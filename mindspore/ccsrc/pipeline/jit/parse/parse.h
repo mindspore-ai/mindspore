@@ -275,12 +275,12 @@ class Parser {
   // so in FunctionBlock class we can use FunctionBlock* in member
   // pre_blocks_ and jumps_ to break reference cycle.
   std::vector<FunctionBlockPtr> func_block_list_;
-  using pStmtFunc = FunctionBlockPtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
-  using pExprFunc = AnfNodePtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
+  using StmtFunc = FunctionBlockPtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
+  using ExprFunc = AnfNodePtr (Parser::*)(const FunctionBlockPtr &block, const py::object &node);
   // Define the function map to parse ast Statement
-  std::map<std::string, pStmtFunc> stmt_method_map_;
+  std::map<std::string, StmtFunc> stmt_method_map_;
   // Define the function map to parse ast expression
-  std::map<std::string, pExprFunc> expr_method_map_;
+  std::map<std::string, ExprFunc> expr_method_map_;
   // Save current loops to support 'continue', 'break' statement.
   std::stack<Loop> loops_;
   string max_for_loop_count_str_;

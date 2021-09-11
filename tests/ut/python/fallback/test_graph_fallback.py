@@ -80,14 +80,28 @@ def test_np_fallback_func():
     print(np_fallback_func())
 
 
+# Test `return` interpret node.
 @ms_function
-def div_mod_func(x, y):
+def div_mod_func1():
+    x = 8
+    y = 3
     a = divmod(x, y)
     return Tensor(a)
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_div_mod_func():
-    print(div_mod_func(8, 3))  # (2, 2)
+def test_div_mod_func1():
+    print(div_mod_func1())  # (2, 2)
+
+
+# Test interpret node with parameters as input.
+@ms_function
+def div_mod_func2(x, y):
+    a = divmod(x, y)
+    return Tensor(a)
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_div_mod_func2():
+    print(div_mod_func2(8, 3))  # (2, 2)
 
 
 # NameError: name 'Tensor' is not defined.

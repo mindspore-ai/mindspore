@@ -362,7 +362,17 @@ ValuePtr ConvertOtherObj(const py::object &obj) {
     MS_LOG(DEBUG) << "name_space: " << res->ToString();
     return res;
   }
-  MS_LOG(ERROR) << "Resolve type is invalid " << ((std::string)py::str(obj));
+  // Start RESOLVE_TYPE_INVALID...
+  // The fallback feature is enabled in default.
+  // Not support change the flag during the process is alive.
+  static const auto support_fallback = common::GetEnv("ENV_SUPPORT_FALLBACK");
+  static const auto use_fallback = (support_fallback == "1");
+  if (use_fallback) {
+    auto res = std::make_shared<InterpretedObject>(obj, py::str(obj));
+    MS_LOG(DEBUG) << "Get interpreted object: " << res->ToString();
+    return res;
+  }
+  MS_LOG(ERROR) << "Resolve type is invalid, obj: " << py::str(obj);
   return nullptr;
 }
 

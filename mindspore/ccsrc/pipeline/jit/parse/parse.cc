@@ -30,11 +30,11 @@
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "utils/ms_context.h"
+#include "utils/interpret_node_recorder.h"
 #include "debug/trace.h"
 
 namespace mindspore {
 namespace parse {
-
 FuncGraphPtr ParsePythonCode(const py::object &obj, const std::string &python_mod_get_parse_method) {
   (void)python_adapter::set_python_scoped();
 
@@ -472,15 +472,15 @@ void Parser::MakeConditionBlocks(const FunctionBlockPtr &pre_block, const Functi
 FunctionBlockPtr Parser::ParseReturn(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast return";
   MS_EXCEPTION_IF_NULL(block);
-  // Create return valuenode
-  AnfNodePtr return_value_node = NewValueNode(prim::kPrimReturn);
-  // Parse the return Statements value
-  py::object value = python_adapter::GetPyObjAttr(node, "value");
-  AnfNodePtr return_expr_node = ParseExprNode(block, value);
-  // Create the cnode
-  auto block_fg = block->func_graph();
-  CNodePtr return_node = block_fg->NewCNodeInOrder({return_value_node, return_expr_node});
-  block_fg->set_return(return_node);
+  // Parse the return Statements value.
+  py::object value_object = python_adapter::GetPyObjAttr(node, "value");
+  AnfNodePtr return_expr_node = ParseExprNode(block, value_object);
+  // Check if need interpreting.
+  return_expr_node = HandleInterpret(block, return_expr_node, value_object);
+  // Create the `return` CNode.
+  auto func_graph = block->func_graph();
+  CNodePtr return_cnode = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimReturn), return_expr_node});
+  func_graph->set_return(return_cnode);
   return block;
 }
 
@@ -928,13 +928,13 @@ AnfNodePtr Parser::ParseLambda(const FunctionBlockPtr &block, const py::object &
   py::list args = ast_->GetArgs(node);
   auto block_fg = func_block->func_graph();
   for (std::size_t i = 0; i < args.size(); i++) {
-    std::string arg = py::cast<std::string>(args[i].attr("arg"));
+    std::string arg_name = py::cast<std::string>(args[i].attr("arg"));
     TraceGuard guard(GetLocation(args[i]));
     auto para_node = std::make_shared<Parameter>(block_fg);
-    para_node->debug_info()->set_name(arg);
+    para_node->debug_info()->set_name(arg_name);
     block_fg->add_parameter(para_node);
-    func_block->WriteVariable(arg, para_node);
-    MS_LOG(DEBUG) << "The arg[" << i << "] is " << arg;
+    func_block->WriteVariable(arg_name, para_node);
+    MS_LOG(DEBUG) << "The arg[" << i << "] is " << arg_name;
   }
 
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
@@ -1701,7 +1701,6 @@ void Parser::HandleAssignName(const FunctionBlockPtr &block, const py::object &t
     }
   }
   MS_LOG(DEBUG) << "Assign name: `" << name_id << "` to node: " << assigned_node->DebugString();
-  block->AddLocalPyParam(name_id, assigned_node);
   block->WriteVariable(name_id, assigned_node);
 }
 
@@ -1827,35 +1826,35 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
   static const auto use_fallback = (support_fallback() == "1");
-  if (!use_fallback) {
+  if (!use_fallback || !value_node->interpret()) {
     return value_node;
   }
 
-  AnfNodePtr interpreted_node = value_node;
-  if (value_node->interpret()) {
-    const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));
-    py::dict global_dict = block->global_py_params();
-    constexpr int recursive_level = 3;
-    MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: " << script_text
-                 << ", value_node: " << value_node->DebugString(recursive_level)
-                 << ", global_dict: " << py::str(global_dict);
-    // Prepare global parameters.
-    ValuePtr globals_converted_value = nullptr;
-    if (!ConvertData(global_dict, &globals_converted_value)) {
-      MS_LOG(EXCEPTION) << "Convert data failed";
-    }
-    auto global_dict_node = NewValueNode(globals_converted_value);
-    // Prepare local parameters.
-    auto [keys, values] = block->local_py_params();
-    auto local_dict_node = ParseDictByKeysAndValues(block, keys, values);
-    // Update the valued node if it need interpreting.
-    interpreted_node = block->MakeInterpret(script_text, global_dict_node, local_dict_node, value_node);
-
-    // Print a hint for user.
-    MS_LOG(ERROR) << "Found unsupported syntax in Graph mode, those codes would be fell back to Python interpreter:"
-                  << "\n\n"
-                  << trace::GetDebugInfo(value_node->debug_info());
+  const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));
+  // Prepare global parameters.
+  py::dict global_dict = block->global_py_params();
+  ValuePtr globals_converted_value = nullptr;
+  if (!ConvertData(global_dict, &globals_converted_value)) {
+    MS_LOG(EXCEPTION) << "Convert data failed";
   }
+  auto global_dict_node = NewValueNode(globals_converted_value);
+  // Prepare local parameters.
+  auto [keys, values] = block->local_py_params();
+  auto local_dict_node = ParseDictByKeysAndValues(block, keys, values);
+  // Update the valued node if it need interpreting.
+  constexpr int recursive_level = 3;
+  MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: `" << script_text
+               << "`,\nvalue_node: " << value_node->DebugString(recursive_level)
+               << ",\nglobal_dict_node: " << global_dict_node->ToString()
+               << ",\nlocal_dict_node: " << local_dict_node->ToString();
+  AnfNodePtr interpreted_node = block->MakeInterpret(script_text, global_dict_node, local_dict_node, value_node);
+
+  // Print a hint for user.
+  auto line_info = trace::GetDebugInfo(value_node->debug_info());
+  MS_LOG(DEBUG) << "Found unsupported syntax in Graph mode, those codes would be fell back to Python interpreter:"
+                << "\n\n"
+                << line_info;
+  InterpretNodeRecorder::GetInstance().Push(line_info);
   return interpreted_node;
 }
 

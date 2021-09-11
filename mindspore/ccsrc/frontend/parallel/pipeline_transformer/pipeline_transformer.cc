@@ -120,7 +120,8 @@ bool PipelineTransformer::LabelParameterStart(const FuncGraphPtr &graph, const C
   for (auto &node : orders) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->stage() > 0) {
+    auto stage_info = cnode->user_data<NodeStageInfo>();
+    if (stage_info != nullptr && stage_info->stage() > 0) {
       continue;
     }
     if (IsValueNode<FuncGraph>(cnode->input(0))) {
@@ -214,7 +215,7 @@ void PipelineTransformer::Coloring() {
         auto node_users = manager_->node_users()[node];
         for (auto &user_pair : node_users) {
           auto user_node = user_pair.first->cast<CNodePtr>();
-          user_node->set_stage(graph->stage());
+          user_node->set_user_data<NodeStageInfo>(std::make_shared<NodeStageInfo>(graph->stage()));
           auto user_node_graph = user_node->func_graph();
           if (graph->stage() == stage_ && user_node_graph->stage() == -1) {
             user_node_graph->set_stage(graph->stage());
@@ -238,19 +239,24 @@ void PipelineTransformer::BroadCastColoring() {
     auto all_nodes = main_graph_->nodes();
     auto node_users = manager_->node_users();
     for (auto &node : all_nodes) {
-      if (!node->isa<CNode>() || node->stage() == -1) {
+      auto stage_info = node->user_data<NodeStageInfo>();
+      if (!node->isa<CNode>() || stage_info == nullptr || stage_info->stage() == -1) {
         continue;
       }
-      auto stage = node->stage();
+      auto stage = stage_info->stage();
       for (auto &user_pair : node_users[node]) {
         auto user_node = user_pair.first->cast<CNodePtr>();
-        auto user_node_stage = user_node->stage();
+        auto user_stage_info = user_node->user_data<NodeStageInfo>();
+        if (user_stage_info == nullptr) {
+          continue;
+        }
+        auto user_node_stage = user_stage_info->stage();
         if (stage > user_node_stage) {
           if (IsValueNode<FuncGraph>(user_node->input(0))) {
             MS_LOG(EXCEPTION) << "The stage setting is incorrect. PreNode's stage:" << stage
                               << " is larger than NextNode's stage:" << user_node_stage;
           }
-          user_node->set_stage(stage);
+          user_node->set_user_data<NodeStageInfo>(std::make_shared<NodeStageInfo>(stage));
           need_coloring = true;
         }
       }
@@ -431,11 +437,12 @@ std::vector<AnfNodePtr> PipelineTransformer::HandleSharedParameter() {
         MS_LOG(INFO) << "parameter: " << parameter->ToString() << " doesn't have micro batch";
         micro = MakeValue(int64_t(0));
       }
-      auto user_stage = node->stage();
       if (stage_ == *parameter_stage.begin()) {
-        if (graph->stage() == stage_) {
+        auto stage_info = node->user_data<NodeStageInfo>();
+        if (graph->stage() == stage_ || stage_info == nullptr) {
           continue;
         }
+        auto user_stage = stage_info->stage();
         if (Reuse(parameter, user_stage, make_tuple_input, DEST_RANK)) {
           continue;
         }
@@ -469,7 +476,7 @@ void PipelineTransformer::ParameterColoring() {
       }
       if (graph != root_ && graph->stage() != -1) {
         parameter_stage.insert(graph->stage());
-        parameter->set_stage(graph->stage());
+        parameter->set_user_data<NodeStageInfo>(std::make_shared<NodeStageInfo>(graph->stage()));
       }
     }
     auto param_info = parameter->cast<ParameterPtr>()->param_info();
@@ -762,7 +769,7 @@ bool PipelineTransformer::IsParameterGraph(const AnfNodePtr &node) {
 
 AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage,
                                                      int64_t user_stage, const ValuePtr &micro, size_t pos,
-                                                     const std::vector<AnfNodePtr> ops) {
+                                                     const std::vector<AnfNodePtr> &ops) {
   MS_EXCEPTION_IF_NULL(node);
   auto actual_node = ActualOp(node);
   auto cnode = actual_node->cast<CNodePtr>();
@@ -811,11 +818,76 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
   return send_out.depend;
 }
 
+void PipelineTransformer::CutBorderForNode(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                           std::vector<AnfNodePtr> *send_ops, std::vector<AnfNodePtr> *receive_ops) {
+  auto stage_info = node->user_data<NodeStageInfo>();
+  auto node_users = manager_->node_users()[node];
+  AnfNodePtr receive = nullptr;
+  for (auto &user_pair : node_users) {
+    auto user_node = user_pair.first;
+    auto node_stage = stage_info->stage();
+    auto user_stage_info = user_node->user_data<NodeStageInfo>();
+    if (user_stage_info == nullptr) {
+      continue;
+    }
+    auto user_node_stage = user_stage_info->stage();
+    if (node_stage != stage_ && user_node_stage != stage_) {
+      continue;
+    }
+    auto micro = user_node->cast<CNodePtr>()->GetPrimalAttr(MICRO);
+    if (!micro) {
+      MS_LOG(INFO) << "Can't find micro_batch information, use micro(0)";
+      micro = MakeValue(int64_t(0));
+    }
+    if (node_stage < user_node_stage) {
+      if (node_stage == stage_) {
+        if (IsParameterGraph(node)) {
+          auto send_depend =
+            HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro, user_pair.second, *send_ops);
+          if (!send_depend) {
+            continue;
+          }
+          send_ops->insert(send_ops->begin(), send_depend);
+          continue;
+        }
+        if (Reuse(node, user_node_stage, *send_ops, DEST_RANK)) {
+          continue;
+        }
+        auto send_out = InsertSend(graph, node, user_node_stage, node_stage, micro);
+        MS_EXCEPTION_IF_NULL(send_out.depend);
+        send_ops->push_back(send_out.depend);
+        send_out.depend->set_user_data<Type>(DTYPE, send_out.type);
+        send_out.depend->set_user_data<ValueList>(SHAPE, send_out.shape);
+      } else {
+        if (!receive) {
+          if (IsParameterGraph(node)) {
+            receive =
+              HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro, user_pair.second, *receive_ops);
+            if (!receive) {
+              continue;
+            }
+            receive_ops->push_back(receive);
+          } else {
+            receive = InsertReceive(graph, node, user_node, user_pair.second, user_node_stage, node_stage, micro, node);
+            receive_ops->push_back(receive);
+          }
+        } else {
+          manager_->SetEdge(user_node, user_pair.second, receive);
+        }
+      }
+      continue;
+    }
+    if (node_stage > user_node_stage) {
+      MS_LOG(EXCEPTION) << "node_stage: " << node_stage << " must be smaller than user_node_stage: " << user_node_stage;
+    }
+  }
+}
+
 std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer::CutBorder(const FuncGraphPtr &graph) {
   OperatorAttrs depend_attrs;
   auto depend_op = CreatOpInstance(depend_attrs, DEPEND, DEPEND);
-  std::vector<AnfNodePtr> receive_ops;
   std::vector<AnfNodePtr> send_ops;
+  std::vector<AnfNodePtr> receive_ops;
   auto ret = graph->get_return();
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
@@ -825,67 +897,13 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
     MS_LOG(EXCEPTION) << "MicroBatch size: " << micro_size_ << " can't less than stage num: " << stage_num;
   }
   for (auto &node : all_nodes) {
-    if (!node->isa<CNode>() || node->stage() == -1 || IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+    auto stage_info = node->user_data<NodeStageInfo>();
+    if (!node->isa<CNode>() || stage_info == nullptr || stage_info->stage() == -1 ||
+        IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
       continue;
     }
-    auto node_users = manager_->node_users()[node];
-    AnfNodePtr receive = nullptr;
-    for (auto &user_pair : node_users) {
-      auto user_node = user_pair.first;
-      auto node_stage = node->stage();
-      auto user_node_stage = user_node->stage();
-      if (node_stage != stage_ && user_node_stage != stage_) {
-        continue;
-      }
-      auto micro = user_node->cast<CNodePtr>()->GetPrimalAttr(MICRO);
-      if (!micro) {
-        MS_LOG(INFO) << "Can't find micro_batch information, use micro(0)";
-        micro = MakeValue(int64_t(0));
-      }
-      if (node_stage < user_node_stage) {
-        if (node_stage == stage_) {
-          if (IsParameterGraph(node)) {
-            auto send_depend =
-              HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro, user_pair.second, send_ops);
-            if (!send_depend) {
-              continue;
-            }
-            send_ops.insert(send_ops.begin(), send_depend);
-            continue;
-          }
-          if (Reuse(node, user_node_stage, send_ops, DEST_RANK)) {
-            continue;
-          }
-          auto send_out = InsertSend(graph, node, user_node_stage, node_stage, micro);
-          MS_EXCEPTION_IF_NULL(send_out.depend);
-          send_ops.push_back(send_out.depend);
-          send_out.depend->set_user_data<Type>(DTYPE, send_out.type);
-          send_out.depend->set_user_data<ValueList>(SHAPE, send_out.shape);
-        } else {
-          if (!receive) {
-            if (IsParameterGraph(node)) {
-              receive = HandleParameterGraph(node, user_node, node_stage, user_node_stage, micro, user_pair.second,
-                                             receive_ops);
-              if (!receive) {
-                continue;
-              }
-              receive_ops.push_back(receive);
-            } else {
-              receive =
-                InsertReceive(graph, node, user_node, user_pair.second, user_node_stage, node_stage, micro, node);
-              receive_ops.push_back(receive);
-            }
-          } else {
-            manager_->SetEdge(user_node, user_pair.second, receive);
-          }
-        }
-        continue;
-      }
-      if (node_stage > user_node_stage) {
-        MS_LOG(EXCEPTION) << "node_stage: " << node_stage
-                          << " must be smaller than user_node_stage: " << user_node_stage;
-      }
-    }
+    // Modify for lizard cyclomatic complexity.
+    CutBorderForNode(graph, node, &send_ops, &receive_ops);
   }
   return std::make_pair(send_ops, receive_ops);
 }

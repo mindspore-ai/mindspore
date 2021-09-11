@@ -72,6 +72,11 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " write var `" << var_name << "` with node "
                 << node->DebugString();
+
+  // The fallback feature is enabled in default.
+  // Not support change the flag during the process is alive.
+  static const auto use_fallback = (parser_.support_fallback() == "1");
+
   auto [iter, is_new_name] = assigned_vars_.emplace(var_name, std::make_pair(node, false));
   if (!is_new_name) {
     // If a cnode variable with same name already existed but not used,
@@ -92,14 +97,21 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
       AddIsolatedNode(hidden_node);
     }
     iter->second = std::make_pair(node, false);
+    if (use_fallback) {
+      UpdateLocalPyParam(var_name, node);
+    }
+  } else {
+    if (use_fallback) {
+      AddLocalPyParam(var_name, node);
+    }
   }
 }
 
 // Read variable from predecessors
-AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
-  MS_LOG(DEBUG) << "Read begin, var: " << var << ", block: " << ToString();
+AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
+  MS_LOG(DEBUG) << "Read begin, var: " << var_name << ", block: " << ToString();
   // Get var node if it is found
-  auto found = assigned_vars_.find(var);
+  auto found = assigned_vars_.find(var_name);
   if (found != assigned_vars_.end()) {
     auto &node = found->second.first;
     MS_EXCEPTION_IF_NULL(node);
@@ -117,34 +129,40 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
     if (prev_blocks_.size() == 1) {
       auto block = prev_blocks_[0];
       MS_EXCEPTION_IF_NULL(block);
-      auto res = block->ReadVariable(var);
-      MS_LOG(INFO) << "Update global params of block: " << ToString() << ", with previous block: " << block->ToString()
-                   << ",\nCurrent: " << py::str(global_py_params())
-                   << "\nInsert: " << py::str(block->global_py_params());
-      CopyGlobalPyParam(block->global_py_params());
+      auto res = block->ReadVariable(var_name);
+
+      // The fallback feature is enabled in default.
+      // Not support change the flag during the process is alive.
+      static const auto use_fallback = (parser_.support_fallback() == "1");
+      if (use_fallback) {
+        MS_LOG(DEBUG) << "Update global params of block: " << ToString()
+                      << ", with previous block: " << block->ToString() << ",\nCurrent: " << py::str(global_py_params())
+                      << "\nInsert: " << py::str(block->global_py_params());
+        UpdateGlobalPyParam(block->global_py_params());
+      }
       return res;
     } else if (prev_blocks_.empty()) {
       // Get namespace and make Resolve
-      auto it = var_to_resolve_.find(var);
+      auto it = var_to_resolve_.find(var_name);
       if (it != var_to_resolve_.end()) {
         return it->second;
       }
-      MS_LOG(DEBUG) << "var: " << var;
-      auto tmp_node = MakeResolveSymbol(var);
-      var_to_resolve_[var] = tmp_node;
+      MS_LOG(DEBUG) << "var: " << var_name;
+      auto tmp_node = MakeResolveSymbol(var_name);
+      var_to_resolve_[var_name] = tmp_node;
       return tmp_node;
     }
   }
   // If have more than one predecessor blocks then build a phi node.
   auto debug_info = std::make_shared<NodeDebugInfo>();
-  debug_info->set_name(var);
+  debug_info->set_name(var_name);
   TraceGuard guard(std::make_shared<TracePhi>(debug_info));
   ParameterPtr phi_param = std::make_shared<Parameter>(func_graph());
   MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " generate phi node "
-                << phi_param->ToString() << " for " << var;
+                << phi_param->ToString() << " for " << var_name;
   func_graph()->add_parameter(phi_param);
-  phi_nodes_[phi_param] = var;
-  WriteVariable(var, phi_param);
+  phi_nodes_[phi_param] = var_name;
+  WriteVariable(var_name, phi_param);
   if (matured_) {
     SetPhiArgument(phi_param);
   }
@@ -337,19 +355,19 @@ AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const Parame
 // Args: phi: This parameter node is functioning as a phi node.
 bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   MS_EXCEPTION_IF_NULL(phi);
-  std::string var = phi_nodes_[phi];
-  MS_LOG(DEBUG) << "check phi " << phi->DebugString() << " for " << var;
+  std::string var_name = phi_nodes_[phi];
+  MS_LOG(DEBUG) << "check phi " << phi->DebugString() << " for " << var_name;
   if (prev_blocks_.empty()) {
-    MS_LOG(DEBUG) << "no phi " << phi->DebugString() << " for var " << var;
+    MS_LOG(DEBUG) << "no phi " << phi->DebugString() << " for var " << var_name;
     return false;
   }
-  AnfNodePtr arg_node = SearchReplaceNode(var, phi);
+  AnfNodePtr arg_node = SearchReplaceNode(var_name, phi);
   if (arg_node != nullptr) {
     arg_node->set_debug_info(phi->debug_info());
     MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " phi " << phi->ToString()
                   << " can be replaced with " << arg_node->DebugString();
     // Replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."
-    WriteVariable(var, arg_node);
+    WriteVariable(var_name, arg_node);
     removable_phis_[phi] = arg_node;
     resolve_to_removable_phis_[arg_node] = phi;
     // The following equal to statement "The φ-function defining v1, which now reads φ(v2, v1), is optimized

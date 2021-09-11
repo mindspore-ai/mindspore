@@ -66,7 +66,7 @@ class PipelineTransformer {
   bool IsParameterGraph(const AnfNodePtr &node);
   AnfNodeIndexSet GetActualOpUsers(const std::pair<AnfNodePtr, int> &node_pair, NodeUsersMap *node_users_map);
   AnfNodePtr HandleParameterGraph(const AnfNodePtr &node, const AnfNodePtr &use_node, int64_t stage, int64_t user_stage,
-                                  const ValuePtr &micro, size_t pos, const std::vector<AnfNodePtr> ops);
+                                  const ValuePtr &micro, size_t pos, const std::vector<AnfNodePtr> &ops);
   ValuePtr SetMicroBatch(const AnfNodePtr &node, int64_t micro_size);
   std::vector<AnfNodePtr> HandleSharedParameter();
   SendAttr InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, int64_t user_node_stage,
@@ -75,6 +75,8 @@ class PipelineTransformer {
                            int64_t user_node_stage, int64_t node_stage, const ValuePtr &value,
                            const AnfNodePtr &graph_param);
   std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> CutBorder(const FuncGraphPtr &graph);
+  void CutBorderForNode(const FuncGraphPtr &graph, const AnfNodePtr &node, std::vector<AnfNodePtr> *send_ops,
+                        std::vector<AnfNodePtr> *receive_ops);
   AnfNodePtr Reuse(const AnfNodePtr &node, int64_t stage, const std::vector<AnfNodePtr> &out_input,
                    const std::string &tag);
   AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);
@@ -98,6 +100,20 @@ class PipelineTransformer {
   AnfNodePtr virtual_param_;
   int64_t micro_size_ = 0;
   std::vector<std::string> group_ = {};
+};
+
+class NodeStageInfo {
+ public:
+  explicit NodeStageInfo(int64_t stage) : stage_(stage) {}
+  ~NodeStageInfo() = default;
+
+  int64_t stage() const { return stage_; }
+
+  // Key for user data.
+  constexpr static char key[] = "NodeStageInfo";
+
+ private:
+  int64_t stage_;
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -26,36 +26,38 @@
 #include <algorithm>
 #include <iomanip>
 
+#include "pybind_api/pybind_patch.h"
 #include "ir/param_info.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "frontend/optimizer/ad/dfunctor.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
-#include "debug/anf_ir_dump.h"
-#include "debug/dump_proto.h"
-#include "debug/anf_ir_utils.h"
-#include "debug/common.h"
+#include "pipeline/pynative/pynative_execute.h"
+#include "frontend/optimizer/py_pass_manager.h"
+#include "frontend/optimizer/ad/dfunctor.h"
+#include "frontend/optimizer/ad/prim_bprop_optimizer.h"
+#include "frontend/parallel/context.h"
+#include "frontend/parallel/graph_util/get_parallel_info.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "utils/convert_utils_py.h"
 #include "utils/context/context_extends.h"
-#include "vm/segment_runner.h"
-#include "frontend/parallel/context.h"
-#include "frontend/parallel/graph_util/get_parallel_info.h"
-#include "runtime/device/kernel_runtime_manager.h"
-#include "backend/session/executor_manager.h"
-#include "debug/trace.h"
-#include "debug/draw.h"
-#include "pipeline/pynative/pynative_execute.h"
-#include "frontend/optimizer/py_pass_manager.h"
-#include "pybind_api/pybind_patch.h"
 #include "utils/shape_utils.h"
 #include "utils/info.h"
-#include "load_mindir/load_model.h"
-#include "frontend/optimizer/ad/prim_bprop_optimizer.h"
-#include "runtime/hardware/device_context_manager.h"
 #include "utils/crypto.h"
 #include "utils/comm_manager.h"
+#include "utils/interpret_node_recorder.h"
+#include "debug/anf_ir_dump.h"
+#include "debug/dump_proto.h"
+#include "debug/anf_ir_utils.h"
+#include "debug/trace.h"
+#include "debug/draw.h"
+#include "debug/common.h"
+#include "load_mindir/load_model.h"
+#include "vm/segment_runner.h"
+#include "backend/session/executor_manager.h"
+#include "runtime/hardware/device_context_manager.h"
+#include "runtime/device/kernel_runtime_manager.h"
+
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/constants.h"
 #include "ps/util.h"
@@ -722,9 +724,8 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   CheckArgsValid(args);
 
   auto phase = py::cast<std::string>(phase_obj);
-  MS_LOG(INFO) << "Start compiling, phase: " << phase << ".";
-  MS_LOG(DEBUG) << "Compiling source: {" << py::str(source_obj)
-                << "}\n\n Args: " << py::str(const_cast<py::tuple &>(args));
+  MS_LOG(INFO) << "Start compiling, phase: " << phase;
+  MS_LOG(DEBUG) << "source: {" << py::str(source_obj) << "}\nargs: " << py::str(const_cast<py::tuple &>(args));
 
 #ifdef ENABLE_GE
   GetGeBackendPolicy();
@@ -1471,6 +1472,7 @@ void ClearResAtexit() {
   parse::Parser::CleanParserResource();
   parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
+  InterpretNodeRecorder::GetInstance().Clear();
 }
 
 py::bytes PyEncrypt(char *plain_data, size_t plain_len, char *key, size_t key_len, const std::string &enc_mode) {
