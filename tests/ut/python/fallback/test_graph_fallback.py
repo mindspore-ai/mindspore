@@ -18,8 +18,10 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor, ms_function, context
+from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-
+import mindspore.common.dtype as mstype
+import mindspore.common._monad as monad
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -38,16 +40,15 @@ def test_increment():
 
 
 @ms_function
-def np_fallback_func():
-    array_x = [2, 3, 4, 5]
-    np_x = np.array(array_x).astype(np.float32)
-    me_x = Tensor(np_x)
-    me_x = me_x + me_x
-    return me_x
+def use_monad(x, y):
+    res = P.Mul()(x, y)
+    res = F.depend(res, monad.U)
+    return res
 
-@pytest.mark.skip(reason='Graph fallback feature is not supported yet')
-def test_np_fallback_func():
-    print(np_fallback_func())
+def test_use_monad():
+    x = Tensor(1.0, mstype.float32)
+    y = Tensor(1.0, mstype.float32)
+    print(use_monad(x, y))
 
 
 class Net(nn.Cell):
@@ -64,3 +65,74 @@ class Net(nn.Cell):
 def test_builtins_len():
     net = Net()
     net()
+
+
+@ms_function
+def np_fallback_func():
+    array_x = tuple([2, 3, 4, 5])
+    np_x = np.array(array_x).astype(np.float32)
+    me_x = Tensor(np_x)
+    me_x = me_x + me_x
+    return me_x
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_np_fallback_func():
+    print(np_fallback_func())
+
+
+@ms_function
+def div_mod_func(x, y):
+    a = divmod(x, y)
+    return Tensor(a)
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_div_mod_func():
+    print(div_mod_func(8, 3))  # (2, 2)
+
+
+# NameError: name 'Tensor' is not defined.
+@ms_function
+def select_func(cond, x, y):
+    if isinstance(cond, (tuple, list)):
+        output = y
+    elif isinstance(cond, Tensor):
+        output = F.select(cond, x, y)
+    else:
+        output = x
+    return output
+
+def test_select_func():
+    cond = Tensor([True, False])
+    x = Tensor([2, 3], mstype.float32)
+    y = Tensor([1, 2], mstype.float32)
+    print(select_func(cond, x, y))
+
+
+# Not interpret 'Tensor'.
+@ms_function
+def select_func2(cond, x, y):
+    if isinstance(cond, (tuple, list)):
+        output = y
+    if isinstance(cond, Tensor):
+        output = F.select(cond, x, y)
+    else:
+        output = x
+    return output
+
+def test_select_func2():
+    cond = Tensor([True, False])
+    x = Tensor([2, 3], mstype.float32)
+    y = Tensor([1, 2], mstype.float32)
+    print(select_func2(cond, x, y))
+
+
+# NameError: name 'Tensor' is not defined.
+@ms_function
+def slice_func(a, b):
+    a[1:3, ::] = b
+    return a
+
+def test_slice_func():
+    a = Tensor(np.arange(60).reshape(3, 4, 5), dtype=mstype.float32)
+    b = Tensor([1], dtype=mstype.float32)
+    print(slice_func(a, b))

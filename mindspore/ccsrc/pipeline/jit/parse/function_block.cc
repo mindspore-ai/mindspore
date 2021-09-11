@@ -70,7 +70,7 @@ static bool CanBeIsolatedNode(const std::string &var_name, const AnfNodePtr &nod
 // Write variable records the variable name to corresponding node
 void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " write var " << var_name << " with node "
+  MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " write var `" << var_name << "` with node "
                 << node->DebugString();
   auto [iter, is_new_name] = assigned_vars_.emplace(var_name, std::make_pair(node, false));
   if (!is_new_name) {
@@ -97,7 +97,7 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
 
 // Read variable from predecessors
 AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
-  MS_LOG(DEBUG) << "Read begin, var: " << var << ", block id: " << func_graph_->debug_info()->debug_id();
+  MS_LOG(DEBUG) << "Read begin, var: " << var << ", block: " << ToString();
   // Get var node if it is found
   auto found = assigned_vars_.find(var);
   if (found != assigned_vars_.end()) {
@@ -117,7 +117,12 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
     if (prev_blocks_.size() == 1) {
       auto block = prev_blocks_[0];
       MS_EXCEPTION_IF_NULL(block);
-      return block->ReadVariable(var);
+      auto res = block->ReadVariable(var);
+      MS_LOG(INFO) << "Update global params of block: " << ToString() << ", with previous block: " << block->ToString()
+                   << ",\nCurrent: " << py::str(global_py_params())
+                   << "\nInsert: " << py::str(block->global_py_params());
+      CopyGlobalPyParam(block->global_py_params());
+      return res;
     } else if (prev_blocks_.empty()) {
       // Get namespace and make Resolve
       auto it = var_to_resolve_.find(var);
@@ -190,13 +195,14 @@ AnfNodePtr FunctionBlock::HandleNamespaceInfo(const py::tuple &namespace_info) {
   }
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_SYMBOL_STR, namespace_info[0]);
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_info[1].cast<std::string>());
-  MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString()
-                << ", unsupported: " << unsupported;
+  MS_LOG(DEBUG) << "[" << func_graph()->ToString() << "] name_space: " << name_space->ToString()
+                << ", symbol: " << symbol->ToString() << ", unsupported: " << unsupported;
   auto resolved_node = MakeResolve(name_space, symbol);
   if (unsupported) {
     resolved_node->set_interpret(true);
     AddGlobalPyParam(symbol->name(), py_obj);
-    MS_LOG(INFO) << "Added global python symblol: {" << symbol->name() << " : " << py::str(py_obj) << "}";
+    MS_LOG(INFO) << "[" << func_graph()->ToString() << "] Added global python symblol: {" << symbol->name() << " : "
+                 << py::str(py_obj) << "}";
   }
   return resolved_node;
 }
@@ -218,7 +224,7 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
 
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
-  static const auto use_fallback = (parser_.support_fallback() != "1" ? false : true);
+  static const auto use_fallback = (parser_.support_fallback() == "1");
   if (!use_fallback) {
     py::tuple namespace_info = ast->CallParserObjMethod(PYTHON_PARSE_GET_NAMESPACE_SYMBOL, value);
     return HandleNamespaceInfo(namespace_info);
@@ -268,12 +274,12 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
   TraceGuard trace_guard(std::make_shared<TraceResolve>(phi->debug_info()));
   std::string var = phi_nodes_[phi];
   MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " set phi " << phi->ToString()
-                << " for var " << var;
+                << " for var `" << var << "`";
   auto removable = CollectRemovablePhi(phi);
   // If the phi node is not necessary, not need to add to jumps_ of the prev blocks.
   if (removable) {
     MS_LOG(DEBUG) << "remove the phi when call graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
-                  << " var " << var;
+                  << " var `" << var << "`";
     return;
   }
   for (auto &pred : prev_blocks_) {
@@ -402,12 +408,10 @@ CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
 
 // Perform a jump from this block to target block
 void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args) {
-  MS_LOG(DEBUG) << "Jump from " << func_graph_->debug_info()->debug_id() << " to "
-                << target_block->func_graph()->debug_info()->debug_id();
+  MS_LOG(DEBUG) << "Jump from block: " << ToString() << " to block: " << target_block->ToString();
   MS_EXCEPTION_IF_NULL(target_block);
   if (is_dead_block_) {
-    MS_LOG(DEBUG) << "Dead code block should not jump to other block! Block id:"
-                  << func_graph_->debug_info()->debug_id();
+    MS_LOG(DEBUG) << "Dead code block should not jump to other block! block: " << ToString();
     return;
   }
   if (func_graph_->get_return() != nullptr) {

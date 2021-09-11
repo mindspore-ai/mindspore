@@ -112,6 +112,16 @@ class PyObjectWrapper : public Named {
   py::object obj_;
 };
 
+// InterpretedObject class wrappers interpreted python object.
+class InterpretedObject : public PyObjectWrapper {
+ public:
+  explicit InterpretedObject(const py::object &obj, const std::string &name = "Interpreted object")
+      : PyObjectWrapper(obj, name) {}
+  ~InterpretedObject() override = default;
+  MS_DECLARE_PARENT(InterpretedObject, PyObjectWrapper);
+  abstract::AbstractBasePtr ToAbstract() override;
+};
+
 // ClassObject class wrappers dataclass
 class ClassObject : public PyObjectWrapper {
  public:
