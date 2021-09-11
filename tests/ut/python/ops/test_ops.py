@@ -1027,6 +1027,19 @@ class ApplyAdagradDANet(nn.Cell):
                                      lr, l1, l2, global_step)
         return out
 
+
+class SparseApplyRMSPropNet(nn.Cell):
+    def __init__(self, rho, momentum, epsilon, use_locking=False):
+        super(SparseApplyRMSPropNet, self).__init__()
+        self.sparse_apply_r_m_s_prop = P.SparseApplyRMSProp(rho, momentum, epsilon, use_locking)
+        self.var = Parameter(Tensor(np.array([[0.6, 0.3], [0.1, 0.5]]).astype(np.float32)), name="var")
+        self.ms = Parameter(Tensor(np.array([[0.2, 0.4], [0.1, 0.3]]).astype(np.float32)), name="ms")
+        self.mom = Parameter(Tensor(np.array([[0.3, 0.1], [0.3, 0.6]]).astype(np.float32)), name="mom")
+
+    def construct(self, lr, grad, indices):
+        out = self.sparse_apply_r_m_s_prop(self.var, self.ms, self.mom, lr, grad, indices)
+        return out
+
 test_case_math_ops = [
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
@@ -2279,6 +2292,12 @@ test_case_nn_ops = [
                         Tensor(0.001, mstype.float32),
                         Tensor(0.001, mstype.float32),
                         Tensor(2, mstype.int32)],
+        'skip': ['backward']}),
+    ('SparseApplyRMSProp', {
+        'block': SparseApplyRMSPropNet(0.2, 0.01, 1e-6),
+        'desc_inputs': [Tensor(0.01, mstype.float32),
+                        Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32)),
+                        Tensor(np.array([0, 1], dtype=np.int32))],
         'skip': ['backward']}),
 ]
 

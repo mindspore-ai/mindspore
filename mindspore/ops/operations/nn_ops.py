@@ -9046,3 +9046,116 @@ class ApplyAdagradDA(Primitive):
     def __init__(self, use_locking=False):
         """Initialize ApplyAdagradDA"""
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+
+class SparseApplyRMSProp(Primitive):
+    r"""
+    Update relevant entries according to the rmsprop algorithm.
+
+    .. math::
+        \begin{array}{ll} \\
+            ms = rho * ms_{t-1} + (1 - rho) * grad * grad \\
+            mom = momentum * mom_{t-1} + lr * grad / sqrt(ms + epsilon) \\
+            var = var - mom
+        \end{array}
+
+    Inputs of `var`, `ms`, `mom` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
+    Args:
+        rho (float): Decay rate. The value should between 0 and 1, otherwise the behavior is undefined.
+        momentum (float): Momentum. The value should be greater or equal to 0, otherwise the behavior is undefined.
+        epsilon (float): A small value added for numerical stability. The value should be greater than 0,
+                         otherwise the behavior is undefined.
+        use_locking (bool): If `True`, updating of the var, ms, and mom tensors is protected by a lock;
+                            otherwise the behavior is undefined, but may exhibit less contention. Default: False.
+
+    Inputs:
+        - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **ms** (Parameter) - The dict of mutable tensor ms. Must have the same shape and dtype as `var`.
+        - **mom** (Parameter) - The dict of mutable tensor mom. Must have the same shape and dtype as `var`.
+        - **lr** ([Number, Tensor]) - Learning rate. Must be a scalar. With float16 or float32 data type.
+        - **grad** (Tensor) - A tensor for gradient. Must have the same shape and dtype as `var`.
+        - **indices** (Tensor) - A tensor of indices in the first dimension of `var`, `ms` and `mom`.
+          If there are duplicates in `indices`, the behavior is undefined. Must be one of the
+          following types: int32, int64 and indices.shape[0] = var.shape[0].
+
+    Outputs:
+        Tuple of 3 Tensors, the updated parameters.
+
+        - **var** (Tensor) -  The same shape and data type as `var`.
+        - **ms** (Tensor) - The same shape and data type as `ms`.
+        - **mom** (Tensor) - The same shape and data type as `mom`.
+
+    Raises:
+        TypeError: If `var`, `ms` or `mom` is not a Parameter.
+        TypeError: If `grad` or `indices` is not a Tensor.
+        TypeError: If dtype of `var`, `ms`, `mom`, `lr`, `grad` is neither float16 nor float32.
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        TypeError: If `lr` is neither a Number or a Tensor.
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If dtype of `epsilon`, `rho`, `momentum` is not a float.
+        ValueError: If shape of `ms`, `mom`, `grad` is not same as `var`.
+        ValueError: If the shape size of `lr` is not 0.
+        ValueError: If shape of `indices` is not same as shape of first dimension of `var`.
+        ValueError: If `epsilon` is less than or equal to 0.
+        ValueError: If `momentum` is less than 0.
+        ValueError: If `rho` is less than 0 or greater than 1.
+        ValueError: If dimension of `var` is less than 1.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> class SparseApplyRMSPropNet(nn.Cell):
+        ...     def __init__(self, rho, momentum, epsilon, use_locking=False):
+        ...         super(SparseApplyRMSPropNet, self).__init__()
+        ...         self.sparse_apply_r_m_s_prop = P.SparseApplyRMSProp(rho, momentum, epsilon, use_locking)
+        ...         self.var = Parameter(Tensor(np.array([[0.6, 0.3], [0.1, 0.5]]).astype(np.float32)), name="var")
+        ...         self.ms = Parameter(Tensor(np.array([[0.2, 0.4], [0.1, 0.3]]).astype(np.float32)), name="ms")
+        ...         self.mom = Parameter(Tensor(np.array([[0.3, 0.1], [0.3, 0.6]]).astype(np.float32)), name="mom")
+        ...     def construct(self, lr, grad, indices):
+        ...         out = self.sparse_apply_r_m_s_prop(self.var, self.ms, self.mom, lr, grad, indices)
+        ...         return out
+        ...
+        >>> rho = 0.2
+        >>> momentum = 0.01
+        >>> epsilon = 1e-6
+        >>> net = SparseApplyRMSPropNet(rho, momentum, epsilon)
+        >>> lr = 0.01
+        >>> grad = Tensor(np.array([[0.3, 0.7], [0.1, 0.8]]).astype(np.float32))
+        >>> indices = Tensor(np.array([0, 1], dtype=np.int32))
+        >>> out = net(lr, grad, indices)
+        >>> print(out)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 5.88035822e-01,  2.88811117e-01],
+         [ 9.10239667e-02,  4.83422279e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.12000003e-01,  4.72000003e-01],
+         [ 2.80000009e-02,  5.72000027e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.19641740e-02,  1.11888833e-02],
+         [ 8.97603668e-03,  1.65777095e-02]]))
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('ms', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('mom', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T1),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T2)
+    )
+
+    @prim_attr_register
+    def __init__(self, rho, momentum, epsilon, use_locking=False):
+        """"Initialize SparseApplyRMSProp"""
+        validator.check_value_type("rho", rho, [float], self.name)
+        validator.check_value_type("momentum", momentum, [float], self.name)
+        validator.check_value_type("epsilon", epsilon, [float], self.name)
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.epsilon = validator.check_number("epsilon", epsilon, 0.0, Rel.GT, self.name)
+        self.momentum = validator.check_number("momentum", momentum, 0.0, Rel.GE, self.name)
+        self.rho = validator.check_float_range(rho, 0.0, 1.0, Rel.INC_BOTH, "rho", self.name)
