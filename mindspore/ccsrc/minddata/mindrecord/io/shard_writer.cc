@@ -52,7 +52,8 @@ Status ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &path
     RETURN_UNEXPECTED_IF_NULL(_fullpath(resolved_path, dirname(&(buf[0])), PATH_MAX));
     RETURN_UNEXPECTED_IF_NULL(_fullpath(resolved_path, common::SafeCStr(path), PATH_MAX));
 #else
-    RETURN_UNEXPECTED_IF_NULL(realpath(dirname(&(buf[0])), resolved_path));
+    CHECK_FAIL_RETURN_UNEXPECTED(realpath(dirname(&(buf[0])), resolved_path) != nullptr,
+                                 "Invalid file, path: " + std::string(resolved_path));
     if (realpath(common::SafeCStr(path), resolved_path) == nullptr) {
       MS_LOG(DEBUG) << "Path " << resolved_path;
     }

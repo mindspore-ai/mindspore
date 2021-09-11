@@ -81,8 +81,7 @@ Status GetFileName(const std::string &path, std::shared_ptr<std::string> *fn_ptr
   }
 #endif
   std::string s = real_path;
-  char sep = '/';
-  size_t i = s.rfind(sep, s.length());
+  size_t i = s.rfind(kPathSeparator, s.length());
   if (i != std::string::npos) {
     if (i + 1 < s.size()) {
       *fn_ptr = std::make_shared<std::string>(s.substr(i + 1));
@@ -117,11 +116,13 @@ Status GetParentDir(const std::string &path, std::shared_ptr<std::string> *pd_pt
   }
 #endif
   std::string s = real_path;
-  if (s.rfind('/') + 1 <= s.size()) {
-    *pd_ptr = std::make_shared<std::string>(s.substr(0, s.rfind('/') + 1));
+  if (s.rfind(kPathSeparator) + 1 <= s.size()) {
+    *pd_ptr = std::make_shared<std::string>(s.substr(0, s.rfind(kPathSeparator) + 1));
     return Status::OK();
   }
-  *pd_ptr = std::make_shared<std::string>("/");
+  std::string ss;
+  ss.push_back(kPathSeparator);
+  *pd_ptr = std::make_shared<std::string>(ss);
   return Status::OK();
 }
 
