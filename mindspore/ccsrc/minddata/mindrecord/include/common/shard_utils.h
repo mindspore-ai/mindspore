@@ -130,6 +130,13 @@ const std::unordered_map<std::string, std::string> kDbJsonMap = {
 
 const char kPoint = '.';
 
+const char kPathSeparator =
+#if defined(_WIN32) || defined(_WIN64)
+  '\\';
+#else
+  '/';
+#endif
+
 // field type used by check schema validation
 const std::set<std::string> kFieldTypeSet = {"bytes", "string", "int32", "int64", "float32", "float64"};
 
