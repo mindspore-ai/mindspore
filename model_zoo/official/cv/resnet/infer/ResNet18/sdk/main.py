@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
         with open(file_path, 'rb') as f:
             data_input.data = f.read()
-        
+
         empty_data = []
         stream_name = b'im_resnet18'
         in_plugin_id = 0
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         # print the infer result
         infer_res = infer_result.data.decode()
         print("process img: {}, infer result: {}".format(file_name, infer_res))
-        
+
         load_dict = json.loads(infer_result.data.decode())
         if load_dict.get('MxpiClass') is None:
             with open(res_dir_name + "/" + file_name[:-5] + '.txt', 'w') as f_write:

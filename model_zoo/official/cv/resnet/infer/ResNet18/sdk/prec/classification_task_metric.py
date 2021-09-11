@@ -13,11 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import numpy as np
 import os
 import sys
 import json
+import numpy as np
 
 np.set_printoptions(threshold=sys.maxsize)
 
@@ -87,17 +86,17 @@ def load_statistical_predict_result(filepath):
 
 
 def create_visualization_statistical_result(prediction_file_path,
-                                            result_store_path, json_file_name,
+                                            result_store_path, file_name,
                                             img_gt_dict, topn=5):
     """
     :param prediction_file_path:
     :param result_store_path:
-    :param json_file_name:
+    :param file_name:
     :param img_gt_dict:
     :param topn:
     :return:
     """
-    writer = open(os.path.join(result_store_path, json_file_name), 'w')
+    writer = open(os.path.join(result_store_path, file_name), 'w')
     table_dict = {"title": "Overall statistical evaluation", "value": []}
 
     count = 0
@@ -176,4 +175,3 @@ if __name__ == '__main__':
     create_visualization_statistical_result(folder_davinci_target,
                                             result_json_path, json_file_name,
                                             img_label_dict, topn=5)
-

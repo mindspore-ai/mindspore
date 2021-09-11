@@ -16,12 +16,12 @@
 
 #ifndef MXBASE_RESNET18CLASSIFYOPENCV_H
 #define MXBASE_RESNET18CLASSIFYOPENCV_H
-#include <opencv2/opencv.hpp>
 
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+#include <opencv2/opencv.hpp>
 #include "MxBase/DvppWrapper/DvppWrapper.h"
 #include "MxBase/ModelInfer/ModelInferenceProcessor.h"
 #include "ClassPostProcessors/Resnet50PostProcess.h"

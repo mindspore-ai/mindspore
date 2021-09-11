@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include <dirent.h>
 #include "Resnet18ClassifyOpencv.h"
 #include "MxBase/Log/Log.h"
-#include <dirent.h>
 
 namespace {
 const uint32_t CLASS_NUM = 1001;

@@ -189,15 +189,7 @@ def set_config():
     config.num_classes = args_opt.num_classes
 
 
-def main():
-    set_config()
-    target = args_opt.device_target
-    if target == "CPU":
-        args_opt.run_distribute = False
-
-    ckpt_save_dir = config.save_checkpoint_path
-
-    # init context
+def init_context(target):
     if args_opt.mode == 'GRAPH':
         context.set_context(mode=context.GRAPH_MODE, device_target=target,
                             save_graphs=False)
@@ -234,22 +226,9 @@ def main():
             if args_opt.net == "resnet50":
                 context.set_auto_parallel_context(
                     all_reduce_fusion_config=[85, 160])
-        ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(
-            get_rank()) + "/"
 
-    # create dataset
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
-                             repeat_num=1,
-                             batch_size=config.batch_size, target=target,
-                             distribute=args_opt.run_distribute)
-    step_size = dataset.get_dataset_size()
 
-    # define net
-    net = resnet(class_num=config.class_num)
-    if args_opt.parameter_server:
-        net.set_param_ps()
-
-    # init weight
+def init_weight(net):
     if os.path.exists(args_opt.pre_trained):
         param_dict = load_checkpoint(args_opt.pre_trained)
         if args_opt.filter_weight:
@@ -269,7 +248,8 @@ def main():
                                             cell.weight.shape,
                                             cell.weight.dtype))
 
-    # init lr
+
+def init_lr(step_size):
     if cfg.optimizer == "Thor":
         from src.lr_generator import get_thor_lr
         lr = get_thor_lr(0, config.lr_init, config.lr_decay,
@@ -293,7 +273,37 @@ def main():
                              warmup_epochs=config.warmup_epochs,
                              total_epochs=config.epoch_size,
                              steps_per_epoch=step_size)
-    lr = Tensor(lr)
+    return Tensor(lr)
+
+
+def main():
+    set_config()
+    target = args_opt.device_target
+    if target == "CPU":
+        args_opt.run_distribute = False
+
+    # init context
+    init_context(target)
+    ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(
+            get_rank()) + "/"
+
+    # create dataset
+    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
+                             repeat_num=1,
+                             batch_size=config.batch_size, target=target,
+                             distribute=args_opt.run_distribute)
+    step_size = dataset.get_dataset_size()
+
+    # define net
+    net = resnet(class_num=config.class_num)
+    if args_opt.parameter_server:
+        net.set_param_ps()
+
+    # init weight
+    init_weight(net)
+
+    # init lr
+    lr = init_lr(step_size)
 
     # define opt
     decayed_params = []
@@ -327,10 +337,10 @@ def main():
     if args_opt.run_distribute:
         metrics = {'acc': DistAccuracy(batch_size=config.batch_size,
                                        device_num=args_opt.device_num)}
-    if (args_opt.net not in (
-    "resnet18", "resnet50", "resnet101", "se-resnet50")) or \
-            args_opt.parameter_server or target == "CPU":
-        ## fp32 training
+    if (args_opt.net not in ("resnet18", "resnet50", "resnet101",
+                             "se-resnet50")) or args_opt.parameter_server \
+            or target == "CPU":
+        # fp32 training
         model = Model(net, loss_fn=loss, optimizer=opt, metrics=metrics,
                       eval_network=dist_eval_network)
     else:
@@ -367,8 +377,8 @@ def main():
                                   config=config_ck)
         cb += [ckpt_cb]
     if args_opt.run_eval:
-        if args_opt.eval_dataset_path is None or (
-        not os.path.isdir(args_opt.eval_dataset_path)):
+        if args_opt.eval_dataset_path is None \
+                or (not os.path.isdir(args_opt.eval_dataset_path)):
             raise ValueError(
                 "{} is not a existing path.".format(args_opt.eval_dataset_path))
         eval_dataset = create_dataset(
