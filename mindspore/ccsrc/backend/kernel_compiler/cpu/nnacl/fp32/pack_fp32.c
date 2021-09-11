@@ -406,14 +406,22 @@ void PackNC8HW8AlignedToNC8HW8NotAlignedFp32(const void *src, void *dst, const i
 }
 
 void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int channel) {
+  int channel_up8 = UP_ROUND(channel, C8NUM);
   for (int n = 0; n < batch; n++) {
     for (int hw = 0; hw < plane; hw++) {
-      for (int c = 0; c < channel; c++) {
+      int c = 0;
+      for (; c < channel; c++) {
         int c8div = c / C8NUM;
         int c8mod = c % C8NUM;
         int src_index = n * plane * channel + hw * channel + c;
         int dst_index = c8div * batch * plane * C8NUM + hw * batch * C8NUM + n * C8NUM + c8mod;
         ((float *)dst)[dst_index] = ((float *)src)[src_index];
+      }
+      for (; c < channel_up8; c++) {
+        int c8div = c / C8NUM;
+        int c8mod = c % C8NUM;
+        int dst_index = c8div * batch * plane * C8NUM + hw * batch * C8NUM + n * C8NUM + c8mod;
+        ((float *)dst)[dst_index] = 0;
       }
     }
   }
@@ -421,6 +429,56 @@ void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int 
 
 void PackNHWCToCXHWNXFp32(const float *src, float *dst, int batch, int plane, int channel) {
   // pack weight NHWC to C24HWN24 (Priority 24)=>C16HWN16 (Not satisfied 24)=>C8HWN8 (Not satisfied 16)
+#ifdef ENABLE_AVX
+  int oc_block_num = UP_DIV(channel, C8NUM);
+  int plane16 = plane / C16NUM * C16NUM;
+  for (int i = 0, oc_block = 0; i < oc_block_num; i += oc_block) {
+    oc_block = MSMIN(C3NUM, oc_block_num - i);
+    int oc_remainder = MSMIN(C8NUM * oc_block, channel - i * C8NUM);
+    int oc_remainder_c8 = oc_remainder / C8NUM * C8NUM;
+    int p = 0;
+    for (; p < plane16; p += C16NUM) {
+      int index_plane = i * C8NUM + p * channel;
+      for (int b = 0; b < batch; ++b) {
+        int index_batch = index_plane + b * plane * channel;
+        int oc = 0;
+        int stride = oc_block * C8NUM * batch;
+        for (; oc < oc_remainder_c8; oc += C8NUM) {
+          const float *cur_src = src + index_batch + oc;
+          float *cur_dst = dst + oc;
+          LOAD256X16_F32(r, cur_src, channel);
+          STORE256X16_F32(cur_dst, stride, r);
+        }
+        for (; oc < oc_remainder; ++oc) {
+          for (int k = 0; k < C16NUM; ++k) {
+            dst[oc + stride * k] = src[index_batch + oc + channel * k];
+          }
+        }
+        for (; oc < C8NUM; ++oc) {
+          for (int k = 0; k < C16NUM; ++k) {
+            dst[oc + stride * k] = 0;
+          }
+        }
+        dst += oc_block * C8NUM;
+      }
+      dst += (C16NUM - 1) * oc_block * C8NUM * batch;
+    }
+    for (; p < plane; ++p) {
+      int index_plane = i * C8NUM + p * channel;
+      for (int b = 0; b < batch; ++b) {
+        int index_batch = index_plane + b * plane * channel;
+        int oc = 0;
+        for (; oc < oc_remainder; ++oc) {
+          dst[oc] = src[index_batch + oc];
+        }
+        for (; oc < C8NUM; ++oc) {
+          dst[oc] = 0;
+        }
+        dst += oc_block * C8NUM;
+      }
+    }
+  }
+#else
   int oc_block = 0;
   int oc_block_num = UP_DIV(channel, C8NUM);
   for (int i = 0; i < oc_block_num; i += oc_block) {
@@ -437,6 +495,7 @@ void PackNHWCToCXHWNXFp32(const float *src, float *dst, int batch, int plane, in
       }
     }
   }
+#endif
 }
 
 void PackDepthwiseIndirectWeightC4Fp32(const void *src, void *dst, int height, int width, int channel) {

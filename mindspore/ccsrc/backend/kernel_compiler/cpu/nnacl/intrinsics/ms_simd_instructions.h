@@ -235,6 +235,24 @@ static inline MS_FLOAT32X8 MS_SQRTFX8_F32(MS_FLOAT32X8 src) {
   MS_FLOAT32X8 src##7 = MS_LD256_F32(input_ptr + 6 * num); \
   MS_FLOAT32X8 src##8 = MS_LD256_F32(input_ptr + 7 * num);
 
+#define LOAD256X16_F32(src, input_ptr, num)                  \
+  MS_FLOAT32X8 src##1 = MS_LD256_F32(input_ptr + 0 * num);   \
+  MS_FLOAT32X8 src##2 = MS_LD256_F32(input_ptr + 1 * num);   \
+  MS_FLOAT32X8 src##3 = MS_LD256_F32(input_ptr + 2 * num);   \
+  MS_FLOAT32X8 src##4 = MS_LD256_F32(input_ptr + 3 * num);   \
+  MS_FLOAT32X8 src##5 = MS_LD256_F32(input_ptr + 4 * num);   \
+  MS_FLOAT32X8 src##6 = MS_LD256_F32(input_ptr + 5 * num);   \
+  MS_FLOAT32X8 src##7 = MS_LD256_F32(input_ptr + 6 * num);   \
+  MS_FLOAT32X8 src##8 = MS_LD256_F32(input_ptr + 7 * num);   \
+  MS_FLOAT32X8 src##9 = MS_LD256_F32(input_ptr + 8 * num);   \
+  MS_FLOAT32X8 src##10 = MS_LD256_F32(input_ptr + 9 * num);  \
+  MS_FLOAT32X8 src##11 = MS_LD256_F32(input_ptr + 10 * num); \
+  MS_FLOAT32X8 src##12 = MS_LD256_F32(input_ptr + 11 * num); \
+  MS_FLOAT32X8 src##13 = MS_LD256_F32(input_ptr + 12 * num); \
+  MS_FLOAT32X8 src##14 = MS_LD256_F32(input_ptr + 13 * num); \
+  MS_FLOAT32X8 src##15 = MS_LD256_F32(input_ptr + 14 * num); \
+  MS_FLOAT32X8 src##16 = MS_LD256_F32(input_ptr + 15 * num);
+
 #define STORE256X8_F32(output_ptr, num, dst)  \
   MS_ST256_F32(output_ptr + 0 * num, dst##1); \
   MS_ST256_F32(output_ptr + 1 * num, dst##2); \
@@ -244,6 +262,24 @@ static inline MS_FLOAT32X8 MS_SQRTFX8_F32(MS_FLOAT32X8 src) {
   MS_ST256_F32(output_ptr + 5 * num, dst##6); \
   MS_ST256_F32(output_ptr + 6 * num, dst##7); \
   MS_ST256_F32(output_ptr + 7 * num, dst##8);
+
+#define STORE256X16_F32(output_ptr, num, dst)   \
+  MS_ST256_F32(output_ptr + 0 * num, dst##1);   \
+  MS_ST256_F32(output_ptr + 1 * num, dst##2);   \
+  MS_ST256_F32(output_ptr + 2 * num, dst##3);   \
+  MS_ST256_F32(output_ptr + 3 * num, dst##4);   \
+  MS_ST256_F32(output_ptr + 4 * num, dst##5);   \
+  MS_ST256_F32(output_ptr + 5 * num, dst##6);   \
+  MS_ST256_F32(output_ptr + 6 * num, dst##7);   \
+  MS_ST256_F32(output_ptr + 7 * num, dst##8);   \
+  MS_ST256_F32(output_ptr + 8 * num, dst##9);   \
+  MS_ST256_F32(output_ptr + 9 * num, dst##10);  \
+  MS_ST256_F32(output_ptr + 10 * num, dst##11); \
+  MS_ST256_F32(output_ptr + 11 * num, dst##12); \
+  MS_ST256_F32(output_ptr + 12 * num, dst##13); \
+  MS_ST256_F32(output_ptr + 13 * num, dst##14); \
+  MS_ST256_F32(output_ptr + 14 * num, dst##15); \
+  MS_ST256_F32(output_ptr + 15 * num, dst##16);
 
 static inline MS_FLOAT32X8 MS_TANHX8_F32(MS_FLOAT32X8 src) {
   static const MS_FLOAT32X8 data0 = {378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f};
