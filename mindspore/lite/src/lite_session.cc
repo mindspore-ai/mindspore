@@ -209,7 +209,10 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
         MS_LOG(ERROR) << "Graph output shouldn't have data";
         return RET_ERROR;
       }
-      dst_tensor->set_category(Tensor::GRAPH_OUTPUT);
+      // a tensor is as both input and output, would be treated as an input.
+      if (!dst_tensor->IsGraphInput()) {
+        dst_tensor->set_category(Tensor::GRAPH_OUTPUT);
+      }
     }
     if (src_tensor->name() != nullptr) {
       dst_tensor->set_tensor_name(src_tensor->name()->str());
@@ -364,16 +367,13 @@ void LiteSession::InitGraphInOutTensorsMap(const lite::Model *model) {
   InitGraphInputMap(model);
   InitGraphOutputNodeMap(model);
   InitGraphOutputTensorMap(model);
-  for (auto *tensor : this->inputs_) {
-    tensor->set_category(Tensor::Category::GRAPH_INPUT);
-  }
-  for (auto *tensor : this->outputs_) {
-    tensor->set_category(Tensor::Category::GRAPH_OUTPUT);
-  }
 }
 
 void LiteSession::IsolateOutputTensor() {
   for (Tensor *src_tensor : outputs_) {
+    if (src_tensor->IsGraphInput()) {
+      continue;
+    }
     Tensor *new_tensor =
       new Tensor(src_tensor->data_type(), src_tensor->shape(), src_tensor->format(), Tensor::GRAPH_OUTPUT);
     new_tensor->set_allocator(src_tensor->allocator()); /* GPU use opencl allocator */
