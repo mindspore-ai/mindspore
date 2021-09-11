@@ -18,8 +18,8 @@ Validators for TensorOps.
 
 from functools import wraps
 
-from mindspore.dataset.core.validator_helpers import check_float32, check_int32_not_zero, check_non_negative_float32, \
-    check_pos_float32, check_pos_int32, check_value, parse_user_args, type_check
+from mindspore.dataset.core.validator_helpers import check_float32, check_int32_not_zero, check_list_same_size, \
+    check_non_negative_float32, check_pos_float32, check_pos_int32, check_value, parse_user_args, type_check
 from .utils import ScaleType
 
 
@@ -225,6 +225,27 @@ def check_equalizer_biquad(method):
         check_biquad_central_freq(center_freq)
         check_biquad_gain(gain)
         check_biquad_Q(Q)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_lfilter(method):
+    """Wrapper method to check the parameters of lfilter."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [a_coeffs, b_coeffs, clamp], _ = parse_user_args(method, *args, **kwargs)
+        type_check(a_coeffs, (list, tuple), "a_coeffs")
+        type_check(b_coeffs, (list, tuple), "b_coeffs")
+        for i, value in enumerate(a_coeffs):
+            type_check(value, (float, int), "a_coeffs[{0}]".format(i))
+            check_float32(value, "a_coeffs[{0}]".format(i))
+        for i, value in enumerate(b_coeffs):
+            type_check(value, (float, int), "b_coeffs[{0}]".format(i))
+            check_float32(value, "b_coeffs[{0}]".format(i))
+        check_list_same_size(a_coeffs, b_coeffs, "a_coeffs", "b_coeffs")
+        type_check(clamp, (bool,), "clamp")
         return method(self, *args, **kwargs)
 
     return new_method

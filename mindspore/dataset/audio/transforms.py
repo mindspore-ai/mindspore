@@ -26,8 +26,8 @@ from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_contrast, check_deemph_biquad, \
-    check_equalizer_biquad, check_highpass_biquad, check_lowpass_biquad, check_masking, check_mu_law_decoding,\
-    check_time_stretch
+    check_equalizer_biquad, check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_masking, \
+    check_mu_law_decoding, check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -407,6 +407,39 @@ class HighpassBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.HighpassBiquadOperation(self.sample_rate, self.cutoff_freq, self.Q)
+
+
+class LFilter(AudioTensorOperation):
+    """
+    Design two-pole filter for audio waveform of dimension of (..., time).
+
+    Args:
+        a_coeffs (sequence): denominator coefficients of difference equation of dimension of (n_order + 1).
+            Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
+            Must be same size as b_coeffs (pad with 0's as necessary).
+        b_coeffs (sequence): numerator coefficients of difference equation of dimension of (n_order + 1).
+            Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
+            Must be same size as a_coeffs (pad with 0's as necessary).
+        clamp (bool, optional): If True, clamp the output signal to be in the range [-1, 1] (default=True).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> a_coeffs = [0.1, 0.2, 0.3]
+        >>> b_coeffs = [0.1, 0.2, 0.3]
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.LFilter(a_coeffs, b_coeffs)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+    @check_lfilter
+    def __init__(self, a_coeffs, b_coeffs, clamp=True):
+        self.a_coeffs = a_coeffs
+        self.b_coeffs = b_coeffs
+        self.clamp = clamp
+
+    def parse(self):
+        return cde.LFilterOperation(self.a_coeffs, self.b_coeffs, self.clamp)
 
 
 class LowpassBiquad(AudioTensorOperation):
