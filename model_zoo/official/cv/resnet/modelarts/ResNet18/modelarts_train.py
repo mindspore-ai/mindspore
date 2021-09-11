@@ -276,36 +276,7 @@ def init_lr(step_size):
     return Tensor(lr)
 
 
-def main():
-    set_config()
-    target = args_opt.device_target
-    if target == "CPU":
-        args_opt.run_distribute = False
-
-    # init context
-    init_context(target)
-    ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(
-            get_rank()) + "/"
-
-    # create dataset
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
-                             repeat_num=1,
-                             batch_size=config.batch_size, target=target,
-                             distribute=args_opt.run_distribute)
-    step_size = dataset.get_dataset_size()
-
-    # define net
-    net = resnet(class_num=config.class_num)
-    if args_opt.parameter_server:
-        net.set_param_ps()
-
-    # init weight
-    init_weight(net)
-
-    # init lr
-    lr = init_lr(step_size)
-
-    # define opt
+def define_opt(net, lr):
     decayed_params = []
     no_decayed_params = []
     for param in net.trainable_params():
@@ -321,6 +292,10 @@ def main():
         {'order_params': net.trainable_params()}]
     opt = Momentum(group_params, lr, config.momentum,
                    loss_scale=config.loss_scale)
+    return opt
+
+
+def define_model(net, opt, target):
     if args_opt.dataset == "imagenet2012":
         if not config.use_label_smooth:
             config.label_smooth_factor = 0.0
@@ -348,6 +323,67 @@ def main():
                       loss_scale_manager=loss_scale, metrics=metrics,
                       amp_level="O2", keep_batchnorm_fp32=False,
                       eval_network=dist_eval_network)
+    return model, loss, loss_scale
+
+
+def run_eval(model, target, ckpt_save_dir):
+    if args_opt.eval_dataset_path is None \
+            or (not os.path.isdir(args_opt.eval_dataset_path)):
+        raise ValueError(
+            "{} is not a existing path.".format(args_opt.eval_dataset_path))
+    eval_dataset = create_dataset(
+        dataset_path=args_opt.eval_dataset_path,
+        do_train=False,
+        batch_size=config.batch_size,
+        target=target,
+        enable_cache=args_opt.enable_cache,
+        cache_session_id=args_opt.cache_session_id)
+    eval_param_dict = {"model": model, "dataset": eval_dataset,
+                       "metrics_name": "acc"}
+    eval_cb = EvalCallBack(apply_eval, eval_param_dict,
+                           interval=args_opt.eval_interval,
+                           eval_start_epoch=args_opt.eval_start_epoch,
+                           save_best_ckpt=args_opt.save_best_ckpt,
+                           ckpt_directory=ckpt_save_dir,
+                           besk_ckpt_name="best_acc.ckpt",
+                           metrics_name="acc")
+    return eval_cb
+
+
+def main():
+    set_config()
+    target = args_opt.device_target
+    if target == "CPU":
+        args_opt.run_distribute = False
+
+    # init context
+    init_context(target)
+    ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(
+        get_rank()) + "/"
+
+    # create dataset
+    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
+                             repeat_num=1,
+                             batch_size=config.batch_size, target=target,
+                             distribute=args_opt.run_distribute)
+    step_size = dataset.get_dataset_size()
+
+    # define net
+    net = resnet(class_num=config.class_num)
+    if args_opt.parameter_server:
+        net.set_param_ps()
+
+    # init weight
+    init_weight(net)
+
+    # init lr
+    lr = init_lr(step_size)
+
+    # define opt
+    opt = define_opt(net, lr)
+
+    # define model
+    model, loss, loss_scale = define_model(net, opt, target)
 
     if cfg.optimizer == "Thor" and args_opt.dataset == "imagenet2012":
         from src.lr_generator import get_thor_damping
@@ -377,26 +413,7 @@ def main():
                                   config=config_ck)
         cb += [ckpt_cb]
     if args_opt.run_eval:
-        if args_opt.eval_dataset_path is None \
-                or (not os.path.isdir(args_opt.eval_dataset_path)):
-            raise ValueError(
-                "{} is not a existing path.".format(args_opt.eval_dataset_path))
-        eval_dataset = create_dataset(
-            dataset_path=args_opt.eval_dataset_path,
-            do_train=False,
-            batch_size=config.batch_size,
-            target=target,
-            enable_cache=args_opt.enable_cache,
-            cache_session_id=args_opt.cache_session_id)
-        eval_param_dict = {"model": model, "dataset": eval_dataset,
-                           "metrics_name": "acc"}
-        eval_cb = EvalCallBack(apply_eval, eval_param_dict,
-                               interval=args_opt.eval_interval,
-                               eval_start_epoch=args_opt.eval_start_epoch,
-                               save_best_ckpt=args_opt.save_best_ckpt,
-                               ckpt_directory=ckpt_save_dir,
-                               besk_ckpt_name="best_acc.ckpt",
-                               metrics_name="acc")
+        eval_cb = run_eval(model, target, ckpt_save_dir)
         cb += [eval_cb]
     # train model
     if args_opt.net == "se-resnet50":
