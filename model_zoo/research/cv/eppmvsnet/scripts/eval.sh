@@ -27,6 +27,6 @@ fi
 DATA_PATH=$1
 GPU_ID=$2
 
-python -u validate.py --root_dir "${DATA_PATH}/dataset_low_res" --dataset_name blendedmvs --save_visual --img_wh 768 576 --n_views ${VIEW_NUM} --n_depths 32 16 8 --interval_ratios 4.0 2.0 1.0 --levels 3 --split val --gpu_id ${GPU_ID} > log.txt 2>&1 &
+CUDA_VISIBLE_DEVICES=${GPU_ID} python -u validate.py --root_dir "${DATA_PATH}/dataset_low_res" --dataset_name blendedmvs --img_wh 768 576 --n_views ${VIEW_NUM} --n_depths 32 16 8 --interval_ratios 4.0 2.0 1.0 --levels 3 --split val > log.txt 2>&1 &
 
 cd ..
