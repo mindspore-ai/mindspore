@@ -117,7 +117,7 @@ def _get_dtype_max(dtype):
 @constexpr
 def _check_input_4d(input_shape, param_name, func_name):
     if len(input_shape) != 4:
-        raise ValueError(f"{func_name} {param_name} should be 4d, but got shape {input_shape}")
+        raise ValueError(f"For '{func_name}', the '{param_name}' should be 4d, but got shape {input_shape}.")
     return True
 
 

@@ -58,9 +58,13 @@ class _Conv(Cell):
         self.bias_init = bias_init
         self.format = Validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
+            raise ValueError(f"For '{self.cls_name}', the \"NHWC\" format only support in GPU target, "
+                             f"but got the format is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
         if context.get_context("device_target") == "CPU" and self.format == "NCDHW":
-            raise ValueError("NCDHW format only support in Ascend and GPU targets.")
+            raise ValueError(f"For '{self.cls_name}', the \"NCDHW\" format only support in Ascend and GPU target, "
+                             f"but got the format is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
         if isinstance(padding, int):
             Validator.check_non_negative_int(padding, 'padding', self.cls_name)
             self.padding = padding
@@ -69,7 +73,8 @@ class _Conv(Cell):
                 Validator.check_non_negative_int(pad, 'padding item', self.cls_name)
             self.padding = padding
         else:
-            raise TypeError("padding type must be int/tuple(int) cannot be {}!".format(type(padding)))
+            raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int or tuple(int), "
+                            f"but got {type(padding).__name__}.")
 
         self.dilation = dilation
         self.group = Validator.check_positive_int(group)
@@ -81,11 +86,11 @@ class _Conv(Cell):
         for dilation_elem in dilation:
             Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
         if in_channels % group != 0:
-            raise ValueError(f"Attr 'in_channels' of {self.cls_name} Op must be divisible by "
-                             f"attr 'group' of {self.cls_name} Op.")
+            raise ValueError(f"For '{self.cls_name}', the attr 'in_channels' must be divisible by attr 'group', "
+                             f"but got 'in_channels': {in_channels} and 'group': {group}.")
         if out_channels % group != 0:
-            raise ValueError(f"Attr 'out_channels' {self.cls_name} Op must be divisible by "
-                             f"attr 'group' of {self.cls_name} Op.")
+            raise ValueError(f"For '{self.cls_name}', the 'out_channels' must be divisible by attr 'group', "
+                             f"but got 'out_channels': {out_channels} and 'group': {group}.")
         if transposed:
             shape = [in_channels, out_channels // group, *kernel_size]
         else:
@@ -93,7 +98,7 @@ class _Conv(Cell):
                 [out_channels, in_channels // group, *kernel_size]
         self.weight = Parameter(initializer(self.weight_init, shape), name='weight')
 
-        if Validator.check_bool(has_bias):
+        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
             self.bias = Parameter(initializer(self.bias_init, [out_channels]), name='bias')
         else:
             if self.bias_init != 'zeros':
@@ -284,9 +289,9 @@ class Conv2d(_Conv):
 
 
 @constexpr
-def _check_input_3d(input_shape):
+def _check_input_3d(input_shape, op_name):
     if len(input_shape) != 3:
-        raise ValueError(f"Input should be 3d, but got shape {input_shape}")
+        raise ValueError(f"For '{op_name}', the shape of input should be 3d, but got shape {input_shape}")
 
 
 class Conv1d(_Conv):
@@ -437,16 +442,14 @@ class Conv1d(_Conv):
                                dilation=self.dilation,
                                group=self.group)
         self.bias_add = P.BiasAdd()
-        if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError('Attr \'pad_mode\' of \'Conv1d\' Op passed '
-                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
+        Validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.cls_name)
         self.expand_dims = P.ExpandDims()
         self.squeeze = P.Squeeze(2)
         self.shape = P.Shape()
 
     def construct(self, x):
         x_shape = self.shape(x)
-        _check_input_3d(x_shape)
+        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
         output = self.conv2d(x, self.weight)
         if self.has_bias:
@@ -477,7 +480,7 @@ class Conv1d(_Conv):
 @constexpr
 def _check_input_5dims(input_shape, op_name):
     if len(input_shape) != 5:
-        raise ValueError(f"For {op_name}, input should be 5 dims, but got shape {input_shape}.")
+        raise ValueError(f"For '{op_name}', the input shape should be 5 dimensions, but got shape {input_shape}.")
 
 
 class Conv3d(_Conv):
@@ -978,13 +981,11 @@ class Conv2dTranspose(_Conv):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.shape = P.Shape()
-        if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError('Attr \'pad_mode\' of \'Conv2dTranspose\' Op passed '
-                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
+        Validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.cls_name)
         self.is_valid = self.pad_mode == 'valid'
         self.is_same = self.pad_mode == 'same'
         self.is_pad = self.pad_mode == 'pad'
-        if Validator.check_bool(has_bias):
+        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
         # cause Conv2DTranspose's out_channel refers to Conv2D's out_channel.
@@ -1162,13 +1163,11 @@ class Conv1dTranspose(_Conv):
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.shape = P.Shape()
-        if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError('Attr \'pad_mode\' of \'Conv1dTranspose\' Op passed '
-                             + str(pad_mode) + ', should be one of values in \'valid\', \'same\', \'pad\'.')
+        Validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.cls_name)
         self.is_valid = self.pad_mode == 'valid'
         self.is_same = self.pad_mode == 'same'
         self.is_pad = self.pad_mode == 'pad'
-        if Validator.check_bool(has_bias):
+        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel.
@@ -1190,7 +1189,7 @@ class Conv1dTranspose(_Conv):
 
     def construct(self, x):
         x_shape = self.shape(x)
-        _check_input_3d(x_shape)
+        _check_input_3d(x_shape, self.cls_name)
         x = self.expand_dims(x, 2)
 
         n, _, h, w = self.shape(x)

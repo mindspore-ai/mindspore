@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Operations for random number generators."""
-
 from mindspore.ops.primitive import constexpr
 from .. import operations as P
 from .. import functional as F
@@ -253,10 +252,8 @@ def gamma(shape, alpha, beta, seed=None):
         >>> print(output)
         [[[ 2.2132034  5.8855834]]
          [ 3.3981476  7.5805717]
-
         [[ 3.3981476  7.5805717]]
          [ 3.7190282 19.941492]
-
         [[ 2.9512358  2.5969937]]
          [ 3.786061   5.160872 ]]]
         >>> # case 4: beta_shape is (2, 1), the output is different.
@@ -268,10 +265,8 @@ def gamma(shape, alpha, beta, seed=None):
         >>> print(output)
         [[[ 5.6085486  7.8280783]]
          [ 15.97684  16.116285]
-
         [[ 1.8347423  1.713663]]
          [ 3.2434065 15.667398]
-
         [[ 4.2922077  7.3365674]]
          [ 5.3876944  13.159832 ]]]
     """
@@ -388,7 +383,10 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
     seed1, seed2 = _get_seed(seed, "multinomial")
     if not replacement:
         if shape(inputs)[-1] < num_sample:
-            const_utils.raise_value_error("num_sample must be less than shape(input)[-1] without replacement")
+            const_utils.raise_value_error("For 'multinomial', the 'num_sample' must be less than "
+                                          "the last dimension of input without 'replacement', "
+                                          "but got 'num_sample': {} and "
+                                          "'replacement': {}".format(num_sample, replacement))
         n_dist = 1
         if len(shape(inputs)) > 1:
             n_dist = shape(inputs)[-2]

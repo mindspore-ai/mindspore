@@ -20,23 +20,28 @@ from ..cell import Cell
 __all__ = ['SequentialCell', 'CellList']
 
 
-def _valid_index(cell_num, index):
+def _valid_index(cell_num, index, op_name=None):
+    """Internal function, used to detect the value and type of index."""
+    msg_prefix = f"For '{op_name}', the" if op_name else "The"
     if not isinstance(index, int):
-        raise TypeError("Index {} is not int type")
+        raise TypeError(f"{msg_prefix} type of index should be int type, but got {type(index).__name__}.")
     if not -cell_num <= index < cell_num:
-        raise IndexError("Index should be a number in range [{}, {}), but got {}"
-                         .format(-cell_num, cell_num, index))
+        raise IndexError(f"{msg_prefix} value of index should be a number in range [{-cell_num}, {cell_num}), "
+                         f"but got {index}.")
     return index % cell_num
 
 
-def _valid_cell(cell):
+def _valid_cell(cell, op_name=None):
+    """Internal function, used to check whether the input cell is a subclass of Cell."""
     if issubclass(cell.__class__, Cell):
         return True
-    raise TypeError('`{}` is not a subclass of Cell. Please check your code'.format(cell))
+    msg_prefix = f"For '{op_name}'," if op_name else ""
+    raise TypeError(f'{msg_prefix} each cell should be subclass of Cell. '
+                    f'Please check your code')
 
 
 def _get_prefix_and_index(cells):
-    """get prefix and index of parameter name in sequential cell or cell list"""
+    """get prefix and index of parameter name in sequential cell or cell list."""
     prefix = ""
     index = 0
     if not cells:
@@ -150,7 +155,8 @@ class SequentialCell(Cell):
                     cell.update_parameters_name(name + ".")
                     self._is_dynamic_name.append(False)
             else:
-                raise TypeError('Cells must be list or orderedDict')
+                raise TypeError(f"For '{self.__class__.__name__}', Cells must be list or orderedDict, "
+                                f"but got {type(cells).__name__}")
         else:
             for index, cell in enumerate(args):
                 self.insert_child_to_cell(str(index), cell)
@@ -162,21 +168,23 @@ class SequentialCell(Cell):
         if isinstance(index, slice):
             return self.__class__(
                 OrderedDict(list(self._cells.items())[index]))
-        index = _valid_index(len(self), index)
+        index = _valid_index(len(self), index, self.__class__.__name__)
         return list(self._cells.values())[index]
 
     def __setitem__(self, index, cell):
-        if _valid_cell(cell):
+        cls_name = self.__class__.__name__
+        if _valid_cell(cell, cls_name):
             prefix, _ = _get_prefix_and_index(self._cells)
-            index = _valid_index(len(self), index)
+            index = _valid_index(len(self), index, cls_name)
             key = list(self._cells.keys())[index]
             self._cells[key] = cell
             cell.update_parameters_name(prefix + key + ".")
             self.cell_list = list(self._cells.values())
 
     def __delitem__(self, index):
+        cls_name = self.__class__.__name__
         if isinstance(index, int):
-            index = _valid_index(len(self), index)
+            index = _valid_index(len(self), index, cls_name)
             key = list(self._cells.keys())[index]
             del self._cells[key]
             del self._is_dynamic_name[index]
@@ -186,7 +194,8 @@ class SequentialCell(Cell):
                 del self._cells[key]
             del self._is_dynamic_name[index]
         else:
-            raise TypeError('Index {} is not int type or slice type'.format(index))
+            raise TypeError(f"For '{cls_name}', the type of index should be int type or slice type, "
+                            f"but got {type(index).__name__}")
         prefix, key_index = _get_prefix_and_index(self._cells)
         temp_dict = OrderedDict()
         for idx, key in enumerate(self._cells.keys()):
@@ -225,7 +234,7 @@ class SequentialCell(Cell):
               [[26.999863 26.999863]
                [26.999863 26.999863]]]]
         """
-        if _valid_cell(cell):
+        if _valid_cell(cell, self.__class__.__name__):
             prefix, _ = _get_prefix_and_index(self._cells)
             cell.update_parameters_name(prefix + str(len(self)) + ".")
             self._is_dynamic_name.append(True)
@@ -280,32 +289,38 @@ class CellList(_CellListBase, Cell):
             self.extend(args[0])
 
     def __getitem__(self, index):
+        cls_name = self.__class__.__name__
         if isinstance(index, slice):
             return self.__class__(list(self._cells.values())[index])
         if isinstance(index, int):
-            index = _valid_index(len(self), index)
+            index = _valid_index(len(self), index, cls_name)
             return self._cells[str(index)]
-        raise TypeError('Index {} is not int type or slice type'.format(index))
+        raise TypeError(f"For '{cls_name}', the type of index should be int type or slice type, "
+                        f"but got {type(index).__name__}")
 
     def __setitem__(self, index, cell):
-        if not isinstance(index, int) and _valid_cell(cell):
-            raise TypeError('Index {} is not int type'.format(index))
-        index = _valid_index(len(self), index)
+        cls_name = self.__class__.__name__
+        if not isinstance(index, int) and _valid_cell(cell, cls_name):
+            raise TypeError(f"For '{cls_name}', the type of index should be int type, "
+                            f"but got {type(index).__name__}")
+        index = _valid_index(len(self), index, cls_name)
         if self._auto_prefix:
             prefix, _ = _get_prefix_and_index(self._cells)
             cell.update_parameters_name(prefix + str(index) + ".")
         self._cells[str(index)] = cell
 
     def __delitem__(self, index):
+        cls_name = self.__class__.__name__
         if isinstance(index, int):
-            index = _valid_index(len(self), index)
+            index = _valid_index(len(self), index, cls_name)
             del self._cells[str(index)]
         elif isinstance(index, slice):
             keys = list(self._cells.keys())[index]
             for key in keys:
                 del self._cells[key]
         else:
-            raise TypeError('Index {} is not int type or slice type'.format(index))
+            raise TypeError(f"For '{cls_name}', the type of index should be int type or slice type, "
+                            f"but got {type(index).__name__}")
         # adjust orderedDict
         prefix, key_index = _get_prefix_and_index(self._cells)
         temp_dict = OrderedDict()
@@ -328,8 +343,9 @@ class CellList(_CellListBase, Cell):
 
     def insert(self, index, cell):
         """Inserts a given cell before a given index in the list."""
-        idx = _valid_index(len(self), index)
-        _valid_cell(cell)
+        cls_name = self.__class__.__name__
+        idx = _valid_index(len(self), index, cls_name)
+        _valid_cell(cell, cls_name)
         length = len(self)
         prefix, key_index = _get_prefix_and_index(self._cells)
         while length > idx:
@@ -350,11 +366,13 @@ class CellList(_CellListBase, Cell):
         Raises:
             TypeError: If the cells are not a list of subcells.
         """
+        cls_name = self.__class__.__name__
         if not isinstance(cells, list):
-            raise TypeError('Cells {} should be list of subcells'.format(cells))
+            raise TypeError(f"For '{cls_name}', the new cells wanted to append "
+                            f"should be list of subcells.")
         prefix, _ = _get_prefix_and_index(self._cells)
         for cell in cells:
-            if _valid_cell(cell):
+            if _valid_cell(cell, cls_name):
                 if self._auto_prefix:
                     cell.update_parameters_name(prefix + str(len(self)) + ".")
                 self._cells[str(len(self))] = cell
@@ -362,7 +380,7 @@ class CellList(_CellListBase, Cell):
 
     def append(self, cell):
         """Appends a given cell to the end of the list."""
-        if _valid_cell(cell):
+        if _valid_cell(cell, self.__class__.__name__):
             if self._auto_prefix:
                 prefix, _ = _get_prefix_and_index(self._cells)
                 cell.update_parameters_name(prefix + str(len(self)) + ".")

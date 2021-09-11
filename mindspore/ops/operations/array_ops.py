@@ -2710,8 +2710,8 @@ class Slice(PrimitiveWithInfer):
     def __infer__(self, x, begin, size):
         x_shape = x['shape']
         x_shp_len = len(x_shape)
-        validator.check_const_input('begin', begin['value'], self.name)
-        validator.check_const_input('size', size['value'], self.name)
+        validator.check_valid_input('begin', begin['value'], self.name)
+        validator.check_valid_input('size', size['value'], self.name)
         begin_v, size_v = begin['value'], size['value']
         if begin_v is None or size_v is None:
             return {'shape': None,
@@ -5564,8 +5564,8 @@ class EditDistance(PrimitiveWithInfer):
         self.set_const_input_indexes([2, 5])
 
     def __infer__(self, h_indices, h_values, h_shape, truth_indices, truth_values, truth_shape):
-        validator.check_const_input('hypothesis_shape', h_shape['value'], self.name)
-        validator.check_const_input('truth_shape', truth_shape['value'], self.name)
+        validator.check_valid_input('hypothesis_shape', h_shape['value'], self.name)
+        validator.check_valid_input('truth_shape', truth_shape['value'], self.name)
         args_int = {"hypothesis_indices": h_indices['dtype'], "hypothesis_shape": h_shape['dtype'],
                     "truth_indices": truth_indices['dtype'], "truth_shape": truth_shape['dtype']}
         validator.check_tensors_dtypes_same_and_valid(args_int, [mstype.int64], self.name)

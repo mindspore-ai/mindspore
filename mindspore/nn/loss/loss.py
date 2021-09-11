@@ -50,7 +50,8 @@ class LossBase(Cell):
         super(LossBase, self).__init__()
 
         if reduction not in ('mean', 'sum', 'none'):
-            raise ValueError(f"The reduction method for {reduction} is not supported")
+            raise ValueError(f"For '{self.cls_name}', the 'reduction' should be in ['mean', 'sum', 'none'], "
+                             f"but got {reduction}.")
 
         self.average = True
         self.reduce = True
@@ -98,7 +99,7 @@ class LossBase(Cell):
         x = self.cast(x, input_dtype)
         return x
 
-    def construct(self, base, target):
+    def construct(self, logits, labels):
         raise NotImplementedError
 
 
@@ -112,12 +113,13 @@ class _Loss(LossBase):
                     "will be removed in a future version, use 'LossBase' instead.")
         super(_Loss, self).__init__(reduction)
 
-    def construct(self, base, target):
+    def construct(self, logits, labels):
         raise NotImplementedError
 
 
 @constexpr
 def _check_is_tensor(param_name, input_data, cls_name):
+    """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(F.typeof(input_data), mstype.tensor_type):
         raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.tensor_type}', "
                         f"but got '{F.typeof(input_data)}'")
@@ -125,7 +127,7 @@ def _check_is_tensor(param_name, input_data, cls_name):
 class L1Loss(LossBase):
     r"""
     L1Loss creates a criterion to measure the mean absolute error (MAE) between :math:`x` and :math:`y` element-wise,
-    where :math:`x` is the input Tensor and :math:`y` is the target Tensor.
+    where :math:`x` is the input Tensor and :math:`y` is the labels Tensor.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
@@ -185,17 +187,17 @@ class L1Loss(LossBase):
         super(L1Loss, self).__init__(reduction)
         self.abs = P.Abs()
 
-    def construct(self, base, target):
-        _check_is_tensor('logits', base, self.cls_name)
-        _check_is_tensor('labels', target, self.cls_name)
-        x = self.abs(base - target)
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        x = self.abs(logits - labels)
         return self.get_loss(x)
 
 
 class MSELoss(LossBase):
     r"""
     MSELoss creates a criterion to measure the mean squared error (squared L2-norm) between :math:`x` and :math:`y`
-    element-wise, where :math:`x` is the input and :math:`y` is the target.
+    element-wise, where :math:`x` is the input and :math:`y` is the labels.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
@@ -250,24 +252,23 @@ class MSELoss(LossBase):
         [[0. 1. 4.]
          [0. 0. 1.]]
     """
-    def construct(self, base, target):
-        _check_is_tensor('logits', base, self.cls_name)
-        _check_is_tensor('labels', target, self.cls_name)
-        x = F.square(base - target)
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        x = F.square(logits - labels)
         return self.get_loss(x)
 
 
 class RMSELoss(LossBase):
     r"""
     RMSELoss creates a criterion to measure the root mean square error between :math:`x` and :math:`y`
-    element-wise, where :math:`x` is the input and :math:`y` is the target.
+    element-wise, where :math:`x` is the input and :math:`y` is the labels.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
     the loss of :math:`x` and :math:`y` is given as:
 
     .. math::
         loss = \sqrt{\frac{1}{N}\sum_{i=1}^{N}{(x_i-y_i)^2}}
-
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
@@ -312,7 +313,7 @@ class RMSELoss(LossBase):
 class MAELoss(LossBase):
     r"""
     MAELoss creates a criterion to measure the average absolute error between :math:`x` and :math:`y`
-    element-wise, where :math:`x` is the input and :math:`y` is the target.
+    element-wise, where :math:`x` is the input and :math:`y` is the labels.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
@@ -438,10 +439,10 @@ class SmoothL1Loss(LossBase):
         self.beta = beta
         self.smooth_l1_loss = P.SmoothL1Loss(self.beta)
 
-    def construct(self, base, target):
-        _check_is_tensor('logits', base, self.cls_name)
-        _check_is_tensor('labels', target, self.cls_name)
-        return self.smooth_l1_loss(base, target)
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        return self.smooth_l1_loss(logits, labels)
 
 
 class SoftMarginLoss(LossBase):
@@ -449,7 +450,7 @@ class SoftMarginLoss(LossBase):
     A loss class for two-class classification problems.
 
     SoftMarginLoss creates a criterion that optimizes a two-class classification
-    logistic loss between input tensor :math:`x` and target tensor :math:`y`
+    logistic loss between input tensor :math:`x` and labels tensor :math:`y`
     (containing 1 or -1).
 
     .. math::
@@ -487,8 +488,8 @@ class SoftMarginLoss(LossBase):
         super(SoftMarginLoss, self).__init__()
         self.soft_margin_loss = P.SoftMarginLoss(reduction)
 
-    def construct(self, base, target):
-        return self.soft_margin_loss(base, target)
+    def construct(self, logits, labels):
+        return self.soft_margin_loss(logits, labels)
 
 
 class SoftmaxCrossEntropyWithLogits(LossBase):
@@ -496,7 +497,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
     Computes softmax cross entropy between logits and labels.
 
     Measures the distribution error between the probabilities of the input (computed with softmax function) and the
-    target where the classes are mutually exclusive (only one class is positive) using cross entropy loss.
+    labels where the classes are mutually exclusive (only one class is positive) using cross entropy loss.
 
     Typical input into this function is unnormalized scores denoted as x whose shape is (N, C),
     and the corresponding targets.
@@ -510,7 +511,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
     where :math:`x_i` is a 1D score Tensor, :math:`c` is the index of 1 in one-hot.
 
     Note:
-        While the target classes are mutually exclusive, i.e., only one class is positive in the target, the predicted
+        While the labels classes are mutually exclusive, i.e., only one class is positive in the labels, the predicted
         probabilities does not need to be exclusive. It is only required that the predicted probability distribution
         of entry is a valid one.
 
@@ -581,6 +582,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
 
 @constexpr
 def _check_label_dtype(labels_dtype, cls_name):
+    """Internal function, used to check whether the data type of labels meets the requirements."""
     validator.check_type_name("labels", labels_dtype, [mstype.int32, mstype.int64], cls_name)
 
 
@@ -631,7 +633,7 @@ class DiceLoss(LossBase):
     def construct(self, logits, label):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
-        _check_shape(logits.shape, label.shape)
+        _check_shape(logits.shape, label.shape, self.cls_name)
         intersection = self.reduce_sum(self.mul(logits.view(-1), label.view(-1)))
         unionset = self.reduce_sum(self.mul(logits.view(-1), logits.view(-1))) + \
                    self.reduce_sum(self.mul(label.view(-1), label.view(-1)))
@@ -643,22 +645,28 @@ class DiceLoss(LossBase):
 
 
 @constexpr
-def _check_shape(logits_shape, label_shape):
-    validator.check('logits_shape', logits_shape, 'label_shape', label_shape)
+def _check_shape(logits_shape, label_shape, prim_name=None):
+    """Internal function, used to check whether the shape of logits and labels meets the requirements."""
+    validator.check('logits_shape', logits_shape, 'label_shape', label_shape, prim_name=prim_name)
 
 
 @constexpr
-def _check_ndim_multi(logits_dim, label_dim):
+def _check_ndim_multi(logits_dim, label_dim, prim_name=None):
+    """Internal function, used to check whether the dimension of logits and label meets the requirements."""
+    msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
     if logits_dim < 2:
-        raise ValueError("Logits dimension should be greater than 1, but got {}".format(logits_dim))
+        raise ValueError(f"{msg_prefix} Logits dimension should be greater than 1, but got {logits_dim}.")
     if label_dim < 2:
-        raise ValueError("Label dimension should be greater than 1, but got {}".format(label_dim))
+        raise ValueError(f"{msg_prefix} Label dimension should be greater than 1, but got {label_dim}.")
 
 
 @constexpr
-def _check_weights(weight_shape, label_shape):
+def _check_weights(weight_shape, label_shape, prim_name=None):
+    """Internal function, used to check whether the reduced shape meets the requirements."""
+    msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
     if weight_shape != label_shape:
-        raise ValueError("The weight shape[0] should be equal to label.shape[1].")
+        raise ValueError(f"{msg_prefix} weight shape[0] should be equal to label.shape[1], "
+                         f"but got weight_shape: {weight_shape} and label_shape: {label_shape}.")
 
 
 class MultiClassDiceLoss(LossBase):
@@ -709,22 +717,25 @@ class MultiClassDiceLoss(LossBase):
         self.binarydiceloss = DiceLoss(smooth=1e-5)
         self.weights = weights if weights is None else validator.check_value_type("weights", weights, [Tensor])
         if isinstance(self.weights, Tensor) and self.weights.ndim != 2:
-            raise ValueError("The weight dimension should be 2, but got {}.".format(self.weights.ndim))
+            raise ValueError(f"For '{self.cls_name}', the dimension of 'weights' should be 2, "
+                             f"but got {self.weights.ndim}.")
         self.ignore_indiex = ignore_indiex if ignore_indiex is None else \
             validator.check_value_type("ignore_indiex", ignore_indiex, [int])
         if isinstance(activation, str) and activation not in activation_list:
-            raise ValueError("The activation must be in {}, but got {}.".format(activation_list, activation))
+            raise ValueError(f"For '{self.cls_name}', the 'activation' must be in {activation_list}, "
+                             f"but got {activation}.")
 
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
         if self.activation is not None and not isinstance(self.activation, Cell):
-            raise TypeError("The activation must be str or Cell, but got {}.".format(type(self.activation)))
+            raise TypeError(f"For '{self.cls_name}', the 'activation' must be str or Cell, "
+                            f"but got {type(self.activation)}.")
         self.reshape = P.Reshape()
 
     def construct(self, logits, label):
         _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', label, self.cls_name)
-        _check_shape(logits.shape, label.shape)
-        _check_ndim_multi(logits.ndim, label.ndim)
+        _check_shape(logits.shape, label.shape, self.cls_name)
+        _check_ndim_multi(logits.ndim, label.ndim, self.cls_name)
         total_loss = 0
 
         if self.activation is not None:
@@ -734,7 +745,7 @@ class MultiClassDiceLoss(LossBase):
             if i != self.ignore_indiex:
                 dice_loss = self.binarydiceloss(logits[:, i], label[:, i])
                 if self.weights is not None:
-                    _check_weights(self.weights.shape[0], label.shape[1])
+                    _check_weights(self.weights.shape[0], label.shape[1], self.cls_name)
                     dice_loss *= self.weights[i]
                 total_loss += dice_loss
 
@@ -749,12 +760,12 @@ class SampledSoftmaxLoss(LossBase):
     Args:
         num_sampled (int): The number of classes to randomly sample per batch.
         num_classes (int): The number of possible classes.
-        num_true (int): The number of target classes per training example. Default: 1.
+        num_true (int): The number of labels classes per training example. Default: 1.
         sampled_values (Union[list, tuple]):  List or tuple of (`sampled_candidates`, `true_expected_count`,
             `sampled_expected_count`) returned by a `*CandidateSampler` function.
             Default to None, `UniformCandidateSampler` is applied.
         remove_accidental_hits (bool): Whether to remove "accidental hits"
-            where a sampled class equals to one of the target classes. Default: True.
+            where a sampled class equals to one of the labels classes. Default: True.
         seed (int): Random seed for candidate sampling. Default: 0
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
             If "none", do not perform reduction. Default: "none".
@@ -762,7 +773,7 @@ class SampledSoftmaxLoss(LossBase):
     Inputs:
         - **weights** (Tensor) - Tensor of shape :math:`(C, dim)`.
         - **bias** (Tensor) - Tensor of shape :math:`(C,)`. The class biases.
-        - **labels** (Tensor) - Tensor of shape :math:`(N, num\_true)`, type `int64, int32`. The target classes.
+        - **labels** (Tensor) - Tensor of shape :math:`(N, num\_true)`, type `int64, int32`. The labels classes.
         - **logits** (Tensor) - Tensor of shape :math:`(N, dim)`. The forward activations of the input network.
 
     Outputs:
@@ -798,18 +809,24 @@ class SampledSoftmaxLoss(LossBase):
         super(SampledSoftmaxLoss, self).__init__(reduction)
 
         if num_true < 1:
-            raise ValueError(f"The num_true {num_true} is less than 1.")
+            raise ValueError(f"For '{self.cls_name}', the 'num_true' must be greater than or equal to 1, "
+                             f"but got {num_true}.")
         if seed < 0:
-            raise ValueError(f"The seed {seed} is less than 0.")
+            raise ValueError(f"For '{self.cls_name}', the 'seed' must be greater than or equal to 0, but got {seed}.")
         if num_sampled > num_classes:
-            raise ValueError(f"The num_sampled {num_sampled} is greater than num_classes {num_classes}.")
+            raise ValueError(f"For '{self.cls_name}', the 'num_sampled' must be smaller than or "
+                             f"equal to 'num_classes', but got 'num_sampled': {num_sampled} "
+                             f"and 'num_classes': {num_classes}.")
         if num_true > num_classes:
-            raise ValueError(f"The num_true {num_true} is greater than num_classes {num_classes}.")
+            raise ValueError(f"For '{self.cls_name}', the 'num_true' must be smaller than or equal to 'num_classes', "
+                             f"but got 'num_true': {num_true} amd 'num_classes': {num_classes}.")
         if sampled_values is not None:
             if not isinstance(sampled_values, (list, tuple)):
-                raise TypeError(f"The sampled_values {sampled_values} is not a list or tuple.")
+                raise TypeError(f"For '{self.cls_name}', the type of 'sampled_values' must be a list or tuple, "
+                                f"but got {type(sampled_values).__name__}.")
             if len(sampled_values) != 3:
-                raise ValueError(f"The sampled_values size {len(sampled_values)} is not 3.")
+                raise ValueError(f"For '{self.cls_name}', the length of 'sampled_values' must be equal to 3,"
+                                 f"but got {len(sampled_values)}.")
 
         self.num_sampled = num_sampled
         self.num_classes = num_classes
@@ -843,18 +860,18 @@ class SampledSoftmaxLoss(LossBase):
         self.expand_dims = P.ExpandDims()
         self.dtype = P.DType()
 
-    def construct(self, weights, biases, labels, inputs):
+    def construct(self, weights, biases, labels, logits):
         _check_is_tensor('weights', weights, self.cls_name)
         _check_is_tensor('biases', biases, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
-        _check_is_tensor('inputs', inputs, self.cls_name)
+        _check_is_tensor('logits', logits, self.cls_name)
         _check_label_dtype(self.dtype(labels), self.cls_name)
 
         logits, labels = self._compute_sampled_logits(
             weights=weights,
             biases=biases,
             labels=labels,
-            inputs=inputs,
+            logits=logits,
             num_true=self.num_true,
             sampled_values=self.sampled_values,
             subtract_log_q=True)
@@ -870,7 +887,7 @@ class SampledSoftmaxLoss(LossBase):
     def _compute_sampled_logits(self, weights,
                                 biases,
                                 labels,
-                                inputs,
+                                logits,
                                 num_true=1,
                                 sampled_values=None,
                                 subtract_log_q=True):
@@ -878,17 +895,17 @@ class SampledSoftmaxLoss(LossBase):
 
         Computes sampled output training logits and labels suitable
 
-        Note: In the case where num_true > 1, we assign to each target class
-        with the target probability (1/num_true) so that the target probabilities
+        Note: In the case where num_true > 1, we assign to each labels class
+        with the labels probability (1/num_true) so that the labels probabilities
         sum to 1 per-example.
 
         Args:
             weights (Tensor): Tensor of shape `[num_classes, dim]`.
             biases (Tensor): Tensor of shape `[num_classes]`.
-            labels (Tensor): Tensor of shape `[batch_size, num_true]`. The target classes.
-            inputs (Tensor): Tensor of shape `[batch_size, dim]`. The forward
+            labels (Tensor): Tensor of shape `[batch_size, num_true]`. The labels classes.
+            logits (Tensor): Tensor of shape `[batch_size, dim]`. The forward
                 activations of the input network.
-            num_true (int): The number of target classes per training example.
+            num_true (int): The number of labels classes per training example.
             sampled_values: A tuple of (`sampled_candidates`, `true_expected_count`,
                 `sampled_expected_count`) returned by a `UniformCandidateSampler` function.
             subtract_log_q: A `bool`. whether to subtract the log expected count of
@@ -924,14 +941,14 @@ class SampledSoftmaxLoss(LossBase):
 
         true_w = self.slice_op(all_w, [0, 0], [n_true, n_dim])
         sampled_w = self.slice_op(all_w, [n_true, 0], [n_sampled, n_dim])
-        sampled_logits = self.matmul(inputs, sampled_w)
+        sampled_logits = self.matmul(logits, sampled_w)
 
         all_b = self.gather_v2(biases, all_ids, 0)
         true_b = self.slice_op(all_b, [0], [n_true])
         sampled_b = self.slice_op(all_b, [n_true], [n_sampled])
 
         new_true_w_shape = (-1, num_true, n_dim)
-        row_wise_dots = self.mul(self.expand_dims(inputs, 1),
+        row_wise_dots = self.mul(self.expand_dims(logits, 1),
                                  self.reshape(true_w, new_true_w_shape))
 
         # We want the row-wise dot plus biases which yields a
@@ -1027,19 +1044,20 @@ class BCELoss(LossBase):
         else:
             self.ones = P.OnesLike()
 
-    def construct(self, inputs, labels):
-        _check_is_tensor('logits', inputs, self.cls_name)
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
         if self.weight_one:
-            weight = self.ones(inputs)
+            weight = self.ones(logits)
         else:
             weight = self.weight
-        loss = self.binary_cross_entropy(inputs, labels, weight)
+        loss = self.binary_cross_entropy(logits, labels, weight)
         return loss
 
 
 @constexpr
 def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name):
+    """Internal function, used to check whether the reduced shape meets the requirements."""
     validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name)
 
 
@@ -1096,25 +1114,25 @@ class CosineEmbeddingLoss(LossBase):
         validator.check_value_type("margin", margin, [float], self.cls_name)
         self.margin = validator.check_float_range(margin, -1.0, 1.0, Rel.INC_BOTH, "margin", self.cls_name)
 
-    def construct(self, x1, x2, y):
-        _check_is_tensor('logits_x1', x1, self.cls_name)
-        _check_is_tensor('logits_x2', x2, self.cls_name)
-        _check_is_tensor('labels', y, self.cls_name)
-        F.same_type_shape(x1, x2)
-        _check_reduced_shape_valid(F.shape(x1), F.shape(y), (1,), self.cls_name)
-        # if target > 0, 1-cosine(x1, x2)
-        # else, max(0, cosine(x1, x2)-margin)
-        prod_sum = self.reduce_sum(x1 * x2, (1,))
-        square1 = self.reduce_sum(F.square(x1), (1,))
-        square2 = self.reduce_sum(F.square(x2), (1,))
+    def construct(self, logits_x1, logits_x2, labels):
+        _check_is_tensor('logits_x1', logits_x1, self.cls_name)
+        _check_is_tensor('logits_x2', logits_x2, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        F.same_type_shape(logits_x1, logits_x2)
+        _check_reduced_shape_valid(F.shape(logits_x1), F.shape(labels), (1,), self.cls_name)
+        # if labels > 0, 1-cosine(logits_x1, logits_x2)
+        # else, max(0, cosine(logits_x1, logits_x2)-margin)
+        prod_sum = self.reduce_sum(logits_x1 * logits_x2, (1,))
+        square1 = self.reduce_sum(F.square(logits_x1), (1,))
+        square2 = self.reduce_sum(F.square(logits_x2), (1,))
         denom = F.sqrt(square1) * F.sqrt(square2)
         cosine = prod_sum / denom
 
         pos_value = 1.0 - cosine
         neg_value = self.maximum(cosine - self.margin, 0.0)
         zeros = F.zeros_like(cosine)
-        pos_part = F.select(y == 1, pos_value, zeros)
-        neg_part = F.select(y == -1, neg_value, zeros)
+        pos_part = F.select(labels == 1, pos_value, zeros)
+        neg_part = F.select(labels == -1, neg_value, zeros)
         output_unreduced = pos_part + neg_part
 
         return self.get_loss(output_unreduced)
@@ -1185,17 +1203,17 @@ class BCEWithLogitsLoss(LossBase):
         super(BCEWithLogitsLoss, self).__init__()
         self.bce_with_logits_loss = P.BCEWithLogitsLoss(reduction=reduction)
         if isinstance(weight, Parameter):
-            raise TypeError(f"For {self.cls_name}, the weight can not be a parameter.")
+            raise TypeError(f"For '{self.cls_name}', the 'weight' can not be a parameter.")
         if isinstance(pos_weight, Parameter):
-            raise TypeError(f"For {self.cls_name}, the pos_weight can not be a parameter.")
+            raise TypeError(f"For '{self.cls_name}', the 'pos_weight' can not be a parameter.")
         self.weight = weight
         self.pos_weight = pos_weight
         self.ones = P.OnesLike()
 
-    def construct(self, predict, target):
-        _check_is_tensor('logits', predict, self.cls_name)
-        _check_is_tensor('labels', target, self.cls_name)
-        ones_input = self.ones(predict)
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        ones_input = self.ones(logits)
         if self.weight is not None:
             weight = self.weight
         else:
@@ -1204,37 +1222,42 @@ class BCEWithLogitsLoss(LossBase):
             pos_weight = self.pos_weight
         else:
             pos_weight = ones_input
-        loss = self.bce_with_logits_loss(predict, target, weight, pos_weight)
+        loss = self.bce_with_logits_loss(logits, labels, weight, pos_weight)
         return loss
 
 
 @constexpr
-def _check_ndim(predict_nidm, target_ndim):
-    if predict_nidm < 2 or predict_nidm > 4:
-        raise ValueError("The dimensions of predict should be between 2 and 4, but got"
-                         "predict dim {}.".format(predict_nidm))
-    if target_ndim < 2 or target_ndim > 4:
-        raise ValueError("The dimensions of target should be between 2 and 4, but got"
-                         "target dim {}.".format(target_ndim))
-    if predict_nidm != target_ndim:
-        raise ValueError("The dimensions of predict and target must be equal, but got"
-                         "predict dim {} and target dim {}.".format(predict_nidm, target_ndim))
+def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
+    '''Internal function, used to check whether the dimension of logits and labels meets the requirements。'''
+    msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
+    if logits_nidm < 2 or logits_nidm > 4:
+        raise ValueError(f"{msg_prefix} dimensions of 'logits' should be in [2, 4], but got"
+                         f"dimension of 'logits' {logits_nidm}.")
+    if labels_ndim < 2 or labels_ndim > 4:
+        raise ValueError(f"{msg_prefix} dimensions of 'labels' should be in [2, 4], but got"
+                         f"dimension of 'labels' {labels_ndim}.")
+    if logits_nidm != labels_ndim:
+        raise ValueError(f"{msg_prefix} dimensions of 'logits' and 'labels' must be equal, but got"
+                         f"dimension of 'logits' {logits_nidm} and dimension of 'labels' {labels_ndim}.")
 
 
 @constexpr
-def _check_channel_and_shape(predict, target):
-    if predict == 1:
-        raise ValueError("Single channel prediction is not supported.")
-    if target not in (1, predict):
-        raise ValueError("The target must have a channel or the same shape as predict."
-                         "If it has a channel, it should be the range [0, C-1], where C is the number of classes "
-                         f"inferred from 'predict': C={predict}.")
+def _check_channel_and_shape(logits, labels, prime_name=None):
+    '''Internal function, used to check whether the channels or shape of logits and labels meets the requirements.'''
+    msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
+    if logits == 1:
+        raise ValueError(f"{msg_prefix} single channel prediction is not supported, but got {logits}.")
+    if labels not in (1, logits):
+        raise ValueError(f"{msg_prefix} 'labels' must have a channel or the same shape as 'logits'."
+                         f"If it has a channel, it should be the range [0, C-1], where C is the number of classes "
+                         f"inferred from 'logits': C={logits}, but got 'labels': {labels}.")
 
 
 @constexpr
-def _check_input_dtype(targets_dtype, cls_name):
-    validator.check_type_name("targets", targets_dtype, [mstype.int32, mstype.int64, mstype.float16,
-                                                         mstype.float32], cls_name)
+def _check_input_dtype(labels_dtype, cls_name):
+    """Internal function, used to check whether the data type of labels meets the requirements."""
+    validator.check_type_name("labels", labels_dtype,
+                              [mstype.int32, mstype.int64, mstype.float16, mstype.float32], cls_name)
 
 
 class FocalLoss(LossBase):
@@ -1293,9 +1316,9 @@ class FocalLoss(LossBase):
 
         self.gamma = validator.check_value_type("gamma", gamma, [float])
         if weight is not None and not isinstance(weight, Tensor):
-            raise TypeError("The type of weight should be a tensor, but got {}.".format(type(weight)))
+            raise TypeError(f"For '{self.cls_name}', the type of 'weight' should be a Tensor.")
         if isinstance(weight, Tensor) and weight.ndim != 1:
-            raise ValueError("The dimension of weight should be 1, but got {}.".format(weight.ndim))
+            raise ValueError(f"For '{self.cls_name}', the dimension of 'weight' should be 1, but got {weight.ndim}.")
         self.weight = weight
         self.expand_dims = P.ExpandDims()
         self.gather_d = P.GatherD()
@@ -1305,41 +1328,41 @@ class FocalLoss(LossBase):
         self.dtype = P.DType()
         self.logsoftmax = nn.LogSoftmax(1)
 
-    def construct(self, predict, target):
-        _check_is_tensor('logits', predict, self.cls_name)
-        _check_is_tensor('labels', target, self.cls_name)
-        targets = target
-        _check_ndim(predict.ndim, targets.ndim)
-        _check_channel_and_shape(predict.shape[1], targets.shape[1])
-        _check_input_dtype(self.dtype(targets), self.cls_name)
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        labelss = labels
+        _check_ndim(logits.ndim, labelss.ndim)
+        _check_channel_and_shape(logits.shape[1], labelss.shape[1])
+        _check_input_dtype(self.dtype(labelss), self.cls_name)
 
-        if predict.ndim > 2:
-            predict = predict.view(predict.shape[0], predict.shape[1], -1)
-            targets = targets.view(targets.shape[0], targets.shape[1], -1)
+        if logits.ndim > 2:
+            logits = logits.view(logits.shape[0], logits.shape[1], -1)
+            labelss = labelss.view(labelss.shape[0], labelss.shape[1], -1)
         else:
-            predict = self.expand_dims(predict, 2)
-            targets = self.expand_dims(targets, 2)
+            logits = self.expand_dims(logits, 2)
+            labelss = self.expand_dims(labelss, 2)
 
-        log_probability = self.logsoftmax(predict)
+        log_probability = self.logsoftmax(logits)
 
-        if target.shape[1] == 1:
-            log_probability = self.gather_d(log_probability, 1, self.cast(targets, mindspore.int32))
+        if labels.shape[1] == 1:
+            log_probability = self.gather_d(log_probability, 1, self.cast(labelss, mindspore.int32))
             log_probability = self.squeeze(log_probability)
 
         probability = F.exp(log_probability)
 
         if self.weight is not None:
             convert_weight = self.weight[None, :, None]
-            convert_weight = self.tile(convert_weight, (targets.shape[0], 1, targets.shape[2]))
-            if target.shape[1] == 1:
-                convert_weight = self.gather_d(convert_weight, 1, self.cast(targets, mindspore.int32))
+            convert_weight = self.tile(convert_weight, (labelss.shape[0], 1, labelss.shape[2]))
+            if labels.shape[1] == 1:
+                convert_weight = self.gather_d(convert_weight, 1, self.cast(labelss, mindspore.int32))
                 convert_weight = self.squeeze(convert_weight)
             log_probability = log_probability * convert_weight
 
         weight = F.pows(-1 * probability + 1.0, self.gamma)
-        if target.shape[1] == 1:
+        if labels.shape[1] == 1:
             loss = (-1 * weight * log_probability).mean(axis=1)
         else:
-            loss = (-1 * weight * targets * log_probability).mean(axis=-1)
+            loss = (-1 * weight * labelss * log_probability).mean(axis=-1)
 
         return self.get_loss(loss)
