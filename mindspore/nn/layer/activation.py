@@ -898,6 +898,5 @@ def get_activation(name, prim_name=None):
         return None
 
     if name not in _activation:
-        raise KeyError(f"{msg_prefix} 'name' should be in {_activation}, but got '{name}'. "
-                       f"Refer to official documents for more information.")
+        raise KeyError(f"{msg_prefix} 'name' should be in {_activation}, but got {name}.")
     return _activation[name]()

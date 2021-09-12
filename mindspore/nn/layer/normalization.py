@@ -1108,7 +1108,7 @@ class GroupNorm(Cell):
             raise ValueError(f"For '{self.cls_name}', the 'num_channels' should be divided by 'num_groups', "
                              f"but got 'num_channels': {num_channels}, 'num_groups': {num_groups}.")
         self.eps = validator.check_value_type('eps', eps, (float,), type(self).__name__)
-        self.affine = validator.check_bool(affine)
+        self.affine = validator.check_bool(affine, arg_name="affine", prim_name=self.cls_name)
 
         gamma = initializer(gamma_init, num_channels)
         beta = initializer(beta_init, num_channels)

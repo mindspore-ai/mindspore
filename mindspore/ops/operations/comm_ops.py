@@ -147,10 +147,10 @@ class AllReduce(PrimitiveWithInfer):
     def __init__(self, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         """Initialize AllReduce."""
         if not isinstance(op, type(ReduceOp.SUM)):
-            raise TypeError(f"For '{self.name}', the 'op' of AllReduce should be str, but got {type(op).__name__}.")
+            raise TypeError(f"For '{self.name}', the 'op' should be str, but got {type(op).__name__}.")
         if not isinstance(_get_group(group), str):
-            raise TypeError(f"For '{self.name}', the 'group' of AllReduce should be str, "
-                            f"but got {type(_get_group(group))}.")
+            raise TypeError(f"For '{self.name}', the 'group' should be str, "
+                            f"but got {type(_get_group(group)).__name__}.")
         check_hcom_group_valid(group, prim_name=self.name)
         self.op = op
         self.add_prim_attr('group', _get_group(group))
