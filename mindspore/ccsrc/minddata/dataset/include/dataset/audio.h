@@ -230,6 +230,32 @@ class Contrast final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply a DC shift to the audio.
+class DCShift : public TensorTransform {
+ public:
+  /// \brief Constructor
+  /// \param[in] shift Indicates the amount to shift the audio, the value must be in the range [-2.0, 2.0].
+  /// \param[in] limiter_gain Used only on peaks to prevent clipping.
+  DCShift(float shift, float limiter_gain);
+
+  /// \brief Constructor
+  /// \param[in] shift Indicates the amount to shift the audio.
+  /// \note This constructor will use `shift` as `limiter_gain`.
+  explicit DCShift(float shift);
+
+  /// \brief Destructor.
+  ~DCShift() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Design two-pole deemph filter. Similar to SoX implementation.
 class DeemphBiquad final : public TensorTransform {
  public:

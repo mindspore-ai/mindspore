@@ -1016,3 +1016,54 @@ TEST_F(MindDataTestPipeline, TestLfilterWrongArgs) {
   std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
   EXPECT_EQ(iter01, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestDCShiftPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDCShiftPipeline.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 2, 100}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto dc_shift_op = audio::DCShift(0.8, 0.02);
+
+  ds = ds->Map({dc_shift_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {1, 2, 100};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 3);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestDCShiftPipelineError) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDCShiftPipelineError.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {100}));
+  std::shared_ptr<Dataset> ds = RandomData(4, schema);
+  EXPECT_NE(ds, nullptr);
+
+  auto dc_shift_op = audio::DCShift(3, 0.02);
+
+  ds = ds->Map({dc_shift_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

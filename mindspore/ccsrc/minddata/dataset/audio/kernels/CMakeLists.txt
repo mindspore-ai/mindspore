@@ -12,6 +12,7 @@ add_library(audio-kernels OBJECT
         bass_biquad_op.cc
         complex_norm_op.cc
         contrast_op.cc
+        dc_shift_op.cc
         deemph_biquad_op.cc
         equalizer_biquad_op.cc
         frequency_masking_op.cc

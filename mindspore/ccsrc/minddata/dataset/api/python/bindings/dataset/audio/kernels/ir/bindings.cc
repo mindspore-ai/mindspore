@@ -29,6 +29,7 @@
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
+#include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
@@ -146,6 +147,16 @@ PYBIND_REGISTER(ContrastOperation, 1, ([](const py::module *m) {
                         THROW_IF_ERROR(contrast->ValidateParams());
                         return contrast;
                       }));
+                }));
+
+PYBIND_REGISTER(DCShiftOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::DCShiftOperation, TensorOperation, std::shared_ptr<audio::DCShiftOperation>>(
+                    *m, "DCShiftOperation")
+                    .def(py::init([](float shift, float limiter_gain) {
+                      auto dc_shift = std::make_shared<audio::DCShiftOperation>(shift, limiter_gain);
+                      THROW_IF_ERROR(dc_shift->ValidateParams());
+                      return dc_shift;
+                    }));
                 }));
 
 PYBIND_REGISTER(

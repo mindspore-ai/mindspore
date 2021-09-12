@@ -150,6 +150,40 @@ Status Contrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   return Status::OK();
 }
 
+/// \brief Apply a DC shift to the audio.
+/// \param input/output: Tensor of shape <...,time>.
+/// \param shift: the amount to shift the audio.
+/// \param limiter_gain: used only on peaks to prevent clipping.
+/// \return Status code.
+template <typename T>
+Status DCShift(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float shift, float limiter_gain) {
+  float limiter_threshold = 0.0;
+  if (shift != limiter_gain && shift != 0) {
+    limiter_threshold = 1.0 - (std::abs(shift) - limiter_gain);
+    for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+      if (*itr > limiter_threshold && shift > 0) {
+        T peak = (*itr - limiter_threshold) * limiter_gain / (1 - limiter_threshold);
+        T sample = (peak + limiter_threshold + shift);
+        *itr = sample > limiter_threshold ? limiter_threshold : sample;
+      } else if (*itr < -limiter_threshold && shift < 0) {
+        T peak = (*itr + limiter_threshold) * limiter_gain / (1 - limiter_threshold);
+        T sample = (peak + limiter_threshold + shift);
+        *itr = sample < -limiter_threshold ? -limiter_threshold : sample;
+      } else {
+        T sample = (*itr + shift);
+        *itr = (sample > 1 || sample < -1) ? (sample > 1 ? 1 : -1) : sample;
+      }
+    }
+  } else {
+    for (auto itr = input->begin<T>(); itr != input->end<T>(); itr++) {
+      T sample = (*itr + shift);
+      *itr = sample > 1 || sample < -1 ? (sample > 1 ? 1 : -1) : sample;
+    }
+  }
+  *output = input;
+  return Status::OK();
+}
+
 /// \brief Perform an IIR filter by evaluating difference equation.
 /// \param input/output: Tensor of shape <..., time>
 /// \param a_coeffs: denominator coefficients of difference equation of dimension of (n_order + 1).
