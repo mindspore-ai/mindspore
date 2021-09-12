@@ -2366,7 +2366,7 @@ class Minimum(_MathBinaryOp):
         >>> # case 1 : same data type
         >>> x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> minimum = ops.Minimum
+        >>> minimum = ops.Minimum()
         >>> output = minimum(x, y)
         >>> print(output)
         [1. 2. 3.]
@@ -2540,7 +2540,7 @@ class Div(_MathBinaryOp):
         >>> print(output)
         [-2.  2.5  3.]
         >>> print(output.dtype)
-        Flaot32
+        Float32
     """
 
     def infer_value(self, x, y):

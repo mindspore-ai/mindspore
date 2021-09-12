@@ -313,7 +313,7 @@ class Dense(Cell):
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
         if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
             raise TypeError(f"For '{self.cls_name}', the 'activation' must be str or Cell or Primitive, but got "
-                            f"{type(activation)}.")
+                            f"{type(activation).__name__}.")
         self.activation_flag = self.activation is not None
 
     def construct(self, x):
@@ -800,7 +800,8 @@ class Pad(Cell):
         self.paddings = paddings
         Validator.check_string(self.mode, ["CONSTANT", "REFLECT", "SYMMETRIC"], 'mode', self.cls_name)
         if not isinstance(paddings, tuple):
-            raise TypeError(f"For '{self.cls_name}', the type of 'paddings' must be tuple, but got {type(paddings)}.")
+            raise TypeError(f"For '{self.cls_name}', the type of 'paddings' must be tuple, "
+                            f"but got {type(paddings).__name__}.")
         for item in paddings:
             if len(item) != 2:
                 raise ValueError(f"For '{self.cls_name}', the dimension of 'paddings' must be (n, 2), "
@@ -827,14 +828,15 @@ def bilinear(shape, size, scale, align_corners, prim_name=None):
     """Check input and calculate shape"""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if not isinstance(align_corners, bool):
-        raise TypeError(f"{msg_prefix} type of 'align_corners' should be boolean, but got {type(align_corners)}.")
+        raise TypeError(f"{msg_prefix} type of 'align_corners' should be boolean, "
+                        f"but got {type(align_corners).__name__}.")
     if size is None and scale is None:
         raise ValueError(f"{msg_prefix} 'size' and 'scale' both none.")
     if size is not None and scale is not None:
         raise ValueError(f"{msg_prefix} 'size' and 'scale' both not none.")
     if size is not None:
         if not isinstance(size, (tuple, list)):
-            raise ValueError(f"{msg_prefix} 'size' must be tuple or list, but got {type(size)}.")
+            raise ValueError(f"{msg_prefix} 'size' must be tuple or list, but got {type(size).__name__}.")
         Validator.check_int(len(size), 2, Rel.EQ, "size", "bilinear")
         Validator.check_int(size[0], 1, Rel.GE, "size[0]", "bilinear")
         Validator.check_int(size[1], 1, Rel.GE, "size[1]", "bilinear")

@@ -69,7 +69,7 @@ class StandardNormal(PrimitiveWithInfer):
     def __infer__(self, shape):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -126,7 +126,7 @@ class StandardLaplace(PrimitiveWithInfer):
     def __infer__(self, shape):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -189,7 +189,7 @@ class Gamma(PrimitiveWithInfer):
     def __infer__(self, shape, alpha, beta):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -253,7 +253,7 @@ class Poisson(PrimitiveWithInfer):
     def __infer__(self, shape, mean):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -325,7 +325,7 @@ class UniformInt(PrimitiveWithInfer):
     def __infer__(self, shape, minval, maxval):
         shape_v = shape["value"]
         if shape_v is None:
-            raise ValueError(f"For '{self.name}', the 'shape' cannot be None, but got {shape}.")
+            raise ValueError(f"For '{self.name}', the 'shape' cannot be None.")
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
@@ -564,7 +564,7 @@ class Multinomial(PrimitiveWithInfer):
         Validator.check_tensor_dtype_valid('inputs', inputs['dtype'], [mstype.float32], self.name)
         num_samples_value = num_samples["value"]
         if num_samples_value is None:
-            raise ValueError(f"For '{self.name}', the 'num_samples' cannot be None, but got {num_samples}.")
+            raise ValueError(f"For '{self.name}', the 'num_samples' cannot be None.")
         Validator.check_value_type("num_samples", num_samples_value, (int,), self.name)
         Validator.check_positive_int(num_samples_value, "num_samples")
         y_shape = (num_samples_value,)

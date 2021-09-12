@@ -319,14 +319,13 @@ class GradOperation(GradOperation_):
     def __init__(self, get_all=False, get_by_list=False, sens_param=False):
         """Initialize GradOperation."""
         if not isinstance(get_all, bool):
-            raise TypeError(f"For 'GradOperation', the arg 'get_all' should be bool, but got {get_all} with type "
-                            f"{type(get_all)}")
+            raise TypeError(f"For 'GradOperation', the 'get_all' should be bool, but got {type(get_all).__name__}")
         if not isinstance(get_by_list, bool):
-            raise TypeError(f"For 'GradOperation', the arg 'get_by_list' should be bool, but got {get_by_list} with "
-                            f"type {type(get_by_list)}")
+            raise TypeError(f"For 'GradOperation', the 'get_by_list' should be bool, "
+                            f"but got {type(get_by_list).__name__}")
         if not isinstance(sens_param, bool):
-            raise TypeError(f"For 'GradOperation', the arg 'sens_param' should be bool, but got {sens_param} with type "
-                            f"{type(sens_param)}")
+            raise TypeError(f"For 'GradOperation', the 'sens_param' should be bool, "
+                            f"but got {type(sens_param).__name__}")
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param

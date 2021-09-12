@@ -1264,7 +1264,9 @@ class BatchNorm(PrimitiveWithInfer):
         validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
+            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
+                             f"but got the format is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
@@ -1331,7 +1333,7 @@ class Conv2D(Primitive):
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "valid".
+            "same", "valid", "pad", not case sensitive. Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input `x`. The total number of padding will be calculated in horizontal and vertical
@@ -1413,10 +1415,11 @@ class Conv2D(Primitive):
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
 
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
+                             f"but got 'pad' and 'pad_mode' is {pad_mode}.")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -1424,7 +1427,9 @@ class Conv2D(Primitive):
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
+            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
+                             f"but got the format is {self.format} "
+                             f"and platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.group = validator.check_positive_int(group, 'group', self.name)
@@ -1454,7 +1459,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 3.
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "valid".
+            "same", "valid", "pad". Default: "valid", not case sensitive.
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input `x`. The total number of padding will be calculated in horizontal and vertical
@@ -1541,9 +1546,10 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
+                             f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -1563,7 +1569,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         _, _, stride_h, stride_w = self.stride
         _, _, dilation_h, dilation_w = self.dilation
         if kernel_size_n != 1:
-            raise ValueError(f"The batch of input weight should be 1, but got {kernel_size_n}")
+            raise ValueError(f"For '{self.name}', the batch of input weight should be 1, but got {kernel_size_n}")
         if self.pad_mode == "valid":
             h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
             w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
@@ -1630,7 +1636,9 @@ class _Pool(PrimitiveWithInfer):
         self.is_maxpoolwithargmax = (self.name == "MaxPoolWithArgmax")
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
+            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
+                             f"but got the format is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
         if not self.is_maxpoolwithargmax:
             self.add_prim_attr('data_format', self.format)
 
@@ -1666,8 +1674,8 @@ class _Pool(PrimitiveWithInfer):
 
         for shape_value in out_shape:
             if shape_value <= 0:
-                raise ValueError(f"For '{self.name}', the kernel size is not valid, "
-                                 f"the input shape: {x_shape}, strides shape: {self.strides}.")
+                raise ValueError(f"For '{self.name}', the each element of the output shape must be larger than 0, "
+                                 f"but got one of shape in output shape is {shape_value}.")
         return out_shape
 
     def infer_dtype(self, x_dtype):
@@ -1925,10 +1933,11 @@ class MaxPool3D(PrimitiveWithInfer):
         if len(self.pad_list) == 3:
             self.pad_list = (pad_list[0], pad_list[0], pad_list[1], pad_list[1], pad_list[2], pad_list[2])
         if len(self.pad_list) != 3 and len(self.pad_list) != 6:
-            raise ValueError(f"For `maxpool3d` attr 'pad_list' should be an positive int number or a tuple of "
-                             f"three or six positive int numbers, but got `{len(self.pad_list)}` numbers.")
+            raise ValueError(f"For '{self.name}', attr 'pad_list' should be an positive int number or a tuple of "
+                             f"three or six positive int numbers, but got {len(self.pad_list)} numbers.")
         if self.pad_mode != 'CALCULATED' and self.pad_list != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', when pad_list is not 0, pad_mode should be set as 'pad'.")
+            raise ValueError(f"For '{self.name}', the 'pad_list' must be zero when 'pad_mode' is not \"CALCULATED\", "
+                             f"but got 'pad_list' is {self.pad_list} and 'pad_mode' is {pad_mode}.")
         if self.pad_mode == 'CALCULATED':
             for item in self.pad_list:
                 validator.check_non_negative_int(item, 'pad_list item', self.name)
@@ -2069,7 +2078,8 @@ class Conv2DBackpropInput(Primitive):
             and width of the 2D convolution window. Single int means the value is for both the height and the width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
-        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
+        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad", not case sensitive.
+            Default: "valid".
         pad (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
                     top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
                     padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
@@ -2146,7 +2156,9 @@ class Conv2DBackpropInput(Primitive):
         self.add_prim_attr('kernel_size', self.kernel_size)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
+            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
+                             f"but got the format is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
         self.stride = _check_positive_int_or_tuple('stride', stride, self.name, allow_four=True, ret_four=True)
         self.stride = _update_attr_by_format(self.stride, self.format)
@@ -2161,9 +2173,10 @@ class Conv2DBackpropInput(Primitive):
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', padding must be zero when pad_mode is '{pad_mode}'.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
+                             f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}.")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -2284,7 +2297,9 @@ class BiasAdd(Primitive):
         self.init_prim_io_names(inputs=['x', 'b'], outputs=['output'])
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
+            raise ValueError(f"For '{self.name}', the \"NHWC\" format only support in GPU target, "
+                             f"but got the format is {self.format} and "
+                             f"the platform is {context.get_context('device_target')}.")
         self.add_prim_attr('data_format', self.format)
 
 
@@ -2388,7 +2403,8 @@ class NLLLoss(PrimitiveWithInfer):
         \end{array}\right.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum', not case sensitive.
+            Default: "mean".
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only support float32 or float16.
@@ -2432,7 +2448,7 @@ class NLLLoss(PrimitiveWithInfer):
     def __init__(self, reduction="mean"):
         """Initialize NLLLoss"""
         self.init_prim_io_names(inputs=['x', 'target', "weight"], outputs=['loss'])
-        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction.lower(), ['none', 'sum', 'mean'], 'reduction', self.name)
         self.add_prim_attr('reduction', self.reduction)
 
     def infer_shape(self, x_shape, t_shape, w_shape):
@@ -2640,8 +2656,8 @@ class ApplyMomentum(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, use_nesterov=False, use_locking=False, gradient_scale=1.0):
         """Initialize ApplyMomentum."""
-        self.use_nesterov = validator.check_bool(use_nesterov)
-        self.use_locking = validator.check_bool(use_locking)
+        self.use_nesterov = validator.check_bool(use_nesterov, "use_nesterov", self.name)
+        self.use_locking = validator.check_bool(use_locking, "use_locking", self.name)
         validator.check_value_type('gradient_scale', gradient_scale, [float], self.name)
         self.init_prim_io_names(inputs=['variable', 'accumulation', 'learning_rate', 'gradient', 'momentum'],
                                 outputs=['output'])
@@ -2746,7 +2762,8 @@ class SoftMarginLoss(Primitive):
         \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum', not case sensitive.
+            Default: "mean".
 
     Inputs:
         - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
@@ -2778,7 +2795,7 @@ class SoftMarginLoss(Primitive):
     def __init__(self, reduction="mean"):
         """Initialize SoftMarginLoss"""
         self.init_prim_io_names(inputs=['predict', 'label'], outputs=['loss'])
-        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction.lower(), ['none', 'sum', 'mean'], 'reduction', self.name)
 
 
 class L2Loss(PrimitiveWithInfer):
@@ -3000,7 +3017,8 @@ class SGD(PrimitiveWithCheck):
         """Initialize SGD."""
         validator.check_value_type("nesterov", nesterov, [bool], self.name)
         if nesterov and dampening != 0:
-            raise ValueError(f"Nesterov need zero dampening!")
+            raise ValueError(f"For '{self.name}', the 'dampening' must be 0 when 'nesterov' is True, "
+                             f"but got 'dampening' is {dampening} and 'nesterov' is {nesterov}.")
         self.init_prim_io_names(inputs=['parameters', 'gradient', 'learning_rate', 'accum', 'momentum', 'stat'],
                                 outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
@@ -3128,7 +3146,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     def infer_value(self, var, mean_square, moment, learning_rate, grad, decay, momentum, epsilon):
         if decay is None or momentum is None or epsilon is None:
-            raise ValueError(f"For {self.name}, decay, momentum, epsilon must be const.")
+            raise ValueError(f"For '{self.name}', 'decay', 'momentum' and 'epsilon' can not be None, "
+                             f"but got 'decay': {decay}, 'momentum': {momentum} and 'epsilon':{epsilon}.")
 
 
 class ApplyCenteredRMSProp(PrimitiveWithInfer):
@@ -3362,7 +3381,8 @@ class L2Normalize(PrimitiveWithInfer):
         self.add_prim_attr('axis', axis)
         self.init_attrs['axis'] = axis
         if len(axis) != 1:
-            raise TypeError("The length of axis must be 1, later will support multiple axis!")
+            raise TypeError(f"For '{self.name}', the dimension of 'axis' must be 1, but got {len(axis)}, "
+                            f"later will support multiple axis!")
         self.axis = axis
 
     def infer_shape(self, input_x):
@@ -3842,17 +3862,18 @@ class PReLU(PrimitiveWithInfer):
         input_x_dim = len(input_x_shape)
         if input_x_dim in (0, 1):
             if context.get_context("device_target") == "Ascend":
-                raise ValueError(f"For '{self.name}', the 0-D or 1-D 'input_x' is not supported on Ascend.")
+                raise ValueError(f"For '{self.name}', the dimension of 'x' can not be 0-D or 1-D when the platform is "
+                                 f"\"Ascend\", but got dimension of 'x' is {input_x_dim}.")
             channel_num = 1
         else:
             channel_num = input_x_shape[1]
 
         weight_dim = len(weight_shape)
         if weight_dim != 1:
-            raise ValueError(f"For '{self.name}', the weight dimension should be 1, while got {weight_dim}.")
+            raise ValueError(f"For '{self.name}', the dimension of 'x' should be 1, while got {weight_dim}.")
         if weight_shape[0] != 1 and weight_shape[0] != channel_num:
-            raise ValueError(f"For '{self.name}', the weight shape should be (1,) or "
-                             f"matched with input channel ({channel_num},), but got {weight_shape}")
+            raise ValueError(f"For '{self.name}', the first dimension of 'weight' should be (1,) or "
+                             f"it should be equal to number of channels: {channel_num}, but got {weight_shape}")
         return input_x_shape
 
     def infer_dtype(self, input_x_dtype, weight_dtype):
@@ -4055,8 +4076,8 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     and the third method is to calculate the sum of all losses.
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none'.
-            If 'none', do not perform reduction. Default:'mean'.
+        reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',
+             not case sensitive. If 'none', do not perform reduction. Default:'mean'.
 
     Inputs:
         - **logits** (Tensor) - Input logits. Data type must be float16 or float32.
@@ -4095,36 +4116,36 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, reduction='mean'):
         """Initialize BCEWithLogitsLoss"""
-        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction.lower(), ['none', 'sum', 'mean'], 'reduction', self.name)
 
-    def infer_shape(self, predict, target, weight, pos_weight):
-        validator.check('predict_shape', predict, 'target_shape', target, Rel.EQ, self.name)
+    def infer_shape(self, logits, label, weight, pos_weight):
+        validator.check('logits_shape', logits, 'label_shape', label, Rel.EQ, self.name)
         reversed_weight_shape = tuple(reversed(weight))
-        reversed_target = tuple(reversed(predict))
+        reversed_label = tuple(reversed(logits))
         for i, v in enumerate(reversed_weight_shape):
-            if v not in (reversed_target[i], 1):
-                raise ValueError(f"For {self.name}, shapes can not broadcast. "
-                                 f"predict: {tuple(predict)}, weight shape {tuple(weight)}.")
+            if v not in (reversed_label[i], 1):
+                raise ValueError(f"For {self.name}, the shapes of 'logits' and 'weight' can not broadcast. "
+                                 f"'logits': {tuple(logits)}, 'weight' shape {tuple(weight)}.")
 
         reversed_pos_shape = tuple(reversed(pos_weight))
-        reversed_target = tuple(reversed(predict))
+        reversed_label = tuple(reversed(logits))
         for i, v in enumerate(reversed_pos_shape):
-            if v not in (reversed_target[i], 1):
-                raise ValueError(f"For {self.name}, shapes can not broadcast. "
-                                 f"predict: {tuple(predict)}, pos_weight shape {tuple(pos_weight)}.")
+            if v not in (reversed_label[i], 1):
+                raise ValueError(f"For {self.name}, the shapes of 'logits' and 'pos_weight' can not broadcast. "
+                                 f"'logits': {tuple(logits)}, 'pos_weight' shape {tuple(pos_weight)}.")
 
         if self.reduction in ('mean', 'sum'):
             shape = []
         else:
-            shape = predict
+            shape = logits
         return shape
 
-    def infer_dtype(self, predict, target, weight, pos_weight):
-        validator.check_tensor_dtype_valid('predict dtype', predict, [mstype.float16, mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('target dtype', target, [mstype.float16, mstype.float32], self.name)
+    def infer_dtype(self, logits, label, weight, pos_weight):
+        validator.check_tensor_dtype_valid('logits dtype', logits, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('label dtype', label, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_dtype_valid('weight dtype', weight, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_dtype_valid('pos_weight dtype', pos_weight, [mstype.float16, mstype.float32], self.name)
-        return predict
+        return logits
 
 
 class Pad(PrimitiveWithInfer):
@@ -4170,17 +4191,19 @@ class Pad(PrimitiveWithInfer):
         """Initialize Pad"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         if not isinstance(paddings, tuple):
-            raise TypeError('Paddings must be tuple type.')
+            raise TypeError(f"For '{self.name}', the type of 'paddings' must be tuple, "
+                            f"but got {type(paddings)}.")
         for item in paddings:
             if len(item) != 2:
-                raise ValueError('The shape of paddings must be (n, 2).')
+                raise ValueError(f"For '{self.name}', the shape of paddings must be (n, 2), "
+                                 f"but got {item}.")
         self.paddings = paddings
 
     def infer_shape(self, x_shape):
         validator.check_int(len(self.paddings), len(x_shape), Rel.EQ, 'paddings.shape', self.name)
         paddings = np.array(self.paddings)
         if not np.all(paddings >= 0):
-            raise ValueError('All elements of paddings must be >= 0.')
+            raise ValueError(f"For '{self.name}', all elements of paddings must be >= 0.")
         y_shape = ()
         for i in range(int(paddings.size / 2)):
             y_shape += ((x_shape[i] + paddings[i, 0] + paddings[i, 1]),)
@@ -4272,13 +4295,14 @@ class MirrorPad(PrimitiveWithInfer):
         paddings_size = paddings_value.size
         validator.check_int(paddings_size, len(x_shape) * 2, Rel.EQ, 'paddings.shape', self.name)
         if not np.all(paddings_value >= 0):
-            raise ValueError('All elements of paddings must be >= 0.')
+            raise ValueError(f"For '{self.name}', all elements of 'paddings' must be >= 0.")
         adjust = 0
         if self.mode == 'SYMMETRIC':
             adjust = 1
         for i in range(0, int(paddings_size / 2)):
             if (paddings_value[i, 0] >= x_shape[i] + adjust) or (paddings_value[i, 1] >= x_shape[i] + adjust):
-                raise ValueError('At least one dim has too high a padding value for this input and mode')
+                raise ValueError(f"For '{self.name}', both paddings[D, 0] and paddings[D, 1] must be no greater than "
+                                 f"the dimension corresponding to 'x'.")
         y_shape = ()
         for i in range(0, int(paddings_size / 2)):
             y_shape += ((x_shape[i] + paddings_value[i, 0] + paddings_value[i, 1]),)
@@ -5307,7 +5331,7 @@ class KLDivLoss(PrimitiveWithInfer):
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
+            Its value must be one of 'none', 'mean', 'sum', not case sensitive. Default: 'mean'.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float32.
@@ -5345,7 +5369,7 @@ class KLDivLoss(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, reduction='mean'):
         """Initialize KLDivLoss."""
-        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction.lower(), ['none', 'mean', 'sum'], 'reduction', self.name)
 
     def infer_shape(self, x_shape, y_shape):
         validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
@@ -5389,7 +5413,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
+            Its value must be one of 'none', 'mean', 'sum', not case sensitive. Default: 'mean'.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float16 or float32,
@@ -5432,7 +5456,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, reduction='mean'):
         """Initialize BinaryCrossEntropy."""
-        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction.lower(), ['none', 'mean', 'sum'], 'reduction', self.name)
 
     def infer_shape(self, x_shape, y_shape, weight_shape):
         validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
@@ -6002,7 +6026,6 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, lr, update_slots=True, use_locking=False):
         """Initialize SparseApplyAdagrad."""
-        validator.check_value_type("lr", lr, [float], self.name)
         validator.check_is_float(lr, "lr", self.name)
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
@@ -7674,14 +7697,15 @@ class DynamicRNN(PrimitiveWithInfer):
         validator.check_int(len(h_shape), 3, Rel.EQ, "h_shape", self.name)
         validator.check_int(len(c_shape), 3, Rel.EQ, "c_shape", self.name)
         if seq_shape is not None:
-            raise ValueError(f"For {self.name}, seq_shape should be None.")
+            raise ValueError(f"For '{self.name}', the dimension of 'seq_length' should be None, but got {seq_shape}.")
 
         num_step, batch_size, input_size = x_shape
         hidden_size = w_shape[-1] // 4
 
         validator.check("b_shape[-1]", b_shape[-1], "w_shape[-1]", w_shape[-1], Rel.EQ, self.name)
         if w_shape[-1] % 4 != 0:
-            raise ValueError(f"For {self.name}, w_shape[-1] should multiple of 4.")
+            raise ValueError(f"For '{self.name}', the last dimension of 'w' should be a multiple of 4, "
+                             f"but got {w_shape[-1]}.")
         validator.check("w_shape[0]", w_shape[0], "input_size + hidden_size",
                         input_size + hidden_size, Rel.EQ, self.name)
         validator.check("b_shape[0]", b_shape[0], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
@@ -7841,7 +7865,8 @@ class DynamicGRUV2(PrimitiveWithInfer):
         num_step, batch_size, input_size = x_shape
         hidden_size = winput_shape[-1] // 3
         if winput_shape[-1] % 3 != 0:
-            raise ValueError(f"For {self.name}, weight_input_shape[-1] should multiple of 3.")
+            raise ValueError(f"For '{self.name}', the last dimension of 'w' should be a multiple of 3, "
+                             f"but got {winput_shape[-1]}.")
 
         self.placeholder_index = [3, 4, 5]
         if binput_shape is not None:
@@ -7854,7 +7879,8 @@ class DynamicGRUV2(PrimitiveWithInfer):
                             "3 * hidden_shape", [3 * hidden_size], Rel.EQ, self.name)
             self.placeholder_index.remove(4)
         if seq_shape is not None:
-            raise ValueError(f"For {self.name}, seq_shape should be None.")
+            raise ValueError(f"For '{self.name}', the dimension of 'seq_length' should be None, "
+                             f"but got {seq_shape}.")
 
         validator.check_int(len(h_shape), 2, Rel.EQ, "init_h shape rank", self.name)
         validator.check("init_h_shape[0]", h_shape[0], "batch_size", batch_size, Rel.EQ, self.name)
@@ -8036,8 +8062,8 @@ class AvgPool3D(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same", "valid", "pad", not case sensitive.
-            Default: "valid".
+        pad_mode (str): The optional value for pad mode, is "SAME", "VALID", "PAD", not case sensitive.
+            Default: "VALID".
 
             - same: Adopts the way of completion. The depth, height and width of the output will be the same as
               the input. The total number of padding will be calculated in depth, horizontal and vertical
@@ -8106,7 +8132,7 @@ class AvgPool3D(Primitive):
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:
-            raise ValueError(f"For `AvgPool3D` attr 'pad' should be an positive int number or a tuple of "
+            raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
                              f"six positive int numbers, but got `{len(pad)}`.")
         self.pad_list = pad
         self.add_prim_attr('pad_list', self.pad_list)
@@ -8115,7 +8141,8 @@ class AvgPool3D(Primitive):
         self.add_prim_attr('pad_mode', self.pad_mode)
 
         if self.pad_mode != 'PAD' and pad != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be (0, 0, 0, 0, 0, 0) when 'pad_mode' is not \"pad\", "
+                             f"but got 'pad' is {pad} and 'pad_mode' is {self.pad_mode}.")
         if self.pad_mode == 'PAD':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad or item of pad', self.name)
@@ -8250,7 +8277,7 @@ class Conv3D(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:
-            raise ValueError(f"For `conv3d` attr 'pad' should be an positive int number or a tuple of "
+            raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
                              f"six positive int numbers, but got `{len(pad)}`.")
         self.add_prim_attr("pad", pad)
         self.padding = pad
@@ -8259,7 +8286,8 @@ class Conv3D(PrimitiveWithInfer):
         self.add_prim_attr('pad_mode', self.pad_mode)
 
         if self.pad_mode != 'pad' and pad != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be (0, 0, 0, 0, 0, 0) when 'pad_mode' is not \"pad\", "
+                             f"but got 'pad' is {pad} and 'pad_mode' is {self.pad_mode}.")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -8277,7 +8305,7 @@ class Conv3D(PrimitiveWithInfer):
         validator.check_equal_int(len(w_shape), 5, "weight rank", self.name)
         validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
         if b_shape is not None:
-            raise ValueError("Bias currently only support None.")
+            raise ValueError(f"For '{self.name}', the 'bias' currently only support None, but got {b_shape}.")
         validator.check(f"x_shape[1] // group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
         validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape[0], Rel.EQ, self.name)
         validator.check('kernel_size', self.kernel_size, 'w_shape[1:4]', tuple(w_shape[2:]), Rel.EQ, self.name)
@@ -8443,7 +8471,9 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
 
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if self.pad_mode != 'pad' and self.pad_list != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be (0, 0, 0, 0, 0, 0) "
+                             f"when 'pad_mode' is not \"pad\", "
+                             f"but got 'pad' is {self.pad_list} and 'pad_mode' is {self.pad_mode}.")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -8526,8 +8556,8 @@ class CTCLossV2(Primitive):
 
     Args:
         blank (int): The blank label. Default: 0.
-        reduction (string): Apply specific reduction method to the output. Currently only support 'none'.
-          Default: "none".
+        reduction (string): Apply specific reduction method to the output. Currently only support 'none',
+            not case sensitive. Default: "none".
         zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
 
     Inputs:
@@ -8557,7 +8587,7 @@ class CTCLossV2(Primitive):
         self.add_prim_attr("blank", blank)
         validator.check_value_type("reduction", reduction, [str], self.name)
         self.reduction = self.reduction.lower()
-        validator.check_string(self.reduction, ['none'], 'reduction', self.name)
+        validator.check_string(self.reduction.lower(), ['none'], 'reduction', self.name)
         self.add_prim_attr("reduction", self.reduction)
         validator.check_value_type("zero_infinity", zero_infinity, [bool], self.name)
         self.add_prim_attr("zero_infinity", zero_infinity)
@@ -8640,7 +8670,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
             other is for the width of the kernel.
         mode (int): Modes for different convolutions. Default is 1. It is currently not used.
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "valid".
+            "same", "valid", "pad", not case sensitive. Default: "valid".
 
             - same: Adopts the way of completion. The depth, height and width of the output will be the same as
               the input. The total number of padding will be calculated in depth, horizontal and vertical
@@ -8736,7 +8766,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:
-            raise ValueError(f"For `Conv3DTranspose` attr 'pad' should be an positive int number or a tuple of "
+            raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
                              f"six positive int numbers, but got `{len(pad)}`.")
         self.pad_list = pad
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
@@ -8744,7 +8774,8 @@ class Conv3DTranspose(PrimitiveWithInfer):
         self.add_prim_attr('pad_mode', self.pad_mode)
 
         if self.pad_mode != 'pad' and pad != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
+            raise ValueError(f"For '{self.name}', the 'pad' must be (0, 0, 0, 0, 0, 0) when 'pad_mode' is not \"pad\", "
+                             f"but got 'pad' is {pad} and 'pad_mode' is {self.pad_mode}.")
 
         if self.pad_mode == 'pad':
             for item in self.pad_list:
@@ -8760,7 +8791,9 @@ class Conv3DTranspose(PrimitiveWithInfer):
                                                      allow_five=False, ret_five=True, greater_zero=False)
         output_padding = (self.output_padding[2], self.output_padding[3], self.output_padding[4])
         if self.pad_mode != 'pad' and output_padding != (0, 0, 0):
-            raise ValueError(f"For '{self.name}', when output_padding is not 0, pad_mode should be set as 'pad'.")
+            raise ValueError(f"For '{self.name}', the 'output_padding' must be (0, 0, 0) "
+                             f"when 'pad_mode' is not \"pad\", "
+                             f"but got 'output_padding' is {output_padding} and 'pad_mode' is {self.pad_mode}.")
         validator.check_int_range(self.kernel_size[0] * self.kernel_size[1] * self.kernel_size[2], 1, 343, Rel.INC_BOTH,
                                   'The product of height, width and depth of kernel_size belonging [1, 343]', self.name)
         validator.check_int_range(self.stride[0] * self.stride[1] * self.stride[2], 1, 343, Rel.INC_BOTH,
@@ -8777,7 +8810,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
     def __infer__(self, x, w, b=None):
         args = {'x': x['dtype'], 'w': w['dtype']}
         if b is not None:
-            raise ValueError("Bias currently only support None.")
+            raise ValueError(f"For '{self.name}', the 'bias' currently only support None, but got {b}.")
         valid_dtypes = [mstype.float16, mstype.float32]
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
 

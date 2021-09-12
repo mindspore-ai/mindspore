@@ -227,7 +227,7 @@ class HistogramSummary(PrimitiveWithInfer):
         # In the summary, the histogram value should be a tensor whose shape is not [].
         if not v_shape:
             raise ValueError(f"For '{self.name}', the type of 'value' should be tensor, "
-                             f"and whose shape should not be [], but got {v_shape}.")
+                             f"its shape should not be [], but got {v_shape}.")
 
         return SUMMARY_RETURN_VALUE
 
@@ -343,7 +343,7 @@ class HookBackward(PrimitiveWithInfer):
         self.add_prim_attr("cell_id", cell_id)
         self.init_attrs["cell_id"] = cell_id
         if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"For '{self.name}', the tye of 'hook_fn' should be python function, "
+            raise TypeError(f"For '{self.name}', the type of 'hook_fn' should be python function, "
                             f"but got {type(hook_fn)}.")
         self.register_hook(hook_fn)
         self.cell_id = cell_id

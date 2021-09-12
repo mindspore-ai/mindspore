@@ -493,11 +493,12 @@ class Validator:
             if addition_error_info is None:
                 addition_error_info = ''
             type_str = (type(type_).__name__ if isinstance(type_, (tuple, list)) else "") + str(type_)
-            raise TypeError(f'For \'{prim_name}\', the type of `{arg_name}` should be subclass'
-                            f' of {", ".join((str(x) for x in template_types))}, but got {type_str}'
-                            f' {addition_error_info}. This message is only for reference. The supported data types'
-                            f' depend on the hardware that executes the operator'
-                            f' and it is a subset of the data types above.')
+            raise TypeError(f"For '{prim_name}', the type of '{arg_name}'"
+                            f" should be {'one of ' if len(template_types) > 1 else ''}"
+                            f"{', '.join((str(x) for x in template_types))}, but got {type_str}"
+                            f" {addition_error_info}. The supported data types depend on the hardware that"
+                            f" executes the operator, please refer the official api document to get"
+                            f" more information about the data type.")
 
     @staticmethod
     def check_valid_input(arg_name, arg_value, prim_name):

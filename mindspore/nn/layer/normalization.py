@@ -180,7 +180,7 @@ class _BatchNorm(Cell):
             validator.check_int_range(rid, 0, rank_size, Rel.INC_LEFT, "rank id in process_groups")
             if rid in seen:
                 raise ValueError(f"For '{self.cls_name}', rank id in 'process_groups' should not be duplicated, "
-                                 f"but got {rid}.")
+                                 f"but got {process_groups}.")
             seen.add(rid)
 
     def _create_global_groups(self):
@@ -241,7 +241,7 @@ class _BatchNorm(Cell):
 def _channel_check(channel, num_channel, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if channel != num_channel:
-        raise ValueError(f"{msg_prefix} channel should be equal with num_channel, but got channel: "
+        raise ValueError(f"{msg_prefix} channel should be equal to num_channel, but got channel: "
                          f"{channel}, num_channel: {num_channel}.")
 
 
@@ -888,7 +888,7 @@ class LayerNorm(Cell):
         super(LayerNorm, self).__init__()
         if not isinstance(normalized_shape, (tuple, list)):
             raise TypeError(f"For '{self.cls_name}', the type of 'normalized_shape' should be tuple[int] or list[int], "
-                            f"but got '{normalized_shape}' and the type is {type(normalized_shape)}.")
+                            f"but got {normalized_shape} and the type is {type(normalized_shape)}.")
         self.normalized_shape = normalized_shape
         self.begin_norm_axis = begin_norm_axis
         self.begin_params_axis = begin_params_axis
@@ -1037,7 +1037,7 @@ class InstanceNorm2d(Cell):
             val = args_dict[key]
             if not isinstance(val, (Tensor, numbers.Number, str, Initializer)):
                 raise TypeError(f"For '{self.cls_name}', the type of args_dict['{key}'] should be in "
-                                f"[Tensor, numbers.Number, str, Initializer], but got type {type(val)}.")
+                                f"[Tensor, numbers.Number, str, Initializer], but got type {type(val).__name__}.")
             if isinstance(val, Tensor) and val.dtype != mstype.float32:
                 raise TypeError(f"For '{self.cls_name}', the type of args_dict['{key}'] should be float32, "
                                 f"but got {val.dtype}.")

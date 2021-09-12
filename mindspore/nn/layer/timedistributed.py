@@ -104,8 +104,8 @@ class TimeDistributed(Cell):
     def __init__(self, layer, time_axis, reshape_with_axis=None):
         """Initialize TimeDistributed."""
         if not isinstance(layer, (Cell, Primitive)):
-            raise TypeError(f"For '{self.cls_name}', the type of 'layer' should be mindspore.nn.Cell or "
-                            "mindspore.ops.Primitive instance, but got type: {type(layer)}.")
+            raise TypeError(f"For '{self.cls_name}', the 'layer' should be Cell or Primitive instance, "
+                            f"but got type: {type(layer).__name__}.")
         super(TimeDistributed, self).__init__()
         Validator.check_is_int(time_axis)
         if reshape_with_axis is not None:

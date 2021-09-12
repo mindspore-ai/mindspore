@@ -107,9 +107,9 @@ def test_reverse_v2_invalid_axis():
     with pytest.raises(ValueError) as info:
         reverse_v2_net = ReverseV2Net((0, 1, 2, 1))
         _ = reverse_v2_net(x)
-    assert "axis cannot contain duplicate dimensions" in str(info.value)
+    assert "'axis' cannot contain duplicate dimensions" in str(info.value)
 
     with pytest.raises(ValueError) as info:
         reverse_v2_net = ReverseV2Net((-2, -1, 3))
         _ = reverse_v2_net(x)
-    assert "axis cannot contain duplicate dimensions" in str(info.value)
+    assert "'axis' cannot contain duplicate dimensions" in str(info.value)

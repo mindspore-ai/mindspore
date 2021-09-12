@@ -17,12 +17,11 @@
 # ============================================================================
 
 """Operators for array."""
-
+from collections import Counter
 import copy
 import functools
 import itertools
 import numbers
-
 import numpy as np
 
 from mindspore import log as logger
@@ -87,7 +86,8 @@ class _ScatterOpDynamic(PrimitiveWithCheck):
     def _check_scatter_shape(self, x_shape, indices_shape, updates_shape, prim_name):
         # x_shape cannot be dynamic
         if np.any(np.array(x_shape) == -1):
-            raise ValueError(f"x does not support dynamic shape")
+            raise ValueError(f"For '{prim_name}', the 'input_x' does not support dynamic shape, "
+                             f"but got the shape of 'input_x' is {x_shape}.")
         # support indices and updates dynamic
         if np.any(np.array(indices_shape) == -1) or np.any(np.array(updates_shape) == -1):
             pass
@@ -492,7 +492,8 @@ class Reshape(PrimitiveWithInfer):
             validator.check_value_type("shape[%d]" % i, shp_i, [int], self.name)
             if shp_i == -1:
                 if neg_index != -1:
-                    raise ValueError(f'The shape can only has one -1 at most, but {shape_v}.')
+                    raise ValueError(f"For '{self.name}', the 'input_shape' can only has one -1 at most, "
+                                     f"but got {shape_v}.")
                 neg_index = i
             else:
                 dim_prod *= shp_i
@@ -514,25 +515,27 @@ class Reshape(PrimitiveWithInfer):
                 max_shape[neg_index] = int(max_arr_prod / dim_prod)
                 min_shape[neg_index] = int(min_arr_prod / dim_prod)
             else:
-                raise ValueError(f'For dynamic shape, Reshape must have neg index')
+                raise ValueError(f"For '{self.name}', the 'input_shape' must have -1 in the case of dynamic shape, "
+                                 f"but got {shape_v}.")
             out = {'shape': shape['value'],
                    'dtype': x['dtype'],
                    'value': None,
                    'max_shape': tuple(max_shape),
                    'min_shape': tuple(min_shape)}
         else:
-            if dim_prod <= 0 or arr_prod % dim_prod != 0:
-                raise ValueError(f'For \'{self.name}\' input_x\'s shape is {x_shp}, input_shape\'s value is {shape_v}.'
-                                 f'The product of input_x\'s shape should > 0, '
-                                 f'and can be divided by product of input_shape, but '
-                                 f'product of input_x\'s shape is {arr_prod}, product of input_shape is {dim_prod}.')
+            if dim_prod <= 0:
+                raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
+                                 f"the value of 'input_shape' is {shape_v}. "
+                                 f"The product of shape of 'input_shape' should > 0, but got {dim_prod}.")
             if neg_index != -1:
                 shape_v[neg_index] = int(arr_prod / dim_prod)
                 dim_prod *= shape_v[neg_index]
             if dim_prod != arr_prod:
-                raise ValueError(f'For \'{self.name}\' input_x\'s shape is {x_shp}, input_shape\'s value is {shape_v}.'
-                                 f'The product of input_x\'s shape should be equal to product of input_shape, but '
-                                 f'product of input_x\'s shape is {arr_prod}, product of input_shape is {dim_prod}.')
+                raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
+                                 f"the value of 'input_shape' value is {shape_v}. "
+                                 f"The product of the shape of 'input_x' should be equal to product of 'input_shape', "
+                                 f"but product of the shape of 'input_x' is {arr_prod} "
+                                 f", product of 'input_shape' is {dim_prod}.")
             value = None
             if x['value'] is not None:
                 value = Tensor(x['value'].asnumpy().reshape(shape_v))
@@ -675,7 +678,8 @@ class Squeeze(PrimitiveWithInfer):
             for a in axis:
                 validator.check_int_range(a, -ndim, ndim - 1, Rel.INC_BOTH, 'axis or its elements', self.name)
                 if x_shape[a] != 1:
-                    raise ValueError('Cannot select an axis to squeeze out which has size not equal to one.')
+                    raise ValueError(f"For '{self.name}', the shape of 'input_x' at {a} dimension should be 1, "
+                                     f"but got {x_shape[a]}.")
             ret = [x_shape[i] for i in range(ndim) if not (i in axis or (i - ndim) in axis)]
         return ret
 
@@ -1077,8 +1081,9 @@ class Split(PrimitiveWithCheck):
             # only validate when shape fully known
             output_valid_check = x_shape[self.axis] % self.output_num
             if output_valid_check != 0:
-                raise ValueError(f"x_shape[{self.axis}] {x_shape[self.axis]} must be divide exactly by"
-                                 f" output_num {self.output_num}")
+                raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shape}, 'axis' is {self.axis}, "
+                                 f"the shape of 'input_x' in 'axis' {self.axis} is {x_shape[self.axis]}, "
+                                 f"which must be divide exactly by 'output_num': {self.output_num}.")
         size_splits = [x_shape[self.axis] // self.output_num] * self.output_num
         self.add_prim_attr('size_splits', size_splits)
 
@@ -1449,7 +1454,7 @@ class TupleToArray(PrimitiveWithInfer):
         for i, item in enumerate(x):
             validator.check_value_type(f"x[{i}]", item, [numbers.Number], self.name)
         if not all(isinstance(item, dtype) for item in x):
-            raise TypeError("For \'{self.name}\' all elements of input x must be have same type.")
+            raise TypeError(f"For \'{self.name}\', all elements of 'input_x' must be have same type.")
         if isinstance(x[0], int):
             ret = np.array(x, np.int32)
         else:
@@ -1591,14 +1596,14 @@ class InvertPermutation(PrimitiveWithInfer):
         x_shp = x['shape']
         x_value = x['value']
         if x_value is None:
-            raise ValueError(f'For \'{self.name}\' the input value must be const.')
+            raise ValueError(f"For '{self.name}', the value of 'input_x' can not be None, but got {x_value}.")
         validator.check_value_type("shape", x_shp, [tuple, list], self.name)
         if mstype.issubclass_(x['dtype'], mstype.tensor):
-            raise ValueError(f'For \'{self.name}\' the input value must be non-Tensor.')
+            raise ValueError(f"For \'{self.name}\', the value of 'input_x' must be non-Tensor, but got {x['dtype']}")
         for shp in x_shp:
             if shp:
                 x_rank = len(np.array(x_value, np.int64).shape)
-                raise ValueError(f'For \'{self.name}\' the rank of input must be 1, but got {x_rank}.')
+                raise ValueError(f"For \'{self.name}\', the length of 'input_x' must be 1, but got {x_rank}.")
         for i, value in enumerate(x_value):
             validator.check_value_type("input[%d]" % i, value, [int], self.name)
         z = [x_value[i] for i in range(len(x_value))]
@@ -1606,7 +1611,8 @@ class InvertPermutation(PrimitiveWithInfer):
 
         for i in range(1, len(z)):
             if z[i - 1] == z[i]:
-                raise ValueError(f"For {self.name}, {z[i]} is duplicated in the input.")
+                raise ValueError(f"For '{self.name}', the 'input_x' can not contain duplicate values, "
+                                 f"but got duplicated {z[i]} in the 'input_x'.")
         validator.check(f'value min', min(x_value), '', 0, Rel.EQ, self.name)
         validator.check(f'value max', max(x_value), '', len(x_value) - 1, Rel.EQ, self.name)
 
@@ -1949,7 +1955,8 @@ class Tile(PrimitiveWithInfer):
 
     def check_elim(self, base_tensor, multiplier):
         if (not isinstance(base_tensor, Tensor)) or (not isinstance(multiplier, tuple)):
-            raise TypeError("Expecting (Tensor, tuple), got: ({}, {})".format(base_tensor, multiplier))
+            raise TypeError(f"For '{self.name}', the type of ('input_x', 'multiples') should be (Tensor, tuple), "
+                            f"but got ({type(base_tensor).__name__}, {type(multiplier).__name__}).")
         if all(v == 1 for v in multiplier):
             return (True, base_tensor)
         return (False, None)
@@ -1970,8 +1977,8 @@ class Tile(PrimitiveWithInfer):
                 x_shp.insert(0, 1)
             multiples_w = multiples_v
         elif len_sub < 0:
-            raise ValueError(f'For \'{self.name}\' the length of multiples can not be smaller than '
-                             f'the length of dimension in input_x.')
+            raise ValueError(f"For '{self.name}', the length of 'multiples' can not be smaller than "
+                             f"the length of dimension in 'input_x'.")
         for i, a in enumerate(multiples_w):
             x_shp[i] *= a
         value = None
@@ -2073,7 +2080,9 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
             output_min_shape = list(num_segments['min_value'])
         else:
             if isinstance(num_segments_type, type(mstype.tensor)):
-                raise ValueError("Num_segments only support int type when it is not a dynamic value")
+                raise ValueError(f"For '{self.name}', the dtype of 'num_segments' only support int type "
+                                 f"when it is not a dynamic value, but got type of 'num_segments': "
+                                 f"{num_segments_type}.")
             output_max_shape = [num_segments_v]
             output_min_shape = [num_segments_v]
         if 'max_shape' in x and 'min_shape' in x:
@@ -2727,8 +2736,8 @@ class Slice(PrimitiveWithInfer):
             validator.check_non_negative_int(begin_v[i], f'input begin[{i}]')
             if x_shape[i] < begin_v[i] + size_v[i]:
                 y = begin_v[i] + size_v[i]
-                raise ValueError("For '%s' slice shape can not bigger than origin shape %d, %d." %
-                                 (self.name, x_shape[i], y))
+                raise ValueError(f"For '{self.name}', the sliced shape can not greater than origin shape, but got "
+                                 f"sliced shape is {y}, and origin shape is {x_shape}.")
         return {'shape': size_v,
                 'dtype': x['dtype'],
                 'value': None}
@@ -2794,7 +2803,9 @@ class ReverseV2(PrimitiveWithInfer):
                 normalized_axis.append(v)
 
         if len(normalized_axis) != len(set(normalized_axis)):
-            raise ValueError('axis cannot contain duplicate dimensions.')
+            duplicated = [item for item, count in Counter(normalized_axis).items() if count > 1]
+            raise ValueError(f"For '{self.name}', the 'axis' cannot contain duplicate dimensions,"
+                             f" but got duplicated elements {duplicated}.")
 
         return x_shape
 
@@ -2913,8 +2924,9 @@ class Select(Primitive):
 def _compute_slicing_length(begin, end, stride, x_shape, i):
     """Computes the length of the slicing."""
     if i >= len(x_shape):
-        raise ValueError(f"For 'StridedSlice', When their is no new axis, the index length must be less or "
-                         f"equal than the dim of x.")
+        raise ValueError(f"For 'StridedSlice', the index length must be less than or equal to "
+                         f"the dimension of 'input_x' when there is no new axis, but got "
+                         f"the dimension of 'input_x': {len(x_shape)} and the index length: {i}.")
     x_dim = x_shape[i]
     if stride > 0:
         # When slicing forward, convert begin and end to positive numbers.
@@ -3143,15 +3155,16 @@ class StridedSlice(PrimitiveWithInfer):
         validator.check_value_type("strides", strides_v, [tuple], self.name)
 
         if tuple(filter(lambda x: not isinstance(x, int), begin_v + end_v + strides_v)):
-            raise TypeError(f"For {self.name}, both the begins, ends, and strides must be a tuple of int, "
-                            f"but got begins: {begin_v}, ends: {end_v}, strides: {strides_v}.")
+            raise TypeError(f"For {self.name}, both the 'begin', 'end', and 'strides' must be a tuple of int, "
+                            f"but got 'begin': {begin_v}, 'end': {end_v}, 'strides': {strides_v}.")
 
         if tuple(filter(lambda x: x == 0, strides_v)):
-            raise ValueError(f"For '{self.name}', the strides cannot contain 0, but got strides: {strides_v}.")
+            raise ValueError(f"For '{self.name}', the 'strides' cannot contain 0, but got 'strides': {strides_v}.")
 
         if len(end_v) != len(begin_v) or len(strides_v) != len(begin_v):
-            raise ValueError(f"For '{self.name}' the length of begin index: {begin_v}, end index: {end_v} and "
-                             f"strides: {strides_v} must be equal.")
+            raise ValueError(f"For '{self.name}', the length of 'begin' index and the length of 'end' index "
+                             f"must be the same as 'strides', but got the length of 'begin': {begin_v}, "
+                             f"'end' index: {end_v} and 'strides': {strides_v}.")
 
         ret_shape = self._compute_slicing_shape(x['shape'], begin_v, end_v, strides_v)
 
@@ -3219,9 +3232,9 @@ class StridedSlice(PrimitiveWithInfer):
                     continue
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
                     if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
-                        raise IndexError(f"For {self.name}, when shrink axis, the stride cannot be negative number, "
-                                         f"and begin should be in [-{x_shape[i]}, {x_shape[i]}), "
-                                         f"but got stride: {stride}, begin: {begin}.")
+                        raise IndexError(f"For '{self.name}', the 'strides' cannot be negative number and "
+                                         f"'begin' should be in [-{x_shape[i]}, {x_shape[i]}) when shrink axis, "
+                                         f"but got 'strides': {stride}, 'begin': {begin}.")
                     j += 1
                     i += 1
                     continue
@@ -3253,9 +3266,9 @@ class StridedSlice(PrimitiveWithInfer):
                     continue
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
                     if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
-                        raise ValueError(f"For {self.name}, when shrink axis, the stride cannot be negative number, "
-                                         f"and begin should be in [-{x_shape[i]}, {x_shape[i]}), "
-                                         f"but got stride: {stride}, begin: {begin}.")
+                        raise IndexError(f"For '{self.name}', the 'strides' cannot be negative number and "
+                                         f"'begin' should be in [-{x_shape[i]}, {x_shape[i]}) when shrink axis, "
+                                         f"but got 'strides': {stride}, 'begin': {begin}.")
                     j += 1
                     i += 1
                     continue
@@ -3369,8 +3382,8 @@ class DiagPart(PrimitiveWithInfer):
     def infer_shape(self, x_shape):
         if len(x_shape) % 2 != 0 or \
                 not x_shape:
-            raise ValueError(f"For \'{self.name}\' input rank must be non-zero and even, but got rank {len(x_shape)}, "
-                             f"with shapes {x_shape}")
+            raise ValueError(f"For \'{self.name}\', the rank of 'input_x' must be non-zero and even, "
+                             f"but got rank {len(x_shape)}, with shapes {x_shape}.")
         length = len(x_shape) // 2
         for i in range(length):
             validator.check('input_shape[i + len(input_shape)/2]', x_shape[i + length],
@@ -3533,7 +3546,9 @@ class ScatterNd(PrimitiveWithInfer):
 
         indices_shape, update_shape = indices["shape"], update["shape"]
         if indices_shape[0] != update_shape[0]:
-            raise ValueError(f'For \'{self.name}\' The indices_shape[0] and update_shape[0] must be equal.')
+            raise ValueError(f"For '{self.name}', the first shape of 'indices' must be the same as the first shape of "
+                             f"'updates', but got the first shape of 'indices': {indices_shape[0]}, "
+                             f"the first shape of 'updates': {update_shape[0]}.")
 
         return {'shape': shp,
                 'dtype': update['dtype'],
@@ -3704,15 +3719,22 @@ class TensorScatterUpdate(PrimitiveWithInfer):
 
     def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterUpdate', rank of indices cannot be less than 2.")
+            raise ValueError(f"For '{self.name}', the dimension of 'indices' cannot be less than 2,"
+                             f" but got {len(indices_shape)}.")
 
         if indices_shape[-1] > len(input_x_shape):
-            raise ValueError("For 'TensorScatterUpdate', indices.shape[-1] cannot be greater than rank of input_x.")
+            raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
+                             f"the dimension of 'input_x', but got the "
+                             f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
+                             f"{len(indices_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError("For 'TensorScatterUpdate', input_x.shape, "\
-                             "indices.shape and updates.shape are incompatible.")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
+                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
+                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
+                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
+                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
 
         return input_x_shape
 
@@ -3782,14 +3804,22 @@ class TensorScatterAdd(PrimitiveWithInfer):
 
     def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterAdd', rank of indices cannot be less than 2.")
+            raise ValueError(f"For '{self.name}', the dimension of 'indices' cannot be less than 2,"
+                             f" but got {len(indices_shape)}.")
 
         if indices_shape[-1] > len(input_x_shape):
-            raise ValueError("For 'TensorScatterAdd', indices.shape[-1] cannot be greater than rank of input_x.")
+            raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
+                             f"the dimension of 'input_x', but got the "
+                             f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
+                             f"{len(indices_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError("For 'TensorScatterAdd', input_x.shape, indices.shape and updates.shape are incompatible.")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
+                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
+                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
+                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
+                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
 
         return input_x_shape
 
@@ -4719,8 +4749,11 @@ class SpaceToDepth(PrimitiveWithInfer):
         out_shape = copy.deepcopy(x_shape)
         for i in range(2):
             if out_shape[i + 2] % self.block_size != 0:
-                raise ValueError(f'For \'{self.name}\' input shape[{i + 2}] {out_shape[i + 2]} should be '
-                                 f'fully divided by block_size {self.block_size}')
+                msg_prefix = "2nd" if i + 2 == 2 else "3rd"
+                raise ValueError(f"For '{self.name}', the shape of output with index {i + 2} must be divided "
+                                 f"exactly by 'block_size', but got the {msg_prefix} dimension "
+                                 f"of output: {out_shape[i + 2]} and "
+                                 f"'block_size': {self.block_size}.")
             out_shape[i + 2] //= self.block_size
 
         out_shape[1] *= self.block_size * self.block_size
@@ -4876,8 +4909,11 @@ class SpaceToBatch(PrimitiveWithInfer):
         for i in range(2):
             padded = out_shape[i + 2] + self.paddings[i][0] + self.paddings[i][1]
             if padded % self.block_size != 0:
-                raise ValueError(f'For \'{self.name}\' padded[{i}] {padded} should be divisible by '
-                                 f'block_size {self.block_size}')
+                msg_ndim = "2nd" if i + 2 == 2 else "3rd"
+                raise ValueError(f"For '{self.name}', the shape of the output tensor should be "
+                                 f"divisible by 'block_size', but got the {msg_ndim} dimension of output: {padded} and "
+                                 f"'block_size': {self.block_size}. Please check the official homepage "
+                                 f"for more information about the output tensor.")
             out_shape[i + 2] = padded // self.block_size
         out_shape[0] *= self.block_size * self.block_size
         return out_shape
@@ -4964,8 +5000,9 @@ class BatchToSpace(PrimitiveWithInfer):
             out_shape[i + 2] = x_block_prod - crops_sum
         block_size_prod = self.block_size * self.block_size
         if out_shape[0] % block_size_prod != 0:
-            raise ValueError(f'For \'{self.name}\' input_x dimension 0 {out_shape[0]}  should be divisible by '
-                             f'block_size_prod {block_size_prod}')
+            raise ValueError(f"For '{self.name}', the shape of output with index 0 must be divided exactly "
+                             f"by block_size_prod, but got the shape of output: {out_shape} and "
+                             f"block_size_prod: {block_size_prod}.")
         out_shape[0] = out_shape[0] // block_size_prod
         return out_shape
 
@@ -5066,8 +5103,11 @@ class SpaceToBatchND(PrimitiveWithInfer):
             padded = out_shape[i + offset] + self.paddings[i][0] + \
                      self.paddings[i][1]
             if padded % self.block_shape[i] != 0:
-                raise ValueError(f'For \'{self.name}\' padded[{i}] {padded} should be divisible by '
-                                 f'block_shape[{i}] {self.block_shape[i]}')
+                msg_ndim = "2nd" if i + 2 == 2 else "3rd"
+                raise ValueError(f"For '{self.name}', the 2nd and 3rd dimension of the output tensor should be "
+                                 f"divisible by 'block_shape', but got the {msg_ndim} dimension of output: {padded} "
+                                 f"and the {i} dimension block_shape: {self.block_shape}. Please check the "
+                                 f"official homepage for more information about the output tensor.")
             out_shape[i + offset] = padded // self.block_shape[i]
             block_shape_prod = block_shape_prod * self.block_shape[i]
         out_shape[0] *= block_shape_prod
@@ -5170,8 +5210,9 @@ class BatchToSpaceND(PrimitiveWithInfer):
             out_shape[i + offset] = x_block_prod - crops_sum
 
         if out_shape[0] % block_shape_prod != 0:
-            raise ValueError(f'For \'{self.name}\' input_x dimension 0 {out_shape[0]} should be divisible by '
-                             f'block_shape_prod {block_shape_prod}')
+            raise ValueError(f"For '{self.name}', the 0th dimension of the output tensor should be "
+                             f"divisible by block_shape_prod, but got 0th dimension of the output tensor: "
+                             f"{out_shape[0]} and the block_shape_prod: {block_shape_prod}.")
         out_shape[0] = out_shape[0] // block_shape_prod
         return out_shape
 
@@ -5317,8 +5358,7 @@ class Meshgrid(PrimitiveWithInfer):
     def __init__(self, indexing="xy"):
         """Initialize Meshgrid."""
         validator.check_value_type("indexing", indexing, (str), self.name)
-        if indexing not in ("xy", "ij"):
-            raise ValueError("indexing parameter must be either 'xy' or 'ij'")
+        validator.check_string(indexing.lower(), ["xy", "ij"], "indexing", self.name)
         self.indexing = indexing
 
     def infer_shape(self, x_shape):
@@ -5401,7 +5441,8 @@ class InplaceUpdate(PrimitiveWithInfer):
                         Rel.EQ, self.name)
         for i in self.indices:
             if i < 0 or i >= x_shape[0]:
-                raise ValueError(f'The value of indices must be in [0, {x_shape[0]}), but got {i}.')
+                raise ValueError(f"For '{self.name}', the value of indices must be in [0, {x_shape[0]}), "
+                                 f"but got {i}.")
         x_rank = len(x_shape)
         for idx in range(x_rank)[1:]:
             validator.check('v dim %d' % idx, v_shape[idx], "x dim %d" % idx, x_shape[idx], Rel.EQ, self.name)
@@ -5731,10 +5772,11 @@ class EmbeddingLookup(PrimitiveWithCheck):
         validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
         indices_shp = indices['shape']
         if not indices_shp:
-            raise ValueError("'indices' should NOT be a scalar.")
+            raise ValueError(f"For '{self.name}', the 'input_indices' should not be a scalar, but got {indices_shp}.")
         params_shp = params['shape']
         if len(params_shp) > 2:
-            raise ValueError("The dimension of 'params' in EmbeddingLookup must <= 2, but got %d." % len(params_shp))
+            raise ValueError(f"For '{self.name}', the dimension of 'input_params' must <= 2, "
+                             f"but got {len(params_shp)}.")
 
 
 class GatherD(Primitive):
@@ -6014,9 +6056,11 @@ class SearchSorted(PrimitiveWithInfer):
 
     def infer_shape(self, sequence_shape, values_shape):
         if len(sequence_shape) != 1 and sequence_shape[:-1] != values_shape[:-1]:
-            raise ValueError(f"Sequence should be 1 dimensional or has all but the last dimension matching "
-                             f" the dimensions of values, but got sequence's dimensions: {sequence_shape} "
-                             f"and values' dimensions: {values_shape}.")
+            raise ValueError(f"For '{self.name}', the 'sequence' should be 1 dimensional or "
+                             f"all dimensions except the last dimension of 'sequence' "
+                             f"must be the same as all dimensions except the last dimension of 'values'. "
+                             f"but got dimension of 'sequence': {sequence_shape} "
+                             f"and dimension of 'values': {values_shape}.")
         return values_shape
 
     def infer_dtype(self, sequence_dtype, values_dtype):
@@ -6081,14 +6125,22 @@ class TensorScatterMax(PrimitiveWithInfer):
 
     def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterMax', rank of indices cannot be less than 2.")
+            raise ValueError(f"For '{self.name}', the dimension of 'indices' cannot be less than 2,"
+                             f" but got {len(indices_shape)}.")
 
         if indices_shape[-1] > len(input_x_shape):
-            raise ValueError("For 'TensorScatterMax', indices.shape[-1] cannot be greater than rank of input_x.")
+            raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
+                             f"the dimension of 'input_x', but got the "
+                             f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
+                             f"{len(indices_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError("For 'TensorScatterMax', input_x.shape, indices.shape and updates.shape are incompatible.")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
+                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
+                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
+                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
+                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
 
         return input_x_shape
 
@@ -6157,14 +6209,22 @@ class TensorScatterMin(PrimitiveWithInfer):
 
     def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterMin', rank of indices cannot be less than 2.")
+            raise ValueError(f"For '{self.name}', the dimension of 'indices' cannot be less than 2,"
+                             f" but got {len(indices_shape)}.")
 
         if indices_shape[-1] > len(input_x_shape):
-            raise ValueError("For 'TensorScatterMin', indices.shape[-1] cannot be greater than rank of input_x.")
+            raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
+                             f"the dimension of 'input_x', but got the "
+                             f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
+                             f"{len(indices_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError("For 'TensorScatterMin', input_x.shape, indices.shape and updates.shape are incompatible.")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
+                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
+                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
+                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
+                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
 
         return input_x_shape
 
@@ -6234,14 +6294,22 @@ class TensorScatterSub(PrimitiveWithInfer):
 
     def infer_shape(self, input_x_shape, indices_shape, updates_shape):
         if len(indices_shape) < 2:
-            raise ValueError("For 'TensorScatterSub', rank of indices cannot be less than 2.")
+            raise ValueError(f"For '{self.name}', the dimension of 'indices' cannot be less than 2,"
+                             f" but got {len(indices_shape)}.")
 
         if indices_shape[-1] > len(input_x_shape):
-            raise ValueError("For 'TensorScatterSub', indices.shape[-1] cannot be greater than rank of input_x.")
+            raise ValueError(f"For '{self.name}', the last dimension of 'indices' must be less than or equal to "
+                             f"the dimension of 'input_x', but got the "
+                             f"last dimension of 'indices': {indices_shape[-1]} and the dimension of 'input_x': "
+                             f"{len(indices_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError("For 'TensorScatterSub', input_x.shape, indices.shape and updates.shape are incompatible.")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
+                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
+                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
+                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
+                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
 
         return input_x_shape
 
