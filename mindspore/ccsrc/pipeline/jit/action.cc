@@ -656,9 +656,10 @@ bool EliminateForwardCNode(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(graph_executor);
   auto phase = graph_executor->phase();
   MS_LOG(DEBUG) << "The phase of current pipeline graph is: " << phase;
-  // Export graph run in pynative mode no need to do this action.
-  if (phase.find("export") != std::string::npos) {
-    auto pynative_exec = pynative::PynativeExecutor::GetInstance();
+  // Exporting graph in PyNative mode or only running forward process no need to do this action.
+  auto pynative_exec = pynative::PynativeExecutor::GetInstance();
+  if (phase.find("export") == 0 || !pynative_exec->grad_flag()) {
+    MS_LOG(DEBUG) << "When exporting graph or only running forward process, no need to eliminate forward cnode.";
     auto grad_exec = pynative_exec->grad_executor();
     grad_exec->set_eliminate_forward(true);
     return true;
@@ -669,7 +670,6 @@ bool EliminateForwardCNode(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   auto ms_func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(ms_func_graph);
-  auto pynative_exec = pynative::PynativeExecutor::GetInstance();
   auto grad_exec = pynative_exec->grad_executor();
   bool eliminate_forward = grad_exec->eliminate_forward();
   grad_exec->set_eliminate_forward(eliminate_forward && ms_func_graph->func_graphs_used().empty());
