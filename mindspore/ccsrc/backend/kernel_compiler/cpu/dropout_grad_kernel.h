@@ -31,6 +31,7 @@ class DropoutGradCpuBwdKernel : public CPUKernel {
   DropoutGradCpuBwdKernel() = default;
   ~DropoutGradCpuBwdKernel() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
@@ -39,8 +40,8 @@ class DropoutGradCpuBwdKernel : public CPUKernel {
   size_t num_count_{1};
   TypeId dtype_{kTypeUnknown};
   template <typename T>
-  void DropoutBackwardKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
-                             float keep_prob);
+  void DropoutBackwardKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                             const std::vector<AddressPtr> &outputs, float keep_prob);
 };
 
 MS_REG_CPU_KERNEL(DropoutGrad, KernelAttr(), DropoutGradCpuBwdKernel);

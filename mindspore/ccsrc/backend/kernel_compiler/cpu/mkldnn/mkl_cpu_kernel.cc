@@ -43,14 +43,14 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
       int effective_k = (SizeToInt(kernel_size[i]) - 1) * dilation[i] + 1;
       int pad_along = std::max(0, (out - 1) * stride[i] + effective_k - wh);
       int pad = pad_along / 2;
-      padding_l->emplace_back(pad);
-      padding_r->emplace_back(pad_along - pad);
+      (void)padding_l->emplace_back(pad);
+      (void)padding_r->emplace_back(pad_along - pad);
     }
   } else if (pad_mode == PAD_MODE_LOWER_VALID || pad_mode == PAD_MODE_UPPER_VALID) {
     MS_LOG(INFO) << "pad valid";
     for (size_t i = 0; i < dim - 2; ++i) {
-      padding_l->emplace_back(0);
-      padding_r->emplace_back(0);
+      (void)padding_l->emplace_back(0);
+      (void)padding_r->emplace_back(0);
     }
   } else {
     std::vector<int> pad;
@@ -58,8 +58,8 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
     (void)std::transform(pad_me.begin(), pad_me.end(), std::back_inserter(pad),
                          [](const int64_t &value) { return static_cast<int>(value); });
     for (size_t i = 0; i < dim; i += 2) {
-      padding_l->emplace_back(pad[i]);
-      padding_r->emplace_back(pad[i + 1]);
+      (void)padding_l->emplace_back(pad[i]);
+      (void)padding_r->emplace_back(pad[i + 1]);
     }
   }
 }
@@ -71,19 +71,19 @@ bool MKLCPUKernel::BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<
   MS_EXCEPTION_IF_NULL(dst_shape);
   bool need_swap = false;
   if (dst_shape->size() == 0) {
-    dst_shape->emplace_back(1);
-    src0_shape->emplace_back(1);
-    src1_shape->emplace_back(1);
+    (void)dst_shape->emplace_back(1);
+    (void)src0_shape->emplace_back(1);
+    (void)src1_shape->emplace_back(1);
   }
   MS_LOG(DEBUG) << "Binary broadcast in: src0: " << *src0_shape << " src1: " << *src1_shape << " dst: " << *dst_shape;
   if (src0_shape->size() != dst_shape->size()) {
     need_swap = true;
     for (size_t i = src0_shape->size(); i < dst_shape->size(); ++i) {
-      src0_shape->insert(src0_shape->begin(), 1);
+      (void)src0_shape->insert(src0_shape->begin(), 1);
     }
   } else if (src1_shape->size() != dst_shape->size()) {
     for (size_t i = src1_shape->size(); i < dst_shape->size(); ++i) {
-      src1_shape->insert(src1_shape->begin(), 1);
+      (void)src1_shape->insert(src1_shape->begin(), 1);
     }
   }
   if (src0_shape->size() == src1_shape->size()) {

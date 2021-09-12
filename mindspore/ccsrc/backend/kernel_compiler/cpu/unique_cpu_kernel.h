@@ -112,12 +112,12 @@ class UniqueCPUKernel : public CPUKernel {
     std::vector<common::Task> tasks;
     tasks.reserve(thread_num);
     for (size_t i = 0; i < thread_num; ++i) {
-      segment_bucket_sizes.emplace_back(std::make_shared<std::vector<IndexType>>(thread_num, 0));
+      (void)segment_bucket_sizes.emplace_back(std::make_shared<std::vector<IndexType>>(thread_num, 0));
       IndexType data_size = thread_data_size;
       if (i < left_data_size) {
         data_size += 1;
       }
-      segments.emplace_back(std::make_shared<UniqueParam<DataType, IndexType>>());
+      (void)segments.emplace_back(std::make_shared<UniqueParam<DataType, IndexType>>());
       segments[i]->input_ = params->input_ + current_offset;
       segments[i]->input_size_ = data_size;
       segments[i]->thread_num_ = thread_num;
@@ -125,10 +125,10 @@ class UniqueCPUKernel : public CPUKernel {
         CalculateEachBucketSize<DataType, IndexType>(segments[i], segment_bucket_sizes[i].get());
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
       current_offset += data_size;
     }
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
   template <typename DataType, typename IndexType>
@@ -201,7 +201,7 @@ class UniqueCPUKernel : public CPUKernel {
       bucket->inverse_idx_ = params->input_idx_ + current_offset;
       bucket->input_size_ = bucket_data_size[i];
       current_offset += bucket_data_size[i];
-      buckets.emplace_back(bucket);
+      (void)buckets.emplace_back(bucket);
     }
     std::vector<IndexType> tmp_bucket_data_size(thread_num, 0);
     std::vector<std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>>> thread_buckets;
@@ -212,10 +212,10 @@ class UniqueCPUKernel : public CPUKernel {
         bucket->input_ = buckets[j]->input_ + tmp_bucket_data_size[j];
         bucket->input_size_ = buckets[j]->input_size_ - tmp_bucket_data_size[j];
         bucket->workspace_idx_ = buckets[j]->workspace_idx_ + tmp_bucket_data_size[j];
-        local_buckets.emplace_back(bucket);
+        (void)local_buckets.emplace_back(bucket);
         tmp_bucket_data_size[j] += segment_bucket_sizes[i]->at(j);
       }
-      thread_buckets.emplace_back(local_buckets);
+      (void)thread_buckets.emplace_back(local_buckets);
     }
     std::vector<common::Task> tasks;
     tasks.reserve(thread_num);
@@ -226,10 +226,10 @@ class UniqueCPUKernel : public CPUKernel {
         SegmentToBuckets<DataType, IndexType>(segments[i], current_offset, thread_buckets[i]);
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
       current_offset += segments[i]->input_size_;
     }
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
     MS_LOG(DEBUG) << "End";
   }
 
@@ -299,9 +299,9 @@ class UniqueCPUKernel : public CPUKernel {
         Unique<DataType, IndexType>(buckets[i]);
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
     }
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
     MS_LOG(DEBUG) << "End";
   }
 
@@ -355,9 +355,9 @@ class UniqueCPUKernel : public CPUKernel {
         TransformBucketReverseIndices<DataType, IndexType>(buckets[i], result, bucket_offsets[i]);
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
     }
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
     MS_LOG(DEBUG) << "End";
   }
 

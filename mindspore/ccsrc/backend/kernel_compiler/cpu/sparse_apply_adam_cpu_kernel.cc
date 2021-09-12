@@ -81,11 +81,11 @@ void ComputeWeight(MultiThreadComputeParams<T> *input_params, size_t start, size
 
 template <typename T>
 void SparseApplyAdamCPUKernel::InitWorkspaceSize() {
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
-  workspace_size_list_.emplace_back(var_first_dim_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(var_first_dim_size_ * var_outer_dim_size_ * sizeof(float));
 }
 
 void SparseApplyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {

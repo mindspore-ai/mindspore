@@ -59,10 +59,10 @@ void ComputeProximalAdagrad(MultiThreadComputeParams<T> *input_params, size_t st
 
 template <typename T>
 void SparseApplyProximalAdagradCPUKernel::InitWorkspaceSize() {
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
 }
 
 void SparseApplyProximalAdagradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {

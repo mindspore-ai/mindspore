@@ -79,13 +79,13 @@ class BufferCPUSampleKernel : public CPUKernel {
     std::vector<size_t> indexes;
     if (unique_) {
       for (size_t i = 0; i < IntToSize(count_addr[0]); ++i) {
-        indexes.emplace_back(i);
+        (void)indexes.emplace_back(i);
       }
       random_shuffle(indexes.begin(), indexes.end(), [&](int i) { return std::rand() % i; });
     } else {
       std::uniform_int_distribution<> distrib(0, count_addr[0]);
       for (size_t i = 0; i < batch_size_; ++i) {
-        indexes.emplace_back(distrib(generator_));
+        (void)indexes.emplace_back(distrib(generator_));
       }
     }
 

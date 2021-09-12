@@ -19,6 +19,21 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+// preset size of paddings
+constexpr int MAX_PADDINGS = 4;
+constexpr int PADDING_SIZE = 2;
+
+// define constants for kernel indexing use
+constexpr int BATCH = 0;
+constexpr int CHANNEL = 1 * PADDING_SIZE;
+constexpr int HEIGHT = 2 * PADDING_SIZE;
+constexpr int WIDTH = 3 * PADDING_SIZE;
+constexpr int TOP = 0;
+constexpr int BOTTOM = 1;
+constexpr int LEFT = 0;
+constexpr int RIGHT = 1;
+}  // namespace
 void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::string mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -123,7 +138,7 @@ bool MirrorPadGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
 
 template <typename T>
 void MirrorPadGradCPUKernel::InitWorkspaceSize() {
-  workspace_size_list_.emplace_back(workspace_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(workspace_size_ * sizeof(T));
 }
 
 void MirrorPadGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {

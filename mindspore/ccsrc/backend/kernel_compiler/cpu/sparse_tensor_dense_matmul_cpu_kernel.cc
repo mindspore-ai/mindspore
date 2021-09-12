@@ -86,20 +86,21 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
       MS_EXCEPTION(ValueError) << "The indices including out of bounds index, row range: [0, " << out_dim_0
                                << "), col range: [0, " << same_dim << "), but got row: " << row << ", col: " << col;
     }
-
+    const size_t row_s = IntToSize(row);
+    const size_t col_s = IntToSize(col);
     for (size_t n = 0; n < out_dim_1; ++n) {
       if (adj_dt_) {
-        if (n * b_dim_1 + col >= b_length) {
+        if (n * b_dim_1 + col_s >= b_length) {
           MS_LOG(EXCEPTION) << "The index of b out of bounds.";
         }
-        const T b_value = b[n * b_dim_1 + col];
-        out[row * out_dim_1 + n] += a_values[i] * b_value;
+        const T b_value = b[n * b_dim_1 + col_s];
+        out[row_s * out_dim_1 + n] += a_values[i] * b_value;
       } else {
-        if (col * b_dim_1 + n >= b_length) {
+        if (col_s * b_dim_1 + n >= b_length) {
           MS_LOG(EXCEPTION) << "The index of b out of bounds.";
         }
-        const T b_value = b[col * b_dim_1 + n];
-        out[row * out_dim_1 + n] += a_values[i] * b_value;
+        const T b_value = b[col_s * b_dim_1 + n];
+        out[row_s * out_dim_1 + n] += a_values[i] * b_value;
       }
     }
   }

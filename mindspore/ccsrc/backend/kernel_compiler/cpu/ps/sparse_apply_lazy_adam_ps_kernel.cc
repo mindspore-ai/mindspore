@@ -58,10 +58,10 @@ void SparseApplyLazyAdamPSKernel::InitKernel(
   if (AnfAlgo::HasNodeAttr(USE_NESTEROV, cnode)) {
     use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(cnode, "use_nesterov");
   }
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
 }
 
 void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {

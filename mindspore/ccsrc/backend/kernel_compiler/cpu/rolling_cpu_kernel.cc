@@ -64,7 +64,7 @@ void RollingCpuKernel<T, S>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   // input values
-  workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
+  (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
 }
 
 template <typename T, typename S>
@@ -202,7 +202,7 @@ bool RollingCpuKernel<T, S>::Launch(const std::vector<AddressPtr> &inputs, const
     for (size_t j = 0; j < axisIterator_.InnerSize(); ++j) {
       size_t offset = (i * axisIterator_.InnerSize() + j) * axisIterator_.AxisSize();
       size_t *ids = workspace_addr + offset;
-      tasks.emplace_back([this, i, j, nan_value, input_addr, ids, output_addr] {
+      (void)tasks.emplace_back([this, i, j, nan_value, input_addr, ids, output_addr] {
         AxisIterator iter(axisIterator_);
         iter.SetOffset(i, j);
 
@@ -222,7 +222,7 @@ bool RollingCpuKernel<T, S>::Launch(const std::vector<AddressPtr> &inputs, const
       });
     }
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   return true;
 }
 }  // namespace kernel

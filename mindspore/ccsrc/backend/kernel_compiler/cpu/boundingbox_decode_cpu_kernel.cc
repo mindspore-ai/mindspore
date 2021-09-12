@@ -33,7 +33,7 @@ void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<FloatImm>()) {
     float mean = AnfAlgo::GetNodeAttr<float>(kernel_node, "means");
     for (size_t i = 0; i < coordinate_size; i++) {
-      means_.emplace_back(mean);
+      (void)means_.emplace_back(mean);
     }
   } else {
     MS_LOG(EXCEPTION) << "Attribute means type is invalid.";
@@ -45,7 +45,7 @@ void BoundingBoxDecodeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<FloatImm>()) {
     float std = AnfAlgo::GetNodeAttr<float>(kernel_node, "stds");
     for (size_t i = 0; i < coordinate_size; i++) {
-      stds_.emplace_back(std);
+      (void)stds_.emplace_back(std);
     }
   } else {
     MS_LOG(EXCEPTION) << "Attribute stds type is invalid.";

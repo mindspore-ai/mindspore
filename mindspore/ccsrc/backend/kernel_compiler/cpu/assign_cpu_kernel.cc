@@ -89,10 +89,10 @@ bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
       }
       return common::SUCCESS;
     };
-    tasks.emplace_back(block);
+    (void)tasks.emplace_back(block);
     thread_index++;
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   return true;
 }
 }  // namespace kernel

@@ -50,7 +50,7 @@ void LaunchStandardNormal(unsigned int seed, const std::vector<AddressPtr> &outp
     // avoid different threads using the same seed to generate the same random number
     std::default_random_engine random_generator(++seed);
     size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    threads.emplace_back(std::thread(StandardNormal, output, distribution, random_generator, start, end));
+    (void)threads.emplace_back(std::thread(StandardNormal, output, distribution, random_generator, start, end));
     start += once_compute_size;
   }
   for (size_t i = 0; i < threads.size(); ++i) {

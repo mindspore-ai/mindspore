@@ -68,12 +68,12 @@ void RankCpuKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   // id
-  workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
+  (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
   // copy element
-  workspace_size_list_.emplace_back((sizeof(T) * element_size));
+  (void)workspace_size_list_.emplace_back((sizeof(T) * element_size));
   if constexpr (!std::is_integral_v<T>) {
     // nan flags
-    workspace_size_list_.emplace_back((sizeof(bool) * element_size));
+    (void)workspace_size_list_.emplace_back((sizeof(bool) * element_size));
   }
 }
 
@@ -215,7 +215,7 @@ void RankCpuKernel<T>::Launch1DFloat(const T *input_addr, size_t *sort_idx, T *v
   for (size_t i = 0; i < n; ++i) {
     duplicate_count++;
 
-    if ((i == n - 1) || (values[sort_idx[i]] != values[sort_idx[i + 1]]) ||
+    if ((i == n - 1) || std::not_equal_to<T>()(values[sort_idx[i]], values[sort_idx[i + 1]]) ||
         (is_nan[sort_idx[i]] != is_nan[sort_idx[i + 1]])) {
       if ((option_ == NaOption::Keep) && is_nan[sort_idx[i]]) {
         for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
@@ -278,7 +278,7 @@ bool RankCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
   tasks.reserve(axisIterator_.OuterSize() * axisIterator_.InnerSize());
   for (size_t i = 0; i < axisIterator_.OuterSize(); ++i) {
     for (size_t j = 0; j < axisIterator_.InnerSize(); ++j) {
-      tasks.emplace_back([this, i, j, input_addr, ids_addr, values_addr, workspace, output_addr]() {
+      (void)tasks.emplace_back([this, i, j, input_addr, ids_addr, values_addr, workspace, output_addr]() {
         AxisIterator iter(axisIterator_);
         iter.SetOffset(i, j);
 
@@ -297,7 +297,7 @@ bool RankCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
       });
     }
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   return true;
 }
 }  // namespace kernel

@@ -107,9 +107,9 @@ void LayerNormCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
       task(i);
       return common::SUCCESS;
     };
-    tasks.emplace_back(block);
+    (void)tasks.emplace_back(block);
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 
 void LayerNormCPUKernel::CheckParam(const CNodePtr &kernel_node) {

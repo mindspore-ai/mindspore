@@ -134,7 +134,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     };
     tasks1.emplace_back(block);
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks1);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks1);
   for (size_t i = 0; i < thread_num2; ++i) {
     auto block = [&, i]() {
       task2(i);
@@ -142,7 +142,7 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     };
     tasks2.emplace_back(block);
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks2);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks2);
 }
 
 void LayerNormGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {

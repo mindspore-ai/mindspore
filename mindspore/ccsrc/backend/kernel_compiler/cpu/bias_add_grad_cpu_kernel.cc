@@ -52,8 +52,8 @@ bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const s
       }
     }
   } else if (input_shape_.size() == 2) {
-    auto task = [&](size_t start, size_t end) {
-      ReduceSumDim2Axis0(end - start, input_shape_[1], input_shape_[0], input_addr + start, output_addr + start);
+    auto task = [this, input_addr, output_addr](size_t start, size_t end) {
+      (void)ReduceSumDim2Axis0(end - start, input_shape_[1], input_shape_[0], input_addr + start, output_addr + start);
     };
     ParallelLaunchAutoSearch(task, input_shape_[1], this, &parallel_search_info_);
   }

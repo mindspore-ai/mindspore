@@ -42,7 +42,7 @@ void CumSumCPUKernel::InitWorkspaceSize() {
   for (size_t i = 0; i < shape_.size(); i++) {
     input_size_0_ *= shape_[i];
   }
-  workspace_size_list_.emplace_back(input_size_0_);
+  (void)workspace_size_list_.emplace_back(input_size_0_);
 }
 
 void CumSumCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
@@ -233,7 +233,7 @@ void CumSumCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   }
   while (start < lens) {
     size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    threads.emplace_back(std::thread(&CumSumCPUKernel::LaunchCumSum<T>, this, input, output, ws, start, end));
+    (void)threads.emplace_back(std::thread(&CumSumCPUKernel::LaunchCumSum<T>, this, input, output, ws, start, end));
     start += once_compute_size;
   }
   for (size_t i = 0; i < threads.size(); ++i) {

@@ -126,10 +126,10 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
       Compute<T>(&params, start, end);
       return common::SUCCESS;
     };
-    tasks.emplace_back(task);
+    (void)tasks.emplace_back(task);
     start += once_compute_size;
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
 
   auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
   if (ret != 0) {

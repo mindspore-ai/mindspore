@@ -32,7 +32,7 @@ void CPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     tensor_size = std::max(tensor_size, type_size);
-    input_size_list_.emplace_back(tensor_size);
+    (void)input_size_list_.emplace_back(tensor_size);
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
@@ -42,7 +42,7 @@ void CPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     tensor_size = std::max(tensor_size, type_size);
-    output_size_list_.emplace_back(tensor_size);
+    (void)output_size_list_.emplace_back(tensor_size);
   }
 }
 
@@ -79,10 +79,10 @@ size_t CPUKernelUtils::GetElementNumOnAxis(const std::vector<size_t> &shape, int
 
 void CPUKernelUtils::GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num) {
   size_t accumulation = 1;
-  element_num->emplace_back(1);
+  (void)element_num->emplace_back(1);
   for (size_t i = shape.size() - 1; i > 0; --i) {
     accumulation *= shape[i];
-    element_num->emplace_back(accumulation);
+    (void)element_num->emplace_back(accumulation);
   }
   std::reverse(element_num->begin(), element_num->end());
 }
@@ -99,10 +99,10 @@ void CPUKernelUtils::ParallelFor(const CTask &task, size_t count, float block_si
       task(start, end);
       return common::SUCCESS;
     };
-    tasks.emplace_back(block);
+    (void)tasks.emplace_back(block);
     start += once_compute_size;
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 
 // Search for best block_size to get best thread num : 1 2 4 8 16 23(32)

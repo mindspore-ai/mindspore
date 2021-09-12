@@ -44,7 +44,7 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   for (size_t i = 0; i < input_num; i++) {
     auto input_shape_i = AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
     auto flat_shape = CPUKernelUtils::FlatShapeByAxis(input_shape_i, axis_);
-    input_flat_shape_list.emplace_back(flat_shape);
+    (void)input_flat_shape_list.emplace_back(flat_shape);
   }
 
   size_t output_dim_1 = 0;
@@ -55,7 +55,7 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   std::vector<T *> input_addr_list;
   for (size_t j = 0; j < input_num; ++j) {
     auto tmp_addr = reinterpret_cast<T *>(inputs[j]->addr);
-    input_addr_list.emplace_back(tmp_addr);
+    (void)input_addr_list.emplace_back(tmp_addr);
   }
   // each input's row of shape after flat are same
   auto before_axis = input_flat_shape_list[0][0];
@@ -69,7 +69,7 @@ bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
         auto copy_num = input_flat_shape_list[j][1];
         auto copy_size = copy_num * sizeof(T);
         auto offset = copy_num * i;
-        (void)memcpy(output_ptr, input_addr_list[j] + offset, copy_size);
+        (void)memcpy_s(output_ptr, copy_size, input_addr_list[j] + offset, copy_size);
         output_ptr += copy_num;
       }
     }

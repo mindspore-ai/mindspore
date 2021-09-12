@@ -105,7 +105,7 @@ void RandomChoiceWithMaskCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < input_num; i++) {
     auto input_i_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
     for (size_t j = 0; j < input_i_shape.size(); j++) {
-      dims_.emplace_back(input_i_shape[j]);
+      (void)dims_.emplace_back(input_i_shape[j]);
     }
   }
   input_dim_size = SizeToInt(dims_.size());
@@ -170,7 +170,6 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
   int32_t copy_output_length = 0;
   if (output_length * input_dim_size >= INT_MAX || output_length * input_dim_size < 0) {
     MS_LOG(EXCEPTION) << "Output size exceed INT_MAX";
-    return false;
   }
 
   copy_output_length = output_length * input_dim_size;
@@ -181,17 +180,14 @@ bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr>
   copy_output_length = std::min(actual_output_length, copy_output_length);
   if (INT_MAX / static_cast<int>(sizeof(int32_t)) < copy_output_length) {
     MS_LOG(EXCEPTION) << "The output length is out of range!";
-    return false;
   }
 
   size_t copy_output_bytes = IntToSize(copy_output_length) * sizeof(int32_t);
   auto ret = memcpy_s(output_coordinate, outputs[0]->size, output, copy_output_bytes);
   if (ret != EOK) {
-    MS_LOG(INFO) << "memcpy_s failed, ret = " << ret;
-    return false;
+    MS_LOG(EXCEPTION) << "memcpy_s failed, ret = " << ret;
   }
   UpdateOutput(dims_, non_zero_num, count_, output_length, mask_dim, output_coordinate, mask);
-
   return true;
 }
 }  // namespace kernel

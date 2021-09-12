@@ -66,10 +66,10 @@ void SparseApplyFtrlPSKernel::InitKernel(
   if (lr_power_ > 0) {
     MS_LOG(EXCEPTION) << "lr_power should be a non-positive scalar";
   }
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
 }
 
 void SparseApplyFtrlPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {

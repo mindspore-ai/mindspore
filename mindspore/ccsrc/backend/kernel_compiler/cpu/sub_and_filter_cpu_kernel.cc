@@ -71,7 +71,7 @@ void SubAndFilterCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
   MS_LOG(INFO) << "SubAndFilter output count is " << count;
   std::vector<size_t> out_shape;
-  out_shape.emplace_back(count);
+  (void)out_shape.emplace_back(count);
   size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
   std::vector<TypeId> dtypes(output_num);
   for (size_t i = 0; i < output_num; i++) {

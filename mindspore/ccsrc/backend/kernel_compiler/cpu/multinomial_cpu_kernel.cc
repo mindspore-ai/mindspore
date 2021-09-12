@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 void MultinomialGpuKernel::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 

@@ -49,7 +49,7 @@ void SortCpuKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   // id
-  workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
+  (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
 }
 
 template <typename T>
@@ -101,10 +101,10 @@ bool SortCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::
         }
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
     }
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   return true;
 }
 }  // namespace kernel

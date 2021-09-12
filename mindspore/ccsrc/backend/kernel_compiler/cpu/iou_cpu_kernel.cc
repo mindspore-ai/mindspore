@@ -71,8 +71,8 @@ bool IOUCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
     constexpr size_t X1_SHIFT = 2;
     constexpr size_t Y1_SHIFT = 3;
     for (size_t i = start; i < end; i++) {
-      int idx1 = i % anchor_boxes_size_ * BOX_COORDINATE_LEN;
-      int idx2 = i / anchor_boxes_size_ * BOX_COORDINATE_LEN;
+      size_t idx1 = i % anchor_boxes_size_ * BOX_COORDINATE_LEN;
+      size_t idx2 = i / anchor_boxes_size_ * BOX_COORDINATE_LEN;
       T I_x0 = std::max(anchor_boxes[idx1], gt_boxes[idx2]);
       T I_y0 = std::max(anchor_boxes[idx1 + Y0_SHIFT], gt_boxes[idx2 + Y0_SHIFT]);
       T I_x1 = std::min(anchor_boxes[idx1 + X1_SHIFT], gt_boxes[idx2 + X1_SHIFT]);

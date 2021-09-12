@@ -130,10 +130,10 @@ class SparseOptimizerCPUKernel : public CPUKernel {
         func(params, start, end);
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
       start += once_compute_size;
     }
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
  private:
@@ -176,12 +176,12 @@ class SparseOptimizerCPUKernel : public CPUKernel {
 
     size_t current_indices_offset = 0;
     for (size_t i = 0; i < param.thread_num_; ++i) {
-      segment_bucket_sizes.emplace_back(std::make_shared<std::vector<size_t>>(param.thread_num_, 0));
+      (void)segment_bucket_sizes.emplace_back(std::make_shared<std::vector<size_t>>(param.thread_num_, 0));
       size_t indices_size = thread_indices_size;
       if (i < left_indices_size) {
         indices_size += 1;
       }
-      segments.emplace_back(std::make_shared<SparseGradient<T>>());
+      (void)segments.emplace_back(std::make_shared<SparseGradient<T>>());
       segments[i]->value_ = input_grad->value_ + current_indices_offset * param.value_stride_;
       segments[i]->indices_ = input_grad->indices_ + current_indices_offset;
       segments[i]->indices_size_ = indices_size;
@@ -189,10 +189,10 @@ class SparseOptimizerCPUKernel : public CPUKernel {
         CalculateEachBucketSize<T>(segments[i], param.max_index_, segment_bucket_sizes[i].get());
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
       current_indices_offset += indices_size;
     }
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
   template <typename T>
@@ -239,7 +239,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
     }
     size_t current_indices_offset = 0;
     for (size_t i = 0; i < thread_num; ++i) {
-      buckets.emplace_back(std::make_shared<BucketSparseGradient<T>>());
+      (void)buckets.emplace_back(std::make_shared<BucketSparseGradient<T>>());
       buckets[i]->value_ = param.output_grad_->value_ + current_indices_offset * param.value_stride_;
       buckets[i]->indices_ = param.output_grad_->indices_ + current_indices_offset;
       buckets[i]->global_indices_ = param.workspace_grad_->indices_ + current_indices_offset;
@@ -251,14 +251,14 @@ class SparseOptimizerCPUKernel : public CPUKernel {
     for (size_t i = 0; i < thread_num; ++i) {
       std::vector<std::shared_ptr<BucketSparseGradient<T>>> thread_buckets;
       for (size_t j = 0; j < thread_num; ++j) {
-        thread_buckets.emplace_back(std::make_shared<BucketSparseGradient<T>>());
+        (void)thread_buckets.emplace_back(std::make_shared<BucketSparseGradient<T>>());
         thread_buckets[j]->indices_ = buckets[j]->indices_ + tmp_bucket_data_size[j];
         thread_buckets[j]->global_indices_ = buckets[j]->global_indices_ + tmp_bucket_data_size[j];
         thread_buckets[j]->value_ = buckets[j]->value_ + tmp_bucket_data_size[j] * param.value_stride_;
         thread_buckets[j]->indices_size_ = segment_bucket_sizes[i]->at(j);
         tmp_bucket_data_size[j] += segment_bucket_sizes[i]->at(j);
       }
-      each_thread_buckets.emplace_back(thread_buckets);
+      (void)each_thread_buckets.emplace_back(thread_buckets);
     }
     std::vector<common::Task> tasks;
     tasks.reserve(thread_num);
@@ -268,10 +268,10 @@ class SparseOptimizerCPUKernel : public CPUKernel {
         CopySegmentIndicesToBucket<T>(param, segments[i], current_indices_offset, each_thread_buckets[i]);
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
       current_indices_offset += segments[i]->indices_size_;
     }
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
   template <typename T>
@@ -290,7 +290,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
     for (size_t i = 0; i < bucket->indices_size_; ++i) {
       T index = bucket->indices_[i];
       T global_index = bucket->global_indices_[i];
-      sorted_indices.emplace_back(std::pair<T, T>(index, global_index));
+      (void)sorted_indices.emplace_back(std::pair<T, T>(index, global_index));
     }
     std::sort(sorted_indices.begin(), sorted_indices.end());
 
@@ -384,7 +384,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
 
     size_t current_indices_offset = 0;
     for (size_t i = 0; i < thread_num; ++i) {
-      reduced_buckets.emplace_back(std::make_shared<SparseGradient<T>>());
+      (void)reduced_buckets.emplace_back(std::make_shared<SparseGradient<T>>());
       reduced_buckets[i]->value_ = param.workspace_grad_->value_ + current_indices_offset * param.value_stride_;
       reduced_buckets[i]->indices_ = param.workspace_grad_->indices_ + current_indices_offset;
       reduced_buckets[i]->indices_size_ = buckets[i]->indices_size_;
@@ -396,10 +396,10 @@ class SparseOptimizerCPUKernel : public CPUKernel {
         }
         return common::SUCCESS;
       };
-      tasks.emplace_back(task);
+      (void)tasks.emplace_back(task);
       current_indices_offset += buckets[i]->indices_size_;
     }
-    common::ThreadPool::GetInstance().SyncRun(tasks);
+    (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
   template <typename T>

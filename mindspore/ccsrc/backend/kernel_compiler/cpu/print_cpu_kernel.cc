@@ -27,12 +27,12 @@ void PrintCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   size_t input_tensor_num = AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t i = 0; i < input_tensor_num; ++i) {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
-    input_shapes_.emplace_back(input_shape);
+    (void)input_shapes_.emplace_back(input_shape);
     size_t size = input_shape.size() ? 1 : 0;
     for (size_t j = 0; j < input_shape.size(); ++j) {
       size *= input_shape[j];
     }
-    input_sizes_.emplace_back(size);
+    (void)input_sizes_.emplace_back(size);
   }
 }
 
@@ -50,8 +50,8 @@ bool PrintCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
       std::cout << *num << std::endl;
     } else {
       ShapeVector shape;
-      std::transform(input_shapes_[i].begin(), input_shapes_[i].end(), std::back_inserter(shape),
-                     [](const size_t &value) { return static_cast<int64_t>(value); });
+      (void)std::transform(input_shapes_[i].begin(), input_shapes_[i].end(), std::back_inserter(shape),
+                           [](const size_t &value) { return static_cast<int64_t>(value); });
       Tensor tensor(data_type, shape, inputs[i]->addr, input_sizes_[i] * sizeof(T));
       std::cout << tensor.ToStringNoLimit() << std::endl;
     }

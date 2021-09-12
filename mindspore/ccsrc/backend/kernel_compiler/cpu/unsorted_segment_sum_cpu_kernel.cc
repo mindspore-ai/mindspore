@@ -61,21 +61,21 @@ bool UnsortedSegmentSumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &
   }
 
   if (dtype_ == kNumberTypeInt32 && segment_ids_dtype_ == kNumberTypeInt32) {
-    ret1 = UnsortedSegmentSum(int, int, static_cast<const int *>(input_addr), unit_num_, input_dim1_,
-                              static_cast<const int *>(indices_addr), static_cast<int *>(output_addr), output_dim0_,
-                              output_dim1_);
+    ret1 = UnsortedSegmentSum(int, int, static_cast<const int *>(input_addr), SizeToInt(unit_num_),
+                              SizeToInt(input_dim1_), static_cast<const int *>(indices_addr),
+                              static_cast<int *>(output_addr), SizeToInt(output_dim0_), SizeToInt(output_dim1_));
   } else if (dtype_ == kNumberTypeFloat32 && segment_ids_dtype_ == kNumberTypeInt32) {
-    ret1 = UnsortedSegmentSum(float, int, static_cast<const float *>(input_addr), unit_num_, input_dim1_,
-                              static_cast<const int *>(indices_addr), static_cast<float *>(output_addr), output_dim0_,
-                              output_dim1_);
+    ret1 = UnsortedSegmentSum(float, int, static_cast<const float *>(input_addr), SizeToInt(unit_num_),
+                              SizeToInt(input_dim1_), static_cast<const int *>(indices_addr),
+                              static_cast<float *>(output_addr), SizeToInt(output_dim0_), SizeToInt(output_dim1_));
   } else if (dtype_ == kNumberTypeInt32 && segment_ids_dtype_ == kNumberTypeInt64) {
-    ret1 = UnsortedSegmentSum(int, int64_t, static_cast<const int *>(input_addr), unit_num_, input_dim1_,
-                              static_cast<const int64_t *>(indices_addr), static_cast<int *>(output_addr), output_dim0_,
-                              output_dim1_);
+    ret1 = UnsortedSegmentSum(int, int64_t, static_cast<const int *>(input_addr), SizeToInt(unit_num_),
+                              SizeToInt(input_dim1_), static_cast<const int64_t *>(indices_addr),
+                              static_cast<int *>(output_addr), SizeToInt(output_dim0_), SizeToInt(output_dim1_));
   } else if (dtype_ == kNumberTypeFloat32 && segment_ids_dtype_ == kNumberTypeInt64) {
-    ret1 = UnsortedSegmentSum(float, int64_t, static_cast<const float *>(input_addr), unit_num_, input_dim1_,
-                              static_cast<const int64_t *>(indices_addr), static_cast<float *>(output_addr),
-                              output_dim0_, output_dim1_);
+    ret1 = UnsortedSegmentSum(float, int64_t, static_cast<const float *>(input_addr), SizeToInt(unit_num_),
+                              SizeToInt(input_dim1_), static_cast<const int64_t *>(indices_addr),
+                              static_cast<float *>(output_addr), SizeToInt(output_dim0_), SizeToInt(output_dim1_));
   } else {
     MS_LOG(ERROR) << "Only support input_x int32 and float32, indices int32 and int64";
     return false;

@@ -25,12 +25,12 @@ void RMSPropCPUKernel<T>::LaunchRMSPropUnuseCenter(T *variable, T *mean_square, 
                                                    float *learning_rate) {
   std::function<void(size_t, size_t)> task;
   if (dtype_ == kNumberTypeFloat32) {
-    task = [&](size_t start, size_t end) {
-      RMSPropUnuseCenterFp32(variable, mean_square, moment, gradients, momentum_, learning_rate[0], decay_, epsilon_,
-                             start, end);
+    task = [this, &variable, &mean_square, &moment, &gradients, &learning_rate](size_t start, size_t end) {
+      (void)RMSPropUnuseCenterFp32(variable, mean_square, moment, gradients, momentum_, learning_rate[0], decay_,
+                                   epsilon_, start, end);
     };
   } else {
-    task = [&](size_t start, size_t end) {
+    task = [this, &variable, &mean_square, &moment, &gradients, &learning_rate](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         mean_square[i] += (gradients[i] * gradients[i] - mean_square[i]) * (1.0 - decay_);
         moment[i] = moment[i] * momentum_ + (gradients[i] * learning_rate[0]) / sqrt(mean_square[i] + epsilon_);
@@ -48,8 +48,8 @@ void RMSPropCPUKernel<T>::LaunchRMSPropUseCenter(T *variable, T *mean_square, T 
   std::function<void(size_t, size_t)> task;
   if (dtype_ == kNumberTypeFloat32) {
     task = [&](size_t start, size_t end) {
-      RMSPropUseCenterFp32(variable, mean_square, moment, gradients, mean_gradients, momentum[0], learning_rate[0],
-                           decay[0], epsilon[0], start, end);
+      (void)RMSPropUseCenterFp32(variable, mean_square, moment, gradients, mean_gradients, momentum[0],
+                                 learning_rate[0], decay[0], epsilon[0], start, end);
     };
   } else {
     task = [&](size_t start, size_t end) {
@@ -88,7 +88,7 @@ void RMSPropCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 bool RMSPropCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
-                                 const std::vector<kernel::AddressPtr> &outputs) {
+                                 const std::vector<kernel::AddressPtr> &) {
   if (!use_center_) {
     float *variable = reinterpret_cast<float *>(inputs[0]->addr);
     float *mean_square = reinterpret_cast<float *>(inputs[1]->addr);
