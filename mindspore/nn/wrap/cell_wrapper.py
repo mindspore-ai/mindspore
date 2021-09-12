@@ -468,7 +468,7 @@ class PipelineCell(Cell):
         >>> net = PipelineCell(net, 4)
     """
     def __init__(self, network, micro_size):
-        super(PipelineCell, self).__init__()
+        super(PipelineCell, self).__init__(auto_prefix=False)
         self.network = network
         self.micro_inputs = nn.CellList()
         self.micro_size = micro_size

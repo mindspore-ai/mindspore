@@ -29,6 +29,7 @@
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "utils/ms_context.h"
+#include "utils/check_convert_utils.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #include "ops/state_ops.h"
 #include "ops/array_ops.h"
@@ -1798,17 +1799,21 @@ void DfGraphConvertor::SaveParamFormat(const CNodePtr node) {
   if (IsValueNode<Primitive>(op)) {
     auto prim = GetValueNode<PrimitivePtr>(op);
     for (auto attr : prim->attrs()) {
-      if (attr.first == "format" && attr.second->ToString() == "NCDHW") {
+      if (attr.first == "format") {
+        if (attr.second->isa<Int64Imm>()) {
+          CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), "format", &attr.second);
+        }
         std::string format = attr.second->ToString();
-        auto inputs_size = node->size();
-        for (size_t i = 1; i < inputs_size; i++) {
+        if (format != "NCDHW") {
+          break;
+        }
+        for (size_t i = 1; i < node->size(); i++) {
           auto input = node->input(i);
           if (input->isa<Parameter>()) {
             param_format_[input->DebugString()] = format;
             MS_LOG(DEBUG) << "Save Param " << input->DebugString() << " format: " << format;
           }
         }
-        continue;
       }
     }
   }
