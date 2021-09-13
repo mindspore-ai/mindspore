@@ -33,7 +33,7 @@
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 #include "runtime/device/bucket.h"
-#if !defined(_WIN32) && !defined(_WIN64)
+#if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
 #include "debug/debugger/debugger.h"
 #endif
 #include "runtime/hardware/device_context.h"
@@ -93,7 +93,7 @@ class Executor;
 class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
  public:
   SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
-#if !defined(_WIN32) && !defined(_WIN64)
+#if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
     debugger_ = nullptr;
 #endif
   }
@@ -319,7 +319,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   // rank id of physical device
   uint32_t rank_id_{0};
   std::shared_ptr<Executor> executor_;
-#if !defined(_WIN32) && !defined(_WIN64)
+#if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
 #endif
 };

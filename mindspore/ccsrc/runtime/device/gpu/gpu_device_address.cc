@@ -127,6 +127,7 @@ void GPUDeviceAddress::ClearDeviceMemory() {
 
 GPUDeviceAddress::~GPUDeviceAddress() { ClearDeviceMemory(); }
 
+#ifdef ENABLE_DEBUGGER
 bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                                      const ShapeVector &host_shape, TypeId host_type, size_t slot,
                                      bool keep_prev) const {
@@ -161,6 +162,7 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
   MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
   return ret;
 }
+#endif
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

@@ -33,6 +33,7 @@ from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
 from dump_test_utils import generate_dump_json
+from tests.security_utils import security_off_wrap
 
 
 class Net(nn.Cell):
@@ -52,6 +53,7 @@ y = np.array([[7, 8, 9], [10, 11, 12]]).astype(np.float32)
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_async_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     pwd = os.getcwd()
@@ -104,6 +106,7 @@ def run_e2e_dump():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_e2e_dump()
@@ -113,6 +116,7 @@ def test_e2e_dump():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_e2e_dump_with_hccl_env():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     os.environ["RANK_TABLE_FILE"] = "invalid_file.json"
@@ -123,6 +127,7 @@ def test_e2e_dump_with_hccl_env():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_cpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     run_e2e_dump()
@@ -131,6 +136,7 @@ def test_cpu_e2e_dump():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_cpu_e2e_dump_with_hccl_set():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     os.environ["RANK_TABLE_FILE"] = "invalid_file.json"
@@ -141,6 +147,7 @@ def test_cpu_e2e_dump_with_hccl_set():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_gpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_e2e_dump()
@@ -149,6 +156,7 @@ def test_gpu_e2e_dump():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_gpu_e2e_dump_with_hccl_set():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     os.environ["RANK_TABLE_FILE"] = "invalid_file.json"
@@ -175,6 +183,7 @@ class ReluReduceMeanDenseRelu(Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_async_dump_net_multi_layer_mode1():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     pwd = os.getcwd()
@@ -218,6 +227,7 @@ def test_async_dump_net_multi_layer_mode1():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_dump_with_diagnostic_path():
     """
     Test e2e dump when path is not set (set to empty) in dump json file and MS_DIAGNOSTIC_DATA_PATH is set.
@@ -260,6 +270,7 @@ def run_e2e_dump_execution_graph():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_dump_with_execution_graph():
     """Test dump with execution graph on GPU."""
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')

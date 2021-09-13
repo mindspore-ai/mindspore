@@ -19,11 +19,13 @@ import shutil
 import numpy as np
 import mindspore.offline_debug.dbg_services as d
 from dump_test_utils import compare_actual_with_expected, build_dump_structure
+from tests.security_utils import security_off_wrap
 
 GENERATE_GOLDEN = False
 test_name = "sync_read_tensors_base_stat"
 
 
+@security_off_wrap
 def test_sync_read_tensors_base_stat():
 
     value_tensor = np.array([[7.5, 8.56, -9.78], [10.0, -11.0, 0.0]], np.float32)

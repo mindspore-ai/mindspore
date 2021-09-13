@@ -21,7 +21,9 @@
 #include "runtime/framework/actor/debug_aware_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/cpu_e2e_dump.h"
+#endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #include "debug/debugger/debugger_utils.h"
@@ -45,11 +47,13 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
 
   const auto &cnode = node->cast<CNodePtr>();
   if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kCPU) {
+#ifndef ENABLE_SECURITY
     if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
       auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
       MS_EXCEPTION_IF_NULL(kernel_graph);
       CPUE2eDump::DumpCNodeData(cnode, kernel_graph->graph_id());
     }
+#endif
   } else if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kGPU) {
 #ifdef ENABLE_DEBUGGER
     auto debugger = Debugger::GetInstance();
@@ -73,9 +77,11 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
 
+#ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
     CPUE2eDump::DumpParametersAndConst();
   }
+#endif
 
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
@@ -86,7 +92,9 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
     debugger->Debugger::PostExecuteGraphDebugger();
   }
 #else
+#ifndef ENABLE_SECURITY
   DumpJsonParser::GetInstance().UpdateDumpIter();
+#endif
 #endif
 
   // Call back to the from actor to process after debug finished.

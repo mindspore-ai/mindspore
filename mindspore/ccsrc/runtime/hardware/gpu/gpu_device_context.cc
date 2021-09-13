@@ -41,7 +41,9 @@
 #include "debug/rdr/running_data_recorder.h"
 #endif
 #include "utils/comm_manager.h"
+#ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
+#endif
 #include "backend/optimizer/pass/optimize_updatestate.h"
 
 namespace mindspore {
@@ -95,13 +97,14 @@ void GPUDeviceContext::Initialize() {
     (*init_nccl_comm_funcptr)();
   }
 
+#ifndef ENABLE_SECURITY
   // Dump json config file if dump is enabled.
   auto rank_id = GetRankID();
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
   json_parser.CopyJsonToDir(rank_id);
   json_parser.CopyMSCfgJsonToDir(rank_id);
-
+#endif
   initialized_ = true;
 }
 
@@ -135,11 +138,13 @@ bool GPUDeviceContext::InitDevice() {
 
 void GPUDeviceContext::Destroy() {
   // Release GPU buffer manager resource
+#ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
   if (debugger && debugger->debugger_enabled()) {
     debugger->SetTrainingDone(true);
     debugger->SendMetadata(false);
   }
+#endif
 
   if (GpuBufferMgr::GetInstance().IsInit()) {
     if (!GpuBufferMgr::GetInstance().IsClosed() && !GpuBufferMgr::GetInstance().CloseNotify()) {

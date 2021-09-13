@@ -103,7 +103,9 @@ const char IR_TYPE_MINDIR[] = "mind_ir";
 
 GraphExecutorPyPtr GraphExecutorPy::executor_ = nullptr;
 std::mutex GraphExecutorPy::instance_lock_;
+#ifdef ENABLE_DEBUGGER
 bool GraphExecutorPy::debugger_terminate_ = false;
+#endif
 
 std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBasePtrListHasher,
                    abstract::AbstractBasePtrListEqual>
@@ -683,8 +685,10 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     compile::SetMindRTEnable();
     // Create backend.
     auto backend_ptr = compile::CreateBackend();
+#ifdef ENABLE_DEBUGGER
     // Connect session to debugger
     backend_ptr->SetDebugger();
+#endif
     resource->results()[kBackend] = backend_ptr;
     // If the 'use_frontend_compile_cache' context has been set true and the cache is read successfully,
     // do the backend actions only.
@@ -990,6 +994,7 @@ void GraphExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &pha
   ProcessVmArgInner(args, GetResource(phase), arg_list);
 }
 
+#ifdef ENABLE_DEBUGGER
 void GraphExecutorPy::TerminateDebugger() {
   if (debugger_terminate_) {
     MS_LOG(INFO) << "Terminate debugger and clear resources!";
@@ -997,10 +1002,13 @@ void GraphExecutorPy::TerminateDebugger() {
     exit(1);
   }
 }
+#endif
 
 py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_obj) {
   // Mindspore debugger notify main thread to exit after one step, and will not run next step
+#ifdef ENABLE_DEBUGGER
   TerminateDebugger();
+#endif
   std::size_t size = args.size();
   if (!py::isinstance<py::str>(phase_obj)) {
     MS_LOG(EXCEPTION) << "Run failed, phase input is not a str";

@@ -56,15 +56,15 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/config_manager.h"
 #include "debug/data_dump/dump_json_parser.h"
-#include "debug/tensor_load.h"
+#include "debug/data_dump/e2e_dump.h"
 #include "debug/anf_ir_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/session/ascend_auto_monad.h"
-#include "debug/data_dump/e2e_dump.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #include "abstract/utils.h"
 #ifdef ENABLE_DEBUGGER
+#include "debug/tensor_load.h"
 #include "debug/debugger/proto_exporter.h"
 #else
 #include "debug/debugger/proto_exporter_stub.h"
@@ -520,10 +520,12 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 
   HardwareOptimize(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
+#ifdef ENABLE_DEBUGGER
   // load graphs to debugger.
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     LoadGraphsToDbg(NOT_NULL(root_graph), NOT_NULL(&memo));
   }
+#endif
   memo.clear();
   UpdateRefOutputMap(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
@@ -553,9 +555,11 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(root_graph));
   // build kernel
   BuildKernel(root_graph);
+#ifdef ENABLE_DEBUGGER
   if (debugger_ && debugger_->partial_memory()) {
     debugger_->PreExecute(root_graph);
   }
+#endif
   SetSummaryNodes(root_graph.get());
   // Alloc memory for child graph's inputs
   AssignStaticMemory(NOT_NULL(root_graph), NOT_NULL(&memo));
@@ -568,6 +572,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   root_graph->SetOptimizerFlag();
   DumpAllGraphs(all_graphs);
   // Save memory profiling data to proto file
+#ifndef ENABLE_SECURITY
   auto profiling_instance = MemoryProfiling::GetInstance();
   if (profiling_instance.IsMemoryProfilingEnable()) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
@@ -576,6 +581,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
     profiling_instance.SetDeviceMemSize(mem_size);
     profiling_instance.SaveMemoryProfiling();
   }
+#endif
   // return the root_graph id to backend
   auto graph_id = root_graph->graph_id();
   return graph_id;
@@ -628,9 +634,11 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   BuildKernel(graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+#ifdef ENABLE_DEBUGGER
   if (debugger_ && debugger_->partial_memory()) {
     debugger_->PreExecute(graph);
   }
+#endif
   if (ms_context->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
     MS_LOG(INFO) << "Precompile only, stop in build kernel step";
   } else {
@@ -677,9 +685,11 @@ bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedInser
 
 void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                     const std::vector<tensor::TensorPtr> &inputs, VectorRef *const) {
+#ifdef ENABLE_DEBUGGER
   if (debugger_) {
     debugger_->PreExecute(kernel_graph);
   }
+#endif
 #if ENABLE_CPU && ENABLE_D
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
@@ -694,6 +704,7 @@ void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_
                                      const std::vector<tensor::TensorPtr> &, VectorRef *const) {
   // summary
   Summary(kernel_graph.get());
+#ifdef ENABLE_DEBUGGER
   // load tensor from device for debugger
   if (debugger_ && debugger_->debugger_enabled()) {
     LoadTensor(kernel_graph);
@@ -702,6 +713,7 @@ void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_
   if (debugger_) {
     debugger_->PostExecute();
   }
+#endif
 }
 
 void AscendSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) { Execute(kernel_graph, true); }
@@ -1759,6 +1771,7 @@ void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
   MS_LOG(INFO) << "Finish doing HardwareOptimize in graph: " << graph->graph_id();
 }
 
+#ifdef ENABLE_DEBUGGER
 void AscendSession::LoadGraphsToDbg(NotNull<KernelGraphPtr> graph,
                                     NotNull<std::set<KernelGraphPtr> *> const memo) const {
   if (memo->find(graph) != memo->end()) {
@@ -1775,6 +1788,7 @@ void AscendSession::LoadGraphsToDbg(NotNull<KernelGraphPtr> graph,
   }
   MS_LOG(INFO) << "Finish doing LoadGraphsToDbg in graph: " << graph->graph_id();
 }
+#endif
 
 void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,
                                        NotNull<std::set<KernelGraphPtr> *> const memo) const {

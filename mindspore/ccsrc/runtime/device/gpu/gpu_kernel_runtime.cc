@@ -38,7 +38,9 @@
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "profiler/device/gpu/gpu_profiling_utils.h"
 #include "utils/shape_utils.h"
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
@@ -85,7 +87,9 @@ bool GPUKernelRuntime::Init() {
     MS_LOG(ERROR) << "InitDevice error.";
     return ret;
   }
+#ifndef ENABLE_SECURITY
   DumpJsonParser::GetInstance().Parse();
+#endif
   mem_manager_ = std::make_shared<GPUMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->MallocDeviceMemory();
@@ -98,7 +102,11 @@ bool GPUKernelRuntime::Init() {
     (*init_nccl_comm_funcptr)();
   }
   device_init_ = true;
+
+#ifdef ENABLE_DEBUGGER
   SetDebugger();
+#endif
+
   return ret;
 }
 
@@ -120,6 +128,7 @@ std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &out
   return real_outputs;
 }
 
+#ifdef ENABLE_DEBUGGER
 void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
                     const std::vector<mindspore::kernel::AddressPtr> &kernel_inputs,
                     const std::vector<mindspore::kernel::AddressPtr> &kernel_workspaces,
@@ -199,6 +208,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
   }
   debugger->PostExecuteNode(kernel, last_kernel);
 }
+#endif
 }  // namespace
 
 bool GPUKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
@@ -723,10 +733,12 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   AllocCommunicationOpDynamicRes(graph);
   AllocInplaceNodeMemory(graph);
 
+#ifdef ENABLE_DEBUGGER
   bool dump_enabled = GPUKernelRuntime::DumpDataEnabledIteration();
   if (!mock && debugger_) {
     debugger_->UpdateStepNum(graph);
   }
+#endif
   auto &kernels = graph->execution_order();
   int exec_order = 1;
 #ifdef ENABLE_DUMP_IR
@@ -760,11 +772,13 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     AddressPtrList kernel_outputs;
     auto ret = AllocKernelDynamicRes(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs, mock);
     if (!ret) {
+#ifdef ENABLE_DEBUGGER
       if (!mock) {
         MS_EXCEPTION_IF_NULL(debugger_);
         // invalidate current data collected by the debugger
         debugger_->ClearCurrentData();
       }
+#endif
       return false;
     }
 #ifdef ENABLE_DUMP_IR
@@ -778,18 +792,21 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       if (gpu_kernel != nullptr && dynamic_kernel != nullptr && dynamic_kernel->is_dynamic_shape()) {
         gpu_kernel->PostExecute();
       }
-
+#ifdef ENABLE_DEBUGGER
       // called once per kernel to collect the outputs to the kernel (does a SyncDeviceToHost)
       LoadKernelData(debugger_.get(), kernel, kernel_inputs, kernel_workspaces, kernel_outputs, exec_order, stream_,
                      dump_enabled, kernel == last_kernel);
+#endif
     }
     exec_order = exec_order + 1;
     FreeKernelDynamicRes(kernel);
     if (!UpdateMemorySwapTask(kernel, mock, profiling)) {
+#ifdef ENABLE_DEBUGGER
       if (!mock) {
         // invalidate current data collected by the debugger
         debugger_->ClearCurrentData();
       }
+#endif
       return false;
     }
   }

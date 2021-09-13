@@ -358,8 +358,9 @@ bool AscendKernelRuntime::Init() {
     if (!ret) {
       return ret;
     }
-
+#ifdef ENABLE_DEBUGGER
     SetDebugger();
+#endif
     mem_manager_ = std::make_shared<AscendMemoryManager>();
     MS_EXCEPTION_IF_NULL(mem_manager_);
     mem_manager_->MallocDeviceMemory();
@@ -583,7 +584,6 @@ void AscendKernelRuntime::DistributeDebugTask(NotNull<const session::KernelGraph
     MS_LOG(WARNING) << "[DataDump] Insert graphId:" << graph->graph_id() << " data dumper failed";
   }
 }
-#endif
 
 void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
   if (!DumpJsonParser::GetInstance().async_dump_enabled()) {
@@ -600,6 +600,7 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
     MS_LOG(EXCEPTION) << "GraphId:" << graph_id << " not found";
   }
 }
+#endif
 
 void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
   MS_EXCEPTION_IF_NULL(task_fail_info);

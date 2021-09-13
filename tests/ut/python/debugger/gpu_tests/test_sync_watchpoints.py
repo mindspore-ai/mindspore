@@ -20,11 +20,13 @@ import shutil
 import numpy as np
 import mindspore.offline_debug.dbg_services as d
 from dump_test_utils import compare_actual_with_expected, build_dump_structure
+from tests.security_utils import security_off_wrap
 
 GENERATE_GOLDEN = False
 test_name = "sync_watchpoints"
 
 
+@security_off_wrap
 def test_sync_trans_false_watchpoints():
 
     if GENERATE_GOLDEN:

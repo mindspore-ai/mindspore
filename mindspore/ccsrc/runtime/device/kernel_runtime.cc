@@ -190,6 +190,7 @@ void KernelRuntime::RunOpClearMemory(const session::KernelGraph *graph) const {
   }
 }
 
+#ifdef ENABLE_DEBUGGER
 bool KernelRuntime::DumpDataEnabled() {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   return dump_json_parser.e2e_dump_enabled();
@@ -207,6 +208,7 @@ bool KernelRuntime::DumpDataEnabledIteration() {
   }
   return false;
 }
+#endif
 
 void KernelRuntime::AssignStaticMemory(session::KernelGraph *graph) {
   AssignStaticMemoryInput(graph);

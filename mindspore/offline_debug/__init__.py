@@ -16,6 +16,11 @@ This module provides APIs to load and process dump data, i.e. read tensors, chec
 for watchpoints and other debugging services.
 """
 
+from mindspore._c_expression import security
 from . import dbg_services
 from . import mi_validator_helpers
 from . import mi_validators
+
+if security.enable_security():
+    raise ModuleNotFoundError("Offline debugger is not supported in security mode."\
+                              "Please recompile mindspore without `-s on`.")
