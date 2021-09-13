@@ -107,9 +107,11 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void DelNetRes(const std::string &id);
   void ReleaseResource(const py::object &phase_obj);
   static void ClearRes();
+#ifdef ENABLE_DEBUGGER
   static bool GetDebugTerminate() { return debugger_terminate_; }
   static void DebugTerminate(bool val) { debugger_terminate_ = val; }
   void TerminateDebugger();
+#endif
 
   std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> FetchInfoForQuantExport(
     const std::string &phase);
@@ -127,7 +129,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   std::map<std::string, ExecutorInfoPtr> info_;
   static std::shared_ptr<GraphExecutorPy> executor_;
   static std::mutex instance_lock_;
+#ifdef ENABLE_DEBUGGER
   static bool debugger_terminate_;
+#endif
   std::map<std::string, py::dict> stra_dict_;
   std::string phase_ = "";
   std::map<std::string, size_t> phase_to_num_op_info_;

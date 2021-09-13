@@ -19,6 +19,7 @@ Watchpoints test script for offline debugger APIs.
 import mindspore.offline_debug.dbg_services as d
 import pytest
 from dump_test_utils import compare_actual_with_expected
+from tests.security_utils import security_off_wrap
 
 GENERATE_GOLDEN = False
 test_name = "async_sink_mode_true_watchpoints"
@@ -29,6 +30,7 @@ test_name = "async_sink_mode_true_watchpoints"
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.skip(reason="needs updating")
+@security_off_wrap
 def test_async_sink_mode_true_watchpoints():
     if GENERATE_GOLDEN:
         f_write = open(test_name + ".expected", "w")

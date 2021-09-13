@@ -55,11 +55,13 @@ install(
     COMPONENT mindspore
 )
 
-install(
-    TARGETS _mindspore_offline_debug
-    DESTINATION ${INSTALL_BASE_DIR}
-    COMPONENT mindspore
-)
+if(ENABLE_DEBUGGER)
+    install(
+        TARGETS _mindspore_offline_debug
+        DESTINATION ${INSTALL_BASE_DIR}
+        COMPONENT mindspore
+    )
+endif()
 
 install(
     TARGETS mindspore_shared_lib

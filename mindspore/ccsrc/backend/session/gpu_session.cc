@@ -57,16 +57,16 @@
 #include "backend/optimizer/pass/optimize_updatestate.h"
 #include "common/trans.h"
 #include "debug/anf_ir_dump.h"
-#include "debug/data_dump/e2e_dump.h"
+#include "debug/dump_proto.h"
 #ifdef ENABLE_DEBUGGER
+#include "debug/data_dump/e2e_dump.h"
+#include "debug/data_dump/dump_json_parser.h"
 #include "debug/debugger/proto_exporter.h"
+#include "debug/data_dump/dump_utils.h"
+#include "debug/tensor_load.h"
 #else
 #include "debug/debugger/proto_exporter_stub.h"
 #endif
-#include "debug/data_dump/dump_json_parser.h"
-#include "debug/data_dump/dump_utils.h"
-#include "debug/tensor_load.h"
-#include "debug/dump_proto.h"
 #include "runtime/device/gpu/gpu_kernel_build.h"
 #include "runtime/device/gpu/gpu_kernel_runtime.h"
 #include "runtime/device/gpu/gpu_stream_assign.h"
@@ -123,11 +123,12 @@ void GPUSession::Init(uint32_t device_id) {
       rank_id_ = GetRankId();
     }
   }
-
+#ifndef ENABLE_SECURITY
   auto &json_parser = DumpJsonParser::GetInstance();
   // Dump json config file if dump is enabled
   json_parser.CopyJsonToDir(rank_id_);
   json_parser.CopyMSCfgJsonToDir(rank_id_);
+#endif
   MS_LOG(INFO) << "Set device id " << device_id << " for gpu session.";
   InitExecutor(kGPUDevice, device_id);
 }
@@ -403,8 +404,10 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
+#ifndef ENABLE_SECURITY
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
+#endif
   // Dump .pb graph before graph optimization
   if (save_graphs) {
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
@@ -454,6 +457,7 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   if (save_graphs) {
     DumpIRProto(graph, "after_opt_" + std::to_string(graph->graph_id()));
   }
+#ifndef ENABLE_SECURITY
   if (json_parser.e2e_dump_enabled()) {
     graph->set_root_graph_id(graph->graph_id());
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
@@ -465,6 +469,7 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
     DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
                       graph->execution_order());
   }
+#endif
   // Set graph manager.
   MS_EXCEPTION_IF_NULL(context_);
   FuncGraphManagerPtr manager = MakeManager({graph});
@@ -493,11 +498,13 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
 
 void GPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                  const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
+#ifdef ENABLE_DEBUGGER
   if (debugger_) {
     debugger_->PreExecute(kernel_graph);
   }
 
   DumpSetup(kernel_graph);
+#endif
 
 #if ENABLE_CPU && ENABLE_GPU
   // Initialize parameter server
@@ -513,7 +520,7 @@ void GPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_gra
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY)) {
     Summary(kernel_graph.get());
   }
-
+#ifdef ENABLE_DEBUGGER
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     debugger_->LoadParametersAndConst(kernel_graph);
   }
@@ -526,6 +533,7 @@ void GPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_gra
   if (debugger_) {
     debugger_->PostExecute();
   }
+#endif
 }
 
 void GPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
@@ -683,6 +691,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   }
 }
 
+#ifdef ENABLE_DEBUGGER
 void GPUSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -704,6 +713,7 @@ bool GPUSession::DumpDataEnabledIteration() const {
   MS_EXCEPTION_IF_NULL(runtime_instance);
   return runtime_instance->DumpDataEnabledIteration();
 }
+#endif
 
 void GPUSession::SyncStream() const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);

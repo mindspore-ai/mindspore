@@ -39,7 +39,9 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
 #endif

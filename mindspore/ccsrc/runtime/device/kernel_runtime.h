@@ -59,8 +59,10 @@ class KernelRuntime {
                          const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node = {});
   void RunOpClearMemory(const session::KernelGraph *graph) const;
   void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors);
+#ifdef ENABLE_DEBUGGER
   static bool DumpDataEnabled();
   static bool DumpDataEnabledIteration();
+#endif
   virtual bool LoadData(session::KernelGraph *graph);
   virtual bool Load(session::KernelGraph *graph, bool is_task_sink);
   virtual bool Run(session::KernelGraph *graph, bool is_task_sink) = 0;
@@ -92,12 +94,14 @@ class KernelRuntime {
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
   uint32_t device_id() { return device_id_; }
 
+#ifdef ENABLE_DEBUGGER
   // set debugger
   void SetDebugger() {
 #if !defined(_WIN32) && !defined(_WIN64)
     debugger_ = Debugger::GetInstance();
 #endif
   }
+#endif
 
 #ifndef ENABLE_SECURITY
   virtual void PreInit() {}
@@ -159,7 +163,7 @@ class KernelRuntime {
  protected:
   uint32_t device_id_{0};
   bool pynative_mode_profiling_flag_{false};
-#if !defined(_WIN32) && !defined(_WIN64)
+#if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
 #endif
   void *stream_{nullptr};

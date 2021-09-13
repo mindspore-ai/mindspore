@@ -16,6 +16,7 @@
 The module DbgServices provides offline debugger APIs.
 """
 
+from mindspore._c_expression import security
 import mindspore._mindspore_offline_debug as cds
 from mindspore.offline_debug.mi_validators import check_init, check_initialize, check_add_watchpoint,\
      check_remove_watchpoint, check_check_watchpoints, check_read_tensor_info, check_initialize_done, \
@@ -35,6 +36,9 @@ def get_version():
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> version = dbg_services.get_version()
     """
+    if security.enable_security():
+        raise ValueError("Offline debugger is not supported in security mode. " \
+                         "Please recompile mindspore without `-s on`.")
     return cds.DbgServices(False).GetVersion()
 
 class DbgLogger:
@@ -75,6 +79,9 @@ class DbgServices():
 
     @check_init
     def __init__(self, dump_file_path, verbose=False):
+        if security.enable_security():
+            raise ValueError("Offline debugger is not supported in security mode. "\
+                             "Please recompile mindspore without `-s on`.")
         log.verbose = verbose
         log("in Python __init__, file path is ", dump_file_path)
         self.dump_file_path = dump_file_path
@@ -382,6 +389,9 @@ class TensorInfo():
 
     @check_tensor_info_init
     def __init__(self, node_name, slot, iteration, rank_id, root_graph_id, is_output=True):
+        if security.enable_security():
+            raise ValueError("Offline debugger is not supported in security mode. " \
+                             "Please recompile mindspore without `-s on`.")
         iteration = replace_minus_one(iteration)
         self.instance = cds.tensor_info(node_name, slot, iteration, rank_id, root_graph_id, is_output)
 
@@ -531,6 +541,9 @@ class TensorData():
 
     @check_tensor_data_init
     def __init__(self, data_ptr, data_size, dtype, shape):
+        if security.enable_security():
+            raise ValueError("Offline debugger is not supported in security mode." \
+                             "Please recompile mindspore without `-s on`.")
         self.instance = cds.tensor_data(data_ptr, data_size, dtype, shape)
 
     @property
@@ -627,6 +640,9 @@ class TensorBaseData():
     """
     @check_tensor_base_data_init
     def __init__(self, data_size, dtype, shape):
+        if security.enable_security():
+            raise ValueError("Offline debugger is not supported in security mode. " \
+                             "Please recompile mindspore without `-s on`.")
         self.instance = cds.TensorBaseData(data_size, dtype, shape)
 
     def __str__(self):
@@ -727,6 +743,9 @@ class TensorStatData():
     @check_tensor_stat_data_init
     def __init__(self, data_size, dtype, shape, is_bool, max_value, min_value, avg_value, count,
                  neg_zero_count, pos_zero_count, nan_count, neg_inf_count, pos_inf_count, zero_count):
+        if security.enable_security():
+            raise ValueError("Offline debugger is not supported in security mode. " \
+                             "Please recompile mindspore without `-s on`.")
         self.instance = cds.TensorStatData(data_size, dtype, shape, is_bool, max_value,
                                            min_value, avg_value, count, neg_zero_count,
                                            pos_zero_count, nan_count, neg_inf_count,
@@ -1064,6 +1083,9 @@ class WatchpointHit():
 
     @check_watchpoint_hit_init
     def __init__(self, name, slot, condition, watchpoint_id, parameters, error_code, rank_id, root_graph_id):
+        if security.enable_security():
+            raise ValueError("Offline debugger is not supported in security mode. " \
+                             "Please recompile mindspore without `-s on`.")
         parameter_list_inst = []
         for elem in parameters:
             parameter_list_inst.append(elem.instance)
@@ -1285,6 +1307,9 @@ class Parameter():
 
     @check_parameter_init
     def __init__(self, name, disabled, value, hit=False, actual_value=0.0):
+        if security.enable_security():
+            raise ValueError("Offline debugger is not supported in security mode. " \
+                             "Please recompile mindspore without `-s on`.")
         self.instance = cds.parameter(name, disabled, value, hit, actual_value)
 
     @property

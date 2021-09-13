@@ -20,11 +20,13 @@ import shutil
 import numpy as np
 import mindspore.offline_debug.dbg_services as d
 from dump_test_utils import compare_actual_with_expected, build_dump_structure
+from tests.security_utils import security_off_wrap
 
 GENERATE_GOLDEN = False
 test_name = "sync_read_tensors_nonexist_node"
 
 
+@security_off_wrap
 def test_sync_trans_read_tensors_nonexist_node():
 
     tensor1 = np.array([32.0, 4096.0], np.float32)
