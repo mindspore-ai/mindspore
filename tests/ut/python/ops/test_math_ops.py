@@ -469,6 +469,10 @@ raise_set = [
     ('AssignAdd_Error', {
         'block': (P.AssignAdd(), {'exception': ValueError}),
         'desc_inputs': [[1]]}),
+    ('Trunc', {
+        'block': P.Trunc(),
+        'desc_inputs': [Tensor(np.array([[1.1, 2.2, -4.1]], np.float32))],
+        'skip': ['backward']}),
 ]
 
 

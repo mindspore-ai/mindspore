@@ -21,6 +21,7 @@ from .. import functional as F
 from .. import operations as P
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
+from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..primitive import constexpr
 
@@ -94,5 +95,16 @@ def get_bprop_erfinv(self):
         dout_square = square(dout)
         dx = dout * root_pi_over_two * exp(dout_square)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.Trunc)
+def get_bprop_trunc(self):
+    """Grad definition for `Trunc` operation."""
+
+    def bprop(input_x, output_y, dout):
+        bc_x = zeros_like(input_x)
+        return (bc_x,)
 
     return bprop
