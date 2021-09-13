@@ -384,6 +384,27 @@ void PackNC8HW8ToNHWCFp32(const void *src, void *dst, int batch, int plane, int 
   }
 }
 
+void PackNC8HW8AlignedToNC8HW8NotAlignedFp32(const void *src, void *dst, const int batch, const int plane,
+                                             const int channel) {
+  int down_channel_8 = DOWN_ROUND(channel, C8NUM);
+  int up_channel_16 = UP_ROUND(channel, C16NUM);
+  size_t dst_batch_offset = (size_t)(plane * channel) * sizeof(float);
+  size_t src_batch_offset = (size_t)(plane * up_channel_16) * sizeof(float);
+  size_t unaligned_channel_size = (size_t)(channel - down_channel_8) * sizeof(float);
+  size_t aligned_channel_size = (size_t)(down_channel_8 * plane) * sizeof(float);
+  size_t src_p_offset = C8NUM * sizeof(float);
+  for (size_t b = 0; b < (size_t)(batch); ++b) {
+    const char *src_batch = (char *)(src) + b * src_batch_offset;
+    char *dst_bacth = (char *)(dst) + b * dst_batch_offset;
+    memcpy(dst_bacth, src_batch, aligned_channel_size);
+    src_batch += aligned_channel_size;
+    dst_bacth += aligned_channel_size;
+    for (int p = 0; p < plane; ++p) {
+      memcpy(dst_bacth + p * unaligned_channel_size, src_batch + p * src_p_offset, unaligned_channel_size);
+    }
+  }
+}
+
 void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int channel) {
   for (int n = 0; n < batch; n++) {
     for (int hw = 0; hw < plane; hw++) {

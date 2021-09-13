@@ -49,11 +49,18 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
       ctx_->allocator->Free(col_major_input_);
       col_major_input_ = nullptr;
     }
+    if (output_need_align_ && tmp_output_ != nullptr) {
+      ctx_->allocator->Free(tmp_output_);
+      tmp_output_ = nullptr;
+      output_need_align_ = false;
+    }
   }
 
  protected:
+  float *tmp_output_ = nullptr;
   float *packed_input_ = nullptr;
   float *col_major_input_ = nullptr;
+  bool output_need_align_ = false;
 };
 }  // namespace mindspore::kernel
 

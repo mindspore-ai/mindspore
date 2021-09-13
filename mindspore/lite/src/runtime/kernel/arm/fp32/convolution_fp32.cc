@@ -36,7 +36,8 @@ namespace mindspore::kernel {
 #endif
 int ConvolutionCPUKernel::InitTmpBuffer() {
   MS_ASSERT(ctx_->allocator != nullptr);
-
+  CHECK_NULL_RETURN(out_tensors_[0]);
+  CHECK_NULL_RETURN(out_tensors_[0]->MutableData());
 #ifdef ENABLE_AVX
   int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C6NUM * thread_count_;
 #elif defined(ENABLE_SSE)
@@ -56,6 +57,20 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
     MS_LOG(ERROR) << "malloc col_major_input_ failed.";
     return RET_ERROR;
   }
+
+#ifdef ENABLE_AVX
+  if (conv_param_->output_channel_ % OC_BLOCK != 0 && out_tensors_[0]->format() == NC4HW4) {
+    output_need_align_ = true;
+    int oc_algin = UP_DIV(conv_param_->output_channel_, OC_BLOCK);
+    int pack_output_size =
+      conv_param_->output_batch_ * conv_param_->output_h_ * conv_param_->output_w_ * OC_BLOCK * oc_algin;
+    tmp_output_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(pack_output_size * sizeof(float)));
+    if (tmp_output_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc tmp_output_ buffer is failed.";
+      return RET_ERROR;
+    }
+  }
+#endif
   return RET_OK;
 }
 
@@ -96,14 +111,13 @@ int ConvolutionCPUKernel::ReSize() {
 
 int ConvolutionCPUKernel::RunImpl(int task_id) {
   auto ori_input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
-  if (out_tensors()[0]->format() != NC4HW4) {
+  if (out_tensors_[0]->format() != NC4HW4) {
     ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
-             reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
+             reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
   } else {
-#if ENABLE_ARM64
+#if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
     ConvFp32OutNC4HW4(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
-                      reinterpret_cast<float *>(bias_data_), col_major_input_, output_addr, task_id, conv_param_);
+                      reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
 #else
     MS_LOG(ERROR) << "ConvFp32OutNC4HW4 not implemented.";
     return RET_ERROR;
@@ -129,8 +143,12 @@ int ConvolutionCPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  if (!output_need_align_) {
+    tmp_output_ = output_addr;
+  }
   if (RepackWeight() != RET_OK) {
+    FreeTmpBuffer();
     MS_LOG(ERROR) << "Repack weight failed.";
     return RET_ERROR;
   }
@@ -138,6 +156,13 @@ int ConvolutionCPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv error error_code[" << ret << "]";
   }
+#ifdef ENABLE_AVX
+  if (output_need_align_) {
+    PackNC8HW8AlignedToNC8HW8NotAlignedFp32(tmp_output_, output_addr, conv_param_->output_batch_,
+                                            conv_param_->output_h_ * conv_param_->output_w_,
+                                            conv_param_->output_channel_);
+  }
+#endif
   FreeTmpBuffer();
   return ret;
 }
