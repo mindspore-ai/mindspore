@@ -49,7 +49,6 @@ args, _ = parser.parse_known_args()
 
 context.set_context(
     mode=context.GRAPH_MODE,
-    enable_auto_mixed_precision=True,
     device_target=args.device_target,
     save_graphs=False,
     device_id=args.device_num)

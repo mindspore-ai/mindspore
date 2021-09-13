@@ -44,7 +44,7 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train():
     device_num = get_device_num()
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True, save_graphs=False,
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False,
                         device_target=config.device_target, device_id=get_device_id())
     # init multicards training
     config.rank = 0

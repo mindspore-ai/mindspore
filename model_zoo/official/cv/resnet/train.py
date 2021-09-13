@@ -105,7 +105,7 @@ def set_parameter():
     if config.run_distribute:
         if target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))
-            context.set_context(device_id=device_id, enable_auto_mixed_precision=True)
+            context.set_context(device_id=device_id)
             context.set_auto_parallel_context(device_num=config.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             set_algo_parameters(elementwise_op_strategy_follow=True)

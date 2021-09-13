@@ -192,7 +192,7 @@ def parse_args(cloud_args=None):
     args.lr_epochs = list(map(int, args.lr_epochs.split(',')))
     args.image_size = list(map(int, args.image_size.split(',')))
 
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+    context.set_context(mode=context.GRAPH_MODE,
                         device_target=args.platform, save_graphs=False)
     # init distributed
     if args.is_distributed:

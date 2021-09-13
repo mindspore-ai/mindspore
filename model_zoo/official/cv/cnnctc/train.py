@@ -65,7 +65,7 @@ def train():
 
     if target == "Ascend":
         device_id = get_device_id()
-        context.set_context(device_id=device_id, enable_auto_mixed_precision=False)
+        context.set_context(device_id=device_id)
 
         if config.run_distribute:
             init()

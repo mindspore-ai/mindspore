@@ -172,7 +172,7 @@ if __name__ == "__main__":
     if args.run_distribute:
         device_num = int(os.getenv('RANK_SIZE'))
         device_id = int(os.getenv('DEVICE_ID'))
-        context.set_context(device_id=device_id, enable_auto_mixed_precision=True)
+        context.set_context(device_id=device_id)
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
         init()

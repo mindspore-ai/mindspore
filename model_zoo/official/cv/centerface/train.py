@@ -55,8 +55,6 @@ dev_id = get_device_id()
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target,
                     save_graphs=False, device_id=dev_id, reserve_class_name_in_scope=False)
 
-if config.device_target == "Ascend":
-    context.set_context(enable_auto_mixed_precision=False)
 
 if config.lr_scheduler == 'cosine_annealing' and config.max_epoch > config.t_max:
     config.t_max = config.max_epoch

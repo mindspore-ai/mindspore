@@ -39,7 +39,7 @@ context.set_context(mode=context.GRAPH_MODE,
 
 if config.device_target == "Ascend":
     context.set_context(device_id=dev_id)
-    context.set_context(enable_auto_mixed_precision=False)
+
 
 def modelarts_process():
     config.data_dir = config.data_path

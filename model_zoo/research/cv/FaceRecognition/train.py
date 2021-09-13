@@ -43,8 +43,8 @@ from model_utils.device_adapter import get_device_id, get_device_num, get_rank_i
 mindspore.common.seed.set_seed(1)
 context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False,
                     reserve_class_name_in_scope=False, enable_graph_kernel=config.device_target == "GPU")
-if config.device_target == 'Ascend':
-    context.set_context(enable_auto_mixed_precision=False)
+
+
 if config.device_target != 'GPU' or not config.is_distributed:
     context.set_context(device_id=get_device_id())
 

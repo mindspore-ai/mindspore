@@ -106,8 +106,7 @@ class ProgressMonitor(Callback):
 
 def set_parameters():
     """parameters"""
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                        device_target=config.device_target, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, save_graphs=False)
     # init distributed
     if config.run_distribute:
         init()

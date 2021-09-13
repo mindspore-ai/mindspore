@@ -152,7 +152,7 @@ def modelarts_pre_process():
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def run_train():
     config = set_default_args(default_config)
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+    context.set_context(mode=context.GRAPH_MODE,
                         device_target=config.device_target, save_graphs=False, device_id=get_device_id())
     if config.is_distributed:
         parallel_mode = ParallelMode.DATA_PARALLEL

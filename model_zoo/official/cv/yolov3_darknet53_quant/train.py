@@ -43,7 +43,7 @@ from src.util import ShapeRecord
 set_seed(1)
 
 devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+context.set_context(mode=context.GRAPH_MODE,
                     device_target="Ascend", save_graphs=False, device_id=devid)
 
 

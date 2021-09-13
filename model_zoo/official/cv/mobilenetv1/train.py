@@ -115,7 +115,7 @@ def train_mobilenetv1():
     device_id = int(os.getenv('DEVICE_ID', '0'))
     if config.run_distribute:
         if target == "Ascend":
-            context.set_context(device_id=device_id, enable_auto_mixed_precision=True)
+            context.set_context(device_id=device_id)
             context.set_auto_parallel_context(device_num=get_device_num(), parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
             init()

@@ -59,8 +59,7 @@ def train_net():
         if target == "Ascend":
             device_id = get_device_id()
             device_num = config.device_num
-            context.set_context(device_id=device_id,
-                                enable_auto_mixed_precision=True)
+            context.set_context(device_id=device_id)
             context.set_auto_parallel_context(
                 device_num=device_num,
                 parallel_mode=ParallelMode.DATA_PARALLEL,

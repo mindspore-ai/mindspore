@@ -119,7 +119,7 @@ def run_transformer_train():
         context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target, device_id=get_device_id())
     else:
         context.set_context(mode=context.GRAPH_MODE, device_target=config.device_target)
-    context.set_context(reserve_class_name_in_scope=False, enable_auto_mixed_precision=False)
+    context.set_context(reserve_class_name_in_scope=False)
 
     if config.device_target == "GPU":
         # Enable graph kernel

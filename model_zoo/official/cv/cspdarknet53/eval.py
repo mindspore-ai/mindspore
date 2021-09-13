@@ -105,7 +105,7 @@ def run_eval():
                                       datetime.datetime.now().strftime("%Y-%m-%d_time_%H_%M_%S"))
     config.logger = get_logger(config.outputs_dir, config.rank)
 
-    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+    context.set_context(mode=context.GRAPH_MODE,
                         device_target=config.device_target, save_graphs=False, device_id=get_device_id())
     config.logger.save_args(config)
 

@@ -102,7 +102,7 @@ def train():
     args = parse_args()
     context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target=args.device_target)
     if args.device_target != "CPU":
-        context.set_context(enable_auto_mixed_precision=True, device_id=args.device_id)
+        context.set_context(device_id=args.device_id)
 
     # init multicards training
     if args.modelArts_mode:
