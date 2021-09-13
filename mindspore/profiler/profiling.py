@@ -236,10 +236,11 @@ class Profiler:
     def _ascend_analyse(self):
         """Collect and analyse ascend performance data"""
         self._rank_size = 1
-        self._profile_communication = False
+        if self._profile_communication and not GlobalComm.INITED:
+            self._profile_communication = False
+
         if GlobalComm.INITED:
             self._rank_size = get_group_size()
-            self._profile_communication = True
 
         release()
 
