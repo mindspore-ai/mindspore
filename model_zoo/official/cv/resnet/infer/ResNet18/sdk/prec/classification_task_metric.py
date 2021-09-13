@@ -1,4 +1,4 @@
-#coding = utf-8
+# coding = utf-8
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the BSD 3-Clause License  (the "License");
