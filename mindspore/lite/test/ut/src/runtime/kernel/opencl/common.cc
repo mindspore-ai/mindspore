@@ -45,8 +45,8 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
                                     schema::v0::PrimitiveType_DepthwiseConv2D,
                                     schema::v0::PrimitiveType_DeDepthwiseConv2D, schema::v0::PrimitiveType_MatMul};
 #else
-  static std::vector<int> packed_ops = {schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion,
-                                        schema::PrimitiveType_MatMul};
+  static std::set<int> packed_op = {schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion,
+                                    schema::PrimitiveType_MatMul};
 #endif
 
   // simulating benchmark: session::LiteSession::CreateSession() -> session->Init()
