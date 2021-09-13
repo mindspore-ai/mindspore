@@ -218,9 +218,9 @@ APP_ERROR SSDMobileNetV1Fpn::Process(const std::string &imgPath) {
         std::vector<MxBase::ObjectInfo> objects = objectInfos.at(0);
         for (size_t i = 0; i < objects.size(); i++) {
             ObjectInfo obj = objects.at(i);
-            LogInfo << "BBox[" << i << "]:[x0=" << obj.x0 << ", y0=" << obj.y0 << ", x1=" << obj.x1 << ", y1=" << obj.y1
-                    << "], confidence=" << obj.confidence << ", classId=" << obj.classId << ", className=" << obj.className
-                    << std::endl;
+            LogInfo << "BBox[" << i << "]:[x0=" << obj.x0 << ", y0=" << obj.y0 << ", x1=" << obj.x1
+            << ", y1=" << obj.y1 << "], confidence=" << obj.confidence << ", classId=" << obj.classId
+            << ", className=" << obj.className << std::endl;
         }
     }
     return APP_ERR_OK;
