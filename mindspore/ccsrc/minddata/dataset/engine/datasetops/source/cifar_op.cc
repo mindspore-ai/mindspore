@@ -256,7 +256,7 @@ Status CifarOp::ParseCifarData() {
   if (num_rows_ == 0) {
     std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
     RETURN_STATUS_UNEXPECTED("Invalid data, " + api +
-                             " API can't read the data file(interface mismatch or no data found). "
+                             " API can't read the data file (interface mismatch or no data found). "
                              "Check file in directory:" +
                              folder_path_);
   }

@@ -72,10 +72,9 @@ Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
   image_label_pairs_.shrink_to_fit();
   num_rows_ = image_label_pairs_.size();
   if (num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "Invalid data, ImageFolderDataset API can't read the data file(interface mismatch or no data found). "
-      "Check file path: " +
-      folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + DatasetName(true) +
+                             "Dataset API can't read the data file (interface mismatch or no data found). Check " +
+                             DatasetName() + " file path: " + folder_path_);
   }
   // free memory of two queues used for pre-scan
   folder_name_queue_->Reset();
@@ -112,8 +111,8 @@ void ImageFolderOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nNumber of rows:" << num_rows_ << "\nImageFolder directory: " << folder_path_
-        << "\nDecode: " << (decode_ ? "yes" : "no") << "\n\n";
+    out << "\nNumber of rows:" << num_rows_ << "\n"
+        << DatasetName(true) << " directory: " << folder_path_ << "\nDecode: " << (decode_ ? "yes" : "no") << "\n\n";
   }
 }
 
@@ -121,10 +120,9 @@ void ImageFolderOp::Print(std::ostream &out, bool show_all) const {
 Status ImageFolderOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
     if (image_label_pairs_.empty()) {
-      RETURN_STATUS_UNEXPECTED(
-        "Invalid data, ImageFolderDataset API can't read the data file(interface mismatch or no data found). "
-        "Check file path: " +
-        folder_path_);
+      RETURN_STATUS_UNEXPECTED("Invalid data, " + DatasetName(true) +
+                               "Dataset API can't read the data file(interface mismatch or no data found). Check " +
+                               DatasetName() + " file path: " + folder_path_);
     } else {
       RETURN_STATUS_UNEXPECTED(
         "[Internal ERROR], Map containing image-index pair is nullptr or has been set in other place,"
@@ -157,7 +155,7 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
     Path folder(folder_path_ + folder_name);
     std::shared_ptr<Path::DirIterator> dirItr = Path::DirIterator::OpenDirectory(&folder);
     if (folder.Exists() == false || dirItr == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + folder_name);
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + ": " + folder_name);
     }
     std::set<std::string> imgs;  // use this for ordering
     while (dirItr->HasNext()) {
@@ -165,7 +163,7 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
       if (extensions_.empty() || extensions_.find(file.Extension()) != extensions_.end()) {
         (void)imgs.insert(file.ToString().substr(dirname_offset_));
       } else {
-        MS_LOG(WARNING) << "Image folder operator unsupported file found: " << file.ToString()
+        MS_LOG(WARNING) << DatasetName(true) << " operator unsupported file found: " << file.ToString()
                         << ", extension: " << file.Extension() << ".";
       }
     }
@@ -207,7 +205,7 @@ Status ImageFolderOp::StartAsyncWalk() {
   TaskManager::FindMe()->Post();
   Path dir(folder_path_);
   if (dir.Exists() == false || dir.IsDirectory() == false) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open image folder: " + folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + ": " + folder_path_);
   }
   dirname_offset_ = folder_path_.length();
   RETURN_IF_NOT_OK(RecursiveWalkFolder(&dir));
@@ -250,7 +248,7 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const std::se
   std::string err_msg = "";
   int64_t row_cnt = 0;
   err_msg += (dir.Exists() == false || dir.IsDirectory() == false)
-               ? "Invalid parameter, image folder path is invalid or not set, path: " + path
+               ? "Invalid parameter, input path is invalid or not set, path: " + path
                : "";
   err_msg +=
     (num_classes == nullptr && num_rows == nullptr) ? "Invalid parameter, num_class and num_rows are null.\n" : "";

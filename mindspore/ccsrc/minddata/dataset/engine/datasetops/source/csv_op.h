@@ -179,6 +179,10 @@ class CsvOp : public NonMappableLeafOp {
   /// @return Name of the current Op
   std::string Name() const override { return "CsvOp"; }
 
+  // DatasetName name getter
+  // \return DatasetName of the current Op
+  virtual std::string DatasetName(bool upper = false) const { return upper ? "CSV" : "csv"; }
+
  private:
   // Parses a single row and puts the data into a tensor table.
   // @param line - the content of the row.

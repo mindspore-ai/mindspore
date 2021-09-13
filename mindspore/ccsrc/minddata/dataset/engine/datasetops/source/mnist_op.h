@@ -77,6 +77,10 @@ class MnistOp : public MappableLeafOp {
   // @return Name of the current Op
   std::string Name() const override { return "MnistOp"; }
 
+  // DatasetName name getter
+  // \return DatasetName of the current Op
+  virtual std::string DatasetName(bool upper = false) const { return upper ? "Mnist" : "mnist"; }
+
  private:
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row

@@ -167,7 +167,7 @@ Status VOCOp::ParseAnnotationIds() {
   num_rows_ = image_ids_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, VOCDataset API can't read the data file(interface mismatch or no data found). "
+      "Invalid data, VOCDataset API can't read the data file (interface mismatch or no data found). "
       "Check file in directory:" +
       folder_path_);
   }
