@@ -151,6 +151,7 @@ kernel::InnerKernel *CpuReduceFp16KernelCreator(const std::vector<lite::Tensor *
   if (reduce_param->mode_ != ReduceMode_ReduceMean && reduce_param->mode_ != ReduceMode_ReduceMax &&
       reduce_param->mode_ != ReduceMode_ReduceSum) {
     MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << reduce_param->mode_;
+    free(opParameter);
     return nullptr;
   }
 
