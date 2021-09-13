@@ -532,8 +532,9 @@ def set_context(**kwargs):
 
     Some configurations are device specific, see the below table for details:
 
-    ===========================  ===========================  =================
+    =======================      ===========================  =========================
     Function Classification      Configuration Parameters     Hardware Platform Support
+    =======================      ===========================  =========================
     System Configuration         device_id                    CPU/GPU/Ascend
                                  device_target                CPU/GPU/Ascend
                                  max_device_memory            GPU
@@ -560,12 +561,13 @@ def set_context(**kwargs):
                                  grad_for_scalar              CPU/GPU/Ascend
                                  save_compile_cache           CPU/GPU/Ascend
                                  load_compile_cache           CPU/GPU/Ascend
-    ============================ ===========================  ===================
+    =======================      ===========================  =========================
 
     Args:
         device_id (int): ID of the target device, the value must be in [0, device_num_per_host-1],
             while device_num_per_host should be no more than 4096. Default: 0.
-        device_target (str): The target device to run, support "Ascend", "GPU", and "CPU". Default: Ascend.
+        device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
+            If device target is not set, the version of MindSpore package is used.
         max_device_memory (str): Set the maximum memory available for devices.
             Currently, it is only supported on GPU. The format is "xxGB". Default: "1024GB".
             The actual used memory size is the minimum of the available memory of the device and max_device_memory.
@@ -574,13 +576,10 @@ def set_context(**kwargs):
         save_graphs (bool): Whether to save graphs. Default: False.
             When the `save_graphs` attribute is set as True, attribute of `save_graphs_path` is used to set the
             intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
-            For other configurations and arguments, please refer to the corresponding module
-            description. Additionally, the configuration is optional and can be enabled when needed.
         save_graphs_path (str): Path to save graphs. Default: ".".
+            If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
-            To save the data to a specified directory, set save_graphs_path. If the specified directory does not exist,
-            the system will automatically create the directory.
         enable_dump (bool): Whether to enable dump on Ascend. Default: False.
         save_dump_path (str): When the program is executed on Ascend, operators can dump data in this path.
             The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
@@ -594,7 +593,7 @@ def set_context(**kwargs):
               that the running user configured during installation has read and write permissions. It supports the
               configuration of absolute or relative paths(relative to the current path when executing the command line).
               The absolute path configuration starts with '/', for example:/home/data/output.
-              The relative path configuration starts with the directory name, for example:output.
+              The relative path configuration starts with the directory name, for example: output.
 
             - training_trace: collect iterative trajectory data, that is, the training task and software information of
               the AI software stack, to realize performance analysis of the training task, focusing on data
@@ -609,32 +608,40 @@ def set_context(**kwargs):
 
             - fp_point: specify the start position of the forward operator of the training network iteration trajectory,
               which is used to record the start timestamp of the forward calculation. The configuration value is
-              the name of the first operator specified in the forward direction. when the value is empty,
+              the name of the first operator specified in the forward direction. When the value is empty,
               the system will automatically obtain the forward operator name.
 
             - bp_point: specify the end position of the iteration trajectory reversal operator of the training network,
               record the end timestamp of the backward calculation. The configuration value is the name of the operator
-              after the specified reverse. when the value is empty, the system will automatically obtain the backward
+              after the specified reverse. When the value is empty, the system will automatically obtain the backward
               operator name.
 
-            - aic_metrics: the values are as follows:
-              ArithmeticUtilization: percentage statistics of various calculation indicators.
-              PipeUtilization: the time-consuming ratio of calculation unit and handling unit, this item is
-              the default value.
-              Memory: percentage of external memory read and write instructions.
-              MemoryL0: percentage of internal memory read and write instructions.
-              ResourceConflictRatio: proportion of pipline queue instructions.
+            - aic_metrics:
+                the values are as follows:
+              ArithmeticUtilization:
+                percentage statistics of various calculation indicators.
+              PipeUtilization:
+                the time-consuming ratio of calculation unit and handling unit, this item is
+                the default value.
+              Memory:
+                percentage of external memory read and write instructions.
+              MemoryL0:
+                percentage of internal memory read and write instructions.
+              ResourceConflictRatio:
+                proportion of pipline queue instructions.
 
             The profiling_options is like '{"output":'/home/data/output', 'training_trace':'on'}'
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
-            a file by default, and turns off printing to the screen. If the file exists already, add a timestamp
-            suffix to the file. Default: './'.
+            a file by default, and print_file_path is not set, the screen will be displayed.
             If the saved file already exists, the timestamp suffix will be added to the file. Saving data to a file
             solves the problem of data loss in screen printing when a large amount of data is generated.
+            If it is not set, an error will be reported: prompt to set the upper absolute path.
         env_config_path (str): Config path for DFX.
-            Through context.set_context(env_config_path="./mindspore_config.json ")
+            Through context.set_context(env_config_path="./mindspore_config.json")
             configure RDR:
-                enable: controls whether the RDR function is enabled.
+                enable: controls whether the RDR is enabled to collects the key data during training and
+                    saves key data in the fault scenario. When set to true, the RDR will be turned on.
+                    When set to false, the RDR will be turned off.
                 path: sets the path where RDR saves data. The current path must be absolute.
             Memory reuse:
                 mem_Reuse: controls whether the memory reuse function is turned on. When set to True,
@@ -646,10 +653,10 @@ def set_context(**kwargs):
             is set, the class name will be saved after keyword 'net-' in the scope.
             For example:Default/net-Net1/net-Net2 (reserve_class_name_in_scope=True)
                          Default/net/net (reserve_class_name_in_scope=False)
-        pynative_synchronize (bool): Whether to enable synchronous execution of the device in Pynative mode.
+        pynative_synchronize (bool): Whether to enable synchronous execution of the device in PyNative mode.
             Default: False. When the value is set to False, the operator is executed asynchronously on the device.
             When an error occurs in the execution of the operator, the specific error script code location cannot
-            be located; when the value is set to True, the operator is executed synchronously on the device. It will
+            be located, when the value is set to True, the operator is executed synchronously on the device. It will
             reduce the execution performance of the program. At this time, when an error occurs in the execution of
             the operator, the location of the error script code can be located according to the call stack of the error.
         mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: GRAPH_MODE(0).
@@ -661,25 +668,27 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to True, acceleration can be enabled.
             For details of sparsity and sparse tensor, please check
             `Enabling Graph-Accounting Convergence <https://www.mindspore.cn/docs/programming_guide
-            /en/master/enable_graph_kernel_fusion.html>`_
-        graph_kernel_flags (str): Optimization options of graph kernel fusion. Experienced user only.
-            For example: context.set_context(graph_kernel_flags=”–opt_level=2 –dump_as_text”).
-            Some general options:
-                opt_level: Set the optimization level. Default: 2. Graph kernel fusion can be enabled equivalently
-                by setting opt_level greater than 0. Available values are:
-                0: disable graph kernel fusion;
+            /en/master/enable_graph_kernel_fusion.html>`_.
+        graph_kernel_flags (str) –
+            Optimization options of graph kernel fusion, and the priority is higher when it conflicts
+            with enable_graph_kernel. Experienced user only.
+            For example, context.set_context(graph_kernel_flags=”–opt_level=2 –dump_as_text”). Some general options:
+            opt_level: Set the optimization level.
+                Default: 2. Graph kernel fusion can be enabled equivalently by setting opt_level greater than 0.
+                Available values are:
+                0: Disable graph kernel fusion;
                 1: enable the basic fusion of operators;
-                2: includes all optimizations of level 1, and turns on more optimizations such as CSE, arithmetic
-                    simplication and so on;
+                2: includes all optimizations of level 1,
+                    and turns on more optimizations such as CSE, arithmetic simplication and so on;
                 3: includes all optimizations of level 2, and turns on more optimizations such as SitchingFusion,
-                   ParallelFusion and so on. Optimizations of this level are radical and unstable in some scenarios.
-                   Be caution when using this level.
-                dump_as_text: dump detail info as text files. Default: False.
-            More options can be referred from the implementation code. These options can also be set
-            by environment variable MS_GRAPH_KERNEL_FLAGS, without modifying network source code.
-            For example: export MS_GRAPH_KERNEL_FLAGS=”–opt_level=2 –dump_as_text”.
+                    ParallelFusion and so on. Optimizations of this level are radical and unstable in some scenarios.
+                    Be caution when using this level.
+                dump_as_text: dump detail info as text files. Default: false.
+            More options can refer to the implementation code. These options can also be set by environment
+            variable MS_GRAPH_KERNEL_FLAGS, without modifying network source code.
+            For example, export MS_GRAPH_KERNEL_FLAGS=”–opt_level=2 –dump_as_text”.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
-        auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance,
+        auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance.
             Default: NO_TUNE. The value must be in ['RL', 'GA', 'RL,GA'].
             RL: Reinforcement Learning tune.
             GA: Genetic Algorithm tune.
@@ -688,7 +697,7 @@ def set_context(**kwargs):
                    (Automatic selection).
             For more information about the enable operator tuning tool settings, please check
             `Enable the operator optimization tool <https://www.mindspore.cn/docs/programming_guide/en
-            /master/enable_auto_tune.html>`_
+            /master/enable_auto_tune.html>`_.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
@@ -696,18 +705,18 @@ def set_context(**kwargs):
             of subgraphs is too large.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
             For details of sparsity and sparse tensor, please check
-             `sparse tensor <https://www.mindspore.cn/docs/programming_guide/en/master/tensor.html#sparse-tensor>`_
-        grad_for_scalar (bool):  Whether to get gradient for scalar, Default: False.
+             `sparse tensor <https://www.mindspore.cn/docs/programming_guide/en/master/tensor.html#sparse-tensor>`_.
+        grad_for_scalar (bool):  Whether to get gradient for scalar. Default: False.
             When grad_for_scalar is set to True, the function's scalar input can be derived.
             The default value is False. Because the back-end does not support scaling operations currently,
             this interface only supports simple operations that can be deduced by the front-end.
         save_compile_cache (bool): Whether to cache the graph compiled by front-end. Default: False.
             After save_compile_cache is set to True, a hardware-independent compilation cache is
-            generated and exported to a Mindir file, This is an experimental prototype that is
+            generated and exported to a MINDIR file, This is an experimental prototype that is
             subject to change and/or deletion.
         load_compile_cache (bool): Whether to use the cache of the graph compiled by front-end.
             This parameter must be used together with save_compile_cache. After save_compile_cache is set to True,
-            a hardware-independent compilation cache is generated and exported to a Mindir file.
+            a hardware-independent compilation cache is generated and exported to a MINDIR file.
             When the network is executed again, if load_compile_cache is set to True, the compile cache is loaded.
             By now, we do not support automatic checking for changes.
             Default: False.
