@@ -22,7 +22,7 @@
 
 bool GetSupportOptFlag() {
   bool status = false;
-#ifdef ENABLE_ARM64
+#if (defined ENABLE_ARM64) && (!defined SUPPORT_NNIE)
   int hwcap_type = 16;
   // getHwCap
   const uint32_t hwcap = getauxval(hwcap_type);

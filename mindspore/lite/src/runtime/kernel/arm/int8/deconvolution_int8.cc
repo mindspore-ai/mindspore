@@ -117,13 +117,17 @@ void DeConvInt8CPUKernel::CheckSupportOptimize() {
   support_optimize_ = true;
   matmul_func_ = MatMulInt8_16x4;
 #ifdef ENABLE_ARM64
+#if !defined(SUPPORT_NNIE)
   if (mindspore::lite::IsSupportSDot()) {
     support_optimize_ = true;
     matmul_func_ = MatMulR4Int8_optimize_handler;
   } else {
+#endif
     support_optimize_ = false;
     matmul_func_ = MatMulR4Int8Neon64;
+#if !defined(SUPPORT_NNIE)
   }
+#endif
 #endif
   return;
 }

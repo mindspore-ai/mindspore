@@ -68,9 +68,14 @@ void Conv2DINT8Coder::CheckSupportOptimize() {
       matmul_func_ = "NULL";
       break;
     case kARM64:
+#ifdef SUPPORT_NNIE
+      support_optimize_ = false;
+      tile_num_ = 8;
+#else
       // check support_optimize at runtime
       matmul_func_ = "MatMulRInt8_optimize_handler";
       tile_num_ = 8;
+#endif
       break;
     case kX86:
       support_optimize_ = true;

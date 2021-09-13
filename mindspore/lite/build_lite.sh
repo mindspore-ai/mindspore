@@ -38,6 +38,7 @@ write_commit_file() {
 }
 
 build_lite_x86_64_jni_and_jar() {
+    X86_JNI_CMAKE_ARGS=$1
     # copy x86 so
     local is_train=on
     cd ${BASEPATH}/output/tmp
@@ -63,8 +64,7 @@ build_lite_x86_64_jni_and_jar() {
     cd ${BASEPATH}/mindspore/lite/build
     rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
-    cmake -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
-          $CMAKE_ARGS -DENABLE_VERBOSE=${ENABLE_VERBOSE} -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
+    cmake ${X86_JNI_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni x86_64 failed----------------"
@@ -113,8 +113,8 @@ build_lite_x86_64_jni_and_jar() {
 }
 
 build_lite() {
+    LITE_CMAKE_ARGS=${CMAKE_ARGS}
     [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output
-    get_version
     echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
     local local_lite_platform=${LITE_PLATFORM}
     if [[ "${LITE_ENABLE_AAR}" == "on" ]]; then
@@ -131,65 +131,72 @@ build_lite() {
     cd ${BASEPATH}/mindspore/lite/build
     write_commit_file
 
-    if [[ "${local_lite_platform}" == "arm32" ]]; then
-      if [[ "${TOOLCHAIN_NAME}" == "ohos-lite" ]]; then
-        COMPILE_MINDDATA_LITE="off"
-        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/ohos-lite.toolchain.cmake
-        CMAKE_TOOLCHAIN_NAME="ohos-lite"
-      elif [[ "${TOOLCHAIN_NAME}" == "himix200" ]]; then
-        COMPILE_MINDDATA_LITE="off"
-        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/himix200.toolchain.cmake
-        CMAKE_TOOLCHAIN_NAME="himix200"
-      else
-        CMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
-        ANDROID_NATIVE_API_LEVEL="19"
-        CMAKE_ANDROID_NDK=${ANDROID_NDK}
-        CMAKE_ANDROID_ABI="armeabi-v7a"
-        CMAKE_ANDROID_TOOLCHAIN_NAME="clang"
-        CMAKE_ANDROID_STL=${MSLITE_ANDROID_STL}
-        MSLITE_ENABLE_FP16="on"
-      fi
+    LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp"
+
+    if [ "$(uname)" == "Darwin" ]; then
+      LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DCMAKE_BUILD_TYPE=Debug/-DCMAKE_BUILD_TYPE=Release/g'`
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_TRAIN=off -DMSLITE_GPU_BACKEND=off -DMSLITE_ENABLE_NPU=off"
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=off"
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DENABLE_BITCODE=0 -G Xcode"
+      CMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake
     fi
 
-    if [[ "${local_lite_platform}" == "arm64" ]]; then
-      if [ "$(uname)" == "Darwin" ]; then
-        pkg_name=mindspore-lite-${VERSION_STR}-ios-aarch64
-        cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="arm64" -DENABLE_BITCODE=0                   \
-              -DCMAKE_BUILD_TYPE="Release" -DBUILD_MINDDATA="" -DPLATFORM_ARM64="on" -DENABLE_NEON="on" -DMSLITE_ENABLE_FP16="on" \
-              -DMSLITE_ENABLE_TRAIN="off" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off"        \
-              -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp -G Xcode ..
-      else
-        checkndk
-        echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
-        cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"         \
-              -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"     \
-              -DANDROID_STL=${MSLITE_ANDROID_STL} $CMAKE_ARGS -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
-              -DPLATFORM_ARM64="on" -DENABLE_NEON="on" -DMSLITE_ENABLE_FP16="on" -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp           \
-              -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION}   \
-              -DENABLE_ASAN=${ENABLE_ASAN} -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
-      fi
-    elif [[ "${local_lite_platform}" == "arm32" ]]; then
+    if [[ "${local_lite_platform}" == "arm32" ]]; then
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_ARM32=on -DENABLE_NEON=on"
       if [ "$(uname)" == "Darwin" ]; then
         pkg_name=mindspore-lite-${VERSION_STR}-ios-aarch32
-        cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DARCHS="armv7;armv7s" -DENABLE_BITCODE=0     \
-              -DCMAKE_BUILD_TYPE="Release" -DBUILD_MINDDATA="" -DPLATFORM_ARM32="on" -DENABLE_NEON="on"             \
-              -DMSLITE_ENABLE_TRAIN="off" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off" \
-              -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp -G Xcode ..
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DARCHS=armv7;armv7s"
+      elif [[ "${TOOLCHAIN_NAME}" == "ohos-lite" ]]; then
+        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/ohos-lite.toolchain.cmake
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DTOOLCHAIN_NAME=ohos-lite"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=off"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=off"
+      elif [[ "${TOOLCHAIN_NAME}" == "himix200" ]]; then
+        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/himix200.toolchain.cmake
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DTOOLCHAIN_NAME=himix200"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=off"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=off -DMSLITE_ENABLE_TRAIN=off -DMSLITE_GPU_BACKEND=off"
       else
         checkndk
-        echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
-        cmake -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DTOOLCHAIN_NAME=${CMAKE_TOOLCHAIN_NAME} -DANDROID_NATIVE_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}          \
-              -DANDROID_NDK=${CMAKE_ANDROID_NDK} -DANDROID_ABI=${CMAKE_ANDROID_ABI} -DANDROID_TOOLCHAIN_NAME=${CMAKE_ANDROID_TOOLCHAIN_NAME}                    \
-              -DANDROID_STL=${CMAKE_ANDROID_STL}  $CMAKE_ARGS -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
-              -DPLATFORM_ARM32="on" -DENABLE_NEON="on"  -DMSLITE_ENABLE_FP16=${MSLITE_ENABLE_FP16} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp           \
-              -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION}    \
-              -DENABLE_ASAN=${ENABLE_ASAN} -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
+        CMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=lite_cv"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=on"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DANDROID_NATIVE_API_LEVEL=19 -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=armeabi-v7a -DANDROID_TOOLCHAIN_NAME=clang -DANDROID_STL=${MSLITE_ANDROID_STL}"
+      fi
+    elif [[ "${local_lite_platform}" == "arm64" ]]; then
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_ARM64=on -DENABLE_NEON=on"
+      if [ "$(uname)" == "Darwin" ]; then
+        pkg_name=mindspore-lite-${VERSION_STR}-ios-aarch64
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DARCHS=arm64"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=on"
+      elif [[ "${TOOLCHAIN_NAME}" == "himix100" ]]; then
+        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/himix100.toolchain.cmake
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DTOOLCHAIN_NAME=himix100"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=off"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=off -DMSLITE_ENABLE_TRAIN=off -DMSLITE_GPU_BACKEND=off"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_TOOLS=off"
+      else
+        checkndk
+        CMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=lite_cv"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_FP16=on"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DANDROID_NATIVE_API_LEVEL=19 -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=arm64-v8a -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang -DANDROID_STL=${MSLITE_ANDROID_STL}"
       fi
     else
-        cmake -DPLATFORM_X86_64=on $CMAKE_ARGS -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE}              \
-              -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
-              -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=lite_cv"
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_X86_64=on"
     fi
+
+    if [[ "X$CMAKE_TOOLCHAIN_FILE" != "X" ]]; then
+      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
+    fi
+
+    if [[ "${local_lite_platform}" == "arm64" || "${local_lite_platform}" == "arm32" ]]; then
+      echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
+    fi
+    echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
+    cmake ${LITE_CMAKE_ARGS}  "${BASEPATH}/mindspore/lite"
+
     if [ "$(uname)" == "Darwin" ]; then
         xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet
     else
@@ -197,7 +204,7 @@ build_lite() {
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
-            build_lite_x86_64_jni_and_jar
+            build_lite_x86_64_jni_and_jar $1
         else
             echo -e "\e[31mJAVA_HOME is not set, so jni and jar packages will not be compiled \e[0m"
             echo -e "\e[31mIf you want to compile the JAR package, please set $JAVA_HOME. For example: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64 \e[0m"
@@ -233,21 +240,21 @@ build_lite() {
         fi
 
         [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output/tmp/
-        if [[ "${MSLITE_ENABLE_NNIE}" == "on" ]]; then
-          compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
+        local compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
+        if [[ "${MSLITE_ENABLE_NNIE}" == "on" && "${local_lite_platform}" == "x86_64" ]]; then
           cd ${BASEPATH}/../
-          if [[ "${local_lite_platform}" == "x86_64" ]]; then
-            sh ${compile_nnie_script} -I x86_64 -b nnie_3516_master_dev -j $THREAD_NUM
-            if [[ $? -ne 0 ]]; then
-              echo "compile x86_64 for nnie failed."
-              exit 1
-            fi
-          elif [[ "${local_lite_platform}" == "arm32" ]]; then
-            sh ${compile_nnie_script} -I arm32 -b nnie_3516_master_dev -j $THREAD_NUM
-            if [[ $? -ne 0 ]]; then
-              echo "compile arm32 for nnie failed."
-              exit 1
-            fi
+          sh ${compile_nnie_script} -I x86_64 -b nnie_3516_master -j $THREAD_NUM
+          if [[ $? -ne 0 ]]; then
+            echo "compile x86_64 for nnie failed."
+            exit 1
+          fi
+        fi
+        if [[ "${TOOLCHAIN_NAME}" == "himix200" && "${local_lite_platform}" == "arm32" ]]; then
+          cd ${BASEPATH}/../
+          sh ${compile_nnie_script} -I arm32 -b nnie_3516_master -j $THREAD_NUM
+          if [[ $? -ne 0 ]]; then
+            echo "compile arm32 for nnie failed."
+            exit 1
           fi
         fi
         echo "---------------- mindspore lite: build success ----------------"
@@ -255,6 +262,7 @@ build_lite() {
 }
 
 build_lite_arm64_and_jni() {
+    local ARM64_CMAKE_ARGS=${CMAKE_ARGS}
     build_lite "arm64"
     # copy arm64 so
     local is_train=on
@@ -279,11 +287,10 @@ build_lite_arm64_and_jni() {
     # build jni so
     [ -n "${BASEPATH}" ] && rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
-    cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
+    cmake ${ARM64_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} -DPLATFORM_ARM64=on  \
+          -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
-          -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
-          -DANDROID_STL=${MSLITE_ANDROID_STL} $CMAKE_ARGS -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
-          -DSUPPORT_TRAIN=${is_train} -DPLATFORM_ARM64=on "${LITE_JAVA_PATH}/native/"
+          -DANDROID_STL=${MSLITE_ANDROID_STL} "${LITE_JAVA_PATH}/native/"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni arm64 failed----------------"
@@ -298,6 +305,7 @@ build_lite_arm64_and_jni() {
 }
 
 build_lite_arm32_and_jni() {
+    local ARM32_CMAKE_ARGS=${CMAKE_ARGS}
     build_lite "arm32"
     # copy arm32 so
     local is_train=on
@@ -323,11 +331,10 @@ build_lite_arm32_and_jni() {
     # build jni so
     [ -n "${BASEPATH}" ] && rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
-    cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
+    cmake ${ARM32_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} -DPLATFORM_ARM32=on \
+          -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
-          -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
-          -DANDROID_STL=${MSLITE_ANDROID_STL} $CMAKE_ARGS -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
-          -DSUPPORT_TRAIN=${is_train} -DPLATFORM_ARM32=on "${LITE_JAVA_PATH}/native"
+          -DANDROID_STL=${MSLITE_ANDROID_STL} "${LITE_JAVA_PATH}/native"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni arm32 failed----------------"
@@ -342,7 +349,6 @@ build_lite_arm32_and_jni() {
 }
 
 build_aar() {
-    get_version
     if [[ "X${INC_BUILD}" == "Xoff" ]]; then
         [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/mindspore/lite/build
     fi
@@ -401,6 +407,7 @@ if [[ "${MSLITE_ENABLE_ACL}" == "on" ]]; then
     update_submodule
 fi
 
+CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_VERBOSE=${ENABLE_VERBOSE}"
 if [[ "${DEBUG_MODE}" == "on" ]]; then
     CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Debug "
 else
@@ -409,6 +416,9 @@ fi
 if [[ "X$ENABLE_GITEE" = "Xon" ]]; then
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GITEE=ON"
 fi
+
+get_version
+CMAKE_ARGS="${CMAKE_ARGS} -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION}"
 
 if [[ "X$LITE_ENABLE_AAR" = "Xon" ]]; then
     build_aar

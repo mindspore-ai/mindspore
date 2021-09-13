@@ -18,7 +18,7 @@ add_executable(benchmark
 
 add_dependencies(benchmark fbs_src)
 
-if((PLATFORM_ARM32 OR PLATFORM_ARM64) AND NOT TARGET_HIMIX200 AND NOT TARGET_OHOS_LITE)
+if((PLATFORM_ARM32 OR PLATFORM_ARM64) AND NOT TARGET_HIMIX AND NOT TARGET_OHOS_LITE)
     if(SUPPORT_NPU AND ANDROID_STL STREQUAL "c++_static")
         target_link_libraries(benchmark mindspore-lite mindspore::json c++_shared)
     else()
