@@ -532,40 +532,40 @@ def set_context(**kwargs):
 
     Some configurations are device specific, see the below table for details:
 
-    ===========================  ===========================    ==========================
-    Function Classification      Configuration Parameters       Hardware Platform Support
-    System configuration         device_id                      CPU/GPU/Ascend
-                                 device_target                  CPU/GPU/Ascend
-                                 max_device_memory              GPU
-                                 variable_memory_max_size       Ascend
-    Debug configuration          save_graphs                    CPU/GPU/Ascend
-                                 save_graphs_path               CPU/GPU/Ascend
-                                 enable_dump                    Ascend
-                                 save_dump_path                 Ascend
-                                 enable_profiling               Ascend
-                                 profiling_options              Ascend
-                                 print_file_path                Ascend
-                                 env_config_path                CPU/GPU/Ascend
-                                 precompile_only                CPU/GPU/Ascend
-                                 reserve_class_name_in_scope    CPU/GPU/Ascend
-                                 pynative_synchronize           GPU/Ascend
-    Executive control            mode                           CPU/GPU/Ascend
-                                 enable_graph_kernel            Ascend/GPU
-                                 graph_kernel_flags             Ascend/GPU
-                                 enable_reduce_precision        Ascend
-                                 auto_tune_mode                 Ascend
-                                 check_bprop                    CPU/GPU/Ascend
-                                 max_call_depth                 CPU/GPU/Ascend
-                                 enable_sparse                  CPU/GPU/Ascend
-                                 grad_for_scalar                CPU/GPU/Ascend
-                                 save_compile_cache             CPU/GPU/Ascend
-                                 load_compile_cache             CPU/GPU/Ascend
-    ============================ ===========================    =============================
+    ===========================  ===========================  =================
+    Function Classification      Configuration Parameters     Hardware Platform Support
+    System Configuration         device_id                    CPU/GPU/Ascend
+                                 device_target                CPU/GPU/Ascend
+                                 max_device_memory            GPU
+                                 variable_memory_max_size     Ascend
+    Debug Configuration          save_graphs                  CPU/GPU/Ascend
+                                 save_graphs_path             CPU/GPU/Ascend
+                                 enable_dump                  Ascend
+                                 save_dump_path               Ascend
+                                 enable_profiling             Ascend
+                                 profiling_options            Ascend
+                                 print_file_path              Ascend
+                                 env_config_path              CPU/GPU/Ascend
+                                 precompile_only              CPU/GPU/Ascend
+                                 reserve_class_name_in_scope  CPU/GPU/Ascend
+                                 pynative_synchronize         GPU/Ascend
+    Executive Control            mode                         CPU/GPU/Ascend
+                                 enable_graph_kernel          Ascend/GPU
+                                 graph_kernel_flags           Ascend/GPU
+                                 enable_reduce_precision      Ascend
+                                 auto_tune_mode               Ascend
+                                 check_bprop                  CPU/GPU/Ascend
+                                 max_call_depth               CPU/GPU/Ascend
+                                 enable_sparse                CPU/GPU/Ascend
+                                 grad_for_scalar              CPU/GPU/Ascend
+                                 save_compile_cache           CPU/GPU/Ascend
+                                 load_compile_cache           CPU/GPU/Ascend
+    ============================ ===========================  ===================
 
     Args:
         device_id (int): ID of the target device, the value must be in [0, device_num_per_host-1],
             while device_num_per_host should be no more than 4096. Default: 0.
-        device_target (str): The target device to run, support "Ascend", "GPU", and "CPU".
+        device_target (str): The target device to run, support "Ascend", "GPU", and "CPU". Default: Ascend.
         max_device_memory (str): Set the maximum memory available for devices.
             Currently, it is only supported on GPU. The format is "xxGB". Default: "1024GB".
             The actual used memory size is the minimum of the available memory of the device and max_device_memory.
