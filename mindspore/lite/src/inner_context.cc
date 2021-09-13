@@ -268,7 +268,7 @@ bool InnerContext::IsProviderEnabled() const {
 
 bool InnerContext::IsAllDeviceTypeValid() const {
   return std::all_of(this->device_list_.begin(), this->device_list_.end(), [](const DeviceContext &device) {
-    return device.device_type_ >= DT_CPU && device.device_type_ <= DT_NPU;
+    return device.device_type_ >= DT_CPU && device.device_type_ <= DT_ASCEND310;
   });
 }
 

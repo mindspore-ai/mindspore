@@ -1,14 +1,10 @@
 # build mindspore_shared_lib
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
-if(NOT(BUILD_LITE))
+if(NOT BUILD_LITE)
     set(LOAD_MINDIR_SRC
             ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/load_model.cc
             ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/anf_model_parser.cc
-            )
-else()
-    set(MS_UTILS_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/utils/config_manager.cc
             )
 endif()
 
@@ -21,17 +17,12 @@ if(ENABLE_D OR ENABLE_ACL)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
 
     file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
-            "model/acl/acl_model_options.cc"
+            "akg_kernel_register.cc"
+            "model/acl/*.cc"
             "model/acl/model_converter.cc"
             "model/model_converter_utils/*.cc"
             "graph/acl/*.cc"
             )
-
-    if(NOT(BUILD_LITE))
-        list(APPEND API_ACL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc"
-                                "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model_multi.cc"
-                                "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model.cc")
-    endif()
 
     if(NOT ENABLE_D)
         list(APPEND API_ACL_SRC $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
@@ -53,22 +44,29 @@ endif()
 set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc
               ${API_MS_INFER_SRC}
               ${API_ACL_SRC}
               ${API_OPS_SRC}
-              ${LOAD_MINDIR_SRC}
-              ${MS_UTILS_SRC})
+              ${LOAD_MINDIR_SRC})
 
-if(NOT(BUILD_LITE))
-    list(APPEND MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc"
-                          "${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc"
-                          "${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc")
+if(BUILD_LITE)
+    list(APPEND MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/utils/config_manager.cc")
+    list(REMOVE_ITEM MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model_multi.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc"
+            $<TARGET_OBJECTS:_mindspore_vm_obj>)
 endif()
 
 add_library(mindspore_shared_lib SHARED ${MSLIB_SRC})
-if(NOT(BUILD_LITE))
+if(NOT BUILD_LITE)
     set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
 endif()
 
@@ -81,9 +79,9 @@ else()
             -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core proto_input mindspore_gvar
             mindspore::protobuf)
     else()
-        if(NOT(BUILD_LITE))
+        if(NOT BUILD_LITE)
             target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-              mindspore mindspore_core proto_input mindspore_gvar mindspore::protobuf)
+                mindspore mindspore_core proto_input mindspore_gvar mindspore::protobuf)
         else()
             target_link_libraries(mindspore_shared_lib PRIVATE ${SECUREC_LIBRARY})
         endif()

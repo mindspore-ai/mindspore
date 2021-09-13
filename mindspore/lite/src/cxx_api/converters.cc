@@ -71,6 +71,14 @@ Status AddNpuDevice(Context *a_context, lite::InnerContext *l_context, DeviceInf
   return kSuccess;
 }
 
+Status AddAscend310Device(Context *a_context, lite::InnerContext *l_context, DeviceInfoContext *device) {
+  lite::DeviceInfo device_info = {0};
+  auto ascend310_context = device->Cast<Ascend310DeviceInfo>();
+  device_info.ascend310_device_info_ = {ascend310_context->GetDeviceID()};
+  l_context->device_list_.push_back({lite::DT_ASCEND310, device_info});
+  return kSuccess;
+}
+
 Status A2L_ConvertContext(Context *a_context, lite::InnerContext *l_context) {
   if ((a_context == nullptr) || (l_context == nullptr)) {
     MS_LOG(ERROR) << "Invalid context pointers.";
@@ -100,6 +108,8 @@ Status A2L_ConvertContext(Context *a_context, lite::InnerContext *l_context) {
       error_code = AddGpuDevice(a_context, l_context, device.get());
     } else if (device->GetDeviceType() == kKirinNPU) {
       error_code = AddNpuDevice(a_context, l_context, device.get());
+    } else if (device->GetDeviceType() == kAscend310) {
+      error_code = AddAscend310Device(a_context, l_context, device.get());
     } else {
       MS_LOG(ERROR) << "Invalid device.";
       return kLiteInputParamInvalid;

@@ -69,6 +69,18 @@ std::shared_ptr<mindspore::KirinNPUDeviceInfo> NPUDeviceInfoFromNPUDeviceContext
   PassBasicProperties(npu_info, npu_context);
   return npu_info;
 }
+
+std::shared_ptr<mindspore::Ascend310DeviceInfo> Ascend310DeviceInfoFromAscend310DeviceContext(
+  const lite::DeviceContext &ascend310_context) {
+  if (ascend310_context.device_type_ != DT_ASCEND310) {
+    MS_LOG(ERROR) << "Function input parameter is not ascend310 context.";
+    return nullptr;
+  }
+  auto ascend310_info = std::make_shared<mindspore::Ascend310DeviceInfo>();
+  MS_CHECK_TRUE_RET(ascend310_info != nullptr, nullptr);
+  ascend310_info->SetDeviceID(ascend310_context.device_info_.ascend310_device_info_.device_id_);
+  return ascend310_info;
+}
 }  // namespace
 
 mindspore::Context *MSContextFromContext(const lite::Context *context) {
@@ -89,7 +101,8 @@ mindspore::Context *MSContextFromContext(const lite::Context *context) {
   std::map<DeviceType, std::function<std::shared_ptr<mindspore::DeviceInfoContext>(const lite::DeviceContext &)>>
     transfer_funcs = {{DT_CPU, CPUDeviceInfoFromCPUDeviceContext},
                       {DT_GPU, GPUDeviceInfoFromGPUDeviceContext},
-                      {DT_NPU, NPUDeviceInfoFromNPUDeviceContext}};
+                      {DT_NPU, NPUDeviceInfoFromNPUDeviceContext},
+                      {DT_ASCEND310, Ascend310DeviceInfoFromAscend310DeviceContext}};
   for (auto &device_context : context->device_list_) {
     auto device_type = device_context.device_type_;
     if (transfer_funcs.find(device_type) == transfer_funcs.end()) {

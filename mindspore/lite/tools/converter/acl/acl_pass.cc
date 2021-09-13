@@ -214,7 +214,7 @@ STATUS AclPass::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data
   SetAclModelOptions(func_graph);
   // call interface of cloud
   ModelConverter model_converter;
-  model_converter.set_options(options_.get());
+  model_converter.set_options(options_);
   *om_data = model_converter.LoadMindIR(func_graph);
   if (om_data->Data() == nullptr || om_data->DataSize() == 0) {
     MS_LOG(ERROR) << "Model converter load mindir failed.";
@@ -230,7 +230,7 @@ void AclPass::SetAclModelOptions(const FuncGraphPtr &func_graph) {
   ascend310_info->SetDeviceID(0);
   model_context->MutableDeviceInfo().emplace_back(ascend310_info);
   // set options
-  options_ = std::make_unique<AclModelOptions>(model_context);
+  options_ = std::make_shared<AclModelOptions>(model_context);
   if (options_ == nullptr) {
     MS_LOG(ERROR) << "Acl option make shared failed.";
     return;

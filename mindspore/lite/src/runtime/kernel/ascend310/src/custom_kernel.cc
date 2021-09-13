@@ -47,8 +47,8 @@ AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Conte
   }
   auto context = const_cast<mindspore::Context *>(ctx);
   auto device_infos = context->MutableDeviceInfo();
-  if (device_infos.size() != 1) {
-    MS_LOG(WARNING) << "Size of device infos is not one.";
+  if (device_infos.size() < 1) {
+    MS_LOG(WARNING) << "Size of device infos is less than one.";
     return options;
   }
   if (device_infos[0] == nullptr) {
@@ -62,7 +62,6 @@ AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Conte
   }
 
   options.device_id = static_cast<int32_t>(ascend31o_info->GetDeviceID());
-  options.dump_cfg_path = ascend31o_info->GetDumpConfigPath();
   return options;
 }
 

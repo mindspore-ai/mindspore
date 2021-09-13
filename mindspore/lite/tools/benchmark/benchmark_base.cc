@@ -239,6 +239,16 @@ int BenchmarkBase::CheckThreadNumValid() {
   return RET_OK;
 }
 
+int BenchmarkBase::CheckDeviceTypeValid() {
+  if (flags_->device_ != "CPU" && flags_->device_ != "GPU" && flags_->device_ != "NPU" &&
+      flags_->device_ != "Ascend310") {
+    MS_LOG(ERROR) << "Device type:" << flags_->device_ << " is not supported.";
+    std::cerr << "Device type:" << flags_->device_ << " is not supported." << std::endl;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int BenchmarkBase::InitDumpConfigFromJson(char *path) {
   auto real_path = RealPath(path);
   std::ifstream ifs(real_path);
@@ -393,9 +403,8 @@ int BenchmarkBase::Init() {
     return RET_ERROR;
   }
 
-  if (flags_->device_ != "CPU" && flags_->device_ != "GPU" && flags_->device_ != "NPU") {
-    MS_LOG(ERROR) << "Device type:" << flags_->device_ << " is not supported.";
-    std::cerr << "Device type:" << flags_->device_ << " is not supported." << std::endl;
+  if (CheckDeviceTypeValid() != RET_OK) {
+    MS_LOG(ERROR) << "Device type is invalid.";
     return RET_ERROR;
   }
 
