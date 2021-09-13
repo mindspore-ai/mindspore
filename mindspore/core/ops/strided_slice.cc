@@ -42,6 +42,16 @@ std::vector<int64_t> TenToTwo(int64_t num) {
   return output;
 }
 
+int64_t get_stride_with_not_zero(int64_t start_pos, int64_t end_pos, int64_t strides) {
+  int64_t slicing_length = 0;
+  if (strides != 0) {
+    slicing_length = 1 + (end_pos + 1 - start_pos) / strides;
+  } else {
+    MS_EXCEPTION(ValueError) << "the strides must be non-zero but got " << strides;
+  }
+  return slicing_length;
+}
+
 void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t> &x_shape,
                         const std::vector<int64_t> &begin_v, const std::vector<int64_t> &end_v,
                         const std::vector<int64_t> &strides_v, std::vector<int64_t> *infer_shape, size_t i, size_t j,
@@ -317,7 +327,7 @@ int64_t StridedSlice::compute_slicing_length(int64_t start_pos, int64_t end_pos,
       if (start_pos <= end_pos) {
         slicing_length = 0;
       } else {
-        slicing_length = 1 + (end_pos + 1 - start_pos) / strides;
+        slicing_length = get_stride_with_not_zero(start_pos, end_pos, strides);
       }
     }
   }

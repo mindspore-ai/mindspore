@@ -36,9 +36,9 @@ std::vector<int64_t> GetOutputMaskShape(const std::vector<int64_t> &input_shape,
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (i == 1) {
       if (x_dtype == kUInt8 || x_dtype == kInt8) {
-        mask_shape.push_back(ceil((input_shape[1] + 31) / 32));
+        mask_shape.push_back(UlongToLong(ceil((input_shape[1] + 31) / 32)));
       } else {
-        mask_shape.push_back(ceil((input_shape[1] + 15) / 16));
+        mask_shape.push_back(UlongToLong(ceil((input_shape[1] + 15) / 16)));
       }
     } else {
       mask_shape.push_back(input_shape[i]);
