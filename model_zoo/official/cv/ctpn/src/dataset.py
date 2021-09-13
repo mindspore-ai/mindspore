@@ -50,7 +50,7 @@ class PhotoMetricDistortion:
                                        self.contrast_upper)
                 img *= alpha
         # convert color from BGR to HSV
-        img = cv2.cvtColor((img, getattr(cv2, f'COLOR_BGR2HSV')))
+        img = cv2.cvtColor((img, cv2.COLOR_BGR2HSV))
         # random saturation
         if random.randint(2):
             img[..., 1] *= random.uniform(self.saturation_lower,
@@ -61,7 +61,7 @@ class PhotoMetricDistortion:
             img[..., 0][img[..., 0] > 360] -= 360
             img[..., 0][img[..., 0] < 0] += 360
         # convert color from HSV to BGR
-        img = cv2.cvtColor((img, getattr(cv2, f'COLOR_HSV2BGR')))
+        img = cv2.cvtColor((img, cv2.COLOR_HSV2BGR))
         # random contrast
         if mode == 0:
             if random.randint(2):
