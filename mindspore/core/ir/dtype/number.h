@@ -153,13 +153,18 @@ class MS_CORE_API Float : public Number {
 // Complex
 class MS_CORE_API Complex : public Number {
  public:
-  Complex() : Number(kNumberTypeComplex64, 64, false) {}
+  Complex() : Number(kNumberTypeComplex, 0) {}
   explicit Complex(const int nbits);
   ~Complex() override {}
   MS_DECLARE_PARENT(Complex, Number)
 
-  TypeId generic_type_id() const override { return kNumberTypeComplex64; }
-  TypePtr DeepCopy() const override { return std::make_shared<Complex>(nbits()); }
+  TypeId generic_type_id() const override { return kNumberTypeComplex; }
+  TypePtr DeepCopy() const override {
+    if (nbits() == 0) {
+      return std::make_shared<Complex>();
+    }
+    return std::make_shared<Complex>(nbits());
+  }
   std::string ToString() const override { return GetTypeName("Complex"); }
   std::string ToReprString() const override { return GetTypeName("complex"); }
   std::string DumpText() const override { return std::string("C") + std::to_string(nbits()); }

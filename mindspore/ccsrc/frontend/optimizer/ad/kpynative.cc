@@ -696,6 +696,7 @@ bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodeP
       din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToLong(i))});
       din->set_abstract(input_adjoint_iter->second->out()->ToAbstract()->Broaden());
     }
+    din = HandleRealToComplex(input, din->cast<CNodePtr>(), tape_);
     input_adjoint_iter->second->AccumulateDout(din);
   }
   return true;

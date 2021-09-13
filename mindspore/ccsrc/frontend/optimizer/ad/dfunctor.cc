@@ -186,6 +186,42 @@ static bool HasSideEffectBackProp(const CNodePtr &cnode) {
   return false;
 }
 
+AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, FuncGraphPtr fg) {
+  MS_EXCEPTION_IF_NULL(input);
+  TypePtr input_type = input->Type();
+  if (input_type == nullptr || !input_type->isa<TensorType>()) {
+    return din;
+  }
+  input_type = input_type->cast<TensorTypePtr>()->element();
+  MS_EXCEPTION_IF_NULL(input_type);
+  if (input_type->type_id() == kNumberTypeComplex64 || input_type->type_id() == kNumberTypeComplex128) {
+    return din;
+  }
+
+  MS_EXCEPTION_IF_NULL(din);
+  // If we can not get the dtype of din, we insert real op ignoring din's dtype,
+  // and eliminate it in "real_op_elimiate" pass.
+  MS_EXCEPTION_IF_NULL(fg);
+  if (din->abstract() == nullptr) {
+    return fg->NewCNode({NewValueNode(prim::kPrimReal), din});
+  }
+
+  TypePtr din_type = din->Type();
+  if (din_type == nullptr || !din_type->isa<TensorType>()) {
+    return din;
+  }
+  din_type = din_type->cast<TensorTypePtr>()->element();
+  MS_EXCEPTION_IF_NULL(din_type);
+  if (din_type->type_id() != kNumberTypeComplex64 && din_type->type_id() != kNumberTypeComplex128) {
+    return din;
+  }
+  AnfNodePtr new_din = fg->NewCNode({NewValueNode(prim::kPrimReal), din});
+  AbstractBasePtr abs = std::make_shared<abstract::AbstractTensor>(
+    abstract::AbstractTensor(input_type, input->abstract()->GetShapeTrack()));
+  new_din->set_abstract(abs);
+  return new_din;
+}
+
 void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app, const AdjointPtr &node_adjoint) {
   auto bprop =
     k_graph_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), k_app, NewValueNode(static_cast<int64_t>(1))});
@@ -214,6 +250,9 @@ void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app,
       auto inp_i = input->cast<CNodePtr>();
       input = inp_i->input(1);
     }
+    auto din_with_real = HandleRealToComplex(input, din, tape_);
+    MS_EXCEPTION_IF_NULL(din_with_real);
+    din = din_with_real->cast<CNodePtr>();
     // Backprop sens wrt fvs.
     if (IsValueNode<FuncGraph>(input)) {
       auto func_graph = GetValueNode<FuncGraphPtr>(input);
