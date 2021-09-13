@@ -4813,7 +4813,7 @@ class SpaceToBatch(PrimitiveWithInfer):
         ValueError: If `block_size` is less than 2.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> block_size = 2
@@ -4897,7 +4897,7 @@ class BatchToSpace(PrimitiveWithInfer):
         ValueError: If `block_size` is less than 2.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> block_size = 2
