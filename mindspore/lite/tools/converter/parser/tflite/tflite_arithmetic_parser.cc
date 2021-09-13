@@ -49,6 +49,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteAddParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::AddFusion>();
 
@@ -64,6 +65,7 @@ ops::PrimitiveC *TfliteAddParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteMulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::MulFusion>();
 
@@ -79,6 +81,7 @@ ops::PrimitiveC *TfliteMulParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteDivParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::DivFusion>();
 
@@ -94,6 +97,7 @@ ops::PrimitiveC *TfliteDivParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteSubParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::SubFusion>();
 
@@ -109,18 +113,21 @@ ops::PrimitiveC *TfliteSubParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteFloorDivParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::FloorDiv>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteFloorModParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::FloorMod>();
   return prim.release();
 }
 
 ops::PrimitiveC *TflitePowParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::PowFusion>();
 
@@ -131,42 +138,49 @@ ops::PrimitiveC *TflitePowParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteSquaredDifferenceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::SquaredDifference>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteMaximumParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Maximum>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteMinimumParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Minimum>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteAbsParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Abs>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteCosParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Cos>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteFloorParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Floor>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteExpParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::ExpFusion>();
 
@@ -178,84 +192,98 @@ ops::PrimitiveC *TfliteExpParser::Parse(const std::unique_ptr<tflite::OperatorT>
 }
 
 ops::PrimitiveC *TfliteCeilParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Ceil>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteLogParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Log>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteRoundParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Round>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteSqrtParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Sqrt>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteRsqrtParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Rsqrt>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteSquareParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Square>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteSinParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Sin>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteNegParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Neg>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Equal>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteNotEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::NotEqual>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteGreaterParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Greater>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteGreaterEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::GreaterEqual>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteLessParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Less>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteLessEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                              const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::LessEqual>();
   return prim.release();

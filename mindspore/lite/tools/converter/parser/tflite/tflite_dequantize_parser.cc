@@ -22,12 +22,11 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
-    return nullptr;
-  }
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
   const auto &in_tensor = tflite_subgraph->tensors[tflite_op->inputs.at(0)];
   if (in_tensor == nullptr) {
     MS_LOG(ERROR) << "input tensor is null";

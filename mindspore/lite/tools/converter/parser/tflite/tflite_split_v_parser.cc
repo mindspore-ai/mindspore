@@ -23,16 +23,13 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Split>();
 
   MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   MS_ASSERT(tflite_model != nullptr);
-  const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
-    return nullptr;
-  }
   const auto &tflite_attr = tflite_op->builtin_options.AsSplitVOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op splitv attr failed";

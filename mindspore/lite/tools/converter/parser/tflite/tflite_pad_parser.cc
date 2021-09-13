@@ -27,16 +27,13 @@ constexpr int kTFlitePadInputSize = 3;
 constexpr int kTFlitePaddingIndex = 1;
 }  // namespace
 ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::PadFusion>();
 
   MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   MS_ASSERT(tflite_model != nullptr);
-  const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
-    return nullptr;
-  }
   auto &opcode = tflite_model->operator_codes.at(tflite_op->opcode_index);
   if (opcode == nullptr) {
     MS_LOG(ERROR) << "opcode is nullptr";
