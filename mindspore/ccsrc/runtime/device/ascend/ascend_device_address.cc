@@ -280,6 +280,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   SyncStream();
   auto output_addr_vec = launch_transdata_->GetKernelOutputAddr();
   if (output_addr_vec.size() != 1) {
+    launch_transdata_->FreeLaunchDeviceMem();
     MS_LOG(EXCEPTION) << "Launch transdata outputs should have only one output";
     return false;
   }
@@ -293,9 +294,11 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans data type failed.";
+      launch_transdata_->FreeLaunchDeviceMem();
       return false;
     }
   }
+  launch_transdata_->FreeLaunchDeviceMem();
   return sync_ok;
 }
 
@@ -485,12 +488,7 @@ void AscendDeviceAddress::ClearDeviceMemory() {
   }
 }
 
-AscendDeviceAddress::~AscendDeviceAddress() {
-  ClearDeviceMemory();
-  if (launch_transdata_ != nullptr) {
-    launch_transdata_->FreeLaunchDeviceMem();
-  }
-}
+AscendDeviceAddress::~AscendDeviceAddress() { ClearDeviceMemory(); }
 
 bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &host_fmt,
                                         const ShapeVector &host_shape, TypeId host_type, bool trans_flag) const {
