@@ -203,7 +203,9 @@ constexpr char FORWARD_REDUCE_SCATTER[] = "forward_reduce_scatter";
 constexpr char FIELD_SIZE[] = "field_size";
 constexpr char OPTIMIZER_SUB_STRING[] = "optimizer";
 constexpr char DEVICE[] = "Device";
-constexpr char PARALLEL_OPTIMIZER_ALLGATHER[] = "parallel_optimizer_allgather_not_recompute";
+constexpr char PARALLEL_OPTIMIZER_ALLGATHER[] = "parallel_optimizer_allgather";
+constexpr char PARALLEL_OPTIMIZER_ALLGATHER_NOT_COMPUTE[] = "parallel_optimizer_allgather_not_recompute";
+constexpr char PARALLEL_OPTIMIZER_COMM_OP[] = "parallel_optimizer_comm_op";
 constexpr char CELLLIST_KEYWORD_PATTERN[] = "-CellList/(\\d+)-";
 
 constexpr char OUT_CHANNEL[] = "out_channel";

@@ -371,6 +371,15 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
     std::vector<int64_t> fusion_total_shape{fusion_total_size};
     AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(fusion_total_shape), fused_node);
   }
+  bool is_recompute =
+    final_node->GetAttr(kAttrDuplicated) != nullptr && GetValue<bool>(final_node->GetAttr(kAttrDuplicated));
+  if (AnfAlgo::GetCNodeName(final_node) == kAllGatherOpName && is_recompute) {
+    auto fused_cnode = fused_node->cast<CNodePtr>();
+    fused_cnode->AddAttr("duplicated", MakeValue(true));
+    auto fused_prim = GetCNodePrimitive(fused_cnode);
+    auto final_node_prim = GetCNodePrimitive(final_node);
+    fused_prim->set_instance_name(final_node_prim->instance_name());
+  }
   return fused_node;
 }
 

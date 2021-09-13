@@ -324,6 +324,28 @@ class Parameter(Tensor_):
         self.param_info.comm_fusion = comm_fusion_
 
     @property
+    def parallel_optimizer_comm_recompute(self):
+        """
+        Get and Set the whether do recompute for communication operators corresponding to this parameter
+        when applying parallel optimizer.
+
+        In `AUTO_PARALLEL` and `SEMI_AUTO_PARALLEL` mode, when applying parallel optimizer, some all_gather operators
+        used for parameters gathering are inserted automatically.
+        The interface is used to control the recompute attr for those all_gather operators.
+
+        Note:
+            - Only `Ascend` and `Graph` mode is supported.
+            - It is recommended to use cell.recompute(parallel_optimizer_comm_recompute=True/False) to configure
+              the all_gather operators introducing by parallel optimizer rather than using this interface directly.
+        """
+        return self.param_info.parallel_optimizer_comm_recompute
+
+    @parallel_optimizer_comm_recompute.setter
+    def parallel_optimizer_comm_recompute(self, parallel_optimizer_comm_recompute_):
+        Validator.check_bool(parallel_optimizer_comm_recompute_)
+        self.param_info.parallel_optimizer_comm_recompute = parallel_optimizer_comm_recompute_
+
+    @property
     def unique(self):
         """whether the parameter is already unique or not."""
         return self._unique
