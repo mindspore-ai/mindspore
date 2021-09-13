@@ -1,19 +1,19 @@
 /*
- * Copyright (c) 2021. Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *  ============================================================================
  */
-
 #include<map>
 #include<memory>
 #include<string>
@@ -212,17 +212,16 @@ APP_ERROR SSDMobileNetV1Fpn::Process(const std::string &imgPath) {
         LogError << "PostProcess failed, ret=" << ret << ".";
         return ret;
     }
-    if (objectInfos.empty()) {
-        LogInfo << "No object detected." << std::endl;
-        return APP_ERR_OK;
-    }
 
-    std::vector<MxBase::ObjectInfo> objects = objectInfos.at(0);
-    for (size_t i = 0; i < objects.size(); i++) {
-        ObjectInfo obj = objects.at(i);
-        LogInfo << "BBox[" << i << "]:[x0=" << obj.x0 << ", y0=" << obj.y0 << ", x1=" << obj.x1 << ", y1=" << obj.y1
-                << "], confidence=" << obj.confidence << ", classId=" << obj.classId << ", className=" << obj.className
-                << std::endl;
+    LogInfo << "Object detected num: " << objectInfos.size();
+    if (!objectInfos.empty()) {
+        std::vector<MxBase::ObjectInfo> objects = objectInfos.at(0);
+        for (size_t i = 0; i < objects.size(); i++) {
+            ObjectInfo obj = objects.at(i);
+            LogInfo << "BBox[" << i << "]:[x0=" << obj.x0 << ", y0=" << obj.y0 << ", x1=" << obj.x1 << ", y1=" << obj.y1
+                    << "], confidence=" << obj.confidence << ", classId=" << obj.classId << ", className=" << obj.className
+                    << std::endl;
+        }
     }
     return APP_ERR_OK;
 }
