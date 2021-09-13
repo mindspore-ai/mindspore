@@ -40,9 +40,9 @@ then
 exit 1
 fi
 
-if [ ! -f $PATH2 ]
+if [ ! -d $PATH2 ]
 then
-    echo "error: CKPT_URL=$PATH2 is not a file"
+    echo "error: CKPT_URL=$PATH2 is not a directory"
 exit 1
 fi
 
