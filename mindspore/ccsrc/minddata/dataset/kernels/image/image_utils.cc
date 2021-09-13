@@ -104,7 +104,7 @@ bool CheckTensorShape(const std::shared_ptr<Tensor> &tensor, const int &channel)
 Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int flip_code) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
 
-  if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
+  if (input_cv->Rank() <= 1 || input_cv->mat().dims > 2) {
     RETURN_STATUS_UNEXPECTED("Flip: input tensor is not in shape of <H,W,C> or <H,W>.");
   }
 

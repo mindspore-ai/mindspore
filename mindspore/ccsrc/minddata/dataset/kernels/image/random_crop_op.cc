@@ -114,6 +114,13 @@ void RandomCropOp::GenRandomXY(int *x, int *y, const int32_t &padded_image_w, co
 
 Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
+  if (input.size() != 1) {
+    for (size_t i = 0; i < input.size() - 1; i++) {
+      if (input[i]->shape()[0] != input[i + 1]->shape()[0] || input[i]->shape()[1] != input[i + 1]->shape()[1]) {
+        RETURN_STATUS_UNEXPECTED("RandomCropOp: The width and height of the image need to be the same size.");
+      }
+    }
+  }
   int x = 0;
   int y = 0;
   const int output_count = input.size();
