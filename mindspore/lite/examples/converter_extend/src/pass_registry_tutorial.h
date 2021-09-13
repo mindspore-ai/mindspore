@@ -17,18 +17,18 @@
 #ifndef MINDSPORE_LITE_EXAMPLES_CONVERTER_REGISTER_SRC_PASS_REGISTRY_TUTORIAL_H
 #define MINDSPORE_LITE_EXAMPLES_CONVERTER_REGISTER_SRC_PASS_REGISTRY_TUTORIAL_H
 
-#include "include/pass.h"
+#include "include/registry/pass_base.h"
 
 namespace mindspore {
 namespace opt {
-class PassTutorial : public Pass {
+class PassTutorial : public registry::PassBase {
  public:
-  PassTutorial() : Pass("pass_tutorial") {}
+  PassTutorial() : PassBase("PassTutorial") {}
 
-  bool Run(const FuncGraphPtr &func_graph) override;
+  bool Execute(const api::FuncGraphPtr &func_graph) override;
 
  private:
-  AnfNodePtr CreateCustomOp(const FuncGraphPtr func_graph, const CNodePtr &cnode);
+  AnfNodePtr CreateCustomOp(const api::FuncGraphPtr func_graph, const CNodePtr &cnode);
 };
 }  // namespace opt
 }  // namespace mindspore

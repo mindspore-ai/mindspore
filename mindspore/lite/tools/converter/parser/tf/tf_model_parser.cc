@@ -492,7 +492,7 @@ STATUS TFModelParser::ConvertGraphInputsAndConsts(const std::vector<const tensor
   return RET_OK;
 }
 
-FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
+api::FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
   auto modelFile = flag.model_file;
   NotSupportOp::GetInstance()->set_fmk_type("TF");
   auto status = ValidateFileStr(modelFile, ".pb");
@@ -528,7 +528,9 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
     tf_root_graph_nodes_vec_.emplace_back(&node_def);
   }
 
-  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_vec_, res_graph_, &anf_root_node_map_, true);
+  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  status = ConvertGraphInputsAndConsts(tf_root_graph_nodes_vec_, func_graph, &anf_root_node_map_, true);
   if (status != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
@@ -536,7 +538,7 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
   bool success_flag = true;
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
-    status = ConvertOps(node_def, tf_root_graph_nodes_, res_graph_, &anf_root_node_map_);
+    status = ConvertOps(node_def, tf_root_graph_nodes_, func_graph, &anf_root_node_map_);
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     if (status != RET_OK) {
       success_flag = false;
@@ -570,7 +572,7 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
     return nullptr;
   }
   std::set<FuncGraphPtr> all_func_graphs = {};
-  GetAllFuncGraph(res_graph_, &all_func_graphs);
+  GetAllFuncGraph(func_graph, &all_func_graphs);
 
   if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
@@ -584,12 +586,12 @@ FuncGraphPtr TFModelParser::Parse(const converter::ConverterParameters &flag) {
   }
   auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeTf, false);
   MS_CHECK_TRUE_RET(unify_format != nullptr, nullptr);
-  if (!unify_format->Run(res_graph_)) {
+  if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
-  res_graph_->set_manager(nullptr);
-  static auto root_func_manager = Manage(res_graph_);
+  func_graph->set_manager(nullptr);
+  static auto root_func_manager = Manage(func_graph);
   return res_graph_;
 }
 
@@ -780,7 +782,12 @@ STATUS TFModelParser::ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGr
                   << " second_func_map.size(): " << second_func_map.size();
     return RET_ERROR;
   }
-  static auto root_func_manager = Manage(res_graph_);
+  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func graph is invalid.";
+    return RET_ERROR;
+  }
+  static auto root_func_manager = Manage(func_graph);
 
   for (auto &kv : first_func_map) {
     auto control_flow_node = kv.first;
@@ -1082,7 +1089,12 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
       }
     }
   }
-  auto status = MakeAnfGraphOutputs(output_nodes, res_graph_);
+  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "unc graph is invalid.";
+    return RET_ERROR;
+  }
+  auto status = MakeAnfGraphOutputs(output_nodes, func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "make anf graph outputs node error";
     return status;

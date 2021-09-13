@@ -28,7 +28,7 @@ namespace mindspore {
 class ModelParserTest : public converter::ModelParser {
  public:
   ModelParserTest() = default;
-  FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
+  api::FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
  private:
   int InitOriginModelStructure();

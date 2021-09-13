@@ -21,7 +21,7 @@
 #include <memory>
 #include "schema/inner/model_generated.h"
 #include "ir/anf.h"
-#include "ir/func_graph.h"
+#include "api/ir/func_graph.h"
 #include "include/registry/model_parser_registry.h"
 #include "utils/log_adapter.h"
 
@@ -32,10 +32,10 @@ class ModelParser {
 
   virtual ~ModelParser() = default;
 
-  virtual FuncGraphPtr Parse(const converter::ConverterParameters &flags) { return this->res_graph_; }
+  virtual api::FuncGraphPtr Parse(const converter::ConverterParameters &flags) { return this->res_graph_; }
 
  protected:
-  FuncGraphPtr res_graph_ = nullptr;
+  api::FuncGraphPtr res_graph_ = nullptr;
 };
 
 typedef ModelParser *(*ModelParserCreator)();

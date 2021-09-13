@@ -56,7 +56,7 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::st
   return tflite::UnPackModel(tflite_model_buf_);
 }
 
-FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag) {
+api::FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag) {
   auto model_file = flag.model_file;
   // load graph
   tflite_model_ = ReadTfliteModel(model_file);
@@ -81,7 +81,9 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
   }
 
   std::set<FuncGraphPtr> all_func_graphs = {};
-  GetAllFuncGraph(res_graph_, &all_func_graphs);
+  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  GetAllFuncGraph(func_graph, &all_func_graphs);
 
   if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
@@ -95,7 +97,7 @@ FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag
   }
   auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeTflite, false);
   MS_CHECK_TRUE_RET(unify_format != nullptr, nullptr);
-  if (!unify_format->Run(res_graph_)) {
+  if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }
@@ -542,7 +544,9 @@ STATUS TfliteModelParser::ControlFlowNodePostProcess() {
   if (control_flow_map_.empty()) {
     return RET_OK;
   }
-  static auto root_func_manager = Manage(res_graph_);
+  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, RET_ERROR);
+  static auto root_func_manager = Manage(func_graph);
   for (auto &node_vs_graph : control_flow_map_) {
     auto control_flow_node = node_vs_graph.first;
     auto sub_graphs = node_vs_graph.second;

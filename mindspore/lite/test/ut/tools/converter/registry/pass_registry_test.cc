@@ -18,13 +18,14 @@
 #include <string>
 #include <vector>
 #include "common/common_test.h"
-#include "backend/optimizer/common/pass.h"
 #include "include/registry/model_parser_registry.h"
+#include "include/registry/pass_base.h"
 #include "include/registry/pass_registry.h"
 #include "ops/fusion/add_fusion.h"
 #include "ops/addn.h"
 #include "ops/custom.h"
 #include "tools/converter/model_parser.h"
+#include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ut/tools/converter/registry/model_parser_test.h"
 
@@ -44,14 +45,14 @@ class PassRegistryTest : public mindspore::CommonTest {
     ConverterParameters converter_parameters;
     func_graph_ = model_parser->Parse(converter_parameters);
   }
-  FuncGraphPtr func_graph_ = nullptr;
+  api::FuncGraphPtr func_graph_ = nullptr;
 };
 
 namespace opt {
 // fuse add and add to addn.
-class Test1Fusion : public Pass {
+class Test1Fusion : public registry::PassBase {
  public:
-  Test1Fusion() : Pass("Test1Fusion") {}
+  Test1Fusion() : PassBase("Test1Fusion") {}
   bool CanFusion(const CNodePtr &cnode) {
     if (cnode == nullptr) {
       return false;
@@ -90,15 +91,15 @@ class Test1Fusion : public Pass {
     return input_cnode_num > 0;
   }
 
-  bool Run(const FuncGraphPtr &func_graph) override {
+  bool Execute(const api::FuncGraphPtr &func_graph) override {
     if (func_graph == nullptr) {
       return false;
     }
-    auto manager = Manage(func_graph);
+    auto manager = api::FuncGraphManager::Manage(func_graph);
     if (manager == nullptr) {
       return false;
     }
-    auto node_list = TopoSort(func_graph->get_return());
+    auto node_list = api::FuncGraph::TopoSort(func_graph->get_return());
     for (auto &node : node_list) {
       if (!utils::isa<CNode>(node)) {
         continue;
@@ -130,10 +131,10 @@ class Test1Fusion : public Pass {
 };
 
 // convert addn to custom op
-class Test2Fusion : public Pass {
+class Test2Fusion : public registry::PassBase {
  public:
-  Test2Fusion() : Pass("Test2Fusion") {}
-  AnfNodePtr CreateCustomOp(const FuncGraphPtr func_graph, const CNodePtr &cnode) {
+  Test2Fusion() : PassBase("Test2Fusion") {}
+  AnfNodePtr CreateCustomOp(const api::FuncGraphPtr func_graph, const CNodePtr &cnode) {
     if (func_graph == nullptr || cnode == nullptr) {
       return nullptr;
     }
@@ -158,11 +159,11 @@ class Test2Fusion : public Pass {
     return custom_cnode;
   }
 
-  bool Run(const FuncGraphPtr &func_graph) override {
+  bool Execute(const api::FuncGraphPtr &func_graph) override {
     if (func_graph == nullptr) {
       return false;
     }
-    auto manager = Manage(func_graph);
+    auto manager = api::FuncGraphManager::Manage(func_graph);
     if (manager == nullptr) {
       return false;
     }
@@ -194,14 +195,26 @@ REG_SCHEDULED_PASS(POSITION_BEGIN, schedule)
 TEST_F(PassRegistryTest, TestRegistry) {
   auto schedule_task = registry::PassRegistry::GetOuterScheduleTask(POSITION_BEGIN);
   ASSERT_EQ(schedule_task.size(), 2);
-  auto passes = registry::PassRegistry::GetPassFromStoreRoom(schedule_task);
-  ASSERT_EQ(passes.size(), 2);
+  std::vector<registry::PassBasePtr> passes;
+  auto pass1 = registry::PassRegistry::GetPassFromStoreRoom("Test1Fusion");
+  ASSERT_NE(pass1, nullptr);
+  passes.push_back(pass1);
+  auto pass2 = registry::PassRegistry::GetPassFromStoreRoom("Test2Fusion");
+  ASSERT_NE(pass2, nullptr);
+  passes.push_back(pass2);
   ASSERT_NE(func_graph_, nullptr);
   for (auto &pass : passes) {
-    auto ret = pass->Run(func_graph_);
+    auto ret = pass->Execute(func_graph_);
     ASSERT_EQ(ret, true);
   }
-  auto cnode_list = func_graph_->GetOrderedCnodes();
+  std::vector<CNodePtr> cnode_list;
+  auto node_list = api::FuncGraph::TopoSort(func_graph_->get_return());
+  for (auto &node : node_list) {
+    ASSERT_NE(node, nullptr);
+    if (node->isa<CNode>()) {
+      cnode_list.push_back(node->cast<CNodePtr>());
+    }
+  }
   ASSERT_EQ(cnode_list.size(), 2);
   bool is_custom = opt::CheckPrimitiveType(cnode_list.front(), prim::kPrimCustom);
   ASSERT_EQ(is_custom, true);

@@ -44,16 +44,13 @@ void InitConverterParameters(const converter::Flags &flag, converter::ConverterP
 }  // namespace
 
 FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
-  FuncGraphPtr func_graph = nullptr;
+  api::FuncGraphPtr func_graph_base = nullptr;
   if (flag.fmk == converter::FmkType::kFmkTypeMs) {
 #ifdef SUPPORT_TRAIN
     kernel::PopulateTrainParameters();
 #endif
     MindsporeImporter ms_import;
-    func_graph = ms_import.ImportMindIR(flag);
-    if (func_graph == nullptr) {
-      return nullptr;
-    }
+    func_graph_base = ms_import.ImportMindIR(flag);
   } else {
     model_parser_ = registry::ModelParserRegistry::GetModelParser(flag.fmk);
     if (model_parser_ == nullptr) {
@@ -61,11 +58,16 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
     }
     converter::ConverterParameters converter_parameters;
     InitConverterParameters(flag, &converter_parameters);
-    func_graph = model_parser_->Parse(converter_parameters);
+    func_graph_base = model_parser_->Parse(converter_parameters);
   }
-  if (func_graph == nullptr) {
+  if (func_graph_base == nullptr) {
     MS_LOG(ERROR) << "Get funcGraph failed for fmk: " << flag.fmkIn;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NOT_SUPPORT);
+    return nullptr;
+  }
+  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(func_graph_base);
+  if (func_graph == nullptr) {
+    MS_LOG(ERROR) << "func graph is invalid.";
     return nullptr;
   }
   if (UpdateFuncGraphInputsAndOutputsDtype(func_graph) != RET_OK) {

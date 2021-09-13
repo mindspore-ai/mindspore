@@ -41,7 +41,7 @@ bool CheckPrimitiveTypeTutorial(const AnfNodePtr &node, const PrimitivePtr &prim
 }  // namespace
 
 // convert addn to custom op
-AnfNodePtr PassTutorial::CreateCustomOp(const FuncGraphPtr func_graph, const CNodePtr &cnode) {
+AnfNodePtr PassTutorial::CreateCustomOp(const api::FuncGraphPtr func_graph, const CNodePtr &cnode) {
   if (cnode == nullptr) {
     return nullptr;
   }
@@ -66,17 +66,17 @@ AnfNodePtr PassTutorial::CreateCustomOp(const FuncGraphPtr func_graph, const CNo
   return custom_cnode;
 }
 
-bool PassTutorial::Run(const FuncGraphPtr &func_graph) {
+bool PassTutorial::Execute(const api::FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     return false;
   }
 
   // generate a func_graph manager.
-  auto manager = Manage(func_graph, true);
+  auto manager = api::FuncGraphManager::Manage(func_graph, true);
   if (manager == nullptr) {
     return false;
   }
-  auto node_list = TopoSort(func_graph->get_return());
+  auto node_list = api::FuncGraph::TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNode>(node)) {
       continue;

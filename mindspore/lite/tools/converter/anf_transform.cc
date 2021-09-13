@@ -501,25 +501,36 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
   return old_graph;
 }
 
-void AnfTransform::AppendPassToStoreRoom(const converter::Flags *config) {
+bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
   if (config == nullptr) {
     MS_LOG(ERROR) << "config is nullptr";
-    return;
+    return false;
   }
   auto fmk = config->fmk;
   auto is_train = config->trainModel;
-  registry::PassRegistry("DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train));
-  registry::PassRegistry("DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>());
-  registry::PassRegistry("InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train));
-  registry::PassRegistry("ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train));
-  registry::PassRegistry("ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train));
-  registry::PassRegistry("SpecifyGraphInputFormat",
-                         std::make_shared<opt::SpecifyGraphInputFormat>(config->graphInputFormat));
-  registry::PassRegistry("DumpGraph", std::make_shared<opt::DumpGraph>(config));
+  std::unordered_map<std::string, opt::PassPtr> passes = {
+    {"DumpGraph", std::make_shared<opt::DumpGraph>(config)},
+    {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train)},
+    {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train)},
+    {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train)},
+    {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train)},
+    {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(config->graphInputFormat)}};
+  bool succeed_store = true;
+  for (auto iter = passes.begin(); iter != passes.end(); ++iter) {
+    if (PassStorage::StorePass(iter->first, iter->second) != RET_OK) {
+      MS_LOG(ERROR) << "external pass name conflicts with that of internal pass, the pass name is " << iter->first
+                    << ", please edit external pass name.";
+      succeed_store = false;
+    }
+  }
+  return succeed_store;
 }
 
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {
-  AppendPassToStoreRoom(config);
+  if (!StoreBuiltinPass(config)) {
+    MS_LOG(ERROR) << "store pass failed.";
+    return nullptr;
+  }
   auto new_graph = TransformFuncGraph(main_graph, config);
   if (new_graph == nullptr) {
     MS_LOG(ERROR) << "optimizer failed.";

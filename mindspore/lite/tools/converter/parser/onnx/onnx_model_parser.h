@@ -41,7 +41,7 @@ class OnnxModelParser : public converter::ModelParser {
 
   ~OnnxModelParser() override = default;
 
-  FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
+  api::FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
  private:
   STATUS InitOriginModel(const std::string &model_file);
