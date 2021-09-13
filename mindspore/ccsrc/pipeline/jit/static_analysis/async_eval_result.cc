@@ -27,8 +27,8 @@ AnalysisSchedule AnalysisSchedule::instance_;
 
 void AnalysisSchedule::Schedule() {
   const auto checkPeriod = std::chrono::seconds(3);
-  std::unique_lock<std::mutex> lock(activate_thread_lock_);
   while (notExit_ || infer_thread_count_.load() > 0) {
+    std::unique_lock<std::mutex> lock(activate_thread_lock_);
     if (activate_threads_.size() > 1) {
       MS_LOG(ERROR) << "There is something wrong."
                     << " The active thread count: " << activate_threads_.size()
