@@ -432,5 +432,5 @@ def groupwise_correlation(v1, v2, groups, dim):
     reshaped_size = (n, d, h, w, groups, c // groups)
     v1_reshaped = v1.view(*reshaped_size)
     v2_reshaped = v2.view(*reshaped_size)
-    vc = P.ReduceSum()(v1_reshaped * v2_reshaped, dim + 1)
+    vc = P.Transpose()(P.ReduceSum()(v1_reshaped * v2_reshaped, 5), (0, 4, 1, 2, 3))
     return vc
