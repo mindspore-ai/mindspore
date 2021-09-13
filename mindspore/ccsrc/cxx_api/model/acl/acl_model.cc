@@ -78,7 +78,7 @@ Status AclModel::Build() {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_cell = std::make_shared<GraphCell>(graph);
   MS_EXCEPTION_IF_NULL(graph_cell);
-  auto ret = ModelImpl::Load(graph_cell, options->GetDeviceID());
+  auto ret = graph_cell->Load(options->GetDeviceID());
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Load failed.";
     return ret;

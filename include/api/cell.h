@@ -103,11 +103,10 @@ class MS_API GraphCell final : public Cell<GraphCell> {
   Status Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
   std::vector<MSTensor> GetInputs();
   std::vector<MSTensor> GetOutputs();
+  Status Load(uint32_t device_id);
 
  private:
   friend class Model;
-  friend class ModelImpl;
-  Status Load(uint32_t device_id);
 
   std::shared_ptr<Graph> graph_;
   std::shared_ptr<GraphImpl> executor_;
