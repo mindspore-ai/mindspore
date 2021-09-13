@@ -354,7 +354,7 @@ class FeedForward(Cell):
             raise ValueError(f"hidden_size {hidden_size} should be a multiple of the model parallel way {mp}")
         if dropout_rate < 0 or dropout_rate >= 1:
             raise ValueError(f"dropout_rate probability should be a number in range [0, 1.0), "
-                             "but got {dropout_rate}")
+                             f"but got {dropout_rate}")
         input_size = hidden_size
         output_size = ffn_hidden_size
         # Here, 'ep' stands for expert parallel number, which is equal to data parallel number.
@@ -774,10 +774,10 @@ class MultiHeadAttention(Cell):
         self.batch_size = batch_size
         if hidden_dropout_rate < 0 or hidden_dropout_rate >= 1:
             raise ValueError(f"hidden_dropout_rate probability should be a number in range [0, 1.0), "
-                             "but got {hidden_dropout_rate}")
+                             f"but got {hidden_dropout_rate}")
         if attention_dropout_rate < 0 or attention_dropout_rate >= 1:
             raise ValueError(f"attention_dropout_rate probability should be a number in range [0, 1.0), "
-                             "but got {attention_dropout_rate}")
+                             f"but got {attention_dropout_rate}")
         if hidden_size % num_heads != 0:
             raise ValueError(f"The hidden size {hidden_size} should be a multiple of num_heads {num_heads}")
         if num_heads % parallel_config.model_parallel != 0:

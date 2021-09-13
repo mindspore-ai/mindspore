@@ -89,7 +89,7 @@ def _valid_value_checks(types, class_name):
 @constexpr
 def _check_input_shape(input_shape, param_name, func_name, target_len):
     if len(input_shape) != target_len:
-        raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
+        raise ValueError(f"{func_name} {param_name} should be {target_len}d, but got shape {input_shape}")
     return True
 
 
