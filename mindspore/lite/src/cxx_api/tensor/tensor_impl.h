@@ -83,6 +83,7 @@ class MSTensor::Impl {
       return;
     }
     lite_tensor_->set_tensor_name(name);
+    tensor_name_ = name;
   }
 
   virtual enum DataType DataType() const {

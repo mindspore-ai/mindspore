@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace lite {
 mindspore::Context *MSContextFromContext(const lite::Context *context);
-bool DeviceTypePriority(const lite::Context *context, DeviceType dt1, DeviceType dt2);
+bool DeviceTypePriority(const lite::Context *context, int device_type1, int device_type2);
 DeviceType KernelArchToDeviceType(kernel::KERNEL_ARCH kernel_arch);
 }  // namespace lite
 }  // namespace mindspore

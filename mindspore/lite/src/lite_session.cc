@@ -717,6 +717,7 @@ int LiteSession::Init(InnerContext *context) {
   if (context->delegate != nullptr) {
 #ifndef DELEGATE_CLIP
     delegate_ = context->delegate;
+    delegate_device_type_ = -1;
 #else
     MS_LOG(ERROR) << unsupport_delegate_log;
     is_running_.store(false);
@@ -738,6 +739,7 @@ int LiteSession::Init(InnerContext *context) {
       return RET_ERROR;
     }
     delegate_device_type_ = DT_NPU;
+    this->context_->delegate = delegate_;
   }
 #endif
 #if GPU_TENSORRT
@@ -748,6 +750,7 @@ int LiteSession::Init(InnerContext *context) {
       return RET_ERROR;
     }
     delegate_device_type_ = DT_GPU;
+    this->context_->delegate = delegate_;
   }
 #endif
 

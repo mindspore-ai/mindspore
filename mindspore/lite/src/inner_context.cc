@@ -48,6 +48,7 @@ InnerContext::InnerContext(const Context *context) {
     this->enable_parallel_ = context->enable_parallel_;
     this->affinity_core_list_ = context->affinity_core_list_;
     SetContextDevice(context);
+    this->delegate = context->delegate;
   }
   InitDeviceFp16();
 }

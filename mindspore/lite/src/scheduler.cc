@@ -307,6 +307,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "Repalce delegate kernels failed.";
     return ret;
   }
+  this->context_->thread_pool()->SetMaxSpinCount(kMinSpinCount);
 #endif
 
   ret = CheckCpuValid(dst_kernels);
@@ -457,7 +458,7 @@ int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernel
   }
 
   /* external delegate */
-  if (context_->delegate != nullptr) {
+  if (delegate_device_type_ == -1) {
     auto ret = ReplaceDelegateKernels(dst_kernels);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "external delegate init failed.";
