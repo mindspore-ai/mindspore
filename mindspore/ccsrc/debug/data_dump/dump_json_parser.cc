@@ -60,8 +60,14 @@ std::string GetIfstreamString(const std::ifstream &ifstream) {
 }
 
 bool DumpJsonParser::IsDumpEnabled() {
+  auto single_op = common::GetEnv(kGraphOpRun);
   auto config_path = common::GetEnv(kMindsporeDumpConfig);
   if (config_path.empty()) {
+    return false;
+  }
+  if (!single_op.empty() && single_op == "1") {
+    MS_LOG(WARNING) << "Dump is not supported when task is not sink. Please set env GRAPH_OP_RUN to 0 to enable task "
+                       "sink, so that the data can be dumped.";
     return false;
   }
   MS_LOG(INFO) << "Dump config path is " << config_path;

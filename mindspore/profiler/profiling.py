@@ -219,6 +219,9 @@ class Profiler:
             raise TypeError("The parameter profile_memory must be bool")
         if kwargs:
             logger.warning("There are invalid params which don't work.")
+        task_sink = os.getenv("GRAPH_OP_RUN")
+        if task_sink and task_sink == "1":
+            logger.warning("Profiling is not supported when task is not sink.")
 
     def analyse(self):
         """
