@@ -670,24 +670,15 @@ STATUS TFModelParser::ConvertSubgraphOutputs(std::map<std::string, const tensorf
   }
 
   // hardcode subgraph outputs name
-  if (sub_output_nodes.size() == 1) {
-    if (utils::isa<CNodePtr>(sub_output_nodes[0])) {
-      sub_output_nodes[0]->cast<CNodePtr>()->set_fullname_with_scope(sub_graph_name + "_output_0_cnode");
-    } else if (utils::isa<ParameterPtr>(sub_output_nodes[0])) {
-      sub_output_nodes[0]->cast<ParameterPtr>()->set_name(sub_graph_name + "_output_0_parameter");
-    }
-  } else {
-    for (size_t j = 1; j < sub_output_nodes.size(); j++) {
-      if (utils::isa<CNodePtr>(sub_output_nodes[j])) {
-        sub_output_nodes[j]->cast<CNodePtr>()->set_fullname_with_scope(sub_graph_name + "_output_" +
-                                                                       std::to_string(j - 1) + "_cnode");
-      } else if (utils::isa<ParameterPtr>(sub_output_nodes[j])) {
-        sub_output_nodes[j]->cast<ParameterPtr>()->set_name(sub_graph_name + "_output_" + std::to_string(j - 1) +
-                                                            "_parameter");
-      }
+  for (size_t j = 0; j < sub_output_nodes.size(); j++) {
+    if (utils::isa<CNodePtr>(sub_output_nodes[j])) {
+      sub_output_nodes[j]->cast<CNodePtr>()->set_fullname_with_scope(sub_graph_name + "_output_" + std::to_string(j) +
+                                                                     "_cnode");
+    } else if (utils::isa<ParameterPtr>(sub_output_nodes[j])) {
+      sub_output_nodes[j]->cast<ParameterPtr>()->set_name(sub_graph_name + "_output_" + std::to_string(j) +
+                                                          "_parameter");
     }
   }
-
   return RET_OK;
 }
 
