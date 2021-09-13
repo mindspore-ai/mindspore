@@ -120,3 +120,4 @@
 "mindspore/tests/st/explainer/explanation/_attribution/_backprop/test_gradcam.py"                       "not-callable"
 "mindspore/tests/st/explainer/explanation/_attribution/_backprop/test_gradient.py"                      "not-callable"
 "mindspore/tests/st/explainer/explanation/_attribution/_backprop/test_modified_relu.py"                 "not-callable"
+"mindspore/tests/ut/python/optimizer/test_auto_grad.py"                                                 "broad-except"

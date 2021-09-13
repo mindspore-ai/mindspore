@@ -189,8 +189,6 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
   MS_EXCEPTION_IF_NULL(bprop_fg);
   CheckBprop(bprop_fg, primal->ToString());
 
-  auto debug_info = std::make_shared<GraphDebugInfo>();
-  debug_info->set_name(primal->ToString());
   FuncGraphPtr cloned_bprop_fg;
   {
     PrimalAttrGuard primal_attr_guard(primal_attrs);
@@ -199,21 +197,30 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
   }
   MS_EXCEPTION_IF_NULL(cloned_bprop_fg);
 
+  GraphDebugInfoPtr debug_info = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceGradFprop>(bprop_fg->debug_info()));
+    debug_info = std::make_shared<GraphDebugInfo>();
+    debug_info->set_name(primal->ToString());
+  }
   cloned_bprop_fg->debug_info()->set_name("");
   cloned_bprop_fg->debug_info()->set_trace_info(std::make_shared<TraceGradBprop>(debug_info));
 
   // Make sure (out, dout) provided.
   if (cloned_bprop_fg->parameters().size() < 2) {
-    MS_LOG(EXCEPTION) << "Primitive or Cell " << primal->ToString()
-                      << " bprop requires out and dout at least, but only got " << cloned_bprop_fg->parameters().size()
-                      << " params. NodeInfo: " << trace::GetDebugInfo(cloned_bprop_fg->debug_info());
+    MS_LOG(EXCEPTION)
+      << "The function 'bprop' of Primitive or Cell requires at least 2 params 'out' and 'dout', but got only "
+      << cloned_bprop_fg->parameters().size() << ".\n"
+      << trace::GetDebugInfo(cloned_bprop_fg->debug_info());
   }
   AnfNodePtr bout = BuildOutput(cloned_bprop_fg, current_primal_fg);
   cloned_bprop_fg->set_output(bout);
 
   FuncGraphPtr outer = nullptr;
   {
-    TraceGuard guard(std::make_shared<TraceGradFprop>(debug_info));
+    auto outer_debug_info = std::make_shared<GraphDebugInfo>();
+    outer_debug_info->set_name(primal->ToString());
+    TraceGuard guard(std::make_shared<TraceGradFprop>(outer_debug_info));
     outer = std::make_shared<FuncGraph>();
     (void)outer->transforms().emplace("primal", FuncGraphTransform(primal));
     outer->set_output(NewValueNode(kNone));

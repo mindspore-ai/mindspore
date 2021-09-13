@@ -701,14 +701,15 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
 // Generate the graph.
 FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "GenerateGraph requires at least 1 parameters, while the input size is "
-                      << args_spec_list.size() << ".";
+    MS_LOG(EXCEPTION)
+      << "'GradOperation' requires a forward network or function as an input, while the input is empty.";
   }
 
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(args_spec_list[0]);
   if (fn == nullptr) {
-    MS_LOG(EXCEPTION) << "GradOperation arg0 must be AbstractFunction, but " << args_spec_list[0]->ToString();
+    MS_LOG(EXCEPTION) << "'GradOperation' arg0 must be a 'Function' or 'Cell', but got "
+                      << args_spec_list[0]->ToString();
   }
 
   // Waiting for implementation.
