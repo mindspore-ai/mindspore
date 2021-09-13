@@ -481,6 +481,7 @@ constexpr auto kValueTargetOther = "target_other";
 
 // env key
 constexpr auto kGraphOpRun = "GRAPH_OP_RUN";
+constexpr auto kEnableMemScheduler = "ENABLE_MEM_SCHEDULER";
 
 // some size
 const size_t kShape4dDims = 4;

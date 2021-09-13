@@ -1265,8 +1265,9 @@ void InitHccl() {
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 #if ENABLE_D
   bool task_sink = true;
-  auto single_op = std::getenv(kGraphOpRun);
-  if (single_op && std::string(single_op) == "1") {
+  auto single_op = common::GetEnv(kGraphOpRun);
+  auto enable_mem_scheduler = common::GetEnv(kEnableMemScheduler);
+  if (single_op == "1" || enable_mem_scheduler == "1") {
     task_sink = false;
   }
   auto mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);

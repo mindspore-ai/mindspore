@@ -1701,11 +1701,23 @@ void SessionBasic::CreateOutputTensors(const GraphId &graph_id, const std::vecto
     MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";
     outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, tensor_to_node, &node_to_tensor));
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto enable_mem_scheduler = ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
+  if (enable_mem_scheduler) {
+    kernel_graph->SetOutputNodeToTensor(node_to_tensor);
+  }
 }
 
 void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
                                        const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                                        std::map<DeviceAddressPtr, DeviceAddressPtr> *) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
+  if (enable_mem_scheduler) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(outputs);
   for (const auto &item : *outputs) {
     if (utils::isa<VectorRefPtr>(item)) {

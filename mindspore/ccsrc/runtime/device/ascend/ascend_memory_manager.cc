@@ -126,6 +126,10 @@ void *AscendMemoryManager::MallocMemFromMemPool(size_t size) {
   return AscendMemoryPool::GetInstance().AllocTensorMem(align_size);
 }
 
+void AscendMemoryManager::FreeMemFromMemPool(void *device_ptr) {
+  AscendMemoryPool::GetInstance().FreeTensorMem(device_ptr);
+}
+
 uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) {
   size_t align_size = 0;
   if (communication_mem) {
@@ -202,6 +206,47 @@ uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
   auto align_size = GetCommunicationAlignSize(size);
   uint8_t *base_ptr = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
   return base_ptr + kMemAlignSize;
+}
+
+size_t AscendMemoryManager::GetAvailableMemSize() {
+  auto available_mem_size = AscendMemoryPool::GetInstance().free_mem_size() +
+                            AscendMemoryPool::GetInstance().total_mem_statistics() -
+                            AscendMemoryPool::GetInstance().used_mem_statistics();
+  return available_mem_size;
+}
+
+void AscendMemoryManager::SwapIn(void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
+  if (stream == nullptr) {
+    auto ret_rt_memcpy = rtMemcpy(device_ptr, mem_size, host_ptr, mem_size, RT_MEMCPY_HOST_TO_DEVICE);
+    if (ret_rt_memcpy != RT_ERROR_NONE) {
+      MS_EXCEPTION(DeviceProcessError) << "SwapIn rtMemcpy failed.";
+    }
+  } else {
+    auto ret_rt_memcpy = rtMemcpyAsync(device_ptr, mem_size, host_ptr, mem_size, RT_MEMCPY_HOST_TO_DEVICE, stream);
+    if (ret_rt_memcpy != RT_ERROR_NONE) {
+      MS_EXCEPTION(DeviceProcessError) << "SwapIn rtMemcpyAsync failed.";
+    }
+    if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
+    }
+  }
+}
+
+void AscendMemoryManager::SwapOut(void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
+  if (stream == nullptr) {
+    auto ret_rt_memcpy = rtMemcpy(host_ptr, mem_size, device_ptr, mem_size, RT_MEMCPY_DEVICE_TO_HOST);
+    if (ret_rt_memcpy != RT_ERROR_NONE) {
+      MS_EXCEPTION(DeviceProcessError) << "SwapOut rtMemcpy failed.";
+    }
+  } else {
+    auto ret_rt_memcpy = rtMemcpyAsync(host_ptr, mem_size, device_ptr, mem_size, RT_MEMCPY_DEVICE_TO_HOST, stream);
+    if (ret_rt_memcpy != RT_ERROR_NONE) {
+      MS_EXCEPTION(DeviceProcessError) << "SwapOut rtMemcpyAsync failed.";
+    }
+    if (rtStreamSynchronize(stream) != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
+    }
+  }
 }
 }  // namespace ascend
 }  // namespace device

@@ -19,8 +19,11 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <map>
+#include <queue>
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
 #include "backend/optimizer/somas/somas.h"
+#include "runtime/device/memory_scheduler.h"
 namespace mindspore {
 namespace device {
 enum MemType { kStaticMem, kDynamicMem, kSomasReuseDynamicMem };
@@ -28,7 +31,7 @@ const int kGetAllOuts = -1;
 const uint64_t kMemAlignSize = 512;
 using SomasPtr = mindspore::somas::SomasPtr;
 
-class MemoryManager {
+class MemoryManager : public MemHandler {
  public:
   MemoryManager() = default;
   virtual ~MemoryManager() = default;
@@ -60,6 +63,45 @@ class MemoryManager {
   static size_t GetCommonAlignSize(size_t input_size);
   static size_t GetCommunicationAlignSize(size_t input_size);
 
+  // swap manager interface
+  void *MallocDevice(size_t mem_size) override { return MallocMemFromMemPool(mem_size); }
+  void FreeDevice(void *ptr) override {
+    MS_EXCEPTION_IF_NULL(ptr);
+    FreeMemFromMemPool(ptr);
+  }
+  void *MallocHost(size_t mem_size) override {
+    auto &mem_que = cached_host_mem_[mem_size];
+    if (!mem_que.empty()) {
+      auto ret = mem_que.front();
+      mem_que.pop();
+      return ret;
+    }
+    auto block = std::make_shared<std::vector<uint8_t>>();
+    try {
+      block->resize(mem_size, 0);
+      auto ptr = block->data();
+      host_mem_block_map_[ptr] = block;
+      return ptr;
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Malloc memory failed: size " << mem_size;
+    }
+  }
+  void FreeHost(void *ptr) override {
+    MS_EXCEPTION_IF_NULL(ptr);
+    auto iter = host_mem_block_map_.find(ptr);
+    if (iter == host_mem_block_map_.end()) {
+      MS_LOG(ERROR) << "Free ptr not be created from manager!";
+    }
+    auto mem_size = iter->second->size();
+    cached_host_mem_[mem_size].emplace(iter->first);
+  }
+  void SwapIn(void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override {}
+  void SwapOut(void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override {}
+  size_t GetAvailableMemSize() override {
+    MS_LOG(ERROR) << "Return default 0 mem size!";
+    return 0;
+  }
+
  protected:
   virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) = 0;
   virtual uint8_t *MallocDynamicMem(size_t size, bool communication_mem);
@@ -70,6 +112,8 @@ class MemoryManager {
   size_t total_static_size_ = 0;
   size_t total_dynamic_size_ = 0;
   SomasPtr somas_reuse_util_ptr_{nullptr};
+  std::map<size_t, std::queue<void *>> cached_host_mem_;
+  std::map<void *, std::shared_ptr<std::vector<uint8_t>>> host_mem_block_map_;
 };
 }  // namespace device
 }  // namespace mindspore

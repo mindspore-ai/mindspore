@@ -404,13 +404,18 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
     MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
                       << ", input_ctrl_size:" << input_ctrl_size;
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto enable_mem_scheduler = ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
+  if (enable_mem_scheduler) {
+    kernel_graph->SetInputTensors(inputs);
+    return;
+  }
   for (auto item : tensor_device_addr_map_) {
     auto output_tensor = item.first;
     output_tensor->set_device_address(item.second);
   }
   SyncStream();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   for (size_t i = 0; i < inputs.size(); ++i) {
     auto tensor = inputs[i];
     MS_EXCEPTION_IF_NULL(tensor);
@@ -644,7 +649,10 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   } else {
     // alloc memory, including static memory and dynamic memory
     MemoryAlloc(graph.get());
-    AnfAlgo::CacheAddrForGraph(graph);
+    auto enable_mem_scheduler = ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
+    if (!enable_mem_scheduler) {
+      AnfAlgo::CacheAddrForGraph(graph);
+    }
     // generate and load task info to device if it is sink mode
     Load(graph);
   }
@@ -675,10 +683,13 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   // optimize graph
   HardwareOptimize(child_graph);
   // assign static memory of parameters
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->AssignStaticMemoryInput(child_graph.get());
-  runtime_instance->AssignStaticMemoryValueNode(child_graph.get());
+  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
+  if (!enable_mem_scheduler) {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    runtime_instance->AssignStaticMemoryInput(child_graph.get());
+    runtime_instance->AssignStaticMemoryValueNode(child_graph.get());
+  }
 }
 
 bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedInsertSwitch(); }
@@ -1915,6 +1926,12 @@ void AscendSession::ExecuteAllTaskInQueue() {
 void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
                                         const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                                         std::map<DeviceAddressPtr, DeviceAddressPtr> *) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
+  if (enable_mem_scheduler) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(outputs);
   tensor_device_addr_map_.clear();
   for (const auto &item : *outputs) {

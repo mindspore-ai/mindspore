@@ -195,11 +195,14 @@ class KernelMod {
   const std::vector<AddressPtr> &GetInputsAddr() { return inputs_addr_; }
   const std::vector<AddressPtr> &GetWorkSpacesAddr() { return workspaces_addr_; }
   const std::vector<AddressPtr> &GetOutputsAddr() { return outputs_addr_; }
+  void SetStream(void *stream) { stream_ = stream; }
+  void *GetStream() const { return stream_; }
 
  protected:
   std::string unique_name_;
   std::string fullname_;
   bool is_monad_{false};
+  void *stream_{nullptr};
 
  private:
   std::vector<AddressPtr> inputs_addr_;

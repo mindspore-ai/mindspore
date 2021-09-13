@@ -42,6 +42,9 @@ using mindspore::kernel::AddressPtr;
 
 namespace mindspore {
 namespace device {
+constexpr float kMaxMemReuseFactor = 0.8;
+constexpr float kMinMemReuseFactor = 0.5;
+constexpr float kRetryFactor = 0.1;
 namespace {
 std::vector<AnfNodePtr> GetGraphInputs(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -85,10 +88,16 @@ bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_
 void KernelRuntime::AssignMemory(session::KernelGraph *graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->ResetDynamicMemory();
-  AssignStaticMemory(graph);
-  AssignDynamicMemory(graph);
+  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
+  if (enable_mem_scheduler) {
+    AssignStaticMemoryValueNode(graph);
+    ResetNodeAddress(graph);
+  } else {
+    MS_EXCEPTION_IF_NULL(mem_manager_);
+    mem_manager_->ResetDynamicMemory();
+    AssignStaticMemory(graph);
+    AssignDynamicMemory(graph);
+  }
   UpdateRefNodeOutputMem(graph);
 }
 
@@ -143,6 +152,47 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
       current_tensor->set_device_address(device_address);
       current_tensor->set_sync_status(kNeedSyncHostToDevice);
+    }
+  }
+}
+
+void KernelRuntime::ResetNodeAddress(session::KernelGraph *kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto kernels = kernel_graph->execution_order();
+  for (auto &kernel : kernels) {
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+    for (size_t j = 0; j < input_num; ++j) {
+      auto input_index = AnfAlgo::GetRealInputIndex(kernel, j);
+      KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(kernel, input_index, true);
+      auto index = kernel_with_index.second;
+      auto &input_node = kernel_with_index.first;
+      if (NodeOutputDeviceAddressExist(input_node, index)) {
+        continue;
+      }
+      TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(input_node, index);
+      if (output_type_id == kTypeUnknown) {
+        MS_LOG(WARNING) << "It is not suggested to use a lonely weight parameter as the output of graph";
+        continue;
+      }
+      auto tensor_size = AnfAlgo::GetOutputTensorMemSize(input_node, index);
+      auto device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(input_node, index),
+                                                output_type_id, {input_node, index});
+      AnfAlgo::SetOutputAddr(device_address, index, input_node.get());
+    }
+
+    auto output_sizes = kernel_mod->GetOutputSizeList();
+    for (size_t i = 0; i < output_sizes.size(); ++i) {
+      auto output_format = AnfAlgo::GetOutputFormat(kernel, i);
+      auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
+      AnfAlgo::SetOutputAddr(CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type), i,
+                             kernel.get());
+    }
+    auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
+    for (size_t i = 0; i < workspace_sizes.size(); ++i) {
+      AnfAlgo::SetWorkspaceAddr(CreateDeviceAddress(nullptr, workspace_sizes[i], kOpFormat_DEFAULT, kNumberTypeFloat32),
+                                i, kernel.get());
     }
   }
 }
@@ -1015,7 +1065,8 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   }
 }
 
-void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs) {
+void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs,
+                                           const std::shared_ptr<MemScheduler> &mem_scheduler) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
   if (cnode->inputs().size() != 2) {
@@ -1034,8 +1085,12 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
       auto device_address = AnfAlgo::GetOutputAddr(pre_node, index);
       kernel::AddressPtr input = std::make_shared<kernel::Address>();
       MS_EXCEPTION_IF_NULL(input);
-      input->addr = device_address->ptr_;
-      MS_EXCEPTION_IF_NULL(input->addr);
+      if (mem_scheduler != nullptr) {
+        GetOrMallocAddress(mem_scheduler, device_address, input);
+      } else {
+        input->addr = device_address->ptr_;
+        MS_EXCEPTION_IF_NULL(input->addr);
+      }
       input->size = device_address->size_;
       kernel_inputs->emplace_back(input);
     }
@@ -1052,8 +1107,12 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
       auto device_address = AnfAlgo::GetWorkspaceAddr(pre_node, index);
       kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
       MS_EXCEPTION_IF_NULL(workspace);
-      workspace->addr = device_address->ptr_;
-      MS_EXCEPTION_IF_NULL(workspace->addr);
+      if (mem_scheduler != nullptr) {
+        GetOrMallocAddress(mem_scheduler, device_address, workspace);
+      } else {
+        workspace->addr = device_address->ptr_;
+        MS_EXCEPTION_IF_NULL(workspace->addr);
+      }
       workspace->size = device_address->size_;
       kernel_inputs->emplace_back(workspace);
     }
@@ -1110,36 +1169,197 @@ void KernelRuntime::DebugStreamSync(const CNodePtr &kernel) {
   }
 }
 
-bool KernelRuntime::LaunchKernel(const AnfNodePtr &kernel) {
+void KernelRuntime::GetOrMallocAddress(const std::shared_ptr<MemScheduler> &mem_scheduler,
+                                       const DeviceAddress *device_address, const kernel::AddressPtr &kernel_addr) {
+  if (device_address->ptr_ != nullptr) {
+    kernel_addr->addr = device_address->ptr_;
+  } else {
+    kernel_addr->addr = mem_scheduler->GetOrMalloc(device_address, device_address->size_);
+    if (mem_scheduler->IsHighPriorityMem(device_address)) {
+      device_address->ptr_ = kernel_addr->addr;
+    }
+  }
+}
+
+void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem_scheduler, const AnfNodePtr &kernel,
+                                        AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
+                                        AddressPtrList *kernel_outputs) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_inputs);
+  MS_EXCEPTION_IF_NULL(kernel_workspaces);
+  MS_EXCEPTION_IF_NULL(kernel_outputs);
+  auto cnode = kernel->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (AnfAlgo::GetCNodeName(cnode) == kAtomicAddrCleanOpName) {
+    return GenAddrCleanLaunchArgs(cnode, kernel_inputs, mem_scheduler);
+  }
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+  for (size_t j = 0; j < input_num; ++j) {
+    auto real_input = AnfAlgo::GetRealInputIndex(kernel, j);
+    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(kernel, real_input, true);
+    auto index = kernel_with_index.second;
+    auto &input_node = kernel_with_index.first;
+    auto device_address = AnfAlgo::GetOutputAddr(input_node, index, true);
+    MS_EXCEPTION_IF_NULL(device_address);
+    kernel::AddressPtr input = std::make_shared<kernel::Address>();
+    GetOrMallocAddress(mem_scheduler, device_address, input);
+    input->size = device_address->size_;
+    kernel_inputs->emplace_back(input);
+  }
+
+  for (size_t j = 0; j < kernel_mod->GetOutputSizeList().size(); ++j) {
+    auto device_address = AnfAlgo::GetOutputAddr(kernel, j, true);
+    kernel::AddressPtr output = std::make_shared<kernel::Address>();
+    GetOrMallocAddress(mem_scheduler, device_address, output);
+    output->size = device_address->size_;
+    kernel_outputs->emplace_back(output);
+  }
+
+  for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
+    auto device_address = AnfAlgo::GetWorkspaceAddr(kernel, i);
+    kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
+    GetOrMallocAddress(mem_scheduler, device_address, workspace);
+    workspace->size = device_address->size_;
+    kernel_workspaces->emplace_back(workspace);
+  }
+}
+
+void KernelRuntime::SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler,
+                                          const session::KernelGraph *graph, const AnfNodePtr &kernel, bool mock) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(mem_scheduler);
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  for (size_t j = 0; j < kernel_mod->GetOutputSizeList().size(); ++j) {
+    auto tensor = graph->GetNodeOutputTensor(std::make_pair(kernel, j));
+    auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, j, true);
+    if (mock) {
+      if (graph->IsInternalOutput(kernel, j) && device_address != nullptr) {
+        mem_scheduler->SetMemPriority(device_address.get(), kMemPriorityHigh);
+      }
+      continue;
+    }
+    if (tensor != nullptr) {
+      if (device_address == nullptr) {
+        tensor->data_sync(false);
+        tensor->set_device_address(nullptr);
+        tensor->set_sync_status(kNeedSyncHostToDevice);
+        continue;
+      }
+      SyncStream();
+      auto origin_ptr = device_address->ptr_;
+      if (origin_ptr == nullptr) {
+        device_address->ptr_ = mem_scheduler->GetOrMalloc(device_address.get(), device_address->size_);
+      }
+      tensor->set_device_address(device_address);
+      tensor->data_sync(false);
+      tensor->set_device_address(nullptr);
+      if (origin_ptr == nullptr) {
+        device_address->ptr_ = nullptr;
+      }
+      tensor->set_sync_status(kNeedSyncHostToDevice);
+    }
+  }
+}
+
+void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler,
+                                          const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(mem_scheduler);
+  auto &input_nodes = graph->input_nodes();
+  auto &input_tensors = graph->input_tensors();
+  if (input_tensors.size() != input_nodes.size()) {
+    MS_LOG_EXCEPTION << "Invalid input tensor size:" << input_tensors.size() << " vs node size:" << input_nodes.size();
+  }
+  for (size_t i = 0; i < input_tensors.size(); ++i) {
+    auto tensor = input_tensors[i];
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto input_node = input_nodes[i];
+    if (!input_node->isa<Parameter>()) {
+      continue;
+    }
+    auto input_param = input_node->cast<ParameterPtr>();
+    if (AnfAlgo::OutputAddrExist(input_node, 0)) {
+      auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
+      MS_EXCEPTION_IF_NULL(tensor);
+      MemPriority priority = kMemPriorityHigh;
+      auto tensor_address = tensor->device_address();
+      if (tensor_address != nullptr && tensor_address != device_address) {
+        tensor->data_sync(false);
+        priority = kMemPriorityLow;
+      }
+      mem_scheduler->Init(device_address.get(), tensor->data_c(), tensor->data().nbytes(), priority);
+    }
+  }
+}
+
+bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph, const AnfNodePtr &kernel,
+                                 const std::shared_ptr<MemScheduler> &mem_scheduler, bool mock) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   AddressPtrList kernel_inputs;
   AddressPtrList kernel_workspaces;
   AddressPtrList kernel_outputs;
-  GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
-  bool ret;
-  if (AnfAlgo::IsCommunicationOp(kernel)) {
-    if (pynative_mode_profiling_flag_) {
-      ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
-                                              kernel_workspaces, kernel_outputs, communication_stream_);
+  auto stream = kernel_mod->GetStream();
+  if (stream == nullptr) {
+    if (AnfAlgo::IsCommunicationOp(kernel)) {
+      stream = communication_stream_;
     } else {
-      ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, communication_stream_);
+      stream = stream_;
     }
+  }
+  bool ret = true;
+  if (mem_scheduler != nullptr) {
+    ret = mem_scheduler->PreCompute(stream);
+    if (!ret) {
+      return ret;
+    }
+    AssignKernelAddress(mem_scheduler, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  } else if (!kernel_mod->GetInputsAddr().empty() || !kernel_mod->GetOutputsAddr().empty()) {
+    kernel_inputs = kernel_mod->GetInputsAddr();
+    kernel_outputs = kernel_mod->GetOutputsAddr();
+    kernel_workspaces = kernel_mod->GetWorkSpacesAddr();
   } else {
+    GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  }
+  if (!mock) {
     if (pynative_mode_profiling_flag_) {
       ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
-                                              kernel_workspaces, kernel_outputs, stream_);
+                                              kernel_workspaces, kernel_outputs, stream);
     } else {
-      ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+      ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream);
+    }
+  }
+  if (mem_scheduler != nullptr) {
+    SyncNodeOutputTensors(mem_scheduler, graph, kernel, mock);
+    ret = mem_scheduler->PostCompute(stream);
+    if (!ret) {
+      return ret;
     }
   }
   return ret;
 }
 
-bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
-  const auto &kernels = graph.execution_order();
+bool KernelRuntime::LaunchKernelMod(const session::KernelGraph *graph, bool mock) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::shared_ptr<MemScheduler> mem_scheduler = nullptr;
+  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
+  if (enable_mem_scheduler) {
+    mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph->graph_id());
+    MS_EXCEPTION_IF_NULL(mem_scheduler);
+    mem_scheduler->SetMemHandler(mem_manager_);
+    mem_scheduler->RecordMemUsage();
+    InitGraphInputTensors(mem_scheduler, graph);
+  }
+  const auto &kernels = graph->execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernel_list;
-  auto iter = graph_dynamic_kernel_map_.find(graph.graph_id());
+  auto iter = graph_dynamic_kernel_map_.find(graph->graph_id());
   if (iter != graph_dynamic_kernel_map_.end()) {
     dynamic_kernel_list = iter->second;
   }
@@ -1149,7 +1369,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
   }
   std::vector<std::vector<std::function<void()>>> kernel_pre_run_events;
   std::vector<std::vector<std::function<void()>>> kernel_post_run_events;
-  auto events_iter = graph_kernel_events_map_.find(graph.graph_id());
+  auto events_iter = graph_kernel_events_map_.find(graph->graph_id());
   if (events_iter != graph_kernel_events_map_.end()) {
     kernel_pre_run_events = events_iter->second.first;
     kernel_post_run_events = events_iter->second.second;
@@ -1161,7 +1381,6 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
       dynamic_kernel_list[i]->InferShape();
       dynamic_kernel_list[i]->UpdateArgs();
       dynamic_kernel_list[i]->Execute();
-
       if (!SyncStream()) {
         MS_LOG(ERROR) << "SyncStream failed";
         return false;
@@ -1182,7 +1401,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
         }
         continue;
       }
-      auto ret = LaunchKernel(kernel);
+      auto ret = LaunchKernel(graph, kernel, mem_scheduler, mock);
       if (!ret) {
         MS_LOG(ERROR) << "Launch kernel failed.";
         return false;
@@ -1192,16 +1411,42 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
     }
     LaunchKernelEvent(kernel_post_run_events, i);
   }
+  if (mem_scheduler != nullptr) {
+    mem_scheduler->OptMemUsage();
+  }
   return true;
+}
+
+void KernelRuntime::UseMemSchedulerIfNeeded(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
+  if (enable_mem_scheduler) {
+    auto mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph->graph_id());
+    if (mem_scheduler->need_record_event()) {
+      (void)LaunchKernelMod(graph, true);
+    }
+    float mem_used_factor = kMaxMemReuseFactor;
+    while (!mem_scheduler->optimized() && mem_used_factor >= kMinMemReuseFactor) {
+      mem_scheduler->SetMemUsedFactor(mem_used_factor);
+      bool ret = LaunchKernelMod(graph, true);
+      if (ret) {
+        mem_scheduler->SetOptimized(true);
+      } else {
+        mem_used_factor -= kRetryFactor;
+      }
+    }
+  }
 }
 
 bool KernelRuntime::LaunchKernels(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (!LaunchKernelMod(*graph)) {
+  UseMemSchedulerIfNeeded(graph);
+  if (!LaunchKernelMod(graph)) {
     MS_LOG(ERROR) << "LaunchKernelMod failed!";
     return false;
   }
-
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
