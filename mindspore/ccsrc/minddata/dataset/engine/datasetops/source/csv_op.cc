@@ -454,14 +454,14 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
 
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file);
+    MS_LOG(ERROR) << "Invalid file, " + DatasetName() + " file get real path failed, path=" << file;
+    RETURN_STATUS_UNEXPECTED("Invalid file, " + DatasetName() + " file get real path failed, path=" + file);
   }
 
   std::ifstream ifs;
   ifs.open(realpath.value(), std::ifstream::in);
   if (!ifs.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + " file: " + file);
   }
   if (column_name_list_.empty()) {
     std::string tmp;
@@ -505,7 +505,8 @@ void CsvOp::Print(std::ostream &out, bool show_all) const {
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
     out << "\nSample count: " << total_rows_ << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
-        << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\nCsv files list:\n";
+        << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\n"
+        << DatasetName(true) << " files list:\n";
     for (int i = 0; i < csv_files_list_.size(); ++i) {
       out << " " << csv_files_list_[i];
     }
@@ -574,10 +575,9 @@ Status CsvOp::CalculateNumRowsPerShard() {
       ss << " " << csv_files_list_[i];
     }
     std::string file_list = ss.str();
-    RETURN_STATUS_UNEXPECTED(
-      "Invalid data, CSVDataset API can't read the data file(interface mismatch or no data found). "
-      "Check file path: " +
-      file_list + ".");
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + DatasetName(true) +
+                             "Dataset API can't read the data file (interface mismatch or no data found). Check " +
+                             DatasetName() + " file path: " + file_list + ".");
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));
@@ -589,13 +589,13 @@ int64_t CsvOp::CountTotalRows(const std::string &file) {
   CsvParser csv_parser(0, jagged_rows_connector_.get(), field_delim_, column_default_list_, file);
   Status rc = csv_parser.InitCsvParser();
   if (rc.IsError()) {
-    MS_LOG(ERROR) << "[Internal ERROR], failed to initialize CSV Parser. Error:" << rc;
+    MS_LOG(ERROR) << "[Internal ERROR], failed to initialize " + DatasetName(true) + " Parser. Error:" << rc;
     return 0;
   }
 
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file;
+    MS_LOG(ERROR) << "Invalid file, " + DatasetName() + " file get real path failed, path=" << file;
     return 0;
   }
 
@@ -659,7 +659,8 @@ Status CsvOp::ComputeColMap() {
   // Set the column name mapping (base class field)
   if (column_name_id_map_.empty()) {
     if (!ColumnNameValidate()) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to obtain column name from input CSV file list.");
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to obtain column name from input " + DatasetName() +
+                               " file list.");
     }
 
     for (auto &csv_file : csv_files_list_) {
@@ -697,8 +698,9 @@ Status CsvOp::ColMapAnalyse(const std::string &csv_file_name) {
     if (!check_flag_) {
       auto realpath = FileUtils::GetRealPath(csv_file_name.data());
       if (!realpath.has_value()) {
-        MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << csv_file_name;
-        RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + csv_file_name);
+        std::string err_msg = "Invalid file, " + DatasetName() + " file get real path failed, path=" + csv_file_name;
+        MS_LOG(ERROR) << err_msg;
+        RETURN_STATUS_UNEXPECTED(err_msg);
       }
 
       std::string line;
@@ -757,7 +759,7 @@ bool CsvOp::ColumnNameValidate() {
   for (auto &csv_file : csv_files_list_) {
     auto realpath = FileUtils::GetRealPath(csv_file.data());
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << csv_file;
+      MS_LOG(ERROR) << "Invalid file, " + DatasetName() + " file get real path failed, path=" << csv_file;
       return false;
     }
 

@@ -74,6 +74,10 @@ class TextFileOp : public NonMappableLeafOp {
   // @return Name of the current Op
   std::string Name() const override { return "TextFileOp"; }
 
+  // DatasetName name getter
+  // \return DatasetName of the current Op
+  virtual std::string DatasetName(bool upper = false) const { return upper ? "TextFile" : "text file"; }
+
   // File names getter
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return text_files_list_; }

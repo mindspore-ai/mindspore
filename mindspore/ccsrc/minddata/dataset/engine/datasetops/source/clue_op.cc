@@ -221,7 +221,7 @@ Status ClueOp::CalculateNumRowsPerShard() {
     }
     std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, ClueDataset API can't read the data file(interface mismatch or no data found). "
+      "Invalid data, ClueDataset API can't read the data file (interface mismatch or no data found). "
       "Check file path:" +
       file_list);
   }

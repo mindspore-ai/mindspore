@@ -96,6 +96,10 @@ class ImageFolderOp : public MappableLeafOp {
   /// @return Name of the current Op
   std::string Name() const override { return "ImageFolderOp"; }
 
+  // DatasetName name getter
+  // \return DatasetName of the current Op
+  virtual std::string DatasetName(bool upper = false) const { return upper ? "ImageFolder" : "image folder"; }
+
   //// \brief Base-class override for GetNumClasses
   //// \param[out] num_classes the number of classes
   //// \return Status of the function

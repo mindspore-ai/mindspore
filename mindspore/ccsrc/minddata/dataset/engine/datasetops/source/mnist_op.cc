@@ -66,7 +66,7 @@ void MnistOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nNumber of rows:" << num_rows_ << "\nMNIST Directory: " << folder_path_ << "\n\n";
+    out << "\nNumber of rows:" << num_rows_ << "\n" << DatasetName(true) << " Directory: " << folder_path_ << "\n\n";
   }
 }
 
@@ -74,7 +74,7 @@ void MnistOp::Print(std::ostream &out, bool show_all) const {
 Status MnistOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_label_pairs_.empty()) {
     if (image_label_pairs_.empty()) {
-      RETURN_STATUS_UNEXPECTED("Invalid data, no image found in dataset.");
+      RETURN_STATUS_UNEXPECTED("Invalid data, no image found in " + DatasetName() + " file.");
     } else {
       RETURN_STATUS_UNEXPECTED(
         "[Internal ERROR] Map for containing image-index pair is nullptr or has been set in other place,"
@@ -93,7 +93,8 @@ Status MnistOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) co
 Status MnistOp::ReadFromReader(std::ifstream *reader, uint32_t *result) {
   uint32_t res = 0;
   reader->read(reinterpret_cast<char *>(&res), 4);
-  CHECK_FAIL_RETURN_UNEXPECTED(!reader->fail(), "Invalid data, failed to read 4 bytes from file.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!reader->fail(),
+                               "Invalid data, failed to read 4 bytes from " + DatasetName() + " file.");
   *result = SwapEndian(res);
   return Status::OK();
 }
@@ -104,16 +105,17 @@ uint32_t MnistOp::SwapEndian(uint32_t val) const {
 }
 
 Status MnistOp::CheckImage(const std::string &file_name, std::ifstream *image_reader, uint32_t *num_images) {
-  CHECK_FAIL_RETURN_UNEXPECTED(image_reader->is_open(), "Invalid file, failed to open mnist image file: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(image_reader->is_open(),
+                               "Invalid file, failed to open " + DatasetName() + " image file: " + file_name);
   int64_t image_len = image_reader->seekg(0, std::ios::end).tellg();
   (void)image_reader->seekg(0, std::ios::beg);
   // The first 16 bytes of the image file are type, number, row and column
-  CHECK_FAIL_RETURN_UNEXPECTED(image_len >= 16, "Invalid file, Mnist file is corrupted: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(image_len >= 16, "Invalid file, " + DatasetName() + " file is corrupted: " + file_name);
 
   uint32_t magic_number;
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &magic_number));
   CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kMnistImageFileMagicNumber,
-                               "Invalid file, this is not the mnist image file: " + file_name);
+                               "Invalid file, this is not the " + DatasetName() + " image file: " + file_name);
 
   uint32_t num_items;
   RETURN_IF_NOT_OK(ReadFromReader(image_reader, &num_items));
@@ -132,15 +134,16 @@ Status MnistOp::CheckImage(const std::string &file_name, std::ifstream *image_re
 }
 
 Status MnistOp::CheckLabel(const std::string &file_name, std::ifstream *label_reader, uint32_t *num_labels) {
-  CHECK_FAIL_RETURN_UNEXPECTED(label_reader->is_open(), "Invalid file, failed to open mnist label file: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(label_reader->is_open(),
+                               "Invalid file, failed to open " + DatasetName() + " label file: " + file_name);
   int64_t label_len = label_reader->seekg(0, std::ios::end).tellg();
   (void)label_reader->seekg(0, std::ios::beg);
   // The first 8 bytes of the image file are type and number
-  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 8, "Invalid file, Mnist file is corrupted: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 8, "Invalid file, " + DatasetName() + " file is corrupted: " + file_name);
   uint32_t magic_number;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &magic_number));
   CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kMnistLabelFileMagicNumber,
-                               "Invalid file, this is not the mnist label file: " + file_name);
+                               "Invalid file, this is not the " + DatasetName() + " label file: " + file_name);
   uint32_t num_items;
   RETURN_IF_NOT_OK(ReadFromReader(label_reader, &num_items));
   CHECK_FAIL_RETURN_UNEXPECTED((label_len - 8) == num_items, "Invalid data, number of labels is wrong.");
@@ -159,18 +162,18 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
   auto images_buf = std::make_unique<char[]>(size * num_images);
   auto labels_buf = std::make_unique<char[]>(num_images);
   if (images_buf == nullptr || labels_buf == nullptr) {
-    std::string err_msg = "[Internal ERROR] Failed to allocate memory for MNIST buffer.";
+    std::string err_msg = "[Internal ERROR] Failed to allocate memory for " + DatasetName() + " buffer.";
     MS_LOG(ERROR) << err_msg.c_str();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   (void)image_reader->read(images_buf.get(), size * num_images);
   if (image_reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read image: " + image_names_[index] +
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + DatasetName() + " image: " + image_names_[index] +
                              ", size:" + std::to_string(size * num_images) + ". Ensure data file is not damaged.");
   }
   (void)label_reader->read(labels_buf.get(), num_images);
   if (label_reader->fail()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read label:" + label_names_[index] +
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + DatasetName() + " label:" + label_names_[index] +
                              ", size: " + std::to_string(num_images) + ". Ensure data file is not damaged.");
   }
   TensorShape img_tensor_shape = TensorShape({kMnistImageRows, kMnistImageCols, 1});
@@ -207,10 +210,9 @@ Status MnistOp::ParseMnistData() {
   image_label_pairs_.shrink_to_fit();
   num_rows_ = image_label_pairs_.size();
   if (num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "Invalid data, MnistDataset API can't read the data file(interface mismatch or no data found). "
-      "Check file in directory: " +
-      folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + DatasetName(true) +
+                             "Dataset API can't read the data file (interface mismatch or no data found). Check " +
+                             DatasetName() + " file in directory: " + folder_path_);
   }
   return Status::OK();
 }
@@ -231,14 +233,14 @@ Status MnistOp::WalkAllFiles() {
       std::string fname = file.Basename();  // name of the mnist file
       if ((fname.find(prefix + "-images") != std::string::npos) && (fname.find(img_ext) != std::string::npos)) {
         image_names_.push_back(file.ToString());
-        MS_LOG(INFO) << "Mnist operator found image file at " << fname << ".";
+        MS_LOG(INFO) << DatasetName(true) << " operator found image file at " << fname << ".";
       } else if ((fname.find(prefix + "-labels") != std::string::npos) && (fname.find(lbl_ext) != std::string::npos)) {
         label_names_.push_back(file.ToString());
-        MS_LOG(INFO) << "Mnist Operator found label file at " << fname << ".";
+        MS_LOG(INFO) << DatasetName(true) << " Operator found label file at " << fname << ".";
       }
     }
   } else {
-    MS_LOG(WARNING) << "Mnist operator unable to open directory " << dir.ToString() << ".";
+    MS_LOG(WARNING) << DatasetName(true) << " operator unable to open directory " << dir.ToString() << ".";
   }
 
   std::sort(image_names_.begin(), image_names_.end());
@@ -252,7 +254,7 @@ Status MnistOp::WalkAllFiles() {
 
 Status MnistOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));

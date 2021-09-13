@@ -167,7 +167,7 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
     }
     std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, TFRecordDataset API can't read the data file(interface mismatch or no data under the file). "
+      "Invalid data, TFRecordDataset API can't read the data file (interface mismatch or no data under the file). "
       "Check file path." +
       file_list);
   }

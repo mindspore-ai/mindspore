@@ -322,7 +322,7 @@ Status CocoOp::ParseAnnotationIds() {
   num_rows_ = image_ids_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, CocoDataset API can't read the data file(interface mismatch or no data found). "
+      "Invalid data, CocoDataset API can't read the data file (interface mismatch or no data found). "
       "Check file in directory: " +
       image_folder_path_ + ".");
   }

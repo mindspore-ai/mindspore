@@ -50,7 +50,8 @@ void TextFileOp::Print(std::ostream &out, bool show_all) const {
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
     out << "\nRow count: " << total_rows_ << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
-        << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\nText files list:\n";
+        << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\n"
+        << DatasetName(true) << " list:\n";
     for (size_t i = 0; i < text_files_list_.size(); ++i) {
       out << " " << text_files_list_[i];
     }
@@ -81,13 +82,13 @@ Status TextFileOp::LoadTensor(const std::string &line, TensorRow *out_row) {
 Status TextFileOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file;
-    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file);
+    MS_LOG(ERROR) << "Invalid file, " + DatasetName() + " get real path failed, path=" << file;
+    RETURN_STATUS_UNEXPECTED("Invalid file, " + DatasetName() + " get real path failed, path=" + file);
   }
 
   std::ifstream handle(realpath.value());
   if (!handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open " + DatasetName() + ": " + file);
   }
 
   int64_t rows_total = 0;
@@ -204,10 +205,9 @@ Status TextFileOp::CalculateNumRowsPerShard() {
       ss << " " << text_files_list_[i];
     }
     std::string file_list = ss.str();
-    RETURN_STATUS_UNEXPECTED(
-      "Invalid data, TextDataset API can't read the data file(interface mismatch or no data found). "
-      "Check file: " +
-      file_list);
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + DatasetName(true) +
+                             "Dataset API can't read the data file (interface mismatch or no data found). Check " +
+                             DatasetName() + ": " + file_list);
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));

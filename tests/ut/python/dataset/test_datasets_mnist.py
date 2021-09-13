@@ -270,7 +270,7 @@ def test_mnist_usage():
 
     assert test_config("test") == 10000
     assert test_config("all") == 10000
-    assert "MnistDataset API can't read the data file(interface mismatch or no data found)" in test_config("train")
+    assert "MnistDataset API can't read the data file (interface mismatch or no data found)" in test_config("train")
     assert "usage is not within the valid set of ['train', 'test', 'all']" in test_config("invalid")
     assert "Argument usage with value ['list'] is not of type [<class 'str'>]" in test_config(["list"])
 
