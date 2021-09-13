@@ -122,7 +122,7 @@ mindspore::Context *MSContextFromContext(const lite::Context *context) {
   return ms_context;
 }
 
-bool DeviceTypePriority(const lite::Context *context, DeviceType dt1, DeviceType dt2) {
+bool DeviceTypePriority(const lite::Context *context, int device_type1, int device_type2) {
   /* dt1 > dt2    true
    * dt1 < dt2    false    */
 
@@ -131,10 +131,10 @@ bool DeviceTypePriority(const lite::Context *context, DeviceType dt1, DeviceType
   }
   DeviceContextVector device_infos = context->device_list_;
   for (DeviceContext device_info : device_infos) {
-    if (device_info.device_type_ == dt1) {
+    if (device_info.device_type_ == device_type1) {
       return true;
     }
-    if (device_info.device_type_ == dt2) {
+    if (device_info.device_type_ == device_type2) {
       return false;
     }
   }

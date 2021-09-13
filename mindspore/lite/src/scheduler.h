@@ -43,7 +43,7 @@ class Scheduler {
             std::vector<Tensor *> *src_tensors, const std::vector<Tensor *> &input_tensors,
             const std::vector<Tensor *> &output_tensors, bool is_train_session,
             std::map<std::string, TypeId> *executions, std::shared_ptr<Delegate> delegate = nullptr,
-            DeviceType delegate_device_type = DT_CPU)
+            int delegate_device_type = -1)
       : context_(ctx),
         ms_context_(ms_ctx),
         src_model_(src_model),
@@ -149,7 +149,7 @@ class Scheduler {
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::map<kernel::Kernel *, const schema::Primitive *> primitives_;
   std::shared_ptr<Delegate> delegate_ = nullptr;
-  DeviceType delegate_device_type_;
+  int delegate_device_type_ = -1;
   std::deque<int> subgraphs_to_schedule_{};
   std::unordered_map<size_t, kernel::LiteKernel *> subgraph_index_subgraph_kernel_map_{};
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
