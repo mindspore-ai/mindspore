@@ -96,7 +96,7 @@ class Cloner {
                      AnfNodePtrList *const input_params);
   void AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph, const AnfNodePtrList &params);
   void OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs, size_t arg_start_index);
-  void SetEdges(const FuncGraphPtr &func_graph);
+  void SetEdges(const FuncGraphPtr &func_graph, FuncGraphTransaction *tx);
   void LiftParameters(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
                       const AnfNodePtrList &params);
   void Lift(const std::vector<FuncGraphPtr> &sorted);
@@ -108,7 +108,6 @@ class Cloner {
   TraceInfoPtr relation_;
   TraceInfoPtr target_relation_;
   FuncGraphManagerPtr manager_;
-  FuncGraphTransaction transaction_;
   FuncGraphSet graph_set_;
   ScopePtr scope_;
   CloneType type_;

@@ -23,6 +23,7 @@
 #include <set>
 #include <map>
 #include <list>
+#include <deque>
 #include <string>
 #include <vector>
 #include <utility>
@@ -36,13 +37,20 @@
 #include "utils/ordered_map.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "utils/counter.h"
 #include "utils/hashing.h"
 #include "base/base_ref.h"
 #include "api/ir/func_graph_manager.h"
 
 namespace mindspore {
-struct Change;
+namespace change {
+struct ChangeCounter;
+struct Change {
+  virtual ~Change() = default;
+  virtual void Apply(ChangeCounter *counter) = 0;
+};
+using ChangePtr = std::unique_ptr<Change>;
+}  // namespace change
+
 class FuncGraphTransaction;
 class FuncGraphManager;
 using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
@@ -52,20 +60,7 @@ using AnfNodeIndexSet = api::AnfNodeIndexSet;
 using NodeUsersMap = api::NodeUsersMap;
 using FuncGraphSetPair = std::pair<FuncGraphPtr, FuncGraphSet>;
 using FuncGraphSetPtr = std::shared_ptr<FuncGraphSet>;
-using EdgeTuple = std::pair<AnfNodePtr, std::pair<int, AnfNodePtr>>;
-struct EdgeTupleHasher {
-  std::size_t operator()(const EdgeTuple &p1) const {
-    return hash_combine({std::hash<AnfNode *>{}(p1.first.get()), std::hash<int>{}(p1.second.first),
-                         std::hash<AnfNode *>{}(p1.second.second.get())});
-  }
-};
 
-struct EdgeTupleEqual {
-  bool operator()(const EdgeTuple &lhs, const EdgeTuple &rhs) const {
-    return lhs.first == rhs.first && lhs.second.first == rhs.second.first && lhs.second.second == rhs.second.second;
-  }
-};
-using EdgeTupleCounter = Counter<EdgeTuple, EdgeTupleHasher, EdgeTupleEqual>;
 // manage the func graphs.
 // if no manager exist, just create one and associate it to all func graphs; else reuse simply.
 // func_graph, be managed graph
@@ -80,8 +75,6 @@ FuncGraphManagerPtr MakeManager(const std::vector<FuncGraphPtr> &func_graphs = {
 struct Signals {
   Signal<void()> InvalidateComputer;
 };
-
-enum EdgeProcessDirection { kDecEdge = -1, kIncEdge = 1 };
 
 using CNodeIndexPair = std::pair<AnfNodePtr, int>;
 using CNodeIndexPairPtr = std::shared_ptr<CNodeIndexPair>;
@@ -297,7 +290,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>, 
   void Reset();
   void Init();
   void Clear();
-  void AddFuncGraph(FuncGraphPtr func_graph, bool is_root = false);
+  void AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root = false);
   void KeepRoots(const std::vector<FuncGraphPtr> &roots = {});
   void RemoveRoots();
   void SetParameters(const FuncGraphPtr &fg, const std::vector<AnfNodePtr> &parameters);
@@ -307,10 +300,10 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>, 
   bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node) final;
   void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value) final;
   void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value) final;
-  void MoveAllCNodeDropGraph(FuncGraphPtr source, FuncGraphPtr target, const ScopePtr &scope);
+  void MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target, const ScopePtr &scope);
 
   FuncGraphTransaction Transact();
-  void CommitChanges(const std::vector<Change> &changes);
+  void CommitChanges(std::deque<change::ChangePtr> &&changes);
 
   bool IsManaged() const { return is_manage_; }
 
@@ -343,8 +336,6 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>, 
 
   std::shared_ptr<Signals> signals() const { return signals_; }
 
-  IncludeType Limit(const AnfNodePtr &node);
-
   // Static Analysis
   NodeUsersMap node_users_;
   AnfNodeSet all_nodes_;  // managed nodes
@@ -354,17 +345,17 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>, 
 
  private:
   // Erase OneGraph From Manager
-  void EraseOneGraph(FuncGraph *fg);
+  void EraseOneGraph(const FuncGraphPtr &fg);
   void AddIntoManaged(const FuncGraphPtr &fg);
-  void ProcessEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction);
-  void ProcessInputs(const AnfNodePtr &node, EdgeProcessDirection direction);
-  void AcquireNodes(const std::vector<AnfNodePtr> &nodes);
-  FuncGraphSetPtr MaybeDropNodes(const std::vector<AnfNodePtr> &nodes);
-  void ParseChanges(const std::vector<Change> &changes, EdgeTupleCounter *add_edges, EdgeTupleCounter *rm_edges,
-                    Counter<AnfNodePtr> *adds, Counter<AnfNodePtr> *rms);
-  void AddEdge(AnfNodePtr node, int index, AnfNodePtr input);
-  void DropEdge(AnfNodePtr node, int index, AnfNodePtr input);
-  void MoveAllNodes(FuncGraphPtr source, FuncGraphPtr target);
+  void ProcessEdgeAdd(const AnfNodePtr &node, int index, const AnfNodePtr &input);
+  void ProcessEdgeRemove(const AnfNodePtr &node, int index, const AnfNodePtr &input);
+  void ProcessInputsEdgeAdd(const CNodePtr &cnode);
+  void ProcessInputsEdgeRemove(const CNodePtr &cnode);
+  void AcquireNodes(std::vector<AnfNodePtr> &&nodes);
+  FuncGraphSet MaybeDropNodes(std::vector<AnfNodePtr> &&nodes);
+  void OnEdgeAdded(const AnfNodePtr &node, int index, const AnfNodePtr &input);
+  void OnEdgeRemoved(const AnfNodePtr &node, int index, const AnfNodePtr &input);
+  void MoveAllNodes(const FuncGraphPtr &source, const FuncGraphPtr &target);
 
   FuncGraphSet roots_;        // Managed roots.
   FuncGraphSet func_graphs_;  // Managed func graphs.
@@ -381,20 +372,19 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>, 
   std::shared_ptr<FuncGraphJTotalComputer> j_total_;
 
   bool is_manage_;
-  std::function<IncludeType(AnfNodePtr)> limit_;
 };
 
 class FuncGraphTransaction {
  public:
-  explicit FuncGraphTransaction(FuncGraphManager *manager) : manager_(manager), changes_() {
-    MS_EXCEPTION_IF_NULL(manager_);
-    if (!manager_->IsManaged()) {
-      MS_LOG(DEBUG) << "The manager is not managed yet";
-    }
-  }
-
+  explicit FuncGraphTransaction(FuncGraphManager *manager) : manager_(manager) {}
   FuncGraphTransaction() : manager_(nullptr) {}
-  ~FuncGraphTransaction() { manager_ = nullptr; }
+  ~FuncGraphTransaction() = default;
+
+  FuncGraphTransaction(const FuncGraphTransaction &other) = delete;
+  FuncGraphTransaction &operator=(const FuncGraphTransaction &other) = delete;
+
+  FuncGraphTransaction(FuncGraphTransaction &&other) = default;
+  FuncGraphTransaction &operator=(FuncGraphTransaction &&other) = default;
 
   // set parameters of a func graph
   void SetParameters(FuncGraphPtr fg, const std::vector<AnfNodePtr> &params);
@@ -414,76 +404,10 @@ class FuncGraphTransaction {
 
  private:
   FuncGraphManager *manager_;
-  std::vector<Change> changes_;
+  std::deque<change::ChangePtr> changes_;
 };
 
-// args for set param
-struct ArgsOfSetParams {
-  FuncGraphPtr func_graph;
-  std::vector<AnfNodePtr> params;
-  bool operator==(const ArgsOfSetParams &other) const { return &other == this; }
-
-  friend std::ostream &operator<<(std::ostream &os, const ArgsOfSetParams &) {
-    os << "[ArgsOfSetParams]";
-    return os;
-  }
-};
-
-// args for add param
-struct ArgsOfAddParam {
-  FuncGraphPtr func_graph;
-  AnfNodePtr param;
-  bool operator==(const ArgsOfAddParam &other) const { return &other == this; }
-
-  friend std::ostream &operator<<(std::ostream &os, const ArgsOfAddParam &) {
-    os << "[ArgsOfAddParam]";
-    return os;
-  }
-};
-
-// args for InsertFront param
-struct ArgsOfInsertFrontParam {
-  FuncGraphPtr func_graph;
-  AnfNodePtr param;
-  bool operator==(const ArgsOfInsertFrontParam &other) const { return &other == this; }
-
-  friend std::ostream &operator<<(std::ostream &os, const ArgsOfInsertFrontParam &) {
-    os << "[ArgsOfInsertFrontParam]";
-    return os;
-  }
-};
-
-// args for set edge
-struct ArgsOfSetEdge {
-  CNodePtr root_node;
-  AnfNodePtr new_node;
-  size_t index;
-  bool operator==(const ArgsOfSetEdge &other) const { return &other == this; }
-
-  friend std::ostream &operator<<(std::ostream &os, const ArgsOfSetEdge &other) {
-    os << "[ArgsOfSetEdge]";
-    return os;
-  }
-};
-
-// args for add edge
-struct ArgsOfAddEdge {
-  CNodePtr root_node;
-  AnfNodePtr new_node;
-  bool operator==(const ArgsOfAddEdge &other) const { return &other == this; }
-
-  friend std::ostream &operator<<(std::ostream &os, const ArgsOfAddEdge &other) {
-    os << "[ArgsOfAddEdge]";
-    return os;
-  }
-};
-
-struct Change {
-  enum OpName { kTxSetParams, kTxSetEdge, kTxAddParam, kTxInsertFrontParam, kTxAddEdge };
-  OpName op;
-  Any args;
-  Change(OpName name, const Any &para) : op(name), args(para) {}
-};
+inline FuncGraphTransaction FuncGraphManager::Transact() { return FuncGraphTransaction(this); }
 
 }  // namespace mindspore
 

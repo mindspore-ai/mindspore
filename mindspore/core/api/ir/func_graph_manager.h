@@ -19,10 +19,10 @@
 
 #include <memory>
 #include <utility>
+#include <unordered_map>
 
 #include "utils/visible.h"
 #include "utils/ordered_set.h"
-#include "utils/ordered_map.h"
 #include "ir/anf.h"
 
 namespace mindspore::api {
@@ -46,7 +46,7 @@ struct MS_CORE_API AnfNodeIndexPairEqual {
 };
 
 using AnfNodeIndexSet = OrderedSet<std::pair<AnfNodePtr, int>, AnfNodeIndexPairHasher, AnfNodeIndexPairEqual>;
-using NodeUsersMap = OrderedMap<AnfNodePtr, AnfNodeIndexSet>;
+using NodeUsersMap = std::unordered_map<AnfNodePtr, AnfNodeIndexSet>;
 
 class MS_CORE_API FuncGraphManager {
  public:

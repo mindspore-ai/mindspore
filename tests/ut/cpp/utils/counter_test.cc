@@ -85,4 +85,54 @@ TEST_F(TestCounter, test_minus) {
   s = "a";
   assert(counter_minus.contains(s) == false);
 }
+
+struct MyStruct {
+  int a = 0;
+  int b = 0;
+};
+
+struct MyHash {
+  std::size_t operator()(const MyStruct &e) const noexcept {  //
+    return (static_cast<std::size_t>(e.a) << 16) + e.b;
+  }
+};
+
+struct MyEqual {
+  bool operator()(const MyStruct &lhs, const MyStruct &rhs) const noexcept {  //
+    return lhs.a == rhs.a && lhs.b == rhs.b;
+  }
+};
+
+TEST_F(TestCounter, test_struct) {
+  using MyCounter = Counter<MyStruct, MyHash, MyEqual>;
+  MyCounter counter;
+  counter.add(MyStruct{100, 1});
+  counter.add(MyStruct{100, 2});
+  counter.add(MyStruct{100, 2});
+  counter.add(MyStruct{100, 3});
+  counter.add(MyStruct{100, 3});
+  counter.add(MyStruct{100, 3});
+  ASSERT_EQ(1, (counter[MyStruct{100, 1}]));
+  ASSERT_EQ(2, (counter[MyStruct{100, 2}]));
+  ASSERT_EQ(3, (counter[MyStruct{100, 3}]));
+
+  MyCounter counter2;
+  counter2.add(MyStruct{100, 2});
+  counter2.add(MyStruct{100, 3});
+  counter2.add(MyStruct{100, 3});
+  counter2.add(MyStruct{100, 3});
+  counter2.add(MyStruct{100, 4});
+
+  auto result = counter.subtract(counter2);
+  ASSERT_EQ(2, result.size());
+  ASSERT_TRUE((MyEqual{}(MyStruct{100, 1}, result[0])));
+  ASSERT_TRUE((MyEqual{}(MyStruct{100, 2}, result[1])));
+
+  counter2 = counter;
+  ASSERT_EQ(3, counter2.size());
+  ASSERT_EQ(1, (counter2[MyStruct{100, 1}]));
+  ASSERT_EQ(2, (counter2[MyStruct{100, 2}]));
+  ASSERT_EQ(3, (counter2[MyStruct{100, 3}]));
+}
+
 }  // namespace mindspore
