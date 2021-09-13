@@ -16,6 +16,8 @@
 
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_
+
+#include <vector>
 #include "runtime/device/memory_manager.h"
 #include "graphengine/inc/external/runtime/rt_error_codes.h"
 namespace mindspore {
@@ -34,6 +36,9 @@ class AscendMemoryManager : public MemoryManager {
   uint64_t GetDeviceMemSize();
   void MallocSomasDynamicMem(const session::KernelGraph *graph) override;
   uint8_t *MallocCommunicationMemFromMemPool(size_t size) override;
+  std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) override {
+    return AscendMemoryPool::GetInstance().AllocContinuousTensorMem(total_size, size_list);
+  }
 
  protected:
   uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) override;

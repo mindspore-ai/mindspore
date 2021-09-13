@@ -92,6 +92,112 @@ void KernelRuntime::AssignMemory(session::KernelGraph *graph) {
   UpdateRefNodeOutputMem(graph);
 }
 
+void KernelRuntime::RunOpGetCommunicationInputInfo(const AnfNodePtr &node, size_t *total_size,
+                                                   std::vector<DeviceAddressPtr> *address_list,
+                                                   std::vector<size_t> *align_size_list) const {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(total_size);
+  MS_EXCEPTION_IF_NULL(address_list);
+  MS_EXCEPTION_IF_NULL(align_size_list);
+  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(node, i, true);
+    auto input_node = input_node_with_index.first;
+    MS_EXCEPTION_IF_NULL(input_node);
+    DeviceAddressPtr address = nullptr;
+    if (AnfAlgo::OutputAddrExist(input_node, input_node_with_index.second)) {
+      address = AnfAlgo::GetMutableOutputAddr(input_node, input_node_with_index.second);
+    } else {
+      if (input_node->isa<CNode>()) {
+        address = PreAssignCNodeMemory(input_node, input_node_with_index.second);
+      } else {
+        MS_LOG(EXCEPTION) << "Communication node inputs only support CNode";
+      }
+    }
+    MS_EXCEPTION_IF_NULL(address);
+    auto align_size = MemoryManager::GetCommonAlignSize(address->size());
+    *total_size += align_size;
+    address_list->emplace_back(address);
+    align_size_list->emplace_back(align_size);
+  }
+}
+
+void KernelRuntime::RunOpAssignCommunicationInput(const AnfNodePtr &node) const {
+  if (!AnfAlgo::IsCommunicationOp(node)) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  size_t total_size = 0;
+  std::vector<DeviceAddressPtr> address_list;
+  std::vector<size_t> align_size_list;
+  RunOpGetCommunicationInputInfo(node, &total_size, &address_list, &align_size_list);
+  if (address_list.empty()) {
+    return;
+  }
+
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->inputs().size() < kMinInputSize) {
+    MS_LOG(ERROR) << "No inputs for " << cnode->fullname_with_scope();
+    return;
+  }
+
+  if (!mem_manager_->MallocContinuousMemFromMemPool(address_list, total_size, align_size_list)) {
+    MS_LOG(EXCEPTION) << "Allocate continuous memory failed, totol_size:" << total_size;
+  }
+}
+
+void KernelRuntime::RunOpGetCommunicationOutputInfo(const AnfNodePtr &node, size_t *total_size,
+                                                    std::vector<size_t> *align_size_list,
+                                                    std::vector<DeviceAddressPtr> *device_address_list) const {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(total_size);
+  MS_EXCEPTION_IF_NULL(align_size_list);
+  MS_EXCEPTION_IF_NULL(device_address_list);
+  auto runtime_info = node->user_data<session::OpRuntimeInfo>();
+  auto output_num = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t i = 0; i < output_num; ++i) {
+    MS_EXCEPTION_IF_NULL(runtime_info);
+    DeviceAddressPtr address = nullptr;
+    if (AnfAlgo::OutputAddrExist(node, i)) {
+      address = AnfAlgo::GetMutableOutputAddr(node, i);
+    } else {
+      std::string output_format = runtime_info->output_format(i);
+      auto output_type = runtime_info->output_type(i);
+      address =
+        CreateDeviceAddress(nullptr, runtime_info->output_tensor_size(i), output_format, output_type, {node, i});
+    }
+    MS_EXCEPTION_IF_NULL(address);
+    auto align_size = MemoryManager::GetCommonAlignSize(address->size());
+    *total_size += align_size;
+    align_size_list->emplace_back(align_size);
+    device_address_list->emplace_back(address);
+  }
+}
+
+void KernelRuntime::RunOpAssignCommunicationOutput(const AnfNodePtr &node) const {
+  if (!AnfAlgo::IsCommunicationOp(node)) {
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+
+  size_t total_size = 0;
+  std::vector<size_t> align_size_list;
+  std::vector<DeviceAddressPtr> device_address_list;
+  RunOpGetCommunicationOutputInfo(node, &total_size, &align_size_list, &device_address_list);
+
+  if (align_size_list.empty()) {
+    return;
+  }
+
+  if (!mem_manager_->MallocContinuousMemFromMemPool(device_address_list, total_size, align_size_list)) {
+    MS_LOG(EXCEPTION) << "Allocate continuous memory failed, totol_size:" << total_size;
+  }
+}
+
 void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
                                    const std::vector<tensor::TensorPtr> &input_tensors) {
   const auto &nodes = graph.execution_order();
@@ -152,11 +258,17 @@ void KernelRuntime::RunOpAssignMemory(const std::vector<tensor::TensorPtr> &inpu
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->ResetDynamicMemory();
+
+  for (const auto &node : graph->execution_order()) {
+    RunOpAssignCommunicationOutput(node);
+    RunOpAssignCommunicationInput(node);
+  }
+
   RunOpAssignInputMemory(input_tensors, graph);
   AssignStaticMemoryValueNode(graph);
-  for (const auto &cnode : graph->execution_order()) {
-    RunOpAssignOutputMemory(cnode, tensor_to_node);
-    RunOpAssignWorkSpaceMemory(cnode);
+  for (const auto &node : graph->execution_order()) {
+    RunOpAssignOutputMemory(node, tensor_to_node);
+    RunOpAssignWorkSpaceMemory(node);
   }
   UpdateRefNodeOutputMem(graph);
 }
@@ -288,7 +400,6 @@ void KernelRuntime::RunOpAssignOutputMemory(
         MS_EXCEPTION_IF_NULL(mem_manager_);
         mem_manager_->MallocMemFromMemPool(address, address->size());
       }
-
       continue;
     }
     if (AnfAlgo::GetCNodeName(kernel) == kApplyMomentumOpName) {
@@ -635,7 +746,7 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
 }
 bool KernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) { return false; }
 
-DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index) {
+DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (!anf_node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "anf_node should be a cnode";

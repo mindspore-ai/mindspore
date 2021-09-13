@@ -75,9 +75,9 @@ class AscendKernelRuntime : public KernelRuntime {
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                       TypeId type_id) override;
+                                       TypeId type_id) const override;
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const KernelWithIndex &node_index) override;
+                                       const KernelWithIndex &node_index) const override;
   bool KernelMemNotReuse(const AnfNodePtr &node) override;
 
   void KernelLaunchProfiling(const std::string &kernel_name) override;
