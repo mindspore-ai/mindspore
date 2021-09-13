@@ -90,6 +90,7 @@ constexpr char kManifestNode[] = "ManifestDataset";
 constexpr char kMindDataNode[] = "MindDataDataset";
 constexpr char kMnistNode[] = "MnistDataset";
 constexpr char kRandomNode[] = "RandomDataset";
+constexpr char kSBUNode[] = "SBUDataset";
 constexpr char kTextFileNode[] = "TextFileDataset";
 constexpr char kTFRecordNode[] = "TFRecordDataset";
 constexpr char kUSPSNode[] = "USPSDataset";

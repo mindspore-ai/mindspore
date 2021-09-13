@@ -10,6 +10,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     cifar_op.cc
     random_data_op.cc
     celeba_op.cc
+    sbu_op.cc
     text_file_op.cc
     clue_op.cc
     csv_op.cc

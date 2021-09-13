@@ -44,6 +44,7 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/sbu_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/usps_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
@@ -261,6 +262,16 @@ PYBIND_REGISTER(RandomNode, 2, ([](const py::module *m) {
                         std::make_shared<RandomNode>(total_rows, schema, toStringVector(columns_list), nullptr);
                       THROW_IF_ERROR(random_node->ValidateParams());
                       return random_node;
+                    }));
+                }));
+
+PYBIND_REGISTER(SBUNode, 2, ([](const py::module *m) {
+                  (void)py::class_<SBUNode, DatasetNode, std::shared_ptr<SBUNode>>(*m, "SBUNode",
+                                                                                   "to create an SBUNode")
+                    .def(py::init([](std::string dataset_dir, bool decode, py::handle sampler) {
+                      auto sbu = std::make_shared<SBUNode>(dataset_dir, decode, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(sbu->ValidateParams());
+                      return sbu;
                     }));
                 }));
 
