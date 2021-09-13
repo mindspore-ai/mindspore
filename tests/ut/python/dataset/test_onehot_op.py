@@ -19,6 +19,7 @@ import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as data_trans
+import mindspore.dataset.transforms.py_transforms as py_trans
 import mindspore.dataset.vision.c_transforms as c_vision
 from mindspore import log as logger
 from util import dataset_equal_with_function
@@ -98,7 +99,119 @@ def test_one_hot_post_aug():
 
     assert num_iter == 1
 
+def test_one_hot_success():
+    # success
+    class GetDatasetGenerator:
+        def __init__(self):
+            np.random.seed(58)
+            self.__data = np.random.sample((5, 2))
+            self.__label = []
+            for index in range(5):
+                self.__label.append(np.array(index))
+
+        def __getitem__(self, index):
+            return (self.__data[index], self.__label[index])
+
+        def __len__(self):
+            return len(self.__data)
+
+    dataset = ds.GeneratorDataset(GetDatasetGenerator(), ["data", "label"], shuffle=False)
+
+    one_hot_encode = py_trans.OneHotOp(10)
+    trans = py_trans.Compose([one_hot_encode])
+    dataset = dataset.map(operations=trans, input_columns=["label"])
+
+    for index, item in enumerate(dataset.create_dict_iterator(output_numpy=True)):
+        assert item["label"][index] == 1.0
+
+def test_one_hot_success2():
+    # success
+    class GetDatasetGenerator:
+        def __init__(self):
+            np.random.seed(58)
+            self.__data = np.random.sample((5, 2))
+            self.__label = []
+            for index in range(5):
+                self.__label.append(np.array([index]))
+
+        def __getitem__(self, index):
+            return (self.__data[index], self.__label[index])
+
+        def __len__(self):
+            return len(self.__data)
+
+    dataset = ds.GeneratorDataset(GetDatasetGenerator(), ["data", "label"], shuffle=False)
+
+    one_hot_encode = py_trans.OneHotOp(10)
+    trans = py_trans.Compose([one_hot_encode])
+    dataset = dataset.map(operations=trans, input_columns=["label"])
+
+    for index, item in enumerate(dataset.create_dict_iterator(output_numpy=True)):
+        logger.info(item)
+        assert item["label"][0][index] == 1.0
+
+def test_one_hot_success3():
+    # success
+    class GetDatasetGenerator:
+        def __init__(self):
+            np.random.seed(58)
+            self.__data = np.random.sample((5, 2))
+            self.__label = []
+            for _ in range(5):
+                value = np.ones([10, 1], dtype=np.int32)
+                for i in range(10):
+                    value[i][0] = i
+                self.__label.append(value)
+
+        def __getitem__(self, index):
+            return (self.__data[index], self.__label[index])
+
+        def __len__(self):
+            return len(self.__data)
+
+    dataset = ds.GeneratorDataset(GetDatasetGenerator(), ["data", "label"], shuffle=False)
+
+    one_hot_encode = py_trans.OneHotOp(10)
+    trans = py_trans.Compose([one_hot_encode])
+    dataset = dataset.map(operations=trans, input_columns=["label"])
+
+    for item in dataset.create_dict_iterator(output_numpy=True):
+        logger.info(item)
+        for i in range(10):
+            assert item["label"][i][0][i] == 1.0
+
+def test_one_hot_type_error():
+    # type error
+    class GetDatasetGenerator:
+        def __init__(self):
+            np.random.seed(58)
+            self.__data = np.random.sample((5, 2))
+            self.__label = []
+            for index in range(5):
+                self.__label.append(np.array(float(index)))
+
+        def __getitem__(self, index):
+            return (self.__data[index], self.__label[index])
+
+        def __len__(self):
+            return len(self.__data)
+
+    dataset = ds.GeneratorDataset(GetDatasetGenerator(), ["data", "label"], shuffle=False)
+
+    one_hot_encode = py_trans.OneHotOp(10)
+    trans = py_trans.Compose([one_hot_encode])
+    dataset = dataset.map(operations=trans, input_columns=["label"])
+
+    try:
+        for index, item in enumerate(dataset.create_dict_iterator(output_numpy=True)):
+            assert item["label"][index] == 1.0
+    except RuntimeError as e:
+        assert "the input numpy type should be int" in str(e)
 
 if __name__ == "__main__":
     test_one_hot()
     test_one_hot_post_aug()
+    test_one_hot_success()
+    test_one_hot_success2()
+    test_one_hot_success3()
+    test_one_hot_type_error()

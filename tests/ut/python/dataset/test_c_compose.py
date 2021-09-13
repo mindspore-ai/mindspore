@@ -39,7 +39,7 @@ def test_compose():
     assert test_config([[1, 0]], [ops.Duplicate(), ops.Concatenate(), ops.Duplicate(), ops.Concatenate()]) == [
         [1, 0] * 4]
     # test one python transform followed by a C transform. type after oneHot is float (mixed use-case)
-    assert test_config([1, 0], [py_ops.OneHotOp(2), ops.TypeCast(mstype.int32)]) == [[[0, 1]], [[1, 0]]]
+    assert test_config([1, 0], [py_ops.OneHotOp(2), ops.TypeCast(mstype.int32)]) == [[0, 1], [1, 0]]
     # test exceptions. compose, randomApply randomChoice use the same validator
     assert "op_list[0] is neither a c_transform op" in test_config([1, 0], [1, ops.TypeCast(mstype.int32)])
     # test empty op list

@@ -58,7 +58,7 @@ def test_compose():
     # Test one Python transform followed by a C++ transform. Type after OneHot is a float (mixed use-case)
     assert test_config([1, 0],
                        c_transforms.Compose([py_transforms.OneHotOp(2), c_transforms.TypeCast(mstype.int32)])) \
-           == [[[0, 1]], [[1, 0]]]
+           == [[0, 1], [1, 0]]
 
     # Test exceptions.
     with pytest.raises(TypeError) as error_info:
@@ -71,20 +71,20 @@ def test_compose():
     assert "op_list can not be empty." in str(error_info.value)
 
     # Test Python compose op
-    assert test_config([1, 0], py_transforms.Compose([py_transforms.OneHotOp(2)])) == [[[0, 1]], [[1, 0]]]
-    assert test_config([1, 0], py_transforms.Compose([py_transforms.OneHotOp(2), (lambda x: x + x)])) == [[[0, 2]],
-                                                                                                          [[2, 0]]]
+    assert test_config([1, 0], py_transforms.Compose([py_transforms.OneHotOp(2)])) == [[0, 1], [1, 0]]
+    assert test_config([1, 0], py_transforms.Compose([py_transforms.OneHotOp(2), (lambda x: x + x)])) == [[0, 2],
+                                                                                                          [2, 0]]
 
     # Test nested Python compose op
     assert test_config([1, 0],
                        py_transforms.Compose([py_transforms.Compose([py_transforms.OneHotOp(2)]), (lambda x: x + x)])) \
-           == [[[0, 2]], [[2, 0]]]
+           == [[0, 2], [2, 0]]
 
     # Test passing a list of Python ops without Compose wrapper
     assert test_config([1, 0],
                        [py_transforms.Compose([py_transforms.OneHotOp(2)]), (lambda x: x + x)]) \
-           == [[[0, 2]], [[2, 0]]]
-    assert test_config([1, 0], [py_transforms.OneHotOp(2), (lambda x: x + x)]) == [[[0, 2]], [[2, 0]]]
+           == [[0, 2], [2, 0]]
+    assert test_config([1, 0], [py_transforms.OneHotOp(2), (lambda x: x + x)]) == [[0, 2], [2, 0]]
 
     # Test a non callable function
     with pytest.raises(ValueError) as error_info:
@@ -149,14 +149,14 @@ def test_c_py_compose_transforms_module():
     arr = [1, 0]
     assert test_config(arr, ["cols"], ["cols"],
                        [py_transforms.OneHotOp(2), c_transforms.Mask(c_transforms.Relational.EQ, 1)]) == \
-           [[[False, True]],
-            [[True, False]]]
+           [[False, True],
+            [True, False]]
     assert test_config(arr, ["cols"], ["cols"],
                        [py_transforms.OneHotOp(2), (lambda x: x + x), c_transforms.Fill(1)]) \
-           == [[[1, 1]], [[1, 1]]]
+           == [[1, 1], [1, 1]]
     assert test_config(arr, ["cols"], ["cols"],
                        [py_transforms.OneHotOp(2), (lambda x: x + x), c_transforms.Fill(1), (lambda x: x + x)]) \
-           == [[[2, 2]], [[2, 2]]]
+           == [[2, 2], [2, 2]]
     assert test_config([[1, 3]], ["cols"], ["cols"],
                        [c_transforms.PadEnd([3], -1), (lambda x: x + x)]) \
            == [[2, 6, -2]]
@@ -248,8 +248,7 @@ def test_py_transforms_with_c_vision():
 
     with pytest.raises(RuntimeError) as error_info:
         test_config([py_transforms.OneHotOp(20, 0.1)])
-    assert "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()" in str(
-        error_info.value)
+    assert "is smaller than the category number" in str(error_info.value)
 
 
 def test_py_vision_with_c_transforms():
