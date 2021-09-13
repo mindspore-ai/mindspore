@@ -234,6 +234,44 @@ const BaseRef ConvConvFusion::DefinePattern() const {
   return VectorRef({is_conv_down, is_conv_up, is_param, is_seq_var});
 }
 
+bool ConvConvFusion::CheckCanFusion(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_cnode) const {
+  if (IsMarkedTrainOp(down_conv_cnode)) {
+    return false;
+  }
+  auto down_weight_parameter = down_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
+  auto down_weight_value = std::dynamic_pointer_cast<tensor::Tensor>(down_weight_parameter->default_param());
+  auto down_weight_shape = down_weight_value->shape();
+  auto down_weight_type = down_weight_value->data_type();
+  // down conv node filter must 1x1,only support float32
+  if (down_weight_shape.size() != kNHWC_DIMS || down_weight_type != kNumberTypeFloat32 ||
+      (down_weight_shape[kNHWC_HDim] != 1 || down_weight_shape[kNHWC_WDim] != 1)) {
+    return false;
+  }
+  if (IsMarkedTrainOp(up_conv_cnode)) {
+    return false;
+  }
+  auto up_weight_parameter = up_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
+  auto up_weight_value = std::dynamic_pointer_cast<tensor::Tensor>(up_weight_parameter->default_param());
+  auto up_weight_shape = up_weight_value->shape();
+  auto up_weight_type = up_weight_value->data_type();
+  if (up_weight_shape.size() != kNHWC_DIMS || up_weight_type != kNumberTypeFloat32 ||
+      (up_weight_shape[kNHWC_HDim] != 1 || up_weight_shape[kNHWC_WDim] != 1)) {
+    return false;
+  }
+  auto cin0 = up_weight_shape[kNHWC_CDim];
+  auto cout0 = up_weight_shape[0];
+  auto cout1 = down_weight_shape[0];
+  if (cout0 != down_weight_shape[kNHWC_CDim]) {
+    MS_LOG(WARNING) << "conv_conv_fusion up conv and down conv node shape not fit";
+    return false;
+  }
+  if (cin0 * (cout1 - cout0) > cout0 * cout1) {
+    MS_LOG(INFO) << "conv_conv_fusion up conv and down conv node channel requirement not fit";
+    return false;
+  }
+  return true;
+}
+
 // conv->conv1x1 fusion conv (w1x+b)w2+c = (w1*w2)*x+(w2*b+c)
 const AnfNodePtr ConvConvFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                          const EquivPtr &) const {
@@ -246,39 +284,13 @@ const AnfNodePtr ConvConvFusion::Process(const FuncGraphPtr &func_graph, const A
     MS_LOG(WARNING) << "conv node inputs error ,name:" << down_conv_cnode->fullname_with_scope();
     return nullptr;
   }
-  auto down_weight_parameter = down_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
-  auto down_weight_value = std::dynamic_pointer_cast<tensor::Tensor>(down_weight_parameter->default_param());
-  auto down_weight_shape = down_weight_value->shape();
-  auto down_weight_type = down_weight_value->data_type();
-  // down conv node filter must 1x1,only support float32
-  if (down_weight_shape.size() != kNHWC_DIMS || down_weight_type != kNumberTypeFloat32 ||
-      (down_weight_shape[kNHWC_HDim] != 1 || down_weight_shape[kNHWC_WDim] != 1)) {
-    return nullptr;
-  }
-
   auto up_conv_cnode = down_conv_cnode->input(1)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(up_conv_cnode != nullptr, nullptr);
-  auto up_weight_parameter = up_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
-  auto up_weight_value = std::dynamic_pointer_cast<tensor::Tensor>(up_weight_parameter->default_param());
-  auto up_weight_shape = up_weight_value->shape();
-  auto up_weight_type = up_weight_value->data_type();
-  if (up_weight_shape.size() != kNHWC_DIMS || up_weight_type != kNumberTypeFloat32 ||
-      (up_weight_shape[kNHWC_HDim] != 1 || up_weight_shape[kNHWC_WDim] != 1)) {
-    return nullptr;
-  }
   if (up_conv_cnode->inputs().size() != kConvWithBiasLen && up_conv_cnode->inputs().size() != kConvNoBiasLen) {
     MS_LOG(WARNING) << "conv node inputs error ,name:" << up_conv_cnode->fullname_with_scope();
     return nullptr;
   }
-  auto cin0 = up_weight_shape[kNHWC_CDim];
-  auto cout0 = up_weight_shape[0];
-  auto cout1 = down_weight_shape[0];
-  if (cout0 != down_weight_shape[kNHWC_CDim]) {
-    MS_LOG(WARNING) << "conv_conv_fusion up conv and down conv node shape not fit";
-    return nullptr;
-  }
-  if (cin0 * (cout1 - cout0) > cout0 * cout1) {
-    MS_LOG(INFO) << "conv_conv_fusion up conv and down conv node channel requirement not fit";
+  if (!CheckCanFusion(up_conv_cnode, down_conv_cnode)) {
     return nullptr;
   }
   // multi output need skip

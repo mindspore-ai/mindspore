@@ -29,6 +29,7 @@ class ConvConvFusion : public PatternProcessPass {
   ~ConvConvFusion() override = default;
 
  private:
+  bool CheckCanFusion(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_cnode) const;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };

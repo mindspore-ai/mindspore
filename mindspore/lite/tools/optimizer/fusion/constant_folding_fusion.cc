@@ -311,15 +311,29 @@ bool ConstFoldPass::PreProcess() const {
   }
   return true;
 }
+
+bool ConstFoldPass::CheckCanFusion(const AnfNodePtr &input_node) const {
+  if (!input_node->isa<CNode>() || !CheckIsAllInputsParam(input_node)) {
+    return false;
+  }
+  if (CheckPrimitiveType(input_node, prim::kPrimTupleGetItem) || CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
+    return false;
+  }
+  auto input_cnode = input_node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(input_cnode)) {
+    return false;
+  }
+  return true;
+}
+
 const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
   if (!PreProcess()) {
     MS_LOG(ERROR) << "run pre-process failed.";
     return nullptr;
   }
-  if (func_graph == nullptr || node == nullptr) {
-    return nullptr;
-  }
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(node != nullptr, nullptr);
   auto any_node = node->cast<CNodePtr>();
   if (any_node == nullptr) {
     return nullptr;
@@ -327,11 +341,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
   bool changed = false;
   for (size_t i = 1; i < any_node->inputs().size(); i++) {
     auto input_node = any_node->input(i);
-    if (!input_node->isa<CNode>() || !CheckIsAllInputsParam(input_node)) {
-      continue;
-    }
-    if (CheckPrimitiveType(input_node, prim::kPrimTupleGetItem) ||
-        CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
+    if (!CheckCanFusion(input_node)) {
       continue;
     }
     auto input_cnode = input_node->cast<CNodePtr>();

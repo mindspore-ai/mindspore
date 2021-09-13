@@ -59,11 +59,11 @@ class AnfTransform {
 
   void AppendPassToStoreRoom(const converter::Flags *config);
 
-  static STATUS FindInputCnode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  static STATUS MarkTrainInputOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
-  static STATUS FindSameParameterCnode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  static STATUS MarkTrainWeightSharingOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
-  static STATUS FindTrainOp(const FuncGraphPtr &func_graph);
+  static STATUS MarkTrainOp(const FuncGraphPtr &func_graph);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -77,6 +77,9 @@ const AnfNodePtr GeLUFusion::Process(const FuncGraphPtr &func_graph, const AnfNo
   if (!utils::isa<CNodePtr>(node)) {
     return nullptr;
   }
+  if (IsMarkedTrainOp(utils::cast<CNodePtr>(node))) {
+    return nullptr;
+  }
   if (!CheckPattern(equiv)) {
     return nullptr;
   }

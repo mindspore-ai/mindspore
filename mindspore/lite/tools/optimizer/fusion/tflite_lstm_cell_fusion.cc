@@ -338,6 +338,9 @@ bool TfliteLstmCellFusion::CheckReferencedOutputs(const FuncGraphPtr &func_graph
       return false;
     }
     auto cnode = utils::cast<CNodePtr>(node_user.first);
+    if (IsMarkedTrainOp(cnode)) {
+      return false;
+    }
     if (!CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
       return false;
     }

@@ -141,6 +141,9 @@ AnfNodePtr TransposeFusion::TransTransFusion(const mindspore::FuncGraphPtr &func
                                              const mindspore::AnfNodePtr &node) const {
   MS_ASSERT(func_graph != nullptr && node != nullptr);
   auto trans_cnode_2 = node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(trans_cnode_2)) {
+    return nullptr;
+  }
   MS_CHECK_TRUE_RET(trans_cnode_2 != nullptr, nullptr);
   if (!CheckPrimitiveType(trans_cnode_2, prim::kPrimTranspose) ||
       !CheckPrimitiveType(trans_cnode_2->input(1), prim::kPrimTranspose)) {
@@ -155,6 +158,9 @@ AnfNodePtr TransposeFusion::TransTransFusion(const mindspore::FuncGraphPtr &func
   auto pre_node = trans_cnode_2->input(1);
   auto pre_cnode = pre_node->cast<CNodePtr>();
   if (pre_cnode == nullptr) {
+    return nullptr;
+  }
+  if (IsMarkedTrainOp(pre_cnode)) {
     return nullptr;
   }
   if (GetTransposePerm(pre_cnode, &pre_perm) != lite::RET_OK) {
@@ -180,11 +186,17 @@ AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const minds
     return nullptr;
   }
   auto any_cnode = node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(any_cnode)) {
+    return nullptr;
+  }
   const auto transpose_node = any_cnode->input(1);
   if (transpose_node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }
   const CNodePtr &transpose_cnode = transpose_node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(transpose_cnode)) {
+    return nullptr;
+  }
   auto perm_node = transpose_cnode->input(kInputIndexTwo);
   auto trans_post_node = GenTransposeNode(func_graph, any_cnode, perm_node, any_cnode->fullname_with_scope() + "_post");
   MS_CHECK_TRUE_RET(trans_post_node != nullptr, nullptr);

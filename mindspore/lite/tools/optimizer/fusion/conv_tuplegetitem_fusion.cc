@@ -40,6 +40,9 @@ const AnfNodePtr ConvTupleGetItemFusion::Process(const FuncGraphPtr &func_graph,
   if (tuple_cnode == nullptr || tuple_cnode->size() != kInputSizeThree) {
     return nullptr;
   }
+  if (IsMarkedTrainOp(tuple_cnode)) {
+    return nullptr;
+  }
   auto idx = GetTupleGetItemOutIndex(tuple_cnode);
   if (idx != 0) {
     MS_LOG(DEBUG) << "TupleGetItem's idx is not 0";
@@ -51,6 +54,9 @@ const AnfNodePtr ConvTupleGetItemFusion::Process(const FuncGraphPtr &func_graph,
   }
   auto conv_cnode = conv_node->cast<CNodePtr>();
   if (conv_cnode == nullptr) {
+    return nullptr;
+  }
+  if (IsMarkedTrainOp(conv_cnode)) {
     return nullptr;
   }
   auto abstr = conv_cnode->abstract();

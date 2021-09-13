@@ -1169,5 +1169,15 @@ bool IsTrainOp(const CNodePtr &cnode) {
   }
   return false;
 }
+
+bool IsMarkedTrainOp(const CNodePtr &cnode) {
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_RET(prim != nullptr, false);
+  if (prim->GetAttr("trainOp") != nullptr && GetValue<bool>(prim->GetAttr("trainOp"))) {
+    MS_LOG(DEBUG) << "train op not fusion.";
+    return true;
+  }
+  return false;
+}
 }  // namespace opt
 }  // namespace mindspore

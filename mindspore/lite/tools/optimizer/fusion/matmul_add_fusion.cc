@@ -57,10 +57,8 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
     if (!CheckPrimitiveType(node, prim::kPrimAddFusion) && !CheckPrimitiveType(node, prim::kPrimBiasAdd)) {
       continue;
     }
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    MS_CHECK_TRUE_RET(prim != nullptr, false);
-    if (prim->GetAttr("trainOp") != nullptr && GetValue<bool>(prim->GetAttr("trainOp"))) {
-      continue;
+    if (IsMarkedTrainOp(cnode)) {
+      return false;
     }
     size_t index = 0;
     if (!CheckAndGetMatMulIndex(cnode, &index)) {
@@ -72,10 +70,8 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
         (!utils::isa<Parameter>(bias_node) || !bias_node->cast<ParameterPtr>()->default_param())) {
       continue;
     }
-    auto matmul_prim = GetValueNode<PrimitivePtr>(matmul_cnode->input(0));
-    MS_CHECK_TRUE_RET(matmul_prim != nullptr, false);
-    if (matmul_prim->GetAttr("trainOp") != nullptr && GetValue<bool>(matmul_prim->GetAttr("trainOp"))) {
-      continue;
+    if (IsMarkedTrainOp(matmul_cnode)) {
+      return false;
     }
     auto manager = func_graph->manager();
     MS_ASSERT(manager != nullptr);

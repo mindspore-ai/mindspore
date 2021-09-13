@@ -34,6 +34,7 @@ class ConvBiasaddFusion : public PatternProcessPass {
  private:
   bool CheckCanFusion(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
   int DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  CNodePtr GetAddCnode(const AnfNodePtr &node) const;
 };
 }  // namespace opt
 }  // namespace mindspore

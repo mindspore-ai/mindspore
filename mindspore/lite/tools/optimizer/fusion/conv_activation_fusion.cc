@@ -37,6 +37,9 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     return nullptr;
   }
   auto act_node = node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(act_node)) {
+    return nullptr;
+  }
   if (act_node == nullptr || act_node->size() != kInputSizeTwo ||
       !CheckPrimitiveType(act_node, prim::kPrimActivation)) {
     return nullptr;
@@ -54,6 +57,9 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
       return nullptr;
     }
     auto conv_node = pre_node->cast<CNodePtr>();
+    if (IsMarkedTrainOp(conv_node)) {
+      return nullptr;
+    }
     if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion) ||
         CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion)) {
       auto prim = GetValueNode<PrimitivePtr>(conv_node->input(0));
