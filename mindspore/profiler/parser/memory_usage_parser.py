@@ -17,6 +17,7 @@ from collections import OrderedDict
 import json
 import os
 import stat
+from importlib import import_module
 
 from google.protobuf.text_format import ParseError
 
@@ -27,7 +28,12 @@ from mindspore.profiler.common.validator.validate_path import validate_and_norma
 from mindspore.profiler.parser.container import MemoryGraph as Graph
 from mindspore.profiler.parser.container import MemoryNode as Node
 from mindspore.profiler.parser.container import MemoryTensor as Tensor
-from mindspore.train.memory_profiling_pb2 import MemoryProto
+import mindspore._c_expression as c_expression
+
+try:
+    MemoryProto = import_module("mindspore.train.memory_profiling_pb2.MemoryProto")
+except ModuleNotFoundError:
+    MemoryProto = None
 
 GIGABYTES = 1024 * 1024 * 1024
 
@@ -84,22 +90,26 @@ class MemoryUsageParser:
             raise ProfilerIOException
 
         # Parse memory raw data from file.
-        memory_proto = MemoryProto()
-        try:
-            memory_proto.ParseFromString(content)
-        except ParseError as err:
-            msg = "Fail to parse memory proto file."
-            logger.error("Cannot parse the memory file. Please check the file schema.\n%s", err)
-            raise ProfilerRawFileException(msg)
+        if not c_expression.security.enable_security():
+            if not MemoryProto:
+                raise ProfilerRawFileException("Can not find memory profiling pb file.")
 
-        # Parse memory details based on graphs in the network.
-        graphs = memory_proto.graph_mem
-        self._parse_graph_memory(graphs)
-        # Update memory summary information.
-        self._mem_summary['capacity'] = memory_proto.total_mem / GIGABYTES
-        self._mem_summary['peak_mem'] = self._peak_mem
+            memory_proto = MemoryProto()
+            try:
+                memory_proto.ParseFromString(content)
+            except ParseError as err:
+                msg = "Fail to parse memory proto file."
+                logger.error("Cannot parse the memory file. Please check the file schema.\n%s", err)
+                raise ProfilerRawFileException(msg)
 
-        logger.info('Finished processing memory usage data.')
+            # Parse memory details based on graphs in the network.
+            graphs = memory_proto.graph_mem
+            self._parse_graph_memory(graphs)
+            # Update memory summary information.
+            self._mem_summary['capacity'] = memory_proto.total_mem / GIGABYTES
+            self._mem_summary['peak_mem'] = self._peak_mem
+
+            logger.info('Finished processing memory usage data.')
 
     def _parse_graph_memory(self, graphs):
         """Parse memory usage based on subgraphs."""

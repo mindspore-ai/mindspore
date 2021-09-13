@@ -121,6 +121,9 @@ class Profiler:
     _aicpu_op_output_filename_target = "output_data_preprocess_aicpu_"
 
     def __init__(self, **kwargs):
+        if c_expression.security.enable_security():
+            raise Runtime("Profiler is not supported if compiled with \'-s on\'")
+
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
         self._get_output_path(kwargs)
@@ -225,6 +228,8 @@ class Profiler:
         """
         Collect and analyse performance data, called after training or during training. The example shows above.
         """
+        if c_expression.security.enable_security():
+            raise Runtime("Profiler is not supported if compiled with \'-s on\'")
         self._cpu_profiler.stop()
         _stop_dataset_profiler()
         if self._device_target and self._device_target == "GPU":

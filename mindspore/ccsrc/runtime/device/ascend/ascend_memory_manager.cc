@@ -18,11 +18,13 @@
 #include "runtime/device/ascend/ascend_memory_pool.h"
 #include "utils/ms_context.h"
 #include "runtime/mem.h"
+#ifndef ENABLE_SECURITY
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "profiler/device/ascend/memory_profiling.h"
 
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
+#endif
 
 namespace mindspore {
 namespace device {
@@ -139,7 +141,7 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
                << "], Pool statistics: pool total size [" << AscendMemoryPool::GetInstance().total_mem_statistics()
                << "] used [" << AscendMemoryPool::GetInstance().used_mem_statistics()
                << "] communication_mem:" << communication_mem;
-
+#ifndef ENABLE_SECURITY
   if (MemoryProfiling::GetInstance().IsMemoryProfilingEnable() && graph_id != kInvalidGraphId) {
     auto node = MemoryProfiling::GetInstance().GetGraphMemoryNode(graph_id);
     if (node == nullptr) {
@@ -149,7 +151,7 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
 
     node->AddStaticMemorySize(SizeToUint(align_size));
   }
-
+#endif
   if (communication_mem) {
     // create protect area [kMemAlignSize -- data -- kMemAlignSize]
     uint8_t *alloc_address = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
@@ -191,9 +193,11 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
 
 void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
   MemoryManager::MallocSomasDynamicMem(graph);
+#ifndef ENABLE_SECURITY
   if (MemoryProfiling::GetInstance().IsMemoryProfilingEnable()) {
     somas_reuse_util_ptr_->ConvertToProfilingNode(graph->graph_id());
   }
+#endif
 }
 
 // communication memory: [512align_size + data + 512align_size]

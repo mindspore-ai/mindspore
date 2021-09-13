@@ -153,12 +153,14 @@ include_directories("${CMAKE_BINARY_DIR}/ps/core")
 file(GLOB_RECURSE COMM_PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ps/core/protos/*.proto")
 ms_protobuf_generate(COMM_PROTO_SRCS COMM_PROTO_HDRS ${COMM_PROTO_IN})
 list(APPEND MINDSPORE_PROTO_LIST ${COMM_PROTO_SRCS})
-
-include_directories("${CMAKE_BINARY_DIR}/profiler/device/ascend")
-file(GLOB_RECURSE PROFILER_PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  "profiler/device/ascend/memory_profiling.proto")
-ms_protobuf_generate_py(PROFILER_MEM_PROTO_PY PROFILER_MEM_PROTO_HDRS_PY PROFILER_MEM_PROTO_PYS ${PROFILER_PROTO_LIST})
-list(APPEND MINDSPORE_PROTO_LIST ${PROFILER_MEM_PROTO_PY})
+if(NOT ENABLE_SECURITY)
+    include_directories("${CMAKE_BINARY_DIR}/profiler/device/ascend")
+    file(GLOB_RECURSE PROFILER_PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+      "profiler/device/ascend/memory_profiling.proto")
+    ms_protobuf_generate_py(PROFILER_MEM_PROTO_PY PROFILER_MEM_PROTO_HDRS_PY PROFILER_MEM_PROTO_PYS
+      ${PROFILER_PROTO_LIST})
+    list(APPEND MINDSPORE_PROTO_LIST ${PROFILER_MEM_PROTO_PY})
+endif()
 
 if(ENABLE_DEBUGGER)
     # debugger: compile proto files
