@@ -101,7 +101,7 @@ def train():
 
     # init distributed
     if config.is_distributed:
-        if get_device_id().isdigit():
+        if get_device_id():
             context.set_context(device_id=get_device_id())
         init()
         rank = get_rank_id()
