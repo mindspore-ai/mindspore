@@ -81,8 +81,8 @@ Status TextFileOp::LoadTensor(const std::string &line, TensorRow *out_row) {
 Status TextFileOp::LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file;
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file);
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file;
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + file);
   }
 
   std::ifstream handle(realpath.value());
@@ -171,7 +171,7 @@ Status TextFileOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
 int64_t CountTotalRows(const std::string &file) {
   auto realpath = FileUtils::GetRealPath(file.data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << file;
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file;
     return 0;
   }
 
@@ -205,7 +205,9 @@ Status TextFileOp::CalculateNumRowsPerShard() {
     }
     std::string file_list = ss.str();
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not be suitable to read with TextFileDataset API. Check file: " + file_list);
+      "Invalid data, TextDataset API can't read the data file(interface mismatch or no data found). "
+      "Check file: " +
+      file_list);
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));

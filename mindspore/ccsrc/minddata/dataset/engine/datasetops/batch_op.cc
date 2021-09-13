@@ -306,7 +306,8 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
     size_t col_id = column_name_id_map_[out_col_names_[i]];
     size_t row_id = 0;
     CHECK_FAIL_RETURN_UNEXPECTED(num_rows == out_cols[i].size(),
-                                 "column: " + out_col_names_[i] + " expects: " + std::to_string(num_rows) +
+                                 "Invalid data, column: " + out_col_names_[i] +
+                                   " expects: " + std::to_string(num_rows) +
                                    " rows returned from per_batch_map, gets: " + std::to_string(out_cols[i].size()));
     for (auto &t_row : *out_q_table) {
       t_row[col_id] = out_cols[i][row_id++];
@@ -504,12 +505,11 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
 }
 
 Status BatchOp::ComputeColMap() {
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    child_.size() == 1,
-    "Batch operator expects only 1 child node, but number of children nodes is: " + std::to_string(child_.size()) +
-      ". Check your script how many node composed into Batch node.");
+  CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 1,
+                               "Invalid data, batch operator can't be used as a single operator, "
+                               "should be preceded by an operator that reads data, for example, ImageFolderDataset.");
   CHECK_FAIL_RETURN_UNEXPECTED(!(child_[0]->column_name_id_map().empty()),
-                               "Column of Batch operator's child is empty.");
+                               "Invalid data, the column of the previous operator of the batch cannot be empty.");
 
   if (in_col_names_.empty()) {  // if per_batch_map is not set, do not need to deal with out_col_names
     column_name_id_map_ = child_[0]->column_name_id_map();
@@ -521,7 +521,8 @@ Status BatchOp::ComputeColMap() {
 
   // check all input columns exist
   for (const auto &col : in_col_names_) {
-    CHECK_FAIL_RETURN_UNEXPECTED(child_map_.find(col) != child_map_.end(), "col:" + col + " doesn't exist in dataset.");
+    CHECK_FAIL_RETURN_UNEXPECTED(child_map_.find(col) != child_map_.end(),
+                                 "Invalid parameter, col:" + col + " doesn't exist in dataset.");
   }
 
   // following logic deals with per_batch_map

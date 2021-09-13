@@ -307,7 +307,7 @@ def test_tf_wrong_schema():
             pass
     except RuntimeError as e:
         exception_occurred = True
-        assert "Shape in schema's column 'image' is incorrect" in str(e)
+        assert "shape in schema's column 'image' is incorrect" in str(e)
 
     assert exception_occurred, "test_tf_wrong_schema failed."
 

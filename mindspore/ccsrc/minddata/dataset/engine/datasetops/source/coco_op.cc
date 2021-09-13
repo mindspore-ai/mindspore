@@ -156,7 +156,7 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
     std::string img_id;
     size_t pos = image_id.find(".");
     if (pos == image_id.npos) {
-      RETURN_STATUS_UNEXPECTED("Invalid image : " + image_id + ", should be with suffix like \".jpg\"");
+      RETURN_STATUS_UNEXPECTED("Invalid data, image : " + image_id + ", should be with suffix like \".jpg\"");
     }
     std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
     std::shared_ptr<Tensor> filename;
@@ -189,7 +189,7 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
     std::string img_id;
     size_t pos = image_id.find(".");
     if (pos == image_id.npos) {
-      RETURN_STATUS_UNEXPECTED("Invalid image : " + image_id + ", should be with suffix like \".jpg\"");
+      RETURN_STATUS_UNEXPECTED("Invalid data, image : " + image_id + ", should be with suffix like \".jpg\"");
     }
     std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
     std::shared_ptr<Tensor> filename;
@@ -240,7 +240,7 @@ Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id,
     std::string img_id;
     size_t pos = image_id.find(".");
     if (pos == image_id.npos) {
-      RETURN_STATUS_UNEXPECTED("Invalid image : " + image_id + ", should be with suffix like \".jpg\"");
+      RETURN_STATUS_UNEXPECTED("Invalid data, image : " + image_id + ", should be with suffix like \".jpg\"");
     }
     std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
     std::shared_ptr<Tensor> filename;
@@ -265,8 +265,8 @@ Status CocoOp::ParseAnnotationIds() {
   try {
     auto realpath = FileUtils::GetRealPath(annotation_path_.data());
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Get real path failed, path=" << annotation_path_;
-      RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + annotation_path_);
+      MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << annotation_path_;
+      RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" + annotation_path_);
     }
 
     std::ifstream in(realpath.value());
@@ -322,7 +322,8 @@ Status CocoOp::ParseAnnotationIds() {
   num_rows_ = image_ids_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not suitable to read with CocoDataset API. Check file in directory: " +
+      "Invalid data, CocoDataset API can't read the data file(interface mismatch or no data found). "
+      "Check file in directory: " +
       image_folder_path_ + ".");
   }
   return Status::OK();
@@ -440,7 +441,7 @@ Status CocoOp::PanopticColumnLoad(const nlohmann::json &annotation_tree, const s
 
 Status CocoOp::CategoriesColumnLoad(const nlohmann::json &categories_tree) {
   if (categories_tree.size() == 0) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, no categories found in annotation_path: " + annotation_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid data, no categories found in annotation_path: " + annotation_path_);
   }
   for (auto category : categories_tree) {
     int32_t id = 0;
@@ -516,8 +517,8 @@ Status CocoOp::ComputeColMap() {
 Status CocoOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
   if ((*output_class_indexing).empty()) {
     if ((task_type_ != TaskType::Detection) && (task_type_ != TaskType::Panoptic)) {
-      MS_LOG(ERROR) << "Class index only valid in \"Detection\" and \"Panoptic\" task.";
-      RETURN_STATUS_UNEXPECTED("GetClassIndexing: Get Class Index failed in CocoOp.");
+      MS_LOG(ERROR) << "Invalid parameter, GetClassIndex only valid in \"Detection\" and \"Panoptic\" task.";
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, GetClassIndex only valid in \"Detection\" and \"Panoptic\" task.");
     }
     RETURN_IF_NOT_OK(ParseAnnotationIds());
     for (const auto &label : label_index_) {

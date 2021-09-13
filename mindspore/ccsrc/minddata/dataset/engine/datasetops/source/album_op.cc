@@ -84,8 +84,9 @@ Status AlbumOp::PrescanEntry() {
   num_rows_ = image_rows_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not be suitable to read with AlbumDataset API. Check file path:" + folder_path_ +
-      ".");
+      "Invalid data, AlbumDataset API can't read the data file(interface mismatch or no data found). "
+      "Check file path:" +
+      folder_path_ + ".");
   }
   return Status::OK();
 }

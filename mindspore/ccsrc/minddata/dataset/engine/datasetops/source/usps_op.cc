@@ -276,8 +276,10 @@ Status USPSOp::CalculateNumRowsPerShard() {
       ss << " " << data_files_list_[i];
     }
     std::string file_list = ss.str();
-    RETURN_STATUS_UNEXPECTED("Invalid data, data file may not be suitable to read with USPSDataset API. Check file: " +
-                             file_list);
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid data, USPSDataset API can't read the data file(interface mismatch or no data found). "
+      "Check file: " +
+      file_list);
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));

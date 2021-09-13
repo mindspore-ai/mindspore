@@ -73,8 +73,9 @@ Status CelebAOp::ParseAttrFile() {
 
   auto realpath = FileUtils::GetRealPath((folder_path / "list_attr_celeba.txt").ToString().data());
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed, path=" << (folder_path / "list_attr_celeba.txt").ToString();
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + (folder_path / "list_attr_celeba.txt").ToString());
+    MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << (folder_path / "list_attr_celeba.txt").ToString();
+    RETURN_STATUS_UNEXPECTED("Invalid file, get real path failed, path=" +
+                             (folder_path / "list_attr_celeba.txt").ToString());
   }
 
   std::ifstream attr_file(realpath.value());
@@ -137,7 +138,8 @@ bool CelebAOp::CheckDatasetTypeValid() {
     Path folder_path(folder_path_);
     partition_file_.open((folder_path / "list_eval_partition.txt").ToString());
     if (!partition_file_.is_open()) {
-      MS_LOG(ERROR) << "Celeba partition file does not exist!";
+      MS_LOG(ERROR) << "Invalid file, fail to open celeba partition file, path="
+                    << (folder_path / "list_eval_partition.txt").ToString();
       return false;
     }
   }
@@ -215,8 +217,9 @@ Status CelebAOp::ParseImageAttrInfo() {
   num_rows_ = image_labels_vec_.size();
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid data, data file may not be suitable to read with CelebADataset API. Check attr_file in directory:" +
-      folder_path_ + ".");
+      "Invalid data, CelebADataset API can't read the data file(interface mismatch or no data found). "
+      "Check file path: " +
+      folder_path_);
   }
   MS_LOG(DEBUG) << "Celeba dataset rows number is " << num_rows_ << ".";
   return Status::OK();

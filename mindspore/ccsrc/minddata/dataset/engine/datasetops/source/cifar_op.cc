@@ -255,8 +255,10 @@ Status CifarOp::ParseCifarData() {
   num_rows_ = cifar_image_label_pairs_.size();
   if (num_rows_ == 0) {
     std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
-    RETURN_STATUS_UNEXPECTED("Invalid data, data file may not suitable to read with " + api +
-                             " API. Check file in directory:" + folder_path_);
+    RETURN_STATUS_UNEXPECTED("Invalid data, " + api +
+                             " API can't read the data file(interface mismatch or no data found). "
+                             "Check file in directory:" +
+                             folder_path_);
   }
   cifar_raw_data_block_->Reset();
   return Status::OK();
