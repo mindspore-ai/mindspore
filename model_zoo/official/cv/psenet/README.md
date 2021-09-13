@@ -104,7 +104,7 @@ After installing MindSpore via the official website, you can start training and 
 bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [PRED_TRAINED PATH] [TRAIN_ROOT_DIR]
 
 #enter the path ,run Makefile
-cd ./src/ETSNET/pse/;make
+cd ./src/PSENET/pse/;make
 
 #run test.py
 python test.py --ckpt pretrained_model.ckpt --TEST_ROOT_DIR [test root path]
@@ -453,7 +453,7 @@ time_cb = TimeMonitor(data_size=step_size)
 loss_cb = LossCallBack(per_print_times=20)
 # set and apply parameters of check point
 ckpoint_cf = CheckpointConfig(save_checkpoint_steps=1875, keep_checkpoint_max=2)
-ckpoint_cb = ModelCheckpoint(prefix="ETSNet", config=ckpoint_cf, directory=config.TRAIN_MODEL_SAVE_PATH)
+ckpoint_cb = ModelCheckpoint(prefix="PSENet", config=ckpoint_cf, directory=config.TRAIN_MODEL_SAVE_PATH)
 
 model = Model(net)
 model.train(config.TRAIN_REPEAT_NUM, ds, dataset_sink_mode=False, callbacks=[time_cb, loss_cb, ckpoint_cb])
