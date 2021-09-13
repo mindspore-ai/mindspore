@@ -14,12 +14,9 @@
 # ==============================================================================
 """Visualization for detection/segmentation dataset.
 """
-try:
-    import cv2
-except ImportError:
-    raise ImportError("import cv2 failed, seems you have to run `pip install opencv-python`.")
 import os
 import sys
+import importlib
 import numpy as np
 from mindspore import log as logger
 
@@ -66,6 +63,11 @@ def imshow_det_bbox(image,
     Returns:
         ndarray: The image with bboxes drawn on it.
     """
+
+    try:
+        cv2 = importlib.import_module("cv2")
+    except ModuleNotFoundError:
+        raise ImportError("import cv2 failed, seems you have to run `pip install opencv-python`.")
 
     # validation
     assert isinstance(image, np.ndarray) and image.ndim == 3 and (image.shape[0] == 3 or image.shape[2] == 3),\
