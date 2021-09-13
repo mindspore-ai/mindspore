@@ -193,6 +193,7 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
     auto kernel_idx = AnfAlgo::VisitKernel(input, 0);
     nlohmann::json input_desc;
     GenDescJson(kernel_idx.first, kernel_idx.second, kernel_idx.second, &input_desc);
+    GenInputConstValue(anf_node, i - 1, &input_desc);
     if (is_dynamic_input) {
       input_desc[kJDynIndex] = (i - 1);
     }

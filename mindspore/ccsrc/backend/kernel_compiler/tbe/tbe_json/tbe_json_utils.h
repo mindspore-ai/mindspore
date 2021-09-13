@@ -55,6 +55,7 @@ constexpr auto kVTypeInt = "int";
 constexpr auto kVTypeStr = "str";
 constexpr auto kVTypeBool = "bool";
 constexpr auto kVTypeFloat = "float";
+constexpr auto kVTypeFloat32 = "float32";
 constexpr auto kVTypeListInt = "listInt";
 constexpr auto kVTypeInt32 = "Int32";
 constexpr auto kVTypeInt64 = "Int64";
@@ -101,6 +102,8 @@ constexpr auto kJListArgs = "list_args";
 constexpr auto kAccuratelyBuild = "accurately_build";
 constexpr auto kPyPath = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe";
 constexpr auto kJMaxKernelIDValue = 10;
+constexpr auto kJConstValue = "const_value";
+constexpr auto kJConstValueDtype = "const_value_dtype";
 
 class TbeJsonUtils {
  public:

@@ -27,6 +27,7 @@ namespace mindspore {
 namespace kernel {
 enum OpImplyType { kAKG = 0, kTBE = 1, kAICPU = 2, kCPU };
 enum OpIOType { kInput = 0, kOutput };
+constexpr auto kIgnored = "ignored";
 
 class OpAttr {
  public:
@@ -66,6 +67,7 @@ class OpIOInfo {
   const std::string &shape() const { return shape_; }
   const std::vector<std::string> &dtypes() const { return dtypes_; }
   const std::vector<std::string> &formats() const { return formats_; }
+  const std::string &value_depend() const { return value_depend_; }
 
   void set_index(const int index) { index_ = index; }
   void set_name(const std::string &name) { name_ = name; }
@@ -75,6 +77,7 @@ class OpIOInfo {
   void set_shape(const std::string &shape) { shape_ = shape; }
   void set_dtypes(const std::vector<std::string> &dtype) { dtypes_ = dtype; }
   void set_formats(const std::vector<std::string> &formats) { formats_ = formats; }
+  void set_value_depend(const std::string &value_depend) { value_depend_ = value_depend; }
 
  private:
   int index_ = 0;
@@ -85,6 +88,7 @@ class OpIOInfo {
   std::string shape_;
   std::vector<std::string> dtypes_;
   std::vector<std::string> formats_;
+  std::string value_depend_ = kIgnored;
 };
 
 class OpInfo {

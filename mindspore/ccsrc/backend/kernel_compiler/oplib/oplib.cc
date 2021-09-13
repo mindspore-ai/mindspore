@@ -33,6 +33,7 @@ constexpr auto kComputeCost = "compute_cost";
 constexpr auto kKernelName = "kernel_name";
 constexpr auto kPartialFlag = "partial_flag";
 constexpr auto kReshapeType = "reshape_type";
+constexpr auto kValueDepend = "value_depend";
 constexpr auto kOpPattern = "op_pattern";
 constexpr auto kIsDynamicFormat = "is_dynamic_format";
 constexpr auto kDynamicFormat = "dynamicFormat";
@@ -331,6 +332,9 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply
       }
       if (obj.find(kReshapeType) != obj.end()) {
         op_io->set_reshape_type(obj.at(kReshapeType));
+      }
+      if (obj.find(kValueDepend) != obj.end()) {
+        op_io->set_value_depend(obj.at(kValueDepend));
       }
     }
 

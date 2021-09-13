@@ -28,6 +28,7 @@
 #include "runtime/dev.h"
 #include "utils/ms_utils.h"
 #include "utils/json_operation_utils.h"
+#include "utils/convert_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_json/tbe_json_utils.h"
 
 namespace mindspore::kernel {
@@ -388,6 +389,97 @@ void TbeJsonCreator::GenDesJsonCommon(nlohmann::json *output_desc) {
   (*output_desc)[kJTotalShape] = nlohmann::json::array();
   (*output_desc)[kJValidShape] = nlohmann::json::array();
 }
+
+void ParseConstValue(const mindspore::ValuePtr &value, nlohmann::json *json_obj) {
+  if (value->isa<tensor::Tensor>()) {
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    TypePtr data_type = tensor->Dtype();
+    MS_EXCEPTION_IF_NULL(data_type);
+    TypeId type_id = data_type->type_id();
+    (*json_obj)[kJConstValueDtype] = tbe::TypeIdToString(type_id);
+    switch (type_id) {
+      case kNumberTypeInt8:
+        (*json_obj)[kJConstValue] = TensorValueToVector<int8_t>(tensor);
+        break;
+
+      case kNumberTypeUInt8:
+        (*json_obj)[kJConstValue] = TensorValueToVector<uint8_t>(tensor);
+        break;
+
+      case kNumberTypeInt16:
+        (*json_obj)[kJConstValue] = TensorValueToVector<int16_t>(tensor);
+        break;
+
+      case kNumberTypeUInt16:
+        (*json_obj)[kJConstValue] = TensorValueToVector<uint16_t>(tensor);
+        break;
+
+      case kNumberTypeInt32:
+        (*json_obj)[kJConstValue] = TensorValueToVector<int32_t>(tensor);
+        break;
+
+      case kNumberTypeUInt32:
+        (*json_obj)[kJConstValue] = TensorValueToVector<uint32_t>(tensor);
+        break;
+
+      case kNumberTypeInt64:
+        (*json_obj)[kJConstValue] = TensorValueToVector<int64_t>(tensor);
+        break;
+
+      case kNumberTypeUInt64:
+        (*json_obj)[kJConstValue] = TensorValueToVector<uint64_t>(tensor);
+        break;
+
+      case kNumberTypeFloat32:
+        (*json_obj)[kJConstValue] = TensorValueToVector<float>(tensor);
+        break;
+
+      case kNumberTypeFloat64:
+        (*json_obj)[kJConstValue] = TensorValueToVector<double>(tensor);
+        break;
+
+      default:
+        MS_LOG(EXCEPTION) << "When parse const input value, the value data type: " << data_type << " is not supported.";
+    }
+  } else {
+    MS_LOG(WARNING) << "Const value input is not a tensor.";
+  }
+}
+
+void TbeJsonCreator::GenInputConstValue(const AnfNodePtr &anf_node, size_t real_input_index,
+                                        nlohmann::json *input_desc) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(input_desc);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(anf_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(build_info);
+  auto value_depend = build_info->GetInputValueDepend(real_input_index);
+  if (value_depend.empty() || value_depend == kIgnored) {
+    return;
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input_node = cnode->inputs()[real_input_index + 1];
+  if (AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimDepend)) {
+    input_node = AnfAlgo::VisitKernel(input_node, 0).first;
+  }
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (input_node->isa<ValueNode>()) {
+    MS_LOG(INFO) << "Const Input value node info : " << GetValueNode(input_node)->ToString();
+    auto value_node = input_node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    ParseConstValue(value, input_desc);
+  } else {
+    MS_LOG(ERROR) << "The operator " << anf_node->fullname_with_scope() << "'s input" << real_input_index
+                  << "'s value depend is " << value_depend << ", but its input node is a " << input_node->type_name()
+                  << ", not a value node.";
+  }
+}
+
 bool TbeJsonCreator::AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *attrs_ptr,
                                             nlohmann::json *attrs_json) {
   tbe::TbeAdapter::CastAttrJsonPrePass(anf_node, attrs_ptr, attrs_json);

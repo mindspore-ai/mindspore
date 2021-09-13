@@ -175,6 +175,7 @@ void SingleTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
   (*input_desc)[kJFormat] = format;
   (*input_desc)[kJValid] = true;
   (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format);
+  GenInputConstValue(anf_node, real_input_index, input_desc);
 }
 
 void SingleTbeJsonCreator::GenOutputDescJson(const AnfNodePtr &anf_node, size_t node_out_idx,
@@ -424,5 +425,6 @@ void CheckTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t re
   (*input_desc)[kJFormat] = format;
   (*input_desc)[kJValid] = true;
   (*input_desc)[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index, format);
+  GenInputConstValue(anf_node, real_input_index, input_desc);
 }
 }  // namespace mindspore::kernel

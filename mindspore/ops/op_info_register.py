@@ -558,7 +558,7 @@ class TBERegOp(RegOp):
         self.attr_.append(attr_dict)
         return self
 
-    def input(self, index=None, name=None, need_compile=None, param_type=None, shape=None, **kwargs):
+    def input(self, index=None, name=None, need_compile=None, param_type=None, shape=None, value_depend=None, **kwargs):
         """
         Register TBE op input information.
 
@@ -568,12 +568,17 @@ class TBERegOp(RegOp):
             need_compile (bool): Whether the input needs to be compiled or not. Default: None.
             param_type (str): Type of the input. Default: None.
             shape (str): Shape of the input. Default: None.
+            value_depend (str): Whether the input is const value depend. Default: None.
             kwargs (dict): Other information of the input.
         """
-        param_list = [index, name, need_compile, param_type, shape]
-        key_list = ["index", "name", "need_compile", "param_type", "shape"]
-        fn_list = [self._is_int, self._is_string, self._is_bool, self._is_string, self._is_string]
+        param_list = [index, name, need_compile, param_type, shape, value_depend]
+        key_list = ["index", "name", "need_compile", "param_type", "shape", "value_depend"]
+        fn_list = [self._is_int, self._is_string, self._is_bool, self._is_string, self._is_string, self._is_string]
         input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        value_depend_values = ("ignored", "optional", "required")
+        if value_depend and value_depend.lower() not in value_depend_values:
+            raise ValueError("Operator {} input{}'s value_depend's value ({}) is not in {}.".
+                             format(self.op_name, index, value_depend, value_depend_values))
         self.inputs.append(input_dict)
         return self
 
