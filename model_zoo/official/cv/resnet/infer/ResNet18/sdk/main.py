@@ -59,7 +59,6 @@ def run():
         with open(file_path, 'rb') as f:
             data_input.data = f.read()
 
-        empty_data = []
         stream_name = b'im_resnet18'
         in_plugin_id = 0
         unique_id = stream_manager_api.SendData(stream_name, in_plugin_id,
