@@ -136,7 +136,7 @@ Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
                    &padded_image_h, &crop_further));
     if (!crop_further) {
       (*output)[i] = pad_image;
-      return Status::OK();
+      continue;
     }
     if (i == 0) {
       GenRandomXY(&x, &y, padded_image_w, padded_image_h);

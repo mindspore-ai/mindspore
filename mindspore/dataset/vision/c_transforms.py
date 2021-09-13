@@ -301,12 +301,13 @@ class ConvertColor(ImageTensorOperation):
             - ConvertMode.COLOR_RGBA2GRAY, Convert RGBA image to GRAY image.
 
     Examples:
+        >>> import mindspore.dataset.vision.utils as mode
         >>> # Convert RGB images to GRAY images
-        >>> convert_op = c_vision.ConvertColor(ConvertMode.COLOR_RGB2GRAY)
+        >>> convert_op = c_vision.ConvertColor(mode.ConvertMode.COLOR_RGB2GRAY)
         >>> image_folder_dataset = image_folder_dataset.map(operations=convert_op,
         ...                                                 input_columns=["image"])
         >>> # Convert RGB images to BGR images
-        >>> convert_op = c_vision.ConvertColor(ConvertMode.COLOR_RGB2BGR)
+        >>> convert_op = c_vision.ConvertColor(mode.ConvertMode.COLOR_RGB2BGR)
         >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=convert_op,
         ...                                                     input_columns=["image"])
     """

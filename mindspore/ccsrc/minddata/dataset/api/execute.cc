@@ -266,15 +266,18 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
 
     // Apply transforms on tensor
     for (auto &t : transforms) {
-      std::shared_ptr<dataset::Tensor> de_output;
-      Status rc_ = t->Compute(de_tensor, &de_output);
+      TensorRow de_tensor_row;
+      TensorRow de_output_row;
+      de_tensor_row.push_back(de_tensor);
+      de_output_row.resize(1);
+      Status rc_ = t->Compute(de_tensor_row, &de_output_row);
       if (rc_.IsError()) {
         MS_LOG(ERROR) << rc_;
         return rc_;
       }
 
       // For next transform
-      de_tensor = std::move(de_output);
+      de_tensor = std::move(de_output_row[0]);
     }
 
     // Convert dataset::Tensor to mindspore::Tensor
