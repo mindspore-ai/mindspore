@@ -40,6 +40,7 @@
 #include "utils/log_adapter.h"
 #include "utils/comm_manager.h"
 #include "abstract/abstract_value.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 // namespace to support debug trace information
@@ -413,7 +414,8 @@ std::string GetEvalFailDatPath() {
     path = ".";
   }
   path += "/rank_" + std::to_string(GetRank()) + "/om/analyze_fail.dat";
-  auto realpath = Common::CreatePrefixPath(path);
+  // Support "../" in path.
+  auto realpath = Common::CreatePrefixPath(path, true);
   if (!realpath.has_value()) {
     MS_EXCEPTION(ValueError) << "Get real path failed. path=" << path;
   }

@@ -27,7 +27,7 @@
 #include "utils/utils.h"
 
 namespace mindspore {
-std::optional<std::string> Common::CreatePrefixPath(const std::string &input_path) {
+std::optional<std::string> Common::CreatePrefixPath(const std::string &input_path, const bool support_relative_path) {
   std::optional<std::string> prefix_path;
   std::optional<std::string> file_name;
   FileUtils::SplitDirAndFileName(input_path, &prefix_path, &file_name);
@@ -45,7 +45,7 @@ std::optional<std::string> Common::CreatePrefixPath(const std::string &input_pat
 
   std::string prefix_path_str;
   if (prefix_path.has_value()) {
-    auto create_prefix_path = FileUtils::CreateNotExistDirs(prefix_path.value());
+    auto create_prefix_path = FileUtils::CreateNotExistDirs(prefix_path.value(), support_relative_path);
     if (!create_prefix_path.has_value()) {
       return std::nullopt;
     }

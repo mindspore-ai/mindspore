@@ -78,15 +78,17 @@ void FileUtils::ConcatDirAndFileName(const std::optional<std::string> *dir, cons
 #endif
 }
 
-std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path) {
+std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path, const bool support_relative_path) {
   if (path.size() >= PATH_MAX) {
     MS_LOG(ERROR) << "The length of the path is greater than or equal to:" << PATH_MAX;
     return std::nullopt;
   }
-  auto dot_pos = path.find("..");
-  if (dot_pos != std::string::npos) {
-    MS_LOG(ERROR) << "Do not support relative path";
-    return std::nullopt;
+  if (!support_relative_path) {
+    auto dot_pos = path.find("..");
+    if (dot_pos != std::string::npos) {
+      MS_LOG(ERROR) << "Do not support relative path";
+      return std::nullopt;
+    }
   }
 
   std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
