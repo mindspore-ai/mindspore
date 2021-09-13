@@ -265,6 +265,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   std::list<GraphProto> graph_proto_list_;
   std::list<KernelGraphPtr> graph_ptr_list_;
+  // The vector of graph pointers that have been run in the current step.
+  std::vector<KernelGraphPtr> graph_ptr_step_vec_;
 
   // singleton
   static std::mutex instance_lock_;
