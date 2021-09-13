@@ -17,6 +17,7 @@
 #include "src/delegate/npu/npu_delegate.h"
 #include <queue>
 #include "include/errorcode.h"
+#include "src/common/prim_util.h"
 #include "src/delegate/npu/op/npu_op.h"
 #include "src/delegate/npu/op/activation_npu.h"
 #include "src/delegate/npu/op/argmax_npu.h"
@@ -239,6 +240,12 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
     if (tensor.DataType() == DataType::kNumberTypeFloat16) {
       tensor.SetDataType(DataType::kNumberTypeFloat32);
     }
+  }
+
+  if (npu_op != nullptr) {
+    MS_LOG(DEBUG) << "kernel: [" << kernel->name().c_str() << "] op success. "
+                  << "op_type: " << lite::PrimitiveCurVersionTypeName(kernel->type()) << ", "
+                  << "arch: " << kKirinNPU;
   }
   return npu_op;
 }

@@ -349,6 +349,19 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 
   MS_LOG(DEBUG) << "schedule kernels success.";
+
+  for (auto subgraph : *dst_kernels) {
+    if (subgraph->desc().arch == kernel::KERNEL_ARCH::kDelegate) {
+      MS_LOG(DEBUG) << "NPU subgraph : " << subgraph->name();
+      continue;
+    }
+    std::vector<kernel ::LiteKernel *> kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
+    for (auto kernel : kernel_list) {
+      MS_LOG(DEBUG) << "kernel: [" << kernel->name() << "] get TypeId(" << kernel->desc().data_type
+                    << ") op success. op_type: " << PrimitiveCurVersionTypeName(kernel->desc().type)
+                    << ", arch: " << kernel->desc().arch;
+    }
+  }
   return RET_OK;
 }
 
@@ -443,16 +456,16 @@ int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernel
     return RET_OK;
   }
 
-  /* external context delegate */
+  /* external delegate */
   if (context_->delegate != nullptr) {
     auto ret = ReplaceDelegateKernels(dst_kernels);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Tensor RT repalce delegate kernels failed.";
+      MS_LOG(ERROR) << "external delegate init failed.";
       return ret;
     }
   }
 
-  /* NPU delegate  :  check Priority */
+  /* Inner delegate  :  check Priority */
   std::vector<kernel::LiteKernel *> src_kernels = *dst_kernels;
   dst_kernels->clear();
 
@@ -1328,9 +1341,6 @@ kernel::LiteKernel *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src
     return nullptr;
   }
 
-  MS_LOG(DEBUG) << "kernel: [" << src_node->name_ << "] get TypeId(" << kernel->desc().data_type
-                << ") op success. op_type: " << PrimitiveCurVersionTypeName(kernel->desc().type)
-                << ", arch: " << kernel->desc().arch;
   SetKernelTensorDataType(kernel);
   kernel->set_name(src_node->name_);
   return kernel;
