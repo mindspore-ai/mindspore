@@ -43,6 +43,7 @@
 #include "minddata/dataset/kernels/ir/vision/random_crop_decode_resize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_crop_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_crop_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_equalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_with_bbox_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_invert_ir.h"
@@ -362,6 +363,16 @@ PYBIND_REGISTER(RandomCropWithBBoxOperation, 1, ([](const py::module *m) {
                         THROW_IF_ERROR(random_crop_with_bbox->ValidateParams());
                         return random_crop_with_bbox;
                       }));
+                }));
+
+PYBIND_REGISTER(RandomEqualizeOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::RandomEqualizeOperation, TensorOperation,
+                                   std::shared_ptr<vision::RandomEqualizeOperation>>(*m, "RandomEqualizeOperation")
+                    .def(py::init([](float prob) {
+                      auto random_equalize = std::make_shared<vision::RandomEqualizeOperation>(prob);
+                      THROW_IF_ERROR(random_equalize->ValidateParams());
+                      return random_equalize;
+                    }));
                 }));
 
 PYBIND_REGISTER(RandomHorizontalFlipOperation, 1, ([](const py::module *m) {

@@ -1082,6 +1082,28 @@ class RandomCropWithBBox(ImageTensorOperation):
                                                border_type)
 
 
+class RandomEqualize(ImageTensorOperation):
+    """
+    Apply histogram equalization on the input image with a given probability.
+
+    Args:
+        prob (float, optional): Probability of the image being equalized, which
+            must be in range of [0, 1] (default=0.5).
+
+    Examples:
+        >>> transforms_list = [c_vision.Decode(), c_vision.RandomEqualize(0.5)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_prob
+    def __init__(self, prob=0.5):
+        self.prob = prob
+
+    def parse(self):
+        return cde.RandomEqualizeOperation(self.prob)
+
+
 class RandomHorizontalFlip(ImageTensorOperation):
     """
     Randomly flip the input image horizontally with a given probability.

@@ -47,6 +47,7 @@
 #include "minddata/dataset/kernels/ir/vision/random_crop_decode_resize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_crop_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_crop_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_equalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_with_bbox_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_invert_ir.h"
@@ -600,6 +601,18 @@ RandomCropWithBBox::RandomCropWithBBox(std::vector<int32_t> size, std::vector<in
 std::shared_ptr<TensorOperation> RandomCropWithBBox::Parse() {
   return std::make_shared<RandomCropWithBBoxOperation>(data_->size_, data_->padding_, data_->pad_if_needed_,
                                                        data_->fill_value_, data_->padding_mode_);
+}
+
+// RandomEqualize Transform Operation.
+struct RandomEqualize::Data {
+  explicit Data(float prob) : probability_(prob) {}
+  float probability_;
+};
+
+RandomEqualize::RandomEqualize(float prob) : data_(std::make_shared<Data>(prob)) {}
+
+std::shared_ptr<TensorOperation> RandomEqualize::Parse() {
+  return std::make_shared<RandomEqualizeOperation>(data_->probability_);
 }
 
 // RandomHorizontalFlip.
