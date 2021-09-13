@@ -1057,6 +1057,7 @@ TEST_F(MindDataTestExecute, TestFadeWithInvalidArg) {
   Status s04 = Transform04(input_04, &input_04);
   EXPECT_FALSE(s04.IsOk());
 }
+
 TEST_F(MindDataTestExecute, TestVolDefalutValue) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestVolDefalutValue.";
   std::shared_ptr<Tensor> input_tensor_;
@@ -1096,4 +1097,18 @@ TEST_F(MindDataTestExecute, TestMagphaseEager) {
   auto transform = Execute({magphase});
   Status rc = transform({input_tensor}, &output_tensor);
   ASSERT_TRUE(rc.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestRandomInvertEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomInvertEager.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto random_invert_op = vision::RandomInvert(0.6);
+
+  auto transform = Execute({decode, random_invert_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
 }
