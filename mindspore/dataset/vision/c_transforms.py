@@ -51,7 +51,7 @@ from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode
 from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, \
     check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
     check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, \
-    check_uniform_augment_cpp, check_convert_color, check_random_resize_crop, \
+    check_uniform_augment_cpp, check_convert_color, check_random_resize_crop, check_random_auto_contrast, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
     check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
@@ -774,6 +774,38 @@ class RandomAffine(ImageTensorOperation):
     def parse(self):
         return cde.RandomAffineOperation(self.degrees, self.translate, self.scale_, self.shear, self.resample,
                                          self.fill_value)
+
+
+class RandomAutoContrast(ImageTensorOperation):
+    """
+    Automatically adjust the contrast of the image with a given probability.
+
+    Args:
+        cutoff (float, optional): Percent of the lightest and darkest pixels to be cut off from
+            the histogram of the input image. The value must be in range of [0.0, 50.0) (default=0.0).
+        ignore (Union[int, sequence], optional): The background pixel values to be ignored, each of
+            which must be in range of [0, 255] (default=None).
+        prob (float, optional): Probability of the image being automatically contrasted, which
+            must be in range of [0, 1] (default=0.5).
+
+    Examples:
+        >>> transforms_list = [c_vision.Decode(), c_vision.RandomAutoContrast(cutoff=0.0, ignore=None, prob=0.5)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_random_auto_contrast
+    def __init__(self, cutoff=0.0, ignore=None, prob=0.5):
+        if ignore is None:
+            ignore = []
+        if isinstance(ignore, int):
+            ignore = [ignore]
+        self.cutoff = cutoff
+        self.ignore = ignore
+        self.prob = prob
+
+    def parse(self):
+        return cde.RandomAutoContrastOperation(self.cutoff, self.ignore, self.prob)
 
 
 class RandomColor(ImageTensorOperation):

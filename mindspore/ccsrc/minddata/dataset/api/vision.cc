@@ -41,6 +41,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_color_adjust_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_color_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_crop_decode_resize_ir.h"
@@ -480,6 +481,22 @@ std::shared_ptr<TensorOperation> RandomAffine::Parse() {
 }
 
 #ifndef ENABLE_ANDROID
+// RandomAutoContrast Transform Operation.
+struct RandomAutoContrast::Data {
+  Data(float cutoff, const std::vector<uint32_t> &ignore, float prob)
+      : cutoff_(cutoff), ignore_(ignore), probability_(prob) {}
+  float cutoff_;
+  std::vector<uint32_t> ignore_;
+  float probability_;
+};
+
+RandomAutoContrast::RandomAutoContrast(float cutoff, std::vector<uint32_t> ignore, float prob)
+    : data_(std::make_shared<Data>(cutoff, ignore, prob)) {}
+
+std::shared_ptr<TensorOperation> RandomAutoContrast::Parse() {
+  return std::make_shared<RandomAutoContrastOperation>(data_->cutoff_, data_->ignore_, data_->probability_);
+}
+
 // RandomColor Transform Operation.
 struct RandomColor::Data {
   Data(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) {}
