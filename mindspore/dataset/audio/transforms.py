@@ -25,9 +25,9 @@ import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_contrast, check_deemph_biquad, \
-    check_equalizer_biquad, check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_masking, \
-    check_mu_law_decoding, check_time_stretch
+    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_contrast, check_dc_shift, \
+    check_deemph_biquad, check_equalizer_biquad, check_highpass_biquad, check_lfilter, check_lowpass_biquad, \
+    check_masking, check_mu_law_decoding, check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -293,6 +293,33 @@ class Contrast(AudioTensorOperation):
 
     def parse(self):
         return cde.ContrastOperation(self.enhancement_amount)
+
+
+class DCShift(AudioTensorOperation):
+    """
+    Apply a DC shift to the audio.
+
+    Args:
+        shift (float): The amount to shift the audio, the value must be in the range [-2.0, 2.0].
+        limiter_gain (float, optional): Used only on peaks to prevent clipping,
+            the value should be much less than 1, such as 0.05 or 0.02.
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([0.60, 0.97, -1.04, -1.26, 0.97, 0.91, 0.48, 0.93])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.DCShift(0.5, 0.02)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operation=transforms, input_columns=["audio"])
+    """
+
+    @check_dc_shift
+    def __init__(self, shift, limiter_gain=None):
+        self.shift = shift
+        self.limiter_gain = limiter_gain if limiter_gain else shift
+
+    def parse(self):
+        return cde.DCShiftOperation(self.shift, self.limiter_gain)
 
 
 class DeemphBiquad(AudioTensorOperation):

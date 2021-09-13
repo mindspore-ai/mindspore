@@ -25,6 +25,7 @@
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
+#include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
@@ -164,6 +165,21 @@ Contrast::Contrast(float enhancement_amount) : data_(std::make_shared<Data>(enha
 
 std::shared_ptr<TensorOperation> Contrast::Parse() {
   return std::make_shared<ContrastOperation>(data_->enhancement_amount_);
+}
+
+// DCShift Transform Operation.
+struct DCShift::Data {
+  Data(float shift, float limiter_gain) : shift_(shift), limiter_gain_(limiter_gain) {}
+  float limiter_gain_;
+  float shift_;
+};
+
+DCShift::DCShift(float shift) : data_(std::make_shared<Data>(shift, shift)) {}
+
+DCShift::DCShift(float shift, float limiter_gain) : data_(std::make_shared<Data>(shift, limiter_gain)) {}
+
+std::shared_ptr<TensorOperation> DCShift::Parse() {
+  return std::make_shared<DCShiftOperation>(data_->shift_, data_->limiter_gain_);
 }
 
 // DeemphBiquad Transform Operation.

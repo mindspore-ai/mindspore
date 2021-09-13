@@ -201,6 +201,20 @@ def check_contrast(method):
     return new_method
 
 
+def check_dc_shift(method):
+    """Wrapper method to check the parameters of DCShift."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [shift, limiter_gain], _ = parse_user_args(method, *args, **kwargs)
+        type_check(shift, (float, int), "shift")
+        check_value(shift, [-2.0, 2.0], "shift")
+        if limiter_gain is not None:
+            type_check(limiter_gain, (float, int), "limiter_gain")
+        return method(self, *args, **kwargs)
+    return new_method
+
+
 def check_deemph_biquad(method):
     """Wrapper method to check the parameters of CutMixBatch."""
 

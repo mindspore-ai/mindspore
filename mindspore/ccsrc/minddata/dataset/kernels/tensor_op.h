@@ -148,6 +148,7 @@ constexpr char kBandrejectBiquadOp[] = "BandrejectBiquadOp";
 constexpr char kBassBiquadOp[] = "BassBiquadOp";
 constexpr char kComplexNormOp[] = "ComplexNormOp";
 constexpr char kContrastOp[] = "ContrastOp";
+constexpr char kDCShiftOp[] = "DCShiftOp";
 constexpr char kDeemphBiquadOp[] = "DeemphBiquadOp";
 constexpr char kEqualizerBiquadOp[] = "EqualizerBiquadOp";
 constexpr char kFrequencyMaskingOp[] = "FrequencyMaskingOp";

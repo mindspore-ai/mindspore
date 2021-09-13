@@ -913,3 +913,17 @@ TEST_F(MindDataTestExecute, TestLFilterWithWrongArg) {
   Status s01 = Transform01(input_02, &input_02);
   EXPECT_FALSE(s01.IsOk());
 }
+
+TEST_F(MindDataTestExecute, TestDCShiftEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDCShiftEager.";
+
+  std::vector<float> origin = {0.67443, 1.87523, 0.73465, -0.74553, -1.54346, 1.54093, -1.23453};
+  std::shared_ptr<Tensor> de_tensor;
+  Tensor::CreateFromVector(origin, &de_tensor);
+
+  std::shared_ptr<TensorTransform> dc_shift = std::make_shared<audio::DCShift>(0.5, 0.02);
+  auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  mindspore::dataset::Execute Transform({dc_shift});
+  Status s = Transform(input, &input);
+  ASSERT_TRUE(s.IsOk());
+}
