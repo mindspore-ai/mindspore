@@ -14,6 +14,12 @@
 # limitations under the License.
 # ==========================================================================
 
+if [ $# != 4 ]
+then
+  echo "Usage: bash run_standalone_train.sh [RANK_TABLE_FILE] [DATA_URL] [CKPT_URL] [MODELART]"
+exit 1
+fi
+
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
     echo "$1"

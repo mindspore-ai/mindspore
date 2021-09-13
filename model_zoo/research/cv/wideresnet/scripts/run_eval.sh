@@ -14,11 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-#if [$# != 3]
-#then
-  #echo "Usage: bash run_eval.sh [DATA_URL] [CKPT_URL] [MODELART]"
-#exit 1
-#fi
+if [ $# != 3 ]
+then
+  echo "Usage: bash run_eval.sh [DATA_URL] [CKPT_URL] [MODELART]"
+exit 1
+fi
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then

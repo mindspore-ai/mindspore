@@ -27,7 +27,7 @@ class SaveCallback(Callback):
         super(SaveCallback, self).__init__()
         self.model = model
         self.eval_dataset = eval_dataset
-        self.cpkt_path = ckpt_path
+        self.ckpt_path = ckpt_path
         self.acc = 0.96
         self.cur_acc = 0.0
         self.modelart = modelart
@@ -47,5 +47,5 @@ class SaveCallback(Callback):
             save_checkpoint(save_obj=cb_params.train_network, ckpt_file_name=file_name)
             if self.modelart:
                 import moxing as mox
-                mox.file.copy_parallel(src_url=cfg.save_checkpoint_path, dst_url=self.cpkt_path)
+                mox.file.copy_parallel(src_url=cfg.save_checkpoint_path, dst_url=self.ckpt_path)
             print("Save the maximum accuracy checkpoint,the accuracy is", self.acc)
