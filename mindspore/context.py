@@ -608,9 +608,9 @@ def set_context(**kwargs):
             - aicpu: collect profiling data enhanced by aicpu data. The value is on/off.
 
             - fp_point: specify the start position of the forward operator of the training network iteration trajectory,
-              which is used to record the start timestamp of the forward calculation. The configuration value is the name
-              of the first operator specified in the forward direction. when the value is empty, the system will
-              automatically obtain the forward operator name.
+              which is used to record the start timestamp of the forward calculation. The configuration value is
+              the name of the first operator specified in the forward direction. when the value is empty,
+              the system will automatically obtain the forward operator name.
 
             - bp_point: specify the end position of the iteration trajectory reversal operator of the training network,
               record the end timestamp of the backward calculation. The configuration value is the name of the operator
