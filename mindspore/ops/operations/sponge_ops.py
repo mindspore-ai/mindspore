@@ -33,7 +33,7 @@ class BondForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -118,7 +118,7 @@ class BondEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -206,7 +206,7 @@ class BondAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -284,7 +284,7 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -366,7 +366,7 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     The Virial part is as follows:
 
@@ -459,7 +459,7 @@ class DihedralForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
@@ -561,7 +561,7 @@ class DihedralEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
@@ -664,7 +664,7 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     The calculation formula is the same as operator DihedralEnergy().
 
@@ -769,7 +769,7 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         dihedral_numbers(int32): the number of dihedral terms m.
@@ -874,7 +874,7 @@ class AngleForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
@@ -969,7 +969,7 @@ class AngleEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
@@ -1061,7 +1061,7 @@ class AngleAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         angle_numbers(int32): the number of angles m.
@@ -1144,7 +1144,7 @@ class AngleForceWithAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         angle_numbers(int32): the number of angles m.
@@ -1232,7 +1232,7 @@ class Dihedral14LJForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
         dr = (x_a-x_b, y_a-y_b, z_a-z_b)
@@ -1335,7 +1335,7 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
         dr = (x_a-x_b, y_a-y_b, z_a-z-b)
@@ -1368,8 +1368,7 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **ene** (Tensor) - The Lennard-Jones potential
-          energy correction for each necessary dihedral 1,4 term.
+        - **ene** (Tensor) - The Lennard-Jones potential energy correction.
           The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
@@ -1439,7 +1438,7 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     The calculation formula of the Lennard-Jones part is the same as operator
     Dihedral14LJForce(), and the Coulomb part is as follows:
@@ -1556,7 +1555,7 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
@@ -1665,7 +1664,7 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
@@ -1765,7 +1764,7 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -1863,7 +1862,7 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         nb14_numbers (int32): the number of necessary dihedral 1,4 terms m.
@@ -1888,7 +1887,7 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
 
     Outputs:
         - **ene** (Tensor) - The accumulated potential energy of each atom.
-          The data type is float32 and the shape is :math:`(n,]`
+          The data type is float32 and the shape is :math:`(n,)`
 
 
     Supported Platforms:
@@ -1957,7 +1956,7 @@ class PMEReciprocalForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms, n.
@@ -1972,13 +1971,13 @@ class PMEReciprocalForce(PrimitiveWithInfer):
 
     Inputs:
         - **uint_crd** (Tensor) - [n, 3], the unsigned int coordinates value of each atom.
-          The data type is uint32 and the shape is :math:`(n, 3]`
+          The data type is uint32 and the shape is :math:`(n, 3)`
         - **charge** (Tensor) - [n,], the charge carried by each atom.
-          The data type is float32 and the shape is :math:`(n,]`
+          The data type is float32 and the shape is :math:`(n,)`
 
     Outputs:
         - **force** (Tensor) - The force felt by each atom.
-          The data type is float32 and the shape is :math:`(n, 3]`
+          The data type is float32 and the shape is :math:`(n, 3)`
 
     Supported Platforms:
         ``GPU``
@@ -2040,7 +2039,7 @@ class PMEExcludedForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms, n.
@@ -2050,21 +2049,21 @@ class PMEExcludedForce(PrimitiveWithInfer):
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
-          The data type is uint32 and the shape is :math:`(n, 3]`
+          The data type is uint32 and the shape is :math:`(n, 3)`
         - **scaler** (Tensor) - The scale factor between real space
-          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,)`
         - **charge** (Tensor) - The charge carried by each atom.
-          The data type is float32 and the shape is :math:`(n,]`
+          The data type is float32 and the shape is :math:`(n,)`
         - **excluded_list_start** (Tensor) - The start excluded index
-          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,)`
         - **excluded_list** (Tensor) - The contiguous join of excluded
-          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,]`
+          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,)`
         - **excluded_atom_numbers** (Tensor) - The number of atom excluded
-          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,)`
 
     Outputs:
         - **force** (Tensor) - The force felt by each atom.
-          The data type is float32 and the shape is :math:`(n, 3]`
+          The data type is float32 and the shape is :math:`(n, 3)`
 
     Supported Platforms:
         ``GPU``
@@ -2124,7 +2123,7 @@ class PMEEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -2145,29 +2144,31 @@ class PMEEnergy(PrimitiveWithInfer):
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
-          The data type is uint32 and the shape is :math:`(n, 3]`
+          The data type is uint32 and the shape is :math:`(n, 3)`
         - **charge** (Tensor) - The charge carried by each atom.
-          The data type is float32 and the shape is :math:`(n,]`
+          The data type is float32 and the shape is :math:`(n,)`
         - **nl_numbers** - (Tensor) - The each atom.
-          The data type is int32 and the shape is :math:`(n, 3]`
+          The data type is int32 and the shape is :math:`(n, 3)`
         - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
-          The data type is int32 and the shape is :math:`(n, 800]`
+          The data type is int32 and the shape is :math:`(n, 800)`
         - **scaler** (Tensor) - The scale factor between real space
-          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,)`
         - **excluded_list_start** (Tensor) - The start excluded index
-          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,)`
         - **excluded_list** (Tensor) - The contiguous join of excluded
-          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,]`
+          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,)`
         - **excluded_atom_numbers** (Tensor) - The number of atom excluded
-          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,)`
 
     Outputs:
-        - **reciprocal_ene** (Scalar) - the reciprocal term of PME energy.
-          The data type is float32.
-        - **self_ene** (Scalar) - the self term of PME energy.
-          The data type is float32.
-        - **direct_ene** (Scalar) - the direct term of PME energy. The data type is float32.
-        - **correction_ene** (Scalar) - the correction term of PME energy. The data type is float32.
+        - **reciprocal_ene** (Tensor) - The reciprocal term of PME energy.
+          The data type is float32 and the the shape is :math:`(1,)`.
+        - **self_ene** (Tensor) - The self term of PME energy.
+          The data type is float32 and the the shape is :math:`(1,)`.
+        - **direct_ene** (Tensor) - The direct term of PME energy.
+          The data type is float32 and the the shape is :math:`(1,)`.
+        - **correction_ene** (Tensor) - The correction term of PME energy.
+          The data type is float32 and the the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -2258,7 +2259,7 @@ class LJEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -2273,15 +2274,15 @@ class LJEnergy(PrimitiveWithInfer):
 
     Inputs:
         - **uint_crd** (Tensor, uint32) - The unsigned int coordinate value of each atom.
-            The data type is uint32 and the shape is :math:`(n, 3]`
+            The data type is uint32 and the shape is :math:`(n, 3)`
         - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
-           The data type is int32 and the shape is :math:`(n,]`
+           The data type is int32 and the shape is :math:`(n,)`
         - **charge** (Tensor) - The charge carried by each atom.
-           The data type is float32 and the shape is :math:`(n,]`
+           The data type is float32 and the shape is :math:`(n,)`
         - **scaler** (Tensor) - The scale factor between real
-          space coordinate and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+          space coordinate and its unsigned int value. The data type is float32 and the shape is :math:`(3,)`
         - **nl_numbers** - (Tensor) - The each atom.
-          The data type is int32 and the shape is :math:`(n,]`
+          The data type is int32 and the shape is :math:`(n,)`
         - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
           The data type is int32 and the shape is :math:`(n, 800)`.
         - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
@@ -2356,7 +2357,7 @@ class LJForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. math::
 
@@ -2450,7 +2451,7 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms, n.
@@ -2461,7 +2462,7 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
         - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
           The data type is uint32 and the shape is :math:`(n, 3)`.
         - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
-          The data type is float32 and the shape is :math:`(n,)`.
+          The data type is int32 and the shape is :math:`(n,)`.
         - **charge** (Tensor) - The charge carried by each atom.
           The data type is float32 and the shape is :math:`(n,)`.
         - **scaler** (Tensor) - The scale factor between real
@@ -2575,9 +2576,29 @@ class GetCenterOfGeometry(PrimitiveWithInfer):
 
 class MDTemperature(PrimitiveWithInfer):
     """
-    Calculate the MD Temperature.
+    Compute the MD temperature.
 
-    Calculate the temperature.
+    Because there is a large amount of inputs and each of them are related,
+    there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
+
+    Args:
+        residue_numbers (int32): the number of residues m.
+        atom_numbers (int32): the number of atoms n.
+
+    Inputs:
+        - **start** (Tensor) - The start atom index of each residue.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **end** (Tensor) - The end atom index of each residue.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_vel_f** (Tensor) - The velocity of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **atom_mass** (Tensor) - The mass of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+
+    Outputs:
+        - **ek** (Tensor) - The temperature of each atom.
+        The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -2630,12 +2651,12 @@ class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Inputs:
         - **float4_numbers** (Scalar) - total length to store random numbers.
           The data type is int32.
-        - **atom_numbers** (Scalar) - the number of atoms n.
+        - **atom_numbers** (Scalar) - The number of atoms n.
           The data type is int32.
         - **dt** (Scalar) - time step for finite difference. The data type is float32.
         - **half_dt** (Scalar) - half of time step for finite difference.
@@ -2643,7 +2664,7 @@ class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
         - **exp_gamma** (Scalar) - parameter in Liu's dynamic, equals
           exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
           dynamics. The data type is float32.
-        - **max_velocity** (Scalar) - the upper limit of velocity, when the
+        - **max_velocity** (Scalar) - The upper limit of velocity, when the
           veclocity overflows, scale it to the upper limit. The data type is float32.
         - **is_max_velocity** (Scalar) - whether the max velocity control is
           open or not. The data type is int32.
@@ -2746,7 +2767,7 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -2821,7 +2842,7 @@ class CrdToUintCrd(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
@@ -2863,18 +2884,19 @@ class CrdToUintCrd(PrimitiveWithInfer):
 
 class MDIterationSetupRandState(PrimitiveWithInfer):
     """
-    Convert FP32 coordinate to Uint32 coordinate.
+    Compute the random state of the iteration.
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         atom_numbers(int32): the number of atoms n.
         seed(int32): random seed.
 
     Outputs:
-        - **output** (Scalar) random state. The data type is uint32
+        - **output** (Tensor) random state.
+        The data type is float32 and the shape is :math:`(ceil(n * 3 / 4),)`.
 
     Supported Platforms:
         ``GPU``
@@ -2906,7 +2928,7 @@ class TransferCrd(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     Args:
         start_serial(int32): the index start position.
@@ -2984,7 +3006,7 @@ class FFT3D(PrimitiveWithInfer):
         - **input_tensor** (Tensor, float32) - [fftx, ffty, fftz]
 
     Outputs:
-        - **output_tensor** (complex64) - the real part of the output tensor after
+        - **output_tensor** (complex64) - The real part of the output tensor after
           undergoing fast Fourier transform.
 
     Supported Platforms:
@@ -3073,7 +3095,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
         - **crd** (Tensor, float32) - [N,], the coordinates of each atom.
         - **box_length** (Tensor, float32) - [3,], the length of 3 dimensions of the simulation box.
         - **grid_N** (Tensor, int32) - [3,], the number of grids divided of 3 dimensions of the simulation box.
-        - **grid_length_inverse** (float32) - the inverse value of grid length.
+        - **grid_length_inverse** (float32) - The inverse value of grid length.
         - **atom_in_grid_serial** (Tensor, int32) - [N,], the grid index for each atom.
         - **old_crd** (Tensor, float32) - [N, 3], the coordinates before update of each atom.
         - **crd_to_uint_crd_cof** (Tensor, float32) - [3,], the scale factor
