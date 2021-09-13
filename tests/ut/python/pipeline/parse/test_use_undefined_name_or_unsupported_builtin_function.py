@@ -346,7 +346,7 @@ def test_call_unsupported_builtin_function_in_while():
     net = Net()
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3]), Tensor([4, 5, 6]))
-    assert "The builtin function 'divmod' is not supported in graph mode" in str(err.value)
+    assert "The builtin function 'divmod' of python is not supported in graph mode" in str(err.value)
     assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(342)" in str(
         err.value)
     assert "ret = divmod(x, y)" in str(err.value)
@@ -368,7 +368,7 @@ def test_call_unsupported_builtin_function_in_if_in_for():
     net = Net()
     with pytest.raises(NameError) as err:
         net(Tensor([1, 2, 3], mstype.float32))
-    assert "The builtin function 'divmod' is not supported in graph mode" in str(err.value)
+    assert "The builtin function 'divmod' of python is not supported in graph mode" in str(err.value)
     assert "tests/ut/python/pipeline/parse/test_use_undefined_name_or_unsupported_builtin_function.py(364)" in \
            str(err.value)
     assert "x = divmod(x, i)" in str(err.value)

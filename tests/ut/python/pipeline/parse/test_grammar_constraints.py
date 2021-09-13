@@ -14,7 +14,7 @@
 # ============================================================================
 """
 test mindspore grammar constraints
-1. funtion must have return statement
+1. function must have return statement
 2. raise statement can not be used
 """
 # pylint: disable=R1705, R1710, W0223
@@ -60,7 +60,7 @@ def test_missing_return():
     z = Tensor(2, mstype.int32)
     with pytest.raises(TypeError) as er:
         net(x, y, z)
-    assert "Missing return statement in bound method 'construct'" in str(er.value)
+    assert "Function must has 'return' statement, but missing in bound method 'construct'" in str(er.value)
 
 
 def test_nest_function_missing_return():
@@ -95,7 +95,7 @@ def test_nest_function_missing_return():
     z = Tensor(2, mstype.int32)
     with pytest.raises(TypeError) as er:
         net(x, y, z)
-    assert "Missing return statement in function 'g'" in str(er.value)
+    assert "Function must has 'return' statement, but missing in function 'g'" in str(er.value)
 
 
 def test_raise_in_method():
@@ -118,7 +118,7 @@ def test_raise_in_method():
     z = Tensor(2, mstype.int32)
     with pytest.raises(RuntimeError) as er:
         net(x, y, z)
-    assert "Unsupported syntax 'Raise'." in str(er.value)
+    assert "Unsupported statement 'Raise'." in str(er.value)
 
 
 def test_raise_in_nested_function():
@@ -145,7 +145,7 @@ def test_raise_in_nested_function():
     z = Tensor(2, mstype.int32)
     with pytest.raises(RuntimeError) as er:
         net(x, y, z)
-    assert "Unsupported syntax 'Raise'." in str(er.value)
+    assert "Unsupported statement 'Raise'." in str(er.value)
 
 
 def test_nest_branch_with_return():
@@ -182,7 +182,7 @@ def test_any_with_no_return():
     net = NetAnyNoReturn()
     with pytest.raises(TypeError) as er:
         net(tensor)
-    assert "Missing return statement in bound method 'construct'" in str(er.value)
+    assert "Function must has 'return' statement, but missing in bound method 'construct'" in str(er.value)
 
 
 def test_missing_construct():

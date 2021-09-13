@@ -234,8 +234,8 @@ void CheckArgsValid(const py::tuple &args) {
       MS_EXCEPTION(TypeError)
         << "The inputs types of the outermost network support bool, int, float, tensor, "
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
-           "and tuple or list containing only these types, and dict whose values are these types, but got "
-        << i << "th arg is " << py::str(args[i]);
+           "and tuple or list containing only these types, and dict whose values are these types, but the "
+        << i << "th arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
     }
   }
 }
@@ -720,8 +720,9 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   CheckArgsValid(args);
 
   auto phase = py::cast<std::string>(phase_obj);
-  MS_LOG(INFO) << "Start compiling, phase: " << phase << ", source: {" << py::str(source_obj) << "}";
-  MS_LOG(DEBUG) << "args: " << py::str(const_cast<py::tuple &>(args));
+  MS_LOG(INFO) << "Start compiling, phase: " << phase << ".";
+  MS_LOG(DEBUG) << "Compiling source: {" << py::str(source_obj)
+                << "}\n\n Args: " << py::str(const_cast<py::tuple &>(args));
 
 #ifdef ENABLE_GE
   GetGeBackendPolicy();

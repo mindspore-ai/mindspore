@@ -387,6 +387,8 @@ def get_object_description(obj, fname, fline):
         return f"function '{obj.__name__}' at {fname}:{fline}"
     if isinstance(obj, ast.FunctionDef):
         return f"function '{obj.name}' at {fname}:{fline}"
+    if isinstance(obj, ast.Attribute):
+        return f"attribute "
     return str(obj)
 
 
@@ -583,7 +585,7 @@ class Parser:
             logger.debug(f"Found `{var}` in global_namespace {self.global_namespace.__str__()}")
             value = self.global_namespace[var]
             if self.is_unsupported_namespace(value):
-                error_info = f"The builtin function '{var}' is not supported in graph mode."
+                error_info = f"The builtin function '{var}' of python is not supported in graph mode."
                 return None, var, error_info
             return self.global_namespace, var
 
@@ -686,7 +688,7 @@ class Parser:
         elif isinstance(class_type_node, ast.Attribute):
             class_name = getattr(class_type_node, 'attr')
         else:
-            raise ValueError(f"When call 'super', the first arg should be a class type, "
+            raise ValueError(f"The first argument of 'super()' must be a class type, "
                              f"but got {class_type_node.__class__.__name__}.")
 
         target_father_class = None
@@ -695,7 +697,8 @@ class Parser:
                 target_father_class = class_element
                 break
         if target_father_class is None:
-            raise ValueError("When call 'super', the second arg should be an instance of first arg.")
+            raise ValueError(f"The second argument of 'super()' must be 'self', "
+                             f"but got {subclass_instance}.")
         return super(target_father_class, subclass_instance)
 
     def get_location(self, node):
