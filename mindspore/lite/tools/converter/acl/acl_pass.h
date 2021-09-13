@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ACL_ACL_PASS_H
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <memory>
 #include "backend/optimizer/common/pass.h"
@@ -25,6 +26,7 @@
 #include "include/api/types.h"
 #include "include/registry/parser_context.h"
 #include "cxx_api/model/acl/acl_model_options.h"
+#include "tools/converter/acl/common/acl_option_cfg.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,7 +35,11 @@ using mindspore::lite::STATUS;
 
 class AclPass : public Pass {
  public:
-  explicit AclPass(FmkType fmk_type) : Pass("Acl"), fmk_type_(fmk_type) {}
+  AclPass(FmkType fmk_type, std::string graph_input_format, lite::acl::AclModelOptionCfg cfg)
+      : Pass("Acl"),
+        fmk_type_(fmk_type),
+        graph_input_format_(std::move(graph_input_format)),
+        acl_model_option_cfg_(std::move(cfg)) {}
   ~AclPass() override = default;
 
   bool Run(const FuncGraphPtr &func_graph) override;
@@ -51,11 +57,16 @@ class AclPass : public Pass {
   STATUS SetMultiOutputs(const CNodePtr &new_cnode, TypeId data_type);
   STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
                                  const CNodePtr &custom_node);
-  void SetAclModelOptions(const FuncGraphPtr &func_graph);
+  STATUS SetAclModelOptions(const FuncGraphPtr &func_graph);
   STATUS GetFuncGraphOutputInfo(const FuncGraphPtr &func_graph);
   STATUS TraceOutput(const AnfNodePtr &node);
+  std::shared_ptr<mindspore::Context> CreateModelContext();
+  void SetAclModelInitOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info);
+  void SetAclModelBuildOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info);
 
   FmkType fmk_type_;
+  std::string graph_input_format_;
+  lite::acl::AclModelOptionCfg acl_model_option_cfg_;
   ParameterPtr om_parameter_ = nullptr;
   CNodePtr custom_node_ = nullptr;
   std::shared_ptr<AclModelOptions> options_;

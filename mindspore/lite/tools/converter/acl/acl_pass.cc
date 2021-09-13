@@ -23,6 +23,7 @@
 #include "tools/converter/acl/mapper/spatial_node_adapter.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/optimizer_manager.h"
+#include "tools/common/string_util.h"
 #include "include/registry/pass_registry.h"
 #include "common/utils.h"
 #include "ops/custom.h"
@@ -38,6 +39,10 @@ constexpr auto kMakeTuple = "MakeTuple";
 constexpr auto kOutputNames = "outputs_names";
 constexpr auto kCustomPrimTypeACL = "ACL";
 constexpr auto kCustomNodeName = "custom_0";
+constexpr auto kNCHWFormat = "NCHW";
+constexpr auto kToNHWCFormatPass = "ToNHWCFormat";
+constexpr auto kToNCHWFormatPass = "ToNCHWFormat";
+constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
@@ -84,6 +89,7 @@ STATUS AclPass::BuildGraph(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Convert graph  to om failed.";
     return lite::RET_ERROR;
   }
+  MS_LOG(DEBUG) << "Build graph success.";
   return lite::RET_OK;
 }
 
@@ -140,23 +146,28 @@ STATUS AclPass::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphMana
 
 STATUS AclPass::PreProcGraph(const FuncGraphPtr &func_graph) {
   if (fmk_type_ == converter::kFmkTypeMs) {
-    MS_LOG(INFO) << "MindIr no need to pre proc graph";
+    MS_LOG(INFO) << "MindIr no need to pre proc graph.";
     return lite::RET_OK;
   }
   // The format of nodes (cnode, parameter, val) must be nchw due to interface of convert om
-  if (!lite::RunOptimizerPass(func_graph, {"ToNCHWFormat", "DecreaseTransposeAlgo"})) {
+  if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, kDelRedundantTranspose})) {
     MS_LOG(ERROR) << "To nchw format success.";
     return lite::RET_ERROR;
   }
+  MS_LOG(DEBUG) << "Pre proc graph success.";
   return lite::RET_OK;
 }
 
 STATUS AclPass::PostProcGraph(const FuncGraphPtr &func_graph) {
-  // The format must be nhwc due to ms model
-  if (!lite::RunOptimizerPass(func_graph, {"ToNHWCFormat"})) {
+  if (graph_input_format_ == kNCHWFormat) {
+    MS_LOG(INFO) << "No need to transpose format to nhwc.";
+    return lite::RET_OK;
+  }
+  if (!lite::RunOptimizerPass(func_graph, {kToNHWCFormatPass})) {
     MS_LOG(ERROR) << "To NHWC Format failed.";
     return lite::RET_ERROR;
   }
+  MS_LOG(DEBUG) << "Post pro graph success.";
   return lite::RET_OK;
 }
 
@@ -223,40 +234,82 @@ STATUS AclPass::ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data
   return lite::RET_OK;
 }
 
-void AclPass::SetAclModelOptions(const FuncGraphPtr &func_graph) {
-  MS_LOG(INFO) << "Set acl model options start.";
-  auto model_context = std::make_shared<mindspore::Context>();
-  auto ascend310_info = std::make_shared<Ascend310DeviceInfo>();
-  ascend310_info->SetDeviceID(0);
-  model_context->MutableDeviceInfo().emplace_back(ascend310_info);
-  // set options
-  options_ = std::make_shared<AclModelOptions>(model_context);
-  if (options_ == nullptr) {
-    MS_LOG(ERROR) << "Acl option make shared failed.";
-    return;
+void AclPass::SetAclModelInitOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info) {
+  if (!acl_model_option_cfg_.fusion_switch_config_file_path.empty()) {
+    ascend310_info->SetFusionSwitchConfigPath(acl_model_option_cfg_.fusion_switch_config_file_path);
   }
+  if (!acl_model_option_cfg_.op_select_impl_mode.empty()) {
+    ascend310_info->SetOpSelectImplMode(acl_model_option_cfg_.op_select_impl_mode);
+  }
+  if (!acl_model_option_cfg_.buffer_optimize.empty()) {
+    ascend310_info->SetBufferOptimizeMode(acl_model_option_cfg_.buffer_optimize);
+  }
+}
+
+void AclPass::SetAclModelBuildOptions(const std::shared_ptr<Ascend310DeviceInfo> &ascend310_info) {
+  if (acl_model_option_cfg_.output_type != DataType::kInvalidType) {
+    ascend310_info->SetOutputType(acl_model_option_cfg_.output_type);
+  }
+  if (acl_model_option_cfg_.input_shape_map.size() > 0) {
+    ascend310_info->SetInputShapeMap(acl_model_option_cfg_.input_shape_map);
+  }
+  if (acl_model_option_cfg_.dynamic_batch_size.size() > 0) {
+    ascend310_info->SetDynamicBatchSize(acl_model_option_cfg_.dynamic_batch_size);
+  }
+  if (!acl_model_option_cfg_.input_format.empty()) {
+    ascend310_info->SetInputFormat(acl_model_option_cfg_.input_format);
+  }
+  if (!acl_model_option_cfg_.input_shape.empty()) {
+    ascend310_info->SetInputShape(acl_model_option_cfg_.input_shape);
+  }
+  if (!acl_model_option_cfg_.precision_mode.empty()) {
+    ascend310_info->SetPrecisionMode(acl_model_option_cfg_.precision_mode);
+  }
+  if (!acl_model_option_cfg_.insert_op_config_file_path.empty()) {
+    ascend310_info->SetInsertOpConfigPath(acl_model_option_cfg_.insert_op_config_file_path);
+  }
+}
+
+std::shared_ptr<mindspore::Context> AclPass::CreateModelContext() {
+  auto model_context = std::make_shared<mindspore::Context>();
+  if (model_context == nullptr) {
+    return nullptr;
+  }
+  auto ascend310_info = std::make_shared<Ascend310DeviceInfo>();
+  if (ascend310_info == nullptr) {
+    return nullptr;
+  }
+  ascend310_info->SetDeviceID(acl_model_option_cfg_.device_id);
+  SetAclModelInitOptions(ascend310_info);
+  SetAclModelBuildOptions(ascend310_info);
+
+  model_context->MutableDeviceInfo().emplace_back(ascend310_info);
+  return model_context;
+}
+
+STATUS AclPass::SetAclModelOptions(const FuncGraphPtr &func_graph) {
+  MS_LOG(INFO) << "Set acl model options start.";
+  auto model_context = CreateModelContext();
+  CHECK_NULL_RETURN(model_context);
+  options_ = std::make_shared<AclModelOptions>(model_context);
+  CHECK_NULL_RETURN(options_);
   auto inputs = func_graph->get_inputs();
   std::vector<std::string> input_names;
   for (auto node : inputs) {
-    if (node == nullptr) {
-      MS_LOG(ERROR) << "Node is nullptr.";
-      return;
-    }
+    CHECK_NULL_RETURN(node);
     auto para = node->cast<ParameterPtr>();
-    if (para == nullptr) {
-      MS_LOG(ERROR) << "Parameter is nullptr.";
-      return;
-    }
+    CHECK_NULL_RETURN(para);
     std::string name = para->name();
     for (auto pos = name.find(':'); pos != std::string::npos; pos = name.find(':')) {
       name = name.substr(0, pos) + "_" + name.substr(pos + 1);
-      MS_LOG(INFO) << name;
+      MS_LOG(INFO) << "Input name: " << name;
     }
     para->set_name(name);
     input_names.push_back(name);
   }
   options_->RenameInput(input_names);
-  MS_LOG(INFO) << "Set acl model options end.";
+  MS_LOG(INFO) << "Set acl model options success.";
+  return lite::RET_OK;
 }
 
 STATUS AclPass::TraceOutput(const AnfNodePtr &node) {
@@ -416,6 +469,7 @@ STATUS AclPass::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const Fu
       }
     }
   }
+  MS_LOG(DEBUG) << "Modify graph by custom node success.";
   return lite::RET_OK;
 }
 }  //  namespace opt

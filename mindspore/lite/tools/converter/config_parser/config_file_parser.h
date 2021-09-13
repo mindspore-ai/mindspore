@@ -57,6 +57,20 @@ struct RegistryInfoString {
   std::string disable_fusion;
 };
 
+struct AclOptionCfgString {
+  std::string device_id;
+  std::string input_format;
+  std::string input_shape_vector;
+  std::string input_shape;
+  std::string output_type;
+  std::string precision_mode;
+  std::string op_select_impl_mode;
+  std::string fusion_switch_config_file_path;
+  std::string dynamic_batch_size;
+  std::string buffer_optimize;
+  std::string insert_op_config_file_path;
+};
+
 class ConfigFileParser {
  public:
   int ParseConfigFile(const std::string &config_file_path);
@@ -66,6 +80,7 @@ class ConfigFileParser {
   MixedBitWeightQuantString GetMixedBitWeightQuantString() const { return this->mixed_bit_quant_string_; }
   FullQuantString GetFullQuantString() const { return this->full_quant_string_; }
   RegistryInfoString GetRegistryInfoString() const { return this->registry_info_string_; }
+  AclOptionCfgString GetAclOptionCfgString() { return this->acl_option_cfg_string_; }
 
  private:
   int ParseDataPreProcessString(const std::map<std::string, std::map<std::string, std::string>> &maps);
@@ -73,6 +88,7 @@ class ConfigFileParser {
   int ParseMixedBitQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseFullQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int ParseRegistryInfoString(const std::map<std::string, std::map<std::string, std::string>> &maps);
+  int ParseAclOptionCfgString(const std::map<std::string, std::map<std::string, std::string>> &maps);
   int SetMapData(const std::map<std::string, std::string> &input_map,
                  const std::map<std::string, std::string &> &parse_map, const std::string &section);
 
@@ -82,6 +98,7 @@ class ConfigFileParser {
   MixedBitWeightQuantString mixed_bit_quant_string_;
   FullQuantString full_quant_string_;
   RegistryInfoString registry_info_string_;
+  AclOptionCfgString acl_option_cfg_string_;
 };
 
 }  // namespace lite

@@ -238,6 +238,7 @@ message(STATUS "\tMSLITE_ENABLE_MINDRT              = \t${MSLITE_ENABLE_MINDRT}"
 message(STATUS "\tMSLITE_ENABLE_V0                  = \t${MSLITE_ENABLE_V0}")
 message(STATUS "\tBUILD_MINDDATA                    = \t${BUILD_MINDDATA}")
 message(STATUS "\tMSLITE_DELEGATE_USE               = \t${MSLITE_DELEGATE_USE}")
+message(STATUS "\tMSLITE_ENABLE_ACL                 = \t${MSLITE_ENABLE_ACL}")
 message(STATUS "\tMSLITE_ENABLE_FP16                = \t${MSLITE_ENABLE_FP16}")
 message(STATUS "\tMSLITE_ENABLE_MODEL_ENCRYPTION    = \t${MSLITE_ENABLE_MODEL_ENCRYPTION}")
 
@@ -256,6 +257,8 @@ endif()
 if(MSLITE_ENABLE_ACL)
     add_definitions(-D ENABLE_LITE_ACL)
     add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--allow-shlib-undefined")
+
     if(DEFINED ENV{ASCEND_CUSTOM_PATH})
         set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
     else()

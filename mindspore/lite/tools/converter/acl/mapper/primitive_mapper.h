@@ -43,7 +43,7 @@ class PrimitiveMapper {
   STATUS AdjustPoolAttr(int fmk_type, const std::string &src_prim_name, const PrimitivePtr &dst_prim);
 
   STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const PrimitivePtr &dst_prim,
-                        const std::string &attr_name, int flag);
+                        const std::string &attr_name, size_t flag);
 
  private:
   void AdjustCaffePoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim);

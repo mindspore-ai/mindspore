@@ -27,6 +27,7 @@ constexpr auto kFullQuantParam = "full_quant_param";
 constexpr auto kMixedBitWeightQuantParam = "mixed_bit_weight_quant_param";
 constexpr auto kDataPreprocessParam = "data_preprocess_param";
 constexpr auto kRegistry = "registry";
+constexpr auto kAclOptionParam = "acl_option_cfg_param";
 }  // namespace
 int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
   std::map<std::string, std::map<std::string, std::string>> maps;
@@ -58,6 +59,11 @@ int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
   ret = ParseRegistryInfoString(maps);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseExtendedintegrationString failed.";
+    return ret;
+  }
+  ret = ParseAclOptionCfgString(maps);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseAclOptionCfgString failed.";
     return ret;
   }
   return RET_OK;
@@ -143,6 +149,26 @@ int ConfigFileParser::ParseRegistryInfoString(const std::map<std::string, std::m
       {"disable_fusion", registry_info_string_.disable_fusion},
     };
     return SetMapData(map, parse_map, kRegistry);
+  }
+  return RET_OK;
+}
+
+int ConfigFileParser::ParseAclOptionCfgString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
+  if (maps.find(kAclOptionParam) != maps.end()) {
+    const auto &map = maps.at(kAclOptionParam);
+    std::map<std::string, std::string &> parse_map{
+      {"device_id", acl_option_cfg_string_.device_id},
+      {"input_format", acl_option_cfg_string_.input_format},
+      {"input_shape_vector", acl_option_cfg_string_.input_shape_vector},
+      {"input_shape", acl_option_cfg_string_.input_shape},
+      {"output_type", acl_option_cfg_string_.output_type},
+      {"precision_mode", acl_option_cfg_string_.precision_mode},
+      {"op_select_impl_mode", acl_option_cfg_string_.op_select_impl_mode},
+      {"fusion_switch_config_file_path", acl_option_cfg_string_.fusion_switch_config_file_path},
+      {"dynamic_batch_size", acl_option_cfg_string_.dynamic_batch_size},
+      {"buffer_optimize", acl_option_cfg_string_.buffer_optimize},
+      {"insert_op_config_file_path", acl_option_cfg_string_.insert_op_config_file_path}};
+    return SetMapData(map, parse_map, kAclOptionParam);
   }
   return RET_OK;
 }
