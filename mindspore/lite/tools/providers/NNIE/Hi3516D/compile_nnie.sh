@@ -138,7 +138,7 @@ else
   exit 1
 fi
 
-git clone https://${gitee_user_name}:${gitee_user_pass}@gitee.com/ms-incubator/mindspore.git -b ${branch_name}
+git clone https://${gitee_user_name}:${gitee_user_pass}@gitee.com/ms-incubator/mindspore.git -b ${branch_name} --single-branch
 if [[ $? -ne 0 ]]; then
   echo "git clone https://gitee.com/ms-incubator/mindspore.git -b ${branch_name} failed."
   exit 1
