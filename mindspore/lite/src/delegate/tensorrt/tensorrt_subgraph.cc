@@ -95,7 +95,8 @@ int TensorRTSubGraph::BuildEngine() {
 
 int TensorRTSubGraph::SetDeviceConfig() {
   // set fp16
-  if (device_info_->GetEnableFP16() && SupportFP16()) {
+  if (device_info_->GetEnableFP16() && runtime_->GetBuilder()->platformHasFastFp16()) {
+    MS_LOG(INFO) << "set fp16 flag successfully for tensorrt.";
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
   }
 
@@ -376,8 +377,8 @@ int TensorRTSubGraph::ReSize() {
     runtime_->SetBatchSize(inputs_[i].Shape()[input_batchsize_index_]);
 
     // inputs_ is dupulated by mindrt, name is untustable.
-    auto device_ptr =
-      runtime_->GetAllocator()->MallocDeviceMem(trt_in_tensor_name_[i], inputs_[i].DataSize(), inputs_[i].DataType());
+    auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(trt_in_tensor_name_[i], inputs_[i].DataSize(),
+                                                                ConvertDataType(inputs_[i].DataType()));
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "realloc for input tensor device memory failed.";
       return RET_ERROR;
@@ -403,7 +404,7 @@ int TensorRTSubGraph::ReSize() {
   for (size_t i = 0; i < trt_out_tensor_name_.size(); i++) {
     int index = this->engine_->getBindingIndex(trt_out_tensor_name_[i].c_str());
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(trt_out_tensor_name_[i], outputs_[i].DataSize(),
-                                                                outputs_[i].DataType());
+                                                                ConvertDataType(outputs_[i].DataType()));
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "realloc for outputs tensor device memory failed.";
       return RET_ERROR;

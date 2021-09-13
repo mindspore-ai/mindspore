@@ -88,6 +88,9 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     scale.values = in_tensors_[SCALE_INDEX].MutableData();
     MS_ASSERT(scale.values);
     scale.count = in_tensors_[SCALE_INDEX].ElementNum();
+    scale.type = ConvertDataType(in_tensors_[SCALE_INDEX].DataType());
+    shift.type = scale.type;
+    power.type = scale.type;
     nd = in_tensors_[1].Shape().size() == 1 ? false : true;
   }
   if (in_tensors_.size() > SHIFT_INDEX) {

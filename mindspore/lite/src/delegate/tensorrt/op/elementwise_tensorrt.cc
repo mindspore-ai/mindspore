@@ -200,7 +200,8 @@ int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *constant_input = nullptr;
   if (this->in_tensors_[1 - first_in_tensor_index_].Shape().size() == 0) {
     constant_input = lite::ConvertScalarToITensor(network, this->in_tensors_[first_in_tensor_index_].Shape().size(),
-                                                  in_tensors_[1 - first_in_tensor_index_].Data().get());
+                                                  in_tensors_[1 - first_in_tensor_index_].Data().get(),
+                                                  in_tensors_[1 - first_in_tensor_index_].DataType());
     if (constant_input == nullptr) {
       MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << op_name_;
       return RET_ERROR;

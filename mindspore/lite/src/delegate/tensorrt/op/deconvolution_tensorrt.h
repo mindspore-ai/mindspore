@@ -36,7 +36,7 @@ class DeconvolutionTensorRT : public TensorRTOp {
  private:
   void SetAttributes(const schema::Conv2dTransposeFusion *ms_op, nvinfer1::IDeconvolutionLayer *decon_layer);
 
-  float *pack_weight_{nullptr};
+  void *pack_weight_{nullptr};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_TENSORRT_OP_DECONVOLUTION_TENSORRT_H_

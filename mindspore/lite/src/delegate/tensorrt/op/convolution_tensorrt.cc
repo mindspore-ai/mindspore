@@ -89,7 +89,7 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (in_tensors_.size() >= INPUT_SIZE3) {
     biasWeights = lite::ConvertWeight(in_tensors_[BIAS_INDEX]);
   } else {
-    biasWeights.type = nvinfer1::DataType::kFLOAT;
+    biasWeights.type = ConvertDataType(weight_tensor.DataType());
     biasWeights.count = 0;
     biasWeights.values = nullptr;
   }

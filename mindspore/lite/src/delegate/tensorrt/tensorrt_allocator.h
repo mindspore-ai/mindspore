@@ -19,6 +19,7 @@
 #include "src/delegate/tensorrt/tensorrt_allocator.h"
 #include <map>
 #include <string>
+#include <NvInfer.h>
 #include "include/api/types.h"
 #include "include/ms_tensor.h"
 
@@ -36,11 +37,14 @@ class TensorRTAllocator {
 
   void *MallocDeviceMem(const mindspore::MSTensor &host_tensor, size_t size);
 
-  void *MallocDeviceMem(const std::string &name, size_t size, DataType data_type);
+  void *MallocDeviceMem(const std::string &name, size_t size, nvinfer1::DataType data_type);
 
   void *GetDevicePtr(const std::string &tensor_name);
 
   int SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, const std::string &device_tensor_name,
+                             bool is_host2device, bool sync = true);
+
+  int SyncMemInHostAndDevice(void *host_data, const std::string &device_tensor_name, size_t data_size,
                              bool is_host2device, bool sync = true);
 
   int ClearDeviceMem();

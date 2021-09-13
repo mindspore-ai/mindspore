@@ -127,9 +127,10 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
   return constant_tensor->getOutput(0);
 }
 
-nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value) {
+nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value,
+                                          const DataType data_type) {
   nvinfer1::Dims dims = ConvertCudaDims(1, shape_size);
-  nvinfer1::Weights weights{nvinfer1::DataType::kFLOAT, value, 1};
+  nvinfer1::Weights weights{ConvertDataType(data_type), value, 1};
   nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
@@ -195,30 +196,50 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
   return constant_tensor->getOutput(0);
 }
 
-nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, float **pack_weight) {
+nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
+  nvinfer1::Weights weights{};
+  MS_LOG(INFO) << "ms_tensor.DataType(): " << static_cast<int>(ms_tensor.DataType());
+  if (ms_tensor.DataType() == DataType::kNumberTypeFloat16) {
+    weights.type = nvinfer1::DataType::kHALF;
+    weights.count = ms_tensor.ElementNum();
+    void *pack_weight_tmp = malloc(ms_tensor.DataSize());
+    if (pack_weight_tmp == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return weights;
+    }
+    MS_ASSERT(ms_tensor.Data());
+    auto weight_shape = ms_tensor.Shape();
+    PackNHWCToNCHWFp16(ms_tensor.Data().get(), pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2],
+                       weight_shape[3], 0, 0);
+    *pack_weight = pack_weight_tmp;
+    weights.values = pack_weight_tmp;
+    return weights;
+  } else {
+    return TransposeWeightFP32(ms_tensor, pack_weight);
+  }
+}
+
+nvinfer1::Weights TransposeWeightFP32(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
   // usage notice: malloc addr saved to pack_weight, save pack_weight ptr and free it when deconstruct
   nvinfer1::Weights weights{};
   weights.count = ms_tensor.ElementNum();
   if (lite::ConvertDataType(ms_tensor.DataType()) != nvinfer1::DataType::kFLOAT) {
-    MS_LOG(WARNING) << "weights data type is not float";
+    MS_LOG(WARNING) << "weights data type is not float32";
   }
   weights.type = nvinfer1::DataType::kFLOAT;
   auto weight_shape = ms_tensor.Shape();
   const void *src_ptr = ms_tensor.Data().get();
-  const float *src_val;
   if (src_ptr == nullptr) {
-    src_val = nullptr;
     MS_LOG(ERROR) << "TransposeWeight from a MSTensor with nullptr data";
     return weights;
   }
-  src_val = reinterpret_cast<const float *>(src_ptr);
 
   float *pack_weight_tmp = reinterpret_cast<float *>(malloc(ms_tensor.ElementNum() * sizeof(float)));
   if (pack_weight_tmp == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return weights;
   }
-  PackNHWCToNCHWFp32(src_val, pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2], weight_shape[3], 0,
+  PackNHWCToNCHWFp32(src_ptr, pack_weight_tmp, weight_shape[0], weight_shape[1] * weight_shape[2], weight_shape[3], 0,
                      0);
   weights.values = pack_weight_tmp;
   *pack_weight = pack_weight_tmp;
@@ -243,7 +264,17 @@ void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_) {
     MS_LOG(WARNING) << "cudaGetDevice failed, device is untrustable. error code: " << ret;
   }
   int set_device_id = static_cast<int>(device_info_->GetDeviceID());
-  if (device != set_device_id) {
+  int deviceCnt = 0;
+
+  ret = cudaGetDeviceCount(&deviceCnt);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaGetDeviceCount failed.";
+    return;
+  }
+
+  if (set_device_id > deviceCnt - 1) {
+    MS_LOG(WARNING) << "invalid input device id as " << set_device_id << " for current device count " << deviceCnt;
+  } else if (device != set_device_id) {
     ret = cudaSetDevice(set_device_id);
     if (ret != cudaSuccess) {
       MS_LOG(WARNING) << "cudaSetDevice failed, error code: " << ret;
@@ -287,4 +318,55 @@ int ConvertAxisFromNHWC2NCHW(int nhwc_axis) {
   return nhwc_axis;
 }
 
+void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batches, size_t plane, size_t channel, size_t task_id,
+                        size_t thread_count) {
+  size_t hw8 = plane / C8NUM;
+  size_t task_start = 0;
+  size_t task_end = plane;
+  if (thread_count > 0) {
+    size_t offset_hw = UP_DIV(hw8, thread_count) * C8NUM;
+    task_start = offset_hw * task_id;
+    size_t count = plane - task_start;
+    if (count == 0) {
+      return;
+    }
+    task_end = (task_id + 1) == thread_count ? plane : MSMIN(plane, task_start + offset_hw);
+    hw8 = task_start + ((task_end - task_start) >= offset_hw ? offset_hw : 0);
+  } else {
+    hw8 *= C8NUM;
+  }
+  size_t c8 = channel / C8NUM * C8NUM;
+  size_t batch = plane * channel;
+  for (size_t n = 0; n < batches; n++) {
+    const uint16_t *src_batch = static_cast<const uint16_t *>(src) + n * batch;
+    uint16_t *dst_batch = static_cast<uint16_t *>(dst) + n * batch;
+    size_t hw = task_start;
+    for (; hw < hw8; hw += C8NUM) {
+      size_t c = 0;
+      for (; c < c8; c += C8NUM) {
+        const uint16_t *src_ptr = src_batch + hw * channel + c;
+        uint16_t *dst_ptr = dst_batch + c * plane + hw;
+        for (size_t tr = 0; tr < C8NUM; tr++) {
+          for (size_t tc = 0; tc < C8NUM; tc++) {
+            dst_ptr[tc * plane + tr] = src_ptr[tr * channel + tc];
+          }
+        }
+      }
+      for (; c < channel; c++) {
+        const uint16_t *src_ptr = src_batch + hw * channel + c;
+        uint16_t *dst_ptr = dst_batch + c * plane + hw;
+        for (size_t i = 0; i < C8NUM; i++) {
+          dst_ptr[i] = src_ptr[i * channel];
+        }
+      }
+    }
+    for (; hw < task_end; hw++) {
+      const uint16_t *src_ptr = src_batch + hw * channel;
+      uint16_t *dst_ptr = dst_batch + hw;
+      for (size_t i = 0; i < channel; i++) {
+        dst_ptr[i * plane] = src_ptr[i];
+      }
+    }
+  }
+}
 }  // namespace mindspore::lite
