@@ -17,22 +17,21 @@ function Run_Converter() {
     local cfg_file_list=("$models_arm32_config" "$models_arm32_fp16_config" "$models_codegen_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
-    Convert "${cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file
+    Convert "${cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $arm32_fail_not_return
 }
 
 # Run on arm32 platform:
 function Run_arm32() {
     local arm32_cfg_file_list=("$models_arm32_config")
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${arm32_cfg_file_list[*]}" . '/data/local/tmp' $run_arm32_log_file $run_benchmark_result_file 'arm32' 'CPU' $device_id
-
+    Run_Benchmark "${arm32_cfg_file_list[*]}" . '/data/local/tmp' $run_arm32_log_file $run_benchmark_result_file 'arm32' 'CPU' $device_id $arm32_fail_not_return
 }
 
 # Run on armv8.2-a32-fp16 platform:
 function Run_armv82_a32_fp16() {
     local arm32_fp16_cfg_file_list=("$models_arm32_fp16_config")
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${arm32_fp16_cfg_file_list[*]}" . '/data/local/tmp' $run_armv82_a32_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id
+    Run_Benchmark "${arm32_fp16_cfg_file_list[*]}" . '/data/local/tmp' $run_armv82_a32_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id $arm32_fail_not_return
 }
 
 basepath=$(pwd)
@@ -40,7 +39,7 @@ echo ${basepath}
 #set -e
 
 # Example:sh run_benchmark_arm.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:" opt; do
+while getopts "r:m:d:e:p:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -57,6 +56,10 @@ while getopts "r:m:d:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        p)
+            arm32_fail_not_return=${OPTARG}
+            echo "arm32_fail_not_return is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"

@@ -18,7 +18,7 @@ function Run_Converter() {
     local npu_cfg_file_list=("$models_npu_config" "$models_npu_weightquant_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
-    Convert "${npu_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file
+    Convert "${npu_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $npu_fail_not_return
 }
 
 # Run on npu platform:
@@ -27,14 +27,14 @@ function Run_npu() {
     local npu_cfg_file_list=("$models_npu_config" "$models_npu_fp16_config" "$models_npu_weightquant_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${npu_cfg_file_list[*]}" . '/data/local/tmp' $run_npu_log_file $run_benchmark_result_file 'arm64' 'NPU' $device_id
+    Run_Benchmark "${npu_cfg_file_list[*]}" . '/data/local/tmp' $run_npu_log_file $run_benchmark_result_file 'arm64' 'NPU' $device_id $npu_fail_not_return
 }
 
 basepath=$(pwd)
 echo ${basepath}
 
 # Example:sh run_benchmark_npu.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:" opt; do
+while getopts "r:m:d:e:p:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -51,6 +51,10 @@ while getopts "r:m:d:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        p)
+            npu_fail_not_return=${OPTARG}
+            echo "npu_fail_not_return is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"

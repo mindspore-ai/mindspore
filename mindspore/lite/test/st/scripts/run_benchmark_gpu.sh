@@ -18,7 +18,7 @@ function Run_Converter() {
     local cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_weightquant_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
-    Convert "${cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file
+    Convert "${cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $gpu_fail_not_return
 }
 
 # Run on gpu platform:
@@ -27,7 +27,7 @@ function Run_gpu() {
     local gpu_cfg_file_list=("$models_gpu_fp32_config" "$models_gpu_fp16_config" "$models_gpu_weightquant_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${gpu_cfg_file_list[*]}" . '/data/local/tmp' $run_gpu_log_file $run_benchmark_result_file 'arm64' 'GPU' $device_id
+    Run_Benchmark "${gpu_cfg_file_list[*]}" . '/data/local/tmp' $run_gpu_log_file $run_benchmark_result_file 'arm64' 'GPU' $device_id $gpu_fail_not_return
 }
 
 
@@ -60,7 +60,10 @@ function Run_mindrt_parallel() {
         if [ $? = 0 ]; then
             run_result='mindrt_parallel_CPU_CPU: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='mindrt_parallel_CPU_CPU: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='mindrt_parallel_CPU_CPU: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            if [[ $gpu_fail_not_return != "ON" ]]; then
+                return 1
+            fi
         fi
 
         ########## RUN CPU-GPU parallel
@@ -74,7 +77,10 @@ function Run_mindrt_parallel() {
         if [ $? = 0 ]; then
             run_result='mindrt_parallel_CPU_GPU: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='mindrt_parallel_CPU_GPU: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='mindrt_parallel_CPU_GPU: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            if [[ $gpu_fail_not_return != "ON" ]]; then
+                return 1
+            fi
         fi
     done < ${models_mindrt_parallel_config}
 }
@@ -84,7 +90,7 @@ echo ${basepath}
 #set -e
 
 # Example:sh run_benchmark_gpu.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
-while getopts "r:m:d:e:" opt; do
+while getopts "r:m:d:e:p:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -101,6 +107,10 @@ while getopts "r:m:d:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        p)
+            gpu_fail_not_return=${OPTARG}
+            echo "gpu_fail_not_return is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"
