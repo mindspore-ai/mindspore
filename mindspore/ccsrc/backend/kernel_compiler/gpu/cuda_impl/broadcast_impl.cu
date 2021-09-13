@@ -223,10 +223,9 @@ struct DivNoNanFunc<half2> {
 template <typename T>
 struct FloorDivFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    return floorf(static_cast<float>(lhs) / static_cast<float>(rhs));
+    return floor(static_cast<double>(lhs) / static_cast<double>(rhs));
   }
 };
-
 template <>
 struct FloorDivFunc<half> {
   __device__ __host__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
@@ -251,8 +250,8 @@ struct ModFunc {
     T data_div = lhs / rhs;
     T data_div_min = data_div < 0.0 ? data_div : 0.0;
     T data_div_max = data_div > 0.0 ? data_div : 0.0;
-    T data_div_max_floor = floorf(data_div_max);
-    T data_div_min_ceil = ceilf(data_div_min);
+    T data_div_max_floor = static_cast<T>(floor(static_cast<double>(data_div_max)));
+    T data_div_min_ceil = static_cast<T>(ceil(static_cast<double>(data_div_min)));
     T data_div_res = data_div_max_floor + data_div_min_ceil;
     return lhs - data_div_res * rhs;
   }
@@ -292,7 +291,7 @@ struct ModFunc<half2> {
 template <typename T>
 struct FloorModFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    T res = lhs - floorf(lhs / rhs) * rhs;
+    T res = lhs - static_cast<T>(floor(static_cast<double>(lhs) / static_cast<double>(rhs))) * rhs;
     res = (std::abs(res) > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
     return res;
   }
