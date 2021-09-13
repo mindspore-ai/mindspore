@@ -368,6 +368,14 @@ def check_non_negative_float64(value, arg_name=""):
     check_value(value, [UINT32_MIN, DOUBLE_MAX_INTEGER], arg_name)
 
 
+def check_float32_not_zero(value, arg_name=""):
+    arg_name = pad_arg_name(arg_name)
+    type_check(value, (int,), arg_name)
+    if value < FLOAT_MIN_INTEGER or value > FLOAT_MAX_INTEGER or value == 0:
+        raise ValueError(
+            "Input {0}is not within the required interval of [-16777216, 0) and (0, 16777216].".format(arg_name))
+
+
 def check_valid_detype(type_):
     """
     Validates if a type is a DE Type.

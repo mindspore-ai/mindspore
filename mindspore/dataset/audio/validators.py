@@ -18,8 +18,9 @@ Validators for TensorOps.
 
 from functools import wraps
 
-from mindspore.dataset.core.validator_helpers import check_float32, check_int32_not_zero, check_list_same_size, \
-    check_non_negative_float32, check_pos_float32, check_pos_int32, check_value, parse_user_args, type_check
+from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, \
+    check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_pos_float32, \
+    check_pos_int32, check_value, parse_user_args, type_check
 from .utils import ScaleType
 
 
@@ -339,6 +340,31 @@ def check_complex_norm(method):
         [power], _ = parse_user_args(method, *args, **kwargs)
         type_check(power, (int, float), "power")
         check_non_negative_float32(power, "power")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_biquad_coeff(coeff, arg_name):
+    """Wrapper method to check the parameters of coeff."""
+    type_check(coeff, (float, int), arg_name)
+    check_float32(coeff, arg_name)
+
+
+def check_biquad(method):
+    """Wrapper method to check the parameters of Biquad."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [b0, b1, b2, a0, a1, a2], _ = parse_user_args(
+            method, *args, **kwargs)
+        check_biquad_coeff(b0, "b0")
+        check_biquad_coeff(b1, "b1")
+        check_biquad_coeff(b2, "b2")
+        type_check(a0, (float, int), "a0")
+        check_float32_not_zero(a0, "a0")
+        check_biquad_coeff(a1, "a1")
+        check_biquad_coeff(a2, "a2")
         return method(self, *args, **kwargs)
 
     return new_method

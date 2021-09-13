@@ -10,6 +10,7 @@ add_library(audio-kernels OBJECT
         bandpass_biquad_op.cc
         bandreject_biquad_op.cc
         bass_biquad_op.cc
+        biquad_op.cc
         complex_norm_op.cc
         contrast_op.cc
         dc_shift_op.cc

@@ -146,6 +146,7 @@ constexpr char kBandBiquadOp[] = "BandBiquadOp";
 constexpr char kBandpassBiquadOp[] = "BandpassBiquadOp";
 constexpr char kBandrejectBiquadOp[] = "BandrejectBiquadOp";
 constexpr char kBassBiquadOp[] = "BassBiquadOp";
+constexpr char kBiquadOp[] = "BiquadOp";
 constexpr char kComplexNormOp[] = "ComplexNormOp";
 constexpr char kContrastOp[] = "ContrastOp";
 constexpr char kDCShiftOp[] = "DCShiftOp";
