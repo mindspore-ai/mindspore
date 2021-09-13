@@ -182,39 +182,37 @@ kernel::InnerKernel *CpuQuantDTypeCastFp16KernelCreator(const std::vector<lite::
                                                         const std::vector<lite::Tensor *> &outputs,
                                                         OpParameter *opParameter, const lite::Context *ctx,
                                                         const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
-
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "opParameter is nullptr!";
-    return nullptr;
-  }
   auto in_tensor = inputs.front();
   auto out_tensor = outputs.front();
   auto param = reinterpret_cast<QuantDTypeCastParameter *>(opParameter);
   if (param->dstT == kNumberTypeInt8) {
     if (in_tensor->data_type() != kNumberTypeFloat16 || out_tensor->data_type() != kNumberTypeInt8) {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      free(opParameter);
       return nullptr;
     }
   } else if (param->srcT == kNumberTypeInt8) {
     if (in_tensor->data_type() != kNumberTypeInt8 || out_tensor->data_type() != kNumberTypeFloat16) {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      free(opParameter);
       return nullptr;
     }
   } else if (param->dstT == kNumberTypeUInt8) {
     if (in_tensor->data_type() != kNumberTypeFloat16 || out_tensor->data_type() != kNumberTypeUInt8) {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      free(opParameter);
       return nullptr;
     }
   } else if (param->srcT == kNumberTypeUInt8) {
     if (in_tensor->data_type() != kNumberTypeUInt8 || out_tensor->data_type() != kNumberTypeFloat16) {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      free(opParameter);
       return nullptr;
     }
   } else {
     MS_LOG(ERROR) << "param data type not supported:"
                   << " src: " << param->srcT << " dst: " << param->dstT;
+    free(opParameter);
     return nullptr;
   }
 

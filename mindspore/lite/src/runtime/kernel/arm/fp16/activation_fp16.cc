@@ -37,15 +37,6 @@ namespace mindspore::kernel {
 int ActivationFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  if (type_ != schema::ActivationType_RELU && type_ != schema::ActivationType_RELU6 &&
-      type_ != schema::ActivationType_LEAKY_RELU && type_ != schema::ActivationType_SIGMOID &&
-      type_ != schema::ActivationType_TANH && type_ != schema::ActivationType_HSWISH &&
-      type_ != schema::ActivationType_SWISH && type_ != schema::ActivationType_HARD_TANH &&
-      type_ != schema::ActivationType_GELU && type_ != schema::ActivationType_HSIGMOID &&
-      type_ != schema::ActivationType_ELU) {
-    MS_LOG(ERROR) << "Activation fp16 not support type: " << type_;
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
@@ -129,17 +120,16 @@ kernel::InnerKernel *CpuActivationFp16KernelCreator(const std::vector<lite::Tens
                                                     const std::vector<lite::Tensor *> &outputs,
                                                     OpParameter *opParameter, const lite::Context *ctx,
                                                     const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Activation);
-
   auto act_param = reinterpret_cast<ActivationParameter *>(opParameter);
   auto type = act_param->type_;
   if (type != schema::ActivationType_RELU && type != schema::ActivationType_RELU6 &&
       type != schema::ActivationType_LEAKY_RELU && type != schema::ActivationType_SIGMOID &&
       type != schema::ActivationType_TANH && type != schema::ActivationType_HSWISH &&
       type != schema::ActivationType_SWISH && type != schema::ActivationType_HARD_TANH &&
-      type != schema::ActivationType_GELU && type != schema::ActivationType_HSIGMOID) {
+      type != schema::ActivationType_GELU && type != schema::ActivationType_HSIGMOID &&
+      type != schema::ActivationType_ELU) {
     MS_LOG(ERROR) << "Activation fp16 not support type: " << type;
+    free(opParameter);
     return nullptr;
   }
 
