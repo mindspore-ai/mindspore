@@ -363,7 +363,7 @@ std::vector<MSTensor> ModelImpl::GetGradients() const {
     MS_LOG(ERROR) << "No optimizer parameters avelibale.";
     return empty;
   }
-  std::vector<MSTensor> res = LiteTensorsToMSTensors(params);
+  std::vector<MSTensor> res = LiteTensorsToMSTensors(params, false);
   return res;
 }
 
