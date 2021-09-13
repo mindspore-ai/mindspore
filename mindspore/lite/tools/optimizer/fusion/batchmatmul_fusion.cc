@@ -161,6 +161,9 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
   auto stack_cnode = node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(stack_cnode)) {
+    return nullptr;
+  }
   // check stack node all inputs must fullconnect
   for (size_t i = 1; i < stack_cnode->inputs().size(); i++) {
     auto input_node = stack_cnode->input(i);
@@ -172,9 +175,15 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   auto fullconnect_node = stack_cnode->input(1);
   MS_ASSERT(fullconnnect_node != nullptr);
   auto fullconnect_cnode = fullconnect_node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(fullconnect_cnode)) {
+    return nullptr;
+  }
   MS_CHECK_TRUE_RET(fullconnect_cnode->inputs().size() == 3, nullptr);
   auto left_slice_node = fullconnect_cnode->input(1);
   auto left_slice_cnode = left_slice_node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(left_slice_cnode)) {
+    return nullptr;
+  }
   MS_CHECK_TRUE_RET(left_slice_cnode != nullptr, nullptr);
   if (!CheckPrimitiveType(left_slice_cnode, prim::kPrimSliceFusion)) {
     if (!CheckPrimitiveType(left_slice_cnode, prim::kPrimReshape)) {
@@ -182,6 +191,9 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
     }
     auto &left_reshape_cnode = left_slice_cnode;
     left_slice_cnode = left_reshape_cnode->input(1)->cast<CNodePtr>();
+    if (IsMarkedTrainOp(left_slice_cnode)) {
+      return nullptr;
+    }
     if (left_slice_cnode == nullptr || !CheckPrimitiveType(left_slice_cnode, prim::kPrimSliceFusion)) {
       return nullptr;
     }
@@ -212,6 +224,9 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   } else {
     auto right_reshape_cnode = right_reshape_node->cast<CNodePtr>();
     MS_CHECK_TRUE_RET(right_reshape_cnode != nullptr, nullptr);
+    if (IsMarkedTrainOp(right_reshape_cnode)) {
+      return nullptr;
+    }
     MS_ASSERT(right_reshape_cnode->inputs().size() > 1);
     auto right_transpose_node = right_reshape_cnode->input(1);
     auto right_transpose_cnode = right_transpose_node->cast<CNodePtr>();

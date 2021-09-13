@@ -61,6 +61,7 @@ class TfliteLstmCellFusion : public PatternProcessPass {
                                   const std::string &base_name, float zoneout_cell, float zoneout_hidden) const;
 
  private:
+  CNodePtr GetWhileCnode(const AnfNodePtr &cnode) const;
   bool CheckBodyGraph(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const CNodePtr &while_cnode,
                       float *zoneout_cell, float *zoneout_hidden) const;
   static bool CheckReferencedOutputs(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode);

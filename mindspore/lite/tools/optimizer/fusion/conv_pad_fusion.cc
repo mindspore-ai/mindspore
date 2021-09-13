@@ -178,6 +178,9 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
 
   auto conv_cnode = node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(conv_cnode != nullptr, nullptr);
+  if (IsMarkedTrainOp(conv_cnode)) {
+    return nullptr;
+  }
   if (conv_cnode->inputs().size() != kConvWithBiasLen && conv_cnode->inputs().size() != kConvNoBiasLen) {
     MS_LOG(WARNING) << "conv node inputs error ,name:" << conv_cnode->fullname_with_scope();
     return nullptr;
@@ -186,6 +189,9 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
   if (pattern_name == "PadTransposeConvPatternName") {
     auto transpose_cnode = conv_cnode->input(1)->cast<CNodePtr>();
     MS_CHECK_TRUE_RET(transpose_cnode != nullptr, nullptr);
+    if (IsMarkedTrainOp(transpose_cnode)) {
+      return nullptr;
+    }
     if (IsMultiOutputTensors(func_graph, transpose_cnode)) {
       MS_LOG(WARNING) << "transpose node is used as input by multiple cnodes, Fusion failed! ,name:"
                       << transpose_cnode->fullname_with_scope();
@@ -195,6 +201,9 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
     pad_cnode = transpose_cnode->input(1)->cast<CNodePtr>();
   } else {
     pad_cnode = conv_cnode->input(1)->cast<CNodePtr>();
+    if (IsMarkedTrainOp(pad_cnode)) {
+      return nullptr;
+    }
   }
   MS_CHECK_TRUE_RET(pad_cnode != nullptr, nullptr);
 

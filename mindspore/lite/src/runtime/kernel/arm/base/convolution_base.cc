@@ -123,6 +123,9 @@ int ConvolutionBaseCPUKernel::Init() {
 }
 
 int ConvolutionBaseCPUKernel::InitConvWeightBias() {
+  if (op_parameter_->is_train_session_) {
+    UpdateOriginWeightAndBias();
+  }
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   CHECK_NULL_RETURN(weight_tensor);
   auto shape = weight_tensor->shape();

@@ -83,7 +83,7 @@ AnfTransform::AnfTransform() = default;
 
 AnfTransform::~AnfTransform() = default;
 
-STATUS AnfTransform::FindInputCnode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS AnfTransform::MarkTrainInputOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     if (!utils::isa<CNodePtr>(input_node)) {
@@ -101,7 +101,7 @@ STATUS AnfTransform::FindInputCnode(const FuncGraphPtr &func_graph, const CNodeP
   return RET_OK;
 }
 
-STATUS AnfTransform::FindSameParameterCnode(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+STATUS AnfTransform::MarkTrainWeightSharingOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNodePtr>(node)) {
@@ -125,7 +125,7 @@ STATUS AnfTransform::FindSameParameterCnode(const FuncGraphPtr &func_graph, cons
   return RET_OK;
 }
 
-STATUS AnfTransform::FindTrainOp(const FuncGraphPtr &func_graph) {
+STATUS AnfTransform::MarkTrainOp(const FuncGraphPtr &func_graph) {
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNodePtr>(node)) {
@@ -140,14 +140,14 @@ STATUS AnfTransform::FindTrainOp(const FuncGraphPtr &func_graph) {
     }
     if (opt::IsTrainOp(cnode)) {
       prim->AddAttr("trainOp", MakeValue(true));
-      auto status = FindInputCnode(func_graph, cnode);
+      auto status = MarkTrainInputOp(func_graph, cnode);
       if (status != RET_OK) {
-        MS_LOG(ERROR) << "FindInputCnode failed.";
+        MS_LOG(ERROR) << "MarkTrainInputOp failed.";
         return RET_ERROR;
       }
-      status = FindSameParameterCnode(func_graph, cnode);
+      status = MarkTrainWeightSharingOp(func_graph, cnode);
       if (status != RET_OK) {
-        MS_LOG(ERROR) << "FindSameParameterCnode failed.";
+        MS_LOG(ERROR) << "MarkTrainWeightSharingOp failed.";
         return RET_ERROR;
       }
     }
@@ -156,9 +156,9 @@ STATUS AnfTransform::FindTrainOp(const FuncGraphPtr &func_graph) {
 }
 
 int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto status = FindTrainOp(old_graph);
+  auto status = MarkTrainOp(old_graph);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "FindTrainOp failed.";
+    MS_LOG(ERROR) << "MarkTrainOp failed.";
     return RET_ERROR;
   }
   CHECK_NULL_RETURN(config);
@@ -166,33 +166,32 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   CHECK_NULL_RETURN(optimizer);
   auto fusion_pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
   CHECK_NULL_RETURN(fusion_pm);
-  // for now - training is not supporting fuse operations
-  if (!config->trainModel) {
-    // remove quantdtype when awaretraining
-    fusion_pm->AddPass(std::make_shared<opt::SqueezeFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::TransposeFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::ReshapeReshapeFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>(config->fmk));
-    fusion_pm->AddPass(std::make_shared<opt::ConvScaleFusion>(config->fmk));
-    fusion_pm->AddPass(std::make_shared<opt::TfNormFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::BatchMatMulFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::TfliteLstmCellFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::TfLstmCellFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::TfBidirectionGruFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::TfGeLUFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::OnnxGeLUFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::TfliteRelPosMultiHeadAttentionFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::GLUFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
-    fusion_pm->AddPass(std::make_shared<opt::AffineFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::AffineActivationFusion>());
-  }
+
+  // The training model only does the fusion of the inference part
+  // remove quantdtype when awaretraining
+  fusion_pm->AddPass(std::make_shared<opt::SqueezeFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::TransposeFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::ReshapeReshapeFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>(config->fmk));
+  fusion_pm->AddPass(std::make_shared<opt::ConvScaleFusion>(config->fmk));
+  fusion_pm->AddPass(std::make_shared<opt::TfNormFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::BatchMatMulFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::TfliteLstmCellFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::TfLstmCellFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::TfBidirectionGruFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::TfGeLUFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::OnnxGeLUFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::TfliteRelPosMultiHeadAttentionFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::GLUFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
+  fusion_pm->AddPass(std::make_shared<opt::AffineFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::AffineActivationFusion>());
   if (config->fmk == converter::kFmkTypeMs && !config->trainModel) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();
     if (remove_unused_cast_pass == nullptr) {

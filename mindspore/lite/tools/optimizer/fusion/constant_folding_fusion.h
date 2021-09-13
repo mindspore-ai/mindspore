@@ -36,6 +36,7 @@ class ConstFoldPass : public PatternProcessPass {
   ~ConstFoldPass() override = default;
 
  private:
+  bool CheckCanFusion(const AnfNodePtr &input_node) const;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
   bool PreProcess() const;
   converter::FmkType fmk_type_{converter::kFmkTypeMs};

@@ -41,8 +41,14 @@ const AnfNodePtr SigmoidMulFusion::Process(const FuncGraphPtr &func_graph, const
   }
   auto mul_cnode = node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(mul_cnode != nullptr, nullptr);
+  if (IsMarkedTrainOp(mul_cnode)) {
+    return nullptr;
+  }
   auto activation_cnode = mul_cnode->input(kInputIndexTwo)->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(activation_cnode != nullptr, nullptr);
+  if (IsMarkedTrainOp(activation_cnode)) {
+    return nullptr;
+  }
   // activation must sigmoid
   auto activation_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(activation_cnode->input(0));
   MS_CHECK_TRUE_RET(activation_prim != nullptr, nullptr);

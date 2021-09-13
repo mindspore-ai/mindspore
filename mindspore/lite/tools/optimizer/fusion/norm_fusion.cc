@@ -436,6 +436,9 @@ const AnfNodePtr NormFusion::Process(const FuncGraphPtr &func_graph, const AnfNo
     return nullptr;
   }
   auto add2_cnode = node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(add2_cnode)) {
+    return nullptr;
+  }
   float epsilon = 0.0f;
   int begin_norm_axis = 0;
   int begin_params_axis = 0;

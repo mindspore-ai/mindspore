@@ -84,22 +84,29 @@ const BaseRef ConvBiasaddFusion::DefinePattern() const {
   return VectorRef({is_add, is_conv, is_const});
 }
 
-bool ConvBiasaddFusion::CheckCanFusion(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
-  MS_ASSERT(func_graph != nullptr && node != nullptr);
+CNodePtr ConvBiasaddFusion::GetAddCnode(const AnfNodePtr &node) const {
+  MS_ASSERT(node != nullptr);
   if (!utils::isa<CNode>(node)) {
-    return false;
+    return nullptr;
   }
   auto add_cnode = node->cast<CNodePtr>();
-  if (add_cnode->size() != kInputSizeThree) {
-    return false;
+  if (add_cnode->size() != kInputSizeThree || IsMarkedTrainOp(add_cnode)) {
+    return nullptr;
   }
+  return add_cnode;
+}
+
+bool ConvBiasaddFusion::CheckCanFusion(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const {
+  MS_ASSERT(func_graph != nullptr);
+  auto add_cnode = GetAddCnode(node);
+  MS_CHECK_TRUE_RET(add_cnode != nullptr, false);
   auto prim_add = GetValueNode<PrimitivePtr>(add_cnode->input(0));
   MS_ASSERT(prim_add != nullptr);
   auto add_act_ptr = prim_add->GetAttr(ops::kActivationType);
   auto add_act = add_act_ptr == nullptr ? mindspore::NO_ACTIVATION
                                         : static_cast<mindspore::ActivationType>(GetValue<int64_t>(add_act_ptr));
   auto conv_cnode = add_cnode->input(1)->cast<CNodePtr>();
-  if (conv_cnode == nullptr) {
+  if (conv_cnode == nullptr || IsMarkedTrainOp(conv_cnode)) {
     return false;
   }
   if (IsMultiOutputTensors(func_graph, conv_cnode)) {

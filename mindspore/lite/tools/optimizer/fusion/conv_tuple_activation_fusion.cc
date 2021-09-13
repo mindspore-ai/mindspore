@@ -44,7 +44,9 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
   if (act_node == nullptr || act_node->size() != kInputSizeTwo) {
     return nullptr;
   }
-
+  if (IsMarkedTrainOp(act_node)) {
+    return nullptr;
+  }
   if (!CheckPrimitiveType(act_node, prim::kPrimActivation)) {
     return nullptr;
   }
@@ -58,12 +60,18 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
   MS_ASSERT(tuple_node != nullptr);
   auto tuple_cnode = tuple_node->cast<CNodePtr>();
   MS_CHECK_TRUE_RET(tuple_cnode != nullptr, nullptr);
+  if (IsMarkedTrainOp(tuple_cnode)) {
+    return nullptr;
+  }
   auto conv_node = tuple_cnode->input(1);
   if (conv_node != nullptr && conv_node->isa<CNode>()) {
+    auto conv_cnode = conv_node->cast<CNodePtr>();
+    if (IsMarkedTrainOp(conv_cnode)) {
+      return nullptr;
+    }
     if (IsMultiOutputTensors(func_graph, conv_node)) {
       return nullptr;
     }
-    auto conv_cnode = conv_node->cast<CNodePtr>();
     if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
       auto primc = GetValueNode<std::shared_ptr<mindspore::ops::Conv2DFusion>>(conv_cnode->input(0));
       MS_ASSERT(primc != nullptr);

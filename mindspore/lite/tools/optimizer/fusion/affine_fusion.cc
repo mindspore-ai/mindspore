@@ -52,6 +52,9 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   auto matmul_node = node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(matmul_node)) {
+    return nullptr;
+  }
   if (matmul_node == nullptr) {
     MS_LOG(ERROR) << "the matmul_node is null.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -67,6 +70,9 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   auto splice_node = pre_node->cast<CNodePtr>();
+  if (IsMarkedTrainOp(splice_node)) {
+    return nullptr;
+  }
   if (pre_node == nullptr) {
     MS_LOG(ERROR) << "the splice_node is null.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);

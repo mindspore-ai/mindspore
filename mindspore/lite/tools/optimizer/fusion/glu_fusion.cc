@@ -72,6 +72,9 @@ const AnfNodePtr GLUFusion::Process(const FuncGraphPtr &func_graph, const AnfNod
   if (!utils::isa<CNodePtr>(node)) {
     return nullptr;
   }
+  if (IsMarkedTrainOp(utils::cast<CNodePtr>(node))) {
+    return nullptr;
+  }
   auto cnode = CreateGLUNode(func_graph, node, equiv);
   if (cnode == nullptr) {
     MS_LOG(DEBUG) << "new glu node failed.";

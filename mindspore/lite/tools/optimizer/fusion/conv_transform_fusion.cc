@@ -95,13 +95,18 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   if (transform_node == nullptr || transform_node->size() < kInputSizeTwo) {
     return nullptr;
   }
+  if (IsMarkedTrainOp(transform_node)) {
+    return nullptr;
+  }
 
   auto pre_node = transform_node->input(1);
   auto conv_node = pre_node->cast<CNodePtr>();
   if (conv_node == nullptr || IsMultiOutputTensors(func_graph, conv_node) || IsVariableWeightConv(conv_node)) {
     return nullptr;
   }
-
+  if (IsMarkedTrainOp(conv_node)) {
+    return nullptr;
+  }
   auto abstr = transform_node->abstract();
   int kernel_nums = GetOutChannels(conv_node);
   if (kernel_nums <= 0) {
