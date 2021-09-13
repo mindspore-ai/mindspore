@@ -523,7 +523,7 @@ def set_context(**kwargs):
     Set context for running environment.
 
     Context should be configured before running your program. If there is no configuration,
-    it will be automatically obtained according to the device target by default.
+    it will be automatically set according to the device target by default.
 
     Note:
         Attribute name is required for setting attributes.
@@ -581,7 +581,7 @@ def set_context(**kwargs):
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
             To save the data to a specified directory, set save_graphs_path. If the specified directory does not exist,
             the system will automatically create the directory.
-        enable_dump (bool): Whether to enable dump. Default: False.
+        enable_dump (bool): Whether to enable dump on Ascend. Default: False.
         save_dump_path (str): When the program is executed on Ascend, operators can dump data in this path.
             The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
             So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
@@ -591,10 +591,10 @@ def set_context(**kwargs):
 
             - output: The saving path of the profiling collection result. The directory specified by this
               parameter should be created in advance in the training environment (container or host side) and ensure
-              that the running user configured during installation has read and write permissions.It supports the
+              that the running user configured during installation has read and write permissions. It supports the
               configuration of absolute or relative paths(relative to the current path when executing the command line).
               The absolute path configuration starts with '/', for example:/home/data/output.
-              The relative path configuration starts with the directory name,for example:output.
+              The relative path configuration starts with the directory name, for example:output.
 
             - training_trace: collect iterative trajectory data, that is, the training task and software information of
               the AI software stack, to realize performance analysis of the training task, focusing on data
@@ -608,40 +608,39 @@ def set_context(**kwargs):
             - aicpu: collect profiling data enhanced by aicpu data. The value is on/off.
 
             - fp_point: specify the start position of the forward operator of the training network iteration trajectory,
-              which is used to record the start timestamp of the forward calculation.The configuration value is the name
-              of the first operator specified in the forward direction. when the value is empty,the system will
+              which is used to record the start timestamp of the forward calculation. The configuration value is the name
+              of the first operator specified in the forward direction. when the value is empty, the system will
               automatically obtain the forward operator name.
 
             - bp_point: specify the end position of the iteration trajectory reversal operator of the training network,
               record the end timestamp of the backward calculation. The configuration value is the name of the operator
-              after the specified reverse. when the value is empty,the system will automatically obtain the backward
+              after the specified reverse. when the value is empty, the system will automatically obtain the backward
               operator name.
 
             - aic_metrics: the values are as follows:
               ArithmeticUtilization: percentage statistics of various calculation indicators.
-              PipeUtilization: the time-consuming ratio of calculation unit and handling unit,this item is
+              PipeUtilization: the time-consuming ratio of calculation unit and handling unit, this item is
               the default value.
               Memory: percentage of external memory read and write instructions.
               MemoryL0: percentage of internal memory read and write instructions.
               ResourceConflictRatio: proportion of pipline queue instructions.
 
-            The profiling_options is like '{"output":'/home/data/output','training_trace':'on'}'
+            The profiling_options is like '{"output":'/home/data/output', 'training_trace':'on'}'
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
             a file by default, and turns off printing to the screen. If the file exists already, add a timestamp
             suffix to the file. Default: './'.
-            You can save the print operator data to a file and disable the screen printing function.
             If the saved file already exists, the timestamp suffix will be added to the file. Saving data to a file
             solves the problem of data loss in screen printing when a large amount of data is generated.
         env_config_path (str): Config path for DFX.
-            Through context.set_ context(env_ config_ path="./mindspore_config.json ")
+            Through context.set_context(env_config_path="./mindspore_config.json ")
             configure RDR:
                 enable: controls whether the RDR function is enabled.
                 path: sets the path where RDR saves data. The current path must be absolute.
             Memory reuse:
                 mem_Reuse: controls whether the memory reuse function is turned on. When set to True,
                 the memory reuse function is turned on. When set to False, the memory reuse function is turned off.
-        precompile_only (bool): Whether to only precompile the network, Default: False.
-            If set to True,the network will only be compiled, not executed.
+        precompile_only (bool): Whether to only precompile the network. Default: False.
+            If set to True, the network will only be compiled, not executed.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
             Each node has a scope. A scope of a subnode is the name of its parent node. If reserve_class_name_in_scope
             is set, the class name will be saved after keyword 'net-' in the scope.
@@ -702,11 +701,11 @@ def set_context(**kwargs):
             When grad_for_scalar is set to True, the function's scalar input can be derived.
             The default value is False. Because the back-end does not support scaling operations currently,
             this interface only supports simple operations that can be deduced by the front-end.
-        save_compile_cache (bool): Whether to cache the graph compiled by frontend. Default: False.
+        save_compile_cache (bool): Whether to cache the graph compiled by front-end. Default: False.
             After save_compile_cache is set to True, a hardware-independent compilation cache is
-            generated and exported to a mindir file, This is an experimental prototype that is
+            generated and exported to a Mindir file, This is an experimental prototype that is
             subject to change and/or deletion.
-        load_compile_cache (bool): Whether to use the cache of the graph compiled by frontend.
+        load_compile_cache (bool): Whether to use the cache of the graph compiled by front-end.
             This parameter must be used together with save_compile_cache. After save_compile_cache is set to True,
             a hardware-independent compilation cache is generated and exported to a Mindir file.
             When the network is executed again, if load_compile_cache is set to True, the compile cache is loaded.
