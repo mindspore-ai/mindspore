@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 BufferGetKernel::BufferGetKernel() : element_nums_(0), capacity_(0) {}
 
 BufferGetKernel::~BufferGetKernel() {}
