@@ -185,6 +185,8 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
 AbstractBasePtr InferImplFusedSparseAdam(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const AbstractBasePtrList &args_spec_list) {
   // the output is useless, so we dont have to focus on the output shape
+  auto name = primitive->name();
+  MS_LOG(DEBUG) << "Infer shape for op :" << name;
   constexpr size_t dx_index = 1;
   constexpr size_t dscale_index = 2;
   constexpr size_t dbias_index = 3;

@@ -128,6 +128,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
+  auto name = prim->name();
+  MS_LOG(DEBUG) << "Infer data type for : " << name;
   auto input_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
   auto input_tensor_type = input_type->cast<TensorTypePtr>();

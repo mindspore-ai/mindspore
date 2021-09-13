@@ -30,7 +30,8 @@ namespace {
 constexpr int64_t k16 = 16;
 constexpr int64_t k4 = 4;
 constexpr int kDims2 = 2;
-enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims, N_ncdhw = 0, C_ncdhw, D_ncdhw, H_ncdhw, W_ncdhw, kNcdhwDims };
+enum k2Axis : int { kN = 0, kC, kH, kW, kNchwDims };
+enum k3Axis : int { N_ncdhw = 0, C_ncdhw, D_ncdhw, H_ncdhw, W_ncdhw, kNcdhwDims };
 RangePair PaddingRangeTo5D(const RangePair &ori_range) {
   RangePair dst_range(kNcdhwDims, std::pair<int64_t, int64_t>(1, 1));
   switch (ori_range.size()) {
@@ -78,7 +79,7 @@ RangePair PaddingRangeTo4D(const RangePair &ori_range) {
       dst_range[kW] = ori_range[kH];
       break;
     case kNchwDims:
-      std::copy(ori_range.begin(), ori_range.end(), dst_range.begin());
+      (void)std::copy(ori_range.begin(), ori_range.end(), dst_range.begin());
       break;
     default:
       MS_LOG(EXCEPTION) << "Unexpected range size: " << ori_range.size();
@@ -135,7 +136,7 @@ RangePair FracNZRange(const RangePair &range) {
   if (range.size() < kDims2) {
     MS_LOG(EXCEPTION) << "Format FracNZ can not support range size: " << range.size();
   } else {
-    std::copy(range.begin(), range.end() - kDims2, std::back_inserter(dst_range));
+    (void)std::copy(range.begin(), range.end() - kDims2, std::back_inserter(dst_range));
   }
   const std::pair<int64_t, int64_t> c0 = {k16, k16};
   const std::pair<int64_t, int64_t> w1 = {(range[range.size() - 1].first - 1) / k16 + 1,
