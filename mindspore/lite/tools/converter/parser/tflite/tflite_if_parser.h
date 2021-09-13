@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SQUEEZE_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SQUEEZE_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_IF_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_IF_PARSER_H
 
 #include <memory>
 #include <vector>
 #include <map>
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
+#include "tools/converter/ops/ops_def.h"
 
 namespace mindspore {
 namespace lite {
-class TfliteSqueezeParser : public TfliteNodeParser {
+class TfliteIfParser : public TfliteNodeParser {
  public:
-  TfliteSqueezeParser() : TfliteNodeParser("Squeeze") {}
+  TfliteIfParser() : TfliteNodeParser("If") {}
 
-  ~TfliteSqueezeParser() override = default;
+  ~TfliteIfParser() override = default;
 
   ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
@@ -38,4 +39,4 @@ class TfliteSqueezeParser : public TfliteNodeParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SQUEEZE_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_IF_PARSER_H

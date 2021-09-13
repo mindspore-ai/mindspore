@@ -22,18 +22,14 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteRangeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::Range>();
-
   prim->set_d_type(0);
 
   MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   MS_ASSERT(tflite_model != nullptr);
-  const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
-    return nullptr;
-  }
   std::vector<int64_t> limit;
   std::vector<int64_t> delta;
   int status = GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, limit);

@@ -86,8 +86,9 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   param->param_length_ = (int)(input->shape_size_);
   output->shape_size_ = input->shape_size_;
 
-  if (InitBeginAndSizeParam(inputs, param) != NNACL_OK) {
-    return NNACL_ERR;
+  ret = InitBeginAndSizeParam(inputs, param);
+  if (ret != NNACL_OK) {
+    return ret;
   }
 
   /* infer output shape information */
@@ -105,7 +106,7 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     if (begin[i] < 0) {
       return NNACL_PARAM_INVALID;
     }
-    if (input->shape_[i] <= begin[i]) {
+    if (input->shape_[i] < begin[i]) {
       return NNACL_PARAM_INVALID;
     }
     if (size[i] > (input->shape_[i] - begin[i])) {

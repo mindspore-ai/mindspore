@@ -23,6 +23,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::SparseToDense>();
   return prim.release();

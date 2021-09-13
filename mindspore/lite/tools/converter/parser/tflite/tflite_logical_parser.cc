@@ -24,18 +24,21 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteLogicalAndParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::LogicalAnd>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteLogicalNotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::LogicalNot>();
   return prim.release();
 }
 
 ops::PrimitiveC *TfliteLogicalOrParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                              const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::LogicalOr>();
   return prim.release();

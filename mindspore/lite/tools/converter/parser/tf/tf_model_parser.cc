@@ -790,30 +790,21 @@ STATUS TFModelParser::ConvertSubgraphOutputs(std::map<std::string, const tensorf
     }
     sub_output_nodes.push_back(anf_node);
   }
-  if (MakeAnfGraphOutputs(&sub_output_nodes, sub_func_graph) != RET_OK) {
+  if (MakeAnfGraphOutputs(sub_output_nodes, sub_func_graph) != RET_OK) {
     MS_LOG(ERROR) << "cmake anf graph outputs node error";
     return RET_ERROR;
   }
 
   // hardcode subgraph outputs name
-  if (sub_output_nodes.size() == 1) {
-    if (utils::isa<CNodePtr>(sub_output_nodes[0])) {
-      sub_output_nodes[0]->cast<CNodePtr>()->set_fullname_with_scope(sub_graph_name + "_output_0_cnode");
-    } else if (utils::isa<ParameterPtr>(sub_output_nodes[0])) {
-      sub_output_nodes[0]->cast<ParameterPtr>()->set_name(sub_graph_name + "_output_0_parameter");
-    }
-  } else {
-    for (size_t j = 1; j < sub_output_nodes.size(); j++) {
-      if (utils::isa<CNodePtr>(sub_output_nodes[j])) {
-        sub_output_nodes[j]->cast<CNodePtr>()->set_fullname_with_scope(sub_graph_name + "_output_" +
-                                                                       std::to_string(j - 1) + "_cnode");
-      } else if (utils::isa<ParameterPtr>(sub_output_nodes[j])) {
-        sub_output_nodes[j]->cast<ParameterPtr>()->set_name(sub_graph_name + "_output_" + std::to_string(j - 1) +
-                                                            "_parameter");
-      }
+  for (size_t j = 0; j < sub_output_nodes.size(); j++) {
+    if (utils::isa<CNodePtr>(sub_output_nodes[j])) {
+      sub_output_nodes[j]->cast<CNodePtr>()->set_fullname_with_scope(sub_graph_name + "_output_" + std::to_string(j) +
+                                                                     "_cnode");
+    } else if (utils::isa<ParameterPtr>(sub_output_nodes[j])) {
+      sub_output_nodes[j]->cast<ParameterPtr>()->set_name(sub_graph_name + "_output_" + std::to_string(j) +
+                                                          "_parameter");
     }
   }
-
   return RET_OK;
 }
 
@@ -1212,7 +1203,7 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
       }
     }
   }
-  auto status = MakeAnfGraphOutputs(&output_nodes, res_graph_);
+  auto status = MakeAnfGraphOutputs(output_nodes, res_graph_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "make anf graph outputs node error";
     return status;
@@ -1221,22 +1212,22 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
   ConverterContext::GetInstance()->SetGraphOutputTensorNames(graph_output_names_);
   return RET_OK;
 }
-STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph) {
-  if (output_nodes->empty() || anf_graph == nullptr) {
+STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_nodes, const FuncGraphPtr &anf_graph) {
+  if (output_nodes.empty() || anf_graph == nullptr) {
     MS_LOG(ERROR) << "anf output nodes empty or  null anf graph";
     return RET_ERROR;
   }
-  if (output_nodes->size() > 1) {
-    std::vector<AnfNodePtr> *make_tuple_inputs = output_nodes;
+  if (output_nodes.size() > 1) {
+    std::vector<AnfNodePtr> make_tuple_inputs = output_nodes;
     auto make_tuple_prim_ptr = std::make_shared<lite::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
     }
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
-    make_tuple_inputs->insert(make_tuple_inputs->begin(), make_tuple_prim);
-    auto make_tuple_cnode = anf_graph->NewCNode(*make_tuple_inputs);
-    make_tuple_cnode->set_fullname_with_scope("return tuple");
+    make_tuple_inputs.insert(make_tuple_inputs.begin(), make_tuple_prim);
+    auto make_tuple_cnode = anf_graph->NewCNode(make_tuple_inputs);
+    make_tuple_cnode->set_fullname_with_scope("return_tuple");
 
     auto return_prim_ptr = std::make_shared<lite::Return>();
     if (return_prim_ptr == nullptr) {
@@ -1255,7 +1246,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes,
       return RET_NULL_PTR;
     }
     auto value_node = NewValueNode(return_prim_ptr);
-    std::vector<AnfNodePtr> op_inputs{value_node, output_nodes->front()};
+    std::vector<AnfNodePtr> op_inputs{value_node, output_nodes.front()};
     auto return_cnode = anf_graph->NewCNode(op_inputs);
     return_cnode->set_fullname_with_scope("Return");
     anf_graph->set_return(return_cnode);

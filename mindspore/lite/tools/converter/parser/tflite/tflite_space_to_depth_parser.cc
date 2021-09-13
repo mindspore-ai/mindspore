@@ -23,9 +23,9 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSpaceToDepthParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::SpaceToDepth>();
-
   prim->set_format(mindspore::Format::NHWC);
 
   MS_ASSERT(tflite_op != nullptr);

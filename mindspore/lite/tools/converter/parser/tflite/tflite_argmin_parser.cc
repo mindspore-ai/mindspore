@@ -23,6 +23,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteArgminParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::ArgMinFusion>();
 
@@ -31,12 +32,8 @@ ops::PrimitiveC *TfliteArgminParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_top_k(1);
 
   MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   MS_ASSERT(tflite_model != nullptr);
-  const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
-    return nullptr;
-  }
   const auto &axis_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[1]);
   if (axis_tensor == nullptr) {
     MS_LOG(ERROR) << "axis_tensor is nullptr";

@@ -21,19 +21,15 @@
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+ops::PrimitiveC *TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                             const std::unique_ptr<tflite::ModelT> &tfliteModel) {
   auto prim = std::make_unique<ops::Reshape>();
 
   MS_ASSERT(tfliteOp != nullptr);
   MS_ASSERT(tfliteModel != nullptr);
   std::vector<int32_t> shape;
-  const auto &tflite_subgraph = tfliteModel->subgraphs.front();
-  if (tflite_subgraph == nullptr) {
-    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
-    return nullptr;
-  }
-  const auto &tflite_attr = tfliteOp->builtin_options.AsReshapeOptions();
+  const auto &tflite_attr = tflite_op->builtin_options.AsReshapeOptions();
   if (tflite_attr != nullptr) {
     shape.resize(tflite_attr->new_shape.size());
     for (size_t i = 0; i < tflite_attr->new_shape.size(); ++i) {
