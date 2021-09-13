@@ -279,7 +279,9 @@ void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_m
   if (IsDeviceTargetGPU()) {
     if (starting_graph_id == INT32_MAX) {
       starting_graph_id = graph_id;
-    } else if (starting_graph_id == graph_id) {
+    } else if (starting_graph_id == graph_id && !MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+      // Update dump iter for mindrt runtime is done using UpdateIterGPUDump().
+      // Update dump iter for GPU old runtime.
       dump_json_parser.UpdateDumpIter();
     }
     return;
@@ -304,6 +306,12 @@ void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
 
   if (dump_json_parser.async_dump_enabled() || dump_json_parser.e2e_dump_enabled()) {
     UpdateIterDumpSetup(graph, sink_mode);
+  }
+}
+
+void E2eDump::UpdateIterGPUDump() {
+  if (starting_graph_id != INT32_MAX) {
+    DumpJsonParser::GetInstance().UpdateDumpIter();
   }
 }
 

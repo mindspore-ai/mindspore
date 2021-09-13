@@ -274,6 +274,7 @@ void Debugger::Reset() {
   debug_services_ = nullptr;
   graph_proto_list_.clear();
   graph_ptr_list_.clear();
+  graph_ptr_step_vec_.clear();
   MS_LOG(INFO) << "Release Debugger resource.";
 }
 
@@ -282,6 +283,9 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
   if (device_target_ != kGPUDevice) {
     return;
   }
+  E2eDump::UpdateIterGPUDump();
+  // Store graphs that are run in one step.
+  graph_ptr_step_vec_ = graphs;
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
     const auto &graph = graphs[graph_index];
     if (debugger_) {
@@ -430,15 +434,13 @@ void Debugger::PostExecuteGraphDebugger() {
     return;
   }
   // LoadParametersAndConst for all the graphs
-  if (debugger_) {
-    for (auto graph : graph_ptr_list_) {
-      debugger_->LoadParametersAndConst(graph);
-    }
+  for (auto graph : graph_ptr_step_vec_) {
+    debugger_->LoadParametersAndConst(graph);
   }
   // debug used for dump
   if (debugger_ && debugger_->CheckDebuggerDumpEnabled()) {
     // Dump Parameters and consts
-    for (auto graph : graph_ptr_list_) {
+    for (auto graph : graph_ptr_step_vec_) {
       debugger_->Dump(graph);
       if (!debugger_->debugger_enabled()) {
         debugger_->ClearCurrentData();
