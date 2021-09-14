@@ -45,6 +45,8 @@ class E2eDump {
 
   static bool isDatasetGraph(const session::KernelGraph *graph);
 
+  static bool CheckDatasetGraph(const session::KernelGraph *graph);
+
   // Dump data when task error.
   static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                             std::string *kernel_name, const Debugger *debugger);
@@ -77,6 +79,9 @@ class E2eDump {
   static bool IsDeviceTargetGPU();
   static void DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_index, const std::string &dump_path,
                                 bool trans_flag, std::map<std::string, size_t> *const_map, const Debugger *debugger);
+
+  static void UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_mode);
+
   inline static unsigned int starting_graph_id = INT32_MAX;
 };
 }  // namespace mindspore
