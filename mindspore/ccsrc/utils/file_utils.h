@@ -31,7 +31,8 @@ class FileUtils {
                                   std::optional<std::string> *file_name);
   static void ConcatDirAndFileName(const std::optional<std::string> *dir, const std::optional<std::string> *file_name,
                                    std::optional<std::string> *path);
-  static std::optional<std::string> CreateNotExistDirs(const std::string &path);
+  static std::optional<std::string> CreateNotExistDirs(const std::string &path,
+                                                       const bool support_relative_path = false);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_FILE_UTILS_H_
