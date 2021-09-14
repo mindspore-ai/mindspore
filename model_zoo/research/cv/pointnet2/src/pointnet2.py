@@ -14,13 +14,13 @@
 # ============================================================================
 """network definition"""
 
-from src.layers import Dense
-from src.pointnet2_utils import PointNetSetAbstraction
-
 import mindspore.nn as nn
 import mindspore.ops as P
 from mindspore.nn.loss.loss import _Loss
 from mindspore.ops import functional as F
+
+from src.layers import Dense
+from src.pointnet2_utils import PointNetSetAbstraction
 
 
 class PointNet2(nn.Cell):
@@ -57,11 +57,6 @@ class PointNet2(nn.Cell):
     def construct(self, xyz):
         """
         construct method
-        Args:
-            xyz: input
-
-        Returns:
-            output
         """
         if self.normal_channel:
             norm = self.transpose(xyz[:, :, 3:], (0, 2, 1))
@@ -90,12 +85,6 @@ class NLLLoss(_Loss):
     def construct(self, logits, label):
         """
         construct method
-        Args:
-            logits:
-            label:
-
-        Returns:
-            loss value
         """
         label_one_hot = self.one_hot(label, F.shape(logits)[-1], F.scalar_to_array(1.0), F.scalar_to_array(0.0))
         loss = self.reduce_sum(-1.0 * logits * label_one_hot, (1,))

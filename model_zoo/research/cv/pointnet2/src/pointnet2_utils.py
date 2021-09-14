@@ -15,14 +15,14 @@
 """network definition utils"""
 
 import numpy as np
-from src.layers import Conv2d
-
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.numpy as mnp
 import mindspore.ops as P
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import constexpr
+
+from src.layers import Conv2d
 
 
 @constexpr
@@ -160,9 +160,6 @@ def sample_and_group_all(xyz, points):
 def sample_and_group(npoint, radius, nsample, xyz, points):
     """
     Input:
-        npoint:
-        radius:
-        nsample:
         xyz: input points position data, [B, N, 3]
         points: input points data, [B, N, D]
     Return:

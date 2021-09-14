@@ -19,13 +19,14 @@ import ast
 import os
 import time
 
-import numpy as np
-
 import mindspore.dataset as ds
 from mindspore import context
+from mindspore.nn.metrics import Accuracy
+from mindspore.train import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+
 from src.dataset import DatasetGenerator
-from src.pointnet2 import PointNet2
+from src.pointnet2 import PointNet2, NLLLoss
 
 
 def parse_args():
@@ -40,96 +41,78 @@ def parse_args():
     parser.add_argument('--process_data', action='store_true', default=False, help='save data offline')
     parser.add_argument('--use_uniform_sample', action='store_true', default=False, help='use uniform sampiling')
 
-    parser.add_argument('--platform', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='run platform')
-    parser.add_argument('--modelarts', type=ast.literal_eval, default=False)
+    parser.add_argument('--platform', type=str, default='Ascend', help='run platform')
+    parser.add_argument('--enable_modelarts', type=ast.literal_eval, default=False)
     parser.add_argument('--data_url', type=str)
     parser.add_argument('--train_url', type=str)
-    parser.add_argument('--eval_out_url', type=str)
 
     return parser.parse_known_args()[0]
 
 
-if __name__ == '__main__':
-    print('PARAMETER ...')
+def run_eval():
+    """Run eval"""
     args = parse_args()
-    print(args)
-    device_id = int(os.getenv('DEVICE_ID'))
 
-    if args.modelarts:
+    # INIT
+    device_id = int(os.getenv('DEVICE_ID', '0'))
+
+    if args.enable_modelarts:
         import moxing as mox
 
         local_data_url = "/cache/data"
         mox.file.copy_parallel(args.data_url, local_data_url)
         pretrained_ckpt_path = "/cache/pretrained_ckpt/pretrained.ckpt"
         mox.file.copy_parallel(args.pretrained_ckpt, pretrained_ckpt_path)
-        local_eval_url_out = "/cache/eval_out"
+        local_eval_url = "/cache/eval_out"
+        mox.file.copy_parallel(args.train_url, local_eval_url)
     else:
         local_data_url = args.data_path
         pretrained_ckpt_path = args.pretrained_ckpt
 
     if args.platform == "Ascend":
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id)
         context.set_context(max_call_depth=2048)
-        context.set_context(device_id=device_id)
     else:
         raise ValueError("Unsupported platform.")
+
+    print(args)
 
     # DATA LOADING
     print('Load dataset ...')
     data_path = local_data_url
 
-    test_dataset_generator = DatasetGenerator(root=data_path,
-                                              args=args, split='test',
-                                              process_data=args.process_data)
-    test_dataset = ds.GeneratorDataset(test_dataset_generator,
-                                       ["data", "label"],
-                                       num_parallel_workers=16,
-                                       shuffle=False)
-    test_dataset = test_dataset.batch(batch_size=args.batch_size,
-                                      drop_remainder=True,
-                                      num_parallel_workers=16)
-
-    steps_per_epoch = test_dataset.get_dataset_size()
+    num_workers = 8
+    test_ds_generator = DatasetGenerator(root=data_path, args=args, split='test', process_data=args.process_data)
+    test_ds = ds.GeneratorDataset(test_ds_generator, ["data", "label"], num_parallel_workers=num_workers, shuffle=False)
+    test_ds = test_ds.batch(batch_size=args.batch_size, drop_remainder=True, num_parallel_workers=num_workers)
 
     # MODEL LOADING
-    num_class = args.num_category
-
-    net = PointNet2(num_class, args.use_normals)
+    net = PointNet2(args.num_category, args.use_normals)
 
     # load checkpoint
     print("Load checkpoint: ", args.pretrained_ckpt)
     param_dict = load_checkpoint(pretrained_ckpt_path)
     load_param_into_net(net, param_dict)
 
-    net.set_train(False)
+    net_loss = NLLLoss()
 
-    # Start Eval
+    model = Model(net, net_loss, metrics={"Accuracy": Accuracy()})
+
+    # EVAL
+    net.set_train(False)
     print('Starting eval ...')
     time_start = time.time()
     print('Time: ', time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime()))
 
-    acc = []
-    total_correct = 0
-    total_seen = 0
-    for batch_id, data in enumerate(test_dataset.create_dict_iterator()):
-        time_step = time.time()
-        points = data['data']
-        label = data['label']
-        pred = net(points)
-        pred_choice = np.argmax(pred.asnumpy(), axis=1)
-        correct = (pred_choice == label.asnumpy()).sum()
-        acc.append(correct / label.shape[0])
-        total_correct += correct
-        total_seen += label.shape[0]
-        cost_time = time.time() - time_step
-        print('batch: ', batch_id + 1, '/', steps_per_epoch,
-              '\t| accuracy: ', "%.4f" % acc[-1],
-              '\t| step_time: ', "%.2f" % cost_time, ' s')
+    result = model.eval(test_ds, dataset_sink_mode=True)
+    print("result : {}".format(result))
 
-    print("\nAccuracy: ", total_correct / total_seen)
-    print("\nCheckPoint Path: ", args.pretrained_ckpt)
-    print('\nEnd of eval.')
-    print('\nTotal time cost: ', "%.2f" % ((time.time() - time_start) / 60), ' min')
+    # END
+    print('Total time cost: {} min'.format("%.2f" % ((time.time() - time_start) / 60)))
 
-    if args.modelarts == "True":
-        mox.file.copy_parallel(local_eval_url_out, args.eval_url)
+    if args.enable_modelarts:
+        mox.file.copy_parallel(local_eval_url, args.train_url)
+
+
+if __name__ == '__main__':
+    run_eval()

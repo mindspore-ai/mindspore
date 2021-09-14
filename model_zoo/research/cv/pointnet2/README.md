@@ -1,6 +1,7 @@
 # Contents
 
-- [PointNet++ Description](#PointNet++-description)
+- [Contents](#contents)
+- [PointNet2 Description](#pointnet2-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
@@ -14,12 +15,12 @@
         - [Evaluation](#evaluation)
 - [Model Description](#model-description)
     - [Performance](#performance)
-        - [Evaluation Performance](#evaluation-performance)
+        - [Training Performance](#training-performance)
         - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-# [PointNet++ Description](#contents)
+# [PointNet2 Description](#contents)
 
 PointNet++ was proposed in 2017, it is a hierarchical neural network that applies PointNet recursively on a nested
 partitioning of the input point set. By exploiting metric space distances, this network is able to learn local features
@@ -57,27 +58,27 @@ Dataset used: alignment [ModelNet40](<https://shapenet.cs.stanford.edu/media/mod
     - [MindSpore](https://www.mindspore.cn/install)
 - For more information, please check the resources below：
     - [MindSpore Tutorials](https://www.mindspore.cn/tutorials/zh-CN/master/index.html)
-    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/docs/api/zh-CN/r1.3/index.html)
 
 # [Quick Start](#contents)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-```Shell
+```shell
 # Run stand-alone training
-bash scripts/run_standalone_train.sh [DATA_PATH] [PRETRAINDE_CKPT] [LOG_DIR] [MODELARTS]
+bash scripts/run_standalone_train.sh [DATA_PATH] [SAVE_DIR] [PRETRAINDE_CKPT(optional)]
 # example:
-bash scripts/run_standalone_train.sh modelnet40_normal_resampled log/pointnet2.ckpt log 'False'
+bash scripts/run_standalone_train.sh modelnet40_normal_resampled save pointnet2.ckpt
 
 # Run distributed training
-bash scripts/run_distributed_train.sh [RANK_TABLE_FILE]  [DATA_PATH] [PRETRAINDE_CKPT] [LOG_DIR] [MODELARTS]
+bash scripts/run_distributed_train.sh [RANK_TABLE_FILE] [DATA_PATH] [SAVE_DIR] [PRETRAINDE_CKPT(optional)]
 # example:
-bash scripts/run_standalone_train.sh hccl_8p_01234567_127.0.0.1.json modelnet40_normal_resampled log/pointnet2.ckpt log 'False'
+bash scripts/run_standalone_train.sh hccl_8p_01234567_127.0.0.1.json modelnet40_normal_resampled save pointnet2.ckpt
 
 # Evaluate
-bash scripts/run_eval.sh [DATA_PATH] [CKPT_NAME] [MODELARTS]
+bash scripts/run_eval.sh [DATA_PATH] [CKPT_NAME]
 # example:
-bash scripts/run_eval.sh modelnet40_normal_resampled log/pointnet2.ckpt "False"
+bash scripts/run_eval.sh modelnet40_normal_resampled pointnet2.ckpt
 ```
 
 # [Script Description](#contents)
@@ -92,6 +93,7 @@ bash scripts/run_eval.sh modelnet40_normal_resampled log/pointnet2.ckpt "False"
         │   ├── run_eval.sh              # launch evaluating with ascend platform
         │   └── run_train_ascend.sh      # launch standalone training with ascend platform (1p)
         ├── src
+        │   ├── callbacks.py          # callbacks definition
         │   ├── dataset.py            # data preprocessing
         │   ├── layers.py             # network layers initialization
         │   ├── lr_scheduler.py       # learning rate scheduler
@@ -114,10 +116,10 @@ Major parameters in train.py are as follows:
 --optimizer         # Optimizer for training. Optional values are "Adam", "SGD".
 --data_path         # The path to the train and evaluation datasets.
 --loss_per_epoch    # The times to print loss value per epoch.
---log_dir           # The path to save files generated during training.
+--save_dir           # The path to save files generated during training.
 --use_normals       # Whether to use normals data in training.
 --pretrained_ckpt   # The file path to load checkpoint.
---modelarts         # Whether to use modelarts.
+--enable_modelarts         # Whether to use modelarts.
 ```
 
 # [Training Process](#contents)
@@ -126,19 +128,17 @@ Major parameters in train.py are as follows:
 
 - running on Ascend
 
-```Shell
+```shell
 # Run stand-alone training
-bash scripts/run_standalone_train.sh [DATA_PATH] [PRETRAINDE_CKPT] [LOG_DIR] [MODELARTS]
+bash scripts/run_standalone_train.sh [DATA_PATH] [SAVE_DIR] [PRETRAINDE_CKPT(optional)]
 # example:
-bash scripts/run_standalone_train.sh modelnet40_normal_resampled log/pointnet2.ckpt log 'False'
+bash scripts/run_standalone_train.sh modelnet40_normal_resampled save pointnet2.ckpt
 
 # Run distributed training
-bash scripts/run_distributed_train.sh [RANK_TABLE_FILE] [DATA_PATH] [PRETRAINDE_CKPT] [LOG_DIR] [MODELARTS]
+bash scripts/run_distributed_train.sh [RANK_TABLE_FILE] [DATA_PATH] [SAVE_DIR] [PRETRAINDE_CKPT(optional)]
 # example:
-bash scripts/run_standalone_train.sh hccl_8p_01234567_127.0.0.1.json modelnet40_normal_resampled log/pointnet2.ckpt log 'False'
+bash scripts/run_standalone_train.sh hccl_8p_01234567_127.0.0.1.json modelnet40_normal_resampled save pointnet2.ckpt
 ```
-
-If there is no [PRETRAINDE_CKPT], use "" as a parameter to run the script.
 
 Distributed training requires the creation of an HCCL configuration file in JSON format in advance. For specific
 operations, see the instructions
@@ -148,20 +148,20 @@ After training, the loss value will be achieved as follows:
 
 ```bash
 # train log
-epoch:  1   | batch:  10 / 51   | loss:  3.5503   | step_time: 31.1355  s
-epoch:  1   | batch:  20 / 51   | loss:  3.6631   | step_time: 31.1640  s
-epoch:  1   | batch:  30 / 51   | loss:  3.1155   | step_time: 31.1380  s
-epoch:  1   | batch:  40 / 51   | loss:  3.0222   | step_time: 31.1509  s
-epoch:  1   | batch:  50 / 51   | loss:  2.8573   | step_time: 31.1540  s
-epoch:  2   | batch:  10 / 51   | loss:  2.6613   | step_time: 31.1660  s
-epoch:  2   | batch:  20 / 51   | loss:  3.1501   | step_time: 31.1495  s
-epoch:  2   | batch:  30 / 51   | loss:  2.7178   | step_time: 31.1295  s
-epoch:  2   | batch:  40 / 51   | loss:  2.6925   | step_time: 31.1402  s
-epoch:  2   | batch:  50 / 51   | loss:  2.3370   | step_time: 31.1869  s
+epoch: 1 step: 410, loss is 1.4731973
+epoch time: 704454.051 ms, per step time: 1718.181 ms
+epoch: 2 step: 410, loss is 1.0621885
+epoch time: 471478.224 ms, per step time: 1149.947 ms
+epoch: 3 step: 410, loss is 1.176581
+epoch time: 471530.000 ms, per step time: 1150.073 ms
+epoch: 4 step: 410, loss is 1.0118457
+epoch time: 471498.514 ms, per step time: 1149.996 ms
+epoch: 5 step: 410, loss is 0.47454038
+epoch time: 471535.602 ms, per step time: 1150.087 ms
 ...
 ```
 
-The model checkpoint will be saved in the 'LOG_DIR' directory.
+The model checkpoint will be saved in the 'SAVE_DIR' directory.
 
 # [Evaluation Process](#contents)
 
@@ -171,25 +171,25 @@ Before running the command below, please check the checkpoint path used for eval
 
 - running on Ascend
 
-```Shell
+```shell
 # Evaluate
-bash scripts/run_eval.sh [DATA_PATH] [CKPT_NAME] [MODELARTS]
+bash scripts/run_eval.sh [DATA_PATH] [CKPT_NAME]
 # example:
-bash scripts/run_eval.sh modelnet40_normal_resampled log/pointnet2.ckpt "False"
+bash scripts/run_eval.sh modelnet40_normal_resampled pointnet2.ckpt
 ```
 
-You can view the results through the file "eval_log.txt". The accuracy of the test dataset will be as follows:
+You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:
 
 ```bash
-# grep "Accuracy: " eval_log.txt
-'Accuracy': 0.9129
+# grep "Accuracy: " eval.log
+'Accuracy': 0.9146
 ```
 
 # [Model Description](#contents)
 
 ## [Performance](#contents)
 
-## Evaluation Performance
+## Training Performance
 
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
@@ -203,10 +203,9 @@ You can view the results through the file "eval_log.txt". The accuracy of the te
 | Loss Function              | NLLLoss                                                     |
 | outputs                    | probability                                                 |
 | Loss                       | 0.01                                                        |
-| Speed                      | 1.2 s/step                                                   |
-| Total time                 | 27.3 h                                                       |
-| Checkpoint for Fine tuning | 17 MB (.ckpt file)                                        |
-| Scripts                    | [PointNet++ Script](https://gitee.com/mindspore/mindspore/tree/r1.3/model_zoo/research/cv/pointnet2) |
+| Speed                      | 1.2 s/step (1p)                                             |
+| Total time                 | 27.3 h (1p)                                                 |
+| Checkpoint for Fine tuning | 17 MB (.ckpt file)                                          |
 
 ## Inference Performance
 
@@ -219,7 +218,7 @@ You can view the results through the file "eval_log.txt". The accuracy of the te
 | Dataset             | ModelNet40                  |
 | Batch_size          | 24                          |
 | Outputs             | probability                 |
-| Accuracy            | 91.3%                       |
+| Accuracy            | 91.5% (1p)                  |
 | Total time          | 2.5 min                     |
 
 # [Description of Random Situation](#contents)
