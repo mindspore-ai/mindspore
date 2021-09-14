@@ -63,6 +63,7 @@ struct OpExecInfo {
   py::dict op_attrs;
 #endif
   std::vector<int64_t> inputs_mask;
+  bool lazy_build = false;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
 

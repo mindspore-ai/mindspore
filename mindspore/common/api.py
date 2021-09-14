@@ -394,6 +394,12 @@ class _PynativeExecutor:
     def sync(self):
         self._executor.sync()
 
+    def set_lazy_build(self, enable):
+        self._executor.set_lazy_build(enable)
+
+    def execute_all_task(self):
+        self._executor.execute_all_task()
+
     def grad_ms_function(self, output, *args):
         return self._executor.grad_ms_function(output, *args)
 
@@ -415,6 +421,15 @@ class _PynativeExecutor:
     def parameter_broadcast(self, obj, phase, auto_parallel_mode):
         if BROADCAST_PHASE not in phase and _get_parameter_broadcast():
             _parameter_broadcast(obj, auto_parallel_mode)
+
+    def enter_cell(self):
+        self._executor.enter_cell()
+
+    def exit_cell(self):
+        self._executor.exit_cell()
+
+    def is_top_cell(self):
+        return self._executor.is_top_cell()
 
     def __call__(self, obj, *args, **kwargs):
         args = args + tuple(kwargs.values())

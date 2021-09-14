@@ -318,6 +318,7 @@ class ForwardExecutor {
   std::unordered_map<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
   void ClearRes();
   CNodePtr ConstructForwardGraph(const OpExecInfoPtr &op_exec_info);
+  void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
 
  private:
   GradExecutorPtr grad() const;
@@ -350,6 +351,7 @@ class ForwardExecutor {
   PrimAbsCache prim_abs_list_;
   ImplicitCastCache implicit_cast_map_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
+  bool lazy_build_{false};
 };
 
 class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
@@ -392,7 +394,11 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void ClearRes();
   // Sync stream
   void Sync();
+  void SetLazyBuild(bool enable);
   void ExecuteAllTask();
+  void EnterCell();
+  void ExitCell();
+  bool IsTopCell() const;
 
  private:
   PynativeExecutor() = default;
@@ -401,6 +407,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static std::mutex instance_lock_;
   static ForwardExecutorPtr forward_executor_;
   static GradExecutorPtr grad_executor_;
+  uint32_t cell_depth_{0};
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;

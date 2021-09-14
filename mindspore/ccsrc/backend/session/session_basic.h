@@ -62,6 +62,7 @@ struct OpRunInfo {
   AbstractBasePtr abstract;
   bool is_dynamic_shape = false;
   bool is_auto_mixed_precision = false;
+  bool lazy_build = false;
   std::string next_op_name = "";
 #if defined(__APPLE__)
   int next_input_index = 0;
