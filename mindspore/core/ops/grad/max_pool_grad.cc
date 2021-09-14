@@ -19,8 +19,7 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr MaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr MaxPoolGradInfer(const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(input_args[0]->BuildValue());
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto tensor_type = input_args[0]->BuildType()->cast<TensorTypePtr>();

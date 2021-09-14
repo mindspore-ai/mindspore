@@ -40,9 +40,9 @@ size_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &pr
       if (max_shape.empty()) {
         MS_LOG(EXCEPTION) << prim_name << " input shape is dynamic, but max shape is empty.";
       }
-      return max_shape[0];
+      return static_cast<size_t>(max_shape[0]);
     }
-    return input_shape[0];
+    return static_cast<size_t>(input_shape[0]);
   } else if (input_arg->isa<abstract::AbstractTuple>()) {
     auto x_shape = dyn_cast<abstract::AbstractTuple>(input_arg);
     auto x_shape_data = x_shape->elements();
