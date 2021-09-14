@@ -389,7 +389,10 @@ void CheckTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_ou
   if (ori_shape.empty()) {
     ori_shape.emplace_back(1);
   }
-  shape = ori_shape;
+  shape = TbeJsonUtils::GetOutputDeviceShapeForTbeBuild(anf_node, node_out_idx);
+  if (shape.empty()) {
+    shape.emplace_back(1);
+  }
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
   auto format = AnfAlgo::GetOutputFormat(anf_node, node_out_idx);
   format = TbeAdapter::FormatPass(format, ori_shape.size());
@@ -407,11 +410,14 @@ void CheckTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t re
                                            nlohmann::json *input_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
   GenDesJsonCommon(input_desc);
-  auto shape = TbeJsonUtils::GetInputOriShapeForTbeBuild(anf_node, real_input_index);
+  auto ori_shape = TbeJsonUtils::GetInputOriShapeForTbeBuild(anf_node, real_input_index);
+  if (ori_shape.empty()) {
+    ori_shape.emplace_back(1);
+  }
+  auto shape = TbeJsonUtils::GetInputDeviceShapeForTbeBuild(anf_node, real_input_index);
   if (shape.empty()) {
     shape.emplace_back(1);
   }
-  auto ori_shape = shape;
 
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
   auto format = AnfAlgo::GetInputFormat(anf_node, real_input_index);
