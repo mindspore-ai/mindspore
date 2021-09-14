@@ -18,6 +18,8 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
+#include <utility>
 #include "fl/armour/cipher/cipher_shares.h"
 
 namespace mindspore {
@@ -52,7 +54,7 @@ bool GetSecretsKernel::CountForGetSecrets(const std::shared_ptr<FBBuilder> &fbb,
   return true;
 }
 
-bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   bool response = false;
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();

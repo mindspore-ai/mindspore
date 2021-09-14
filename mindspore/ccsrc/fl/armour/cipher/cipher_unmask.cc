@@ -28,17 +28,24 @@ bool CipherUnmask::UnMask(const std::map<std::string, AddressPtr> &data) {
 
   bool ret = cipher_init_->cipher_meta_storage_.GetClientNoisesFromServer(fl::server::kCtxClientNoises, &noise);
   if (!ret || noise.size() != cipher_init_->featuremap_) {
-    MS_LOG(ERROR) << " CipherMgr UnMask ERROR";
+    MS_LOG(WARNING) << "Client noises is not ready";
     return false;
   }
 
   size_t data_size = fl::server::LocalMetaStore::GetInstance().value<size_t>(fl::server::kCtxFedAvgTotalDataSize);
+  if (data_size == 0) {
+    MS_LOG(ERROR) << "FedAvgTotalDataSize equals to 0";
+    return false;
+  }
   int sum_size = 0;
   for (auto iter = data.begin(); iter != data.end(); ++iter) {
-    int size_data = iter->second->size / sizeof(float);
+    if (iter->second == nullptr) {
+      MS_LOG(ERROR) << "AddressPtr is nullptr";
+      return false;
+    }
+    size_t size_data = iter->second->size / sizeof(float);
     float *in_data = reinterpret_cast<float *>(iter->second->addr);
-    MS_LOG(INFO) << " weight name : " << iter->first;
-    for (int i = 0; i < size_data; ++i) {
+    for (size_t i = 0; i < size_data; ++i) {
       in_data[i] = in_data[i] + noise[i + sum_size] / data_size;
     }
     sum_size += size_data;

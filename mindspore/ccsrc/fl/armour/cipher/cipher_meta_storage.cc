@@ -21,6 +21,10 @@ namespace armour {
 
 void CipherMetaStorage::GetClientSharesFromServer(
   const char *list_name, std::map<std::string, std::vector<clientshare_str>> *clients_shares_list) {
+  if (clients_shares_list == nullptr) {
+    MS_LOG(ERROR) << "input clients_shares_list is nullptr";
+    return;
+  }
   const fl::PBMetadata &clients_shares_pb_out =
     fl::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
   const fl::ClientShares &clients_shares_pb = clients_shares_pb_out.client_shares();
@@ -29,7 +33,8 @@ void CipherMetaStorage::GetClientSharesFromServer(
     std::string fl_id = iter->first;
     const fl::SharesPb &shares_pb = iter->second;
     std::vector<clientshare_str> encrpted_shares_new;
-    for (int index_shares = 0; index_shares < shares_pb.clientsharestrs_size(); ++index_shares) {
+    size_t client_share_num = IntToSize(shares_pb.clientsharestrs_size());
+    for (size_t index_shares = 0; index_shares < client_share_num; ++index_shares) {
       const fl::ClientShareStr &client_share_str_pb = shares_pb.clientsharestrs(index_shares);
       clientshare_str new_clientshare;
       new_clientshare.fl_id = client_share_str_pb.fl_id();
@@ -42,9 +47,14 @@ void CipherMetaStorage::GetClientSharesFromServer(
 }
 
 void CipherMetaStorage::GetClientListFromServer(const char *list_name, std::vector<std::string> *clients_list) {
+  if (clients_list == nullptr) {
+    MS_LOG(ERROR) << "input clients_list is nullptr";
+    return;
+  }
   const fl::PBMetadata &client_list_pb_out = fl::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
   const fl::UpdateModelClientList &client_list_pb = client_list_pb_out.client_list();
-  for (int i = 0; i < client_list_pb.fl_id_size(); ++i) {
+  size_t client_list_num = IntToSize(client_list_pb.fl_id_size());
+  for (size_t i = 0; i < client_list_num; ++i) {
     std::string fl_id = client_list_pb.fl_id(i);
     clients_list->push_back(fl_id);
   }
@@ -52,6 +62,10 @@ void CipherMetaStorage::GetClientListFromServer(const char *list_name, std::vect
 
 void CipherMetaStorage::GetClientKeysFromServer(
   const char *list_name, std::map<std::string, std::vector<std::vector<uint8_t>>> *clients_keys_list) {
+  if (clients_keys_list == nullptr) {
+    MS_LOG(ERROR) << "input clients_keys_list is nullptr";
+    return;
+  }
   const fl::PBMetadata &clients_keys_pb_out =
     fl::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
   const fl::ClientKeys &clients_keys_pb = clients_keys_pb_out.client_keys();
@@ -65,12 +79,16 @@ void CipherMetaStorage::GetClientKeysFromServer(
     std::vector<std::vector<uint8_t>> cur_keys;
     cur_keys.push_back(cpk);
     cur_keys.push_back(spk);
-    clients_keys_list->insert(std::pair<std::string, std::vector<std::vector<uint8_t>>>(fl_id, cur_keys));
+    (void)clients_keys_list->emplace(std::pair<std::string, std::vector<std::vector<uint8_t>>>(fl_id, cur_keys));
   }
 }
 
 void CipherMetaStorage::GetClientIVsFromServer(
   const char *list_name, std::map<std::string, std::vector<std::vector<uint8_t>>> *clients_ivs_list) {
+  if (clients_ivs_list == nullptr) {
+    MS_LOG(ERROR) << "input clients_ivs_list is nullptr";
+    return;
+  }
   const fl::PBMetadata &clients_keys_pb_out =
     fl::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
   const fl::ClientKeys &clients_keys_pb = clients_keys_pb_out.client_keys();
@@ -86,25 +104,28 @@ void CipherMetaStorage::GetClientIVsFromServer(
     cur_ivs.push_back(ind_iv);
     cur_ivs.push_back(pw_iv);
     cur_ivs.push_back(pw_salt);
-    clients_ivs_list->insert(std::pair<std::string, std::vector<std::vector<uint8_t>>>(fl_id, cur_ivs));
+    (void)clients_ivs_list->emplace(std::pair<std::string, std::vector<std::vector<uint8_t>>>(fl_id, cur_ivs));
   }
 }
 
 bool CipherMetaStorage::GetClientNoisesFromServer(const char *list_name, std::vector<float> *cur_public_noise) {
+  if (cur_public_noise == nullptr) {
+    MS_LOG(ERROR) << "input cur_public_noise is nullptr";
+    return false;
+  }
   const fl::PBMetadata &clients_noises_pb_out =
     fl::server::DistributedMetadataStore::GetInstance().GetMetadata(list_name);
   const fl::ClientNoises &clients_noises_pb = clients_noises_pb_out.client_noises();
   int count = 0;
-  int count_thld = 100;
+  const int count_thld = 1000;
   while (clients_noises_pb.has_one_client_noises() == false) {
-    int register_time = 500;
+    const int register_time = 500;
     std::this_thread::sleep_for(std::chrono::milliseconds(register_time));
     count++;
     if (count >= count_thld) break;
   }
-  MS_LOG(INFO) << "GetClientNoisesFromServer Count: " << count;
   if (clients_noises_pb.has_one_client_noises() == false) {
-    MS_LOG(ERROR) << "GetClientNoisesFromServer NULL.";
+    MS_LOG(WARNING) << "GetClientNoisesFromServer Count: " << count;
     return false;
   }
   cur_public_noise->assign(clients_noises_pb.one_client_noises().noise().begin(),
@@ -112,17 +133,22 @@ bool CipherMetaStorage::GetClientNoisesFromServer(const char *list_name, std::ve
   return true;
 }
 
-bool CipherMetaStorage::GetPrimeFromServer(const char *prime_name, unsigned char *prime) {
+bool CipherMetaStorage::GetPrimeFromServer(const char *prime_name, uint8_t *prime) {
+  if (prime == nullptr) {
+    MS_LOG(ERROR) << "input prime is nullptr";
+    return false;
+  }
   const fl::PBMetadata &prime_pb_out = fl::server::DistributedMetadataStore::GetInstance().GetMetadata(prime_name);
   fl::Prime prime_pb(prime_pb_out.prime());
   std::string str = *(prime_pb.mutable_prime());
-  MS_LOG(INFO) << "get prime from metastorage :" << str;
-
   if (str.size() != PRIME_MAX_LEN) {
     MS_LOG(ERROR) << "get prime size is :" << str.size();
     return false;
   } else {
-    memcpy_s(prime, PRIME_MAX_LEN, str.data(), PRIME_MAX_LEN);
+    if (memcpy_s(prime, PRIME_MAX_LEN, str.data(), str.size()) != 0) {
+      MS_LOG(ERROR) << "Memcpy_s error";
+      return false;
+    }
     return true;
   }
 }
@@ -143,12 +169,13 @@ void CipherMetaStorage::RegisterPrime(const char *list_name, const std::string &
   fl::PBMetadata prime_pb;
   prime_pb.mutable_prime()->MergeFrom(prime_id_pb);
   fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(list_name, prime_pb);
-  sleep(1);
+  uint32_t time = 1;
+  (void)sleep(time);
 }
 
 bool CipherMetaStorage::UpdateClientKeyToServer(const char *list_name, const std::string &fl_id,
                                                 const std::vector<std::vector<uint8_t>> &cur_public_key) {
-  size_t correct_size = 2;
+  const size_t correct_size = 2;
   if (cur_public_key.size() < correct_size) {
     MS_LOG(ERROR) << "cur_public_key's size must is 2. actual size is " << cur_public_key.size();
     return false;
@@ -245,14 +272,18 @@ bool CipherMetaStorage::UpdateClientNoiseToServer(const char *list_name, const s
 bool CipherMetaStorage::UpdateClientShareToServer(
   const char *list_name, const std::string &fl_id,
   const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientShare>> *shares) {
-  int size_shares = shares->size();
+  if (shares == nullptr) {
+    return false;
+  }
+  size_t size_shares = shares->size();
   fl::SharesPb shares_pb;
-  for (int index = 0; index < size_shares; ++index) {
+  for (size_t index = 0; index < size_shares; ++index) {
     // new item
     fl::ClientShareStr *client_share_str_new_p = shares_pb.add_clientsharestrs();
     std::string fl_id_new = (*shares)[index]->fl_id()->str();
     int index_new = (*shares)[index]->index();
     auto share = (*shares)[index]->share();
+    if (share == nullptr) return false;
     client_share_str_new_p->set_share(reinterpret_cast<const char *>(share->data()), share->size());
     client_share_str_new_p->set_fl_id(fl_id_new);
     client_share_str_new_p->set_index(index_new);
@@ -293,6 +324,8 @@ void CipherMetaStorage::RegisterClass() {
   fl::PBMetadata get_update_clients_list;
   fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxGetUpdateModelClientList,
                                                                        get_update_clients_list);
+  fl::PBMetadata client_noises;
+  fl::server::DistributedMetadataStore::GetInstance().RegisterMetadata(fl::server::kCtxClientNoises, client_noises);
 }
 }  // namespace armour
 }  // namespace mindspore

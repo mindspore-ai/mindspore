@@ -36,7 +36,7 @@ class ReconstructSecretsKernel : public RoundKernel {
   ~ReconstructSecretsKernel() override = default;
 
   void InitKernel(size_t required_cnt) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
   bool Reset() override;
   void OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) override;
@@ -44,7 +44,7 @@ class ReconstructSecretsKernel : public RoundKernel {
  private:
   std::string name_unmask_;
   Executor *executor_;
-  size_t iteration_time_window_;
+  size_t iteration_time_window_{0};
   armour::CipherReconStruct cipher_reconstruct_;
 };
 }  // namespace kernel

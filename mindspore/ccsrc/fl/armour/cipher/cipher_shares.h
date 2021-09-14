@@ -35,6 +35,7 @@ class CipherShares {
  public:
   // initialize: get cipher_init_
   CipherShares() { cipher_init_ = &CipherInit::GetInstance(); }
+  ~CipherShares() = default;
 
   static CipherShares &GetInstance() {
     static CipherShares instance;
@@ -55,9 +56,9 @@ class CipherShares {
                             const schema::ResponseCode retcode, const string &reason, const string &next_req_time,
                             const int iteration);
   // build response code of get secrets.
-  void BuildGetSecretsRsp(const std::shared_ptr<fl::server::FBBuilder> &get_secrets_resp_builder,
-                          const schema::ResponseCode retcode, const int iteration, std::string next_req_time,
-                          std::vector<flatbuffers::Offset<mindspore::schema::ClientShare>> *encrypted_shares);
+  void BuildGetSecretsRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
+                          const size_t iteration, const string &next_req_time,
+                          const std::vector<flatbuffers::Offset<mindspore::schema::ClientShare>> *encrypted_shares);
   // clear the shared memory.
   void ClearShareSecrets();
 

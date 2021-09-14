@@ -43,25 +43,28 @@ class CipherInit {
             size_t cipher_get_clientlist_cnt, size_t cipher_reconstruct_secrets_down_cnt,
             size_t cipher_reconstruct_secrets_up_cnt);
 
-  // Check whether the parameters are valid.
-  bool Check_Parames();
-
   // Get public params. which is given to start fl job thread.
   CipherPublicPara *GetPublicParams() { return &publicparam_; }
 
   size_t share_secrets_threshold;        // the minimum number of clients to share secret fragments.
-  size_t get_secrets_threshold;          // the minimum number of clients to get secret fragments.
   size_t reconstruct_secrets_threshold;  // the minimum number of clients to reconstruct secret mask.
   size_t exchange_key_threshold;         // the minimum number of clients to send public keys.
-  size_t get_key_threshold;              // the minimum number of clients to get public keys.
-  size_t client_list_threshold;          // the minimum number of clients to get update model client list.
-
-  size_t secrets_minnums_;  // the minimum number of secret fragment s to reconstruct secret mask.
-  size_t featuremap_;       // the size of data to deal.
-  size_t time_out_mutex_;   // timeout mutex.
+  size_t push_list_sign_threshold;       // the minimum number of clients to push client list signature.
+  size_t secrets_minnums_;               // the minimum number of secret fragment s to reconstruct secret mask.
+  size_t featuremap_;                    // the size of data to deal.
 
   CipherPublicPara publicparam_;  // the param containing encrypted public parameters.
   CipherMetaStorage cipher_meta_storage_;
+
+ private:
+  size_t client_list_threshold;    // the minimum number of clients to get update model client list.
+  size_t get_key_threshold;        // the minimum number of clients to get public keys.
+  size_t get_list_sign_threshold;  // the minimum number of clients to get client list signature.
+  size_t get_secrets_threshold;    // the minimum number of clients to get secret fragments.
+  size_t time_out_mutex_;          // timeout mutex.
+
+  // Check whether the parameters are valid.
+  bool Check_Parames();
 };
 }  // namespace armour
 }  // namespace mindspore

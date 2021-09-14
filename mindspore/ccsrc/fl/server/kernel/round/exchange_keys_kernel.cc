@@ -65,7 +65,7 @@ bool ExchangeKeysKernel::CountForExchangeKeys(const std::shared_ptr<FBBuilder> &
   return true;
 }
 
-bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                 const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "Launching ExchangeKey kernel.";
   bool response = false;

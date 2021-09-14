@@ -33,6 +33,7 @@ class CipherUnmask {
  public:
   // initialize: get cipher_init_
   CipherUnmask() { cipher_init_ = &CipherInit::GetInstance(); }
+  ~CipherUnmask() = default;
   // unmask the data by secret mask.
   bool UnMask(const std::map<std::string, AddressPtr> &data);
 

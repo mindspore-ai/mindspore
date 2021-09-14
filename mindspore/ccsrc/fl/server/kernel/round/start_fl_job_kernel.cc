@@ -118,7 +118,6 @@ bool StartFLJobKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return ConvertResultCode(result_code);
   }
-
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
   return true;
 }

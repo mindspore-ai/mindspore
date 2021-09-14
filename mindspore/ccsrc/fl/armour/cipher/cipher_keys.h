@@ -36,6 +36,7 @@ class CipherKeys {
  public:
   // initialize: get cipher_init_
   CipherKeys() { cipher_init_ = &CipherInit::GetInstance(); }
+  ~CipherKeys() = default;
 
   static CipherKeys &GetInstance() {
     static CipherKeys instance;
@@ -43,20 +44,20 @@ class CipherKeys {
   }
 
   // handle the client's request of get keys.
-  bool GetKeys(const int cur_iterator, const std::string &next_req_time,
+  bool GetKeys(const size_t cur_iterator, const std::string &next_req_time,
                const schema::GetExchangeKeys *get_exchange_keys_req, const std::shared_ptr<fl::server::FBBuilder> &fbb);
 
   // handle the client's request of exchange keys.
-  bool ExchangeKeys(const int cur_iterator, const std::string &next_req_time,
+  bool ExchangeKeys(const size_t cur_iterator, const std::string &next_req_time,
                     const schema::RequestExchangeKeys *exchange_keys_req,
                     const std::shared_ptr<fl::server::FBBuilder> &fbb);
 
   // build response code of get keys.
-  void BuildGetKeysRsp(std::shared_ptr<fl::server::FBBuilder> fbb, const schema::ResponseCode retcode,
-                       const int iteration, const std::string &next_req_time, bool is_good);
+  void BuildGetKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
+                       const size_t iteration, const std::string &next_req_time, bool is_good);
   // build response code of exchange keys.
-  void BuildExchangeKeysRsp(std::shared_ptr<fl::server::FBBuilder> fbb, const schema::ResponseCode retcode,
-                            const std::string &reason, const std::string &next_req_time, const int iteration);
+  void BuildExchangeKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
+                            const std::string &reason, const std::string &next_req_time, const size_t iteration);
   // clear the shared memory.
   void ClearKeys();
 

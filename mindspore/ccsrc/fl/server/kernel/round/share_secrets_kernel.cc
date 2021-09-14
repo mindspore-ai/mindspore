@@ -38,8 +38,7 @@ void ShareSecretsKernel::InitKernel(size_t) {
 
 bool ShareSecretsKernel::CountForShareSecrets(const std::shared_ptr<FBBuilder> &fbb,
                                               const schema::RequestShareSecrets *share_secrets_req,
-                                              const int iter_num) {
-  MS_ERROR_IF_NULL_W_RET_VAL(share_secrets_req, false);
+                                              const size_t iter_num) {
   if (!DistributedCountService::GetInstance().Count(name_, share_secrets_req->fl_id()->str())) {
     std::string reason = "Counting for share secret kernel request failed. Please retry later.";
     cipher_share_->BuildShareSecretsRsp(fbb, schema::ResponseCode_OutOfTime, reason,
@@ -50,7 +49,7 @@ bool ShareSecretsKernel::CountForShareSecrets(const std::shared_ptr<FBBuilder> &
   return true;
 }
 
-bool ShareSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool ShareSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                 const std::vector<AddressPtr> &outputs) {
   bool response = false;
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();

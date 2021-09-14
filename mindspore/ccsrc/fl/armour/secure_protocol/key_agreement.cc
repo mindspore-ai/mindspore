@@ -54,9 +54,9 @@ PrivateKey::PrivateKey(EVP_PKEY *evpKey) { evpPrivKey = evpKey; }
 
 PrivateKey::~PrivateKey() { EVP_PKEY_free(evpPrivKey); }
 
-int PrivateKey::GetPrivateBytes(size_t *len, uint8_t *privKeyBytes) {
-  if (privKeyBytes == nullptr || len <= 0) {
-    MS_LOG(ERROR) << "input privKeyBytes invalid.";
+int PrivateKey::GetPrivateBytes(size_t *len, uint8_t *privKeyBytes) const {
+  if (privKeyBytes == nullptr || len == nullptr || evpPrivKey == nullptr) {
+    MS_LOG(ERROR) << "input data invalid.";
     return -1;
   }
   if (!EVP_PKEY_get_raw_private_key(evpPrivKey, privKeyBytes, len)) {
@@ -65,8 +65,8 @@ int PrivateKey::GetPrivateBytes(size_t *len, uint8_t *privKeyBytes) {
   return 0;
 }
 
-int PrivateKey::GetPublicBytes(size_t *len, uint8_t *pubKeyBytes) {
-  if (pubKeyBytes == nullptr || len <= 0) {
+int PrivateKey::GetPublicBytes(size_t *len, uint8_t *pubKeyBytes) const {
+  if (pubKeyBytes == nullptr || len == nullptr || evpPrivKey == nullptr) {
     MS_LOG(ERROR) << "input pubKeyBytes invalid.";
     return -1;
   }
@@ -90,11 +90,10 @@ int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned c
     MS_LOG(ERROR) << "input salt in invalid.";
     return -1;
   }
-  EVP_PKEY_CTX *ctx;
   size_t len = 0;
-  ctx = EVP_PKEY_CTX_new(evpPrivKey, NULL);
-  if (!ctx) {
-    MS_LOG(ERROR) << "EVP_PKEY_CTX_new failed!";
+  EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(evpPrivKey, NULL);
+  if (ctx == nullptr) {
+    MS_LOG(ERROR) << "new context failed!";
     return -1;
   }
   if (EVP_PKEY_derive_init(ctx) <= 0) {
@@ -107,15 +106,17 @@ int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned c
     EVP_PKEY_CTX_free(ctx);
     return -1;
   }
-  unsigned char *secret;
   if (EVP_PKEY_derive(ctx, NULL, &len) <= 0) {
     MS_LOG(ERROR) << "get derive key size failed!";
     EVP_PKEY_CTX_free(ctx);
     return -1;
   }
-
-  secret = (unsigned char *)OPENSSL_malloc(len);
-  if (!secret) {
+  if (len == 0) {
+    EVP_PKEY_CTX_free(ctx);
+    return -1;
+  }
+  uint8_t *secret = reinterpret_cast<uint8_t *>(OPENSSL_malloc(len));
+  if (secret == nullptr) {
     MS_LOG(ERROR) << "malloc secret memory failed!";
     EVP_PKEY_CTX_free(ctx);
     return -1;
@@ -142,7 +143,7 @@ int PrivateKey::Exchange(PublicKey *peerPublicKey, int key_len, const unsigned c
 PrivateKey *KeyAgreement::GeneratePrivKey() {
   EVP_PKEY *evpKey = NULL;
   EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
-  if (!pctx) {
+  if (pctx == nullptr) {
     return NULL;
   }
   if (EVP_PKEY_keygen_init(pctx) <= 0) {
@@ -168,7 +169,7 @@ PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
     return NULL;
   }
   pubKeyBytes = reinterpret_cast<uint8_t *>(OPENSSL_malloc(len));
-  if (!pubKeyBytes) {
+  if (pubKeyBytes == nullptr) {
     MS_LOG(ERROR) << "malloc secret memory failed!";
     return NULL;
   }
@@ -190,7 +191,11 @@ PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
   return pubKey;
 }
 
-PrivateKey *KeyAgreement::FromPrivateBytes(unsigned char *data, int len) {
+PrivateKey *KeyAgreement::FromPrivateBytes(const uint8_t *data, size_t len) {
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "input data is null!";
+    return NULL;
+  }
   EVP_PKEY *evp_Key = EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, NULL, data, len);
   if (evp_Key == NULL) {
     MS_LOG(ERROR) << "create evp_Key from raw bytes failed!";
@@ -200,7 +205,11 @@ PrivateKey *KeyAgreement::FromPrivateBytes(unsigned char *data, int len) {
   return privKey;
 }
 
-PublicKey *KeyAgreement::FromPublicBytes(unsigned char *data, int len) {
+PublicKey *KeyAgreement::FromPublicBytes(const uint8_t *data, size_t len) {
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "input data is null!";
+    return NULL;
+  }
   EVP_PKEY *evp_pubKey = EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, NULL, data, len);
   if (evp_pubKey == NULL) {
     MS_LOG(ERROR) << "create evp_pubKey from raw bytes fail";
