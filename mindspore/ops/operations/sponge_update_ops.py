@@ -34,17 +34,21 @@ class RefreshUintCrd(PrimitiveWithInfer):
     Args:
         atom_numbers (int32): the number of atoms n.
         half_exp_gamma_plus_half (float32): constant value (1.0 + exp(gamma * dt)) if Langvin-Liu thermostat is used,
-        where gamma is friction coefficient and dt is the simulation time step, 1.0 otherwise.
+            where gamma is friction coefficient and dt is the simulation time step, 1.0 otherwise.
 
     Inputs:
-        - **crd** (Tensor, float32) - [n, 3], the coordinate value of each atom.
-        - **quarter_cof** (Tensor, float32) - [3, ], the 3-D scale factor (x, y, z)
-          between the real space float coordinates and the 0.25 times unsigned int coordinates.
-        - **test_frc** (Tensor, float32) - [n, 3], the constrained force calculated in last iteration.
-        - **mass_inverse** (Tensor, float32) - [n, ], the inverse value of mass of each atom.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **quarter_cof** (Tensor) - The 3-D scale factor.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **test_frc** (Tensor) - The constraint force.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **mass_inverse** (Tensor) - The inverse value of mass of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Outputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinate of each atom after update.
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -99,19 +103,26 @@ class ConstrainForceCycleWithVirial(PrimitiveWithInfer):
         constrain_pair_numbers (int32): the number of constrain pairs m.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
-          between the real space float coordinates and the unsigned int coordinates.
-        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
-        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
-        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
-        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
-        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler** (Tensor) - The 3-D scale factor (x, y, z),
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **pair_dr** (Tensor) - The displacement vector of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m, 3)`.
+        - **atom_i_serials** (Tensor) - The first atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_j_serials** (Tensor) - The second atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **constant_rs** (Tensor) - The constrained distance of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **constrain_ks** (Tensor) - The coefficient of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **test_frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
-        - **atom_virial** (Tensor, float32) - [m,], the virial caused by constraint force of each atom.
-
+        - **test_frc** (Tensor) - The constraint force.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **atom_virial** (Tensor) - The virial caused by constraint force of each atom.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
@@ -178,18 +189,24 @@ class LastCrdToDr(PrimitiveWithInfer):
         constrain_pair_numbers (int32): the number of constrain pairs m.
 
     Inputs:
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **quarter_cof** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z)
-          between the real space float coordinates and the 0.25 times unsigned int coordinates.
-        - **uint_dr_to_dr** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z)
-          between the unsigned int value and the real space coordinates.
-        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
-        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
-        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
-        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **quarter_cof** (Tensor) - The 3-D scale factor.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **uint_dr_to_dr** (Tensor) - The 3-D scale factor (x, y, z)
+          The data type is int32 and the shape is :math:`(3,)`..
+        - **atom_i_serials** (Tensor) - The first atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_j_serials** (Tensor) - The second atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **constant_rs** (Tensor) - The constrained distance of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **constrain_ks** (Tensor) - The coefficient of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
+        - **pair_dr** (Tensor) - The displacement vector of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -258,13 +275,18 @@ class RefreshCrdVel(PrimitiveWithInfer):
         half_exp_gamma_plus_half (float32): constant value (1 + exp_gamma)/2.
 
     Inputs:
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **vel** (Tensor, float32) - [n, 3], the velocity of each atom.
-        - **test_frc** (Tensor, float32) - [n, 3], the constraint force calculated in the last oteration.
-        - **mass_inverse** (Tensor, float32) - [n, ], the inverse value of mass of each atom.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **vel** (Tensor) - The velocity of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **test_frc** (Tensor) - The constraint force calculated in the last oteration.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **mass_inverse** (Tensor) - The inverse value of mass of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Outputs:
-        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
+        - **res** (Tensor) - The return value after updating successfully.
+          The data type is float32 and the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -326,12 +348,16 @@ class CalculateNowrapCrd(PrimitiveWithInfer):
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **box** (Tensor, float32) - [3, ], the 3-D size of system.
-        - **box_map_times** (Tensor, int32) - [n, 3], The number of times each atom has crossed the box.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **box** (Tensor) - The 3-D size of system.
+          The data type is float32 and the shape is :math:`(3, )`.
+        - **box_map_times** (Tensor) - The number of times each atom has crossed the box.
+          The data type is int32 and the shape is :math:`(n, 3)`.
 
     Outputs:
-        - **nowrap_crd** (Tensor, float32) - [n, 3], the inside-box periodic image of each atom.
+        - **nowrap_crd** (Tensor) - The inside-box periodic image of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -379,13 +405,18 @@ class RefreshBoxmapTimes(PrimitiveWithInfer):
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **old_crd** (Tensor, float32) - [n, 3], the coordinate of each atom at last update.
-        - **box_length_inverse** (Tensor, float32) - [3,], the inverse value of box length in 3 dimensions.
-        - **box_map_times** (Tensor, int32) - [n, 3], the number of times each atom has crossed the box.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **old_crd** (Tensor) - The coordinate of each atom at last update.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **box_length_inverse** (Tensor) - The inverse value of box length in 3 dimensions.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **box_map_times** (Tensor) - The number of times each atom has crossed the box.
+          The data type is int32 and the shape is :math:`(n, 3)`.
 
     Outputs:
-        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
+        - **res** (Tensor) - The return value after updating successfully.
+          The data type is float32 and the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -438,11 +469,14 @@ class Totalc6get(PrimitiveWithInfer):
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **atom_lj_type** (Tensor, int32) - [n, ], the Lennard-Jones type of each atom.
-        - **lj_b** (Tensor, float32) - [pair_number, ], the attraction coefficient of each type.
+        - **atom_lj_type** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **lj_b** (Tensor) - The attraction coefficient of each type. the number of pair atoms is m.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **factor** (float32) - the average dispersion constant of Lennard-Jones interaction.
+        - **factor** (Tensor) - The average dispersion constant of Lennard-Jones interaction.
+          The data type is float32 and the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -482,11 +516,14 @@ class CrdToUintCrdQuarter(PrimitiveWithInfer):
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **crd_to_uint_crd_cof** (Tensor, float32) - [3,], the crd_to_uint_crd coefficient.
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
+        - **crd_to_uint_crd_cof** (Tensor) - The crd_to_uint_crd coefficient.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Outputs:
-        - **output** (uint32)
+        - **output** (Tensor) - The unsigned int coordinates.
+          The data type is unsigned int32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -540,20 +577,26 @@ class MDIterationLeapFrogLiujianWithMaxVel(PrimitiveWithInfer):
         max_vel (float32): the maximum velocity limit.
 
     Inputs:
-        - **inverse_mass** (Tensor, float32) - [n,], the inverse value of
-        mass of each atom.
-        - **sqrt_mass_inverse** (Tensor, float32) - [n,], the inverse square root value
-        of effect mass in Liu's dynamics of each atom.
-        - **vel** (Tensor, float32) - [n, 3], the velocity of each atom.
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **frc** (Tensor, float32) - [n, 3], the force felt by each atom.
-        - **acc** (Tensor, float32) - [n, 3], the acceleration of each atom.
-        - **rand_state** (Tensor, float32) - [math.ceil(atom_numbers * 3.0 / 4.0) * 16,], random state to generate
-        random force.
-        - **rand_frc** (Tensor, float32) - [n, 3], the random forces.
+        - **inverse_mass** (Tensor) - The inverse value of mass of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **sqrt_mass_inverse** (Tensor) - The inverse sqrt of the mass in Liu's dynamics of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **vel** (Tensor) - The velocity of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **acc** (Tensor) - The acceleration of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **rand_state** (Tensor) - Random state to generate random force.
+          The data type is float32 and the shape is :math:`(math.ceil(atom_numbers * 3.0 / 4.0) * 16, 3)`.
+        - **rand_frc** (Tensor) - The random forces.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Outputs:
-        - **output** (float32)
+        - **output** (float32) - The output coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -616,14 +659,20 @@ class GetCenterOfMass(PrimitiveWithInfer):
         residue_numbers (int32): the number of residues m.
 
     Inputs:
-        - **start** (Tensor, int32): [m, ], the start atom index of each residue.
-        - **end** (Tensor, int32): [m, ], the end atom index of each residue.
-        - **crd** (Tensor, float32): [atom_numbers, 3], the end atom index of each residue.
-        - **atom_mass** (Tensor, float32): [atom_numbers, ], the mass of each atom.
-        - **residue_mass_inverse** (Tensor, float32): [m, ], the inverse of mass of each residue.
+        - **start** (Tensor) - The start atom index of each residue.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **end** (Tensor) - The end atom index of each residue.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **atom_mass** (Tensor) - The mass of each atom and the atom number is n.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **residue_mass_inverse** (Tensor) - The inverse of mass of each residue.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **center_of_mass** (Tensor, float32): [m, 3], the coordinate of centroid of each residue.
+        - **center_of_mass** (Tensor) - The coordinate of centroid of each residue.
+          The data type is float32 and the shape is :math:`(m, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -670,20 +719,26 @@ class MapCenterOfMass(PrimitiveWithInfer):
 
     Args:
         residue_numbers (int32): the number of residues m.
-        scaler (float32): the scaling factor.
 
     Inputs:
-        - **start** (Tensor, int32): [m, ], the start atom index of each residue.
-        - **end** (Tensor, int32): [m, ], the end atom index of each residue.
-        - **center_of_mass** (Tensor, float32): [m, 3], the coordinate of centroid of each residue.
-        - **box_length** (Tensor, float32): [3, ], the size of system in 3-dimensions.
-        - **no_wrap_crd** (Tensor, float32): [n, 3], the coordinate of each atom before wrap.
-        - **crd** (Tensor, float32): [n, 3], the coordinate of each atom after wrap.
-        - **box_length** (Tensor, float32): [3, ], the size of system in 3-dimensions.
-        - **scaler** (Tensor, float32): [1, ], the scaler of system.
+        - **start** (Tensor) - The start atom index of each residue.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **end** (Tensor) - The end atom index of each residue.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **center_of_mass** (Tensor) - The coordinate of centroid of each residue.
+          The data type is float32 and the shape is :math:`(m, 3)`.
+        - **box_length** (Tensor) - The box length of the simulation box.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **no_wrap_crd** (Tensor) - The coordinate of each atom before wrap.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **crd** (Tensor) - The coordinate of each atom after wrap.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **scaler** (Tensor) - The scaler of system.
+          The data type is float32 and the shape is :math:`(1,)`.
 
     Outputs:
-        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
+        - **res** (Tensor) - The return value after updating successfully.
+          The data type is float32 and the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -751,36 +806,53 @@ class NeighborListRefresh(PrimitiveWithInfer):
         cutoff_with_skin_square (float32): the square value of cutoff_with_skin.
         refresh_interval (int32): the number of iteration steps between two updates of neighbor list. Default: 20.
         max_atom_in_grid_numbers (int32): the maximum number of atoms in one grid m. Default: 64.
-        max_neighbor_numbers (int32): The maximum number of neighbors L. Default: 800.
-        force_update (int32): the flag that decides whether to force an update.
-        force_check (int32): the flag that decides whether to force an check.
+        max_neighbor_numbers (int32): The maximum number of neighbors m. Default: 800.
+        force_update (int32): the flag that decides whether to force an update. Default: 0.
+        force_check (int32): the flag that decides whether to force an check. Default: 0.
 
     Inputs:
-        - **atom_numbers_in_grid_bucket** (Tensor, int32) - [G,], the number of atoms in each grid bucket.
-        - **bucket** (Tensor, int32) - (Tensor,int32) - [G, m], the atom indices in each grid bucket.
-        - **crd** (Tensor, float32) - [n,], the coordinates of each atom.
-        - **box_length** (Tensor, float32) - [3,], the length of 3 dimensions of the simulation box.
-        - **grid_n** (Tensor, int32) - [3,], the number of grids divided of 3 dimensions of the simulation box.
-        - **grid_length_inverse** (float32) - the inverse value of grid length.
-        - **atom_in_grid_serial** (Tensor, int32) - [n,], the grid index for each atom.
-        - **old_crd** (Tensor, float32) - [n, 3], the coordinates before update of each atom.
-        - **crd_to_uint_crd_cof** (Tensor, float32) - [3,], the scale factor
-          between the unsigned int value and the real space coordinates.
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinates value fo each atom.
-        - **gpointer** (Tensor, int32) - [G, 125], the 125 nearest neighbor grids (including self) of each grid.
-          G is the number of nearest neighbor grids.
-        - **nl_atom_numbers** (Tensor, int32) - [n,], the number of atoms in neighbor list of each atom.
-        - **nl_atom_serial** (Tensor, int32) - [n, L], the indices of atoms in neighbor list of each atom.
-        - **uint_dr_to_dr_cof** (Tensor, float32) - [3,], the scale factor between
-          the real space coordinates and the unsigned int value.
-        - **excluded_list_start** (Tensor, int32) - [n,], the start excluded index in excluded list for each atom.
-        - **excluded_numbers** (Tensor, int32) - [n,], the number of atom excluded in excluded list for each atom.
-        - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded list of each atom.
-        - **need_refresh_flag** (Tensor, int32) - [n,], whether the neighbor list of each atom need update or not.
-        - **refresh_count** (Tensor, int32) - [1,], count how many iteration steps have passed since last update.
+        - **atom_numbers_in_grid_bucket** (Tensor) - The number of atoms in each grid bucket.
+          The data type is int32 and the shape is :math:`(G,)`.
+        - **bucket** (Tensor) - (Tensor) - The atom indices in each grid bucket.
+          The data type is int32 and the shape is :math:`(G, m)`.
+        - **crd** (Tensor) - The coordinates of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **box_length** (Tensor) - The box length of the simulation box.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **grid_n** (Tensor) - The number of grids divided of 3 dimensions of the simulation box.
+          The data type is int32 and the shape is :math:`(3,)`.
+        - **grid_length_inverse** (Tensor) - The inverse value of grid length.
+          The data type is int32 and the shape is :math:`(3,)`.
+        - **atom_in_grid_serial** (Tensor) - The grid index for each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **old_crd** (Tensor) - The coordinates before update of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **crd_to_uint_crd_cof** (Tensor) - The scale factor between the unsigned int coordinate and the real one.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **uint_crd** (Tensor) - The unsigned int coordinates value fo each atom.
+          The data type is unsigned int32 and the shape is :math:`(n, 3)`.
+        - **gpointer** (Tensor) - The nearest neighbor grids (including self) of each grid.
+          The data type is int32 and the shape is :math:`(G, 125)`.
+        - **nl_atom_numbers** (Tensor) - The number of atoms in neighbor list of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **nl_atom_serial** (Tensor) - The indices of atoms in neighbor list of each atom.
+          The data type is int32 and the shape is :math:`(n, m)`.
+        - **uint_dr_to_dr_cof** (Tensor) - The scale factor.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **excluded_list_start** (Tensor) - The start excluded index in excluded list for each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **excluded_list** (Tensor) - The contiguous join of excluded list of each atom.
+          The data type is int32 and the shape is :math:`(E,)`.
+        - **excluded_numbers** (Tensor) - The number of atom excluded in excluded list for each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **need_refresh_flag** (Tensor) - Whether the neighbor list of each atom need update or not.
+          The data type is int32 and the shape is :math:`(1,)`.
+        - **refresh_count** (Tensor) - Count how many iteration steps have passed since last update.
+          The data type is int32 and the shape is :math:`(1,)`.
 
     Outputs:
-        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
+        - **res** (Tensor) - The return value after updating successfully.
+          The data type is float32 and the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -936,15 +1008,22 @@ class MDIterationLeapFrog(PrimitiveWithInfer):
         dt (float32): the simulation time step.
 
     Inputs:
-        -**sqrt_mass_inverse** (Tensor, float32):?
-        -**vel** (Tensor, float32): [n, 3], the velocity of each atom.
-        -**crd** (Tensor, float32): [n, 3], the coordinate of each atom.
-        -**frc** (Tensor, float32): [n, 3], the force on each atom.
-        -**acc** (Tensor, float32): [n, 3], the acceleration of each atom.
-        -**inverse_mass** (Tensor, float32): [n, ], the inverse value of mass of each atom.
+        - **sqrt_mass_inverse** (Tensor) - The square root of the inverse value of the mass of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **vel** (Tensor) - The velocity of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **acc** (Tensor) - The acceleration of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **inverse_mass** (Tensor) - The inverse value of mass of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Outputs:
-        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
+        - **res** (Tensor) - The return value after updating successfully.
+          The data type is float32 and the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1003,15 +1082,22 @@ class MDIterationLeapFrogWithMaxVel(PrimitiveWithInfer):
         max_velocity (float32): the maximum velocity limit.
 
     Inputs:
-        -**sqrt_mass_inverse** (Tensor, float32): [n,], the sqrt inverse value of mass of each atom
-        -**vel** (Tensor, float32): [n, 3], the velocity of each atom.
-        -**crd** (Tensor, float32): [n, 3], the coordinate of each atom.
-        -**frc** (Tensor, float32): [n, 3], the force on each atom.
-        -**acc** (Tensor, float32): [n, 3], the acceleration of each atom.
-        -**inverse_mass** (Tensor, float32): [n,], the inverse value of mass of each atom.
+        - **sqrt_mass_inverse** (Tensor) - The sqrt inverse value of mass of each atom
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **vel** (Tensor) - The velocity of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **acc** (Tensor) - The acceleration of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **inverse_mass** (Tensor) - The inverse value of mass of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Outputs:
-        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
+        - **res** (Tensor) - The return value after updating successfully.
+          The data type is float32 and the shape is :math:`(1,)`.
 
 
     Supported Platforms:
@@ -1074,11 +1160,14 @@ class MDIterationGradientDescent(PrimitiveWithInfer):
         learning_rate (float32): the update step length.
 
     Inputs:
-        - **crd** (Tensor, float32) - [n, 3], the coordinate of each atom.
-        - **frc** (Tensor, float32) - [n, 3], the force on each atom.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **frc** (Tensor), The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Output:
-        - **res** (Tensor, float32) - [1,], the return value after updating successfully.
+        - **res** (Tensor) - The return value after updating successfully.
+          The data type is float32 and the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1121,7 +1210,7 @@ class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1134,9 +1223,8 @@ class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
         - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
           The data type is uint32 and the shape is :math:`(n, 3)`.
         - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
-          between the real space float coordinates and the unsigned int coordinates.
           The data type is float32 and the shape is :math:`(3,)`.
-        - **atom_a** (Tensor, int32) - The first atom index of each bond.
+        - **atom_a** (Tensor) - The first atom index of each bond.
           The data type is int32 and the shape is :math:`(m,)`.
         - **atom_b** (Tensor) - The second atom index of each bond.
           The data type is int32 and the shape is :math:`(m,)`.
@@ -1146,9 +1234,12 @@ class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], same as operator BondForce().
-        - **atom_e** (Tensor, float32) - [n,], same as atom_ene in operator BondAtomEnergy().
-        - **atom_virial** (Tensor, float32) - [n,], same as atom_ene in operator BondAtomEnergy().
+        - **frc_f** (Tensor) - The force of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **atom_e** (Tensor) - The energy of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **atom_virial** (Tensor) - The virial of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1156,7 +1247,7 @@ class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, bond_numbers, atom_numbers):
-        """Initialize BondForceWithAtomEnergyAndVirial."""
+        """Initialize BondForceWithAtomEnergyAndVirial"""
         validator.check_value_type('bond_numbers', bond_numbers, int, self.name)
         validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         self.bond_numbers = bond_numbers
@@ -1207,14 +1298,14 @@ class LJForceWithVirialEnergy(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         atom_numbers (int32): the number of atoms, n.
-        cutoff_square (float32): the square value of cutoff.
+        cutoff (float32): the square value of cutoff.
         pme_beta (float32): PME beta parameter, same as operator PMEReciprocalForce().
         max_neighbor_numbers (int32): the max neighbor numbers, default 800.
 
@@ -1222,26 +1313,26 @@ class LJForceWithVirialEnergy(PrimitiveWithInfer):
         - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
           The data type is uint32 and the shape is :math:`(n, 3)`.
         - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
-          The data type is float32 and the shape is :math:`(n,)`.
+          The data type is int32 and the shape is :math:`(n,)`.
         - **charge** (Tensor) - The charge carried by each atom.
           The data type is float32 and the shape is :math:`(n,)`.
         - **scaler** (Tensor) - The scale factor between real
           space coordinate and its unsigned int value.
           The data type is float32 and the shape is :math:`(3,)`.
-        - **nl_numbers** - (Tensor) - The each atom.
+        - **nl_numbers** (Tensor) - The each atom.
           The data type is int32 and the shape is :math:`(n,)`.
-        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+        - **nl_serial** (Tensor) - The neighbor list of each atom, the max number is 800.
           The data type is int32 and the shape is :math:`(n, 800)`.
         - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
-          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+          The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
         - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
-          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+          The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
         - **frc** (Tensor), The force felt by each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
         - **virial** (Tensor), The virial felt by each atom.
-          The data type is float32 and the shape is :math:`(n, )`.
+          The data type is float32 and the shape is :math:`(n,)`.
         - **atom_energy** (Tensor), The atom energy felt by each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
 
@@ -1251,7 +1342,7 @@ class LJForceWithVirialEnergy(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, atom_numbers, cutoff, pme_beta, max_neighbor_numbers=800):
-        """Initialize LJForceWithPMEDirectForce."""
+        """Initialize LJForceWithVirialEnergy"""
         validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         validator.check_value_type('cutoff', cutoff, float, self.name)
         validator.check_value_type('pme_beta', pme_beta, float, self.name)
@@ -1312,14 +1403,14 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         atom_numbers (int32): the number of atoms, n.
-        cutoff_square (float32): the square value of cutoff.
+        cutoff (float32): the square value of cutoff.
         pme_beta (float32): PME beta parameter, same as operator PMEReciprocalForce().
         need_update (int32): if need_update = 1, calculate the pressure, default 0.
 
@@ -1327,24 +1418,24 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
         - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
           The data type is uint32 and the shape is :math:`(n, 3)`.
         - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
-          The data type is float32 and the shape is :math:`(n,)`.
+          The data type is int32 and the shape is :math:`(n,)`.
         - **charge** (Tensor) - The charge carried by each atom.
           The data type is float32 and the shape is :math:`(n,)`.
         - **scaler** (Tensor) - The scale factor between real
           space coordinate and its unsigned int value.
           The data type is float32 and the shape is :math:`(3,)`.
-        - **nl_numbers** - (Tensor) - The each atom.
+        - **nl_numbers** (Tensor) - The each atom.
           The data type is int32 and the shape is :math:`(n,)`.
-        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+        - **nl_serial** (Tensor) - The neighbor list of each atom, the max number is 800.
           The data type is int32 and the shape is :math:`(n, 800)`.
         - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
-          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+          The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
         - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
-          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+          The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
         - **beta** (Tensor) - PME beta parameter. The data type is float32 and the shape is :math:`(1,)`.
 
     Outputs:
-        - **frc** (Tensor), The force felt by each atom.
+        - **frc** (Tensor) - The force felt by each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
@@ -1418,7 +1509,7 @@ class PMEReciprocalForceUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1436,16 +1527,16 @@ class PMEReciprocalForceUpdate(PrimitiveWithInfer):
         need_update (int32): if need_update = 1, calculate the pressure, default 0.
 
     Inputs:
-        - **uint_crd** (Tensor) - [n, 3], the unsigned int coordinates value of each atom.
-          The data type is uint32 and the shape is :math:`(n, 3]`
-        - **charge** (Tensor) - [n,], the charge carried by each atom.
-          The data type is float32 and the shape is :math:`(n,]`
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,)`
         - **beta** (Tensor) - The PME beta parameter to be updated in pressure calculation.
-          The data type is float32 and the shape is :math:`(1,]`
+          The data type is float32 and the shape is :math:`(1,)`
 
     Outputs:
         - **force** (Tensor) - The force felt by each atom.
-          The data type is float32 and the shape is :math:`(n, 3]`
+          The data type is float32 and the shape is :math:`(n, 3)`
 
     Supported Platforms:
         ``GPU``
@@ -1512,7 +1603,7 @@ class PMEExcludedForceUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1526,23 +1617,23 @@ class PMEExcludedForceUpdate(PrimitiveWithInfer):
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
-          The data type is uint32 and the shape is :math:`(n, 3]`
+          The data type is uint32 and the shape is :math:`(n, 3)`
         - **scaler** (Tensor) - The scale factor between real space
-          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,)`
         - **charge** (Tensor) - The charge carried by each atom.
-          The data type is float32 and the shape is :math:`(n,]`
+          The data type is float32 and the shape is :math:`(n,)`
         - **excluded_list_start** (Tensor) - The start excluded index
-          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,)`
         - **excluded_list** (Tensor) - The contiguous join of excluded
-          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,]`
+          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,)`
         - **excluded_atom_numbers** (Tensor) - The number of atom excluded
-          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,)`
         - **beta** (Tensor) - The PME beta parameter to be updated in pressure calculation.
-          The data type is float32 and the shape is :math:`(1,]`
+          The data type is float32 and the shape is :math:`(1,)`
 
     Outputs:
         - **force** (Tensor) - The force felt by each atom.
-          The data type is float32 and the shape is :math:`(n, 3]`
+          The data type is float32 and the shape is :math:`(n, 3)`
 
     Supported Platforms:
         ``GPU``
@@ -1610,14 +1701,14 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         atom_numbers (int32): the number of atoms, n.
-        cutoff_square (float32): the square value of cutoff.
+        cutoff (float32): the square value of cutoff.
         pme_beta (float32): PME beta parameter, same as operator PMEReciprocalForce().
         max_neighbor_numbers (int32): the max neighbor numbers, default 800.
         need_update (int32): if need_update = 1, calculate the pressure, default 0.
@@ -1626,22 +1717,21 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
         - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
           The data type is uint32 and the shape is :math:`(n, 3)`.
         - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
-          The data type is float32 and the shape is :math:`(n,)`.
+          The data type is int32 and the shape is :math:`(n,)`.
         - **charge** (Tensor) - The charge carried by each atom.
           The data type is float32 and the shape is :math:`(n,)`.
-        - **scaler** (Tensor) - The scale factor between real
-          space coordinate and its unsigned int value.
+        - **scaler** (Tensor) - The scale factor.
           The data type is float32 and the shape is :math:`(3,)`.
-        - **nl_numbers** - (Tensor) - The each atom.
+        - **nl_numbers** (Tensor) - The each atom.
           The data type is int32 and the shape is :math:`(n,)`.
-        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+        - **nl_serial** (Tensor) - The neighbor list of each atom, the max number is 800.
           The data type is int32 and the shape is :math:`(n, 800)`.
         - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
-          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+          The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
         - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
-          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+          The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
         - **beta** (Tensor) - The PME beta parameter to be updated in pressure calculation.
-          The data type is float32 and the shape is :math:`(1,]`
+          The data type is float32 and the shape is :math:`(1,)`
 
     Outputs:
         - **frc** (Tensor) - The force felt by each atom.
@@ -1732,25 +1822,34 @@ class Dihedral14ForceWithAtomEnergyVirial(PrimitiveWithInfer):
         atom_numbers (int32): the number of atoms n.
 
     Inputs:
-        - **uint_crd_f** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJ_type** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge of each atom.
-        - **boxlength** (Tensor, float32) - [3,], the length of molecular simulation box in 3 dimensions.
-        - **a_14** (Tensor, int32) - [m,], the first atom index of each dihedral 1,4 term.
-        - **b_14** (Tensor, int32) - [m,], the second atom index of each dihedral 1,4 term.
-        - **lj_scale_factor** (Tensor, float32) - [m,], the scale factor for the
+        - **uint_crd_f** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **charge** (Tensor) - The charge carried by each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **boxlength** (Tensor) - The length of molecular simulation box in 3 dimensions.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **a_14** (Tensor) - The first atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **b_14** (Tensor) - The second atom index of each dihedral 1,4 term.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **lj_scale_factor** (Tensor) - The scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
-        - **cf_scale_factor** (Tensor, float) - [m,], the scale factor for the
-          Coulomb part of force correction for each dihedral 1,4 terms.
-        - **LJ_type_A** (Tensor, float32) - [q,], the A parameter in Lennard-Jones scheme of each atom pair type.
-          q is the number of atom pair.
-        - **LJ_type_B** (Tensor, float32) - [q,], the B parameter in Lennard-Jones shceme of each atom pair type.
-          q is the number of atom pair.
+        - **cf_scale_factor** (Tensor) - The scale factor for the Coulomb force.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
+          The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+          The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], the force felt by each atom.
-        - **atom_energy** (Tensor, float32) - [n,], the accumulated potential energy for each atom.
-        - **atom_virial** (Tensor, float32) - [n,], the accumulated potential energy for each atom.
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **atom_energy** (Tensor) - The accumulated potential energy for each atom.
+          The data type is float32 and the shape is :math:`(n, )`.
+        - **atom_virial** (Tensor) - The accumulated potential virial for each atom.
+          The data type is float32 and the shape is :math:`(n, )`.
 
     Supported Platforms:
         ``GPU``
@@ -1821,7 +1920,7 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
 
     Because there is a large amount of inputs and each of them are related,
     there is no way to construct `Examples` using random methods. For details, refer the webpage `SPONGE in MindSpore
-    <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge>`_.
+    <https://gitee.com/mindspore/mindscience/blob/master/MindSPONGE/docs/simple_formula.md>`_.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -1842,33 +1941,35 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
 
     Inputs:
         - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
-          The data type is uint32 and the shape is :math:`(n, 3]`
+          The data type is uint32 and the shape is :math:`(n, 3)`
         - **charge** (Tensor) - The charge carried by each atom.
-          The data type is float32 and the shape is :math:`(n,]`
+          The data type is float32 and the shape is :math:`(n,)`
         - **nl_numbers** - (Tensor) - The each atom.
-          The data type is int32 and the shape is :math:`(n, 3]`
+          The data type is int32 and the shape is :math:`(n, 3)`
         - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
-          The data type is int32 and the shape is :math:`(n, 800]`
+          The data type is int32 and the shape is :math:`(n, 800)`
         - **scaler** (Tensor) - The scale factor between real space
-          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,]`
+          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,)`
         - **excluded_list_start** (Tensor) - The start excluded index
-          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,)`
         - **excluded_list** (Tensor) - The contiguous join of excluded
-          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,]`
+          list of each atom. E is the number of excluded atoms. The data type is int32 and the shape is :math:`(E,)`
         - **excluded_atom_numbers** (Tensor) - The number of atom excluded
-          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,]`
+          in excluded list for each atom. The data type is int32 and the shape is :math:`(n,)`
         - **factor** (Tensor) - The factor parameter to be updated in pressure calculation.
-          The data type is float32 and the shape is :math:`(1,]`
+          The data type is float32 and the shape is :math:`(1,)`
         - **beta** (Tensor) - The PME beta parameter to be updated in pressure calculation.
-          The data type is float32 and the shape is :math:`(1,]`
+          The data type is float32 and the shape is :math:`(1,)`
 
     Outputs:
-        - **reciprocal_ene** (Scalar) - the reciprocal term of PME energy.
-          The data type is float32.
-        - **self_ene** (Scalar) - the self term of PME energy.
-          The data type is float32.
-        - **direct_ene** (Scalar) - the direct term of PME energy. The data type is float32.
-        - **correction_ene** (Scalar) - the correction term of PME energy. The data type is float32.
+        - **reciprocal_ene** (Tensor) - The reciprocal term of PME energy.
+          The data type is float32 and the the shape is :math:`(1,)`.
+        - **self_ene** (Tensor) - The self term of PME energy.
+          The data type is float32 and the the shape is :math:`(1,)`.
+        - **direct_ene** (Tensor) - The direct term of PME energy.
+          The data type is float32 and the the shape is :math:`(1,)`.
+        - **correction_ene** (Tensor) - The correction term of PME energy.
+          The data type is float32 and the the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1970,17 +2071,24 @@ class ConstrainForceCycle(PrimitiveWithInfer):
         constrain_pair_numbers (int32): the number of constrain pairs m.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
-          between the real space float coordinates and the unsigned int coordinates.
-        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
-        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
-        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
-        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
-        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler** (Tensor) - The 3-D scale factor (x, y, z),
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **pair_dr** (Tensor) - The displacement vector of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m, 3)`.
+        - **atom_i_serials** (Tensor) - The first atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_j_serials** (Tensor) - The second atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **constant_rs** (Tensor) - The constrained distance of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **constrain_ks** (Tensor) - The coefficient of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **test_frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
+        - **test_frc** (Tensor) - The constraint force.
+          The data type is float32 and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -2049,22 +2157,32 @@ class ConstrainForceVirial(PrimitiveWithInfer):
         half_exp_gamma_plus_half (float32): half exp_gamma plus half q.
 
     Inputs:
-        - **crd** (Tensor, float32 ) - [n, 3], the coordinate value of each atom.
-        - **quarter_cof** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z)
-          between the real space float coordinates and the 0.25 times unsigned int coordinates.
-        - **mass_inverse** (Tensor, float32) - [n, ], the inverse value of mass of each atom.
-        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
-          between the real space float coordinates and the unsigned int coordinates.
-        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
-        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
-        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
-        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
-        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+        - **crd** (Tensor) - The coordinate of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **quarter_cof** (Tensor) - The 3-D scale factor.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **mass_inverse** (Tensor) - The inverse value of mass of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
+        - **scaler** (Tensor) - The 3-D scale factor (x, y, z),
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **pair_dr** (Tensor) - The displacement vector of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m, 3)`.
+        - **atom_i_serials** (Tensor) - The first atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_j_serials** (Tensor) - The second atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **constant_rs** (Tensor) - The constrained distance of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **constrain_ks** (Tensor) - The coefficient of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **uint_crd** (Tensor, unsigned int32) - [n, 3], the uint crd on each atom.
-        - **frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
-        - **virial** (Tensor, float32) - [m, ], the constraint virial on each atom.
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **frc** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **virial** (Tensor) - The constraint virial on each atom.
+         The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
@@ -2144,19 +2262,28 @@ class ConstrainForce(PrimitiveWithInfer):
         half_exp_gamma_plus_half (float32): half exp_gamma plus half q.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
-          between the real space float coordinates and the unsigned int coordinates.
-        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
-        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
-        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
-        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
-        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler** (Tensor) - The 3-D scale factor (x, y, z),
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **pair_dr** (Tensor) - The displacement vector of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m, 3)`.
+        - **atom_i_serials** (Tensor) - The first atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_j_serials** (Tensor) - The second atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **constant_rs** (Tensor) - The constrained distance of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **constrain_ks** (Tensor) - The coefficient of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **uint_crd** (Tensor, unsigned int32) - [n, 3], the uint crd on each atom.
-        - **frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
-        - **virial** (Tensor, float32) - [m, ], the constraint virial on each atom and it is zero.
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **frc** (Tensor) - The constraint force on each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **virial** (Tensor) - The constraint virial on each atom and it is zero.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
@@ -2235,20 +2362,30 @@ class Constrain(PrimitiveWithInfer):
         half_exp_gamma_plus_half (float32): half exp_gamma plus half q.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32 ) - [n, 3], the unsigned int coordinate value of each atom.
-        - **scaler** (Tensor, float32) - [3,], the 3-D scale factor (x, y, z),
-          between the real space float coordinates and the unsigned int coordinates.
-        - **pair_dr** (Tensor, float32) - [m, 3], the displacement vector of each constrained atom pair.
-        - **atom_i_serials** (Tensor, int32) - [m,], the first atom index of each constrained atom pair.
-        - **atom_j_serials** (Tensor, int32) - [m,], the second atom index of each constrained atom pair.
-        - **constant_rs** (Tensor, float32) - [m,], the constrained distance of each constrained atom pair.
-        - **constrain_ks** (Tensor, float32) - [m,], m1 * m2/ (m1 + m2) of each constrained atom pair.
-        - **need_pressure** (Tensor, int32) - [1,], if need pressure, 1 else 0.
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **scaler** (Tensor) - The 3-D scale factor (x, y, z),
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **pair_dr** (Tensor) - The displacement vector of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m, 3)`.
+        - **atom_i_serials** (Tensor) - The first atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **atom_j_serials** (Tensor) - The second atom index of each constrained atom pair.
+          The data type is int32 and the shape is :math:`(m,)`.
+        - **constant_rs** (Tensor) - The constrained distance of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **constrain_ks** (Tensor) - The coefficient of each constrained atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **need_pressure** (Tensor) - If need pressure, 1 else 0.
+          The data type is int32 and the shape is :math:`(1,)`.
 
     Outputs:
-        - **uint_crd** (Tensor, unsigned int32) - [n, 3], the uint crd on each atom.
-        - **frc** (Tensor, float32) - [n, 3], the constraint force on each atom.
-        - **virial** (Tensor, float32) - [n, 3], the constraint virial on each atom.
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`.
+        - **frc** (Tensor) - The constraint force on each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **virial** (Tensor) - The constraint virial on each atom.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
