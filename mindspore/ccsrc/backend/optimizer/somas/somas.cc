@@ -37,12 +37,13 @@
 #include "debug/rdr/running_data_recorder.h"
 #endif
 #include "common/thread_pool.h"
+#ifndef ENABLE_SECURITY
 #include "profiler/device/ascend/memory_profiling.h"
 
 using mindspore::profiler::ascend::MemoryProfiling;
 using mindspore::profiler::ascend::NodeMemory;
 using mindspore::profiler::ascend::TensorMemory;
-
+#endif
 namespace mindspore {
 namespace somas {
 constexpr auto kGapSize = 512;
@@ -1772,7 +1773,7 @@ uint8_t *Somas::GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const 
   }
   return ptr;
 }
-
+#ifndef ENABLE_SECURITY
 void Somas::ConvertToProfilingNode(uint32_t graph_id) {
 #ifdef ENABLE_D
   auto graph_node = MemoryProfiling::GetInstance().GetGraphMemoryNode(graph_id);
@@ -1810,5 +1811,6 @@ void Somas::ConvertToProfilingNode(uint32_t graph_id) {
   }
 #endif
 }
+#endif
 }  // namespace somas
 }  // namespace mindspore

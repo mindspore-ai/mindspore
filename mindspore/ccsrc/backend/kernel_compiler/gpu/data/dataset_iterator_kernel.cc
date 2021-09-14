@@ -73,6 +73,7 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Gpu Queue(" << queue_name_ << ") Open Failed";
   }
 
+#ifndef ENABLE_SECURITY
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
   profiling_enable_ = profiler_inst->GetEnableFlag();
@@ -82,6 +83,7 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
     MS_EXCEPTION_IF_NULL(profiling_op_);
     profiler_inst->RegisterProfilingOp(profiling_op_);
   }
+#endif
   return true;
 }
 

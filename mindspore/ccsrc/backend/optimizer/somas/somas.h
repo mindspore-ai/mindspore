@@ -55,7 +55,9 @@ class Somas {
   void DumpSomasMemoryIR(const string filename) const;
 
   static bool NodeSort(SomasNodePtr, SomasNodePtr);
+#ifndef ENABLE_SECURITY
   void ConvertToProfilingNode(uint32_t graph_id);
+#endif
 
  private:
   std::vector<DynamicBitSet> reuse_matrix_;

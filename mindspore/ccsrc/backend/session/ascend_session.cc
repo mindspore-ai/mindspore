@@ -81,9 +81,9 @@
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 #include "runtime/device/ascend/ascend_bucket.h"
+#ifndef ENABLE_SECURITY
 #include "profiler/device/ascend/memory_profiling.h"
 
-#ifndef ENABLE_SECURITY
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif

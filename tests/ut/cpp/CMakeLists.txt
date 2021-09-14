@@ -186,6 +186,11 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/batch_norm_relu_fusion.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/optimizer/gpu/batch_norm_relu_grad_fusion.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/backend/kernel_compiler/tbe/ascend_kernel_compile.cc")
+if(ENABLE_SECURITY)
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/profiling.cc")
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/memory_profiling.cc")
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/ascend_profiling.cc")
+endif()
 
 add_library(_ut_mindspore_obj OBJECT ${MINDSPORE_SRC_LIST})
 add_library(_ut_ut_obj OBJECT ${UT_SRCS})
