@@ -72,7 +72,7 @@ Status RenameOp::ComputeColMap() {
         if (new_col_name.find(out_columns_[index]) != new_col_name.end()) {
           std::string err_msg(
             "Invalid parameter, rename operation does not support rename one column name into another already exist "
-            "column name, existed column name is: " +
+            "column name, existing column name is: " +
             out_columns_[index] + ".");
           RETURN_STATUS_UNEXPECTED(err_msg);
         }
@@ -83,7 +83,7 @@ Status RenameOp::ComputeColMap() {
         if (new_col_name.find(name) != new_col_name.end()) {
           std::string err_msg(
             "Invalid parameter, rename operation does not support rename one column name into another already exist "
-            "column name, existed column name is: " +
+            "column name, existing column name is: " +
             name + ".");
           RETURN_STATUS_UNEXPECTED(err_msg);
         }

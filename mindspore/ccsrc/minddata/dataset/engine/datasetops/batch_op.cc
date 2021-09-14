@@ -308,7 +308,7 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
     CHECK_FAIL_RETURN_UNEXPECTED(num_rows == out_cols[i].size(),
                                  "Invalid data, column: " + out_col_names_[i] +
                                    " expects: " + std::to_string(num_rows) +
-                                   " rows returned from per_batch_map, gets: " + std::to_string(out_cols[i].size()));
+                                   " rows returned from per_batch_map, got: " + std::to_string(out_cols[i].size()));
     for (auto &t_row : *out_q_table) {
       t_row[col_id] = out_cols[i][row_id++];
     }

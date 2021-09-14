@@ -402,8 +402,8 @@ def test_exceptions_2():
 
     # test exception where column name is incorrect
     assert "col:num1 doesn't exist" in test_exceptions_config(4, 2, ["num1"], simple_copy)
-    assert "expects: 2 rows returned from per_batch_map, gets: 4" in test_exceptions_config(4, 2, ["num"], concat_copy)
-    assert "expects: 4 rows returned from per_batch_map, gets: 2" in test_exceptions_config(4, 4, ["num"], shrink_copy)
+    assert "expects: 2 rows returned from per_batch_map, got: 4" in test_exceptions_config(4, 2, ["num"], concat_copy)
+    assert "expects: 4 rows returned from per_batch_map, got: 2" in test_exceptions_config(4, 4, ["num"], shrink_copy)
 
 
 if __name__ == '__main__':
