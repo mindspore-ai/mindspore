@@ -1,17 +1,17 @@
 {
-	"detection": {
+    "detection": {
         "stream_config": {
                 "deviceId": "0"
         },
-		"appsrc0": {
-			"props": {
-				"blocksize": "409600"
+        "appsrc0": {
+            "props": {
+                "blocksize": "409600"
 			},
 			"factory": "appsrc",
 			"next": "mxpi_imagedecoder0"
 		},
         "mxpi_imagedecoder0": {
-			"factory": "mxpi_imagedecoder",
+            "factory": "mxpi_imagedecoder",
             "next": "queue0"
         },
         "queue0": {
@@ -21,15 +21,15 @@
                 "factory": "queue",
                 "next": "mxpi_imageresize0"
         },
-		"mxpi_imageresize0": {
-			"props": {
-				"parentName": "mxpi_imagedecoder0",
-				"resizeHeight": "640",
-				"resizeWidth": "640"
-			},
-			"factory": "mxpi_imageresize",
-			"next": "queue1"
-		},
+        "mxpi_imageresize0": {
+            "props": {
+                "parentName": "mxpi_imagedecoder0",
+                "resizeHeight": "640",
+                "resizeWidth": "640"
+            },
+            "factory": "mxpi_imageresize",
+            "next": "queue1"
+        },
         "queue1": {
                 "props": {
                       "max-size-buffers": "50"

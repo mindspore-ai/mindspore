@@ -17,6 +17,11 @@
 #ifndef SSD_RESNET50_FPN_H
 #define SSD_RESNET50_FPN_H
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "MxBase/DvppWrapper/DvppWrapper.h"
 #include "MxBase/ModelInfer/ModelInferenceProcessor.h"
 #include "ObjectPostProcessors/SsdMobilenetFpnMindsporePost.h"
@@ -34,18 +39,19 @@ struct InitParam {
 };
 
 class SSDResnet50Fpn {
-public:
+ public:
     APP_ERROR Init(const InitParam &initParam);
     APP_ERROR DeInit();
     APP_ERROR ReadImage(const std::string &imgPath, MxBase::TensorBase &tensor);
     APP_ERROR Resize(const MxBase::TensorBase &input, MxBase::TensorBase &output);
-    APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs, std::vector<MxBase::TensorBase> &outputs);
+    APP_ERROR Inference(const std::vector<MxBase::TensorBase> &inputs,
+                        std::vector<MxBase::TensorBase> &outputs);
     APP_ERROR PostProcess(const std::vector<MxBase::TensorBase> &inputs,
         std::vector<std::vector<MxBase::ObjectInfo>> &objectInfos,
         const std::vector<MxBase::ResizedImageInfo> &resizedImageInfos,
         const std::map<std::string, std::shared_ptr<void>> &configParamMap);
     APP_ERROR Process(const std::string &imgPath);
-private:
+ private:
     std::shared_ptr<MxBase::DvppWrapper> dvppWrapper_;
     std::shared_ptr<MxBase::ModelInferenceProcessor> model_;
     std::shared_ptr<MxBase::SsdMobilenetFpnMindsporePost> post_;

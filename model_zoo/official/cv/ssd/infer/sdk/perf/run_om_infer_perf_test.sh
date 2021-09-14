@@ -1,7 +1,5 @@
 #!/bin/bash
 
-CUR_PATH=$(cd "$(dirname "$0")" || { warn "Failed to check path/to/run.sh" ; exit ; } ; pwd)
-
 # Simple log helper functions
 info() { echo -e "\033[1;34m[INFO ][MxStream] $1\033[1;37m" ; }
 warn() { echo >&2 -e "\033[1;31m[WARN ][MxStream] $1\033[1;37m" ; }

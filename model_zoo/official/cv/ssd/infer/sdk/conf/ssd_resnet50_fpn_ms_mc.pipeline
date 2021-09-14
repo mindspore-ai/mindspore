@@ -1,5 +1,5 @@
 {
-	"detection": {
+     "detection": {
         "stream_config": {
                 "deviceId": "0"
         },

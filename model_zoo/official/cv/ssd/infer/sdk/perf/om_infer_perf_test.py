@@ -18,7 +18,6 @@ import os
 import threading
 import time
 from datetime import datetime
-from threading import Lock
 
 import MxpiDataType_pb2 as MxpiDataType
 import cv2
@@ -37,7 +36,7 @@ DET_RESULT_RESIZED_JSON = None
 DET_RESULT_JSON = None
 
 FLAGS = flags.FLAGS
-infer_ret_list_lock = Lock()
+infer_ret_list_lock = threading.Lock()
 det_restore_ratio = dict()
 
 flags.DEFINE_string(
@@ -145,7 +144,7 @@ def draw_image(input_image, bboxes, output_img):
         color_key = index % 10
         color = color_index_dict.get(color_key)
         # Coordinate must be integer.
-        bbox = list(map(lambda cor: int(cor), bbox))
+        # bbox = list(map(lambda cor: int(cor), bbox))
         # pdb.set_trace()
         cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
 
@@ -163,24 +162,26 @@ def draw_img_fun(img_id, bboxes):
 
 
 def trans_class_id(k):
-    if k >= 1 and k <= 11:
-        return k
-    elif k >= 12 and k <= 24:
-        return k + 1
-    elif k >= 25 and k <= 26:
-        return k + 2
-    elif k >= 27 and k <= 40:
-        return k + 4
-    elif k >= 41 and k <= 60:
-        return k + 5
+    c = None
+    if 1 <= k <= 11:
+        c = k
+    elif 12 <= k <= 24:
+        c = k + 1
+    elif 25 <= k <= 26:
+        c = k + 2
+    elif 27 <= k <= 40:
+        c = k + 4
+    elif 41 <= k <= 60:
+        c = k + 5
     elif k == 61:
-        return k + 6
+        c = k + 6
     elif k == 62:
-        return k + 8
-    elif k >= 63 and k <= 73:
-        return k + 9
-    elif k >= 74 and k <= 80:
-        return k + 10
+        c = k + 8
+    elif 63 <= k <= 73:
+        c = k + 9
+    elif 74 <= k <= 80:
+        c = k + 10
+    return c
 
 
 def parse_result(img_id, json_content):
@@ -256,10 +257,10 @@ def send_img_with_opencv_handled(stream_manager_api, img_file_name):
         if FLAGS.coco
         else img_file_name
     )
-    """
-    height/FLAGS.model_input_height = hx/ DH =>hx = DH * (
-    height/FLAGS.model_input_height)
-    """
+    # """
+    # height/FLAGS.model_input_height = hx/ DH =>hx = DH * (
+    # height/FLAGS.model_input_height)
+    # """
     det_restore_ratio[img_id] = (
         round(height * 1.0 / FLAGS.model_input_height, 4),
         round(width * 1.0 / FLAGS.model_input_width, 4),
@@ -321,9 +322,7 @@ def write_speed_detail(perf_detail, report_file):
     report_file.flush()
 
 
-def handle_infer_result(
-    all_infer_dict_list, img_id, infer_result, img_ext="jpg"
-):
+def handle_infer_result(all_infer_dict_list, img_id, infer_result, img_ext="jpg"):
     if infer_result.errorCode != 0:
         print(
             "GetResultWithUniqueId error. errorCode=%d, errorMsg=%s"
@@ -492,10 +491,6 @@ def get_all_images_result(uuid_img_id_zip, stream_manager_api):
     return all_infer_dict_list
 
 
-def write_speed_detail(perf_detail, report_file):
-    report_file.write(perf_detail)
-    report_file.flush()
-
 
 def parse_infer_result(all_infer_dict_list, img_id, infer_result):
     if infer_result.errorCode != 0:
@@ -585,14 +580,13 @@ def main(unused_arg):
     global TXT_DIR
     global PERF_REPORT_TXT
     global DET_RESULT_JSON
-    """
-    output_dir
-    |_boxed_imgs
-    |_txts
-    |_per_report_npu.txt
-    |_det_result_npu.json
-
-    """
+    # '''
+    # output_dir
+    # |_boxed_imgs
+    # |_txts
+    # |_per_report_npu.txt
+    # |_det_result_npu.json
+    # '''
 
     BOXED_IMG_DIR = os.path.join(FLAGS.output_dir, "boxed_imgs")
     TXT_DIR = os.path.join(FLAGS.output_dir, "txts")
