@@ -134,6 +134,9 @@ class DynamicLossScaleUpdateCell(Cell):
         self.const_true = Tensor(True, dtype=mstype.bool_)
 
     def get_loss_scale(self):
+        """
+        Get Loss Scale value.
+        """
         return self.loss_scale_value
 
     def construct(self, loss_scale, overflow):
@@ -205,6 +208,9 @@ class FixedLossScaleUpdateCell(Cell):
         self.loss_scale_value = loss_scale_value
 
     def get_loss_scale(self):
+        """
+        Get Loss Scale value.
+        """
         return self.loss_scale_value
 
     def construct(self, _, overflow):

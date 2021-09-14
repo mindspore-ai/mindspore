@@ -19,7 +19,11 @@ from .. import nn
 
 
 class LossScaleManager:
-    """Loss scale manager abstract class."""
+    """
+    Loss scale manager abstract class.
+
+    Derive FixedLossScaleManager and DynamicLossScaleManager that override all LossScaleManager's method.
+    """
     def get_loss_scale(self):
         """Get loss scale value."""
 
