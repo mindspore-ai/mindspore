@@ -316,7 +316,7 @@ struct ModFunc<half2> {
 template <typename T>
 struct FloorModFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    T res = lhs - static_cast<T>(floor(static_cast<double>(lhs) / static_cast<double>(rhs))) * rhs;
+    T res = lhs - floorf(lhs / rhs) * rhs;
     res = (std::abs(res) > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
     return res;
   }
