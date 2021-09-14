@@ -30,8 +30,10 @@ def _get_parallel_mode():
     """Get parallel mode."""
     return auto_parallel_context().get_parallel_mode()
 
+
 def _is_in_auto_parallel_mode():
     return _get_parallel_mode() in [ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL]
+
 
 def _get_full_batch():
     """Get whether to use full_batch."""
@@ -51,12 +53,8 @@ def _check_task_sink_envs():
     """
     import os
     task_sink = os.getenv("GRAPH_OP_RUN")
-    if task_sink:
-        try:
-            if int(task_sink) == 1:
-                return False
-        except ValueError:
-            return True
+    if task_sink and task_sink.isdigit() and int(task_sink) == 1:
+        return False
     return True
 
 

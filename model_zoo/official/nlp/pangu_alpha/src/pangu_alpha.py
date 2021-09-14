@@ -33,20 +33,19 @@ class EmbeddingLayer(nn.Cell):
     def __init__(self, config):
         super(EmbeddingLayer, self).__init__()
         # Only for the pipeline mode, the embedding needs to be row sliced.
-        copied_parallel_config = copy.deepcopy(config.parallel_config)
-        if copied_parallel_config.pipeline_stage > 1:
-            copied_parallel_config.vocab_emb_dp = False
         self.word_embedding = VocabEmbedding(vocab_size=config.vocab_size,
                                              embedding_size=config.hidden_size,
                                              param_init=initializer("normal", [config.vocab_size, config.hidden_size],
                                                                     dtype=config.param_init_type),
-                                             parallel_config=copied_parallel_config.embedding_dp_mp_config)
+                                             parallel_config=config.parallel_config.embedding_dp_mp_config)
+        copied_parallel_config = copy.deepcopy(config.parallel_config)
+        copied_parallel_config.vocab_emb_dp = True
         self.position_embedding = VocabEmbedding(vocab_size=config.seq_length,
                                                  embedding_size=config.hidden_size,
                                                  param_init=initializer("normal",
                                                                         [config.seq_length, config.hidden_size],
                                                                         dtype=config.param_init_type),
-                                                 parallel_config=config.parallel_config.embedding_dp_mp_config)
+                                                 parallel_config=copied_parallel_config.embedding_dp_mp_config)
         self.add = P.Add().shard(
             ((config.parallel_config.data_parallel, 1, 1), (config.parallel_config.data_parallel, 1, 1)))
         self.dropout = nn.Dropout(1 - config.dropout_rate)
@@ -249,13 +248,14 @@ class PanguAlpha_Model(Cell):
                                          param_init_type=config.param_init_type,
                                          use_past=config.use_past,
                                          parallel_config=config.parallel_config).blocks
-
+        copied_parallel_config = copy.deepcopy(config.parallel_config)
+        copied_parallel_config.vocab_emb_dp = True
         self.top_query_embedding = VocabEmbedding(vocab_size=config.seq_length,
                                                   embedding_size=config.hidden_size,
                                                   param_init=initializer("normal",
                                                                          [config.seq_length, config.hidden_size],
                                                                          dtype=config.param_init_type),
-                                                  parallel_config=config.parallel_config.embedding_dp_mp_config)
+                                                  parallel_config=copied_parallel_config.embedding_dp_mp_config)
         self.top_query_embedding.pipeline_stage = config.parallel_config.pipeline_stage - 1
         if config.parallel_config.pipeline_stage > 1:
             self.top_query_embedding.set_comm_fusion(2)
