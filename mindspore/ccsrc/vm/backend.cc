@@ -779,7 +779,7 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
 }
 
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs) {
-  MS_LOG(DEBUG) << "Run actor begin, actor name: " << actor_info;
+  MS_LOG(INFO) << "Run actor begin, actor name: " << actor_info;
   MS_EXCEPTION_IF_NULL(root_graph_);
   if (IsGraphOutputValueNodeOrParameter(root_graph_->output(), args, outputs)) {
     return;
@@ -817,7 +817,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   std::vector<tensor::TensorPtr> input_tensor;
   MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
   // Get inputs of control node which come from the host actor.
-  const auto &control_node_parameters = graph_compiler_info.control_node_parser_->GetControlNodeParameter();
+  const auto &control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
   for (const auto &parameter : control_node_parameters) {
     PushTensor(args, origin_parameters, parameter, &input_tensor);
   }
@@ -831,14 +831,14 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     return;
   }
 
-  mindspore::ScopedLongRunning long_running;
-  // Run actor DAG.
-  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
-  MS_EXCEPTION_IF_NULL(actor_set);
-  runtime::GraphScheduler::GetInstance().PrepareRun(actor_set, graph_compiler_info, input_tensors);
   // Debugger pre-execute graph.
   PrepareForDebuggr(graph_compiler_info);
-  if (!runtime::GraphScheduler::GetInstance().Run(actor_set)) {
+
+  // Run actor DAG.
+  mindspore::ScopedLongRunning long_running;
+  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
+  MS_EXCEPTION_IF_NULL(actor_set);
+  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors)) {
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();
 #endif
@@ -866,12 +866,13 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     size_t output_position = 0;
     ConstructOutputs(root_graph_->output(), output_tensors, &output_position, outputs);
   }
-  MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
+
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
 
   // Update device address for output node of graph.
   actor_set->output_actor_->UpdateOutputDeviceAddress();
+  MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
 }
 
 void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
@@ -1031,20 +1032,6 @@ void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const Kernel
   actor_to_graph_compiler_info_.erase(actor_info);
 }
 
-void DebugStreamSync(const GraphCompilerInfo &graph_compiler_info) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto enable_sync_run = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
-  if (enable_sync_run) {
-    if (!graph_compiler_info.device_contexts_.empty()) {
-      MS_EXCEPTION_IF_NULL(graph_compiler_info.device_contexts_[0]);
-      if (!graph_compiler_info.device_contexts_[0]->SyncStream()) {
-        MS_LOG(EXCEPTION) << "Sync stream failed!";
-      }
-    }
-  }
-}
-
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info,
                              const std::vector<int64_t> *tensors_mask,
                              const std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs) {
@@ -1079,13 +1066,10 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
     }
   }
 
-  runtime::GraphScheduler::GetInstance().PrepareRunOp(actor_set, graph_compiler_info, {tensors_without_value_node});
-  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, runtime::GraphExecutionStrategy::kStep, input_tensors)) {
+  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, {tensors_without_value_node}, *input_tensors,
+                                                  runtime::GraphExecutionStrategy::kStep)) {
     MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
   }
-
-  // Debug for pynative
-  DebugStreamSync(graph_compiler_info);
 
   // Fetch outputs.
   const auto &graph = graph_compiler_info.graphs_.front();

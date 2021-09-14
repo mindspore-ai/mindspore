@@ -16,7 +16,6 @@
 
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
-#include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -83,7 +82,7 @@ bool IsHostQueueDSActor(const AnfNodePtr &node, const KernelGraphPtr &graph,
   bool is_host = ((front_node == nullptr) || host_parameters.empty() ||
                   find(host_parameters.begin(), host_parameters.end(), front_node) != host_parameters.end());
 
-  //  Judge whether node is internal parameter.
+  // Judge whether node is internal parameter.
   const auto &internal_front_node = graph->GetFrontNodeByInternalParameter(node);
   if (internal_front_node.first == nullptr && is_host) {
     return true;
@@ -173,6 +172,51 @@ bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_
                   << ", dst device type: " << dst_device_tensor->DeviceType();
     return false;
   }
+}
+
+void UpdateRefCount(DeviceTensor *const device_tensor, bool is_max_ref_count) {
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  if (is_max_ref_count) {
+    device_tensor->set_original_ref_count(SIZE_MAX);
+  } else {
+    device_tensor->IncreaseOriginalRefCount();
+  }
+  device_tensor->ResetRefCount();
+}
+
+void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_count) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto device_tensor = AnfAlgo::GetMutableOutputAddr(node, output_idx, false);
+  UpdateRefCount(device_tensor.get(), is_max_ref_count);
+}
+
+AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(backend_node);
+  MS_EXCEPTION_IF_NULL(graph);
+
+  // Internal parameter ---> front node.
+  auto front_node_with_index = graph->GetFrontNodeByInternalParameter(backend_node);
+  if (front_node_with_index.first != nullptr) {
+    return front_node_with_index.first;
+  }
+
+  auto front_node = graph->GetFrontAnfByBackendAnf(backend_node);
+  // PyNative forward graph does not has front node, using backend node instead.
+  if (front_node == nullptr) {
+    front_node = backend_node;
+  }
+  return front_node;
+}
+
+KernelWithIndex FetchFrontNodeWithIndexByGraphOutput(const KernelWithIndex &output_with_index,
+                                                     const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto front_node_with_index = graph->GetFrontNodeWithIndexByGraphOutput(output_with_index);
+  // PyNative forward graph does not has front node, using backend node instead.
+  if (front_node_with_index.first == nullptr) {
+    front_node_with_index = output_with_index;
+  }
+  return front_node_with_index;
 }
 }  // namespace runtime
 }  // namespace mindspore

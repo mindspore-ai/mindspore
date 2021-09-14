@@ -359,6 +359,7 @@ void GPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const
 void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const { CreateGPUKernel(nodes); }
 
 void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
+  MS_EXCEPTION_IF_NULL(kernel);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   bool is_pynative_infer = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
@@ -371,7 +372,7 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
   if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
-    MS_LOG(EXCEPTION) << "Akg kernels do not support dynamic shape by now.";
+    MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << kernel->fullname_with_scope();
   }
 
   kernel::GpuKernel *gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
@@ -407,6 +408,14 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
 
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+    return false;
+  }
+
+  // Sync running.
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
+      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !SyncStream()) {
     return false;
   }
 

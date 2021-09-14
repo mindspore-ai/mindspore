@@ -43,14 +43,10 @@ class LoopCountActor : public DebugAwareActor {
 
   ~LoopCountActor() override = default;
 
-  void Init() override;
-
   // The loop count actor run when receive the input control.
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
-  // The memory related operation interface.
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
-  // The callback after memory alloc finished.
+  // The callback waits for the memory manager actor to finish all the message processing.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
   // The debug related operation interface.
@@ -70,19 +66,9 @@ class LoopCountActor : public DebugAwareActor {
   // The total running count represents the toal step running count.
   size_t total_running_count_;
 
-  // The output controls contain the data source actors and the no input kernel actors and output actor.
-  std::vector<AID> data_source_aids_;
-  std::vector<AID> no_input_kernel_aids_;
+  // The output controls contain the data prepare actor and output actor.
+  AID data_prepare_aid_;
   AID output_aid_;
-
-  // The nodes need continuous memory, which must allocate in the begin of step running. The first bool of pair
-  // expresses the inputs of node need continuous memory, the second bool of pair expresses the outputs of node need
-  // continuous memory.
-  std::map<std::pair<CNodePtr, DeviceContext *>, std::pair<bool, bool>> continuous_memory_nodes_;
-  // The members for continuous memory alloc fetched by continuous_memory_nodes_.
-  std::vector<std::vector<DeviceTensorPtr>> continuous_memory_alloc_list_list_;
-  std::vector<std::vector<size_t>> size_list_list_;
-  std::vector<size_t> total_size_list_;
 };
 
 using LoopCountActorPtr = std::shared_ptr<LoopCountActor>;
