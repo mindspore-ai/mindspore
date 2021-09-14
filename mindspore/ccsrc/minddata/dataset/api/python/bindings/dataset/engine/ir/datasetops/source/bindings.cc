@@ -41,6 +41,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/kmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/speech_commands_node.h"
@@ -264,6 +265,16 @@ PYBIND_REGISTER(ImageFolderNode, 2, ([](const py::module *m) {
                                                                            toStringMap(class_indexing), nullptr);
                       THROW_IF_ERROR(imagefolder->ValidateParams());
                       return imagefolder;
+                    }));
+                }));
+
+PYBIND_REGISTER(KMnistNode, 2, ([](const py::module *m) {
+                  (void)py::class_<KMnistNode, DatasetNode, std::shared_ptr<KMnistNode>>(*m, "KMnistNode",
+                                                                                         "to create a KMnistNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, py::handle sampler) {
+                      auto kmnist = std::make_shared<KMnistNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(kmnist->ValidateParams());
+                      return kmnist;
                     }));
                 }));
 
