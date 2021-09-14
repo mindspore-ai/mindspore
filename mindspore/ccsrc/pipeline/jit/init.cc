@@ -303,8 +303,10 @@ PYBIND11_MODULE(_c_expression, m) {
       mindspore::pipeline::ClearResAtexit();
 
 #ifdef ENABLE_MINDDATA
+      MS_LOG(WARNING) << "Start releasing dataset handles...";
       py::module iterators = py::module::import("mindspore.dataset.engine.iterators");
       (void)iterators.attr("_cleanup")();
+      MS_LOG(WARNING) << "End release dataset handles.";
 #endif
     }
   }});
