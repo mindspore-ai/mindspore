@@ -35,6 +35,7 @@ class MatmulCPUKernel : public MatmulFp32BaseCPUKernel {
  private:
   void InitShapeA();
   void InitShapeB();
+  int InitBroadcastParams();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_H_
