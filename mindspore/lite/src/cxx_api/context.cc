@@ -292,12 +292,6 @@ uint32_t GPUDeviceInfo::GetDeviceID() const {
   return GetValue<uint32_t>(data_, kModelOptionGPUDeviceID);
 }
 
-void GPUDeviceInfo::SetGpuTrtInferMode(bool gpu_trt_infer_mode) { MS_LOG(ERROR) << "Unsupported Feature."; }
-bool GPUDeviceInfo::GetGpuTrtInferMode() const {
-  MS_LOG(ERROR) << "Unsupported Feature.";
-  return false;
-}
-
 void GPUDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
   MS_LOG(ERROR) << "Unsupported Feature.";
 }
