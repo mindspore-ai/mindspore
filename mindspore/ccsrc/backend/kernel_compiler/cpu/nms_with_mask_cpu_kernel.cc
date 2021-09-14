@@ -20,16 +20,16 @@
 namespace mindspore {
 namespace kernel {
 size_t NmsRoundUpPower2(int v) {
-  constexpr size_t ONE = 1, TWO = 2, FOUR = 4, EIGHT = 8, SIXTEEN = 16;
+  constexpr uint32_t ONE = 1, TWO = 2, FOUR = 4, EIGHT = 8, SIXTEEN = 16;
   v--;
-  v = IntToSize(v);
-  v |= v >> ONE;
-  v |= v >> TWO;
-  v |= v >> FOUR;
-  v |= v >> EIGHT;
-  v |= v >> SIXTEEN;
-  v++;
-  return v;
+  size_t value = IntToSize(v);
+  value |= value >> ONE;
+  value |= value >> TWO;
+  value |= value >> FOUR;
+  value |= value >> EIGHT;
+  value |= value >> SIXTEEN;
+  value++;
+  return value;
 }
 
 template <typename T>
@@ -90,7 +90,7 @@ void NMSWithMaskCPUKernel<T>::MaskInit(size_t numSq, bool *row_mask) {
 // copy data from input to output array sorted by indices returned from bitonic sort
 // flips boxes if asked to,  default - false -> if (x1/y1 > x2/y2)
 template <typename T>
-void NMSWithMaskCPUKernel<T>::PopulateOutput(T *data_in, T *data_out, const int *index_buff, const int num,
+void NMSWithMaskCPUKernel<T>::PopulateOutput(const T *data_in, T *data_out, const int *index_buff, const int num,
                                              int box_size, bool flip_mode) {
   auto task = [this, &index_buff, &data_in, &data_out, flip_mode, num, box_size](int start, int end) {
     for (int box_num = start; box_num < end; box_num++) {
@@ -139,10 +139,10 @@ void NMSWithMaskCPUKernel<T>::Preprocess(const int num, int *sel_idx, bool *sel_
 
 template <typename T>
 bool NMSWithMaskCPUKernel<T>::IouDecision(const T *output, int box_A_start, int box_B_start, float IOU_value) {
-  constexpr size_t X1_OFFSET = 0;
-  constexpr size_t Y1_OFFSET = 1;
-  constexpr size_t X2_OFFSET = 2;
-  constexpr size_t Y2_OFFSET = 3;
+  constexpr int X1_OFFSET = 0;
+  constexpr int Y1_OFFSET = 1;
+  constexpr int X2_OFFSET = 2;
+  constexpr int Y2_OFFSET = 3;
   T x_1 = std::max(output[box_A_start + X1_OFFSET], output[box_B_start + X1_OFFSET]);
   T y_1 = std::max(output[box_A_start + Y1_OFFSET], output[box_B_start + Y1_OFFSET]);
   T x_2 = std::min(output[box_A_start + X2_OFFSET], output[box_B_start + X2_OFFSET]);

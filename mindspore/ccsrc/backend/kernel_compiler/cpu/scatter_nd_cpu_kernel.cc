@@ -86,7 +86,7 @@ void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
   int out_stride = 1;
   out_strides_.push_back(out_stride);
   for (int i = indices_unit_rank_ - TWO; i >= 0; i--) {
-    out_stride *= SizeToInt(shape[i + 1]);
+    out_stride *= SizeToInt(shape[IntToSize(i + 1)]);
     out_strides_.push_back(out_stride);
   }
   reverse(out_strides_.begin(), out_strides_.end());

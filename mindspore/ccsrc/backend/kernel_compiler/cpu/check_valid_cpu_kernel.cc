@@ -52,11 +52,11 @@ bool CheckValidCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &input
       const size_t right_x = i * 4 + 2;
       const size_t right_y = i * 4 + 3;
 
-      size_t valid_flag = 0;
-      valid_flag |= !IntToSize(anchor_box[left_x] >= ZERO);
-      valid_flag |= !IntToSize(anchor_box[left_y] >= ZERO);
-      valid_flag |= !IntToSize(img_metas[OFFSET_ONE] * img_metas[OFFSET_TWO] - ONE >= anchor_box[right_x]);
-      valid_flag |= !IntToSize(img_metas[OFFSET_ZERO] * img_metas[OFFSET_TWO] - ONE >= anchor_box[right_y]);
+      uint32_t valid_flag = 0;
+      valid_flag |= !static_cast<uint32_t>(anchor_box[left_x] >= ZERO);
+      valid_flag |= !static_cast<uint32_t>(anchor_box[left_y] >= ZERO);
+      valid_flag |= !static_cast<uint32_t>(img_metas[OFFSET_ONE] * img_metas[OFFSET_TWO] - ONE >= anchor_box[right_x]);
+      valid_flag |= !static_cast<uint32_t>(img_metas[OFFSET_ZERO] * img_metas[OFFSET_TWO] - ONE >= anchor_box[right_y]);
 
       output[i] = !static_cast<bool>(valid_flag);
     }
