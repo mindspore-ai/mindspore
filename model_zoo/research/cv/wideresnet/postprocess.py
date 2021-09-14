@@ -19,8 +19,8 @@ import numpy as np
 
 batch_size = 1
 parser = argparse.ArgumentParser(description="WideResNet inference")
-parser.add_argument("--result_path", type=str, required=True, help="result files path.")
-parser.add_argument("--label_path", type=str, required=True, help="image file path.")
+parser.add_argument("--result_path", required=True, help="result files path.")
+parser.add_argument("--label_path", required=True, help="image file path.")
 args = parser.parse_args()
 
 

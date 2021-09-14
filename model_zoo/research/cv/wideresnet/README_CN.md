@@ -59,12 +59,14 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 - 下载数据集，目录结构如下：
 
 ```text
-└─cifar-10-batches-bin
+└─cifar10
+  ├── train
     ├─data_batch_1.bin                  # 训练数据集
     ├─data_batch_2.bin                  # 训练数据集
     ├─data_batch_3.bin                  # 训练数据集
     ├─data_batch_4.bin                  # 训练数据集
     ├─data_batch_5.bin                  # 训练数据集
+  ├── eval
     └─test_batch.bin                    # 评估数据集
 ```
 
@@ -86,13 +88,22 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 
 ```Shell
 # 分布式训练
-用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATA_URL] [CKPT_URL] [MODELART]
+[DATA_URL]是数据集的路径。
+[MODELART]为True时执行ModelArts云上版本，[CKPT_URL]是训练过程中保存ckpt文件的路径。
+[MODELART]为False时执行线下版本，[CKPT_URL]用“”省略，只保留最佳ckpt结果，文件名为‘WideResNet_best.ckpt’。
 
 # 单机训练
-用法：bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_standalone_train.sh [DATA_URL] [CKPT_URL] [MODELART]
+[DATA_URL]是数据集的路径。
+[MODELART]为True时执行ModelArts云上版本，[CKPT_URL]是训练过程中保存ckpt文件的路径。
+[MODELART]为False时执行线下版本，[CKPT_URL]用“”省略，只保留最佳ckpt结果，文件名为‘WideResNet_best.ckpt’。
 
 # 运行评估示例
-用法：bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+用法：bash run_eval.sh [DATA_URL] [CKPT_URL] [MODELART]
+[DATA_URL]是数据集的路径。
+[CKPT_URL]训练好的ckpt文件。
+[MODELART]为True时执行ModelArts云上版本，为Flase执行线下脚本。
 ```
 
 # 脚本说明
@@ -164,11 +175,16 @@ WideResNet的总体网络架构如下：[链接](https://arxiv.org/abs/1605.0714
 
 ```Shell
 # 分布式训练
-用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
+用法：bash run_distribute_train.sh [RANK_TABLE_FILE] [DATA_URL] [CKPT_URL] [MODELART]
+[DATA_URL]是数据集的路径。
+[MODELART]为True时执行ModelArts云上版本，[CKPT_URL]是训练过程中保存ckpt文件的路径。
+[MODELART]为False时执行线下版本，[CKPT_URL]用“”省略，只保留最佳ckpt结果，文件名为‘WideResNet_best.ckpt’。
 
 # 单机训练
-用法：bash run_standalone_train.sh [DATASET_PATH] [PRETRAINED_CKPT_PATH]（可选）
-
+用法：bash run_standalone_train.sh [DATA_URL] [CKPT_URL] [MODELART]
+[DATA_URL]是数据集的路径。
+[MODELART]为True时执行ModelArts云上版本，[CKPT_URL]是训练过程中保存ckpt文件的路径。
+[MODELART]为False时执行线下版本，[CKPT_URL]用“”省略，只保留最佳ckpt结果，文件名为‘WideResNet_best.ckpt’。
 ```
 
 分布式训练需要提前创建JSON格式的HCCL配置文件。
@@ -218,12 +234,15 @@ epoch: 4 step: 195, loss is 1.221174
 
 ```Shell
 # 评估
-Usage: bash run_eval.sh [DATASET_PATH] [CHECKPOINT_PATH]
+Usage: bash run_eval.sh [DATA_URL] [CKPT_URL] [MODELART]
+[DATA_URL]是数据集的路径。
+[CKPT_URL]训练好的ckpt文件。
+[MODELART]为True时执行ModelArts云上版本，为Flase执行线下脚本。
 ```
 
 ```Shell
 # 评估示例
-bash  run_eval.sh  /cifar10  WideResNet_best.ckpt
+bash  run_eval.sh  /cifar10  WideResNet_best.ckpt False
 ```
 
 训练过程中可以生成检查点。
@@ -244,6 +263,8 @@ result: {'top_1_accuracy': 0.9622395833333334}
 
 ```shell
 python export.py --ckpt_file [CKPT_PATH] --file_format [FILE_FORMAT] --device_id [0]
+
+[CKPT_PATH]是训练后保存的ckpt文件
 ```
 
 参数ckpt_file为必填项，
@@ -300,3 +321,9 @@ dataset.py中设置了“create_dataset”函数内的种子，同时还使用�
 # ModelZoo主页
 
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
+
+# FAQ
+
+优先参考[ModelZoo FAQ](https://gitee.com/mindspore/mindspore/tree/master/model_zoo#FAQ)来查找一些常见的公共问题。
+
+- **Q: 使用PYNATIVE_MODE发生内存溢出怎么办？** **A**：内存溢出通常是因为PYNATIVE_MODE需要更多的内存， 将batch size设置为16降低内存消耗，可进行网络训练。
