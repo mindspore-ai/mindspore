@@ -108,3 +108,19 @@ def get_bprop_trunc(self):
         return (bc_x,)
 
     return bprop
+
+
+@bprop_getters.register(P.Ger)
+def get_bprop_ger(self):
+    """Grad definition for 'Ger' operation"""
+    transpose_op = P.Transpose()
+    matmul = P.MatMul()
+    expand_dims = P.ExpandDims()
+    squeeze = P.Squeeze(1)
+
+    def bprop(input_x, input_y, out, dout):
+        dx = squeeze(matmul(dout, expand_dims(input_y, 1)))
+        dy = squeeze(matmul(transpose_op(dout, (1, 0)), expand_dims(input_x, 1)))
+        return dx, dy
+
+    return bprop

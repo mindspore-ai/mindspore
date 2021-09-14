@@ -1043,6 +1043,10 @@ class SparseApplyRMSPropNet(nn.Cell):
         return out
 
 test_case_math_ops = [
+    ('Ger', {
+        'block': P.Ger(),
+        'desc_inputs': [[3,], [4,]],
+        'desc_bprop': [[3, 4]]}),
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
         'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
