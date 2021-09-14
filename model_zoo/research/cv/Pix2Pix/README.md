@@ -231,8 +231,8 @@ bash run_infer_310.sh [The path of the MINDIR for 310 infer] [The path of the da
 | Optimizer                  | Adam                                                        | Adam                                                            |
 | Loss Function              | SigmoidCrossEntropyWithLogits Loss & L1 Loss                                   | SigmoidCrossEntropyWithLogits Loss & L1 Loss |
 | outputs                    | probability                                                 | probability                                                     |
-| Speed                      | 1pc(Ascend): 10 ms/step                                  | 1pc(GPU): 50 ms/step                                     |
-| Total time                 | 1pc(Ascend): 0.3h                                        | 1pc(GPU): 0.9 h                                     |
+| Speed                      | 1pc(Ascend): 10 ms/step                                  | 1pc(GPU): 40 ms/step                                     |
+| Total time                 | 1pc(Ascend): 0.3h                                        | 1pc(GPU): 0.8 h                                     |
 | Checkpoint for Fine tuning | 207M (.ckpt file)                                            | 207M (.ckpt file)                                              |
 
 | Parameters                 | single Ascend                                            | single GPU                                                         |
@@ -245,8 +245,8 @@ bash run_infer_310.sh [The path of the MINDIR for 310 infer] [The path of the da
 | Optimizer                  | Adam                                                        | Adam                                                            |
 | Loss Function              | SigmoidCrossEntropyWithLogits Loss & L1 Loss                                   | SigmoidCrossEntropyWithLogits Loss & L1 Loss |
 | outputs                    | probability                                                 | probability                                                     |
-| Speed                      | 1pc(Ascend): 20 ms/step                                  | 1pc(GPU): 60 ms/step                                     |
-| Total time                 | 1pc(Ascend): 1.58h                                       | 1pc(GPU): 2.2h                                     |
+| Speed                      | 1pc(Ascend): 20 ms/step                                  | 1pc(GPU): 90 ms/step                                     |
+| Total time                 | 1pc(Ascend): 1.58h                                       | 1pc(GPU): 3.3h                                     |
 | Checkpoint for Fine tuning | 207M (.ckpt file)                                            | 207M (.ckpt file)                                              |
 
 ### Distributed Training Performance
@@ -275,8 +275,8 @@ bash run_infer_310.sh [The path of the MINDIR for 310 infer] [The path of the da
 | Optimizer                  | Adam                                                        | Adam                                                            |
 | Loss Function              | SigmoidCross55EntropyWithLogits Loss & L1 Loss                                   | SigmoidCrossEntropyWithLogits Loss & L1 Loss |
 | outputs                    | probability                                                 | probability                                                     |
-| Speed                      | 8pc(Ascend): 20 ms/step                                  | 8pc(GPU): 30 ms/step                                     |
-| Total time                 | 8pc(Ascend): 1.2h                                       | 8pc(GPU): 2.1h                                     |
+| Speed                      | 8pc(Ascend): 20 ms/step                                  | 8pc(GPU): 40 ms/step                                     |
+| Total time                 | 8pc(Ascend): 1.2h                                       | 8pc(GPU): 2.8h                                     |
 | Checkpoint for Fine tuning | 207M (.ckpt file)                                            | 207M (.ckpt file)                                              |
 
 ### Evaluation Performance

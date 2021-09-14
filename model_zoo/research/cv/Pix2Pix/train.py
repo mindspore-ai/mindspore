@@ -43,7 +43,7 @@ if __name__ == '__main__':
     print("ds.shape:", ds.output_shapes())
 
     steps_per_epoch = ds.get_dataset_size()
-
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
     if args.device_target == 'Ascend':
         if args.run_distribute:
             print("Ascend distribute")
@@ -55,6 +55,8 @@ if __name__ == '__main__':
             init()
 
             rank = get_rank()
+        else:
+            context.set_context(device_id=args.device_id)
     elif args.device_target == 'GPU':
         if args.run_distribute:
             print("GPU distribute")
@@ -63,6 +65,8 @@ if __name__ == '__main__':
             context.set_auto_parallel_context(device_num=get_group_size(),
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
+        else:
+            context.set_context(device_id=args.device_id)
     netG = get_generator()
     netD = get_discriminator()
 

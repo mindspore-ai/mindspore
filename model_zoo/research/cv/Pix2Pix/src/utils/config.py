@@ -19,7 +19,6 @@
 
 import argparse
 import ast
-from mindspore import context
 
 
 def get_args():
@@ -71,7 +70,4 @@ def get_args():
     parser.add_argument('--predict_dir', type=str, default='./results/predict/',
                         help='during validating, the file path of Generated image.')
     args = parser.parse_args()
-
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
-
     return args
