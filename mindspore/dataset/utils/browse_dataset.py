@@ -44,21 +44,22 @@ def imshow_det_bbox(image,
             data should be ordered with (N, x, y, w, h).
         labels (ndarray): Labels of bboxes, shaped (N, 1).
         segm (ndarray): The segmentation masks of image in M classes, shaped (M, H, W) (Default=None).
-        class_names (list[str], dict): Names of each classes to map label to class name
+        class_names (list[str], tuple[str], dict): Names of each classes to map label to class name
             (Default=None, only display label).
         score_threshold (float): Minimum score of bboxes to be shown (Default=0).
         bbox_color (tuple(int)): Color of bbox lines.
             The tuple of color should be in BGR order (Default=(0, 255 ,0), means 'green').
-        text_color (tuple(int)):Color of texts.
+        text_color (tuple(int)): Color of texts.
             The tuple of color should be in BGR order (Default=(203, 192, 255), means 'pink').
-        mask_color (tuple(int)):Color of mask.
+        mask_color (tuple(int)): Color of mask.
             The tuple of color should be in BGR order (Default=(128, 0, 128), means 'purple').
         thickness (int): Thickness of lines (Default=2).
         font_size (int, float): Font size of texts (Default=0.8).
         show (bool): Whether to show the image (Default=True).
         win_name (str): The window name (Default="win").
         wait_time (int): Value of waitKey param (Default=2000, means display interval is 2000ms).
-        out_file (str, optional): The filename to write the image (Default=None).
+        out_file (str, optional): The filename to write the imagee (Default=None). File extension name
+            is required to indicate the image compression type, e.g. 'jpg', 'png'.
 
     Returns:
         ndarray: The image with bboxes drawn on it.
@@ -81,6 +82,9 @@ def imshow_det_bbox(image,
         assert isinstance(segm, np.ndarray) and segm.ndim == 3, "segm must be a ndarray in (M, H, W) format."
         H, W = (image.shape[0], image.shape[1]) if image.shape[2] == 3 else (image.shape[1], image.shape[2])
         assert H == segm.shape[1] and W == segm.shape[2], "segm must has same height and width with image."
+        if bboxes is not None:
+            assert bboxes.shape[0] <= segm.shape[0], "number of segm masks must not be less than the number of bboxes."
+    assert isinstance(class_names, (tuple, list, dict)), "class_names must be a list, tuple or dict."
     assert isinstance(bbox_color, tuple) and len(bbox_color) == 3, \
         "bbox_color must be a three tuple, formatted (B, G, R)."
     assert isinstance(text_color, tuple) and len(text_color) == 3, \
@@ -88,10 +92,13 @@ def imshow_det_bbox(image,
     assert isinstance(mask_color, tuple) and len(mask_color) == 3, \
         "mask_color must be a three tuple, formatted (B, G, R)."
     assert isinstance(thickness, int), "thickness must be a int."
+    assert thickness >= 0, "thickness must be larger than or equal to zero."
     assert isinstance(font_size, (int, float)), "font_size must be a int or float."
+    assert font_size >= 0, "font_size must be larger than or equal to zero."
     assert isinstance(show, bool), "show must be a bool."
     assert isinstance(win_name, str), "win_name must be a str."
     assert isinstance(wait_time, int), "wait_time must be a int."
+    assert wait_time >= 0, "wait_time must be larger than or equal to zero."
     if out_file is not None:
         assert isinstance(out_file, str), "out_file must be a str."
 
@@ -118,7 +125,7 @@ def imshow_det_bbox(image,
             cv2.rectangle(draw_image, (x1, y1), (x2, y2), bbox_color, thickness)
             # label
             try:
-                draw_label = class_names[labels[i][0]] if class_names is not None else f'class {labels[i][0]}'
+                draw_label = str(class_names[labels[i][0]]) if class_names is not None else f'class {labels[i][0]}'
             except (IndexError, KeyError):
                 draw_label = f'class {labels[i][0]}'
             if len(draw_bbox) > 4:
@@ -140,5 +147,5 @@ def imshow_det_bbox(image,
     if out_file:
         logger.info("Saving image file with name: " + out_file + "...")
         cv2.imwrite(out_file, draw_image)
-        os.chmod(out_file, 0o660)
+        os.chmod(out_file, 0o600)
     return draw_image
