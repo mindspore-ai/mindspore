@@ -19,6 +19,7 @@
 #include <iostream>
 #include <map>
 #include <thread>
+#include "utils/log_adapter.h"
 #include "acl/acl_tdt.h"
 
 namespace mindspore {
@@ -35,6 +36,37 @@ class TdtHandle {
   TdtHandle() {}
   ~TdtHandle() = default;
 };
+
+inline void TdtHandle::AddHandle(acltdtChannelHandle **handle, std::thread *use_thread) {
+  if (*handle != nullptr) {
+    acl_handle_map.insert({reinterpret_cast<void **>(handle), use_thread});
+  }
+}
+
+inline void TdtHandle::DelHandle(acltdtChannelHandle **handle) {
+  void **void_handle = reinterpret_cast<void **>(handle);
+  acl_handle_map.erase(void_handle);
+}
+
+inline bool TdtHandle::DestroyHandle() {
+  bool destroy_all = true;
+  for (auto &item : acl_handle_map) {
+    acltdtChannelHandle **handle = reinterpret_cast<acltdtChannelHandle **>(item.first);
+    if (*handle != nullptr) {
+      acltdtStopChannel(*handle);
+      if (item.second != nullptr && item.second->joinable()) {
+        item.second->join();
+      }
+      if (acltdtDestroyChannel(*handle) != ACL_SUCCESS) {
+        destroy_all = false;
+      } else {
+        *handle = nullptr;
+      }
+    }
+  }
+  return destroy_all;
+}
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TDT_TDT_HANDLE_H_
