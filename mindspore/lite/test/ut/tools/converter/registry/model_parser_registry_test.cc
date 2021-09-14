@@ -40,9 +40,15 @@ TEST_F(ModelParserRegistryTest, TestRegistry) {
   ConverterParameters converter_parameters;
   auto func_graph = model_parser->Parse(converter_parameters);
   ASSERT_NE(func_graph, nullptr);
-  auto node_list = func_graph->GetOrderedCnodes();
-  ASSERT_EQ(node_list.size(), 3);
-  auto iter = node_list.begin();
+  auto node_list = func_graph->TopoSort(func_graph->get_return());
+  std::vector<AnfNodePtr> cnode_list;
+  for (auto &node : node_list) {
+    if (node->isa<CNode>()) {
+      cnode_list.push_back(node);
+    }
+  }
+  ASSERT_EQ(cnode_list.size(), 3);
+  auto iter = cnode_list.begin();
   bool is_add = opt::CheckPrimitiveType(*iter, prim::kPrimAddFusion);
   ASSERT_EQ(is_add, true);
   ++iter;

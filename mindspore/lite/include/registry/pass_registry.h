@@ -19,20 +19,13 @@
 
 #include <vector>
 #include <string>
-#include <utility>
 #include <memory>
 #include "include/lite_utils.h"
 
 namespace mindspore {
-namespace opt {
-/// \brief P defined a basic interface.
-///
-/// \note List public class and interface for reference.
-class MS_API Pass;
-using PassPtr = std::shared_ptr<Pass>;
-}  // namespace opt
-
 namespace registry {
+class PassBase;
+using PassBasePtr = std::shared_ptr<PassBase>;
 /// \brief PassPosition defined where to place user's pass.
 enum MS_API PassPosition { POSITION_BEGIN = 0, POSITION_END = 1 };
 
@@ -43,7 +36,7 @@ class MS_API PassRegistry {
   ///
   /// \param[in] pass_name Define the name of the pass, a string which should guarantee uniqueness.
   /// \param[in] pass Define pass instance.
-  PassRegistry(const std::string &pass_name, const opt::PassPtr &pass);
+  PassRegistry(const std::string &pass_name, const PassBasePtr &pass);
 
   /// \brief Constructor of PassRegistry to assign which passes are required for external extension.
   ///
@@ -63,10 +56,10 @@ class MS_API PassRegistry {
 
   /// \brief Static method to obtain pass instance according to passes' name.
   ///
-  /// \param[in] pass_names Define the name of passes.
+  /// \param[in] pass_names Define the name of pass.
   ///
   /// \return Pass Instance Vector.
-  static std::vector<opt::PassPtr> GetPassFromStoreRoom(const std::vector<std::string> &pass_names);
+  static PassBasePtr GetPassFromStoreRoom(const std::string &pass_name);
 };
 
 /// \brief Defined registering macro to register Pass, which called by user directly.

@@ -82,7 +82,7 @@ CaffeModelParser::CaffeModelParser() = default;
 
 CaffeModelParser::~CaffeModelParser() = default;
 
-FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag) {
+api::FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag) {
   auto model_file = flag.model_file;
   auto weight_file = flag.weight_file;
   STATUS status = InitOriginModel(model_file, weight_file);
@@ -114,7 +114,9 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag)
   MS_CHECK_TRUE_RET(value_ptr != nullptr, nullptr);
   res_graph_->set_attr("fmk", value_ptr);
   std::set<FuncGraphPtr> all_func_graphs = {};
-  GetAllFuncGraph(res_graph_, &all_func_graphs);
+  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  GetAllFuncGraph(func_graph, &all_func_graphs);
   if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -122,7 +124,7 @@ FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &flag)
   }
   auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeCaffe, false);
   MS_CHECK_TRUE_RET(unify_format != nullptr, nullptr);
-  if (!unify_format->Run(res_graph_)) {
+  if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }

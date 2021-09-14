@@ -20,25 +20,24 @@
 #include <string>
 #include <vector>
 #include "src/common/log_adapter.h"
-#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace registry {
 namespace {
-std::map<std::string, opt::PassPtr> pass_store_room;
+std::map<std::string, PassBasePtr> outer_pass_storage;
 std::map<registry::PassPosition, std::vector<std::string>> external_assigned_passes;
 std::mutex pass_mutex;
-void RegPass(const std::string &pass_name, const opt::PassPtr &pass) {
+void RegPass(const std::string &pass_name, const PassBasePtr &pass) {
   if (pass == nullptr) {
     MS_LOG(ERROR) << "pass is nullptr.";
     return;
   }
   std::unique_lock<std::mutex> lock(pass_mutex);
-  pass_store_room[pass_name] = pass;
+  outer_pass_storage[pass_name] = pass;
 }
 }  // namespace
 
-PassRegistry::PassRegistry(const std::string &pass_name, const opt::PassPtr &pass) { RegPass(pass_name, pass); }
+PassRegistry::PassRegistry(const std::string &pass_name, const PassBasePtr &pass) { RegPass(pass_name, pass); }
 
 PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &names) {
   std::unique_lock<std::mutex> lock(pass_mutex);
@@ -49,17 +48,8 @@ std::vector<std::string> PassRegistry::GetOuterScheduleTask(PassPosition positio
   return external_assigned_passes[position];
 }
 
-std::vector<opt::PassPtr> PassRegistry::GetPassFromStoreRoom(const std::vector<std::string> &pass_names) {
-  std::vector<opt::PassPtr> schedule_passes;
-  for (auto &name : pass_names) {
-    auto iter = pass_store_room.find(name);
-    if (iter == pass_store_room.end()) {
-      continue;
-    }
-    MS_CHECK_TRUE_RET(iter->second != nullptr, std::vector<opt::PassPtr>{});
-    schedule_passes.push_back(iter->second);
-  }
-  return schedule_passes;
+PassBasePtr PassRegistry::GetPassFromStoreRoom(const std::string &pass_name) {
+  return outer_pass_storage.find(pass_name) == outer_pass_storage.end() ? nullptr : outer_pass_storage[pass_name];
 }
 }  // namespace registry
 }  // namespace mindspore

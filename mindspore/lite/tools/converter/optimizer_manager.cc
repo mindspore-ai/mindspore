@@ -15,31 +15,39 @@
  */
 
 #include "tools/converter/optimizer_manager.h"
+#include <map>
 #include <string>
 #include <vector>
 #include "backend/optimizer/common/pass.h"
 #include "src/common/log_util.h"
+#include "include/registry/pass_base.h"
 
 namespace mindspore {
 namespace lite {
+std::map<std::string, opt::PassPtr> PassStorage::pass_stroge_;
 bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::string> &pass_names) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is nullptr.";
     return false;
   }
-  auto schedule_passes = registry::PassRegistry::GetPassFromStoreRoom(pass_names);
-  if (schedule_passes.size() != pass_names.size()) {
-    MS_LOG(ERROR) << "exited pass cannot be obtained.";
-    return false;
-  }
-  int index = 0;
-  for (auto &pass : schedule_passes) {
-    CHECK_NULL_RETURN(pass);
-    if (!pass->Run(func_graph)) {
-      MS_LOG(WARNING) << "run pass failed, pass name is " << pass_names[index];
+  for (auto &pass_name : pass_names) {
+    auto pass_outer = registry::PassRegistry::GetPassFromStoreRoom(pass_name);
+    if (pass_outer != nullptr) {
+      if (!pass_outer->Execute(func_graph)) {
+        MS_LOG(ERROR) << "run pass failed, pass name is " << pass_name;
+        return false;
+      }
+      continue;
+    }
+    auto pass_builtin = PassStorage::GetPassFromStorage(pass_name);
+    if (pass_builtin == nullptr) {
+      MS_LOG(ERROR) << "exited pass cannot be obtained, pass name is " << pass_name;
       return false;
     }
-    ++index;
+    if (!pass_builtin->Run(func_graph)) {
+      MS_LOG(ERROR) << "run pass failed, pass name is " << pass_name;
+      return false;
+    }
   }
   return true;
 }

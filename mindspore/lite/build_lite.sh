@@ -237,7 +237,7 @@ build_lite() {
           compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
           cd ${BASEPATH}/../
           if [[ "${local_lite_platform}" == "x86_64" ]]; then
-            sh ${compile_nnie_script} -I x86_64 -b nnie_3516_master_dev -j $THREAD_NUM
+            sh ${compile_nnie_script} -I x86_64 -b nnie_3516_master_dev_2 -j $THREAD_NUM
             if [[ $? -ne 0 ]]; then
               echo "compile x86_64 for nnie failed."
               exit 1

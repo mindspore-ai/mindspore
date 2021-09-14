@@ -40,7 +40,7 @@ class TFModelParser : public converter::ModelParser {
   TFModelParser() = default;
   ~TFModelParser() override = default;
 
-  FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
+  api::FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
   static int TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 

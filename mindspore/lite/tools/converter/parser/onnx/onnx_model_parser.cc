@@ -501,7 +501,7 @@ FuncGraphPtr OnnxModelParser::BuildBodyGraph(const onnx::NodeProto &loop_node, c
   return loop_body_graph;
 }
 
-FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) {
+api::FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) {
   auto model_file = flag.model_file;
   NotSupportOp::GetInstance()->set_fmk_type("ONNX");
   res_graph_ = std::make_shared<FuncGraph>();
@@ -514,13 +514,15 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
   }
   MS_ASSERT(onnx_root_graph_ != nullptr);
 
-  status = ConvertOnnxGraph(onnx_root_graph_, res_graph_, &anf_nodes_map_, {}, "root_node");
+  auto func_graph = std::dynamic_pointer_cast<FuncGraph>(res_graph_);
+  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
+  status = ConvertOnnxGraph(onnx_root_graph_, func_graph, &anf_nodes_map_, {}, "root_node");
   if (RET_OK != status) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     MS_LOG(ERROR) << "convert onnx graph failed.";
     return nullptr;
   }
-  static auto root_func_manager = Manage(res_graph_);
+  static auto root_func_manager = Manage(func_graph);
   MS_ASSERT(root_func_manager != nullptr);
   for (auto &subgraph : all_subgraphs_) {
     MS_ASSERT(subgraph != nullptr);
@@ -530,7 +532,7 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
   res_graph_->set_attr("graph_name", MakeValue("main_graph"));
   res_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeOnnx)));
   std::set<FuncGraphPtr> all_func_graphs = {};
-  GetAllFuncGraph(res_graph_, &all_func_graphs);
+  GetAllFuncGraph(func_graph, &all_func_graphs);
   if ((status = CommonAnfAdjust(all_func_graphs)) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -543,7 +545,7 @@ FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) 
   }
   auto unify_format = std::make_shared<UnifyFormatToNHWC>(kFmkTypeOnnx, false);
   MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "create unify_format return nullptr");
-  if (!unify_format->Run(res_graph_)) {
+  if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";
     return nullptr;
   }

@@ -21,9 +21,9 @@
 #include "include/registry/model_parser_registry.h"
 
 namespace mindspore {
-FuncGraphPtr ModelParserTest::Parse(const converter::ConverterParameters &flag) {
+api::FuncGraphPtr ModelParserTest::Parse(const converter::ConverterParameters &flag) {
   // construct funcgraph
-  res_graph_ = std::make_shared<FuncGraph>();
+  res_graph_ = api::FuncGraph::Create();
   auto ret = InitOriginModelStructure();
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "obtain origin model structure failed.";

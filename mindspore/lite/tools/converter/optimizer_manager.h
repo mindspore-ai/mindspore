@@ -17,13 +17,31 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H
 
+#include <map>
 #include <string>
 #include <vector>
+#include "backend/optimizer/common/pass.h"
+#include "include/errorcode.h"
 #include "include/registry/pass_registry.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {
 namespace lite {
+class PassStorage {
+ public:
+  static int StorePass(const std::string &pass_name, const opt::PassPtr &pass) {
+    if (registry::PassRegistry::GetPassFromStoreRoom(pass_name) != nullptr) {
+      return RET_ERROR;
+    }
+    pass_stroge_[pass_name] = pass;
+    return RET_OK;
+  }
+  static opt::PassPtr GetPassFromStorage(const std::string &pass_name) { return pass_stroge_[pass_name]; }
+
+ private:
+  static std::map<std::string, opt::PassPtr> pass_stroge_;
+};
+
 bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::string> &pass_names);
 bool RunExternalPass(const FuncGraphPtr &func_graph, registry::PassPosition position);
 }  // namespace lite

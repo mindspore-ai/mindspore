@@ -34,7 +34,7 @@ class CaffeModelParser : public converter::ModelParser {
 
   ~CaffeModelParser() override;
 
-  FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
+  api::FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
  private:
   STATUS InitOriginModel(const std::string &model_file, const std::string &weight_file);

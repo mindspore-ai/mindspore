@@ -144,7 +144,7 @@ STATUS AclPass::PreProcGraph(const FuncGraphPtr &func_graph) {
     return lite::RET_OK;
   }
   // The format of nodes (cnode, parameter, val) must be nchw due to interface of convert om
-  if (!lite::RunOptimizerPass(func_graph, {"ToNCHWFormat", "DeleteRedundantTranspose"})) {
+  if (!lite::RunOptimizerPass(func_graph, {"ToNCHWFormat", "DecreaseTransposeAlgo"})) {
     MS_LOG(ERROR) << "To nchw format success.";
     return lite::RET_ERROR;
   }

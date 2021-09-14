@@ -760,5 +760,15 @@ std::vector<AnfNodePtr> api::FuncGraph::TopoSort(const AnfNodePtr &node) { retur
 // Create an api::FuncGraph instance.
 api::FuncGraphPtr api::FuncGraph::Create() { return std::make_shared<mindspore::FuncGraph>(); }
 
+AnfNodePtr api::FuncGraph::MakeValueNode(const api::FuncGraphPtr &func_graph) {
+  auto fg = std::dynamic_pointer_cast<mindspore::FuncGraph>(func_graph);
+  return NewValueNode(fg);
+}
+
+api::FuncGraphPtr api::FuncGraph::GetFuncGraphFromAnfNode(const AnfNodePtr &input) {
+  auto fg = GetValueNode<mindspore::FuncGraphPtr>(input);
+  return fg;
+}
+
 const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");
 }  // namespace mindspore
