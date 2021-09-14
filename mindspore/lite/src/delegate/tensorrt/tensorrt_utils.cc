@@ -113,7 +113,7 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
   nvinfer1::Dims dims = ConvertCudaDims(ms_tensor.Shape());
   nvinfer1::DataType data_type = ConvertDataType(ms_tensor.DataType());
   if (ms_tensor.Data() == nullptr) {
-    MS_LOG(ERROR) << "ConvertConstantTensor from a MSTensor with nullptr data";
+    MS_LOG(ERROR) << "ConvertConstantTensor from a MSTensor with nullptr data: " << ms_tensor.Name();
     return nullptr;
   }
   nvinfer1::Weights weights{data_type, ms_tensor.Data().get(), ms_tensor.ElementNum()};
@@ -198,7 +198,7 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
 
 nvinfer1::Weights TransposeWeight(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
   nvinfer1::Weights weights{};
-  MS_LOG(INFO) << "ms_tensor.DataType(): " << static_cast<int>(ms_tensor.DataType());
+  MS_LOG(DEBUG) << "ms_tensor.DataType(): " << static_cast<int>(ms_tensor.DataType());
   if (ms_tensor.DataType() == DataType::kNumberTypeFloat16) {
     weights.type = nvinfer1::DataType::kHALF;
     weights.count = ms_tensor.ElementNum();

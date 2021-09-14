@@ -67,9 +67,8 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(nvinfer1::INetworkDefinit
     MS_LOG(ERROR) << "add softmax op failed for TensorRT.";
     return nullptr;
   }
-  std::vector<int64_t> axis_val;
   auto axis = softmax_op_->axis();
-  axis_val = std::vector<int64_t>(axis->begin(), axis->end());
+  auto axis_val = std::vector<int64_t>(axis->begin(), axis->end());
 
   if (axis_val.size() != 1) {
     MS_LOG(WARNING) << "axis needs check";
@@ -80,7 +79,7 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(nvinfer1::INetworkDefinit
     return nullptr;
   }
   int64_t axis_format_value = axis_val[0];
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == 4 &&
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NCHW) {
     // transpose axis to NCHW
     axis_format_value = ConvertAxisFromNHWC2NCHW(axis_val[0]);

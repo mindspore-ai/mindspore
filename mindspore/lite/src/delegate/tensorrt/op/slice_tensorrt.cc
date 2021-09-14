@@ -55,7 +55,7 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   nvinfer1::ITensor *slice_input = tensorrt_in_tensors_[0].trt_tensor_;
   Format out_format = tensorrt_in_tensors_[0].format_;
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == 4 &&
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NCHW) {
     // transpose: NCHW->NHWC
     nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);

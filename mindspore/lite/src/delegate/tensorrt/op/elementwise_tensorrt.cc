@@ -217,5 +217,4 @@ int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::lite

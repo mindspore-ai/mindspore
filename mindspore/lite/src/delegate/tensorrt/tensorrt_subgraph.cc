@@ -66,25 +66,25 @@ int TensorRTSubGraph::Init() {
       input_hw_index_ = -1;
     }
   }
+  if (SetDeviceConfig() != RET_OK) {
+    MS_LOG(WARNING) << "set tensorrt config failed.";
+  }
+  profile_ = runtime_->GetBuilder()->createOptimizationProfile();
   return RET_OK;
 }
 
 int TensorRTSubGraph::BuildEngine() {
-  this->config_ = runtime_->GetBuilder()->createBuilderConfig();
-  if (this->config_ == nullptr) {
-    MS_LOG(ERROR) << "create builder config failed.";
+  // print all network ops
+  if (this->config_->addOptimizationProfile(profile_) == -1) {
+    MS_LOG(ERROR) << "addOptimizationProfile failed.";
     return RET_ERROR;
   }
-  // print all network ops
   MS_LOG(INFO) << "build engine for tensorrt network: " << this->network_->getName();
   for (int i = 0; i < this->network_->getNbLayers(); i++) {
     MS_LOG(DEBUG) << "tensorrt op: " << this->network_->getLayer(i)->getName();
   }
   MS_LOG(DEBUG) << "end of tensorrt network: " << this->network_->getName();
 
-  if (SetDeviceConfig() != RET_OK) {
-    MS_LOG(WARNING) << "set tensorrt config failed.";
-  }
   this->engine_ = runtime_->GetBuilder()->buildEngineWithConfig(*this->network_, *this->config_);
   if (this->engine_ == nullptr) {
     MS_LOG(ERROR) << "Create engine failed in TensorRT network";
@@ -94,45 +94,21 @@ int TensorRTSubGraph::BuildEngine() {
 }
 
 int TensorRTSubGraph::SetDeviceConfig() {
+  this->config_ = runtime_->GetBuilder()->createBuilderConfig();
+  if (this->config_ == nullptr) {
+    MS_LOG(ERROR) << "create builder config failed.";
+    return RET_ERROR;
+  }
   // set fp16
   if (device_info_->GetEnableFP16() && runtime_->GetBuilder()->platformHasFastFp16()) {
     MS_LOG(INFO) << "set fp16 flag successfully for tensorrt.";
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
+    MS_LOG(INFO) << "hw resize is unsupported in fp16 mode for tensorrt.";
+    input_hw_index_ = -1;
   }
 
   // config setMaxWorkspaceSize to 32 MB for max limit
   config_->setMaxWorkspaceSize(32 * (1 << 20));
-
-  // init profile as network input dims
-  nvinfer1::IOptimizationProfile *profile = runtime_->GetBuilder()->createOptimizationProfile();
-  for (auto tensor : inputs_) {
-    // We do not need to check the return of setDimension and addOptimizationProfile here as all dims are explicitly set
-    nvinfer1::Dims input_dims_min = ConvertCudaDims(tensor.Shape());
-    input_dims_min.d[input_batchsize_index_] = 1;
-    if (input_hw_index_ != -1) {
-      input_dims_min.d[input_hw_index_] = 1;
-      input_dims_min.d[input_hw_index_ + 1] = 1;
-    }
-    if (!profile->setDimensions(tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims_min)) {
-      MS_LOG(ERROR) << "setDimensions of kMIN failed.";
-      return RET_ERROR;
-    }
-    nvinfer1::Dims input_dims_opt = ConvertCudaDims(tensor.Shape());
-    if (!profile->setDimensions(tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt)) {
-      MS_LOG(ERROR) << "setDimensions of kOPT failed.";
-      return RET_ERROR;
-    }
-    nvinfer1::Dims input_dims_max = ConvertCudaDims(tensor.Shape());
-    // input_dims_max should be the same with input network dims
-    if (!profile->setDimensions(tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims_max)) {
-      MS_LOG(ERROR) << "setDimensions of kMAX failed.";
-      return RET_ERROR;
-    }
-    if (this->config_->addOptimizationProfile(profile) == -1) {
-      MS_LOG(ERROR) << "addOptimizationProfile failed.";
-      return RET_ERROR;
-    }
-  }
   return RET_OK;
 }
 
@@ -185,13 +161,34 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
       }
     }
   }
-
   // only support NHWC HW dim resize
   if (input_hw_index_ != -1) {
-    MS_LOG(INFO) << "input tensor format: " << in_tensor.format();
-    input_hw_index_ = in_tensor.format() == Format::NHWC ? 1 : /* NCHW*/ 2;
+    MS_LOG(INFO) << "input tensor format is (NHWC:1, NCHW:0): " << in_tensor.format();
+    input_hw_index_ = in_tensor.format() == Format::NHWC ? 1 : 2;  // NCHW is 2
     input_dims.d[input_hw_index_] = -1;
     input_dims.d[input_hw_index_ + 1] = -1;
+  }
+  // We do not need to check the return of setDimension and addOptimizationProfile here as all dims are explicitly set
+  nvinfer1::Dims input_dims_min = ConvertCudaDims(in_tensor.Shape());
+  input_dims_min.d[input_batchsize_index_] = 1;
+  if (input_hw_index_ != -1) {
+    input_dims_min.d[input_hw_index_] = 1;
+    input_dims_min.d[input_hw_index_ + 1] = 1;
+  }
+  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMIN, input_dims_min)) {
+    MS_LOG(ERROR) << "setDimensions of kMIN failed.";
+    return nullptr;
+  }
+  nvinfer1::Dims input_dims_opt = ConvertCudaDims(in_tensor.Shape());
+  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kOPT, input_dims_opt)) {
+    MS_LOG(ERROR) << "setDimensions of kOPT failed.";
+    return nullptr;
+  }
+  nvinfer1::Dims input_dims_max = ConvertCudaDims(in_tensor.Shape());
+  // input_dims_max should be the same with input network dims
+  if (!profile_->setDimensions(in_tensor.Name().c_str(), nvinfer1::OptProfileSelector::kMAX, input_dims_max)) {
+    MS_LOG(ERROR) << "setDimensions of kMAX failed.";
+    return nullptr;
   }
 
   return this->network_->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
@@ -244,6 +241,10 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
     MS_LOG(ERROR) << "MarkOutputs failed in TensorRT network";
     return ret;
   }
+  std::string network_name =
+    "network_" + std::string(network_->getInput(0)->getName()) + "_" + std::string(network_->getOutput(0)->getName());
+  network_->setName(network_name.c_str());
+  this->name_ = network_name;
 
   ret = BuildEngine();
   if (ret != RET_OK) {
@@ -260,7 +261,7 @@ int TensorRTSubGraph::MarkOutputs() {
       for (size_t index = 0; index < out_op->outputs().size(); index++) {
         if (out_op->outputs()[index] == out_tensor) {
           nvinfer1::ITensor *out_trt_tensor = out_op->GetInnerOutTensor()[index].trt_tensor_;
-          if (out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions().nbDims == 4 &&
+          if (out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
               out_op->GetInnerOutTensor()[index].format_ == Format::NCHW) {
             // transpose subgraph output from nchw to nhwc
             nvinfer1::IShuffleLayer *transpose_layer_out =
@@ -357,7 +358,7 @@ int TensorRTSubGraph::ReSize() {
         MS_LOG(ERROR) << "invalid resize input.";
         return RET_ERROR;
       }
-      if (contruct_dim.nbDims != DIMENSION_4D) {
+      if (input_hw_index_ == -1) {
         // only NHWC format support HW resize, otherwise only support batchsize resize
         for (int d = 0; d < contruct_dim.nbDims; d++) {
           if (d != input_batchsize_index_ && contruct_dim.d[d] != inputs_[i].Shape()[d]) {

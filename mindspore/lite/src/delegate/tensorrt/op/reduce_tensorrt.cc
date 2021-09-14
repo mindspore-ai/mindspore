@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <valarray>
 #include "src/delegate/tensorrt/op/reduce_tensorrt.h"
 
 namespace mindspore::lite {
@@ -97,10 +98,11 @@ uint32_t ReduceTensorRT::GetAxis() {
     (out_format_ == Format::NCHW) && (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D);
   for (int i = 0; i < axis_tensor.ElementNum(); i++) {
     int format_axis_data = need_transpose_axis ? ConvertAxisFromNHWC2NCHW(*axis_data) : *axis_data;
+    // 16 is 1111 as 4 dims
     reduceAxis |= (16 - (1u << format_axis_data));
     axis_data++;
   }
-  MS_LOG(INFO) << "reduceAxis: " << reduceAxis;
+  MS_LOG(DEBUG) << "reduceAxis: " << reduceAxis;
   return reduceAxis;
 }
 }  // namespace mindspore::lite

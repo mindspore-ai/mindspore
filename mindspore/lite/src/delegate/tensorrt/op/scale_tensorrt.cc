@@ -63,7 +63,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       MS_LOG(ERROR) << "AddUnsqueezeOp failed";
       return RET_ERROR;
     }
-  } else if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == 4 &&
+  } else if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
              tensorrt_in_tensors_[0].format_ == Format::NCHW) {
     // transpose: NCHW->NHWC
     nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
@@ -145,7 +145,7 @@ nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(size_t axis) {
   auto input_data_shape = in_tensors_[0].Shape();
   auto input_weight_shape = in_tensors_[1].Shape();
   int total = std::accumulate(input_data_shape.begin(), input_data_shape.end(), 1, std::multiplies<int>());
-  MS_LOG(INFO) << "input tensor element cnt: " << total;
+  MS_LOG(DEBUG) << "input tensor element cnt: " << total;
   if (input_weight_shape.size() == 0 || (input_weight_shape.size() == 1 && input_weight_shape[0] == 1)) {
     mode = nvinfer1::ScaleMode::kUNIFORM;
   } else if (axis < input_data_shape.size() && input_weight_shape.size() == 1 &&
@@ -184,7 +184,7 @@ nvinfer1::ITensor *ScaleTensorRT::AddSqueezeOp(nvinfer1::ITensor *in_tensor, nvi
   }
   squeeze_layer->setName((op_name_ + "_squeeze").c_str());
   nvinfer1::Dims squeeze_dims = lite::ConvertCudaDims(out_tensors_[0].Shape());
-  MS_LOG(INFO) << "squeeze_dims cnt for scale: " << squeeze_dims.nbDims;
+  MS_LOG(DEBUG) << "squeeze_dims cnt for scale: " << squeeze_dims.nbDims;
   squeeze_layer->setReshapeDimensions(squeeze_dims);
   return squeeze_layer->getOutput(0);
 }

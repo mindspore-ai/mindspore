@@ -74,7 +74,7 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   nvinfer1::ITensor *shuffler_input = tensorrt_in_tensors_[0].trt_tensor_;
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == 4 &&
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NCHW && !tensorrt_in_tensors_[0].trt_tensor_->isNetworkInput()) {
     // network input tensor format can be NCHW
     nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
@@ -223,7 +223,7 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     nvinfer1::Dims reshape_dims = lite::ConvertCudaDims(shape_tensor.Data().get(), shape_tensor.ElementNum());
     shuffle_layer->setReshapeDimensions(reshape_dims);
   } else {
-    if (tensorrt_in_tensors_.size() != 2) {
+    if (tensorrt_in_tensors_.size() != INPUT_SIZE2) {
       MS_LOG(ERROR) << "invalid shape tensor for reshape " << op_name_;
       return RET_ERROR;
     }
@@ -235,7 +235,7 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 int ShuffleTensorRT::AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   nvinfer1::Dims flatten_dims;
   const std::vector<int64_t> &input_shape = in_tensors_[0].Shape();
-  flatten_dims.nbDims = 2;
+  flatten_dims.nbDims = DIMENSION_2D;
   flatten_dims.d[0] = input_shape[0];
   flatten_dims.d[1] = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int>());
   shuffle_layer->setReshapeDimensions(flatten_dims);

@@ -93,6 +93,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   nvinfer1::IBuilderConfig *config_{nullptr};
   nvinfer1::ICudaEngine *engine_{nullptr};
   nvinfer1::IExecutionContext *trt_context_{nullptr};
+  nvinfer1::IOptimizationProfile *profile_{nullptr};
 
   int input_batchsize_index_{0};
   int output_batchsize_index_{0};
