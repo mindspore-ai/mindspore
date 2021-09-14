@@ -646,13 +646,13 @@ TEST_F(MindDataTestExecute, TestEqualizerBiquadEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestEqualizerBiquadEager.";
   int sample_rate = 44100;
   float center_freq = 3.5;
-  float gain =5.5;
+  float gain = 5.5;
   float Q = 0.707;
   std::vector<mindspore::MSTensor> output;
   std::shared_ptr<Tensor> test;
-  std::vector<double> test_vector = {0.8236, 0.2049, 0.3335, 0.5933, 0.9911, 0.2482,
-                                     0.3007, 0.9054, 0.7598, 0.5394, 0.2842, 0.5634, 0.6363, 0.2226, 0.2288};
-  Tensor::CreateFromVector(test_vector, TensorShape({5,3}), &test);
+  std::vector<double> test_vector = {0.8236, 0.2049, 0.3335, 0.5933, 0.9911, 0.2482, 0.3007, 0.9054,
+                                     0.7598, 0.5394, 0.2842, 0.5634, 0.6363, 0.2226, 0.2288};
+  Tensor::CreateFromVector(test_vector, TensorShape({5, 3}), &test);
   auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
   std::shared_ptr<TensorTransform> equalizer_biquad(new audio::EqualizerBiquad({sample_rate, center_freq, gain, Q}));
   auto transform = Execute({equalizer_biquad});
@@ -664,9 +664,9 @@ TEST_F(MindDataTestExecute, TestEqualizerBiquadParamCheckQ) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestEqualizerBiquadParamCheckQ.";
   std::vector<mindspore::MSTensor> output;
   std::shared_ptr<Tensor> test;
-  std::vector<double> test_vector = {0.1129, 0.3899, 0.7762, 0.2437, 0.9911, 0.8764,
-                                     0.4524, 0.9034, 0.3277, 0.8904, 0.1852, 0.6721, 0.1325, 0.2345, 0.5538};
-  Tensor::CreateFromVector(test_vector, TensorShape({3,5}), &test);
+  std::vector<double> test_vector = {0.1129, 0.3899, 0.7762, 0.2437, 0.9911, 0.8764, 0.4524, 0.9034,
+                                     0.3277, 0.8904, 0.1852, 0.6721, 0.1325, 0.2345, 0.5538};
+  Tensor::CreateFromVector(test_vector, TensorShape({3, 5}), &test);
   auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
   // Check Q
   std::shared_ptr<TensorTransform> equalizer_biquad_op = std::make_shared<audio::EqualizerBiquad>(44100, 3.5, 5.5, 0);
@@ -679,9 +679,9 @@ TEST_F(MindDataTestExecute, TestEqualizerBiquadParamCheckSampleRate) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestEqualizerBiquadParamCheckSampleRate.";
   std::vector<mindspore::MSTensor> output;
   std::shared_ptr<Tensor> test;
-  std::vector<double> test_vector = {0.5236, 0.7049, 0.4335, 0.4533, 0.0911, 0.3482,
-                                     0.3407, 0.9054, 0.7598, 0.5394, 0.2842, 0.5634, 0.6363, 0.2226, 0.2288,0.6743};
-  Tensor::CreateFromVector(test_vector, TensorShape({4,4}), &test);
+  std::vector<double> test_vector = {0.5236, 0.7049, 0.4335, 0.4533, 0.0911, 0.3482, 0.3407, 0.9054,
+                                     0.7598, 0.5394, 0.2842, 0.5634, 0.6363, 0.2226, 0.2288, 0.6743};
+  Tensor::CreateFromVector(test_vector, TensorShape({4, 4}), &test);
   auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
   // Check sample_rate
   std::shared_ptr<TensorTransform> equalizer_biquad_op = std::make_shared<audio::EqualizerBiquad>(0, 3.5, 5.5, 0.7);
@@ -926,4 +926,38 @@ TEST_F(MindDataTestExecute, TestDCShiftEager) {
   mindspore::dataset::Execute Transform({dc_shift});
   Status s = Transform(input, &input);
   ASSERT_TRUE(s.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestBiquadWithEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBiquadWithEager.";
+  // Original waveform
+  std::vector<float> labels = {3.716064453125,  12.34765625,     5.246826171875,  1.0894775390625,
+                               1.1383056640625, 2.1566162109375, 1.3946533203125, 3.55029296875};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 4}), &input));
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> biquad_01 = std::make_shared<audio::Biquad>(1, 0.02, 0.13, 1, 0.12, 0.3);
+  mindspore::dataset::Execute Transform01({biquad_01});
+  // Filtered waveform by biquad
+  Status s01 = Transform01(input_01, &input_01);
+  EXPECT_TRUE(s01.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestBiquadWithWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestBiquadWithWrongArg.";
+  std::vector<double> labels = {
+    2.716064453125000000e-03,
+    6.347656250000000000e-03,
+    9.246826171875000000e-03,
+    1.089477539062500000e-02,
+  };
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({1, 4}), &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  // Check a0
+  MS_LOG(INFO) << "a0 is zero.";
+  std::shared_ptr<TensorTransform> biquad_op = std::make_shared<audio::Biquad>(1, 0.02, 0.13, 0, 0.12, 0.3);
+  mindspore::dataset::Execute Transform01({biquad_op});
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_FALSE(s01.IsOk());
 }

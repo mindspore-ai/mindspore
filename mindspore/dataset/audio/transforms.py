@@ -25,7 +25,7 @@ import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
 from .utils import ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
-    check_bandreject_biquad, check_bass_biquad, check_complex_norm, check_contrast, check_dc_shift, \
+    check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
     check_deemph_biquad, check_equalizer_biquad, check_highpass_biquad, check_lfilter, check_lowpass_biquad, \
     check_masking, check_mu_law_decoding, check_time_stretch
 
@@ -244,6 +244,38 @@ class BassBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.BassBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.Q)
+
+
+class Biquad(TensorOperation):
+    """
+    Perform a biquad filter of input tensor.
+
+    Args:
+        b0 (float): Numerator coefficient of current input, x[n].
+        b1 (float): Numerator coefficient of input one time step ago x[n-1].
+        b2 (float): Numerator coefficient of input two time steps ago x[n-2].
+        a0 (float): Denominator coefficient of current output y[n], the value can't be zero, typically 1.
+        a1 (float): Denominator coefficient of current output y[n-1].
+        a2 (float): Denominator coefficient of current output y[n-2].
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> biquad_op = audio.Biquad(0.01, 0.02, 0.13, 1, 0.12, 0.3)
+        >>> waveform_filtered = biquad_op(waveform)
+    """
+    @check_biquad
+    def __init__(self, b0, b1, b2, a0, a1, a2):
+        self.b0 = b0
+        self.b1 = b1
+        self.b2 = b2
+        self.a0 = a0
+        self.a1 = a1
+        self.a2 = a2
+
+    def parse(self):
+        return cde.BiquadOperation(self.b0, self.b1, self.b2, self.a0, self.a1, self.a2)
 
 
 class ComplexNorm(AudioTensorOperation):

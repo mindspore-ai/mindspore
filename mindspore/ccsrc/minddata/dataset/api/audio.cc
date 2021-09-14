@@ -23,6 +23,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
@@ -143,6 +144,25 @@ BassBiquad::BassBiquad(int32_t sample_rate, float gain, float central_freq, floa
 
 std::shared_ptr<TensorOperation> BassBiquad::Parse() {
   return std::make_shared<BassBiquadOperation>(data_->sample_rate_, data_->gain_, data_->central_freq_, data_->Q_);
+}
+
+// Biquad Transform Operation.
+struct Biquad::Data {
+  Data(float b0, float b1, float b2, float a0, float a1, float a2)
+      : b0_(b0), b1_(b1), b2_(b2), a0_(a0), a1_(a1), a2_(a2) {}
+  float b0_;
+  float b1_;
+  float b2_;
+  float a0_;
+  float a1_;
+  float a2_;
+};
+
+Biquad::Biquad(float b0, float b1, float b2, float a0, float a1, float a2)
+    : data_(std::make_shared<Data>(b0, b1, b2, a0, a1, a2)) {}
+
+std::shared_ptr<TensorOperation> Biquad::Parse() {
+  return std::make_shared<BiquadOperation>(data_->b0_, data_->b1_, data_->b2_, data_->a0_, data_->a1_, data_->a1_);
 }
 
 // ComplexNorm Transform Operation.

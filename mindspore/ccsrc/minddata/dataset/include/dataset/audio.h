@@ -189,6 +189,31 @@ class BassBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Perform a biquad filter of input tensor.
+class Biquad final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] b0 Numerator coefficient of current input, x[n].
+  /// \param[in] b1 Numerator coefficient of input one time step ago x[n-1].
+  /// \param[in] b2 Numerator coefficient of input two time steps ago x[n-2].
+  /// \param[in] a0 Denominator coefficient of current output y[n], the value can't be zero, typically 1.
+  /// \param[in] a1 Denominator coefficient of current output y[n-1].
+  /// \param[in] a2 Denominator coefficient of current output y[n-2].
+  explicit Biquad(float b0, float b1, float b2, float a0, float a1, float a2);
+
+  /// \brief Destructor.
+  ~Biquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief ComplexNorm TensorTransform.
 /// \notes Compute the norm of complex tensor input.
 class ComplexNorm final : public TensorTransform {
@@ -465,6 +490,7 @@ class TimeStretch final : public TensorTransform {
   struct Data;
   std::shared_ptr<Data> data_;
 };
+
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

@@ -27,6 +27,7 @@
 #include "minddata/dataset/audio/ir/kernels/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/bass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/complex_norm_ir.h"
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
@@ -126,6 +127,16 @@ PYBIND_REGISTER(
         return bass_biquad;
       }));
   }));
+
+PYBIND_REGISTER(BiquadOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::BiquadOperation, TensorOperation, std::shared_ptr<audio::BiquadOperation>>(
+                    *m, "BiquadOperation")
+                    .def(py::init([](float b0, float b1, float b2, float a0, float a1, float a2) {
+                      auto biquad = std::make_shared<audio::BiquadOperation>(b0, b1, b2, a0, a1, a2);
+                      THROW_IF_ERROR(biquad->ValidateParams());
+                      return biquad;
+                    }));
+                }));
 
 PYBIND_REGISTER(
   ComplexNormOperation, 1, ([](const py::module *m) {
@@ -259,5 +270,6 @@ PYBIND_REGISTER(
         return timestretch;
       }));
   }));
+
 }  // namespace dataset
 }  // namespace mindspore
