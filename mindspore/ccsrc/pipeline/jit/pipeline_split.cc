@@ -111,9 +111,9 @@ bool PipelineSplit(const ResourcePtr &res) {
   // step1: Do color graph
   transformer->Coloring();
   transformer->MainGraph();
-  transformer->LabelMicroBatch();
   // step2: Do color broadcast
   transformer->BroadCastColoring();
+  transformer->LabelMicroBatch();
   // step3: Handle shared parameters
   transformer->ParameterColoring();
   // step4: Cut Graph
