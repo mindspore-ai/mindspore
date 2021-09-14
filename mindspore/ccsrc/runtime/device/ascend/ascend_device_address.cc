@@ -31,7 +31,9 @@
 #include "abstract/utils.h"
 #include "utils/utils.h"
 #include "common/trans.h"
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
 #endif
@@ -507,7 +509,9 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
       MS_LOG(ERROR) << "Copy device mem to host failed";
       return ret;
     }
+#ifndef ENABLE_SECURITY
     ret = DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size, host_shape, host_type);
+#endif
   } else {
     auto host_tmp = std::vector<uint8_t>(size_);
     auto ret_rt_memcpy = rtMemcpy(host_tmp.data(), size_, ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
@@ -516,7 +520,9 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     }
     std::string path = filepath + '.' + format_;
     MS_LOG(INFO) << "E2E Dump path is " << path;
+#ifndef ENABLE_SECURITY
     ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_, host_shape, type_id_);
+#endif
   }
 
   return ret;

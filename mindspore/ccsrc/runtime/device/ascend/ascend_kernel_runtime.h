@@ -102,7 +102,9 @@ class AscendKernelRuntime : public KernelRuntime {
 #endif
   static CNodePtr GetErrorNodeName(uint32_t streamid, uint32_t taskid);
   static std::string GetDumpPath();
+#ifndef ENABLE_SECURITY
   static void DumpTaskExceptionInfo(const session::KernelGraph *graph);
+#endif
   static void TaskFailCallback(rtExceptionInfo *task_fail_info);
   static bool DeleteDumpDir(const std::string &path);
   static int DeleteDumpFile(std::string path);

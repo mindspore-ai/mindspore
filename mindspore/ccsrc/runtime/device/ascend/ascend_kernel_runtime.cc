@@ -20,7 +20,6 @@
 #include <utility>
 #include <algorithm>
 #include "utils/signal_util.h"
-#include "debug/data_dump/e2e_dump.h"
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "runtime/device/ascend/distribute/ascend_collective.h"
 #include "utils/ms_context.h"
@@ -39,7 +38,10 @@
 #endif
 #include "runtime/device/ascend/ascend_memory_manager.h"
 #include "runtime/device/ascend/ascend_event.h"
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#include "debug/data_dump/e2e_dump.h"
+#endif
 #include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
@@ -226,6 +228,7 @@ bool AscendKernelRuntime::NeedDestroyHccl() {
   return true;
 }
 
+#ifndef ENABLE_SECURITY
 void AsyncDataDumpUninit() {
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
     if (AdxDataDumpServerUnInit() != 0) {
@@ -234,7 +237,6 @@ void AsyncDataDumpUninit() {
   }
 }
 
-#ifndef ENABLE_SECURITY
 void AscendKernelRuntime::ReportProfilingData() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -268,7 +270,9 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
   // release ge runtime
   ClearGraphModelMap();
 
+#ifndef ENABLE_SECURITY
   AsyncDataDumpUninit();
+#endif
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -382,6 +386,7 @@ bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
 bool AscendKernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   bool need_dump = false;
+#ifndef ENABLE_SECURITY
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (dump_json_parser.e2e_dump_enabled() && dump_json_parser.dump_mode() == 1) {
     auto op_name = node->fullname_with_scope();
@@ -389,6 +394,7 @@ bool AscendKernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
       need_dump = true;
     }
   }
+#endif
   return need_dump;
 }
 
@@ -447,14 +453,18 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
     if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && (ConfigManager::GetInstance().iter_num() > 1)) {
       MS_LOG(EXCEPTION) << "Dynamic shape is not supported with dataset_sink_mode.";
     }
+#ifndef ENABLE_SECURITY
     if (DumpJsonParser::GetInstance().async_dump_enabled()) {
       MS_LOG(EXCEPTION) << "Dynamic shape is not supported with Asynchronous Dump. Please use Synchronous Dump.";
     }
+#endif
     MS_LOG(INFO) << "Dynamic Shape Graph Generate Dynamic kernel";
     return GenDynamicKernel(graph);
   }
   MS_LOG(INFO) << "GenTask start. GraphId:" << graph->graph_id();
+#ifndef ENABLE_SECURITY
   DumpJsonParser::GetInstance().UpdateNeedDumpKernels(NOT_NULL(graph));
+#endif
 #ifdef MEM_REUSE_DEBUG
   if (!EnvConfigParser::GetInstance().GetSysMemreuse()) {
     // Get normal graph ir for memreuse
@@ -656,6 +666,7 @@ std::string AscendKernelRuntime::GetDumpPath() {
   return path;
 }
 
+#ifndef ENABLE_SECURITY
 void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   const std::string path = GetDumpPath();
@@ -680,6 +691,7 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *grap
     E2eDump::DumpOutputImpl(node, false, path, &full_scope_name, nullptr);
   }
 }
+#endif
 
 bool AscendKernelRuntime::Run(session::KernelGraph *const graph, bool is_task_sink) {
   const uint64_t kUSecondInSecond = 1000000;
@@ -947,7 +959,9 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
   try {
     ModelRunner::Instance().RunModel(graph->graph_id());
   } catch (const std::exception &) {
+#ifndef ENABLE_SECURITY
     DumpTaskExceptionInfo(graph);
+#endif
 #ifdef ENABLE_TDTQUE
     // Run task error, we should call TdtHostDestroy to release tdt to avoid DeviceQueueOp hostPush hung
     // case1: cpu usage 100% cause thread/process exit, but some tdt thread remain in backend

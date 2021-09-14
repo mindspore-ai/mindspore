@@ -17,12 +17,13 @@ The module DbgServices provides offline debugger APIs.
 """
 
 from mindspore._c_expression import security
-import mindspore._mindspore_offline_debug as cds
 from mindspore.offline_debug.mi_validators import check_init, check_initialize, check_add_watchpoint,\
      check_remove_watchpoint, check_check_watchpoints, check_read_tensor_info, check_initialize_done, \
          check_tensor_info_init, check_tensor_data_init, check_tensor_base_data_init, check_tensor_stat_data_init,\
               check_watchpoint_hit_init, check_parameter_init
 from mindspore.offline_debug.mi_validator_helpers import replace_minus_one
+if not security.enable_security():
+    import mindspore._mindspore_offline_debug as cds
 
 
 def get_version():

@@ -55,8 +55,10 @@
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/config_manager.h"
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/e2e_dump.h"
+#endif
 #include "debug/anf_ir_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/session/ascend_auto_monad.h"
@@ -99,6 +101,7 @@ constexpr char SR_TAG[] = "sr_tag";
 constexpr char BACKWARD[] = "backward";
 constexpr auto kUnknowErrorString = "Unknown error occurred";
 namespace {
+#ifndef ENABLE_SECURITY
 void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::string &tag = "") {
   MS_LOG(INFO) << "Dump execution_order size " << execution_order.size();
   MS_LOG(INFO) << "[index][stream_label][graph_id][node string]";
@@ -129,6 +132,7 @@ void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::
   }
   buf << "================== execution order ==================\n";
 }
+#endif
 
 bool IsVMGraphTaskSink() {
   auto ms_context = MsContext::GetInstance();
@@ -1143,6 +1147,7 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
   MS_LOG(INFO) << "Finish!";
 }
 
+#ifndef ENABLE_SECURITY
 void DumpInit(uint32_t device_id) {
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
@@ -1155,6 +1160,7 @@ void DumpInit(uint32_t device_id) {
     }
   }
 }
+#endif
 
 void AscendSession::InitRuntimeResource() {
   MS_LOG(INFO) << "Start!";
@@ -1170,7 +1176,9 @@ void AscendSession::InitRuntimeResource() {
     // get actual rank id if it's distribution training case.
     rank_id_ = GetRankId();
   }
+#ifndef ENABLE_SECURITY
   DumpInit(rank_id_);
+#endif
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -1458,11 +1466,15 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   if (is_task && is_task_sink) {
+#ifndef ENABLE_SECURITY
     DumpSetup(kernel_graph);
+#endif
   }
   bool ret_ok = runtime_instance->Run(kernel_graph.get(), is_task_sink);
   if (is_task && is_task_sink) {
+#ifndef ENABLE_SECURITY
     Dump(kernel_graph);
+#endif
   }
   if (!ret_ok) {
 #ifdef ENABLE_DUMP_IR
@@ -1473,6 +1485,7 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
   MS_LOG(DEBUG) << "Finish!";
 }
 
+#ifndef ENABLE_SECURITY
 void AscendSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -1486,6 +1499,7 @@ void AscendSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const
   E2eDump::DumpData(kernel_graph.get(), rank_id_);
   MS_LOG(DEBUG) << "Finish!";
 }
+#endif
 
 void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs) {
 #ifdef ENABLE_DUMP_IR
@@ -1624,7 +1638,9 @@ void AscendSession::MergeGraphExecOrder() {
   }
   // set final_exec_order into final graph
   MS_EXCEPTION_IF_NULL(final_graph);
+#ifndef ENABLE_SECURITY
   DumpGraphExeOrder(final_exec_order);
+#endif
   final_graph->set_execution_order(final_exec_order);
 }
 
