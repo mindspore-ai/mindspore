@@ -36,4 +36,8 @@ def main():
     python_lib_dir = os.path.join(os.path.dirname(mindspore.__file__), "../../..")
     os.environ['LD_LIBRARY_PATH'] = python_lib_dir + ":" + os.environ.get('LD_LIBRARY_PATH')
 
+    # LD_PRELOAD libnnacl.so
+    nnacl_lib = os.path.join(os.path.dirname(mindspore.__file__), "lib/libnnacl.so")
+    os.environ['LD_PRELOAD'] = nnacl_lib
+
     sys.exit(subprocess.call([cache_admin] + sys.argv[1:], shell=False, env=os.environ))
