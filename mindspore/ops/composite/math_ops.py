@@ -488,7 +488,7 @@ def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
             axes = [axes, axes]
     else:
         raise ValueError(f"{msg_prefix} type of axes must be one of those: int, tuple(int), list(int), "
-                         f"but got {type(axes)}.")
+                         f"but got {type(axes).__name__}.")
     return axes
 
 

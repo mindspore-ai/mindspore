@@ -299,8 +299,9 @@ class EmbeddingLookup(Cell):
             self.embeddinglookup.shard(((1, 1), indices_strategy))
         else:
             if is_auto_parallel:
-                Support_mode = ["field_slice", "table_row_slice", "table_column_slice", "batch_slice"]
-                validator.check_string(slice_mode, Support_mode, "slice_mode", self.cls_name)
+                support_mode = ["field_slice", "table_row_slice", "table_column_slice", "batch_slice"]
+                raise ValueError("For '{}', the 'slice_mode' must be in {}, "
+                                 "but got {}.".format(self.cls_name, support_mode, slice_mode))
         if self.cache_enable and not enable_ps:
             if parallel_mode != ParallelMode.STAND_ALONE:
                 raise ValueError(f"For '{self.cls_name}', parallel mode haven't supported cache enable yet.")

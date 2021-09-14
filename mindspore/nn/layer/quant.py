@@ -409,7 +409,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         max_array = self._get_init_array(self.max_init)
         if not np.greater(max_array, min_array).all():
             raise ValueError(f"For '{self.cls_name}', the 'max_init' should be greater than 'min_init', "
-                             f"but got 'max_array': {max_array}, 'min_init': {min_init}.")
+                             f"but got 'max_init': {max_init}, 'min_init': {min_init}.")
         if self.mode == "DEFAULT":
             self._default_init(min_array, max_array)
         elif self.mode == "LEARNED_SCALE":
@@ -708,7 +708,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
             self.padding = padding
         else:
             raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), but got "
-                            f"{type(padding)}!")
+                            f"{type(padding).__name__}!")
         self.group = Validator.check_positive_int(group)
         self.eps = eps
         self.momentum = 1 - momentum
@@ -950,7 +950,7 @@ class Conv2dBnFoldQuant(Cell):
             self.padding = padding
         else:
             raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), "
-                            f"but got {type(padding)}!")
+                            f"but got {type(padding).__name__}!")
         self.group = Validator.check_positive_int(group)
         self.eps = eps
         self.momentum = momentum
@@ -1162,7 +1162,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
             self.padding = padding
         else:
             raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), "
-                            f"but got {type(padding)}!")
+                            f"but got {type(padding).__name__}!")
         self.group = Validator.check_positive_int(group)
         self.bias_add = P.BiasAdd()
         if Validator.check_bool(has_bias):
@@ -1306,7 +1306,7 @@ class Conv2dQuant(Cell):
             self.padding = padding
         else:
             raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), "
-                            f"but got {type(padding)}!")
+                            f"but got {type(padding).__name__}!")
         self.group = Validator.check_positive_int(group)
 
         weight_shape = [out_channels, in_channels // group, *self.kernel_size]

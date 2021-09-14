@@ -217,7 +217,7 @@ class _ConvThor(Cell):
             self.padding = padding
         else:
             raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), but got "
-                            f"{type(padding)}.")
+                            f"{type(padding).__name__}.")
 
         self.dilation = dilation
         self.group = Validator.check_positive_int(group)
@@ -766,7 +766,7 @@ class EmbeddingLookupThor(Cell):
                                  f"when 'slice_mode' is 'field_slice'.")
             if not isinstance(manual_shapes, tuple):
                 raise TypeError(f"For '{self.cls_name}', the type of 'manual_shapes' must be tuple(int), but got "
-                                f"type {type(manual_shapes)}.")
+                                f"type {type(manual_shapes).__name__}.")
             for dim in manual_shapes:
                 Validator.check_positive_int(dim, 'manual shape dim', self.cls_name)
             self.gatherv2.add_prim_attr("manual_split", manual_shapes)

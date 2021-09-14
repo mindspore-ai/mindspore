@@ -665,8 +665,8 @@ def _check_weights(weight_shape, label_shape, prim_name=None):
     """Internal function, used to check whether the reduced shape meets the requirements."""
     msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
     if weight_shape != label_shape:
-        raise ValueError(f"{msg_prefix} weight shape[0] should be equal to label.shape[1], "
-                         f"but got weight_shape: {weight_shape} and label_shape: {label_shape}.")
+        raise ValueError(f"{msg_prefix} weight_shape[0] should be equal to label_shape[1], "
+                         f"but got weight_shape[0]: {weight_shape} and label_shape[1]: {label_shape}.")
 
 
 class MultiClassDiceLoss(LossBase):

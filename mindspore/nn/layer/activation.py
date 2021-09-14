@@ -607,10 +607,11 @@ class PReLU(Cell):
                                  f"float32 when the 'w' is a tensor, but got {w.dtype}.")
             if len(w.shape) != 1 or w.shape[0] != channel:
                 raise ValueError(f"For '{self.cls_name}', the dimension of 'w' should be 1, and the elements number "
-                                 f"should be equal to the 'channel' when the 'w' is a tensor, but got 'w' shape {w}, "
-                                 f"the 'channel' {channel}.")
+                                 f"should be equal to the 'channel' when the 'w' is a tensor, "
+                                 f"but got 'w' shape {w.shape}, the 'channel' {channel}.")
         else:
-            raise TypeError(f"For '{self.cls_name}', the 'w' only supported float, list and tensor, but got {type(w)}.")
+            raise TypeError(f"For '{self.cls_name}', the 'w' only supported float, list and tensor, "
+                            f"but got {type(w).__name__}.")
         self.w = Parameter(w, name='a')
         self.prelu = P.PReLU()
         self.relu = P.ReLU()

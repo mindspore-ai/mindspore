@@ -552,10 +552,11 @@ class CheckBprop(PrimitiveWithInfer):
         return xshapes
 
     def infer_dtype(self, xdtypes, ydtypes):
-        validator.check_value_type('grads', xdtypes, (tuple,), self.name)
-        validator.check_value_type('params', ydtypes, (tuple,), self.name)
+        tips = f'Bprop of {self.prim_to_check}'
+        validator.check_value_type('grads', xdtypes, (tuple,), tips)
+        validator.check_value_type('params', ydtypes, (tuple,), tips)
         if len(xdtypes) < len(ydtypes):
-            raise ValueError(f"For '{self.name}', the size of 'xdtypes' should not be less than {len(ydtypes)},"
+            raise ValueError(f"{tips}, the size of output should be {len(ydtypes)},"
                              f" but got {len(xdtypes)}.")
         checking_range = len(ydtypes)
         for i in range(checking_range):
@@ -565,11 +566,11 @@ class CheckBprop(PrimitiveWithInfer):
                 continue
             if isinstance(ydtype, mstype.function_type):
                 if not isinstance(xdtype, mstype.env_type_type):
-                    raise TypeError(f"For '{self.name}', the dtype of {i}th 'xdtypes' should be {mstype.env_type_type},"
+                    raise TypeError(f"{tips}, the dtype of {i}th output should be {mstype.env_type_type},"
                                     f" but got {xdtype}.")
                 continue
             if xdtype != ydtype:
-                raise TypeError(f"For '{self.name}', the shape of {i}th 'xdtypes' should be {ydtype},"
+                raise TypeError(f"{tips}, the dtype of {i}th output should be {ydtype},"
                                 f" but got {xdtype}.")
         return xdtypes
 

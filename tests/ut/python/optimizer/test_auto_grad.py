@@ -386,7 +386,7 @@ def test_grad_args_type_error1():
     try:
         GradNetWrtX(Net())(x, y)
     except TypeError as e:
-        assert "For 'GradOperation', the arg 'get_all' should be bool, but got" in str(e)
+        assert "For 'GradOperation', the 'get_all' should be bool, but got" in str(e)
 
 
 def test_grad_args_type_error2():
@@ -412,7 +412,7 @@ def test_grad_args_type_error2():
     try:
         GradNetWrtX(Net())(x, y)
     except TypeError as e:
-        assert "For 'GradOperation', the arg 'get_by_list' should be bool, but got" in str(e)
+        assert "For 'GradOperation', the 'get_by_list' should be bool, but got" in str(e)
 
 
 def test_grad_args_type_error3():
@@ -438,7 +438,7 @@ def test_grad_args_type_error3():
     try:
         GradNetWrtX(Net())(x, y)
     except TypeError as e:
-        assert "For 'GradOperation', the arg 'sens_param' should be bool, but got" in str(e)
+        assert "For 'GradOperation', the 'sens_param' should be bool, but got" in str(e)
 
 
 def test_grad_net_is_none():

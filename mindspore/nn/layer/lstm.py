@@ -46,7 +46,7 @@ def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
 @constexpr
 def _check_input_3d(input_shape, param_name, func_name):
     if len(input_shape) != 3:
-        raise ValueError(f"For '{func_name}', the {param_name} should be 3d, but got the length of input_shape:"
+        raise ValueError(f"For '{func_name}', the '{param_name}' should be 3d, but got the length of input_shape:"
                          f" {len(input_shape)}.")
 
 

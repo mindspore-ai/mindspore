@@ -147,7 +147,7 @@ class AllReduce(PrimitiveWithInfer):
     def __init__(self, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         """Initialize AllReduce."""
         if not isinstance(op, type(ReduceOp.SUM)):
-            raise TypeError(f"For '{self.name}', the 'op' of AllReduce should be str, but got {type(op)}.")
+            raise TypeError(f"For '{self.name}', the 'op' of AllReduce should be str, but got {type(op).__name__}.")
         if not isinstance(_get_group(group), str):
             raise TypeError(f"For '{self.name}', the 'group' of AllReduce should be str, "
                             f"but got {type(_get_group(group))}.")
@@ -563,7 +563,7 @@ class Broadcast(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         if not isinstance(x_dtype, tuple):
-            raise TypeError(f"For '{self.name}', the 'input_x' should be a tuple, but got {type(x_dtype)}!")
+            raise TypeError(f"For '{self.name}', the 'input_x' should be a tuple, but got {type(x_dtype).__name__}!")
         for _ele in x_dtype:
             validator.check_tensor_dtype_valid('x', _ele, target_dtypes, self.name)
         return x_dtype
