@@ -218,14 +218,13 @@ class _MindsporeFunctionExecutor:
 
 def ms_function(fn=None, obj=None, input_signature=None):
     """
-    Create a callable MindSpore graph from a python function.
+    Create a callable MindSpore graph from a Python function.
 
     This allows the MindSpore runtime to apply optimizations based on graph.
 
     Args:
         fn (Function): The Python function that will be run as a graph. Default: None.
-        obj (Object): The python object that provides the information for identifying the compiled function. Default:
-            None.
+        obj (Object): The Python object is used to distinguish the compiled function. Default: None.
         input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
             will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
             And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
