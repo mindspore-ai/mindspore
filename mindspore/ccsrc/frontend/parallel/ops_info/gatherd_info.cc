@@ -41,8 +41,9 @@ Status GatherDInfo::GetAttrs() {
 
   int64_t dim = GetValue<int64_t>(input_value_[1]);
   int64_t input_dim = SizeToLong(inputs_shape_[0].size());
-  if ((dim > input_dim - 1) || (dim < -input_dim)) {
-    MS_LOG(ERROR) << name_ << ": The dim(" << dim << ") is out of range[" << -input_dim << ", " << input_dim - 1 << "]";
+  if ((dim > (input_dim - 1)) || (dim < -input_dim)) {
+    MS_LOG(ERROR) << name_ << ": The dim(" << dim << ") is out of range[" << (-input_dim) << ", " << (input_dim - 1)
+                  << "]";
     return FAILED;
   }
 

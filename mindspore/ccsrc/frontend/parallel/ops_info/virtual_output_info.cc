@@ -60,15 +60,15 @@ Status VirtualOutputInfo::GenerateStrategies(int64_t stage_id) {
   if (full_batch) {
     total_dev_num = 1;
   } else {
-    total_dev_num = stage_device_size_;
+    total_dev_num = LongToSize(stage_device_size_);
   }
   for (auto &shape : inputs_shape_) {
     Shape temp;
     if (!shape.empty()) {
-      if (shape[0] % total_dev_num == 0) {
-        temp.emplace_back(SizeToLong(total_dev_num));
+      if (LongToSize(shape[0]) % total_dev_num == 0) {
+        (void)temp.emplace_back(SizeToLong(total_dev_num));
       } else {
-        temp.emplace_back(1);
+        (void)temp.emplace_back(1);
       }
       (void)temp.insert(temp.end(), shape.size() - 1, 1);
     }
@@ -84,6 +84,5 @@ Status VirtualOutputInfo::GenerateStrategies(int64_t stage_id) {
   }
   return SUCCESS;
 }
-
 }  // namespace parallel
 }  // namespace mindspore

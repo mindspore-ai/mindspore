@@ -47,23 +47,23 @@ class Conv2DInfo : public OperatorInfo {
   Status GetAttrsBase();
   Status GetAttrs() override;
   Status CheckStrategyBase(const StrategyPtr &strategy);
-  Status CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy);
+  Status CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) const;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferRankBias();
-  Status InferOverlapSize();
+  void InferOverlapSize();
   void InferNewOperatorAttrs();
   void InferSendRecvFlag();
   void InferOverlapShapes();
   void InferStridedSliceAttrs();
-  std::string ReplaceNodeName();
+  std::string ReplaceNodeName() const;
   AnfNodePtr GenerateConv2DNode(const AnfNodePtr &new_input, const CNodePtr &cnode);
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
   OperatorAttrs CreateNeighborExchangeAttrs(const CNodePtr &cnode);
   OperatorAttrs CreateConv2DAttrs();
-  Status ComputeReplaceGraph(const CNodePtr &cnode);
+  void ComputeReplaceGraph(const CNodePtr &cnode);
 
   int64_t out_channel_ = 1;
   std::vector<int64_t> kernel_size_;  // two integers

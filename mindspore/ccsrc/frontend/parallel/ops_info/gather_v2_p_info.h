@@ -64,14 +64,14 @@ class GatherPInfo : public OperatorInfo {
   Status ComputeReplaceGraph(const CNodePtr &cnode);
   Status CheckManualSplit(const Strategys &strategy);
   Status CheckSplitAxisStrategy(const StrategyPtr &strategy);
-  Status SetAttribute(const StrategyPtr &strategy);
+  void SetAttribute(const StrategyPtr &strategy);
   Status GetManualSplitAttr();
   Status GetManualSplitWithoutOffsetAttr();
   Status ComputeReplaceOp();
   Status InferBias();
   Status InferOffset();
   Status InferGroup();
-  bool ShardBatchAndAxis(const Strategys &strategy);
+  bool ShardBatchAndAxis(const Strategys &strategy) const;
 
   int64_t axis_;
   std::string target_ = DEVICE;

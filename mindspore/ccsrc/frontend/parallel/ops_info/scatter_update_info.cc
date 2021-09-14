@@ -70,7 +70,8 @@ Status ScatterUpdateInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  if (std::accumulate(stra[2].begin(), stra[2].begin() + stra[1].size(), 1, std::multiplies<int64_t>()) != 1) {
+  if (std::accumulate(stra[2].begin(), stra[2].begin() + static_cast<different_type>(stra[1].size()), 1,
+                      std::multiplies<int64_t>()) != 1) {
     MS_LOG(ERROR) << name_ << ": The first " << stra[1].size() << " dimensions of updates can not be split";
     return FAILED;
   }

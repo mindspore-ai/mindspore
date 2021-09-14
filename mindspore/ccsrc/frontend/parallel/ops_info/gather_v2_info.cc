@@ -243,7 +243,7 @@ Status GatherInfo::InferTensorSubOps() {
   if ((axis_ >= SizeToLong(inputs_shape_.at(0).size())) || axis_ < 0) {
     MS_LOG(ERROR) << "Axis is " << axis_ << ", not in [0, " << inputs_shape_.at(0).size() << ").";
   }
-  int64_t sub_value = inputs_shape_[0][LongToSize(axis_)] / dev_matrix_shape_[axis_] * mod_rank;
+  int64_t sub_value = inputs_shape_[0][LongToSize(axis_)] / dev_matrix_shape_[LongToSize(axis_)] * mod_rank;
 
   OperatorVector sub_op;
   sub_ops_.emplace_back(std::move(sub_op));
