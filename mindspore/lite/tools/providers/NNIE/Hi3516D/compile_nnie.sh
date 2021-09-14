@@ -87,6 +87,7 @@ function Run_Build_arm32() {
     cp ${nnie_code_path}/mindspore/mindspore/lite/build/tools/benchmark/benchmark ${open_source_ms_path}/output/mindspore-lite-${version}-linux-aarch32/tools/benchmark/ || exit 1
     cp ${nnie_code_path}/mindspore/mindspore/lite/build/tools/benchmark/nnie/libmslite_nnie.so ${hi3516d_release_path}/ || exit 1
     cp ${nnie_code_path}/mindspore/mindspore/lite/build/tools/benchmark/nnie_proposal/libmslite_proposal.so ${hi3516d_release_path}/ || exit 1
+    cp ${nnie_code_path}/mindspore/mindspore/lite/micro/example/hi3516d/libmicro_nnie.so ${hi3516d_release_path}/ || exit 1
     echo "cp new nnie so to release pkg success"
     cd ${open_source_ms_path}/output/ || exit 1
     rm ${open_source_ms_path}/output/mindspore-lite-${version}-linux-aarch32.tar.gz
