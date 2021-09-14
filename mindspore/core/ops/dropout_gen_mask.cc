@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
+const int64_t mask_convert_len = 128;
 ShapeVector CalDynamicOutputShape(const ValuePtrList value_list) {
   int64_t count = 1;
   size_t x_rank = value_list.size();
@@ -52,8 +53,8 @@ ShapeVector CalDynamicOutputShape(const ValuePtrList value_list) {
   }
 
   // convert to bytes(8 bits) mask, using round up
-  int64_t n128s = count / 128;
-  if ((count % 128) != 0) {
+  int64_t n128s = count / mask_convert_len;
+  if ((count % mask_convert_len) != 0) {
     n128s++;
   }
   int64_t bytes_count = n128s * 16;
@@ -87,8 +88,8 @@ ShapeVector CalOutputShape(const AbstractBasePtrList shape_list) {
   }
 
   // convert to bytes(8 bits) mask, using round up
-  int64_t n128s = count / 128;
-  if ((count % 128) != 0) {
+  int64_t n128s = count / mask_convert_len;
+  if ((count % mask_convert_len) != 0) {
     n128s++;
   }
   int64_t bytes_count = n128s * 16;
@@ -115,7 +116,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     if (shape->shape().size() != 1) {
       MS_EXCEPTION(TypeError) << "Input `shape` must be a 1-D Tensor.";
     }
-    size_t shape_rank = shape->shape()[0];
+    size_t shape_rank = LongToSize(shape->shape()[0]);
 
     auto shape_max = shape_abstract->get_max_value();
     MS_EXCEPTION_IF_NULL(shape_max);

@@ -24,19 +24,17 @@ namespace {
 abstract::ShapePtr TensorListFromTensorInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, op_name);
+
   auto input0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   if (input0_shape.size() < 1) {
     MS_LOG(ERROR) << "input0_shape.size():" << input0_shape.size() << " must be greater than 0!";
   }
   int64_t dim0 = input0_shape[0];
   if (dim0 < 0) {
     MS_LOG(ERROR) << "input[0] dim0:" << dim0 << " must be greater than or equal to 0!";
-  }
-  auto input1 = &input1_shape[0];
-  MS_EXCEPTION_IF_NULL(input1);
-  if (input1 == nullptr) {
-    MS_LOG(ERROR) << "input1 is nullptr";
   }
   std::vector<int64_t> infer_shape = {1, dim0};
   return std::make_shared<abstract::Shape>(infer_shape);

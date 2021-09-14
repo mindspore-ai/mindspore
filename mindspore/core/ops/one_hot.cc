@@ -40,7 +40,7 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(depth);
   int64_t depth_value;
   if (depth->isa<tensor::Tensor>()) {
-    CheckAndConvertUtils::CheckTensorTypeValid("depth", input_args[1]->BuildType(), {kInt64}, op_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("depth", input_args[1]->BuildType(), {kInt64}, op_name);
     auto depth_data = depth->cast<tensor::TensorPtr>()->data_c();
     MS_EXCEPTION_IF_NULL(depth_data);
     auto data_value = reinterpret_cast<int64_t *>(depth_data);

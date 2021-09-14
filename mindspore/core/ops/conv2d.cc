@@ -113,7 +113,7 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
       int64_t pad_needed_w = (output_hw->at(1) - 1) * stride[1] + dilation[1] * (kernel[1] - 1) + 1 - x_w;
       pad_needed_w = std::max((int64_t)0, pad_needed_w);
       pad_list->push_back(static_cast<int64_t>(std::floor(pad_needed_w / 2)));
-      pad_list->push_back(pad_needed_w - pad_list->at(2));
+      pad_list->push_back(pad_needed_w - pad_list->at(kInputIndex2));
     }
   } else if (pad_mode == PadMode::PAD) {
     (void)pad_list->insert(pad_list->begin(), padding.begin(), padding.end());
@@ -128,9 +128,10 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
       }
     }
     if (x_w != Shape::SHP_ANY) {
-      out_w = static_cast<int64_t>(std::floor(
-        1 + ((x_w * 1.0) + pad_list->at(2) + pad_list->at(3) - kernel[1] - (kernel[1] - 1) * (dilation[1] - 1)) /
-              stride[1]));
+      out_w =
+        static_cast<int64_t>(std::floor(1 + ((x_w * 1.0) + pad_list->at(kInputIndex2) + pad_list->at(kInputIndex3) -
+                                             kernel[1] - (kernel[1] - 1) * (dilation[1] - 1)) /
+                                              stride[1]));
       if (is_min_shape && out_w < 1) {
         out_w = 1L;
       }

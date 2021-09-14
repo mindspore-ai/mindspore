@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-size_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &prim_name) {
+int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &prim_name) {
   MS_EXCEPTION_IF_NULL(input_arg);
   if (input_arg->isa<abstract::AbstractTensor>()) {
     auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kShape];
@@ -57,13 +57,13 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
   auto prim_name = primitive->name();
   const int64_t input_num = 2;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  auto x_shape = CheckInputsAndGetShape(input_args[0], prim_name);
-  auto y_shape = CheckInputsAndGetShape(input_args[1], prim_name);
+  auto x_shape0 = CheckInputsAndGetShape(input_args[0], prim_name);
+  auto y_shape0 = CheckInputsAndGetShape(input_args[1], prim_name);
 
   ShapeVector shape{abstract::Shape::SHP_ANY};
   ShapeVector min_shape{1L};
-  size_t max_size = x_shape > y_shape ? x_shape : y_shape;
-  ShapeVector max_shape{SizeToLong(max_size)};
+  int64_t max_size = x_shape0 > y_shape0 ? x_shape0 : y_shape0;
+  ShapeVector max_shape{max_size};
   auto out_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
 }

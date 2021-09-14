@@ -528,6 +528,9 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
 
 ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,
                                                       const std::string &prim_name) {
+  if (value == nullptr) {
+    MS_EXCEPTION(ValueError) << "The " << prim_name << "'s " << type_name << " value is nullptr.";
+  }
   ShapeVector tensor_value;
   if (!value->isa<tensor::Tensor>()) {
     MS_EXCEPTION(ValueError) << "The " << prim_name << "'s " << type_name << " must be a tensor.";

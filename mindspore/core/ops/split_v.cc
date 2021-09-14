@@ -27,10 +27,10 @@ namespace {
 abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1L, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInteger("x_rank", x_rank, kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", x_rank, kGreaterEqual, 1, prim_name);
   auto split_dim = GetValue<int64_t>(primitive->GetAttr("split_dim"));
   CheckAndConvertUtils::CheckInRange("split_dim", split_dim, kIncludeLeft, {-x_rank, x_rank}, prim_name);
   if (split_dim < 0) {

@@ -41,7 +41,7 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
   // default pad mode is valid
   auto attr_pad_list_prt = primitive->GetAttr(kPadList);
   int64_t pad_mode;
-  (void)CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
   ShapeVector pad_list = {0, 0, 0, 0};
   if (!attr_pad_list_prt->isa<None>()) {
     pad_list = GetValue<ShapeVector>(attr_pad_list_prt);
@@ -56,14 +56,18 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
     int64_t pad_bottom = abstract::Shape::SHP_ANY;
     int64_t pad_left = abstract::Shape::SHP_ANY;
     int64_t pad_right = abstract::Shape::SHP_ANY;
-    if (dout_shape_norm[2] != abstract::Shape::SHP_ANY && x_size_v[2] != abstract::Shape::SHP_ANY) {
-      auto pad_needed_h = (dout_shape_norm[2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[2];
+    if (dout_shape_norm[kInputIndex2] != abstract::Shape::SHP_ANY &&
+        x_size_v[kInputIndex2] != abstract::Shape::SHP_ANY) {
+      auto pad_needed_h =
+        (dout_shape_norm[kInputIndex2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[kInputIndex2];
       pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
       pad_top = pad_needed_h / 2;
       pad_bottom = pad_needed_h - pad_top;
     }
-    if (dout_shape_norm[3] != abstract::Shape::SHP_ANY && x_size_v[3] != abstract::Shape::SHP_ANY) {
-      auto pad_needed_w = (dout_shape_norm[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[3];
+    if (dout_shape_norm[kInputIndex3] != abstract::Shape::SHP_ANY &&
+        x_size_v[kInputIndex3] != abstract::Shape::SHP_ANY) {
+      auto pad_needed_w =
+        (dout_shape_norm[kInputIndex3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[kInputIndex3];
       pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;
       pad_left = pad_needed_w / 2;
       pad_right = pad_needed_w - pad_left;
@@ -203,10 +207,10 @@ void Conv2DBackpropInput::set_pad_mode(const PadMode &pad_mode) {
   std::vector<int64_t> pad = get_pad();
   if (pad_mode == PAD) {
     for (auto item : pad) {
-      (void)CheckAndConvertUtils::Check(kPadItem, item, kGreaterEqual, "zeros_list", 0, name());
+      CheckAndConvertUtils::Check(kPadItem, item, kGreaterEqual, "zeros_list", 0, name());
     }
   } else {
-    (void)CheckAndConvertUtils::Check(kPad, pad, kEqual, "zeros_list", {0, 0, 0, 0}, name());
+    CheckAndConvertUtils::Check(kPad, pad, kEqual, "zeros_list", {0, 0, 0, 0}, name());
   }
   int64_t swi = pad_mode;
   (void)AddAttr(kPadMode, MakeValue(swi));

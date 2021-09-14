@@ -59,9 +59,9 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   types.emplace("start", input_args[0]->BuildType());
   types.emplace("end", input_args[1]->BuildType());
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    types.emplace("weight", input_args[kInputIndex2]->BuildType());
+    (void)types.emplace("weight", input_args[kInputIndex2]->BuildType());
   } else {
-    CheckAndConvertUtils::CheckSubClass("weight", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
+    (void)CheckAndConvertUtils::CheckSubClass("weight", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
   }
   return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32}, op_name);
 }

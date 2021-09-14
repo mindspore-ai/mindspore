@@ -47,7 +47,9 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
     (void)CheckAndConvertUtils::CheckInteger("condition's rank", SizeToLong(condition_values.size()), kLessEqual, 1,
                                              op_name);
     if (condition_values.size() == 1) {
-      (void)CheckAndConvertUtils::CheckInteger("condition[0]", SizeToLong(condition_values[0]), kEqual, 1, op_name);
+      if (!condition_values[0]) {
+        MS_EXCEPTION(ValueError) << "condition value must be `true` when only one value contained.";
+      }
     }
     condition = TypeIdToType(kNumberTypeBool);
   } else {
@@ -56,7 +58,9 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
     if (condition_shape[0] == 1) {
       auto condition_value = reinterpret_cast<bool *>(input_args[0]->BuildValue()->cast<tensor::TensorPtr>()->data_c());
       MS_EXCEPTION_IF_NULL(condition_value);
-      (void)CheckAndConvertUtils::CheckInteger("condition[0]", *condition_value, kEqual, 1, op_name);
+      if (!*condition_value) {
+        MS_EXCEPTION(ValueError) << "condition value must be `true` when only one value contained.";
+      }
     }
     condition = input_args[0]->BuildType();
   }
