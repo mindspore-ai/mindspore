@@ -16,19 +16,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/third_party)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/third_party/eigen3)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/third_party/securec)
 
-# Add directory to linker search path
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
-
 file(GLOB_RECURSE CONVERTER_REGISTRY_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc)
 add_library(converter_extend_tutorial SHARED ${CONVERTER_REGISTRY_SRC})
-
-target_link_libraries(converter_extend_tutorial
-        mslite_converter_plugin
-        -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
-        mindspore_gvar
-        crypto
-        securec
-        glog
-        protobuf
-        dl
-)

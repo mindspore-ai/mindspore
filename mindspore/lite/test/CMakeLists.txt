@@ -100,6 +100,7 @@ if(MSLITE_ENABLE_CONVERTER)
         ${TEST_DIR}/common/import_from_meta_graphT.cc
         ${LITE_DIR}/src/ops/ops_utils.cc
         ${LITE_DIR}/src/ops/ops_def.cc
+        ${LITE_DIR}/src/tensor.cc
         )
 endif()
 

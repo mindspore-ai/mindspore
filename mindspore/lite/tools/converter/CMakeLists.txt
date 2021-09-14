@@ -14,7 +14,8 @@ set(CCSRC_SRC
 include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 
 if(NOT WIN32)
-    set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
+    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -rdynamic -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -rdynamic -fvisibility=hidden")
 endif()
 
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
