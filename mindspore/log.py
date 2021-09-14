@@ -49,20 +49,19 @@ _logger_def_level = '2'
 
 # Log level name and level mapping
 _name_to_level = {
-    'FATAL': 50,
-    'ERROR': 40,
-    'WARNING': 30,
-    'INFO': 20,
     'DEBUG': 10,
+    'INFO': 20,
+    'WARNING': 30,
+    'ERROR': 40,
 }
 
 # GLog level and level name
 _gloglevel_to_name = {
-    '4': 'FATAL',
-    '3': 'ERROR',
-    '2': 'WARNING',
-    '1': 'INFO',
     '0': 'DEBUG',
+    '1': 'INFO',
+    '2': 'WARNING',
+    '3': 'ERROR',
+    '4': 'ERROR',
 }
 
 # The mapping of logger configurations to glog configurations
