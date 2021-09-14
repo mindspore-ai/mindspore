@@ -663,7 +663,7 @@ def set_context(**kwargs):
         graph_kernel_flags (str) –
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Experienced user only.
-            For example, context.set_context(graph_kernel_flags=”–opt_level=2 –dump_as_text”). Some general options:
+            For example, context.set_context(graph_kernel_flags="–opt_level=2 –dump_as_text"). Some general options:
 
             - opt_level: Set the optimization level.
               Default: 2. Graph kernel fusion can be enabled equivalently by setting opt_level greater than 0.
