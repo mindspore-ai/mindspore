@@ -20,6 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.engine.iterators as it
 from mindspore import log as logger
+from mindspore import Tensor
 
 
 # Generate 1d int numpy array from 0 - 63
@@ -878,6 +879,32 @@ def test_explicit_deepcopy():
     for d1, d2 in zip(ds1, ds2):
         assert d1 == d2
 
+def test_func_generator_dataset_005():
+    """
+    generator: class __getitem__
+    """
+    result = [np.random.randn(242, 242, 242), np.random.randn(42, 24, 442)]
+
+    class MyData():
+        def __init__(self, input_para):
+            self.data = input_para
+
+        def __getitem__(self, item):
+            return (Tensor(self.data[0]), Tensor(self.data[1]))
+
+        def __len__(self):
+            return 2
+
+    column_names = ["col1", "col2"]
+    dataset = ds.GeneratorDataset(MyData(result), column_names)
+    i = 0
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        assert "col1" in str(data.keys())
+        assert (data["col1"] == result[0]).all()
+        assert (data["col2"] == result[1]).all()
+        i += 1
+    assert i == 2
+
 
 if __name__ == "__main__":
     test_generator_0()
@@ -917,3 +944,4 @@ if __name__ == "__main__":
     test_generator_dataset_size_4()
     test_generator_dataset_size_5()
     test_explicit_deepcopy()
+    test_func_generator_dataset_005()

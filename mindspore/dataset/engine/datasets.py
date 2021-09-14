@@ -47,6 +47,7 @@ from PIL import Image
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
+from mindspore import Tensor
 from mindspore import log as logger
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from mindspore.parallel._utils import _get_device_num
@@ -3661,11 +3662,16 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
 
 
 def _convert_row(row):
+    """
+    Convert Op return value to numpy
+    """
     value = []
     # convert each column in row into numpy array
     for x in row:
-        if isinstance(x, bytes):
+        if isinstance(x, bytes):         # got image bytes from a file
             value.append(np.frombuffer(x, np.uint8))
+        elif isinstance(x, Tensor):      # got mindspore.Tensor
+            value.append(x.asnumpy())
         else:
             value.append(np.array(x, copy=False))
     return tuple(value)
