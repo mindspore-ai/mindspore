@@ -91,7 +91,6 @@ class GetMaskedLMOutput(nn.Cell):
         self.shape_flat_offsets = (-1, 1)
         self.last_idx = (-1,)
         self.shape_flat_sequence_tensor = (-1, self.width)
-        self.seq_length_tensor = Tensor(np.array((config.seq_length,)).astype(np.int32))
         self.cast = P.Cast()
         self.compute_type = config.compute_type
         self.dtype = config.dtype
@@ -101,8 +100,9 @@ class GetMaskedLMOutput(nn.Cell):
                   output_weights,
                   positions):
         """Get output log_probs"""
-        rng = F.tuple_to_array(F.make_range(P.Shape()(input_tensor)[0]))
-        flat_offsets = self.reshape(rng * self.seq_length_tensor, self.shape_flat_offsets)
+        input_shape = P.Shape()(input_tensor)
+        rng = F.tuple_to_array(F.make_range(input_shape[0]))
+        flat_offsets = self.reshape(rng * input_shape[1], self.shape_flat_offsets)
         flat_position = self.reshape(positions + flat_offsets, self.last_idx)
         flat_sequence_tensor = self.reshape(input_tensor, self.shape_flat_sequence_tensor)
         input_tensor = self.gather(flat_sequence_tensor, flat_position, 0)
@@ -393,7 +393,8 @@ class BertTrainOneStepWithLossScaleCell(nn.TrainOneStepWithLossScaleCell):
                                                            mstype.float32))
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
-        grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
+        degree_sens = self.cast(scaling_sens * self.degree, mstype.float32)
+        grads = self.hyper_map(F.partial(grad_scale, degree_sens), grads)
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
 
         cond = self.get_overflow_status(status, grads)
@@ -799,3 +800,96 @@ class BertTrainAccumulationAllReduceEachWithLossScaleCell(nn.Cell):
 
         ret = (mean_loss, overflow, scaling_sens)
         return F.depend(ret, succ)
+
+
+class BertNetworkMatchBucket(nn.Cell):
+    '''
+    Bert execute according to different sentence lengths.
+    '''
+    def __init__(self, network, seq_length, bucket_list=None):
+        super(BertNetworkMatchBucket, self).__init__()
+        self.network = network
+        if not bucket_list or not isinstance(bucket_list, list):
+            bucket_list = [seq_length]
+        self.bucket_list = [bucket for bucket in bucket_list if bucket <= seq_length]
+
+    def construct(self,
+                  input_ids,
+                  input_mask,
+                  token_type_id,
+                  next_sentence_labels,
+                  masked_lm_positions,
+                  masked_lm_ids,
+                  masked_lm_weights,
+                  sentence_flag):
+        """Switch network according to sentence length."""
+        for bucket in self.bucket_list:
+            if sentence_flag == bucket:
+                input_ids = input_ids[:, :bucket]
+                input_mask = input_mask[:, :bucket]
+                token_type_id = token_type_id[:, :bucket]
+                loss = self.network(input_ids,
+                                    input_mask,
+                                    token_type_id,
+                                    next_sentence_labels,
+                                    masked_lm_positions,
+                                    masked_lm_ids,
+                                    masked_lm_weights)
+                return loss
+
+        loss = self.network(input_ids,
+                            input_mask,
+                            token_type_id,
+                            next_sentence_labels,
+                            masked_lm_positions,
+                            masked_lm_ids,
+                            masked_lm_weights)
+        return loss
+
+
+class BertPretrainEval(nn.Cell):
+    '''
+    Evaluate MaskedLM prediction scores
+    '''
+    def __init__(self, config, network=None):
+        super(BertPretrainEval, self).__init__()
+        if network is None:
+            self.network = BertPreTraining(config, False, False)
+        else:
+            self.network = network
+        self.argmax = P.Argmax(axis=-1, output_type=mstype.int32)
+        self.equal = P.Equal()
+        self.sum = P.ReduceSum()
+        self.reshape = P.Reshape()
+        self.shape = P.Shape()
+        self.cast = P.Cast()
+        self.allreduce = P.AllReduce()
+        self.reduce_flag = False
+        parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        if parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
+            self.reduce_flag = True
+
+    def construct(self,
+                  input_ids,
+                  input_mask,
+                  token_type_id,
+                  next_sentence_labels,
+                  masked_lm_positions,
+                  masked_lm_ids,
+                  masked_lm_weights):
+        """Calculate prediction scores"""
+        bs, _ = self.shape(input_ids)
+        mlm, _ = self.network(input_ids, input_mask, token_type_id, masked_lm_positions)
+        index = self.argmax(mlm)
+        index = self.reshape(index, (bs, -1))
+        eval_acc = self.equal(index, masked_lm_ids)
+        eval_acc = self.cast(eval_acc, mstype.float32)
+        real_acc = eval_acc * masked_lm_weights
+        acc = self.sum(real_acc)
+        total = self.sum(masked_lm_weights)
+
+        if self.reduce_flag:
+            acc = self.allreduce(acc)
+            total = self.allreduce(total)
+
+        return acc, total

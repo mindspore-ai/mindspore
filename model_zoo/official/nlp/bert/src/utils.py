@@ -27,6 +27,7 @@ from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.train.callback import Callback
+from mindspore.nn.metrics import Metric
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR
 
 
@@ -230,3 +231,61 @@ def get_bert_thor_damping(damping_max=5e-2, damping_min=1e-6, damping_power=1.0,
     damping = _get_poly_lr(global_step=0, lr_init=0.0, lr_end=damping_min, lr_max=damping_max, warmup_steps=0,
                            total_steps=damping_total_steps, poly_power=damping_power)
     return Tensor(damping)
+
+
+class EvalCallBack(Callback):
+    """
+    Evaluate after a certain amount of training samples.
+    Args:
+        model (Model): The network model.
+        eval_ds (Dataset): The eval dataset.
+        global_batch (int): The batchsize of the sum of all devices.
+        eval_samples (int): The number of eval interval samples.
+    """
+    def __init__(self, model, eval_ds, global_batch, eval_samples):
+        super(EvalCallBack, self).__init__()
+        self.model = model
+        self.eval_ds = eval_ds
+        self.global_batch = global_batch
+        self.eval_samples = eval_samples
+        self.last_eval_step = 0
+
+    def epoch_end(self, run_context):
+        """
+        Evaluate after training a certain number of samples.
+        """
+        cb_params = run_context.original_args()
+        num_samples = (cb_params.cur_step_num - self.last_eval_step) * self.global_batch
+        if num_samples < self.eval_samples:
+            return
+        self.last_eval_step = cb_params.cur_step_num
+        total_sumples = cb_params.cur_step_num * self.global_batch
+        res = self.model.eval(self.eval_ds, dataset_sink_mode=True)
+        res = res['bert_acc']
+        print("====================================", flush=True)
+        print("Accuracy is: ", "%.6f" % res, ", current samples is: ", total_sumples)
+        print("====================================", flush=True)
+
+class BertMetric(Metric):
+    """
+    The metric of bert network.
+    Args:
+        batch_size (int): The batchsize of each device.
+    """
+    def __init__(self, batch_size):
+        super(BertMetric, self).__init__()
+        self.clear()
+        self.batch_size = batch_size
+
+    def clear(self):
+        self.mlm_total = 0
+        self.mlm_acc = 0
+
+    def update(self, *inputs):
+        mlm_acc = self._convert_data(inputs[0])
+        mlm_total = self._convert_data(inputs[1])
+        self.mlm_acc += mlm_acc
+        self.mlm_total += mlm_total
+
+    def eval(self):
+        return self.mlm_acc / self.mlm_total
