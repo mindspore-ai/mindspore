@@ -90,8 +90,13 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
         WinogradOutputNHWCTransform(dst_ptr, output_ptr, bias_data, cal_num, out_tile_index, out_w_block, conv_param,
                                     out_func);
       } else {
+#if defined(ENABLE_AVX) || defined(ENABLE_ARM64)
         WinogradOutputNC4HW4Transform(dst_ptr, output_ptr, bias_data, cal_num, out_tile_index, out_w_block, conv_param,
                                       out_func);
+#else
+        WinogradOutputNHWCTransform(dst_ptr, output_ptr, bias_data, cal_num, out_tile_index, out_w_block, conv_param,
+                                    out_func);
+#endif
       }
     }
   }
