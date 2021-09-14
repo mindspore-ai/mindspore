@@ -1,0 +1,315 @@
+[
+    {
+        "tensor_1": {
+            "tensor_info": {
+                "node_name": "Default/CudnnUniformReal-op391",
+                "slot": 0,
+                "iteration": 0,
+                "rank_id": 0,
+                "root_graph_id": 0,
+                "is_output": false
+            },
+            "tensor_data": {
+                "data": [
+                    0,
+                    0,
+                    0,
+                    66,
+                    0,
+                    0,
+                    128,
+                    69
+                ],
+                "size_in_bytes": 8,
+                "debugger_dtype": 11,
+                "shape": [
+                    2
+                ]
+            }
+        }
+    },
+    {
+        "tensor_2": {
+            "tensor_info": {
+                "node_name": "Gradients/Default/network-WithLossCell/_backbone-AlexNet/gradReLU/ReluGradV2-op406",
+                "slot": 1,
+                "iteration": 1,
+                "rank_id": 0,
+                "root_graph_id": 0,
+                "is_output": false
+            },
+            "tensor_data": {
+                "data": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    66,
+                    0,
+                    0,
+                    128,
+                    69,
+                    0,
+                    0,
+                    144,
+                    64,
+                    195,
+                    245,
+                    216,
+                    64,
+                    0,
+                    0,
+                    48,
+                    193
+                ],
+                "size_in_bytes": 24,
+                "debugger_dtype": 11,
+                "shape": [
+                    2,
+                    3
+                ]
+            }
+        }
+    },
+    {
+        "tensor_3": {
+            "tensor_info": {
+                "node_name": "Gradients/Default/network-WithLossCell/_backbone-AlexNet/conv5-Conv2d/gradConv2D/Conv2DBackpropFilter-op424",
+                "slot": 0,
+                "iteration": 1,
+                "rank_id": 0,
+                "root_graph_id": 0,
+                "is_output": true
+            },
+            "tensor_data": {
+                "data": [
+                    8,
+                    255,
+                    166,
+                    56,
+                    189,
+                    58,
+                    71,
+                    56,
+                    103,
+                    3,
+                    217,
+                    55,
+                    170,
+                    225,
+                    174,
+                    56,
+                    135,
+                    195,
+                    82,
+                    56,
+                    54,
+                    253,
+                    225,
+                    55,
+                    254,
+                    158,
+                    179,
+                    56,
+                    33,
+                    66,
+                    88,
+                    56,
+                    30,
+                    248,
+                    222,
+                    55,
+                    241,
+                    32,
+                    168,
+                    56,
+                    143,
+                    126,
+                    73,
+                    56,
+                    116,
+                    129,
+                    228,
+                    55,
+                    53,
+                    254,
+                    175,
+                    56,
+                    2,
+                    0,
+                    87,
+                    56,
+                    246,
+                    124,
+                    238,
+                    55,
+                    177,
+                    160,
+                    180,
+                    56,
+                    156,
+                    126,
+                    92,
+                    56,
+                    144,
+                    121,
+                    236,
+                    55,
+                    117,
+                    189,
+                    159,
+                    56,
+                    25,
+                    132,
+                    32,
+                    56,
+                    154,
+                    1,
+                    178,
+                    54,
+                    187,
+                    189,
+                    156,
+                    56,
+                    117,
+                    252,
+                    27,
+                    56,
+                    205,
+                    2,
+                    76,
+                    54,
+                    212,
+                    127,
+                    148,
+                    56,
+                    129,
+                    1,
+                    12,
+                    56,
+                    53,
+                    253,
+                    11,
+                    182
+                ],
+                "size_in_bytes": 108,
+                "debugger_dtype": 11,
+                "shape": [
+                    3,
+                    3,
+                    3
+                ]
+            }
+        }
+    },
+    {
+        "tensor_4": {
+            "tensor_info": {
+                "node_name": "Default/network-WithLossCell/_backbone-AlexNet/ReLUV2-op381",
+                "slot": 1,
+                "iteration": 0,
+                "rank_id": 0,
+                "root_graph_id": 0,
+                "is_output": true
+            },
+            "tensor_data": {
+                "data": [
+                    104,
+                    60,
+                    33,
+                    79,
+                    53,
+                    6,
+                    131,
+                    78,
+                    78,
+                    232,
+                    126,
+                    79,
+                    154,
+                    198,
+                    85,
+                    79,
+                    245,
+                    52,
+                    84,
+                    78,
+                    70,
+                    207,
+                    222,
+                    78
+                ],
+                "size_in_bytes": 24,
+                "debugger_dtype": 11,
+                "shape": [
+                    6
+                ]
+            }
+        }
+    },
+    {
+        "tensor_5": {
+            "tensor_info": {
+                "node_name": "Default/Reciprocal-op3",
+                "slot": 0,
+                "iteration": 0,
+                "rank_id": 0,
+                "root_graph_id": 0,
+                "is_output": true
+            },
+            "tensor_data": {
+                "data": [
+                    0,
+                    0,
+                    128,
+                    63,
+                    0,
+                    0,
+                    128,
+                    255,
+                    0,
+                    0,
+                    128,
+                    127,
+                    0,
+                    0,
+                    128,
+                    255,
+                    0,
+                    0,
+                    128,
+                    127,
+                    0,
+                    0,
+                    128,
+                    127,
+                    0,
+                    0,
+                    128,
+                    63,
+                    0,
+                    0,
+                    128,
+                    255,
+                    0,
+                    0,
+                    128,
+                    127,
+                    0,
+                    0,
+                    128,
+                    127
+                ],
+                "size_in_bytes": 40,
+                "debugger_dtype": 11,
+                "shape": [
+                    2,
+                    5
+                ]
+            }
+        }
+    }
+]

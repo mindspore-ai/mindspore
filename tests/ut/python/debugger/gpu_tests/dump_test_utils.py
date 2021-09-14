@@ -16,19 +16,10 @@
 Utils for testing offline debugger.
 """
 
-import filecmp
 import os
 import tempfile
 import numpy as np
 
-
-def compare_actual_with_expected(test_name):
-    """Compare actual file with expected."""
-    is_eq = filecmp.cmp("../data/dump/gpu_dumps/golden/" +
-                        test_name + ".expected", test_name + ".actual", shallow=False)
-    if os.path.exists(test_name + ".actual"):
-        os.remove(test_name + ".actual")
-    return is_eq
 
 def build_dump_structure(tensor_name_list, tensor_list, net_name, tensor_info_list):
     """Build dump file structure from tensor_list."""

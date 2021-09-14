@@ -1,0 +1,77 @@
+[
+    {
+        "watchpoint_hit1": {
+            "name": "Default/network-WithLossCell/_backbone-AlexNet/conv1-Conv2d/Conv2D-op369",
+            "slot": 1,
+            "condition": 6,
+            "watchpoint_id": 1,
+            "paremeter": [
+                {
+                    "parameter0": {
+                        "name": "param",
+                        "disabled": false,
+                        "value": 0.0,
+                        "hit": true,
+                        "actual_value": -0.020966000854969025
+                    }
+                }
+            ],
+            "error_code": 0,
+            "rank_id": 0,
+            "root_graph_id": 0
+        }
+    },
+    {
+        "watchpoint_hit2": {
+            "name": "Default/CudnnUniformReal-op391",
+            "slot": 0,
+            "condition": 6,
+            "watchpoint_id": 2,
+            "paremeter": [
+                {
+                    "parameter0": {
+                        "name": "param",
+                        "disabled": false,
+                        "value": 10.0,
+                        "hit": true,
+                        "actual_value": -4096.0
+                    }
+                }
+            ],
+            "error_code": 0,
+            "rank_id": 0,
+            "root_graph_id": 0
+        }
+    },
+    {
+        "watchpoint_hit3": {
+            "name": "Default/network-WithLossCell/_backbone-AlexNet/fc3-Dense/Parameter[6]_11/fc2.bias",
+            "slot": 0,
+            "condition": 18,
+            "watchpoint_id": 3,
+            "paremeter": [
+                {
+                    "parameter0": {
+                        "name": "abs_mean_update_ratio_gt",
+                        "disabled": false,
+                        "value": 0.0,
+                        "hit": true,
+                        "actual_value": 1.0156775705209766
+                    }
+                },
+                {
+                    "parameter1": {
+                        "name": "epsilon",
+                        "disabled": true,
+                        "value": 0.0,
+                        "hit": false,
+                        "actual_value": 0.0
+                    }
+                }
+            ],
+            "error_code": 0,
+            "rank_id": 0,
+            "root_graph_id": 0
+        }
+    }
+]

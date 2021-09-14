@@ -255,7 +255,7 @@ void DebugServices::AddAnalyzedTensorToCache(const bool recheck, const unsigned 
   // add analyzed tensor to cache
   if (!recheck) {
     wp_lock_.lock();
-    wp_id_cache_[tensor_name].insert(id);
+    (void)wp_id_cache_[tensor_name].insert(id);
     wp_lock_.unlock();
   }
 }
