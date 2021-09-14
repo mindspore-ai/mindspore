@@ -30,7 +30,6 @@ from .graphdata import GraphData, SamplingStrategy, OutputFormat
 from .iterators import *
 from .samplers import *
 from .serializer_deserializer import compare, deserialize, serialize, show
-from ..utils import imshow_det_bbox
 
 __all__ = ["CelebADataset", "Cifar100Dataset", "Cifar10Dataset", "CLUEDataset", "CocoDataset", "CSVDataset",
            "GeneratorDataset", "GraphData", "ImageFolderDataset", "ManifestDataset", "MindDataset", "MnistDataset",
@@ -38,4 +37,4 @@ __all__ = ["CelebADataset", "Cifar100Dataset", "Cifar10Dataset", "CLUEDataset", 
            "DistributedSampler", "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler",
            "WeightedRandomSampler", "SubsetSampler",
            "DatasetCache", "DSCallback", "Schema", "WaitedDSCallback", "compare", "deserialize",
-           "imshow_det_bbox", "serialize", "show", "zip"]
+           "serialize", "show", "zip"]
