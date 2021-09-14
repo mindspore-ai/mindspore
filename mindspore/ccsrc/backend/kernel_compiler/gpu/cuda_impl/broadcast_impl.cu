@@ -275,8 +275,8 @@ struct ModFunc {
     T data_div = lhs / rhs;
     T data_div_min = data_div < 0.0 ? data_div : 0.0;
     T data_div_max = data_div > 0.0 ? data_div : 0.0;
-    T data_div_max_floor = static_cast<T>(floor(static_cast<double>(data_div_max)));
-    T data_div_min_ceil = static_cast<T>(ceil(static_cast<double>(data_div_min)));
+    T data_div_max_floor = floorf(data_div_max);
+    T data_div_min_ceil = ceilf(data_div_min);
     T data_div_res = data_div_max_floor + data_div_min_ceil;
     return lhs - data_div_res * rhs;
   }
