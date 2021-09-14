@@ -87,10 +87,10 @@ bool CommManager::CreateGroupSync(const string &group, const vector<unsigned int
 }
 
 bool CommManager::GetRankID(const string &group, unsigned int *rank_id) const {
-  HCCL_GROUP_CHECK_EMPTY(group);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    HCCL_GROUP_CHECK_EMPTY(group);
     if (!context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
       *rank_id = static_cast<unsigned int>(HcclCollectiveGroup::instance().GetRankId(group));
     } else {
@@ -103,10 +103,10 @@ bool CommManager::GetRankID(const string &group, unsigned int *rank_id) const {
 }
 
 bool CommManager::GetRankSize(const string &group, unsigned int *rank_size) const {
-  HCCL_GROUP_CHECK_EMPTY(group);
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    HCCL_GROUP_CHECK_EMPTY(group);
     if (!context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
       *rank_size = static_cast<unsigned int>(HcclCollectiveGroup::instance().GetRankSize(group));
     } else {
