@@ -186,6 +186,15 @@ enum class OutputFormat {
   kCsr = 2      ///< CSR format.
 };
 
+/// \brief Possible options for fade shape.
+enum class FadeShape {
+  kLinear = 0,       ///< Fade shape is linear mode.
+  kExponential = 1,  ///< Fade shape is exponential mode.
+  kLogarithmic = 2,  ///< Fade shape is logarithmic mode.
+  kQuarterSine = 3,  ///< Fade shape is quarter_sine mode.
+  kHalfSine = 4,     ///< Fade shape is half_sine mode.
+};
+
 /// \brief Convenience function to check bitmask for a 32bit int
 /// \param[in] bits a 32bit int to be tested
 /// \param[in] bitMask a 32bit int representing bit mask

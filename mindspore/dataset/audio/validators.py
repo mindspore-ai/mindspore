@@ -18,10 +18,10 @@ Validators for TensorOps.
 
 from functools import wraps
 
-from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, \
-    check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_pos_float32, \
-    check_pos_int32, check_value, parse_user_args, type_check
-from .utils import ScaleType
+from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32_not_zero, \
+    check_list_same_size, check_non_negative_float32, check_non_negative_int32, check_pos_float32, check_pos_int32, \
+    check_value, parse_user_args, type_check
+from .utils import FadeShape, ScaleType
 
 
 def check_amplitude_to_db(method):
@@ -365,6 +365,22 @@ def check_biquad(method):
         check_float32_not_zero(a0, "a0")
         check_biquad_coeff(a1, "a1")
         check_biquad_coeff(a2, "a2")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_fade(method):
+    """Wrapper method to check the parameters of Fade."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [fade_in_len, fade_out_len, fade_shape], _ = parse_user_args(method, *args, **kwargs)
+        type_check(fade_in_len, (int,), "fade_in_len")
+        check_non_negative_int32(fade_in_len, "fade_in_len")
+        type_check(fade_out_len, (int,), "fade_out_len")
+        check_non_negative_int32(fade_out_len, "fade_out_len")
+        type_check(fade_shape, (FadeShape,), "fade_shape")
         return method(self, *args, **kwargs)
 
     return new_method

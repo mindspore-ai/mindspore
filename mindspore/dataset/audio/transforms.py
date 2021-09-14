@@ -23,11 +23,11 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
-from .utils import ScaleType
+from .utils import FadeShape, ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
-    check_deemph_biquad, check_equalizer_biquad, check_highpass_biquad, check_lfilter, check_lowpass_biquad, \
-    check_masking, check_mu_law_decoding, check_time_stretch
+    check_deemph_biquad, check_equalizer_biquad, check_fade, check_highpass_biquad, check_lfilter, \
+    check_lowpass_biquad, check_masking, check_mu_law_decoding, check_time_stretch
 
 
 class AudioTensorOperation(TensorOperation):
@@ -406,6 +406,56 @@ class EqualizerBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.EqualizerBiquadOperation(self.sample_rate, self.center_freq, self.gain, self.Q)
+
+
+DE_C_FADESHAPE_TYPE = {FadeShape.LINEAR: cde.FadeShape.DE_FADESHAPE_LINEAR,
+                       FadeShape.EXPONENTIAL: cde.FadeShape.DE_FADESHAPE_EXPONENTIAL,
+                       FadeShape.LOGARITHMIC: cde.FadeShape.DE_FADESHAPE_LOGARITHMIC,
+                       FadeShape.QUARTERSINE: cde.FadeShape.DE_FADESHAPE_QUARTERSINE,
+                       FadeShape.HALFSINE: cde.FadeShape.DE_FADESHAPE_HALFSINE}
+
+
+class Fade(AudioTensorOperation):
+    """
+    Add a fade in and/or fade out to an waveform.
+
+    Args:
+        fade_in_len (int, optional): Length of fade-in (time frames), which must be non-negative (default=0).
+        fade_out_len (int, optional): Length of fade-out (time frames), which must be non-negative (default=0).
+        fade_shape (FadeShape, optional): Shape of fade (default=FadeShape.LINEAR). Can be one of
+            [FadeShape.LINEAR, FadeShape.EXPONENTIAL, FadeShape.LOGARITHMIC, FadeShape.QUARTERSINC, FadeShape.HALFSINC].
+
+            -FadeShape.LINEAR, means it linear to 0.
+
+            -FadeShape.EXPONENTIAL, means it tend to 0 in an exponential function.
+
+            -FadeShape.LOGARITHMIC, means it tend to 0 in an logrithmic function.
+
+            -FadeShape.QUARTERSINE, means it tend to 0 in an quarter sin function.
+
+            -FadeShape.HALFSINE, means it tend to 0 in an half sin function.
+
+    Raises:
+        RuntimeError: If fade_in_len exceeds waveform length.
+        RuntimeError: If fade_out_len exceeds waveform length.
+
+    Examples:
+          >>> import numpy as np
+          >>>
+          >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03, 9.246826171875e-03, 1.0894775390625e-02]])
+          >>> dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+          >>> transforms = [audio.Fade(fade_in_len=3, fade_out_len=2, fade_shape=FadeShape.LINEAR)]
+          >>> dataset = dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_fade
+    def __init__(self, fade_in_len=0, fade_out_len=0, fade_shape=FadeShape.LINEAR):
+        self.fade_in_len = fade_in_len
+        self.fade_out_len = fade_out_len
+        self.fade_shape = fade_shape
+
+    def parse(self):
+        return cde.FadeOperation(self.fade_in_len, self.fade_out_len, DE_C_FADESHAPE_TYPE[self.fade_shape])
 
 
 class FrequencyMasking(AudioTensorOperation):

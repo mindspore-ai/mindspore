@@ -23,3 +23,12 @@ class ScaleType(str, Enum):
     """Scale Type"""
     POWER: str = "power"
     MAGNITUDE: str = "magnitude"
+
+
+class FadeShape(str, Enum):
+    """Fade Shape"""
+    LINEAR: str = "linear"
+    EXPONENTIAL: str = "exponential"
+    LOGARITHMIC: str = "logarithmic"
+    QUARTERSINE: str = "quarter_sine"
+    HALFSINE: str = "half_sine"

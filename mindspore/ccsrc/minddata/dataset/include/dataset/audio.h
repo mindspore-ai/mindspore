@@ -323,6 +323,30 @@ class EqualizerBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Add fade in or/and fade out on the input audio.
+class Fade final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] fade_in_len Length of fade-in (time frames), which must be non-negative
+  ///     and no more than the length of waveform (Default: 0).
+  /// \param[in] fade_out_len Length of fade-out (time frames), which must be non-negative
+  ///     and no more than the length of waveform (Default: 0).
+  /// \param[in] fade_shape An enum for the fade shape (Default: FadeShape::kLinear).
+  explicit Fade(int32_t fade_in_len = 0, int32_t fade_out_len = 0, FadeShape fade_shape = FadeShape::kLinear);
+
+  /// \brief Destructor.
+  ~Fade() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief FrequencyMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the frequency domain.
 class FrequencyMasking final : public TensorTransform {

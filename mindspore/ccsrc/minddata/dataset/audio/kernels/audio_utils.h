@@ -317,6 +317,14 @@ Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
 /// \return Status code.
 Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int quantization_channels);
 
+/// \brief Add a fade in and/or fade out to an input.
+/// \param[in] input: The input tensor.
+/// \param[out] output: Added fade in and/or fade out audio with the same shape.
+/// \param[in] fade_in_len: Length of fade-in (time frames).
+/// \param[in] fade_out_len: Length of fade-out (time frames).
+/// \param[in] fade_shape: Shape of fade.
+Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t fade_in_len,
+            int32_t fade_out_len, FadeShape fade_shape);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
