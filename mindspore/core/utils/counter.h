@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,85 +16,144 @@
 
 #ifndef MINDSPORE_CORE_UTILS_COUNTER_H_
 #define MINDSPORE_CORE_UTILS_COUNTER_H_
+#include <list>
+#include <vector>
+#include <utility>
 #include <functional>
-#include "utils/ordered_map.h"
+#include <unordered_map>
 
 namespace mindspore {
 template <typename T, class Hash = std::hash<T>, class Equal = std::equal_to<T>>
 class Counter {
   using counter_type = Counter<T, Hash, Equal>;
+  using key_type = T const *;
+  using item_type = std::pair<T, int>;
+  using list_type = std::list<item_type>;
+  using iterator = typename list_type::iterator;
+  using const_iterator = typename list_type::const_iterator;
+
+  struct KeyHash {
+    std::size_t operator()(const key_type ptr) const noexcept { return Hash{}(*ptr); }
+  };
+
+  struct KeyEqual {
+    bool operator()(const key_type lhs, const key_type rhs) const noexcept { return Equal{}(*lhs, *rhs); }
+  };
+  using map_type = std::unordered_map<key_type, iterator, KeyHash, KeyEqual>;
 
  public:
   Counter() = default;
   ~Counter() = default;
 
-  Counter(const Counter &other) { data = other.data; }
+  Counter(Counter &&other) noexcept = default;
+  Counter &operator=(Counter &&other) noexcept = default;
+
+  Counter(const Counter &other) { *this = other; }
   Counter &operator=(const Counter &other) {
-    if (this != &other) {
-      data = other.data;
+    map_.clear();
+    list_ = other.list_;
+    for (auto iter = list_.begin(); iter != list_.end(); ++iter) {
+      map_.emplace(&(iter->first), iter);
     }
     return *this;
   }
 
-  int &operator[](const T &t) { return data[t]; }
+  template <typename... Args>
+  std::pair<iterator, bool> emplace(Args &&... args) {
+    auto new_iter = list_.emplace(list_.cend(), std::forward<Args>(args)...);
+    auto [map_iter, inserted] = map_.emplace(&(new_iter->first), new_iter);
+    if (!inserted) {
+      list_.erase(new_iter);
+    }
+    return {map_iter->second, inserted};
+  }
 
-  counter_type operator-(const counter_type &other) {
+  template <typename... Args>
+  void add(Args &&... args) {
+    auto [iter, inserted] = emplace(T{std::forward<Args>(args)...}, 1);
+    if (!inserted) {
+      ++(iter->second);
+    }
+  }
+
+  int &operator[](const T &key) {
+    auto map_iter = map_.find(&key);
+    if (map_iter != map_.end()) {
+      return map_iter->second->second;
+    }
+    return emplace(key, 0).first->second;
+  }
+
+  counter_type operator-(const counter_type &other) const {
     counter_type new_counter;
-    for (auto iter = begin(); iter != end(); ++iter) {
-      auto key = iter->first;
-      int value = iter->second;
-      auto item = other.data.find(key);
-      if (item != other.data.end()) {
-        int o_value = item->second;
-        if (value - o_value > 0) {
-          new_counter[key] = value - o_value;
+    for (const auto &[key, value] : list_) {
+      auto iter = other.find(key);
+      if (iter != other.cend()) {
+        int new_value = value - iter->second;
+        if (new_value > 0) {
+          new_counter.emplace(key, new_value);
         }
       } else {
-        new_counter[key] = value;
+        new_counter.emplace(key, value);
       }
     }
-
     return new_counter;
   }
 
-  counter_type operator+(const counter_type &other) {
-    counter_type new_counter;
-    for (auto iter = begin(); iter != end(); ++iter) {
-      auto key = iter->first;
-      int value = iter->second;
-      auto item = other.data.find(key);
-      if (item != other.data.end()) {
-        new_counter[key] = iter->second + item->second;
+  counter_type operator+(const counter_type &other) const {
+    counter_type new_counter = *this;
+    for (const auto &[key, value] : other.list_) {
+      auto [iter, inserted] = new_counter.emplace(key, value);
+      if (!inserted) {
+        iter->second += value;
+      }
+    }
+    return new_counter;
+  }
+
+  template <typename Func>
+  void subtract_by(const counter_type &other, Func &&func) const {
+    for (const auto &[key, value] : list_) {
+      auto iter = other.find(key);
+      if (iter != other.cend()) {
+        if ((value - iter->second) > 0) {
+          func(key);
+        }
       } else {
-        new_counter[key] = value;
+        func(key);
       }
     }
-
-    for (auto iter = other.cbegin(); iter != other.cend(); ++iter) {
-      auto key = iter->first;
-      int value = iter->second;
-      if (!new_counter.contains(key)) {
-        new_counter[key] = value;
-      }
-    }
-
-    return new_counter;
   }
 
-  std::size_t size() const { return data.size(); }
+  std::vector<T> subtract(const counter_type &other) const {
+    std::vector<T> result;
+    subtract_by(other, [&result](const T &item) { result.emplace_back(item); });
+    return result;
+  }
 
-  bool contains(const T &t) const { return data.find(t) != data.end(); }
+  std::size_t size() const { return list_.size(); }
 
-  typename OrderedMap<T, int, Hash, Equal>::iterator begin() { return data.begin(); }
+  bool contains(const T &key) const { return map_.find(&key) != map_.cend(); }
 
-  typename OrderedMap<T, int, Hash, Equal>::iterator end() { return data.end(); }
+  const_iterator find(const T &key) const {
+    auto map_iter = map_.find(&key);
+    if (map_iter == map_.cend()) {
+      return list_.cend();
+    }
+    return map_iter->second;
+  }
 
-  typename OrderedMap<T, int, Hash, Equal>::const_iterator cbegin() const { return data.cbegin(); }
+  iterator begin() { return list_.begin(); }
 
-  typename OrderedMap<T, int, Hash, Equal>::const_iterator cend() const { return data.cend(); }
+  iterator end() { return list_.end(); }
+
+  const_iterator cbegin() const { return list_.cbegin(); }
+
+  const_iterator cend() const { return list_.cend(); }
 
  private:
-  OrderedMap<T, int, Hash, Equal> data;
+  map_type map_;
+  list_type list_;
 };
 }  // namespace mindspore
 

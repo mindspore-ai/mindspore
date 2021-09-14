@@ -447,7 +447,7 @@ void Cloner::OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrLis
   func_graph->set_parameters(parameters);
 }
 
-void Cloner::SetEdges(const FuncGraphPtr &func_graph) {
+void Cloner::SetEdges(const FuncGraphPtr &func_graph, FuncGraphTransaction *tx) {
   MS_EXCEPTION_IF_NULL(func_graph);
   for (auto &node : func_graph->nodes()) {
     if (node == nullptr) {
@@ -465,12 +465,12 @@ void Cloner::SetEdges(const FuncGraphPtr &func_graph) {
         auto graph = GetValueNode<FuncGraphPtr>(input);
         auto &repl_func_graph = repl_map_func_graph_[func_graph];
         if (repl_func_graph.find(graph) != repl_func_graph.end()) {
-          transaction_.SetEdge(cnode, SizeToInt(i), repl_func_graph[graph]);
+          tx->SetEdge(cnode, SizeToInt(i), repl_func_graph[graph]);
         }
       } else {
         auto &repl_node = repl_map_node_[func_graph];
         if (repl_node.find(input) != repl_node.end()) {
-          transaction_.SetEdge(cnode, SizeToInt(i), repl_node[input]);
+          tx->SetEdge(cnode, SizeToInt(i), repl_node[input]);
         }
       }
     }
@@ -507,16 +507,16 @@ void Cloner::Lift(const std::vector<FuncGraphPtr> &sorted) {
 
 void Cloner::LiftParameters(const FuncGraphPtr &lift_top_func_graph) {
   MS_EXCEPTION_IF_NULL(manager_);
-  transaction_ = manager_->Transact();
+  auto tx = manager_->Transact();
   const auto &func_graphs = BroadFirstSearchGraphUsed(lift_top_func_graph);
   for (auto &func_graph : func_graphs) {
     GenParameters(func_graph);
   }
   Lift(func_graphs);
   for (auto &func_graph : func_graphs) {
-    SetEdges(func_graph);
+    SetEdges(func_graph, &tx);
   }
-  transaction_.Commit();
+  tx.Commit();
 }
 
 bool Cloner::CheckStatus(const FuncGraphPtr &func_graph, bool is_inline) {
