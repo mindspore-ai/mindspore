@@ -50,11 +50,11 @@ int64_t Statistics::GetStatisticsID() const { return statistics_id_; }
 
 bool Statistics::Validate(const json &statistics) {
   if (statistics.size() != kInt1) {
-    MS_LOG(ERROR) << "Statistics object is null";
+    MS_LOG(ERROR) << "Invalid data, 'statistics' is empty.";
     return false;
   }
   if (statistics.find("level") == statistics.end()) {
-    MS_LOG(ERROR) << "There is not 'level' object in statistic";
+    MS_LOG(ERROR) << "Invalid data, 'level' object can not found in statistic";
     return false;
   }
   return LevelRecursive(statistics["level"]);
@@ -66,18 +66,18 @@ bool Statistics::LevelRecursive(json level) {
     json a = it.value();
     if (a.size() == kInt2) {
       if ((a.find("key") == a.end()) || (a.find("count") == a.end())) {
-        MS_LOG(ERROR) << "The node field is 2, but 'key'/'count' is not existed";
+        MS_LOG(ERROR) << "Invalid data, the node field is 2, but 'key'/'count' object does not existed";
         return false;
       }
     } else if (a.size() == kInt3) {
       if ((a.find("key") == a.end()) || (a.find("count") == a.end()) || a.find("level") == a.end()) {
-        MS_LOG(ERROR) << "The node field is 3, but 'key'/'count'/'level' is not existed";
+        MS_LOG(ERROR) << "Invalid data, the node field is 3, but 'key'/'count'/'level' object does not existed";
         return false;
       } else {
         ini = LevelRecursive(a.at("level"));
       }
     } else {
-      MS_LOG(ERROR) << "The node field is not equal 2/3";
+      MS_LOG(ERROR) << "Invalid data, the node field is not equal to 2 or 3";
       return false;
     }
   }

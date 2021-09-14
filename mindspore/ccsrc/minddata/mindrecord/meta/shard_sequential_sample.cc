@@ -58,8 +58,6 @@ Status ShardSequentialSample::Execute(ShardTaskList &tasks) {
     ShardTaskList::TaskListSwap(tasks, new_tasks);
   } else {  // shuffled
     ShardTaskList new_tasks;
-    CHECK_FAIL_RETURN_UNEXPECTED(taking <= static_cast<int64_t>(tasks.permutation_.size()),
-                                 "Taking is out of task range.");
     total_no = static_cast<int64_t>(tasks.permutation_.size());
     for (size_t i = offset_; i < taking + offset_; ++i) {
       new_tasks.AssignTask(tasks, tasks.permutation_[i % total_no]);

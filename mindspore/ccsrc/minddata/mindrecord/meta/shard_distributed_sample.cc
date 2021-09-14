@@ -58,8 +58,10 @@ int64_t ShardDistributedSample::GetNumSamples(int64_t dataset_size, int64_t num_
 Status ShardDistributedSample::PreExecute(ShardTaskList &tasks) {
   auto total_no = tasks.Size();
   if (no_of_padded_samples_ > 0 && first_epoch_) {
-    CHECK_FAIL_RETURN_UNEXPECTED(total_no % denominator_ == 0,
-                                 "Dataset size plus number of padded samples is not divisible by number of shards.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      total_no % denominator_ == 0,
+      "Invalid input, number of padding samples: " + std::to_string(no_of_padded_samples_) +
+        " plus dataset size is not divisible by num_shards: " + std::to_string(denominator_) + ".");
   }
   if (first_epoch_) {
     first_epoch_ = false;

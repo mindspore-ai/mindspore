@@ -110,7 +110,6 @@ Status ShardSample::UpdateTasks(ShardTaskList &tasks, int taking) {
     ShardTaskList::TaskListSwap(tasks, new_tasks);
   } else {
     ShardTaskList new_tasks;
-    CHECK_FAIL_RETURN_UNEXPECTED(taking <= static_cast<int>(tasks.sample_ids_.size()), "taking is out of range.");
     int total_no = static_cast<int>(tasks.permutation_.size());
     int cnt = 0;
     for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
@@ -145,7 +144,8 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
     taking = no_of_samples_ - no_of_samples_ % no_of_categories;
   } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
     CHECK_FAIL_RETURN_UNEXPECTED(indices_.size() <= static_cast<size_t>(total_no),
-                                 "Parameter indices's size is greater than dataset size.");
+                                 "Invalid input, indices size: " + std::to_string(indices_.size()) +
+                                   " need to be less than  dataset size: " + std::to_string(total_no) + ".");
   } else {  // constructor TopPercent
     if (numerator_ > 0 && denominator_ > 0 && numerator_ <= denominator_) {
       if (numerator_ == 1 && denominator_ > 1) {  // sharding
@@ -155,7 +155,9 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
         taking -= (taking % no_of_categories);
       }
     } else {
-      RETURN_STATUS_UNEXPECTED("Parameter numerator or denominator is invalid.");
+      RETURN_STATUS_UNEXPECTED("Invalid input, numerator: " + std::to_string(numerator_) +
+                               " need to be positive and be less than denominator: " + std::to_string(denominator_) +
+                               ".");
     }
   }
   return UpdateTasks(tasks, taking);
