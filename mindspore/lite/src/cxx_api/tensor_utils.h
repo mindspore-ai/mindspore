@@ -29,9 +29,10 @@ namespace mindspore {
 std::vector<int32_t> MS_API TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
                                           bool verify_size);
 
-Status MS_API LiteTensorToMSTensor(tensor::MSTensor *srcTensor, MSTensor *dstTensor);
+Status MS_API LiteTensorToMSTensor(tensor::MSTensor *srcTensor, MSTensor *dstTensor, bool fromSession = true);
 
-std::vector<MSTensor> MS_API LiteTensorsToMSTensors(const std::vector<mindspore::tensor::MSTensor *> &srcTensors);
+std::vector<MSTensor> MS_API LiteTensorsToMSTensors(const std::vector<mindspore::tensor::MSTensor *> &srcTensors,
+                                                    bool fromSession = true);
 
 }  // namespace mindspore
 

@@ -736,7 +736,6 @@ int TrainSession::SetOptimizerParams(const std::vector<tensor::MSTensor *> &para
       }
     }
     if (!found) {
-      MS_LOG(ERROR) << "Tensor name " << param->tensor_name() << " is not a valid name.";
       return RET_ERROR;
     }
   }
@@ -801,6 +800,9 @@ int TrainSession::ApplyGradients(const std::vector<tensor::MSTensor *> &gradient
         return ret;
       }
     }
+  }
+  for (size_t ix = 0; ix < current_gradients.size(); ix++) {
+    delete current_gradients[ix];
   }
   return RET_OK;
 }

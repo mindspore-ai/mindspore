@@ -46,12 +46,13 @@ std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeI
   }
   return truncated_shape;
 }
-Status LiteTensorToMSTensor(tensor::MSTensor *srcTensor, MSTensor *dstTensor) {
+Status LiteTensorToMSTensor(tensor::MSTensor *srcTensor, MSTensor *dstTensor, bool fromSession) {
   auto impl = std::make_shared<MSTensor::Impl>(srcTensor);
   if (impl == nullptr || impl->lite_tensor() == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed.";
     return kLiteError;
   }
+  impl->set_from_session(fromSession);
   auto tensor = MSTensor(impl);
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed.";
@@ -61,12 +62,13 @@ Status LiteTensorToMSTensor(tensor::MSTensor *srcTensor, MSTensor *dstTensor) {
   return kSuccess;
 }
 
-std::vector<MSTensor> LiteTensorsToMSTensors(const std::vector<mindspore::tensor::MSTensor *> &srcTensors) {
+std::vector<MSTensor> LiteTensorsToMSTensors(const std::vector<mindspore::tensor::MSTensor *> &srcTensors,
+                                             bool fromSession) {
   std::vector<MSTensor> dstTensors;
   dstTensors.reserve(srcTensors.size());
   for (auto inTensor : srcTensors) {
     MSTensor tensor;
-    auto status = LiteTensorToMSTensor(inTensor, &tensor);
+    auto status = LiteTensorToMSTensor(inTensor, &tensor, fromSession);
     if (status != kSuccess) {
       return {};
     }
