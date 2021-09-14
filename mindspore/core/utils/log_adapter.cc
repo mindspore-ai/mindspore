@@ -427,7 +427,7 @@ void common_log_init(void) {
 __attribute__((constructor)) void common_log_init(void) {
 #endif
 #else
-void common_log_init(void) {
+MS_CORE_API void common_log_init(void) {
 #endif
 #ifdef USE_GLOG
   // Do not use glog predefined log prefix

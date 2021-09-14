@@ -207,7 +207,6 @@ bool AnyValue::operator==(const Value &other) const {
     return false;
   }
 }
-const ValuePtr kAnyValue = std::make_shared<AnyValue>();
 
 std::size_t ValueSlice::hash() const {
   MS_EXCEPTION_IF_NULL(start_);

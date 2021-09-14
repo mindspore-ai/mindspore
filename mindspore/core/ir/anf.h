@@ -577,7 +577,7 @@ bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value = nullpt
 PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
 
 // used to check whether an AnfNode is a valuenode having some Primitive value
-bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value);
+MS_CORE_API bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value);
 
 // Check whether two primitives are same.
 bool IsPrimitiveEquals(const PrimitivePtr &prim1, const PrimitivePtr &prim2);

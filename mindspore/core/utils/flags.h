@@ -16,32 +16,39 @@
 
 #ifndef MINDSPORE_CORE_UTILS_FLAGS_H
 #define MINDSPORE_CORE_UTILS_FLAGS_H
+
 namespace mindspore {
-extern const char GRAPH_FLAG_MIX_PRECISION_FP16[];
-extern const char GRAPH_FLAG_MIX_PRECISION_FP32[];
-extern const char GRAPH_FLAG_HAS_EFFECT[];
-extern const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[];
-extern const char GRAPH_FLAG_CACHE_ENABLE[];
-extern const char GRAPH_FLAG_RANDOM_EFFECT[];
-extern const char GRAPH_FLAG_SIDE_EFFECT[];
-extern const char GRAPH_FLAG_SIDE_EFFECT_IO[];
-extern const char GRAPH_FLAG_SIDE_EFFECT_MEM[];
-extern const char GRAPH_FLAG_SIDE_EFFECT_EXCEPTION[];
-extern const char GRAPH_FLAG_SIDE_EFFECT_PROPAGATE[];
-extern const char GRAPH_FLAG_SIDE_EFFECT_BACKPROP[];
+// flag names
+inline const char GRAPH_FLAG_MIX_PRECISION_FP16[] = "fp16";
+inline const char GRAPH_FLAG_MIX_PRECISION_FP32[] = "fp32";
+inline const char GRAPH_FLAG_HAS_EFFECT[] = "has_effect";
+inline const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[] = "_effect_patial_order";
+inline const char GRAPH_FLAG_CACHE_ENABLE[] = "cache_enable";
+inline const char GRAPH_FLAG_RANDOM_EFFECT[] = "_random_effect";
+inline const char GRAPH_FLAG_SIDE_EFFECT[] = "_side_effect";
+inline const char GRAPH_FLAG_SIDE_EFFECT_IO[] = "side_effect_io";
+inline const char GRAPH_FLAG_SIDE_EFFECT_MEM[] = "side_effect_mem";
+inline const char GRAPH_FLAG_SIDE_EFFECT_EXCEPTION[] = "side_effect_exception";
+inline const char GRAPH_FLAG_SIDE_EFFECT_PROPAGATE[] = "side_effect_propagate";
+inline const char GRAPH_FLAG_SIDE_EFFECT_BACKPROP[] = "side_effect_backprop";
 
-extern const char PY_PRIM_METHOD_INFER[];
-extern const char PY_PRIM_METHOD_CHECK[];
-extern const char PY_PRIM_METHOD_INFER_VALUE[];
+// method names of python primitive called from c++ source code
+// 1. infer method name of class 'PrimitiveWithInfer'
+inline const char PY_PRIM_METHOD_INFER[] = "__infer__";
+// 2. check method name of class 'PrimitiveWithCheck'
+inline const char PY_PRIM_METHOD_CHECK[] = "__check__";
+// 3. method name of class 'PrimitivePy' for constant propagation
+inline const char PY_PRIM_METHOD_INFER_VALUE[] = "infer_value";
 
-extern const char ATTR_VALUE[];
-extern const char ATTR_DTYPE[];
-extern const char ATTR_SHAPE[];
-extern const char ATTR_MIN_SHAPE[];
-extern const char ATTR_MAX_SHAPE[];
-extern const char ATTR_MIN_VALUE[];
-extern const char ATTR_MAX_VALUE[];
-extern const char ATTR_NO_ELIMINATE[];
+// type inference related attributes
+inline const char ATTR_VALUE[] = "value";
+inline const char ATTR_DTYPE[] = "dtype";
+inline const char ATTR_SHAPE[] = "shape";
+inline const char ATTR_MIN_SHAPE[] = "min_shape";
+inline const char ATTR_MAX_SHAPE[] = "max_shape";
+inline const char ATTR_MIN_VALUE[] = "min_value";
+inline const char ATTR_MAX_VALUE[] = "max_value";
+inline const char ATTR_NO_ELIMINATE[] = "no_eliminate";
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_FLAGS_H

@@ -257,7 +257,8 @@ class MS_CORE_API AnyValue : public Value {
   bool operator==(const Value &other) const override;
   abstract::AbstractBasePtr ToAbstract() override;
 };
-extern const ValuePtr kAnyValue;
+
+inline const ValuePtr kAnyValue = std::make_shared<AnyValue>();
 
 class MS_CORE_API Monad : public Value {
  public:

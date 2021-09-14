@@ -151,7 +151,5 @@ bool SequeueShape::SequeueEqual(const BaseShape &other) const {
 }
 template bool SequeueShape::SequeueEqual<TupleShape>(const BaseShape &) const;
 template bool SequeueShape::SequeueEqual<ListShape>(const BaseShape &) const;
-
-const std::shared_ptr<NoShape> kNoShape = std::make_shared<NoShape>();
 }  // namespace abstract
 }  // namespace mindspore
