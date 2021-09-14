@@ -17,7 +17,7 @@
 #include "fl/server/iteration_metrics.h"
 #include <string>
 #include <fstream>
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "ps/constants.h"
 
 namespace mindspore {
@@ -55,10 +55,14 @@ bool IterationMetrics::Initialize() {
 
     // Parse storage file path.
     metrics_file_path_ = JsonGetKeyWithException<std::string>(value_json, ps::kStoreFilePath);
-    auto realpath = Common::GetRealPath(metrics_file_path_);
+    auto realpath = FileUtils::GetRealPath(metrics_file_path_.c_str());
     if (!realpath.has_value()) {
-      MS_LOG(EXCEPTION) << "Get real path for " << metrics_file_path_ << " failed.";
-      return false;
+      MS_LOG(WARNING) << metrics_file_path_ << " path doesn't exist.";
+      realpath = FileUtils::CreateNotExistDirs(metrics_file_path_);
+      if (!realpath.has_value()) {
+        MS_LOG(EXCEPTION) << "Creating directory " << metrics_file_path_ << " failed.";
+        return false;
+      }
     }
 
     metrics_file_.open(metrics_file_path_, std::ios::ate | std::ios::out);
