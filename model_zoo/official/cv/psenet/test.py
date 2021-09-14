@@ -83,7 +83,7 @@ def modelarts_pre_process():
     cmake_command = 'cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL=/usr/local ..&&make -j16&&sudo make install'
     os.system('cd {}/opencv-3.4.9&&mkdir build&&cd ./build&&{}'.format(local_path, cmake_command))
 
-    os.system('cd {}/src/ETSNET/pse&&make clean&&make'.format(local_path))
+    os.system('cd {}/src/PSENET/pse&&make clean&&make'.format(local_path))
     os.system('cd {}&&sed -i ’s/\r//‘ scripts/run_eval_ascend.sh'.format(local_path))
 
 
@@ -94,7 +94,7 @@ def modelarts_post_process():
 
 @moxing_wrapper(pre_process=modelarts_pre_process, post_process=modelarts_post_process)
 def test():
-    from src.ETSNET.pse import pse
+    from src.PSENET.pse import pse
 
     local_path = ""
     if config.enable_modelarts:

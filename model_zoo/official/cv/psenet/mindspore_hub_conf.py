@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """hub config."""
-from src.ETSNET.etsnet import ETSNet
+from src.PSENET.psenet import PSENet
 from src.config import config
 
 def create_network(name, *args, **kwargs):
     if name == "psenet":
         infer_mode = kwargs.get("infer_mode", False)
         config.INFERENCE = infer_mode
-        return ETSNet(config)
+        return PSENet(config)
     raise NotImplementedError(f"{name} is not implemented in the repo")

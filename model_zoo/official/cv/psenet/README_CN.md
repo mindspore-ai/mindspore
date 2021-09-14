@@ -105,7 +105,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib64
 bash scripts/run_distribute_train.sh [RANK_FILE] [PRETRAINED_PATH] [TRAIN_ROOT_DIR]
 
 # 进入路径，运行Makefile
-cd ./src/ETSNET/pse/;make clean&&make
+cd ./src/PSENET/pse/;make clean&&make
 
 # 运行test.py
 python test.py --ckpt [CKPK_PATH] --TEST_ROOT_DIR [TEST_DATA_DIR]
@@ -391,7 +391,7 @@ loss_cb = LossCallBack(per_print_times=20)
 
 # 设置并应用检查点参数
 ckpoint_cf = CheckpointConfig(save_checkpoint_steps=1875, keep_checkpoint_max=2)
-ckpoint_cb = ModelCheckpoint(prefix="ETSNet", config=ckpoint_cf, directory=config.TRAIN_MODEL_SAVE_PATH)
+ckpoint_cb = ModelCheckpoint(prefix="PSENet", config=ckpoint_cf, directory=config.TRAIN_MODEL_SAVE_PATH)
 
 model = Model(net)
 model.train(config.TRAIN_REPEAT_NUM, ds, dataset_sink_mode=False, callbacks=[time_cb, loss_cb, ckpoint_cb])
