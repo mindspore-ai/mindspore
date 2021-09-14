@@ -29,17 +29,20 @@ typedef void (*Row2ColMajorFuncPtr)(const float *src_ptr, float *dst_ptr, int ro
 #ifdef ENABLE_ARM64
 typedef void (*MatmulFloatOptFuncPtr)(const float *a, const float *b, float *c, const float *bias, int act_type,
                                       int depth, int row, int col, size_t stride, size_t write_mode);
-
-// common convolution output C4HW4, if out_channel mod 4 remains, just output real channel, no zeros padded.
-void ConvFp32OutNC4HW4(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
-                       float *col_major_input, float *output_data, int task_id, const ConvParameter *conv_param);
 #endif
 
 // fp32 convolution common (im2col+gemm)
 void ConvFp32(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
               float *col_major_input, float *output_data, int task_id, const ConvParameter *conv_param);
 
+// common convolution output C4HW4, if out_channel mod 4 remains, just output real channel, no zeros padded.
+void ConvFp32OutNC4HW4(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
+                       float *col_major_input, float *output_data, int task_id, const ConvParameter *conv_param);
+
 #ifdef ENABLE_AVX
+void CommonConv6x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t depth,
+                          size_t out_step, size_t act_flag, size_t real_cal_row);
+
 typedef void (*SWConvKernel)(float *dst, const float *src, const float *weight, const float *bias, size_t kernel_h,
                              size_t kernel_w, size_t act_flag, size_t ow_block, size_t oc_block, size_t oc_algin,
                              size_t ic_algin, size_t in_kw_step, size_t in_kh_step, size_t in_sw_step,

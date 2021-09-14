@@ -145,7 +145,7 @@ bool RuntimePassValid(const InnerContext *context, std::vector<kernel::LiteKerne
     }
   }
 
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64)
   return true;
 #endif
 
