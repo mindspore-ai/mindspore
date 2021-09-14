@@ -371,7 +371,7 @@ struct FloorModFunc<int64_t> {
 
 template <>
 struct FloorModFunc<uint32_t> {
-  __device__ __host__ __forceinline__ int32_t operator()(const int32_t &lhs, const int32_t &rhs) {
+  __device__ __host__ __forceinline__ int32_t operator()(const uint32_t &lhs, const uint32_t &rhs) {
     int32_t res = lhs - floor(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
     res = (res > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
     return res;
