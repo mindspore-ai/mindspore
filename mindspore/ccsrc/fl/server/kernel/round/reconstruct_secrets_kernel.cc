@@ -50,7 +50,7 @@ void ReconstructSecretsKernel::InitKernel(size_t required_cnt) {
                                                          {first_cnt_handler, last_cnt_handler});
 }
 
-bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                       const std::vector<AddressPtr> &outputs) {
   bool response = false;
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
@@ -80,7 +80,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
     DistributedMetadataStore::GetInstance().GetMetadata(kCtxUpdateModelClientList);
   const UpdateModelClientList &update_model_clients_pb = update_model_clients_pb_out.client_list();
 
-  for (int i = 0; i < update_model_clients_pb.fl_id_size(); ++i) {
+  for (size_t i = 0; i < IntToSize(update_model_clients_pb.fl_id_size()); ++i) {
     update_model_clients.push_back(update_model_clients_pb.fl_id(i));
   }
 

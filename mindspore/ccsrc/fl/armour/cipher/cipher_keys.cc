@@ -19,12 +19,16 @@
 
 namespace mindspore {
 namespace armour {
-bool CipherKeys::GetKeys(const int cur_iterator, const std::string &next_req_time,
+bool CipherKeys::GetKeys(const size_t cur_iterator, const std::string &next_req_time,
                          const schema::GetExchangeKeys *get_exchange_keys_req,
                          const std::shared_ptr<fl::server::FBBuilder> &fbb) {
   MS_LOG(INFO) << "CipherMgr::GetKeys START";
   if (get_exchange_keys_req == nullptr) {
     MS_LOG(ERROR) << "Request is nullptr";
+    BuildGetKeysRsp(fbb, schema::ResponseCode_RequestError, cur_iterator, next_req_time, false);
+    return false;
+  }
+  if (cipher_init_ == nullptr) {
     BuildGetKeysRsp(fbb, schema::ResponseCode_SystemError, cur_iterator, next_req_time, false);
     return false;
   }
@@ -61,7 +65,7 @@ bool CipherKeys::GetKeys(const int cur_iterator, const std::string &next_req_tim
   return true;
 }
 
-bool CipherKeys::ExchangeKeys(const int cur_iterator, const std::string &next_req_time,
+bool CipherKeys::ExchangeKeys(const size_t cur_iterator, const std::string &next_req_time,
                               const schema::RequestExchangeKeys *exchange_keys_req,
                               const std::shared_ptr<fl::server::FBBuilder> &fbb) {
   MS_LOG(INFO) << "CipherMgr::ExchangeKeys START";
@@ -70,6 +74,11 @@ bool CipherKeys::ExchangeKeys(const int cur_iterator, const std::string &next_re
     std::string reason = "Request is nullptr";
     MS_LOG(ERROR) << reason;
     BuildExchangeKeysRsp(fbb, schema::ResponseCode_RequestError, reason, next_req_time, cur_iterator);
+    return false;
+  }
+  if (cipher_init_ == nullptr) {
+    std::string reason = "cipher_init_ is nullptr";
+    BuildExchangeKeysRsp(fbb, schema::ResponseCode_SystemError, reason, next_req_time, cur_iterator);
     return false;
   }
   std::string fl_id = exchange_keys_req->fl_id()->str();
@@ -127,9 +136,9 @@ bool CipherKeys::ExchangeKeys(const int cur_iterator, const std::string &next_re
   }
 }
 
-void CipherKeys::BuildExchangeKeysRsp(std::shared_ptr<fl::server::FBBuilder> fbb, const schema::ResponseCode retcode,
-                                      const std::string &reason, const std::string &next_req_time,
-                                      const int iteration) {
+void CipherKeys::BuildExchangeKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb,
+                                      const schema::ResponseCode retcode, const std::string &reason,
+                                      const std::string &next_req_time, const size_t iteration) {
   auto rsp_reason = fbb->CreateString(reason);
   auto rsp_next_req_time = fbb->CreateString(next_req_time);
 
@@ -137,21 +146,21 @@ void CipherKeys::BuildExchangeKeysRsp(std::shared_ptr<fl::server::FBBuilder> fbb
   rsp_builder.add_retcode(retcode);
   rsp_builder.add_reason(rsp_reason);
   rsp_builder.add_next_req_time(rsp_next_req_time);
-  rsp_builder.add_iteration(iteration);
+  rsp_builder.add_iteration(SizeToInt(iteration));
   auto rsp_exchange_keys = rsp_builder.Finish();
   fbb->Finish(rsp_exchange_keys);
   return;
 }
 
-void CipherKeys::BuildGetKeysRsp(std::shared_ptr<fl::server::FBBuilder> fbb, const schema::ResponseCode retcode,
-                                 const int iteration, const std::string &next_req_time, bool is_good) {
+void CipherKeys::BuildGetKeysRsp(const std::shared_ptr<fl::server::FBBuilder> &fbb, const schema::ResponseCode retcode,
+                                 const size_t iteration, const std::string &next_req_time, bool is_good) {
   if (!is_good) {
     auto fbs_next_req_time = fbb->CreateString(next_req_time);
-    schema::ReturnExchangeKeysBuilder rsp_buider(*(fbb.get()));
-    rsp_buider.add_retcode(retcode);
-    rsp_buider.add_iteration(iteration);
-    rsp_buider.add_next_req_time(fbs_next_req_time);
-    auto rsp_get_keys = rsp_buider.Finish();
+    schema::ReturnExchangeKeysBuilder rsp_builder(*(fbb.get()));
+    rsp_builder.add_retcode(static_cast<int>(retcode));
+    rsp_builder.add_iteration(SizeToInt(iteration));
+    rsp_builder.add_next_req_time(fbs_next_req_time);
+    auto rsp_get_keys = rsp_builder.Finish();
     fbb->Finish(rsp_get_keys);
     return;
   }
@@ -176,12 +185,12 @@ void CipherKeys::BuildGetKeysRsp(std::shared_ptr<fl::server::FBBuilder> fbb, con
   }
   auto remote_publickeys = fbb->CreateVector(public_keys_list);
   auto fbs_next_req_time = fbb->CreateString(next_req_time);
-  schema::ReturnExchangeKeysBuilder rsp_buider(*(fbb.get()));
-  rsp_buider.add_retcode(retcode);
-  rsp_buider.add_iteration(iteration);
-  rsp_buider.add_remote_publickeys(remote_publickeys);
-  rsp_buider.add_next_req_time(fbs_next_req_time);
-  auto rsp_get_keys = rsp_buider.Finish();
+  schema::ReturnExchangeKeysBuilder rsp_builder(*(fbb.get()));
+  rsp_builder.add_retcode(static_cast<int>(retcode));
+  rsp_builder.add_iteration(SizeToInt(iteration));
+  rsp_builder.add_remote_publickeys(remote_publickeys);
+  rsp_builder.add_next_req_time(fbs_next_req_time);
+  auto rsp_get_keys = rsp_builder.Finish();
   fbb->Finish(rsp_get_keys);
   MS_LOG(INFO) << "CipherMgr::GetKeys Success";
   return;
@@ -190,6 +199,7 @@ void CipherKeys::BuildGetKeysRsp(std::shared_ptr<fl::server::FBBuilder> fbb, con
 void CipherKeys::ClearKeys() {
   fl::server::DistributedMetadataStore::GetInstance().ResetMetadata(fl::server::kCtxExChangeKeysClientList);
   fl::server::DistributedMetadataStore::GetInstance().ResetMetadata(fl::server::kCtxClientsKeys);
+  fl::server::DistributedMetadataStore::GetInstance().ResetMetadata(fl::server::kCtxGetKeysClientList);
 }
 
 }  // namespace armour

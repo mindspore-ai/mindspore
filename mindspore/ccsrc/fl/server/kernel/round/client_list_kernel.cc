@@ -54,7 +54,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
   uint64_t update_model_client_needed = LocalMetaStore::GetInstance().value<uint64_t>(kCtxUpdateModelThld);
   PBMetadata client_list_pb_out = DistributedMetadataStore::GetInstance().GetMetadata(kCtxUpdateModelClientList);
   const UpdateModelClientList &client_list_pb = client_list_pb_out.client_list();
-  for (int i = 0; i < client_list_pb.fl_id_size(); ++i) {
+  for (size_t i = 0; i < IntToSize(client_list_pb.fl_id_size()); ++i) {
     client_list.push_back(client_list_pb.fl_id(i));
   }
   if (static_cast<uint64_t>(client_list.size()) < update_model_client_needed) {
@@ -87,7 +87,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
     BuildClientListRsp(fbb, schema::ResponseCode_OutOfTime, reason, empty_client_list,
                        std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
     MS_LOG(ERROR) << reason;
-    return true;
+    return false;
   }
   MS_LOG(INFO) << "send clients_list succeed!";
   MS_LOG(INFO) << "UpdateModel client list: ";
@@ -100,7 +100,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
   return true;
 }
 
-bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   size_t total_duration = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
@@ -148,6 +148,7 @@ bool ClientListKernel::Reset() {
   MS_LOG(INFO) << "ITERATION NUMBER IS : " << LocalMetaStore::GetInstance().curr_iter_num();
   MS_LOG(INFO) << "Get Client list kernel reset!";
   DistributedCountService::GetInstance().ResetCounter(name_);
+  DistributedMetadataStore::GetInstance().ResetMetadata(kCtxGetUpdateModelClientList);
   StopTimer();
   return true;
 }
@@ -170,7 +171,7 @@ void ClientListKernel::BuildClientListRsp(std::shared_ptr<server::FBBuilder> cli
   rsp_builder.add_retcode(retcode);
   rsp_builder.add_reason(rsp_reason);
   rsp_builder.add_clients(clients_fb);
-  rsp_builder.add_iteration(iteration);
+  rsp_builder.add_iteration(SizeToInt(iteration));
   rsp_builder.add_next_req_time(rsp_next_req_time);
   auto rsp_exchange_keys = rsp_builder.Finish();
   client_list_resp_builder->Finish(rsp_exchange_keys);

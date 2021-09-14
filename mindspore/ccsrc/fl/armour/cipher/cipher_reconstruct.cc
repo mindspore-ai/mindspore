@@ -58,8 +58,8 @@ bool CipherReconStruct::CombineMask(std::vector<Share *> *shares_tmp,
       for (int i = 0; i < static_cast<int>(cipher_init_->secrets_minnums_); ++i) {
         shares_tmp->at(i)->index = (iter->second)[i].index;
         shares_tmp->at(i)->len = (iter->second)[i].share.size();
-        if (memcpy_s(shares_tmp->at(i)->data, shares_tmp->at(i)->len, (iter->second)[i].share.data(),
-                     shares_tmp->at(i)->len) != 0) {
+        if (memcpy_s(shares_tmp->at(i)->data, SHARE_MAX_SIZE, (iter->second)[i].share.data(), shares_tmp->at(i)->len) !=
+            0) {
           MS_LOG(ERROR) << "shares_tmp copy failed";
           retcode = false;
         }
@@ -78,11 +78,15 @@ bool CipherReconStruct::CombineMask(std::vector<Share *> *shares_tmp,
         // reconstruct pairwise noise
         MS_LOG(INFO) << "start reconstruct pairwise noise.";
         std::vector<float> noise(cipher_init_->featuremap_, 0.0);
-        if (GetSuvNoise(clients_share_list, record_public_keys, client_ivs, fl_id, &noise, secret, length) == false)
-          retcode = false;
-        client_noise->insert(std::pair<std::string, std::vector<float>>(fl_id, noise));
-        MS_LOG(INFO) << " fl_id : " << fl_id;
-        MS_LOG(INFO) << "end get complete s_uv.";
+        if (GetSuvNoise(clients_share_list, record_public_keys, client_ivs, fl_id, &noise, secret, length) == false) {
+          MS_LOG(ERROR) << "GetSuvNoise failed";
+          BN_clear_free(prime);
+          if (memset_s(secret, SECRET_MAX_LEN, 0, length) != 0) {
+            MS_LOG(EXCEPTION) << "Memset failed.";
+          }
+          return false;
+        }
+        (void)client_noise->emplace(std::pair<std::string, std::vector<float>>(fl_id, noise));
       } else {
         // reconstruct individual noise
         MS_LOG(INFO) << "start reconstruct individual noise.";
@@ -97,13 +101,23 @@ bool CipherReconStruct::CombineMask(std::vector<Share *> *shares_tmp,
           return false;
         }
         std::vector<uint8_t> ind_iv = it->second[0];
-        if (Masking::GetMasking(&noise, cipher_init_->featuremap_, (const uint8_t *)secret, SECRET_MAX_LEN,
-                                ind_iv.data(), ind_iv.size()) < 0)
-          retcode = false;
+        if (Masking::GetMasking(&noise, SizeToInt(cipher_init_->featuremap_), (const uint8_t *)secret, SECRET_MAX_LEN,
+                                ind_iv.data(), SizeToInt(ind_iv.size())) < 0) {
+          MS_LOG(ERROR) << "Get Masking failed";
+          if (memset_s(secret, SECRET_MAX_LEN, 0, length) != 0) {
+            MS_LOG(EXCEPTION) << "Memset failed.";
+          }
+          BN_clear_free(prime);
+          return false;
+        }
         for (size_t index_noise = 0; index_noise < cipher_init_->featuremap_; index_noise++) {
           noise[index_noise] *= -1;
         }
-        client_noise->insert(std::pair<std::string, std::vector<float>>(fl_id, noise));
+        (void)client_noise->emplace(std::pair<std::string, std::vector<float>>(fl_id, noise));
+      }
+      BN_clear_free(prime);
+      if (memset_s(secret, SECRET_MAX_LEN, 0, length) != 0) {
+        MS_LOG(EXCEPTION) << "Memset failed.";
       }
     } else {
       MS_LOG(ERROR) << "reconstruct secret failed: the number of secret shares for fl_id: " << fl_id
@@ -157,6 +171,7 @@ bool CipherReconStruct::ReconstructSecretsGenNoise(const std::vector<string> &cl
   std::vector<Share *> shares_tmp;
   if (!MallocShares(&shares_tmp, cipher_init_->secrets_minnums_)) {
     MS_LOG(ERROR) << "Reconstruct malloc shares_tmp invalid.";
+    DeleteShares(&shares_tmp);
     return false;
   }
 
@@ -185,6 +200,24 @@ bool CipherReconStruct::ReconstructSecretsGenNoise(const std::vector<string> &cl
   return retcode;
 }
 
+bool CipherReconStruct::CheckInputs(const schema::SendReconstructSecret *reconstruct_secret_req,
+                                    const std::shared_ptr<fl::server::FBBuilder> &fbb, const int cur_iterator,
+                                    const std::string &next_req_time) {
+  if (reconstruct_secret_req == nullptr) {
+    std::string reason = "Request is nullptr";
+    MS_LOG(ERROR) << reason;
+    BuildReconstructSecretsRsp(fbb, schema::ResponseCode_RequestError, reason, cur_iterator, next_req_time);
+    return false;
+  }
+  if (cipher_init_ == nullptr) {
+    std::string reason = "cipher_init_ is nullptr";
+    MS_LOG(ERROR) << reason;
+    BuildReconstructSecretsRsp(fbb, schema::ResponseCode_SystemError, reason, cur_iterator, next_req_time);
+    return false;
+  }
+  return true;
+}
+
 // reconstruct secrets
 bool CipherReconStruct::ReconstructSecrets(const int cur_iterator, const std::string &next_req_time,
                                            const schema::SendReconstructSecret *reconstruct_secret_req,
@@ -192,13 +225,8 @@ bool CipherReconStruct::ReconstructSecrets(const int cur_iterator, const std::st
                                            const std::vector<std::string> &client_list) {
   MS_LOG(INFO) << "CipherReconStruct::ReconstructSecrets START";
   clock_t start_time = clock();
-
-  if (reconstruct_secret_req == nullptr) {
-    std::string reason = "Request is nullptr";
-    MS_LOG(ERROR) << reason;
-    BuildReconstructSecretsRsp(fbb, schema::ResponseCode_RequestError, reason, cur_iterator, next_req_time);
-    return false;
-  }
+  bool inputs_check = CheckInputs(reconstruct_secret_req, fbb, cur_iterator, next_req_time);
+  if (!inputs_check) return false;
 
   int iterator = reconstruct_secret_req->iteration();
   std::string fl_id = reconstruct_secret_req->fl_id()->str();
@@ -268,7 +296,8 @@ bool CipherReconStruct::ReconstructSecrets(const int cur_iterator, const std::st
     BuildReconstructSecretsRsp(fbb, schema::ResponseCode_SUCCEED,
                                "Success, but the server is not ready to reconstruct secret yet.", cur_iterator,
                                next_req_time);
-    MS_LOG(INFO) << "ReconstructSecrets " << fl_id << " Success, but count " << count_client_num << "is not enough.";
+    MS_LOG(INFO) << "Get reconstruct shares from " << fl_id << " Success, but count " << count_client_num
+                 << " is not enough.";
     return true;
   }
   const fl::PBMetadata &clients_noises_pb_out =
@@ -339,7 +368,8 @@ void CipherReconStruct::BuildReconstructSecretsRsp(const std::shared_ptr<fl::ser
 bool CipherReconStruct::GetSuvNoise(const std::vector<std::string> &clients_share_list,
                                     const std::map<std::string, std::vector<std::vector<uint8_t>>> &record_public_keys,
                                     const std::map<std::string, std::vector<std::vector<uint8_t>>> &client_ivs,
-                                    const string &fl_id, std::vector<float> *noise, uint8_t *secret, int length) {
+                                    const string &fl_id, std::vector<float> *noise, const uint8_t *secret,
+                                    size_t length) {
   for (auto p_key = clients_share_list.begin(); p_key != clients_share_list.end(); ++p_key) {
     if (*p_key != fl_id) {
       PrivateKey *privKey = KeyAgreement::FromPrivateBytes(secret, length);
@@ -357,6 +387,7 @@ bool CipherReconStruct::GetSuvNoise(const std::vector<std::string> &clients_shar
       auto iter = client_ivs.find(iv_fl_id);
       if (iter == client_ivs.end()) {
         MS_LOG(ERROR) << "cannot get ivs for client: " << iv_fl_id;
+        delete privKey;
         return false;
       }
       if (iter->second.size() != IV_NUM) {
@@ -372,8 +403,11 @@ bool CipherReconStruct::GetSuvNoise(const std::vector<std::string> &clients_shar
       }
       MS_LOG(INFO) << "private_key fl_id : " << fl_id << " public_key fl_id : " << *p_key;
       uint8_t secret1[SECRET_MAX_LEN] = {0};
-      if (KeyAgreement::ComputeSharedKey(privKey, pubKey, SECRET_MAX_LEN, pw_salt.data(), pw_salt.size(), secret1) <
-          0) {
+      int ret = KeyAgreement::ComputeSharedKey(privKey, pubKey, SECRET_MAX_LEN, pw_salt.data(),
+                                               SizeToInt(pw_salt.size()), secret1);
+      delete privKey;
+      delete pubKey;
+      if (ret < 0) {
         MS_LOG(ERROR) << "ComputeSharedKey failed\n";
         return false;
       }
@@ -426,7 +460,7 @@ bool CipherReconStruct::ConvertSharesToShares(const std::map<std::string, std::v
       if (des->find(src_id) == des->end()) {  // src_id is not in recombined shares list
         std::vector<clientshare_str> value_list;
         value_list.push_back(value);
-        des->insert(std::pair<std::string, std::vector<clientshare_str>>(src_id, value_list));
+        (void)des->emplace(std::pair<std::string, std::vector<clientshare_str>>(src_id, value_list));
       } else {
         des->at(src_id).push_back(value);
       }
@@ -435,19 +469,18 @@ bool CipherReconStruct::ConvertSharesToShares(const std::map<std::string, std::v
   return true;
 }
 
-bool CipherReconStruct::MallocShares(std::vector<Share *> *shares_tmp, int shares_size) {
+bool CipherReconStruct::MallocShares(std::vector<Share *> *shares_tmp, size_t shares_size) {
   if (shares_tmp == nullptr) return false;
-  for (int i = 0; i < shares_size; ++i) {
-    Share *share_i = new Share();
+  for (size_t i = 0; i < shares_size; ++i) {
+    Share *share_i = new (std::nothrow) Share();
     if (share_i == nullptr) {
-      MS_LOG(ERROR) << "shares_tmp " << i << " memory to cipher is invalid.";
-      DeleteShares(shares_tmp);
+      MS_LOG(ERROR) << "new Share failed.";
       return false;
     }
     share_i->data = new uint8_t[SHARE_MAX_SIZE];
     if (share_i->data == nullptr) {
-      MS_LOG(ERROR) << "shares_tmp's data " << i << " memory to cipher is invalid.";
-      DeleteShares(shares_tmp);
+      MS_LOG(ERROR) << "malloc memory failed.";
+      delete share_i;
       return false;
     }
     share_i->index = 0;

@@ -51,7 +51,7 @@ bool GetKeysKernel::CountForGetKeys(const std::shared_ptr<FBBuilder> &fbb, const
   return true;
 }
 
-bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                            const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "Launching GetKeys kernel.";
   bool response = false;

@@ -48,8 +48,8 @@ class PrivateKey {
   ~PrivateKey();
   int Exchange(PublicKey *peerPublicKey, int key_len, const unsigned char *salt, int salt_len,
                unsigned char *exchangeKey);
-  int GetPrivateBytes(size_t *len, unsigned char *priKeyBytes);
-  int GetPublicBytes(size_t *len, unsigned char *pubKeyBytes);
+  int GetPrivateBytes(size_t *len, unsigned char *priKeyBytes) const;
+  int GetPublicBytes(size_t *len, unsigned char *pubKeyBytes) const;
   EVP_PKEY *evpPrivKey;
 };
 #endif
@@ -58,8 +58,8 @@ class KeyAgreement {
  public:
   static PrivateKey *GeneratePrivKey();
   static PublicKey *GeneratePubKey(PrivateKey *privKey);
-  static PrivateKey *FromPrivateBytes(unsigned char *data, int len);
-  static PublicKey *FromPublicBytes(unsigned char *data, int len);
+  static PrivateKey *FromPrivateBytes(const unsigned char *data, size_t len);
+  static PublicKey *FromPublicBytes(const unsigned char *data, size_t len);
   static int ComputeSharedKey(PrivateKey *privKey, PublicKey *peerPublicKey, int key_len, const unsigned char *salt,
                               int salt_len, unsigned char *exchangeKey);
 };

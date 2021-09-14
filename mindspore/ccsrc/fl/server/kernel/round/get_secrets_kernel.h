@@ -34,7 +34,7 @@ class GetSecretsKernel : public RoundKernel {
   GetSecretsKernel() = default;
   ~GetSecretsKernel() override = default;
   void InitKernel(size_t required_cnt) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
   bool Reset() override;
 

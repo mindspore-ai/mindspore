@@ -37,6 +37,7 @@ class CipherReconStruct {
  public:
   // initialize: get cipher_init_
   CipherReconStruct() { cipher_init_ = &CipherInit::GetInstance(); }
+  ~CipherReconStruct() = default;
 
   static CipherReconStruct &GetInstance() {
     static CipherReconStruct instance;
@@ -64,9 +65,9 @@ class CipherReconStruct {
   bool GetSuvNoise(const std::vector<std::string> &clients_share_list,
                    const std::map<std::string, std::vector<std::vector<uint8_t>>> &record_public_keys,
                    const std::map<std::string, std::vector<std::vector<uint8_t>>> &client_ivs, const string &fl_id,
-                   std::vector<float> *noise, uint8_t *secret, int length);
+                   std::vector<float> *noise, const uint8_t *secret, size_t length);
   // malloc shares.
-  bool MallocShares(std::vector<Share *> *shares_tmp, int shares_size);
+  bool MallocShares(std::vector<Share *> *shares_tmp, size_t shares_size);
   // delete shares.
   void DeleteShares(std::vector<Share *> *shares_tmp);
   // convert shares from receiving clients to sending clients.
@@ -84,6 +85,9 @@ class CipherReconStruct {
                    const std::map<std::string, std::vector<clientshare_str>> &reconstruct_secret_list,
                    const std::vector<string> &client_list,
                    const std::map<std::string, std::vector<std::vector<unsigned char>>> &client_ivs);
+  bool CheckInputs(const schema::SendReconstructSecret *reconstruct_secret_req,
+                   const std::shared_ptr<fl::server::FBBuilder> &fbb, const int cur_iterator,
+                   const std::string &next_req_time);
 };
 }  // namespace armour
 }  // namespace mindspore

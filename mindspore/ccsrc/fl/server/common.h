@@ -206,7 +206,6 @@ constexpr auto kCtxTotalTimeoutDuration = "total_timeout_duration";
 constexpr auto kCtxIterationNextRequestTimestamp = "iteration_next_request_timestamp";
 constexpr auto kCtxUpdateModelClientList = "update_model_client_list";
 constexpr auto kCtxUpdateModelThld = "update_model_threshold";
-constexpr auto kCtxUpdateModelClientNum = "update_model_client_num";
 constexpr auto kCtxClientsKeys = "clients_keys";
 constexpr auto kCtxClientNoises = "clients_noises";
 constexpr auto kCtxClientsEncryptedShares = "clients_encrypted_shares";

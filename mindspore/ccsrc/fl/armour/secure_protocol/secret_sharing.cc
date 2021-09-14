@@ -18,9 +18,9 @@
 
 namespace mindspore {
 namespace armour {
-void secure_zero(unsigned char *s, size_t n) {
-  volatile unsigned char *p = s;
-  if (p)
+void secure_zero(uint8_t *s, size_t n) {
+  volatile uint8_t *p = s;
+  if (p != nullptr)
     while (n--) *p++ = '\0';
 }
 
@@ -215,17 +215,24 @@ int SecretSharing::Combine(size_t k, const std::vector<Share *> &shares, uint8_t
         }
       }
 
+      if (ret == -1) {
+        BN_clear_free(tmp);
+        break;
+      }
       (void)BN_mod_inverse(tmp, denses[j], this->bn_prim_, ctx);
       if (!field_mult(tmp, tmp, nums[j], ctx)) {
         ret = -1;
+        BN_clear_free(tmp);
         break;
       }
       if (!field_mult(tmp, tmp, y[j], ctx)) {
         ret = -1;
+        BN_clear_free(tmp);
         break;
       }
       if (!field_add(sum, sum, tmp, ctx)) {
         ret = -1;
+        BN_clear_free(tmp);
         break;
       }
       BN_clear_free(tmp);

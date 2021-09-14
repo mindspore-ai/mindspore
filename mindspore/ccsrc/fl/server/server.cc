@@ -245,38 +245,18 @@ void Server::InitIteration() {
 void Server::InitCipher() {
 #ifdef ENABLE_ARMOUR
   cipher_init_ = &armour::CipherInit::GetInstance();
-
   int cipher_t = SizeToInt(cipher_reconstruct_secrets_down_cnt_);
   unsigned char cipher_p[SECRET_MAX_LEN] = {0};
   const int cipher_g = 1;
-  unsigned char cipher_prime[PRIME_MAX_LEN] = {0};
   float dp_eps = ps::PSContext::instance()->dp_eps();
   float dp_delta = ps::PSContext::instance()->dp_delta();
   float dp_norm_clip = ps::PSContext::instance()->dp_norm_clip();
   std::string encrypt_type = ps::PSContext::instance()->encrypt_type();
 
-  BIGNUM *prim = BN_new();
-  if (prim == nullptr) {
-    MS_LOG(EXCEPTION) << "new bn failed";
-  }
-
-  mindspore::armour::GetPrime(prim);
-
-  MS_LOG(INFO) << "prime" << BN_bn2hex(prim);
-  (void)BN_bn2bin(prim, reinterpret_cast<uint8_t *>(cipher_prime));
-  if (prim != nullptr) {
-    BN_clear_free(prim);
-  }
-
   mindspore::armour::CipherPublicPara param;
   param.g = cipher_g;
   param.t = cipher_t;
-  int ret = memcpy_s(param.p, SECRET_MAX_LEN, cipher_p, SECRET_MAX_LEN);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return;
-  }
-  ret = memcpy_s(param.prime, PRIME_MAX_LEN, cipher_prime, PRIME_MAX_LEN);
+  int ret = memcpy_s(param.p, SECRET_MAX_LEN, cipher_p, sizeof(cipher_p));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
@@ -285,6 +265,23 @@ void Server::InitCipher() {
   param.dp_eps = dp_eps;
   param.dp_norm_clip = dp_norm_clip;
   param.encrypt_type = encrypt_type;
+
+  BIGNUM *prim = BN_new();
+  if (prim == NULL) {
+    MS_LOG(EXCEPTION) << "new bn failed.";
+    ret = -1;
+  } else {
+    ret = mindspore::armour::GetPrime(prim);
+  }
+  if (ret == 0) {
+    (void)BN_bn2bin(prim, reinterpret_cast<uint8_t *>(param.prime));
+  } else {
+    MS_LOG(EXCEPTION) << "Get prime failed.";
+  }
+  if (prim != NULL) {
+    BN_clear_free(prim);
+  }
+
   cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
                      cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_reconstruct_secrets_down_cnt_,
                      cipher_reconstruct_secrets_up_cnt_);
