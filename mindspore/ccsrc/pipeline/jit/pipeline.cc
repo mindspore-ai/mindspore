@@ -1265,7 +1265,7 @@ void InitHccl() {
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 #if ENABLE_D
   bool task_sink = true;
-  auto single_op = std::getenv(kAttrGraphOpRun);
+  auto single_op = std::getenv(kGraphOpRun);
   if (single_op && std::string(single_op) == "1") {
     task_sink = false;
   }
