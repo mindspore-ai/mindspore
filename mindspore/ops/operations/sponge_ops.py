@@ -2333,6 +2333,8 @@ class LJEnergy(PrimitiveWithInfer):
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial_shape[1]", cls_name)
+        validator.check_int(len(d_lj_a), 1, Rel.EQ, "d_LJ_A_dim", cls_name)
+        validator.check_int(d_lj_a[0], 3, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return charge
 
@@ -2423,6 +2425,8 @@ class LJForce(PrimitiveWithInfer):
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial_shape[1]", cls_name)
+        validator.check_int(len(d_lj_a), 1, Rel.EQ, "d_LJ_A_dim", cls_name)
+        validator.check_int(d_lj_a[0], 3, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return uint_crd
 
@@ -2517,6 +2521,8 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], 800, Rel.EQ, "nl_serial_shape[1]", cls_name)
+        validator.check_int(len(d_lj_a), 1, Rel.EQ, "d_LJ_A_dim", cls_name)
+        validator.check_int(d_lj_a[0], 3, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return uint_crd
 
@@ -2530,42 +2536,6 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('d_LJ_A', d_lj_a, [mstype.float32], self.name)
         validator.check_tensor_dtype_valid('d_LJ_B', d_lj_b, [mstype.float32], self.name)
         return charge
-
-
-class GetCenterOfGeometry(PrimitiveWithInfer):
-    """
-    Get Center Of Geometry.
-
-    Supported Platforms:
-        ``GPU``
-    """
-
-    @prim_attr_register
-    def __init__(self, center_numbers, center_numbers_inverse):
-        """Initialize GetCenterOfGeometry."""
-        validator.check_value_type('center_numbers', center_numbers, int, self.name)
-        validator.check_value_type('center_numbers_inverse', center_numbers_inverse, float, self.name)
-        self.center_numbers = center_numbers
-        self.center_numbers_inverse = center_numbers_inverse
-        self.add_prim_attr('center_numbers', self.center_numbers)
-        self.add_prim_attr('center_numbers_inverse', self.center_numbers_inverse)
-        self.init_prim_io_names(
-            inputs=['center_atoms', 'crd_f'],
-            outputs=['center_of_geometry_f'])
-
-    def infer_shape(self, center_atoms_shape, crd_f_shape):
-        cls_name = self.name
-        n = self.center_numbers
-        validator.check_int(center_atoms_shape[0], n, Rel.EQ, "center_atoms", cls_name)
-        validator.check_int(crd_f_shape[0], n, Rel.EQ, "crd_f[0]", cls_name)
-        validator.check_int(crd_f_shape[1], 3, Rel.EQ, "crd_f[1]", cls_name)
-        return [3,]
-
-    def infer_dtype(self, center_atoms_dtype, crd_f_dtype):
-        validator.check_tensor_dtype_valid('center_atoms', center_atoms_dtype, [mstype.int32], self.name)
-        validator.check_tensor_dtype_valid('crd_f', crd_f_dtype, [mstype.float32], self.name)
-
-        return crd_f_dtype
 
 
 class MDTemperature(PrimitiveWithInfer):
