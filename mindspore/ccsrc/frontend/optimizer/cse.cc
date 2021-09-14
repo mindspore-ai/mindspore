@@ -145,7 +145,7 @@ bool CSE::CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) cons
         return true;
       }
     }
-    if (prim_main != prim_node) {
+    if (prim_main->name() != prim_node->name()) {
       return true;
     }
   }
