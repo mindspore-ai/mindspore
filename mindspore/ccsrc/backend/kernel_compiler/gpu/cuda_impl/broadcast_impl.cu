@@ -229,25 +229,25 @@ struct FloorDivFunc {
 template <>
 struct FloorDivFunc<int64_t> {
   __device__ __host__ __forceinline__ int64_t operator()(const int64_t &lhs, const int64_t &rhs) {
-    return floorl(static_cast<double>(lhs) / static_cast<double>(rhs));
+    return floor(static_cast<double>(lhs) / static_cast<double>(rhs));
   }
 };
 template <>
 struct FloorDivFunc<int32_t> {
   __device__ __host__ __forceinline__ int32_t operator()(const int32_t &lhs, const int32_t &rhs) {
-    return floorl(static_cast<long double>(lhs) / static_cast<double>(rhs));
+    return floor(static_cast<double>(lhs) / static_cast<double>(rhs));
   }
 };
 template <>
 struct FloorDivFunc<uint64_t> {
   __device__ __host__ __forceinline__ int64_t operator()(const uint64_t &lhs, const uint64_t &rhs) {
-    return floorl(static_cast<double>(lhs) / static_cast<double>(rhs));
+    return floor(static_cast<double>(lhs) / static_cast<double>(rhs));
   }
 };
 template <>
 struct FloorDivFunc<uint32_t> {
   __device__ __host__ __forceinline__ uint32_t operator()(const uint32_t &lhs, const uint32_t &rhs) {
-    return floorl(static_cast<double>(lhs) / static_cast<double>(rhs));
+    return floor(static_cast<double>(lhs) / static_cast<double>(rhs));
   }
 };
 
@@ -354,7 +354,7 @@ struct FloorModFunc<half2> {
 template <>
 struct FloorModFunc<int32_t> {
   __device__ __host__ __forceinline__ int32_t operator()(const int32_t &lhs, const int32_t &rhs) {
-    int32_t res = lhs - floorl(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
+    int32_t res = lhs - floor(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
     res = (res > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
     return res;
   }
@@ -363,7 +363,7 @@ struct FloorModFunc<int32_t> {
 template <>
 struct FloorModFunc<int64_t> {
   __device__ __host__ __forceinline__ int64_t operator()(const int64_t &lhs, const int64_t &rhs) {
-    int64_t res = lhs - floorl(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
+    int64_t res = lhs - floor(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
     res = (res > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
     return res;
   }
@@ -372,7 +372,7 @@ struct FloorModFunc<int64_t> {
 template <>
 struct FloorModFunc<uint32_t> {
   __device__ __host__ __forceinline__ int32_t operator()(const int32_t &lhs, const int32_t &rhs) {
-    int32_t res = lhs - floorl(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
+    int32_t res = lhs - floor(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
     res = (res > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
     return res;
   }
@@ -381,7 +381,7 @@ struct FloorModFunc<uint32_t> {
 template <>
 struct FloorModFunc<uint64_t> {
   __device__ __host__ __forceinline__ int64_t operator()(const int64_t &lhs, const int64_t &rhs) {
-    int64_t res = lhs - floorl(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
+    int64_t res = lhs - floor(static_cast<double>(lhs) / static_cast<double>(rhs)) * rhs;
     res = (res > 1e-9) && ((res < 0.0) != (rhs < 0.0)) ? res + rhs : res;
     return res;
   }
