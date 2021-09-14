@@ -19,7 +19,6 @@ This module provides the utils.
 """
 import os
 
-
 # one sys count takes 10 ns, 1 ms has 100000 system count
 import re
 
@@ -156,6 +155,20 @@ def get_file_names(input_path, file_name):
     return name_list
 
 
+def parse_device_id(filename, device_id_list, profiler_file_prefix):
+    """Parse device id from filename."""
+    items = filename.split("_")
+    if filename.startswith("step_trace_raw"):
+        device_num = ""
+        if len(items) > 3:
+            device_num = items[3]
+    else:
+        device_num = items[-1].split(".")[0] if items[-1].split(".") else ""
+
+    if device_num.isdigit() and '_'.join(items[:-1]) in profiler_file_prefix:
+        device_id_list.add(device_num)
+
+
 def analyse_device_list_from_profiler_dir(profiler_dir):
     """
     Analyse device list from profiler dir.
@@ -171,17 +184,7 @@ def analyse_device_list_from_profiler_dir(profiler_dir):
     device_id_list = set()
     for _, _, filenames in os.walk(profiler_dir):
         for filename in filenames:
-            if filename.startswith("step_trace_raw"):
-                items = filename.split("_")
-                device_num = ""
-                if len(items) > 3:
-                    device_num = items[3]
-            else:
-                items = filename.split("_")
-                device_num = items[-1].split(".")[0] if items[-1].split(".") else ""
-
-            if device_num.isdigit() and '_'.join(items[:-1]) in profiler_file_prefix:
-                device_id_list.add(device_num)
+            parse_device_id(filename, device_id_list, profiler_file_prefix)
 
     return sorted(list(device_id_list))
 
@@ -303,4 +306,5 @@ def get_field_value(row_info, field_name, header, time_type='realtime'):
 def get_options(options):
     if options is None:
         options = {}
+
     return options

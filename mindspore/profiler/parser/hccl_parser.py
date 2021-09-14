@@ -81,6 +81,14 @@ class HcclParser:
         """Parse communication info."""
         self._parse_and_save(self._source_dir)
 
+    def _parse_communication_cost(self, operators_cost_info, info, operators_dict):
+        """Parse communication cost."""
+        for key, value in operators_cost_info.items():
+            for item in value:
+                # index0:step_num
+                if info[0] == item[0]:
+                    operators_dict[key] = item
+
     def _parse_and_save(self, dir_path):
         """Parse and save communication info."""
         communication_info_cache = list()
@@ -91,11 +99,7 @@ class HcclParser:
         communication_info_cache = self._merge_communication_info_by_step_num(communication_info_cache)
         for info in communication_info_cache:
             operators_dict = dict()
-            for key, value in operators_cost_info.items():
-                for item in value:
-                    # index0:step_num
-                    if info[0] == item[0]:
-                        operators_dict[key] = item
+            self._parse_communication_cost(operators_cost_info, info, operators_dict)
             info.append(operators_dict)
         # Calculate device communication average.
         device_communication_average_value = self._calculate_communication_average_value(communication_info_cache)
@@ -380,6 +384,22 @@ class HcclParser:
                     total_wait_time += link_type_value[3]
         return total_communication_time, total_wait_time
 
+    def _parse_link_cost(self, result_dict, key, link_type_dict):
+        """Parse link cost."""
+        for link_type_key, link_type_value in link_type_dict.items():
+            if link_type_key == CommunicationInfo.RDMA.value:
+                # Divide information by thread.
+                rdma_infos = []
+                threads_dict = self._divide_communication_info_by_thread(link_type_value)
+                for thread_value in threads_dict.values():
+                    rdma_info = self._calculate_adma_link_info(thread_value)
+                    rdma_infos.append(rdma_info)
+                rdma_total_cost = np.sum(rdma_infos, axis=0).tolist()
+                result_dict[key][link_type_key] = rdma_total_cost
+            if link_type_key == CommunicationInfo.SDMA.value:
+                sdma_total_cost = self._calculate_sdma_link_info(link_type_value)
+                result_dict[key][link_type_key] = sdma_total_cost
+
     def _calculate_src_dst_link_info(self, src_dst_dict: dict):
         """Calculate src dst link info."""
         result_dict = dict()
@@ -389,19 +409,7 @@ class HcclParser:
             if not link_type_dict:
                 continue
             result_dict[key] = dict()
-            for link_type_key, link_type_value in link_type_dict.items():
-                if link_type_key == CommunicationInfo.RDMA.value:
-                    # Divide information by thread.
-                    rdma_infos = []
-                    threads_dict = self._divide_communication_info_by_thread(link_type_value)
-                    for thread_value in threads_dict.values():
-                        rdma_info = self._calculate_adma_link_info(thread_value)
-                        rdma_infos.append(rdma_info)
-                    rdma_total_cost = np.sum(rdma_infos, axis=0).tolist()
-                    result_dict[key][link_type_key] = rdma_total_cost
-                if link_type_key == CommunicationInfo.SDMA.value:
-                    sdma_total_cost = self._calculate_sdma_link_info(link_type_value)
-                    result_dict[key][link_type_key] = sdma_total_cost
+            self._parse_link_cost(result_dict, key, link_type_dict)
         return result_dict
 
     @staticmethod
@@ -499,19 +507,24 @@ class HcclParser:
         return [communication_cost_average, wait_cost_average, link_average_info]
 
     @staticmethod
+    def _parser_link_dict(result_dict, src_dst_key, src_dst_value):
+        """Parser link info to dict."""
+        if src_dst_key not in result_dict.keys():
+            result_dict[src_dst_key] = dict()
+        for link_key, link_value in src_dst_value.items():
+            if link_key not in result_dict[src_dst_key].keys():
+                result_dict[src_dst_key][link_key] = list()
+            result_dict[src_dst_key][link_key].append(link_value)
+
+    @staticmethod
     def _calculate_link_value(link_info: list, calculate_type):
         """Calculate link average or total value."""
         result_dict = dict()
         for item in link_info:
             for src_dst_key, src_dst_value in item.items():
-                if src_dst_key not in result_dict.keys():
-                    result_dict[src_dst_key] = dict()
-                for link_key, link_value in src_dst_value.items():
-                    if link_key not in result_dict[src_dst_key].keys():
-                        result_dict[src_dst_key][link_key] = list()
-                    result_dict[src_dst_key][link_key].append(link_value)
+                HcclParser._parser_link_dict(result_dict, src_dst_key, src_dst_value)
         for src_dst_key, src_dst_value in result_dict.items():
-            for link_key, link_value in src_dst_value.items():
+            for link_key, _ in src_dst_value.items():
                 if calculate_type == 'average':
                     result_dict[src_dst_key][link_key] = np.mean(result_dict[src_dst_key][link_key], axis=0).tolist()
                 if calculate_type == 'total':
