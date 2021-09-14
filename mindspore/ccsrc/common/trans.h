@@ -92,6 +92,11 @@ std::vector<T> TransShapeToDevice(const std::vector<T> &shape, const std::string
   if (format == kOpFormat_FRACTAL_ZN_RNN || format == kOpFormat_ND_RNN_BIAS) {
     input_hidden_size = GetAttrInputAndHiddenSize(node);
   }
+  if (node != nullptr) {
+    MS_LOG(DEBUG) << "Start trans infer shape to device shape for node: " << node->DebugString()
+                  << ", format: " << format;
+  }
+
   return TransShapeToDevice(shape, format, groups, input_hidden_size);
 }
 bool TransDataType(const TypeIdArgs &args, void *result);

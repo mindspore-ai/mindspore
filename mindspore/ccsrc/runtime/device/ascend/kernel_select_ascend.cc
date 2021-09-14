@@ -470,6 +470,7 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
     }
   }
   // Set kernel info to the anfnode
+  MS_LOG(INFO) << "Current node: " << kernel_node->DebugString() << " selected: " << selected_kernel_info->ToString();
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
   // Set format and data type for input tensor.
   if (AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, kernel_node)) {
