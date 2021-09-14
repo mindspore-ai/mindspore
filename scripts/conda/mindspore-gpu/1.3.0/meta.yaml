@@ -1,0 +1,30 @@
+package:
+  name: mindspore-gpu
+  version: "1.3.0"
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python
+    - pip
+  run:
+    - python
+    - numpy >=1.17.0
+    - protobuf >=3.13.0
+    - asttokens >=1.1.13
+    - pillow >=6.2.0
+    - scipy >=1.5.2
+    - cffi >=1.12.3
+    - wheel >=0.32.0
+    - decorator >=4.4.0
+    - setuptools >=40.8.0
+    - astunparse >=1.6.3
+    - packaging >=20.0
+    - psutil >=5.7.0
+
+about:
+  home: https://www.mindspore.cn/
+  license: Apache 2.0
+  summary: MindSpore is a new open source deep learning training/inference framework that could be used for mobile, edge and cloud scenarios.
