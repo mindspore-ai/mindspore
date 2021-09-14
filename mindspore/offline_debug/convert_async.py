@@ -51,8 +51,11 @@ class ConvertToolLoader:
             raise ValueError(
                 "Path {} does not exist. Please install Ascend run packages " \
                 "and set the environment variable $ASCEND_TOOLKIT_PATH correctly.".format(ascend_toolkit_path))
-        ascend_toolkit_path = Path(ascend_toolkit_path).resolve()
-        msaccucmp_file_list = list(ascend_toolkit_path.rglob('msaccucmp.py*'))
+        toolkit_search_path = Path(ascend_toolkit_path).resolve()
+        msaccucmp_file_list = list(toolkit_search_path.rglob('msaccucmp.py*'))
+        if not msaccucmp_file_list:
+            toolkit_search_path = toolkit_search_path / 'tools'
+            msaccucmp_file_list = list(toolkit_search_path.rglob('msaccucmp.py*'))
         if not msaccucmp_file_list:
             raise ValueError("Failed to find msaccucmp.py or msaccucmp.pyc file under {}. " \
                              "Please install Ascend toolkit.".format(ascend_toolkit_path))
