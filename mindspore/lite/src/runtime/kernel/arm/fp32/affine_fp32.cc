@@ -396,7 +396,7 @@ int AffineFp32CPUKernel::IncrementMatmulRun() {
     return ret;
   }
 
-  if (increment_output_->data_c() == nullptr) {
+  if (increment_output_->data() == nullptr) {
     MS_LOG(ERROR) << "increment_output_ data is null.";
     return RET_NULL_PTR;
   }

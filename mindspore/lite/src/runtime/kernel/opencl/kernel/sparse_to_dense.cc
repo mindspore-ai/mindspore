@@ -36,7 +36,7 @@ int SparseToDenseOpenCLKernel::InitOutputToDefault() {
   ImageSize img_size;
   cl_float4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
-  auto src_data = out_tensors_[0]->data_c();
+  auto src_data = out_tensors_[0]->data();
   MS_ASSERT(src_data);
   if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
     MS_LOG(ERROR) << "GetImageSize failed.";
@@ -61,12 +61,12 @@ int SparseToDenseOpenCLKernel::InitWeights() {
   for (int i = 0; i < weight_tensor->shape().size(); ++i) {
     size *= weight_tensor->shape()[i];
   }
-  MS_ASSERT(weight_tensor->data_c());
+  MS_ASSERT(weight_tensor->data());
   if (weight_scalar_) {
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
-      weight_scalar_ = static_cast<float>(*reinterpret_cast<float16_t *>(weight_tensor->data_c()));
+      weight_scalar_ = static_cast<float>(*reinterpret_cast<float16_t *>(weight_tensor->data()));
     } else {
-      weight_scalar_ = *reinterpret_cast<float *>(weight_tensor->data_c());
+      weight_scalar_ = *reinterpret_cast<float *>(weight_tensor->data());
     }
   } else {
     auto sizeof_FLT = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
@@ -83,10 +83,10 @@ int SparseToDenseOpenCLKernel::InitWeights() {
     memset(weight_vector_, 0x00, weight_size);
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
       if (enable_fp16_) {
-        memcpy(weight_vector_, weight_tensor->data_c(), size * sizeof_FLT);
+        memcpy(weight_vector_, weight_tensor->data(), size * sizeof_FLT);
       } else {
         auto weight_fp32 = reinterpret_cast<float *>(weight_vector_);
-        auto origin_bias_fp16 = reinterpret_cast<float16_t *>(weight_tensor->data_c());
+        auto origin_bias_fp16 = reinterpret_cast<float16_t *>(weight_tensor->data());
         for (int i = 0; i < size; ++i) {
           weight_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
         }
@@ -94,12 +94,12 @@ int SparseToDenseOpenCLKernel::InitWeights() {
     } else {
       if (enable_fp16_) {
         auto weight_fp16 = reinterpret_cast<float16_t *>(weight_vector_);
-        auto origin_bias_fp32 = reinterpret_cast<float *>(weight_tensor->data_c());
+        auto origin_bias_fp32 = reinterpret_cast<float *>(weight_tensor->data());
         for (int i = 0; i < size; ++i) {
           weight_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
         }
       } else {
-        memcpy(weight_vector_, weight_tensor->data_c(), size * sizeof_FLT);
+        memcpy(weight_vector_, weight_tensor->data(), size * sizeof_FLT);
       }
     }
     if (allocator->UnmapBuffer(weight_vector_) != RET_OK) {
@@ -201,9 +201,9 @@ int SparseToDenseOpenCLKernel::Prepare() {
   if (in_tensors_.size() > INPUT_TENSOR_SIZE_3) {
     auto input_tensor3 = in_tensors_[3];
     if (input_tensor3->data_type() == kNumberTypeFloat16) {
-      default_ = static_cast<float>(*reinterpret_cast<float16_t *>(input_tensor3->data_c()));
+      default_ = static_cast<float>(*reinterpret_cast<float16_t *>(input_tensor3->data()));
     } else {
-      default_ = *reinterpret_cast<float *>(input_tensor3->data_c());
+      default_ = *reinterpret_cast<float *>(input_tensor3->data());
     }
     MS_ASSERT(default_);
   }
@@ -263,11 +263,11 @@ int SparseToDenseOpenCLKernel::Run() {
     return ret;
   }
   int arg_cn = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), true) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data(), true) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

@@ -60,8 +60,8 @@ void *ConvolutionDelegateFP16CPUKernel::CopyData(const lite::Tensor *tensor) {
     MS_LOG(ERROR) << "Malloc copied_data failed.";
     return nullptr;
   }
-  MS_ASSERT(tensor->data_c() != nullptr);
-  memcpy(copied_data, tensor->data_c(), tensor->Size());
+  MS_ASSERT(tensor->data() != nullptr);
+  memcpy(copied_data, tensor->data(), tensor->Size());
   return copied_data;
 }
 
@@ -71,7 +71,7 @@ int ConvolutionDelegateFP16CPUKernel::Init() {
   if (!InferShapeDone()) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
     CHECK_NULL_RETURN(weight_tensor);
-    origin_weight_ = weight_tensor->data_c() != nullptr ? CopyData(weight_tensor) : nullptr;
+    origin_weight_ = weight_tensor->data() != nullptr ? CopyData(weight_tensor) : nullptr;
     need_free_ = need_free_ | WEIGHT_NEED_FREE;
     if (in_tensors_.size() == 3) {
       origin_bias_ = CopyData(in_tensors_.at(kBiasIndex));
@@ -79,9 +79,9 @@ int ConvolutionDelegateFP16CPUKernel::Init() {
     }
     return RET_OK;
   }
-  origin_weight_ = in_tensors_.at(kWeightIndex)->data_c();
+  origin_weight_ = in_tensors_.at(kWeightIndex)->data();
   if (in_tensors_.size() == 3) {
-    origin_bias_ = in_tensors_.at(kBiasIndex)->data_c();
+    origin_bias_ = in_tensors_.at(kBiasIndex)->data();
     MS_ASSERT(origin_bias_ != nullptr);
   }
   return ReSize();

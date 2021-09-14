@@ -290,7 +290,7 @@ void LiteOpActor::MoveTensorInputData(Tensor *dst_tensor, Tensor *src_tensor) {
 
   src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
 
-  if (src_tensor->data_c() != nullptr) {
+  if (src_tensor->data() != nullptr) {
     dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
   }
 
@@ -405,7 +405,7 @@ void LiteOpActor::MoveTensorListInputData(TensorList *dst_tensorlist, TensorList
       src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
     }
     dst_tensor->set_own_data(src_tensor->own_data());
-    if (src_tensor->data_c() != nullptr) {
+    if (src_tensor->data() != nullptr) {
       dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
     }
     dst_tensor->set_shape(src_tensor->shape());

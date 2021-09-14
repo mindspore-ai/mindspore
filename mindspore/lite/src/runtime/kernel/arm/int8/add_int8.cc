@@ -236,9 +236,9 @@ int QuantizedAddCPUKernel::DoExecute(int task_id) {
 }
 
 int QuantizedAddCPUKernel::Run() {
-  input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->data_c());
-  input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->data_c());
-  output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->data());
+  input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->data());
+  output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->data());
 
   auto ret = ParallelLaunch(this->ms_context_, AddInt8Run, this, thread_count_);
 

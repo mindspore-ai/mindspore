@@ -68,7 +68,7 @@ std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const sch
 }  // namespace
 
 std::vector<uint8_t> TrainExport::CreateData(const lite::Tensor *tensor) {
-  uint8_t *tensor_data = reinterpret_cast<uint8_t *>(tensor->data_c());
+  uint8_t *tensor_data = reinterpret_cast<uint8_t *>(tensor->data());
   auto size = tensor->Size();
   std::vector<uint8_t> data(tensor_data, tensor_data + size);
   return data;
@@ -122,11 +122,11 @@ int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tenso
 
   STATUS ret = RET_OK;
   if (channels == kPerTensor) {
-    ret = DoPerLayerQuant<int8_t>(reinterpret_cast<float *>(src_tensor->data_c()), src_tensor->ElementsNum(),
+    ret = DoPerLayerQuant<int8_t>(reinterpret_cast<float *>(src_tensor->data()), src_tensor->ElementsNum(),
                                   &(quant_params), quant_max, quant_min, bit_num, false, &data);
   } else {
     bool channel_at_first = (src_tensor->shape().at(0) == channels);
-    ret = DoPerChannelQuant<int8_t>(reinterpret_cast<float *>(src_tensor->data_c()), src_tensor->ElementsNum(),
+    ret = DoPerChannelQuant<int8_t>(reinterpret_cast<float *>(src_tensor->data()), src_tensor->ElementsNum(),
                                     schema::QuantType_WeightQuant, &(quant_params), quant_max, quant_min, bit_num,
                                     false, &data, channels, channel_at_first);
   }

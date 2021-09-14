@@ -75,8 +75,8 @@ lite::Tensor *CreateConstTensor(lite::Tensor *tensor, const std::vector<int> &sh
     return nullptr;
   }
 
-  uint8_t *new_tensor_data = reinterpret_cast<uint8_t *>(tensor->data_c()) + index * new_tensor->Size();
-  memcpy(new_tensor->data_c(), new_tensor_data, new_tensor->Size());
+  uint8_t *new_tensor_data = reinterpret_cast<uint8_t *>(tensor->data()) + index * new_tensor->Size();
+  memcpy(new_tensor->data(), new_tensor_data, new_tensor->Size());
   return new_tensor;
 }
 

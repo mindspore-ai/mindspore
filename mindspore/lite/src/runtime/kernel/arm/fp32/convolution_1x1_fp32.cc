@@ -222,8 +222,8 @@ int Convolution1x1RunHw(void *cdata, int task_id, float lhs_scale, float rhs_sca
 int Convolution1x1CPUKernel::Run() {
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]);
-  auto src_in = reinterpret_cast<float *>(in_tensors_[0]->data_c());
-  auto src_out = reinterpret_cast<float *>(out_tensors_[0]->data_c());
+  auto src_in = reinterpret_cast<float *>(in_tensors_[0]->data());
+  auto src_out = reinterpret_cast<float *>(out_tensors_[0]->data());
   CHECK_NULL_RETURN(src_in);
   CHECK_NULL_RETURN(src_out);
   int pack_input_size = multi_thread_by_hw_ ? (thread_count_ * row_tile_ * matmul_param_->deep_)
@@ -281,7 +281,7 @@ void Convolution1x1CPUKernel::PackWeight() {
     return;
   }
 
-  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
   RowMajor2Col16Major(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),

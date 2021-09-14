@@ -395,7 +395,7 @@ TEST_F(TestDeconvInt8, DeConvInt8Test1) {
   ret = deconv->Run();
   ASSERT_EQ(0, ret);
 
-  int8_t *out_data = reinterpret_cast<int8_t *>(outputs_[0]->data_c());
+  int8_t *out_data = reinterpret_cast<int8_t *>(outputs_[0]->data());
   ASSERT_EQ(0, CompareOutputData(out_data, correct, total_size, 3));
 
   delete deconv;

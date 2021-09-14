@@ -110,7 +110,7 @@ int ConvolutionCPUKernel::ReSize() {
 }
 
 int ConvolutionCPUKernel::RunImpl(int task_id) {
-  auto ori_input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
+  auto ori_input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data());
   if (out_tensors_[0]->format() != NC4HW4) {
     ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
              reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
@@ -184,7 +184,7 @@ void ConvolutionCPUKernel::PackWeight() {
     MS_LOG(ERROR) << "get height and width from filter_tensor failed.";
     return;
   }
-  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
   RowMajor2Col16Major(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_), out_channel,

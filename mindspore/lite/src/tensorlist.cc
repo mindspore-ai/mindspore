@@ -244,7 +244,7 @@ bool TensorList::IsCompatibleShape(const Tensor *src) {
     MS_LOG(ERROR) << "src tensor data_type:" << src->data_type() << " is not int";
     return false;
   }
-  auto src_ptr = reinterpret_cast<int *>(src->data_c());
+  auto src_ptr = reinterpret_cast<int *>(src->data());
   for (size_t i = 0; i < this->element_shape_.size(); ++i) {
     if (this->element_shape_[i] >= 0 && src_ptr[i] >= 0 && this->element_shape_[i] != src_ptr[i]) {
       return false;

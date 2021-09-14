@@ -75,7 +75,7 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) 
     unique_value_index_vec.push_back(unique_value_index);
   }
 
-  if (dst_tensor->data_c() != nullptr) {
+  if (dst_tensor->data() != nullptr) {
     MS_LOG(ERROR) << "data_c not null";
     return RET_ERROR;
   }
@@ -84,7 +84,7 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) 
     MS_LOG(ERROR) << "Malloc tensor data failed";
     return RET_NULL_PTR;
   }
-  auto dst_data = dst_tensor->data_c();
+  auto dst_data = dst_tensor->data();
   if (bit_num <= kBit8) {
     ret = UnIndexTensorData<int8_t>(unique_values, unique_value_index_vec, dst_data, dst_tensor->Size());
   } else {
@@ -163,7 +163,7 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
     coor_vec.push_back(coor);
   }
 
-  if (dst_tensor->data_c() != nullptr) {
+  if (dst_tensor->data() != nullptr) {
     MS_LOG(ERROR) << "data_c not null";
     return RET_ERROR;
   }
@@ -172,7 +172,7 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
     MS_LOG(ERROR) << "Malloc tensor data failed";
     return RET_NULL_PTR;
   }
-  auto dst_data = dst_tensor->data_c();
+  auto dst_data = dst_tensor->data();
 
   if (bit_num <= kBit8) {
     ret = UnSparseTensorData<int8_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.quantParams(),
@@ -260,7 +260,7 @@ int WeightDecoder::DecodeHuffmanCode(const schema::Tensor &src_tensor, lite::Ten
     MS_LOG(ERROR) << "Malloc tensor data failed";
     return RET_NULL_PTR;
   }
-  auto dst_data = dst_tensor->data_c();
+  auto dst_data = dst_tensor->data();
   MS_ASSERT(dst_data != nullptr);
   ret = HuffmanDecode::DoHuffmanDecode(encode_str, dst_data, dst_tensor->Size());
   if (ret != RET_OK) {
@@ -280,7 +280,7 @@ int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *d
   if (quant_param == nullptr || !quant_param->inited()) {
     return RET_NO_CHANGE;
   }
-  auto dst_data = dst_tensor->data_c();
+  auto dst_data = dst_tensor->data();
   if (dst_data != nullptr) {
     MS_LOG(ERROR) << "lite Tensor has already malloced data";
     return RET_ERROR;
@@ -290,7 +290,7 @@ int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *d
     MS_LOG(ERROR) << "Malloc tensor data failed";
     return RET_NULL_PTR;
   }
-  dst_data = dst_tensor->data_c();
+  dst_data = dst_tensor->data();
   int origin_bit = quant_param->numBits();
   if (origin_bit < kBitNum8 && origin_bit >= kBitNum1) {
     UnPackUtil<int8_t, uint8_t>(&src_tensor, origin_bit, dst_data);

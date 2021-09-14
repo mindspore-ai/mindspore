@@ -105,7 +105,7 @@ class MemoryAllocator {
 
     auto iter =
       std::find_if(malloc_weights_addr_.begin(), malloc_weights_addr_.end(),
-                   [&variable](const std::pair<Tensor *, std::string> &a) { return variable == (a.first)->data_c(); });
+                   [&variable](const std::pair<Tensor *, std::string> &a) { return variable == (a.first)->data(); });
     if (iter != malloc_weights_addr_.end()) {
       return iter->second;
     }

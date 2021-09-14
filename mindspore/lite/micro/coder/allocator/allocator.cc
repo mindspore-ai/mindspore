@@ -41,7 +41,7 @@ void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocTyp
     saved_weights_addr_.insert(std::make_pair(runtime_addr, weight));
   }
   MS_CHECK_RET_CODE_RET_NULL(weight->MallocData(), "weight malloc data failed!");
-  return weight->data_c();
+  return weight->data();
 }
 
 void MemoryAllocator::Free() {

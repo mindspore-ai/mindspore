@@ -31,12 +31,12 @@ namespace mindspore::kernel {
 int StackOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   ImageSize img_size;
-  auto dst_data = out_tensors_[0]->data_c();
+  auto dst_data = out_tensors_[0]->data();
   MS_ASSERT(dst_data);
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   cl::Image2D *out_image = allocator_->GetImage(dst_data);
   for (int i = 0; i < in_tensors_.size(); i++) {
-    auto src_data = in_tensors_[i]->data_c();
+    auto src_data = in_tensors_[i]->data();
     MS_ASSERT(src_data);
     if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
       MS_LOG(ERROR) << "GetImageSize failed.";
@@ -209,23 +209,23 @@ int StackOpenCLKernel::Run() {
   int arg_cn = 0;
   if (buffer_button_) {
     for (int i = 0; i < in_tensors_.size(); ++i) {
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c(), true) != CL_SUCCESS) {
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data(), true) != CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
         return RET_ERROR;
       }
     }
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), true) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data(), true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   } else {
     for (int i = 0; i < in_tensors_.size(); ++i) {
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c()) != CL_SUCCESS) {
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data()) != CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
         return RET_ERROR;
       }
     }
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data()) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

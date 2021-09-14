@@ -48,28 +48,28 @@ int SliceFp16CPUKernel::Init() {
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   auto input_tensor = in_tensors_.at(0);
-  if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data_c() != nullptr) {
+  if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data() != nullptr) {
     input_data_ =
       reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
     CHECK_NULL_RETURN(input_data_);
-    Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data()), input_data_, input_tensor->ElementsNum());
   }
   return SliceCPUKernel::Init();
 }
 
 int SliceFp16CPUKernel::SliceFp16ParallelRun(int thread_id) {
-  void *input_data = input_data_ == nullptr ? in_tensors_.at(0)->data_c() : input_data_;
+  void *input_data = input_data_ == nullptr ? in_tensors_.at(0)->data() : input_data_;
   CHECK_NULL_RETURN(input_data);
-  DoSlice(input_data, out_tensors_.at(0)->data_c(), param_, thread_id, lite::DataTypeSize(kNumberTypeFloat16));
+  DoSlice(input_data, out_tensors_.at(0)->data(), param_, thread_id, lite::DataTypeSize(kNumberTypeFloat16));
   return RET_OK;
 }
 
 int SliceFp16CPUKernel::Run() {
-  void *input_data = input_data_ == nullptr ? in_tensors_.at(0)->data_c() : input_data_;
+  void *input_data = input_data_ == nullptr ? in_tensors_.at(0)->data() : input_data_;
   CHECK_NULL_RETURN(input_data);
-  CHECK_NULL_RETURN(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(out_tensors_.at(0)->data());
   if (param_->size_[1] < op_parameter_->thread_num_) {
-    DoSliceNoParallel(input_data, out_tensors_.at(0)->data_c(), param_, lite::DataTypeSize(kNumberTypeFloat16));
+    DoSliceNoParallel(input_data, out_tensors_.at(0)->data(), param_, lite::DataTypeSize(kNumberTypeFloat16));
     return RET_OK;
   }
   auto ret = ParallelLaunch(this->ms_context_, SliceFp16Launch, this, op_parameter_->thread_num_);

@@ -35,7 +35,7 @@ int FillOpenCLKernel::RunFill() {
   ImageSize img_size;
   cl_int4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
-  auto src_data = out_tensors_[0]->data_c();
+  auto src_data = out_tensors_[0]->data();
   CHECK_NULL_RETURN(src_data);
   if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
     MS_LOG(ERROR) << "GetImageSize failed.";
@@ -55,7 +55,7 @@ int FillOpenCLKernel::RunFill() {
 int FillOpenCLKernel::RunShape() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   CHECK_NULL_RETURN(allocator_);
-  auto src_data = out_tensors_[0]->data_c();
+  auto src_data = out_tensors_[0]->data();
   CHECK_NULL_RETURN(src_data);
   cl_int4 fill_value = {default_, default_, default_, default_};
   auto tensor_shape = in_tensors_[0]->shape();

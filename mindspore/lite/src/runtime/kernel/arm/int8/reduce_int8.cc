@@ -418,14 +418,14 @@ void ReduceInt8CPUKernel::GetQuantArgs(size_t i) {
 
 int ReduceInt8CPUKernel::Reduce4DExecute(int task_id) {
   auto input = in_tensors_.at(0);
-  auto in_data = reinterpret_cast<int8_t *>(input->data_c());
+  auto in_data = reinterpret_cast<int8_t *>(input->data());
   auto in_shape = input->shape();
   MS_ASSERT(in_shape.size() == 4);
   int n = in_shape.at(0);
   int h = in_shape.at(1);
   int w = in_shape.at(2);
   int c = in_shape.at(3);
-  auto output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  auto output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
   switch (pattern_) {
     case N:
       return ReduceMeanN(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
@@ -470,7 +470,7 @@ int ReduceInt8CPUKernel::Reduce4DExecute(int task_id) {
 
 int ReduceInt8CPUKernel::Fast4DReduceMeanHWImpl() {
   auto input = in_tensors_.at(0);
-  auto input_data = reinterpret_cast<int8_t *>(input->data_c());
+  auto input_data = reinterpret_cast<int8_t *>(input->data());
   nchw_in_data_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(input->ElementsNum()));
   if (nchw_in_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc nchw_in_data_ failed.";
@@ -510,7 +510,7 @@ int ReduceInt8CPUKernel::Run() {
   is_last_axis_ = false;
 
   auto input = in_tensors().at(0);
-  auto input_data = reinterpret_cast<int8_t *>(input->data_c());
+  auto input_data = reinterpret_cast<int8_t *>(input->data());
   if (input_data == nullptr) {
     FreeTmpBuffer();
     MS_LOG(ERROR) << "Input data of reduce int8 operator is null.";

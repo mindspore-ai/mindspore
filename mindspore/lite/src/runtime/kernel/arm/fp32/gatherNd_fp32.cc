@@ -81,7 +81,7 @@ void GatherNdCPUKernel::InitOffset() {
   int indices_rank = indices_shape.size();
   int in_rank = in_shape.size();
   int idx_lastshape = indices_shape[indices_rank - 1];
-  auto indices_ptr = reinterpret_cast<int *>(indices_tensor->data_c());
+  auto indices_ptr = reinterpret_cast<int *>(indices_tensor->data());
   MS_ASSERT(indices_ptr != nullptr);
   area_ = 1;
   for (int i = idx_lastshape; i < in_rank; ++i) {
@@ -127,8 +127,8 @@ int GatherNdRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int GatherNdCPUKernel::Run() {
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->data_c());
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->data_c());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->data());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(in_ptr_);
   CHECK_NULL_RETURN(out_ptr_);
   InitOffset();

@@ -334,11 +334,11 @@ int Conv2DBaseCoder::Init() {
   this->conv_param_ = reinterpret_cast<ConvParameter *>(parameter_);
   filter_tensor_ = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(filter_tensor_);
-  MS_CHECK_PTR(filter_tensor_->data_c());
+  MS_CHECK_PTR(filter_tensor_->data());
   if (input_tensors_.size() == kInputSize2) {
     bias_tensor_ = input_tensors_.at(kBiasIndex);
     MS_CHECK_PTR(bias_tensor_);
-    MS_CHECK_PTR(bias_tensor_->data_c());
+    MS_CHECK_PTR(bias_tensor_->data());
   } else {
     MS_CHECK_TRUE(input_tensors_.size() == kInputSize1, "wrong input size");
   }

@@ -31,7 +31,7 @@ bool CheckConstantTensor(const Tensor *const tensor) {
 template <typename T>
 void TensorDataToFile(const lite::Tensor *tensor, std::ofstream &ofs) {
   const int NUM = 45;
-  T *data = reinterpret_cast<T *>(tensor->data_c());
+  T *data = reinterpret_cast<T *>(tensor->data());
   if (data == nullptr) {
     MS_LOG(ERROR) << "data is nullptr";
     return;

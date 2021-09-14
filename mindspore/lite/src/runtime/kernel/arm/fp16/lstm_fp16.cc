@@ -93,7 +93,7 @@ int LstmFp16CPUKernel::InitInputWeightBias() {
   // weight -- row: hidden_size; col: input_size, need transpose
   // result -- row: seq_len * batch; col: hidden_size
   auto weight_i = in_tensors_.at(1);
-  auto weight_i_data = weight_i->data_c();
+  auto weight_i_data = weight_i->data();
   CHECK_NULL_RETURN(weight_i_data);
   weight_i_ptr_ = reinterpret_cast<float16_t *>(
     malloc(weight_batch_ * lstm_param_->input_col_align_ * lstm_param_->input_size_ * sizeof(float16_t)));
@@ -114,7 +114,7 @@ int LstmFp16CPUKernel::InitInputWeightBias() {
 
   // input bias
   auto bias = in_tensors_.at(3);
-  auto bias_data = bias->data_c();
+  auto bias_data = bias->data();
   CHECK_NULL_RETURN(bias_data);
   input_bias_ =
     reinterpret_cast<float16_t *>(malloc(weight_batch_ * lstm_param_->input_col_align_ * sizeof(float16_t)));
@@ -142,7 +142,7 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
   // weight -- row: hidden_size; col: hidden_size, need transpose
   // result -- row: batch; col: hidden_size
   auto weight_h = in_tensors_.at(2);
-  auto weight_h_data = weight_h->data_c();
+  auto weight_h_data = weight_h->data();
   CHECK_NULL_RETURN(weight_h_data);
   weight_h_ptr_ = reinterpret_cast<float16_t *>(
     malloc(weight_batch_ * lstm_param_->state_col_align_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
@@ -175,7 +175,7 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
 
   // state bias
   auto bias = in_tensors_.at(3);
-  auto bias_data = bias->data_c();
+  auto bias_data = bias->data();
   CHECK_NULL_RETURN(bias_data);
   state_bias_ =
     reinterpret_cast<float16_t *>(malloc(weight_batch_ * lstm_param_->state_col_align_ * sizeof(float16_t)));
@@ -294,23 +294,23 @@ int LstmFp16CPUKernel::MallocRunBuffer() {
 
 int LstmFp16CPUKernel::Run() {
   auto input = in_tensors_.at(0);
-  auto input_ptr = reinterpret_cast<float16_t *>(input->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(input->data());
   CHECK_NULL_RETURN(input_ptr);
   auto output = out_tensors_.at(0);
-  auto output_ptr = reinterpret_cast<float16_t *>(output->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(output->data());
   CHECK_NULL_RETURN(output_ptr);
 
   auto hidden_state = in_tensors_.at(4);
-  CHECK_NULL_RETURN(hidden_state->data_c());
+  CHECK_NULL_RETURN(hidden_state->data());
   auto cell_state = in_tensors_.at(5);
-  CHECK_NULL_RETURN(cell_state->data_c());
+  CHECK_NULL_RETURN(cell_state->data());
 
   auto output_hidden_state = out_tensors_[1];
-  CHECK_NULL_RETURN(output_hidden_state->data_c());
-  memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float16_t));
+  CHECK_NULL_RETURN(output_hidden_state->data());
+  memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float16_t));
   auto output_cell_state = out_tensors_[2];
-  CHECK_NULL_RETURN(output_cell_state->data_c());
-  memcpy(output_cell_state->data_c(), cell_state->data_c(), cell_state->ElementsNum() * sizeof(float16_t));
+  CHECK_NULL_RETURN(output_cell_state->data());
+  memcpy(output_cell_state->data(), cell_state->data(), cell_state->ElementsNum() * sizeof(float16_t));
 
   auto ret = MallocRunBuffer();
   if (ret != RET_OK) {
@@ -323,8 +323,8 @@ int LstmFp16CPUKernel::Run() {
   CHECK_NULL_RETURN(input_bias_);
   CHECK_NULL_RETURN(state_bias_);
   LstmFp16(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, input_bias_, state_bias_,
-           reinterpret_cast<float16_t *>(output_hidden_state->data_c()),
-           reinterpret_cast<float16_t *>(output_cell_state->data_c()), buffer_, lstm_param_);
+           reinterpret_cast<float16_t *>(output_hidden_state->data()),
+           reinterpret_cast<float16_t *>(output_cell_state->data()), buffer_, lstm_param_);
   FreeRunBuffer();
   return RET_OK;
 }

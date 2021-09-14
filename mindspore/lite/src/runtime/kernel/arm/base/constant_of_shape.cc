@@ -71,7 +71,7 @@ int ConstantOfShapeCPUKernel::Run() {
   CHECK_NULL_RETURN(output);
   param_->data_type_ = output->data_type();
   param_->element_size_ = output->ElementsNum();
-  output_ptr_ = output->data_c();
+  output_ptr_ = output->data();
   CHECK_NULL_RETURN(output_ptr_);
 
   int thread_count = MSMIN(op_parameter_->thread_num_, param_->element_size_);

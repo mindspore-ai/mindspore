@@ -57,8 +57,8 @@ int BiasGradCPUKernelFp16::Init() {
 }
 
 int BiasGradCPUKernelFp16::Execute(int task_id) {
-  auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+  auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(in);
   CHECK_NULL_RETURN(out);
   size_t nhw_size = 1;

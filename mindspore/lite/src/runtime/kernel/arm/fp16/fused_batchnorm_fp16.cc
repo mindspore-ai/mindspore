@@ -46,14 +46,14 @@ void FusedBatchnormFp16CPUKernel::CalcMeanVar(float16_t *in, float16_t *scale, f
   std::fill(current_var, current_var + in_tensors_.at(kInCurrentVarIdx)->ElementsNum(), 0.f);
   FusedBatchNormFp16MeanVar(in, current_mean, current_var, param, save_mean, save_variance);
 
-  MS_ASSERT(out_tensors_.at(kOutScaleIdx)->data_c() != nullptr);
-  MS_ASSERT(out_tensors_.at(kOutOffsetIdx)->data_c() != nullptr);
-  MS_ASSERT(out_tensors_.at(kOutCurrentMeanIdx)->data_c() != nullptr);
-  MS_ASSERT(out_tensors_.at(kOutCurrentVarIdx)->data_c() != nullptr);
-  memcpy(out_tensors_.at(kOutScaleIdx)->data_c(), scale, out_tensors_.at(kOutScaleIdx)->Size());
-  memcpy(out_tensors_.at(kOutOffsetIdx)->data_c(), offset, out_tensors_.at(kOutOffsetIdx)->Size());
-  memcpy(out_tensors_.at(kOutCurrentMeanIdx)->data_c(), current_mean, out_tensors_.at(kOutCurrentMeanIdx)->Size());
-  memcpy(out_tensors_.at(kOutCurrentVarIdx)->data_c(), current_var, out_tensors_.at(kOutCurrentVarIdx)->Size());
+  MS_ASSERT(out_tensors_.at(kOutScaleIdx)->data() != nullptr);
+  MS_ASSERT(out_tensors_.at(kOutOffsetIdx)->data() != nullptr);
+  MS_ASSERT(out_tensors_.at(kOutCurrentMeanIdx)->data() != nullptr);
+  MS_ASSERT(out_tensors_.at(kOutCurrentVarIdx)->data() != nullptr);
+  memcpy(out_tensors_.at(kOutScaleIdx)->data(), scale, out_tensors_.at(kOutScaleIdx)->Size());
+  memcpy(out_tensors_.at(kOutOffsetIdx)->data(), offset, out_tensors_.at(kOutOffsetIdx)->Size());
+  memcpy(out_tensors_.at(kOutCurrentMeanIdx)->data(), current_mean, out_tensors_.at(kOutCurrentMeanIdx)->Size());
+  memcpy(out_tensors_.at(kOutCurrentVarIdx)->data(), current_var, out_tensors_.at(kOutCurrentVarIdx)->Size());
 
   // Copy to local variables
   memcpy(scale_, scale, in_tensors_.at(kInScaleIdx)->Size());
@@ -91,20 +91,20 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
       ms_context_->allocator->Free(output_fp16);
       return RET_ERROR;
     }
-    CHECK_NULL_RETURN(input->data_c());
-    CHECK_NULL_RETURN(scale->data_c());
-    CHECK_NULL_RETURN(offset->data_c());
-    CHECK_NULL_RETURN(mean->data_c());
-    CHECK_NULL_RETURN(variance->data_c());
-    Float32ToFloat16(reinterpret_cast<float *>(input->data_c()), reinterpret_cast<float16_t *>(input_fp16),
+    CHECK_NULL_RETURN(input->data());
+    CHECK_NULL_RETURN(scale->data());
+    CHECK_NULL_RETURN(offset->data());
+    CHECK_NULL_RETURN(mean->data());
+    CHECK_NULL_RETURN(variance->data());
+    Float32ToFloat16(reinterpret_cast<float *>(input->data()), reinterpret_cast<float16_t *>(input_fp16),
                      input->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(scale->data_c()), reinterpret_cast<float16_t *>(scale_fp16),
+    Float32ToFloat16(reinterpret_cast<float *>(scale->data()), reinterpret_cast<float16_t *>(scale_fp16),
                      scale->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(offset->data_c()), reinterpret_cast<float16_t *>(offset_fp16),
+    Float32ToFloat16(reinterpret_cast<float *>(offset->data()), reinterpret_cast<float16_t *>(offset_fp16),
                      offset->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(mean->data_c()), reinterpret_cast<float16_t *>(mean_fp16),
+    Float32ToFloat16(reinterpret_cast<float *>(mean->data()), reinterpret_cast<float16_t *>(mean_fp16),
                      mean->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(variance->data_c()), reinterpret_cast<float16_t *>(variance_fp16),
+    Float32ToFloat16(reinterpret_cast<float *>(variance->data()), reinterpret_cast<float16_t *>(variance_fp16),
                      variance->ElementsNum());
 
     if (IsTrain() && IsTrainable() && in_tensors_.size() >= kMaxInIdx) {
@@ -126,27 +126,27 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
     ms_context_->allocator->Free(output_fp16);
     return RET_OK;
   }
-  CHECK_NULL_RETURN(in_tensors_.at(0)->data_c());
-  CHECK_NULL_RETURN(out_tensors_.at(0)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(0)->data());
+  CHECK_NULL_RETURN(out_tensors_.at(0)->data());
   if (IsTrain() && IsTrainable() && in_tensors_.size() >= kMaxInIdx) {
-    CalcMeanVar(static_cast<float16_t *>(in_tensors_.at(0)->data_c()),
-                static_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data_c()),
-                static_cast<float16_t *>(in_tensors_.at(kInOffsetIdx)->data_c()),
-                static_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data_c()),
-                static_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data_c()));
+    CalcMeanVar(static_cast<float16_t *>(in_tensors_.at(0)->data()),
+                static_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data()),
+                static_cast<float16_t *>(in_tensors_.at(kInOffsetIdx)->data()),
+                static_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data()),
+                static_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data()));
   }
-  FusedBatchNormFp16(in_tensors_.at(0)->data_c(), scale_, offset_, mean_, variance_, param, task_id,
-                     out_tensors_.at(0)->data_c());
+  FusedBatchNormFp16(in_tensors_.at(0)->data(), scale_, offset_, mean_, variance_, param, task_id,
+                     out_tensors_.at(0)->data());
   return RET_OK;
 }
 
 int FusedBatchnormFp16CPUKernel::Eval() {
   InnerKernel::Eval();
   if (trained_) {
-    float16_t *save_mean = static_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data_c());
-    float16_t *save_var = static_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data_c());
-    float16_t *scale = static_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data_c());
-    float16_t *bias = static_cast<float16_t *>(in_tensors_.at(kInOffsetIdx)->data_c());
+    float16_t *save_mean = static_cast<float16_t *>(in_tensors_.at(kInCurrentMeanIdx)->data());
+    float16_t *save_var = static_cast<float16_t *>(in_tensors_.at(kInCurrentVarIdx)->data());
+    float16_t *scale = static_cast<float16_t *>(in_tensors_.at(kInScaleIdx)->data());
+    float16_t *bias = static_cast<float16_t *>(in_tensors_.at(kInOffsetIdx)->data());
     CHECK_NULL_RETURN(save_mean);
     CHECK_NULL_RETURN(save_var);
     CHECK_NULL_RETURN(scale);

@@ -103,8 +103,8 @@ int ActivationFp16CPUKernel::Run() {
   MS_ASSERT(input_tensor != nullptr);
   MS_ASSERT(output_tensor != nullptr);
 
-  fp16_input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-  fp16_output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  fp16_input_ = reinterpret_cast<float16_t *>(input_tensor->data());
+  fp16_output_ = reinterpret_cast<float16_t *>(output_tensor->data());
 
   int error_code = ParallelLaunch(this->ms_context_, ActivationFp16Run, this, thread_count_);
   if (error_code != RET_OK) {

@@ -44,14 +44,14 @@ ScaleCPUKernel::~ScaleCPUKernel() {
 
 int ScaleCPUKernel::InitScaleOffset() {
   auto scale_tensor = in_tensors_.at(1);
-  if (reinterpret_cast<float *>(scale_tensor->data_c()) != nullptr) {
+  if (reinterpret_cast<float *>(scale_tensor->data()) != nullptr) {
     scale_param_->const_scale_ = true;
     scale_ = reinterpret_cast<float *>(malloc(scale_tensor->ElementsNum() * sizeof(float)));
     if (scale_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
-    memcpy(scale_, scale_tensor->data_c(), scale_tensor->ElementsNum() * sizeof(float));
+    memcpy(scale_, scale_tensor->data(), scale_tensor->ElementsNum() * sizeof(float));
   } else {
     scale_param_->const_scale_ = false;
     scale_ = nullptr;
@@ -65,7 +65,7 @@ int ScaleCPUKernel::InitScaleOffset() {
       return RET_ERROR;
     }
     memset(offset_, 0, scale_tensor->ElementsNum() * sizeof(float));
-  } else if (in_tensors_.size() == 3 && reinterpret_cast<float *>(in_tensors_.at(2)->data_c()) != nullptr) {
+  } else if (in_tensors_.size() == 3 && reinterpret_cast<float *>(in_tensors_.at(2)->data()) != nullptr) {
     scale_param_->const_offset_ = true;
     auto offset_tensor = in_tensors_.at(2);
     MS_CHECK_TRUE_RET(scale_tensor->ElementsNum() == offset_tensor->ElementsNum(), RET_ERROR);
@@ -74,7 +74,7 @@ int ScaleCPUKernel::InitScaleOffset() {
       MS_LOG(ERROR) << "Malloc data failed";
       return RET_ERROR;
     }
-    memcpy(offset_, offset_tensor->data_c(), offset_tensor->ElementsNum() * sizeof(float));
+    memcpy(offset_, offset_tensor->data(), offset_tensor->ElementsNum() * sizeof(float));
   } else {
     scale_param_->const_offset_ = false;
     offset_ = nullptr;
@@ -176,15 +176,15 @@ int ScaleRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int ScaleCPUKernel::Run() {
   auto in_tensor = in_tensors_.front();
-  input_ptr_ = reinterpret_cast<float *>(in_tensor->data_c());
+  input_ptr_ = reinterpret_cast<float *>(in_tensor->data());
   if (!scale_param_->const_scale_) {
     auto scale_tensor = in_tensors_.at(1);
-    scale_ = reinterpret_cast<float *>(scale_tensor->data_c());
+    scale_ = reinterpret_cast<float *>(scale_tensor->data());
     CHECK_NULL_RETURN(scale_);
   }
   if (!scale_param_->const_offset_) {
     auto offset_tensor = in_tensors_.at(2);
-    offset_ = reinterpret_cast<float *>(offset_tensor->data_c());
+    offset_ = reinterpret_cast<float *>(offset_tensor->data());
     CHECK_NULL_RETURN(offset_);
   }
   auto out_tensor = out_tensors_.front();

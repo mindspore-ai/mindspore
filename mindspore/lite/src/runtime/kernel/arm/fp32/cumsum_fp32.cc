@@ -62,7 +62,7 @@ int CumSumCPUKernel::ReSize() {
   CHECK_NULL_RETURN(input_tensor);
   auto axis_tensor = in_tensors_.at(1);
   CHECK_NULL_RETURN(axis_tensor);
-  int *axis_data = reinterpret_cast<int *>(axis_tensor->data_c());
+  int *axis_data = reinterpret_cast<int *>(axis_tensor->data());
   CHECK_NULL_RETURN(axis_data);
 
   param_->axis_ = *axis_data;
@@ -88,9 +88,9 @@ int CumSumCPUKernel::ReSize() {
 }
 
 int CumSumCPUKernel::DoCumsum(int task_id) {
-  float *input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  float *input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(input_data);
-  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
 
   float *input = input_data + task_id * unit_ * axis_dim_ * in_dim_;
@@ -105,9 +105,9 @@ int CumSumCPUKernel::DoCumsum(int task_id) {
 }
 
 int CumSumCPUKernel::DoCumsumInt(int task_id) {
-  int *input_data = reinterpret_cast<int *>(in_tensors_.at(0)->data_c());
+  int *input_data = reinterpret_cast<int *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(input_data);
-  int *output_data = reinterpret_cast<int *>(out_tensors_.at(0)->data_c());
+  int *output_data = reinterpret_cast<int *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
 
   int *input = input_data + task_id * unit_ * axis_dim_ * in_dim_;

@@ -114,9 +114,9 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
   io_slices_ = {static_cast<cl_int>(input_info.Slice), static_cast<cl_int>(output_info.Slice)};
 
   if (type() == PrimitiveType_SliceFusion) {
-    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
+    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data());
     MS_ASSERT(begin);
-    auto *size = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+    auto *size = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
     MS_ASSERT(size);
     Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
     Broadcast2GpuShape(size_.s, size, input_info.NDim, -1);
@@ -138,11 +138,11 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
       }
     }
   } else {
-    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
+    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data());
     MS_ASSERT(begin);
-    auto *end = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+    auto *end = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
     MS_ASSERT(end);
-    auto *stride = reinterpret_cast<int32_t *>(in_tensors_.at(3)->data_c());
+    auto *stride = reinterpret_cast<int32_t *>(in_tensors_.at(3)->data());
     MS_ASSERT(stride);
     cl_int4 end_ = input_shape_;
     Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
@@ -241,11 +241,11 @@ void StridedSliceOpenCLKernel::SetGlobalLocal() {
 
 int StridedSliceOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

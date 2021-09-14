@@ -38,9 +38,9 @@ int RaggedRangeFp16CPUKernel::ReSize() { return RET_OK; }
 
 int RaggedRangeFp16CPUKernel::Run() {
   RaggedRangeFp16(
-    static_cast<float16_t *>(in_tensors_.at(0)->data_c()), static_cast<float16_t *>(in_tensors_.at(1)->data_c()),
-    static_cast<float16_t *>(in_tensors_.at(2)->data_c()), static_cast<int *>(out_tensors_.at(0)->data_c()),
-    static_cast<float16_t *>(out_tensors_.at(1)->data_c()), reinterpret_cast<RaggedRangeParameter *>(op_parameter_));
+    static_cast<float16_t *>(in_tensors_.at(0)->data()), static_cast<float16_t *>(in_tensors_.at(1)->data()),
+    static_cast<float16_t *>(in_tensors_.at(2)->data()), static_cast<int *>(out_tensors_.at(0)->data()),
+    static_cast<float16_t *>(out_tensors_.at(1)->data()), reinterpret_cast<RaggedRangeParameter *>(op_parameter_));
   return RET_OK;
 }
 

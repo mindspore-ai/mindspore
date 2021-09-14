@@ -45,15 +45,15 @@ int TopKCPUKernel::ReSize() {
 }
 
 int TopKCPUKernel::Run() {
-  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(input_data);
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
-  auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->data_c());
+  auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->data());
   CHECK_NULL_RETURN(output_index);
 
   if (in_tensors_.size() == 2) {
-    auto input_k = reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
+    auto input_k = reinterpret_cast<int *>(in_tensors_.at(1)->data());
     CHECK_NULL_RETURN(input_k);
     topk_param_->k_ = input_k[0];
   }

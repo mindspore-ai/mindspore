@@ -87,13 +87,13 @@ int FillCPUKernel::Run() {
   auto output = out_tensors_.front();
   CHECK_NULL_RETURN(output);
   if (fill_input->data_type() == kNumberTypeFloat32 || fill_input->data_type() == kNumberTypeFloat) {
-    auto fill_data = reinterpret_cast<float *>(fill_input->data_c());
+    auto fill_data = reinterpret_cast<float *>(fill_input->data());
     CHECK_NULL_RETURN(fill_data);
     src_data_ = fill_data[0];
     out_ptr_ = reinterpret_cast<float *>(output->MutableData());
     CHECK_NULL_RETURN(out_ptr_);
   } else if (fill_input->data_type() == kNumberTypeInt32 || fill_input->data_type() == kNumberTypeInt) {
-    auto fill_data = reinterpret_cast<int *>(fill_input->data_c());
+    auto fill_data = reinterpret_cast<int *>(fill_input->data());
     CHECK_NULL_RETURN(fill_data);
     int32_src_data_ = fill_data[0];
     int32_out_ptr_ = reinterpret_cast<int *>(output->MutableData());

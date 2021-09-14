@@ -123,8 +123,8 @@ int StackFp16CPUKernel::Run() {
   if (malloc_out_) {
     auto out_tensor = out_tensors_.at(0);
     MS_ASSERT(out_tensor != nullptr);
-    MS_ASSERT(out_tensor->data_c() != nullptr);
-    Float16ToFloat32(out_buffer_, reinterpret_cast<float *>(out_tensor->data_c()), out_tensor->ElementsNum());
+    MS_ASSERT(out_tensor->data() != nullptr);
+    Float16ToFloat32(out_buffer_, reinterpret_cast<float *>(out_tensor->data()), out_tensor->ElementsNum());
   }
   FreeBuffer();
   return RET_OK;

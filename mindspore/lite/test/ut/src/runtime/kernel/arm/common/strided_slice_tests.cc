@@ -31,9 +31,9 @@ void InitStridedSliceParam(StridedSliceParameter *param, const lite::Tensor *in_
                            const lite::Tensor *stride_tensor) {
   int dim = begin_tensor->ElementsNum();
   auto input_shape = in_tensor->shape();
-  int *begin = reinterpret_cast<int *>(begin_tensor->data_c());
-  int *end = reinterpret_cast<int *>(end_tensor->data_c());
-  int *stride = reinterpret_cast<int *>(stride_tensor->data_c());
+  int *begin = reinterpret_cast<int *>(begin_tensor->data());
+  int *end = reinterpret_cast<int *>(end_tensor->data());
+  int *stride = reinterpret_cast<int *>(stride_tensor->data());
   for (int i = 0; i < dim; ++i) {
     param->begins_[i] = begin[i];
     param->ends_[i] = end[i];

@@ -174,8 +174,8 @@ int ResizeImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int ResizeCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
-  auto input_data = reinterpret_cast<float *>(input->data_c());
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  auto input_data = reinterpret_cast<float *>(input->data());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   MSLITE_CHECK_PTR(ms_context_);
   MSLITE_CHECK_PTR(input_data);
   MSLITE_CHECK_PTR(output_data);

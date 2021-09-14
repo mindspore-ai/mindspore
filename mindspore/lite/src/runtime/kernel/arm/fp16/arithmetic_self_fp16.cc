@@ -86,10 +86,10 @@ int ArithmeticSelfFp16CPUKernel::Run() {
       return RET_ERROR;
     }
   } else {
-    input_fp16_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
+    input_fp16_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data());
     CHECK_NULL_RETURN(input_fp16_ptr_);
   }
-  output_fp16_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  output_fp16_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data());
   CHECK_NULL_RETURN(output_fp16_ptr_);
 
   auto ret = ParallelLaunch(ms_context_, ArithmeticSelfRun, this, op_parameter_->thread_num_);

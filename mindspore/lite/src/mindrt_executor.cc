@@ -140,7 +140,7 @@ void MindrtExecutor::TransferGraphOutput() {
     if (src_tensor->data_type() == kNumberTypeFloat16) {
       dst_tensor->MallocData();
       Fp16ToFloat32(reinterpret_cast<uint16_t *>(src_tensor->MutableData()),
-                    reinterpret_cast<float *>(dst_tensor->data_c()), dst_tensor->ElementsNum());
+                    reinterpret_cast<float *>(dst_tensor->data()), dst_tensor->ElementsNum());
     } else {
       dst_tensor->set_data(src_tensor->data());
       src_tensor->set_data(nullptr);

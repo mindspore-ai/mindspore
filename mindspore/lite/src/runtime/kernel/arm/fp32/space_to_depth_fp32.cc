@@ -96,8 +96,8 @@ int SpaceToDepthRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 }
 
 int SpaceToDepthCPUKernel::Run() {
-  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   if (in_tensors_.at(0)->format() == mindspore::NHWC) {
     auto ret = ParallelLaunch(this->ms_context_, SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {

@@ -42,9 +42,9 @@ int ReshapeBaseCPUKernel::Run() {
    * */
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
       op_parameter_->is_train_session_) {
-    CHECK_NULL_RETURN(out_tensor->data_c());
-    CHECK_NULL_RETURN(in_tensor->data_c());
-    memcpy(out_tensor->data_c(), in_tensor->data_c(), in_tensor->Size());
+    CHECK_NULL_RETURN(out_tensor->data());
+    CHECK_NULL_RETURN(in_tensor->data());
+    memcpy(out_tensor->data(), in_tensor->data(), in_tensor->Size());
     return RET_OK;
   }
 
@@ -53,7 +53,7 @@ int ReshapeBaseCPUKernel::Run() {
 
   in_tensor->allocator()->IncRefCount(in_tensor->data(), out_tensor->ref_count());
 
-  out_tensor->set_data(in_tensor->data_c());
+  out_tensor->set_data(in_tensor->data());
   out_tensor->set_own_data(in_tensor->own_data());
   return RET_OK;
 }

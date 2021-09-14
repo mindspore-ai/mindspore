@@ -67,8 +67,8 @@ int TanhInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int TanhInt8CPUKernel::Run() {
-  in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
-  out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  in_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
+  out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
 
   auto ret = ParallelLaunch(this->ms_context_, TanhInt8Run, this, thread_count_);
   if (ret != RET_OK) {

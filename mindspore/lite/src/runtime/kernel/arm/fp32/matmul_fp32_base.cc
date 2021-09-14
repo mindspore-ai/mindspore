@@ -42,8 +42,8 @@ MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
 void MatmulFp32BaseCPUKernel::InitParameter() {
   NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[kInputIndex]);
   NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[kWeightIndex]);
-  params_->a_const_ = (in_tensors_[kInputIndex]->data_c() != nullptr);
-  params_->b_const_ = (in_tensors_[kWeightIndex]->data_c() != nullptr);
+  params_->a_const_ = (in_tensors_[kInputIndex]->data() != nullptr);
+  params_->b_const_ = (in_tensors_[kWeightIndex]->data() != nullptr);
 
   if (op_parameter_->is_train_session_) {
     params_->a_const_ = false;
@@ -142,14 +142,14 @@ int MatmulFp32BaseCPUKernel::InitBiasData() {
     // whether to broadcast bias data
     if (bias_tensor->ElementsNum() == 1) {
       max_bias_data = CalBroadCastBiasDataElements();
-      float broadcast_data = (reinterpret_cast<float *>(bias_tensor->data_c()))[0];
+      float broadcast_data = (reinterpret_cast<float *>(bias_tensor->data()))[0];
       // broadcast bias data
       for (size_t i = 0; i < max_bias_data; ++i) {
         bias_ptr_[i] = broadcast_data;
       }
     } else {
       memset(bias_ptr_, 0, max_bias_data * static_cast<int>(sizeof(float)));
-      memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * static_cast<int>(sizeof(float)));
+      memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * static_cast<int>(sizeof(float)));
     }
   }
   return RET_OK;
@@ -323,7 +323,7 @@ int MatmulFp32BaseCPUKernel::Init() {
     if (RET_OK != InitBufferA()) {
       return RET_ERROR;
     }
-    ret = InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()));
+    ret = InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data()));
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "InitMatrixA failed!";
       return ret;
@@ -339,8 +339,7 @@ int MatmulFp32BaseCPUKernel::Init() {
       MS_LOG(ERROR) << "matmul fp16 src_b_ is failed!";
       return RET_ERROR;
     }
-    memcpy(src_b_, b_tensor->data_c(),
-           params_->batch * params_->deep_ * params_->col_ * static_cast<int>(sizeof(float)));
+    memcpy(src_b_, b_tensor->data(), params_->batch * params_->deep_ * params_->col_ * static_cast<int>(sizeof(float)));
   }
   return RET_OK;
 }
@@ -391,7 +390,7 @@ int MatmulFp32BaseCPUKernel::ReSize() {
 }
 
 int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
-  auto out_data = reinterpret_cast<float *>(out_tensors_.front()->data_c());
+  auto out_data = reinterpret_cast<float *>(out_tensors_.front()->data());
   MS_ASSERT(out_data != nullptr);
 #ifdef ENABLE_AVX
   if (oc_res_ != 0 && vec_matmul_) {  // vec matmul need to malloc dst
@@ -415,7 +414,7 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 
 int MatmulFp32BaseCPUKernel::Run() {
   if (!params_->a_const_) {
-    auto a_ptr = reinterpret_cast<float *>(in_tensors_[0]->data_c());
+    auto a_ptr = reinterpret_cast<float *>(in_tensors_[0]->data());
     CHECK_NULL_RETURN(a_ptr);
     if (RET_OK != InitBufferA()) {
       return RET_ERROR;
@@ -427,7 +426,7 @@ int MatmulFp32BaseCPUKernel::Run() {
     }
   }
   if (!params_->b_const_) {
-    auto b_ptr = reinterpret_cast<float *>(in_tensors_[1]->data_c());
+    auto b_ptr = reinterpret_cast<float *>(in_tensors_[1]->data());
     CHECK_NULL_RETURN(b_ptr);
     if (RET_OK != InitBufferB()) {
       FreeResizeBufA();

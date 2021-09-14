@@ -70,7 +70,7 @@ int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
     weight_h_ptr_ =
       reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, weight_h->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(weight_h_ptr_);
-    MS_CHECK_RET_CODE(memcpy_s(weight_h_ptr_, weight_h_size, weight_h->data_c(), weight_h_size),
+    MS_CHECK_RET_CODE(memcpy_s(weight_h_ptr_, weight_h_size, weight_h->data(), weight_h_size),
                       "copy weight h data failed");
   }
 

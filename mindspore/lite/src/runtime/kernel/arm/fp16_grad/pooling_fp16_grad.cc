@@ -74,9 +74,9 @@ int PoolingGradCPUKernelFp16::Init() { return ReSize(); }
 
 int PoolingGradCPUKernelFp16::Execute(int task_id) {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
-  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(input_ptr);
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_ptr);
   MS_CHECK_TRUE_RET(thread_num_ > 0, RET_ERROR);
   int stride = UP_DIV(pool_param->output_batch_, thread_num_);
@@ -87,11 +87,11 @@ int PoolingGradCPUKernelFp16::Execute(int task_id) {
     std::fill(output_ptr + task_id * stride * in_batch_size, output_ptr + ((task_id * stride) + count) * in_batch_size,
               0.f);
     if (pool_param->pool_mode_ == PoolMode_MaxPool) {
-      auto dy_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInputDim_2)->data_c());
+      auto dy_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInputDim_2)->data());
       MaxPoolingFp16Grad(input_ptr + task_id * stride * in_batch_size, dy_ptr + task_id * stride * out_batch_size,
                          output_ptr + task_id * stride * in_batch_size, count, pool_param);
     } else {
-      input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInputDim_2)->data_c());
+      input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kNumInputDim_2)->data());
       AvgPoolingFp16Grad(input_ptr + task_id * stride * out_batch_size, output_ptr + task_id * stride * in_batch_size,
                          count, pool_param);
     }

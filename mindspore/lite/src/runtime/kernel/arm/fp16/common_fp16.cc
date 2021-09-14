@@ -59,7 +59,7 @@ int ConvertFp32TensorToFp16(lite::Tensor *tensor, const lite::InnerContext *ctx)
   if (tensor->data_type() == TypeId::kNumberTypeFloat16) {
     return RET_OK;
   }
-  auto fp32_data = tensor->data_c();
+  auto fp32_data = tensor->data();
   tensor->set_data(nullptr);
   tensor->set_data_type(TypeId::kNumberTypeFloat16);
   auto ret = tensor->MallocData();
@@ -67,7 +67,7 @@ int ConvertFp32TensorToFp16(lite::Tensor *tensor, const lite::InnerContext *ctx)
     MS_LOG(ERROR) << "malloc data failed";
     return RET_ERROR;
   }
-  Float32ToFloat16(static_cast<float *>(fp32_data), static_cast<float16_t *>(tensor->data_c()), tensor->ElementsNum());
+  Float32ToFloat16(static_cast<float *>(fp32_data), static_cast<float16_t *>(tensor->data()), tensor->ElementsNum());
   ctx->allocator->Free(fp32_data);
   return RET_OK;
 }

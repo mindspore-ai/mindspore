@@ -121,7 +121,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::Run() {
   }
   auto input_tensor = in_tensors_.at(kInputIndex);
   CHECK_NULL_RETURN(input_tensor);
-  auto input_ptr = reinterpret_cast<float *>(input_tensor->data_c());
+  auto input_ptr = reinterpret_cast<float *>(input_tensor->data());
   CHECK_NULL_RETURN(input_ptr);
 
   if (input_need_align_) {
@@ -133,7 +133,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::Run() {
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
   CHECK_NULL_RETURN(output_tensor);
-  auto output_ptr = reinterpret_cast<float *>(output_tensor->data_c());
+  auto output_ptr = reinterpret_cast<float *>(output_tensor->data());
   CHECK_NULL_RETURN(output_ptr);
 
   if (!output_need_align_) {
@@ -167,7 +167,7 @@ void ConvolutionDepthwiseSWCPUKernelX86::FreePackedInputOutput() {
 void ConvolutionDepthwiseSWCPUKernelX86::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int oc_algin = UP_DIV(weight_tensor->Batch(), oc_tile_);
-  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = IsTrainable() ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackNHWCToNXHWCXFp32(weight_tensor->Height(), weight_tensor->Width(), weight_tensor->Batch(), oc_algin,
                        weight_tensor->Channel(), reinterpret_cast<float *>(packed_weight_),

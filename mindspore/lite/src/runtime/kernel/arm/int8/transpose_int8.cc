@@ -53,7 +53,7 @@ int TransposeInt8CPUKernel::ReSize() {
 
   // get perm data
   auto perm_tensor = in_tensors_.at(1);
-  int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+  int *perm_data = reinterpret_cast<int *>(perm_tensor->data());
   MS_ASSERT(perm_data != nullptr);
   transpose_param_->num_axes_ = perm_tensor->ElementsNum();
   for (int i = 0; i < transpose_param_->num_axes_; ++i) {
@@ -105,8 +105,8 @@ int TransposeInt8CPUKernel::Run() {
   auto in_dims = in_tensor->shape();
   auto out_dims = out_tensor->shape();
 
-  in_ptr_ = reinterpret_cast<int8_t *>(in_tensor->data_c());
-  out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->data_c());
+  in_ptr_ = reinterpret_cast<int8_t *>(in_tensor->data());
+  out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->data());
   GetNHNCTransposeFunc(in_tensor, out_tensor, transpose_param_);
   if (NHNCTransposeFunc_ != nullptr) {
     NHNCTransposeFunc_(in_ptr_, out_ptr_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2]);

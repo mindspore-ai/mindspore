@@ -131,13 +131,13 @@ void ArithmeticFP16CPUKernel::InitRunFunction(int primitive_type) {
 
 int ArithmeticFP16CPUKernel::ConstTensorBroadCast() {
   int ret;
-  if (in_tensors_[0]->data_c() != nullptr) {
+  if (in_tensors_[0]->data() != nullptr) {
     ret = ConvertFp32TensorToFp16(in_tensors_[0], static_cast<const lite::InnerContext *>(this->ms_context_));
     if (ret != RET_OK) {
       return ret;
     }
   }
-  if (in_tensors_[1]->data_c() != nullptr) {
+  if (in_tensors_[1]->data() != nullptr) {
     ret = ConvertFp32TensorToFp16(in_tensors_[1], static_cast<const lite::InnerContext *>(this->ms_context_));
     if (ret != RET_OK) {
       return ret;
@@ -188,7 +188,7 @@ int ArithmeticFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "ArithmeticsRun failed, ret : " << ret;
   }
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    Float16ToFloat32(static_cast<float16_t *>(output_ptr_), reinterpret_cast<float *>(output_tensor->data_c()),
+    Float16ToFloat32(static_cast<float16_t *>(output_ptr_), reinterpret_cast<float *>(output_tensor->data()),
                      output_tensor->ElementsNum());
   }
   FreeFp16Buffer();

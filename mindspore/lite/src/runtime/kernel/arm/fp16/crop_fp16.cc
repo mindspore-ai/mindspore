@@ -52,8 +52,8 @@ int CropFp16CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(0);
   MS_ASSERT(input_tensor != nullptr);
   MS_ASSERT(output_tensor != nullptr);
-  input_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-  output_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  input_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data());
+  output_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data());
   MS_ASSERT(input_ptr_ != nullptr);
   MS_ASSERT(output_ptr_ != nullptr);
   auto ret = ParallelLaunch(this->ms_context_, CropFp16Run, this, crop_para_->thread_count_);

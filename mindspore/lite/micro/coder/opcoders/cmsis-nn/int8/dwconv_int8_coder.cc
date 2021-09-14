@@ -88,7 +88,7 @@ int DWConvInt8Coder::DoCode(CoderContext *const context) {
 }
 
 int DWConvInt8Coder::InitWeightBias() {
-  auto *origin_weight = reinterpret_cast<int8_t *>(filter_tensor_->data_c());
+  auto *origin_weight = reinterpret_cast<int8_t *>(filter_tensor_->data());
   MS_CHECK_PTR(origin_weight);
   auto pack_weight_size =
     static_cast<size_t>(filter_tensor_->Batch() * filter_tensor_->Height() * filter_tensor_->Width());

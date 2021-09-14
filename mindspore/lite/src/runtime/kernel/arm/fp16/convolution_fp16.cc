@@ -32,7 +32,7 @@ void ConvolutionFP16CPUKernel::PackWeight() {
   int in_channel = filter_tensor->Channel();
   int out_channel = filter_tensor->Batch();
   int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
-  void *weight_origin = (op_parameter_->is_train_session_) ? filter_tensor->data_c() : origin_weight_;
+  void *weight_origin = (op_parameter_->is_train_session_) ? filter_tensor->data() : origin_weight_;
   MS_ASSERT(weight_origin != nullptr);
   RowMajor2Col8MajorFp16(weight_origin, reinterpret_cast<float16_t *>(packed_weight_), out_channel,
                          in_channel * kernel_plane, false);
@@ -148,8 +148,8 @@ int ConvolutionFP16CPUKernel::RunImpl(int task_id) {
   auto output_tensor = out_tensors_[0];
   MS_ASSERT(input_tensor != nullptr);
   MS_ASSERT(output_tensor != nullptr);
-  auto input_ptr = reinterpret_cast<float16_t *>(input_tensor->data_c());
-  auto output_ptr = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(input_tensor->data());
+  auto output_ptr = reinterpret_cast<float16_t *>(output_tensor->data());
   if (output_tensor->format() == NC4HW4) {
     ConvOutNc8hw8Fp16(input_ptr, packed_input_, reinterpret_cast<float16_t *>(packed_weight_),
                       reinterpret_cast<float16_t *>(bias_data_), col_major_input_, output_ptr, task_id, conv_param_);

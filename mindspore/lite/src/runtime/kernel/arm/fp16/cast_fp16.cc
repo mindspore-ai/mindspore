@@ -66,8 +66,8 @@ int CastFp16CPUKernel::DoCast(int thread_id) {
   auto output = out_tensors_.at(0);
   CHECK_NULL_RETURN(input);
   CHECK_NULL_RETURN(output);
-  auto input_data = input->data_c();
-  auto output_data = output->data_c();
+  auto input_data = input->data();
+  auto output_data = output->data();
   CHECK_NULL_RETURN(input_data);
   CHECK_NULL_RETURN(output_data);
 

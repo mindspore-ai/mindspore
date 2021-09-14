@@ -75,7 +75,7 @@ int TensorListSetItemCPUKernel::Run() {
   }
 
   int dim0 = output0_->ElementsNum() - 1;
-  index_ = reinterpret_cast<int *>(in_tensors_[1]->data_c())[0];
+  index_ = reinterpret_cast<int *>(in_tensors_[1]->data())[0];
   if (index_ < 0 || index_ > dim0) {
     if (IncrementOutputSize(output0_->tensors().size()) != RET_OK) {
       MS_LOG(ERROR) << "Resizeoutput Error ,index tensor:[" << index_ << "] must be in [0, " << dim0 << "]!";
@@ -129,7 +129,7 @@ int TensorListSetItemCPUKernel::Run() {
       MS_ASSERT(src != nullptr);
       // merge move data will delete tensors
       if (dst == nullptr) {
-        dst = lite::Tensor::CopyTensor(*src, src->data_c() != nullptr, ms_context_->allocator);
+        dst = lite::Tensor::CopyTensor(*src, src->data() != nullptr, ms_context_->allocator);
         auto &tensors = output0_->tensors();
         tensors.emplace_back(dst);
         continue;

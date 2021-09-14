@@ -156,8 +156,8 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
   CHECK_NULL_RETURN(input_tensor);
   CHECK_NULL_RETURN(output_tensor);
 
-  auto input_addr = reinterpret_cast<float *>(input_tensor->data_c());
-  auto output_addr = reinterpret_cast<float *>(output_tensor->data_c());
+  auto input_addr = reinterpret_cast<float *>(input_tensor->data());
+  auto output_addr = reinterpret_cast<float *>(output_tensor->data());
   CHECK_NULL_RETURN(input_addr);
   CHECK_NULL_RETURN(output_addr);
 
@@ -210,7 +210,7 @@ int DeconvolutionDepthwiseCPUKernel::MallocWeightBiasData() {
 
 void DeconvolutionDepthwiseCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = IsTrainable() ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackNCHWToNC4HW4Fp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_), 1,
                        weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());

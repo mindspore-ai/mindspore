@@ -81,9 +81,9 @@ int ConvolutionGradInputCPUKernelFp16::Execute(int task_id) {
   auto *input_w = in_tensors_.at(1);
   auto *out_dx = out_tensors_.at(0);
 
-  auto dy_addr = reinterpret_cast<float16_t *>(input_dy->data_c());
-  auto w_addr = reinterpret_cast<float16_t *>(input_w->data_c());
-  auto dx_addr = reinterpret_cast<float16_t *>(out_dx->data_c());
+  auto dy_addr = reinterpret_cast<float16_t *>(input_dy->data());
+  auto w_addr = reinterpret_cast<float16_t *>(input_w->data());
+  auto dx_addr = reinterpret_cast<float16_t *>(out_dx->data());
 
   int i, j;
   int nweights = input_w->ElementsNum();
@@ -171,7 +171,7 @@ int ConvolutionGradInputCPUKernelFp16::Run() {
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
   auto *out_dx = out_tensors_.at(0);
-  auto dx_addr = reinterpret_cast<float16_t *>(out_dx->data_c());
+  auto dx_addr = reinterpret_cast<float16_t *>(out_dx->data());
   std::memset(dx_addr, 0, sizeof(float16_t) * batch * in_ch * in_h * in_w);
   int error_code = ParallelLaunch(this->ms_context_, ConvolutionGradInputFp16Run, this, ms_context_->thread_num_);
   if (error_code != RET_OK) {

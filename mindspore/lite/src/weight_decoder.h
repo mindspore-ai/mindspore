@@ -141,7 +141,7 @@ class WeightDecoder {
 
   template <typename ST, typename DT = float>
   static DT *DequantData(lite::Tensor *input_tensor, bool channel_first = true) {
-    const auto *quant_datas = static_cast<const ST *>(input_tensor->data_c());
+    const auto *quant_datas = static_cast<const ST *>(input_tensor->data());
     if (quant_datas == nullptr) {
       MS_LOG(ERROR) << "Get quant tensor failed.";
       return nullptr;

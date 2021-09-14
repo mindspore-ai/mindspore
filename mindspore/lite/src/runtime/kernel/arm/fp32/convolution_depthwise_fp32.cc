@@ -83,10 +83,10 @@ int ConvolutionDepthwiseCPUKernel::Run() {
   }
 
   auto input_tensor = in_tensors_.at(kInputIndex);
-  input_ptr_ = reinterpret_cast<float *>(input_tensor->data_c());
+  input_ptr_ = reinterpret_cast<float *>(input_tensor->data());
   MS_CHECK_FALSE(input_ptr_ == nullptr, RET_ERROR);
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
+  output_ptr_ = reinterpret_cast<float *>(output_tensor->data());
   MS_CHECK_FALSE(output_ptr_ == nullptr, RET_ERROR);
 
   auto ret = ParallelLaunch(this->ms_context_, ConvDwRun, this, conv_param_->thread_num_);
@@ -99,7 +99,7 @@ int ConvolutionDepthwiseCPUKernel::Run() {
 
 void ConvolutionDepthwiseCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackWeightKHWToHWKFp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),
                          weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());

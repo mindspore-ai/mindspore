@@ -80,7 +80,7 @@ int ConvolutionWinogradFP16CPUKernel::MallocWeightBiasData() {
 
 void ConvolutionWinogradFP16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *weight_origin = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
+  void *weight_origin = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(weight_origin != nullptr);
   WinogradFilterTransformFp16(reinterpret_cast<float16_t *>(weight_origin), matrix_g_, matrix_gt_, col_tile_);
 }
@@ -207,8 +207,8 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
 }
 
 int ConvolutionWinogradFP16CPUKernel::RunImpl(int task_id) {
-  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   MS_ASSERT(input_ptr != nullptr);
   MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {

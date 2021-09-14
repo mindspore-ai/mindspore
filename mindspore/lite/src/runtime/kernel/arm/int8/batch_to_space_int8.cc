@@ -78,8 +78,8 @@ int BatchToSpaceInt8CPUKernel::Run() {
   auto output = out_tensors_[kOutputIndex];
   CHECK_NULL_RETURN(input);
   CHECK_NULL_RETURN(output);
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(input->data_c());
-  int8_t *output_data = reinterpret_cast<int8_t *>(output->data_c());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(input->data());
+  int8_t *output_data = reinterpret_cast<int8_t *>(output->data());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);

@@ -271,13 +271,13 @@ int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tens
 }
 
 void *StoreTensorData(lite::Tensor *tensor) {
-  if ((tensor != nullptr) && (tensor->data_c() != nullptr) && (tensor->Size() > 0)) {
+  if ((tensor != nullptr) && (tensor->data() != nullptr) && (tensor->Size() > 0)) {
     void *stored_data = malloc(tensor->Size());
     if (stored_data == nullptr) {
       MS_LOG(ERROR) << "StoreTensorData Malloc Failed.";
       return nullptr;
     }
-    memcpy(stored_data, tensor->data_c(), tensor->Size());
+    memcpy(stored_data, tensor->data(), tensor->Size());
     return stored_data;
   }
   return nullptr;

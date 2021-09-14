@@ -58,8 +58,8 @@ int BiasAddCPUFp16Kernel::Run() {
       is_repack_ = false;
     }
   }
-  auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+  auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(in);
   CHECK_NULL_RETURN(out);
   size_t data_size = in_tensors_.at(0)->ElementsNum();
@@ -97,7 +97,7 @@ int BiasAddCPUFp16Kernel::GetBiasData() {
         return RET_NULL_PTR;
       }
     }
-    auto bias = reinterpret_cast<float *>(bias_tensor_->data_c());
+    auto bias = reinterpret_cast<float *>(bias_tensor_->data());
     if (bias == nullptr) {
       MS_LOG(ERROR) << "bias is nullptr!";
       return RET_NULL_PTR;
@@ -106,7 +106,7 @@ int BiasAddCPUFp16Kernel::GetBiasData() {
       bias_data_[i] = static_cast<float16_t>(bias[i]);
     }
   } else {
-    bias_data_ = reinterpret_cast<float16_t *>(bias_tensor_->data_c());
+    bias_data_ = reinterpret_cast<float16_t *>(bias_tensor_->data());
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "bias_data_ is nullptr";
       return RET_NULL_PTR;
@@ -128,12 +128,12 @@ int BiasAddCPUFp16Kernel::Init() {
 
 void BiasAddCPUFp16Kernel::PackWeight() {
   if (bias_data_type_ == kNumberTypeFloat || bias_data_type_ == kNumberTypeFloat32) {
-    auto bias = reinterpret_cast<float *>(bias_tensor_->data_c());
+    auto bias = reinterpret_cast<float *>(bias_tensor_->data());
     for (int i = 0; i < bias_tensor_->ElementsNum(); ++i) {
       bias_data_[i] = static_cast<float16_t>(bias[i]);
     }
   } else {
-    bias_data_ = reinterpret_cast<float16_t *>(bias_tensor_->data_c());
+    bias_data_ = reinterpret_cast<float16_t *>(bias_tensor_->data());
   }
 }
 

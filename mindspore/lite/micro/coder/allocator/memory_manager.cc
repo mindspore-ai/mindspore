@@ -76,7 +76,7 @@ void MemoryManager::ReleaseInputs(const std::unique_ptr<OperatorCoder> &node) {
       MS_LOG(ERROR) << "input tensor is nullptr";
       return;
     }
-    if (input->category() != Tensor::VAR && input->data_c() != nullptr) {
+    if (input->category() != Tensor::VAR && input->data() != nullptr) {
       continue;
     }
     input->DecRefCount();

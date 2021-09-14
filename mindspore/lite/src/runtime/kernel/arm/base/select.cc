@@ -43,7 +43,7 @@ int SelectCPUKernel::Run() {
   MS_ASSERT(bool_tensor != nullptr);
   MS_ASSERT(bool_tensor->data_type() == kNumberTypeBool);
   if (bool_tensor->Size() == 1) {
-    auto condition = static_cast<bool *>(bool_tensor->data_c());
+    auto condition = static_cast<bool *>(bool_tensor->data());
     if (condition == nullptr) {
       MS_LOG(ERROR) << "data of bool tensor is nullptr";
       return lite::RET_NULL_PTR;
@@ -75,10 +75,10 @@ int SelectCPUKernel::Run() {
     }
     MS_ASSERT(in_tensors_.at(1)->Size() == out_tensors_.at(0)->Size());
     auto size = in_tensors_.at(1)->ElementsNum();
-    auto condition = static_cast<bool *>(bool_tensor->data_c());
-    auto input1 = static_cast<float *>(in_tensors_.at(kFirstIdx)->data_c());
-    auto input2 = static_cast<float *>(in_tensors_.at(kSecondIdx)->data_c());
-    auto output = static_cast<float *>(out_tensors_.at(0)->data_c());
+    auto condition = static_cast<bool *>(bool_tensor->data());
+    auto input1 = static_cast<float *>(in_tensors_.at(kFirstIdx)->data());
+    auto input2 = static_cast<float *>(in_tensors_.at(kSecondIdx)->data());
+    auto output = static_cast<float *>(out_tensors_.at(0)->data());
     if (condition == nullptr || input1 == nullptr || input2 == nullptr || output == nullptr) {
       return RET_NULL_PTR;
     }

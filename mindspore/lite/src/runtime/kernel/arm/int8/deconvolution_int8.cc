@@ -152,7 +152,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     CHECK_NULL_RETURN(bias_tensor);
-    auto ori_bias = bias_tensor->data_c();
+    auto ori_bias = bias_tensor->data();
     CHECK_NULL_RETURN(ori_bias);
     memcpy(bias_data_, ori_bias, conv_param_->output_channel_ * sizeof(int32_t));
   }
@@ -167,7 +167,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, pack_weight_size * sizeof(int8_t));
-  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(weight_tensor->data_c()), weight_ptr_, weight_tensor->Batch(),
+  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(weight_tensor->data()), weight_ptr_, weight_tensor->Batch(),
                         weight_tensor->Channel(), weight_tensor->Height() * weight_tensor->Width(), support_optimize_);
 
   weight_sum_ = reinterpret_cast<int32_t *>(malloc(weight_col_size * sizeof(int32_t)));
@@ -274,8 +274,8 @@ int DeConvInt8CPUKernel::DoDeconv(int task_id) {
 int DeConvInt8CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  auto src_in = reinterpret_cast<int8_t *>(input_tensor->data_c());
-  auto src_out = reinterpret_cast<int8_t *>(output_tensor->data_c());
+  auto src_in = reinterpret_cast<int8_t *>(input_tensor->data());
+  auto src_out = reinterpret_cast<int8_t *>(output_tensor->data());
   CHECK_NULL_RETURN(src_in);
   CHECK_NULL_RETURN(src_out);
 

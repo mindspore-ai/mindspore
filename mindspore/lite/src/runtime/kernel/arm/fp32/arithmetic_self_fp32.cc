@@ -86,16 +86,16 @@ int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
       MS_LOG(ERROR) << "Run function is null! ";
       return RET_ERROR;
     }
-    float *input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
-    float *output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+    float *input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data());
+    float *output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
     ret = func_(input_ptr + offset, output_ptr + offset, count);
   } else if (in_tensors_[0]->data_type() == kNumberTypeBool) {
     if (func_bool_ == nullptr) {
       MS_LOG(ERROR) << "Run function is null! ";
       return RET_ERROR;
     }
-    bool *input_ptr = reinterpret_cast<bool *>(in_tensors_.at(0)->data_c());
-    bool *output_ptr = reinterpret_cast<bool *>(out_tensors_.at(0)->data_c());
+    bool *input_ptr = reinterpret_cast<bool *>(in_tensors_.at(0)->data());
+    bool *output_ptr = reinterpret_cast<bool *>(out_tensors_.at(0)->data());
     ret = func_bool_(input_ptr + offset, output_ptr + offset, count);
   } else {
     MS_LOG(ERROR) << "Unsupported type: " << in_tensors_[0]->data_type() << ".";

@@ -67,7 +67,7 @@ int Tensor2TensorC(const Tensor *src, TensorC *dst) {
   MS_CHECK_TRUE_RET(src != nullptr && dst != nullptr, RET_ERROR);
   dst->is_ready_ = src->IsReady();
   dst->format_ = src->format();
-  dst->data_ = src->data_c();
+  dst->data_ = src->data();
   dst->data_type_ = src->data_type();
   dst->shape_size_ = src->shape().size();
   if (dst->shape_size_ > MAX_SHAPE_SIZE) {
@@ -239,7 +239,7 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
       return RET_ERROR;
     }
-    if (tensor->data_type() != kObjectTypeTensorType && tensor->data_c() == nullptr) {
+    if (tensor->data_type() != kObjectTypeTensorType && tensor->data() == nullptr) {
       MS_LOG(ERROR) << "Graph input tensor data is nullptr " << tensor->tensor_name();
       return RET_ERROR;
     }
@@ -254,7 +254,7 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
       MS_LOG(ERROR) << "model input's format may be changed, which should be NHWC or NCHW";
       return RET_FORMAT_ERR;
     }
-    if (tensor->data_c() == nullptr) {
+    if (tensor->data() == nullptr) {
       MS_LOG(ERROR) << "tensor data should be filled before run op";
       return RET_ERROR;
     }

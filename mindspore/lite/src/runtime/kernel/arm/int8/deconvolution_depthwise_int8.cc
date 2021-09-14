@@ -39,7 +39,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // o, h, w, i -> o/8, h, w, i, 8; o equals to group, i equals to 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   CHECK_NULL_RETURN(weight_tensor);
-  auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->data_c());
+  auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->data());
   CHECK_NULL_RETURN(origin_weight);
   if (origin_weight == nullptr) {
     MS_LOG(ERROR) << "origin_weight nullptr";
@@ -64,7 +64,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     CHECK_NULL_RETURN(bias_tensor);
-    auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->data_c());
+    auto ori_bias = reinterpret_cast<int32_t *>(bias_tensor->data());
     CHECK_NULL_RETURN(ori_bias);
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(int32_t));
   }
@@ -205,8 +205,8 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  auto input_addr = reinterpret_cast<int8_t *>(input_tensor->data_c());
-  auto output_addr = reinterpret_cast<int8_t *>(output_tensor->data_c());
+  auto input_addr = reinterpret_cast<int8_t *>(input_tensor->data());
+  auto output_addr = reinterpret_cast<int8_t *>(output_tensor->data());
   CHECK_NULL_RETURN(input_addr);
   CHECK_NULL_RETURN(output_addr);
 

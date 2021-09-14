@@ -298,13 +298,13 @@ void TrainSession::RestoreTensorData() {
     MS_ASSERT(restored_tensor != nullptr);
 
     bool own_data = restored_tensor->own_data();
-    if (origin_tensor->data_c() == nullptr) {
+    if (origin_tensor->data() == nullptr) {
       restored_tensor->FreeData();
     } else {
       origin_tensor->FreeData();
     }
     origin_tensor->set_data_type(restored_tensor->data_type());
-    origin_tensor->set_data(restored_tensor->data_c());
+    origin_tensor->set_data(restored_tensor->data());
     origin_tensor->set_own_data(own_data);
   }
 }

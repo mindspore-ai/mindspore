@@ -67,8 +67,8 @@ int ExpRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int ExpCPUKernel::Run() {
-  input_addr_ = in_tensors_.front()->data_c();
-  output_addr_ = out_tensors_.front()->data_c();
+  input_addr_ = in_tensors_.front()->data();
+  output_addr_ = out_tensors_.front()->data();
   CHECK_NULL_RETURN(input_addr_);
   CHECK_NULL_RETURN(output_addr_);
 

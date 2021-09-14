@@ -32,7 +32,7 @@ int TransposeFp32Coder::Resize() {
   // get perm data
   MS_CHECK_TRUE_RET(input_tensors_.size() == DIMENSION_2D, RET_ERROR);
   auto perm_tensor = input_tensors_.at(1);
-  int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+  int *perm_data = reinterpret_cast<int *>(perm_tensor->data());
   MS_CHECK_TRUE_RET(perm_data != nullptr, RET_ERROR);
   for (int i = 0; i < param_->num_axes_; ++i) {
     param_->perm_[i] = perm_data[i];
@@ -107,8 +107,8 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
   if (input_tensors_.size() == 2) {
     auto input_perm = input_tensors_.at(1);
     MS_CHECK_TRUE_RET(input_perm != nullptr, RET_ERROR);
-    MS_CHECK_TRUE_RET(input_perm->data_c() != nullptr, RET_ERROR);
-    int *perm_data = reinterpret_cast<int *>(input_perm->data_c());
+    MS_CHECK_TRUE_RET(input_perm->data() != nullptr, RET_ERROR);
+    int *perm_data = reinterpret_cast<int *>(input_perm->data());
     for (int i = 0; i < input_perm->ElementsNum(); ++i) {
       param_->perm_[i] = perm_data[i];
     }

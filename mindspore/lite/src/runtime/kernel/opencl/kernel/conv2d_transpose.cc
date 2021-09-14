@@ -186,7 +186,7 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
     return RET_ERROR;
   }
   memset(padWeight_, 0x00, div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
-  auto origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data_c() : stored_weight_;
+  auto origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data() : stored_weight_;
   auto weight_dtype = in_tensors_.at(kWeightIndex)->data_type();
   int index = 0;
   for (int co_i = 0; co_i < div_co; co_i++) {
@@ -259,7 +259,7 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
   }
   memset(bias_, 0x00, div_co * C4NUM * data_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
-    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
+    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data() : stored_bias_;
     MS_ASSERT(src_data);
     auto bias_dtype = in_tensors_[2]->data_type();
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
@@ -285,11 +285,11 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
 int Conv2dTransposeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_cnt = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

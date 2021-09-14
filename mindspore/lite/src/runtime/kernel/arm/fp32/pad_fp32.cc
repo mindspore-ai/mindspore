@@ -219,8 +219,8 @@ int PadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int PadCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  auto input_data = reinterpret_cast<float *>(input->data_c());
-  auto output_data = reinterpret_cast<float *>(output->data_c());
+  auto input_data = reinterpret_cast<float *>(input->data());
+  auto output_data = reinterpret_cast<float *>(output->data());
   CHECK_NULL_RETURN(input_data);
   CHECK_NULL_RETURN(output_data);
   Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, op_parameter_->thread_num_);
@@ -241,9 +241,9 @@ int MirrorPadImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int PadCPUKernel::RunMirrorPadImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  auto input_data = reinterpret_cast<float *>(input->data_c());
+  auto input_data = reinterpret_cast<float *>(input->data());
   CHECK_NULL_RETURN(input_data);
-  auto output_data = reinterpret_cast<float *>(output->data_c());
+  auto output_data = reinterpret_cast<float *>(output->data());
   CHECK_NULL_RETURN(output_data);
   /* Fast Mirror pad */
   if (mirror_pad_block_.size() != 0) {
@@ -316,7 +316,7 @@ int PadCPUKernel::CopyPaddingFromInput() {
     return RET_ERROR;
   }
   auto padding_tensor = in_tensors_.at(1);
-  auto paddings = reinterpret_cast<int *>(padding_tensor->data_c());
+  auto paddings = reinterpret_cast<int *>(padding_tensor->data());
   CHECK_NULL_RETURN(paddings);
   auto input_shape = in_tensors_.at(0)->shape();
   int rank = static_cast<int>(input_shape.size());
@@ -385,7 +385,7 @@ int PadCPUKernel::Run() {
       MS_LOG(ERROR) << "The number of padding value should be only one, but got " << value_num;
       return RET_ERROR;
     }
-    pad_param_->constant_value_ = *(reinterpret_cast<float *>(pad_value->data_c()));
+    pad_param_->constant_value_ = *(reinterpret_cast<float *>(pad_value->data()));
   }
   int error_code = 0;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
@@ -398,7 +398,7 @@ int PadCPUKernel::Run() {
     }
     auto output = out_tensors_.at(0);
     int output_size = output->ElementsNum();
-    auto output_data = reinterpret_cast<float *>(output->data_c());
+    auto output_data = reinterpret_cast<float *>(output->data());
     if (abs(pad_param_->constant_value_ - 0.0f) < 1e-5) {
       memset(output_data, 0, static_cast<size_t>(output_size) * sizeof(float));
     } else {

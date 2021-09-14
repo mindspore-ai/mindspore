@@ -88,7 +88,7 @@ int GruFp16CPUKernel::InitInputWeightBias() {
   // weight -- row: hidden_size; col: input_size, need transpose
   // result -- row: seq_len * batch; col: hidden_size
   auto weight_g = in_tensors_.at(1);
-  CHECK_NULL_RETURN(weight_g->data_c());
+  CHECK_NULL_RETURN(weight_g->data());
   weight_g_ptr_ = reinterpret_cast<float16_t *>(
     malloc(weight_batch_ * gru_param_->input_col_align_ * gru_param_->input_size_ * sizeof(float16_t)));
   if (weight_g_ptr_ == nullptr) {
@@ -96,10 +96,10 @@ int GruFp16CPUKernel::InitInputWeightBias() {
     return RET_ERROR;
   }
   if (weight_g->data_type() == kNumberTypeFloat32) {
-    PackLstmWeightFp32ToFp16(weight_g_ptr_, reinterpret_cast<float *>(weight_g->data_c()), weight_batch_,
+    PackLstmWeightFp32ToFp16(weight_g_ptr_, reinterpret_cast<float *>(weight_g->data()), weight_batch_,
                              gru_param_->input_size_, gru_param_->hidden_size_, gru_param_->input_col_align_);
   } else if (weight_g->data_type() == kNumberTypeFloat16) {
-    PackLstmWeightFp16(weight_g_ptr_, reinterpret_cast<float16_t *>(weight_g->data_c()), weight_batch_,
+    PackLstmWeightFp16(weight_g_ptr_, reinterpret_cast<float16_t *>(weight_g->data()), weight_batch_,
                        gru_param_->input_size_, gru_param_->hidden_size_, gru_param_->input_col_align_);
   } else {
     MS_LOG(ERROR) << "Unsupported data type of weight_g tensor for gru.";
@@ -108,7 +108,7 @@ int GruFp16CPUKernel::InitInputWeightBias() {
 
   // input bias
   auto bias = in_tensors_.at(3);
-  CHECK_NULL_RETURN(bias->data_c());
+  CHECK_NULL_RETURN(bias->data());
   input_bias_ = reinterpret_cast<float16_t *>(malloc(weight_batch_ * gru_param_->input_col_align_ * sizeof(float16_t)));
   if (input_bias_ == nullptr) {
     MS_LOG(ERROR) << "GruFp16CPUKernel malloc input_bias_ error.";
@@ -116,11 +116,11 @@ int GruFp16CPUKernel::InitInputWeightBias() {
   }
   memset(input_bias_, 0, weight_batch_ * gru_param_->input_col_align_ * sizeof(float16_t));
   if (bias->data_type() == kNumberTypeFloat32) {
-    PackLstmBiasFp32ToFp16(input_bias_, reinterpret_cast<float *>(bias->data_c()), weight_batch_,
+    PackLstmBiasFp32ToFp16(input_bias_, reinterpret_cast<float *>(bias->data()), weight_batch_,
                            gru_param_->hidden_size_, gru_param_->input_col_align_, gru_param_->bidirectional_);
   } else if (bias->data_type() == kNumberTypeFloat16) {
-    PackLstmBiasFp16(input_bias_, reinterpret_cast<float16_t *>(bias->data_c()), weight_batch_,
-                     gru_param_->hidden_size_, gru_param_->input_col_align_, gru_param_->bidirectional_);
+    PackLstmBiasFp16(input_bias_, reinterpret_cast<float16_t *>(bias->data()), weight_batch_, gru_param_->hidden_size_,
+                     gru_param_->input_col_align_, gru_param_->bidirectional_);
   } else {
     MS_LOG(ERROR) << "Unsupported data type of bias tensor for gru.";
     return RET_ERROR;
@@ -134,7 +134,7 @@ int GruFp16CPUKernel::InitStateWeightBias() {
   // weight -- row: hidden_size; col: hidden_size, need transpose
   // result -- row: batch; col: hidden_size
   auto weight_r = in_tensors_.at(2);
-  CHECK_NULL_RETURN(weight_r->data_c());
+  CHECK_NULL_RETURN(weight_r->data());
   weight_r_ptr_ = reinterpret_cast<float16_t *>(
     malloc(weight_batch_ * gru_param_->state_col_align_ * gru_param_->hidden_size_ * sizeof(float16_t)));
   if (weight_r_ptr_ == nullptr) {
@@ -144,10 +144,10 @@ int GruFp16CPUKernel::InitStateWeightBias() {
 
   if (!is_vec_) {
     if (weight_r->data_type() == kNumberTypeFloat32) {
-      PackLstmWeightFp32ToFp16(weight_r_ptr_, reinterpret_cast<float *>(weight_r->data_c()), weight_batch_,
+      PackLstmWeightFp32ToFp16(weight_r_ptr_, reinterpret_cast<float *>(weight_r->data()), weight_batch_,
                                gru_param_->hidden_size_, gru_param_->hidden_size_, gru_param_->state_col_align_);
     } else if (weight_r->data_type() == kNumberTypeFloat16) {
-      PackLstmWeightFp16(weight_r_ptr_, reinterpret_cast<float16_t *>(weight_r->data_c()), weight_batch_,
+      PackLstmWeightFp16(weight_r_ptr_, reinterpret_cast<float16_t *>(weight_r->data()), weight_batch_,
                          gru_param_->hidden_size_, gru_param_->hidden_size_, gru_param_->state_col_align_);
     } else {
       MS_LOG(ERROR) << "Unsupported data type of weight_r tensor for gru.";
@@ -155,9 +155,9 @@ int GruFp16CPUKernel::InitStateWeightBias() {
     }
   } else {
     if (weight_r->data_type() == kNumberTypeFloat32) {
-      Float32ToFloat16(reinterpret_cast<float *>(weight_r->data_c()), weight_r_ptr_, weight_r->ElementsNum());
+      Float32ToFloat16(reinterpret_cast<float *>(weight_r->data()), weight_r_ptr_, weight_r->ElementsNum());
     } else if (weight_r->data_type() == kNumberTypeFloat16) {
-      memcpy(weight_r_ptr_, reinterpret_cast<float16_t *>(weight_r->data_c()), weight_r->Size());
+      memcpy(weight_r_ptr_, reinterpret_cast<float16_t *>(weight_r->data()), weight_r->Size());
     } else {
       MS_LOG(ERROR) << "Unsupported data type of weight_r tensor for gru.";
       return RET_ERROR;
@@ -166,7 +166,7 @@ int GruFp16CPUKernel::InitStateWeightBias() {
 
   // state bias
   auto bias = in_tensors_.at(3);
-  CHECK_NULL_RETURN(bias->data_c());
+  CHECK_NULL_RETURN(bias->data());
   state_bias_ = reinterpret_cast<float16_t *>(malloc(weight_batch_ * gru_param_->state_col_align_ * sizeof(float16_t)));
   if (state_bias_ == nullptr) {
     MS_LOG(ERROR) << "GruFp16CPUKernel malloc state_bias_ error.";
@@ -174,11 +174,11 @@ int GruFp16CPUKernel::InitStateWeightBias() {
   }
   memset(state_bias_, 0, weight_batch_ * gru_param_->state_col_align_ * sizeof(float16_t));
   if (bias->data_type() == kNumberTypeFloat32) {
-    auto state_bias_data = reinterpret_cast<float *>(bias->data_c()) + gate_num * gru_param_->hidden_size_;
+    auto state_bias_data = reinterpret_cast<float *>(bias->data()) + gate_num * gru_param_->hidden_size_;
     PackLstmBiasFp32ToFp16(state_bias_, state_bias_data, weight_batch_, gru_param_->hidden_size_,
                            gru_param_->state_col_align_, gru_param_->bidirectional_);
   } else if (bias->data_type() == kNumberTypeFloat16) {
-    auto state_bias_data = reinterpret_cast<float16_t *>(bias->data_c()) + gate_num * gru_param_->hidden_size_;
+    auto state_bias_data = reinterpret_cast<float16_t *>(bias->data()) + gate_num * gru_param_->hidden_size_;
     PackLstmBiasFp16(state_bias_, state_bias_data, weight_batch_, gru_param_->hidden_size_,
                      gru_param_->state_col_align_, gru_param_->bidirectional_);
   } else {
@@ -259,20 +259,20 @@ int GruFp16CPUKernel::MallocRunBuffer() {
 
 int GruFp16CPUKernel::Run() {
   auto input = in_tensors_.at(kInputIndex);
-  auto input_ptr = reinterpret_cast<float16_t *>(input->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(input->data());
   CHECK_NULL_RETURN(input_ptr);
   auto output = out_tensors_.at(0);
-  auto output_ptr = reinterpret_cast<float16_t *>(output->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(output->data());
   CHECK_NULL_RETURN(output_ptr);
   auto hidden_state = in_tensors_.at(4);
   auto output_hidden_state = out_tensors_.at(1);
-  CHECK_NULL_RETURN(output_hidden_state->data_c());
-  CHECK_NULL_RETURN(hidden_state->data_c());
-  memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float16_t));
+  CHECK_NULL_RETURN(output_hidden_state->data());
+  CHECK_NULL_RETURN(hidden_state->data());
+  memcpy(output_hidden_state->data(), hidden_state->data(), hidden_state->ElementsNum() * sizeof(float16_t));
   int check_seq_len = gru_param_->seq_len_;
   if (in_tensors_.size() == 6) {
     MS_ASSERT(in_tensors_.at(5) != nullptr);
-    int *seq_len = reinterpret_cast<int *>(in_tensors_.at(5)->data_c());
+    int *seq_len = reinterpret_cast<int *>(in_tensors_.at(5)->data());
     MS_ASSERT(seq_len != nullptr);
     if (!std::equal(seq_len + 1, seq_len + gru_param_->batch_, seq_len)) {
       MS_LOG(ERROR) << "different batch seq_len is currently not supported";
@@ -292,7 +292,7 @@ int GruFp16CPUKernel::Run() {
   MS_ASSERT(input_bias_ != nullptr);
   MS_ASSERT(state_bias_ != nullptr);
   GruFp16(output_ptr, input_ptr, weight_g_ptr_, weight_r_ptr_, input_bias_, state_bias_,
-          reinterpret_cast<float16_t *>(output_hidden_state->data_c()), buffer_, check_seq_len, gru_param_);
+          reinterpret_cast<float16_t *>(output_hidden_state->data()), buffer_, check_seq_len, gru_param_);
   FreeRunBuffer();
   return RET_OK;
 }

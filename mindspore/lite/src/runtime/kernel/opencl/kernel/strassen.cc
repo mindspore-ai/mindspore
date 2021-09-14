@@ -134,7 +134,7 @@ int StrassenOpenCLKernel::InitWeights() {
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);
   memset(padWeight_, 0x00, NumA * NumB * dtype_size);
-  auto weight_tensor_data = in_tensors_.at(kWeightIndex)->data_c();
+  auto weight_tensor_data = in_tensors_.at(kWeightIndex)->data();
   MS_ASSERT(weight_tensor_data);
   auto originWeightFp32 = reinterpret_cast<float *>(weight_tensor_data);
   auto originWeightFp16 = reinterpret_cast<float16_t *>(weight_tensor_data);
@@ -468,7 +468,7 @@ int StrassenOpenCLKernel::Run() {
   } else {
     threshold = UP_DIV(in_tensors_.at(0)->shape()[0], C4NUM);
   }
-  DoStrassen(in_tensors_.at(0)->data_c(), padWeight_, out_tensors_.at(0)->data_c(), in_tensors_.at(0)->shape()[0], 0,
+  DoStrassen(in_tensors_.at(0)->data(), padWeight_, out_tensors_.at(0)->data(), in_tensors_.at(0)->shape()[0], 0,
              threshold);
   return RET_OK;
 }

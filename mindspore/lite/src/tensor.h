@@ -121,7 +121,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void *data() override;
 
-  virtual void *data_c() const { return data_; }
+  virtual void *data() const { return data_; }
 
   void set_data(void *data) override {
     this->data_ = data;
@@ -195,7 +195,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   template <typename T>
   int Scale(float scale) {
     T cast_scale = static_cast<T>(scale);
-    auto data = reinterpret_cast<T *>(data_c());
+    auto data = reinterpret_cast<T *>(data_);
     if (data == nullptr) {
       return RET_ERROR;
     }

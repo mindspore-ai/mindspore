@@ -33,7 +33,7 @@ int TransposeInt8Coder::Prepare(CoderContext *const context) {
   param_->data_num_ = in_tensor->ElementsNum();
 
   auto perm_tensor = input_tensors_.at(1);
-  int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+  int *perm_data = reinterpret_cast<int *>(perm_tensor->data());
   MS_ASSERT(perm_data != nullptr);
   param_->num_axes_ = perm_tensor->ElementsNum();
   for (int i = 0; i < param_->num_axes_; ++i) {

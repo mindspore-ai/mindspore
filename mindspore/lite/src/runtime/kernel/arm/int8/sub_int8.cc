@@ -151,8 +151,8 @@ int SubInt8CPUKernel::Run() {
       ms_context_->allocator->Free(tile0_data_);
       return RET_ERROR;
     }
-    TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->data_c()),
-                       static_cast<int8_t *>(in_tensors_.at(1)->data_c()), reinterpret_cast<int8_t *>(tile0_data_),
+    TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->data()),
+                       static_cast<int8_t *>(in_tensors_.at(1)->data()), reinterpret_cast<int8_t *>(tile0_data_),
                        reinterpret_cast<int8_t *>(tile1_data_), &tile_para);
   }
   auto ret = ParallelLaunch(this->ms_context_, SubInt8Run, this, op_parameter_->thread_num_);

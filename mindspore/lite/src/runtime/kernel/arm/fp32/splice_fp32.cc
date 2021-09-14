@@ -65,9 +65,9 @@ int SpliceCPUKernel::Run() {
       return RET_PARAM_INVALID;
     }
   }
-  auto input_data = reinterpret_cast<float *>(input_tensor->data_c());
+  auto input_data = reinterpret_cast<float *>(input_tensor->data());
   CHECK_NULL_RETURN(input_data);
-  auto output_data = reinterpret_cast<float *>(output_tensor->data_c());
+  auto output_data = reinterpret_cast<float *>(output_tensor->data());
   CHECK_NULL_RETURN(output_data);
   SpliceFp32(input_data, src_row, src_col, parameter_, output_data, dst_row, dst_col);
   return RET_OK;

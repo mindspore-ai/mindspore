@@ -101,8 +101,8 @@ int SplitInt8CPUKernel::Run() {
   MS_CHECK_TRUE_RET(static_cast<size_t>(param->num_split_) == this->out_tensors_.size(), RET_ERROR);
   CHECK_LESS_RETURN(static_cast<int>(output_ptr_.size()), param->num_split_);
   for (int i = 0; i < param->num_split_; i++) {
-    CHECK_NULL_RETURN(out_tensors_.at(i)->data_c());
-    output_ptr_[i] = reinterpret_cast<int8_t *>(out_tensors_.at(i)->data_c());
+    CHECK_NULL_RETURN(out_tensors_.at(i)->data());
+    output_ptr_[i] = reinterpret_cast<int8_t *>(out_tensors_.at(i)->data());
   }
 
   auto ret = ParallelLaunch(this->ms_context_, SplitInt8Run, this, thread_n_num_);

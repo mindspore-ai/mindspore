@@ -142,26 +142,26 @@ int QuantDTypeCastFP16Run(void *cdata, int task_id, float lhs_scale, float rhs_s
 int QuantDTypeCastFp16CPUKernel::Run() {
   if (in_tensors_.at(0)->data_type() == TypeId::kNumberTypeInt8 &&
       out_tensors_.at(0)->data_type() == TypeId::kNumberTypeFloat16) {
-    int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
-    float16_ptr_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+    int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
+    float16_ptr_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
     CHECK_NULL_RETURN(int8_ptr_);
     CHECK_NULL_RETURN(float16_ptr_);
   } else if (in_tensors_.at(0)->data_type() == TypeId::kNumberTypeFloat16 &&
              out_tensors_.at(0)->data_type() == TypeId::kNumberTypeInt8) {
-    float16_ptr_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-    int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+    float16_ptr_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+    int8_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
     CHECK_NULL_RETURN(float16_ptr_);
     CHECK_NULL_RETURN(int8_ptr_);
   } else if (in_tensors_.at(0)->data_type() == TypeId::kNumberTypeUInt8 &&
              out_tensors_.at(0)->data_type() == TypeId::kNumberTypeFloat16) {
-    uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(0)->data_c());
-    float16_ptr_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+    uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(0)->data());
+    float16_ptr_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
     CHECK_NULL_RETURN(uint8_ptr_);
     CHECK_NULL_RETURN(float16_ptr_);
   } else if (in_tensors_.at(0)->data_type() == TypeId::kNumberTypeFloat16 &&
              out_tensors_.at(0)->data_type() == TypeId::kNumberTypeUInt8) {
-    float16_ptr_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-    uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(0)->data_c());
+    float16_ptr_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+    uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(0)->data());
     CHECK_NULL_RETURN(float16_ptr_);
     CHECK_NULL_RETURN(uint8_ptr_);
   } else {

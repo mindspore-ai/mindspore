@@ -82,7 +82,7 @@ int StackBaseCPUKernel::Init() {
 }
 
 int StackBaseCPUKernel::Execute(int task_id) {
-  auto output_data = reinterpret_cast<void *>(out_tensors_.at(0)->data_c());
+  auto output_data = reinterpret_cast<void *>(out_tensors_.at(0)->data());
   if (output_data == nullptr) {
     return RET_NULL_PTR;
   }
@@ -116,7 +116,7 @@ int StackBaseCPUKernel::Run() {
     return RET_ERROR;
   }
   for (size_t j = 0; j < inputs_num; ++j) {
-    auto input_data = reinterpret_cast<void *>(in_tensors_.at(j)->data_c());
+    auto input_data = reinterpret_cast<void *>(in_tensors_.at(j)->data());
     if (input_data == nullptr) {
       return RET_NULL_PTR;
     }

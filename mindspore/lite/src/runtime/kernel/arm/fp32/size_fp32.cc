@@ -36,9 +36,9 @@ int SizeCPUKernel::ReSize() { return RET_OK; }
 int SizeCPUKernel::Run() {
   auto in_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
-  CHECK_NULL_RETURN(in_tensor->data_c());
-  CHECK_NULL_RETURN(out_tensor->data_c());
-  reinterpret_cast<int *>(out_tensor->data_c())[0] = in_tensor->ElementsNum();
+  CHECK_NULL_RETURN(in_tensor->data());
+  CHECK_NULL_RETURN(out_tensor->data());
+  reinterpret_cast<int *>(out_tensor->data())[0] = in_tensor->ElementsNum();
   return RET_OK;
 }
 

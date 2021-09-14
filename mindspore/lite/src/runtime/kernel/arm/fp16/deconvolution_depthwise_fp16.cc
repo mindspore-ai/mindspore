@@ -93,7 +93,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::MallocWeightBiasData() {
 
 void DeconvolutionDepthwiseFp16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackNCHWFp16ToNC8HW8Fp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_),
                            1, weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());
@@ -183,8 +183,8 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  auto *input_ptr = reinterpret_cast<float16_t *>(input_tensor->data_c());
-  auto *output_ptr = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  auto *input_ptr = reinterpret_cast<float16_t *>(input_tensor->data());
+  auto *output_ptr = reinterpret_cast<float16_t *>(output_tensor->data());
   CHECK_NULL_RETURN(input_ptr);
   CHECK_NULL_RETURN(output_ptr);
 

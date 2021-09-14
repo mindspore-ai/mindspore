@@ -104,8 +104,8 @@ int ScaleFp16CPUKernel::Run() {
   auto output_tensor = out_tensors_.at(0);
   CHECK_NULL_RETURN(input_tensor);
   CHECK_NULL_RETURN(output_tensor);
-  input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-  output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  input_ = reinterpret_cast<float16_t *>(input_tensor->data());
+  output_ = reinterpret_cast<float16_t *>(output_tensor->data());
   CHECK_NULL_RETURN(input_);
   CHECK_NULL_RETURN(output_);
   auto ret = InitScaleOffset();

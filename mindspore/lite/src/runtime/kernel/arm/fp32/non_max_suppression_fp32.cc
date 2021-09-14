@@ -80,22 +80,22 @@ int NonMaxSuppressionCPUKernel::GetParams() {
   max_output_per_class_ = 0;
   if (in_tensors_.size() >= 3) {
     auto max_output_tensor = in_tensors_.at(kMaxOutputNumTensorIndex);
-    if (max_output_tensor != nullptr && reinterpret_cast<int32_t *>(max_output_tensor->data_c()) != nullptr) {
-      max_output_per_class_ = *(reinterpret_cast<int32_t *>(max_output_tensor->data_c()));
+    if (max_output_tensor != nullptr && reinterpret_cast<int32_t *>(max_output_tensor->data()) != nullptr) {
+      max_output_per_class_ = *(reinterpret_cast<int32_t *>(max_output_tensor->data()));
     }
   }
   iou_threshold_ = 0.0f;
   if (in_tensors_.size() >= 4) {
     auto iou_threshold_tensor = in_tensors_.at(kIoUThresholdTensorIndex);
-    if (iou_threshold_tensor != nullptr && reinterpret_cast<float *>(iou_threshold_tensor->data_c() != nullptr)) {
-      iou_threshold_ = *(reinterpret_cast<float *>(iou_threshold_tensor->data_c()));
+    if (iou_threshold_tensor != nullptr && reinterpret_cast<float *>(iou_threshold_tensor->data() != nullptr)) {
+      iou_threshold_ = *(reinterpret_cast<float *>(iou_threshold_tensor->data()));
     }
   }
   score_threshold_ = 0.0f;
   if (in_tensors_.size() >= 5) {
     auto score_threshold_tensor = in_tensors_.at(kScoreThresholdTensorIndex);
-    if (score_threshold_tensor != nullptr && reinterpret_cast<float *>(score_threshold_tensor->data_c()) != nullptr) {
-      score_threshold_ = *(reinterpret_cast<float *>(score_threshold_tensor->data_c()));
+    if (score_threshold_tensor != nullptr && reinterpret_cast<float *>(score_threshold_tensor->data()) != nullptr) {
+      score_threshold_ = *(reinterpret_cast<float *>(score_threshold_tensor->data()));
     }
   }
   return RET_OK;
@@ -222,7 +222,7 @@ int NonMaxSuppressionCPUKernel::Run() {
     MS_LOG(ERROR) << "Boxes tensor spatial dimension should be equal to scores tensor's spatial dimension.";
     return RET_ERROR;
   }
-  const float *scores = reinterpret_cast<const float *>(score_tensor->data_c());  // batch, class, num
+  const float *scores = reinterpret_cast<const float *>(score_tensor->data());  // batch, class, num
   if (scores == nullptr) {
     MS_LOG(ERROR) << "score tensor data nullptr";
     return RET_ERROR;
@@ -232,12 +232,12 @@ int NonMaxSuppressionCPUKernel::Run() {
   constexpr size_t kClassIndex = 1;
   int class_num = score_dims.at(kClassIndex);
   int box_num = score_dims.at(kScoreDimsBoxNumIndex);
-  float *scores_data = reinterpret_cast<float *>(score_tensor->data_c());
+  float *scores_data = reinterpret_cast<float *>(score_tensor->data());
   if (scores_data == nullptr) {
     MS_LOG(ERROR) << "score tensor data nullptr";
     return RET_ERROR;
   }
-  float *box_data = reinterpret_cast<float *>(box_tensor->data_c());
+  float *box_data = reinterpret_cast<float *>(box_tensor->data());
   if (box_data == nullptr) {
     MS_LOG(ERROR) << "box tensor data nullptr";
     return RET_ERROR;

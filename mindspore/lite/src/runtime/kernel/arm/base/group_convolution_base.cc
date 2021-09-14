@@ -140,8 +140,8 @@ int GroupConvolutionBaseCPUKernel::PreProcess() {
 }
 
 int GroupConvolutionBaseCPUKernel::Run() {
-  ori_in_data_ = in_tensors_[0]->data_c();
-  ori_out_data_ = out_tensors_[0]->data_c();
+  ori_in_data_ = in_tensors_[0]->data();
+  ori_out_data_ = out_tensors_[0]->data();
   for (int i = 0; i < group_num_; ++i) {
     // first, separate group conv input into several parts. This step must be in runtime stage.
     auto ret = SeparateInput(i);

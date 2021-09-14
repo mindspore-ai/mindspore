@@ -168,7 +168,7 @@ class TensorList : public Tensor {
 
  protected:
   // The following functions must be masked.
-  void *data_c() const override { return nullptr; }
+  void *data() const override { return nullptr; }
   void *MutableData() override { return nullptr; }
   size_t Size() const override { return 0; }
   std::vector<Tensor *> tensors_{};

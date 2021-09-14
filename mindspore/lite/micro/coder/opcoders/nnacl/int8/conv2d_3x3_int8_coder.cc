@@ -58,7 +58,7 @@ int Conv2D3x3Int8Coder::InitWeightBias() {
   MS_CHECK_PTR(transformed_filter_addr_);
   MS_CHECK_RET_CODE(memset_s(transformed_filter_addr_, transformed_size, 0, transformed_size),
                     "memset_s transformed_filter_addr_ failed.");
-  auto *original_weight_addr = reinterpret_cast<int8_t *>(filter_tensor_->data_c());
+  auto *original_weight_addr = reinterpret_cast<int8_t *>(filter_tensor_->data());
   ProcessFilterUint8(original_weight_addr, transformed_filter_addr_, conv_param_);
 
   // init bias
@@ -67,7 +67,7 @@ int Conv2D3x3Int8Coder::InitWeightBias() {
   MS_CHECK_PTR(new_bias_addr_);
   MS_CHECK_RET_CODE(memset_s(new_bias_addr_, new_bias_size, 0, new_bias_size), "memset_s new_bias_addr_ failed.");
   if (input_tensors_.size() == kInputSize2) {
-    auto *ori_bias_addr = reinterpret_cast<int32_t *>(bias_tensor_->data_c());
+    auto *ori_bias_addr = reinterpret_cast<int32_t *>(bias_tensor_->data());
     MS_CHECK_RET_CODE(memcpy_s(new_bias_addr_, new_bias_size, ori_bias_addr, output_channel * sizeof(int32_t)),
                       "memset_s new_bias_addr_ failed.");
   } else {

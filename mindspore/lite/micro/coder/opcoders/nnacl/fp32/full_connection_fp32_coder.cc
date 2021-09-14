@@ -41,10 +41,10 @@ int FullConnectionFP32Coder::Init() {
   if (input_tensors_.size() == kInputSize2) {
     bias_tensor_ = input_tensors_.at(kBiasIndex);
     MS_CHECK_PTR(bias_tensor_);
-    MS_CHECK_PTR(bias_tensor_->data_c());
+    MS_CHECK_PTR(bias_tensor_->data());
   }
-  params_->a_const_ = (input_tensor_->data_c() != nullptr);
-  params_->b_const_ = (filter_tensor_->data_c() != nullptr);
+  params_->a_const_ = (input_tensor_->data() != nullptr);
+  params_->b_const_ = (filter_tensor_->data() != nullptr);
   MatMulFP32BaseCoder::InitParameter();
   if (params_->a_const_) {
     std::vector<int> a_shape = input_tensor_->shape();

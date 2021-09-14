@@ -28,9 +28,9 @@ namespace mindspore::kernel {
 int SpaceToBatchInt8CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-  auto input_ptr = reinterpret_cast<const int8_t *>(input_tensor->data_c());
+  auto input_ptr = reinterpret_cast<const int8_t *>(input_tensor->data());
   CHECK_NULL_RETURN(input_ptr);
-  auto output_ptr = reinterpret_cast<int8_t *>(output_tensor->data_c());
+  auto output_ptr = reinterpret_cast<int8_t *>(output_tensor->data());
   CHECK_NULL_RETURN(output_ptr);
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
   CHECK_NULL_RETURN(param);

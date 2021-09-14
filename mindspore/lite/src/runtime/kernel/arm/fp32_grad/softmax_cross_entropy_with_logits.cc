@@ -58,15 +58,15 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
 }
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
-  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(ins);
-  auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
+  auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->data());
   CHECK_NULL_RETURN(labels);
-  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(out);
   float *grads = nullptr;
   if (IsTrain() && out_tensors_.size() > 1) {
-    grads = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
+    grads = reinterpret_cast<float *>(out_tensors_.at(1)->data());
   }
   size_t data_size = in_tensors_.at(0)->ElementsNum();
 

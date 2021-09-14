@@ -260,7 +260,7 @@ inline int PackLeftTensor(const lite::Tensor &tensor, Matrix *matrix, int row_ti
   MS_ASSERT(matrix != nullptr);
   MS_ASSERT(allocator != nullptr);
   MS_ASSERT(matrix->data_ == nullptr);
-  matrix->data_ = reinterpret_cast<float *>(tensor.data_c());
+  matrix->data_ = reinterpret_cast<float *>(tensor.data());
   matrix->is_transpose_ = false;
   // Left tensor is in [batch, row, col] shape
   matrix->batch_ = tensor.shape().at(kLeftMatrixBatchDimIndex);
@@ -313,7 +313,7 @@ inline int MallocRightTensor(Matrix *mat, int col_tile, const AllocatorPtr &allo
 inline int PackRightTensor(const lite::Tensor &tensor, Matrix *matrix, int col_tile) {
   MS_ASSERT(matrix != nullptr);
   MS_ASSERT(matrix->data_ == nullptr);
-  matrix->data_ = reinterpret_cast<float *>(tensor.data_c());
+  matrix->data_ = reinterpret_cast<float *>(tensor.data());
   matrix->batch_ = 1;
   matrix->is_transpose_ = false;
   matrix->row_ = tensor.shape().at(0);
@@ -324,7 +324,7 @@ inline int PackRightTensor(const lite::Tensor &tensor, Matrix *matrix, int col_t
 inline int PackBiasTensor(const lite::Tensor &tensor, Matrix *matrix, int bias_tile) {
   MS_ASSERT(matrix != nullptr);
   MS_ASSERT(matrix->data_ == nullptr);
-  matrix->data_ = reinterpret_cast<float *>(tensor.data_c());
+  matrix->data_ = reinterpret_cast<float *>(tensor.data());
   matrix->batch_ = 1;
   matrix->is_transpose_ = false;
   matrix->row_ = 1;
@@ -339,7 +339,7 @@ inline void PackPositionTensor(const lite::Tensor &tensor, Matrix *matrix) {
   matrix->is_transpose_ = false;
   matrix->row_ = matrix->packed_row_ = 1;
   matrix->col_ = matrix->packed_col_ = tensor.shape().at(0) * tensor.shape().at(1);
-  matrix->data_ = matrix->packed_data_ = reinterpret_cast<float *>(tensor.data_c());
+  matrix->data_ = matrix->packed_data_ = reinterpret_cast<float *>(tensor.data());
 }
 }  // namespace
 
@@ -414,10 +414,10 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersInputs() {
     MS_LOG(ERROR) << "Run buffer data should not be packed.";
     return RET_ERROR;
   }
-  auto input_q_tensor_data = reinterpret_cast<float *>(input_q_tensor_->data_c());
-  auto input_k_tensor_data = reinterpret_cast<float *>(input_k_tensor_->data_c());
-  auto input_v_tensor_data = reinterpret_cast<float *>(input_v_tensor_->data_c());
-  auto input_p_tensor_data = reinterpret_cast<float *>(input_p_tensor_->data_c());
+  auto input_q_tensor_data = reinterpret_cast<float *>(input_q_tensor_->data());
+  auto input_k_tensor_data = reinterpret_cast<float *>(input_k_tensor_->data());
+  auto input_v_tensor_data = reinterpret_cast<float *>(input_v_tensor_->data());
+  auto input_p_tensor_data = reinterpret_cast<float *>(input_p_tensor_->data());
   if (input_q_tensor_data == nullptr || input_k_tensor_data == nullptr || input_v_tensor_data == nullptr ||
       input_p_tensor_data == nullptr) {
     MS_LOG(ERROR) << "Input data is nullptr.";
@@ -574,7 +574,7 @@ int RelativePositionAttentionCPUKernel::PackRunBuffersAttention(int batch, int n
     return RET_ERROR;
   }
   (void)InitMatrix(&output_mat_, batch, param_->q_seq_, param_->d_model_, false);
-  output_mat_.data_ = reinterpret_cast<float *>(output_tensor->data_c());
+  output_mat_.data_ = reinterpret_cast<float *>(output_tensor->data());
   if (output_mat_.data_ == nullptr) {
     MS_LOG(ERROR) << "Output buffer is not malloced";
     return RET_ERROR;

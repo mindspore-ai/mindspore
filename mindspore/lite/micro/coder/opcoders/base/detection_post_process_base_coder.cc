@@ -47,7 +47,7 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
   if (anchor_tensor->data_type() == kNumberTypeInt8) {
     MS_CHECK_TRUE(!anchor_tensor->quant_params().empty(), "anchor_tensor quant params cannot be empty.");
     LiteQuantParam quant_param = anchor_tensor->quant_params().at(0);
-    auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->data_c());
+    auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->data());
     MS_CHECK_PTR(anchor_int8);
     auto anchor_fp32 = static_cast<float *>(
       allocator_->Malloc(kNumberTypeFloat, anchor_tensor->ElementsNum() * sizeof(float), kOfflinePackWeight));
@@ -58,7 +58,7 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
   } else if (anchor_tensor->data_type() == kNumberTypeUInt8) {
     MS_CHECK_TRUE(!anchor_tensor->quant_params().empty(), "anchor_tensor quant params cannot be empty.");
     LiteQuantParam quant_param = anchor_tensor->quant_params().front();
-    auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->data_c());
+    auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->data());
     MS_CHECK_PTR(anchor_uint8);
     auto anchor_fp32 = static_cast<float *>(
       allocator_->Malloc(kNumberTypeFloat, anchor_tensor->ElementsNum() * sizeof(float), kOfflinePackWeight));
@@ -70,7 +70,7 @@ int DetectionPostProcessBaseCoder::Prepare(CoderContext *const context) {
     params_->anchors_ =
       static_cast<float *>(allocator_->Malloc(kNumberTypeFloat, anchor_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(params_->anchors_);
-    memcpy_s(params_->anchors_, anchor_tensor->Size(), anchor_tensor->data_c(), anchor_tensor->Size());
+    memcpy_s(params_->anchors_, anchor_tensor->Size(), anchor_tensor->data(), anchor_tensor->Size());
   } else {
     MS_LOG(ERROR) << "unsupported anchor data type " << anchor_tensor->data_type();
     return RET_ERROR;

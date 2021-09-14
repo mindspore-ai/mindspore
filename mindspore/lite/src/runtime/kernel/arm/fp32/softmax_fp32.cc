@@ -115,9 +115,9 @@ int SoftmaxCPUKernel::Run() {
   } else {
     MS_ASSERT(sum_data_);
     MS_ASSERT(softmax_param_);
-    auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
+    auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data());
     MS_ASSERT(input_ptr);
-    auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
+    auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data());
     MS_ASSERT(output_ptr);
     Softmax(input_ptr, output_ptr, sum_data_, softmax_param_);
   }

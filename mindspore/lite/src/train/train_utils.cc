@@ -150,7 +150,7 @@ Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type, bool support_fp16) {
     return nullptr;
   }
 
-  auto origin_data = tensor->data_c();
+  auto origin_data = tensor->data();
   MS_ASSERT(origin_data != nullptr);
   auto restore_tensor = Tensor::CopyTensor(*tensor, false);
   restore_tensor->set_data(origin_data);
@@ -161,7 +161,7 @@ Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type, bool support_fp16) {
     tensor->set_data(nullptr);
     tensor->set_data_type(kNumberTypeFloat16);
     auto ret = tensor->MallocData();
-    auto new_tensor_data = tensor->data_c();
+    auto new_tensor_data = tensor->data();
     MS_ASSERT(new_tensor_data != nullptr);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "malloc data failed";
@@ -179,7 +179,7 @@ Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type, bool support_fp16) {
       delete restore_tensor;
       return nullptr;
     }
-    auto new_tensor_data = tensor->data_c();
+    auto new_tensor_data = tensor->data();
     MS_ASSERT(new_tensor_data != nullptr);
     MS_LOG(DEBUG) << "Convert tensor to fp32 " << tensor->tensor_name();
     Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);

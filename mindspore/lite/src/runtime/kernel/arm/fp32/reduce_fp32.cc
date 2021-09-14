@@ -111,13 +111,13 @@ int ReduceCPUKernel::Run() {
     return ret;
   }
 
-  src_data_ = in_tensors_.at(0)->data_c();
+  src_data_ = in_tensors_.at(0)->data();
   HandleASumAndSumSquare();
   for (size_t i = 0; i < static_cast<size_t>(num_axes_); ++i) {
     if (i != static_cast<size_t>(num_axes_ - 1)) {
       dst_data_ = data_buffers_.at(i);
     } else {
-      dst_data_ = out_tensors_.at(0)->data_c();
+      dst_data_ = out_tensors_.at(0)->data();
     }
     outer_size_ = outer_sizes_.at(i);
     inner_size_ = inner_sizes_.at(i);
@@ -152,7 +152,7 @@ void ReduceCPUKernel::HandleASumAndSumSquare() {
     return;
   }
   int num = in_tensors_.at(0)->ElementsNum();
-  auto *data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto *data = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   if (data == nullptr) {
     return;
   }
@@ -176,7 +176,7 @@ int ReduceCPUKernel::CalculateCoeffOutput() {
   if (data_type_ != kDataTypeFloat) {
     return RET_ERROR;
   }
-  auto *out_data = reinterpret_cast<float *>(out_tensor->data_c());
+  auto *out_data = reinterpret_cast<float *>(out_tensor->data());
   if (out_data == nullptr) {
     return RET_NULL_PTR;
   }

@@ -38,9 +38,9 @@ int PadFp16CPUKernel::RunMirrorPadImpl(int task_id) {
   CHECK_NULL_RETURN(input);
   auto output = out_tensors_.at(0);
   CHECK_NULL_RETURN(output);
-  auto input_data = reinterpret_cast<float16_t *>(input->data_c());
+  auto input_data = reinterpret_cast<float16_t *>(input->data());
   CHECK_NULL_RETURN(input_data);
-  auto output_data = reinterpret_cast<float16_t *>(output->data_c());
+  auto output_data = reinterpret_cast<float16_t *>(output->data());
   CHECK_NULL_RETURN(output_data);
 
   /* Fast Mirror pad */
@@ -87,14 +87,14 @@ int PadFp16CPUKernel::Run() {
       MS_LOG(ERROR) << "The number of padding value should be only one, but got " << value_num;
       return RET_ERROR;
     }
-    CHECK_NULL_RETURN(pad_value->data_c());
-    pad_param_->constant_value_ = *(reinterpret_cast<float16_t *>(pad_value->data_c()));
+    CHECK_NULL_RETURN(pad_value->data());
+    pad_param_->constant_value_ = *(reinterpret_cast<float16_t *>(pad_value->data()));
   }
 
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-  input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-  output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  input_ = reinterpret_cast<float16_t *>(input_tensor->data());
+  output_ = reinterpret_cast<float16_t *>(output_tensor->data());
   CHECK_NULL_RETURN(input_);
   CHECK_NULL_RETURN(output_);
   int ret = 0;

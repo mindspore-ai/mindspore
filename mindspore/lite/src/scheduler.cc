@@ -86,7 +86,7 @@ int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16)
   }
   auto origin_own_data = tensor->own_data();
   auto origin_dt = tensor->data_type();
-  auto origin_data = tensor->data_c();
+  auto origin_data = tensor->data();
   MS_ASSERT(origin_data != nullptr);
   tensor->set_data(nullptr);
   tensor->set_data_type(dst_data_type);
@@ -99,7 +99,7 @@ int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16)
     tensor->set_own_data(origin_own_data);
     return ret;
   }
-  auto new_tensor_data = tensor->data_c();
+  auto new_tensor_data = tensor->data();
   MS_ASSERT(new_tensor_data != nullptr);
   if (dst_data_type == kNumberTypeFloat32) {
     Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
@@ -166,7 +166,7 @@ int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
     if (tensor->data_type() == kObjectTypeTensorType) {
       // tensorlist's data is nullptr since ConvertTensors
       // we never set or malloc data of tensorlist but malloc tensors in tensorlist
-      MS_ASSERT(tensor->data_c() == nullptr);
+      MS_ASSERT(tensor->data() == nullptr);
     } else {
       auto copy_tensor = Tensor::CopyTensor(*tensor, true);
       if (copy_tensor == nullptr) {
@@ -174,7 +174,7 @@ int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
         return RET_ERROR;
       }
       tensor->FreeData();
-      tensor->set_data(copy_tensor->data_c());
+      tensor->set_data(copy_tensor->data());
       tensor->set_own_data(true);
       copy_tensor->set_data(nullptr);
       delete (copy_tensor);
@@ -753,7 +753,7 @@ int CastAndRestoreConstTensorData(Tensor *tensor, std::map<Tensor *, Tensor *> *
   if (tensor->data_type() == dst_data_type) {
     return RET_OK;
   }
-  auto origin_data = tensor->data_c();
+  auto origin_data = tensor->data();
   MS_ASSERT(origin_data != nullptr);
   auto restore_tensor = Tensor::CopyTensor(*tensor, false);
   restore_tensor->set_data(origin_data);
@@ -765,7 +765,7 @@ int CastAndRestoreConstTensorData(Tensor *tensor, std::map<Tensor *, Tensor *> *
     MS_LOG(ERROR) << "malloc data failed";
     return ret;
   }
-  auto new_tensor_data = tensor->data_c();
+  auto new_tensor_data = tensor->data();
   MS_ASSERT(new_tensor_data != nullptr);
   if (dst_data_type == kNumberTypeFloat32) {
     Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
@@ -836,7 +836,7 @@ inline void RestoreTensorData(std::map<Tensor *, Tensor *> *restored_origin_tens
     MS_ASSERT(restored_tensor != nullptr);
     origin_tensor->FreeData();
     origin_tensor->set_data_type(restored_tensor->data_type());
-    origin_tensor->set_data(restored_tensor->data_c());
+    origin_tensor->set_data(restored_tensor->data());
     origin_tensor->set_own_data(restored_tensor->own_data());
   }
   FreeRestoreTensors(restored_origin_tensors);

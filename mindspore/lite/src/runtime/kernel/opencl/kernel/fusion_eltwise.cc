@@ -216,8 +216,8 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
     MS_ASSERT(tensor);
     if (tensor->IsConst()) {
       if (IsScalar(tensor->shape())) {
-        float value = (tensor->data_type() == kNumberTypeFloat16) ? *(reinterpret_cast<float16_t *>(tensor->data_c()))
-                                                                  : *(reinterpret_cast<float32_t *>(tensor->data_c()));
+        float value = (tensor->data_type() == kNumberTypeFloat16) ? *(reinterpret_cast<float16_t *>(tensor->data()))
+                                                                  : *(reinterpret_cast<float32_t *>(tensor->data()));
         scalar_weights_.push_back(value);
       } else {
         auto tensor_info = GpuTensorInfo(tensor);
@@ -235,15 +235,15 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
         memset(buffer, 0x00, size);
         if (tensor->data_type() == kNumberTypeFloat16) {
           if (use_fp16) {
-            CopyNumber<float16_t, float16_t>(buffer, tensor->data_c(), num);
+            CopyNumber<float16_t, float16_t>(buffer, tensor->data(), num);
           } else {
-            CopyNumber<float32_t, float16_t>(buffer, tensor->data_c(), num);
+            CopyNumber<float32_t, float16_t>(buffer, tensor->data(), num);
           }
         } else {
           if (use_fp16) {
-            CopyNumber<float16_t, float32_t>(buffer, tensor->data_c(), num);
+            CopyNumber<float16_t, float32_t>(buffer, tensor->data(), num);
           } else {
-            CopyNumber<float32_t, float32_t>(buffer, tensor->data_c(), num);
+            CopyNumber<float32_t, float32_t>(buffer, tensor->data(), num);
           }
         }
         if (allocator->UnmapBuffer(buffer) != RET_OK) {
@@ -309,14 +309,14 @@ int FusionEltwiseOpenCLKernel::Run() {
   int arg_idx = 0;
   for (auto *in_tensor : in_tensors_) {
     if (!in_tensor->IsConst()) {
-      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, in_tensor->data_c()) != CL_SUCCESS) {
+      if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, in_tensor->data()) != CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
         return RET_ERROR;
       }
     }
     arg_idx++;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, out_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

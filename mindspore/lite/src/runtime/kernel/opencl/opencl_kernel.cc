@@ -98,7 +98,7 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
   }
   auto *tensor = out_tensors()[0];
   auto mem_type = GetMemType();
-  if (tensor == nullptr || tensor->data_c() == nullptr) {
+  if (tensor == nullptr || tensor->data() == nullptr) {
     return;
   }
 
@@ -112,15 +112,15 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
     MS_LOG(ERROR) << "SyncCommandQueue failed.";
   }
   if (mem_type == lite::opencl::MemType::BUF) {
-    if (allocator->MapBuffer(tensor->data_c(), CL_MAP_READ, nullptr, true) == nullptr) {
+    if (allocator->MapBuffer(tensor->data(), CL_MAP_READ, nullptr, true) == nullptr) {
       MS_LOG(ERROR) << "Map Buffer failed.";
     }
-    memcpy(data.data(), tensor->data_c(), img_info.OriginSize);
-    if (allocator->UnmapBuffer(tensor->data_c()) != RET_OK) {
+    memcpy(data.data(), tensor->data(), img_info.OriginSize);
+    if (allocator->UnmapBuffer(tensor->data()) != RET_OK) {
       MS_LOG(ERROR) << "UnmapBuffer failed.";
     }
   } else {
-    runtime->ReadImage(tensor->data_c(), data.data());
+    runtime->ReadImage(tensor->data(), data.data());
   }
 
   printf("shape=(");

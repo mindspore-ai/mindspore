@@ -162,8 +162,8 @@ void MatmulBaseInt8CPUKernel::InitQuantParam() {
 }
 
 void MatmulBaseInt8CPUKernel::InitParameter() {
-  param_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
-  param_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
+  param_->a_const_ = (in_tensors_[0]->data() != nullptr);
+  param_->b_const_ = (in_tensors_[1]->data() != nullptr);
 #ifdef ENABLE_ARM32
   row_tile_ = C4NUM;
   col_tile_ = C2NUM;
@@ -205,7 +205,7 @@ void MatmulBaseInt8CPUKernel::FreeTmpBuffer() {
 }
 
 void MatmulBaseInt8CPUKernel::TransferB() {
-  auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
+  auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data());
   for (int i = 0; i < param_->batch; i++) {
     auto current_weight = weight_data + i * param_->deep_ * param_->col_;
     auto current_b_pack = pack_b_ptr_ + i * param_->col_align_ * param_->deep_16_;
@@ -272,7 +272,7 @@ int MatmulBaseInt8CPUKernel::InitBias() {
       FreeTmpBuffer();
       return RET_MEMORY_FAILED;
     }
-    memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(int));
+    memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(int));
   } else {
     bias_ptr_ = nullptr;
   }
@@ -319,8 +319,8 @@ int MatmulBaseInt8CPUKernel::Run() {
     TransferB();
   }
 
-  int8_t *a_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
-  int8_t *c_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  int8_t *a_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
+  int8_t *c_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(a_ptr);
   CHECK_NULL_RETURN(c_ptr);
   int32_t tmp_weight_zp = filter_per_channel_ ? 1 : quant_param_->filter_zp_[0];

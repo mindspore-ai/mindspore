@@ -44,7 +44,7 @@ void CodeModelParamsState(std::ofstream &ofs, const std::map<std::string, Tensor
     std::string name = item.first;
     Tensor *tensor = item.second;
     if (CheckConstantTensor(tensor)) {
-      if (tensor->data_c() == nullptr) {
+      if (tensor->data() == nullptr) {
         continue;
       }
       ofs << "extern const " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
@@ -57,7 +57,7 @@ void CodeModelParamsData(std::ofstream &ofs, const std::map<std::string, Tensor 
     std::string name = item.first;
     Tensor *tensor = item.second;
     if (CheckConstantTensor(tensor)) {
-      if (tensor->data_c() == nullptr) {
+      if (tensor->data() == nullptr) {
         continue;
       }
       ofs << "const " << GetTensorDataType(tensor->data_type()) << name << "[] = ";
@@ -75,7 +75,7 @@ void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::
   for (auto &item : address_map) {
     std::string name = item.first;
     Tensor *tensor = item.second;
-    if (tensor->data_c() == nullptr) {
+    if (tensor->data() == nullptr) {
       continue;
     }
     if (CheckConstantTensor(tensor)) {
@@ -152,8 +152,8 @@ void SaveDataToNet(const std::map<std::string, Tensor *> &saved_weights, const s
   for (auto &item : saved_weights) {
     std::string name = item.first;
     Tensor *tensor = item.second;
-    if ((CheckConstantTensor(tensor)) && tensor->data_c() != nullptr) {
-      net.write(reinterpret_cast<const char *>(tensor->data_c()), tensor->Size());
+    if ((CheckConstantTensor(tensor)) && tensor->data() != nullptr) {
+      net.write(reinterpret_cast<const char *>(tensor->data()), tensor->Size());
     }
   }
   net.close();

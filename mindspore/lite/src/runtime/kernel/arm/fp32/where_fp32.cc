@@ -70,7 +70,7 @@ int WhereRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int WhereCPUKernel::RunWithSingleInput() {
   auto input = in_tensors_.at(0);
   MS_ASSERT(input);
-  condition_ = reinterpret_cast<bool *>(input->data_c());
+  condition_ = reinterpret_cast<bool *>(input->data());
   CHECK_NULL_RETURN(condition_);
   where_param_->condition_num_ = input->ElementsNum();
   where_param_->rank_ = static_cast<int>(input->shape().size());
@@ -122,13 +122,13 @@ int WhereCPUKernel::RunWithTripleInputs() {
   int x_num = x->ElementsNum();
   int y_num = y->ElementsNum();
 
-  condition_ = reinterpret_cast<bool *>(condition->data_c());
+  condition_ = reinterpret_cast<bool *>(condition->data());
   CHECK_NULL_RETURN(condition_);
-  x_ = reinterpret_cast<float *>(x->data_c());
+  x_ = reinterpret_cast<float *>(x->data());
   CHECK_NULL_RETURN(x_);
-  y_ = reinterpret_cast<float *>(y->data_c());
+  y_ = reinterpret_cast<float *>(y->data());
   CHECK_NULL_RETURN(y_);
-  output_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  output_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   int num_max = condition_nums > x_num ? condition_nums : (x_num > y_num ? x_num : y_num);
   where_param_->condition_num_ = condition_nums;
   where_param_->x_num_ = x_num;
