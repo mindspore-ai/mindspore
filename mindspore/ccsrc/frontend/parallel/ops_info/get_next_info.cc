@@ -87,7 +87,7 @@ Status GetNextInfo::InferDevMatrixShape() {
   }
   auto dev_matrix_iter =
     std::max_element(dataset_strategy_.begin(), dataset_strategy_.end(),
-                     [](Dimensions stra1, Dimensions stra2) { return stra1.size() < stra2.size(); });
+                     [](const Dimensions &stra1, const Dimensions &stra2) { return stra1.size() < stra2.size(); });
   if (dev_matrix_iter != dataset_strategy_.end()) {
     dev_matrix_shape_ = *dev_matrix_iter;
   }
@@ -104,10 +104,8 @@ Status GetNextInfo::Init(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << " : Init failed";
     return FAILED;
   }
-  if (InferReplaceOps(strategy) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Infer replace Ops failed";
-    return FAILED;
-  }
+  InferReplaceOps(strategy);
+
   MS_LOG(INFO) << name_ << " : Init success";
   return SUCCESS;
 }
@@ -125,7 +123,7 @@ Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
     dataset_strategy_ = ParallelContext::GetInstance()->dataset_strategy();
   } else {
     bool full_batch = ParallelContext::GetInstance()->full_batch();
-    int64_t dev_num = full_batch ? 1 : SizeToLong(g_device_manager->stage_device_num());
+    int64_t dev_num = full_batch ? 1 : g_device_manager->stage_device_num();
     for (size_t i = 0; i < outputs_shape_.size(); i++) {
       Dimensions input_strategy;
       for (size_t j = 0; j < outputs_shape_[i].size(); j++) {
@@ -204,10 +202,10 @@ Status GetNextInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
+void GetNextInfo::InferReplaceOps(const StrategyPtr &) {
   Shapes out_shapes;
-  std::transform(outputs_tensor_info_.begin(), outputs_tensor_info_.end(), std::back_inserter(out_shapes),
-                 [](auto tensor_info) { return tensor_info.slice_shape(); });
+  (void)std::transform(outputs_tensor_info_.begin(), outputs_tensor_info_.end(), std::back_inserter(out_shapes),
+                       [](auto tensor_info) { return tensor_info.slice_shape(); });
   ValuePtr new_shapes = MakeValue(out_shapes);
   Attr attr_types = std::make_pair(TYPES, attrs_[TYPES]);
   Attr attr_shapes = std::make_pair(SHAPES, new_shapes);
@@ -217,7 +215,6 @@ Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
   OperatorParams params;
   OperatorArgs args = std::make_pair(attrs, params);
   replace_op_ = {std::make_pair(GET_NEXT, args)};
-  return SUCCESS;
 }
 
 Status GetNextInfo::InitForCostModel(const StrategyPtr &strategy) {

@@ -206,6 +206,5 @@ std::vector<StrategyPtr> DSDMatmulInfo::GenerateOpStrategies(int64_t stage_id) {
 }
 
 Status DSDMatmulInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
-
 }  // namespace parallel
 }  // namespace mindspore

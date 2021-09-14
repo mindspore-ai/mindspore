@@ -255,7 +255,7 @@ Status GatherPInfo::CheckSplitAxisStrategy(const StrategyPtr &strategy) {
 
 // return true: axis is 0, and split the first dimension of parameter and the first dimension of indices
 // otherwise return false
-bool GatherPInfo::ShardBatchAndAxis(const Strategys &strategy) {
+bool GatherPInfo::ShardBatchAndAxis(const Strategys &strategy) const {
   if (axis_ != 0) {
     return false;
   }
@@ -285,7 +285,7 @@ bool GatherPInfo::ShardBatchAndAxis(const Strategys &strategy) {
   return true;
 }
 
-Status GatherPInfo::SetAttribute(const StrategyPtr &strategy) {
+void GatherPInfo::SetAttribute(const StrategyPtr &strategy) {
   auto param_strategy = strategy->GetInputDim().at(0);
   // axis=0, index_shape(0)%param_strategy(0) must be 0
   Shape index_shape = inputs_shape_.at(1);
@@ -310,8 +310,6 @@ Status GatherPInfo::SetAttribute(const StrategyPtr &strategy) {
     repeated_num_in_dev_matrix_right_ = false;
   }
   MS_LOG(INFO) << "Set repeated_num_in_dev_matrix_right for gather to " << repeated_num_in_dev_matrix_right_;
-
-  return SUCCESS;
 }
 
 Status GatherPInfo::CheckStrategy(const StrategyPtr &strategy) {
@@ -370,9 +368,7 @@ Status GatherPInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   // According to the strategy, set the private members.
-  if (SetAttribute(strategy) != SUCCESS) {
-    return FAILED;
-  }
+  SetAttribute(strategy);
 
   return SUCCESS;
 }
@@ -550,9 +546,13 @@ Status GatherPInfo::InferTensorMap() {
   }
 
   if (shard_batch_and_axis_) {
-    inputs_tensor_map_.push_back({0, -1});       // param
-    inputs_tensor_map_.push_back({1, -1});       // indices
-    outputs_tensor_map_.push_back({1, -1, -1});  // output, if forward use reducescatter, tensormap is {0, -1, -1}
+    Shape param_tensor_map = {0, -1};
+    Shape indices_tensor_map = {1, -1};
+    Shape out_tensor_map = {1, -1, -1};
+    (void)inputs_tensor_map_.emplace_back(std::move(param_tensor_map));    // param
+    (void)inputs_tensor_map_.emplace_back(std::move(indices_tensor_map));  // indices
+    (void)outputs_tensor_map_.emplace_back(
+      std::move(out_tensor_map));  // output, if forward use reducescatter, tensormap is {0, -1, -1}
     return SUCCESS;
   }
   InferInputsTensorMap();
@@ -842,8 +842,7 @@ Status GatherPInfo::ComputeReplaceOp() {
 
   OperatorName op_name = EMBEDDING_LOOKUP;
   OperatorAttrs attrs;
-  int64_t bias_int = static_cast<int64_t>(bias);
-  Attr param_offset = std::make_pair("offset", MakeValue(bias_int));
+  Attr param_offset = std::make_pair("offset", MakeValue(bias));
   OperatorParams params = {std::make_pair(param_offset, 3)};
   OperatorArgs args = std::make_pair(attrs, params);
   Operator op = std::make_pair(op_name, args);

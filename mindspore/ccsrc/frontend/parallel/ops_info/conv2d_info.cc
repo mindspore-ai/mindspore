@@ -122,7 +122,7 @@ Status Conv2DInfo::GetAttrsBase() {
 
 Status Conv2DInfo::GetAttrs() { return GetAttrsBase(); }
 
-Status Conv2DInfo::CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) {
+Status Conv2DInfo::CheckHWStrategyBase(int64_t h_strategy, int64_t w_strategy) const {
   if (outputs_shape_[0][2] % h_strategy != 0) {
     MS_LOG(ERROR) << name_
                   << ": Do not support to split h dimension when out_shape of h dimension is not divisible by strategy "
@@ -433,10 +433,10 @@ int64_t Conv2DInfo::ComputeOverlapRightSizeByRankBias(int64_t rank_bias) {
          w_kernel_size - w_stride - left_pad;
 }
 
-Status Conv2DInfo::InferOverlapSize() {
+void Conv2DInfo::InferOverlapSize() {
   if (!need_exchange_overlap_) {
     MS_LOG(INFO) << name_ << ": No need to infer overlap size";
-    return SUCCESS;
+    return;
   }
 
   overlap_left_size_ = ComputeOverlapLeftSizeByRankBias(rank_bias_);
@@ -465,7 +465,6 @@ Status Conv2DInfo::InferOverlapSize() {
                << ", the right overlap size of left rank is " << left_rank_overlap_right_size_
                << ", the left overlap size of right rank is " << right_rank_overlap_left_size_
                << ", the right overlap size of right rank is " << right_rank_overlap_right_size_;
-  return SUCCESS;
 }
 
 Status Conv2DInfo::InferTensorMap() {
@@ -670,7 +669,7 @@ OperatorAttrs Conv2DInfo::CreateConv2DAttrs() {
   return attrs;
 }
 
-std::string Conv2DInfo::ReplaceNodeName() {
+std::string Conv2DInfo::ReplaceNodeName() const {
   if (name_.find(CONV2D_INFO) != std::string::npos) {
     return CONV2D;
   }
@@ -705,7 +704,7 @@ AnfNodePtr Conv2DInfo::GenerateConv2DNode(const AnfNodePtr &new_input, const CNo
   return gen_g_.PushBack({gen_g_.NewOpInst(node_name, conv2d_attrs), new_input, cnode->input(2), cnode->input(3)});
 }
 
-Status Conv2DInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
+void Conv2DInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto graph = cnode->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
 
@@ -785,7 +784,6 @@ Status Conv2DInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(input_nodes, conv2d));
-  return SUCCESS;
 }
 
 ReplaceGraphPtr Conv2DInfo::replace_graph(const CNodePtr &cnode) {
@@ -802,18 +800,12 @@ ReplaceGraphPtr Conv2DInfo::replace_graph(const CNodePtr &cnode) {
     return nullptr;
   }
 
-  if (InferOverlapSize() != SUCCESS) {
-    return nullptr;
-  }
+  InferOverlapSize();
 
   InferNewOperatorAttrs();
 
-  if (ComputeReplaceGraph(cnode) != SUCCESS) {
-    return nullptr;
-  } else {
-    return replace_graph_;
-  }
-  return nullptr;
+  ComputeReplaceGraph(cnode);
+  return replace_graph_;
 }
 
 void Conv2DInfo::ReComputeBatchSplitFlagList() {
@@ -1148,7 +1140,6 @@ void Conv2DBackpropInputInfo::InferNewPadList() {
       std::ceil(LongToDouble(w_output_shape / w_dimension_shard_num_ + left_pad) / LongToDouble(w_stride)));
 
     real_left_pad = w_kernel_size - left_pad - 1;
-
   } else if (rank_bias_ == w_dimension_shard_num_ - 1) {  // the last rank
     current_rank_required_size =
       DoubleToLong(std::ceil(LongToDouble(w_output_shape / w_dimension_shard_num_ + w_kernel_size - w_output_shape +

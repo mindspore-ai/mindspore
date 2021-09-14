@@ -49,7 +49,7 @@ class GetNextInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
-  Status InferReplaceOps(const StrategyPtr &strategy);
+  void InferReplaceOps(const StrategyPtr &strategy);
   Status GetAttrTypes();
   Status GetAttrShapes();
   Status GetAttrOutPutNum();

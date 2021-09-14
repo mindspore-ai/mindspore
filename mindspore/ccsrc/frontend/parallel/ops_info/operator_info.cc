@@ -390,7 +390,7 @@ void AddCommOpParamFlag(const CNodePtr &comm_node) {
   for (auto &node_user : node_users) {
     if (IsPrimitiveCNode(node_user.first, prim::kPrimSend)) {
       auto prim = GetCNodePrimitive(comm_node);
-      prim->AddAttr(PARAMETER_MICRO, MakeValue(0));
+      (void)prim->AddAttr(PARAMETER_MICRO, MakeValue(0));
       return;
     }
   }
