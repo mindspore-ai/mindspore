@@ -108,7 +108,7 @@ from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAto
                          LJForce, LJEnergy, LJForceWithPMEDirectForce, PMEExcludedForce, PMEEnergy, Dihedral14LJForce,
                          Dihedral14LJForceWithDirectCF, Dihedral14LJEnergy, Dihedral14LJCFForceWithAtomEnergy,
                          Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy,
-                         GetCenterOfGeometry, MDTemperature, MDIterationLeapFrogLiujian,
+                         MDTemperature, MDIterationLeapFrogLiujian,
                          CrdToUintCrd, MDIterationSetupRandState, TransferCrd, FFT3D, IFFT3D, NeighborListUpdate)
 from .sponge_update_ops import (ConstrainForceCycleWithVirial, RefreshUintCrd, LastCrdToDr, RefreshCrdVel,
                                 CalculateNowrapCrd, RefreshBoxmapTimes, Totalc6get, CrdToUintCrdQuarter,
@@ -464,6 +464,25 @@ __all__ = [
     "IndexAdd",
     "PQC",
     "Evolution",
+    "AdaptiveAvgPool2D",
+    "TensorScatterMax",
+    "TensorScatterMin",
+    "TensorScatterSub",
+    "SoftShrink",
+    "FFT3D",
+    "IFFT3D",
+    "HShrink",
+    "PyFunc",
+    "BufferAppend",
+    "BufferGetItem",
+    "BufferSample",
+    "Erfinv",
+    "Conj",
+    "Real",
+    "Imag"
+]
+
+__sponge__ = [
     "BondForce",
     "BondEnergy",
     "BondAtomEnergy",
@@ -491,32 +510,13 @@ __all__ = [
     "Dihedral14CFEnergy",
     "MDIterationLeapFrog",
     "Dihedral14CFAtomEnergy",
-    "GetCenterOfGeometry",
     "MDTemperature",
     "NeighborListUpdate",
     "MDIterationLeapFrogLiujian",
     "CrdToUintCrd",
     "MDIterationSetupRandState",
     "TransferCrd",
-    "AdaptiveAvgPool2D",
-    "TensorScatterMax",
-    "TensorScatterMin",
-    "TensorScatterSub",
-    "SoftShrink",
-    "FFT3D",
-    "IFFT3D",
-    "HShrink",
-    "PyFunc",
-    "BufferAppend",
-    "BufferGetItem",
-    "BufferSample",
-    "Erfinv",
-    "Conj",
-    "Real",
-    "Imag"
-]
-
-__sponge__ = [
+    # Update
     "ConstrainForceCycleWithVirial",
     "RefreshUintCrd",
     "LastCrdToDr",
