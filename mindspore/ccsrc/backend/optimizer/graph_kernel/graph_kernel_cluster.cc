@@ -27,7 +27,7 @@
 
 #include "base/core_ops.h"
 #include "ir/graph_utils.h"
-#include "debug/common.h"
+#include "utils/file_utils.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -440,31 +440,27 @@ void GraphKernelCluster::CreateFuncGraph(const FuncGraphPtr &func_graph, const s
 }
 
 void GraphKernelCluster::DumpClusterInfo(const AnfNodePtrList &old_nodes, const AnfNodePtr &new_node) {
-#ifdef ENABLE_DUMP_IR
   dump_buf_ << "Source nodes of " << new_node->fullname_with_scope() << " = " << new_node->DebugString() << std::endl;
   for (const auto &node : old_nodes) {
     dump_buf_ << "  " << node->fullname_with_scope() << " = " << node->DebugString() << std::endl;
   }
   dump_buf_ << "=======================" << std::endl;
-#endif
 }
 
 void GraphKernelCluster::DumpToFile() {
-#ifdef ENABLE_DUMP_IR
-  auto pathname = std::string("./") + kGraphKernelDumpPath + "/graph_kernel_cluster.txt";
-  auto realpath = Common::GetRealPath(pathname);
-  if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << pathname;
+  auto dir_path = FileUtils::CreateNotExistDirs(std::string("./") + kGraphKernelDumpPath);
+  if (!dir_path.has_value()) {
+    MS_LOG(ERROR) << "Failed to CreateNotExistDirs: ./" << kGraphKernelDumpPath;
     return;
   }
-  std::ofstream fout(realpath.value(), std::ios::app);
+  std::string filepath = dir_path.value() + "/" + "graph_kernel_cluster.txt";
+  std::ofstream fout(filepath, std::ios::app);
   if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!";
+    MS_LOG(ERROR) << "Open dump file '" << filepath << "' failed!";
     return;
   }
   fout << dump_buf_.str() << std::endl;
   fout.close();
-#endif
 }
 
 // The GetItem node should be clustered with its real input.
