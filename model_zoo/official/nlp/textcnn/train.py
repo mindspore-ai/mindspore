@@ -33,8 +33,10 @@ from src.textcnn import TextCNN
 from src.textcnn import SoftmaxCrossEntropyExpand
 from src.dataset import MovieReview, SST2, Subjectivity
 
+
 def modelarts_pre_process():
     config.checkpoint_path = os.path.join(config.output_path, str(get_rank_id()), config.checkpoint_path)
+
 
 @moxing_wrapper(pre_process=modelarts_pre_process)
 def train_net():
@@ -69,12 +71,12 @@ def train_net():
         load_param_into_net(net, param_dict)
 
     opt = nn.Adam(filter(lambda x: x.requires_grad, net.get_parameters()), \
-                                    learning_rate=learning_rate, weight_decay=float(config.weight_decay))
+                  learning_rate=learning_rate, weight_decay=float(config.weight_decay))
     loss = SoftmaxCrossEntropyExpand(sparse=True)
 
     model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc': Accuracy()})
 
-    config_ck = CheckpointConfig(save_checkpoint_steps=int(config.epoch_size*batch_num/2),
+    config_ck = CheckpointConfig(save_checkpoint_steps=int(config.epoch_size * batch_num / 2),
                                  keep_checkpoint_max=config.keep_checkpoint_max)
     time_cb = TimeMonitor(data_size=batch_num)
     ckpt_save_dir = os.path.join(config.output_path, config.checkpoint_path)
@@ -82,6 +84,7 @@ def train_net():
     loss_cb = LossMonitor()
     model.train(config.epoch_size, dataset, callbacks=[time_cb, ckpoint_cb, loss_cb])
     print("train success")
+
 
 if __name__ == '__main__':
     train_net()
