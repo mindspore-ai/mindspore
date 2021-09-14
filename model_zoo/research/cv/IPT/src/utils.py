@@ -37,7 +37,6 @@ class MyTrain(nn.Cell):
         self.model = model
         self.con_loss = con_loss
         self.criterion = criterion
-        self.p = P.Print()
         self.cast = P.Cast()
 
     def construct(self, lr, hr, idx):

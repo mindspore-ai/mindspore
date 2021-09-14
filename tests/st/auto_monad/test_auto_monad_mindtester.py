@@ -24,6 +24,7 @@ from mindspore.common.initializer import initializer
 from mindspore.train.model import Model
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
+from tests.security_utils import security_off_wrap
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -346,6 +347,7 @@ class SideEffectIOCellAddnNet(Cell):
         return grad_out
 
 
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -460,7 +462,7 @@ class SideEffectPrintInHighOrdeAddnNet(Cell):
         grad_out = grad_net(params, grad_ys)
         return grad_out
 
-
+@security_off_wrap
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

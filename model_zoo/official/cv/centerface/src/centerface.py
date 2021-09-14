@@ -178,7 +178,6 @@ class CenterFaceLoss(nn.Cell):
         self.cls_loss = FocalLoss()
         self.reg_loss = SmoothL1LossNew()
         self.reg_loss_cmask = SmoothL1LossNewCMask()
-        self.print = P.Print()
 
     def construct(self, output_hm, output_wh, output_off, output_kps, hm, reg_mask, ind, wh, wight_mask, hm_offset,
                   hps_mask, landmarks):
@@ -211,7 +210,6 @@ class CenterFaceWithLossCell(nn.Cell):
         self.loss = CenterFaceLoss(self.config.wh_weight, self.config.reg_offset, self.config.off_weight,
                                    self.config.hm_weight, self.config.lm_weight)
         self.reduce_sum = P.ReduceSum()
-        self.print = P.Print()
 
     def construct(self, x, hm, reg_mask, ind, wh, wight_mask, hm_offset, hps_mask, landmarks):
         output_hm, output_wh, output_off, output_kps = self.centerface_network(x)
@@ -326,7 +324,6 @@ class CenterFaceWithNms(nn.Cell):
         self.maxpool2d = P.MaxPoolWithArgmax(kernel_size=3, strides=1, pad_mode='same')
         self.topk = P.TopK(sorted=True)
         self.reshape = P.Reshape()
-        self.print = P.Print()
         self.test_batch = self.config.test_batch_size
         self.k = self.config.K
 

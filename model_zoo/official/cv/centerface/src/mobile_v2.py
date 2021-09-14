@@ -59,7 +59,6 @@ class ConvBNReLU(nn.Cell):
         layers = [conv, nn.BatchNorm2d(out_planes).add_flags_recursive(fp32=True), nn.ReLU6()]  #, momentum=0.9
         self.features = nn.SequentialCell(layers)
         self.in_planes = in_planes
-        self.print = P.Print()
 
     def construct(self, x):
         x = self.features(x)

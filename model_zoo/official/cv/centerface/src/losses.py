@@ -26,7 +26,6 @@ class FocalLoss(nn.Cell):
         self.log = P.Log()
         self.pow = P.Pow()
         self.sum = P.ReduceSum()
-        self.print = P.Print()
 
     def construct(self, pred, gt):
         """Construct method"""

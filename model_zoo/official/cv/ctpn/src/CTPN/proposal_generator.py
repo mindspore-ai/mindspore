@@ -124,7 +124,6 @@ class Proposal(nn.Cell):
         self.min_float_num = -65536.0
         self.topK_mask = Tensor(self.min_float_num * np.ones(total_max_topk_input, np.float16))
         self.shape = P.Shape()
-        self.print = P.Print()
 
     def construct(self, rpn_cls_score_total, rpn_bbox_pred_total, anchor_list):
         proposals_tuple = ()

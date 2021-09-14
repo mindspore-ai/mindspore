@@ -120,7 +120,6 @@ class PoseNet(nn.Cell):
         self.dropout5 = nn.Dropout(0.5)
         self.cls_fc_pose_xyz = nn.Dense(2048, 3)
         self.cls_fc_pose_wpqr = nn.Dense(2048, 4)
-        self.print = P.Print()
 
     def construct(self, x):
         """construct"""

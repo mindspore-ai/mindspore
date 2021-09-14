@@ -120,7 +120,6 @@ class openpose_loss(MyLoss):
         self.square = P.Square()
         self.reduceMean = P.ReduceMean()
         self.reduceSum = P.ReduceSum()
-        self.print = P.Print()
         self.shape = P.Shape()
         self.maxoftensor = P.ArgMaxWithValue(-1)
 

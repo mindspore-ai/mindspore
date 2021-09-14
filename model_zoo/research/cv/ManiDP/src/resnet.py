@@ -91,7 +91,6 @@ class MaskBlock(nn.Cell):
         self.relu = P.ReLU()
 
         self.thre = thres[num]
-        self.print = P.Print()
 
     def construct(self, x):
         """construct"""

@@ -27,6 +27,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.functional import stop_gradient
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
+from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.utils.bprop_util import bprop
 
@@ -429,6 +430,7 @@ def test_stop_gradient_11():
               Tensor(np.ones([2]).astype(np.float32)))
 
 
+@security_off_wrap
 def test_stop_print():
     class StopPrint(nn.Cell):
         def __init__(self):

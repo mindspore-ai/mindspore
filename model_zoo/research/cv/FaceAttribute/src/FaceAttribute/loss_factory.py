@@ -42,7 +42,6 @@ class CriterionsFaceAttri(nn.Cell):
 
         # loss
         self.ce_ignore_loss = CrossEntropyWithIgnoreIndex()
-        self.printn = P.Print()
 
     def construct(self, x0, x1, x2, label):
         '''Construct function.'''

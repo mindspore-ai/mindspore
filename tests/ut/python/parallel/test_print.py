@@ -19,7 +19,7 @@ from mindspore import context, Tensor, Parameter
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum, BatchNorm2d, BatchNorm1d
 from mindspore.ops import operations as P
-
+from tests.security_utils import security_off_wrap
 
 class Net(Cell):
     def __init__(self, conv2d_weight, out_channel, kernel_size, pad_mode, stride,
@@ -53,6 +53,7 @@ def compile_net(net):
     context.reset_auto_parallel_context()
 
 
+@security_off_wrap
 def test_batchnorm_data_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((8, 1, 1, 1), (1, 1, 1, 1))
@@ -61,6 +62,7 @@ def test_batchnorm_data_parallel():
     compile_net(net)
 
 
+@security_off_wrap
 def test_batchnorm_model_parallel1():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     strategy1 = ((2, 2, 1, 1), (2, 2, 1, 1))
@@ -69,6 +71,7 @@ def test_batchnorm_model_parallel1():
     compile_net(net)
 
 
+@security_off_wrap
 def test_batchnorm_model_parallel2():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=32, global_rank=0)
     strategy1 = ((2, 2, 2, 2), (2, 2, 1, 1))

@@ -26,7 +26,6 @@ from mindspore.nn import TrainOneStepCell
 from mindspore.context import ParallelMode
 from mindspore.train.callback import ModelCheckpoint, RunContext, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from src.FaceAttribute.resnet18 import get_resnet18
 from src.FaceAttribute.loss_factory import get_loss
@@ -55,7 +54,6 @@ class BuildTrainNetwork(nn.Cell):
         super(BuildTrainNetwork, self).__init__()
         self.network = my_network
         self.criterion = my_criterion
-        self.print = P.Print()
 
     def construct(self, input_data, label):
         logit0, logit1, logit2 = self.network(input_data)

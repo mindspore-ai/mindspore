@@ -21,6 +21,7 @@ import math
 from mindspore import RowTensor, SparseTensor
 from mindspore.ops import functional as F, composite as C
 from mindspore.ops.composite import multitype_ops
+from mindspore._c_expression import security
 from . import standard_method as M
 from . import trope as T
 from .namespace import CellNamespace
@@ -112,7 +113,6 @@ convert_object_map = {
     T.map:          C.Map(),
     T.partial:      F.partial,
     T.zip:          C.zip_operation,
-    T.print:        F.print_,
     T.enumerate:    M.enumerate_,
     T.isinstance:   M.isinstance_,
 
@@ -140,3 +140,6 @@ convert_object_map = {
     RowTensor:      F.make_row_tensor,
     SparseTensor:   F.make_sparse_tensor,
 }
+
+if not security.enable_security():
+    convert_object_map[T.print] = F.print_

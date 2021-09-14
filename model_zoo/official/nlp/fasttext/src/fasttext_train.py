@@ -69,7 +69,6 @@ class FastTextNetWithLoss(nn.Cell):
         self.fasttext = FastText(vocab_size, embedding_dims, num_class)
         self.loss_func = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         self.squeeze = P.Squeeze(axis=1)
-        self.print = P.Print()
 
     def construct(self, src_tokens, src_tokens_lengths, label_idx):
         """
