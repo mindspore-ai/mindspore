@@ -89,8 +89,8 @@ APP_ERROR SSDResnet50Fpn::ReadImage(const std::string &imgPath, MxBase::TensorBa
         LogError << "DvppWrapper DvppJpegDecode failed, ret=" << ret << ".";
         return ret;
     }
-    MxBase::MemoryData memoryData(reinterpret_cast<void *>(output.data), output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
-                                  deviceId_);
+    MxBase::MemoryData memoryData(reinterpret_cast<void *>(output.data), output.dataSize,
+                                  MemoryData::MemoryType::MEMORY_DVPP, deviceId_);
     if (output.heightStride % VPC_H_ALIGN != 0) {
         LogError << "Output data height(" << output.heightStride << ") can't be divided by " << VPC_H_ALIGN << ".";
         MemoryHelper::MxbsFree(memoryData);
@@ -121,8 +121,8 @@ APP_ERROR SSDResnet50Fpn::Resize(const MxBase::TensorBase &inputTensor, MxBase::
         LogError << "VpcResize failed, ret=" << ret << ".";
         return ret;
     }
-    MxBase::MemoryData memoryData(reinterpret_cast<void *>(output.data), output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
-                                  deviceId_);
+    MxBase::MemoryData memoryData(reinterpret_cast<void *>(output.data), output.dataSize,
+                                  MemoryData::MemoryType::MEMORY_DVPP, deviceId_);
     if (output.heightStride % VPC_H_ALIGN != 0) {
         LogError << "Output data height(" << output.heightStride << ") can't be divided by " << VPC_H_ALIGN << ".";
         MemoryHelper::MxbsFree(memoryData);
