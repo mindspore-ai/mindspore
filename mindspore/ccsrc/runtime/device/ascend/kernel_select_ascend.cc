@@ -430,7 +430,7 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     auto input_kernel_node = AnfAlgo::GetInputNode(kernel_node, input_index);
     MS_EXCEPTION_IF_NULL(input_kernel_node);
-    auto input_with_index = AnfAlgo::VisitKernel(input_kernel_node, 0);
+    auto input_with_index = AnfAlgo::VisitKernelWithReturnType(input_kernel_node, 0);
     MS_EXCEPTION_IF_NULL(input_with_index.first);
     auto real_input_node = input_with_index.first;
     if (RefreshCastAndParamWeightFormat(real_input_node, selected_kernel_info->GetInputFormat(input_index))) {
