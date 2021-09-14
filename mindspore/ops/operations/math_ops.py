@@ -2739,7 +2739,7 @@ class TruncateDiv(_MathBinaryOp):
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -2783,7 +2783,7 @@ class TruncateMod(_MathBinaryOp):
         TypeError: If neither `x` nor `y` is one of the following: Tensor, Number, bool.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
