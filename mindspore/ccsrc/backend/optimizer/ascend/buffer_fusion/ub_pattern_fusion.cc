@@ -501,6 +501,7 @@ bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionIn
   if (buffer_fusion_info.anf_nodes.size() < kFusionNodeNumThreshold) {
     return false;
   }
+  TraceGuard guard(std::make_shared<TraceOpt>(buffer_fusion_info.anf_nodes[0]->debug_info()));
   auto buffer_fusion = CreateFusionOp(buffer_fusion_info.inputs_list, buffer_fusion_info.outputs_list,
                                       buffer_fusion_info.anf_nodes, kernel_graph);
   buffer_fusion->set_fullname_with_scope(buffer_fusion_info.full_name);

@@ -25,8 +25,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr LayerNormBetaGammaBackpropV2InferShape(const PrimitivePtr &primitive,
-                                                               const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr LayerNormBetaGammaBackpropV2InferShape(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   ValuePtr gamma_value_ptr = primitive->GetAttr(kShapeGamma);
   MS_EXCEPTION_IF_NULL(gamma_value_ptr);
@@ -39,12 +38,9 @@ TypePtr LayerNormBetaGammaBackpropV2InferType(const PrimitivePtr &prim,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  // check
   std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  std::map<std::string, TypePtr> types;
-  types.emplace("gamma", input_args[0]->BuildType());
-  types.emplace("beta", input_args[0]->BuildType());
-  auto output_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
+  auto output_type =
+    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{output_type, output_type});
 }
 }  // namespace
@@ -64,9 +60,9 @@ AbstractBasePtr LayerNormBetaGammaBackpropV2Infer(const abstract::AnalysisEngine
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInteger("LayerNormBetaGammaBackpropV2 infer", SizeToLong(input_args.size()), kGreaterEqual,
-                                     input_num, primitive->name());
-  return abstract::MakeAbstract(LayerNormBetaGammaBackpropV2InferShape(primitive, input_args),
+  (void)CheckAndConvertUtils::CheckInteger("LayerNormBetaGammaBackpropV2 infer", SizeToLong(input_args.size()),
+                                           kGreaterEqual, input_num, primitive->name());
+  return abstract::MakeAbstract(LayerNormBetaGammaBackpropV2InferShape(primitive),
                                 LayerNormBetaGammaBackpropV2InferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LayerNormBetaGammaBackpropV2, prim::kPrimLayerNormBetaGammaBackpropV2,
