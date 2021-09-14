@@ -89,7 +89,7 @@ APP_ERROR SSDResnet50Fpn::ReadImage(const std::string &imgPath, MxBase::TensorBa
         LogError << "DvppWrapper DvppJpegDecode failed, ret=" << ret << ".";
         return ret;
     }
-    MxBase::MemoryData memoryData((void *)output.data, output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
+    MxBase::MemoryData memoryData(reinterpret_cast<void *>(output.data), output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
                                   deviceId_);
     if (output.heightStride % VPC_H_ALIGN != 0) {
         LogError << "Output data height(" << output.heightStride << ") can't be divided by " << VPC_H_ALIGN << ".";
@@ -109,7 +109,7 @@ APP_ERROR SSDResnet50Fpn::Resize(const MxBase::TensorBase &inputTensor, MxBase::
     input.heightStride = (uint32_t) shape[0] * YUV_BYTE_DE / YUV_BYTE_NU;
     input.widthStride = shape[1];
     input.dataSize = inputTensor.GetByteSize();
-    input.data = <uint8_t *> inputTensor.GetBuffer();
+    input.data = reinterpret_cast<uint8_t*>(inputTensor.GetBuffer());
     const uint32_t resizeHeight = 640;
     const uint32_t resizeWidth = 640;
     MxBase::ResizeConfig resize = {};
@@ -121,7 +121,7 @@ APP_ERROR SSDResnet50Fpn::Resize(const MxBase::TensorBase &inputTensor, MxBase::
         LogError << "VpcResize failed, ret=" << ret << ".";
         return ret;
     }
-    MxBase::MemoryData memoryData((void *)output.data, output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
+    MxBase::MemoryData memoryData(reinterpret_cast<void *>(output.data), output.dataSize, MemoryData::MemoryType::MEMORY_DVPP,
                                   deviceId_);
     if (output.heightStride % VPC_H_ALIGN != 0) {
         LogError << "Output data height(" << output.heightStride << ") can't be divided by " << VPC_H_ALIGN << ".";
