@@ -925,13 +925,12 @@ void TransferDependOrUpdateState(const CNodePtr &old_node, const FuncGraphPtr &g
   auto node_users = manager->node_users()[old_node];
   for (const auto &node_index : node_users) {
     AnfNodePtr output = node_index.first;
-    size_t index = IntToSize(node_index.second);
     MS_EXCEPTION_IF_NULL(output);
     if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimDepend) ||
         AnfAlgo::CheckPrimitiveType(output, prim::kPrimUpdateState)) {
       auto depend = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(depend);
-      manager->SetEdge(depend, index, new_node);
+      manager->SetEdge(depend, node_index.second, new_node);
     }
   }
 }
