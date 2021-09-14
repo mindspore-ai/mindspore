@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1287,7 +1287,7 @@ class Cell(Cell_):
                 self._scope = prefix
             elif not self._scope.startswith(prefix):
                 self._scope = prefix + self._scope
-        elif not self._scope is None and self._scope.startswith(prefix):
+        elif self._scope is not None and self._scope.startswith(prefix):
             self._scope = self._scope[len(prefix):]
 
     def recompute(self, mode=True, output_recompute=False):
