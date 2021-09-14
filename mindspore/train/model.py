@@ -186,7 +186,8 @@ class Model:
     def _check_kwargs(self, kwargs):
         for arg in kwargs:
             if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32']:
-                raise ValueError(f"Unsupported arg '{arg}'")
+                raise ValueError(f"The argument in 'kwargs' should be 'loss_scale_manager' or "
+                                 f"'keep_batchnorm_fp32', but got '{arg}'.")
 
     def _check_reuse_dataset(self, dataset):
         if not hasattr(dataset, '__model_hash__'):
@@ -298,7 +299,7 @@ class Model:
         if isinstance(outputs, Tensor):
             outputs = (outputs,)
         if not isinstance(outputs, tuple):
-            raise ValueError("The `outputs` is not tuple.")
+            raise ValueError(f"The argument `outputs` should be tuple, but got {type(outputs)}.")
 
         if self._eval_indexes is not None and len(outputs) < 3:
             raise ValueError("The length of `outputs` must be greater than or equal to 3, \
@@ -398,7 +399,7 @@ class Model:
             raise RuntimeError('Pre-init process only supports GRAPH MODE and Ascend target currently.')
 
         if not train_dataset and not valid_dataset:
-            raise ValueError('Both train_dataset and valid_dataset can not be None or empty.')
+            raise ValueError("'Train_dataset' and 'valid_dataset' can not both be None or empty.")
 
         _device_number_check(self._parallel_mode, self._device_number)
 
@@ -422,7 +423,8 @@ class Model:
 
         if valid_dataset:
             if not self._metric_fns:
-                raise RuntimeError('If define `valid_dataset`, metric fn can not be None or empty.')
+                raise RuntimeError("If define `valid_dataset`, metric fn can not be None or empty, "
+                                   "you should set the argument 'metrics' for model.")
 
             valid_dataset.__no_send__ = True
             valid_dataset_helper, eval_network = self._exec_preprocess(is_train=False,
@@ -612,8 +614,9 @@ class Model:
                 len_element = len(next_element)
                 next_element = _transfer_tensor_to_tuple(next_element)
                 if self._loss_fn and len_element != 2:
-                    raise ValueError("when loss_fn is not None, train_dataset should "
-                                     "return two elements, but got {}".format(len_element))
+                    raise ValueError("When 'loss_fn' is not None, 'train_dataset' should return "
+                                     "two elements, but got {}, please check the number of elements "
+                                     "returned by 'train_dataset'".format(len_element))
                 cb_params.cur_step_num += 1
 
                 cb_params.train_dataset_element = next_element
@@ -696,15 +699,15 @@ class Model:
         """
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode is True:
-            raise ValueError("Sink mode is currently not supported when training with a GraphCell.")
+            raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
         Validator.check_is_int(sink_size)
         dataset_size = train_dataset.get_dataset_size()
         if dataset_size == 0:
-            raise ValueError("There is no valid data in dataset, please check dataset file first.")
+            raise ValueError("There is no valid data in dataset, please check dataset file firstly.")
         if sink_size == -1:
             sink_size = dataset_size
         if sink_size < -1 or sink_size == 0:
-            raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
+            raise ValueError("The 'sink_size' must be -1 or positive, but got sink_size {}.".format(sink_size))
 
         _device_number_check(self._parallel_mode, self._device_number)
 
@@ -859,7 +862,8 @@ class Model:
 
         _device_number_check(self._parallel_mode, self._device_number)
         if not self._metric_fns:
-            raise ValueError("metric fn can not be None or empty.")
+            raise ValueError("The model argument 'metrics' can not be None or empty, "
+                             "you should set the argument 'metrics' for model.")
         if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode is True:
             raise ValueError("Sink mode is currently not supported when evaluating with a GraphCell.")
 
@@ -933,22 +937,23 @@ class Model:
             sink_size (int): Control the amount of data in each sink.
         """
         if context.get_context("mode") != context.GRAPH_MODE:
-            raise RuntimeError('Pre-compile process only supports GRAPH MODE and Ascend target currently.')
+            raise RuntimeError("Pre-compile process that generate parameter layout for the train network "
+                               "only supports GRAPH MODE and Ascend target currently.")
         if _get_parallel_mode() not in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            raise RuntimeError('infer train layout only supports semi auto parallel and auto parallel mode.')
+            raise RuntimeError('Infer train layout only supports semi auto parallel and auto parallel mode.')
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         if not dataset_sink_mode:
             raise ValueError("Only dataset sink mode is supported for now.")
         if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode is True:
-            raise ValueError("Sink mode is currently not supported when training with a GraphCell.")
+            raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
         Validator.check_is_int(sink_size)
         dataset_size = train_dataset.get_dataset_size()
         if dataset_size == 0:
-            raise ValueError("There is no valid data in dataset, please check dataset file first.")
+            raise ValueError("There is no valid data in dataset, please check dataset file firstly.")
         if sink_size == -1:
             sink_size = dataset_size
         if sink_size < -1 or sink_size == 0:
-            raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
+            raise ValueError("The 'sink_size' must be -1 or positive, but got sink_size {}.".format(sink_size))
 
     def infer_train_layout(self, train_dataset, dataset_sink_mode=True, sink_size=-1):
         """
@@ -1051,9 +1056,10 @@ class Model:
             >>> predict_map = model.infer_predict_layout(input_data)
         """
         if context.get_context("mode") != context.GRAPH_MODE:
-            raise RuntimeError('Pre-compile process only supports GRAPH MODE currently.')
+            raise RuntimeError("Pre-compile process that generate parameter layout for the predict network "
+                               "only supports GRAPH MODE and Ascend target currently.")
         if _get_parallel_mode() not in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            raise RuntimeError('infer predict layout only supports semi auto parallel and auto parallel mode.')
+            raise RuntimeError('Infer predict layout only supports semi auto parallel and auto parallel mode.')
         _parallel_predict_check()
         check_input_data(*predict_data, data_class=Tensor)
 

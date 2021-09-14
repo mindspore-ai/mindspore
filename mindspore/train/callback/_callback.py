@@ -175,7 +175,8 @@ class CallbackManager(Callback):
         elif isinstance(callbacks, list):
             for cb in callbacks:
                 if not isinstance(cb, Callback):
-                    raise TypeError("The 'callbacks' contains not-a-Callback item.")
+                    raise TypeError("When the 'callbacks' is a list, the elements in "
+                                    "'callbacks' must be Callback functions.")
                 self._callbacks.append(cb)
         elif callbacks is not None:
             raise TypeError("The 'callbacks' is not a Callback or a list of Callback.")
@@ -249,7 +250,7 @@ class RunContext:
     """
     def __init__(self, original_args):
         if not isinstance(original_args, dict):
-            raise TypeError("The arg of RunContext should be dict type.")
+            raise TypeError("The argument 'original_args' of RunContext should be dict type.")
         self._original_args = original_args
         self._stop_requested = False
 

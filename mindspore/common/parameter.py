@@ -50,10 +50,10 @@ def init_to_value(init):
             return 0.0
         if init == 'ones':
             return 1.0
-        raise ValueError("init should be one of values in 'zeros', 'ones'.")
+        raise ValueError("The 'init' argument should be one of values in 'zeros', 'ones'.")
     if isinstance(init, numbers.Number):
         return float(init)
-    raise ValueError("init should be number or string")
+    raise ValueError("The 'init' argument should be number or string.")
 
 
 class Parameter(Tensor_):
@@ -161,8 +161,8 @@ class Parameter(Tensor_):
         elif isinstance(default_input, (np.ndarray, list)):
             Tensor_.__init__(self, default_input)
         else:
-            raise TypeError(f"Parameter input must be [`Tensor`, `int`, `float`, `numpy.ndarray`, `list`]."
-                            f"But with type {type(default_input)}.")
+            raise TypeError(f"The 'default_input' argument must be [`Tensor`, `int`, `float`, `numpy.ndarray`, `list`]."
+                            f"But got type {type(default_input)}.")
 
     def __deepcopy__(self, memodict):
         new_obj = Parameter(self)
@@ -224,7 +224,8 @@ class Parameter(Tensor_):
         if not(_is_role_worker() or _is_role_pserver() or _is_role_sched()):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \
                                1. set_ps_context(enable_ps=True) \
-                               2. export MS_ROLE environment variable.")
+                               2. export MS_ROLE environment variable \
+                               Please refer to the official website for detailed usage.")
         if init_in_server and (not self.name.endswith("embedding_table")):
             raise RuntimeError("Can not initialize parameter '{}' in server, only parameters of "
                                "sparse operator support initialization in server.".format(self.name))
@@ -283,7 +284,7 @@ class Parameter(Tensor_):
                 raise ValueError("The length of the '{}' name should be less than {}.".
                                  format(name_, PARAMETER_NAME_PREFIX_MAX_LEN))
         else:
-            raise ValueError("The type of the name should be `str` or `None`.")
+            raise ValueError("The type of the parameter's name should be `str` or `None`.")
 
         if _is_role_worker() and self.cache_enable:
             if len(self.shape) != 2:
@@ -415,7 +416,7 @@ class Parameter(Tensor_):
     @layerwise_parallel.setter
     def layerwise_parallel(self, value=True):
         if not isinstance(value, bool):
-            raise TypeError("`layerwise_parallel` parameter must be bool type")
+            raise TypeError("The argument `layerwise_parallel` must be bool type.")
         self.param_info.layerwise_parallel = value
 
     @property
@@ -429,7 +430,7 @@ class Parameter(Tensor_):
     @parallel_optimizer.setter
     def parallel_optimizer(self, value=True):
         if not isinstance(value, bool):
-            raise TypeError("`parallel_optimizer` parameter must be bool type")
+            raise TypeError("The argument `parallel_optimizer` must be bool type.")
         self.param_info.parallel_optimizer = value
 
     @property
@@ -440,7 +441,7 @@ class Parameter(Tensor_):
     @cache_enable.setter
     def cache_enable(self, value=True):
         if not isinstance(value, bool):
-            raise TypeError("`cache_enable` parameter must be bool type")
+            raise TypeError("The argument `cache_enable` must be bool type.")
         self.param_info.cache_enable = value
 
     @property
@@ -451,7 +452,7 @@ class Parameter(Tensor_):
     @cache_shape.setter
     def cache_shape(self, value):
         if not isinstance(value, (tuple, list)):
-            raise TypeError("`cache_shape` parameter must be tuple or list type")
+            raise TypeError("The argument `cache_shape` must be tuple or list type.")
         self.param_info.cache_shape = value
 
     @property
@@ -462,7 +463,7 @@ class Parameter(Tensor_):
     @requires_grad.setter
     def requires_grad(self, value=True):
         if not isinstance(value, bool):
-            raise TypeError("`requires_grad` parameter must be bool type")
+            raise TypeError("The argument `requires_grad` must be bool type")
         self.param_info.requires_grad = value
 
     @property
@@ -514,10 +515,8 @@ class Parameter(Tensor_):
         current_tensor_is_init = isinstance(self, Tensor) and not self.has_init
 
         if incoming_tensor_is_init and not current_tensor_is_init:
-            raise TypeError("Parameter is a `Tensor` and not initialized, `data` for `set_data`"
-                            "should be a Tensor. If you want to update it by Tensor, call method"
-                            "`init_parameters_data` of `Cell` to init and replace all the Parameter of"
-                            "network, then call this method.")
+            raise TypeError("The original tensor data is initialized, but the argument 'data' is not initialized."
+                            "Please initialize 'data' before call this method.")
         if tuple(self.shape) != tuple(data.shape):
             # If Slice create Parameter shape can be change.
             if not slice_shape:
@@ -540,8 +539,6 @@ class Parameter(Tensor_):
                 self.init_mode = data
         elif incoming_tensor_is_init or current_tensor_is_init:
             self._update_tensor_data(data)
-        else:
-            raise ValueError(f"Not support to update the Parameter by {data}")
         self.sliced = slice_shape
         return self
 

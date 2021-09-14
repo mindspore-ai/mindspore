@@ -160,7 +160,8 @@ class CheckpointConfig:
 
         if not save_checkpoint_steps and not save_checkpoint_seconds and \
                 not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
-            raise ValueError("The input_param can't be all None or 0")
+            raise ValueError("The input arguments 'save_checkpoint_steps', 'save_checkpoint_seconds', "
+                             "'keep_checkpoint_max' and 'keep_checkpoint_per_n_minutes' can't be all None or 0.")
 
         self._save_checkpoint_steps = save_checkpoint_steps
         self._save_checkpoint_seconds = save_checkpoint_seconds
@@ -248,7 +249,7 @@ class CheckpointConfig:
         if append_info is None or append_info == []:
             return None
         if not isinstance(append_info, list):
-            raise TypeError(f"The type of append_info must list, but got {str(type(append_info))}.")
+            raise TypeError(f"The type of 'append_info' must list, but got {str(type(append_info))}.")
         handle_append_info = {}
         if "epoch_num" in append_info:
             handle_append_info["epoch_num"] = 0
@@ -303,8 +304,9 @@ class ModelCheckpoint(Callback):
         self._last_triggered_step = 0
 
         if not isinstance(prefix, str) or prefix.find('/') >= 0:
-            raise ValueError("Prefix {} for checkpoint file name invalid, "
-                             "please check and correct it and then continue.".format(prefix))
+            raise ValueError("'Prefix' {} for checkpoint file name is invalid, 'prefix' must be "
+                             "str and does not contain '/', please check and correct it and then "
+                             "continue".format(prefix))
         self._prefix = prefix
 
         if directory is not None:
@@ -316,7 +318,7 @@ class ModelCheckpoint(Callback):
             self._config = CheckpointConfig()
         else:
             if not isinstance(config, CheckpointConfig):
-                raise TypeError("config should be CheckpointConfig type.")
+                raise TypeError("The argument 'config' should be CheckpointConfig type.")
             self._config = config
 
         # get existing checkpoint files

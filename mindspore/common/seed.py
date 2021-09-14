@@ -143,7 +143,7 @@ def set_seed(seed):
         >>> c2 = ops.uniform((1, 4), minval, maxval, seed=2) # still get C1
     """
     if not isinstance(seed, int):
-        raise TypeError("The seed must be type of int.")
+        raise TypeError("The argument 'seed' must be type of int.")
     Validator.check_non_negative_int(seed, "seed", "global_seed")
     import mindspore.dataset as de
     np.random.seed(seed)

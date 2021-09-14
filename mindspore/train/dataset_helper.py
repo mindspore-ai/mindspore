@@ -138,7 +138,7 @@ def connect_network_with_dataset(network, dataset_helper):
     dataset = dataset_iter.dataset
 
     if isinstance(dataset_iter, _DatasetIterNormal):
-        raise RuntimeError("Dataset should be connected with network only in sink mode.")
+        raise RuntimeError("The API 'connect_network_with_dataset' should be called in dataset sink mode.")
 
     ms_role = os.getenv("MS_ROLE")
     if ms_role in ("MS_PSERVER", "MS_SCHED"):
@@ -220,7 +220,7 @@ class DatasetHelper:
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         Validator.check_is_int(sink_size)
         if sink_size < -1 or sink_size == 0:
-            raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
+            raise ValueError("The 'sink_size' must be -1 or positive, but got sink_size {}.".format(sink_size))
         if sink_size == -1:
             sink_size = dataset.get_dataset_size()
 
@@ -238,8 +238,8 @@ class DatasetHelper:
                          (context.get_context("device_target") == "GPU"):
                         iterclass = _DatasetIterMSLoopSink
                     elif context.get_context("device_target") == "CPU":
-                        raise RuntimeError(
-                            "Currently dataset sink mode is not supported when the device target is CPU.")
+                        raise RuntimeError("Currently dataset sink mode is not supported when the device "
+                                           "target is CPU, please set dataset sink mode to False.")
                 else:
                     iterclass = _DatasetIterPyNative
             self.iter = iterclass(dataset, sink_size, epoch_num)
@@ -329,8 +329,8 @@ class _DatasetIter:
         if hasattr(dataset, '__loop_size__'):
             loop_size = dataset.__loop_size__
             if loop_size <= dataset.get_dataset_size() and dataset.get_dataset_size() % loop_size != 0:
-                raise ValueError(f'Dataset size {dataset.get_dataset_size()} and '
-                                 f'sink_size {loop_size} are not matched.')
+                raise ValueError(f"Dataset size {dataset.get_dataset_size()} and sink_size {loop_size} "
+                                 f"are not matched, sink_size should be divisible by dataset size.")
             sink_count = math.ceil(dataset.get_dataset_size() / loop_size)
         return sink_count
 
