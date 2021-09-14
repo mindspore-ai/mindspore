@@ -62,6 +62,7 @@ constexpr auto kTile = "Tile";
 constexpr auto kBiasAddGrad = "BiasAddGrad";
 constexpr auto kCos = "Cos";
 constexpr auto kAbs = "Abs";
+constexpr auto kSquare = "Square";
 
 // Arrays
 constexpr auto kDynamicShape = "DynamicShape";
@@ -479,7 +480,7 @@ inline const PrimitivePtr kPrimFloor = std::make_shared<Primitive>("Floor");
 inline const PrimitivePtr kPrimDivNoNan = std::make_shared<Primitive>("DivNoNan");
 inline const PrimitivePtr kPrimMinimum = std::make_shared<Primitive>("Minimum");
 inline const PrimitivePtr kPrimMaximum = std::make_shared<Primitive>("Maximum");
-inline const PrimitivePtr kPrimSquare = std::make_shared<Primitive>("Square");
+inline const PrimitivePtr kPrimSquare = std::make_shared<Primitive>(kSquare);
 inline const PrimitivePtr kPrimCumSum = std::make_shared<Primitive>("CumSum");
 inline const PrimitivePtr kPrimCumProd = std::make_shared<Primitive>("CumProd");
 inline const PrimitivePtr kPrimSubscalar = std::make_shared<Primitive>("Subscalar");

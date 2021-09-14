@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,18 @@
 
 #ifndef MINDSPORE_CORE_OPS_SQUARE_H_
 #define MINDSPORE_CORE_OPS_SQUARE_H_
-#include "ops/primitive_c.h"
+#include <memory>
+#include <vector>
+
 #include "abstract/abstract_value.h"
+#include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameSquare = "Square";
 class MS_CORE_API Square : public PrimitiveC {
  public:
-  Square() : PrimitiveC(kNameSquare) { InitIOName({"input_x"}, {"y"}); }
+  Square() : PrimitiveC(prim::kPrimSquare->name()) { InitIOName({"input_x"}, {"output"}); }
   ~Square() = default;
   MS_DECLARE_PARENT(Square, PrimitiveC);
   void Init() {}

@@ -65,19 +65,6 @@ AbstractBasePtr InferImplSqrtGrad(const AnalysisEnginePtr &, const PrimitivePtr 
   return out->Broaden();
 }
 
-AbstractBasePtr InferImplSquare(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_spec_list) {
-  // Inputs: one tensor.
-  constexpr auto kSqrtSquareInputNum = 1;
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kSqrtSquareInputNum);
-  auto ref = dyn_cast<abstract::AbstractRef>(args_spec_list[0]);
-  if (ref != nullptr) {
-    return ref->CloneAsTensor();
-  }
-  return args_spec_list[0]->Broaden();
-}
-
 int64_t InferImplReduceFuncCheckAxis(const int64_t &axis, const size_t dim) {
   int64_t dim_ = static_cast<int64_t>(dim);
   if (axis < -dim_ || axis >= dim_) {
