@@ -117,6 +117,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUnsortedSegmentMin, {InferImplUnsortedSegmentMin, nullptr, true}},
     {prim::kPrimScatterAdd, {InferImplScatterAdd, nullptr, true}},
     {prim::kPrimScatterSub, {InferImplScatterSub, nullptr, true}},
+    {prim::kPrimScatterElements, {InferImplScatterElements, nullptr, true}},
     {prim::kPrimSubAndFilter, {InferImplSubAndFilter, nullptr, true}},
     {prim::kPrimScatterUpdate, {InferImplScatterUpdate, nullptr, true}},
     {prim::kPrimMapCacheIdx, {InferImplMapCacheIdx, nullptr, true}},
@@ -133,6 +134,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSort, {InferImplSort, nullptr, true}},
     {prim::kPrimMaskedSelect, {InferImplMaskedSelect, nullptr, true}},
     {prim::kPrimTensorCopySlices, {InferImplTensorCopySlices, nullptr, true}},
+    {prim::kPrimNonZero, {InferImplNonZero, nullptr, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, nullptr, true}},
     {prim::kPrimMakeList, {InferImplMakeList, nullptr, true}},

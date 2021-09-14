@@ -102,6 +102,12 @@ ATTR_MAP(EditDistance) = {{"normalize", ATTR_DESC(normalize, AnyTraits<bool>())}
 OUTPUT_MAP(EditDistance) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(EditDistance, kNameEditDistance, ADPT_DESC(EditDistance))
 
+// NonZero
+INPUT_MAP(NonZero) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(NonZero) = {{"transpose", ATTR_DESC(transpose, AnyTraits<bool>())}};
+OUTPUT_MAP(NonZero) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(NonZero, kNameNonZero, ADPT_DESC(NonZero))
+
 // Unsqueeze
 INPUT_MAP(Unsqueeze) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Unsqueeze) = {{"axis", ATTR_DESC(axes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};

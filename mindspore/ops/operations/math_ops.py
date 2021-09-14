@@ -1117,11 +1117,6 @@ class MatMul(PrimitiveWithCheck):
     def check_shape(self, x1, x2):
         self.check_shape_size(x1, x2)
         cls_name = self.name
-        # expected dimension of x, y, x:[...,a,b] y:[..., c,d], the dim size should be the same except the last two
-        for i in range(len(x1) - 2):
-            if x1[i] != x2[i]:
-                raise ValueError(f"For '{cls_name}', the dim[{i}] of 'x' should be equal to the dim[{i}] of 'y', "
-                                 f"but got 'x[{i}]': {x1[i]} and 'y[{i}]': {x2[i]}.")
 
         # validate whether last two dims satisfying matrix multiply
         x1_last = x1[-2:]
@@ -1150,7 +1145,7 @@ class BatchMatMul(MatMul):
 
         \\text{output}[..., :, :] = \\text{matrix}(x[..., :, :]) * \\text{matrix}(y[..., :, :])
 
-    The two input tensors must have the same rank and the rank must be not less than `3`.
+    The first input tensor must be not less than `3` and the second input must be not less than `2`.
 
     Args:
         transpose_x (bool): If true, the last two dimensions of `x` is transposed before multiplication.
@@ -1214,9 +1209,9 @@ class BatchMatMul(MatMul):
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
 
     def check_shape_size(self, x, y):
-        if len(x) != len(y) or len(x) < 3:
-            raise ValueError(f"For '{self.name}', input 'x', 'y' should be the same dimension size and should be "
-                             f"greater than or equal to 3, but got 'x' size: {len(x)}, 'y' size: {len(y)}.")
+        if len(x) < 3 or len(y) < 2:
+            raise ValueError(f"For '{self.name}', input 'x' should be greater than or equal to 3, input 'y' should "
+                             f"be greater than or equal to 2, but got 'x' size: {len(x)}, 'y' size: {len(y)}.")
 
 
 class CumSum(PrimitiveWithInfer):

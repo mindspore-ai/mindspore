@@ -414,3 +414,4 @@ from .hsigmoid import _hsigmoid_tbe
 from .hshrink import _hshrink_tbe
 from .hshrink_grad import _hshrink_grad_tbe
 from .new_im2col import _new_im2col_tbe
+from .non_zero_ds import _non_zero_ds_tbe

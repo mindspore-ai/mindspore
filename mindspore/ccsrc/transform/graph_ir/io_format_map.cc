@@ -27,6 +27,8 @@ std::unordered_map<std::string, std::string> IOFormatMap::io_format_map_ = {{"Ba
                                                                             {"DynamicRNN", "ND"},
                                                                             {"DynamicRNNGrad", "ND"},
                                                                             {"MatMul", "ND"},
+                                                                            {"BatchMatMul", "ND"},
+                                                                            {"BatchMatMulV2", "ND"},
                                                                             {"Quant", "ND"},
                                                                             {"BasicLSTMCellWeightGrad", "HWCN"},
                                                                             {"ExtractImagePatches", "NCHW"},
