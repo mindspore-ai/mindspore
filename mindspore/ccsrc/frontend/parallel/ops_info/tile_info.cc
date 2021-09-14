@@ -155,7 +155,8 @@ Status TileInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-void TileInfo::UpdateMultiples(const CNodePtr &cnode) {
+void TileInfo::UpdateMultiples() {
+  auto cnode = cnode_;
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->size() != 3) {
     MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 3";
@@ -174,6 +175,8 @@ void TileInfo::UpdateMultiples(const CNodePtr &cnode) {
   AnfNodePtr val = NewValueNode(new_multiples);
   (void)manager->Replace(cnode->input(2), val);
 }
+
+void TileInfo::ReplaceNodeInputOrAttrs() { UpdateMultiples(); }
 
 std::shared_ptr<Strategys> TileInfo::GenerateBatchStrategies() {
   if (InferAttrs() != SUCCESS) {

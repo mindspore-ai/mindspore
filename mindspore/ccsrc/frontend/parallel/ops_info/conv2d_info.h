@@ -127,7 +127,8 @@ class Conv2DBackpropInputInfo : public Conv2DInfo {
                           const PrimitiveAttrs &attrs)
       : Conv2DInfo(name, inputs_shape, outputs_shape, attrs) {}
   ~Conv2DBackpropInputInfo() override = default;
-  void UpdateOutShape(const CNodePtr &cnode);
+  void UpdateOutShape();
+  void ReplaceNodeInputOrAttrs() override;
 
  protected:
   Status GetAttrs() override;

@@ -325,6 +325,7 @@ constexpr char GATHERV2[] = "Gather";
 constexpr char SPARSE_GATHERV2[] = "SparseGatherV2";
 constexpr char STRIDEDSLICE[] = "StridedSlice";
 constexpr char SLICE[] = "Slice";
+constexpr char UNIFORM_REAL[] = "UniformReal";
 constexpr char BROADCAST[] = "Broadcast";
 constexpr char BROADCAST_TO[] = "BroadcastTo";
 constexpr char SQRT[] = "Sqrt";

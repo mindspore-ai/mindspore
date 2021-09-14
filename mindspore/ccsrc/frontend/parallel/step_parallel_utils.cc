@@ -92,7 +92,10 @@ Shapes GetValueListShape(const AnfNodePtr &node) {
   }
   for (auto &ele : inputs_seq) {
     auto tensor = ele->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor == nullptr) {
+      MS_LOG(WARNING) << "The value node is not a tensor";
+      break;
+    }
     auto one_shape = tensor->shape();
     shapes.push_back(one_shape);
   }
@@ -144,6 +147,84 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     shapes.push_back(shape_ptr->shape());
   }
   return shapes;
+}
+
+std::string CreateInstanceName(const CNodePtr &node, size_t index) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!IsValueNode<Primitive>(node->input(0))) {
+    MS_LOG(EXCEPTION) << "CreateInstanceName: " << node->ToString() << " doesn't have primitive";
+  }
+  std::string name_base = node->fullname_with_scope();
+  std::string name = name_base + "_" + std::to_string(index);
+  std::string instance_name = HashInstanceName(name);
+  return instance_name;
+}
+
+void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input) {
+  if (new_node_input.empty()) {
+    return;
+  }
+
+  auto prim_anf_node = new_node_input[0]->cast<ValueNodePtr>();
+  auto prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+  MS_EXCEPTION_IF_NULL(prim);
+
+  auto attrs = prim->attrs();
+  auto iter = attrs.find(GROUP);
+  if (iter != attrs.end()) {
+    auto value = iter->second;
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<StringImm>()) {
+      std::string hash_name = value->cast<StringImmPtr>()->value();
+      MS_EXCEPTION_IF_NULL(g_device_manager);
+      std::string rank_list_name = g_device_manager->FindRankListNameByHashName(hash_name);
+      (void)prim->AddAttr(GROUP_RANKS, MakeValue(rank_list_name));
+    }
+  }
+}
+
+std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
+                                       const CNodePtr &node) {
+  OperatorArgs arg_replace_op = replace_op.second;
+  ValuePtr pyop_instance = CreatOpInstance(arg_replace_op.first, replace_op.first, instance_name);
+  if (pyop_instance == nullptr) {
+    MS_LOG(EXCEPTION) << "Failure: " << replace_op.first << " CreatOpInstance failed";
+  }
+  OperatorParams params = arg_replace_op.second;
+  if (node->inputs().size() < 2) {
+    // GetNext operator dose not has input
+    if (node->inputs().size() == 1) {
+      return {NewValueNode(pyop_instance)};
+    }
+    MS_LOG(EXCEPTION) << "Failure: " << node->ToString() << " size is smaller than 2";
+  }
+  std::vector<AnfNodePtr> replace_input = {NewValueNode(pyop_instance), node->input(1)};
+
+  if (replace_op.first == EMBEDDING_LOOKUP) {
+    replace_input = {NewValueNode(pyop_instance), node->input(1), node->input(2)};
+  }
+
+  if (!params.empty()) {
+    Param param_first = *(params.begin());
+    int64_t first_position = param_first.second;
+    if (first_position == 1) {
+      replace_input.pop_back();
+    }
+    for (auto &param : params) {
+      AnfNodePtr val = NewValueNode(param.first.second);
+      if (val == nullptr) {
+        MS_LOG(EXCEPTION) << "Failure:val is nullptr";
+      }
+      int64_t position = param.second;
+      (void)replace_input.insert(replace_input.begin() + position, val);
+    }
+  } else if (replace_op.first == SYNC_BATCH_NORM) {
+    for (size_t i = 2; i < node->inputs().size(); ++i) {
+      replace_input.push_back(node->input(i));
+    }
+  }
+  SetCommunicationOpGroupLabel(replace_input);
+  return replace_input;
 }
 }  // namespace parallel
 }  // namespace mindspore

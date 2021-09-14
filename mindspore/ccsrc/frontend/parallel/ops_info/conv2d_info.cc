@@ -17,6 +17,7 @@
 #include "frontend/parallel/ops_info/conv2d_info.h"
 
 #include <algorithm>
+#include <functional>
 #include <cmath>
 #include <memory>
 #include <utility>
@@ -1041,7 +1042,8 @@ Status Conv2DBackpropInputInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-void Conv2DBackpropInputInfo::UpdateOutShape(const CNodePtr &cnode) {
+void Conv2DBackpropInputInfo::UpdateOutShape() {
+  auto cnode = cnode_;
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->size() != 4) {
     MS_LOG(EXCEPTION) << name_ << ": The size of cnode's inputs must be 4, but got " << cnode->size();
@@ -1191,5 +1193,7 @@ void Conv2DBackpropInputInfo::InferNewPadList() {
   MS_LOG(INFO) << name_ << ": the new pad list is " << new_pad_list_ << ", the required size of current rank is "
                << current_rank_required_size << ", new pad all is " << pad_all;
 }
+
+void Conv2DBackpropInputInfo::ReplaceNodeInputOrAttrs() { UpdateOutShape(); }
 }  // namespace parallel
 }  // namespace mindspore

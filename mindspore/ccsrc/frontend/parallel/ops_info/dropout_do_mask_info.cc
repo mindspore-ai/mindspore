@@ -24,6 +24,8 @@
 #include "ir/value.h"
 #include "pipeline/jit/resource.h"
 #include "frontend/parallel/auto_parallel/costmodel.h"
+#include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/strategy.h"
 
@@ -213,7 +215,8 @@ void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
 // split. Find the DropoutGenMask node in the anf graph according to DropoutDoMask node, and modify the input shape
 // of DropoutGenMask according to the strategy of DropoutDoMask. When the DropoutDoMask performs repeated calculation
 // and both seeds of DropoutGenMask are 0, two new seeds are automatically generated for DropoutGenMask.
-std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodePtr &cnode) {
+std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp() {
+  auto cnode = cnode_;
   std::vector<Operator> replace_ops;
   MS_EXCEPTION_IF_NULL(cnode);
   PrimitivePtr prim = GetDropoutGenMaskPrim(cnode);
@@ -261,6 +264,47 @@ std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodeP
   Operator replace_op = {std::make_pair(DROPOUT_GEN_MASK, args)};
   replace_ops.push_back(replace_op);
   return replace_ops;
+}
+
+static void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
+  FuncGraphPtr func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  FuncGraphManagerPtr manager = func_graph->manager();
+  if (manager == nullptr) {
+    MS_LOG(EXCEPTION) << "Failure:AddNode error since manager is nullptr";
+  }
+  std::string instance_name = CreateInstanceName(node, 0);
+  std::vector<AnfNodePtr> replace_input;
+  replace_input = ReplaceOpInput(replace_op, instance_name, node);
+  if (node->inputs().size() == DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+    replace_input.push_back(node->input(3));
+  }
+  CNodePtr replace_node = func_graph->NewCNode(replace_input);
+  MS_EXCEPTION_IF_NULL(replace_node);
+  ScopePtr scope = node->scope();
+  MS_EXCEPTION_IF_NULL(scope);
+  replace_node->set_scope(scope);
+  replace_node->set_in_forward_flag(true);
+  replace_input[0]->set_scope(scope);
+  PrimitivePtr prim = GetValueNode<PrimitivePtr>(replace_node->input(0));
+  PrimitivePtr origin_prim = GetValueNode<PrimitivePtr>(node->input(0));
+  SetUserAttrs(origin_prim->attrs(), prim);
+  (void)manager->Replace(node, replace_node);
+}
+
+void DropoutDoMaskInfo::ReplaceNodeInputOrAttrs() {
+  auto cnode = cnode_;
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<Operator> replace_op = GetDropoutGenMaskReplaceOp();
+  if (replace_op.empty()) {
+    MS_LOG(DEBUG) << name_ << ": No need to replace dropout_gen_mask";
+    return;
+  }
+  if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+    MS_LOG(EXCEPTION) << name_ << ": The size of drop out do mask cnode's input is not "
+                      << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
+  }
+  ReplaceOneOp(replace_op[0], cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
 }
 }  // namespace parallel
 }  // namespace mindspore
