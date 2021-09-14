@@ -55,6 +55,8 @@ class KernelRuntime {
   virtual void AssignMemory(session::KernelGraph *graph);
   void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, session::KernelGraph *graph,
                          const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node = {});
+  void RunOpAssignCommunicationOutput(const AnfNodePtr &node) const;
+  void RunOpAssignCommunicationInput(const AnfNodePtr &node) const;
   void RunOpClearMemory(const session::KernelGraph *graph) const;
   void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors);
 #ifdef ENABLE_DEBUGGER
@@ -117,9 +119,9 @@ class KernelRuntime {
 
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id) = 0;
+                                               TypeId type_id) const = 0;
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                               TypeId type_id, const KernelWithIndex &node_index) = 0;
+                                               TypeId type_id, const KernelWithIndex &node_index) const = 0;
   virtual bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index);
   virtual bool KernelMemNotReuse(const AnfNodePtr &node);
 
@@ -150,13 +152,18 @@ class KernelRuntime {
   void RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel);
   void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, session::KernelGraph *graph);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);
-  DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index);
+  DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index) const;
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   void GetFirstPSEmbeddingCache(const session::KernelGraph *graph, AnfNodePtr *const first_cache_input_index,
                                 size_t *const first_cache_size);
   void CheckIfSupportPSEmbeddingCache(const session::KernelGraph *graph);
   void CheckSparsePSEmbeddingCache(const CNodePtr &node);
 #endif
+  void RunOpGetCommunicationInputInfo(const AnfNodePtr &node, size_t *total_size,
+                                      std::vector<DeviceAddressPtr> *address_list,
+                                      std::vector<size_t> *align_size_list) const;
+  void RunOpGetCommunicationOutputInfo(const AnfNodePtr &node, size_t *total_size, std::vector<size_t> *align_size_list,
+                                       std::vector<DeviceAddressPtr> *device_address_list) const;
 
  protected:
   uint32_t device_id_{0};

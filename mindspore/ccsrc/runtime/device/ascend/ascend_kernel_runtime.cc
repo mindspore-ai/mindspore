@@ -393,12 +393,12 @@ bool AscendKernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
 }
 
 DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                                          TypeId type_id) {
+                                                          TypeId type_id) const {
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
 DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                                          TypeId type_id, const KernelWithIndex &node_index) {
+                                                          TypeId type_id, const KernelWithIndex &node_index) const {
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, node_index);
 }
 

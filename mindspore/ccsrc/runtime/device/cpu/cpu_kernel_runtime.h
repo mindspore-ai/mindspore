@@ -52,9 +52,9 @@ class CPUKernelRuntime : public KernelRuntime {
   bool SyncStream() override { return true; };
   bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override { return true; };
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                       TypeId type_id) override;
+                                       TypeId type_id) const override;
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const KernelWithIndex &node_index) override;
+                                       const KernelWithIndex &node_index) const override;
 
  private:
   tensor::TensorPtr CreatTensorForOutput(session::KernelGraph *kernel_graph, const CNodePtr &node, size_t index,

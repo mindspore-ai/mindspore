@@ -55,9 +55,9 @@ class GPUKernelRuntime : public KernelRuntime {
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
-                                       TypeId type_id) override;
+                                       TypeId type_id) const override;
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format, TypeId type_id,
-                                       const KernelWithIndex &node_index) override;
+                                       const KernelWithIndex &node_index) const override;
   bool SyncStream() override;
   bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override;
 

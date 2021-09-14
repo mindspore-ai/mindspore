@@ -36,7 +36,7 @@ std::vector<void *> GPUMemoryManager::MallocContinuousMemFromMemPool(size_t tota
   return GPUMemoryAllocator::GetInstance().AllocContinuousTensorMem(total_size, size_list);
 }
 
-bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList addr_list, size_t total_size,
+bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                                       std::vector<size_t> size_list) {
   auto device_ptr_list = MallocContinuousMemFromMemPool(total_size, size_list);
   if (device_ptr_list.size() == 0) {
