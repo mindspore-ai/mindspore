@@ -78,7 +78,7 @@ Status Serdes::SaveJSONToFile(nlohmann::json json_string, const std::string &fil
 
     ChangeFileMode(whole_path.value(), S_IRUSR | S_IWUSR);
   } catch (const std::exception &err) {
-    RETURN_STATUS_UNEXPECTED("Save json string into " + file_name + " failed!");
+    RETURN_STATUS_UNEXPECTED("Invalid data, failed to save json string into file: " + file_name);
   }
   return Status::OK();
 }
@@ -87,11 +87,11 @@ Status Serdes::Deserialize(std::string json_filepath, std::shared_ptr<DatasetNod
   nlohmann::json json_obj;
   CHECK_FAIL_RETURN_UNEXPECTED(json_filepath.size() != 0, "Json path is null");
   std::ifstream json_in(json_filepath);
-  CHECK_FAIL_RETURN_UNEXPECTED(json_in, "Json path is not valid");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_in, "Invalid file, failed to open json file: " + json_filepath);
   try {
     json_in >> json_obj;
   } catch (const std::exception &e) {
-    return Status(StatusCode::kMDSyntaxError, "Json object is not valid");
+    return Status(StatusCode::kMDSyntaxError, "Invalid file, failed to parse json file: " + json_filepath);
   }
   RETURN_IF_NOT_OK(ConstructPipeline(json_obj, ds));
   return Status::OK();
@@ -123,7 +123,8 @@ Status Serdes::ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<Datase
       CHECK_FAIL_RETURN_UNEXPECTED(datasets.size() > 1, "Should concat more than 1 dataset");
       RETURN_IF_NOT_OK(ConcatNode::from_json(json_obj, datasets, ds));
     } else {
-      return Status(StatusCode::kMDUnexpectedError, "Operation is not supported");
+      return Status(StatusCode::kMDUnexpectedError,
+                    "Invalid data, unsupported operation type: " + std::string(json_obj["op_type"]));
     }
   }
   return Status::OK();
@@ -131,7 +132,7 @@ Status Serdes::ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<Datase
 
 Status Serdes::CreateNode(std::shared_ptr<DatasetNode> child_ds, nlohmann::json json_obj,
                           std::shared_ptr<DatasetNode> *ds) {
-  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("op_type") != json_obj.end(), "Failed to find op_type");
+  CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("op_type") != json_obj.end(), "Failed to find op_type in json.");
   std::string op_type = json_obj["op_type"];
   if (child_ds == nullptr) {
     // if dataset doesn't have any child, then create a source dataset IR. e.g., ImageFolderNode, CocoNode
@@ -173,7 +174,7 @@ Status Serdes::CreateDatasetNode(nlohmann::json json_obj, std::string op_type, s
   } else if (op_type == kVOCNode) {
     RETURN_IF_NOT_OK(VOCNode::from_json(json_obj, ds));
   } else {
-    return Status(StatusCode::kMDUnexpectedError, op_type + " is not supported");
+    return Status(StatusCode::kMDUnexpectedError, "Invalid data, unsupported operation type: " + op_type);
   }
   return Status::OK();
 }
@@ -199,7 +200,7 @@ Status Serdes::CreateDatasetOperationNode(std::shared_ptr<DatasetNode> ds, nlohm
   } else if (op_type == kTakeNode) {
     RETURN_IF_NOT_OK(TakeNode::from_json(json_obj, ds, result));
   } else {
-    return Status(StatusCode::kMDUnexpectedError, op_type + " operation is not supported");
+    return Status(StatusCode::kMDUnexpectedError, "Invalid data, unsupported operation type: " + op_type);
   }
   return Status::OK();
 }
@@ -224,7 +225,7 @@ Status Serdes::ConstructSampler(nlohmann::json json_obj, std::shared_ptr<Sampler
   } else if (sampler_name == "WeightedRandomSampler") {
     RETURN_IF_NOT_OK(WeightedRandomSamplerObj::from_json(json_obj, num_samples, sampler));
   } else {
-    return Status(StatusCode::kMDUnexpectedError, sampler_name + "Sampler is not supported");
+    return Status(StatusCode::kMDUnexpectedError, "Invalid data, unsupported sampler type: " + sampler_name);
   }
   return Status::OK();
 }
@@ -235,6 +236,8 @@ Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shar
     if (item.find("python_module") != item.end()) {
       if (Py_IsInitialized()) {
         RETURN_IF_NOT_OK(PyFuncOp::from_json(item, result));
+      } else {
+        RETURN_STATUS_SYNTAX_ERROR("Python module is not initialized or Pyfunction is not supported on this platform.");
       }
     } else {
       CHECK_FAIL_RETURN_UNEXPECTED(item.find("tensor_op_name") != item.end(), "Failed to find tensor_op_name");
@@ -242,7 +245,8 @@ Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shar
       std::string op_name = item["tensor_op_name"];
       nlohmann::json op_params = item["tensor_op_params"];
       std::shared_ptr<TensorOperation> operation = nullptr;
-      CHECK_FAIL_RETURN_UNEXPECTED(func_ptr_.find(op_name) != func_ptr_.end(), "Failed to find " + op_name);
+      CHECK_FAIL_RETURN_UNEXPECTED(func_ptr_.find(op_name) != func_ptr_.end(),
+                                   "Invalid data, unsupported operation: " + op_name);
       RETURN_IF_NOT_OK(func_ptr_[op_name](op_params, &operation));
       output.push_back(operation);
       *result = output;

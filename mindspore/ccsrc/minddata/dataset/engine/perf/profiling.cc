@@ -79,11 +79,11 @@ Status ProfilingManager::Initialize() {
   // Register nodes based on config
   std::string dir = common::GetEnv("MINDDATA_PROFILING_DIR");
   if (dir.empty()) {
-    RETURN_STATUS_UNEXPECTED("Profiling dir is not set.");
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, Profiling directory is not set.");
   }
   char real_path[PATH_MAX] = {0};
   if (dir.size() >= PATH_MAX) {
-    RETURN_STATUS_UNEXPECTED("Profiling dir is invalid.");
+    RETURN_STATUS_UNEXPECTED("Invalid file, Profiling directory is invalid.");
   }
 #if defined(_WIN32) || defined(_WIN64)
   if (_fullpath(real_path, common::SafeCStr(dir), PATH_MAX) == nullptr) {
@@ -91,7 +91,7 @@ Status ProfilingManager::Initialize() {
   }
 #else
   if (realpath(common::SafeCStr(dir), real_path) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Profiling dir is invalid.");
+    RETURN_STATUS_UNEXPECTED("Invalid file, can not get realpath of Profiling directory.");
   }
 #endif
   dir_path_ = real_path;
