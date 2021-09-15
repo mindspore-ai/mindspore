@@ -387,6 +387,9 @@ class _PynativeExecutor:
     def del_cell(self, cell_id=""):
         self._executor.clear_cell(cell_id)
 
+    def clear_res(self):
+        return self._executor.clear_res()
+
     def clear_grad(self, obj, *args, **kwargs):
         self._executor.clear_grad(obj, *args, *(kwargs.values()))
 
