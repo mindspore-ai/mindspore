@@ -37,6 +37,11 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr float kNumUsPerMs = 1000.;
+constexpr auto kBenchmarkInputNames = "MSLITE_BENCH_INPUT_NAMES";
+}  // namespace
+
 int Benchmark::GenerateInputData() {
   for (auto tensor : ms_inputs_) {
     MS_ASSERT(tensor != nullptr);
@@ -423,10 +428,6 @@ int Benchmark::PrintInputData() {
   return RET_OK;
 }
 
-namespace {
-constexpr float kNumUsPerMs = 1000.;
-}
-
 int Benchmark::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
   // Load graph
@@ -486,6 +487,12 @@ int Benchmark::RunBenchmark() {
   MS_LOG(INFO) << "PrepareTime = " << static_cast<float>(end_prepare_time - start_prepare_time) / kNumUsPerMs << " ms";
   std::cout << "PrepareTime = " << static_cast<float>(end_prepare_time - start_prepare_time) / kNumUsPerMs << " ms"
             << std::endl;
+
+  // Check input names
+  if (CheckInputNames() != RET_OK) {
+    MS_LOG(ERROR) << "Check input names failed.";
+    return RET_ERROR;
+  }
 
   // Load input
   MS_LOG(INFO) << "start generate input data";
@@ -814,6 +821,23 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
     }
     return true;
   };
+  return RET_OK;
+}
+
+int Benchmark::CheckInputNames() {
+  auto bench_inputs = std::getenv(kBenchmarkInputNames);
+  if (bench_inputs == nullptr || std::string(bench_inputs).empty()) {
+    MS_LOG(WARNING) << "The benchmark input names is not set.";
+    return RET_OK;
+  }
+  auto input_names = StrSplit(bench_inputs, std::string(DELIM_COMMA));
+  std::vector<std::string> ms_input_names(ms_inputs_.size());
+  std::transform(ms_inputs_.begin(), ms_inputs_.end(), ms_input_names.begin(),
+                 [](mindspore::tensor::MSTensor *input) { return input->tensor_name(); });
+  if (ms_input_names != input_names) {
+    MS_LOG(ERROR) << "The input names are not the same as ones of the original model.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

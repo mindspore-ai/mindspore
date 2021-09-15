@@ -77,6 +77,8 @@ class MS_API Benchmark : public BenchmarkBase {
 
   int MarkAccuracy();
 
+  int CheckInputNames();
+
  private:
   session::LiteSession *session_{nullptr};
   std::vector<mindspore::tensor::MSTensor *> ms_inputs_;

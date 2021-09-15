@@ -29,7 +29,10 @@ function Run_Converter() {
         if [ $? = 0 ]; then
             converter_result='converter 1_1_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
-            converter_result='converter 1_1_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+            converter_result='converter 1_1_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+            if [[ $x86_fail_not_return != "ON" ]]; then
+                return 1
+            fi
         fi
 
         echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_2_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_2_parallel_split.config' >> "${run_converter_log_file}"
@@ -37,7 +40,10 @@ function Run_Converter() {
         if [ $? = 0 ]; then
             converter_result='converter 1_2_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
-            converter_result='converter 1_2_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+            converter_result='converter 1_2_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+            if [[ $x86_fail_not_return != "ON" ]]; then
+                return 1
+            fi
         fi
 
         echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_3_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_3_parallel_split.config' >> "${run_converter_log_file}"
@@ -45,7 +51,10 @@ function Run_Converter() {
         if [ $? = 0 ]; then
             converter_result='converter 1_3_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
-            converter_result='converter 1_3_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+            converter_result='converter 1_3_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+            if [[ $x86_fail_not_return != "ON" ]]; then
+                return 1
+            fi
         fi
 
     done < ${models_tflite_parallel_split_config}
@@ -57,13 +66,13 @@ function Run_Converter() {
                              "$models_weightquant_9bit_config")
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
-    Convert "${x86_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file
+    Convert "${x86_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $x86_fail_not_return
 }
 
 # Run on x86 platform:
 function Run_x86() {
     echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-x64' >> "${run_x86_log_file}"
-    cd ${x86_path}/mindspore-lite-${version}-linux-x64 || return 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64 || exit 1
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
@@ -81,7 +90,10 @@ function Run_x86() {
         if [ $? = 0 ]; then
             run_result='x86_Parallel_Split: '${model_name}_1_1_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_Parallel_Split: '${model_name}_1_1_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_Parallel_Split: '${model_name}_1_1_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            if [[ $x86_fail_not_return != "ON" ]]; then
+                return 1
+            fi
         fi
 
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_2_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
@@ -89,7 +101,10 @@ function Run_x86() {
         if [ $? = 0 ]; then
             run_result='x86_Parallel_Split: '${model_name}_1_2_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_Parallel_Split: '${model_name}_1_2_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_Parallel_Split: '${model_name}_1_2_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            if [[ $x86_fail_not_return != "ON" ]]; then
+                return 1
+            fi
         fi
 
         echo './benchmark --modelFile='${ms_models_path}'/'${model_name}'_1_3_parallel_split.ms --inDataFile='${models_path}'/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile='${models_path}'/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
@@ -97,7 +112,10 @@ function Run_x86() {
         if [ $? = 0 ]; then
             run_result='x86_Parallel_Split: '${model_name}_1_3_parallel_split' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_Parallel_Split: '${model_name}_1_3_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_Parallel_Split: '${model_name}_1_3_parallel_split' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            if [[ $x86_fail_not_return != "ON" ]]; then
+                return 1
+            fi
         fi
     done < ${models_tflite_parallel_split_config}
 
@@ -108,14 +126,14 @@ function Run_x86() {
                              "$models_weightquant_9bit_config" "$models_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${x86_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_log_file $run_benchmark_result_file 'x86' 'CPU' ''
+    Run_Benchmark "${x86_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_log_file $run_benchmark_result_file 'x86' 'CPU' '' $x86_fail_not_return
 }
 
 # Run on x86 sse platform:
 function Run_x86_sse() {
     cd ${x86_path}/sse || exit 1
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/sse/mindspore-lite-${version}-linux-x64 || return 1
+    cd ${x86_path}/sse/mindspore-lite-${version}-linux-x64 || exit 1
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
@@ -126,14 +144,14 @@ function Run_x86_sse() {
                              "$models_weightquant_9bit_config" "$models_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${sse_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_sse_log_file $run_benchmark_result_file 'x86_sse' 'CPU' ''
+    Run_Benchmark "${sse_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_sse_log_file $run_benchmark_result_file 'x86_sse' 'CPU' '' $x86_fail_not_return
 }
 
 # Run on x86 avx platform:
 function Run_x86_avx() {
     cd ${x86_path}/avx || exit 1
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/avx/mindspore-lite-${version}-linux-x64 || return 1
+    cd ${x86_path}/avx/mindspore-lite-${version}-linux-x64 || exit 1
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
     cp tools/benchmark/benchmark ./ || exit 1
 
@@ -144,7 +162,7 @@ function Run_x86_avx() {
                              "$models_weightquant_9bit_config" "$models_process_only_config")
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:benchmark_mode
-    Run_Benchmark "${avx_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_avx_log_file $run_benchmark_result_file 'x86_avx' 'CPU' ''
+    Run_Benchmark "${avx_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_avx_log_file $run_benchmark_result_file 'x86_avx' 'CPU' '' $x86_fail_not_return
 }
 
 # Run on x86 java platform:
@@ -167,7 +185,7 @@ function Run_x86_java() {
         if [[ ${count} -gt 5 ]]; then
             break
         fi
-        model_name=${line}
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
         if [[ $model_name == \#* ]]; then
           continue
         fi
@@ -177,7 +195,10 @@ function Run_x86_java() {
         if [ $? = 0 ]; then
             run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            if [[ $x86_fail_not_return != "ON" ]]; then
+                return 1
+            fi
         fi
     done < ${models_tflite_config}
 }
@@ -186,7 +207,7 @@ basepath=$(pwd)
 echo ${basepath}
 
 # Example:sh run_benchmark_x86.sh -r /home/temp_test -m /home/temp_test/models -e arm_cpu
-while getopts "r:m:e:" opt; do
+while getopts "r:m:e:p:" opt; do
     case ${opt} in
         r)
             release_path=${OPTARG}
@@ -199,6 +220,10 @@ while getopts "r:m:e:" opt; do
         e)
             backend=${OPTARG}
             echo "backend is ${OPTARG}"
+            ;;
+        p)
+            x86_fail_not_return=${OPTARG}
+            echo "x86_fail_not_return is ${OPTARG}"
             ;;
         ?)
         echo "unknown para"

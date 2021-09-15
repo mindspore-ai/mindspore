@@ -27,9 +27,11 @@ done
 
 cur_path=$(pwd)
 echo "cur_path is "$cur_path
+# This value could not be set to ON.
+fail_not_return="OFF"
 
 if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_fp16" ]]; then
-    sh $cur_path/scripts/run_benchmark_arm64.sh -r $release_path -m $models_path -d $device_id -e $backend
+    sh $cur_path/scripts/run_benchmark_arm64.sh -r $release_path -m $models_path -d $device_id -e $backend -p $fail_not_return
     arm64_status=$?
     if [[ $arm64_status -ne 0 ]]; then
       echo "Run arm64 failed"
@@ -38,7 +40,7 @@ if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" |
 fi
 
 if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" || $backend == "arm32_fp16" ]]; then
-    sh $cur_path/scripts/run_benchmark_arm32.sh -r $release_path -m $models_path -d $device_id -e $backend
+    sh $cur_path/scripts/run_benchmark_arm32.sh -r $release_path -m $models_path -d $device_id -e $backend -p $fail_not_return
     arm32_status=$?
     if [[ $arm32_status -ne 0 ]]; then
       echo "Run arm32 failed"
@@ -47,7 +49,7 @@ if [[ $backend == "all" || $backend == "arm32_cpu" || $backend == "arm32_fp32" |
 fi
 
 if [[ $backend == "all" || $backend == "gpu" ]]; then
-    sh $cur_path/scripts/run_benchmark_gpu.sh -r $release_path -m $models_path -d $device_id -e $backend
+    sh $cur_path/scripts/run_benchmark_gpu.sh -r $release_path -m $models_path -d $device_id -e $backend -p $fail_not_return
     gpu_status=$?
     if [[ $gpu_status -ne 0 ]]; then
       echo "Run gpu failed"
@@ -56,7 +58,7 @@ if [[ $backend == "all" || $backend == "gpu" ]]; then
 fi
 
 if [[ $backend == "all" || $backend == "npu" ]]; then
-    sh $cur_path/scripts/run_benchmark_npu.sh -r $release_path -m $models_path -d $device_id -e $backend
+    sh $cur_path/scripts/run_benchmark_npu.sh -r $release_path -m $models_path -d $device_id -e $backend -p $fail_not_return
     npu_status=$?
     if [[ $npu_status -ne 0 ]]; then
       echo "Run npu failed"
@@ -66,7 +68,7 @@ fi
 
 if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" || $backend == "x86-sse" || \
       $backend == "x86-avx" || $backend == "x86-java" ]]; then
-    sh $cur_path/scripts/run_benchmark_x86.sh -r $release_path -m $models_path -e $backend
+    sh $cur_path/scripts/run_benchmark_x86.sh -r $release_path -m $models_path -e $backend -p $fail_not_return
     x86_status=$?
     if [[ $x86_status -ne 0 ]]; then
       echo "Run x86 failed"

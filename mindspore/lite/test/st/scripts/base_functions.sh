@@ -2,7 +2,7 @@
 
 # Convert models:
 function Convert() {
-  # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
+  # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile; $6:failNotReturn;
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
         quant_type bit_num config_file train_model in_dtype out_dtype converter_result cfg_file
   cfg_file_list=$1
@@ -76,7 +76,10 @@ function Convert() {
       if [ $? = 0 ]; then
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
-          converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5;return 1
+          converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          if [[ $6 != "ON" ]]; then
+              return 1
+          fi
       fi
     done < ${cfg_file}
   done
@@ -121,7 +124,7 @@ function Push_Files() {
 
 # Run converted models:
 function Run_Benchmark() {
-  # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
+  # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:failNotReturn;
   local cfg_file_list cfg_file_name line_info model_info spec_acc_limit model_name input_num input_shapes spec_threads \
         extra_info benchmark_mode infix mode model_file input_files output_file data_path threads acc_limit enableFp16 \
         run_result cfg_file
@@ -133,13 +136,15 @@ function Run_Benchmark() {
       if [[ $line_info == \#* || $line_info == "" ]]; then
         continue
       fi
-      model_info=`echo ${line_info}|awk -F ' ' '{print $1}'`
-      spec_acc_limit=`echo ${line_info}|awk -F ' ' '{print $2}'`
-      model_name=`echo ${model_info}|awk -F ';' '{print $1}'`
-      input_num=`echo ${model_info} | awk -F ';' '{print $2}'`
+      model_info=`echo ${line_info} | awk -F ' ' '{print $1}'`
+      spec_acc_limit=`echo ${line_info} | awk -F ' ' '{print $2}'`
+      model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
+      input_info=`echo ${model_info} | awk -F ';' '{print $2}'`
       input_shapes=`echo ${model_info} | awk -F ';' '{print $3}'`
       spec_threads=`echo ${model_info} | awk -F ';' '{print $4}'`
       extra_info=`echo ${model_info} | awk -F ';' '{print $5}'`
+      input_num=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $1}'`
+      input_names=`echo ${input_info} | sed 's/:/;/' | awk -F ';' '{print $2}'`
       if [[ ${model_name##*.} == "caffemodel" ]]; then
         model_name=${model_name%.*}
       fi
@@ -217,13 +222,16 @@ function Run_Benchmark() {
           cat adb_run_cmd.txt >> "$4"
           adb -s $8 shell < adb_run_cmd.txt >> "$4"
         else
-          echo './benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --numThreads='${threads} >> "$4"
-          ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --numThreads=${threads} >> "$4"
+          echo 'MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --modelFile='${model_file}' --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --accuracyThreshold='${acc_limit}' --numThreads='${threads} >> "$4"
+          MSLITE_BENCH_INPUT_NAMES=${input_names} ./benchmark --modelFile=${model_file} --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --accuracyThreshold=${acc_limit} --numThreads=${threads} >> "$4"
         fi
         if [ $? = 0 ]; then
           run_result="$6_$7_${mode}: ${model_file##*/} pass"; echo ${run_result} >> $5
         else
-          run_result="$6_$7_${mode}: ${model_file##*/} failed"; echo ${run_result} >> $5; return 1
+          run_result="$6_$7_${mode}: ${model_file##*/} failed"; echo ${run_result} >> $5
+          if [[ $9 != "ON" ]]; then
+              return 1
+          fi
         fi
       fi
       # run benchmark without clib data recurrently for guarding the repeated graph execution scene
@@ -246,7 +254,10 @@ function Run_Benchmark() {
         if [ $? = 0 ]; then
             run_result="$6_$7_${mode}_loop: ${model_file##*/} pass"; echo ${run_result} >> $5
         else
-            run_result="$6_$7_${mode}_loop: ${model_file##*/} failed"; echo ${run_result} >> $5; return 1
+            run_result="$6_$7_${mode}_loop: ${model_file##*/} failed"; echo ${run_result} >> $5
+            if [[ $9 != "ON" ]]; then
+                return 1
+            fi
         fi
       fi
     done < ${cfg_file}
