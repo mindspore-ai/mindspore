@@ -24,6 +24,12 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SliceFusion;
 
+namespace {
+constexpr int kNumInput0 = 0;
+constexpr int kNumInput1 = 1;
+constexpr int kNumInput2 = 2;
+constexpr int kNumInputSize = 3;
+}  // namespace
 namespace mindspore::kernel {
 int SliceLaunch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   if (cdata == nullptr) {
@@ -35,9 +41,9 @@ int SliceLaunch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 
 int SliceCPUKernel::ReSize() {
-  auto in_tensor = in_tensors_[0];
-  auto begin_tensor = in_tensors_[1];
-  auto size_tensor = in_tensors_[2];
+  auto in_tensor = in_tensors_[kNumInput0];
+  auto begin_tensor = in_tensors_[kNumInput1];
+  auto size_tensor = in_tensors_[kNumInput2];
   MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(begin_tensor->ElementsNum()));
   MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(size_tensor->ElementsNum()));
   MS_ASSERT(in_tensor->shape().size() <= DIMENSION_8D);
@@ -64,11 +70,11 @@ int SliceCPUKernel::ReSize() {
 }
 
 int SliceCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 3);
+  CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_[0]);
-  CHECK_NULL_RETURN(in_tensors_[1]);
-  CHECK_NULL_RETURN(in_tensors_[2]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput0]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput1]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput2]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(op_parameter_);
   if (!InferShapeDone()) {

@@ -348,7 +348,6 @@ STATUS DecreaseTransposeAlgo::InsertPreTransNode(const FuncGraphPtr &func_graph,
   }
   ModifyCNodeFormat(cnode, trans_insert_info->pre_);
   status = node_infer_shape_.InferShape(cnode);
-
   if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
     MS_LOG(ERROR) << "infer shape failed.";
     return lite::RET_ERROR;
