@@ -2761,6 +2761,12 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[2, 1, 5], [3, 5, 1], [1, 1, 1]]), mstype.float32),
                         Tensor(np.array([[10, 5], [15, 8], [7, 4]]), mstype.float32)],
         'skip': ['backward']}),
+    ('LowerBound', {
+        'block': P.LowerBound(),
+        'desc_inputs': [Tensor(np.arange(20).reshape(4, 5), mstype.int8),
+                        Tensor([[3], [5], [7], [8]], mstype.int8)],
+        'skip': ['backward'],
+    }),
 ]
 
 test_case_image_ops = [

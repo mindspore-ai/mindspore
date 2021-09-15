@@ -113,6 +113,7 @@ constexpr auto kSplitV = "SplitV";
 constexpr auto kDynamicBroadcastTo = "DynamicBroadcastTo";
 constexpr auto kReshape = "Reshape";
 constexpr auto kLstsq = "Lstsq";
+constexpr auto kLowerBound = "LowerBound";
 
 // NN
 constexpr auto kCTCLoss = "CTCLoss";
@@ -309,6 +310,7 @@ inline const PrimitivePtr kPrimImag = std::make_shared<Primitive>(kImag);
 inline const PrimitivePtr kPrimConj = std::make_shared<Primitive>(kConj);
 inline const PrimitivePtr kPrimExtractVolumePatches = std::make_shared<Primitive>("ExtractVolumePatches");
 inline const PrimitivePtr kPrimLstsq = std::make_shared<Primitive>(kLstsq);
+inline const PrimitivePtr kPrimLowerBound = std::make_shared<Primitive>(kLowerBound);
 
 // NN
 inline const PrimitivePtr kPrimCeLU = std::make_shared<Primitive>("CeLU");
