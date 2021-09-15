@@ -2562,7 +2562,7 @@ class MDTemperature(PrimitiveWithInfer):
 
     Outputs:
         - **ek** (Tensor) - The temperature of each atom.
-        The data type is float32 and the shape is :math:`(n,)`.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -2860,7 +2860,7 @@ class MDIterationSetupRandState(PrimitiveWithInfer):
 
     Outputs:
         - **output** (Tensor) random state.
-        The data type is float32 and the shape is :math:`(ceil(n * 3 / 4),)`.
+          The data type is float32 and the shape is :math:`(ceil(n * 3 / 4),)`.
 
     Supported Platforms:
         ``GPU``

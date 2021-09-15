@@ -2220,7 +2220,7 @@ class ConstrainForceVirial(PrimitiveWithInfer):
         - **frc** (Tensor) - The force felt by each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
         - **virial** (Tensor) - The constraint virial on each atom.
-         The data type is float32 and the shape is :math:`(m,)`.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Supported Platforms:
         ``GPU``
