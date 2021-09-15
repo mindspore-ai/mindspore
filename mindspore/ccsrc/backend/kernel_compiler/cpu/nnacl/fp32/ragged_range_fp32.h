@@ -24,9 +24,9 @@ extern "C" {
 #endif
 
 void RaggedRangeFp32(const float *starts, const float *limits, const float *deltas, int *splits, float *value,
-                     RaggedRangeParameter *param);
+                     const RaggedRangeParameter *param);
 void RaggedRangeInt(const int *starts, const int *limits, const int *deltas, int *splits, int *value,
-                    RaggedRangeParameter *param);
+                    const RaggedRangeParameter *param);
 
 #ifdef __cplusplus
 }

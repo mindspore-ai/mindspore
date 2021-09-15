@@ -15,8 +15,8 @@
  */
 
 #include "nnacl/int8/transpose_int8.h"
-void TransposeDim2Int8(const int8_t *in_data, int8_t *out_data, const int *strides, int *out_strides, const int *perm,
-                       const int *output_shape) {
+void TransposeDim2Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
+                       const int *perm, const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int output0 = output_shape[0];
@@ -173,15 +173,15 @@ void TransposeDim6Int8(const int8_t *in_data, int8_t *out_data, const int *strid
 }
 
 int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int *output_shape,
-                    TransposeParameter *transpose_param) {
+                    const TransposeParameter *transpose_param) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_NULL_PTR;
   }
 
-  int *perm = transpose_param->perm_;
-  int *strides = transpose_param->strides_;
-  int *out_strides = transpose_param->out_strides_;
-  int num_axes = transpose_param->num_axes_;
+  const int *perm = transpose_param->perm_;
+  const int *strides = transpose_param->strides_;
+  const int *out_strides = transpose_param->out_strides_;
+  const int num_axes = transpose_param->num_axes_;
 
   // check if transpose is needed
   bool needTranspose = false;
