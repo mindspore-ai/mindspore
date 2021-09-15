@@ -148,11 +148,11 @@ def parse_img_infer_result(file_name, infer_result):
         score = o.get("classVec")[0].get("confidence")
         category_id = o.get("classVec")[0].get("classId")
         img_fname_without_suffix = os.path.basename(file_name).split(".")[0]
-        try:
-            image_id = int(img_fname_without_suffix)
-        except ValueError:
-            print("exception getting image id.")
-            image_id = img_fname_without_suffix
+        # try:
+        image_id = int(img_fname_without_suffix)
+        # except:
+        #     print("exception getting image id.")
+        #     image_id = img_fname_without_suffix
         det_obj_list.append(
             dict(
                 image_id=image_id,
@@ -162,7 +162,5 @@ def parse_img_infer_result(file_name, infer_result):
             )
         )
     return det_obj_list
-
-
 if __name__ == "__main__":
     infer()

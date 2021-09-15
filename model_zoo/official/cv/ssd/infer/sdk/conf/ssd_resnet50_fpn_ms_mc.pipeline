@@ -1,0 +1,73 @@
+{
+     "detection": {
+        "stream_config": {
+                "deviceId": "0"
+        },
+        "appsrc0": {
+            "props": {
+                "blocksize": "409600"
+            },
+            "factory": "appsrc",
+            "next": "mxpi_imagedecoder0"
+        },
+        "mxpi_imagedecoder0": {
+            "props": {
+                "handleMethod": "opencv"
+            },
+            "factory": "mxpi_imagedecoder",
+            "next": "queue0"
+        },
+        "queue0": {
+                "props": {
+                      "max-size-buffers": "50"
+                },
+                "factory": "queue",
+                "next": "mxpi_imageresize0"
+        },
+        "mxpi_imageresize0": {
+            "props": {
+                "parentName": "mxpi_imagedecoder0",
+                "resizeHeight": "640",
+                "resizeWidth": "640",
+                "handleMethod": "opencv"
+            },
+            "factory": "mxpi_imageresize",
+            "next": "queue1"
+        },
+        "queue1": {
+                "props": {
+                      "max-size-buffers": "50"
+                },
+                "factory": "queue",
+                "next": "mxpi_tensorinfer0"
+        },
+        "mxpi_tensorinfer0": {
+            "props": {
+                "dataSource": "mxpi_imageresize0",
+                "modelPath": "../../convert/ssd-300_9_mc_bgr.om"
+            },
+            "factory": "mxpi_tensorinfer",
+            "next": "mxpi_objectpostprocessor0"
+        },
+        "mxpi_objectpostprocessor0": {
+            "props": {
+                "dataSource": "mxpi_tensorinfer0",
+                "postProcessConfigPath": "../conf/ssd_resnet50_fpn_ms_on_mc_postprocess.cfg",
+                "labelPath": "../conf/ssd_resnet50_fpn_mc.names",
+                "postProcessLibPath": "/usr/local/sdk_home/mxManufacture/lib/modelpostprocessors/libSsdMobilenetFpn_MindsporePost.so"
+            },
+            "factory": "mxpi_objectpostprocessor",
+            "next": "mxpi_dataserialize0"
+        },
+        "mxpi_dataserialize0": {
+            "props": {
+                "outputDataKeys": "mxpi_objectpostprocessor0"
+            },
+            "factory": "mxpi_dataserialize",
+            "next": "appsink0"
+        },
+        "appsink0": {
+            "factory": "appsink"
+        }
+    }
+}

@@ -15,19 +15,17 @@
 
 import json
 import os
+import threading
 import time
 from datetime import datetime
-from threading import Lock, Thread
 
 import MxpiDataType_pb2 as MxpiDataType
 import cv2
-
 from StreamManagerApi import InProtobufVector
 from StreamManagerApi import MxDataInput
 from StreamManagerApi import MxProtobufIn
 from StreamManagerApi import StreamManagerApi
 from StreamManagerApi import StringVector
-
 from absl import app
 from absl import flags
 
@@ -38,7 +36,7 @@ DET_RESULT_RESIZED_JSON = None
 DET_RESULT_JSON = None
 
 FLAGS = flags.FLAGS
-infer_ret_list_lock = Lock()
+infer_ret_list_lock = threading.Lock()
 det_restore_ratio = dict()
 
 flags.DEFINE_string(
@@ -146,7 +144,7 @@ def draw_image(input_image, bboxes, output_img):
         color_key = index % 10
         color = color_index_dict.get(color_key)
         # Coordinate must be integer.
-        bbox = list(map(int, bbox))
+        # bbox = list(map(lambda cor: int(cor), bbox))
         # pdb.set_trace()
         cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
 
@@ -164,25 +162,26 @@ def draw_img_fun(img_id, bboxes):
 
 
 def trans_class_id(k):
+    c = None
     if 1 <= k <= 11:
-        res = k
+        c = k
     elif 12 <= k <= 24:
-        res = k + 1
+        c = k + 1
     elif 25 <= k <= 26:
-        res = k + 2
+        c = k + 2
     elif 27 <= k <= 40:
-        res = k + 4
+        c = k + 4
     elif 41 <= k <= 60:
-        res = k + 5
+        c = k + 5
     elif k == 61:
-        res = k + 6
+        c = k + 6
     elif k == 62:
-        res = k + 8
+        c = k + 8
     elif 63 <= k <= 73:
-        res = k + 9
-    else:
-        res = k + 10
-    return res
+        c = k + 9
+    elif 74 <= k <= 80:
+        c = k + 10
+    return c
 
 
 def parse_result(img_id, json_content):
@@ -258,8 +257,10 @@ def send_img_with_opencv_handled(stream_manager_api, img_file_name):
         if FLAGS.coco
         else img_file_name
     )
-
-    # height/FLAGS.model_input_height = hx/ DH =>hx = DH * (height/FLAGS.model_input_height)
+    # """
+    # height/FLAGS.model_input_height = hx/ DH =>hx = DH * (
+    # height/FLAGS.model_input_height)
+    # """
     det_restore_ratio[img_id] = (
         round(height * 1.0 / FLAGS.model_input_height, 4),
         round(width * 1.0 / FLAGS.model_input_width, 4),
@@ -311,7 +312,7 @@ def display_infer_progress(img_num, index, report_file, start_secs):
         f"average inference speed at: {real_speed} ms/image\n"
     )
     print(perf_detail)
-    Thread(
+    threading.Thread(
         target=write_speed_detail, args=(perf_detail, report_file)
     ).start()
 
@@ -367,7 +368,7 @@ def infer_imgs_in_dir_with_open_cv():
         name, ext = os.path.splitext(os.path.basename(img_file_name))
         img_id = int(name) if FLAGS.coco else name
 
-        t = Thread(
+        t = threading.Thread(
             target=handle_infer_result,
             args=(all_infer_dict_list, img_id, infer_result, ext),
         )
@@ -469,11 +470,11 @@ def get_all_images_result(uuid_img_id_zip, stream_manager_api):
                 f"average inference speed at: {real_speed} ms/image\n"
             )
             print(perf_detail)
-            Thread(
+            threading.Thread(
                 target=write_speed_detail, args=(perf_detail, report_file)
             ).start()
 
-        Thread(
+        threading.Thread(
             target=parse_infer_result,
             args=(all_infer_dict_list, img_id, infer_result),
         ).start()
@@ -488,6 +489,7 @@ def get_all_images_result(uuid_img_id_zip, stream_manager_api):
     report_file.close()
 
     return all_infer_dict_list
+
 
 
 def parse_infer_result(all_infer_dict_list, img_id, infer_result):
@@ -574,18 +576,17 @@ def infer_imgs():
 
 
 def main(unused_arg):
-    """
-    output_dir
-    |_boxed_imgs
-    |_txts
-    |_per_report_npu.txt
-    |_det_result_npu.json
-
-    """
     global BOXED_IMG_DIR
     global TXT_DIR
     global PERF_REPORT_TXT
     global DET_RESULT_JSON
+    # '''
+    # output_dir
+    # |_boxed_imgs
+    # |_txts
+    # |_per_report_npu.txt
+    # |_det_result_npu.json
+    # '''
 
     BOXED_IMG_DIR = os.path.join(FLAGS.output_dir, "boxed_imgs")
     TXT_DIR = os.path.join(FLAGS.output_dir, "txts")

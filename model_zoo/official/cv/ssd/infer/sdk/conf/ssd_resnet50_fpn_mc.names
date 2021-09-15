@@ -1,0 +1,6 @@
+# This file is originally from https://github.com/pjreddie/darknet/blob/master/data/coco.names
+background
+Arduino_Nano
+ESP8266
+Raspberry_Pi_3
+Heltec_ESP32_Lora

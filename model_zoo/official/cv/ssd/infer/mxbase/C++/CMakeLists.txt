@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.14.0)
-project(ssd_ms)
+cmake_minimum_required(VERSION 3.10.0)
+project(ssd_resnet)
 
-set(TARGET_ssd ssd_mobilenet_v1_fpn)
+set(TARGET ssd_resnet50_fpn)
 
 add_definitions(-DENABLE_DVPP_INTERFACE)
-add_compile_options(-std=c++11 -fPIE -fstack-protector-all -fPIC -Wall -Dgoogle=mindxsdk_private
--D_GLIBCXX_USE_CXX11_ABI=0)
+add_compile_options(-std=c++11 -fPIE -fstack-protector-all -fPIC -Wall \
+-Dgoogle=mindxsdk_private -D_GLIBCXX_USE_CXX11_ABI=0)
 add_link_options(-Wl,-z,relro,-z,now,-z,noexecstack -s -pie)
 
 # Check environment variable
@@ -47,7 +47,7 @@ link_directories(${OPENSOURCE_DIR}/lib)
 link_directories(${MXBASE_LIB_DIR})
 link_directories(${MXBASE_POST_LIB_DIR})
 
-add_executable(${TARGET_ssd} main_ssd.cpp SSDMobileNetV1Fpn.cpp)
-target_link_libraries(${TARGET_ssd} glog cpprest mxbase SsdMobilenetFpn_MindsporePost)
+add_executable(${TARGET} main_ssd.cpp SSDResnet50Fpn.cpp)
+target_link_libraries(${TARGET} glog cpprest mxbase SsdMobilenetFpn_MindsporePost)
 
 install(TARGETS ${TARGET} RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/)

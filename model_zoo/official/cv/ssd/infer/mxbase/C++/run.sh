@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +15,7 @@
 # limitations under the License.
 # ============================================================================
 export LD_LIBRARY_PATH=${MX_SDK_HOME}/lib:${MX_SDK_HOME}/lib/modelpostprocessors:${MX_SDK_HOME}/opensource/lib:${MX_SDK_HOME}/opensource/lib64:/usr/local/Ascend/ascend-toolkit/latest/acllib/lib64:${LD_LIBRARY_PATH}
-OM_FILE=/data/pretrained_models/ms/mobilenet_v1/ckpt_0/mobilenetv1-90_625_2.om
+OM_FILE=../../convert/ssd_resnet50.om
 
-cp ./build/ssd_mobilenet_v1_fpn .
-./ssd_mobilenet_v1_fpn ${OM_FILE} ./test.jpg
+cp ./build/ssd_resnet50_fpn .
+./ssd_resnet50_fpn ${OM_FILE} ./test.jpg
