@@ -743,17 +743,17 @@ int TrainSession::SetOptimizerParams(const std::vector<tensor::MSTensor *> &para
 }
 
 std::vector<tensor::MSTensor *> TrainSession::GetGradients() const {
-  std::vector<tensor::MSTensor *> params;
+  std::vector<tensor::MSTensor *> gradients;
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
       auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
       auto kernelGradint = optimizer->GetGradients();
       if (kernelGradint != nullptr) {
-        params.push_back(kernelGradint);
+        gradients.push_back(kernelGradint);
       }
     }
   }
-  return params;
+  return gradients;
 }
 
 int TrainSession::ApplyGradients(const std::vector<tensor::MSTensor *> &gradients) {

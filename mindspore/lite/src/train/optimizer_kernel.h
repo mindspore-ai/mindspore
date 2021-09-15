@@ -173,7 +173,9 @@ class OptimizerKernel : public InnerKernel {
   }
 
   int Eval() override {
-    OptimizerStep();
+    if (weight_update_mod_ != WeightUpdateMode::ACCUMULATE_GRADS) {
+      OptimizerStep();
+    }
     return InnerKernel::Eval();
   }
 
