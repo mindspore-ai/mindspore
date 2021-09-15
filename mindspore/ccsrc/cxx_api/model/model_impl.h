@@ -47,11 +47,6 @@ class ModelImpl {
   virtual bool CheckModelSupport(enum ModelType model_type) { return false; }
 
  protected:
-  Status Load(const std::shared_ptr<GraphCell> &graph_cell, uint32_t device_id) {
-    MS_EXCEPTION_IF_NULL(graph_cell);
-    return graph_cell->Load(device_id);
-  }
-
   FuncGraphPtr GetFuncGraph() const {
     if (graph_->ModelType() != ModelType::kMindIR) {
       return nullptr;

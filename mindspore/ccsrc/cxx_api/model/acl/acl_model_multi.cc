@@ -142,7 +142,12 @@ GraphId MultiGraphAclSession::CompileGraphImpl(const AnfNodePtrList &lst, const 
   }
   std::shared_ptr<Graph> graph = std::make_shared<Graph>(std::make_shared<Graph::GraphData>(om_data, ModelType::kOM));
   MS_EXCEPTION_IF_NULL(graph);
-  graphs_[kernel_graph->graph_id()] = GraphCell(graph);
+  auto graph_cell = GraphCell(graph);
+  auto ret = graph_cell.Load(options_->GetDeviceID());
+  if (ret != kSuccess) {
+    MS_LOG(EXCEPTION) << "Load failed.";
+  }
+  graphs_[kernel_graph->graph_id()] = graph_cell;
   MS_LOG(INFO) << "Mulit graph compile success, graph id " << kernel_graph->graph_id();
   return kernel_graph->graph_id();
 }
@@ -400,14 +405,13 @@ Status AclModelMulti::Predict(const std::vector<MSTensor> &inputs, std::vector<M
     return kMCFailed;
   }
 
-  if (inputs.size() != inputs_.size() && !inputs_.empty() != 0) {
-    MS_LOG(ERROR) << "Input Size is wrong.";
-    return kMCFailed;
-  }
-
   if (inputs_.empty()) {
     inputs_ = inputs;
   } else {
+    if (inputs.size() != inputs_.size()) {
+      MS_LOG(ERROR) << "Input Size is wrong.";
+      return kMCFailed;
+    }
     for (size_t i = 0; i < inputs_.size(); ++i) {
       auto input_tensor = MSTensor::CreateTensor(inputs_[i].Name(), inputs_[i].DataType(), inputs_[i].Shape(),
                                                  inputs[i].Data().get(), inputs[i].DataSize());
