@@ -1889,6 +1889,8 @@ void AscendSession::ReportErrorMessage() {
   }
 }
 
+void AscendSession::SetThreadContext() { ErrorManager::GetInstance().GenWorkStreamIdDefault(); }
+
 void AscendSession::ExecuteAllTaskInQueue() {
   // Execute All Task
   auto &task_manager = PynativeTaskManager::GetInstance();

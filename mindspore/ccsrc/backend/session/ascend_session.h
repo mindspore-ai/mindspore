@@ -78,6 +78,7 @@ class AscendSession : public SessionBasic {
   std::string GetCommWorldGroup() override { return kHcclWorldGroup; }
   void ReportWarningMessage() override;
   void ReportErrorMessage() override;
+  void SetThreadContext() override;
   void ExecuteAllTaskInQueue() override;
   void UpdateOutputTensors(const VectorRef *outputs,
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
