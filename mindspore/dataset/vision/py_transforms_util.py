@@ -965,7 +965,7 @@ def perspective(img, start_points, end_points, interpolation=Inter.BICUBIC):
 
 
 def get_erase_params(np_img, scale, ratio, value, bounded, max_attempts):
-    """Helper function to get parameters for RandomErasing/ Cutout.
+    """Helper function to get parameters for RandomErasing/Cutout.
     """
     if not is_numpy(np_img):
         raise TypeError('img should be NumPy array. Got {}.'.format(type(np_img)))
@@ -1169,10 +1169,10 @@ def mix_up_single(batch_size, img, label, alpha=0.2):
     Apply mix up transformation to image and label in single batch internal, One hot encoding should done before this.
 
     Args:
-        batch_size (int): the batch size of dataset.
+        batch_size (int): The batch size of dataset.
         img (numpy.ndarray): NumPy image to be applied mix up transformation.
         label (numpy.ndarray): NumPy label to be applied mix up transformation.
-        alpha (float):  the mix up rate.
+        alpha (float): The mix up rate.
 
     Returns:
         mix_img (numpy.ndarray): NumPy image after being applied mix up transformation.

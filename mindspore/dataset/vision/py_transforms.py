@@ -369,32 +369,29 @@ class RandomCrop(py_transforms.PyTensorOperation):
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
-            If padding is not None, first pad image with padding values.
+            If size is an integer, a square of size (size, size) is returned.
+            If size is a sequence of length 2, it should be in shape of (height, width).
+        padding (Union[int, sequence], optional): Padding on each border of the image (default=None).
+            If padding is not None, pad the image before cropping.
             If a single number is provided, pad all borders with this value.
-            If a tuple or list of 2 values are provided, pad the (left and top)
-            with the first value and (right and bottom) with the second value.
-            If 4 values are provided as a list or tuple,
-            pad the left, top, right and bottom respectively.
+            If a sequence of length 2 is provided, pad the left/top border
+            with the first value and right/bottom border with the second value.
+            If a sequence of length 4 is provided, pad the left, top, right and bottom borders respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
-        fill_value (int or tuple, optional): filling value (default=0).
-            The pixel intensity of the borders if the padding_mode is Border.CONSTANT.
-            If it is a 3-tuple, it is used to fill R, G, B channels respectively.
-        padding_mode (str, optional): The method of padding (default=Border.CONSTANT). It can be any of
+        fill_value (Union[int, tuple], optional): Pixel fill value to pad the borders when padding_mode is
+            Border.CONSTANT (default=0). If a tuple of length 3 is provided, it is used to fill R, G, B
+            channels respectively.
+        padding_mode (Border, optional): The method of padding (default=Border.CONSTANT). It can be any of
             [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
-            - Border.CONSTANT, means it fills the border with constant values.
+            - Border.CONSTANT, means to pad with given constant values.
 
-            - Border.EDGE, means it pads with the last value on the edge.
+            - Border.EDGE, means to pad with the last value at the edge.
 
-            - Border.REFLECT, means it reflects the values on the edge omitting the last
-              value of edge.
+            - Border.REFLECT, means to pad with reflection of image omitting the last value at the edge.
 
-            - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
-              value of edge.
+            - Border.SYMMETRIC, means to pad with reflection of image repeating the last value at the edge.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -423,7 +420,7 @@ class RandomCrop(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be randomly cropped.
+            img (PIL Image): Image to be randomly cropped.
 
         Returns:
             PIL Image, cropped image.
@@ -437,7 +434,7 @@ class RandomHorizontalFlip(py_transforms.PyTensorOperation):
     Randomly flip the input image horizontally with a given probability.
 
     Args:
-        prob (float, optional): Probability of the image being flipped (default=0.5).
+        prob (float, optional): Probability of the image to be horizontally flipped (default=0.5).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -458,10 +455,10 @@ class RandomHorizontalFlip(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be flipped horizontally.
+            img (PIL Image): Image to be horizontally flipped.
 
         Returns:
-            PIL Image, randomly horizontal flipped image.
+            PIL Image, randomly horizontally flipped image.
         """
         return util.random_horizontal_flip(img, self.prob)
 
@@ -471,7 +468,7 @@ class RandomVerticalFlip(py_transforms.PyTensorOperation):
     Randomly flip the input image vertically with a given probability.
 
     Args:
-        prob (float, optional): Probability of the image being flipped (default=0.5).
+        prob (float, optional): Probability of the image to be vertically flipped (default=0.5).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -492,33 +489,33 @@ class RandomVerticalFlip(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be flipped vertically.
+            img (PIL Image): Image to be vertically flipped.
 
         Returns:
-            PIL Image, randomly vertical flipped image.
+            PIL Image, randomly vertically flipped image.
         """
         return util.random_vertical_flip(img, self.prob)
 
 
 class Resize(py_transforms.PyTensorOperation):
     """
-    Resize the input PIL image to the given size.
+    Resize the input PIL Image to the given size.
 
     Args:
-        size (Union[int, sequence]): The output size of the resized image.
-            If size is an integer, the smaller edge of the image will be resized to this value with
-            the same image aspect ratio.
-            If size is a sequence of length 2, it should be (height, width).
-        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
+        size (Union[int, sequence]): The output size of the image.
+            If size is an integer, the smaller edge of the image will be resized to this
+            value, keeping the image aspect ratio the same.
+            If size is a sequence of length 2, it should be in shape of (height, width).
+        interpolation (Inter, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.NEAREST, Inter.ANTIALIAS, Inter.BILINEAR, Inter.BICUBIC].
 
-            - Inter.NEAREST, means the interpolation method is nearest-neighbor interpolation.
+            - Inter.NEAREST, nearest-neighbor interpolation.
 
-            - Inter.ANTIALIAS, means the interpolation method is antialias interpolation.
+            - Inter.ANTIALIAS, antialias interpolation.
 
-            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
+            - Inter.BILINEAR, bilinear interpolation.
 
-            - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -541,7 +538,7 @@ class Resize(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be resized.
+            img (PIL Image): Image to be resized.
 
         Returns:
             PIL Image, resized image.
@@ -551,25 +548,26 @@ class Resize(py_transforms.PyTensorOperation):
 
 class RandomResizedCrop(py_transforms.PyTensorOperation):
     """
-    Extract crop from the input image and resize it to a random size and aspect ratio.
+    Randomly crop the image and resize it to a given size.
 
     Args:
         size (Union[int, sequence]): The size of the output image.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        scale (list, tuple, optional): Range (min, max) of respective size of the original size
-            to be cropped (default=(0.08, 1.0)).
-        ratio (list, tuple, optional): Range (min, max) of aspect ratio to be cropped (default=(3. / 4., 4. / 3.)).
-        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
+            If size is an integer, a square of size (size, size) is returned.
+            If size is a sequence of length 2, it should be in shape of (height, width).
+        scale (Union[list, tuple], optional): Respective size range of the original image to be cropped
+            in shape of (min, max) (default=(0.08, 1.0)).
+        ratio (Union[list, tuple], optional): Aspect ratio range to be cropped
+            in shape of (min, max) (default=(3./4., 4./3.)).
+        interpolation (Inter, optional): Image interpolation mode (default=Inter.BILINEAR).
             It can be any of [Inter.NEAREST, Inter.ANTIALIAS, Inter.BILINEAR, Inter.BICUBIC].
 
-            - Inter.NEAREST, means the interpolation method is nearest-neighbor interpolation.
+            - Inter.NEAREST, nearest-neighbor interpolation.
 
-            - Inter.ANTIALIAS, means the interpolation method is antialias interpolation.
+            - Inter.ANTIALIAS, antialias interpolation.
 
-            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
+            - Inter.BILINEAR, bilinear interpolation.
 
-            - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
 
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop area (default=10). If exceeded, fall back to use center crop instead.
@@ -598,7 +596,7 @@ class RandomResizedCrop(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be randomly cropped and resized.
+            img (PIL Image): Image to be randomly cropped and resized.
 
         Returns:
             PIL Image, randomly cropped and resized image.
@@ -609,12 +607,12 @@ class RandomResizedCrop(py_transforms.PyTensorOperation):
 
 class CenterCrop(py_transforms.PyTensorOperation):
     """
-    Crop the central reigion of the input PIL image to the given size.
+    Crop the central reigion of the input PIL Image with the given size.
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
+            If size is an integer, a square of size (size, size) is returned.
+            If size is a sequence of length 2, it should be in shape of (height, width).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -636,7 +634,7 @@ class CenterCrop(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be center cropped.
+            img (PIL Image): Image to be center cropped.
 
         Returns:
             PIL Image, cropped image.
@@ -646,21 +644,24 @@ class CenterCrop(py_transforms.PyTensorOperation):
 
 class RandomColorAdjust(py_transforms.PyTensorOperation):
     """
-    Perform a random brightness, contrast, saturation, and hue adjustment on the input PIL image.
+    Randomly adjust the brightness, contrast, saturation, and hue of the input PIL Image.
 
     Args:
-        brightness (Union[float, tuple], optional): Brightness adjustment factor (default=(1, 1)). Cannot be negative.
-            If it is a float, the factor is uniformly chosen from the range [max(0, 1-brightness), 1+brightness].
-            If it is a sequence, it should be [min, max] for the range.
-        contrast (Union[float, tuple], optional): Contrast adjustment factor (default=(1, 1)). Cannot be negative.
-            If it is a float, the factor is uniformly chosen from the range [max(0, 1-contrast), 1+contrast].
-            If it is a sequence, it should be [min, max] for the range.
-        saturation (Union[float, tuple], optional): Saturation adjustment factor (default=(1, 1)). Cannot be negative.
-            If it is a float, the factor is uniformly chosen from the range [max(0, 1-saturation), 1+saturation].
-            If it is a sequence, it should be [min, max] for the range.
+        brightness (Union[float, tuple], optional): Brightness adjustment factor,
+            which must be non negative (default=(1, 1)).
+            If brightness is a float, the factor is uniformly chosen in range of [max(0, 1-brightness), 1+brightness].
+            If brightness is a sequence of length 2, it should be in shape of [min, max].
+        contrast (Union[float, tuple], optional): Contrast adjustment factor,
+            which must be non negative (default=(1, 1)).
+            If contrast is a float, the factor is uniformly chosen in range of [max(0, 1-contrast), 1+contrast].
+            If contrast is a sequence of length 2, it should be in shape of [min, max].
+        saturation (Union[float, tuple], optional): Saturation adjustment factor,
+            which must be non negative(default=(1, 1)).
+            If saturation is a float, the factor is uniformly chosen in range of [max(0, 1-saturation), 1+saturation].
+            If saturation is a sequence of length 2, it should be in shape of [min, max].
         hue (Union[float, tuple], optional): Hue adjustment factor (default=(0, 0)).
-            If it is a float, the range will be [-hue, hue]. Value should be 0 <= hue <= 0.5.
-            If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
+            If hue is a float, the range will be [-hue, hue], where 0 <= hue <= 0.5.
+            If hue is a sequence of length 2, it should be in shape of [min, max], where -0.5 <= min <= max <= 0.5.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -684,17 +685,17 @@ class RandomColorAdjust(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to have its color adjusted randomly.
+            img (PIL image): Image to be randomly color adjusted.
 
         Returns:
-            PIL Image, Image after random adjustment of its color.
+            PIL Image, randomly color adjusted image.
         """
         return util.random_color_adjust(img, self.brightness, self.contrast, self.saturation, self.hue)
 
 
 class RandomRotation(py_transforms.PyTensorOperation):
     """
-    Rotate the input PIL image by a random angle.
+    Rotate the input PIL Image by a random angle.
 
     Note:
         See https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.rotate.
@@ -702,29 +703,28 @@ class RandomRotation(py_transforms.PyTensorOperation):
     Args:
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If degrees is a number, the range will be converted to (-degrees, degrees).
-            If degrees is a sequence, it should be (min, max).
-        resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
-            If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
+            If degrees is a sequence of length 2, it should be in shape of (min, max).
+        resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
+            If the image is in mode of "1" or "P", it is set to Inter.NEAREST by default.
             It can be any of [Inter.NEAREST, Inter.ANTIALIAS, Inter.BILINEAR, Inter.BICUBIC].
 
-            - Inter.NEAREST, means the resampling method is nearest-neighbor interpolation.
+            - Inter.NEAREST, nearest-neighbor interpolation.
 
-            - Inter.ANTIALIAS, means the resampling method is antialias interpolation.
+            - Inter.ANTIALIAS, antialias interpolation.
 
-            - Inter.BILINEAR, means the resampling method is bilinear interpolation.
+            - Inter.BILINEAR, bilinear interpolation.
 
-            - Inter.BICUBIC, means the resampling method is bicubic interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
 
-        expand (bool, optional):  Optional expansion flag (default=False). If set to True, expand the output
-            image to make it large enough to hold the entire rotated image.
-            If set to False or omitted, make the output image the same size as the input.
+        expand (bool, optional): Optional expansion flag (default=False).
+            If set to True, expand the output image to make it large enough to hold the entire rotated image.
+            If set to False, keep the output image the same size as the input.
             Note that the expand flag assumes rotation around the center and no translation.
-        center (tuple, optional): Optional center of rotation (a 2-tuple) (default=None).
-            Origin is the top left corner. Default None sets to the center of the image.
-        fill_value (int or tuple, optional): Optional fill color for the area outside the rotated
-            image (default=0).
-            If it is a 3-tuple, it is used for R, G, B channels respectively.
-            If it is an integer, it is used for all RGB channels. Default is 0.
+        center (tuple, optional): Optional center of rotation, which must be a tuple of length 2 (default=None).
+            Origin is the top left corner. Default None means to set the center of the image.
+        fill_value (int or tuple, optional): Pixel fill value for the area outside the rotated image (default=0).
+            If fill_value is a tuple of length 3, it is used to fill R, G, B channels respectively.
+            If fill_value is an integer, it is used to fill all RGB channels.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -749,22 +749,22 @@ class RandomRotation(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be rotated.
+            img (PIL Image): Image to be randomly rotated.
 
         Returns:
-            PIL Image, rotated image.
+            PIL Image, randomly rotated image.
         """
         return util.random_rotation(img, self.degrees, self.resample, self.expand, self.center, self.fill_value)
 
 
 class FiveCrop(py_transforms.PyTensorOperation):
     """
-    Generate 5 cropped images (one central image and four corners images).
+    Crop the given image into one central crop and four corners.
 
     Args:
-        size (int or sequence): The output size of the crop.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
+        size (Union[int, sequence]): The output size of the cropped images.
+            If size is an integer, a square of size (size, size) is returned.
+            If size is a sequence of length 2, it should be in shape of (height, width).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -787,26 +787,24 @@ class FiveCrop(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): PIL image to be cropped.
+            img (PIL Image): Image to be cropped.
 
         Returns:
-            img_tuple (tuple), a tuple of 5 PIL images
-                (top_left, top_right, bottom_left, bottom_right, center).
+            tuple, a tuple of five PIL Image in order of top_left, top_right, bottom_left, bottom_right, center.
         """
         return util.five_crop(img, self.size)
 
 
 class TenCrop(py_transforms.PyTensorOperation):
     """
-    Generate 10 cropped images (first 5 images from FiveCrop, second 5 images from their flipped version
-    as per input flag to flip vertically or horizontally).
+    Crop the given image into one central crop and four corners plus the flipped version of these.
 
     Args:
-        size (Union[int, sequence]): The output size of the crop.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        use_vertical_flip (bool, optional): Flip the image vertically instead of horizontally
-            if set to True (default=False).
+        size (Union[int, sequence]): The output size of the cropped images.
+            If size is an integer, a square of size (size, size) is returned.
+            If size is a sequence of length 2, it should be in shape of (height, width).
+        use_vertical_flip (bool, optional): Whether to flip the image vertically,
+            otherwise horizontally (default=False).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -832,23 +830,22 @@ class TenCrop(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): PIL image to be cropped.
+            img (PIL Image): Image to be cropped.
 
         Returns:
-            img_tuple (tuple), a tuple of 10 PIL images
-                (top_left, top_right, bottom_left, bottom_right, center) of original image +
-                (top_left, top_right, bottom_left, bottom_right, center) of flipped image.
+            tuple, a tuple of 10 PIL Image, in order of top_left, top_right, bottom_left, bottom_right, center
+                of the original image and top_left, top_right, bottom_left, bottom_right, center of the flipped image.
         """
         return util.ten_crop(img, self.size, self.use_vertical_flip)
 
 
 class Grayscale(py_transforms.PyTensorOperation):
     """
-    Convert the input PIL image to grayscale image.
+    Convert the input PIL Image to grayscale.
 
     Args:
-        num_output_channels (int): Number of channels of the output grayscale image (1 or 3).
-            Default is 1. If set to 3, the returned image has 3 identical RGB channels.
+        num_output_channels (int): Number of channels of the output grayscale image, which can be 1 or 3 (default=1).
+            If num_output_channels is 3, the returned image will have 3 identical RGB channels.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -870,17 +867,17 @@ class Grayscale(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): PIL image to be converted to grayscale.
+            img (PIL Image): Image to be converted to grayscale.
 
         Returns:
-            img (PIL image), grayscaled image.
+            PIL Image, converted grayscale image.
         """
         return util.grayscale(img, num_output_channels=self.num_output_channels)
 
 
 class RandomGrayscale(py_transforms.PyTensorOperation):
     """
-    Randomly convert the input image into grayscale image with a given probability.
+    Randomly convert the input image into grayscale with a given probability.
 
     Args:
         prob (float, optional): Probability of the image being converted to grayscale (default=0.1).
@@ -904,12 +901,12 @@ class RandomGrayscale(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): PIL image to be converted to grayscale randomly.
+            img (PIL Image): Image to be randomly converted to grayscale.
 
         Returns:
-            img (PIL image), Randomly apply grayscale to image, same number of channels as the input image.
-                If input image has 1 channel, the output grayscale image is 1 channel.
-                If input image has 3 channels, the output image has 3 identical grayscale channels.
+            PIL Image, randomly converted grayscale image, which has the same number of channels as the input image.
+                If input image has 1 channel, the output grayscale image will have 1 channel.
+                If input image has 3 channels, the output grayscale image will have 3 identical channels.
         """
         if img.mode == 'L':
             num_output_channels = 1
@@ -923,36 +920,33 @@ class RandomGrayscale(py_transforms.PyTensorOperation):
 
 class Pad(py_transforms.PyTensorOperation):
     """
-    Pad the input PIL image according to padding parameters.
+    Pad the input image on all sides with the given padding parameters.
 
     Args:
-        padding (Union[int, sequence]): The number of pixels to pad the image.
+        padding (Union[int, sequence]): The number of pixels padded on the image borders.
             If a single number is provided, pad all borders with this value.
-            If a tuple or list of 2 values is provided, pad the left and top
-            with the first value and the right and bottom with the second value.
-            If 4 values are provided as a list or tuple,
-            pad the left, top, right and bottom respectively.
-        fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
-            padding_mode Border.CONSTANT (default=0).
-            If it is an integer, it is used for all RGB channels.
-            If it is a 3-tuple, it is used to fill R, G, B channels respectively.
-        padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT).
+            If a sequence of length 2 is provided, pad the left and top with the
+            first value and the right and bottom with the second value.
+            If a sequence of length 4 is provided, pad the left, top, right and bottom respectively.
+        fill_value (Union[int, tuple], optional): Pixel fill value to pad the borders,
+            only valid when padding_mode is Border.CONSTANT (default=0).
+            If fill_value is an integer, it is used for all RGB channels.
+            If fill_value is a tuple of length 3, it is used to fill R, G, B channels respectively.
+        padding_mode (Border, optional): The method of padding (default=Border.CONSTANT).
             It can be any of [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
-            - Border.CONSTANT, means it fills the border with constant values.
+            - Border.CONSTANT, pads with a constant value.
 
-            - Border.EDGE, means it pads with the last value on the edge.
+            - Border.EDGE, pads with the last value at the edge of the image.
 
-            - Border.REFLECT, means it reflects the values on the edge omitting the last
-              value of edge.
+            - Border.REFLECT, pads with reflection of the image omitting the last value on the edge.
 
-            - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
-              value of edge.
+            - Border.SYMMETRIC, pads with reflection of the image repeating the last value on the edge.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
-        ...                            # adds 10 pixels (default black) to each side of the border of the image
+        ...                            # adds 10 pixels (default black) to each border of the image
         ...                            py_vision.Pad(padding=10),
         ...                            py_vision.ToTensor()])
         >>> # apply the transform to dataset through map function
@@ -974,7 +968,7 @@ class Pad(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be padded.
+            img (PIL Image): Image to be padded.
 
         Returns:
             PIL Image, padded image.
@@ -984,19 +978,19 @@ class Pad(py_transforms.PyTensorOperation):
 
 class RandomPerspective(py_transforms.PyTensorOperation):
     """
-    Randomly apply perspective transformation to the input PIL image with a given probability.
+    Randomly apply perspective transformation to the input PIL Image with a given probability.
 
     Args:
-        distortion_scale (float, optional): The scale of distortion, a float value between 0 and 1 (default=0.5).
+        distortion_scale (float, optional): The scale of distortion, in range of [0, 1] (default=0.5).
         prob (float, optional): Probability of the image being applied perspective transformation (default=0.5).
-        interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BICUBIC).
+        interpolation (Inter, optional): Image interpolation mode (default=Inter.BICUBIC).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
-            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
+            - Inter.BILINEAR, bilinear interpolation.
 
-            - Inter.NEAREST, means the interpolation method is nearest-neighbor interpolation.
+            - Inter.NEAREST, nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1019,10 +1013,10 @@ class RandomPerspective(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): PIL image to apply perspective transformation randomly.
+            img (PIL Image): Image to be applied randomly perspective transformation.
 
         Returns:
-            PIL Image, image after being randomly perspective transformed.
+            PIL Image, image applied randomly perspective transformation.
         """
         if not is_pil(img):
             raise ValueError("Input image should be a Pillow image.")
@@ -1035,25 +1029,23 @@ class RandomPerspective(py_transforms.PyTensorOperation):
 
 class RandomErasing(py_transforms.PyTensorOperation):
     """
-    Erase the pixels, within a selected rectangle region, to the given value.
+    Randomly erase the pixels within a random selected rectangle region with a given probability.
 
-    Randomly applied on the input NumPy image array of shape (C, H, W) with a given probability.
-
-    Zhun Zhong et al. 'Random Erasing Data Augmentation' 2017 See https://arxiv.org/pdf/1708.04896.pdf
+    See Zhun Zhong et al. 'Random Erasing Data Augmentation' 2017 on https://arxiv.org/pdf/1708.04896.pdf
 
     Args:
-        prob (float, optional): Probability of applying RandomErasing (default=0.5).
+        prob (float, optional): Probability of the image being randomly erased (default=0.5).
         scale (sequence of floats, optional): Range of the relative erase area to the
             original image (default=(0.02, 0.33)).
-        ratio (sequence of floats, optional): Range of the aspect ratio of the erase
-            area (default=(0.3, 3.3)).
-        value (Union[int, sequence, string]): Erasing value (default=0).
-            If value is a single intieger, it is applied to all pixels to be erased.
-            If value is a sequence of length 3, it is applied to R, G, B channels respectively.
-            If value is a string 'random', the erase value will be obtained from a standard normal distribution.
-        inplace (bool, optional): Apply this transform in-place (default=False).
+        ratio (sequence, optional): Range of aspect ratio of the erased area (default=(0.3, 3.3)).
+        value (Union[int, sequence, str]): Erasing value (default=0).
+            If value is a single integer, it is used to erase all pixels.
+            If value is a sequence of length 3, it is used to erase R, G, B channels respectively.
+            If value is a string of 'random', each pixel will be erased with a random value obtained
+            from a standard normal distribution.
+        inplace (bool, optional): Whether to apply this transformation inplace (default=False).
         max_attempts (int, optional): The maximum number of attempts to propose a valid
-            erase_area (default=10). If exceeded, return the original image.
+            area to be erased (default=10). If exceeded, return the original image.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1079,10 +1071,10 @@ class RandomErasing(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be randomly erased.
+            np_img (numpy.ndarray): image in shape of (C, H, W) to be randomly erased.
 
         Returns:
-            np_img (numpy.ndarray), Erased NumPy image array.
+            numpy.ndarray, erased image.
         """
         bounded = True
         if self.prob > random.random():
@@ -1094,14 +1086,15 @@ class RandomErasing(py_transforms.PyTensorOperation):
 
 class Cutout(py_transforms.PyTensorOperation):
     """
-    Randomly cut (mask) out a given number of square patches from the input NumPy image array of shape (C, H, W).
+    Randomly apply a given number of square patches of zeros to a location within the input
+    numpy.ndarray image of shape (C, H, W).
 
-    Terrance DeVries and Graham W. Taylor 'Improved Regularization of Convolutional Neural Networks with Cutout' 2017
-    See https://arxiv.org/pdf/1708.04552.pdf
+    See Terrance DeVries and Graham W. Taylor 'Improved Regularization of Convolutional Neural Networks with Cutout'
+    2017 on https://arxiv.org/pdf/1708.04552.pdf
 
     Args:
         length (int): The side length of each square patch.
-        num_patches (int, optional): Number of patches to be cut out of an image (default=1).
+        num_patches (int, optional): Number of patches to be applied to the image (default=1).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1124,10 +1117,10 @@ class Cutout(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be cut out.
+            np_img (numpy.ndarray): Image in shape of (C, H, W) to be cut out.
 
         Returns:
-            np_img (numpy.ndarray), NumPy image array with square patches cut out.
+            numpy.ndarray, image cut out.
         """
         if not isinstance(np_img, np.ndarray):
             raise TypeError(
@@ -1149,16 +1142,14 @@ class Cutout(py_transforms.PyTensorOperation):
 
 class LinearTransformation(py_transforms.PyTensorOperation):
     r"""
-    Apply linear transformation to the input NumPy image array, given a square transformation matrix and
-    a mean vector.
-
-    The transformation first flattens the input array and subtracts the mean vector from it. It then computes
-    the dot product with the transformation matrix, and reshapes it back to its original shape.
+    Transform the input numpy.ndarray image with a given square transformation matrix and a mean vector.
+    It will first flatten the input image and subtract the mean vector from it, then compute the dot
+    product with the transformation matrix, finally reshape it back to its original shape.
 
     Args:
-        transformation_matrix (numpy.ndarray): a square transformation matrix of shape (D, D), where
+        transformation_matrix (numpy.ndarray): A square transformation matrix in shape of (D, D), where
             :math:`D = C \times H \times W`.
-        mean_vector (numpy.ndarray): a NumPy ndarray of shape (D,) where :math:`D = C \times H \times W`.
+        mean_vector (numpy.ndarray): A mean vector in shape of (D,), where :math:`D = C \times H \times W`.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1187,61 +1178,60 @@ class LinearTransformation(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be linear transformed.
+            np_img (numpy.ndarray): Image in shape of (C, H, W) to be linearly transformed.
 
         Returns:
-            np_img (numpy.ndarray), Linear transformed image.
+            numpy.ndarray, linearly transformed image.
         """
         return util.linear_transform(np_img, self.transformation_matrix, self.mean_vector)
 
 
 class RandomAffine(py_transforms.PyTensorOperation):
     """
-    Apply Random affine transformation to the input PIL image.
+    Apply random affine transformation to the input PIL Image.
 
     Args:
-        degrees (Union[int, float, sequence]): Range of the rotation degrees.
+        degrees (Union[int, float, sequence]): Range of degrees to select from.
             If degrees is a number, the range will be (-degrees, degrees).
-            If degrees is a sequence, it should be (min, max).
-        translate (sequence, optional): Sequence (tx, ty) of maximum translation in
-            x(horizontal) and y(vertical) directions (default=None).
-            The horizontal shift and vertical shift are selected randomly from the range:
-            (-tx*width, tx*width) and (-ty*height, ty*height), respectively.
-            If None, no translations are applied.
-        scale (sequence, optional): Scaling factor interval (default=None, original scale is used).
-        shear (Union[int, float, sequence], optional): Range of shear factor (default=None).
-            If shear is an integer, then a shear parallel to the X axis in the range of (-shear, +shear) is applied.
-            If shear is a tuple or list of size 2, then a shear parallel to the X axis in the range of
-            (shear[0], shear[1]) is applied.
-            If shear is a tuple of list of size 4, then a shear parallel to X axis in the range of
-            (shear[0], shear[1]) and a shear parallel to Y axis in the range of (shear[2], shear[3]) is applied.
-            If shear is None, no shear is applied.
-        resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
-            If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
+            If degrees is a sequence, it should be in shape of (min, max).
+        translate (sequence, optional): Maximum absolute fraction sequence in shape of (tx, ty)
+            for horizontal and vertical translations. The horizontal and vertical shifts are randomly
+            selected in the range (-tx * width, tx * width) and (-ty * height, ty * height) respectively.
+            (default=None, no translation will be applied).
+        scale (sequence, optional): Scaling factor interval (default=None, keep original scale).
+        shear (Union[int, float, sequence], optional): Range of shear factor to select from.
+            If shear is an integer, a shear parallel to the X axis in the range (-shear, shear) will be applied.
+            If shear is a sequence of length 2, a shear parallel to the X axis in the range (shear[0], shear[1])
+            will be applied.
+            If shear is a sequence of length 4, a shear parallel to the X axis in the range (shear[0], shear[1])
+            and a shear parallel to the Y axis in the range (shear[2], shear[3]) will be applied.
+            (default=None, no shear will be applied).
+        resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
+            If the PIL Image is in mode of "1" or "P", it is set to Inter.NEAREST by default.
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
-            - Inter.BILINEAR, means resample method is bilinear interpolation.
+            - Inter.BILINEAR, bilinear interpolation.
 
-            - Inter.NEAREST, means resample method is nearest-neighbor interpolation.
+            - Inter.NEAREST, nearest-neighbor interpolation.
 
-            - Inter.BICUBIC, means resample method is bicubic interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
 
-        fill_value (Union[tuple, int], optional): Optional filling value to fill the area outside the transform
-            in the output image. There must be three elements in the tuple and the value of a single element is
-            within the range [0, 255].
-            Used only in Pillow versions > 5.0.0 (default=0, filling is performed).
+        fill_value (Union[int, tuple], optional): Pixel fill value for the area outside the
+            transformed image (default=0).
+            If fill_value is an integer, it is used for all RGB channels.
+            If fill_value is a tuple of length 3, it is used to fill R, G, B channels respectively.
+            Only supported with Pillow version > 5.0.0.
 
     Raises:
         ValueError: If degrees is negative.
-        ValueError: If translation value is not between 0 and 1.
+        ValueError: If translation is not between 0 and 1.
         ValueError: If scale is not positive.
-        ValueError: If shear is a number but is not positive.
-        TypeError: If degrees is not a number or a list or a tuple.
-            If degrees is a list or tuple, its length is not 2.
-        TypeError: If translate is specified but is not list or a tuple of length 2.
-        TypeError: If scale is not a list or tuple of length 2.
-        TypeError: If shear is not a list or tuple of length 2 or 4.
-        TypeError: If fill_value is not a single integer or a 3-tuple.
+        ValueError: If shear is a non positive number.
+        TypeError: If degrees is not a number or a sequence of length 2.
+        TypeError: If translate is defined but not a sequence of length 2.
+        TypeError: If scale is not a sequence of length 2.
+        TypeError: If shear is not a sequence of length 2 or 4.
+        TypeError: If fill_value is not an integer or a tuple of length 3.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1255,8 +1245,6 @@ class RandomAffine(py_transforms.PyTensorOperation):
 
     @check_random_affine
     def __init__(self, degrees, translate=None, scale=None, shear=None, resample=Inter.NEAREST, fill_value=0):
-        # Parameter checking
-        # rotation
         if shear is not None:
             if isinstance(shear, numbers.Number):
                 shear = (-1 * shear, shear)
@@ -1281,10 +1269,10 @@ class RandomAffine(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to apply affine transformation.
+            img (PIL Image): Image to be randomly affine transformed.
 
         Returns:
-            img (PIL image), Randomly affine transformed image.
+            PIL Image, randomly affine transformed image.
         """
 
         return util.random_affine(img,
@@ -1298,13 +1286,17 @@ class RandomAffine(py_transforms.PyTensorOperation):
 
 class MixUp(py_transforms.PyTensorOperation):
     """
-    Apply mix up transformation to the input image and label. Make one input data combined with others.
+    Randomly mix up a batch of images together with its labels. Each image will be multiplied by a random
+    weight lambda generated from the beta distribution and then added to another image multiplied by 1 - lambda.
+    The same transformation will be applied to their labels with the same value of lambda. Make sure that the
+    labels are one hot encoded in advance.
 
     Args:
-        batch_size (int): Batch size of dataset.
-        alpha (float):  Mix up rate.
-        is_single (bool): Identify if single batch or multi-batch mix up transformation is to be used
-            (Default=True, which is single batch).
+        batch_size (int): The number of images in a batch.
+        alpha (float): The alpha and beta parameter in the beta distribution.
+        is_single (bool, optional): If True, it will randomly mix up [img(0), ..., img(n-1), img(n)] with
+            [img1, ..., img(n), img0] in each batch. Otherwise, it will randomly mix up images with the
+            output of mixing of previous batch of images (Default=True).
 
 
     Examples:
@@ -1330,12 +1322,12 @@ class MixUp(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            image (numpy.ndarray): NumPy image to apply mix up transformation.
-            label(numpy.ndarray): NumPy label to apply mix up transformation.
+            image (numpy.ndarray): Images to be mixed up.
+            label (numpy.ndarray): Labels to be mixed up.
 
         Returns:
-            image (numpy.ndarray): NumPy image after applying mix up transformation.
-            label(numpy.ndarray): NumPy label after applying mix up transformation.
+            numpy.ndarray, images after mixing up.
+            numpy.ndarray, labels after mixing up.
         """
         if self.is_single:
             return util.mix_up_single(self.batch_size, image, label, self.alpha)
@@ -1344,11 +1336,11 @@ class MixUp(py_transforms.PyTensorOperation):
 
 class RgbToBgr(py_transforms.PyTensorOperation):
     """
-    Convert a NumPy RGB image or a batch of NumPy RGB images to BGR images.
+    Convert one or more numpy.ndarray images from RGB to BGR.
 
     Args:
-        is_hwc (bool): The flag of image shape, (H, W, C) or (N, H, W, C) if True
-                       and (C, H, W) or (N, C, H, W) if False (default=False).
+        is_hwc (bool): Whether the image is in shape of (H, W, C) or (N, H, W, C), otherwise
+            in shape of (C, H, W) or (N, C, H, W) (default=False).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1371,22 +1363,21 @@ class RgbToBgr(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            rgb_imgs (numpy.ndarray): NumPy RGB images array of shape (H, W, C) or (N, H, W, C),
-                                      or (C, H, W) or (N, C, H, W) to be converted.
+            rgb_imgs (numpy.ndarray): RGB images to be converted.
 
         Returns:
-            bgr_img (numpy.ndarray), NumPy BGR images array with same shape of rgb_imgs.
+            numpy.ndarray, converted BGR images.
         """
         return util.rgb_to_bgrs(rgb_imgs, self.is_hwc)
 
 
 class RgbToHsv(py_transforms.PyTensorOperation):
     """
-    Convert a NumPy RGB image or a batch of NumPy RGB images to HSV images.
+    Convert one or more numpy.ndarray images from RGB to HSV.
 
     Args:
-        is_hwc (bool): The flag of image shape, (H, W, C) or (N, H, W, C) if True
-                       and (C, H, W) or (N, C, H, W) if False (default=False).
+        is_hwc (bool): Whether the image is in shape of (H, W, C) or (N, H, W, C), otherwise
+            in shape of (C, H, W) or (N, C, H, W) (default=False).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1409,22 +1400,21 @@ class RgbToHsv(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            rgb_imgs (numpy.ndarray): NumPy RGB images array of shape (H, W, C) or (N, H, W, C),
-                                      or (C, H, W) or (N, C, H, W) to be converted.
+            rgb_imgs (numpy.ndarray): RGB images to be converted.
 
         Returns:
-            np_hsv_img (numpy.ndarray), NumPy HSV images with same shape of rgb_imgs.
+            numpy.ndarray, converted HSV images.
         """
         return util.rgb_to_hsvs(rgb_imgs, self.is_hwc)
 
 
 class HsvToRgb(py_transforms.PyTensorOperation):
     """
-    Convert a NumPy HSV image or one batch NumPy HSV images to RGB images.
+    Convert one or more numpy.ndarray images from HSV to RGB.
 
     Args:
-        is_hwc (bool): The flag of image shape, (H, W, C) or (N, H, W, C) if True
-                       and (C, H, W) or (N, C, H, W) if False (default=False).
+        is_hwc (bool): Whether the image is in shape of (H, W, C) or (N, H, W, C), otherwise
+            in shape of (C, H, W) or (N, C, H, W) (default=False).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1447,22 +1437,21 @@ class HsvToRgb(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            hsv_imgs (numpy.ndarray): NumPy HSV images array of shape (H, W, C) or (N, H, W, C),
-                                      or (C, H, W) or (N, C, H, W) to be converted.
+            hsv_imgs (numpy.ndarray): HSV images to be converted.
 
         Returns:
-            rgb_imgs (numpy.ndarray), NumPy RGB image with same shape of hsv_imgs.
+            numpy.ndarray, converted RGB images.
         """
         return util.hsv_to_rgbs(hsv_imgs, self.is_hwc)
 
 
 class RandomColor(py_transforms.PyTensorOperation):
     """
-    Adjust the color of the input PIL image by a random degree.
+    Adjust the color balance of the input PIL Image by a random degree.
 
     Args:
-        degrees (sequence): Range of random color adjustment degrees.
-            It should be in (min, max) format (default=(0.1,1.9)).
+        degrees (sequence): Range of color adjustment degree to be randomly chosen from,
+            which should be in shape of (min, max) (default=(0.1,1.9)).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1483,10 +1472,10 @@ class RandomColor(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be color adjusted.
+            img (PIL Image): Image to be color adjusted.
 
         Returns:
-            img (PIL image), Color adjusted image.
+            PIL Image, color adjusted image.
         """
 
         return util.random_color(img, self.degrees)
@@ -1494,12 +1483,13 @@ class RandomColor(py_transforms.PyTensorOperation):
 
 class RandomSharpness(py_transforms.PyTensorOperation):
     """
-    Adjust the sharpness of the input PIL image by a fixed or random degree. Degree of 0.0 gives a blurred image,
-    degree of 1.0 gives the original image, and degree of 2.0 gives a sharpened image.
+    Adjust the sharpness of the input PIL Image by a random degree.
 
     Args:
-        degrees (sequence): Range of random sharpness adjustment degrees.
-            It should be in (min, max) format (default=(0.1,1.9)).
+        degrees (sequence): Range of sharpness adjustment degree to be randomly chosen from, which
+            should be in shape of (min, max) (default=(0.1,1.9)).
+            Degree of 0.0 gives a blurred image, degree of 1.0 gives the original image,
+            and degree of 2.0 increases the sharpness by a factor of 2.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1520,10 +1510,10 @@ class RandomSharpness(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be sharpness adjusted.
+            img (PIL Image): Image to be sharpness adjusted.
 
         Returns:
-            img (PIL image), Color adjusted image.
+            PIL Image, sharpness adjusted image.
         """
 
         return util.random_sharpness(img, self.degrees)
@@ -1531,11 +1521,11 @@ class RandomSharpness(py_transforms.PyTensorOperation):
 
 class AdjustGamma(py_transforms.PyTensorOperation):
     """
-    Adjust gamma of the input PIL image.
+    Perform gamma correction on the input PIL Image.
 
     Args:
-        gamma (float): Non negative real number, same as gamma in the equation.
-        gain (float, optional): The constant multiplier.
+        gamma (float): Gamma parameter in the correction equation, which must be non negative.
+        gain (float, optional): The constant multiplier (default=1.0).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1558,10 +1548,10 @@ class AdjustGamma(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be augmented with AutoContrast.
+            img (PIL Image): Image to be gamma adjusted.
 
         Returns:
-            img (PIL image), Augmented image.
+            PIL Image, gamma adjusted image.
         """
 
         return util.adjust_gamma(img, self.gamma, self.gain)
@@ -1569,12 +1559,12 @@ class AdjustGamma(py_transforms.PyTensorOperation):
 
 class AutoContrast(py_transforms.PyTensorOperation):
     """
-    Automatically maximize the contrast of the input PIL image.
+    Automatically maximize the contrast of the input PIL Image.
 
     Args:
-        cutoff (float, optional): Percent of pixels to cut off from the histogram,
-            the value must be in the range [0.0, 50.0) (default=0.0).
-        ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
+        cutoff (float, optional): Percent of pixels to be cut off from the histogram,
+            which must be in range of [0.0, 50.0) (default=0.0).
+        ignore (Union[int, sequence], optional): Pixel values to be ignored (default=None).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1597,10 +1587,10 @@ class AutoContrast(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be augmented with AutoContrast.
+            img (PIL Image): Image to be automatically contrasted.
 
         Returns:
-            img (PIL image), Augmented image.
+            PIL Image, automatically contrasted image.
         """
 
         return util.auto_contrast(img, self.cutoff, self.ignore)
@@ -1608,7 +1598,7 @@ class AutoContrast(py_transforms.PyTensorOperation):
 
 class Invert(py_transforms.PyTensorOperation):
     """
-    Invert colors of input PIL image.
+    Invert the colors of the input PIL Image.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1628,10 +1618,10 @@ class Invert(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be color Inverted.
+            img (PIL Image): Image to be color inverted.
 
         Returns:
-            img (PIL image), Color inverted image.
+            PIL Image, color inverted image.
         """
 
         return util.invert_color(img)
@@ -1639,7 +1629,7 @@ class Invert(py_transforms.PyTensorOperation):
 
 class Equalize(py_transforms.PyTensorOperation):
     """
-    Equalize the histogram of input PIL image.
+    Apply histogram equalization on the input PIL Image.
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1660,10 +1650,10 @@ class Equalize(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to be equalized.
+            img (PIL Image): Image to be equalized.
 
         Returns:
-            img (PIL image), Equalized image.
+            PIL Image, equalized image.
         """
 
         return util.equalize(img)
@@ -1671,15 +1661,16 @@ class Equalize(py_transforms.PyTensorOperation):
 
 class UniformAugment(py_transforms.PyTensorOperation):
     """
-    Uniformly select and apply a number of transforms sequentially from
-    a list of transforms. Randomly assign a probability to each transform for
-    each image to decide whether to apply the transform or not.
+    Uniformly select a number of transformations from a sequence and apply them
+    sequentially and randomly, which means that there is a chance that a chosen
+    transformation will not be applied.
 
-    All the transforms in transform list must have the same input/output data type.
+    All transformations in the sequence require the output type to be the same as
+    the input. Thus, the latter one can deal with the output of the previous one.
 
     Args:
-         transforms (list): List of transformations to be chosen from to apply.
-         num_ops (int, optional): number of transforms to sequentially apply (default=2).
+         transforms (sequence): Sequence of transformations to be chosen from.
+         num_ops (int, optional): Number of transformations to be sequentially and randomly applied (default=2).
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
@@ -1706,9 +1697,9 @@ class UniformAugment(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (PIL image): Image to apply transformation.
+            img (PIL Image): Image to be transformed.
 
         Returns:
-            img (PIL image), Transformed image.
+            PIL Image, transformed image.
         """
         return util.uniform_augment(img, self.transforms.copy(), self.num_ops)
