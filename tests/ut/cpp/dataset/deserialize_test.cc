@@ -527,3 +527,10 @@ TEST_F(MindDataTestDeserialize, TestDeserializeConcatAlbumFlickr) {
   ds = std::make_shared<ConcatNode>(datasets, sampler, children_flag_and_nums, children_start_end_index);
   compare_dataset(ds);
 }
+
+TEST_F(MindDataTestDeserialize, TestDeserializePyFunc) {
+  MS_LOG(INFO) << "Doing MindDataTestDeserialize-PyFunc.";
+  std::shared_ptr<DatasetNode> ds1;
+  ASSERT_OK(Serdes::Deserialize("./data/dataset/tf_file_dataset/pyvision_dataset_pipeline.json", &ds1));
+  EXPECT_NE(ds1, nullptr);
+}

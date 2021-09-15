@@ -17,6 +17,7 @@
 #include <stack>
 #include "minddata/dataset/engine/serdes.h"
 
+#include "minddata/dataset/core/pybind_support.h"
 #include "utils/file_utils.h"
 #include "utils/utils.h"
 
@@ -232,7 +233,9 @@ Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shar
   std::vector<std::shared_ptr<TensorOperation>> output;
   for (nlohmann::json item : json_obj) {
     if (item.find("python_module") != item.end()) {
-      RETURN_IF_NOT_OK(PyFuncOp::from_json(item, result));
+      if (Py_IsInitialized()) {
+        RETURN_IF_NOT_OK(PyFuncOp::from_json(item, result));
+      }
     } else {
       CHECK_FAIL_RETURN_UNEXPECTED(item.find("tensor_op_name") != item.end(), "Failed to find tensor_op_name");
       CHECK_FAIL_RETURN_UNEXPECTED(item.find("tensor_op_params") != item.end(), "Failed to find tensor_op_params");
