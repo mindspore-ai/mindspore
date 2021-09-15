@@ -30,7 +30,9 @@
 #if !defined(_WIN32) && !defined(_WIN64)
 #include "utils/signal_util.h"
 #endif
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/recorder_manager.h"
 #endif
@@ -246,12 +248,15 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   (void)actorMgr->Spawn(base_recorder_actor, true);
 
   // Create and schedule debug actor.
+#ifndef ENABLE_SECURITY
   bool debugger_actor_need = DumpJsonParser::GetInstance().e2e_dump_enabled();
+#endif
 #ifdef ENABLE_DEBUGGER
   if (Debugger::GetInstance()->DebuggerBackendEnabled()) {
     debugger_actor_need = true;
   }
 #endif
+#ifndef ENABLE_SECURITY
   if (debugger_actor_need) {
     auto debug_actor = std::make_shared<DebugActor>();
     MS_EXCEPTION_IF_NULL(debug_actor);
@@ -259,6 +264,7 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
     auto base_debug_actor = static_cast<ActorReference>(debug_actor);
     (void)actorMgr->Spawn(base_debug_actor, true);
   }
+#endif
 }
 
 ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info) {

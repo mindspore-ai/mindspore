@@ -30,7 +30,9 @@
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
 #include "profiler/device/cpu/cpu_profiling.h"
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
 
 namespace mindspore {
 namespace device {

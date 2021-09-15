@@ -29,7 +29,9 @@
 #include "proto/op_mapping_info.pb.h"
 #include "utils/comm_manager.h"
 #include "utils/ms_context.h"
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
@@ -67,6 +69,7 @@ DataDumper::~DataDumper() {
   ReleaseDevMem(&op_debug_dump_args_);
 }
 
+#ifndef ENABLE_SECURITY
 void DataDumper::GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *> kernel_map) const {
   for (const auto &kernel : kernel_graph_->execution_order()) {
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
@@ -196,6 +199,7 @@ bool DataDumper::KernelNeedDump(const CNodePtr &kernel) const {
   // dump all kernel if mode is set 0 in data_dump.json
   return DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope());
 }
+#endif
 
 void DataDumper::UnloadDumpInfo() {
   if (!load_flag_) {
@@ -246,7 +250,9 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
   MS_EXCEPTION_IF_NULL(iter->second);
   auto task_id = std::get<kTupleTaskId>(*iter->second);
   auto stream_id = std::get<kTupleStreamId>(*iter->second);
+#ifndef ENABLE_SECURITY
   auto args = std::get<kTupleArgs>(*iter->second);
+#endif
   MS_LOG(INFO) << "[DataDump] Get runtime info task_id:" << task_id << " stream_id:" << stream_id;
 
   dump_task->set_task_id(task_id);
@@ -255,8 +261,10 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
   dump_task->mutable_op()->set_op_name(kernel->fullname_with_scope());
   dump_task->mutable_op()->set_op_type(AnfAlgo::GetCNodeName(kernel.get()));
 
+#ifndef ENABLE_SECURITY
   DumpKernelOutput(kernel, args, dump_task);
   DumpKernelInput(kernel, args, dump_task);
+#endif
 }
 
 void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const {
@@ -287,6 +295,7 @@ void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo 
   dump_info->mutable_task()->Add(std::move(task));
 }
 
+#ifndef ENABLE_SECURITY
 void DataDumper::OpDebugRegister() {
   uint32_t op_debug_mode = DumpJsonParser::GetInstance().op_debug_mode();
   auto iter = kOverflowModeStr.find(op_debug_mode);
@@ -336,6 +345,7 @@ void DataDumper::OpDebugUnregister() {
     MS_LOG(EXCEPTION) << "[DataDump] Call rtDebugUnRegister failed, ret = " << rt_ret;
   }
 }
+#endif
 
 void DataDumper::RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr) {
   std::string proto_str;
@@ -372,6 +382,7 @@ void SetDumpShape(const std::vector<size_t> &ms_shape, NotNull<aicpu::dump::Shap
   }
 }
 
+#ifndef ENABLE_SECURITY
 void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task) {
   if (!DumpJsonParser::GetInstance().OutputNeedDump()) {
     MS_LOG(INFO) << "Skip dump output";
@@ -452,6 +463,7 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     offset += sizeof(void *);
   }
 }
+#endif
 
 std::string DataDumper::StripUniqueId(const std::string node_name) {
   size_t last_underscore = node_name.find_last_of('_');

@@ -21,7 +21,9 @@
 #include <memory>
 #include "runtime/device/ascend/ge_runtime/task_info.h"
 #include "backend/kernel_compiler/kernel.h"
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
 
 using TaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::TaskInfo>;
 namespace mindspore {

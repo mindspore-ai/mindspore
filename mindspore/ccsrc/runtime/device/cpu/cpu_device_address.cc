@@ -18,7 +18,9 @@
 #include <memory>
 #include "runtime/device/convert_tensor_utils.h"
 #include "runtime/hardware/cpu/cpu_memory_pool.h"
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
 
 namespace mindspore {
 namespace device {

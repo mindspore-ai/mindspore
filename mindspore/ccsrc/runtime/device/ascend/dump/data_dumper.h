@@ -53,20 +53,26 @@ class DataDumper {
   void set_runtime_info(const std::map<std::string, std::shared_ptr<RuntimeInfo>> &runtime_info) {
     runtime_info_map_ = runtime_info;
   }
+#ifndef ENABLE_SECURITY
   void LoadDumpInfo();
-  void UnloadDumpInfo();
   void OpDebugRegister();
   void OpDebugUnregister();
+#endif
+  void UnloadDumpInfo();
 
  private:
   void ReleaseDevMem(void **ptr) const noexcept;
+#ifndef ENABLE_SECURITY
   bool KernelNeedDump(const CNodePtr &kernel) const;
   void SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
+#endif
   void SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const;
   void ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aicpu::dump::Task *> dump_task) const;
+#ifndef ENABLE_SECURITY
   void GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *> kernel_map) const;
   static void DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
   static void DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aicpu::dump::Task *> task);
+#endif
   static std::string StripUniqueId(const std::string node_name);
   static void RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, void **ptr);
 

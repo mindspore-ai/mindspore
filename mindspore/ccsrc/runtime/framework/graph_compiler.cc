@@ -33,7 +33,9 @@
 #include "debug/anf_ir_dump.h"
 #include "debug/rdr/running_data_recorder.h"
 #endif
+#ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
