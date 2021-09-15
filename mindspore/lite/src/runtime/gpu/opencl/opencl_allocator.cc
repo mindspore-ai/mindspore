@@ -294,7 +294,7 @@ void OpenCLAllocator::Free(void *buf) {
     return;
   }
   UnLock();
-  MS_LOG(WARNING) << "Host ptr " << buf << " has freed";
+  MS_LOG(WARNING) << "Host ptr has freed";
 }
 int OpenCLAllocator::RefCount(void *buf) {
   if (buf == nullptr) {
@@ -465,14 +465,14 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
 
   if (it->second->map_flags_) {
     UnLock();
-    MS_LOG(WARNING) << "Host ptr " << host_ptr << " has mapped";
+    MS_LOG(WARNING) << "Host ptr has mapped";
     return host_ptr;
   }
   MemBuf *mem_buf = it->second;
   MS_ASSERT(mem_buf);
   if (mem_buf->mem_type_ == MemType::SHARED) {
     UnLock();
-    MS_LOG(WARNING) << "Host ptr " << host_ptr << " no need map";
+    MS_LOG(WARNING) << "Host ptr no need map";
     return host_ptr;
   }
 
@@ -522,7 +522,7 @@ int OpenCLAllocator::UnmapBuffer(void *host_ptr, void *command_queue) {
                                                                                       : it->second->image_ptr_);
     return ocl_runtime_->UnmapBuffer(*mem, it->second->host_ptr_, static_cast<cl::CommandQueue *>(command_queue));
   } else {
-    MS_LOG(WARNING) << "Host ptr " << host_ptr << " do not mapped";
+    MS_LOG(WARNING) << "Host ptr do not mapped";
     return RET_OK;
   }
 }

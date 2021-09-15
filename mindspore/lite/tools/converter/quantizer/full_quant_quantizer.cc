@@ -1219,8 +1219,7 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "input_type must pass IMAGE | BIN.";
     return RET_INPUT_PARAM_INVALID;
   }
-  STATUS status;
-  status = PreProcess();
+  STATUS status = PreProcess();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "do pre process failed!";
     return status;

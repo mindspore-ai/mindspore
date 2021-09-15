@@ -232,7 +232,8 @@ int OpenCLSubGraph::UpdateTensorDataTypePass() {
       if (iv->type() == schema::PrimitiveType_Softmax) {
         bool last_kernel = true;
         for (auto k : iv->out_kernels()) {
-          if (static_cast<int>(k->type()) != lite::PRIM_TO_FORMAT) {
+          int type = k->op_parameter() == nullptr ? k->type() : k->op_parameter()->type_;
+          if (type == lite::PRIM_TO_FORMAT) {
             last_kernel = false;
             break;
           }

@@ -490,7 +490,8 @@ int FusionEltwiseOpenCLKernel::GetTensorIdx(lite::Tensor *in_tensor) {
       MS_ASSERT(in_kernel);
       MS_ASSERT(in_kernel->in_tensors().size());
       MS_ASSERT(in_kernel->out_tensors().size());
-      if (static_cast<int>(in_kernel->type()) == lite::PRIM_TO_FORMAT) {
+      int type = in_kernel->op_parameter() == nullptr ? in_kernel->type() : in_kernel->op_parameter()->type_;
+      if (type == lite::PRIM_TO_FORMAT) {
         if (in_tensor == in_kernel->in_tensors().front()) {
           return std::find(in_tensors_.begin(), in_tensors_.end(), in_kernel->out_tensors().front()) -
                  in_tensors_.begin();
