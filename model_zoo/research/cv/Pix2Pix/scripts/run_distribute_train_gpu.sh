@@ -58,7 +58,7 @@ then
     --run_distribute 1 --device_num $3 --dataset_size 400 --train_data_dir $PATH1 --pad_mode REFLECT &> log &
 elif [ $2 == 'maps' ];
 then
-    mpirun --allow-run-as-root -n 1 --output-filename log_output --merge-stderr-to-stdout \
+    mpirun --allow-run-as-root -n $3 --output-filename log_output --merge-stderr-to-stdout \
     python train.py --device_target GPU --device_num $3 --dataset_size 1096 \
     --run_distribute 1 --train_data_dir $PATH1 --pad_mode REFLECT &> log &
 fi

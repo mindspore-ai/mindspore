@@ -29,8 +29,8 @@ get_real_path(){
   fi
 }
 
-export RANK_SIZE=$(get_real_path $1)
-export DISTRIBUTE=$(get_real_path $2)
+export RANK_SIZE=$1
+export DISTRIBUTE=$2
 export RANK_TABLE_FILE=$(get_real_path $3)
 export DATASET_PATH=$(get_real_path $4)
 
