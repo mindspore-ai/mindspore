@@ -111,6 +111,8 @@ class DataSaver {
 
   void ParseOpInfo(const OpInfoMap &op_info_maps);
 
+  OpTimestampInfo op_timestamps_map_;
+
  protected:
   void AddOpDetailInfoForType(const OpDetailInfo &op_detail_info);
 
@@ -126,7 +128,6 @@ class DataSaver {
 
   OpTypeInfos op_type_infos_;
   OpDetailInfos op_detail_infos_;
-  OpTimestampInfo op_timestamps_map_;
   std::string op_side_;
   std::string device_id_;
 };
