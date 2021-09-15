@@ -273,29 +273,48 @@ void E2eDump::DumpParametersAndConst(const session::KernelGraph *graph, const st
   }
 }
 
-void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
-  auto &dump_json_parser = DumpJsonParser::GetInstance();
-  uint32_t cur_iter = dump_json_parser.cur_dump_iter();
+void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_mode) {
   uint32_t graph_id = graph->graph_id();
-  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
-
-  if (dump_json_parser.async_dump_enabled() || dump_json_parser.e2e_dump_enabled()) {
-    if (IsDeviceTargetGPU()) {
-      if (starting_graph_id == INT32_MAX) {
-        starting_graph_id = graph_id;
-      } else if (starting_graph_id == graph_id) {
-        dump_json_parser.UpdateDumpIter();
-      }
-    } else {
-      // Identify the first graph id and not increamenting dump iter for the first iteration (initial dump iter = 0).
-      if (starting_graph_id == INT32_MAX) {
-        starting_graph_id = graph_id;
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  if (IsDeviceTargetGPU()) {
+    if (starting_graph_id == INT32_MAX) {
+      starting_graph_id = graph_id;
+    } else if (starting_graph_id == graph_id) {
+      dump_json_parser.UpdateDumpIter();
+    }
+  } else {
+    // If device target is Ascend
+    // Identify the first graph id and not increasing dump iter for the first iteration (initial dump iter = 0).
+    if (starting_graph_id == INT32_MAX) {
+      if (sink_mode) {
+        if (!CheckDatasetGraph(graph)) {
+          starting_graph_id = graph_id;
+        }
       } else {
-        // Update dump iter for ascend.
-        // In multi network scripts, dump iter is equal to the number of networks that have been run so far.
+        starting_graph_id = graph_id;
+      }
+
+    } else {
+      // Update dump iter for ascend.
+      // In multi network scripts, dump iter is equal to the number of networks that have been run so far.
+      if (sink_mode) {
+        if (!CheckDatasetGraph(graph)) {
+          dump_json_parser.UpdateDumpIter();
+        }
+      } else {
         dump_json_parser.UpdateDumpIter();
       }
     }
+  }
+}
+
+void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  uint32_t cur_iter = dump_json_parser.cur_dump_iter();
+  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
+
+  if (dump_json_parser.async_dump_enabled() || dump_json_parser.e2e_dump_enabled()) {
+    UpdateIterDumpSetup(graph, sink_mode);
     MS_LOG(DEBUG) << "sink_mode = " << sink_mode;
   }
 
@@ -434,6 +453,19 @@ bool E2eDump::isDatasetGraph(const session::KernelGraph *graph) {
   }
   return false;
 }
+
+bool E2eDump::CheckDatasetGraph(const session::KernelGraph *graph) {
+  // Check if there is a InitDataSetQueue node to identify dataset graph.
+  const auto &nodes = graph->execution_order();
+  for (const auto &node : nodes) {
+    auto node_name = AnfAlgo::GetCNodeName(node);
+    if (node_name == "InitDataSetQueue") {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool E2eDump::DumpDirExists(const std::string &dump_path) {
   DIR *dir = opendir(dump_path.c_str());
   if (dir != nullptr) {
