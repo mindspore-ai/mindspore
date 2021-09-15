@@ -45,6 +45,57 @@ struct MaxMin {
 
 constexpr int kDefaultBinNumber = 2048;
 
+struct DivergInfo {
+  std::vector<float> histogram;
+  CNodePtr cnode;
+  int bin_num = 0;
+  float interval = 0;
+  float max = 0.0f;
+  float min = 0.0f;
+  float best_T = 0.0f;
+  size_t bit_num = 0;
+  int quant_max = 255;
+  int quant_min = 0;
+  ActivationQuantizedMethod activation_quant_method = MAX_MIN;
+  std::vector<float> min_datas;
+  std::vector<float> max_datas;
+  std::pair<float, float> percent_result{0.0, 0.0};
+  float scale_tmp = 0;
+  DivergInfo() = default;
+  DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min,
+             ActivationQuantizedMethod activation_quant_method) {
+    this->activation_quant_method = activation_quant_method;
+    this->cnode = std::move(cnode);
+    this->bin_num = bins;
+    this->bit_num = bits;
+    histogram.resize(bin_num);
+    max = -FLT_MAX;
+    min = FLT_MAX;
+    this->quant_max = quant_max;
+    this->quant_min = quant_min;
+    std::fill(histogram.begin(), histogram.end(), 1.0e-7);
+  }
+
+  STATUS RecordMaxMinValue(const std::vector<float> &data);
+
+  STATUS RecordMaxMinValueArray(const std::vector<float> &data);
+
+  void UpdateInterval();
+
+  STATUS UpdateHistogram(const std::vector<float> &data);
+
+  void DumpHistogram();
+
+  void HandleBinForKL(int quant_bint_nums, int bin_index, std::vector<float> *quantized_histogram,
+                      std::vector<float> *expanded_histogram);
+
+  STATUS ComputeThreshold();
+
+  std::pair<CNodePtr, float> GetScale();
+
+  std::pair<CNodePtr, int32_t> GetZeropoint();
+};
+
 class FullQuantQuantizer : public Quantizer {
  public:
   FullQuantQuantizer(FuncGraphPtr graph, int bit_num, TypeId target_type = kNumberTypeInt8, bool per_channel = true);
@@ -112,6 +163,8 @@ class FullQuantQuantizer : public Quantizer {
   STATUS DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, const PrimitivePtr &primitive,
                        bool per_channel) const;
 
+  STATUS DoParameterNodeQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
+
   static STATUS DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive);
   STATUS Int8Inference();
   STATUS BiasCorrection(const FuncGraphPtr &func_graph);
@@ -120,57 +173,6 @@ class FullQuantQuantizer : public Quantizer {
   KernelCallBack GetAfterCallBack(bool int8_op);
   KernelCallBack GetInt8AfterCallBack();
   KernelCallBack GetFloatAfterCallBack();
-};
-
-struct DivergInfo {
-  std::vector<float> histogram;
-  CNodePtr cnode;
-  int bin_num = 0;
-  float interval = 0;
-  float max = 0.0f;
-  float min = 0.0f;
-  float best_T = 0.0f;
-  size_t bit_num = 0;
-  int quant_max = 255;
-  int quant_min = 0;
-  ActivationQuantizedMethod activation_quant_method = MAX_MIN;
-  std::vector<float> min_datas;
-  std::vector<float> max_datas;
-  std::pair<float, float> percent_result{0.0, 0.0};
-  float scale_tmp = 0;
-  DivergInfo() = default;
-  DivergInfo(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min,
-             ActivationQuantizedMethod activation_quant_method) {
-    this->activation_quant_method = activation_quant_method;
-    this->cnode = std::move(cnode);
-    this->bin_num = bins;
-    this->bit_num = bits;
-    histogram.resize(bin_num);
-    max = -FLT_MAX;
-    min = FLT_MAX;
-    this->quant_max = quant_max;
-    this->quant_min = quant_min;
-    std::fill(histogram.begin(), histogram.end(), 1.0e-7);
-  }
-
-  STATUS RecordMaxMinValue(const std::vector<float> &data);
-
-  STATUS RecordMaxMinValueArray(const std::vector<float> &data);
-
-  void UpdateInterval();
-
-  STATUS UpdateHistogram(const std::vector<float> &data);
-
-  void DumpHistogram();
-
-  void HandleBinForKL(int quant_bint_nums, int bin_index, std::vector<float> *quantized_histogram,
-                      std::vector<float> *expanded_histogram);
-
-  STATUS ComputeThreshold();
-
-  std::pair<CNodePtr, float> GetScale();
-
-  std::pair<CNodePtr, int32_t> GetZeropoint();
 };
 
 class Calibrator {

@@ -29,16 +29,13 @@
 #include <thread>
 #include <vector>
 #include <fstream>
-#include "ops/fusion/conv2d_fusion.h"
-#include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/fusion/full_connection.h"
-#include "ops/fusion/layer_norm_fusion.h"
-#include "ops/gather.h"
 #include "tools/converter/ops/ops_def.h"
 #include "src/tensor.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/common/format_utils.h"
 #include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
@@ -639,6 +636,46 @@ STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePt
   return RET_OK;
 }
 
+STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const AnfNodePtr &input_node,
+                                                size_t input_index) {
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (primitive == nullptr) {
+    return RET_ERROR;
+  }
+  auto op_name = cnode->fullname_with_scope();
+  STATUS ret;
+  TypeId type_id = kTypeUnknown;
+  if (opt::GetDataTypeFromAnfNode(input_node, &type_id) != RET_OK) {
+    MS_LOG(ERROR) << "Get data type failed.";
+    return RET_ERROR;
+  }
+  if (type_id != kNumberTypeFloat32) {
+    return RET_CONTINUE;
+  }
+  if (CheckNodeInSet(cnode, has_bias_operator)) {
+    if (input_index == 3) {
+      ret = DoBiasQuant(input_node, primitive);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Do bias quant failed.";
+        return ret;
+      }
+    } else {
+      ret = DoWeightQuant(op_name, input_node, primitive, true);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Do bias quant failed.";
+        return ret;
+      }
+    }
+  } else {
+    ret = DoWeightQuant(op_name, input_node, primitive, false);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Do bias quant failed.";
+      return ret;
+    }
+  }
+  return RET_OK;
+}
+
 STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto inputs_diverg_info = calibrator_->GetInputDivergInfo();
@@ -650,6 +687,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(primitive_quant_holder != nullptr, RET_NULL_PTR, "primitive_quant_holder is nullptr.");
   size_t activation_input_index = 0;
+  STATUS ret;
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
@@ -659,7 +697,20 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         is_graph_input = true;
       }
     }
-    if (input_node->isa<mindspore::CNode>()) {
+    if (is_graph_input) {
+      // do input quant
+      auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
+      auto input_scale = info->GetScale().second;
+      auto input_zp = info->GetZeropoint().second;
+      struct MaxMin input_min_max {};
+      input_min_max.max = info->max;
+      input_min_max.min = info->min;
+      ret = SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, i - 1);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Set activation quant failed.";
+        return ret;
+      }
+    } else if (input_node->isa<mindspore::CNode>()) {
       auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
       auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
       if (input_cnode_primitive == nullptr) {
@@ -672,7 +723,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
                         "input_primitive_quant_holder is nullptr.");
       if (input_primitive_quant_holder->IsOutputQuantParamsInited()) {
         auto quant_param = input_primitive_quant_holder->get_output_quant_params().front();
-        primitive_quant_holder->set_input_quant_param(activation_input_index, quant_param);
+        primitive_quant_holder->set_input_quant_param(i - 1, quant_param);
       } else {
         // do input quant
         auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
@@ -681,39 +732,23 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         struct MaxMin input_min_max {};
         input_min_max.max = info->max;
         input_min_max.min = info->min;
-        return SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, i - 1);
+        ret = SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, i - 1);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Set activation quant failed.";
+          return ret;
+        }
       }
-    } else if (is_graph_input) {
-      auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
-      auto input_scale = info->GetScale().second;
-      auto input_zp = info->GetZeropoint().second;
-      struct MaxMin input_min_max {};
-      input_min_max.max = info->max;
-      input_min_max.min = info->min;
-      return SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, i - 1);
+    } else if (input_node->isa<mindspore::Parameter>()) {
+      ret = DoParameterNodeQuant(cnode, input_node, i);
+      if (ret == RET_CONTINUE) {
+        continue;
+      } else if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Do parameter node quant failed.";
+        return ret;
+      }
     } else {
-      MS_LOG(DEBUG) << "node: " << op_name << " input " << i << " not a cnode";
-      // get dtype
-      auto abstractBase = input_node->abstract();
-      if (abstractBase == nullptr) {
-        MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << input_node->fullname_with_scope();
-        return RET_ERROR;
-      }
-      if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
-        MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << input_node->fullname_with_scope();
-        return RET_ERROR;
-      }
-      auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-      if (abstractTensor == nullptr || abstractTensor->element() == nullptr) {
-        MS_LOG(ERROR) << "abstractTensor is nullptr, " << input_node->fullname_with_scope();
-        return RET_NULL_PTR;
-      }
-      if (abstractTensor->element()->GetTypeTrack()->type_id() == kNumberTypeFloat32) {
-        MS_LOG(DEBUG) << "this parameter do quant";
-        DoWeightQuant(op_name, input_node, primitive, false);
-      } else {
-        MS_LOG(DEBUG) << "this parameter no need to do quant";
-      }
+      MS_LOG(ERROR) << input_node->fullname_with_scope() << ":" << input_node->type_name() << " is not support type";
+      return RET_ERROR;
     }
   }
   return RET_OK;
@@ -773,27 +808,6 @@ STATUS FullQuantQuantizer::QuantNode() {
       }
       primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
       continue;
-    } else if (CheckNodeInSet(cnode, has_bias_operator)) {
-      // do input quant
-      auto &info = (*inputs_diverg_info)[op_name][0];
-      auto input_scale = info->GetScale().second;
-      auto input_zp = info->GetZeropoint().second;
-      struct MaxMin input_min_max {};
-      input_min_max.max = info->max;
-      input_min_max.min = info->min;
-      SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, 0);
-      // do weight quant
-      auto weight = cnode->input(2);
-      bool per_channel = false;
-      if (op_type == ops::kNameConv2DFusion || op_type == ops::kNameFullConnection) {
-        per_channel = true;
-      }
-      DoWeightQuant(op_name, weight, primitive, per_channel);
-      // do bias quant
-      if (cnode->inputs().size() == 4) {
-        auto bias = cnode->input(3);
-        DoBiasQuant(bias, primitive);
-      }
     } else {  // do simple op quant
       auto status = QuantNodeSimpleOp(cnode);
       if (status != RET_OK) {
@@ -1232,7 +1246,8 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "input_type must pass IMAGE | BIN.";
     return RET_INPUT_PARAM_INVALID;
   }
-  STATUS status = PreProcess();
+  STATUS status;
+  status = PreProcess();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "do pre process failed!";
     return status;
