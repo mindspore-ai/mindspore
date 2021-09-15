@@ -113,7 +113,6 @@ Status TensorRTDelegate::Build(DelegateModel *model) {
   lite::SetCudaDevice(device_info_);
   KernelIter from, end;
   std::vector<TensorRTOp *> tensorrt_ops;
-  int graph_index = 0;
   for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
     kernel::Kernel *kernel = *iter;
     auto tensorrt_op = FindTensorRTOp(kernel, model->GetPrimitive(kernel));
@@ -131,7 +130,6 @@ Status TensorRTDelegate::Build(DelegateModel *model) {
           MS_LOG(ERROR) << "Create TensorRT Graph failed.";
           return mindspore::kLiteNullptr;
         }
-        tensorrt_subgraph->set_name("TensorRtGraph" + std::to_string(graph_index++));
         iter = model->Replace(from, end + 1, tensorrt_subgraph);
         tensorrt_ops.clear();
       }
@@ -143,7 +141,6 @@ Status TensorRTDelegate::Build(DelegateModel *model) {
       MS_LOG(DEBUG) << "Create TensorRT Graph failed.";
       return mindspore::kLiteNullptr;
     }
-    tensorrt_subgraph->set_name("TensorRtGraph" + std::to_string(graph_index++));
     model->Replace(from, end + 1, tensorrt_subgraph);
     tensorrt_ops.clear();
   }

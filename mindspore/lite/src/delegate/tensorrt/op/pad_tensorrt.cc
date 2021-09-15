@@ -60,7 +60,7 @@ int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   mindspore::MSTensor &pad_tensor = in_tensors_[1];
   int element_cnt = std::accumulate(pad_tensor.Shape().begin(), pad_tensor.Shape().end(), 1, std::multiplies<int>());
-  if (element_cnt != tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims * 2) {
+  if (element_cnt != tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims * INPUT_SIZE2) {
     MS_LOG(ERROR) << "pad tensor cnt is invalid. cnt: " << element_cnt
                   << ", input tensor dims cnt: " << tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims;
     return RET_ERROR;
@@ -83,7 +83,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   const int *padding_data = reinterpret_cast<const int *>(in_tensors_[1].Data().get());
   MS_ASSERT(padding_data);
   nvinfer1::IPaddingLayer *padding_layer = nullptr;
-  if (element_cnt == index_NHWC_ * 2) {
+  if (element_cnt == index_NHWC_ * INPUT_SIZE2) {
     // NHWC only support pad at HW index
     // 0: N_pre, 1: N_post, 2: H_pre, 3: H_post, 4: W_pre, 5: W_post, 6: C_pre, 7: C_post
     if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 6) != 0 || *(padding_data + 7) != 0) {

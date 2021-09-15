@@ -113,9 +113,9 @@ void PoolTensorRT::AddParams(const schema::AvgPoolFusion *primitive, nvinfer1::I
   if (padding != nullptr) {
     auto padding_val = std::vector<int64_t>(padding->begin(), padding->end());
     nvinfer1::Dims dims{};
-    dims.nbDims = 2;
+    dims.nbDims = DIMENSION_2D;
     dims.d[0] = padding_val[1];
-    dims.d[1] = padding_val[2];
+    dims.d[1] = padding_val[DIMENSION_2D];
     pooling_layer->setPaddingNd(dims);
   }
 }
