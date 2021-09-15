@@ -109,10 +109,20 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
   return impl_->Predict(inputs, outputs, before, after);
 }
 
-Status Model::Predict(const std::vector<char> &input, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
-                      const MSKernelCallBack &after) {
+Status Model::PredictWithPreprocess(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                                    const MSKernelCallBack &before, const MSKernelCallBack &after) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kLiteNotSupport;
+}
+
+Status Model::Preprocess(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return kLiteNotSupport;
+}
+
+bool Model::HasPreprocess() {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return false;
 }
 
 Model::Model() : impl_(nullptr) {}

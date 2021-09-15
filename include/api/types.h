@@ -104,6 +104,13 @@ class MS_API MSTensor {
   static inline MSTensor *CreateDevTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
                                           const void *data, size_t data_len) noexcept;
 
+  /// \brief Creates a MSTensor object from local image file, must be used in pairs with DestroyTensorPtr.
+  ///
+  /// \param[in] image_file Path of image file.
+  ///
+  /// \return A pointer of MSTensor.
+  static inline MSTensor *CreateImageTensor(const std::string &image_file) noexcept;
+
   /// \brief Create a string type MSTensor object whose data can be accessed by Model only after being copied, must be
   /// used in pair with DestroyTensorPtr.
   ///
@@ -261,6 +268,7 @@ class MS_API MSTensor {
                                    const void *data, size_t data_len) noexcept;
   static MSTensor *CreateDevTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                    const void *data, size_t data_len) noexcept;
+  static MSTensor *CreateImageTensor(const std::vector<char> &image_file) noexcept;
   static MSTensor *CharStringsToTensor(const std::vector<char> &name, const std::vector<std::vector<char>> &str);
   static std::vector<std::vector<char>> TensorToStringChars(const MSTensor &tensor);
 
@@ -305,6 +313,10 @@ MSTensor *MSTensor::CreateRefTensor(const std::string &name, enum DataType type,
 MSTensor *MSTensor::CreateDevTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
                                     const void *data, size_t data_len) noexcept {
   return CreateDevTensor(StringToChar(name), type, shape, data, data_len);
+}
+
+MSTensor *MSTensor::CreateImageTensor(const std::string &image_file) noexcept {
+  return CreateImageTensor(StringToChar(image_file));
 }
 
 MSTensor *MSTensor::StringsToTensor(const std::string &name, const std::vector<std::string> &str) {

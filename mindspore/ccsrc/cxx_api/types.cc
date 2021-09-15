@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 #include "include/api/types.h"
+#include <fstream>
 #include <numeric>
 #include "securec/include/securec.h"
 #include "mindspore/core/ir/api_tensor_impl.h"
 #include "mindspore/core/utils/convert_utils_base.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 class Buffer::Impl {
@@ -174,6 +176,69 @@ MSTensor *MSTensor::CreateDevTensor(const std::vector<char> &name, enum DataType
   try {
     std::shared_ptr<Impl> impl = std::make_shared<TensorReferenceImpl>(name_str, type, shape, data, data_len, true);
     MSTensor *ret = new MSTensor(impl);
+    return ret;
+  } catch (const std::bad_alloc &) {
+    MS_LOG(ERROR) << "Malloc memory failed.";
+    return nullptr;
+  } catch (...) {
+    MS_LOG(ERROR) << "Unknown error occurred.";
+    return nullptr;
+  }
+}
+
+MSTensor *MSTensor::CreateImageTensor(const std::vector<char> &image_file) noexcept {
+  std::string image_file_str = CharToString(image_file);
+
+  try {
+    auto realpath = FileUtils::GetRealPath(image_file_str.c_str());
+    if (!realpath.has_value()) {
+      MS_LOG(ERROR) << "Get real path failed, path=" << image_file_str;
+      return nullptr;
+    }
+
+    // Read image file
+    auto file = realpath.value();
+    if (file.empty()) {
+      MS_LOG(ERROR) << "can not find any input file.";
+      return nullptr;
+    }
+
+    std::ifstream ifs(file, std::ios::in | std::ios::binary);
+    if (!ifs.good()) {
+      MS_LOG(ERROR) << "File: " + file + " does not exist.";
+      return nullptr;
+    }
+    if (!ifs.is_open()) {
+      MS_LOG(ERROR) << "File: " + file + " open failed.";
+      return nullptr;
+    }
+
+    auto &io_seekg1 = ifs.seekg(0, std::ios::end);
+    if (!io_seekg1.good() || io_seekg1.fail() || io_seekg1.bad()) {
+      ifs.close();
+      MS_LOG(ERROR) << "Failed to seekg file: " + file;
+      return nullptr;
+    }
+
+    size_t size = ifs.tellg();
+    MSTensor *ret =
+      new MSTensor(file, mindspore::DataType::kNumberTypeUInt8, {static_cast<int64_t>(size)}, nullptr, size);
+
+    auto &io_seekg2 = ifs.seekg(0, std::ios::beg);
+    if (!io_seekg2.good() || io_seekg2.fail() || io_seekg2.bad()) {
+      ifs.close();
+      MS_LOG(ERROR) << "Failed to seekg file: " + file;
+      return nullptr;
+    }
+
+    auto &io_read = ifs.read(reinterpret_cast<char *>(ret->MutableData()), size);
+    if (!io_read.good() || io_read.fail() || io_read.bad()) {
+      ifs.close();
+      MS_LOG(ERROR) << "Failed to read file: " + file;
+      return nullptr;
+    }
+    ifs.close();
+
     return ret;
   } catch (const std::bad_alloc &) {
     MS_LOG(ERROR) << "Malloc memory failed.";

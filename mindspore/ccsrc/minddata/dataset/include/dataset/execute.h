@@ -106,6 +106,10 @@ class Execute {
   /// \return Status error code, returns OK if no error encountered.
   Status operator()(const std::vector<mindspore::MSTensor> &input_tensor_list, std::vector<mindspore::MSTensor> *out);
 
+  /// \brief Given a set of Executes, run them
+  static Status Run(const std::vector<std::shared_ptr<dataset::Execute>> &data_graph,
+                    const std::vector<mindspore::MSTensor> &inputs, std::vector<mindspore::MSTensor> *outputs);
+
   /// \brief The function to release device memory on Ascend310.
   Status DeviceMemoryRelease();
 
