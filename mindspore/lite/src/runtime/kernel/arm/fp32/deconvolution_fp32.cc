@@ -67,7 +67,6 @@ int DeConvolutionCPUKernel::MallocWeightBiasData() {
       MS_LOG(ERROR) << "deconv malloc packed_weight_ error!";
       return RET_ERROR;
     }
-    memset(packed_weight_, 0, pack_weight_size);
   }
 
   bias_data_ = MallocAlignedData(C32NUM, output_aligned_size * sizeof(float));
