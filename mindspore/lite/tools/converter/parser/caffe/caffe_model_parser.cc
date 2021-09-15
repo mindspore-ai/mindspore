@@ -156,7 +156,7 @@ STATUS CaffeModelParser::ConvertLayers() {
 
     // parse primitive
     MS_LOG(INFO) << "parse op : " << layer.type();
-    ops::PrimitiveC *primitive_c;
+    ops::PrimitiveC *primitive_c = nullptr;
     auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeCaffe, layer.type());
     if (node_parser != nullptr) {
       primitive_c = node_parser->Parse(layer, weight);
