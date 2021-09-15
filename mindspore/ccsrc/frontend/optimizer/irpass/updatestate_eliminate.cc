@@ -634,8 +634,10 @@ AnfNodePtr UpdatestateUselessNodeEliminater::operator()(const OptimizerPtr &, co
   // If update_state is the only user of partial/load, replace it with the input monad.
   // UpdateState(u, Partial) -> u
   // UpdateState(u, Load) -> u
+  // UpdateState(u, FuncGraph) -> u
   auto &attach = update_state_node->input(kAttachIndex);
-  if (IsPrimitiveCNode(attach, prim::kPrimPartial) || IsPrimitiveCNode(attach, prim::kPrimLoad)) {
+  if (IsPrimitiveCNode(attach, prim::kPrimPartial) || IsPrimitiveCNode(attach, prim::kPrimLoad) ||
+      IsValueNode<FuncGraph>(attach)) {
     // Replace UpdateState with the input monad.
     if (OnlyUsedByOneNode(attach, update_state_node)) {
       return update_state_node->input(kInputIndex);
