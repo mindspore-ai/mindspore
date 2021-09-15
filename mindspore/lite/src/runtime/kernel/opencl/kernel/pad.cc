@@ -60,6 +60,10 @@ int PadOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Pad only support CONSTANT MODE.";
     return RET_ERROR;
   }
+  // Compatibility code
+  if (param->padding_length == DIMENSION_2D * in_ndim) {
+    return RET_OK;
+  }
   auto pad_shape = in_tensors_.at(1)->shape();
   if (pad_shape.size() != DIMENSION_2D || pad_shape[0] != in_ndim || pad_shape[1] != DIMENSION_2D) {
     MS_LOG(ERROR) << "pad tensor shape invalid.";
