@@ -122,7 +122,7 @@ class DatasetGenerator:
     def __len__(self):
         return len(self.datapath)
 
-    def _get_item(self, index):
+    def __getitem__(self, index):
         """get item"""
         if self.process_data:
             point_set, label = self.list_of_points[index], self.list_of_labels[index]
@@ -142,6 +142,3 @@ class DatasetGenerator:
             point_set = point_set[:, 0:3]
 
         return point_set, label[0]
-
-    def __getitem__(self, index):
-        return self._get_item(index)

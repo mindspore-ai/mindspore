@@ -281,3 +281,18 @@ def random_point_dropout(batch_pc, max_dropout_ratio=0.875):
         if drop_idx.any():
             batch_pc[b, drop_idx, :] = batch_pc[b, 0, :]  # set to the first point
     return batch_pc
+
+
+class RandomInputDropout:
+    """random input dropout during training"""
+
+    def __init__(self):
+        pass
+
+    def __call__(self, data, label, batchInfo):
+        data = np.array(data)
+        label = np.array(label)
+        data = random_point_dropout(data)
+        data[:, :, 0:3] = random_scale_point_cloud(data[:, :, 0:3])
+        data[:, :, 0:3] = shift_point_cloud(data[:, :, 0:3])
+        return data, label
