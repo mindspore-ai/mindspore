@@ -93,7 +93,7 @@ class CrossEntropyLoss(Cell):
         """
         self._check_input(logits, label, input_mask)
 
-        # [bs*seq_length, vocab_size]
+        # the shape is [bs*seq_length, vocab_size]
         logits = F.cast(logits, mstype.float32)
         # LogSoftmax for logits over last dimension
         _, logit_max = self.max(logits)

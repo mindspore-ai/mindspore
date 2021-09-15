@@ -106,6 +106,7 @@ def run_train(args_opt):
                                                   pipeline_stage=args_opt.stage_num,
                                                   micro_batch_num=args_opt.micro_size,
                                                   optimizer_shard=bool(args_opt.optimizer_shard),
+                                                  vocab_emb_dp=bool(args_opt.word_emb_dp),
                                                   recompute=True)
     config = PanguAlphaConfig(batch_size=batch_size, num_heads=args_opt.num_heads,
                               hidden_size=args_opt.embedding_size, seq_length=args_opt.seq_length,
@@ -221,6 +222,7 @@ def run_train_pipeline(args_opt):
                                                   pipeline_stage=args_opt.stage_num,
                                                   micro_batch_num=args_opt.micro_size,
                                                   optimizer_shard=bool(args_opt.optimizer_shard),
+                                                  vocab_emb_dp=bool(args_opt.word_emb_dp),
                                                   recompute=True)
     config = PanguAlphaConfig(batch_size=batch_size // parallel_config.micro_batch_num,
                               num_heads=args_opt.num_heads, hidden_size=args_opt.embedding_size,

@@ -396,12 +396,13 @@ class FeedForward(Cell):
         _check_input_shape(F.shape(x), "x", self.cls_name, 3)
         _check_input_dtype(F.dtype(x), "x", [mstype.float32, mstype.float16], self.cls_name)
         x = self.cast(x, mstype.float16)
-        # [bs, seq_length, ffn_hidden_size]
+        # returned shape is [bs, seq_length, ffn_hidden_size]
         hidden = self.mapping(x)
         output = self.projection(hidden)
-        # [bs, seq_length, hidden_size]
+        # returned shape is [bs, seq_length, hidden_size]
         output = self.dropout(output)
         return output
+
 
 @constexpr
 def calculate_expert_capacity(k, tokens_per_device, capacity_factor, expert_dim):
@@ -588,7 +589,7 @@ class AttentionMask(Cell):
         mask_right = self.reshape(input_mask, shape_right)
         attention_mask = self.mul(mask_left, mask_right)
         lower_traiangle = self.expand_dim(self.lower_triangle_mask, 0)
-        # [bs, seq_length, seq_length]
+        # the returned shape is [bs, seq_length, seq_length]
         attention_mask = self.multiply(
             attention_mask, lower_traiangle)
         return attention_mask
@@ -889,18 +890,18 @@ class MultiHeadAttention(Cell):
         query = self.dense1(query_tensor)
         key = self.dense2(key_tensor)
         value = self.dense3(value_tensor)
-        # [bs, num_heads, seq_length, size_per_head]
+        # the returned shape is [bs, num_heads, seq_length, size_per_head]
         query = self.transpose(
             F.reshape(
                 query,
                 (-1, query_tensor_original_shape[1], self.n_head, self.size_per_head)),
             (0, 2, 1, 3))
-        # [bs, num_heads, size_per_head, seq_length]
+        # the returned shape is [bs, num_heads, size_per_head, seq_length]
         key = self.transpose(
             F.reshape(
                 key, (-1, key_tensor_original_shape[1], self.n_head, self.size_per_head)),
             (0, 2, 3, 1))
-        # [bs, num_heads, seq_length, size_per_head]
+        # the returned shape is [bs, num_heads, seq_length, size_per_head]
         value = self.transpose(
             F.reshape(
                 value,
@@ -949,7 +950,7 @@ class MultiHeadAttention(Cell):
 
         layer_present = (key_present, value_present)
         # multi head attention considering attention mask
-        # [bs, seq_length, hidden_size]
+        # the return shape is [bs, seq_length, hidden_size]
         attention = self._attn(query, key, value, attention_mask)
         # Output
         output = self.projection(attention)
@@ -1019,8 +1020,8 @@ class MultiHeadAttention(Cell):
         ori_dtype = P.DType()(score)
         score = P.Cast()(score, self.softmax_dtype)
 
-        # for input size of (bs, 1) namely the second graph, the shape of attention_mask matrix should be
-        # (bs, 1, 1, seq_length)
+        # for input size of (bs, 1) namely the second graph,
+        # the shape of attention_mask matrix should be (bs, 1, 1, seq_length)
         if self.use_past and not self.is_first_iteration:
             # Calculate the current total token
             current_index = self.reducesum(F.cast(self.not_equal(self.slice(key, (0, 0, 0, 0),
@@ -1508,7 +1509,7 @@ class TransformerDecoderLayer(Cell):
                   memory_mask=None,
                   init_reset=True, batch_valid_length=None):
         self._check_input(hidden_stats, decoder_mask, encoder_output, memory_mask, init_reset, batch_valid_length)
-        # [bs, seq_length, embedding_size]
+        # the returned shape is [bs, seq_length, embedding_size]
         input_x = self.layernorm1(hidden_stats)
         input_x = F.cast(input_x, self.dtype)
 

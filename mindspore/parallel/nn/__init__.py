@@ -18,9 +18,9 @@ NOTE:
     This is an experimental interface that is subject to change and/or deletion.
 """
 from .transformer import *
-from .layers import *
-from .loss import *
-from .op_parallel_config import *
+from .layers import FixedSparseAttention
+from .loss import CrossEntropyLoss
+from .op_parallel_config import OpParallelConfig
 
 __all__ = []
 __all__.extend(transformer.__all__)

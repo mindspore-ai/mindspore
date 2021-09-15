@@ -143,7 +143,6 @@ def _check_config(config):
     device_num = D.get_group_size()
     optimizer_shard = context.get_auto_parallel_context("enable_parallel_optimizer")
 
-    # dp * pp * pipeline_stage <= device_num
     if config.data_parallel * config.model_parallel * pipeline_stage > device_num:
         raise ValueError(f"The product of the data parallel {config.data_parallel}, "
                          f"model parallel {config.model_parallel} "
@@ -155,10 +154,3 @@ def _check_config(config):
         logger.warning(f"The optimizer shard {optimizer_shard} in auto_parallel_context is not equal to the"
                        f" optimizer_shard {config.optimizer_shard} in the OpParallelConfig. Please check the "
                        f"optimizer_shard to make them consistent.")
-
-    # pipeline_stage <= micro_batch_num
-    if hasattr(config, 'pipeline_stage') and hasattr(config, 'micro_batch_num')\
-            and config.pipeline_stage < config.micro_batch_num:
-        raise ValueError(
-            f"The pipeline stage {config.pipeline_stage} should be greater than the micro_batch_num "
-            f"{config.micro_batch_num}.")

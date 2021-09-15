@@ -73,6 +73,7 @@ def _valid_type_checks(types, class_name):
         # as the input of _args_type_validator_check is fixed, so we need to manually change the input order
         partial_check = partial(Validator.check_type_name, valid_types=types, prim_name=class_name)
         return partial_check(name, type(value))
+
     return validator_check_func
 
 
@@ -83,6 +84,7 @@ def _valid_value_checks(types, class_name):
         # as the input of _args_type_validator_check is fixed, so we need to manually change the input order
         partial_check = partial(Validator.check_type_name, valid_types=types, prim_name=class_name)
         return partial_check(name, value)
+
     return validator_check_func
 
 
@@ -334,7 +336,7 @@ class _Linear(Cell):
         if self.activation_flag:
             # some operations has many primitives, need to manually set the shard
             if self.act_name.lower() == "leakyrelu":
-                self.activation.maximum.shard((strategy_activation[0], strategy_activation[0]))
+                self.activation.select_op.shard((strategy_activation[0], strategy_activation[0]))
             elif self.act_name.lower() == "logsigmoid":
                 self.activation.mul.shard((strategy_activation[0], ()))
                 self.activation.exp.shard(strategy_activation)
@@ -402,6 +404,7 @@ class FixedSparseAttention(nn.Cell):
         >>> print(output.shape)
         (2, 1024, 512)
     """
+
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
                                 num_heads=Validator.check_positive_int,
                                 size_per_head=Validator.check_positive_int,
@@ -437,7 +440,7 @@ class FixedSparseAttention(nn.Cell):
         self.transpose = P.Transpose().shard(((dp, 1, mp, 1),))
         self.batch_matmul = P.BatchMatMul().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
         self.multiply = P.Mul().shard(((dp, 1, 1, 1), (1, 1, 1)))
-        self.multiply_data = Tensor([-10000.0,], dtype=mstype.float32)
+        self.multiply_data = Tensor([-10000.0], dtype=mstype.float32)
         self.parallel_config = parallel_config
         size_per_head_list = [64, 128]
         if self.seq_length != 1024:
@@ -460,7 +463,7 @@ class FixedSparseAttention(nn.Cell):
         global_mask_original = -10000 * global_mask_original
         global_mask_fx = global_mask_original.reshape((self.seq_length // 16, 16, self.global_size // 16, 16))
         global_mask = np.transpose(global_mask_fx, (2, 0, 1, 3))
-        global_mask = np.repeat(global_mask[np.newaxis, :, :, :, :,], self.batch_size, axis=0)
+        global_mask = np.repeat(global_mask[np.newaxis, :, :, :, :], self.batch_size, axis=0)
         global_mask = global_mask.reshape((self.batch_size * self.global_size // 16, self.seq_length // 16, 16, 16))
         self.global_mask = Tensor(global_mask, mstype.float32)
         self.local_mask_triangle = Tensor(np.tril(local_ones), mstype.float32)
@@ -578,6 +581,7 @@ class _CumSum(Cell):
         Outputs:
             Tensor of shape :math:`(expert\_parallel, tokens\_per\_device, expert\_dim)`.
     """
+
     def __init__(self, config):
         super(_CumSum, self).__init__()
         dp = config.data_parallel
@@ -598,14 +602,13 @@ class _CumSum(Cell):
         self.delta = Tensor(1, mstype.int32)
         self.add = P.TensorAdd().shard(((1,), ()))
 
-
     def construct(self, expert_mask):
-        # origin_shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        # origin_shape: (expert_parallel, tokens_per_device, self.expert_dim)
         origin_shape = self.shape(expert_mask)
         tokens_per_device = origin_shape[1]
-        # expert_mask_trans's shape: (self.expert_parallel, self.expert_dim, tokens_per_device)
+        # expert_mask_trans's shape: (expert_parallel, self.expert_dim, tokens_per_device)
         expert_mask_trans = self.transpose(expert_mask, (0, 2, 1))
-        # expert_mask_reshaped's shape: (self.expert_parallel*self.expert_dim, tokens_per_device)
+        # expert_mask_reshaped's shape: (expert_parallel*self.expert_dim, tokens_per_device)
         expert_mask_reshaped = self.reshape(expert_mask_trans, (-1, tokens_per_device))
 
         one_dim = self.expand(self.range(self.start, self.add(self.limit, tokens_per_device), self.delta), 0)
@@ -614,11 +617,11 @@ class _CumSum(Cell):
         up_tri_matrix = self.greater(one_dim, other_dim)
         up_tri_matrix = self.cast(up_tri_matrix, mstype.float32)
 
-        # cum_sum's shape: (self.expert_parallel*self.expert_dim, tokens_per_device)
+        # cum_sum's shape: (expert_parallel*self.expert_dim, tokens_per_device)
         cum_sum = self.matmul(expert_mask_reshaped, up_tri_matrix)
-        # cum_sum's shape: (self.expert_parallel, self.expert_dim, tokens_per_device)
+        # cum_sum's shape: (expert_parallel, self.expert_dim, tokens_per_device)
         cum_sum = self.reshape(cum_sum, (origin_shape[0], origin_shape[2], tokens_per_device))
-        # cum_sum's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        # cum_sum's shape: (expert_parallel, tokens_per_device, self.expert_dim)
         cum_sum = self.transpose3(cum_sum, (0, 2, 1))
         return cum_sum
 
@@ -646,6 +649,7 @@ class Router(Cell):
         Outputs:
             Tensor of shape :math:`(expert\_parallel, tokens\_per\_device, expert\_dim)`.
     """
+
     def __init__(self,
                  d_model,
                  moe_config,
@@ -704,6 +708,7 @@ class SwitchRouter(Cell):
             Tensor of shape :math:`(expert\_parallel, tokens\_per\_device, expert\_dim, expert\_capacity)`,
             Tensor of shape :math:`(1)`.
     """
+
     def __init__(self,
                  d_model,
                  moe_config,
@@ -752,9 +757,9 @@ class SwitchRouter(Cell):
         """
         Computing the load balance loss.
         """
-        # density_1's shape: (self.expert_parallel, self.expert_dim)
+        # density_1's shape: (expert_parallel, self.expert_dim)
         density_1 = self.reduce_mean(expert_mask, 1)
-        # density_1_proxy's shape: (self.expert_parallel, self.expert_dim)
+        # density_1_proxy's shape: (expert_parallel, self.expert_dim)
         density_1_proxy = self.reduce_mean2(router_prob, 1)
         loss = self.mul(density_1, density_1_proxy)
         loss = self.reduce_mean3(loss)
@@ -766,19 +771,18 @@ class SwitchRouter(Cell):
         Keeping only the tokens that fit within expert_capacity.
         """
         cumsum = self.cumsum(expert_mask)
-        # position_in_expert's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        # position_in_expert's shape: (expert_parallel, tokens_per_device, self.expert_dim)
         position_in_expert = self.mul4(cumsum, expert_mask)
         less_result = self.less(position_in_expert, expert_capacity)
-        # expert_mask's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        # expert_mask's shape: (expert_parallel, tokens_per_device, self.expert_dim)
         expert_mask = self.mul5(less_result, expert_mask)
-        # expert_mask_flat's shape: (self.expert_parallel, tokens_per_device)
+        # expert_mask_flat's shape: (expert_parallel, tokens_per_device)
         expert_mask_flat = self.reduce_sum(expert_mask, -1)
 
         # Mask out the experts that have overflowed the expert_capacity.
-        # expert_gate's shape: (self.expert_parallel, tokens_per_device)
+        # expert_gate's shape: (expert_parallel, tokens_per_device)
         expert_gate = self.mul6(expert_gate, expert_mask_flat)
         return expert_gate, expert_mask_flat, position_in_expert
-
 
     def construct(self, router_logits):
         router_logits_shape = self.shape(router_logits)
@@ -791,9 +795,9 @@ class SwitchRouter(Cell):
 
         # Probabilities for each token of what expert is should be sent to
         router_prob = self.softmax(router_logits)
-        # shape: (self.expert_parallel, tokens_per_device)
+        # shape is : (expert_parallel, tokens_per_device)
         expert_index, expert_gate = self.argmax(router_prob)
-        # expert_mask's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        # expert_mask's shape: (expert_parallel, tokens_per_device, self.expert_dim)
         expert_mask = self.onehot(expert_index, self.expert_dim, self.on_value, self.off_value)
 
         # Computing the load balance loss:
@@ -802,12 +806,12 @@ class SwitchRouter(Cell):
         expert_gate, expert_mask_flat, position_in_expert = \
             self._maskout_overflowed_tokens(expert_mask, expert_capacity, expert_gate)
 
-        # combine_tensor's shape: (self.expert_parallel, tokens_per_device)
+        # combine_tensor's shape: (expert_parallel, tokens_per_device)
         combine_tensor = self.mul7(expert_gate, expert_mask_flat)
-        # combine_tensor's shape: (self.expert_parallel, tokens_per_device, self.expert_dim)
+        # combine_tensor's shape: (expert_parallel, tokens_per_device, self.expert_dim)
         combine_tensor = self.mul8(self.expand(combine_tensor, -1),
                                    self.onehot2(expert_index, self.expert_dim, self.on_value, self.off_value))
-        # combine_tensor's shape: (self.expert_parallel, tokens_per_device, self.expert_dim, self.expert_capacity)
+        # combine_tensor's shape: (expert_parallel, tokens_per_device, self.expert_dim, self.expert_capacity)
         combine_tensor = self.mul9(self.expand2(combine_tensor, -1),
                                    self.onehot3(self.cast(position_in_expert, mstype.int32), expert_capacity,
                                                 self.on_value, self.off_value))

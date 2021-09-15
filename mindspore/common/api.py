@@ -567,7 +567,7 @@ class _CellGraphExecutor:
         """compile graph in auto parallel mode."""
         if not auto_parallel_mode:
             replace = obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
-            self._updata_param_node_default_input(phase, replace)
+            self._update_param_node_default_input(phase, replace)
             return
 
         obj.parameter_layout_dict = self._graph_executor.get_parameter_layout(phase)
@@ -578,13 +578,13 @@ class _CellGraphExecutor:
         if not context.get_context("enable_debug_runtime") or context.get_context("enable_ge"):
             obj.load_parameter_slice(None)
 
-        self._updata_param_node_default_input(phase, replace)
+        self._update_param_node_default_input(phase, replace)
 
         # set parallel inputs in sink mode
         if is_sink_mode:
             obj.set_parallel_input_with_inputs(*args)
 
-    def _updata_param_node_default_input(self, phase, replace):
+    def _update_param_node_default_input(self, phase, replace):
         new_param = {x.name: replace[x] for x in replace if id(x) != id(replace[x])}
         return self._graph_executor.updata_param_node_default_input(phase, new_param)
 

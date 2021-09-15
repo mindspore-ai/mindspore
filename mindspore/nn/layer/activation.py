@@ -332,15 +332,14 @@ class LeakyReLU(Cell):
         validator.check_value_type('alpha', alpha, [float, int], self.cls_name)
         self.greater_equal = P.GreaterEqual()
         self.mul = P.Mul()
-        self.maximum = P.Maximum()
         self.alpha = alpha
+        self.select_op = P.Maximum()
+        if self.alpha > 1:
+            self.select_op = P.Minimum()
 
     def construct(self, x):
         alpha_array = P.Cast()(F.scalar_to_array(self.alpha), P.DType()(x))
-        if self.alpha <= 1:
-            out = self.maximum(alpha_array * x, x)
-        else:
-            out = self.maximum(alpha_array * x, x)
+        out = self.select_op(alpha_array * x, x)
         return out
 
 
