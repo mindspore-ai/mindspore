@@ -58,7 +58,7 @@ def init_to_value(init):
 
 class Parameter(Tensor_):
     """
-    Parameter types of cell models, after initialized `Parameter` is a subtype of `Tensor`.
+    A object holding weights of cells, after initialized `Parameter` is a subtype of `Tensor`.
 
     Note:
         In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
@@ -72,7 +72,7 @@ class Parameter(Tensor_):
 
     Args:
         default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
-        to initialize the parameter data.
+            to initialize the parameter data.
         name (str): Name of the child parameter. Default: None.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): When layerwise_parallel is true in data/hybrid parallel mode,
