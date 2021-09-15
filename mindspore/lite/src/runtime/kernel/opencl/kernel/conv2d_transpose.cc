@@ -48,7 +48,8 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Conv2dTranspose doesn't support non-constant filter yet.";
     return RET_ERROR;
   }
-  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && in_tensors_.at(2) != nullptr && !in_tensors_.at(2)->IsConst()) {
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && in_tensors_.at(C2NUM) != nullptr &&
+      !in_tensors_.at(C2NUM)->IsConst()) {
     MS_LOG(ERROR) << "Conv2dTranspose doesn't support non-constant bias yet.";
     return RET_ERROR;
   }

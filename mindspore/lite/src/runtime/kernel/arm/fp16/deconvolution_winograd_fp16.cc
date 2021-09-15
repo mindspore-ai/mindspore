@@ -351,7 +351,7 @@ int DeConvWinogradFp16CPUKernel::InitDataParam() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, deconv_param_->oc_up4_ * sizeof(float16_t));
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     CHECK_NULL_RETURN(bias_tensor);
     CHECK_NULL_RETURN(bias_tensor->data());
