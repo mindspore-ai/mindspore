@@ -299,7 +299,7 @@ class Integrator:
             reduce_info = self._sort_reduce_by_time(row_info_dict)
             if reduce_info:
                 reduce_infos.extend(reduce_info)
-
+        reduce_infos.sort(key=lambda x: float(x[2]))
         return reduce_infos
 
     def _get_info_dict_from_row_data(self, row_info, time_type):
