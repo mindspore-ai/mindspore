@@ -23,7 +23,6 @@
 #include <set>
 #include <map>
 #include <list>
-#include <deque>
 #include <string>
 #include <vector>
 #include <utility>
@@ -303,7 +302,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>, 
   void MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target, const ScopePtr &scope);
 
   FuncGraphTransaction Transact();
-  void CommitChanges(std::deque<change::ChangePtr> &&changes);
+  void CommitChanges(std::vector<change::ChangePtr> &&changes);
 
   bool IsManaged() const { return is_manage_; }
 
@@ -404,7 +403,7 @@ class FuncGraphTransaction {
 
  private:
   FuncGraphManager *manager_;
-  std::deque<change::ChangePtr> changes_;
+  std::vector<change::ChangePtr> changes_;
 };
 
 inline FuncGraphTransaction FuncGraphManager::Transact() { return FuncGraphTransaction(this); }

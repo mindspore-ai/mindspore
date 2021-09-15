@@ -431,11 +431,12 @@ void FuncGraphManager::AddIntoManaged(const FuncGraphPtr &fg) {
 }
 
 void FuncGraphManager::MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool ignore_users) {
-  FuncGraphSet todo(func_graphs);
+  std::list<FuncGraphPtr> todo(func_graphs.begin(), func_graphs.end());
   std::set<FuncGraphPtr> dropped;
   while (!todo.empty()) {
-    FuncGraphPtr func_graph = todo.pop();
+    FuncGraphPtr func_graph = std::move(todo.front());
     MS_EXCEPTION_IF_NULL(func_graph);
+    todo.pop_front();
     MS_LOG(DEBUG) << "Maybe drop func graph " << func_graph->ToString();
     if (roots_.contains(func_graph)) {
       MS_LOG(DEBUG) << "Cannot drop as roots contains func graph: " << func_graph->ToString();
@@ -452,7 +453,8 @@ void FuncGraphManager::MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool
     }
     (void)dropped.insert(func_graph);
     std::vector<AnfNodePtr> return_vec = {func_graph->get_return()};
-    todo.update(MaybeDropNodes(std::move(return_vec)));
+    auto drop_graphs = MaybeDropNodes(std::move(return_vec));
+    todo.insert(todo.end(), drop_graphs.begin(), drop_graphs.end());
   }
   for (auto &fg : dropped) {
     MS_EXCEPTION_IF_NULL(fg);
@@ -520,12 +522,12 @@ void FuncGraphManager::AcquireNodes(std::vector<AnfNodePtr> &&nodes) {
       continue;
     }
     node->seen_ = seen;
-    // Skip acquired nodes.
-    if (all_nodes_.contains(node)) {
+    // Try add it to all_nodes_.
+    auto insert_result = all_nodes_.insert(node);
+    if (insert_result.second == false) {
+      // Skip acquired nodes.
       continue;
     }
-    // Add it to all_nodes_.
-    all_nodes_.add(node);
     // Add node to its func_graph.
     auto fg = node->func_graph();
     if (fg != nullptr) {
@@ -730,14 +732,13 @@ void FuncGraphManager::MoveAllNodes(const FuncGraphPtr &source, const FuncGraphP
   signals_->InvalidateComputer();
 }
 
-void FuncGraphManager::CommitChanges(std::deque<change::ChangePtr> &&changes) {
+void FuncGraphManager::CommitChanges(std::vector<change::ChangePtr> &&changes) {
   // Apply changes.
   change::ChangeCounter counter;
-  while (!changes.empty()) {
-    auto &change = changes.front();
+  for (auto &change : changes) {
     change->Apply(&counter);
-    changes.pop_front();
   }
+  changes.clear();
 
   // Process added edges.
   counter.ForEachAddedEdges([this](const change::Edge &edge) {  //
@@ -884,7 +885,7 @@ void ParentComputer::RealRecompute(FuncGraphPtr fg) {
     this->parent_analysis_[fg] = nullptr;
     return;
   } else if (deps.size() == 1) {
-    this->parent_analysis_[fg] = deps.pop();
+    this->parent_analysis_[fg] = deps.front();
     return;
   } else {
     // return nearest parent as parent
@@ -897,7 +898,7 @@ void ParentComputer::RealRecompute(FuncGraphPtr fg) {
         }
       }
       if (deps_copy.size() == 1) {
-        this->parent_analysis_[fg] = deps_copy.pop();
+        this->parent_analysis_[fg] = deps_copy.front();
         return;
       }
     }

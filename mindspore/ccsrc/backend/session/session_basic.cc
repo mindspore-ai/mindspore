@@ -96,7 +96,7 @@ bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &no
   MS_EXCEPTION_IF_NULL(node);
   auto node_users = manager->node_users()[node];
   // filter nodes not in current graph
-  for (auto iter = node_users.begin(); iter != node_users.end(); iter++) {
+  for (auto iter = node_users.begin(); iter != node_users.end();) {
     auto func_graph = iter->first->func_graph();
     auto kernel_graph = func_graph->cast<KernelGraphPtr>();
     if (kernel_graph == nullptr) {
@@ -104,6 +104,8 @@ bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &no
     }
     if (kernel_graph->graph_id() != graph_id) {
       iter = node_users.erase(iter);
+    } else {
+      iter++;
     }
   }
 
