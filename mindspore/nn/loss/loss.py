@@ -699,7 +699,7 @@ class MultiClassDiceLoss(LossBase):
         ValueError: If `weights` is a tensor, but its dimension is not 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = nn.MultiClassDiceLoss(weights=None, ignore_indiex=None, activation="softmax")
@@ -1095,7 +1095,7 @@ class CosineEmbeddingLoss(LossBase):
         ValueError: If `margin` is not in range [-1, 1].
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> logits_x1 = Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), mindspore.float32)

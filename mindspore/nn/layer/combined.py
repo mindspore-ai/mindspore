@@ -187,7 +187,7 @@ class DenseBnAct(Cell):
         ValueError: If `momentum` is not in range [0, 1.0].
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.DenseBnAct(3, 4)

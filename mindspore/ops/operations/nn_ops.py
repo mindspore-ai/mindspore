@@ -8243,7 +8243,7 @@ class Conv3D(PrimitiveWithInfer):
         ValueError: If `data_format` is not 'NCDHW'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
