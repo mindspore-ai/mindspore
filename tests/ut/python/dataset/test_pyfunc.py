@@ -330,6 +330,22 @@ def skip_test_pyfunc_Exception_multiprocess():
         assert "MP Pyfunc Throw" in str(info.value)
 
 
+def test_func_with_yield_manifest_dataset_01():
+    def pass_func(_):
+        for i in range(10):
+            yield (np.array([i]),)
+
+    DATA_FILE = "../data/dataset/testManifestData/test.manifest"
+    data = ds.ManifestDataset(DATA_FILE)
+    data = data.map(operations=pass_func, input_columns=["image"], num_parallel_workers=1, python_multiprocessing=True)
+    num_iter = 0
+    try:
+        for _ in data.create_dict_iterator(output_numpy=True):
+            num_iter += 1
+    except RuntimeError as e:
+        assert "Can not pickle <class 'generator'> object, " in str(e)
+
+
 if __name__ == "__main__":
     test_case_0()
     test_case_1()
@@ -345,3 +361,4 @@ if __name__ == "__main__":
     test_pyfunc_implicit_compose()
     test_pyfunc_exception()
     skip_test_pyfunc_exception_multiprocess()
+    test_func_with_yield_manifest_dataset_01()

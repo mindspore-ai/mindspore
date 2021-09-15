@@ -20,9 +20,10 @@ but it will pass large data through shared memory.
 
 import multiprocessing.queues
 import multiprocessing
+import types
 import numpy as np
+
 from mindspore import log as logger
-from ..core.validator_helpers import is_serializable
 from ..transforms.py_transforms_util import ExceptionHandler
 
 
@@ -79,7 +80,8 @@ class _SharedQueue(multiprocessing.queues.Queue):
                 raise TypeError("return value of user defined python function in GeneratorDataset or"
                                 " map should be numpy array or tuple of numpy array.")
             for r in data:
-                if not is_serializable(obj=r):
+                # the map:pyfunc is a yield generator which can't be serialize
+                if isinstance(r, types.GeneratorType):
                     raise TypeError("Can not pickle {} object, please verify pyfunc return with numpy array"
                                     .format(type(r)))
                 if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem

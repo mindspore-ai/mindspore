@@ -18,7 +18,6 @@ General Validators.
 import inspect
 from multiprocessing import cpu_count
 import os
-from pickle import dumps
 import numpy as np
 
 import mindspore._c_dataengine as cde
@@ -58,23 +57,6 @@ def is_iterable(obj):
     """
     try:
         iter(obj)
-    except TypeError:
-        return False
-    return True
-
-
-def is_serializable(obj):
-    """
-    Helper function to check if object is serializable.
-
-    Args:
-        obj (any): object to check if serializable.
-
-    Returns:
-        bool, true if object is serializable.
-    """
-    try:
-        dumps(obj)
     except TypeError:
         return False
     return True
