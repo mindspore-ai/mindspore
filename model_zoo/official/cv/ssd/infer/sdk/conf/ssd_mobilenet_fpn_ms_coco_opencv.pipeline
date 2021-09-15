@@ -1,0 +1,42 @@
+{
+    "detection": {
+        "stream_config": {
+                "deviceId": "0"
+        },
+        "appsrc0": {
+            "props": {
+                "blocksize": "409600"
+            },
+            "factory": "appsrc",
+            "next": "mxpi_tensorinfer0"
+        },
+        "mxpi_tensorinfer0": {
+            "props": {
+                "dataSource": "appsrc0",
+                "modelPath": "/home/sam/codes/SSD_for_MindSpore/infer/convert/models/ms_ckpt_1_2/ssd-60_458_rgb.om"
+            },
+            "factory": "mxpi_tensorinfer",
+            "next": "mxpi_objectpostprocessor0"
+        },
+        "mxpi_objectpostprocessor0": {
+            "props": {
+                "dataSource": "mxpi_tensorinfer0",
+                "postProcessConfigPath": "/home/sam/codes/SSD_for_MindSpore/infer/sdk/conf/ssd_mobilenet_v1_fpn_ms_on_coco_postprocess.cfg",
+                "labelPath": "/home/sam/codes/SSD_for_MindSpore/infer/sdk/conf/coco.names",
+                "postProcessLibPath": "/home/sam/mxManufacture/lib/modelpostprocessors/libSsdMobilenetFpn_MindsporePost.so"
+            },
+            "factory": "mxpi_objectpostprocessor",
+            "next": "mxpi_dataserialize0"
+        },
+        "mxpi_dataserialize0": {
+            "props": {
+                "outputDataKeys": "mxpi_objectpostprocessor0"
+            },
+            "factory": "mxpi_dataserialize",
+            "next": "appsink0"
+        },
+        "appsink0": {
+            "factory": "appsink"
+        }
+    }
+}
