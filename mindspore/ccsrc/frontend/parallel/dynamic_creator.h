@@ -78,6 +78,7 @@ class RegisterAction {
 // operator register
 REGISTER(MatMulInfo);
 REGISTER(GeLUInfo);
+REGISTER(FastGeLUInfo);
 REGISTER(VirtualDatasetInfo);
 REGISTER(BatchParallelInfo);
 REGISTER(TanhInfo);

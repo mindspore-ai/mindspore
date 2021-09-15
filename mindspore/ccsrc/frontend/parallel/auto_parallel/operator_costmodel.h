@@ -251,6 +251,7 @@ class GeLUCost : public SqrtCost {
   // Taking account of input and output
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
+using FastGeLUCost = GeLUCost;
 using BesselI0eCost = GeLUCost;
 using BesselI1eCost = GeLUCost;
 using L2NormalizeCost = GeLUCost;

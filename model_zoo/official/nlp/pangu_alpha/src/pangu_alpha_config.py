@@ -36,7 +36,7 @@ class PanguAlphaConfig:
                  dropout_rate=0.1,
                  eod_token=6,
                  use_past=False,
-                 hidden_act='gelu',
+                 hidden_act='fast_gelu',
                  eod_reset=True,
                  enable_offload=False,
                  parallel_config=None):
