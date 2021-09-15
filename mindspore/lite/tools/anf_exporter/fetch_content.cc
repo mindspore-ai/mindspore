@@ -29,6 +29,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 constexpr int kNumWeightIndex = 2;
+constexpr int kNumTransposePermSize = 4;
 constexpr size_t kTensorListMinSize = 3 * sizeof(int32_t);
 static const std::unordered_map<int, int> TypeToTypeMap = {
   {kNumberTypeInt, kNumberTypeInt32}, {kNumberTypeUInt, kNumberTypeUInt32}, {kNumberTypeFloat, kNumberTypeFloat32}};
@@ -338,9 +339,11 @@ int SetFormatForCnode(const CNodePtr &cnode, size_t index, converter::FmkType fm
     if (opt::GetTransposePerm(cnode->input(index)->cast<CNodePtr>(), &perm) != RET_OK) {
       return RET_ERROR;
     }
-    if (perm.size() < 4) {
+    if (perm.size() < kNumTransposePermSize) {
       return RET_OK;
     }
+    // NHWC to NCHW: perm is {0, 3, 1, 2}
+    // NCHW to NHWC: perm is {0, 2, 3, 1}
     if (perm[0] == 0 && perm[1] == 3 && perm[2] == 1 && perm[3] == 2 &&
         (data_info->format_ == NHWC || data_info->format_ == KHWC)) {
       data_info->format_ = NCHW;

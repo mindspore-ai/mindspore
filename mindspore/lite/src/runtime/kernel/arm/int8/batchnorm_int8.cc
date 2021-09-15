@@ -28,7 +28,13 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNorm;
 using mindspore::schema::PrimitiveType_FusedBatchNorm;
-
+namespace {
+constexpr int kNumInput0 = 0;
+constexpr int kNumInput1 = 1;
+constexpr int kNumInput2 = 2;
+constexpr int kNumInput3 = 3;
+constexpr int kNumInput4 = 4;
+}  // namespace
 namespace mindspore::kernel {
 BatchnormInt8CPUKernel::~BatchnormInt8CPUKernel() {
   if (alpha_addr_ != nullptr) {
@@ -42,9 +48,9 @@ BatchnormInt8CPUKernel::~BatchnormInt8CPUKernel() {
 }
 
 int BatchnormInt8CPUKernel::InitConstTensor() {
-  auto input = in_tensors_.at(0);
-  auto mean = in_tensors_.at(1);
-  auto variance = in_tensors_.at(2);
+  auto input = in_tensors_.at(kNumInput0);
+  auto mean = in_tensors_.at(kNumInput1);
+  auto variance = in_tensors_.at(kNumInput2);
   auto output = out_tensors_.at(0);
 
   auto mean_ptr = reinterpret_cast<int8_t *>(mean->MutableData());
@@ -86,13 +92,13 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
 
 int BatchnormInt8CPUKernel::InitFusedConstTensor() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
-  auto input = in_tensors_.at(0);
-  auto scale = in_tensors_.at(1);
-  auto offset = in_tensors_.at(2);
-  CHECK_NULL_RETURN(in_tensors_.at(3));
-  auto mean = in_tensors_.at(3);
-  CHECK_NULL_RETURN(in_tensors_.at(4));
-  auto variance = in_tensors_.at(4);
+  auto input = in_tensors_.at(kNumInput0);
+  auto scale = in_tensors_.at(kNumInput1);
+  auto offset = in_tensors_.at(kNumInput2);
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInput3));
+  auto mean = in_tensors_.at(kNumInput3);
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInput4));
+  auto variance = in_tensors_.at(kNumInput4);
   auto output = out_tensors_.at(0);
 
   auto scale_ptr = reinterpret_cast<int8_t *>(scale->MutableData());
@@ -148,9 +154,9 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
 int BatchnormInt8CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_[0]);
-  CHECK_NULL_RETURN(in_tensors_[1]);
-  CHECK_NULL_RETURN(in_tensors_[2]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput0]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput1]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput2]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(batchnorm_param_);
   auto input_shapes = in_tensors_.at(0)->shape();

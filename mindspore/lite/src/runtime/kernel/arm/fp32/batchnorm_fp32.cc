@@ -22,14 +22,16 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNorm;
-
+namespace {
+constexpr int kNumInput2 = 2;
+}
 namespace mindspore::kernel {
 int BatchnormCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(in_tensors_[1]);
-  CHECK_NULL_RETURN(in_tensors_[2]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput2]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(op_parameter_);
   if (!InferShapeDone()) {
@@ -71,7 +73,7 @@ void BatchnormCPUKernel::FillParam() {
 
 int BatchnormCPUKernel::InitConstTensor() {
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(1)->Size());
-  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(2)->Size());
+  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, in_tensors_.at(kNumInput2)->Size());
   mean_ = malloc(in_tensors_.at(SECOND_INPUT)->Size());
   variance_ = malloc(in_tensors_.at(THIRD_INPUT)->Size());
   if (mean_ == nullptr || variance_ == nullptr) {

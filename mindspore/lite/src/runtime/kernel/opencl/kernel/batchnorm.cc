@@ -27,7 +27,13 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchNorm;
-
+namespace {
+constexpr int kNumInput0 = 0;
+constexpr int kNumInput1 = 1;
+constexpr int kNumInput2 = 2;
+constexpr int kNumInput3 = 3;
+constexpr int kNumInput4 = 4;
+}  // namespace
 namespace mindspore::kernel {
 int BatchNormOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_5 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
@@ -42,11 +48,11 @@ int BatchNormOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "  Unsupported batch_size >1 ";
     return RET_ERROR;
   }
-  CHECK_NULL_RETURN(in_tensors_[0]);
-  CHECK_NULL_RETURN(in_tensors_[1]);
-  CHECK_NULL_RETURN(in_tensors_[2]);
-  CHECK_NULL_RETURN(in_tensors_[3]);
-  CHECK_NULL_RETURN(in_tensors_[4]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput0]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput1]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput2]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput3]);
+  CHECK_NULL_RETURN(in_tensors_[kNumInput4]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   return RET_OK;
 }
@@ -169,10 +175,10 @@ int BatchNormOpenCLKernel::Initweight() {
   memset(offset_, 0x00, weight_size);
   memset(mean_, 0x00, weight_size);
   memset(variance_, 0x00, weight_size);
-  CHECK_NULL_RETURN(in_tensors_.at(1)->data());
-  CHECK_NULL_RETURN(in_tensors_.at(2)->data());
-  CHECK_NULL_RETURN(in_tensors_.at(3)->data());
-  CHECK_NULL_RETURN(in_tensors_.at(4)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInput1)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInput2)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInput3)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInput4)->data());
   if (weight_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_enable_) {
       memcpy(scale_, in_tensors_.at(1)->data(), weight_size);

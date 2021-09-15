@@ -37,14 +37,16 @@ namespace mindspore::kernel {
 namespace {
 constexpr int kWsMultiplier = 2;
 constexpr int kMaxTaskNum = 4;
+constexpr int kNumInputDim2 = 2;
+constexpr int kNumInputDim4 = 4;
 }  // namespace
 
 int BNGradCPUKernel::ReSize() {
   auto *input_x = in_tensors_.at(1);
-  if (input_x->shape().size() == 4) {
+  if (input_x->shape().size() == kNumInputDim4) {
     int channels = input_x->shape().at(kNHWC_C);
     ws_size_ = kWsMultiplier * channels;
-  } else if (input_x->shape().size() == 2) {
+  } else if (input_x->shape().size() == kNumInputDim2) {
     int channels = input_x->shape().at(1);
     ws_size_ = kWsMultiplier * channels;
   } else {
@@ -113,9 +115,9 @@ int BNGradCPUKernel::Execute(int task_id) {
   CHECK_NULL_RETURN(dbias);
   float *dscale = reinterpret_cast<float *>(output_scale->MutableData());
   int total = 0;
-  if (in_tensors().at(1)->shape().size() == 4) {
+  if (in_tensors().at(1)->shape().size() == kNumInputDim4) {
     total = spatial * batch;
-  } else if (in_tensors().at(1)->shape().size() == 2) {
+  } else if (in_tensors().at(1)->shape().size() == kNumInputDim2) {
     total = batch;
   } else {
     MS_LOG(ERROR) << "Unsupported tensor shape: " << in_tensors().at(1)->shape().size();

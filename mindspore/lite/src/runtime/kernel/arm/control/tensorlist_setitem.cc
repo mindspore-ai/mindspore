@@ -27,14 +27,15 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_TensorListSetItem;
 namespace {
 constexpr int kNumInputSize = 3;
-}
+constexpr int kNumInput2 = 2;
+}  // namespace
 namespace mindspore::kernel {
 int TensorListSetItemCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));
   CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(in_tensors_.at(2));
+  CHECK_NULL_RETURN(in_tensors_.at(kNumInput2));
   CHECK_NULL_RETURN(out_tensors_.at(0));
   return RET_OK;
 }

@@ -26,10 +26,14 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_StridedSlice;
 
+namespace {
+constexpr int kNumInputSize = 2;
+constexpr int kNumOutputSize = 1;
+}  // namespace
 namespace mindspore::kernel {
 int StridedSliceCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
+  CHECK_LESS_RETURN(out_tensors_.size(), kNumOutputSize);
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(in_tensors_[1]);
   CHECK_NULL_RETURN(out_tensors_[0]);
