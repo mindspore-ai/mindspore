@@ -88,7 +88,6 @@ add_dependencies(engine-datasetops-source-sampler core)
 add_dependencies(engine-datasetops core)
 add_dependencies(engine-datasetops-mapop core)
 add_dependencies(engine-opt core)
-add_dependencies(engine-perf core)
 add_dependencies(engine-gnn core)
 add_dependencies(engine core)
 add_dependencies(callback core)
@@ -116,6 +115,9 @@ endif()
 if(ENABLE_PYTHON)
     add_dependencies(APItoPython core)
 endif()
+if(NOT ENABLE_SECURITY)
+    add_dependencies(engine-perf core)
+endif()
 if(ENABLE_TDTQUE)
     add_dependencies(engine-tdt core)
 endif()
@@ -127,7 +129,9 @@ if(ENABLE_CACHE)
     add_dependencies(engine-ir-datasetops-source engine-cache-client)
     add_dependencies(engine-opt engine-cache-client)
     add_dependencies(engine-datasetops engine-cache-client)
-    add_dependencies(engine-perf engine-cache-client)
+    if(NOT ENABLE_SECURITY)
+        add_dependencies(engine-perf engine-cache-client)
+    endif()
     add_dependencies(engine-cache-client core)
     add_dependencies(engine-cache-server core)
 endif()
@@ -151,7 +155,6 @@ set(submodules
         $<TARGET_OBJECTS:engine-datasetops-source-sampler>
         $<TARGET_OBJECTS:engine-datasetops-mapop>
         $<TARGET_OBJECTS:engine-gnn>
-        $<TARGET_OBJECTS:engine-perf>
         $<TARGET_OBJECTS:engine-datasetops>
         $<TARGET_OBJECTS:engine-opt>
         $<TARGET_OBJECTS:engine-cache-client>
@@ -169,6 +172,7 @@ set(submodules
         $<TARGET_OBJECTS:md_plugin>
         )
 
+
 if(ENABLE_ACL)
     set(submodules
             ${submodules}
@@ -183,9 +187,17 @@ if(ENABLE_PYTHON)
 endif()
 
 if(ENABLE_TDTQUE)
-    add_library(_c_dataengine SHARED ${submodules} $<TARGET_OBJECTS:engine-tdt>)
+    if(NOT ENABLE_SECURITY)
+        add_library(_c_dataengine SHARED ${submodules} $<TARGET_OBJECTS:engine-perf> $<TARGET_OBJECTS:engine-tdt>)
+    else()
+        add_library(_c_dataengine SHARED ${submodules} $<TARGET_OBJECTS:engine-tdt>)
+    endif()
 else()
-    add_library(_c_dataengine SHARED ${submodules})
+    if(NOT ENABLE_SECURITY)
+        add_library(_c_dataengine SHARED ${submodules} $<TARGET_OBJECTS:engine-perf>)
+    else()
+        add_library(_c_dataengine SHARED ${submodules})
+    endif()
 endif()
 
 if(ENABLE_PYTHON)

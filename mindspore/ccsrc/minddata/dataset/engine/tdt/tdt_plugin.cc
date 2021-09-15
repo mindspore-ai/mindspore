@@ -15,7 +15,9 @@
  */
 #include "minddata/dataset/engine/tdt/tdt_plugin.h"
 #include "utils/ms_utils.h"
+#ifndef ENABLE_SECURITY
 #include "minddata/dataset/engine/perf/profiling.h"
+#endif
 #include "minddata/dataset/util/log_adapter.h"
 #if ENABLE_D
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
@@ -58,16 +60,20 @@ Status TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_n
   MS_LOG(DEBUG) << "TDT channel name is " << channel_name << ".";
 
   acltdtDataset *acl_dataset = nullptr;
+#ifndef ENABLE_SECURITY
   double start_time;
+#endif
   auto ret = translate(tdt_type, ts_row, &acl_dataset);
   if (ret != Status::OK()) {
     DestroyAclDataset(acl_dataset);
     RETURN_STATUS_UNEXPECTED("Converting into TDT tensor failed!");
   }
-
+#ifndef ENABLE_SECURITY
   if (profiling) {
     start_time = ProfilingTime::GetCurMilliSecond();
   }
+#endif
+
 #if ENABLE_D
   // Data prefetch only when PS mode enables cache.
   if (acltdtGetDatasetSize(acl_dataset) > 0) {
@@ -88,10 +94,12 @@ Status TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_n
     ReportErrorMessage();
     RETURN_STATUS_UNEXPECTED("Tdt Send data failed.");
   }
+#ifndef ENABLE_SECURITY
   if (profiling) {
     double end_time = ProfilingTime::GetCurMilliSecond();
     time = (int32_t)(end_time - start_time);
   }
+#endif
   return Status::OK();
 }
 

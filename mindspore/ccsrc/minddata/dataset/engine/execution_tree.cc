@@ -19,8 +19,10 @@
 #include <limits>
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
+#ifndef ENABLE_SECURITY
 #include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/engine/perf/monitor.h"
+#endif
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
 #include "minddata/dataset/util/numa_interface.h"
 #endif
@@ -31,7 +33,9 @@ namespace dataset {
 // Constructor
 ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit) {
   tg_ = std::make_unique<TaskGroup>();
+#ifndef ENABLE_SECURITY
   profiling_manager_ = std::make_unique<ProfilingManager>(this);
+#endif
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   rank_id_ = cfg->rank_id();
@@ -183,12 +187,14 @@ Status ExecutionTree::Launch() {
   }
 
   // Profiling infrastructures need to be initialized before Op launching
+#ifndef ENABLE_SECURITY
   if (profiling_manager_->IsProfilingEnable()) {
     // Setup profiling manager
     RETURN_IF_NOT_OK(profiling_manager_->Initialize());
     // Launch Monitor Thread
     RETURN_IF_NOT_OK(profiling_manager_->LaunchMonitor());
   }
+#endif
 
   std::ostringstream ss;
   ss << *this;

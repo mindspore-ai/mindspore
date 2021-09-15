@@ -69,11 +69,13 @@ class DatasetIterator {
  private:
   std::shared_ptr<DatasetOp> root_;  // saves the root of the executionTree
   TensorRow device_queue_row_;
+#ifndef ENABLE_SECURITY
   std::shared_ptr<DatasetIteratorTracing> tracing_;  // trace profiling data
-  int32_t cur_batch_num_;                            // current batch number,used for profiling
-  int32_t cur_connector_size_;                       // current connector size of root op,used for profiling
-  int32_t cur_connector_capacity_;                   // current connector capacity of root op, used for profiling
-  bool eof_handled_;                                 // T/F if this op got an eof
+#endif
+  int32_t cur_batch_num_;           // current batch number,used for profiling
+  int32_t cur_connector_size_;      // current connector size of root op,used for profiling
+  int32_t cur_connector_capacity_;  // current connector capacity of root op, used for profiling
+  bool eof_handled_;                // T/F if this op got an eof
   std::unordered_map<std::string, int32_t> col_name_id_map_;
   std::vector<std::pair<std::string, int32_t>> column_order_;  // key: column name, val: column id
 };

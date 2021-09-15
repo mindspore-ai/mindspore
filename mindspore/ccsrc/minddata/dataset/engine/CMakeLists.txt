@@ -2,7 +2,12 @@ add_subdirectory(datasetops)
 add_subdirectory(opt)
 add_subdirectory(gnn)
 add_subdirectory(ir)
-add_subdirectory(perf)
+
+message("ENABLE_SECURITY = ${ENABLE_SECURITY}")
+if(NOT ENABLE_SECURITY)
+    add_subdirectory(perf)
+endif()
+
 add_subdirectory(cache)
 
 if(ENABLE_TDTQUE)
@@ -41,10 +46,13 @@ add_dependencies(engine engine-datasetops
                     engine-datasetops-source
                     engine-opt
                     engine-gnn
-                    engine-perf
                     engine-cache-client
                     engine-datasetops-mapop
                     )
+
+if(NOT ENABLE_SECURITY)
+    add_dependencies(engine engine-perf)
+endif()
 
 if(ENABLE_TDTQUE)
     add_dependencies(engine engine-tdt)
