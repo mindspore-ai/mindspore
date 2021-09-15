@@ -30,7 +30,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::Run(const FuncGraphPtr 
   std::vector<int64_t> parallel_optimizer_recompute_allgather_fusion_ids;
   std::vector<AnfNodePtr> parallel_optimizer_recompute_allgathers;
   std::vector<AnfNodePtr> parallel_optimizer_recompute_first_fusion_allgathers;
-  int64_t unrecompute_max_fusion_id = 0;
+  int64_t unrecompute_max_fusion_id = -1;
   int64_t recompute_min_fusion_id = 0;
   for (auto &node : node_list) {
     MS_EXCEPTION_IF_NULL(node);
