@@ -977,7 +977,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 int LiteSession::InitGPURuntime() {
   if (context_->IsCpuEnabled()) {
     CpuBindMode cpu_bind_mode = context_->GetCpuDeviceInfo()->cpu_bind_mode_;
-    ActorThreadPool *thread_pool = this->context_->thread_pool();
+    ThreadPool *thread_pool = this->context_->thread_pool();
     if (thread_pool == nullptr) {
       MS_LOG(ERROR) << "thread pool is nullptr";
       is_running_.store(false);
@@ -1011,7 +1011,7 @@ int LiteSession::InitGPURuntime() {
 #endif
   // Setting the binding core will affect the opencl drive scheduling.
   if (context_->IsCpuEnabled()) {
-    ActorThreadPool *thread_pool = this->context_->thread_pool();
+    ThreadPool *thread_pool = this->context_->thread_pool();
     thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
   }
   return RET_OK;

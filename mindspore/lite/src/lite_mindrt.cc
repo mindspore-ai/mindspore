@@ -784,7 +784,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
                                                         const lite::InnerContext *ctx) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
   std::unordered_map<kernel::LiteKernel *, AID> subgraph_name_AID_map{};
-  auto thread_pool = ctx->thread_pool();
+  ActorThreadPool *thread_pool = reinterpret_cast<ActorThreadPool *>(ctx->thread_pool());
   if (thread_pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
     return actors;
