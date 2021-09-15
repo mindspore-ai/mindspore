@@ -54,9 +54,14 @@ InnerContext::InnerContext(const Context *context) {
 }
 
 void InnerContext::SetContextDevice(const Context *context) {
-  MS_ASSERT(context->device_list_.size() <= kMaxLiteContextDeviceNums);
-
   this->device_list_.clear();
+
+  if (context->device_list_.size() > kMaxLiteContextDeviceNums || context->device_list_.size() <= 0) {
+    return;
+  }
+  if (context->device_list_.front().device_type_ != DT_CPU) {
+    return;
+  }
 
   /* user set order for different device */
   if (context->device_list_.size() < kMaxLiteContextDeviceNums) {
