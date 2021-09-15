@@ -1158,6 +1158,6 @@ int TFModelParser::TF2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   return RET_OK;
 }
 
-REG_MODEL_PARSER(kFmkTypeTf, converter::LiteModelParserCreator<TFModelParser>)
+REG_MODEL_PARSER(kFmkTypeTf, LiteModelParserCreator<TFModelParser>)
 }  // namespace lite
 }  // namespace mindspore

@@ -39,9 +39,6 @@ struct MS_API ConverterParameters {
   std::string weight_file;
   std::map<std::string, std::string> attrs;
 };
-
-/// \brief ModelParser defined a base class of model parser
-class MS_API ModelParser;
 }  // namespace converter
 }  // namespace mindspore
 

@@ -19,9 +19,9 @@
 
 #include <memory>
 #include <string>
+#include "include/registry/model_parser.h"
 #include "schema/inner/model_generated.h"
 #include "tools/converter/graphdef_transform.h"
-#include "tools/converter/model_parser.h"
 #include "include/registry/model_parser_registry.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/anf_transform.h"

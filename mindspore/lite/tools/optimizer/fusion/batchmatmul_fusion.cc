@@ -68,7 +68,7 @@ STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPt
     return RET_ERROR;
   }
   for (size_t i = 1; i < joint_fullconnect_size + 1; i++) {
-    auto tensor_addr = GetInputAddr(stack_node->input(i), 2);
+    auto tensor_addr = GetInputAddr(stack_node->input(i), kInputIndexTwo);
     if (tensor_addr == nullptr) {
       MS_LOG(ERROR) << "input tensor addr nullptr";
       return RET_ERROR;
@@ -178,7 +178,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   if (IsMarkedTrainOp(fullconnect_cnode)) {
     return nullptr;
   }
-  MS_CHECK_TRUE_RET(fullconnect_cnode->inputs().size() == 3, nullptr);
+  MS_CHECK_TRUE_RET(fullconnect_cnode->inputs().size() == kInputSizeThree, nullptr);
   auto left_slice_node = fullconnect_cnode->input(1);
   auto left_slice_cnode = left_slice_node->cast<CNodePtr>();
   if (IsMarkedTrainOp(left_slice_cnode)) {

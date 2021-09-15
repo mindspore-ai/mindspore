@@ -21,7 +21,7 @@
 #include <memory>
 #include <set>
 #include <unordered_map>
-#include "tools/converter/model_parser.h"
+#include "include/registry/model_parser.h"
 #include "include/registry/model_parser_registry.h"
 #include "proto/caffe.pb.h"
 #include "ops/primitive_c.h"

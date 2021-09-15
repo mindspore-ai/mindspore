@@ -734,5 +734,5 @@ int TfliteModelParser::Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_g
   return RET_OK;
 }
 
-REG_MODEL_PARSER(kFmkTypeTflite, converter::LiteModelParserCreator<TfliteModelParser>)
+REG_MODEL_PARSER(kFmkTypeTflite, LiteModelParserCreator<TfliteModelParser>)
 }  // namespace mindspore::lite

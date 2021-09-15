@@ -14,41 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MODEL_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_MODEL_PARSER_H
-#include <google/protobuf/message.h>
-#include <string>
-#include <memory>
-#include "schema/inner/model_generated.h"
-#include "ir/anf.h"
-#include "api/ir/func_graph.h"
-#include "include/registry/model_parser_registry.h"
-#include "utils/log_adapter.h"
+#ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_H_
+#define MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_H_
 
-namespace mindspore::converter {
-class ModelParser {
+#include "api/ir/func_graph.h"
+#include "include/registry/parser_context.h"
+
+namespace mindspore {
+namespace converter {
+/// \brief ModelParser defined a base class to parse model.
+class MS_API ModelParser {
  public:
+  /// \brief Constructor.
   ModelParser() = default;
 
+  /// \brief Destructor.
   virtual ~ModelParser() = default;
 
+  /// \brief Method to parse model, which must be onnx/caffe/tf/tflite.
+  ///
+  /// \param[in] flags Define the basic parameters when converting, which defined in parser_context.h.
+  ///
+  /// \return FuncGraph Pointer, which contains all information about the model.
   virtual api::FuncGraphPtr Parse(const converter::ConverterParameters &flags) { return this->res_graph_; }
 
  protected:
   api::FuncGraphPtr res_graph_ = nullptr;
 };
+}  // namespace converter
+}  // namespace mindspore
 
-typedef ModelParser *(*ModelParserCreator)();
-
-template <class T>
-ModelParser *LiteModelParserCreator() {
-  auto *parser = new (std::nothrow) T();
-  if (parser == nullptr) {
-    MS_LOG(ERROR) << "new model parser failed";
-    return nullptr;
-  }
-  return parser;
-}
-}  // namespace mindspore::converter
-
-#endif
+#endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_H_

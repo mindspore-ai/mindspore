@@ -45,7 +45,7 @@ void SetConvAttr(const PrimitivePtr &prim, const std::vector<int64_t> &kernel_si
 STATUS UpdateConv2DParamPass::UpdateConv2DAttr(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   if (cnode->size() < kInputSizeThree) {
-    MS_LOG(ERROR) << "conv2d's input size is invalid, now is " << cnode->size() - 1;
+    MS_LOG(ERROR) << "conv2d's input size is invalid, now is " << (cnode->size() - 1);
     return lite::RET_ERROR;
   }
   auto weight = cnode->input(kInputIndexTwo);
