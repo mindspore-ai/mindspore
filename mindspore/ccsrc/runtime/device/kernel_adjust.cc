@@ -707,6 +707,12 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::K
 }
 
 bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  auto &dump_json_parser = DumpJsonParser::GetInstance();
+  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || kernel_graph_ptr->isDatasetGraph());
+  if (!sink_mode && dump_json_parser.async_dump_enabled()) {
+    InitCtrlInputs(kernel_graph_ptr);
+    return true;
+  }
   if (!NeedInsertSwitch()) {
     return true;
   }
@@ -792,7 +798,12 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   MS_EXCEPTION_IF_NULL(iter_loop_tensor);
   val = static_cast<int32_t *>(iter_loop_tensor->data_c());
   MS_EXCEPTION_IF_NULL(val);
-  *val = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
+  if (ConfigManager::GetInstance().dataset_mode() == DS_NORMAL_MODE) {
+    MS_LOG(INFO) << "iter_loop_tensor not used in dataset_mode DS_NORMAL_MODE";
+    *val = 0;
+  } else {
+    *val = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
+  }
   MS_LOG(INFO) << "iter_loop_tensor = " << *val;
   inputs->push_back(iter_loop_tensor);
 
@@ -804,6 +815,36 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   inputs->push_back(one_tensor);
 
   MS_LOG(INFO) << "---------------- LoadSwitchInputs End--";
+}
+
+void KernelAdjust::InitCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  MS_LOG(INFO) << " -------------------------- InitCtrlInputs Start-- ";
+  std::vector<tensor::TensorPtr> inputs;
+  // prepare default values for CtrlInputs
+  LoadSwitchInputs(&inputs);
+  std::shared_ptr<std::vector<tensor::TensorPtr>> inputsPtr = std::make_shared<std::vector<tensor::TensorPtr>>(inputs);
+  kernel_graph_ptr->set_input_ctrl_tensors(inputsPtr);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    auto tensor = inputs[i];
+    MS_EXCEPTION_IF_NULL(tensor);
+    device::DeviceAddressPtr device_address = std::make_shared<device::ascend::AscendDeviceAddress>(
+      nullptr, LongToSize(tensor->data().nbytes()), tensor->device_info().host_format_, tensor->data_type());
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto runtime_instance = KernelRuntimeManager::Instance().GetSingleKernelRuntime(kAscendDevice, device_id);
+    if (runtime_instance->MallocMem(kStaticMem, LongToSize(tensor->data().nbytes()), device_address) == nullptr) {
+      MS_LOG(EXCEPTION) << "Cannot alloc address when flag is : " << kStaticMem
+                        << " , tensor size is : " << tensor->data().nbytes();
+    }
+    MS_EXCEPTION_IF_NULL(device_address);
+    tensor->set_device_address(device_address);
+    if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                          tensor->data_c(), tensor->device_info().host_format_)) {
+      MS_LOG(EXCEPTION) << "SyncHostToDevice failed for InitCtrlInputs.";
+    }
+  }
+  MS_LOG(INFO) << " ------------------------- InitCtrlInputs End--";
 }
 
 #ifndef ENABLE_SECURITY

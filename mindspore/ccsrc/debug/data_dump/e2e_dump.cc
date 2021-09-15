@@ -310,32 +310,10 @@ void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_m
 
 void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  uint32_t cur_iter = dump_json_parser.cur_dump_iter();
   bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
 
   if (dump_json_parser.async_dump_enabled() || dump_json_parser.e2e_dump_enabled()) {
     UpdateIterDumpSetup(graph, sink_mode);
-    MS_LOG(DEBUG) << "sink_mode = " << sink_mode;
-  }
-
-  if (dump_json_parser.async_dump_enabled() && dump_json_parser.IsDumpIter(cur_iter) && !sink_mode) {
-    auto zero_dir_dump_path =
-      dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
-
-    auto root_cur_iter_dump_path = dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/" +
-                                   dump_json_parser.net_name() + "/" + std::to_string(graph->graph_id());
-
-    auto cur_iter_dump_path = root_cur_iter_dump_path + "/" + std::to_string(cur_iter);
-
-    MS_LOG(INFO) << "zero_dir_dump_path: " << zero_dir_dump_path;
-    MS_LOG(INFO) << "root_cur_iter_dump_path: " << root_cur_iter_dump_path;
-    MS_LOG(INFO) << "cur_iter_dump_path: " << cur_iter_dump_path;
-
-    // create cur_iter_dump_path dirs
-    auto dir_path = FileUtils::CreateNotExistDirs(root_cur_iter_dump_path);
-    if (!dir_path.has_value()) {
-      MS_LOG(EXCEPTION) << "Failed at CreateNotExistDirs for " << root_cur_iter_dump_path;
-    }
   }
 }
 
@@ -344,7 +322,6 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t graph_id = graph->graph_id();
-  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
 
   if (dump_json_parser.GetIterDumpFlag()) {
     MS_LOG(INFO) << "Start e2e dump. Current iteration is " << dump_json_parser.cur_dump_iter();
@@ -355,64 +332,12 @@ void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, cons
     DumpOutput(graph, dump_path, debugger);
     DumpParametersAndConst(graph, dump_path, debugger);
     success = true;
-  } else if (dump_json_parser.async_dump_enabled() && !sink_mode) {
-    uint32_t current_iter = dump_json_parser.cur_dump_iter();
-
-    auto zero_dir_dump_path =
-      dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/_/" + std::to_string(graph->graph_id()) + "/0";
-
-    auto cur_iter_dump_path = dump_json_parser.path() + "/rank_" + std::to_string(rank_id) + "/" +
-                              dump_json_parser.net_name() + "/" + std::to_string(graph->graph_id()) + "/" +
-                              std::to_string(current_iter);
-
-    MS_LOG(INFO) << "zero_dir_dump_path: " << zero_dir_dump_path;
-    MS_LOG(INFO) << "cur_iter_dump_path: " << cur_iter_dump_path;
-
-    if (dump_json_parser.IsDumpIter(current_iter)) {
-      // create actual dir for iteration in final dump dir
-      auto dir_path = FileUtils::CreateNotExistDirs(cur_iter_dump_path);
-      if (!dir_path.has_value()) {
-        MS_LOG(EXCEPTION) << "failed at CreateNotExistDirs for " << cur_iter_dump_path;
-      }
-
-      // test if zero_dir_dump_path exists (may not if there was
-      // no data dumped, for example for an overflow dump)
-      MS_LOG(INFO) << "Check " << zero_dir_dump_path << " exists.";
-      bool dir_exists = DumpDirExists(zero_dir_dump_path);
-      if (dir_exists) {
-        // move contents from active dump dir to final dump dir
-        MS_LOG(INFO) << "Move contents from " << zero_dir_dump_path << " to " << cur_iter_dump_path;
-        bool move_files = MoveDumpFiles(zero_dir_dump_path, cur_iter_dump_path);
-        if (!move_files) {
-          MS_LOG(INFO) << "Issue with moving contents.";
-        }
-      } else {
-        MS_LOG(INFO) << "active dump dir, not created yet";
-      }
-    } else {
-      // test if zero_dir_dump_path exists (may not if there was
-      // no data dumped, for example for an overflow dump)
-      MS_LOG(INFO) << "Check " << zero_dir_dump_path << " exists.";
-      bool dir_exists = DumpDirExists(zero_dir_dump_path);
-      if (dir_exists) {
-        // delete contents from active dump dir
-        MS_LOG(INFO) << "Delete contents from active dump dir " << zero_dir_dump_path;
-        bool delete_contents = DeleteDirContents(zero_dir_dump_path);
-        if (!delete_contents) {
-          MS_LOG(EXCEPTION) << "Ascend runtime has changed the dump dir structure!!!";
-        }
-      } else {
-        MS_LOG(INFO) << "active dump dir, not created yet";
-      }
-    }
-
-    success = true;
   }
 
   if (success) {
-    MS_LOG(DEBUG) << "Dump Data completed!";
+    MS_LOG(DEBUG) << "E2eDump Dump Data completed!";
   } else {
-    MS_LOG(DEBUG) << "Dump has not occurred!";
+    MS_LOG(DEBUG) << "E2eDump Dump has not occurred!";
   }
 }
 

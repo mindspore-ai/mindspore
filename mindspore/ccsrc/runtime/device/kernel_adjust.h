@@ -28,6 +28,7 @@
 #include "backend/session/session_context.h"
 #include "ir/tensor.h"
 #include "runtime/device/kernel_info.h"
+#include "runtime/device/kernel_runtime_manager.h"
 
 #ifndef ENABLE_SECURITY
 #include "runtime/device/ascend/profiling/profiling_utils.h"
@@ -97,6 +98,7 @@ class KernelAdjust {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder CreateMngKernelBuilder(const std::vector<std::string> &formats,
                                                                          const std::vector<TypeId> &type_ids);
   void LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs);
+  void InitCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
 #ifndef ENABLE_SECURITY
   void InsertProfilingKernel(const ProfilingTraceInfo &profiling_trace_info,
                              NotNull<session::KernelGraph *> kernel_graph_ptr);

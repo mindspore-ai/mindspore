@@ -121,15 +121,16 @@ void DataDumper::LoadDumpInfo() {
 }
 
 void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_info) const {
+  MS_LOG(INFO) << "SetOpMappinglnfo Start.";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(kernel_graph_);
   auto dump_path = DumpJsonParser::GetInstance().path();
   const auto &input_ctrl_tensors = kernel_graph_->input_ctrl_tensors();
   constexpr size_t kLoopSinkCtrlTensorNum = 3;  // cur step, cur epoch, steps per epoch
-  bool data_sink_mode = input_ctrl_tensors != nullptr && input_ctrl_tensors->size() >= kLoopSinkCtrlTensorNum;
-  std::string net_name = (data_sink_mode ? DumpJsonParser::GetInstance().net_name() : "_");
-  std::string iteration = (data_sink_mode ? DumpJsonParser::GetInstance().iteration_string() : "0");
+  bool valid_ctrl_tensors = input_ctrl_tensors != nullptr && input_ctrl_tensors->size() >= kLoopSinkCtrlTensorNum;
+  std::string net_name = DumpJsonParser::GetInstance().net_name();
+  std::string iteration = DumpJsonParser::GetInstance().iteration_string();
 
   if (dump_path.empty()) {
     MS_LOG(EXCEPTION) << "Dump path invalid";
@@ -162,8 +163,8 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   dump_info->set_model_id(graph_id);
   dump_info->set_flag(kAicpuLoadFlag);
 
-  if (!data_sink_mode) {
-    MS_LOG(INFO) << "[DataDump] Not data sink mode, input_ctrl_tensor";
+  if (!valid_ctrl_tensors) {
+    MS_LOG(INFO) << "[DataDump] input_ctrl_tensors not valid.";
     return;
   }
   const auto &current_step_tensor = input_ctrl_tensors->at(kCurrentStepTensorIndex);
@@ -188,6 +189,7 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   } else {
     MS_LOG(INFO) << "Invalid ctrl tensor device address";
   }
+  MS_LOG(INFO) << "SetOpMappinglnfo End.";
 }
 
 bool DataDumper::KernelNeedDump(const CNodePtr &kernel) const {

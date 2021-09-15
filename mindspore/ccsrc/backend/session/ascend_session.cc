@@ -236,8 +236,16 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   *cur_val = 0;
   cur_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
   // set loop_count to zero
-  MS_EXCEPTION_IF_NULL(inputs);
-  inputs->push_back(cur_loop_tensor);
+  if (inputs) {
+    inputs->push_back(cur_loop_tensor);
+  } else {
+    auto device_address = cur_loop_tensor->device_address();
+    if (!device_address->SyncHostToDevice(cur_loop_tensor->shape(), LongToSize(cur_loop_tensor->data().nbytes()),
+                                          cur_loop_tensor->data_type(), cur_loop_tensor->data_c(),
+                                          cur_loop_tensor->device_info().host_format_)) {
+      MS_LOG(EXCEPTION) << "SyncHostToDevice failed for cur_loop_tensor needed for async dump.";
+    }
+  }
 
   // update next loop tensor to 0 per iterator
   auto next_loop_tensor = (*inputs_params)[kLoopSinkNextLoopIndex];
@@ -247,7 +255,16 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   *next_val = 0;
   next_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
   // set loop_count to zero
-  inputs->push_back(next_loop_tensor);
+  if (inputs) {
+    inputs->push_back(next_loop_tensor);
+  } else {
+    auto device_address = next_loop_tensor->device_address();
+    if (!device_address->SyncHostToDevice(next_loop_tensor->shape(), LongToSize(next_loop_tensor->data().nbytes()),
+                                          next_loop_tensor->data_type(), next_loop_tensor->data_c(),
+                                          next_loop_tensor->device_info().host_format_)) {
+      MS_LOG(EXCEPTION) << "SyncHostToDevice failed for next_loop_tensor needed for async dump.";
+    }
+  }
 
   auto epoch_tensor = (*inputs_params)[kLoopSinkEpochIndex];
   MS_EXCEPTION_IF_NULL(epoch_tensor);
@@ -255,10 +272,31 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
   MS_EXCEPTION_IF_NULL(epoch_val);
   *epoch_val = SizeToInt(graph->current_epoch());
   epoch_tensor->set_sync_status(kNeedSyncHostToDevice);
-  inputs->push_back(epoch_tensor);
+  if (inputs) {
+    inputs->push_back(epoch_tensor);
+  } else {
+    auto device_address = epoch_tensor->device_address();
+    if (!device_address->SyncHostToDevice(epoch_tensor->shape(), LongToSize(epoch_tensor->data().nbytes()),
+                                          epoch_tensor->data_type(), epoch_tensor->data_c(),
+                                          epoch_tensor->device_info().host_format_)) {
+      MS_LOG(EXCEPTION) << "SyncHostToDevice failed for epoch_tensor needed for async dump.";
+    }
+  }
   MS_LOG(DEBUG) << "Load epoch_val:" << *epoch_val;
   graph->set_current_epoch(graph->current_epoch() + 1);
   return inputs_params->size();
+}
+
+void UpdateCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vector<tensor::TensorPtr> *inputs,
+                           size_t *input_ctrl_size) {
+  if (graph->input_ctrl_tensors()) {
+    bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || graph->isDatasetGraph());
+    if (sink_mode) {
+      *input_ctrl_size = LoadCtrlInputTensor(graph, inputs);
+    } else {
+      LoadCtrlInputTensor(graph, nullptr);
+    }
+  }
 }
 
 bool NeedMemcpyInDevice(const device::DeviceAddressPtr &src_device_addr,
@@ -404,9 +442,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
   size_t input_ctrl_size = kLoopSinkTensorNum;
   uint32_t device_memcpy_nums = 0;
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  if (kernel_graph->input_ctrl_tensors()) {
-    input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
-  }
+  UpdateCtrlInputTensor(kernel_graph, &inputs, &input_ctrl_size);
   auto &input_nodes = kernel_graph->input_nodes();
   if ((inputs.size() + input_ctrl_size) - kLoopSinkTensorNum != input_nodes.size()) {
     MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
