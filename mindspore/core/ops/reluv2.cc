@@ -44,10 +44,12 @@ std::vector<int64_t> GetOutputMaskShape(const std::vector<int64_t> &input_shape,
       mask_shape.push_back(input_shape[i]);
     }
   }
+  const int64_t shape_end_4d = 4;
+  const int64_t shape_end_2d = 2;
   if (x_dtype == kUInt8 || x_dtype == kInt8) {
-    (void)mask_shape.insert(mask_shape.end(), 4);
+    (void)mask_shape.insert(mask_shape.end(), shape_end_4d);
   } else {
-    (void)mask_shape.insert(mask_shape.end(), 2);
+    (void)mask_shape.insert(mask_shape.end(), shape_end_2d);
   }
   return mask_shape;
 }

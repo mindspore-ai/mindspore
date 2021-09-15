@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-void Unsqueeze::Init(const std::vector<int64_t> axis) { (void)this->set_axis(axis); }
+void Unsqueeze::Init(const std::vector<int64_t> axis) { this->set_axis(axis); }
 
 void Unsqueeze::set_axis(const std::vector<int64_t> axis) { (void)this->AddAttr(kAxis, MakeValue(axis)); }
 

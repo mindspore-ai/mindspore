@@ -28,19 +28,13 @@ namespace ops {
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, primitive->name());
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1L, primitive->name());
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
 TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, primitive->name());
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
-  }
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   return CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), valid_types,
                                                     primitive->name());

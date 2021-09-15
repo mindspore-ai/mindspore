@@ -80,7 +80,7 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
   auto pad_mode_ptr = primitive->GetAttr("pad_mode");
   if (pad_mode_ptr != nullptr) {
     int64_t pad_mode;
-    (void)CheckAndConvertUtils::GetPadModEnumValue(pad_mode_ptr, &pad_mode, true);
+    CheckAndConvertUtils::GetPadModEnumValue(pad_mode_ptr, &pad_mode, true);
     if (pad_mode == PadMode::VALID) {
       padding = 0;
     } else if (pad_mode == PadMode::SAME) {
@@ -298,7 +298,7 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   std::vector<int64_t> padding =
     CheckAttrIntOrTuple(op_name, primitive->GetAttr("pad"), padding_start_idx, padding_num_element);
   int64_t pad_mode;
-  (void)CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr("pad_mode"), &pad_mode);
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr("pad_mode"), &pad_mode);
   std::vector<int64_t> output_hw;
   std::vector<int64_t> pad_list;
   std::vector<int64_t> output_hw_min;

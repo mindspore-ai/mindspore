@@ -39,16 +39,16 @@ AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisE
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto dout_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::Check("x_shape", x_shape, kEqual, "y_shape", y_shape, prim_name, TypeError);
-  (void)CheckAndConvertUtils::Check("x_shape", x_shape, kEqual, "dout_shape", dout_shape, prim_name, TypeError);
+  CheckAndConvertUtils::Check("x_shape", x_shape, kEqual, "y_shape", y_shape, prim_name, TypeError);
+  CheckAndConvertUtils::Check("x_shape", x_shape, kEqual, "dout_shape", dout_shape, prim_name, TypeError);
 
   // Infer type
   const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
                                          kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;
-  args.emplace("x_type", input_args[kInputIndex0]->BuildType());
-  args.emplace("y_type", input_args[kInputIndex1]->BuildType());
-  args.emplace("dout_type", input_args[kInputIndex2]->BuildType());
+  (void)args.emplace("x_type", input_args[kInputIndex0]->BuildType());
+  (void)args.emplace("y_type", input_args[kInputIndex1]->BuildType());
+  (void)args.emplace("dout_type", input_args[kInputIndex2]->BuildType());
   auto dout_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   return std::make_shared<abstract::AbstractTensor>(dout_type, x_shape);
 }

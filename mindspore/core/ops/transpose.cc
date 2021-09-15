@@ -41,6 +41,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
                          [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   } else {
     auto perm_value = input_args[1]->BuildValue();
+    MS_EXCEPTION_IF_NULL(perm_value);
     if (perm_value->isa<tensor::Tensor>()) {
       p_value = CheckAndConvertUtils::CheckTensorIntValue("perm value", perm_value, op_name);
     } else {
@@ -66,7 +67,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     }
   }
   std::vector<int64_t> in_shape(p_value);
-  (void)std::transform(in_shape.begin(), in_shape.end(), in_shape.begin(), [x_shape](int i) { return x_shape[i]; });
+  (void)std::transform(in_shape.begin(), in_shape.end(), in_shape.begin(), [x_shape](int64_t i) { return x_shape[i]; });
   if (!x_min_shape.empty() && !x_max_shape.empty()) {
     std::vector<int64_t> min_shape;
     std::vector<int64_t> max_shape;

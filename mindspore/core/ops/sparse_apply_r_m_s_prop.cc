@@ -50,15 +50,15 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   same_shape_args_map.insert({"shape of mom ", mom_shape});
   same_shape_args_map.insert({"shape of grad ", grad_shape});
   for (auto &elem : same_shape_args_map) {
-    (void)CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, "var shape", var_shape, prim_name);
+    CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, "var shape", var_shape, prim_name);
   }
   // Indices must be rank 1
   (void)CheckAndConvertUtils::CheckInteger("indices dim", indices_shape.size(), kEqual, 1, prim_name);
   // Dimension of var must be equal or greater than 1
   (void)CheckAndConvertUtils::CheckInteger("dimension of var", var_shape.size(), kGreaterEqual, 1, prim_name);
   // Indices shape must be equal to the first dimension of var
-  (void)CheckAndConvertUtils::Check("indices shape", indices_shape[0], kEqual, "the first dimension of var",
-                                    var_shape[0], prim_name);
+  CheckAndConvertUtils::Check("indices shape", indices_shape[0], kEqual, "the first dimension of var", var_shape[0],
+                              prim_name);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{var_shape_ptr, ms_shape_ptr, mom_shape_ptr});
 }

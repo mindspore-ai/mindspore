@@ -27,7 +27,7 @@ ShapeVector CalLayerNormMeanAndVarShape(int64_t begin_norm_axis, const ShapeVect
   if (begin_norm_axis == -1) {
     mean_var_shape_value[input_rank - 1] = 1;
   } else {
-    for (size_t i = begin_norm_axis; i < input_rank; i++) {
+    for (size_t i = LongToSize(begin_norm_axis); i < input_rank; i++) {
       mean_var_shape_value[i] = 1;
     }
   }

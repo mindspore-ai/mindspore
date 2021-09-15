@@ -28,10 +28,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, input_num, op_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, op_name);
   auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto input_shape = input_shape_map[kShape];
   auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
@@ -57,15 +54,15 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   }
   auto op_name = prim->name();
   const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, input_num, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     std::map<std::string, TypePtr> types;
-    types.emplace("input", input_args[kInputIndex0]->BuildType());
-    types.emplace("value", input_args[kInputIndex2]->BuildType());
+    (void)types.emplace("input", input_args[kInputIndex0]->BuildType());
+    (void)types.emplace("value", input_args[kInputIndex2]->BuildType());
     return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32, kInt8, kInt32}, op_name);
   } else {
-    CheckAndConvertUtils::CheckSubClass("value", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
+    (void)CheckAndConvertUtils::CheckSubClass("value", input_args[kInputIndex2]->BuildType(), {kFloat}, op_name);
     return CheckAndConvertUtils::CheckTensorTypeValid("input", input_args[0]->BuildType(),
                                                       {kFloat16, kFloat32, kInt8, kInt32}, op_name);
   }

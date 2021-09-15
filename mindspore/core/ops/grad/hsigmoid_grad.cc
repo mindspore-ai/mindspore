@@ -33,7 +33,8 @@ namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num,
+                                           primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -47,10 +48,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, input_num, prim->name());
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("grads", input_args[0]->BuildType());

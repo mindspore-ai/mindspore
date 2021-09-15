@@ -43,9 +43,9 @@ void TransStrideTo4D(const PrimitivePtr &primitive, const std::vector<AbstractBa
   auto stride_value = GetValue<std::vector<int64_t>>(stride);
   if (stride_value.size() == kStride2dSize) {
     std::vector<int64_t> stride_value_4d(stride_value);
-    stride_value_4d.insert(stride_value_4d.begin(), 1);
-    stride_value_4d.insert(stride_value_4d.begin(), 1);
-    (void)primitive->set_attr(kStride, MakeValue(stride_value_4d));
+    (void)stride_value_4d.insert(stride_value_4d.begin(), 1);
+    (void)stride_value_4d.insert(stride_value_4d.begin(), 1);
+    primitive->set_attr(kStride, MakeValue(stride_value_4d));
   }
   return;
 }

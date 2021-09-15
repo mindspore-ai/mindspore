@@ -36,7 +36,7 @@ AbstractBasePtr MergeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
     args.insert({"input[" + std::to_string(i) + "]", inputs_type[i]});
   }
   std::set<TypePtr> template_type = common_valid_types;
-  template_type.emplace(kBool);
+  (void)template_type.emplace(kBool);
   auto infered_type = CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, template_type, op_name);
   std::vector<int64_t> in_shape0 = inputs_shape[0]->cast<abstract::ShapePtr>()->shape();
 
