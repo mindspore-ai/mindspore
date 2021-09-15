@@ -136,7 +136,10 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
   MS_CHECK_TRUE_MSG(channels != 0, RET_ERROR, "divide 0");
   size_t one_filter_size = elem_count / channels;
   for (int i = 0; i < channels; i++) {
-    MS_CHECK_TRUE_MSG(tensor->quantParams.at(i)->scale <= 0.0f, RET_ERROR, "divide 0");
+    if (tensor->quantParams.at(i)->scale <= 0.0f) {
+      MS_LOG(ERROR) << "scale:" << tensor->quantParams.at(i)->scale << " <= 0";
+      return RET_OK;
+    }
     // do quantization
     for (uint32_t j = 0; j < one_filter_size; j++) {
       auto index = j + i * one_filter_size;

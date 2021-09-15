@@ -1179,5 +1179,35 @@ bool IsMarkedTrainOp(const CNodePtr &cnode) {
   }
   return false;
 }
+
+int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {
+  if (anf_node == nullptr || type_id == nullptr) {
+    MS_LOG(ERROR) << "anf_node or type_id is nullptr.";
+    return RET_ERROR;
+  }
+  auto abstract_base = anf_node->abstract();
+  // used for multi output e.g. split.
+  if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
+    auto abstract_tuple = abstract_base->cast<abstract::AbstractTuplePtr>();
+    if (abstract_tuple->elements().empty()) {
+      MS_LOG(ERROR) << "abstract_tuple elements is empty.";
+      return RET_ERROR;
+    }
+    abstract_base = abstract_tuple->elements().front();
+  }
+  if (abstract_base == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << anf_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << anf_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+  MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
+  *type_id = type_ptr->type_id();
+  return RET_OK;
+}
 }  // namespace opt
 }  // namespace mindspore

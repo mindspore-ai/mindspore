@@ -25,23 +25,10 @@
 #include <set>
 #include <functional>
 #include "include/version.h"
-#include "ops/concat.h"
-#include "ops/crop.h"
-#include "ops/eltwise.h"
-#include "ops/fusion/activation.h"
-#include "ops/fusion/add_fusion.h"
-#include "ops/fusion/avg_pool_fusion.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/fusion/full_connection.h"
-#include "ops/fusion/layer_norm_fusion.h"
-#include "ops/fusion/max_pool_fusion.h"
-#include "ops/fusion/mul_fusion.h"
-#include "ops/gather.h"
 #include "ops/mat_mul.h"
-#include "ops/reshape.h"
-#include "ops/split.h"
-#include "ops/transpose.h"
 #include "tools/converter/ops/ops_def.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/bitpacking.h"
@@ -49,6 +36,8 @@
 #include "tools/common/tensor_util.h"
 #include "abstract/abstract_value.h"
 #include "securec/include/securec.h"
+#include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/common/format_utils.h"
 
 using std::string;
 using std::vector;
@@ -109,7 +98,7 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
   return true;
 }
 
-bool QuantStrategy::CanOpPostQuantized(const AnfNodePtr &node) {
+bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   MS_CHECK_TRUE_RET(node != nullptr, false);
   if (!node->isa<mindspore::CNode>()) {
     return false;
@@ -117,19 +106,43 @@ bool QuantStrategy::CanOpPostQuantized(const AnfNodePtr &node) {
   const auto cnode = std::dynamic_pointer_cast<mindspore::CNode>(node);
   MS_ASSERT(cnode != nullptr);
   auto type = NodePrimitiveType(cnode);
-  static const std::vector<std::string> int8OpList = {
-    ops::kNameAddFusion,     ops::kNameActivation,      ops::kNameAvgPoolFusion,
-    ops::kNameConcat,        ops::kNameConv2DFusion,    ops::kNameConv2dTransposeFusion,
-    ops::kNameCrop,          ops::kNameEltwise,         ops::kNameFullConnection,
-    ops::kNameGather,        ops::kNameLayerNormFusion, ops::kNameMatMul,
-    ops::kNameMaxPoolFusion, ops::kNameMulFusion,       ops::kNameReshape,
-    ops::kNameSplit,         ops::kNameTranspose,       lite::kNameTupleGetItem,
-  };
-  bool contain = IsContain(int8OpList, type);
-  if (!contain) {
-    MS_LOG(INFO) << "not quant, " << cnode->fullname_with_scope() << " of type: " << type;
+  static const std::set<PrimitivePtr> support_int8_ops = {prim::kPrimAddFusion,      prim::kPrimActivation,
+                                                          prim::kPrimAvgPoolFusion,  prim::kPrimConcat,
+                                                          prim::kPrimConv2DFusion,   prim::kPrimConv2dTransposeFusion,
+                                                          prim::kPrimCrop,           prim::kPrimFullConnection,
+                                                          prim::kPrimGather,         prim::kPrimLayerNormFusion,
+                                                          prim::kPrimMatMul,         prim::kPrimMaxPoolFusion,
+                                                          prim::kPrimMulFusion,      prim::kPrimReshape,
+                                                          prim::kPrimSplit,          prim::kPrimTranspose,
+                                                          prim::kPrimReduceFusion,   prim::kPrimDivFusion,
+                                                          prim::kPrimSqrt,           prim::kPrimPowFusion,
+                                                          prim::kPrimSubFusion,      prim::kPrimUnsqueeze,
+                                                          prim::kPrimLayerNormFusion};
+  // The return node does not need to be quantified.
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn) || opt::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
+    return false;
   }
-  return contain;
+  // These operators do not need to check the data type.
+  if (opt::CheckPrimitiveType(cnode, prim::kPrimShape) || opt::CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
+    return true;
+  }
+  auto is_support_node = CheckNodeInSet(cnode, support_int8_ops);
+  if (!is_support_node && type != "Eltwise") {
+    MS_LOG(WARNING) << "node:" << cnode->fullname_with_scope() << " type:" << type << " is not support quantization.";
+    return false;
+  }
+  TypeId type_id;
+  auto ret = opt::GetDataTypeFromAnfNode(cnode, &type_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Fetch DataType from cnode failed.";
+    return ret;
+  }
+
+  bool is_data_type_fp32 = type_id == kNumberTypeFloat32;
+  if (!is_data_type_fp32) {
+    MS_LOG(INFO) << cnode->fullname_with_scope() << "  type_id is " << type_id << " , and is not float32.";
+  }
+  return is_data_type_fp32;
 }
 
 bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
@@ -775,11 +788,15 @@ STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
     return RET_ERROR;
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  if (quant_type == QuantType_PostTraining) {
-    quant_param_holder->AddInputQuantParam(quant_params);
-  } else {
-    quant_param_holder->set_input_quant_param(index, quant_params);
-  }
+  quant_param_holder->set_input_quant_param(index, quant_params);
   return ret;
+}
+bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types) {
+  for (const auto &type : support_primitive_types) {
+    if (opt::CheckPrimitiveType(cnode, type)) {
+      return true;
+    }
+  }
+  return false;
 }
 }  // namespace mindspore::lite::quant

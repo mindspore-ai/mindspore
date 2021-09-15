@@ -124,11 +124,7 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
           return RET_OK;
         }
         quant::FSEEncoder fse_encoder;
-        if (dst_node->primitive->value.type == PrimitiveType_GRU) {
-          fse_encoder.Compress(tensor_input);
-        } else {
-          fse_encoder.Compress(tensor_input);
-        }
+        fse_encoder.Compress(tensor_input);
       } else if (bit_num <= kBitNum8) {
         repetition_packed = PackRepetition<int8_t>(bit_num, tensor_input);
       } else {

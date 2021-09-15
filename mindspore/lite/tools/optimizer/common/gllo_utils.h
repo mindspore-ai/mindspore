@@ -133,6 +133,7 @@ bool IsTrainOp(const CNodePtr &cnode);
 
 bool IsMarkedTrainOp(const CNodePtr &cnode);
 
+int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_

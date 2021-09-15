@@ -116,16 +116,6 @@ class QuantParamHolder : public Value {
 
   bool enable_huffman_code() const { return enable_huffman_code_; }
 
-  // deprecated
-  void AddInputQuantParam(const std::vector<schema::QuantParamT> &quant_param) {
-    this->input_quant_params_.emplace_back(quant_param);
-  }
-
-  // deprecated
-  void AddOutputQuantParam(const std::vector<schema::QuantParamT> &quant_param) {
-    this->output_quant_params_.emplace_back(quant_param);
-  }
-
   std::vector<std::vector<schema::QuantParamT>> get_input_quant_params() const { return this->input_quant_params_; }
 
   std::vector<std::vector<schema::QuantParamT>> get_output_quant_params() const { return this->output_quant_params_; }
