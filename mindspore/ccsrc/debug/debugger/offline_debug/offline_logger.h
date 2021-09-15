@@ -43,7 +43,7 @@ class DbgLogger {
     if (dbg_log_path != nullptr) {
       char abspath[PATH_MAX];
       if (sizeof(dbg_log_path) > PATH_MAX || NULL == realpath(dbg_log_path, abspath)) {
-        return;
+        std::cout << "ERROR: DbgLogger could not create real path";
       }
       FILE *fp = freopen(abspath, "a", stdout);
       if (fp == nullptr) {

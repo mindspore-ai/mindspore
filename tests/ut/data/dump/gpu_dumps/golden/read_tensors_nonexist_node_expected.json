@@ -1,0 +1,56 @@
+[
+    {
+        "tensor_1": {
+            "tensor_info": {
+                "node_name": "Default/CudnnUniformReal-op390",
+                "slot": 0,
+                "iteration": 0,
+                "rank_id": 0,
+                "root_graph_id": 0,
+                "is_output": false
+            },
+            "tensor_data": {
+                "data": [],
+                "size_in_bytes": 0,
+                "debugger_dtype": 0,
+                "shape": []
+            }
+        }
+    },
+    {
+        "tensor_2": {
+            "tensor_info": {
+                "node_name": "Gradients/Default/network-WithLossCell/_backbone-AlexNet/gradReLU/ReluGradV2-op406",
+                "slot": 1,
+                "iteration": 0,
+                "rank_id": 0,
+                "root_graph_id": 0,
+                "is_output": false
+            },
+            "tensor_data": {
+                "data": [],
+                "size_in_bytes": 0,
+                "debugger_dtype": 0,
+                "shape": []
+            }
+        }
+    },
+    {
+        "tensor_3": {
+            "tensor_info": {
+                "node_name": "Gradients/Default/network-WithLossCell/_backbone-AlexNet/gradReLU/ReluGradV2-op406",
+                "slot": 1,
+                "iteration": 1,
+                "rank_id": 0,
+                "root_graph_id": 0,
+                "is_output": true
+            },
+            "tensor_data": {
+                "data": [],
+                "size_in_bytes": 0,
+                "debugger_dtype": 0,
+                "shape": []
+            }
+        }
+    }
+]
