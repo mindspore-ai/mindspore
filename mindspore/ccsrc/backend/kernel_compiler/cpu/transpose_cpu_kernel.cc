@@ -80,7 +80,7 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  transpose_param_.data_num_ = inputs[0]->size / sizeof(T);
+  transpose_param_.data_num_ = SizeToInt(inputs[0]->size / sizeof(T));
   int output_shape[SizeToInt(output_shape_.size())];
   for (size_t i = 0; i < output_shape_.size(); ++i) {
     output_shape[i] = SizeToInt(output_shape_[i]);

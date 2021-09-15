@@ -63,21 +63,21 @@ void CPUKernelFactory::SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_i
 
   for (size_t i = 0; i < first_input_dtypes.size(); i++) {
     KernelAttr kernel_attr;
-    kernel_attr.AddInputAttr(kernel::DtypeToTypeId(first_input_dtypes[i]), input_formats[i]);
+    (void)kernel_attr.AddInputAttr(kernel::DtypeToTypeId(first_input_dtypes[i]), input_formats[i]);
     for (size_t j = 1; j < inputs_ptr.size(); j++) {
       auto input_dtypes = inputs_ptr[j]->dtypes();
       input_formats = inputs_ptr[j]->formats();
-      kernel_attr.AddInputAttr(kernel::DtypeToTypeId(input_dtypes[i]), input_formats[i]);
+      (void)kernel_attr.AddInputAttr(kernel::DtypeToTypeId(input_dtypes[i]), input_formats[i]);
     }
     for (size_t j = 0; j < outputs_ptr.size(); j++) {
       auto output_dtypes = outputs_ptr[j]->dtypes();
       auto output_formats = outputs_ptr[j]->formats();
-      kernel_attr.AddOutputAttr(kernel::DtypeToTypeId(output_dtypes[i]), output_formats[i]);
+      (void)kernel_attr.AddOutputAttr(kernel::DtypeToTypeId(output_dtypes[i]), output_formats[i]);
     }
     if (same_op_name.count(op_info->op_name()) != 0) {
-      kernel_attr.SetAllSameAttr(true);
+      (void)kernel_attr.SetAllSameAttr(true);
     }
-    kernel_attrs->emplace_back(kernel_attr);
+    (void)kernel_attrs->emplace_back(kernel_attr);
   }
 }
 
@@ -166,7 +166,7 @@ std::vector<KernelAttr> CPUKernelFactory::GetSupportedKernelAttrList(const std::
   result.reserve(creators.size());
   for (size_t index = 0; index < creators.size(); ++index) {
     auto attr_creator = creators[index];
-    result.emplace_back(attr_creator.first);
+    (void)result.emplace_back(attr_creator.first);
   }
   return result;
 }

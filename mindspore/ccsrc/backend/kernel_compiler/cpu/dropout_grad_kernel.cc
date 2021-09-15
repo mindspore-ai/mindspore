@@ -40,12 +40,21 @@ void DropoutGradCpuBwdKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+void DropoutGradCpuBwdKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  if (dtype_ == kNumberTypeFloat16) {
+    workspace_size_list_.emplace_back(num_count_ * sizeof(float));
+    workspace_size_list_.emplace_back(num_count_ * sizeof(float));
+    workspace_size_list_.emplace_back(num_count_ * sizeof(float));
+  }
+}
+
+bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                      const std::vector<AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
-    DropoutBackwardKernel<float16>(inputs, outputs, keep_prob_);
+    DropoutBackwardKernel<float16>(inputs, workspace, outputs, keep_prob_);
   } else if (dtype_ == kNumberTypeFloat32) {
-    DropoutBackwardKernel<float>(inputs, outputs, keep_prob_);
+    DropoutBackwardKernel<float>(inputs, workspace, outputs, keep_prob_);
   } else {
     MS_LOG(ERROR) << "Input data type: " << dtype_ << " is not supported for DropoutGrad kernel for CPU.";
   }
@@ -55,6 +64,7 @@ bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs, cons
 
 template <typename T>
 void DropoutGradCpuBwdKernel::DropoutBackwardKernel(const std::vector<AddressPtr> &inputs,
+                                                    const std::vector<AddressPtr> &workspace,
                                                     const std::vector<AddressPtr> &outputs, float keep_prob) {
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
@@ -62,9 +72,9 @@ void DropoutGradCpuBwdKernel::DropoutBackwardKernel(const std::vector<AddressPtr
   const float scale = 1.f / keep_prob;
 
   if constexpr (std::is_same_v<T, float16>) {
-    float *input_tmp = new float[num_count_];
-    float *output_tmp = new float[num_count_];
-    float *mask_tmp = new float[num_count_];
+    float *input_tmp = reinterpret_cast<float *>(workspace[0]->addr);
+    float *output_tmp = reinterpret_cast<float *>(workspace[1]->addr);
+    float *mask_tmp = reinterpret_cast<float *>(workspace[2]->addr);
     for (size_t i = 0; i < num_count_; ++i) {
       input_tmp[i] = static_cast<float>(input[i]);
       mask_tmp[i] = static_cast<float>(mask[i]);
@@ -73,9 +83,6 @@ void DropoutGradCpuBwdKernel::DropoutBackwardKernel(const std::vector<AddressPtr
     for (size_t i = 0; i < num_count_; ++i) {
       output[i] = static_cast<float16>(output_tmp[i]);
     }
-    delete[] input_tmp;
-    delete[] output_tmp;
-    delete[] mask_tmp;
   } else if constexpr (std::is_same_v<T, float>) {
     DropoutGrad(input, mask, output, SizeToInt(num_count_), scale);
   }

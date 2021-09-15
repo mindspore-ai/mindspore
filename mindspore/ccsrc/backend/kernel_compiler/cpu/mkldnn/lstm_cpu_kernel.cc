@@ -33,7 +33,7 @@ void LstmCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   std::vector<std::vector<size_t>> output_shapes;
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     auto shape = AnfAlgo::GetOutputInferShape(kernel_node, output_index);
-    output_shapes.emplace_back(shape);
+    (void)output_shapes.emplace_back(shape);
   }
   size_t len = reserve_size_ / IntToSize(kGateNum);
   output_shapes[kOutputWorkSpaceIndex] = {len, 1};

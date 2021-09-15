@@ -88,7 +88,7 @@ void SliceSimpleDim2(const int8_t *input, int8_t *output, SliceParameter *param,
   for (size_t i = 0; i < row_size; ++i) {
     auto dst = output + data_size * param->size_[1] * i;
     auto src = input + data_size * (param->shape_[1] * i + param->begin_[1]);
-    (void)memcpy(dst, src, copy_size);
+    (void)memcpy_s(dst, copy_size, src, copy_size);
   }
 }
 
@@ -107,7 +107,7 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const
   auto output_addr = outputs[0]->addr;
 
   if (origin_dim_size_ == 2) {
-    auto task = [&](size_t start, size_t end) {
+    auto task = [this, &input_addr, &output_addr](size_t start, size_t end) {
       auto src =
         static_cast<int8_t *>(input_addr) + data_size_ * slice_param_.shape_[1] * (start + slice_param_.begin_[0]);
       auto dst = static_cast<int8_t *>(output_addr) + data_size_ * slice_param_.size_[1] * start;

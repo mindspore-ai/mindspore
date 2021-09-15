@@ -115,13 +115,13 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
                          task_proc_lens, outer_dim_size_, static_cast<T>(offset_), first_dim_size_);
       return common::SUCCESS;
     };
-    tasks.emplace_back(task);
+    (void)tasks.emplace_back(task);
     task_offset += task_proc_lens;
     if (task_offset + task_proc_lens > indices_lens_) {
       task_proc_lens = indices_lens_ - task_offset;
     }
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 
 bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -77,7 +77,7 @@ bool StridedSliceCPUKernel::MatchParallelPattern() {
   std::vector<int> axis_list;
   for (size_t i = 0; i < input_shape_.size(); ++i) {
     if (input_shape_[i] != output_shape_[i]) {
-      axis_list.emplace_back(i);
+      (void)axis_list.emplace_back(i);
     }
   }
   if (axis_list.size() == 1) {
@@ -201,10 +201,11 @@ void StridedSliceCPUKernel::ParallelRun(uint8_t *input_addr, uint8_t *output_add
   }
 
   while (thread_index < thread_num) {
-    tasks.emplace_back(std::bind(execute_func, this, input_addr, output_addr, thread_index * cal_num_per_thread_));
+    (void)tasks.emplace_back(
+      std::bind(execute_func, this, input_addr, output_addr, thread_index * cal_num_per_thread_));
     thread_index++;
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 
 bool StridedSliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -225,7 +226,7 @@ bool StridedSliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
   if (parallel_ && thread_num >= 2) {
     ParallelRun(input_addr, output_addr, thread_num);
   } else {
-    DoStridedSlice(input_addr, output_addr, &slice_param_);
+    (void)DoStridedSlice(input_addr, output_addr, &slice_param_);
   }
   return true;
 }

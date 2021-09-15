@@ -63,10 +63,10 @@ void ComputeFtrl(MultiThreadComputeParams<T> *input_params, size_t start, size_t
 
 template <typename T>
 void SparseApplyFtrlCPUKernel::InitWorkspaceSize() {
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
 }
 
 void SparseApplyFtrlCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {

@@ -32,11 +32,11 @@ void AdamDeltaCPUKernel::LaunchAdamDelta(T *delta, T *m, T *v, float lr, float b
                                          const T *gradient, size_t size) {
   std::function<void(size_t, size_t)> task;
   if (dtype_ == kNumberTypeFloat32) {
-    task = [&](size_t start, size_t end) {
-      AdamDeltaFp32(delta, m, v, lr, beta1, beta2, epsilon, gradient, start, end, use_nesterov_);
+    task = [this, delta, m, v, lr, beta1, beta2, epsilon, gradient](size_t start, size_t end) {
+      (void)AdamDeltaFp32(delta, m, v, lr, beta1, beta2, epsilon, gradient, start, end, use_nesterov_);
     };
   } else {
-    task = [&](size_t start, size_t end) {
+    task = [this, delta, m, v, lr, beta1, beta2, epsilon, gradient](size_t start, size_t end) {
       for (size_t c1 = start; c1 < end; ++c1) {
         m[c1] *= beta1;
         m[c1] += (1 - beta1) * gradient[c1];

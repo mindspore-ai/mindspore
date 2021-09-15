@@ -45,7 +45,7 @@ int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
 
 void UpdateShape(size_t miss_count, const CNodePtr &node_) {
   std::vector<size_t> out_shape;
-  out_shape.emplace_back(miss_count);
+  (void)out_shape.emplace_back(miss_count);
   size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
   std::vector<TypeId> dtypes(output_num);
   for (size_t i = 0; i < output_num; i++) {
@@ -125,7 +125,7 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     }
     total_count += SizeToFloat(count);
     if (hashmap[tmp_entry].IsEmpty()) {
-      miss_idx.emplace_back(i);
+      (void)miss_idx.emplace_back(i);
       output_miss_emb_idx[miss_count] = key;
       output_cache_idx[i] = -1;
       miss_count++;

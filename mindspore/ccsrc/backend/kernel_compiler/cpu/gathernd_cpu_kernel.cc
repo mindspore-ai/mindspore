@@ -39,9 +39,9 @@ void GatherNdCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
     dim_after_indices *= input_shapes_[i];
   }
 
-  dims_.emplace_back(dim_of_indices);
-  dims_.emplace_back(dim_after_indices);
-  dims_.emplace_back(dim_indices_last);
+  (void)dims_.emplace_back(dim_of_indices);
+  (void)dims_.emplace_back(dim_after_indices);
+  (void)dims_.emplace_back(dim_indices_last);
 
   batch_strides_.resize(dim_indices_last, 0);
   batch_indices_.resize(dim_indices_last, 0);

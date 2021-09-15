@@ -52,18 +52,18 @@ template <typename T>
 void ArithmeticCPUKernel<T>::Sub(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
     if (input_shape1_ == input_shape2_) {
-      auto task = [&](size_t start, size_t end) {
-        ElementSub(input1 + start, input2 + start, out + start, end - start);
+      auto task = [this, input1, input2, out](size_t start, size_t end) {
+        (void)ElementSub(input1 + start, input2 + start, out + start, end - start);
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
       return;
     }
     if (op_para.in_elements_num0_ == 1 || op_para.in_elements_num1_ == 1) {
-      auto task = [&](size_t start, size_t end) {
+      auto task = [this, input1, input2, out](size_t start, size_t end) {
         if (op_para.in_elements_num0_ == 1) {
-          ElementOptSub(input1, input2 + start, out + start, end - start, &op_para);
+          (void)ElementOptSub(input1, input2 + start, out + start, end - start, &op_para);
         } else {
-          ElementOptSub(input1 + start, input2, out + start, end - start, &op_para);
+          (void)ElementOptSub(input1 + start, input2, out + start, end - start, &op_para);
         }
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
@@ -87,18 +87,18 @@ template <typename T>
 void ArithmeticCPUKernel<T>::Mul(const T *input1, const T *input2, T *out) {
   if constexpr (std::is_same_v<T, float>) {
     if (input_shape1_ == input_shape2_) {
-      auto task = [&](size_t start, size_t end) {
-        ElementMul(input1 + start, input2 + start, out + start, end - start);
+      auto task = [this, input1, input2, out](size_t start, size_t end) {
+        (void)ElementMul(input1 + start, input2 + start, out + start, end - start);
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
       return;
     }
     if (op_para.in_elements_num0_ == 1 || op_para.in_elements_num1_ == 1) {
-      auto task = [&](size_t start, size_t end) {
+      auto task = [this, input1, input2, out](size_t start, size_t end) {
         if (op_para.in_elements_num0_ == 1) {
-          ElementOptMul(input1, input2 + start, out + start, end - start, &op_para);
+          (void)ElementOptMul(input1, input2 + start, out + start, end - start, &op_para);
         } else {
-          ElementOptMul(input1 + start, input2, out + start, end - start, &op_para);
+          (void)ElementOptMul(input1 + start, input2, out + start, end - start, &op_para);
         }
       };
       ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);

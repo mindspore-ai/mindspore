@@ -26,7 +26,7 @@ void BatchNormCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t tensor_size = shape[1] * 2 * type_size;  // [2, c] to store scale and bias
-  workspace_size_list_.emplace_back(tensor_size);
+  (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
 void BatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {

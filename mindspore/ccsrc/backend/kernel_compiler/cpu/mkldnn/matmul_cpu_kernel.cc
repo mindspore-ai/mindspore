@@ -48,9 +48,6 @@ void MatMulCPUKernel::InitTile() {
 void MatMulCPUKernel::InitMatrixA(const float *src_ptr) {
   const size_t size = param_.batch * param_.row_align_ * param_.deep_;
   a_pack_ptr_ = new float[size];
-  if (a_pack_ptr_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Malloc a_pack_ptr_ failed.";
-  }
 
   if (vec_matmul_) {
     const size_t count = size * sizeof(float);
@@ -88,7 +85,7 @@ void MatMulCPUKernel::InitMatrixA(const float *src_ptr) {
 
 void MatMulCPUKernel::InitMatrixB(const float *src_ptr) {
   const size_t size = param_.batch * param_.col_align_ * param_.deep_;
-  b_pack_ptr_ = new float[size];
+  b_pack_ptr_ = new (std::nothrow) float[size];
   if (b_pack_ptr_ == nullptr) {
     FreeBuffer();
     MS_LOG(EXCEPTION) << "Malloc b_pack_ptr_ failed";
@@ -227,7 +224,7 @@ void MatMulCPUKernel::ParallelRun(float *output) {
     std::vector<common::Task> tasks;
     size_t thread_index = 0;
     while (thread_index < thread_count_) {
-      tasks.emplace_back(std::bind(&MatMulCPUKernel::FloatRun, this, thread_index));
+      (void)tasks.emplace_back(std::bind(&MatMulCPUKernel::FloatRun, this, thread_index));
       thread_index++;
     }
     (void)common::ThreadPool::GetInstance().SyncRun(tasks);

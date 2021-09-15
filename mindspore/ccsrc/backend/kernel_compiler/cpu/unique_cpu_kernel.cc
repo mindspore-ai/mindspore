@@ -33,9 +33,9 @@ void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 void UniqueCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
-  workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
-  workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
+  (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
+  (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
+  (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
 }
 
 bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -56,7 +56,7 @@ bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
       MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
     }
     std::vector<size_t> out_shape;
-    out_shape.emplace_back(output_size_);
+    (void)out_shape.emplace_back(output_size_);
     size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
     std::vector<TypeId> dtypes(output_num);
     for (size_t i = 0; i < output_num; i++) {

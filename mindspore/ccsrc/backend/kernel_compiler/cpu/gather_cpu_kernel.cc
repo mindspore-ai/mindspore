@@ -71,16 +71,16 @@ void GatherV2CPUKernel<T>::ParallelRun(int8_t *input_addr, int8_t *output_addr, 
     indices_element_size *= indices_shape_.at(i);
   }
   auto limit = input_shape_.at(axis);
-  size_t stride = UP_DIV(outer_size, thread_num);
+  size_t stride = UP_DIV(outer_size, IntToSize(thread_num));
   std::vector<common::Task> tasks;
   int thread_index = 0;
   while (thread_index < thread_num) {
-    int count = MSMIN(stride, outer_size - stride * thread_index);
+    int count = SizeToInt(MSMIN(stride, outer_size - stride * IntToSize(thread_index)));
     if (count <= 0) break;
     auto thread_stride = static_cast<size_t>(stride * thread_index);
     int8_t *in = input_addr + thread_stride * limit * inner_size * sizeof(T);
     int8_t *out = output_addr + thread_stride * indices_element_size * inner_size * sizeof(T);
-    auto block = [&, in, count, out]() {
+    auto block = [this, in, count, inner_size, limit, indices_element_size, out, thread_index]() {
       int ret = Gather(in, count, inner_size, limit, indices_data_, indices_element_size, out, sizeof(T));
       if (ret != 0) {
         MS_LOG(ERROR) << "GatherRun error task_id[" << thread_index << "] error_code[" << ret << "]";
@@ -88,7 +88,7 @@ void GatherV2CPUKernel<T>::ParallelRun(int8_t *input_addr, int8_t *output_addr, 
       }
       return common::SUCCESS;
     };
-    tasks.emplace_back(block);
+    (void)tasks.emplace_back(block);
     thread_index++;
   }
   if (!common::ThreadPool::GetInstance().SyncRun(tasks)) {

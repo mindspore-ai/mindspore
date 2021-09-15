@@ -80,7 +80,7 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
   // if periods_ is 0, do nothing
   if (periods_ == 0) {
     // directly copy input to output
-    memcpy(output, input, inputs[0]->size);
+    (void)memcpy_s(output, outputs[0]->size, input, inputs[0]->size);
     return true;
   }
 
@@ -90,7 +90,7 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
 
   // periods is larger than size, all value of the tensor would be fill_value
   if (std::abs(periods_) >= static_cast<int>(axis_size)) {
-    std::fill_n(output, outer_size * axis_size * inner_size, fill_value);
+    (void)std::fill_n(output, outer_size * axis_size * inner_size, fill_value);
     return true;
   }
 
@@ -101,8 +101,10 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
   // check if the tensor is linear
   if ((inner_size == 1) && (outer_size == 1)) {
     // treat it as a simple 1D array
-    memcpy(output + copy_dst_begin_, input + copy_src_begin_, copy_size_ * sizeof(T));
-    std::fill_n(output + fill_begin_, fill_size_, fill_value);
+    size_t copy_size = copy_size_ * sizeof(T);
+    size_t dst_max_size = outputs[0]->size - copy_dst_begin_;
+    (void)memcpy_s(output + copy_dst_begin_, dst_max_size, input + copy_src_begin_, copy_size);
+    (void)std::fill_n(output + fill_begin_, fill_size_, fill_value);
     return true;
   }
 
@@ -110,19 +112,20 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
   std::vector<common::Task> tasks;
   tasks.reserve(outer_size);
   for (size_t i = 0; i < outer_size; ++i) {
-    tasks.emplace_back([this, i, fill_value, axis_size, inner_size, input, output] {
+    (void)tasks.emplace_back([this, i, fill_value, axis_size, inner_size, input, output, outputs] {
       size_t offset = i * axis_size * inner_size;
       size_t input_offset = offset + copy_src_begin_ * inner_size;
       size_t output_offset = offset + copy_dst_begin_ * inner_size;
-      memcpy(output + output_offset, input + input_offset, copy_size_ * inner_size * sizeof(T));
+      size_t copy_size = copy_size_ * inner_size * sizeof(T);
+      size_t dst_max_size = outputs[0]->size - output_offset;
+      (void)memcpy_s(output + output_offset, dst_max_size, input + input_offset, copy_size);
       size_t fill_offset = offset + fill_begin_ * inner_size;
-      std::fill_n(output + fill_offset, fill_size_ * inner_size, fill_value);
+      (void)std::fill_n(output + fill_offset, fill_size_ * inner_size, fill_value);
       return common::SUCCESS;
     });
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   return true;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

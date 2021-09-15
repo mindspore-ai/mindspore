@@ -254,10 +254,10 @@ bool PQCCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const s
       ComputerForwardBackward(params, start, end, i);
       return common::SUCCESS;
     };
-    tasks.emplace_back(task);
-    thread_params.emplace_back(params);
+    (void)tasks.emplace_back(task);
+    (void)thread_params.emplace_back(params);
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
   return true;
 }
 }  // namespace kernel

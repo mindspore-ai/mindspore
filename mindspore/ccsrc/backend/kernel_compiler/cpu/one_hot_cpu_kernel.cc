@@ -51,7 +51,7 @@ bool OneHotCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(int);
 
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &indices, &on_value, &off_value, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       size_t stride_num = i / stride_;
       size_t output_index = stride_num * depth_ * stride_ + i % stride_;

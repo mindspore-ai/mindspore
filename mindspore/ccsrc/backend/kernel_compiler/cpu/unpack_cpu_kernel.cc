@@ -49,7 +49,7 @@ void UnpackCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 void UnpackCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  workspace_size_list_.emplace_back(sizeof(T *) * output_num_);
+  (void)workspace_size_list_.emplace_back(sizeof(T *) * output_num_);
 }
 
 template <typename T>

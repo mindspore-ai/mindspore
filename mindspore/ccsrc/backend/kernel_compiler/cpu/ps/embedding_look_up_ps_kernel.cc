@@ -52,7 +52,7 @@ void EmbeddingLookUpPSKernel::InitKernel(
 
   size_t output_size =
     std::accumulate(output_shape.begin(), output_shape.end(), sizeof(float), std::multiplies<size_t>());
-  output_size_list_.emplace_back(output_size);
+  (void)output_size_list_.emplace_back(output_size);
 }
 
 void EmbeddingLookUpPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
@@ -64,7 +64,7 @@ void EmbeddingLookUpPSKernel::ReInit(const std::vector<std::vector<size_t>> &sha
     output_size *= input_shape_[i];
   }
   output_size_list_.clear();
-  output_size_list_.emplace_back(output_size);
+  (void)output_size_list_.emplace_back(output_size);
 }
 
 bool EmbeddingLookUpPSKernel::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

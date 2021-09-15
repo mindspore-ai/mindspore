@@ -59,10 +59,10 @@ void ComputeLazyAdam(MultiThreadComputeParams<T> *input_params, size_t start, si
 
 template <typename T>
 void SparseApplyLazyAdamCPUKernel::InitWorkspaceSize() {
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
-  workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
-  workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
+  (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float));
+  (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
 }
 
 void SparseApplyLazyAdamCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {

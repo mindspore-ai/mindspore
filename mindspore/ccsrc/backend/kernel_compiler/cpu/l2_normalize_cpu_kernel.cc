@@ -57,7 +57,7 @@ void L2NormalizeCPUKernel<T>::CalcDenominator(const T *input_addr, const size_t 
 
   TransposeIterator tran_base_iter(std::move(transpose_shape), std::move(axes), input_shape_);
 
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, &tran_base_iter, &input_addr, &denominator_addr, stride](size_t start, size_t end) {
     T temp = (T)0.0;
     T denominator = (T)0.0;
     auto iter = tran_base_iter;
@@ -115,11 +115,11 @@ bool L2NormalizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  int dims = input_shape_.size();
+  int dims = SizeToInt(input_shape_.size());
   std::vector<size_t> reduce_shape = input_shape_;
   size_t reduce_size = 1;
   reduce_shape[axis_] = 1;
-  for (int i = 0; i < dims; ++i) {
+  for (size_t i = 0; i < input_shape_.size(); ++i) {
     reduce_size *= reduce_shape[i];
   }
   auto denominator_addr = std::make_unique<T[]>(reduce_size);

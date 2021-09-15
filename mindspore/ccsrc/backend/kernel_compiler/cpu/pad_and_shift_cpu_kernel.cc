@@ -75,7 +75,7 @@ void PadAndShiftCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
   }
   std::vector<size_t> out_shape;
-  out_shape.emplace_back(output_size);
+  (void)out_shape.emplace_back(output_size);
   auto node_ = node_wpt_.lock();
   if (!node_) {
     MS_LOG(EXCEPTION) << "node_wpt_ is expired.";

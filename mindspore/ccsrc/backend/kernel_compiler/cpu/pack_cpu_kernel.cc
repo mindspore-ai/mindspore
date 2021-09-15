@@ -79,7 +79,7 @@ bool PackCpuFwdKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const st
 
   while (start < input_size) {
     size_t end = (start + batch_size) > input_size ? input_size : (start + batch_size);
-    threads.emplace_back(std::thread(&PackCpuFwdKernel::PackTensor, this, output, start, end));
+    (void)threads.emplace_back(std::thread(&PackCpuFwdKernel::PackTensor, this, output, start, end));
     start += batch_size;
   }
 

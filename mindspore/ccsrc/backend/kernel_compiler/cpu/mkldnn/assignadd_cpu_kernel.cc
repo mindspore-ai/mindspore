@@ -34,7 +34,7 @@ void AssignAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   if (src1_shape.size() < src0_shape.size()) {
     for (size_t i = src1_shape.size(); i < src0_shape.size(); ++i) {
-      src1_shape.emplace_back(1);
+      (void)src1_shape.emplace_back(1);
     }
   }
   dnnl::memory::desc src0_desc = GetDefaultMemDesc(src0_shape);

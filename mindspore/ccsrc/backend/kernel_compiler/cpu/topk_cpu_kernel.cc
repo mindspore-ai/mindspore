@@ -54,7 +54,7 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
   std::vector<common::Task> tasks;
   tasks.reserve(outer_size_);
   for (size_t i = 0; i < outer_size_; ++i) {
-    tasks.emplace_back([this, i, k_num, &comparator, input, workspace, indices, output]() {
+    (void)tasks.emplace_back([this, i, k_num, &comparator, input, workspace, indices, output]() {
       size_t *idx = workspace + i * inner_size_;
       auto base_input = i * inner_size_;
       std::iota(idx, idx + inner_size_, base_input);
@@ -81,7 +81,7 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
       return common::SUCCESS;
     });
   }
-  common::ThreadPool::GetInstance().SyncRun(tasks);
+  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 
 void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -99,7 +99,7 @@ void TopKCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   size_t element_size = outer_size_ * inner_size_;
   // id
-  workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
+  (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
 }
 
 bool TopKCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

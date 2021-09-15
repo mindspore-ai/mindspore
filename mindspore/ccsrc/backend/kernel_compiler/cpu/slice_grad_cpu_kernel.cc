@@ -218,8 +218,8 @@ void SliceGradCPUKernel::FormatArgs(bool stride) {
       while (size_[i] < 0) {
         size_[i] = size_[i] + SizeToInt(output_shape_[i]);
       }
-      strides_.emplace_back(1);
-      end_.emplace_back(begin_[i] + size_[i]);
+      (void)strides_.emplace_back(1);
+      (void)end_.emplace_back(begin_[i] + size_[i]);
     }
   }
 }

@@ -33,7 +33,7 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
     axis_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
   } else if (axis_addr->isa<Int64Imm>()) {
-    axis_.emplace_back(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
+    (void)axis_.emplace_back(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
   } else {
     MS_LOG(EXCEPTION) << "Attribute is invalid";
   }
@@ -133,7 +133,7 @@ bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
       if (simple_execute_) {
         auto task = [&](size_t start, size_t end) {
           for (size_t i = start; i < end; ++i) {
-            ReduceSumDim2Axis1(stride, input_addr + i * stride, output_addr + i);
+            (void)ReduceSumDim2Axis1(stride, input_addr + i * stride, output_addr + i);
             if (reduce_type_ == kReduceMean) {
               output_addr[i] /= stride;
             }

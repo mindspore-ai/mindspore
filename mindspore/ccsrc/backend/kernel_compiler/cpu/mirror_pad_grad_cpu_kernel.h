@@ -23,20 +23,6 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
-// preset size of paddings
-#define MAX_PADDINGS 4
-#define PADDING_SIZE 2
-
-// define constants for kernel indexing use
-#define BATCH 0
-#define CHANNEL 1 * PADDING_SIZE
-#define HEIGHT 2 * PADDING_SIZE
-#define WIDTH 3 * PADDING_SIZE
-#define TOP 0
-#define BOTTOM 1
-#define LEFT 0
-#define RIGHT 1
-
 namespace mindspore {
 namespace kernel {
 class MirrorPadGradCPUKernel : public CPUKernel {

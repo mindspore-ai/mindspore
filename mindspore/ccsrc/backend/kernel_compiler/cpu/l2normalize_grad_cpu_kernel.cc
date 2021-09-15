@@ -24,7 +24,7 @@ void L2NormalizeGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   CheckIONumber(kernel_node);
   for (size_t i = 0; i < INPUT_SIZE; i++) {
-    input_shape_list_.emplace_back(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
+    (void)input_shape_list_.emplace_back(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
   }
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   CheckInputShape(output_shape);
@@ -50,7 +50,7 @@ bool L2NormalizeGradCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
   auto dout = reinterpret_cast<T *>(inputs[2]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   auto output_size = outputs[0]->size / sizeof(T);
-  auto task = [&](size_t start, size_t end) {
+  auto task = [this, input_x, y, dout, output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       std::vector<size_t> high_dim_index = OneDimIndexToHighDimIndex(i);
       std::vector<T> input_x_vector = GetVector(high_dim_index, input_x);
@@ -123,7 +123,7 @@ std::vector<T> L2NormalizeGradCPUKernel<T>::GetVector(const std::vector<size_t> 
     std::vector<size_t> tmp_high_dim_index = high_dim_index;
     tmp_high_dim_index[axis_] = i;
     HighDimIndexToOneDimIndex(&oneDimIndex, tmp_high_dim_index);
-    x_vector.emplace_back(x[oneDimIndex]);
+    (void)x_vector.emplace_back(x[oneDimIndex]);
   }
   // referred to Copy elision https://en.cppreference.com/w/cpp/language/copy_elision
   // returning a vector won't cause extra vector constructed or moved

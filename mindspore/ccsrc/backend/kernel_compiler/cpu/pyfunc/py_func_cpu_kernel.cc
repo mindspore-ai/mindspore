@@ -123,7 +123,7 @@ void ScalarToRawMemory(const py::object &obj, const TypePtr &type, const Address
       return;
     }
     case kNumberTypeFloat64: {
-      float data = py::cast<double>(obj);
+      double data = py::cast<double>(obj);
       CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, &data, sizeof(double)), EOK, "memcpy failed.");
       return;
     }
@@ -238,14 +238,14 @@ void PyFuncCpuKernel::BuildFuncInfo(const CNodePtr &kernel_node) {
     input_tensors_.push_back(tensor);
 
     const auto &object_type = in_shapes[i].empty() ? PythonOjectType::kScalar : PythonOjectType::kNumpyArray;
-    input_infos_.object_types.emplace_back(object_type);
+    (void)input_infos_.object_types.emplace_back(object_type);
   }
 
   output_infos_.dtypes = out_types;
   output_infos_.shapes = out_shapes;
   for (size_t j = 0; j < out_shapes.size(); j++) {
     const auto &object_type = out_shapes[j].empty() ? PythonOjectType::kScalar : PythonOjectType::kNumpyArray;
-    output_infos_.object_types.emplace_back(object_type);
+    (void)output_infos_.object_types.emplace_back(object_type);
   }
 }
 

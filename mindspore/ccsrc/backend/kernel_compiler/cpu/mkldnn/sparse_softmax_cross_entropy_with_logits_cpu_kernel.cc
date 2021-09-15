@@ -29,7 +29,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitInputOutputSize(const CNo
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-  workspace_size_list_.emplace_back(tensor_size);
+  (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
 void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_node) {
