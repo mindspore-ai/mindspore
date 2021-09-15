@@ -26,24 +26,24 @@ using mindspore::schema::PrimitiveType_SpaceToBatchND;
 
 namespace mindspore::kernel {
 void SpaceToBatchCPUKernel::ProcessInput() {
-  auto input_tensor = in_tensors_.at(0);
-  auto output_tensor = out_tensors_.at(0);
+  auto input_tensor = in_tensors_.at(FIRST_INPUT);
+  auto output_tensor = out_tensors_.at(FIRST_INPUT);
   for (size_t i = 0; i < DIMENSION_4D; i++) {
     param_->input_shape_[i] = input_tensor->shape().at(i);
     param_->output_shape_[i] = output_tensor->shape().at(i);
   }
   ComputeStrides(param_->input_shape_, param_->in_stride_, DIMENSION_4D);
   ComputeStrides(param_->output_shape_, param_->out_stride_, DIMENSION_4D);
-  auto block_shape_data = in_tensors_.at(1)->data();
+  auto block_shape_data = in_tensors_.at(SECOND_INPUT)->data();
   auto block_shape = static_cast<int *>(block_shape_data);
   MS_ASSERT(block_shape != nullptr);
-  for (int i = 0; i < in_tensors_.at(1)->ElementsNum(); i++) {
+  for (int i = 0; i < in_tensors_.at(SECOND_INPUT)->ElementsNum(); i++) {
     param_->block_sizes_[i] = block_shape[i];
   }
-  auto padding_data = in_tensors_.at(2)->data();
+  auto padding_data = in_tensors_.at(THIRD_INPUT)->data();
   auto padding = static_cast<int *>(padding_data);
   MS_ASSERT(padding != nullptr);
-  for (int i = 0; i < in_tensors_.at(2)->ElementsNum(); i++) {
+  for (int i = 0; i < in_tensors_.at(THIRD_INPUT)->ElementsNum(); i++) {
     param_->paddings_[i] = padding[i];
   }
 }
@@ -64,14 +64,14 @@ int SpaceToBatchFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int SpaceToBatchCPUKernel::ReSize() {
-  if (in_tensors_.size() == 3) {
-    if (in_tensors_.at(1) != nullptr && in_tensors_.at(1)->IsConst() && in_tensors_.at(2) != nullptr &&
-        in_tensors_.at(2)->IsConst()) {
+  if (in_tensors_.size() == DIMENSION_3D) {
+    if (in_tensors_.at(SECOND_INPUT) != nullptr && in_tensors_.at(SECOND_INPUT)->IsConst() &&
+        in_tensors_.at(THIRD_INPUT) != nullptr && in_tensors_.at(THIRD_INPUT)->IsConst()) {
       ProcessInput();
     }
   }
-  auto input_tensor = in_tensors_.at(0);
-  auto output_tensor = out_tensors_.at(0);
+  auto input_tensor = in_tensors_.at(FIRST_INPUT);
+  auto output_tensor = out_tensors_.at(FIRST_INPUT);
   for (size_t i = 0; i < DIMENSION_4D; i++) {
     param_->input_shape_[i] = input_tensor->shape().at(i);
     param_->output_shape_[i] = output_tensor->shape().at(i);
@@ -90,12 +90,12 @@ int SpaceToBatchCPUKernel::DoRun(int task_id) {
 }
 
 int SpaceToBatchCPUKernel::Run() {
-  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data());
+  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
   MS_ASSERT(input_ptr_ != nullptr);
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(FIRST_INPUT)->data());
   MS_ASSERT(output_ptr_ != nullptr);
-  if (in_tensors_.size() == 3) {
-    if (!in_tensors_[1]->IsConst() || !in_tensors_[2]->IsConst()) {
+  if (in_tensors_.size() == DIMENSION_3D) {
+    if (!in_tensors_.at(SECOND_INPUT)->IsConst() || !in_tensors_.at(THIRD_INPUT)->IsConst()) {
       ProcessInput();
     }
   }

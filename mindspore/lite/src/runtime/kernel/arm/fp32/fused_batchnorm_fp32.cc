@@ -23,9 +23,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FusedBatchNorm;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int kNumInputSize = 5;
-}  // namespace
 int FusedBatchnormCPUKernel::ReSize() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
@@ -77,7 +74,7 @@ int FusedBatchnormCPUKernel::InitConstTensor() {
 int FusedBatchnormCPUKernel::Run() {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   MS_ASSERT(param != nullptr);
-  if (IsTrain() && IsTrainable() && in_tensors_.size() >= kNumInputSize) {
+  if (IsTrain() && IsTrainable() && in_tensors_.size() >= DIMENSION_5D) {
     float *in = static_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
     float *scale = static_cast<float *>(in_tensors_.at(SECOND_INPUT)->data());
     float *offset = static_cast<float *>(in_tensors_.at(THIRD_INPUT)->data());
@@ -140,8 +137,8 @@ int FusedBatchnormCPUKernel::Eval() {
 
 int FusedBatchnormCPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  auto in_data = in_tensors_.at(0)->data();
-  auto out_data = out_tensors_.at(0)->data();
+  auto in_data = in_tensors_.at(FIRST_INPUT)->data();
+  auto out_data = out_tensors_.at(FIRST_INPUT)->data();
   CHECK_NULL_RETURN(in_data);
   CHECK_NULL_RETURN(out_data);
   FusedBatchNormFp32(in_data, scale_, offset_, mean_, variance_, param, task_id, out_data);
