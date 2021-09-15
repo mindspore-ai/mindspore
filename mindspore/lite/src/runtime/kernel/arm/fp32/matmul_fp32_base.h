@@ -22,6 +22,7 @@
 #include "src/inner_kernel.h"
 #include "nnacl/matmul_parameter.h"
 #include "include/errorcode.h"
+#include "src/common/common.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;

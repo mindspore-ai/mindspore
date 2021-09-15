@@ -20,18 +20,15 @@
 #include "nnacl/fp32/matmul_fp32.h"
 #include "src/kernel_registry.h"
 
+using mindspore::lite::kCHWDimNumber;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::kHWDimNumber;
+using mindspore::lite::kNCHWDimNumber;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
-namespace {
-constexpr size_t HWDIMS = 2;
-constexpr size_t CHWDIMS = 3;
-constexpr size_t NCHWDIMS = 4;
-}  // namespace
-
 void MatmulCPUKernel::InitShapeA() {
   auto a_shape = in_tensors_.at(0)->shape();
   int batch = 1;
@@ -78,22 +75,22 @@ int MatmulCPUKernel::Init() {
 
 int MatmulCPUKernel::InitBroadcastParams() {
   auto a_shape = in_tensors_[kInputIndex]->shape();
-  if (a_shape.size() < NCHWDIMS) {
-    size_t add_nums = NCHWDIMS - a_shape.size();
+  if (a_shape.size() < kNCHWDimNumber) {
+    size_t add_nums = kNCHWDimNumber - a_shape.size();
     for (size_t i = 0; i < add_nums; ++i) {
       a_shape.insert(a_shape.begin(), 1);
     }
   }
   auto b_shape = in_tensors_[kWeightIndex]->shape();
-  if (b_shape.size() < NCHWDIMS) {
-    size_t add_nums = NCHWDIMS - b_shape.size();
+  if (b_shape.size() < kNCHWDimNumber) {
+    size_t add_nums = kNCHWDimNumber - b_shape.size();
     for (size_t i = 0; i < add_nums; ++i) {
       b_shape.insert(b_shape.begin(), 1);
     }
   }
 
-  for (int i = a_shape.size() - CHWDIMS; i >= 0; --i) {
-    if (static_cast<int>(a_shape.size() - CHWDIMS) == i) {
+  for (int i = a_shape.size() - kCHWDimNumber; i >= 0; --i) {
+    if (static_cast<int>(a_shape.size() - kCHWDimNumber) == i) {
       batch_sizes_[i] = std::max(a_shape[i], b_shape[i]);
       a_batch_sizes_[i] = a_shape[i];
       b_batch_sizes_[i] = b_shape[i];
@@ -105,7 +102,7 @@ int MatmulCPUKernel::InitBroadcastParams() {
   }
 
   int out_batch = 1;
-  for (size_t i = 0; i < a_shape.size() - HWDIMS; ++i) {
+  for (size_t i = 0; i < a_shape.size() - kHWDimNumber; ++i) {
     out_batch *= MSMAX(a_shape[i], b_shape[i]);
     if (a_shape[i] < b_shape[i] && a_shape[i] == 1) {
       a_broadcast_ = true;
