@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/ops_info/gather_v2_p_info.h"
+#include "frontend/parallel/ops_info/gather_info.h"
 
 #include <vector>
 #include <numeric>
@@ -32,7 +32,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status GatherPInfo::GetManualSplitWithoutOffsetAttr() {
+Status GatherInfo::GetManualSplitWithoutOffsetAttr() {
   auto manual_split_without_offset_iter = attrs_.find("manual_split");
   if (manual_split_without_offset_iter != attrs_.end()) {
     manual_split_ = true;
@@ -68,7 +68,7 @@ Status GatherPInfo::GetManualSplitWithoutOffsetAttr() {
   return SUCCESS;
 }
 
-Status GatherPInfo::GetManualSplitAttr() {
+Status GatherInfo::GetManualSplitAttr() {
   auto manual_split_with_offset_iter = attrs_.find("manual_split_with_offset");
   if (manual_split_with_offset_iter != attrs_.end()) {
     manual_split_ = true;
@@ -118,7 +118,7 @@ Status GatherPInfo::GetManualSplitAttr() {
   return SUCCESS;
 }
 
-Status GatherPInfo::GetAttrs() {
+Status GatherInfo::GetAttrs() {
   // get axis, the third input is the axis, is a ValueNode, embeddinglookup doesn't have axis.
   if (target_ != CPU) {
     if (input_value_.at(2) == nullptr) {
@@ -170,7 +170,7 @@ Status GatherPInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status GatherPInfo::CheckManualSplit(const Strategys &strategy) {
+Status GatherInfo::CheckManualSplit(const Strategys &strategy) {
   if (strategy.size() != 2) {
     MS_LOG(ERROR) << name_ << ": The size of strategy must be 2, but got " << strategy.size();
     return FAILED;
@@ -226,7 +226,7 @@ Status GatherPInfo::CheckManualSplit(const Strategys &strategy) {
   return SUCCESS;
 }
 
-Status GatherPInfo::CheckSplitAxisStrategy(const StrategyPtr &strategy) {
+Status GatherInfo::CheckSplitAxisStrategy(const StrategyPtr &strategy) {
   auto param_strategy = strategy->GetInputDim().at(0);
   auto index_strategy = strategy->GetInputDim().at(1);
   // param_strategy(axis) != 1, index can't be split
@@ -255,7 +255,7 @@ Status GatherPInfo::CheckSplitAxisStrategy(const StrategyPtr &strategy) {
 
 // return true: axis is 0, and split the first dimension of parameter and the first dimension of indices
 // otherwise return false
-bool GatherPInfo::ShardBatchAndAxis(const Strategys &strategy) const {
+bool GatherInfo::ShardBatchAndAxis(const Strategys &strategy) const {
   if (axis_ != 0) {
     return false;
   }
@@ -285,7 +285,7 @@ bool GatherPInfo::ShardBatchAndAxis(const Strategys &strategy) const {
   return true;
 }
 
-void GatherPInfo::SetAttribute(const StrategyPtr &strategy) {
+void GatherInfo::SetAttribute(const StrategyPtr &strategy) {
   auto param_strategy = strategy->GetInputDim().at(0);
   // axis=0, index_shape(0)%param_strategy(0) must be 0
   Shape index_shape = inputs_shape_.at(1);
@@ -312,7 +312,7 @@ void GatherPInfo::SetAttribute(const StrategyPtr &strategy) {
   MS_LOG(INFO) << "Set repeated_num_in_dev_matrix_right for gather to " << repeated_num_in_dev_matrix_right_;
 }
 
-Status GatherPInfo::CheckStrategy(const StrategyPtr &strategy) {
+Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
   }
@@ -373,7 +373,7 @@ Status GatherPInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status GatherPInfo::InferMirrorOps() {
+Status GatherInfo::InferMirrorOps() {
   // There is no mirror operators for manual split
   if (manual_split_) {
     return SUCCESS;
@@ -403,7 +403,7 @@ Status GatherPInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-Status GatherPInfo::InferDevMatrixShape() {
+Status GatherInfo::InferDevMatrixShape() {
   dev_matrix_shape_.clear();
   out_dev_matrix_shape_.clear();
   // infer input dev_matrix_shape
@@ -460,7 +460,7 @@ Status GatherPInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-void GatherPInfo::InferInputsTensorMap() {
+void GatherInfo::InferInputsTensorMap() {
   // infer input tensor map
   // param_strategy(axis) is not 1
   size_t param_size = inputs_shape_.at(0).size();
@@ -487,7 +487,7 @@ void GatherPInfo::InferInputsTensorMap() {
   inputs_tensor_map_.emplace_back(std::move(tensor_map_index));
 }
 
-void GatherPInfo::InferOutputsTensorMap() {
+void GatherInfo::InferOutputsTensorMap() {
   // infer output tensor map
   size_t param_size = inputs_shape_.at(0).size();
   size_t index_size = inputs_shape_.at(1).size();
@@ -534,7 +534,7 @@ void GatherPInfo::InferOutputsTensorMap() {
   (void)outputs_tensor_map_.emplace_back(std::move(tensor_map_out));
 }
 
-Status GatherPInfo::InferTensorMap() {
+Status GatherInfo::InferTensorMap() {
   if (manual_split_) {
     Shape param_map = {1, 0};
     Shape indices_map = {-1, 1};
@@ -560,7 +560,7 @@ Status GatherPInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status GatherPInfo::InferTensorInfo() {
+Status GatherInfo::InferTensorInfo() {
   // infer tensor shape
   Shape input_shape = inputs_shape_.at(0);
   Shape input_index_shape = inputs_shape_.at(1);
@@ -593,7 +593,7 @@ Status GatherPInfo::InferTensorInfo() {
   return SUCCESS;
 }
 
-Status GatherPInfo::InferBias() {
+Status GatherInfo::InferBias() {
   CheckGlobalDeviceManager();
   int64_t rank = g_device_manager->rank_index_in_stage();
   auto input_shape = inputs_shape_.at(0);
@@ -656,7 +656,7 @@ Status GatherPInfo::InferBias() {
   return FAILED;
 }
 
-Status GatherPInfo::InferOffset() {
+Status GatherInfo::InferOffset() {
   CheckGlobalDeviceManager();
   size_t rank = LongToSize(g_device_manager->rank_index_in_stage());
 
@@ -677,7 +677,7 @@ Status GatherPInfo::InferOffset() {
   return FAILED;
 }
 
-Status GatherPInfo::InferGroup() {
+Status GatherInfo::InferGroup() {
   size_t dim = LongToSize(axis_);
 
   int64_t rank = g_device_manager->global_rank();
@@ -708,7 +708,7 @@ Status GatherPInfo::InferGroup() {
   return SUCCESS;
 }
 
-Status GatherPInfo::InferForwardCommunication() {
+Status GatherInfo::InferForwardCommunication() {
   if (manual_split_) {
     return SUCCESS;
   }
@@ -745,7 +745,7 @@ Status GatherPInfo::InferForwardCommunication() {
   return SUCCESS;
 }
 
-Status GatherPInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
+Status GatherInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph(attrs_);
   if (gen_g.Init(cnode) != SUCCESS) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
@@ -805,7 +805,7 @@ Status GatherPInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   return SUCCESS;
 }
 
-ReplaceGraphPtr GatherPInfo::replace_graph(const CNodePtr &cnode) {
+ReplaceGraphPtr GatherInfo::replace_graph(const CNodePtr &cnode) {
   if (manual_split_ && target_ != CPU) {
     if (ComputeReplaceGraph(cnode) != SUCCESS) {
       MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
@@ -824,7 +824,7 @@ ReplaceGraphPtr GatherPInfo::replace_graph(const CNodePtr &cnode) {
   return replace_graph_;
 }
 
-Status GatherPInfo::ComputeReplaceOp() {
+Status GatherInfo::ComputeReplaceOp() {
   int64_t bias = 0;
   if (manual_split_) {
     if (InferOffset() != SUCCESS) {
@@ -851,7 +851,7 @@ Status GatherPInfo::ComputeReplaceOp() {
   return SUCCESS;
 }
 
-Status GatherPInfo::Init(const StrategyPtr &strategy) {
+Status GatherInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -864,7 +864,7 @@ Status GatherPInfo::Init(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status GatherPInfo::InitForCostModel(const StrategyPtr &strategy) {
+Status GatherInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
@@ -882,9 +882,9 @@ Status GatherPInfo::InitForCostModel(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status GatherPInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+Status GatherInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-std::vector<StrategyPtr> GatherPInfo::GenerateOpStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> GatherInfo::GenerateOpStrategies(int64_t stage_id) {
   if (manual_split_) {
     MS_LOG(EXCEPTION) << name_ << ": Manual split does not support to search strategy";
   }
@@ -900,7 +900,7 @@ std::vector<StrategyPtr> GatherPInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-std::shared_ptr<Strategys> GatherPInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategys> GatherInfo::GenerateBatchStrategies() {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
   }
