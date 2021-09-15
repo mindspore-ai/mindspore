@@ -76,7 +76,7 @@ template <typename T>
 void CompareOutput(Tensor *output_tensor, const std::string &file_path, float atol, float rtol = 1e-9) {
   size_t output_size;
   auto expect_data = lite::ReadFile(file_path.c_str(), &output_size);
-  CompareOutput<T>(output_tensor->data_c(), expect_data, output_tensor->ElementsNum(), atol, rtol);
+  CompareOutput<T>(output_tensor->data(), expect_data, output_tensor->ElementsNum(), atol, rtol);
 }
 
 template <typename T>

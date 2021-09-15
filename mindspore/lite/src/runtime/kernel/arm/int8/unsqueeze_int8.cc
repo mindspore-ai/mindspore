@@ -61,9 +61,9 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
     return RET_OK;
   }
 
-  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.front()->data_c());
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.front()->data());
   CHECK_NULL_RETURN(input_ptr);
-  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.front()->data_c());
+  auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(output_ptr);
   size_t data_size = out_tensors_.front()->Size();
 
@@ -87,9 +87,9 @@ int UnsqueezeIn8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 }
 
 int Unsqueezeint8CPUKernel::Run() {
-  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  in_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(in_ptr_);
-  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  out_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(out_ptr_);
   auto ret = ParallelLaunch(this->ms_context_, UnsqueezeIn8Run, this, thread_sz_count_);
   if (ret != RET_OK) {

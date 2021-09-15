@@ -46,32 +46,32 @@ int InstanceNormFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto gamma = in_tensors_.at(1);
-  CHECK_NULL_RETURN(gamma->data_c());
+  CHECK_NULL_RETURN(gamma->data());
   if (gamma->data_type() == kNumberTypeFloat32) {
     gamma_data_ = reinterpret_cast<float16_t *>(malloc(gamma->ElementsNum() * sizeof(float16_t)));
     if (gamma_data_ == nullptr) {
       MS_LOG(ERROR) << "InstanceNorm fp16 kernel malloc gamma_data_ error.";
       return RET_ERROR;
     }
-    Float32ToFloat16(reinterpret_cast<float *>(gamma->data_c()), gamma_data_, gamma->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(gamma->data()), gamma_data_, gamma->ElementsNum());
   } else if (gamma->data_type() == kNumberTypeFloat16) {
-    gamma_data_ = reinterpret_cast<float16_t *>(gamma->data_c());
+    gamma_data_ = reinterpret_cast<float16_t *>(gamma->data());
   } else {
     MS_LOG(ERROR) << "Unsupported data type of gamma tensor for instance norm.";
     return RET_ERROR;
   }
 
   auto beta = in_tensors_.at(2);
-  CHECK_NULL_RETURN(beta->data_c());
+  CHECK_NULL_RETURN(beta->data());
   if (beta->data_type() == kNumberTypeFloat32) {
     beta_data_ = reinterpret_cast<float16_t *>(malloc(beta->ElementsNum() * sizeof(float16_t)));
     if (beta_data_ == nullptr) {
       MS_LOG(ERROR) << "InstanceNorm fp16 kernel malloc beta_data_ error.";
       return RET_ERROR;
     }
-    Float32ToFloat16(reinterpret_cast<float *>(beta->data_c()), beta_data_, beta->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(beta->data()), beta_data_, beta->ElementsNum());
   } else if (beta->data_type() == kNumberTypeFloat16) {
-    beta_data_ = reinterpret_cast<float16_t *>(beta->data_c());
+    beta_data_ = reinterpret_cast<float16_t *>(beta->data());
   } else {
     MS_LOG(ERROR) << "Unsupported data type of beta tensor for instance norm.";
     return RET_ERROR;
@@ -116,8 +116,8 @@ int InstanceNormFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int InstanceNormFp16CPUKernel::Run() {
-  src_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  dst_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  src_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+  dst_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(src_data_);
   CHECK_NULL_RETURN(dst_data_);
   auto ret = ParallelLaunch(this->ms_context_, InstanceNormFp16Run, this, op_parameter_->thread_num_);

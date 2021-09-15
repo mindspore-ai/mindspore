@@ -264,7 +264,7 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
   for (const auto &item : ctx->tensors_map()) {
     Tensor *tensor = item.first;
     std::string name = item.second;
-    if (tensor->data_c() != nullptr && !(CheckConstantTensor(tensor))) {
+    if (tensor->data() != nullptr && !(CheckConstantTensor(tensor))) {
       ofs << name << ", ";
       num++;
     }

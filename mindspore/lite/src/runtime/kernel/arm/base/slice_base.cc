@@ -41,9 +41,9 @@ int SliceCPUKernel::ReSize() {
   MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(begin_tensor->ElementsNum()));
   MS_ASSERT(in_tensor->shape().size() == static_cast<size_t>(size_tensor->ElementsNum()));
   MS_ASSERT(in_tensor->shape().size() <= DIMENSION_8D);
-  auto begin = reinterpret_cast<int32_t *>(begin_tensor->data_c());
+  auto begin = reinterpret_cast<int32_t *>(begin_tensor->data());
   CHECK_NULL_RETURN(begin);
-  auto size = reinterpret_cast<int32_t *>(size_tensor->data_c());
+  auto size = reinterpret_cast<int32_t *>(size_tensor->data());
   CHECK_NULL_RETURN(size);
 
   param_->param_length_ = in_tensor->shape().size();
@@ -78,14 +78,14 @@ int SliceCPUKernel::Init() {
 }
 
 int SliceCPUKernel::SliceParallelRun(int thread_id) {
-  DoSlice(in_tensors_.at(0)->data_c(), out_tensors_.at(0)->data_c(), param_, thread_id,
+  DoSlice(in_tensors_.at(0)->data(), out_tensors_.at(0)->data(), param_, thread_id,
           lite::DataTypeSize(in_tensors_.at(0)->data_type()));
   return RET_OK;
 }
 
 int SliceCPUKernel::Run() {
-  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   if (input_data == nullptr || output_data == nullptr) {
     return RET_NULL_PTR;
   }

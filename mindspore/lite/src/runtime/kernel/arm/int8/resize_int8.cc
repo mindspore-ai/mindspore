@@ -313,11 +313,11 @@ int ResizeInt8Impl(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 
 int ResizeInt8CPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
-  auto input_data = reinterpret_cast<const int8_t *>(input->data_c());
+  auto input_data = reinterpret_cast<const int8_t *>(input->data());
   if (input_data == nullptr) {
     return RET_NULL_PTR;
   }
-  auto output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  auto output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
   if (output_data == nullptr) {
     return RET_NULL_PTR;
   }

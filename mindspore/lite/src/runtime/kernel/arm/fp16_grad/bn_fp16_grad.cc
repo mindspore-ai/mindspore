@@ -87,9 +87,9 @@ int BNGradCPUKernelFp16::Execute(int task_id) {
   auto bn_param = reinterpret_cast<BNGradParameter *>(op_parameter_);
   int stage = stage_;
   int thread_num = thread_num_;
-  float16_t *save_mean = reinterpret_cast<float16_t *>(input_mean->data_c());
+  float16_t *save_mean = reinterpret_cast<float16_t *>(input_mean->data());
   CHECK_NULL_RETURN(save_mean);
-  float16_t *save_var = reinterpret_cast<float16_t *>(input_var->data_c());
+  float16_t *save_var = reinterpret_cast<float16_t *>(input_var->data());
   CHECK_NULL_RETURN(save_var);
 
   auto *output_dx = out_tensors_.at(0);
@@ -103,12 +103,12 @@ int BNGradCPUKernelFp16::Execute(int task_id) {
   CHECK_NULL_RETURN(workspace_temp);
   float *dxhat_sum = workspace_temp;
   float *dxhathat_sum = dxhat_sum + channels;
-  float16_t *x = reinterpret_cast<float16_t *>(input_x->data_c());
-  float16_t *yt = reinterpret_cast<float16_t *>(input_yt->data_c());
-  float16_t *scale = reinterpret_cast<float16_t *>(input_scale->data_c());
-  float16_t *dx = reinterpret_cast<float16_t *>(output_dx->data_c());
-  float16_t *dbias = reinterpret_cast<float16_t *>(output_bias->data_c());
-  float16_t *dscale = reinterpret_cast<float16_t *>(output_scale->data_c());
+  float16_t *x = reinterpret_cast<float16_t *>(input_x->data());
+  float16_t *yt = reinterpret_cast<float16_t *>(input_yt->data());
+  float16_t *scale = reinterpret_cast<float16_t *>(input_scale->data());
+  float16_t *dx = reinterpret_cast<float16_t *>(output_dx->data());
+  float16_t *dbias = reinterpret_cast<float16_t *>(output_bias->data());
+  float16_t *dscale = reinterpret_cast<float16_t *>(output_scale->data());
   int total = spatial * batch;
   int stride = UP_DIV(total, thread_num);
   int count = MSMIN(stride, total - stride * task_id);

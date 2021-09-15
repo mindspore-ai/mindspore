@@ -46,11 +46,11 @@ int TopKInt8CPUKernel::ReSize() {
 }
 
 int TopKInt8CPUKernel::Run() {
-  int8_t *input_data = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
+  int8_t *input_data = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(input_data);
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
-  int32_t *output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->data_c());
+  int32_t *output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->data());
   CHECK_NULL_RETURN(output_index);
 
   MS_ASSERT(ms_context_->allocator != nullptr);

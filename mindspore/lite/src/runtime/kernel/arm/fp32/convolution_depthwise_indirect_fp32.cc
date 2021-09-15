@@ -130,7 +130,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocPackedInput() {
 
 int ConvolutionDepthwiseIndirectCPUKernel::Run() {
   auto input_tensor = in_tensors_.at(kInputIndex);
-  auto input_ptr = reinterpret_cast<float *>(input_tensor->data_c());
+  auto input_ptr = reinterpret_cast<float *>(input_tensor->data());
   MS_ASSERT(input_ptr != nullptr);
 #ifdef ENABLE_AVX
   int div_flag = C8NUM;
@@ -158,7 +158,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
     return RET_ERROR;
   }
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
+  output_ptr_ = reinterpret_cast<float *>(output_tensor->data());
   MS_ASSERT(output_ptr_ != nullptr);
   ConvDwInitIndirection(indirect_buffer_, packed_input_, zero_ptr_, conv_param_, step_h, step_w);
 
@@ -175,7 +175,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
 
 void ConvolutionDepthwiseIndirectCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
   PackDepthwiseIndirectWeightC8Fp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),

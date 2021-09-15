@@ -30,7 +30,7 @@ int FullConnectionBaseCoder::Init() {
   if (input_tensors_.size() == kInputSize2) {
     bias_tensor_ = input_tensors_.at(kBiasIndex);
     MS_CHECK_PTR(bias_tensor_);
-    MS_CHECK_PTR(bias_tensor_->data_c());
+    MS_CHECK_PTR(bias_tensor_->data());
   }
   return RET_OK;
 }

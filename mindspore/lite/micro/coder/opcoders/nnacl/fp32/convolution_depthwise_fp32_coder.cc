@@ -30,7 +30,7 @@ int ConvolutionDepthwiseFP32Coder::Prepare(CoderContext *const context) {
 }
 
 int ConvolutionDepthwiseFP32Coder::InitWeightBias() {
-  auto *origin_weight = reinterpret_cast<float *>(filter_tensor_->data_c());
+  auto *origin_weight = reinterpret_cast<float *>(filter_tensor_->data());
   MS_CHECK_PTR(origin_weight);
   int channel = filter_tensor_->Batch();
   size_t pack_weight_size = filter_tensor_->Batch() * filter_tensor_->Height() * filter_tensor_->Width();
@@ -49,7 +49,7 @@ int ConvolutionDepthwiseFP32Coder::InitWeightBias() {
   MS_CHECK_RET_CODE(memset_s(bias_, bias_size, 0, bias_size), "memset bias failed!");
   // init bias
   if (input_tensors_.size() == kInputSize2) {
-    auto *ori_bias = reinterpret_cast<float *>(bias_tensor_->data_c());
+    auto *ori_bias = reinterpret_cast<float *>(bias_tensor_->data());
     MS_CHECK_TRUE(bias_tensor_->ElementsNum() > 0, "invalid bias length");
     MS_CHECK_RET_CODE(memcpy_s(bias_, bias_size, ori_bias, bias_tensor_->Size()), "memcpy_s bias failed!");
   }

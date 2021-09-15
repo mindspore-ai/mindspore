@@ -65,8 +65,8 @@ int GatherOpenCLKernel::CheckSpecs() {
   if (CheckParamLikeTensor("Gather", "axis", in_tensors_.at(2), kNumberTypeInt32, {1}) != RET_OK) {
     return RET_ERROR;
   }
-  axis_ = *reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
-  if (in_tensors_.at(2)->data_c() == nullptr) {
+  axis_ = *reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
+  if (in_tensors_.at(2)->data() == nullptr) {
     MS_LOG(ERROR) << "GatherOpenCLKernel need Axis.";
     return RET_ERROR;
   }
@@ -151,7 +151,7 @@ int GatherOpenCLKernel::Prepare() {
 int GatherOpenCLKernel::ConvertTensorToweight() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto indices_tensor = in_tensors_.at(1);
-  if (allocator->MapBuffer(indices_tensor->data_c(), CL_MAP_WRITE, nullptr, true) == nullptr) {
+  if (allocator->MapBuffer(indices_tensor->data(), CL_MAP_WRITE, nullptr, true) == nullptr) {
     MS_LOG(ERROR) << "Map Buffer failed.";
     return RET_ERROR;
   }
@@ -171,7 +171,7 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
     return RET_ERROR;
   }
   auto data_type = indices_tensor->data_type();
-  auto data = indices_tensor->data_c();
+  auto data = indices_tensor->data();
   MS_ASSERT(data);
   if (data_type == kNumberTypeInt32) {
     for (int i = 0; i < indices_num; i++) {
@@ -186,7 +186,7 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
-  if (allocator->UnmapBuffer(indices_tensor->data_c()) != RET_OK) {
+  if (allocator->UnmapBuffer(indices_tensor->data()) != RET_OK) {
     MS_LOG(ERROR) << "UnmapBuffer failed.";
     return RET_ERROR;
   }
@@ -205,7 +205,7 @@ int GatherOpenCLKernel::InitWeights() {
   }
 
   auto data_type = indices_tensor->data_type();
-  auto data = indices_tensor->data_c();
+  auto data = indices_tensor->data();
   MS_ASSERT(data);
   if (data_type == kNumberTypeInt32) {
     for (int i = 0; i < indices_num; i++) {
@@ -250,11 +250,11 @@ int GatherOpenCLKernel::Run() {
       return ret;
     }
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

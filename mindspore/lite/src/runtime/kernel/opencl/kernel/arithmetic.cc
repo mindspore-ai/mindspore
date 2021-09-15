@@ -94,7 +94,7 @@ int ArithmeticOpenCLKernel::InitWeights() {
     if (in_tensor->IsConst()) {
       std::vector<char> weight(in_shape.Image2DSize, 0);
       bool src_is_fp16 = in_tensor->data_type() == kNumberTypeFloat16;
-      PackNHWCToNHWC4(in_tensor->data_c(), weight.data(), src_is_fp16, fp16_enable, in_shape);
+      PackNHWCToNHWC4(in_tensor->data(), weight.data(), src_is_fp16, fp16_enable, in_shape);
       size_t dtype = fp16_enable ? CL_HALF_FLOAT : CL_FLOAT;
       ImageSize img_size{in_shape.width, in_shape.height, dtype};
       auto weight_ptr_ = allocator->Malloc(img_size, weight.data());
@@ -232,8 +232,8 @@ int ArithmeticOpenCLKernel::Prepare() {
 
 int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  auto input_0_ptr = weight_ptrs_[0] == nullptr ? in_tensors_[0]->data_c() : weight_ptrs_[0];
-  auto input_1_ptr = weight_ptrs_[1] == nullptr ? in_tensors_[1]->data_c() : weight_ptrs_[1];
+  auto input_0_ptr = weight_ptrs_[0] == nullptr ? in_tensors_[0]->data() : weight_ptrs_[0];
+  auto input_1_ptr = weight_ptrs_[1] == nullptr ? in_tensors_[1]->data() : weight_ptrs_[1];
   int arg_idx = 0;
   if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_0_ptr) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
@@ -243,7 +243,7 @@ int ArithmeticOpenCLKernel::Run() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

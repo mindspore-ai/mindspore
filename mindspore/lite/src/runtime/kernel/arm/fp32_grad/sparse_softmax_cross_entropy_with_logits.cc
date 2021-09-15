@@ -81,11 +81,11 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *lab
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   auto sce_param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(op_parameter_);
-  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(ins);
-  auto labels = reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
+  auto labels = reinterpret_cast<int *>(in_tensors_.at(1)->data());
   CHECK_NULL_RETURN(labels);
-  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  float *out = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(out);
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   float *losses = static_cast<float *>(workspace());

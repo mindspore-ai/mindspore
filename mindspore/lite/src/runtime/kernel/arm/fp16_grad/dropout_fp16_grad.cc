@@ -62,9 +62,9 @@ int DropoutGradCPUKernelFp16::Init() {
 int DropoutGradCPUKernelFp16::ReSize() { return RET_OK; }
 
 int DropoutGradCPUKernelFp16::Execute(int task_id) {
-  auto yt_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data_c());
-  auto mask_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c());
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data_c());
+  auto yt_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data());
+  auto mask_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data());
   CHECK_NULL_RETURN(yt_ptr);
   CHECK_NULL_RETURN(mask_ptr);
   CHECK_NULL_RETURN(output_ptr);

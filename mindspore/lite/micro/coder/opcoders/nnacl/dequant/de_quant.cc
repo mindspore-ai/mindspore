@@ -36,7 +36,7 @@ bool Dequant::CheckDequantFlag(const Tensor *weight_tensor) {
     return false;
   }
   return !weight_tensor->quant_params().empty() && weight_tensor->quant_params().front().inited &&
-         weight_tensor->data_c() != nullptr;
+         weight_tensor->data() != nullptr;
 }
 
 void Dequant::DeQuantFunctionPerChannel(const Tensor *quant_tensor, const std::vector<DeQuantArg> &de_quant_args,

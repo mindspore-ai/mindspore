@@ -28,8 +28,8 @@ int BatchToSpaceCPUKernel::Processinput() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
   CHECK_NULL_RETURN(in_tensors_[DIMENSION_1D]);
   CHECK_NULL_RETURN(in_tensors_[DIMENSION_2D]);
-  auto block_shape_data = in_tensors_[DIMENSION_1D]->data_c();
-  auto crops_data = in_tensors_[DIMENSION_2D]->data_c();
+  auto block_shape_data = in_tensors_[DIMENSION_1D]->data();
+  auto crops_data = in_tensors_[DIMENSION_2D]->data();
   CHECK_NULL_RETURN(block_shape_data);
   CHECK_NULL_RETURN(crops_data);
   auto block_shape = static_cast<int *>(block_shape_data);
@@ -69,8 +69,8 @@ int BatchToSpaceCPUKernel::Run() {
   auto output = out_tensors_[0];
   CHECK_NULL_RETURN(input);
   CHECK_NULL_RETURN(output);
-  const float *input_data = reinterpret_cast<const float *>(input->data_c());
-  float *output_data = reinterpret_cast<float *>(output->data_c());
+  const float *input_data = reinterpret_cast<const float *>(input->data());
+  float *output_data = reinterpret_cast<float *>(output->data());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
   if (in_tensors_.size() == 1) {

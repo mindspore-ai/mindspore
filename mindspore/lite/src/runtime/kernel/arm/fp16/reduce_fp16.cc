@@ -88,7 +88,7 @@ int ReduceFp16CPUKernel::Run() {
   }
 
   auto in_tensor = in_tensors_.at(0);
-  fp16_src_data_ = reinterpret_cast<float16_t *>(in_tensor->data_c());
+  fp16_src_data_ = reinterpret_cast<float16_t *>(in_tensor->data());
   for (size_t i = 0; i < data_buffers_.size(); ++i) {
     fp16_dst_data_ = data_buffers_.at(i);
     outer_size_ = outer_sizes_.at(i);
@@ -104,7 +104,7 @@ int ReduceFp16CPUKernel::Run() {
   }
 
   auto out_tensor = out_tensors_.at(0);
-  fp16_dst_data_ = reinterpret_cast<float16_t *>(out_tensor->data_c());
+  fp16_dst_data_ = reinterpret_cast<float16_t *>(out_tensor->data());
   MS_ASSERT(fp16_dst_data_ != nullptr);
   outer_size_ = outer_sizes_.back();
   inner_size_ = inner_sizes_.back();

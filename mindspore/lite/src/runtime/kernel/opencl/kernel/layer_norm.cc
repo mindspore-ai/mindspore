@@ -150,19 +150,19 @@ int LayerNormOpenCLKernel::Initweight() {
   }
   memset(gamma_, 0x01, weight_size);
   memset(beta_, 0x00, weight_size);
-  CHECK_NULL_RETURN(in_tensors_.at(1)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(1)->data());
   CHECK_NULL_RETURN(in_tensors_.at(2));
-  CHECK_NULL_RETURN(in_tensors_.at(2)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(2)->data());
 
   if (weight_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_enable_) {
-      memcpy(gamma_, in_tensors_.at(1)->data_c(), weight_size);
-      memcpy(beta_, in_tensors_.at(2)->data_c(), weight_size);
+      memcpy(gamma_, in_tensors_.at(1)->data(), weight_size);
+      memcpy(beta_, in_tensors_.at(2)->data(), weight_size);
     } else {
       auto gamma_fp32 = reinterpret_cast<float *>(gamma_);
       auto beta_fp32 = reinterpret_cast<float *>(beta_);
-      auto origin_gamma_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c());
-      auto origin_beta_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data_c());
+      auto origin_gamma_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data());
+      auto origin_beta_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data());
 
       for (int i = 0; i < img_info.ElementsNum; ++i) {
         gamma_fp32[i] = static_cast<float>(origin_gamma_fp16[i]);
@@ -173,16 +173,16 @@ int LayerNormOpenCLKernel::Initweight() {
     if (use_fp16_enable_) {
       auto gamma_fp16 = reinterpret_cast<float16_t *>(gamma_);
       auto beta_fp16 = reinterpret_cast<float16_t *>(beta_);
-      auto origin_gamma_fp32 = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
-      auto origin_beta_fp32 = reinterpret_cast<float *>(in_tensors_.at(2)->data_c());
+      auto origin_gamma_fp32 = reinterpret_cast<float *>(in_tensors_.at(1)->data());
+      auto origin_beta_fp32 = reinterpret_cast<float *>(in_tensors_.at(2)->data());
 
       for (int i = 0; i < img_info.ElementsNum; ++i) {
         gamma_fp16[i] = static_cast<float16_t>(origin_gamma_fp32[i]);
         beta_fp16[i] = static_cast<float16_t>(origin_beta_fp32[i]);
       }
     } else {
-      memcpy(gamma_, in_tensors_.at(1)->data_c(), weight_size);
-      memcpy(beta_, in_tensors_.at(2)->data_c(), weight_size);
+      memcpy(gamma_, in_tensors_.at(1)->data(), weight_size);
+      memcpy(beta_, in_tensors_.at(2)->data(), weight_size);
     }
   }
   if (allocator->UnmapBuffer(gamma_) != RET_OK) {
@@ -250,7 +250,7 @@ int LayerNormOpenCLKernel::Prepare() {
 int LayerNormOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   int arg1_cn = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, arg1_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_mean_var_, arg1_cn++, in_tensors_.at(0)->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // input tensor
@@ -265,11 +265,11 @@ int LayerNormOpenCLKernel::Run() {
   ocl_runtime_->RunKernel(kernel_mean_var_, global_mean_var_, local_mean_var_, nullptr, &event_);
 
   int arg_cn = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // input tensor
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // out tensor

@@ -47,15 +47,15 @@ static int DoApplyMomentum(float *weight, float *accumulate, float learning_rate
 
 int ApplyMomentumCPUKernel::Execute(int task_id) {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
-  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(weight);
-  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
+  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->data());
   CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
-  auto gradient = reinterpret_cast<float *>(in_tensors_.at(3)->data_c());
+  auto gradient = reinterpret_cast<float *>(in_tensors_.at(3)->data());
   CHECK_NULL_RETURN(gradient);
-  CHECK_NULL_RETURN(in_tensors_.at(4)->data_c());
-  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->data_c())[0];
+  CHECK_NULL_RETURN(in_tensors_.at(4)->data());
+  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->data())[0];
   int length = in_tensors_.at(0)->ElementsNum();
 
   MS_CHECK_TRUE_RET(thread_count_ > 0, RET_ERROR);
@@ -117,13 +117,13 @@ std::vector<int> ApplyMomentumCPUKernel::GetOptimizerParamsIdxs() const {
 }
 
 int ApplyMomentumCPUKernel::OptimizerStep() {
-  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(weight);
-  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
+  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->data());
   CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
-  CHECK_NULL_RETURN(in_tensors_.at(4)->data_c());
-  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->data_c())[0];
+  CHECK_NULL_RETURN(in_tensors_.at(4)->data());
+  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->data())[0];
 
   size_t length = in_tensors_.at(0)->ElementsNum();
 

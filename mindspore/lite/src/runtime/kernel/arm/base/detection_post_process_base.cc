@@ -49,10 +49,10 @@ int DetectionPostProcessBaseCPUKernel::Init() {
   params_->selected_ = nullptr;
   params_->anchors_ = nullptr;
   auto anchor_tensor = in_tensors_.at(2);
-  CHECK_NULL_RETURN(anchor_tensor->data_c());
+  CHECK_NULL_RETURN(anchor_tensor->data());
   if (anchor_tensor->data_type() == kNumberTypeInt8) {
     auto quant_param = anchor_tensor->quant_params().front();
-    auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->data_c());
+    auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->data());
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
     if (anchor_fp32 == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";
@@ -63,7 +63,7 @@ int DetectionPostProcessBaseCPUKernel::Init() {
     params_->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeUInt8) {
     auto quant_param = anchor_tensor->quant_params().front();
-    auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->data_c());
+    auto anchor_uint8 = reinterpret_cast<uint8_t *>(anchor_tensor->data());
     auto anchor_fp32 = new (std::nothrow) float[anchor_tensor->ElementsNum()];
     if (anchor_fp32 == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";
@@ -78,7 +78,7 @@ int DetectionPostProcessBaseCPUKernel::Init() {
       MS_LOG(ERROR) << "Malloc anchor failed";
       return RET_ERROR;
     }
-    memcpy(params_->anchors_, anchor_tensor->data_c(), anchor_tensor->Size());
+    memcpy(params_->anchors_, anchor_tensor->data(), anchor_tensor->Size());
   } else {
     MS_LOG(ERROR) << "unsupported anchor data type " << anchor_tensor->data_type();
     return RET_ERROR;
@@ -213,10 +213,10 @@ int DetectionPostProcessBaseCPUKernel::Run() {
   if (status != RET_OK) {
     return status;
   }
-  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
-  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->data_c());
-  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->data_c());
+  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->data());
+  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->data());
+  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->data());
   if (output_boxes == nullptr || output_classes == nullptr || output_scores == nullptr || output_num == nullptr) {
     return RET_NULL_PTR;
   }

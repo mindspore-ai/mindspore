@@ -131,7 +131,7 @@ int WinogradOpenCLKernel::InitFilter() {
 
   // rearrange filter
   auto filter_tensor = in_tensors_.at(1);
-  void *src_filter_data = stored_filter_ == nullptr ? filter_tensor->data_c() : stored_filter_;
+  void *src_filter_data = stored_filter_ == nullptr ? filter_tensor->data() : stored_filter_;
   MS_ASSERT(src_filter_data);
 #ifndef ENABLE_ARM64
   auto winograd_filter = GenerateWinogradFilter(src_filter_data, filter_tensor->data_type(), CO_, CI_);
@@ -296,7 +296,7 @@ void WinogradOpenCLKernel::SetGlobalLocal() {
 int WinogradOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " winograd Running!";
   MS_LOG(DEBUG) << "winograd kernel0 Running!";
-  if (ocl_runtime_->SetKernelArg(kernel_4x4to36_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_4x4to36_, 0, in_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
@@ -312,7 +312,7 @@ int WinogradOpenCLKernel::Run() {
   }
 
   MS_LOG(DEBUG) << "winograd kernel2 Running!";
-  if (ocl_runtime_->SetKernelArg(kernel_36to4x4_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_36to4x4_, 1, out_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

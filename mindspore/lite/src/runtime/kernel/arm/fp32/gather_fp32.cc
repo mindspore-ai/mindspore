@@ -32,8 +32,8 @@ constexpr int kSecondInput = 2;
 int GatherCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(kSecondInput)->data_c());
-  axis_ = *(reinterpret_cast<int *>(in_tensors_.at(kSecondInput)->data_c()));
+  CHECK_NULL_RETURN(in_tensors_.at(kSecondInput)->data());
+  axis_ = *(reinterpret_cast<int *>(in_tensors_.at(kSecondInput)->data()));
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -67,9 +67,9 @@ int GatherCPUKernel::DoGather(int task_id) {
   }
   auto thread_stride = stride * task_id;
 
-  int8_t *int8_in = reinterpret_cast<int8_t *>(input_tensor->data_c());
+  int8_t *int8_in = reinterpret_cast<int8_t *>(input_tensor->data());
   CHECK_NULL_RETURN(int8_in);
-  int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data_c());
+  int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data());
   CHECK_NULL_RETURN(int8_out);
 
   int data_size = static_cast<int>(lite::DataTypeSize(input_tensor->data_type()));

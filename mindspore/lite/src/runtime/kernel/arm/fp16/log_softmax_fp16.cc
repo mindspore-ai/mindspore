@@ -86,9 +86,9 @@ int LogSoftmaxFp16CPUKernel::DoLogSoftmaxLastAxis(int task_id) {
   int end = MSMIN(begin + unit, out_plane_size_);
   int channel = softmax_param_->input_shape_[softmax_param_->axis_];
   int offset = begin * channel;
-  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(kInputIndex)->data());
   CHECK_NULL_RETURN(input_ptr);
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(kOutputIndex)->data());
   CHECK_NULL_RETURN(output_ptr);
   LogSoftmaxLastAxisFp16(input_ptr + offset, output_ptr + offset, tmp_data_ + offset, end - begin, channel);
   return RET_OK;
@@ -112,9 +112,9 @@ int LogSoftmaxFp16CPUKernel::Run() {
     }
     return ret;
   } else {
-    input_fp16_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
+    input_fp16_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
     CHECK_NULL_RETURN(input_fp16_);
-    output_fp16_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+    output_fp16_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
     CHECK_NULL_RETURN(output_fp16_);
     CHECK_NULL_RETURN(tmp_data_);
     LogSoftmaxFp16(input_fp16_, output_fp16_, tmp_data_, softmax_param_);

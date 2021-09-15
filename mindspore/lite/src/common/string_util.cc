@@ -29,7 +29,7 @@ std::vector<StringPack> ParseTensorBuffer(Tensor *tensor) {
     MS_LOG(ERROR) << "tensor is nullptr.";
     return std::vector<StringPack>{};
   }
-  if (tensor->data_c() == nullptr) {
+  if (tensor->data() == nullptr) {
     MS_LOG(ERROR) << "Tensor data is null, cannot be parsed";
     return std::vector<StringPack>{};
   }

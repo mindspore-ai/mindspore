@@ -143,10 +143,10 @@ int ConvolutionWinogradCPUKernel::ReSize() {
 int ConvolutionWinogradCPUKernel::RunImpl(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   CHECK_NULL_RETURN(input_tensor);
-  auto ori_input_data = reinterpret_cast<float *>(input_tensor->data_c());
+  auto ori_input_data = reinterpret_cast<float *>(input_tensor->data());
   CHECK_NULL_RETURN(ori_input_data);
   CHECK_NULL_RETURN(out_tensors_.front());
-  auto output_data = reinterpret_cast<float *>(out_tensors_.front()->data_c());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(output_data);
   ConvWinogardFp32(ori_input_data, reinterpret_cast<float *>(packed_weight_),
                    reinterpret_cast<const float *>(bias_data_), output_data, tmp_buffer_address_list_, task_id,
@@ -244,7 +244,7 @@ int ConvolutionWinogradCPUKernel::MallocWeightBiasData() {
 
 void ConvolutionWinogradCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   WinogradFilterTransform(reinterpret_cast<float *>(origin_weight), matrix_g_, matrix_gt_, oc_block_);
 }

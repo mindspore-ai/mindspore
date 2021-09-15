@@ -121,8 +121,8 @@ int LeakyReluInt8CPUKernel::Run() {
 int LeakyReluInt8CPUKernel::DoExecute(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto out_tensor = out_tensors_.at(kOutputIndex);
-  int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->data_c());
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->data_c());
+  int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->data());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->data());
   MS_ASSERT(input_data);
   MS_ASSERT(output_data);
   auto ret = DoLeakReluInt8(input_data, output_data, &quant_prelu_parm_, task_id);

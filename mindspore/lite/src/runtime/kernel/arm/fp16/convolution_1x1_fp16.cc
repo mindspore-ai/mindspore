@@ -115,7 +115,7 @@ void Convolution1x1FP16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = weight_tensor->Channel();
   auto output_channel = weight_tensor->Batch();
-  void *weight_origin = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
+  void *weight_origin = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(weight_origin != nullptr);
 #ifdef ENABLE_ARM64
   if (out_tensors_.front()->format() == NC4HW4) {
@@ -275,8 +275,8 @@ static int Convolution1x1Fp16RunHw(void *cdata, int task_id, float lhs_scale, fl
 }
 
 int Convolution1x1FP16CPUKernel::Run() {
-  auto input_data = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto output_data = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto input_data = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+  auto output_data = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   MS_ASSERT(input_data != nullptr);
   MS_ASSERT(output_data != nullptr);
   if (input_data == nullptr || output_data == nullptr) {

@@ -60,26 +60,26 @@ int CastCPUKernel::ReSize() {
 
 int CastCPUKernel::CastToFp32(const lite::Tensor *input, lite::Tensor *output, int offset, int data_num) {
   auto input_data_type = input->data_type();
-  auto output_data = output->data_c();
+  auto output_data = output->data();
   switch (input_data_type) {
     case kNumberTypeBool:
-      BoolToFloat32(reinterpret_cast<const bool *>(input->data_c()) + offset,
+      BoolToFloat32(reinterpret_cast<const bool *>(input->data()) + offset,
                     reinterpret_cast<float *>(output_data) + offset, data_num);
       break;
     case kNumberTypeUInt8:
-      Uint8ToFloat32(reinterpret_cast<const uint8_t *>(input->data_c()) + offset,
+      Uint8ToFloat32(reinterpret_cast<const uint8_t *>(input->data()) + offset,
                      reinterpret_cast<float *>(output_data) + offset, data_num);
       break;
     case kNumberTypeInt32:
-      Int32ToFloat32(reinterpret_cast<const int32_t *>(input->data_c()) + offset,
+      Int32ToFloat32(reinterpret_cast<const int32_t *>(input->data()) + offset,
                      reinterpret_cast<float *>(output_data) + offset, data_num);
       break;
     case kNumberTypeFloat16:
-      Fp16ToFloat32(reinterpret_cast<const uint16_t *>(input->data_c()) + offset,
+      Fp16ToFloat32(reinterpret_cast<const uint16_t *>(input->data()) + offset,
                     reinterpret_cast<float *>(output_data) + offset, data_num);
       break;
     case kNumberTypeInt64:
-      Int64ToFloat32(reinterpret_cast<const int64_t *>(input->data_c()) + offset,
+      Int64ToFloat32(reinterpret_cast<const int64_t *>(input->data()) + offset,
                      reinterpret_cast<float *>(output_data) + offset, data_num);
       break;
     default:
@@ -91,26 +91,26 @@ int CastCPUKernel::CastToFp32(const lite::Tensor *input, lite::Tensor *output, i
 
 int CastCPUKernel::CastToFp16(const lite::Tensor *input, lite::Tensor *output, int offset, int data_num) {
   auto input_data_type = input->data_type();
-  auto output_data = output->data_c();
+  auto output_data = output->data();
   switch (input_data_type) {
     case kNumberTypeFloat32:
-      Float32ToFp16(reinterpret_cast<const float *>(input->data_c()) + offset,
+      Float32ToFp16(reinterpret_cast<const float *>(input->data()) + offset,
                     reinterpret_cast<uint16_t *>(output_data) + offset, data_num);
       break;
 #ifdef ENABLE_FP16
     case kNumberTypeInt64:
-      Int64ToFp16(reinterpret_cast<const int64_t *>(input->data_c()) + offset,
+      Int64ToFp16(reinterpret_cast<const int64_t *>(input->data()) + offset,
                   reinterpret_cast<float16_t *>(output_data) + offset, data_num);
     case kNumberTypeInt32:
-      Int32ToFp16(reinterpret_cast<const int32_t *>(input->data_c()) + offset,
+      Int32ToFp16(reinterpret_cast<const int32_t *>(input->data()) + offset,
                   reinterpret_cast<float16_t *>(output_data) + offset, data_num);
       break;
     case kNumberTypeBool:
-      BoolToFp16(reinterpret_cast<const bool *>(input->data_c()) + offset,
+      BoolToFp16(reinterpret_cast<const bool *>(input->data()) + offset,
                  reinterpret_cast<float16_t *>(output_data) + offset, data_num);
       break;
     case kNumberTypeUInt8:
-      Uint8ToFp16(reinterpret_cast<const uint8_t *>(input->data_c()) + offset,
+      Uint8ToFp16(reinterpret_cast<const uint8_t *>(input->data()) + offset,
                   reinterpret_cast<float16_t *>(output_data) + offset, data_num);
       break;
 #endif
@@ -124,21 +124,21 @@ int CastCPUKernel::CastToFp16(const lite::Tensor *input, lite::Tensor *output, i
 int CastCPUKernel::CastToOthers(const lite::Tensor *input, lite::Tensor *output, int offset, int data_num) {
   auto input_data_type = input->data_type();
   auto output_data_type = output->data_type();
-  auto output_data = output->data_c();
+  auto output_data = output->data();
   if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt64) {
-    Float32ToInt64(reinterpret_cast<const float *>(input->data_c()) + offset,
+    Float32ToInt64(reinterpret_cast<const float *>(input->data()) + offset,
                    reinterpret_cast<int64_t *>(output_data) + offset, data_num);
   } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt32) {
-    Float32ToInt32(reinterpret_cast<const float *>(input->data_c()) + offset,
+    Float32ToInt32(reinterpret_cast<const float *>(input->data()) + offset,
                    reinterpret_cast<int32_t *>(output_data) + offset, data_num);
   } else if (input_data_type == kNumberTypeInt32 && output_data_type == kNumberTypeInt64) {
-    Int32ToInt64(reinterpret_cast<const int32_t *>(input->data_c()) + offset,
+    Int32ToInt64(reinterpret_cast<const int32_t *>(input->data()) + offset,
                  reinterpret_cast<int64_t *>(output_data) + offset, data_num);
   } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt16) {
-    Float32ToInt16(reinterpret_cast<const float *>(input->data_c()) + offset,
+    Float32ToInt16(reinterpret_cast<const float *>(input->data()) + offset,
                    reinterpret_cast<int16_t *>(output_data) + offset, data_num);
   } else if (input_data_type == kNumberTypeBool && output_data_type == kNumberTypeInt32) {
-    BoolToInt32(reinterpret_cast<const bool *>(input->data_c()) + offset,
+    BoolToInt32(reinterpret_cast<const bool *>(input->data()) + offset,
                 reinterpret_cast<int32_t *>(output_data) + offset, data_num);
   } else {
     MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
@@ -154,8 +154,8 @@ int CastCPUKernel::DoCast(int thread_id) {
   auto output = out_tensors_.at(0);
   CHECK_NULL_RETURN(input);
   CHECK_NULL_RETURN(output);
-  auto input_data = input->data_c();
-  auto output_data = output->data_c();
+  auto input_data = input->data();
+  auto output_data = output->data();
   CHECK_NULL_RETURN(input_data);
   CHECK_NULL_RETURN(output_data);
 

@@ -39,7 +39,7 @@ int TensorListFromTensorCPUKernel::IsCompatibleShape() {
                   << " must be equal in_tensors_[1].ElementsNum():" << in1_ele_num;
     return RET_ERROR;
   }
-  int *elements_shape = reinterpret_cast<int *>(input1_->data_c());  // element shape in tensor data
+  int *elements_shape = reinterpret_cast<int *>(input1_->data());  // element shape in tensor data
   if (elements_shape == nullptr) {
     return RET_NULL_PTR;
   }
@@ -47,7 +47,7 @@ int TensorListFromTensorCPUKernel::IsCompatibleShape() {
     int dim0 = tensor_shape[i + 1];
     int dim1 = elements_shape[i];
     if (dim0 >= 0 && dim1 >= 0 && dim0 != dim1) {
-      MS_LOG(ERROR) << "input0_->shape()[" << (i + 1) << "]:" << dim0 << " is not equal input1_->data_c()[" << i
+      MS_LOG(ERROR) << "input0_->shape()[" << (i + 1) << "]:" << dim0 << " is not equal input1_->data()[" << i
                     << "]:" << dim1;
       return RET_ERROR;
     }
@@ -95,7 +95,7 @@ int TensorListFromTensorCPUKernel::Run() {
   }
   int devision_dim0 = input0_->ElementsNum() / dim0;
   auto data_offset = devision_dim0 * lite::DataTypeSize(dtype_);
-  auto in_data = reinterpret_cast<char *>(input0_->data_c());
+  auto in_data = reinterpret_cast<char *>(input0_->data());
   MS_ASSERT(in_data != nullptr);
   // copy data from input0(tensor) to output(tensorlist) vector<*tensor>
   for (int i = 0; i < dim0; ++i) {
@@ -106,7 +106,7 @@ int TensorListFromTensorCPUKernel::Run() {
                     << " must be euqal to devision_dim0:" << devision_dim0;
       return RET_ERROR;
     }
-    auto out_data = out_ptr->data_c();
+    auto out_data = out_ptr->data();
     MS_ASSERT(out_data != nullptr);
     memcpy(out_data, in_data, data_offset);
     out_ptr->set_data_type(dtype_);

@@ -138,8 +138,8 @@ int StridedSliceGradCPUKernelFp16::Execute(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
   int *po = output_shape_.data();
-  auto dx = reinterpret_cast<float16_t *>(output->data_c());
-  auto dy = reinterpret_cast<float16_t *>(input->data_c());
+  auto dx = reinterpret_cast<float16_t *>(output->data());
+  auto dy = reinterpret_cast<float16_t *>(input->data());
   CHECK_NULL_RETURN(po);
   CHECK_NULL_RETURN(dx);
   CHECK_NULL_RETURN(dy);

@@ -44,7 +44,7 @@ int RandomStandardNormalCPUKernel::Run() {
   std::default_random_engine engine{static_cast<unsigned int>(random_seed)};
   std::normal_distribution<double> nums(0, 1.0);
   auto all_data_nums = out_tensors_[0]->ElementsNum();
-  auto out_data = out_tensors_[0]->data_c();
+  auto out_data = out_tensors_[0]->data();
   MS_ASSERT(out_data != nullptr);
   auto output = reinterpret_cast<float *>(out_data);
 

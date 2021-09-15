@@ -169,26 +169,26 @@ int BatchNormOpenCLKernel::Initweight() {
   memset(offset_, 0x00, weight_size);
   memset(mean_, 0x00, weight_size);
   memset(variance_, 0x00, weight_size);
-  CHECK_NULL_RETURN(in_tensors_.at(1)->data_c());
-  CHECK_NULL_RETURN(in_tensors_.at(2)->data_c());
-  CHECK_NULL_RETURN(in_tensors_.at(3)->data_c());
-  CHECK_NULL_RETURN(in_tensors_.at(4)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(1)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(2)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(3)->data());
+  CHECK_NULL_RETURN(in_tensors_.at(4)->data());
   if (weight_tensor->data_type() == kNumberTypeFloat16) {
     if (use_fp16_enable_) {
-      memcpy(scale_, in_tensors_.at(1)->data_c(), weight_size);
-      memcpy(offset_, in_tensors_.at(2)->data_c(), weight_size);
-      memcpy(mean_, in_tensors_.at(3)->data_c(), weight_size);
-      memcpy(variance_, in_tensors_.at(4)->data_c(), weight_size);
+      memcpy(scale_, in_tensors_.at(1)->data(), weight_size);
+      memcpy(offset_, in_tensors_.at(2)->data(), weight_size);
+      memcpy(mean_, in_tensors_.at(3)->data(), weight_size);
+      memcpy(variance_, in_tensors_.at(4)->data(), weight_size);
     } else {
       auto scale_fp32 = reinterpret_cast<float *>(scale_);
       auto offset_fp32 = reinterpret_cast<float *>(offset_);
       auto mean_fp32 = reinterpret_cast<float *>(mean_);
       auto variance_fp32 = reinterpret_cast<float *>(variance_);
 
-      auto origin_scale_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c());
-      auto origin_offset_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data_c());
-      auto origin_mean_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(3)->data_c());
-      auto origin_variance_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(4)->data_c());
+      auto origin_scale_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data());
+      auto origin_offset_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data());
+      auto origin_mean_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(3)->data());
+      auto origin_variance_fp16 = reinterpret_cast<float16_t *>(in_tensors_.at(4)->data());
 
       for (int i = 0; i < img_info.ElementsNum; ++i) {
         scale_fp32[i] = static_cast<float>(origin_scale_fp16[i]);
@@ -204,10 +204,10 @@ int BatchNormOpenCLKernel::Initweight() {
       auto mean_fp16 = reinterpret_cast<float16_t *>(mean_);
       auto variance_fp16 = reinterpret_cast<float16_t *>(variance_);
 
-      auto origin_scale_fp32 = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
-      auto origin_offset_fp32 = reinterpret_cast<float *>(in_tensors_.at(2)->data_c());
-      auto origin_mean_fp32 = reinterpret_cast<float *>(in_tensors_.at(3)->data_c());
-      auto origin_variance_fp32 = reinterpret_cast<float *>(in_tensors_.at(4)->data_c());
+      auto origin_scale_fp32 = reinterpret_cast<float *>(in_tensors_.at(1)->data());
+      auto origin_offset_fp32 = reinterpret_cast<float *>(in_tensors_.at(2)->data());
+      auto origin_mean_fp32 = reinterpret_cast<float *>(in_tensors_.at(3)->data());
+      auto origin_variance_fp32 = reinterpret_cast<float *>(in_tensors_.at(4)->data());
 
       for (int i = 0; i < img_info.ElementsNum; ++i) {
         scale_fp16[i] = static_cast<float16_t>(origin_scale_fp32[i]);
@@ -216,10 +216,10 @@ int BatchNormOpenCLKernel::Initweight() {
         variance_fp16[i] = static_cast<float16_t>(origin_variance_fp32[i]);
       }
     } else {
-      memcpy(scale_, in_tensors_.at(1)->data_c(), weight_size);
-      memcpy(offset_, in_tensors_.at(2)->data_c(), weight_size);
-      memcpy(mean_, in_tensors_.at(3)->data_c(), weight_size);
-      memcpy(variance_, in_tensors_.at(4)->data_c(), weight_size);
+      memcpy(scale_, in_tensors_.at(1)->data(), weight_size);
+      memcpy(offset_, in_tensors_.at(2)->data(), weight_size);
+      memcpy(mean_, in_tensors_.at(3)->data(), weight_size);
+      memcpy(variance_, in_tensors_.at(4)->data(), weight_size);
     }
   }
   if (UnmapBuffer() != RET_OK) {
@@ -262,7 +262,7 @@ int BatchNormOpenCLKernel::Prepare() {
 int BatchNormOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   int arg_cn = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // input tensor
@@ -282,7 +282,7 @@ int BatchNormOpenCLKernel::Run() {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // variance
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }  // out tensor

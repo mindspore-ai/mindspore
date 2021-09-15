@@ -75,7 +75,7 @@ int UnstackCPUKernel::Run() {
   CHECK_NULL_RETURN(input);
   size_t out_num = out_tensors_.size();
   for (size_t i = 0; i < out_num; i++) {
-    output_addr_array_[i] = out_tensors_.at(i)->data_c();
+    output_addr_array_[i] = out_tensors_.at(i)->data();
     CHECK_NULL_RETURN(output_addr_array_[i]);
   }
   auto para = reinterpret_cast<UnstackParameter *>(op_parameter_);

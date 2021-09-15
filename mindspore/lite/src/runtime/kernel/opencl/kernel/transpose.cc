@@ -51,7 +51,7 @@ int TransposeOpenCLKernel::CheckSpecs() {
 
 int TransposeOpenCLKernel::Prepare() {
   tensor_size_ = GpuTensorInfo(out_tensors_.front());
-  auto *perm = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
+  auto *perm = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data());
   int num_axes = in_tensors_.at(1)->shape().at(0);
   if (tensor_size_.NDim == DIMENSION_2D) {
     perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
@@ -174,11 +174,11 @@ void TransposeOpenCLKernel::SetGlobalLocal() {
 int TransposeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

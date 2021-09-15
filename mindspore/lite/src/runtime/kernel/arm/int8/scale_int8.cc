@@ -48,7 +48,7 @@ ScaleInt8CPUKernel::~ScaleInt8CPUKernel() {
 int ScaleInt8CPUKernel::InitScaleOffset() {
   CalcMultiplesAndStrides(tile_para);
   scale_param_->const_scale_ = false;
-  auto *scale_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
+  auto *scale_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data());
   // scale may be const value ,can be processed in prepare stage
   if (scale_ptr != nullptr) {
     scale_param_->const_scale_ = true;
@@ -61,7 +61,7 @@ int ScaleInt8CPUKernel::InitScaleOffset() {
         return RET_ERROR;
       }
       malloced_scale_ = true;
-      TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c()),
+      TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(1)->data()),
                            reinterpret_cast<int8_t *>(input1_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
                            tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
     }
@@ -71,7 +71,7 @@ int ScaleInt8CPUKernel::InitScaleOffset() {
   if (in_tensors_.size() == kScaleBiasInputsSize) {
     has_bias_ = true;
     auto offset_tensor = in_tensors_.at(kOffsetIndex);
-    auto *offset_ptr = reinterpret_cast<int8_t *>(offset_tensor->data_c());
+    auto *offset_ptr = reinterpret_cast<int8_t *>(offset_tensor->data());
     // offset may be const value ,can be processed in prepare stage
     if (offset_ptr != nullptr) {
       scale_param_->const_offset_ = true;
@@ -88,7 +88,7 @@ int ScaleInt8CPUKernel::InitScaleOffset() {
           return RET_ERROR;
         }
         malloced_offset_ = true;
-        TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data_c()),
+        TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data()),
                              reinterpret_cast<int8_t *>(input2_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
                              tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
       }
@@ -289,8 +289,8 @@ int ScaleRunInt8(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int ScaleInt8CPUKernel::Run() {
   elements_num_ = out_tensors_.at(0)->ElementsNum();
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
-  input0_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
-  output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  input0_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
+  output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
   int ret = RET_ERROR;
   // need broadcasting
   if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
@@ -301,7 +301,7 @@ int ScaleInt8CPUKernel::Run() {
         MS_LOG(ERROR) << "malloc input1_data_  failed.";
         return RET_ERROR;
       }
-      TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c()),
+      TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(1)->data()),
                            reinterpret_cast<int8_t *>(input1_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
                            tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
     }
@@ -315,7 +315,7 @@ int ScaleInt8CPUKernel::Run() {
         input1_data_ = nullptr;
         return RET_ERROR;
       }
-      TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data_c()),
+      TileOneDimensionInt8(reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data()),
                            reinterpret_cast<int8_t *>(input2_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
                            tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
     }
@@ -335,10 +335,10 @@ int ScaleInt8CPUKernel::Run() {
 
   // input1 has the same shape with input0 situation
   if (input1_data_ == nullptr) {
-    input1_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
+    input1_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data());
   }
   if (has_bias_ && !scale_param_->const_offset_) {
-    input2_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data_c());
+    input2_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(kOffsetIndex)->data());
   }
   ret = ParallelLaunch(this->ms_context_, ScaleRunInt8, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {

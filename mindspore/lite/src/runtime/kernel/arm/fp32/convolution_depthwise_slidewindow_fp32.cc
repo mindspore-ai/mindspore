@@ -121,7 +121,7 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   CHECK_NULL_RETURN(input_tensor);
-  auto input_ptr = reinterpret_cast<float *>(input_tensor->data_c());
+  auto input_ptr = reinterpret_cast<float *>(input_tensor->data());
   MS_ASSERT(input_ptr != nullptr);
   if (need_align_) {
     PackNHWCToNHWC4Fp32(input_ptr, packed_input_, conv_param_->input_batch_,
@@ -132,7 +132,7 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
   CHECK_NULL_RETURN(output_tensor);
-  auto output_ptr = reinterpret_cast<float *>(output_tensor->data_c());
+  auto output_ptr = reinterpret_cast<float *>(output_tensor->data());
   MS_ASSERT(output_ptr != nullptr);
   if (!need_align_) {
     packed_output_ = output_ptr;
@@ -162,7 +162,7 @@ void ConvolutionDepthwiseSWCPUKernel::FreePackedInputOutput() {
 
 void ConvolutionDepthwiseSWCPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackNCHWToNC4HW4Fp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_), 1,
                        weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());

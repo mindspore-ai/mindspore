@@ -44,8 +44,8 @@ int NegGradCPUKernelFp16::Init() {
 }
 
 int NegGradCPUKernelFp16::DoNegGrad(int task_id) {
-  auto dy = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto dx = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto dy = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+  auto dx = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(dy);
   CHECK_NULL_RETURN(dx);
   int length = in_tensors_.at(0)->ElementsNum();

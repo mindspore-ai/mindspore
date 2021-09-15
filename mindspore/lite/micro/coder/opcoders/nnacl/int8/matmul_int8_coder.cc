@@ -25,7 +25,7 @@ int MatMulInt8Coder::Prepare(CoderContext *const context) {
   if (input_tensors_.size() == kInputSize2) {
     bias_tensor_ = input_tensors_.at(kBiasIndex);
     MS_CHECK_PTR(bias_tensor_);
-    MS_CHECK_PTR(bias_tensor_->data_c());
+    MS_CHECK_PTR(bias_tensor_->data());
   }
   param_ = reinterpret_cast<MatMulParameter *>(parameter_);
   MatMulBaseInt8Coder::InitParameter();

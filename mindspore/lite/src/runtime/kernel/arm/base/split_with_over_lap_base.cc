@@ -122,14 +122,14 @@ int SplitWithOverlapRun(void *cdata, int task_id, float lhs_scale, float rhs_sca
 }
 
 int SplitWithOverlapBaseCPUKernel::Run() {
-  input_ptr_ = reinterpret_cast<char *>(in_tensors_.front()->data_c());
+  input_ptr_ = reinterpret_cast<char *>(in_tensors_.front()->data());
   if (input_ptr_ == nullptr) {
     return RET_NULL_PTR;
   }
   output_ptr_.clear();
   CHECK_LESS_RETURN(static_cast<int>(out_tensors_.size()), param_->num_split_);
   for (int i = 0; i < param_->num_split_; i++) {
-    output_ptr_.push_back(reinterpret_cast<char *>(out_tensors_.at(i)->data_c()));
+    output_ptr_.push_back(reinterpret_cast<char *>(out_tensors_.at(i)->data()));
     if (output_ptr_.at(i) == nullptr) {
       return RET_NULL_PTR;
     }

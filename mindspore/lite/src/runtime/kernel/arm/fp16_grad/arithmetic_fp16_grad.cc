@@ -44,9 +44,9 @@ int ArithmeticGradCPUKernelFp16::Init() {
 
 int ArithmeticGradCPUKernelFp16::ArithmeticGradMaximum(float16_t *dy, int dy_size, float16_t *dx1, int dx1_size,
                                                        float16_t *dx2, int dx2_size) {
-  auto x1 = reinterpret_cast<float16_t *>(in_tensors_[kX1Idx]->data_c());
-  auto x2 = reinterpret_cast<float16_t *>(in_tensors_[kX2Idx]->data_c());
-  dy = reinterpret_cast<float16_t *>(in_tensors_[kDyIdx]->data_c());
+  auto x1 = reinterpret_cast<float16_t *>(in_tensors_[kX1Idx]->data());
+  auto x2 = reinterpret_cast<float16_t *>(in_tensors_[kX2Idx]->data());
+  dy = reinterpret_cast<float16_t *>(in_tensors_[kDyIdx]->data());
   CHECK_NULL_RETURN(x1);
   CHECK_NULL_RETURN(x2);
   CHECK_NULL_RETURN(dy);
@@ -58,9 +58,9 @@ int ArithmeticGradCPUKernelFp16::ArithmeticGradMaximum(float16_t *dy, int dy_siz
 
 int ArithmeticGradCPUKernelFp16::ArithmeticGradMinimum(float16_t *dy, int dy_size, float16_t *dx1, int dx1_size,
                                                        float16_t *dx2, int dx2_size) {
-  auto x1 = reinterpret_cast<float16_t *>(in_tensors_[kX1Idx]->data_c());
-  auto x2 = reinterpret_cast<float16_t *>(in_tensors_[kX2Idx]->data_c());
-  dy = reinterpret_cast<float16_t *>(in_tensors_[kDyIdx]->data_c());
+  auto x1 = reinterpret_cast<float16_t *>(in_tensors_[kX1Idx]->data());
+  auto x2 = reinterpret_cast<float16_t *>(in_tensors_[kX2Idx]->data());
+  dy = reinterpret_cast<float16_t *>(in_tensors_[kDyIdx]->data());
   CHECK_NULL_RETURN(x1);
   CHECK_NULL_RETURN(x2);
   CHECK_NULL_RETURN(dy);
@@ -73,9 +73,9 @@ int ArithmeticGradCPUKernelFp16::ArithmeticGradMinimum(float16_t *dy, int dy_siz
 int ArithmeticGradCPUKernelFp16::ReSize() { return RET_OK; }
 
 int ArithmeticGradCPUKernelFp16::Execute(int task_id) {
-  auto dy = reinterpret_cast<float16_t *>(in_tensors_[0]->data_c());
-  auto dx1 = reinterpret_cast<float16_t *>(out_tensors_[0]->data_c());
-  auto dx2 = reinterpret_cast<float16_t *>(out_tensors_[1]->data_c());
+  auto dy = reinterpret_cast<float16_t *>(in_tensors_[0]->data());
+  auto dx1 = reinterpret_cast<float16_t *>(out_tensors_[0]->data());
+  auto dx2 = reinterpret_cast<float16_t *>(out_tensors_[1]->data());
   CHECK_NULL_RETURN(dy);
   CHECK_NULL_RETURN(dx1);
   CHECK_NULL_RETURN(dx2);

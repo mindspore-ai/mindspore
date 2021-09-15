@@ -54,7 +54,7 @@ std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
   if (tensor == nullptr) {
     return {""};
   }
-  const void *ptr = static_cast<const Tensor *>(tensor)->data_c();
+  const void *ptr = const_cast<Tensor *>(static_cast<const Tensor *>(tensor))->data();
   std::vector<StringPack> all_pack = ParseStringBuffer(ptr);
   std::vector<std::string> result(all_pack.size());
   std::transform(all_pack.begin(), all_pack.end(), result.begin(), [](StringPack &pack) {

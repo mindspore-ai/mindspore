@@ -51,7 +51,7 @@ int TileCPUKernel::ReSize() {
                     << " must be kNumberTypeInt32 or kNumberTypeInt!";
       return RET_ERROR;
     }
-    auto input1_addr = reinterpret_cast<int *>(in_tensors_[1]->data_c());
+    auto input1_addr = reinterpret_cast<int *>(in_tensors_[1]->data());
     for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
       tile_parameter_->dims_[i] = i;
       tile_parameter_->multiples_[i] = input1_addr[i];
@@ -142,8 +142,8 @@ int TileCPUKernel::RunSimpleTile() {
 int TileCPUKernel::Run() {
   auto data_type = in_tensors_.at(0)->data_type();
   tile_parameter_->data_size_ = lite::DataTypeSize(data_type);
-  input_addr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(0)->data_c());
-  output_addr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(0)->data_c());
+  input_addr_ = reinterpret_cast<uint8_t *>(in_tensors_.at(0)->data());
+  output_addr_ = reinterpret_cast<uint8_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(input_addr_);
   CHECK_NULL_RETURN(output_addr_);
   if (one_dim_tile_) {

@@ -239,7 +239,7 @@ void TryMergePadXxx(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::
 
   auto *conv_param = reinterpret_cast<ParamType *>(reinterpret_cast<OpenCLKernel *>(node->kernel())->GetParameter());
   MS_ASSERT(conv_param);
-  auto paddings = reinterpret_cast<int32_t *>(pad->in_tensors().at(1)->data_c());
+  auto paddings = reinterpret_cast<int32_t *>(pad->in_tensors().at(1)->data());
   conv_param->pad_u_ += paddings[2];
   conv_param->pad_d_ += paddings[3];
   conv_param->pad_l_ += paddings[4];
@@ -418,7 +418,7 @@ void TryMergeConvPReLU(LiteKernel *prelu, std::set<LiteKernel *> *removed_set, s
   // group must be 1 & have not act function
   if (param->group_ == 1 && param->act_type_ == ActType_No) {
     param->act_type_ = static_cast<ActType>(ActivationType_LEAKY_RELU);
-    reinterpret_cast<Conv2DOpenCLKernel *>(conv->kernel())->alpha_ = *reinterpret_cast<float *>(prelu_weight->data_c());
+    reinterpret_cast<Conv2DOpenCLKernel *>(conv->kernel())->alpha_ = *reinterpret_cast<float *>(prelu_weight->data());
     MergeRemoveB(conv, prelu, removed_set);
     MS_LOG(DEBUG) << "Merge Conv2D(NO_ACTIVATION) and PReLU(weight is scalar) success";
   }
@@ -461,16 +461,16 @@ int TryFusionConvScaleWeight(LiteKernel *conv_kernel, LiteKernel *scale_kernel) 
   int KH = filter->shape()[1];
   int KW = filter->shape()[2];
   int CO = filter->shape()[3];
-  auto *filter_data = reinterpret_cast<float *>(filter->data_c());
-  auto *scale_data = reinterpret_cast<float *>(scale->data_c());
+  auto *filter_data = reinterpret_cast<float *>(filter->data());
+  auto *scale_data = reinterpret_cast<float *>(scale->data());
   for (int i = 0; i < CI * KH * KW * CO; ++i) {
     filter_data[i] *= scale_data[i % CO];
   }
 
   // update bias: bias=bias*scale+offset
   if (bias != nullptr) {
-    auto *bias_data = reinterpret_cast<float *>(bias->data_c());
-    auto *offset_data = reinterpret_cast<float *>(offset->data_c());
+    auto *bias_data = reinterpret_cast<float *>(bias->data());
+    auto *offset_data = reinterpret_cast<float *>(offset->data());
     for (int co = 0; co < CO; ++co) {
       bias_data[co] *= scale_data[co];
       bias_data[co] += offset_data[co];

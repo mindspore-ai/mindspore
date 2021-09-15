@@ -171,9 +171,9 @@ int StridedSliceCPUKernel::FastRun() {
       MS_LOG(ERROR) << "Not supported data type: " << input->data_type();
       return RET_ERROR;
   }
-  input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.front()->data_c());
+  input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.front()->data());
   CHECK_NULL_RETURN(input_ptr_);
-  output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.front()->data_c());
+  output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(output_ptr_);
   if (input_ptr_ == nullptr || output_ptr_ == nullptr) {
     return RET_NULL_PTR;
@@ -206,9 +206,9 @@ int StridedSliceCPUKernel::NormalRun() {
       return RET_ERROR;
   }
   auto output = out_tensors_.at(0);
-  CHECK_NULL_RETURN(input->data_c());
-  CHECK_NULL_RETURN(output->data_c());
-  auto ret = DoStridedSlice(input->data_c(), output->data_c(), param_);
+  CHECK_NULL_RETURN(input->data());
+  CHECK_NULL_RETURN(output->data());
+  auto ret = DoStridedSlice(input->data(), output->data(), param_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSlice error error_code[" << ret << "]";
     return RET_ERROR;

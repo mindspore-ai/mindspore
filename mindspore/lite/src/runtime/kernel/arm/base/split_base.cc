@@ -140,7 +140,7 @@ static int SplitRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 
 int SplitBaseCPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
-  input_ptr_ = input_tensor->data_c();
+  input_ptr_ = input_tensor->data();
   if (input_ptr_ == nullptr) {
     return RET_NULL_PTR;
   }
@@ -148,7 +148,7 @@ int SplitBaseCPUKernel::Run() {
   CHECK_NULL_RETURN(param);
   for (int i = 0; i < param->num_split_; i++) {
     auto output_tensor = out_tensors_.at(i);
-    output_ptr_.at(i) = output_tensor->data_c();
+    output_ptr_.at(i) = output_tensor->data();
     if (output_ptr_.at(i) == nullptr) {
       return RET_NULL_PTR;
     }

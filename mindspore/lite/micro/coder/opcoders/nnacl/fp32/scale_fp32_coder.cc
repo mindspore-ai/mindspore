@@ -26,13 +26,13 @@ namespace mindspore::lite::micro::nnacl {
 int ScaleFP32Coder::InitScaleOffset() {
   Tensor *scale_tensor = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(scale_tensor);
-  if (scale_tensor->data_c() != nullptr) {
+  if (scale_tensor->data() != nullptr) {
     scale_param_->const_scale_ = true;
     scale_ =
       reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, scale_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(scale_);
     MS_CHECK_TRUE(scale_tensor->Size() > 0, "invalid scale tensor size");
-    MS_CHECK_RET_CODE(memcpy_s(scale_, scale_tensor->Size(), scale_tensor->data_c(), scale_tensor->Size()),
+    MS_CHECK_RET_CODE(memcpy_s(scale_, scale_tensor->Size(), scale_tensor->data(), scale_tensor->Size()),
                       "memcpy scale failed");
   } else {
     scale_param_->const_scale_ = false;
@@ -45,7 +45,7 @@ int ScaleFP32Coder::InitScaleOffset() {
       reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, scale_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(offset_);
     MS_CHECK_RET_CODE(memset_s(offset_, scale_tensor->Size(), 0, scale_tensor->Size()), "memset_s failed!");
-  } else if (input_tensors_.size() == DIMENSION_3D && input_tensors_.at(kBiasIndex)->data_c() != nullptr) {
+  } else if (input_tensors_.size() == DIMENSION_3D && input_tensors_.at(kBiasIndex)->data() != nullptr) {
     scale_param_->const_offset_ = true;
     Tensor *offset_tensor = input_tensors_.at(kBiasIndex);
     MS_CHECK_PTR(offset_tensor);
@@ -53,7 +53,7 @@ int ScaleFP32Coder::InitScaleOffset() {
       reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, offset_tensor->Size(), kOfflinePackWeight));
     MS_CHECK_PTR(offset_);
     MS_CHECK_TRUE(offset_tensor->Size() > 0, "invalid offset tensor size");
-    MS_CHECK_RET_CODE(memcpy_s(offset_, offset_tensor->Size(), offset_tensor->data_c(), offset_tensor->Size()),
+    MS_CHECK_RET_CODE(memcpy_s(offset_, offset_tensor->Size(), offset_tensor->data(), offset_tensor->Size()),
                       "memcpy_s failed!");
   } else {
     scale_param_->const_offset_ = false;

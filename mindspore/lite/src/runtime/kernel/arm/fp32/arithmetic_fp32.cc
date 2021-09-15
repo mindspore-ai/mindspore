@@ -144,7 +144,7 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
     if (input0_ptr_ == nullptr) {
       return RET_ERROR;
     }
-    TileConstTensor(in_tensors_[0]->data_c(), input0_ptr_, param_->ndim_, param_->in_shape0_, param_->in_strides0_,
+    TileConstTensor(in_tensors_[0]->data(), input0_ptr_, param_->ndim_, param_->in_shape0_, param_->in_strides0_,
                     param_->out_strides_, param_->multiples0_);
     input0_broadcast_ = true;
     param_->in_elements_num0_ = param_->out_elements_num_;
@@ -156,7 +156,7 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
       FreeConstTileBuff();
       return RET_ERROR;
     }
-    TileConstTensor(in_tensors_[1]->data_c(), input1_ptr_, param_->ndim_, param_->in_shape1_, param_->in_strides1_,
+    TileConstTensor(in_tensors_[1]->data(), input1_ptr_, param_->ndim_, param_->in_shape1_, param_->in_strides1_,
                     param_->out_strides_, param_->multiples1_);
     input1_broadcast_ = true;
     param_->in_elements_num1_ = param_->out_elements_num_;
@@ -425,12 +425,12 @@ int ArithmeticCPUKernel::Run() {
     return RET_ERROR;
   }
   if (!input0_broadcast_) {
-    input0_ptr_ = in_tensors_[0]->data_c();
+    input0_ptr_ = in_tensors_[0]->data();
   }
   if (!input1_broadcast_) {
-    input1_ptr_ = in_tensors_[1]->data_c();
+    input1_ptr_ = in_tensors_[1]->data();
   }
-  output_ptr_ = out_tensors_[0]->data_c();
+  output_ptr_ = out_tensors_[0]->data();
   return ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
 }
 

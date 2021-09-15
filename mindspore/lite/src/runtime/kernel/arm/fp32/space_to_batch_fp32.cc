@@ -34,13 +34,13 @@ void SpaceToBatchCPUKernel::ProcessInput() {
   }
   ComputeStrides(param_->input_shape_, param_->in_stride_, DIMENSION_4D);
   ComputeStrides(param_->output_shape_, param_->out_stride_, DIMENSION_4D);
-  auto block_shape_data = in_tensors_.at(1)->data_c();
+  auto block_shape_data = in_tensors_.at(1)->data();
   auto block_shape = static_cast<int *>(block_shape_data);
   MS_ASSERT(block_shape != nullptr);
   for (int i = 0; i < in_tensors_.at(1)->ElementsNum(); i++) {
     param_->block_sizes_[i] = block_shape[i];
   }
-  auto padding_data = in_tensors_.at(2)->data_c();
+  auto padding_data = in_tensors_.at(2)->data();
   auto padding = static_cast<int *>(padding_data);
   MS_ASSERT(padding != nullptr);
   for (int i = 0; i < in_tensors_.at(2)->ElementsNum(); i++) {
@@ -90,9 +90,9 @@ int SpaceToBatchCPUKernel::DoRun(int task_id) {
 }
 
 int SpaceToBatchCPUKernel::Run() {
-  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data());
   MS_ASSERT(input_ptr_ != nullptr);
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   MS_ASSERT(output_ptr_ != nullptr);
   if (in_tensors_.size() == 3) {
     if (!in_tensors_[1]->IsConst() || !in_tensors_[2]->IsConst()) {

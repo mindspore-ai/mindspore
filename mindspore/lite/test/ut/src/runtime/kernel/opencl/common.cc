@@ -172,7 +172,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
   MS_LOG(DEBUG) << "malloc and init input data";
   for (auto input : subgraph_inputs) {
     EXPECT_TRUE(input->MutableData() != nullptr);  // malloc Image2D & call MapBuffer()
-    memcpy(input->data_c(), subgraph_inputs_data[input], input->Size());
+    memcpy(input->data(), subgraph_inputs_data[input], input->Size());
   }
 
   // simulating benchmark:  MarkAccuracy() -> session_->RunGraph() -> executor_->Run() -> OpenCLSubGraph->Run()
@@ -180,10 +180,10 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
   EXPECT_TRUE(sub_graph->Execute() == RET_OK);  // will call UnmapBuffer() for input
 
   for (int i = 0; i < outputs.size(); ++i) {
-    ocl_runtime->GetAllocator()->MapBuffer(outputs[i]->data_c(), CL_MAP_READ, nullptr, true);
+    ocl_runtime->GetAllocator()->MapBuffer(outputs[i]->data(), CL_MAP_READ, nullptr, true);
     float *expect_data = reinterpret_cast<float *>(std::get<1>(output_info[i]));
-    CompareOutput<float>(outputs[i]->data_c(), expect_data, outputs[i]->ElementsNum(), atol, rtol, print_data);
-    ocl_runtime->GetAllocator()->UnmapBuffer(outputs[i]->data_c());
+    CompareOutput<float>(outputs[i]->data(), expect_data, outputs[i]->ElementsNum(), atol, rtol, print_data);
+    ocl_runtime->GetAllocator()->UnmapBuffer(outputs[i]->data());
   }
 
   MS_LOG(DEBUG) << "release resources";
@@ -337,7 +337,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
   MS_LOG(DEBUG) << "malloc and init input data";
   for (auto input : subgraph_inputs) {
     EXPECT_TRUE(input->MutableData() != nullptr);  // malloc Image2D & call MapBuffer()
-    memcpy(input->data_c(), subgraph_inputs_data[input], input->Size());
+    memcpy(input->data(), subgraph_inputs_data[input], input->Size());
   }
 
   // simulating benchmark:  MarkAccuracy() -> session_->RunGraph() -> executor_->Run() -> OpenCLSubGraph->Run()
@@ -345,9 +345,9 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
   EXPECT_TRUE(sub_graph->Execute() == RET_OK);  // will call UnmapBuffer() for input
 
   // check result
-  ocl_runtime->GetAllocator()->MapBuffer(output.data_c(), CL_MAP_READ, nullptr, true);
-  CompareOutput<float>(output.data_c(), expect_data, output.ElementsNum(), atol, rtol, print_data);
-  ocl_runtime->GetAllocator()->UnmapBuffer(output.data_c());
+  ocl_runtime->GetAllocator()->MapBuffer(output.data(), CL_MAP_READ, nullptr, true);
+  CompareOutput<float>(output.data(), expect_data, output.ElementsNum(), atol, rtol, print_data);
+  ocl_runtime->GetAllocator()->UnmapBuffer(output.data());
 
   MS_LOG(DEBUG) << "release resources";
   for (auto &tensor : tensors) {

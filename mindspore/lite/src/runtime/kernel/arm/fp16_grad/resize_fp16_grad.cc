@@ -63,8 +63,8 @@ int ResizeGradCPUKernelFp16::Init() {
 }
 
 int ResizeGradCPUKernelFp16::Execute(int task_id) {
-  auto in_addr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto out_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto in_addr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+  auto out_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(in_addr);
   CHECK_NULL_RETURN(out_addr);
   auto param = reinterpret_cast<ResizeFp16GradParameter *>(op_parameter_);
@@ -100,7 +100,7 @@ int ResizeFp16GradRun(void *cdata, int task_id, float lhs_scale, float rhs_scale
 }
 
 int ResizeGradCPUKernelFp16::Run() {
-  auto out_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto out_addr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(out_addr);
   size_t elem_number = out_tensors_.at(0)->ElementsNum();
   std::fill(out_addr, out_addr + elem_number, 0.f);

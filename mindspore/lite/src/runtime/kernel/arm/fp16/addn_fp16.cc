@@ -72,14 +72,14 @@ int AddNFp16CPUKernel::Run() {
 
     for (size_t i = 2; i < in_tensors_.size(); ++i) {
       if (in_tensors_[i]->shape() == out_tensors_[0]->shape()) {
-        ElementAddFp16(reinterpret_cast<float16_t *>(in_tensors_[i]->data_c()), out_data, out_data, elements_num_);
+        ElementAddFp16(reinterpret_cast<float16_t *>(in_tensors_[i]->data()), out_data, out_data, elements_num_);
       } else {
         ArithmeticParameter param;
         param.in_elements_num0_ = in_tensors_[i]->ElementsNum();
         param.in_elements_num1_ = out_tensors_[0]->ElementsNum();
         param.out_elements_num_ = out_tensors_[0]->ElementsNum();
         param.broadcasting_ = true;
-        ElementOptAddFp16(reinterpret_cast<float16_t *>(in_tensors_[i]->data_c()), out_data, out_data, elements_num_,
+        ElementOptAddFp16(reinterpret_cast<float16_t *>(in_tensors_[i]->data()), out_data, out_data, elements_num_,
                           &param);
       }
     }

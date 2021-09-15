@@ -58,9 +58,9 @@ int SliceInt8CPUKernel::Init() {
 }
 
 int SliceInt8CPUKernel::DoSlice(int task_id) {
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->data_c());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(input_data);
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
 
   auto ret = SliceInt8(input_data, output_data, param_, task_id);

@@ -55,9 +55,9 @@ int PowerInt8CPUKernel::Init() {
 int PowerInt8CPUKernel::ReSize() { return RET_OK; }
 
 int PowerInt8CPUKernel::DoPower(int task_id) {
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->data_c());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->data());
   MSLITE_CHECK_PTR(input_data);
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->data());
   MSLITE_CHECK_PTR(output_data);
 
   auto size = in_tensors_.at(0)->ElementsNum();

@@ -75,17 +75,17 @@ int OneHotOpenCLKernel::Prepare() {
 }
 
 int OneHotOpenCLKernel::InitWeights() {
-  depth_ = static_cast<int32_t *>(in_tensors_[1]->data_c())[0];
+  depth_ = static_cast<int32_t *>(in_tensors_[1]->data())[0];
   MS_ASSERT(depth_);
   // inputs num is 3 or 4.
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {  // onnx
-    off_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];
-    on_value_ = static_cast<float *>(in_tensors_[2]->data_c())[1];
+    off_value_ = static_cast<float *>(in_tensors_[2]->data())[0];
+    on_value_ = static_cast<float *>(in_tensors_[2]->data())[1];
     param_->support_neg_index_ = true;
   }
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_4) {  // tf
-    on_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];
-    off_value_ = static_cast<float *>(in_tensors_[3]->data_c())[0];
+    on_value_ = static_cast<float *>(in_tensors_[2]->data())[0];
+    off_value_ = static_cast<float *>(in_tensors_[3]->data())[0];
     param_->support_neg_index_ = false;
   }
   MS_ASSERT(off_value_);
@@ -136,11 +136,11 @@ void OneHotOpenCLKernel::SetGlobalLocal() {
 
 int OneHotOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

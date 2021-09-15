@@ -72,7 +72,7 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
   int gamma_zp = gamma_tensor->quant_params().front().zeroPoint;
   gamma_ptr_ = reinterpret_cast<float *>(malloc(gamma_tensor->ElementsNum() * sizeof(float)));
   CHECK_NULL_RETURN(gamma_ptr_);
-  int8_t *src_gamma = reinterpret_cast<int8_t *>(gamma_tensor->data_c());
+  int8_t *src_gamma = reinterpret_cast<int8_t *>(gamma_tensor->data());
   for (int i = 0; i < gamma_tensor->ElementsNum(); i++) {
     gamma_ptr_[i] = (src_gamma[i] - gamma_zp) * gamma_scale;
   }
@@ -86,7 +86,7 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
     gamma_ptr_ = nullptr;
     return RET_ERROR;
   }
-  int32_t *src_beta = reinterpret_cast<int32_t *>(beta_tensor->data_c());
+  int32_t *src_beta = reinterpret_cast<int32_t *>(beta_tensor->data());
   for (int i = 0; i < beta_tensor->ElementsNum(); i++) {
     beta_ptr_[i] = src_beta[i] * quant_param_->in_scale_ * gamma_scale;
   }
@@ -153,9 +153,9 @@ int LayerNormInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 }
 
 int LayerNormInt8CPUKernel::Run() {
-  src_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
+  src_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(src_ptr_);
-  dst_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  dst_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(dst_ptr_);
 
   auto ret = ParallelLaunch(this->ms_context_, LayerNormInt8Run, this, op_parameter_->thread_num_);

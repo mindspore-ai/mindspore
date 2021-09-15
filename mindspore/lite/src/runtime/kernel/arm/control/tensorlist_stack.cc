@@ -76,7 +76,7 @@ int TensorListStackCPUKernel::MergeElementShape() {
     MS_LOG(ERROR) << "in_tensors_.at(1)->data_type():" << in_tensors_.at(1)->data_type() << " must be int";
     return RET_ERROR;
   }
-  auto ele_shape_data = reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
+  auto ele_shape_data = reinterpret_cast<int *>(in_tensors_.at(1)->data());
   MS_CHECK_TRUE_RET(ele_shape_data != nullptr, RET_NULL_PTR);
   output_shape_.clear();
   for (int i = 0; i < in_tensors_.at(1)->ElementsNum(); ++i) {
@@ -160,7 +160,7 @@ int TensorListStackCPUKernel::Run() {
                   << "must be equal to in_ele_num:" << in_ele_num;
     return RET_ERROR;
   }
-  auto out_data = reinterpret_cast<char *>(output0_->data_c());
+  auto out_data = reinterpret_cast<char *>(output0_->data());
   MS_CHECK_TRUE_RET(out_data != nullptr, RET_NULL_PTR);
   dtype_ = input0_->tensors_data_type();
   auto unknown_type_offset = TypeUnknownSize * lite::DataTypeSize(dtype_);
@@ -173,7 +173,7 @@ int TensorListStackCPUKernel::Run() {
     }
     if (in_ptr->data_type() != kTypeUnknown) {
       int data_size = in_ptr->ElementsNum() * lite::DataTypeSize(dtype_);
-      auto in_data = in_ptr->data_c();
+      auto in_data = in_ptr->data();
       MS_CHECK_TRUE_RET(in_data != nullptr, RET_NULL_PTR);
       memcpy(out_data, in_data, data_size);
       out_data += data_size;

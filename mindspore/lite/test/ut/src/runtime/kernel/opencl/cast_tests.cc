@@ -130,11 +130,11 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   }
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
-  memcpy(inputs[0]->data_c(), input_data, input1_size);
+  memcpy(inputs[0]->data(), input_data, input1_size);
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Execute();
-  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
@@ -240,11 +240,11 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   }
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
-  memcpy(inputs[0]->data_c(), input_data, input1_size);
+  memcpy(inputs[0]->data(), input_data, input1_size);
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Execute();
-  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data());
   CompareOutputData1(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);

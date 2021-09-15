@@ -25,7 +25,7 @@ int GroupConvolutionInt8CPUKernel::SeparateInput(int group_id) {
   int sub_in_channel = conv_param_->input_channel_;
   int ori_in_channel = sub_in_channel * group_num_;
   auto sub_in_data =
-    reinterpret_cast<int8_t *>(static_cast<lite::Tensor *>(group_convs_.at(group_id)->in_tensors().front())->data_c());
+    reinterpret_cast<int8_t *>(static_cast<lite::Tensor *>(group_convs_.at(group_id)->in_tensors().front())->data());
   int8_t *src_ptr = reinterpret_cast<int8_t *>(ori_in_data_) + group_id * sub_in_channel;
   int8_t *dst_ptr = sub_in_data;
   for (int i = 0; i < in_plane; ++i) {
@@ -41,7 +41,7 @@ int GroupConvolutionInt8CPUKernel::PostConcat(int group_id) {
   int sub_out_channel = conv_param_->output_channel_;
   int ori_out_channel = sub_out_channel * group_num_;
   auto sub_out_data =
-    reinterpret_cast<int8_t *>(static_cast<lite::Tensor *>(group_convs_.at(group_id)->out_tensors().front())->data_c());
+    reinterpret_cast<int8_t *>(static_cast<lite::Tensor *>(group_convs_.at(group_id)->out_tensors().front())->data());
   int8_t *src_ptr = sub_out_data;
   int8_t *dst_ptr = reinterpret_cast<int8_t *>(ori_out_data_) + group_id * sub_out_channel;
   for (int i = 0; i < out_plane; ++i) {

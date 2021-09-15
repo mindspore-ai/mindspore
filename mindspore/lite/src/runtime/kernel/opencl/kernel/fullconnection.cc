@@ -152,7 +152,7 @@ int FullConnectionOpenCLKernel::InitFilter() {
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);
   memset(padWeight_, 0x00, nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size);
-  void *src_data = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data_c() : stored_weight_;
+  void *src_data = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data() : stored_weight_;
   MS_ASSERT(src_data);
   auto originWeightFp32 = reinterpret_cast<float *>(src_data);
   auto originWeightFp16 = reinterpret_cast<float16_t *>(src_data);
@@ -228,7 +228,7 @@ int FullConnectionOpenCLKernel::InitBias() {
   }
   memset(bias_, 0x00, co4 * C4NUM * dtype_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
-    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data_c() : stored_bias_;
+    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data() : stored_bias_;
     MS_ASSERT(src_data);
     if (in_tensors_[kBiasIndex]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < CO_; i++) {
@@ -319,16 +319,16 @@ int FullConnectionOpenCLKernel::StoreConstData() {
 int FullConnectionOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_count = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
   if (weight_var_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[1]->data_c()) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[1]->data()) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

@@ -39,8 +39,8 @@ int TensorListGetItemCPUKernel::Run() {
   auto input0 = reinterpret_cast<lite::TensorList *>(in_tensors_.at(0));
   CHECK_NULL_RETURN(input0);
   dtype_ = input0->tensors_data_type();
-  MS_ASSERT(in_tensors_.at(1)->data_c() != nullptr);
-  index_ = reinterpret_cast<int *>(in_tensors_.at(1)->data_c())[0];
+  MS_ASSERT(in_tensors_.at(1)->data() != nullptr);
+  index_ = reinterpret_cast<int *>(in_tensors_.at(1)->data())[0];
   int dim0 = input0->ElementsNum();
   if (index_ < 0 || index_ >= dim0) {
     MS_LOG(ERROR) << "index tensor:[" << index_ << "] must be in [0, " << dim0 << ")!";
@@ -61,7 +61,7 @@ int TensorListGetItemCPUKernel::Run() {
     }
   } else {
     // reset data buffer is zero
-    auto out_data = out_tensors_[0]->data_c();
+    auto out_data = out_tensors_[0]->data();
     if (out_data == nullptr) {
       MS_LOG(ERROR) << "data of out_tensors_[0] is nullptr";
       return RET_ERROR;

@@ -49,17 +49,16 @@ int RangeCPUKernel::ReSize() {
 int RangeCPUKernel::Run() {
   if (in_tensors_.size() == 3) {
     if (data_type_ == kDataTypeInt) {
-      RangeInt(reinterpret_cast<int *>(out_tensors_.at(0)->data_c()),
-               *reinterpret_cast<int *>(in_tensors_.at(0)->data_c()),
-               *reinterpret_cast<int *>(in_tensors_.at(2)->data_c()), out_tensors_.at(0)->shape()[0]);
+      RangeInt(reinterpret_cast<int *>(out_tensors_.at(0)->data()), *reinterpret_cast<int *>(in_tensors_.at(0)->data()),
+               *reinterpret_cast<int *>(in_tensors_.at(2)->data()), out_tensors_.at(0)->shape()[0]);
     } else {
-      Range(reinterpret_cast<float *>(out_tensors_.at(0)->data_c()),
-            *reinterpret_cast<float *>(in_tensors_.at(0)->data_c()),
-            *reinterpret_cast<float *>(in_tensors_.at(2)->data_c()), out_tensors_.at(0)->shape()[0]);
+      Range(reinterpret_cast<float *>(out_tensors_.at(0)->data()),
+            *reinterpret_cast<float *>(in_tensors_.at(0)->data()),
+            *reinterpret_cast<float *>(in_tensors_.at(2)->data()), out_tensors_.at(0)->shape()[0]);
     }
   } else {
     if (data_type_ == kDataTypeInt) {
-      RangeInt(reinterpret_cast<int *>(out_tensors_.at(0)->data_c()),
+      RangeInt(reinterpret_cast<int *>(out_tensors_.at(0)->data()),
                (reinterpret_cast<RangeParameter *>(op_parameter_))->start_,
                (reinterpret_cast<RangeParameter *>(op_parameter_))->delta_, out_tensors_.at(0)->shape()[0]);
     } else {

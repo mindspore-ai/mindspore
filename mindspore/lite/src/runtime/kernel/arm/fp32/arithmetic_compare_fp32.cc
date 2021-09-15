@@ -86,23 +86,21 @@ int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
       return RET_OK;
     }
     if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-      error_code =
-        BroadcastRun(reinterpret_cast<float *>(input0_ptr_), reinterpret_cast<float *>(input1_ptr_),
-                     reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c()), 0, out_count, out_thread_stride);
+      error_code = BroadcastRun(reinterpret_cast<float *>(input0_ptr_), reinterpret_cast<float *>(input1_ptr_),
+                                reinterpret_cast<uint8_t *>(out_tensors_[0]->data()), 0, out_count, out_thread_stride);
     } else {
-      error_code =
-        BroadcastRun(reinterpret_cast<int *>(input0_ptr_), reinterpret_cast<int *>(input1_ptr_),
-                     reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c()), 0, out_count, out_thread_stride);
+      error_code = BroadcastRun(reinterpret_cast<int *>(input0_ptr_), reinterpret_cast<int *>(input1_ptr_),
+                                reinterpret_cast<uint8_t *>(out_tensors_[0]->data()), 0, out_count, out_thread_stride);
     }
   } else {  // no broadcast, neither is scalar, two same shape
     if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
       error_code = func_fp32_(reinterpret_cast<float *>(input0_ptr_) + stride * task_id,
                               reinterpret_cast<float *>(input1_ptr_) + stride * task_id,
-                              reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c()) + stride * task_id, count);
+                              reinterpret_cast<uint8_t *>(out_tensors_[0]->data()) + stride * task_id, count);
     } else {
       error_code = func_int32_(reinterpret_cast<int *>(input0_ptr_) + stride * task_id,
                                reinterpret_cast<int *>(input1_ptr_) + stride * task_id,
-                               reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c()) + stride * task_id, count);
+                               reinterpret_cast<uint8_t *>(out_tensors_[0]->data()) + stride * task_id, count);
     }
   }
   if (error_code != RET_OK) {

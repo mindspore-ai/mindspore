@@ -93,18 +93,18 @@ int ScaleOpenCLKernel::InitWeights() {
   ImageSize img_size;
   GetImageSize(0, &img_size);
   img_size.dtype = scale_dtype == kNumberTypeFloat16 ? CL_HALF_FLOAT : CL_FLOAT;
-  MS_ASSERT(scale_tensor->data_c());
-  MS_ASSERT(offset_tensor->data_c());
+  MS_ASSERT(scale_tensor->data());
+  MS_ASSERT(offset_tensor->data());
 
   if (broadcast_flag_) {
     img_size.height = 1;
     img_size.width = UP_DIV(scale_tensor->shape()[0], C4NUM);
-    scale_ptr_ = allocator->Malloc(img_size, scale_tensor->data_c());
+    scale_ptr_ = allocator->Malloc(img_size, scale_tensor->data());
     if (scale_ptr_ == nullptr) {
       MS_LOG(ERROR) << "Malloc failed.";
       return RET_ERROR;
     }
-    offset_ptr_ = allocator->Malloc(img_size, offset_tensor->data_c());
+    offset_ptr_ = allocator->Malloc(img_size, offset_tensor->data());
     if (offset_ptr_ == nullptr) {
       MS_LOG(ERROR) << "Malloc failed.";
       return RET_ERROR;
@@ -114,12 +114,12 @@ int ScaleOpenCLKernel::InitWeights() {
 
   if (in_tensor->format() == scale_tensor->format()) {
     if (in_tensor->data_type() == scale_tensor->data_type()) {
-      scale_ptr_ = allocator->Malloc(img_size, scale_tensor->data_c());
+      scale_ptr_ = allocator->Malloc(img_size, scale_tensor->data());
       if (scale_ptr_ == nullptr) {
         MS_LOG(ERROR) << "Malloc failed.";
         return RET_ERROR;
       }
-      offset_ptr_ = allocator->Malloc(img_size, offset_tensor->data_c());
+      offset_ptr_ = allocator->Malloc(img_size, offset_tensor->data());
       if (offset_ptr_ == nullptr) {
         MS_LOG(ERROR) << "Malloc failed.";
         return RET_ERROR;
@@ -136,8 +136,8 @@ int ScaleOpenCLKernel::InitWeights() {
       std::vector<char> scale(pack_weight_size, 0);
       std::vector<char> offset(pack_weight_size, 0);
       bool src_is_fp16 = scale_dtype == kNumberTypeFloat16;
-      PackNHWCToNHWC4(scale_tensor->data_c(), scale.data(), src_is_fp16, fp16_enable, image2d_info);
-      PackNHWCToNHWC4(offset_tensor->data_c(), offset.data(), src_is_fp16, fp16_enable, image2d_info);
+      PackNHWCToNHWC4(scale_tensor->data(), scale.data(), src_is_fp16, fp16_enable, image2d_info);
+      PackNHWCToNHWC4(offset_tensor->data(), offset.data(), src_is_fp16, fp16_enable, image2d_info);
       scale_ptr_ = allocator->Malloc(img_size, scale.data());
       if (scale_ptr_ == nullptr) {
         MS_LOG(ERROR) << "Malloc failed.";
@@ -221,12 +221,12 @@ int ScaleOpenCLKernel::Prepare() {
 
 int ScaleOpenCLKernel::SetKernelArg(int *idx) {
   int arg_idx = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data()) != CL_SUCCESS) {
     return RET_ERROR;
   }
   if (weight_vector_flag_) {
-    void *scale = scale_ptr_ == nullptr ? in_tensors_[1]->data_c() : scale_ptr_;
-    void *offset = offset_ptr_ == nullptr ? in_tensors_[2]->data_c() : offset_ptr_;
+    void *scale = scale_ptr_ == nullptr ? in_tensors_[1]->data() : scale_ptr_;
+    void *offset = offset_ptr_ == nullptr ? in_tensors_[2]->data() : offset_ptr_;
     if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale) != CL_SUCCESS) {
       return RET_ERROR;
     }
@@ -235,8 +235,8 @@ int ScaleOpenCLKernel::SetKernelArg(int *idx) {
     }
   } else {
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-      float scale = static_cast<float *>(in_tensors_[1]->data_c())[0];
-      float offset = static_cast<float *>(in_tensors_[2]->data_c())[0];
+      float scale = static_cast<float *>(in_tensors_[1]->data())[0];
+      float offset = static_cast<float *>(in_tensors_[2]->data())[0];
       if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale) != CL_SUCCESS) {
         return RET_ERROR;
       }
@@ -244,8 +244,8 @@ int ScaleOpenCLKernel::SetKernelArg(int *idx) {
         return RET_ERROR;
       }
     } else if (in_tensors_[1]->data_type() == kNumberTypeFloat16) {
-      float16_t scale = static_cast<float16_t *>(in_tensors_[1]->data_c())[0];
-      float16_t offset = static_cast<float16_t *>(in_tensors_[2]->data_c())[0];
+      float16_t scale = static_cast<float16_t *>(in_tensors_[1]->data())[0];
+      float16_t offset = static_cast<float16_t *>(in_tensors_[2]->data())[0];
       if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(scale)) != CL_SUCCESS) {
         return RET_ERROR;
       }
@@ -257,7 +257,7 @@ int ScaleOpenCLKernel::SetKernelArg(int *idx) {
       return RET_ERROR;
     }
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data()) != CL_SUCCESS) {
     return RET_ERROR;
   }
   cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};

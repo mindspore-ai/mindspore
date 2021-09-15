@@ -93,11 +93,11 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
   in_tensor1.MallocData(allocator);
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
-  memcpy(inputs[0]->data_c(), input_data1, sizeof(input_data1));
+  memcpy(inputs[0]->data(), input_data1, sizeof(input_data1));
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Execute();
-  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data());
   ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
@@ -163,11 +163,11 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
   in_tensor1.MallocData(allocator);
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
-  memcpy(inputs[0]->data_c(), input_data1, sizeof(input_data1));
+  memcpy(inputs[0]->data(), input_data1, sizeof(input_data1));
 
   std::cout << "==================output data================" << std::endl;
   sub_graph->Execute();
-  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data());
   ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }

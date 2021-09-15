@@ -31,7 +31,7 @@ using mindspore::schema::PrimitiveType_Split;
 namespace mindspore::kernel {
 int SplitOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
-  auto src_data = in_tensors_[0]->data_c();
+  auto src_data = in_tensors_[0]->data();
   CHECK_NULL_RETURN(src_data);
   cl::Image2D *in_image = allocator_->GetImage(src_data);
   if (in_image == nullptr) {
@@ -40,7 +40,7 @@ int SplitOpenCLKernel::RunAxis0() {
   }
   auto src_area = cl::array<cl::size_type, 3U>{0, 0, 0};
   for (int i = 0; i < out_tensors_.size(); i++) {
-    auto dst_data = out_tensors_[i]->data_c();
+    auto dst_data = out_tensors_[i]->data();
     CHECK_NULL_RETURN(dst_data);
     ImageSize img_size;
     if (allocator_->GetImageSize(dst_data, &img_size) != RET_OK) {
@@ -247,18 +247,18 @@ int SplitOpenCLKernel::Run() {
   }
   int arg_cn = 0;
   if (Align_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c()) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data()) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   } else {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c(), true) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data(), true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   }
   for (int i = 0; i < out_tensors_.size(); ++i) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(i)->data_c()) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(i)->data()) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

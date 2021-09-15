@@ -225,7 +225,7 @@ std::vector<int> NodeInferShape::GetIntVecInput(const CNodePtr &cnode, size_t in
     return {};
   }
   tensor_data.resize(specify_tensors.front()->shape()[0]);
-  if (memcpy_s(tensor_data.data(), tensor_data.size() * sizeof(int), specify_tensors.front()->data_c(),
+  if (memcpy_s(tensor_data.data(), tensor_data.size() * sizeof(int), specify_tensors.front()->data(),
                tensor_data.size() * sizeof(int)) != EOK) {
     FreeTensors(&specify_tensors);
     return {};

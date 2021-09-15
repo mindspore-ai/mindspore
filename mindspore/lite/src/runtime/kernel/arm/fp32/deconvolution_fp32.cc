@@ -85,7 +85,7 @@ void DeConvolutionCPUKernel::PackWeight() {
   auto output_channel = weight_tensor->Channel();
   auto kernel_h = weight_tensor->Height();
   auto kernel_w = weight_tensor->Width();
-  void *origin_weight = IsTrainable() ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = IsTrainable() ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
 #ifdef ENABLE_AVX
   PackNHWCToCXHWNXFp32(reinterpret_cast<float *>(origin_weight), reinterpret_cast<float *>(packed_weight_),
@@ -189,7 +189,7 @@ int DeConvolutionCPUKernel::Init() {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;
   }
-  if (in_tensors_.at(kWeightIndex)->data_c() != nullptr) {
+  if (in_tensors_.at(kWeightIndex)->data() != nullptr) {
     int error_code = InitConvWeightBias();
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv InitConvWeightBias error!ret: " << error_code;
@@ -252,8 +252,8 @@ int DeConvolutionCPUKernel::Run() {
 
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  float *src_in = reinterpret_cast<float *>(input_tensor->data_c());
-  float *src_out = reinterpret_cast<float *>(output_tensor->data_c());
+  float *src_in = reinterpret_cast<float *>(input_tensor->data());
+  float *src_out = reinterpret_cast<float *>(output_tensor->data());
   CHECK_NULL_RETURN(src_in);
   CHECK_NULL_RETURN(src_out);
 

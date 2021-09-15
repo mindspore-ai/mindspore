@@ -89,8 +89,8 @@ int PoolingFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
 
-  fp16_input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
-  fp16_output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  fp16_input_ = reinterpret_cast<float16_t *>(input_tensor->data());
+  fp16_output_ = reinterpret_cast<float16_t *>(output_tensor->data());
   CHECK_NULL_RETURN(fp16_input_);
   CHECK_NULL_RETURN(fp16_output_);
   int error_code = ParallelLaunch(this->ms_context_, PoolingFp16Impl, this, thread_count_);

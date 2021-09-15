@@ -250,19 +250,19 @@ std::string Tensor::ToString() const {
   oss << std::endl << "Data:";
   switch (this->data_type_) {
     case kNumberTypeFloat32: {
-      oss << DataToString<float>(this->data_c(), this->ElementsNum());
+      oss << DataToString<float>(data_, this->ElementsNum());
     } break;
     case kNumberTypeFloat16: {
-      oss << DataToString<int16_t>(this->data_c(), this->ElementsNum());
+      oss << DataToString<int16_t>(data_, this->ElementsNum());
     } break;
     case kNumberTypeInt32: {
-      oss << DataToString<int32_t>(this->data_c(), this->ElementsNum());
+      oss << DataToString<int32_t>(data_, this->ElementsNum());
     } break;
     case kNumberTypeInt16: {
-      oss << DataToString<int16_t>(this->data_c(), this->ElementsNum());
+      oss << DataToString<int16_t>(data_, this->ElementsNum());
     } break;
     case kNumberTypeInt8: {
-      oss << DataToString<int8_t>(this->data_c(), this->ElementsNum());
+      oss << DataToString<int8_t>(data_, this->ElementsNum());
     } break;
     default:
       oss << "Unsupported data type to print";

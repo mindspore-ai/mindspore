@@ -83,9 +83,9 @@ int UnsortedSegmentSumCPUKernel::Execute(int task_id) {
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);
   auto output_tensor = out_tensors_.at(0);
-  float *input = reinterpret_cast<float *>(input_tensor->data_c());
+  float *input = reinterpret_cast<float *>(input_tensor->data());
   CHECK_NULL_RETURN(input);
-  int *indices = reinterpret_cast<int *>(indices_tensor->data_c());
+  int *indices = reinterpret_cast<int *>(indices_tensor->data());
   CHECK_NULL_RETURN(indices);
   float *output = reinterpret_cast<float *>(output_tensor->MutableData());
   CHECK_NULL_RETURN(output);

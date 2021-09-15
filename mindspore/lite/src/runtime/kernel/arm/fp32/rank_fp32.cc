@@ -36,7 +36,7 @@ int RankCPUKernel::Init() {
 int RankCPUKernel::ReSize() { return RET_OK; }
 
 int RankCPUKernel::Run() {
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_ptr);
   auto in_shape = in_tensors_.at(0)->shape();
   auto rank = in_shape.size();

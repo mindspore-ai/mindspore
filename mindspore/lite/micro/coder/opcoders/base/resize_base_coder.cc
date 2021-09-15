@@ -48,7 +48,7 @@ int ResizeBaseCoder::CheckParameters() {
       return RET_INVALID_OP_ATTR;
     }
   } else if (this->input_tensors_.size() == kDoubleNum) {
-    auto out_shape = this->input_tensors_.at(1)->data_c();
+    auto out_shape = this->input_tensors_.at(1)->data();
     if (out_shape == nullptr) {
       MS_LOG(INFO) << "Out shape is not assigned";
       const_shape_ = false;

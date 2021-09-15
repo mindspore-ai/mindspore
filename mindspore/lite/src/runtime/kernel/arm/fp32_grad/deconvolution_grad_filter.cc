@@ -76,11 +76,11 @@ int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto *input_x = in_tensors_.at(1);
   auto *out_dw = out_tensors_.at(0);
 
-  auto x_addr = reinterpret_cast<float *>(input_x->data_c());
+  auto x_addr = reinterpret_cast<float *>(input_x->data());
   CHECK_NULL_RETURN(x_addr);
-  auto dy_addr = reinterpret_cast<float *>(input_dy->data_c());
+  auto dy_addr = reinterpret_cast<float *>(input_dy->data());
   CHECK_NULL_RETURN(dy_addr);
-  auto dw_addr = reinterpret_cast<float *>(out_dw->data_c());
+  auto dw_addr = reinterpret_cast<float *>(out_dw->data());
   CHECK_NULL_RETURN(dw_addr);
 
   int i, j;

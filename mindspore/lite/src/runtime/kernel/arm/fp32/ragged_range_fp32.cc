@@ -38,14 +38,14 @@ int RaggedRangeCPUKernel::ReSize() { return RET_OK; }
 
 int RaggedRangeCPUKernel::Run() {
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-    RaggedRangeFp32(
-      static_cast<float *>(in_tensors_.at(0)->data_c()), static_cast<float *>(in_tensors_.at(1)->data_c()),
-      static_cast<float *>(in_tensors_.at(2)->data_c()), static_cast<int *>(out_tensors_.at(0)->data_c()),
-      static_cast<float *>(out_tensors_.at(1)->data_c()), reinterpret_cast<RaggedRangeParameter *>(op_parameter_));
+    RaggedRangeFp32(static_cast<float *>(in_tensors_.at(0)->data()), static_cast<float *>(in_tensors_.at(1)->data()),
+                    static_cast<float *>(in_tensors_.at(2)->data()), static_cast<int *>(out_tensors_.at(0)->data()),
+                    static_cast<float *>(out_tensors_.at(1)->data()),
+                    reinterpret_cast<RaggedRangeParameter *>(op_parameter_));
   } else {
-    RaggedRangeInt(static_cast<int *>(in_tensors_.at(0)->data_c()), static_cast<int *>(in_tensors_.at(1)->data_c()),
-                   static_cast<int *>(in_tensors_.at(2)->data_c()), static_cast<int *>(out_tensors_.at(0)->data_c()),
-                   static_cast<int *>(out_tensors_.at(1)->data_c()),
+    RaggedRangeInt(static_cast<int *>(in_tensors_.at(0)->data()), static_cast<int *>(in_tensors_.at(1)->data()),
+                   static_cast<int *>(in_tensors_.at(2)->data()), static_cast<int *>(out_tensors_.at(0)->data()),
+                   static_cast<int *>(out_tensors_.at(1)->data()),
                    reinterpret_cast<RaggedRangeParameter *>(op_parameter_));
   }
   return RET_OK;

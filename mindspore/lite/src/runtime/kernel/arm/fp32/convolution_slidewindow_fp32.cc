@@ -192,7 +192,7 @@ void ConvolutionSWCPUKernel::PackWeight() {
   int kernel_h = filter_tensor->Height();
   int kernel_w = filter_tensor->Width();
   int oc_block_num = UP_DIV(output_channel, oc_tile_);
-  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? filter_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackNHWCToNXHWCXFp32(kernel_h, kernel_w, output_channel, oc_block_num, input_channel,
                        reinterpret_cast<float *>(packed_weight_), reinterpret_cast<float *>(origin_weight));

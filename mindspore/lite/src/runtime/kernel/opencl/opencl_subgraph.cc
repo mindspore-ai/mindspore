@@ -318,7 +318,7 @@ int OpenCLSubGraph::Prepare() {
     }
     for (const auto tensor : node->out_tensors()) {
       CHECK_NULL_RETURN(tensor);
-      MS_CHECK_TRUE_RET(tensor->data_c() == nullptr, RET_ERROR);
+      MS_CHECK_TRUE_RET(tensor->data() == nullptr, RET_ERROR);
       tensor->set_allocator(allocator_);
     }
     if (desc_.provider == kBuiltin) {
@@ -410,11 +410,11 @@ int OpenCLSubGraph::Execute() {
   int ret;
   for (auto &tensor : in_tensors()) {
     MS_ASSERT(tensor);
-    if (tensor->data_c() == nullptr) {
+    if (tensor->data() == nullptr) {
       MS_LOG(ERROR) << "OpenCL subgraph input tensor data is null";
       return RET_ERROR;
     }
-    ret = allocator_->UnmapBuffer(tensor->data_c());
+    ret = allocator_->UnmapBuffer(tensor->data());
     if (ret != RET_OK) {
       return ret;
     }
@@ -440,11 +440,11 @@ int OpenCLSubGraph::Execute(const KernelCallBack &before, const KernelCallBack &
   int ret;
   for (auto &tensor : in_tensors()) {
     MS_ASSERT(tensor);
-    if (tensor->data_c() == nullptr) {
+    if (tensor->data() == nullptr) {
       MS_LOG(ERROR) << "OpenCL subgraph input tensor data is null";
       return RET_ERROR;
     }
-    ret = allocator_->UnmapBuffer(tensor->data_c());
+    ret = allocator_->UnmapBuffer(tensor->data());
     if (ret != RET_OK) {
       return ret;
     }

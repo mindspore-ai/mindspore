@@ -113,7 +113,7 @@ TEST_F(TestNMSFp32, TestCase1) {
 
   std::vector<int32_t> expect{0, 0, 3, 0, 0, 0, 0, 0, 5};
   ASSERT_EQ(0,
-            CompareOutputData(reinterpret_cast<int32_t *>(out_tensor_.data_c()), expect.data(), output_size, err_tol_));
+            CompareOutputData(reinterpret_cast<int32_t *>(out_tensor_.data()), expect.data(), output_size, err_tol_));
 }
 
 }  // namespace mindspore

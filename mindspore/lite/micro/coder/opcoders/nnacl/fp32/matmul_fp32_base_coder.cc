@@ -181,7 +181,7 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     init_code.CodeFunction("memset", bias_ptr_, 0, bias_pack_ptr_size_);
     int max_bias_data = params_->col_align_;
     if (is_bias_broadcast_) {
-      float broad_cast_data = (reinterpret_cast<float *>(bias_tensor_->data_c()))[0];
+      float broad_cast_data = (reinterpret_cast<float *>(bias_tensor_->data()))[0];
       std::string bias_ptr_str = "((float *)(" + allocator_->GetRuntimeAddr(bias_ptr_) + "))";
       init_code << "\tfor (int i = 0; i < " << max_bias_data << "; ++i) {\n";
       init_code << "\t\t" << bias_ptr_str << "[i] = " << broad_cast_data << ";\n";

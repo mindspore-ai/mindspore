@@ -102,11 +102,11 @@ int ConcatFp16CPUKernel::Run() {
     const auto in_tensor = in_tensors_.at(i);
     CHECK_NULL_RETURN(in_tensor);
     if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
-      auto in_tensor_data = reinterpret_cast<float *>(in_tensor->data_c());
+      auto in_tensor_data = reinterpret_cast<float *>(in_tensor->data());
       CHECK_NULL_RETURN(in_tensor_data);
       Float32ToFloat16(in_tensor_data, fp16_inputs_[i], in_tensor->ElementsNum());
     } else {
-      fp16_inputs_[i] = reinterpret_cast<float16_t *>(in_tensor->data_c());
+      fp16_inputs_[i] = reinterpret_cast<float16_t *>(in_tensor->data());
       CHECK_NULL_RETURN(fp16_inputs_[i]);
     }
 
@@ -120,7 +120,7 @@ int ConcatFp16CPUKernel::Run() {
   auto output_addr = out_tensors_.at(0)->MutableData();
   CHECK_NULL_RETURN(output_addr);
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat16) {
-    fp16_output_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+    fp16_output_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
     CHECK_NULL_RETURN(fp16_output_);
   }
   int dtype_len = in_tensors_.at(0)->data_type() == kNumberTypeInt32 ? sizeof(int32_t) : sizeof(float16_t);

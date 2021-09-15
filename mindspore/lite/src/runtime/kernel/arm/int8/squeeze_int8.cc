@@ -107,9 +107,9 @@ void SqueezeInt8CPUKernel::DoExecute(int task_id) {
   MS_ASSERT(input_tensor);
   auto out_tensor = out_tensors_.at(kOutputIndex);
   MS_ASSERT(out_tensor);
-  int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->data_c());
+  int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->data());
   MS_ASSERT(input_data);
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->data_c());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->data());
   MS_ASSERT(output_data);
 
   int num = input_tensor->ElementsNum();

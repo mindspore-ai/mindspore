@@ -122,13 +122,13 @@ int CropAndResizeImpl(void *cdata, int task_id, float lhs_scale, float rhs_scale
 
 int CropAndResizeCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
-  auto input_data = reinterpret_cast<float *>(input->data_c());
+  auto input_data = reinterpret_cast<float *>(input->data());
   CHECK_NULL_RETURN(input_data);
-  auto boxes = reinterpret_cast<float *>(in_tensors_.at(kBoxIndex)->data_c());
+  auto boxes = reinterpret_cast<float *>(in_tensors_.at(kBoxIndex)->data());
   CHECK_NULL_RETURN(boxes);
-  auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(kBoxIdIndex)->data_c());
+  auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(kBoxIdIndex)->data());
   CHECK_NULL_RETURN(box_idx);
-  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(output_data);
   int unit = UP_DIV(new_height_, op_parameter_->thread_num_);
   int h_begin = unit * task_id;
@@ -155,8 +155,8 @@ int CropAndResizeCPUKernel::Run() {
 
   auto input = in_tensors_.at(0);
   auto input_shape = input->shape();
-  auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
-  auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+  auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data());
+  auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
   CHECK_LESS_RETURN(input_shape.size(), DIMENSION_4D);
   const auto &output_shape = out_tensors_.at(0)->shape();
   CHECK_LESS_RETURN(output_shape.size(), DIMENSION_4D);

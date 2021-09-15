@@ -33,12 +33,12 @@ namespace mindspore::kernel {
 int ConcatOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   ImageSize img_size;
-  auto dst_data = out_tensors_[0]->data_c();
+  auto dst_data = out_tensors_[0]->data();
   MS_ASSERT(dst_data);
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto *out_image = allocator_->GetImage(dst_data);
   for (int i = 0; i < in_tensors_.size(); i++) {
-    auto src_data = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data_c() : weight_ptrs_.at(i);
+    auto src_data = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data() : weight_ptrs_.at(i);
     if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
       MS_LOG(ERROR) << "GetImageSize failed.";
       return RET_ERROR;
@@ -194,7 +194,7 @@ int ConcatOpenCLKernel::ConvertWeightToTensor() {
     if (in_tensor->IsConst()) {
       std::vector<char> weight(in_shape.Image2DSize, 0);
       bool src_is_fp16 = in_tensor->data_type() == kNumberTypeFloat16;
-      PackNHWCToNHWC4(in_tensor->data_c(), weight.data(), src_is_fp16,
+      PackNHWCToNHWC4(in_tensor->data(), weight.data(), src_is_fp16,
                       fp16_enable && in_tensor->data_type() != kNumberTypeInt32, in_shape);
       size_t dtype;
       switch (in_tensor->data_type()) {
@@ -283,19 +283,19 @@ int ConcatOpenCLKernel::Run() {
   }
   int arg_cn = 0;
   for (int i = 0; i < in_tensors_.size(); ++i) {
-    auto input_ptr = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data_c() : weight_ptrs_.at(i);
+    auto input_ptr = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data() : weight_ptrs_.at(i);
     if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_ptr) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   }
   if (axis_ == 3 && !Align_) {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), true) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data(), true) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }
   } else {
-    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+    if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data()) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";
       return RET_ERROR;
     }

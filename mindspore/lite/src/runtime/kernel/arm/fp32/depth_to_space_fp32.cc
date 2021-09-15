@@ -67,8 +67,8 @@ int DepthToSpaceCPUKernel::ReSize() {
 int DepthToSpaceCPUKernel::Run() {
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
-  const void *input_data = input->data_c();
-  void *output_data = output->data_c();
+  const void *input_data = input->data();
+  void *output_data = output->data();
   auto in_shape = input->shape();
   MS_CHECK_TRUE_MSG(in_shape.size() == DIMENSION_4D, RET_ERROR, "input shape should be 4!");
   if (input->format() == mindspore::NHWC) {

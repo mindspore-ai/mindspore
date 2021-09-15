@@ -56,7 +56,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitPackedInputOutput() {
 
 void ConvolutionDepthwiseSWFp16CPUKernel::PackWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data_c() : origin_weight_;
+  void *origin_weight = (op_parameter_->is_train_session_) ? weight_tensor->data() : origin_weight_;
   MS_ASSERT(origin_weight != nullptr);
   PackNCHWFp16ToNC8HW8Fp16(reinterpret_cast<float16_t *>(origin_weight), reinterpret_cast<float16_t *>(packed_weight_),
                            1, weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());
@@ -153,8 +153,8 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
     return ret;
   }
 
-  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
-  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data());
+  auto output_ptr = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   MS_ASSERT(input_ptr != nullptr);
   MS_ASSERT(output_ptr != nullptr);
   if (input_ptr == nullptr || output_ptr == nullptr) {

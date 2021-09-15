@@ -51,9 +51,9 @@ int EmbeddingLookupCPUKernel::ReSize() {
 }
 
 int EmbeddingLookupCPUKernel::DoExcute(int task_id) {
-  auto ids_addr = reinterpret_cast<int *>(in_tensors_.back()->data_c());
+  auto ids_addr = reinterpret_cast<int *>(in_tensors_.back()->data());
   CHECK_NULL_RETURN(ids_addr);
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.front()->data_c());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.front()->data());
   CHECK_NULL_RETURN(output_addr);
   int error_code = EmbeddingLookup(input_addr_, ids_addr, output_addr, param_, task_id);
   if (error_code != RET_OK) {
@@ -88,7 +88,7 @@ int EmbeddingLookupCPUKernel::Run() {
   }
   int dest_loc = 0;
   for (size_t i = 0; i < in_tensors_.size() - 1; i++) {
-    auto input_t = reinterpret_cast<float *>(in_tensors_.at(i)->data_c());
+    auto input_t = reinterpret_cast<float *>(in_tensors_.at(i)->data());
     if (input_t == nullptr) {
       MS_LOG(ERROR) << "Get input tensor data failed.";
       FreeRunBuff();

@@ -40,12 +40,12 @@ int TensorListReserveCPUKernel::Init() {
 int TensorListReserveCPUKernel::Run() {
   auto input0 = in_tensors_.at(0);
   auto input1 = in_tensors_.at(1);
-  MS_ASSERT(input1->data_c() != nullptr);
-  int num_elements = reinterpret_cast<int *>(input1->data_c())[0];
+  MS_ASSERT(input1->data() != nullptr);
+  int num_elements = reinterpret_cast<int *>(input1->data())[0];
   auto output = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
   CHECK_NULL_RETURN(output);
   if (output->tensors().size() < static_cast<uint32_t>(num_elements)) {
-    auto ele_shape_ptr = reinterpret_cast<int *>(input0->data_c());
+    auto ele_shape_ptr = reinterpret_cast<int *>(input0->data());
     if (ele_shape_ptr == nullptr) {
       return RET_NULL_PTR;
     }

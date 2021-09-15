@@ -44,7 +44,7 @@ int GatherFp16CPUKernel::Init() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto input_tensor = in_tensors_.at(0);
   CHECK_NULL_RETURN(input_tensor);
-  if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data_c() != nullptr) {
+  if (input_tensor->data_type() == kNumberTypeFloat32 && input_tensor->data() != nullptr) {
     const_input_ = true;
     input_data_ =
       reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
@@ -52,11 +52,11 @@ int GatherFp16CPUKernel::Init() {
       MS_LOG(ERROR) << "Malloc failed";
       return RET_ERROR;
     }
-    Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
+    Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data()), input_data_, input_tensor->ElementsNum());
   }
-  CHECK_NULL_RETURN(in_tensors_.at(kSecondInput)->data_c());
+  CHECK_NULL_RETURN(in_tensors_.at(kSecondInput)->data());
   (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_ =
-    *(reinterpret_cast<int *>(in_tensors_.at(kSecondInput)->data_c()));
+    *(reinterpret_cast<int *>(in_tensors_.at(kSecondInput)->data()));
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -92,12 +92,12 @@ int GatherFp16CPUKernel::DoGather(int task_id) {
   if (input_tensor->data_type() == kNumberTypeFloat32) {
     int8_in = reinterpret_cast<int8_t *>(input_data_);
   } else if (input_tensor->data_type() == kNumberTypeFloat16) {
-    int8_in = reinterpret_cast<int8_t *>(input_tensor->data_c());
+    int8_in = reinterpret_cast<int8_t *>(input_tensor->data());
   } else {
     MS_LOG(ERROR) << "input data type error";
     return RET_ERROR;
   }
-  int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data_c());
+  int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data());
   CHECK_NULL_RETURN(int8_in);
   CHECK_NULL_RETURN(int8_out);
   int data_size = lite::DataTypeSize(kNumberTypeFloat16);
@@ -138,7 +138,7 @@ int GatherFp16CPUKernel::Run() {
   }
   if (!const_input_) {
     auto input_tensor = in_tensors_.at(0);
-    CHECK_NULL_RETURN(input_tensor->data_c());
+    CHECK_NULL_RETURN(input_tensor->data());
     if (input_tensor->data_type() == kNumberTypeFloat32) {
       input_data_ =
         reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(input_tensor->ElementsNum() * sizeof(float16_t)));
@@ -147,7 +147,7 @@ int GatherFp16CPUKernel::Run() {
         FreeIndicesData();
         return RET_ERROR;
       }
-      Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data_c()), input_data_, input_tensor->ElementsNum());
+      Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data()), input_data_, input_tensor->ElementsNum());
     }
   }
   ret = ParallelLaunch(this->ms_context_, GatherRunFp16, this, op_parameter_->thread_num_);
@@ -159,7 +159,7 @@ int GatherFp16CPUKernel::Run() {
 }
 
 int GatherFp16CPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, const lite::Tensor *indices_tensor) {
-  CHECK_NULL_RETURN(indices_tensor->data_c());
+  CHECK_NULL_RETURN(indices_tensor->data());
   if (!isIndicesInt32) {
     if (indices_num >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
       MS_LOG(ERROR) << "Input indices_num is invalid, indices_num: " << indices_num;
@@ -177,15 +177,15 @@ int GatherFp16CPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num,
     }
     if (indices_tensor->data_type() == kNumberTypeInt64) {
       for (int i = 0; i < indices_num; i++) {
-        indices_data_[i] = reinterpret_cast<int64_t *>(indices_tensor->data_c())[i];
+        indices_data_[i] = reinterpret_cast<int64_t *>(indices_tensor->data())[i];
       }
     } else {
       for (int i = 0; i < indices_num; i++) {
-        indices_data_[i] = reinterpret_cast<float16_t *>(indices_tensor->data_c())[i];
+        indices_data_[i] = reinterpret_cast<float16_t *>(indices_tensor->data())[i];
       }
     }
   } else {
-    indices_data_ = reinterpret_cast<int32_t *>(indices_tensor->data_c());
+    indices_data_ = reinterpret_cast<int32_t *>(indices_tensor->data());
   }
   return RET_OK;
 }

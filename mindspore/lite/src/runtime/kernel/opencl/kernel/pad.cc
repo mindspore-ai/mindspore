@@ -100,7 +100,7 @@ int PadOpenCLKernel::SetConstArgs() {
   int ndim = in_tensors_.front()->shape().size();
   std::vector<int> pad_before_ori;
   pad_before_ori.reserve(ndim);
-  auto paddings = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
+  auto paddings = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data());
   for (size_t i = 0; i < ndim; i++) {
     pad_before_ori.push_back(paddings[2 * i]);
   }
@@ -135,11 +135,11 @@ int PadOpenCLKernel::SetConstArgs() {
 }
 
 int PadOpenCLKernel::Run() {
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

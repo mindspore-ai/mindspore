@@ -27,7 +27,7 @@ int GroupConvolutionFP16CPUKernel::SeparateInput(int group_id) {
   int in_plane = in_tensor->Height() * in_tensor->Width() * in_tensor->Batch();
   int sub_in_channel = conv_param_->input_channel_;
   int ori_in_channel = sub_in_channel * group_num_;
-  auto sub_in_data = static_cast<lite::Tensor *>(group_convs_.at(group_id)->in_tensors().front())->data_c();
+  auto sub_in_data = static_cast<lite::Tensor *>(group_convs_.at(group_id)->in_tensors().front())->data();
   MS_ASSERT(sub_in_data != nullptr);
   auto in_data_type = in_tensors_.front()->data_type();
   auto sub_in_data_type = group_convs_.at(group_id)->in_tensors().front()->data_type();
@@ -70,7 +70,7 @@ int GroupConvolutionFP16CPUKernel::PostConcat(int group_id) {
   int sub_out_channel = conv_param_->output_channel_;
   int ori_out_channel = sub_out_channel * group_num_;
   auto sub_out_data = reinterpret_cast<float16_t *>(
-    static_cast<lite::Tensor *>(group_convs_.at(group_id)->out_tensors().front())->data_c());
+    static_cast<lite::Tensor *>(group_convs_.at(group_id)->out_tensors().front())->data());
   MS_ASSERT(sub_out_data);
   float16_t *src_ptr = sub_out_data;
   float16_t *dst_ptr = reinterpret_cast<float16_t *>(ori_out_data_) + group_id * sub_out_channel;

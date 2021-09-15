@@ -86,9 +86,9 @@ int LogSoftmaxCPUKernel::DoLogSoftmaxLastAxis(int task_id) {
   int end = MSMIN(begin + unit, out_plane_size_);
   int channel = softmax_param_->input_shape_[softmax_param_->axis_];
   int offset = begin * channel;
-  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data());
   CHECK_NULL_RETURN(input_ptr);
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data());
   CHECK_NULL_RETURN(output_ptr);
   LogSoftmaxLastAxis(input_ptr + offset, output_ptr + offset, tmp_data_ + offset, end - begin, channel);
   return RET_OK;
@@ -112,9 +112,9 @@ int LogSoftmaxCPUKernel::Run() {
       MS_LOG(ERROR) << "LogSoftmaxCPUKernel ParallelLaunch failed, ret: " << ret;
     }
   } else {
-    auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
+    auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data());
     CHECK_NULL_RETURN(input_ptr);
-    auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
+    auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data());
     CHECK_NULL_RETURN(output_ptr);
     CHECK_NULL_RETURN(tmp_data_);
     LogSoftmax(input_ptr, output_ptr, tmp_data_, softmax_param_);

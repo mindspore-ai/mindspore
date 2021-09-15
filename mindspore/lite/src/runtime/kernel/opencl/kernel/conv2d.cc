@@ -345,7 +345,7 @@ int Conv2DOpenCLKernel::InitFilter() {
   // rearrange filter
   auto filter_tensor = in_tensors_.at(1);
   CHECK_NULL_RETURN(filter_tensor);
-  void *src_data = stored_filter_ == nullptr ? filter_tensor->data_c() : stored_filter_;
+  void *src_data = stored_filter_ == nullptr ? filter_tensor->data() : stored_filter_;
   CHECK_NULL_RETURN(src_data);
   auto src_dtype = filter_tensor->data_type();
   auto dst_dtype = use_fp16_ ? kNumberTypeFloat16 : kNumberTypeFloat32;
@@ -392,7 +392,7 @@ int Conv2DOpenCLKernel::InitBias() {
   memset(packed_bias_, 0x00, packed_bias_size);
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     auto bias_tensor = in_tensors_.at(2);
-    void *src_data = stored_bias_ == nullptr ? bias_tensor->data_c() : stored_bias_;
+    void *src_data = stored_bias_ == nullptr ? bias_tensor->data() : stored_bias_;
     MS_ASSERT(src_data);
 
     if (bias_tensor->data_type() == kNumberTypeFloat16) {
@@ -506,11 +506,11 @@ void Conv2DOpenCLKernel::SetGlobalLocal() {
 
 int Conv2DOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

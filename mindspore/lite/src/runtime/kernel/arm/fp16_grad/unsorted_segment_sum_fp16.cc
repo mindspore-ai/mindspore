@@ -84,11 +84,11 @@ int UnsortedSegmentSumCPUKernelFp16::Execute(int task_id) {
   auto input_tensor = in_tensors_.at(0);
   auto indices_tensor = in_tensors_.at(1);
   auto output_tensor = out_tensors_.at(0);
-  float16_t *input = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  float16_t *input = reinterpret_cast<float16_t *>(input_tensor->data());
   CHECK_NULL_RETURN(input);
-  int *indices = reinterpret_cast<int *>(indices_tensor->data_c());
+  int *indices = reinterpret_cast<int *>(indices_tensor->data());
   CHECK_NULL_RETURN(indices);
-  float16_t *output = reinterpret_cast<float16_t *>(output_tensor->data_c());
+  float16_t *output = reinterpret_cast<float16_t *>(output_tensor->data());
   CHECK_NULL_RETURN(output);
   std::fill(output, output + output_tensor->ElementsNum(), 0.f);
   int ret = UnsortedSegmentSumFp16(input, unit_num_, input_dim1_, indices, output, output_dim0_, output_dim1_);

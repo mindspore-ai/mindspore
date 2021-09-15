@@ -37,9 +37,9 @@ int PReluOpenCLKernel::InitWeights() {
   auto weight_tensor = in_tensors_.at(1);
   if (weight_is_scalar) {
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
-      weight_scalar_ = static_cast<float>(*reinterpret_cast<float16_t *>(weight_tensor->data_c()));
+      weight_scalar_ = static_cast<float>(*reinterpret_cast<float16_t *>(weight_tensor->data()));
     } else {
-      weight_scalar_ = *reinterpret_cast<float *>(weight_tensor->data_c());
+      weight_scalar_ = *reinterpret_cast<float *>(weight_tensor->data());
     }
     MS_ASSERT(weight_scalar_);
   } else {
@@ -58,10 +58,10 @@ int PReluOpenCLKernel::InitWeights() {
     memset(weight_vector_, 0x00, weight_size);
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
       if (enable_fp16_) {
-        memcpy(weight_vector_, weight_tensor->data_c(), C_ * sizeof_FLT);
+        memcpy(weight_vector_, weight_tensor->data(), C_ * sizeof_FLT);
       } else {
         auto weight_fp32 = reinterpret_cast<float *>(weight_vector_);
-        auto origin_bias_fp16 = reinterpret_cast<float16_t *>(weight_tensor->data_c());
+        auto origin_bias_fp16 = reinterpret_cast<float16_t *>(weight_tensor->data());
         for (int i = 0; i < C_; ++i) {
           weight_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
         }
@@ -69,12 +69,12 @@ int PReluOpenCLKernel::InitWeights() {
     } else {
       if (enable_fp16_) {
         auto weight_fp16 = reinterpret_cast<float16_t *>(weight_vector_);
-        auto origin_bias_fp32 = reinterpret_cast<float *>(weight_tensor->data_c());
+        auto origin_bias_fp32 = reinterpret_cast<float *>(weight_tensor->data());
         for (int i = 0; i < C_; ++i) {
           weight_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
         }
       } else {
-        memcpy(weight_vector_, weight_tensor->data_c(), C_ * sizeof_FLT);
+        memcpy(weight_vector_, weight_tensor->data(), C_ * sizeof_FLT);
       }
     }
     if (allocator->UnmapBuffer(weight_vector_) != RET_OK) {
@@ -170,11 +170,11 @@ int PReluOpenCLKernel::Prepare() {
 int PReluOpenCLKernel::Run() {
   MS_LOG(DEBUG) << op_parameter_->name_ << " Running!";
   int arg_idx = 0;
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }
-  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c()) != CL_SUCCESS) {
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data()) != CL_SUCCESS) {
     MS_LOG(ERROR) << "SetKernelArg failed.";
     return RET_ERROR;
   }

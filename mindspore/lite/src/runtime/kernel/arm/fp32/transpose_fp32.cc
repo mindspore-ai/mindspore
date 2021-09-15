@@ -52,7 +52,7 @@ int TransposeCPUKernel::ReSize() {
   } else {
     MS_ASSERT(in_tensors_.size() == 2);
     auto perm_tensor = in_tensors_.at(1);
-    perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+    perm_data = reinterpret_cast<int *>(perm_tensor->data());
     MSLITE_CHECK_PTR(perm_data);
   }
   if (param_->num_axes_ > MAX_TRANSPOSE_DIM_SIZE || param_->num_axes_ < 0) {
@@ -168,8 +168,8 @@ int TransposeCPUKernel::Run() {
     MS_LOG(ERROR) << "null pointer dreferencing.";
     return RET_ERROR;
   }
-  in_data_ = in_tensor->data_c();
-  out_data_ = out_tensor->data_c();
+  in_data_ = in_tensor->data();
+  out_data_ = out_tensor->data();
   CHECK_NULL_RETURN(in_data_);
   CHECK_NULL_RETURN(out_data_);
 

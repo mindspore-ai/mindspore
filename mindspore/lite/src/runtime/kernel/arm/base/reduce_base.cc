@@ -107,8 +107,8 @@ int ReduceBaseCPUKernel::Init() {
       MS_LOG(ERROR) << "input axes invalid.";
       return RET_ERROR;
     }
-    CHECK_NULL_RETURN(axes_tensor->data_c());
-    memcpy(axes_, axes_tensor->data_c(), axes_tensor->Size());
+    CHECK_NULL_RETURN(axes_tensor->data());
+    memcpy(axes_, axes_tensor->data(), axes_tensor->Size());
   } else {
     num_axes_ = reduce_param->num_axes_;
     memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));

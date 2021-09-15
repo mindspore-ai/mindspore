@@ -186,7 +186,7 @@ class OptimizerKernel : public InnerKernel {
     auto ctx = static_cast<const lite::InnerContext *>(this->ms_context_);
     if (ctx->IsCpuFloat16Enabled()) {
       auto t = in_tensors_.at(grad_idx_);
-      auto gradient = reinterpret_cast<float *>(t->data_c());
+      auto gradient = reinterpret_cast<float *>(t->data());
       int length = in_tensors_.at(grad_idx_)->ElementsNum();
 
       for (int i = 0; i < length; ++i) {

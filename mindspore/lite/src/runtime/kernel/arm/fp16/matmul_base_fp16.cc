@@ -68,8 +68,8 @@ void MatmulBaseFP16CPUKernel::FreeResizeBufB() {
 void MatmulBaseFP16CPUKernel::InitParameter() {
   NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[0]);
   NNACL_CHECK_NULL_RETURN_VOID(in_tensors_[1]);
-  params_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
-  params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
+  params_->a_const_ = (in_tensors_[0]->data() != nullptr);
+  params_->b_const_ = (in_tensors_[1]->data() != nullptr);
 }
 
 int MatmulBaseFP16CPUKernel::InitBias() {
@@ -83,7 +83,7 @@ int MatmulBaseFP16CPUKernel::InitBias() {
     if (in_tensors_.size() == 3) {
       auto bias_tensor = in_tensors_[2];
       CHECK_NULL_RETURN(bias_tensor);
-      memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(float16_t));
+      memcpy(bias_ptr_, bias_tensor->data(), bias_tensor->ElementsNum() * sizeof(float16_t));
     } else {
       memset(bias_ptr_, 0, max_bias_data * sizeof(float16_t));
     }
@@ -250,8 +250,8 @@ int MatmulBaseFP16CPUKernel::Init() {
       return RET_ERROR;
     }
     MS_ASSERT(in_tensors_[0] != nullptr);
-    MS_ASSERT(in_tensors_[0]->data_c() != nullptr);
-    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()));
+    MS_ASSERT(in_tensors_[0]->data() != nullptr);
+    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data()));
   }
 
   if (params_->b_const_ == true) {
@@ -259,7 +259,7 @@ int MatmulBaseFP16CPUKernel::Init() {
      * pack after a infershape done */
     auto b_tensor = in_tensors_[1];
     MS_ASSERT(b_tensor != nullptr);
-    MS_ASSERT(b_tensor->data_c() != nullptr);
+    MS_ASSERT(b_tensor->data() != nullptr);
     src_b_ = reinterpret_cast<float16_t *>(malloc(params_->batch * params_->col_ * params_->deep_ * sizeof(float16_t)));
     if (src_b_ == nullptr) {
       MS_LOG(ERROR) << "Matmul fp16 malloc src_b_ failed";
@@ -267,10 +267,10 @@ int MatmulBaseFP16CPUKernel::Init() {
     }
 
     if (b_tensor->data_type() == kNumberTypeFloat32) {
-      Float32ToFloat16(reinterpret_cast<float *>(b_tensor->data_c()), src_b_,
+      Float32ToFloat16(reinterpret_cast<float *>(b_tensor->data()), src_b_,
                        params_->batch * params_->col_ * params_->deep_);
     } else {
-      memcpy(src_b_, b_tensor->data_c(), params_->batch * params_->col_ * params_->deep_ * sizeof(float16_t));
+      memcpy(src_b_, b_tensor->data(), params_->batch * params_->col_ * params_->deep_ * sizeof(float16_t));
     }
   }
 
@@ -312,21 +312,21 @@ int MatmulBaseFP16CPUKernel::RunImpl(int task_id) {
 }
 
 int MatmulBaseFP16CPUKernel::Run() {
-  auto c_ptr = reinterpret_cast<float16_t *>(out_tensors_[0]->data_c());
+  auto c_ptr = reinterpret_cast<float16_t *>(out_tensors_[0]->data());
   CHECK_NULL_RETURN(c_ptr);
 
   if ((params_->a_const_ == false) || IsRepack()) {
     if (RET_OK != InitBufferA()) {
       return RET_ERROR;
     }
-    InitMatrixA(in_tensors_[0]->data_c());
+    InitMatrixA(in_tensors_[0]->data());
   }
   if ((params_->b_const_ == false) || IsRepack()) {
     if (RET_OK != InitBufferB()) {
       FreeResizeBufA();
       return RET_ERROR;
     }
-    InitMatrixB(in_tensors_[1]->data_c(), in_tensors_[1]->data_type());
+    InitMatrixB(in_tensors_[1]->data(), in_tensors_[1]->data_type());
     InitBias();
   }
 

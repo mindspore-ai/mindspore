@@ -32,7 +32,7 @@ int AssertCPUKernel::Init() {
 int AssertCPUKernel::ReSize() { return RET_OK; }
 
 int AssertCPUKernel::Run() {
-  auto cond = reinterpret_cast<bool *>(in_tensors_.front()->data_c());
+  auto cond = reinterpret_cast<bool *>(in_tensors_.front()->data());
   if (*cond) {
     return RET_OK;
   } else {

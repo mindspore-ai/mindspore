@@ -69,7 +69,7 @@ int DeconvolutionInt8Coder::InitBiasWeight(CoderContext *const context) {
   MS_CHECK_PTR(bias_data_);
   MS_CHECK_RET_CODE(memset_s(bias_data_, size, 0, size), "memset_s new_bias_addr_ failed.");
   if (input_tensors_.size() == kInputSize2) {
-    auto *ori_bias_addr = reinterpret_cast<int32_t *>(bias_tensor_->data_c());
+    auto *ori_bias_addr = reinterpret_cast<int32_t *>(bias_tensor_->data());
     MS_CHECK_RET_CODE(memcpy_s(bias_data_, size, ori_bias_addr, bias_tensor_->Size()),
                       "memcpy_s new_bias_addr_ failed.");
   }
@@ -81,7 +81,7 @@ int DeconvolutionInt8Coder::InitBiasWeight(CoderContext *const context) {
   MS_CHECK_RET_CODE(
     memset_s(weight_ptr_, size, static_cast<int8_t>(conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_), size),
     "memset_s weight_ptr_ failed.");
-  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(filter_tensor_->data_c()), weight_ptr_, conv_param_->input_channel_,
+  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(filter_tensor_->data()), weight_ptr_, conv_param_->input_channel_,
                         conv_param_->output_channel_, conv_param_->kernel_h_ * conv_param_->kernel_w_,
                         support_optimize_);
 

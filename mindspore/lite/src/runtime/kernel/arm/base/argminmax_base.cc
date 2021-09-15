@@ -60,15 +60,15 @@ int ArgMinMaxCPUKernel::Run() {
   auto input = in_tensors_.at(0);
   auto shape = input->shape();
 
-  auto input_data = input->data_c();
-  auto output_data = out_tensors_.at(0)->data_c();
+  auto input_data = input->data();
+  auto output_data = out_tensors_.at(0)->data();
   if (input_data == nullptr || output_data == nullptr) {
     return RET_NULL_PTR;
   }
   CHECK_NULL_RETURN(shape.data());
   void *output_value = nullptr;
   if (out_tensors_.size() == 2) {
-    output_value = out_tensors_.at(1)->data_c();
+    output_value = out_tensors_.at(1)->data();
     if (output_value == nullptr) {
       return RET_NULL_PTR;
     }
