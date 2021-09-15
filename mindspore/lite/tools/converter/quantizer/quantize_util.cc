@@ -710,7 +710,7 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
     MS_LOG(ERROR) << " shape vector is empty.";
     return;
   }
-  if (primitive.value.type == schema::PrimitiveType_MatMul && static_cast<int>(shapes.size()) == 2) {
+  if (primitive.value.type == schema::PrimitiveType_MatMul && static_cast<int>(shapes.size()) == kDim2) {
     auto matmul_prim = primitive.value.AsMatMul();
     MS_ASSERT(matmul_prim != nullptr);
     *channel_at_first = index != 1 || matmul_prim->transpose_b;

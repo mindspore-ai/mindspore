@@ -19,7 +19,6 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite {
-
 STATUS QuantDtypeCastQuantParamPropogator::PropogateQuantParams(schema::MetaGraphT *graph, const schema::CNodeT &node) {
   MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
   MS_CHECK_TRUE_MSG(!node.inputIndex.empty(), RET_ERROR, "inputIndex is empty.");
