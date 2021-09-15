@@ -535,12 +535,13 @@ void CheckCustomPrimOutputInferResult(const PrimitivePtr &prim, const AbstractBa
     }
     int64_t output_num = GetValue<int64_t>(output_num_value);
     if (res_spec->isa<AbstractTensor>() && output_num != 1) {
-      MS_LOG(EXCEPTION) << "Custom primitive " << prim->ToString() << " output_num " << output_num
-                        << " not matches the infer result.";
+      MS_LOG(EXCEPTION) << "Custom operator primitive[" << prim->ToString()
+                        << "]'s attribute[output_num]:" << output_num << " not matches the infer result "
+                        << res_spec->ToString();
     } else if (res_spec->isa<AbstractTuple>() &&
                (res_spec->cast<AbstractTuplePtr>()->size() != LongToSize(output_num))) {
-      MS_LOG(EXCEPTION) << "Custom primitive " << prim->ToString() << " output_num " << output_num
-                        << " not matches the infer result.";
+      MS_LOG(EXCEPTION) << "Custom primitive[" << prim->ToString() << "]'s attribute[output_num]:" << output_num
+                        << " not matches the infer result " << res_spec->ToString();
     }
   }
 }
@@ -949,8 +950,8 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   if (require.empty()) {
     require = pipeline::Resource::GetAttrPtr(data_type->type_id(), item_name);
     if (require.empty()) {
-      MS_LOG(EXCEPTION) << "Mindspore don't support this usage '" << item_name << "' for the object with type <"
-                        << data_type->ToString() << ">.";
+      MS_LOG(EXCEPTION) << "Not supported to get attribute item name:\'" << item_name << "\' of a type["
+                        << data_type->ToString() << "]";
     }
     require_type = REQUIRE_TYPE::ATTR;
   }
@@ -1215,7 +1216,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     auto obj = parse::data_converter::CreatePythonObject(class_type, params);
     if (py::isinstance<py::none>(obj)) {
       MS_LOG(EXCEPTION) << "Create python object `" << py::str(class_type)
-                        << "` failed, only support create Cell or Primitive object.";
+                        << "` failed, only support to create \'Cell\' or \'Primitive\' object.";
     }
 
     // Process the object.
