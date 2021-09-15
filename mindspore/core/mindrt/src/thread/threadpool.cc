@@ -158,6 +158,17 @@ int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_li
 }
 
 int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) const {
+  // if single thread, run master thread
+  if (thread_num() <= 1 || task_num <= 1) {
+    for (int i = 0; i < task_num; ++i) {
+      int ret = func(content, i, 0, 1);
+      if (ret != 0) {
+        return ret;
+      }
+    }
+    return THREAD_OK;
+  }
+
   // distribute task to the KernelThread and the idle ActorThread,
   // if the task num is greater than the KernelThread num
   THREAD_DEBUG("launch: %d", task_num);
