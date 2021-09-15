@@ -33,6 +33,7 @@
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/fade_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
@@ -189,6 +190,26 @@ PYBIND_REGISTER(EqualizerBiquadOperation, 1, ([](const py::module *m) {
                         std::make_shared<audio::EqualizerBiquadOperation>(sample_rate, center_freq, gain, Q);
                       THROW_IF_ERROR(equalizer_biquad->ValidateParams());
                       return equalizer_biquad;
+                    }));
+                }));
+
+PYBIND_REGISTER(FadeShape, 0, ([](const py::module *m) {
+                  (void)py::enum_<FadeShape>(*m, "FadeShape", py::arithmetic())
+                    .value("DE_FADESHAPE_LINEAR", FadeShape::kLinear)
+                    .value("DE_FADESHAPE_EXPONENTIAL", FadeShape::kExponential)
+                    .value("DE_FADESHAPE_LOGARITHMIC", FadeShape::kLogarithmic)
+                    .value("DE_FADESHAPE_QUARTERSINE", FadeShape::kQuarterSine)
+                    .value("DE_FADESHAPE_HALFSINE", FadeShape::kHalfSine)
+                    .export_values();
+                }));
+
+PYBIND_REGISTER(FadeOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::FadeOperation, TensorOperation, std::shared_ptr<audio::FadeOperation>>(
+                    *m, "FadeOperation")
+                    .def(py::init([](int fade_in_len, int fade_out_len, FadeShape fade_shape) {
+                      auto fade = std::make_shared<audio::FadeOperation>(fade_in_len, fade_out_len, fade_shape);
+                      THROW_IF_ERROR(fade->ValidateParams());
+                      return fade;
                     }));
                 }));
 

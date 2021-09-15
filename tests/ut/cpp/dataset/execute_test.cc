@@ -961,3 +961,99 @@ TEST_F(MindDataTestExecute, TestBiquadWithWrongArg) {
   Status s01 = Transform01(input_02, &input_02);
   EXPECT_FALSE(s01.IsOk());
 }
+
+TEST_F(MindDataTestExecute, TestFade) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestFade.";
+  std::vector<float> waveform = {
+    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
+    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
+    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
+    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
+    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, 20}), &input));
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade01 = std::make_shared<audio::Fade>(5, 6, FadeShape::kLinear);
+  mindspore::dataset::Execute Transform01({fade01});
+  Status s01 = Transform01(input_01, &input_01);
+  EXPECT_TRUE(s01.IsOk());
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade02 = std::make_shared<audio::Fade>(5, 6, FadeShape::kQuarterSine);
+  mindspore::dataset::Execute Transform02({fade02});
+  Status s02 = Transform02(input_02, &input_02);
+  EXPECT_TRUE(s02.IsOk());
+  auto input_03 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade03 = std::make_shared<audio::Fade>(5, 6, FadeShape::kExponential);
+  mindspore::dataset::Execute Transform03({fade03});
+  Status s03 = Transform03(input_03, &input_03);
+  EXPECT_TRUE(s03.IsOk());
+  auto input_04 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade04 = std::make_shared<audio::Fade>(5, 6, FadeShape::kHalfSine);
+  mindspore::dataset::Execute Transform04({fade04});
+  Status s04 = Transform01(input_04, &input_04);
+  EXPECT_TRUE(s04.IsOk());
+  auto input_05 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade05 = std::make_shared<audio::Fade>(5, 6, FadeShape::kLogarithmic);
+  mindspore::dataset::Execute Transform05({fade05});
+  Status s05 = Transform01(input_05, &input_05);
+  EXPECT_TRUE(s05.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestFadeDefaultArg) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestFadeDefaultArg.";
+  std::vector<double> waveform = {
+    1.573897564868000000e-03, 5.462374385400000000e-03, 3.584989689205400000e-03, 2.035667767462500000e-02,
+    2.353543454062500000e-02, 1.256616210937500000e-02, 2.394653320312500000e-02, 5.243553968750000000e-02,
+    2.434554533002500000e-02, 3.454566960937500000e-02, 2.343545454437500000e-02, 2.534343093750000000e-02,
+    2.354465654550000000e-02, 1.453545517187500000e-02, 1.454645535875000000e-02, 1.433243195312500000e-02,
+    1.434354554812500000e-02, 3.343435276865400000e-02, 1.234257687312500000e-02, 5.368896484375000000e-03};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({2, 10}), &input));
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade01 = std::make_shared<audio::Fade>();
+  mindspore::dataset::Execute Transform01({fade01});
+  Status s01 = Transform01(input_01, &input_01);
+  EXPECT_TRUE(s01.IsOk());
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade02 = std::make_shared<audio::Fade>(5);
+  mindspore::dataset::Execute Transform02({fade02});
+  Status s02 = Transform02(input_02, &input_02);
+  EXPECT_TRUE(s02.IsOk());
+  auto input_03 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade03 = std::make_shared<audio::Fade>(5, 6);
+  mindspore::dataset::Execute Transform03({fade03});
+  Status s03 = Transform03(input_03, &input_03);
+  EXPECT_TRUE(s03.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestFadeWithInvalidArg) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestFadeWithInvalidArg.";
+  std::vector<float> waveform = {
+    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
+    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
+    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
+    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
+    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(waveform, TensorShape({1, 20}), &input));
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade1 = std::make_shared<audio::Fade>(-5, 6);
+  mindspore::dataset::Execute Transform01({fade1});
+  Status s01 = Transform01(input_01, &input_01);
+  EXPECT_FALSE(s01.IsOk());
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade2 = std::make_shared<audio::Fade>(0, -1);
+  mindspore::dataset::Execute Transform02({fade2});
+  Status s02 = Transform02(input_02, &input_02);
+  EXPECT_FALSE(s02.IsOk());
+  auto input_03 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade3 = std::make_shared<audio::Fade>(30, 10);
+  mindspore::dataset::Execute Transform03({fade3});
+  Status s03 = Transform03(input_03, &input_03);
+  EXPECT_FALSE(s03.IsOk());
+  auto input_04 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> fade4 = std::make_shared<audio::Fade>(10, 30);
+  mindspore::dataset::Execute Transform04({fade4});
+  Status s04 = Transform04(input_04, &input_04);
+  EXPECT_FALSE(s04.IsOk());
+}

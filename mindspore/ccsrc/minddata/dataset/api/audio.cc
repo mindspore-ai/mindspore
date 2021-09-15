@@ -29,6 +29,7 @@
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/fade_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
@@ -229,6 +230,22 @@ EqualizerBiquad::EqualizerBiquad(int32_t sample_rate, float center_freq, float g
 
 std::shared_ptr<TensorOperation> EqualizerBiquad::Parse() {
   return std::make_shared<EqualizerBiquadOperation>(data_->sample_rate_, data_->center_freq_, data_->gain_, data_->Q_);
+}
+
+// Fade Transform Operation.
+struct Fade::Data {
+  Data(int32_t fade_in_len, int32_t fade_out_len, FadeShape fade_shape)
+      : fade_in_len_(fade_in_len), fade_out_len_(fade_out_len), fade_shape_(fade_shape) {}
+  int32_t fade_in_len_;
+  int32_t fade_out_len_;
+  FadeShape fade_shape_;
+};
+
+Fade::Fade(int32_t fade_in_len, int32_t fade_out_len, FadeShape fade_shape)
+    : data_(std::make_shared<Data>(fade_in_len, fade_out_len, fade_shape)) {}
+
+std::shared_ptr<TensorOperation> Fade::Parse() {
+  return std::make_shared<FadeOperation>(data_->fade_in_len_, data_->fade_out_len_, data_->fade_shape_);
 }
 
 // FrequencyMasking Transform Operation.

@@ -302,6 +302,17 @@ def check_pos_int64(value, arg_name=""):
     check_value(value, [POS_INT_MIN, INT64_MAX])
 
 
+def check_non_negative_int32(value, arg_name=""):
+    """
+    Validates the value of a variable is within the range of non negative int32.
+
+    :param value: the value of the variable.
+    :param arg_name: name of the variable to be validated.
+    :return: Exception: when the validation fails, nothing otherwise.
+    """
+    check_value(value, [UINT32_MIN, INT32_MAX], arg_name)
+
+
 def check_float32(value, arg_name=""):
     """
     Validates the value of a variable is within the range of float32.

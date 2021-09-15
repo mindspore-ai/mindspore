@@ -16,6 +16,7 @@ add_library(audio-kernels OBJECT
         dc_shift_op.cc
         deemph_biquad_op.cc
         equalizer_biquad_op.cc
+        fade_op.cc
         frequency_masking_op.cc
         highpass_biquad_op.cc
         lfilter_op.cc

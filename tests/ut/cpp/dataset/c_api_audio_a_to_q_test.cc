@@ -1125,3 +1125,221 @@ TEST_F(MindDataTestPipeline, TestBiquadParamCheck) {
   std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
   EXPECT_EQ(iter01, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestFadeWithPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithPipeline.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {1, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto fade_op = audio::Fade(20, 30, FadeShape::kExponential);
+
+  ds = ds->Map({fade_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {1, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFadeWithLinear) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithLinear.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 10}));
+  std::shared_ptr<Dataset> ds = RandomData(10, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto fade_op = audio::Fade(5, 5, FadeShape::kLinear);
+
+  ds = ds->Map({fade_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 10};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFadeWithLogarithmic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithLogarithmic.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat64, {1, 150}));
+  std::shared_ptr<Dataset> ds = RandomData(30, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto fade_op = audio::Fade(80, 100, FadeShape::kLogarithmic);
+
+  ds = ds->Map({fade_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {1, 150};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat64);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 30);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFadeWithQuarterSine) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithQuarterSine.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt32, {20, 20000}));
+  std::shared_ptr<Dataset> ds = RandomData(40, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto fade_op = audio::Fade(1000, 1000, FadeShape::kQuarterSine);
+
+  ds = ds->Map({fade_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {20, 20000};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 40);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFadeWithHalfSine) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithHalfSine.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt16, {1, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(40, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto fade_op = audio::Fade(100, 100, FadeShape::kHalfSine);
+
+  ds = ds->Map({fade_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {1, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 40);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFadeWithInvalidArg) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithInvalidArg.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {1, 200}));
+  std::shared_ptr<Dataset> ds_01 = RandomData(50, schema);
+  EXPECT_NE(ds_01, nullptr);
+
+  ds_01 = ds_01->SetNumWorkers(4);
+  EXPECT_NE(ds_01, nullptr);
+
+  auto fade_op_01 = audio::Fade(-20, 30, FadeShape::kLogarithmic);
+
+  ds_01 = ds_01->Map({fade_op_01});
+  EXPECT_NE(ds_01, nullptr);
+  // Expect failure, fade in length less than zero
+  std::shared_ptr<Iterator> iter_01 = ds_01->CreateIterator();
+  EXPECT_EQ(iter_01, nullptr);
+
+  std::shared_ptr<Dataset> ds_02 = RandomData(50, schema);
+  EXPECT_NE(ds_02, nullptr);
+
+  ds_02 = ds_02->SetNumWorkers(4);
+  EXPECT_NE(ds_02, nullptr);
+
+  auto fade_op_02 = audio::Fade(5, -3, FadeShape::kExponential);
+
+  ds_02 = ds_02->Map({fade_op_02});
+  EXPECT_NE(ds_02, nullptr);
+  // Expect failure, fade out length less than zero
+  std::shared_ptr<Iterator> iter_02 = ds_02->CreateIterator();
+  EXPECT_EQ(iter_02, nullptr);
+}

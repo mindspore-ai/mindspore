@@ -42,7 +42,7 @@ Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
   n = std::isnan(n) ? 100 : n;
   TensorShape out_shape({n});
   std::vector<T> linear_vect(n);
-  T interval = (end - start) / (n - 1);
+  T interval = (n == 1) ? 0 : ((end - start) / (n - 1));
   for (int i = 0; i < linear_vect.size(); ++i) {
     linear_vect[i] = start + i * interval;
   }
@@ -505,6 +505,127 @@ Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     RETURN_IF_NOT_OK(Decoding<double>(input, output, f_mu));
   } else {
     RETURN_STATUS_UNEXPECTED("MuLawDecoding: input tensor type should be int, float or double, but got: " +
+                             input->type().ToString());
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status FadeIn(std::shared_ptr<Tensor> *output, int32_t fade_in_len, FadeShape fade_shape) {
+  T start = 0;
+  T end = 1;
+  RETURN_IF_NOT_OK(Linspace<T>(output, start, end, fade_in_len));
+  for (auto iter = (*output)->begin<T>(); iter != (*output)->end<T>(); iter++) {
+    switch (fade_shape) {
+      case FadeShape::kLinear:
+        break;
+      case FadeShape::kExponential:
+        // Compute the scale factor of the exponential function, pow(2.0, *in_ter - 1.0) * (*in_ter)
+        *iter = static_cast<T>(std::pow(2.0, *iter - 1.0) * (*iter));
+        break;
+      case FadeShape::kLogarithmic:
+        // Compute the scale factor of the logarithmic function, log(*in_iter + 0.1) + 1.0
+        *iter = static_cast<T>(std::log10(*iter + 0.1) + 1.0);
+        break;
+      case FadeShape::kQuarterSine:
+        // Compute the scale factor of the quarter_sine function, sin((*in_iter - 1.0) * PI / 2.0)
+        *iter = static_cast<T>(std::sin((*iter) * PI / 2.0));
+        break;
+      case FadeShape::kHalfSine:
+        // Compute the scale factor of the half_sine function, sin((*in_iter) * PI - PI / 2.0) / 2.0 + 0.5
+        *iter = static_cast<T>(std::sin((*iter) * PI - PI / 2.0) / 2.0 + 0.5);
+        break;
+    }
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status FadeOut(std::shared_ptr<Tensor> *output, int32_t fade_out_len, FadeShape fade_shape) {
+  T start = 0;
+  T end = 1;
+  RETURN_IF_NOT_OK(Linspace<T>(output, start, end, fade_out_len));
+  for (auto iter = (*output)->begin<T>(); iter != (*output)->end<T>(); iter++) {
+    switch (fade_shape) {
+      case FadeShape::kLinear:
+        // In fade out, invert *out_iter
+        *iter = static_cast<T>(1.0 - *iter);
+        break;
+      case FadeShape::kExponential:
+        // Compute the scale factor of the exponential function
+        *iter = static_cast<T>(std::pow(2.0, -*iter) * (1.0 - *iter));
+        break;
+      case FadeShape::kLogarithmic:
+        // Compute the scale factor of the logarithmic function
+        *iter = static_cast<T>(std::log10(1.1 - *iter) + 1.0);
+        break;
+      case FadeShape::kQuarterSine:
+        // Compute the scale factor of the quarter_sine function
+        *iter = static_cast<T>(std::sin((*iter) * PI / 2.0 + PI / 2.0));
+        break;
+      case FadeShape::kHalfSine:
+        // Compute the scale factor of the half_sine function
+        *iter = static_cast<T>(std::sin((*iter) * PI + PI / 2.0) / 2.0 + 0.5);
+        break;
+    }
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t fade_in_len,
+            int32_t fade_out_len, FadeShape fade_shape) {
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input, output));
+  const TensorShape input_shape = input->shape();
+  int32_t waveform_length = static_cast<int32_t>(input_shape[-1]);
+  CHECK_FAIL_RETURN_UNEXPECTED(fade_in_len <= waveform_length, "Fade: fade_in_len exceeds waveform length.");
+  CHECK_FAIL_RETURN_UNEXPECTED(fade_out_len <= waveform_length, "Fade: fade_out_len exceeds waveform length.");
+  int32_t num_waveform = static_cast<int32_t>(input->Size() / waveform_length);
+  TensorShape toShape = TensorShape({num_waveform, waveform_length});
+  RETURN_IF_NOT_OK((*output)->Reshape(toShape));
+  TensorPtr fade_in;
+  RETURN_IF_NOT_OK(FadeIn<T>(&fade_in, fade_in_len, fade_shape));
+  TensorPtr fade_out;
+  RETURN_IF_NOT_OK(FadeOut<T>(&fade_out, fade_out_len, fade_shape));
+
+  // Add fade in to input tensor
+  auto output_iter = (*output)->begin<T>();
+  for (auto fade_in_iter = fade_in->begin<T>(); fade_in_iter != fade_in->end<T>(); fade_in_iter++) {
+    *output_iter = (*output_iter) * (*fade_in_iter);
+    for (int32_t j = 1; j < num_waveform; j++) {
+      output_iter += waveform_length;
+      *output_iter = (*output_iter) * (*fade_in_iter);
+    }
+    output_iter -= ((num_waveform - 1) * waveform_length);
+    ++output_iter;
+  }
+
+  // Add fade out to input tensor
+  output_iter = (*output)->begin<T>();
+  output_iter += (waveform_length - fade_out_len);
+  for (auto fade_out_iter = fade_out->begin<T>(); fade_out_iter != fade_out->end<T>(); fade_out_iter++) {
+    *output_iter = (*output_iter) * (*fade_out_iter);
+    for (int32_t j = 1; j < num_waveform; j++) {
+      output_iter += waveform_length;
+      *output_iter = (*output_iter) * (*fade_out_iter);
+    }
+    output_iter -= ((num_waveform - 1) * waveform_length);
+    ++output_iter;
+  }
+  (*output)->Reshape(input_shape);
+  return Status::OK();
+}
+
+Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t fade_in_len,
+            int32_t fade_out_len, FadeShape fade_shape) {
+  if (DataType::DE_INT8 <= input->type().value() && input->type().value() <= DataType::DE_FLOAT32) {
+    std::shared_ptr<Tensor> waveform;
+    RETURN_IF_NOT_OK(TypeCast(input, &waveform, DataType(DataType::DE_FLOAT32)));
+    RETURN_IF_NOT_OK(Fade<float>(waveform, output, fade_in_len, fade_out_len, fade_shape));
+  } else if (input->type().value() == DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(Fade<double>(input, output, fade_in_len, fade_out_len, fade_shape));
+  } else {
+    RETURN_STATUS_UNEXPECTED("Fade: input tensor type should be int, float or double, but got: " +
                              input->type().ToString());
   }
   return Status::OK();
