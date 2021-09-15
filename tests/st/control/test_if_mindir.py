@@ -153,7 +153,7 @@ def test_load_mindir_and_run():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_single_if():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path="./ifir")
+    context.set_context(mode=context.GRAPH_MODE)
     network = SingleIfNet()
 
     x = Tensor(np.array([1]).astype(np.float32))

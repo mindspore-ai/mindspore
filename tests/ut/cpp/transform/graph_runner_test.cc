@@ -142,9 +142,9 @@ TEST_F(TestGraphRunner, TestRunGraphException) {
   MeTensorPtr init_tensor_ptr = MakeTensor(kF32, list0);
   dict["x1"] = init_tensor_ptr;
 
-  std::shared_ptr<DfGraphConvertor> convertor = MakeGeGraph();
-  (*convertor).ConvertAllNode().InitParam(dict).BuildGraph();
-  auto df_graph = (*convertor).GetComputeGraph();
+  std::shared_ptr<DfGraphConvertor> converter = MakeGeGraph();
+  (*converter).ConvertAllNode().InitParam(dict).BuildGraph();
+  auto df_graph = (*converter).GetComputeGraph();
 
   graph_manager.AddGraph("test_graph", df_graph);
   std::initializer_list<int64_t> list1{1, 1, 2, 3};
@@ -176,13 +176,13 @@ TEST_F(TestGraphRunner, TestRunGraph) {
   DfGraphManager &graph_manager = DfGraphManager::GetInstance();
   graph_manager.ClearGraph();
 
-  std::shared_ptr<DfGraphConvertor> convertor = MakeGeGraph();
+  std::shared_ptr<DfGraphConvertor> converter = MakeGeGraph();
   std::map<std::string, MeTensorPtr> dict;
   std::initializer_list<int64_t> list0{2, 1, 2, 2};
   dict.emplace("x1", MakeTensor(kF32, list0));
 
-  (*convertor).ConvertAllNode().InitParam(dict).BuildGraph();
-  graph_manager.AddGraph("test_graph", (*convertor).GetComputeGraph());
+  (*converter).ConvertAllNode().InitParam(dict).BuildGraph();
+  graph_manager.AddGraph("test_graph", (*converter).GetComputeGraph());
 
   TypePtr type_id = kFloat32;
 
@@ -214,14 +214,13 @@ TEST_F(TestGraphRunner, TestAPI) {
   DfGraphManager &graph_manager = DfGraphManager::GetInstance();
   graph_manager.ClearGraph();
 
-  std::shared_ptr<DfGraphConvertor> convertor = MakeGeGraph();
+  std::shared_ptr<DfGraphConvertor> converter = MakeGeGraph();
   std::map<std::string, MeTensorPtr> dict;
   std::initializer_list<int64_t> list0{2, 1, 2, 2};
   dict.emplace("x1", MakeTensor(kF32, list0));
 
-  (*convertor).ConvertAllNode().InitParam(dict).BuildGraph();
-  (*convertor).DrawComputeGraph("TestGraphRunner_TestAPI_Training.dot");
-  graph_manager.AddGraph("fp_bp_subgraph", (*convertor).GetComputeGraph());
+  (*converter).ConvertAllNode().InitParam(dict).BuildGraph();
+  graph_manager.AddGraph("fp_bp_subgraph", (*converter).GetComputeGraph());
 
   std::initializer_list<int64_t> list1{1, 1, 4, 4};
   std::initializer_list<int64_t> list2{2, 3, 4, 5};

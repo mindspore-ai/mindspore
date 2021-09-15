@@ -1268,7 +1268,6 @@ def use_build_train_network_check_cast_num(network, level, inputs, label, cast_n
 class AssignNet(Cell):
     def __init__(self):
         super().__init__()
-        #self._save_graphs(save_graph_flag=True, save_graph_path=".")
         self.relu = ReLU()
         self.mean = P.ReduceMean(keep_dims=False)
         self.assign_sub = P.AssignSub()
@@ -1281,14 +1280,14 @@ class AssignNet(Cell):
         x = self.mean(x, (2, 3))
         return x
 
-
+@security_off_wrap
 def test_auto_mixed_precision_train_1(pynative_save_graphs):
     net = AssignNet()
     input32 = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
     label32 = Tensor(np.zeros([1, 3]).astype(np.float32))
     use_build_train_network_check_cast_num(net, "O0", input32, label32, 0)
 
-
+@security_off_wrap
 def test_auto_mixed_precision_train_2(pynative_save_graphs):
     net = AssignNet()
     input32 = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
@@ -1299,7 +1298,6 @@ def test_auto_mixed_precision_train_2(pynative_save_graphs):
 class MixControlNet(Cell):
     def __init__(self, in_channel, x):
         super().__init__()
-        #self._save_graphs(save_graph_flag=True, save_graph_path=".")
         self.biasadd = P.BiasAdd()
         self.equal = P.Equal()
         self.addn = P.AddN()
@@ -1366,7 +1364,7 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
         assert len(castnum) == cast_num
     return out_me
 
-
+@security_off_wrap
 def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
     net = MixControlNet(3, 5)
     input_x = Tensor(
@@ -1404,7 +1402,6 @@ def test_if_cast():
 
             return out
 
-    context.set_context(save_graphs=False)
     net = Net(True)
     beta1 = Tensor(np.array([2]).astype(np.float32))
     beta2 = Tensor(np.array([10]).astype(np.float32))

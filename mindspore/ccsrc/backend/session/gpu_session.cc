@@ -401,17 +401,19 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   // Prepare ms context info for dump .pb graph
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
 #ifndef ENABLE_SECURITY
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
 #endif
+#ifdef ENABLE_DUMP_IR
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   // Dump .pb graph before graph optimization
   if (save_graphs) {
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
+#endif
   // Graph optimization irrelevant to device data format
   Optimize(graph);
   // Select kernel build info
@@ -429,10 +431,12 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
 #endif
   // Assign CUDA streams
   AssignStream(graph);
+#ifdef ENABLE_DUMP_IR
   // Dump .pb graph before remove nop nodes
   if (save_graphs) {
     DumpIRProto(graph, "before_removeNop_" + std::to_string(graph->graph_id()));
   }
+#endif
   // Update Graph Dynamic Shape Attr.
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
   graph->UpdateGraphDynamicAttr();
@@ -454,9 +458,11 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   // Get summary nodes.
   SetSummaryNodes(graph.get());
   // Dump .pb graph after graph optimization
+#ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     DumpIRProto(graph, "after_opt_" + std::to_string(graph->graph_id()));
   }
+#endif
 #ifndef ENABLE_SECURITY
   if (json_parser.e2e_dump_enabled()) {
     graph->set_root_graph_id(graph->graph_id());

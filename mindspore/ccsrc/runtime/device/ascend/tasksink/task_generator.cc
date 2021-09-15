@@ -44,7 +44,6 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
 #ifdef ENABLE_DUMP_IR
   string task_info_name = "task_info_graph." + std::to_string(graph_id);
   (void)mindspore::RDR::RecordTaskDebugInfo(SUBMODULE_ID, task_info_name, task_debug_info_list_);
-#endif
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
@@ -54,6 +53,7 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
     DumpTaskInfo(file_path);
 #endif
   }
+#endif
   return true;
 }
 

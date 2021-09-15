@@ -19,6 +19,8 @@ import json
 import pytest
 
 from mindspore import context
+from mindspore._c_expression import security
+from tests.security_utils import security_off_wrap
 
 
 # pylint: disable=W0212
@@ -36,6 +38,22 @@ def test_contex_create_context():
         ctx = context._context()
         assert ctx is not None
     context._k_context = None
+
+
+def test_set_save_graphs_in_security():
+    """ test set save_graphs in the security mode"""
+    if security.enable_security():
+        with pytest.raises(ValueError) as err:
+            context.set_context(save_graphs=True)
+        assert "not supported" in str(err.value)
+
+
+def test_set_save_graphs_path_in_security():
+    """ test set save_graphs_path in the security mode"""
+    if security.enable_security():
+        with pytest.raises(ValueError) as err:
+            context.set_context(save_graphs_path="ir_files")
+        assert "not supported" in str(err.value)
 
 
 def test_switch_mode():
@@ -132,6 +150,7 @@ def test_print_file_path():
         context.set_context(print_file_path="./")
 
 
+@security_off_wrap
 def test_set_context():
     """ test_set_context """
     context.set_context.__wrapped__(device_id=0)

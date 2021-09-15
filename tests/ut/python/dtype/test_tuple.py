@@ -24,7 +24,7 @@ from tests.mindspore_test_framework.mindspore_test import mindspore_test
 from tests.mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class TupleGraphNet(nn.Cell):

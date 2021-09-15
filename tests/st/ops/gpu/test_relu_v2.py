@@ -38,7 +38,7 @@ class ReluNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ReluV2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     x = Tensor(np.array([[[[-1, 1, 10],
                            [1, -1, 1],
@@ -77,7 +77,7 @@ class AddReluNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_AddRelu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     x1 = Tensor(np.array([[[[-1, 1, 10],
                             [1, -1, 1],
@@ -118,7 +118,7 @@ class AddReluGradNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_AddReluGrad():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     x = Tensor(np.array([[[[-1, 1, 10],
                            [1, -1, 1],

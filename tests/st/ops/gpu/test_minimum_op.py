@@ -48,7 +48,7 @@ class Grad(Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nobroadcast():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
     x1_np = np.random.rand(3, 4).astype(np.float32)
     x2_np = np.random.rand(3, 4).astype(np.float32)
@@ -66,7 +66,7 @@ def test_nobroadcast():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
     x1_np = np.array([[[[0.659578],
                         [0.49113268],
@@ -191,7 +191,7 @@ def test_broadcast():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_diff_dims():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
     x1_np = np.array([[[0.275478, 0.48933202, 0.71846116],
                        [0.9803821, 0.57205725, 0.28511533]],
@@ -224,7 +224,7 @@ def test_broadcast_diff_dims():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_int32():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
     x1_np = np.random.rand(3, 4).astype(np.int32)
     x2_np = np.random.rand(3, 4).astype(np.int32)

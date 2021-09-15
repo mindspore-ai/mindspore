@@ -74,14 +74,6 @@ TEST_F(TestParserClass, TestParseDataClassApi) {
   FuncGraphPtr graph_inf = ParsePythonCode(inf_method);
   ASSERT_TRUE(nullptr != graph_inf);
   manager->AddFuncGraph(graph_inf);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_class_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 }
 
 /* # skip ut test cases temporarily
@@ -91,7 +83,6 @@ TEST_F(TestParserClass, TestParseMethod) {
   Parser::InitParserEnvironment(obj_);
   FuncGraphPtr func_graph = ParsePythonCode(obj_);
   ASSERT_TRUE(nullptr != func_graph);
-  draw::Draw("ut_parser_method_x.dot", func_graph);
 
   // save the func_graph to manager
   std::shared_ptr<FuncGraphManager> manager = Manage(func_graph);
@@ -100,14 +91,6 @@ TEST_F(TestParserClass, TestParseMethod) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_method_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 }
 
 // Test case 3: common test for debug ptest case

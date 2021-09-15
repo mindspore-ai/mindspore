@@ -19,7 +19,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor, ms_function
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net_l1_regularizer(nn.Cell):

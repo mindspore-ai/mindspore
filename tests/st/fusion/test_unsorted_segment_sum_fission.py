@@ -21,7 +21,6 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(save_graphs=True)
 
 
 class Net(nn.Cell):

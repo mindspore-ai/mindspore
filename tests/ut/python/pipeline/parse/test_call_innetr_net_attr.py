@@ -20,7 +20,7 @@ from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.ops import composite as C
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class InnerInNet(nn.Cell):

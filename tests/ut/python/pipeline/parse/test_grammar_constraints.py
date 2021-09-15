@@ -159,7 +159,6 @@ def test_nest_branch_with_return():
             else:
                 return 5
 
-    context.set_context(save_graphs=True)
     net = NetBranchWithReturn()
     x = Tensor(0, mstype.int32)
     y = Tensor(5, mstype.int32)

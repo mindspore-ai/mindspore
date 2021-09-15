@@ -199,6 +199,11 @@ class MsContext {
 // set method implementation for type bool/int/uint32_t/float/std::string
 template <>
 inline void MsContext::set_param<bool>(MsCtxParam param, const bool &value) {
+#ifdef ENABLE_SECURITY
+  if (param == MS_CTX_SAVE_GRAPHS_FLAG) {
+    MS_EXCEPTION(ValueError) << "The save_graphs is not supported, please without '-s on' and recompile source.";
+  }
+#endif
   bool_params_[param - MS_CTX_TYPE_BOOL_BEGIN] = value;
 }
 
@@ -219,6 +224,11 @@ inline void MsContext::set_param<float>(MsCtxParam param, const float &value) {
 
 template <>
 inline void MsContext::set_param<std::string>(MsCtxParam param, const std::string &value) {
+#ifdef ENABLE_SECURITY
+  if (param == MS_CTX_SAVE_GRAPHS_PATH) {
+    MS_EXCEPTION(ValueError) << "The save_graphs is not supported, please without '-s on' and recompile source.";
+  }
+#endif
   if (seter_ != nullptr && param == MS_CTX_DEVICE_TARGET) {
     MS_LOG(INFO) << "ms set context device target:" << value;
     seter_(value);

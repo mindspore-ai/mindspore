@@ -30,7 +30,7 @@ from utils import allclose_nparray
 from utils import FakeDataInitMode
 from utils import find_newest_validateir_file
 from utils import clean_all_ir_files
-
+from tests.security_utils import security_off_wrap
 
 def read_validateir_file(path_folder):
     filename = find_newest_validateir_file(path_folder)
@@ -109,6 +109,7 @@ def test_sit_auto_mix_precision_train_o3():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_sit_auto_mix_precision_model_o0():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float32)
     dataset1 = FakeData(size=32,
@@ -142,6 +143,7 @@ def test_sit_auto_mix_precision_model_o0():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+@security_off_wrap
 def test_sit_auto_mix_precision_model_o2():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float32)
     dataset1 = FakeData(size=32,

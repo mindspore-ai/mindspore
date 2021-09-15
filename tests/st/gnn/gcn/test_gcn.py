@@ -38,8 +38,7 @@ SEED = 20
 def test_gcn():
     print("test_gcn begin")
     np.random.seed(SEED)
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend", save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     config = ConfigGCN()
     config.dropout = 0.0
     adj, feature, label_onehot, _ = get_adj_features_labels(DATA_DIR)

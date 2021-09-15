@@ -132,7 +132,7 @@ class LossGet(Callback):
 def train_process(q, device_id, epoch_size, device_num, enable_hccl):
     os.system("mkdir " + str(device_id))
     os.chdir(str(device_id))
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(device_id=device_id)
     os.environ['MINDSPORE_HCCL_CONFIG_PATH'] = MINDSPORE_HCCL_CONFIG_PATH
     os.environ['RANK_ID'] = str(device_id)
@@ -230,7 +230,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
 def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     os.system("mkdir " + str(device_id))
     os.chdir(str(device_id))
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(device_id=device_id)
     os.environ['MINDSPORE_HCCL_CONFIG_PATH'] = MINDSPORE_HCCL_CONFIG_PATH_2
     os.environ['RANK_ID'] = str(device_id - 4)
@@ -313,7 +313,7 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
 @pytest.mark.env_single
 def test_resnet_and_resnet_thor_imagenet_4p():
     # reset context
-    context.set_context(save_graphs=False, enable_graph_kernel=False, enable_sparse=False)
+    context.set_context(enable_graph_kernel=False, enable_sparse=False)
     context.reset_auto_parallel_context()
     context.reset_ps_context()
 

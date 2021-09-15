@@ -31,7 +31,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 def conv3x3(in_channels, out_channels, stride=1, padding=1):
     """3x3 convolution """
@@ -408,7 +408,7 @@ def test_max_pool_with_arg_max():
 
     x = Tensor(np.ones([1, 1, 3, 3], np.float32))
     net = NetMaxPoolWithArgMax()
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     ret = net(x)
     print(ret)
 

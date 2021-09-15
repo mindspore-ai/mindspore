@@ -17,7 +17,7 @@
 import mindspore.nn as nn
 from mindspore import context
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True, save_graphs_path="graph_paths")
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net(nn.Cell):

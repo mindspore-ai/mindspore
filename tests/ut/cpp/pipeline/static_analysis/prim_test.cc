@@ -276,7 +276,6 @@ TEST_F(TestPrim, test_J_2) {
   inputs.push_back(jf_jx);
   CNodePtr cnode_return = func_graph->NewCNode(inputs);
   func_graph->set_return(cnode_return);
-  draw::Draw("test_J_2.dot", func_graph);
 
   int64_t v1 = 1;
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
@@ -468,7 +467,6 @@ TEST_F(TestPrim, test_relu) {
 TEST_F(TestPrim, test_relu2) {
   FuncGraphPtr func_graph = getPyFun("get_relu");
   ASSERT_TRUE(func_graph != nullptr);
-  draw::Draw("test_relu.dot", func_graph);
 
   auto arr = ArrayOfTensor(UTPrimUtils::kF32, {3, 4, 5});
   auto expected = ArrayOfTensor(UTPrimUtils::kF32, {3, 4, 5});
@@ -597,7 +595,6 @@ TEST_F(TestPrim, test_softmax_cross_entropy_with_logits) {
 TEST_F(TestPrim, test_tensor_to_scalar_prim) {
   FuncGraphPtr func_graph = getPyFun("get_tensor_to_scalar");
   ASSERT_TRUE(func_graph != nullptr);
-  draw::Draw("get_tensor_to_scalar.dot", func_graph);
 
   auto logits = ArrayOfTensor(UTPrimUtils::kF64, {64, 10});
   auto labels = ArrayOfTensor(UTPrimUtils::kF64, {64, 10});

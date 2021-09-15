@@ -14,7 +14,7 @@ from tests.security_utils import security_off_wrap
 grad_all_list = C.GradOperation(get_all=True, get_by_list=True)
 grad_by_list = C.GradOperation(get_by_list=True)
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_load_grad():

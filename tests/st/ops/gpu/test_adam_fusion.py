@@ -25,7 +25,7 @@ from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
 class Net(nn.Cell):

@@ -35,7 +35,6 @@ class TestGradImplementations : public UT::Common {
 TEST_F(TestGradImplementations, TestGetAugmentedGraph) {
   FuncGraphPtr fg = ad::g_k_prims.KPrimitive(nullptr, NewValueNode(kPrimScalarMul), nullptr);
   ASSERT_TRUE(fg != nullptr);
-  draw::Draw("gradImpl_TestGetAugmentedFuncGraph.dot", fg);
 
   auto fg1 = ad::g_k_prims.KPrimitive(nullptr, NewValueNode(kPrimScalarMul), nullptr);
 

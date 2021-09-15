@@ -60,9 +60,6 @@ TEST_F(TestOptOptimizer, test_step_opt) {
   EXPECT_TRUE(optimizer.get() != nullptr);
 
   auto after = optimizer->step(before);
-
-  draw::Draw("optimizer_test_expendJ_before.dot", before);
-  draw::Draw("optimizer_test_expendJ_after.dot", after);
 }
 
 }  // namespace opt

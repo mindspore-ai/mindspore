@@ -26,7 +26,7 @@ from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class FakeOp(PrimitiveWithInfer):

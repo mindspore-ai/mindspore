@@ -761,7 +761,9 @@ CNodePtr GetJUser(const NodeUsersMap &node_user_map, const CNodePtr &cnode, int 
       for (auto &user : j_users) {
         user_info << "    user: " << user.first->DebugString() << ", index: " << user.second << "\n";
       }
+#ifdef ENABLE_DUMP_IR
       DumpIR("J_User_Ex_" + cnode->func_graph()->ToString() + ".ir", cnode->func_graph());
+#endif
       MS_LOG(EXCEPTION) << "Incorrect J CNode user size: " << size << ", of {" << cnode->DebugString(2) << "/" << index
                         << "}\nUser Info:\n"
                         << user_info.str();

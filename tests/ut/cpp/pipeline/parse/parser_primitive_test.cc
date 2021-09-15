@@ -49,14 +49,6 @@ TEST_F(TestParserPrimitive, TestParserOpsMethod1) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_ops_1_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 }
 
 TEST_F(TestParserPrimitive, TestParserOpsMethod2) {
@@ -72,14 +64,6 @@ TEST_F(TestParserPrimitive, TestParserOpsMethod2) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_ops_2_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 }
 
 // Test primitive class obj
@@ -89,7 +73,6 @@ TEST_F(TestParserPrimitive, TestParsePrimitive) {
   Parser::InitParserEnvironment(obj_);
   FuncGraphPtr func_graph = ParsePythonCode(obj_);
   ASSERT_TRUE(nullptr != func_graph);
-  draw::Draw("ut_parser_primitive_x.dot", func_graph);
 
   // save the func_graph to manager
   std::shared_ptr<FuncGraphManager> manager = Manage(func_graph);
@@ -98,14 +81,6 @@ TEST_F(TestParserPrimitive, TestParsePrimitive) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_ops_3_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 #endif
 }
 
@@ -116,7 +91,6 @@ TEST_F(TestParserPrimitive, TestParsePrimitiveParmeter) {
   Parser::InitParserEnvironment(obj_);
   FuncGraphPtr func_graph = ParsePythonCode(obj_);
   ASSERT_TRUE(nullptr != func_graph);
-  draw::Draw("ut_parser_primitive_x.dot", func_graph);
 
   // save the func_graph to manager
   std::shared_ptr<FuncGraphManager> manager = Manage(func_graph);
@@ -125,14 +99,6 @@ TEST_F(TestParserPrimitive, TestParsePrimitiveParmeter) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_ops_4_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 }
 
 TEST_F(TestParserPrimitive, TestParsePrimitiveParmeter2) {
@@ -140,7 +106,6 @@ TEST_F(TestParserPrimitive, TestParsePrimitiveParmeter2) {
   Parser::InitParserEnvironment(obj_);
   FuncGraphPtr func_graph = ParsePythonCode(obj_);
   ASSERT_TRUE(nullptr != func_graph);
-  draw::Draw("ut_parser_primitive_x.dot", func_graph);
 
   // save the func_graph to manager
   std::shared_ptr<FuncGraphManager> manager = Manage(func_graph);
@@ -149,14 +114,6 @@ TEST_F(TestParserPrimitive, TestParsePrimitiveParmeter2) {
   bool ret_ = ResolveAll(manager);
 
   ASSERT_TRUE(ret_);
-
-  // draw graph
-  int i = 0;
-  for (auto tmp : manager->func_graphs()) {
-    std::string name = "ut_parser_ops_5_" + std::to_string(i) + ".dot";
-    draw::Draw(name, tmp);
-    i++;
-  }
 }
 */
 

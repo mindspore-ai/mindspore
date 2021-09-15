@@ -32,8 +32,14 @@ std::map<std::string, MsBackendPolicy> MsContext::policy_map_ = {{"ge", kMsBacke
                                                                  {"vm_prior", kMsBackendVmPrior}};
 
 MsContext::MsContext(const std::string &policy, const std::string &target) {
+#ifndef ENABLE_SECURITY
   set_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG, false);
   set_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH, ".");
+#else
+  // Need set a default value for arrays even if running in the security mode.
+  bool_params_[MS_CTX_SAVE_GRAPHS_FLAG - MS_CTX_TYPE_BOOL_BEGIN] = false;
+  string_params_[MS_CTX_SAVE_GRAPHS_PATH - MS_CTX_TYPE_STRING_BEGIN] = ".";
+#endif
   set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, "python");
   set_param<std::string>(MS_CTX_KERNEL_BUILD_SERVER_DIR, "");
   set_param<bool>(MS_CTX_ENABLE_DUMP, false);

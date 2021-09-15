@@ -33,7 +33,7 @@ def smoothl1loss(beta):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_smoothl1loss():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU", save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     epsilon = 1e-6
 
@@ -81,7 +81,7 @@ def smoothl1loss_grad(beta):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_smoothl1loss_grad():
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU", save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     epsilon = 1e-6
 

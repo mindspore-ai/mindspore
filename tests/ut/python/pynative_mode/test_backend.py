@@ -23,6 +23,7 @@ from mindspore._checkparam import args_type_check
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
+from tests.security_utils import security_off_wrap
 
 
 def setup_module():
@@ -50,7 +51,7 @@ def test_vm_backend():
     output = add()
     assert output.asnumpy().shape == (1, 3, 3, 4)
 
-
+@security_off_wrap
 def test_vm_set_context():
     """ test_vm_set_context """
     context.set_context(save_graphs=True, save_graphs_path="mindspore_ir_path", mode=context.GRAPH_MODE)

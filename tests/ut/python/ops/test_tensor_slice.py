@@ -445,7 +445,7 @@ class TensorSetItemByMixedTensors(Cell):
 
 
 def test_tensor_assign():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     net = TensorAssignWithSlice()
     net2 = TensorAssignWithSlice2()
     # The test case is no longer appropriate since x[1:3:-1] = np.array(2) does

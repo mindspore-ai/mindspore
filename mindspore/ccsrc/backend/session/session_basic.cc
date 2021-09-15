@@ -1566,7 +1566,9 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
     }
     // Create cnode
     if (!CreateCNodeOfKernelGraph(node, graph.get())) {
+#ifdef ENABLE_DUMP_IR
       DumpIR("construct_kernel_graph_fail.ir", func_graph);
+#endif
       MS_LOG(EXCEPTION) << "Construct func graph " << func_graph->ToString() << " failed."
                         << trace::DumpSourceLines(node);
     }

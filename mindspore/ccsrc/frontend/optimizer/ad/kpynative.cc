@@ -365,10 +365,12 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
   SetOutput(weights, grad_inputs, grad_weights);
   // Replace Parameter of primal funcgraph  with parameter of tape_;
   ReplacePrimalParameter(weights, has_sens_arg);
+#ifdef ENABLE_DUMP_IR
   auto save_graphs_flg = MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs_flg) {
     DumpIR("before_final_opt.ir", tape_);
   }
+#endif
   return tape_;
 }
 

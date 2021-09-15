@@ -12,7 +12,7 @@ def setup_module(module):
 
 
 class Block1(nn.Cell):
-    """ Define Cell with tuple input as paramter."""
+    """ Define Cell with tuple input as parameter."""
 
     def __init__(self):
         super(Block1, self).__init__()
@@ -60,7 +60,6 @@ class Net2(nn.Cell):
         return res
 
 def test_net():
-    context.set_context(save_graphs=True)
     x = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32) * 2)
     y = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32) * 3)
     net1 = Net1()

@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore import dtype as mstype
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_use_undefined_name():

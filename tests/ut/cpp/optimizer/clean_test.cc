@@ -114,13 +114,7 @@ TEST_F(TestClean, TestEraseClassGetAttr) {
 
   ASSERT_EQ(dataclass_count, 1);
 
-  // draw func_graph before erase class
-  draw::Draw("opt_before_erase_class.dot", func_graph);
-
   SimplifyDataStructures(func_graph, manager);
-
-  // draw func_graph after erase class
-  draw::Draw("opt_after_erase_class.dot", func_graph);
 
   int tuple_getitem_count = 0;
 
@@ -166,11 +160,7 @@ TEST_F(TestClean, TestEraseClassMakeRecord) {
 
   auto manager = Manage(func_graph);
 
-  draw::Draw("opt_erase_class_record_before.dot", func_graph);
-
   SimplifyDataStructures(func_graph, manager);
-
-  draw::Draw("opt_erase_class_record_after.dot", func_graph);
 }
 
 TEST_F(TestClean, TestEraseClassPartial) {
@@ -207,17 +197,12 @@ TEST_F(TestClean, TestEraseClassPartial) {
   func_graph->add_parameter(para1);
 
   auto manager = Manage(func_graph);
-
-  draw::Draw("opt_erase_class_partial_before.dot", func_graph);
   SimplifyDataStructures(func_graph, manager);
-  draw::Draw("opt_erase_class_partial_after.dot", func_graph);
 }
 
 TEST_F(TestClean, TestEraseTuple) {
   ASSERT_TRUE(nullptr != me_graph);
   std::shared_ptr<FuncGraphManager> manager = Manage(me_graph);
-
-  draw::Draw("opt_before_erase_tuple.dot", me_graph);
 
   int abstract_tuple_count = 0;
 
@@ -241,8 +226,6 @@ TEST_F(TestClean, TestEraseTuple) {
   }
 
   ASSERT_EQ(abstract_tuple_count, 3);
-
-  draw::Draw("opt_after_erase_tuple.dot", me_graph);
 }
 
 }  // namespace opt

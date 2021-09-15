@@ -143,7 +143,7 @@ def _set_bert_all_reduce_split():
 def train_process_bert_thor(q, device_id, epoch_size, device_num):
     os.system("mkdir " + str(device_id))
     os.chdir(str(device_id))
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id)
     context.set_context(reserve_class_name_in_scope=False)
     context.set_context(max_call_depth=3000)
     os.environ['MINDSPORE_HCCL_CONFIG_PATH'] = MINDSPORE_HCCL_CONFIG_PATH

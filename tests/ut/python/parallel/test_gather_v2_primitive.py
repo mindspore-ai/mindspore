@@ -133,7 +133,7 @@ def net_trains(criterion, rank):
     max_epoch = 20
     input_channels = 256
     out_channels = 512
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE)
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=device_number,
                                       global_rank=rank)

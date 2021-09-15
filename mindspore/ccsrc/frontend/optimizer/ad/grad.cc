@@ -42,22 +42,28 @@ FuncGraphPtr PartialEliminateOptPass(const ResourcePtr &resource, const FuncGrap
 }
 
 FuncGraphPtr LiftFv(const pipeline::ResourceBasePtr &resource, const FuncGraphPtr &func_graph) {
+#ifdef ENABLE_DUMP_IR
   bool save_graphs_flag = MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs_flag) {
     DumpIR("before_lift_" + func_graph->ToString() + ".ir", func_graph);
   }
+#endif
   FuncGraphPtr new_fg = LiftingClone(func_graph);
+#ifdef ENABLE_DUMP_IR
   if (save_graphs_flag) {
     DumpIR("after_lift_" + new_fg->ToString() + ".ir", new_fg);
   }
+#endif
   auto new_res = std::dynamic_pointer_cast<pipeline::Resource>(resource);
   if (new_res == nullptr) {
     MS_LOG(EXCEPTION) << "Parameter resources is not a pipeline::Resource";
   }
   auto opt_fg = PartialEliminateOptPass(new_res, new_fg);
+#ifdef ENABLE_DUMP_IR
   if (save_graphs_flag) {
     DumpIR("after_opt_" + opt_fg->ToString() + ".ir", opt_fg);
   }
+#endif
   return opt_fg;
 }
 }  // namespace

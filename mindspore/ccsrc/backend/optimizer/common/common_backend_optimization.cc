@@ -35,6 +35,7 @@ namespace opt {
 void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "start common opt graph:" << kernel_graph->graph_id();
+#ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
@@ -42,6 +43,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
     std::string file_name = "hwopt_common_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
+#endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("common_pm");
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
@@ -55,10 +57,12 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "hwopt_common_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
+#endif
 }
 
 void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -70,6 +74,7 @@ void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
   // Dump IR if save_graphs is set.
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -78,11 +83,13 @@ void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel
     std::string filename = "hwopt_common_final_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(filename, kernel_graph);
   }
+#endif
 }
 
 void CommonUnifyMindIROptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "start common unify mindir opt graph:" << kernel_graph->graph_id();
+#ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
@@ -91,16 +98,19 @@ void CommonUnifyMindIROptimization(const std::shared_ptr<session::KernelGraph> &
       "hwopt_common_unify_mindir_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
+#endif
   auto opt = std::make_shared<GraphOptimizer>();
   auto pm = std::make_shared<PassManager>("common_unify_mindir_pm");
   pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
   opt->AddPassManager(pm);
   (void)opt->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+#ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "hwopt_common_unify_mindir_after_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
   }
+#endif
 }
 }  // namespace opt
 }  // namespace mindspore

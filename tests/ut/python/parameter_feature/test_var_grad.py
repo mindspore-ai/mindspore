@@ -22,7 +22,7 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 grad_by_list = C.GradOperation(get_by_list=True)

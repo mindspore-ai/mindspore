@@ -145,8 +145,7 @@ class LossGet(Callback):
 def train_process(q, device_id, epoch_size, num_classes, device_num, batch_size, enable_hccl):
     os.system("mkdir " + str(device_id))
     os.chdir(str(device_id))
-    context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend", save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(device_id=device_id)
     os.environ['MINDSPORE_HCCL_CONFIG_PATH'] = MINDSPORE_HCCL_CONFIG_PATH
     os.environ['RANK_ID'] = str(device_id)

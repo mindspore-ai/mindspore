@@ -145,7 +145,7 @@ def server_train(args):
         os.makedirs(output_dir)
 
     # mindspore context
-    context.set_context(mode=context.GRAPH_MODE, device_target=device_target, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
     context.set_fl_context(**fl_ctx)
     print('Context setting is done! Time cost: {}'.format(time() - start))
     sys.stdout.flush()

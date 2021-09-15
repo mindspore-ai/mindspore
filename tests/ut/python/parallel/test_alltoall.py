@@ -103,7 +103,7 @@ def all_to_all_common(strategy1):
 
 def test_all_to_all():
     strategy1 = ((8, 1),)
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE)
     _reset_op_id()
     strategys = all_to_all_common(strategy1)
     print(strategys)
@@ -116,7 +116,6 @@ def test_all_to_all():
             assert v == [[8, 1]]
         elif re.search('MatMul-op', k) is not None:
             assert v == [[1, 1], [1, 8]]
-    context.set_context(save_graphs=False)
 
 
 def test_all_to_all_success():

@@ -152,7 +152,7 @@ def test_second_grad_with_j_primitive():
 
 # A CNode being used as FV is MapMorphism after MapMorphism of call-site CNode;
 def test_ad_fv_cnode_order():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -180,7 +180,7 @@ def test_ad_fv_cnode_order():
 
 # True and False branch of switch have different number of parameters.
 def test_if_branch_with_different_params():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE)
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -217,7 +217,7 @@ def test_if_branch_with_different_params():
 # Otherwise, "Illegal AnfNode for evaluating" may be reported
 # because weight1 in Net may use old_parameter other than replicated one.
 def test_limit_lift_fv_scope():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE)
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()

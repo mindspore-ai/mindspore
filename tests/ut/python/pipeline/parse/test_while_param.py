@@ -36,7 +36,7 @@ class WhileSubGraphParam(Cell):
 
 
 def test_while_loop_phi():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(0, ms.float32)
     y = Tensor(10, ms.float32)
     z = Tensor(100, ms.float32)
@@ -60,7 +60,7 @@ class WhileSubGraphParam2(Cell):
 
 
 def test_while_loop_phi_2():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(0, ms.float32)
     y = Tensor(10, ms.float32)
     z = Tensor(100, ms.float32)
@@ -85,7 +85,7 @@ class WhileSubGraphParam3(Cell):
 
 
 def test_while_loop_phi_3():
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(0, ms.float32)
 
     net = WhileSubGraphParam3(x)
