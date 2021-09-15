@@ -2039,10 +2039,10 @@ void GradExecutor::ClearCellRes(const std::string &cell_id) {
     const auto &top_cell_id = (*it)->cell_id();
     const auto &already_run_cell_id = (*it)->already_run_cell_id();
     if (IsCellObjIdEq(cell_id, top_cell_id)) {
+      MS_LOG(DEBUG) << "Clear top cell resource. Top cell id " << top_cell_id;
       (*it)->Clear();
       it = top_cell_list_.erase(it);
       (void)already_run_top_cell_.erase(already_run_cell_id);
-      MS_LOG(DEBUG) << "Clear top cell resource. Top cell id " << top_cell_id;
       continue;
     }
     ++it;
