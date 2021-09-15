@@ -145,11 +145,7 @@ bool RuntimePassValid(const InnerContext *context, std::vector<kernel::LiteKerne
     }
   }
 
-#if defined(ENABLE_ARM64)
   return true;
-#endif
-
-  return false;
 }
 
 void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors) {
