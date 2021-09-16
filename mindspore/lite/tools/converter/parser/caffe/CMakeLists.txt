@@ -1,4 +1,6 @@
-file(GLOB_RECURSE CAFFE_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
+include(${TOP_DIR}/mindspore/lite/cmake/merge.cmake)
+merge_parser(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_BINARY_DIR}/tools/converter/parser/caffe/caffe_op_parser.cc)
+file(GLOB_RECURSE CAFFE_SRC_LIST ${CMAKE_BINARY_DIR}/tools/converter/parser/caffe/caffe_op_parser.cc)
 
 set_property(SOURCE ${CAFFE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 

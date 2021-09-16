@@ -71,9 +71,6 @@ if(MSLITE_ENABLE_CONVERTER)
                 ${LITE_DIR}/tools/benchmark/benchmark_unified_api.cc
                 ${LITE_DIR}/tools/benchmark/benchmark.cc
                 )
-        if(NOT MSLITE_ENABLE_CONVERTER)
-            list(APPEND TEST_LITE_SRC ${LITE_DIR}/tools/common/flag_parser.cc)
-        endif()
     endif()
     add_definitions(-DPRIMITIVE_WRITEABLE)
     add_definitions(-DUSE_GLOG)
