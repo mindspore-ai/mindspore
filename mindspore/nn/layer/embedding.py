@@ -39,7 +39,7 @@ __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
 @constexpr
 def _check_input_2d(input_shape, param_name, func_name):
     if len(input_shape) != 2:
-        raise ValueError(f"For '{func_name}', the '{param_name}' should be 2d, but got shape {input_shape}")
+        raise ValueError(f"For '{func_name}', the dimension of '{param_name}' should be 2d, but got {len(input_shape)}")
     return True
 
 
@@ -301,7 +301,7 @@ class EmbeddingLookup(Cell):
             if is_auto_parallel:
                 support_mode = ["field_slice", "table_row_slice", "table_column_slice", "batch_slice"]
                 raise ValueError("For '{}', the 'slice_mode' must be in {}, "
-                                 "but got {}.".format(self.cls_name, support_mode, slice_mode))
+                                 "but got \"{}\".".format(self.cls_name, support_mode, slice_mode))
         if self.cache_enable and not enable_ps:
             if parallel_mode != ParallelMode.STAND_ALONE:
                 raise ValueError(f"For '{self.cls_name}', parallel mode haven't supported cache enable yet.")
@@ -353,8 +353,8 @@ class EmbeddingLookup(Cell):
                 full_batch = _get_full_batch()
                 if rank_size > 1 and not (full_batch and slice_mode == "table_row_slice"):
                     raise ValueError(f"For '{self.cls_name}', the cache of parameter server parallel only be used "
-                                     f"in \"full_batch\" and \"table_row_slice\" parallel strategy, but got "
-                                     f"full_batch: {full_batch} and 'slice_mode': {slice_mode}.")
+                                     f"in \"full_batch\" and \"table_row_slice\" 'slice_mode', but got "
+                                     f"full_batch: {full_batch} and 'slice_mode': \"{slice_mode}\".")
                 self.vocab_cache_size = self.vocab_cache_size * rank_size
                 _set_rank_id(rank_id)
             self.cache_enable = True

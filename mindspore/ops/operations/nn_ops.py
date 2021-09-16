@@ -1569,7 +1569,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         _, _, stride_h, stride_w = self.stride
         _, _, dilation_h, dilation_w = self.dilation
         if kernel_size_n != 1:
-            raise ValueError(f"For '{self.name}', the batch of input weight should be 1, but got {kernel_size_n}")
+            raise ValueError(f"For '{self.name}', the batch of 'weight' should be 1, but got {kernel_size_n}")
         if self.pad_mode == "valid":
             h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
             w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
@@ -1676,7 +1676,9 @@ class _Pool(PrimitiveWithInfer):
             if shape_value <= 0:
                 raise ValueError(f"For '{self.name}', the each element of the output shape must be larger than 0, "
                                  f"but got output shape: {out_shape}. The input shape: {x_shape}, "
-                                 f"kernel size: {self.kernel_size}, strides: {self.strides}.")
+                                 f"kernel size: {self.kernel_size}, strides: {self.strides}."
+                                 f"Please check the official api documents for "
+                                 f"more information about the output.")
         return out_shape
 
     def infer_dtype(self, x_dtype):
@@ -3379,7 +3381,7 @@ class L2Normalize(PrimitiveWithInfer):
         self.add_prim_attr('axis', axis)
         self.init_attrs['axis'] = axis
         if len(axis) != 1:
-            raise TypeError(f"For '{self.name}', the dimension of 'axis' must be 1, but got {len(axis)}, "
+            raise TypeError(f"For '{self.name}', the length of 'axis' must be 1, but got {len(axis)}, "
                             f"later will support multiple axis!")
         self.axis = axis
 
@@ -3868,7 +3870,7 @@ class PReLU(PrimitiveWithInfer):
 
         weight_dim = len(weight_shape)
         if weight_dim != 1:
-            raise ValueError(f"For '{self.name}', the dimension of 'x' should be 1, while got {weight_dim}.")
+            raise ValueError(f"For '{self.name}', the dimension of 'weight' should be 1, while got {weight_dim}.")
         if weight_shape[0] != 1 and weight_shape[0] != channel_num:
             raise ValueError(f"For '{self.name}', the first dimension of 'weight' should be (1,) or "
                              f"it should be equal to number of channels: {channel_num}, but got {weight_shape}")
@@ -4193,8 +4195,8 @@ class Pad(PrimitiveWithInfer):
                             f"but got {type(paddings)}.")
         for item in paddings:
             if len(item) != 2:
-                raise ValueError(f"For '{self.name}', the shape of paddings must be (n, 2), "
-                                 f"but got {item}.")
+                raise ValueError(f"For '{self.name}', the shape of 'paddings' must be (n, 2), "
+                                 f"but got {paddings}.")
         self.paddings = paddings
 
     def infer_shape(self, x_shape):
@@ -4299,8 +4301,10 @@ class MirrorPad(PrimitiveWithInfer):
             adjust = 1
         for i in range(0, int(paddings_size / 2)):
             if (paddings_value[i, 0] >= x_shape[i] + adjust) or (paddings_value[i, 1] >= x_shape[i] + adjust):
-                raise ValueError(f"For '{self.name}', both paddings[D, 0] and paddings[D, 1] must be no greater than "
-                                 f"the dimension corresponding to 'x'.")
+                msg = "x_shape[D] + 1" if adjust == 1 else "x_shape[D]"
+                raise ValueError(f"For '{self.name}', both paddings[D, 0] and paddings[D, 1] must be less than {msg}, "
+                                 f"but got paddings[{i}, 0]: {paddings[i, 0]}, "
+                                 f"paddings[{i}, 1]: {paddings[i, 1]}, x_shape[{i}]: {x_shape[i]}.")
         y_shape = ()
         for i in range(0, int(paddings_size / 2)):
             y_shape += ((x_shape[i] + paddings_value[i, 0] + paddings_value[i, 1]),)
@@ -8131,7 +8135,7 @@ class AvgPool3D(Primitive):
             pad = (pad,) * 6
         if len(pad) != 6:
             raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
-                             f"six positive int numbers, but got `{len(pad)}`.")
+                             f"six positive int numbers, but got `{pad}`.")
         self.pad_list = pad
         self.add_prim_attr('pad_list', self.pad_list)
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
@@ -8276,7 +8280,7 @@ class Conv3D(PrimitiveWithInfer):
             pad = (pad,) * 6
         if len(pad) != 6:
             raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
-                             f"six positive int numbers, but got `{len(pad)}`.")
+                             f"six positive int numbers, but got `{pad}`.")
         self.add_prim_attr("pad", pad)
         self.padding = pad
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
@@ -8766,7 +8770,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
             pad = (pad,) * 6
         if len(pad) != 6:
             raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
-                             f"six positive int numbers, but got `{len(pad)}`.")
+                             f"six positive int numbers, but got `{pad}`.")
         self.pad_list = pad
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
