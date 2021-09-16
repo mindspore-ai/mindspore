@@ -100,16 +100,3 @@ if(SUPPORT_TRAIN)
         target_link_libraries(mindspore-lite-train-jni ${LITE_TRAIN_SO_NAME})
     endif()
 endif()
-
-set(NDK_STRIP
-        "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    if(PLATFORM_ARM64 OR PLATFORM_ARM32)
-        add_custom_command(TARGET mindspore-lite-jni POST_BUILD COMMAND ${NDK_STRIP}
-                ${CMAKE_BINARY_DIR}/libmindspore-lite*.so)
-    elseif(NOT WIN32)
-        add_custom_command(TARGET mindspore-lite-jni POST_BUILD COMMAND strip
-                ${CMAKE_BINARY_DIR}/libmindspore-lite*.so)
-    endif()
-endif()
-

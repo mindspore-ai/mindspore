@@ -332,25 +332,6 @@ if(SUPPORT_TRAIN)
   target_link_libraries(mindspore-lite-train_static minddata-lite mindspore-lite)
 endif()
 
-if(NOT APPLE AND PLATFORM_ARM)
-    set(NDK_STRIP
-        "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
-    if(TARGET_HIMIX200)
-        set(NDK_STRIP ${HIMIX_STRIP})
-    elseif(TARGET_OHOS_LITE)
-        set(NDK_STRIP "llvm-strip")
-    endif()
-endif()
-
-if(NOT APPLE AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    if(PLATFORM_ARM)
-        add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
-                ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
-    elseif(NOT WIN32)
-        add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND strip ${CMAKE_BINARY_DIR}/src/libmindspore-lite*.so)
-    endif()
-endif()
-
 ########################## build optimize and float16 library #################################
 if(PLATFORM_ARM)
     if(PLATFORM_ARM64)
