@@ -49,8 +49,6 @@ int ScatterNdUpdateCPUKernel::ReSize() {
   auto update = in_tensors_.at(kScatterUpdateIndex);
   auto output = out_tensors_.front();
 
-  update_ptr_ = reinterpret_cast<float *>(update->MutableData());
-  MS_ASSERT(update_ptr_ != nullptr);
   output_ptr_ = reinterpret_cast<float *>(output->MutableData());
   MS_ASSERT(output_ptr_ != nullptr);
 
@@ -151,6 +149,14 @@ int ScatterNdUpdateCPUKernel::Run() {
     out_tensor->set_own_data(in_tensor->own_data());
     output_ptr_ = reinterpret_cast<float *>(out_tensor->data());
   }
+  auto indices = in_tensors_.at(kScatterIndicesIndex);
+  if (!indices->IsConst() && ReSize() != RET_OK) {
+    MS_LOG(ERROR) << "ScatterNdUpdate resize failed.";
+    return RET_ERROR;
+  }
+  auto update = in_tensors_.at(kScatterUpdateIndex);
+  update_ptr_ = reinterpret_cast<float *>(update->MutableData());
+  MS_ASSERT(update_ptr_ != nullptr);
 
   auto ret = ParallelLaunch(this->ms_context_, ScatterNdUpdateRun, this, thread_n_num_);
   if (ret != RET_OK) {
