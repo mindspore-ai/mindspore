@@ -21,7 +21,7 @@
 #include <algorithm>
 #include "utils/log_adapter.h"
 
-#if not defined(_WIN32)
+#ifdef ENABLE_OPENSSL
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -65,26 +65,28 @@ bool IsCipherFile(const Byte *model_data) {
   auto flag = ByteToInt(int_buf.data(), int_buf.size());
   return static_cast<unsigned int>(flag) == MAGIC_NUM;
 }
-#if defined(_WIN32)
+#ifndef ENABLE_OPENSSL
 std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, size_t plain_len, const Byte *key,
                                 size_t key_len, const std::string &enc_mode) {
-  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  MS_LOG(ERROR) << "The feature is only supported on the Linux platform "
+                   "when the OPENSSL compilation option is enabled.";
   return nullptr;
 }
 
 std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const std::string &encrypt_data_path, const Byte *key,
                                 size_t key_len, const std::string &dec_mode) {
-  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  MS_LOG(ERROR) << "The feature is only supported on the Linux platform "
+                   "when the OPENSSL compilation option is enabled.";
   return nullptr;
 }
 
 std::unique_ptr<Byte[]> Decrypt(size_t *decrypt_len, const Byte *model_data, size_t data_size, const Byte *key,
                                 size_t key_len, const std::string &dec_mode) {
-  MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
+  MS_LOG(ERROR) << "The feature is only supported on the Linux platform "
+                   "when the OPENSSL compilation option is enabled.";
   return nullptr;
 }
 #else
-
 bool ParseEncryptData(const Byte *encrypt_data, size_t encrypt_len, std::vector<Byte> *iv,
                       std::vector<Byte> *cipher_data) {
   // encrypt_data is organized in order to iv_len, iv, cipher_len, cipher_data

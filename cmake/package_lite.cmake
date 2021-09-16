@@ -492,8 +492,12 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(DIRECTORY ${protobuf_INC}/google DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(DIRECTORY ${openssl_INC}/openssl DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_MODEL_ENCRYPTION)
+            install(DIRECTORY ${openssl_INC}/openssl DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${openssl_LIBPATH}/libcrypto.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
         install(DIRECTORY ${eigen3_INC}/eigen3 DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/${MINDSPORE_CORE_LIB_NAME}.a
@@ -505,8 +509,6 @@ else()
         install(FILES ${protobuf_LIBPATH}/libprotobuf.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${flatbuffers_LIBPATH}/libflatbuffers.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${openssl_LIBPATH}/libcrypto.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
