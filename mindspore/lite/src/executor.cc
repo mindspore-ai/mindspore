@@ -27,7 +27,7 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
   CHECK_NULL_RETURN(ctx_);
   auto thread_pool = ctx_->thread_pool();
   CHECK_NULL_RETURN(thread_pool);
-  thread_pool->InitSpinCount();
+  thread_pool->SetSpinCountMaxValue();
 
   // clear ref_count
   for (auto *kernel : kernels) {
@@ -57,7 +57,7 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
     }
   }
 
-  thread_pool->UnInitSpinCount();
+  thread_pool->SetSpinCountMinValue();
 
   return RET_OK;
 }

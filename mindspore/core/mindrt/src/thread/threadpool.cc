@@ -316,7 +316,7 @@ int ThreadPool::SetProcessAffinity(BindMode bind_mode) const {
 #endif  // BIND_CORE
 }
 
-void ThreadPool::InitSpinCount() {
+void ThreadPool::SetSpinCountMaxValue() {
   for (auto worker : workers_) {
     THREAD_RETURN_IF_NULL(worker);
     worker->SetMaxSpinCount(max_spin_count_);
@@ -324,7 +324,7 @@ void ThreadPool::InitSpinCount() {
   return;
 }
 
-void ThreadPool::UnInitSpinCount() {
+void ThreadPool::SetSpinCountMinValue() {
   for (auto worker : workers_) {
     THREAD_RETURN_IF_NULL(worker);
     worker->SetMaxSpinCount(min_spin_count_);

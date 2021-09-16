@@ -175,7 +175,7 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
   auto thread_pool = ctx_->thread_pool();
   CHECK_NULL_RETURN(thread_pool);
   if (ctx_->delegate == nullptr) {
-    thread_pool->InitSpinCount();
+    thread_pool->SetSpinCountMaxValue();
   }
 
   FreeOutputTensor();
@@ -188,7 +188,7 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
 
   TransferGraphOutput();
 
-  thread_pool->UnInitSpinCount();
+  thread_pool->SetSpinCountMinValue();
   return RET_OK;
 }
 }  // namespace mindspore::lite
