@@ -20,7 +20,7 @@
 #include <string>
 #include "include/context.h"
 #include "src/runtime/inner_allocator.h"
-#include "thread/actor_threadpool.h"
+#include "thread/threadpool.h"
 #ifdef ENABLE_ARM
 #include "src/cpu_info.h"
 #endif
@@ -58,7 +58,7 @@ struct InnerContext : public Context {
 
   int IsValid() const;
 
-  ActorThreadPool *thread_pool() const;
+  ThreadPool *thread_pool() const;
 
   virtual ~InnerContext();
 
@@ -81,7 +81,7 @@ struct InnerContext : public Context {
 
   bool device_and_pkg_support_fp16_ = false;
 
-  ActorThreadPool *thread_pool_{nullptr};
+  ThreadPool *thread_pool_{nullptr};
 };
 
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num);

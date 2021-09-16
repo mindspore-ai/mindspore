@@ -18,6 +18,9 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
+#ifdef ENABLE_MINDRT
+#include "thread/actor_threadpool.h"
+#endif
 #ifdef SUPPORT_NPU
 #include "include/HiAiModelManagerType.h"
 #endif
@@ -27,7 +30,9 @@
 
 namespace mindspore::lite {
 namespace {
+#ifdef ENABLE_MINDRT
 constexpr int kDefaultParallelNum = 2;
+#endif
 const constexpr int kMaxLiteContextDeviceNums = 2;
 const constexpr int kMaxInnerContextDeviceNums = 3;
 }  // namespace
@@ -110,12 +115,13 @@ int InnerContext::Init() {
     return RET_NOT_SUPPORT;
   }
   if (this->thread_pool_ == nullptr) {
-    int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
     BindMode bind_mode = Power_NoBind;
     if (this->IsCpuEnabled()) {
       bind_mode = static_cast<BindMode>(this->GetCpuDeviceInfo()->cpu_bind_mode_);
     }
 
+#ifdef ENABLE_MINDRT
+    int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
     if (this->affinity_core_list_.empty()) {
       thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, bind_mode);
       if (thread_pool_ == nullptr) {
@@ -130,6 +136,10 @@ int InnerContext::Init() {
         return RET_NULL_PTR;
       }
     }
+#else
+    thread_pool_ = ThreadPool::CreateThreadPool(thread_num_);
+    thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode));
+#endif
   }
 
   if (this->allocator == nullptr) {
@@ -344,12 +354,12 @@ NpuDeviceInfo InnerContext::GetNpuInfo() const {
   }
 }
 
-ActorThreadPool *InnerContext::thread_pool() const { return thread_pool_; }
+ThreadPool *InnerContext::thread_pool() const { return thread_pool_; }
 
 bool InnerContext::device_and_pkg_support_fp16() const { return this->device_and_pkg_support_fp16_; }
 
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num) {
-  ActorThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
+  ThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
   if (pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
     return RET_NULL_PTR;

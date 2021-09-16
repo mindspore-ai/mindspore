@@ -211,18 +211,13 @@ endif()
 
 if(MSLITE_ENABLE_MINDRT)
     add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
-    set(LITE_SRC
-        ${LITE_SRC}
+    set(LITE_SRC ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
         )
 else()
-    file(GLOB MINDRT_ACTOR ${CORE_DIR}/mindrt/src/actor/*.cc)
-    set(LITE_SRC
-        ${LITE_SRC}
-        ${MINDRT_ACTOR}
+    set(LITE_SRC ${LITE_SRC}
         ${CORE_DIR}/mindrt/src/thread/core_affinity.cc
-        ${CORE_DIR}/mindrt/src/thread/actor_threadpool.cc
         ${CORE_DIR}/mindrt/src/thread/threadpool.cc
         )
 endif()
