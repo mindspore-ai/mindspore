@@ -147,6 +147,5 @@ int ConvolutionDepthwise3x3Fp16CPUKernel::Run() {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel
 #endif

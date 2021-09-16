@@ -33,7 +33,7 @@ int SparseToDenseCPUKernel::Init() {
   MS_CHECK_TRUE_RET(in_tensors_.size() == kInputSize2, RET_ERROR);
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(in_tensors_[1]);
-  CHECK_NULL_RETURN(in_tensors_[2]);
+  CHECK_NULL_RETURN(in_tensors_[DIMENSION_2D]);
   MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
   CHECK_NULL_RETURN(out_tensors_.front());
   auto input2 = in_tensors_.at(2);
