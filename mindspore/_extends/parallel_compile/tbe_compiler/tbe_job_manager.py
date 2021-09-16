@@ -36,6 +36,7 @@ class TbeJobManager:
             JobType.SELECT_JOB: self.select_format_handler,
             JobType.PRECOMPILE_JOB: self.pre_compile_handler,
             JobType.COMPILE_JOB: self.compile_handler,
+            JobType.FUSION_COMPILE_JOB: self.compile_handler,
             JobType.TUNE_JOB: self.tune_handler,
             JobType.QUERY_JOB: self.query_handler
         }

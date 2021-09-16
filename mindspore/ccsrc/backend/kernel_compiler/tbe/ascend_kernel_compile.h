@@ -36,6 +36,8 @@ using KernelModMap = std::map<int64_t, KernelModPtr>;
 struct TargetJobStatus {
   int target_job_id;
   std::string job_status;
+  std::string except_msg;
+  std::string json_name;
 };
 
 class AscendKernelCompileManager {
@@ -72,10 +74,9 @@ class AscendKernelCompileManager {
   void PrintProcessLog(const nlohmann::json &json, int adjust_log_level);
   bool JsonAssemble(const std::string &job_type, const nlohmann::json &src_json, nlohmann::json *dst_json);
   void PrintInitResult(const nlohmann::json &json);
-  void PrintSingleBuildResult(const nlohmann::json &json);
-  void PrintFusionOpBuildResult(const nlohmann::json &json);
-  std::string FormatSelectResultProcess(const nlohmann::json &json);
-  void QueryResultProcess(const nlohmann::json &json, TargetJobStatus *task_info, int adjust_log_level);
+  void PrintCompileResult(const nlohmann::json &json);
+  std::string OpSelectAndCheckResultProcess(const nlohmann::json &json, const AnfNodePtr &node);
+  void QueryResultProcess(const nlohmann::json &json, TargetJobStatus *task_info);
   nlohmann::json TurnStrToJson(const std::string &str);
 
   static bool tbe_init_flag_;
@@ -85,8 +86,8 @@ class AscendKernelCompileManager {
   std::string op_debug_level_;  // if op_debug_level is "1", skip tbe compile cache and rebuild again.
   std::shared_ptr<ParallelBuildManager> build_manager_ = nullptr;
   std::map<int, nlohmann::json> job_list_;
+  std::map<int, AnfNodePtr> job_id_to_node_;
   std::map<int, std::string> fusion_op_names_;
-  AnfNodePtr node_;
 };
 }  // namespace ascend
 }  // namespace kernel

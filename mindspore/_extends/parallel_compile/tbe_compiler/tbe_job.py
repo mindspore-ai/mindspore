@@ -26,6 +26,7 @@ class JobType(Enum):
     SELECT_JOB = 'SelectFormat'
     PRECOMPILE_JOB = 'PreCompile'
     COMPILE_JOB = 'Compile'
+    FUSION_COMPILE_JOB = 'FusionOpCompile'
     TUNE_JOB = 'Tune'
     QUERY_JOB = 'Query'
 
