@@ -202,7 +202,11 @@ void MindIREngine::EvalReturnPrimitive(const PrimitivePtr &prim, const CNodePtr 
   auto funcName = node->func_graph()->ToString();
   auto it = func_graph_result_.find(funcName);
   if (it != func_graph_result_.end()) {
-    result = result->Join(it->second);
+    try {
+      result = result->Join(it->second);
+    } catch (const std::exception &e) {
+      MS_LOG(WARNING) << "Join abstract for return node " << node->DebugString() << " failed, exception: " << e.what();
+    }
   }
   this->func_graph_result_[funcName] = result;
   SaveNodeInferResult(node, result);
@@ -275,15 +279,20 @@ void MindIREngine::EvalPartialAbastract(const abstract::PartialAbstractClosurePt
 
 void MindIREngine::SaveNodeInferResult(const AnfNodePtr &node, const AbstractBasePtr &result) {
   auto answer = result;
-  auto it = infer_resut_.find(node);
-  if (it != infer_resut_.end()) {
-    MS_LOG(DEBUG) << node->ToString() << " result: " << it->second->ToString();
-    answer = result->Join(it->second);
-    if (*answer == *(it->second)) {
-      MS_LOG(DEBUG) << node->ToString() << " The value is not changed.";
-      return;
+  try {
+    auto it = infer_resut_.find(node);
+    if (it != infer_resut_.end()) {
+      MS_LOG(DEBUG) << node->ToString() << " result: " << it->second->ToString();
+      answer = result->Join(it->second);
+      if (*answer == *(it->second)) {
+        MS_LOG(DEBUG) << node->ToString() << " The value is not changed.";
+        return;
+      }
     }
+  } catch (const std::exception &e) {
+    MS_LOG(WARNING) << "Join abstract for node " << node->DebugString() << " failed, exception: " << e.what();
   }
+
   MS_LOG(DEBUG) << node->ToString() << " result: " << answer->ToString();
   infer_resut_[node] = answer;
   UpdateReady(node);
