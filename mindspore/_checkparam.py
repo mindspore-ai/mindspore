@@ -438,8 +438,8 @@ class Validator:
             return arg_value
         arg_name = arg_name if arg_name else "Parameter"
         msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
-        raise ValueError(f'{msg_prefix} `{arg_name}` should be str and must be in `{valid_values}`,'
-                         f' but got `{arg_value}`.')
+        raise ValueError(f"{msg_prefix} '{arg_name}' should be str and must be in '{valid_values}',"
+                         f" but got '{arg_value}'.")
 
     @staticmethod
     def check_str_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
