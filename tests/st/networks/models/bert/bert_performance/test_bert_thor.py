@@ -217,6 +217,7 @@ def test_bert_thor_8p():
         sum_cost_list.append(0.0)
 
     for _ in range(device_num):
+        assert not q.empty()
         output = q.get()
         loss_list = output['loss']
         cost_list = output['cost']

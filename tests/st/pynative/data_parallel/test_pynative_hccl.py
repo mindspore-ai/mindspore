@@ -80,6 +80,7 @@ def test_pynative_hccl_8p():
 
     # check result
     for i in range(device_num):
+        assert not q.empty()
         assert q.get()
 
     for i in range(device_num):
@@ -87,7 +88,7 @@ def test_pynative_hccl_8p():
 
     print("End training...")
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
@@ -110,6 +111,7 @@ def test_pynative_hccl_8pv2():
 
     # check result
     for i in range(device_num):
+        assert not q.empty()
         assert q.get()
 
     for i in range(device_num):
