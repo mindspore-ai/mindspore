@@ -35,7 +35,7 @@ typedef struct HswishQuantArg {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int HSwishInt8(const int8_t *src, int length, int8_t *dst, HswishQuantArg *arg);
+int HSwishInt8(const int8_t *src, int length, int8_t *dst, const HswishQuantArg *arg);
 #ifdef __cplusplus
 }
 #endif

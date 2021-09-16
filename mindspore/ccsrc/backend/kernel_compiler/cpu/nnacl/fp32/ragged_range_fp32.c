@@ -16,7 +16,7 @@
 #include "nnacl/fp32/ragged_range_fp32.h"
 
 void RaggedRangeFp32(const float *starts, const float *limits, const float *deltas, int *splits, float *value,
-                     RaggedRangeParameter *param) {
+                     const RaggedRangeParameter *param) {
   splits[0] = 0;
   for (int i = 0; i < param->rows; i++) {
     float start = param->starts_is_scalar ? starts[0] : starts[i];
@@ -32,7 +32,7 @@ void RaggedRangeFp32(const float *starts, const float *limits, const float *delt
 }
 
 void RaggedRangeInt(const int *starts, const int *limits, const int *deltas, int *splits, int *value,
-                    RaggedRangeParameter *param) {
+                    const RaggedRangeParameter *param) {
   splits[0] = 0;
   for (int i = 0; i < param->rows; i++) {
     int start = param->starts_is_scalar ? starts[0] : starts[i];

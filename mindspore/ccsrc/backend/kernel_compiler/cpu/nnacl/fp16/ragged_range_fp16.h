@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 void RaggedRangeFp16(const float16_t *starts, const float16_t *limits, const float16_t *deltas, int *splits,
-                     float16_t *value, RaggedRangeParameter *param);
+                     float16_t *value, const RaggedRangeParameter *param);
 
 #ifdef __cplusplus
 }

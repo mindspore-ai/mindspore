@@ -23,7 +23,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ExpFusion;
 
 namespace mindspore::kernel {
-
 int ExpFp16CPUKernel::DoExcute(int task_id) {
   ExpFusionFp16(reinterpret_cast<float16_t *>(input_addr_), reinterpret_cast<float16_t *>(output_addr_), param_,
                 task_id);

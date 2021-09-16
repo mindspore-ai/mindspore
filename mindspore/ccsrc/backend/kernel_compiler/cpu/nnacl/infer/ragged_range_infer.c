@@ -51,7 +51,8 @@ int GetRows(const TensorC *const *inputs, bool starts_is_scalar, bool limits_is_
   return NNACL_OK;
 }
 
-int GetOutputValueElementNum(const TensorC *const *inputs, RaggedRangeParameter *param, int *output_value_element_num) {
+int GetOutputValueElementNum(const TensorC *const *inputs, const RaggedRangeParameter *param,
+                             int *output_value_element_num) {
   int count = 0;
   switch (inputs[0]->data_type_) {
     case kNumberTypeInt32: {

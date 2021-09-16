@@ -16,7 +16,7 @@
 #include "nnacl/fp16/ragged_range_fp16.h"
 
 void RaggedRangeFp16(const float16_t *starts, const float16_t *limits, const float16_t *deltas, int *splits,
-                     float16_t *value, RaggedRangeParameter *param) {
+                     float16_t *value, const RaggedRangeParameter *param) {
   splits[0] = 0;
   for (int i = 0; i < param->rows; i++) {
     float16_t start = param->starts_is_scalar ? starts[0] : starts[i];

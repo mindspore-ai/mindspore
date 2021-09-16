@@ -21,7 +21,7 @@ int16_t SaturatingLeftShift(int16_t value, int shift_num) {
   return MSMAX(MSMIN(result, SHRT_MAX), SHRT_MIN);
 }
 
-int HSwishInt8(const int8_t *src, int length, int8_t *dst, HswishQuantArg *arg) {
+int HSwishInt8(const int8_t *src, int length, int8_t *dst, const HswishQuantArg *arg) {
   for (int i = 0; i < length; i++) {
     const int16_t input_value = src[i] - arg->input_zp;
     const int16_t input_value_scale = input_value * (1 << 7);
