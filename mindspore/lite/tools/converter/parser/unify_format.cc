@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include "tools/common/tensor_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -237,6 +238,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
     return RET_ERROR;
   }
   auto new_shape_node = func_graph->add_parameter();
+  MS_CHECK_TRUE_MSG(new_shape_node != nullptr, RET_NULL_PTR, "new_shape_node is nullptr.");
   auto tensor_info = CreateTensorInfo(nullptr, 0, shape_tensor->shape(), shape_tensor->data_type());
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "create tensor info failed.";
@@ -274,10 +276,14 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &
   }
   ShapeVector indices_shape = {kNumGatherIndiceSize_4};
   auto gather_prim = GetValueNode<PrimitivePtr>(gather_cnode->input(0));
-  MS_ASSERT(gather_prim != nullptr);
-  gather_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
+  MS_CHECK_TRUE_MSG(gather_prim != nullptr, RET_NULL_PTR, "gather_prim is nullptr.");
+  auto value_ptr = MakeValue<int64_t>(NHWC);
+  MS_CHECK_TRUE_MSG(value_ptr != nullptr, RET_NULL_PTR, "value_ptr is nullptr.");
+  gather_prim->AddAttr(ops::kFormat, value_ptr);
   gather_cnode->set_abstract(abstract->Clone());
-  abstract->set_shape(std::make_shared<abstract::Shape>(indices_shape));
+  auto shape_ptr = std::make_shared<abstract::Shape>(indices_shape);
+  MS_CHECK_TRUE_MSG(shape_ptr != nullptr, RET_NULL_PTR, "shape_ptr is nullptr.");
+  abstract->set_shape(shape_ptr);
   auto tr = func_graph->manager()->Transact();
   tr.SetEdge(cnode, kNumIndex_2, gather_cnode);
   tr.Commit();

@@ -245,6 +245,7 @@ int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
 
   auto quant_param_holder =
     std::make_shared<lite::QuantParamHolder>(inputs.size(), lite::GetCNodeOutputsSize(anf_node, train_flag_));
+  MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
   primitive->AddAttr("quant_params", quant_param_holder);
 
   if (ConvertQuantParam(primitive, inputs) != lite::RET_OK) {

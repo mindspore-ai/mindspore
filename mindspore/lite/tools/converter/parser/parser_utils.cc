@@ -29,6 +29,7 @@
 #include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/format/to_format_base.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 namespace {
@@ -257,7 +258,9 @@ int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_
         abstract = CreateTensorAbstract(shape, TypeId::kNumberTypeFloat32);
         MS_ASSERT(abstract != nullptr);
       }
-      abstract->set_shape(std::make_shared<abstract::Shape>(shape));
+      auto shape_ptr = std::make_shared<abstract::Shape>(shape);
+      MS_CHECK_TRUE_MSG(shape_ptr != nullptr, RET_NULL_PTR, "shape_ptr is nullptr.");
+      abstract->set_shape(shape_ptr);
       trans_cnode->set_abstract(abstract);
     }
     auto post_cnode = post_node->cast<CNodePtr>();
@@ -351,7 +354,9 @@ int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &wei
       auto abstract = weight_node->abstract();
       MS_ASSERT(abstract != nullptr);
       abstract = abstract->Clone();
-      abstract->set_shape(std::make_shared<abstract::Shape>(shape));
+      auto shape_ptr = std::make_shared<abstract::Shape>(shape);
+      MS_CHECK_TRUE_MSG(shape_ptr != nullptr, RET_NULL_PTR, "shape_ptr is nullptr.");
+      abstract->set_shape(shape_ptr);
       trans_cnode->set_abstract(abstract);
     }
     auto post_cnode = post_node->cast<CNodePtr>();
