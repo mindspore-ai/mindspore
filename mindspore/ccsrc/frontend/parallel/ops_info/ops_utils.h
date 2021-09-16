@@ -134,6 +134,7 @@ constexpr char NEW_AXIS_MASK[] = "new_axis_mask";
 constexpr char SHRINK_AXIS_MASK[] = "shrink_axis_mask";
 constexpr char BEGIN[] = "begin";
 constexpr char SIZE[] = "size";
+constexpr char ALIGN_CORNERS[] = "align_corners";
 constexpr char END[] = "end";
 constexpr char STRIDES[] = "strides";
 constexpr char GROUP[] = "group";
@@ -396,6 +397,8 @@ constexpr char GATHERND[] = "GatherNd";
 constexpr char SCATTER_UPDATE[] = "ScatterUpdate";
 constexpr char GATHERD[] = "GatherD";
 constexpr char DSD_MATMUL[] = "DSDMatmul";
+constexpr char RESIZE_BILINEAR[] = "ResizeBilinear";
+constexpr char RESIZE_NEAREST_NEIGHBOR[] = "ResizeNearestNeighbor";
 
 // pipeline
 constexpr char MICRO[] = "micro";
