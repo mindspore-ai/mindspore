@@ -97,6 +97,7 @@ const size_t kLoopSinkTensorNum = 3;
 const size_t kLoopSinkCurLoopIndex = 0;
 const size_t kLoopSinkNextLoopIndex = 1;
 const size_t kLoopSinkEpochIndex = 2;
+const size_t kLabelNumsThreshold = 1023;
 constexpr char SR_TAG[] = "sr_tag";
 constexpr char BACKWARD[] = "backward";
 constexpr auto kUnknowErrorString = "Unknown error occurred";
@@ -540,7 +541,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   // add make_tuple to the output graph
   AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(root_graph));
   // root root_graph valiate,include genearte execute order and so on
-  RootGraphExecutorValidate(NOT_NULL(root_graph));
+  RootGraphExecutorValidate(NOT_NULL(root_graph), all_graphs);
 #ifdef ENABLE_DUMP_IR
   // dump graph before remove nop nodes
   auto context_ptr = MsContext::GetInstance();
@@ -1697,9 +1698,15 @@ void AscendSession::SyncInitialTenosrToDevice() {
   }
 }
 
-void AscendSession::RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph) {
+void AscendSession::RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph,
+                                              const std::vector<KernelGraphPtr> &all_graphs) {
   AscendAutoMonad auto_monad(graph);
   auto_monad.GenerateExecuteOrder();
+  if (graph->label_num() > kLabelNumsThreshold) {
+    MS_LOG(EXCEPTION) << "This model with " << all_graphs.size() << " graphs needs " << graph->label_num()
+                      << " labels, which out of range of [0, 1024).\n1. Check if front-end composition is correct.\n"
+                      << "2. Optimize model expression and reduce the number of graphs and labels.";
+  }
 }
 
 void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) {
@@ -1960,7 +1967,7 @@ void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
       const auto &iter = tensor_to_node.find(tensor);
       if (iter != tensor_to_node.end()) {
         const auto &node = iter->second.first;
-        const auto &output_index = iter->second.second;
+        size_t output_index = iter->second.second;
         if (!AnfAlgo::OutputAddrExist(node, output_index, true)) {
           continue;
         }
@@ -1994,7 +2001,7 @@ void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
   }
 }
 DeviceAddressPtr AscendSession::AssignExtraMemForGraphOutput(const tensor::TensorPtr &tensor, const AnfNodePtr &node,
-                                                             int index) const {
+                                                             size_t index) const {
   MS_EXCEPTION_IF_NULL(tensor);
   MS_EXCEPTION_IF_NULL(node);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
