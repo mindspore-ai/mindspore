@@ -670,7 +670,7 @@ class MultiHeadAttention(Cell):
             ((1,), (parallel_config.data_parallel, 1, 1, 1)))
         self.mul = P.Mul().shard(
             ((parallel_config.data_parallel, 1, 1, 1), (1,)))
-        self.add = P.TensorAdd().shard(
+        self.add = P.Add().shard(
             ((parallel_config.data_parallel, 1, 1, 1),
              (parallel_config.data_parallel, parallel_config.model_parallel, 1, 1)))
         # Normalize factor for attention, sqrt(dk) as widely used
@@ -720,7 +720,7 @@ class MultiHeadAttention(Cell):
             self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
             self.expand_dims = P.ExpandDims().shard(((1, 1, 1),))
             self.tensor_le = P.LessEqual().shard(((1, 1, 1), (1, 1, 1)))
-            self.add = P.TensorAdd().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
+            self.add = P.Add().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
             self.equal = P.Equal().shard(((1, 1, 1), (1, 1, 1)))
             self.sub1 = P.Sub().shard(((1,), ()))
             self.tile = P.Tile().shard(((1, 1, 1, 1),))
@@ -1061,7 +1061,7 @@ class TransformerEncoderLayer(Cell):
                                       hidden_act=hidden_act,
                                       parallel_config=parallel_config)
         self.post_layernorm_residual = post_layernorm_residual
-        self.add = P.TensorAdd().shard(((parallel_config.data_parallel, 1, 1), (parallel_config.data_parallel, 1, 1)))
+        self.add = P.Add().shard(((parallel_config.data_parallel, 1, 1), (parallel_config.data_parallel, 1, 1)))
         self.dtype = mstype.float16
         self.key_past = None
         self.value_past = None
@@ -1338,7 +1338,7 @@ class TransformerDecoderLayer(Cell):
                                       param_init_type=param_init_type,
                                       parallel_config=parallel_config)
         self.post_layernorm_residual = post_layernorm_residual
-        self.add = P.TensorAdd().shard(((parallel_config.data_parallel, 1, 1), (parallel_config.data_parallel, 1, 1)))
+        self.add = P.Add().shard(((parallel_config.data_parallel, 1, 1), (parallel_config.data_parallel, 1, 1)))
         self.dtype = mstype.float16
         self.key_past = None
         self.value_past = None
@@ -1619,7 +1619,7 @@ class TransformerEncoder(Cell):
         _check_config(parallel_config)
 
         self.use_moe = (moe_config.expert_num > 1)
-        self.add = P.TensorAdd().shard(((), ()))
+        self.add = P.Add().shard(((), ()))
         self.aux_loss = Tensor(0.0, mstype.float32)
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
@@ -1802,7 +1802,7 @@ class TransformerDecoder(Cell):
         super(TransformerDecoder, self).__init__()
         _check_config(parallel_config)
 
-        self.add = P.TensorAdd().shard(((), ()))
+        self.add = P.Add().shard(((), ()))
         self.aux_loss = Tensor(0.0, mstype.float32)
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
             raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
@@ -2023,7 +2023,7 @@ class Transformer(Cell):
             lambda_func = _get_lambda_func(total_layer=encoder_layers + decoder_layers)
 
         self.use_moe = (moe_config.expert_num > 1)
-        self.add = P.TensorAdd().shard(((), ()))
+        self.add = P.Add().shard(((), ()))
         self.aux_loss = Tensor(0.0, mstype.float32)
         if encoder_layers > 0:
             self.encoder = TransformerEncoder(num_layers=encoder_layers,

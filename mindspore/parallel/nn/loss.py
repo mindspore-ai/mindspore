@@ -77,14 +77,14 @@ class CrossEntropyLoss(Cell):
         self.exp = P.Exp().shard(((dp, mp),))
         self.div = P.RealDiv().shard(((dp, mp), (dp, 1)))
         self.log = P.Log().shard(((dp, mp),))
-        self.add = P.TensorAdd().shard(((dp, mp), ()))
+        self.add = P.Add().shard(((dp, mp), ()))
         self.mul = P.Mul().shard(
             ((dp, mp), (dp, mp)))
         self.neg = P.Neg().shard(((dp, mp),))
         self.sum2 = P.ReduceSum().shard(((1,),))
 
         self.mul2 = P.Mul().shard(((1,), (1,)))
-        self.add2 = P.TensorAdd()
+        self.add2 = P.Add()
         self.div2 = P.RealDiv()
 
     def construct(self, logits, label, input_mask):
