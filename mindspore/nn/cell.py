@@ -426,7 +426,11 @@ class Cell(Cell_):
             cast_inputs = inputs
 
         with self.CellGuard():
-            output = self.run_construct(cast_inputs, kwargs)
+            try:
+                output = self.run_construct(cast_inputs, kwargs)
+            except TypeError as err:
+                _pynative_executor.clear_res()
+                raise err
 
         if _pynative_executor.is_top_cell():
             _pynative_executor.execute_all_task()

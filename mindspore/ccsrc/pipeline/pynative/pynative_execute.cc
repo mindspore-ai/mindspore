@@ -2103,6 +2103,8 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
       auto cur_top_is_dynamic = top_cell()->is_dynamic();
       MakeNewTopGraph(cell_id, args, false);
       top_cell()->set_is_dynamic(cur_top_is_dynamic);
+    } else {
+      MS_LOG(EXCEPTION) << "cell stack size " << cell_stack_.size() << ", grad_order_ " << grad_order_;
     }
   }
 
@@ -3173,6 +3175,7 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("grad_ms_function", &PynativeExecutor::GradMsFunction, "pynative grad for ms_function.")
                            .def("grad_net", &PynativeExecutor::GradNet, "pynative grad graph.")
                            .def("clear_cell", &PynativeExecutor::ClearCell, "pynative clear status.")
+                           .def("clear_res", &PynativeExecutor::ClearRes, "pynative clear exception res.")
                            .def("clear_grad", &PynativeExecutor::ClearGrad, "pynative clear grad status.")
                            .def("sync", &PynativeExecutor::Sync, "pynative sync stream.")
                            .def("set_lazy_build", &PynativeExecutor::SetLazyBuild, "pynative build kernel async")
