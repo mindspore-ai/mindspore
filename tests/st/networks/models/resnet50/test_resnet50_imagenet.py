@@ -360,6 +360,7 @@ def test_resnet_and_resnet_thor_imagenet_4p():
     acc = 0.0
     cost = 0.0
     for i in range(device_num):
+        assert not q.empty()
         output = q.get()
         acc += output['acc']
         cost += output['cost']

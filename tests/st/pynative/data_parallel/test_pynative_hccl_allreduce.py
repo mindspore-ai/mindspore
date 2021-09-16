@@ -90,6 +90,7 @@ def test_pynative_hccl_allreduce_8p():
     # check result
     for i in range(device_num):
         expect_output = [[256, 256, 256, 256], [256, 256, 256, 256], [256, 256, 256, 256]]
+        assert not q.empty()
         output = Tensor(q.get())
         assert np.allclose(output.asnumpy(), expect_output)
 
