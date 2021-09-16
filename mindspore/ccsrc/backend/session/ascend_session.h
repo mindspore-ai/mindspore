@@ -84,7 +84,7 @@ class AscendSession : public SessionBasic {
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                            std::map<DeviceAddressPtr, DeviceAddressPtr> *) override;
   DeviceAddressPtr AssignExtraMemForGraphOutput(const tensor::TensorPtr &tensor, const AnfNodePtr &node,
-                                                int index) const;
+                                                size_t index) const;
 
  private:
   // compile child graph when session have multiple child graphs
@@ -119,7 +119,7 @@ class AscendSession : public SessionBasic {
   // below functions are used for run op
   void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
 
-  void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
+  void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph, const std::vector<KernelGraphPtr> &all_graphs);
   // merge execution order list of child graphs
   void MergeGraphExecOrder();
   // get graph order vector by graph id

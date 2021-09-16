@@ -114,7 +114,7 @@ class KernelRuntime {
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
   void UpdateRefNodeOutputMem(const session::KernelGraph *graph);
-  virtual DeviceAddressPtr AssignExtraStaticMem(const TensorPtr &tensor, const AnfNodePtr &node, int index);
+  virtual DeviceAddressPtr AssignExtraStaticMem(const TensorPtr &tensor, const AnfNodePtr &node, size_t index);
   virtual void *GetModelStream(uint32_t graph_id) const { return nullptr; }
 
  protected:
