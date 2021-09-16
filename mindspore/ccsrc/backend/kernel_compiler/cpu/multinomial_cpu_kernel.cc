@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-void MultinomialGpuKernel::InitKernel(const CNodePtr &kernel_node) {
+void MultinomialCpuKernel::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
   // The dimensions of input tensor must be 1 or 2, with data type of float32.
@@ -35,7 +35,7 @@ void MultinomialGpuKernel::InitKernel(const CNodePtr &kernel_node) {
   seed2_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2")));
 }
 
-bool MultinomialGpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+bool MultinomialCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &workspace,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 2) {

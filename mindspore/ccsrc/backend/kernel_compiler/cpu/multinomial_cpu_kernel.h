@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class MultinomialGpuKernel : public CPUKernel {
+class MultinomialCpuKernel : public CPUKernel {
  public:
-  MultinomialGpuKernel() = default;
-  ~MultinomialGpuKernel() override = default;
+  MultinomialCpuKernel() = default;
+  ~MultinomialCpuKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
@@ -44,7 +44,7 @@ class MultinomialGpuKernel : public CPUKernel {
 MS_REG_CPU_KERNEL(
   Multinomial,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  MultinomialGpuKernel)
+  MultinomialCpuKernel)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
