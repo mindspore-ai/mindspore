@@ -209,34 +209,34 @@ Status ToDevice::Terminate() {
 // SaveToDisk
 Status SaveToDisk::ValidateParams() {
   if (dataset_path_.empty()) {
-    std::string err = "CreateSaver failed, dataset_path must not be empty";
+    std::string err = "SaveToDisk failed, dataset_path must not be empty";
     MS_LOG(ERROR) << err;
     RETURN_STATUS_SYNTAX_ERROR(err);
   }
   Path dir(dataset_path_);
   if (dir.IsDirectory()) {
-    std::string err = "CreateSaver failed, dataset_path must not be a directory";
+    std::string err = "SaveToDisk failed, dataset_path must not be a directory";
     MS_LOG(ERROR) << err;
     RETURN_STATUS_SYNTAX_ERROR(err);
   }
   std::string real_path;
   if (Path::RealPath(dir.ParentPath(), real_path).IsError()) {
-    std::string err_msg = "CreateSaver failed, can not get real dataset path: " + dir.ParentPath();
+    std::string err_msg = "SaveToDisk failed, can not get real dataset path: " + dir.ParentPath();
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (access(dir.ParentPath().c_str(), R_OK) == -1) {
-    std::string err_msg = "CreateSaver failed, no access to specified dataset path: " + dataset_path_;
+    std::string err_msg = "SaveToDisk failed, no access to specified dataset path: " + dataset_path_;
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (num_files_ <= 0 || num_files_ > 1000) {
-    std::string err = "CreateSaver failed, num_files must between 1 and 1000, but got " + std::to_string(num_files_);
+    std::string err = "SaveToDisk failed, num_files must between 1 and 1000, but got " + std::to_string(num_files_);
     MS_LOG(ERROR) << err;
     RETURN_STATUS_SYNTAX_ERROR(err);
   }
   if (dataset_type_ != "mindrecord") {
-    std::string err = "CreateSaver failed, only \"mindrecord\" dataset format is supported, but got " + dataset_type_;
+    std::string err = "SaveToDisk failed, only \"mindrecord\" dataset format is supported, but got " + dataset_type_;
     MS_LOG(ERROR) << err;
     RETURN_STATUS_SYNTAX_ERROR(err);
   }
@@ -333,7 +333,7 @@ Status SaveToDisk::CheckTensorRowShapes(const std::unordered_map<std::string, in
     std::string mr_type;
     std::string el = column_type.ToString();
     if (mindrecord::kTypesMap.find(el) == mindrecord::kTypesMap.end()) {
-      std::string err_msg("Error: can not support data type: " + el);
+      std::string err_msg("Invalid type, unsupported data type: " + el);
       RETURN_STATUS_UNEXPECTED(err_msg);
     } else {
       mr_type = mindrecord::kTypesMap.at(el);
@@ -356,13 +356,13 @@ Status SaveToDisk::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
                                           const TensorRow &row, nlohmann::json *schema,
                                           std::vector<std::string> *index_fields) {
   if (schema == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Error: schema is NULL.");
+    RETURN_STATUS_UNEXPECTED("schema can not be nullptr.");
   }
   if (index_fields == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Error: index fields is NULL.");
+    RETURN_STATUS_UNEXPECTED("index_fields can not be nullptr.");
   }
   if (column_name_id_map.empty()) {
-    RETURN_STATUS_UNEXPECTED("Error: column not found.");
+    RETURN_STATUS_UNEXPECTED("column_name_id_map can not be nullptr..");
   }
   nlohmann::json dataset_schema;
   for (auto &col : column_name_id_map) {
@@ -378,7 +378,7 @@ Status SaveToDisk::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
     std::string el = column_type.ToString();
     dataset_schema[column_name] = el;
     if (mindrecord::kTypesMap.find(el) == mindrecord::kTypesMap.end()) {
-      std::string err_msg("Error: can not support data type: " + el);
+      std::string err_msg("Invalid type, unsupported data type: " + el);
       RETURN_STATUS_UNEXPECTED(err_msg);
     } else {
       mr_type = mindrecord::kTypesMap.at(el);
@@ -390,7 +390,7 @@ Status SaveToDisk::FetchMetaFromTensorRow(const std::unordered_map<std::string, 
       (*schema)[column_name] = {{"type", mr_type}};
     } else {
       if (mr_type == "string") {  // mindrecord can not support string with shape.
-        std::string err_msg("Error: mindrecord can not support multi-dimensional string tensor.");
+        std::string err_msg("Invalid data, mindrecord can not support multi-dimensional string tensor.");
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
       if (mr_type == "bytes") {  // ignore shape of bytes in minrecord
@@ -411,13 +411,13 @@ inline Status ValidateInputParams(nlohmann::json *row_raw_data,
                                   std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> *row_bin_data,
                                   const std::unordered_map<std::string, int32_t> &column_name_id_map) {
   if (row_raw_data == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Error: row raw data is NULL.");
+    RETURN_STATUS_UNEXPECTED("row_raw_data can not be nullptr.");
   }
   if (row_bin_data == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Error: row bin data is NULL.");
+    RETURN_STATUS_UNEXPECTED("row_bin_data can not be nullptr.");
   }
   if (column_name_id_map.empty()) {
-    RETURN_STATUS_UNEXPECTED("Error: column not found");
+    RETURN_STATUS_UNEXPECTED("column_name_id_map can not be nullptr.");
   }
   return Status::OK();
 }
@@ -516,7 +516,7 @@ Status SaveToDisk::FetchItemData(std::shared_ptr<Tensor> tensor, std::string col
     std::string ss(sv);
     (*row_raw_data)[column_name] = std::move(ss);
   } else {
-    RETURN_STATUS_UNEXPECTED("Got unexpected type when casting data.");
+    RETURN_STATUS_UNEXPECTED("Invalid dtype, got unexpected type when casting data: " + column_type.ToString());
   }
   if (data_ptr != nullptr) {
     (*row_bin_data)[column_name] = std::move(data_ptr);
@@ -616,7 +616,7 @@ Status TreeGetters::GetBatchSize(int64_t *batch_size) {
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   RETURN_UNEXPECTED_IF_NULL(root);
   *batch_size = root->GetTreeBatchSize();
-  CHECK_FAIL_RETURN_UNEXPECTED(*batch_size != -1, "Error in finding the batch size.");
+  CHECK_FAIL_RETURN_UNEXPECTED(*batch_size != -1, "GetBatchSize: Failed to find the batch size in Dataset pipeline.");
   return Status::OK();
 }
 
@@ -644,7 +644,7 @@ Status TreeGetters::GetColumnNames(std::vector<std::string> *output) {
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   RETURN_UNEXPECTED_IF_NULL(root);
   std::unordered_map<std::string, int32_t> column_name_id_map = root->column_name_id_map();
-  CHECK_FAIL_RETURN_UNEXPECTED(!column_name_id_map.empty(), "GetColumnNames: column_name_id map is empty.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!column_name_id_map.empty(), "GetColumnNames: column_name_id map can not be empty.");
   std::vector<std::pair<std::string, int32_t>> col_name_id_vec(column_name_id_map.begin(), column_name_id_map.end());
   std::sort(col_name_id_vec.begin(), col_name_id_vec.end(),
             [](const std::pair<std::string, int32_t> &a, const std::pair<std::string, int32_t> &b) {
@@ -696,7 +696,7 @@ Status BuildVocabConsumer::Start() {
   TensorRow row;
   RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
   // The returned row would EOE which is an empty row
-  CHECK_FAIL_RETURN_UNEXPECTED(row.empty(), "The fetched row from BuildVocab should be an EOE.");
+  CHECK_FAIL_RETURN_UNEXPECTED(row.empty(), "BuildVocab: The fetched row from BuildVocab should be an EOE.");
   return Status::OK();
 }
 Status DatasetSizeGetter::GetDatasetSize(int64_t *size, bool estimate) {

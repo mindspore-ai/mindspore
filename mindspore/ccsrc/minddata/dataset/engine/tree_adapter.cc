@@ -128,7 +128,7 @@ Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(ir->Build(&ops));
 
-  CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build node.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build node: " + ir->Name());
 
   (*op) = ops.front();  // return the first op to be added as child by the caller of this function
   RETURN_IF_NOT_OK(tree_->AssociateNode(*op));

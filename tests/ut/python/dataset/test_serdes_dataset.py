@@ -460,7 +460,7 @@ def test_serdes_exception():
     with pytest.raises(RuntimeError) as msg:
         data2 = ds.deserialize(input_dict=data1_json)
         ds.serialize(data2, "filter_dataset_fail.json")
-    assert "Filter operation is not supported" in str(msg)
+    assert "Invalid data, unsupported operation type: Filter" in str(msg)
     delete_json_files()
 
 

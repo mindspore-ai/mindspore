@@ -167,7 +167,7 @@ Status ExecutionTree::Launch() {
 #endif
   int32_t thread_num = get_nprocs();
   if (thread_num == 0) {
-    std::string err_msg = "Invalid thread number.";
+    std::string err_msg = "Invalid thread number, got 0.";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   constexpr int32_t max_cv_threads_cnt = 8;

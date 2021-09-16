@@ -220,7 +220,7 @@ Status DataSchema::ColumnOrderLoad(nlohmann::json column_tree, const std::vector
       // Find the column in the json document
       auto column_info = column_tree.find(common::SafeCStr(curr_col_name));
       if (column_info == column_tree.end()) {
-        RETURN_STATUS_UNEXPECTED("Invalid data, failed to find column name: " + curr_col_name);
+        RETURN_STATUS_UNEXPECTED("Invalid data, failed to find column name: " + curr_col_name + " in given json file.");
       }
       // At this point, columnInfo.value() is the subtree in the json document that contains
       // all of the data for a given column.  This data will formulate our schema column.
@@ -238,7 +238,7 @@ Status DataSchema::ColumnOrderLoad(nlohmann::json column_tree, const std::vector
       for (const auto &it_child : column_tree.items()) {
         auto name = it_child.value().find("name");
         if (name == it_child.value().end()) {
-          RETURN_STATUS_UNEXPECTED("Name field is missing for this column.");
+          RETURN_STATUS_UNEXPECTED("Invalid data, \"name\" field is missing for column: " + curr_col_name);
         }
         if (name.value() == curr_col_name) {
           index = i;
@@ -247,7 +247,7 @@ Status DataSchema::ColumnOrderLoad(nlohmann::json column_tree, const std::vector
         i++;
       }
       if (index == -1) {
-        RETURN_STATUS_UNEXPECTED("Invalid data, failed to find column name: " + curr_col_name);
+        RETURN_STATUS_UNEXPECTED("Invalid data, failed to find column name: " + curr_col_name + " in given json file.");
       }
       nlohmann::json column_child_tree = column_tree[index];
       RETURN_IF_NOT_OK(ColumnLoad(column_child_tree, curr_col_name));
@@ -259,7 +259,7 @@ Status DataSchema::ColumnOrderLoad(nlohmann::json column_tree, const std::vector
 // Internal helper function for parsing shape info and building a vector for the shape construction.
 static Status BuildShape(const nlohmann::json &shapeVal, std::vector<dsize_t> *outShape) {
   if (outShape == nullptr) {
-    RETURN_STATUS_UNEXPECTED("null output shape");
+    RETURN_STATUS_UNEXPECTED("outShape can not be nullptr.");
   }
   if (shapeVal.empty()) return Status::OK();
 
@@ -294,19 +294,21 @@ Status DataSchema::ColumnLoad(nlohmann::json column_child_tree, const std::strin
       shape_field_exists = true;
       RETURN_IF_NOT_OK(BuildShape(it_child.value(), &tmp_shape));
     } else {
-      std::string err_msg = "Unexpected column attribute " + it_child.key() + " for column " + col_name;
+      std::string err_msg = "Invalid data, unexpected column attribute " + it_child.key() + " for column " + col_name +
+                            ", expected attribute: name, type, rank, t_impl or shape.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
   if (!name.empty()) {
     if (!col_name.empty() && col_name != name) {
       std::string err_msg =
-        "json schema file for column " + col_name + " has column name that does not match columnsToLoad";
+        "Invalid data, json schema file for column " + col_name + " has column name that does not match columnsToLoad";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
   } else {
     if (col_name.empty()) {
-      std::string err_msg = "json schema file for column " + col_name + " has invalid or missing column name.";
+      std::string err_msg =
+        "Invalid data, json schema file for column " + col_name + " has invalid or missing column name.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     } else {
       name = col_name;
@@ -315,12 +317,12 @@ Status DataSchema::ColumnLoad(nlohmann::json column_child_tree, const std::strin
   // data type is mandatory field
   if (type_str.empty())
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "json schema file for column " + col_name + " has invalid or missing column type.");
+                  "Invalid data, json schema file for column " + col_name + " has invalid or missing column type.");
 
   // rank number is mandatory field
   if (rank_value <= -1)
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "json schema file for column " + col_name + " must define a positive rank value.");
+                  "Invalid data, json schema file for column " + col_name + " must define a positive rank value.");
 
   // Create the column descriptor for this column from the data we pulled from the json file
   TensorShape col_shape = TensorShape(tmp_shape);
@@ -347,12 +349,12 @@ Status DataSchema::LoadSchemaFile(const std::string &schema_file_path,
       num_rows_ = 0;
     } catch (nlohmann::json::exception &e) {
       in.close();
-      RETURN_STATUS_UNEXPECTED("Unable to parse \"numRows\" from schema");
+      RETURN_STATUS_UNEXPECTED("Invalid data, unable to parse \"numRows\" from schema file: " + schema_file_path);
     }
     nlohmann::json column_tree = js.at("columns");
     if (column_tree.empty()) {
       in.close();
-      RETURN_STATUS_UNEXPECTED("columns is null");
+      RETURN_STATUS_UNEXPECTED("Invalid data, \"columns\" field is missing in schema file: " + schema_file_path);
     }
     if (columns_to_load.empty()) {
       // Parse the json tree and load the schema's columns in whatever order that the json
@@ -372,7 +374,7 @@ Status DataSchema::LoadSchemaFile(const std::string &schema_file_path,
     in.close();
   } catch (const std::exception &err) {
     // Catch any exception and convert to Status return code
-    RETURN_STATUS_UNEXPECTED("Schema file failed to load with JSON tools. File is: " + schema_file_path);
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to load and parse schema file: " + schema_file_path);
   }
   return Status::OK();
 }
@@ -386,7 +388,7 @@ Status DataSchema::LoadSchemaString(const std::string &schema_json_string,
     num_rows_ = js.value("numRows", 0);
     nlohmann::json column_tree = js.at("columns");
     if (column_tree.empty()) {
-      RETURN_STATUS_UNEXPECTED("columns is null");
+      RETURN_STATUS_UNEXPECTED("Invalid data, \"columns\" field is missing in schema string.");
     }
     if (columns_to_load.empty()) {
       // Parse the json tree and load the schema's columns in whatever order that the json
@@ -397,7 +399,7 @@ Status DataSchema::LoadSchemaString(const std::string &schema_json_string,
     }
   } catch (const std::exception &err) {
     // Catch any exception and convert to Status return code
-    RETURN_STATUS_UNEXPECTED("Schema file failed to load");
+    RETURN_STATUS_UNEXPECTED("Invalid data, failed to load and parse schema string.");
   }
   return Status::OK();
 }
@@ -439,7 +441,7 @@ Status DataSchema::PreLoadExceptionCheck(const nlohmann::json &js) {
   // Check if columns node exists.  It is required for building schema from file.
   if (js.find("columns") == js.end())
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "\"columns\" node is required in the schema json file.");
+                  "Invalid data, \"columns\" node is required in the schema json file.");
   return Status::OK();
 }
 
