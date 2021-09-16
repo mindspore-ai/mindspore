@@ -4,7 +4,7 @@ MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV PATH /usr/local/bin:/root/.local/bin:$PATH
+ENV PATH ${PYTHON_ROOT_PATH}/bin:/usr/local/bin:/root/.local/bin:$PATH
 
 # Install base tools
 RUN apt update \
@@ -72,3 +72,6 @@ RUN mkdir -pv /root/.pip \
 
 # Install MindSpore cpu whl package
 RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.5.0/MindSpore/cpu/x86_64/mindspore-1.5.0-cp37-cp37m-linux_x86_64.whl
+
+# Install MindInsight cpu whl package
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.5.0/MindInsight/any/mindinsight-1.5.0-py3-none-any.whl

@@ -79,3 +79,16 @@ RUN cd /tmp \
     && mkdir -p ${CMAKE_ROOT_PATH} \
     && bash ./cmake-3.14.1-Linux-x86_64.sh --prefix=${CMAKE_ROOT_PATH} --exclude-subdir --skip-license \
     && rm -f /tmp/cmake-3.14.1-Linux-x86_64.sh
+
+# Install nodejs
+RUN cd /tmp \
+    && wget https://mirrors.huaweicloud.com/nodejs/v12.18.4/node-v12.18.4-linux-x64.tar.gz \
+    && tar -zxf node-v12.18.4-linux-x64.tar.gz \
+    && rm -rf /usr/local/nodejs \
+    && mkdir -p /usr/local/nodejs \
+    && mv /tmp/node-v12.18.4-linux-x64 /usr/local/nodejs/ \
+    && chmod 755 -R /usr/local/nodejs \
+    && ln -sf /usr/local/nodejs/node-v12.18.4-linux-x64/bin/node /usr/bin/node \
+    && ln -sf /usr/local/nodejs/node-v12.18.4-linux-x64/bin/npm /usr/bin/npm \
+    && npm config set registry https://registry.npm.taobao.org/ \
+    && rm -f /tmp/node-v12.18.4-linux-x64.tar.gz
