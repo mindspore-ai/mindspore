@@ -277,9 +277,11 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
       }
       // 'used_devices == -1' means that 'used_devices_' is not set
       if ((used_devices == -1) || LongToSize(used_devices) != total_device_num) {
-        MS_LOG(EXCEPTION) << "In configuration 'FULLY_USE_DEVICES' = True, "
+        MS_LOG(EXCEPTION) << "In current configuration 'fully_use_devices' = True, "
                           << "but the specified strategy uses device: " << used_devices
-                          << ", total devices: " << total_device_num;
+                          << ", total devices: " << total_device_num
+                          << ", try to set 'set_algo_parameters(fully_use_devices=False)' "
+                             "in package 'mindspore.parallel'.";
       }
     }
     configured_stra_ops_.insert({operator_info, strategyPtr});
