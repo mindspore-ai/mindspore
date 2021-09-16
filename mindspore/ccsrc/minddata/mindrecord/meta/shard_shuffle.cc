@@ -69,7 +69,8 @@ Status ShardShuffle::ShuffleFiles(ShardTaskList &tasks) {
   if (no_of_samples_ == 0) {
     no_of_samples_ = static_cast<int>(tasks.Size());
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Parameter no_of_samples need to be positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Invalid input, Number of samples [" +
+                                                     std::to_string(no_of_samples_) + "] need to be positive.");
   auto shard_sample_cout = GetShardSampleCount();
 
   // shuffle the files index
@@ -122,7 +123,8 @@ Status ShardShuffle::ShuffleInfile(ShardTaskList &tasks) {
   if (no_of_samples_ == 0) {
     no_of_samples_ = static_cast<int>(tasks.Size());
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Parameter no_of_samples need to be positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Invalid input, Number of samples [" +
+                                                     std::to_string(no_of_samples_) + "] need to be positive.");
   // reconstruct the permutation in file
   // -- before --
   // file1: [0, 1, 2]
@@ -153,8 +155,12 @@ Status ShardShuffle::ShuffleInfile(ShardTaskList &tasks) {
 }
 
 Status ShardShuffle::Execute(ShardTaskList &tasks) {
-  if (reshuffle_each_epoch_) shuffle_seed_++;
-  CHECK_FAIL_RETURN_UNEXPECTED(tasks.categories >= 1, "Task category is invalid.");
+  if (reshuffle_each_epoch_) {
+    shuffle_seed_++;
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    tasks.categories >= 1,
+    "Invalid data, task categories [" + std::to_string(tasks.categories) + "] need to be larger than 1.");
   if (shuffle_type_ == kShuffleSample) {  // shuffle each sample
     if (tasks.permutation_.empty() == true) {
       tasks.MakePerm();
@@ -163,7 +169,8 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
       if (replacement_ == true) {
         ShardTaskList new_tasks;
         if (no_of_samples_ == 0) no_of_samples_ = static_cast<int>(tasks.sample_ids_.size());
-        CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Parameter no_of_samples need to be positive.");
+        CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Invalid input, Number of samples [" +
+                                                           std::to_string(no_of_samples_) + "] need to be positive.");
         for (uint32_t i = 0; i < no_of_samples_; ++i) {
           new_tasks.AssignTask(tasks, tasks.GetRandomTaskID());
         }

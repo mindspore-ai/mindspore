@@ -119,7 +119,7 @@ def test_cifar100_to_mindrecord_directory(fixture_file):
     when destination path is directory.
     """
     with pytest.raises(RuntimeError,
-                       match="MindRecord file already existed, please delete file:"):
+                       match="Invalid file, Mindrecord files already existed in path:"):
         cifar100_transformer = Cifar100ToMR(CIFAR100_DIR,
                                             CIFAR100_DIR)
         cifar100_transformer.transform()
@@ -130,7 +130,7 @@ def test_cifar100_to_mindrecord_filename_equals_cifar100(fixture_file):
     when destination path equals source path.
     """
     with pytest.raises(RuntimeError,
-                       match="indRecord file already existed, please delete file:"):
+                       match="Invalid file, Mindrecord files already existed in path:"):
         cifar100_transformer = Cifar100ToMR(CIFAR100_DIR,
                                             CIFAR100_DIR + "/train")
         cifar100_transformer.transform()

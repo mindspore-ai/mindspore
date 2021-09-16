@@ -43,11 +43,12 @@ ShardWriter::~ShardWriter() {
 Status ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &paths) {
   // Get full path from file name
   for (const auto &path : paths) {
-    CHECK_FAIL_RETURN_UNEXPECTED(CheckIsValidUtf8(path), "The filename contains invalid uft-8 data: " + path);
+    CHECK_FAIL_RETURN_UNEXPECTED(CheckIsValidUtf8(path),
+                                 "Invalid data, file name: " + path + " contains invalid uft-8 character.");
     char resolved_path[PATH_MAX] = {0};
     char buf[PATH_MAX] = {0};
     CHECK_FAIL_RETURN_UNEXPECTED(strncpy_s(buf, PATH_MAX, common::SafeCStr(path), path.length()) == EOK,
-                                 "Secure func failed");
+                                 "Failed to call securec func [strncpy_s], path: " + path);
 #if defined(_WIN32) || defined(_WIN64)
     RETURN_UNEXPECTED_IF_NULL(_fullpath(resolved_path, dirname(&(buf[0])), PATH_MAX));
     RETURN_UNEXPECTED_IF_NULL(_fullpath(resolved_path, common::SafeCStr(path), PATH_MAX));
@@ -55,7 +56,7 @@ Status ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &path
     CHECK_FAIL_RETURN_UNEXPECTED(realpath(dirname(&(buf[0])), resolved_path) != nullptr,
                                  "Invalid file, path: " + std::string(resolved_path));
     if (realpath(common::SafeCStr(path), resolved_path) == nullptr) {
-      MS_LOG(DEBUG) << "Path " << resolved_path;
+      MS_LOG(DEBUG) << "Path: " << common::SafeCStr(path) << "check success.";
     }
 #endif
     file_paths_.emplace_back(string(resolved_path));
@@ -74,7 +75,7 @@ Status ShardWriter::OpenDataFiles(bool append) {
     }
 
     auto realpath = FileUtils::GetRealPath(dir.value().data());
-    CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + file);
+    CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Failed to get real path, path: " + file);
 
     std::optional<std::string> whole_path = "";
     FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
@@ -85,23 +86,23 @@ Status ShardWriter::OpenDataFiles(bool append) {
       fs->open(whole_path.value(), std::ios::in | std::ios::binary);
       if (fs->good()) {
         fs->close();
-        RETURN_STATUS_UNEXPECTED("MindRecord file already existed, please delete file: " + file);
+        RETURN_STATUS_UNEXPECTED("Invalid file, Mindrecord files already existed in path: " + file);
       }
       fs->close();
       // open the mindrecord file to write
       fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary | std::ios::trunc);
       if (!fs->good()) {
-        RETURN_STATUS_UNEXPECTED("MindRecord file could not opened: " + file);
+        RETURN_STATUS_UNEXPECTED("Failed to open file, path: " + file);
       }
     } else {
       // open the mindrecord file to append
       fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary);
       if (!fs->good()) {
         fs->close();
-        RETURN_STATUS_UNEXPECTED("MindRecord file could not opened for append: " + file);
+        RETURN_STATUS_UNEXPECTED("Failed to open file for append data, path: " + file);
       }
     }
-    MS_LOG(INFO) << "Open shard file successfully.";
+    MS_LOG(INFO) << "Succeed to open shard file, path: " << file;
     file_streams_.push_back(fs);
   }
   return Status::OK();
@@ -111,18 +112,18 @@ Status ShardWriter::RemoveLockFile() {
   // Remove temporary file
   int ret = std::remove(pages_file_.c_str());
   if (ret == 0) {
-    MS_LOG(DEBUG) << "Remove page file.";
+    MS_LOG(DEBUG) << "Succeed to remove page file, path: " << pages_file_;
   }
 
   ret = std::remove(lock_file_.c_str());
   if (ret == 0) {
-    MS_LOG(DEBUG) << "Remove lock file.";
+    MS_LOG(DEBUG) << "Succeed to remove lock file, path: " << lock_file_;
   }
   return Status::OK();
 }
 
 Status ShardWriter::InitLockFile() {
-  CHECK_FAIL_RETURN_UNEXPECTED(file_paths_.size() != 0, "File path not initialized.");
+  CHECK_FAIL_RETURN_UNEXPECTED(file_paths_.size() != 0, "Invalid data, file_paths_ is not initialized.");
 
   lock_file_ = file_paths_[0] + kLockFileSuffix;
   pages_file_ = file_paths_[0] + kPageFileSuffix;
@@ -132,10 +133,9 @@ Status ShardWriter::InitLockFile() {
 
 Status ShardWriter::Open(const std::vector<std::string> &paths, bool append) {
   shard_count_ = paths.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(shard_count_ <= kMaxShardCount && shard_count_ != 0,
-                               "The Shard Count greater than max value(1000) or equal to 0, but got " + shard_count_);
   CHECK_FAIL_RETURN_UNEXPECTED(schema_count_ <= kMaxSchemaCount,
-                               "The schema Count greater than max value(1), but got " + schema_count_);
+                               "Invalid data, schema_count_ must be less than or equal to " +
+                                 std::to_string(kMaxSchemaCount) + ", but got " + std::to_string(schema_count_));
 
   // Get full path from file name
   RETURN_IF_NOT_OK(GetFullPathFromFileName(paths));
@@ -147,7 +147,7 @@ Status ShardWriter::Open(const std::vector<std::string> &paths, bool append) {
 }
 
 Status ShardWriter::OpenForAppend(const std::string &path) {
-  CHECK_FAIL_RETURN_UNEXPECTED(IsLegalFile(path), "Invalid file pacth.");
+  CHECK_FAIL_RETURN_UNEXPECTED(IsLegalFile(path), "Invalid file, path: " + path);
   std::shared_ptr<json> header_ptr;
   RETURN_IF_NOT_OK(ShardHeader::BuildSingleHeader(path, &header_ptr));
   auto ds = std::make_shared<std::vector<std::string>>();
@@ -171,7 +171,7 @@ Status ShardWriter::Commit() {
     RETURN_IF_NOT_OK(shard_header_->FileToPages(pages_file_));
   }
   RETURN_IF_NOT_OK(WriteShardHeader());
-  MS_LOG(INFO) << "Write metadata successfully.";
+  MS_LOG(INFO) << "Succeed to write meta data.";
   // Remove lock file
   RETURN_IF_NOT_OK(RemoveLockFile());
 
@@ -183,7 +183,7 @@ Status ShardWriter::SetShardHeader(std::shared_ptr<ShardHeader> header_data) {
   // set fields in mindrecord when empty
   std::vector<std::pair<uint64_t, std::string>> fields = header_data->GetFields();
   if (fields.empty()) {
-    MS_LOG(DEBUG) << "Missing index fields by user, auto generate index fields.";
+    MS_LOG(DEBUG) << "Index field is not set, it will be generated automatically.";
     std::vector<std::shared_ptr<Schema>> schemas = header_data->GetSchemas();
     for (const auto &schema : schemas) {
       json jsonSchema = schema->GetSchema()["schema"];
@@ -213,8 +213,10 @@ Status ShardWriter::SetShardHeader(std::shared_ptr<ShardHeader> header_data) {
 Status ShardWriter::SetHeaderSize(const uint64_t &header_size) {
   // header_size [16KB, 128MB]
   CHECK_FAIL_RETURN_UNEXPECTED(header_size >= kMinHeaderSize && header_size <= kMaxHeaderSize,
-                               "Header size should between 16KB and 128MB.");
-  CHECK_FAIL_RETURN_UNEXPECTED(header_size % 4 == 0, "Header size should be divided by four.");
+                               "Invalid data, header size: " + std::to_string(header_size) + " should be in range [" +
+                                 std::to_string(kMinHeaderSize) + "MB, " + std::to_string(kMaxHeaderSize) + "MB].");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    header_size % 4 == 0, "Invalid data, header size " + std::to_string(header_size) + " should be divided by four.");
   header_size_ = header_size;
   return Status::OK();
 }
@@ -222,8 +224,10 @@ Status ShardWriter::SetHeaderSize(const uint64_t &header_size) {
 Status ShardWriter::SetPageSize(const uint64_t &page_size) {
   // PageSize [32KB, 256MB]
   CHECK_FAIL_RETURN_UNEXPECTED(page_size >= kMinPageSize && page_size <= kMaxPageSize,
-                               "Page size should between 16KB and 256MB.");
-  CHECK_FAIL_RETURN_UNEXPECTED(page_size % 4 == 0, "Page size should be divided by four.");
+                               "Invalid data, page size: " + std::to_string(page_size) + " should be in range [" +
+                                 std::to_string(kMinPageSize) + "MB, " + std::to_string(kMaxPageSize) + "MB].");
+  CHECK_FAIL_RETURN_UNEXPECTED(page_size % 4 == 0,
+                               "Invalid data, page size " + std::to_string(page_size) + " should be divided by four.");
   page_size_ = page_size;
   return Status::OK();
 }
@@ -238,7 +242,7 @@ void ShardWriter::DeleteErrorData(std::map<uint64_t, std::vector<json>> &raw_dat
     for (auto &subMg : sub_err_mg) {
       int loc = subMg.first;
       std::string message = subMg.second;
-      MS_LOG(ERROR) << "For schema " << id << ", " << loc + 1 << " th data is wrong: " << message;
+      MS_LOG(ERROR) << "Invalid input, the " << loc + 1 << " th data is invalid, " << message;
       (void)delete_set.insert(loc);
     }
   }
@@ -275,7 +279,8 @@ Status ShardWriter::CheckDataTypeAndValue(const std::string &key, const json &va
       (data_type == "int64" && !data[key].is_number_integer()) ||
       (data_type == "float32" && !data[key].is_number_float()) ||
       (data_type == "float64" && !data[key].is_number_float()) || (data_type == "string" && !data[key].is_string())) {
-    std::string message = "field: " + key + " type : " + data_type + " value: " + data[key].dump() + " is not matched";
+    std::string message =
+      "field: " + key + " ,type : " + data_type + " ,value: " + data[key].dump() + " is not matched.";
     PopulateMutexErrorData(i, message, err_raw_data);
     RETURN_STATUS_UNEXPECTED(message);
   }
@@ -285,7 +290,7 @@ Status ShardWriter::CheckDataTypeAndValue(const std::string &key, const json &va
     if (static_cast<int64_t>(temp_value) < static_cast<int64_t>(std::numeric_limits<int32_t>::min()) &&
         static_cast<int64_t>(temp_value) > static_cast<int64_t>(std::numeric_limits<int32_t>::max())) {
       std::string message =
-        "field: " + key + " type : " + data_type + " value: " + data[key].dump() + " is out of range";
+        "field: " + key + " ,type : " + data_type + " ,value: " + data[key].dump() + " is out of range.";
       PopulateMutexErrorData(i, message, err_raw_data);
       RETURN_STATUS_UNEXPECTED(message);
     }
@@ -305,7 +310,7 @@ void ShardWriter::CheckSliceData(int start_row, int end_row, json schema, const 
       std::string key = iter.key();
       json value = iter.value();
       if (data.find(key) == data.end()) {
-        std::string message = "there is not '" + key + "' object in the raw data";
+        std::string message = "'" + key + "' object can not found in data: " + value.dump();
         PopulateMutexErrorData(i, message, err_raw_data);
         break;
       }
@@ -341,7 +346,7 @@ Status ShardWriter::CheckData(const std::map<uint64_t, std::vector<json>> &raw_d
     // calculate start position and end position for each thread
     int batch_size = rawdata_iter->second.size() / shard_count_;
     int thread_num = shard_count_;
-    CHECK_FAIL_RETURN_UNEXPECTED(thread_num > 0, "Invalid thread number.");
+    CHECK_FAIL_RETURN_UNEXPECTED(thread_num > 0, "Invalid data, thread_num should be positive.");
     if (thread_num > kMaxThreadCount) {
       thread_num = kMaxThreadCount;
     }
@@ -360,7 +365,9 @@ Status ShardWriter::CheckData(const std::map<uint64_t, std::vector<json>> &raw_d
       thread_set[x] = std::thread(&ShardWriter::CheckSliceData, this, start_row, end_row, schema,
                                   std::ref(sub_raw_data), std::ref(sub_err_mg));
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(thread_num <= kMaxThreadCount, "Invalid thread number.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      thread_num <= kMaxThreadCount,
+      "Invalid data, thread_num should be less than or equal to " + std::to_string(kMaxThreadCount));
     // Wait for threads done
     for (int x = 0; x < thread_num; ++x) {
       thread_set[x].join();
@@ -377,22 +384,25 @@ Status ShardWriter::ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_d
   RETURN_UNEXPECTED_IF_NULL(count_ptr);
   auto rawdata_iter = raw_data.begin();
   schema_count_ = raw_data.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(schema_count_ > 0, "Data size is not positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(schema_count_ > 0, "Invalid data, schema count should be positive.");
 
   // keep schema_id
   std::set<int64_t> schema_ids;
   row_count_ = (rawdata_iter->second).size();
-  MS_LOG(DEBUG) << "Schema count is " << schema_count_;
 
   // Determine if the number of schemas is the same
   CHECK_FAIL_RETURN_UNEXPECTED(shard_header_->GetSchemas().size() == schema_count_,
-                               "Data size is not equal with the schema size");
+                               "Invalid data, schema count: " + std::to_string(schema_count_) + " is not matched.");
   // Determine raw_data size == blob_data size
-  CHECK_FAIL_RETURN_UNEXPECTED(raw_data[0].size() == blob_data.size(), "Raw data size is not equal blob data size");
+  CHECK_FAIL_RETURN_UNEXPECTED(raw_data[0].size() == blob_data.size(),
+                               "Invalid data, raw data size: " + std::to_string(raw_data[0].size()) +
+                                 " is not equal to blob data size: " + std::to_string(blob_data.size()) + ".");
 
   // Determine whether the number of samples corresponding to each schema is the same
   for (rawdata_iter = raw_data.begin(); rawdata_iter != raw_data.end(); ++rawdata_iter) {
-    CHECK_FAIL_RETURN_UNEXPECTED(row_count_ == rawdata_iter->second.size(), "Data size is not equal");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      row_count_ == rawdata_iter->second.size(),
+      "Invalid data, number of samples: " + std::to_string(rawdata_iter->second.size()) + " for schemais not matched.");
     (void)schema_ids.insert(rawdata_iter->first);
   }
   const std::vector<std::shared_ptr<Schema>> &schemas = shard_header_->GetSchemas();
@@ -401,7 +411,7 @@ Status ShardWriter::ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_d
                                             [schema_ids](const std::shared_ptr<Schema> &schema) {
                                               return schema_ids.find(schema->GetSchemaID()) == schema_ids.end();
                                             }),
-                               "Input rawdata schema id do not match real schema id.");
+                               "Invalid data, schema id of data is not matched.");
   if (!sign) {
     *count_ptr = std::make_shared<std::pair<int, int>>(schema_count_, row_count_);
     return Status::OK();
@@ -448,8 +458,8 @@ Status ShardWriter::LockWriter(bool parallel_writer, std::unique_ptr<int> *fd_pt
   }
 
 #if defined(_WIN32) || defined(_WIN64)
-  MS_LOG(DEBUG) << "Lock file done by python.";
   const int fd = 0;
+  MS_LOG(DEBUG) << "Lock file done by Python.";
 
 #else
   const int fd = open(lock_file_.c_str(), O_WRONLY | O_CREAT, 0666);
@@ -457,7 +467,7 @@ Status ShardWriter::LockWriter(bool parallel_writer, std::unique_ptr<int> *fd_pt
     flock(fd, LOCK_EX);
   } else {
     close(fd);
-    RETURN_STATUS_UNEXPECTED("Shard writer failed when locking file.");
+    RETURN_STATUS_UNEXPECTED("Failed to lock file, path: " + lock_file_);
   }
 #endif
 
@@ -467,20 +477,20 @@ Status ShardWriter::LockWriter(bool parallel_writer, std::unique_ptr<int> *fd_pt
     auto realpath = FileUtils::GetRealPath(file.data());
     if (!realpath.has_value()) {
       close(fd);
-      RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file);
+      RETURN_STATUS_UNEXPECTED("Failed to get real path, path: " + file);
     }
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
     fs->open(realpath.value(), std::ios::in | std::ios::out | std::ios::binary);
     if (fs->fail()) {
       close(fd);
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
+      RETURN_STATUS_UNEXPECTED("Failed to open file, path: " + file);
     }
     file_streams_.push_back(fs);
   }
   auto status = shard_header_->FileToPages(pages_file_);
   if (status.IsError()) {
     close(fd);
-    RETURN_STATUS_UNEXPECTED("Error in FileToPages.");
+    RETURN_STATUS_UNEXPECTED("Error raised in FileToPages function.");
   }
   *fd_ptr = std::make_unique<int>(fd);
   return Status::OK();
@@ -495,7 +505,8 @@ Status ShardWriter::UnlockWriter(int fd, bool parallel_writer) {
     file_streams_[i]->close();
   }
 #if defined(_WIN32) || defined(_WIN64)
-  MS_LOG(DEBUG) << "Unlock file done by python.";
+  MS_LOG(DEBUG) << "Unlock file done by Python.";
+
 #else
   flock(fd, LOCK_UN);
   close(fd);
@@ -509,7 +520,8 @@ Status ShardWriter::WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>> &
   // check the free disk size
   std::shared_ptr<uint64_t> size_ptr;
   RETURN_IF_NOT_OK(GetDiskSize(file_paths_[0], kFreeSize, &size_ptr));
-  CHECK_FAIL_RETURN_UNEXPECTED(*size_ptr >= kMinFreeDiskSize, "IO error / there is no free disk to be used");
+  CHECK_FAIL_RETURN_UNEXPECTED(*size_ptr >= kMinFreeDiskSize,
+                               "No free disk to be used, free disk size: " + std::to_string(*size_ptr));
   // compress blob
   if (shard_column_->CheckCompressBlob()) {
     for (auto &blob : blob_data) {
@@ -583,7 +595,7 @@ Status ShardWriter::WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data
 
   // Serialize raw data
   RETURN_IF_NOT_OK(WriteRawDataPreCheck(raw_data, blob_data, sign, &schema_count, &row_count));
-  CHECK_FAIL_RETURN_UNEXPECTED(row_count >= kInt0, "Raw data size is not positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(row_count >= kInt0, "Invalid data, waw data size should be positive.");
   if (row_count == kInt0) {
     return Status::OK();
   }
@@ -596,7 +608,7 @@ Status ShardWriter::WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data
   RETURN_IF_NOT_OK(SetBlobDataSize(blob_data));
   // Write data to disk with multi threads
   RETURN_IF_NOT_OK(ParallelWriteData(blob_data, bin_raw_data));
-  MS_LOG(INFO) << "Write " << bin_raw_data.size() << " records successfully.";
+  MS_LOG(INFO) << "Succeed to write " << bin_raw_data.size() << " records.";
 
   RETURN_IF_NOT_OK(UnlockWriter(*fd_ptr, parallel_writer));
 
@@ -644,7 +656,7 @@ Status ShardWriter::ParallelWriteData(const std::vector<std::vector<uint8_t>> &b
   auto shards = BreakIntoShards();
   // define the number of thread
   int thread_num = static_cast<int>(shard_count_);
-  CHECK_FAIL_RETURN_UNEXPECTED(thread_num > 0, "Invalid thread number.");
+  CHECK_FAIL_RETURN_UNEXPECTED(thread_num > 0, "Invalid data, thread_num should be positive.");
   if (thread_num > kMaxThreadCount) {
     thread_num = kMaxThreadCount;
   }
@@ -708,11 +720,14 @@ Status ShardWriter::CutRowGroup(int start_row, int end_row, const std::vector<st
   auto n_byte_raw = last_raw_page_size - last_raw_offset;
 
   int page_start_row = start_row;
-  CHECK_FAIL_RETURN_UNEXPECTED(start_row <= end_row, "Invalid start row.");
+  CHECK_FAIL_RETURN_UNEXPECTED(start_row <= end_row,
+                               "Invalid data, start row: " + std::to_string(start_row) +
+                                 " should be less than or equal to end row: " + std::to_string(end_row));
 
   CHECK_FAIL_RETURN_UNEXPECTED(
     end_row <= static_cast<int>(blob_data_size_.size()) && end_row <= static_cast<int>(raw_data_size_.size()),
-    "Invalid end row.");
+    "Invalid data, end row: " + std::to_string(end_row) + " should be less than blob data size: " +
+      std::to_string(blob_data_size_.size()) + " and raw data size: " + std::to_string(raw_data_size_.size()) + ".");
   for (int i = start_row; i < end_row; ++i) {
     // n_byte_blob(0) indicate appendBlobPage
     if (n_byte_blob == 0 || n_byte_blob + blob_data_size_[i] > page_size_ ||
@@ -810,7 +825,9 @@ Status ShardWriter::ShiftRawPage(const int &shard_id, const std::vector<std::pai
   std::vector<uint8_t> buf(shift_size);
 
   // Read last row group from previous raw data page
-  CHECK_FAIL_RETURN_UNEXPECTED(shard_id >= 0 && shard_id < file_streams_.size(), "Invalid shard id");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    shard_id >= 0 && shard_id < file_streams_.size(),
+    "Invalid data, shard_id should be in range [0, " + std::to_string(file_streams_.size()) + ").");
 
   auto &io_seekg = file_streams_[shard_id]->seekg(
     page_size_ * last_raw_page_id + header_size_ + last_row_group_id_offset, std::ios::beg);
@@ -921,7 +938,8 @@ Status ShardWriter::FlushBlobChunk(const std::shared_ptr<std::fstream> &out,
                                    const std::pair<int, int> &blob_row) {
   CHECK_FAIL_RETURN_UNEXPECTED(
     blob_row.first <= blob_row.second && blob_row.second <= static_cast<int>(blob_data.size()) && blob_row.first >= 0,
-    "Invalid blob row");
+    "Invalid data, blob_row: " + std::to_string(blob_row.first) + ", " + std::to_string(blob_row.second) +
+      " is invalid.");
   for (int j = blob_row.first; j < blob_row.second; ++j) {
     // Write the size of blob
     uint64_t line_len = blob_data[j].size();
@@ -1003,7 +1021,8 @@ Status ShardWriter::WriteShardHeader() {
   // Write header data to multi files
   CHECK_FAIL_RETURN_UNEXPECTED(
     shard_count_ <= static_cast<int>(file_streams_.size()) && shard_count_ <= static_cast<int>(shard_header.size()),
-    "Invalid shard count");
+    "Invalid data, shard count should be less than or equal to file size: " + std::to_string(file_streams_.size()) +
+      ", and header size: " + std::to_string(shard_header.size()) + ".");
   if (shard_count_ <= kMaxShardCount) {
     for (int shard_id = 0; shard_id < shard_count_; ++shard_id) {
       auto &io_seekp = file_streams_[shard_id]->seekp(0, std::ios::beg);
@@ -1061,7 +1080,7 @@ Status ShardWriter::SerializeRawData(std::map<uint64_t, std::vector<json>> &raw_
     // Set obstacles to prevent the main thread from running
     thread_set[x].join();
   }
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(flag_ != true, "Error in FailArray");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(flag_ != true, "Error raised in FillArray function.");
   return Status::OK();
 }
 
@@ -1072,8 +1091,9 @@ Status ShardWriter::SetRawDataSize(const std::vector<std::vector<uint8_t>> &bin_
       bin_raw_data.begin() + (i * schema_count_), bin_raw_data.begin() + (i * schema_count_) + schema_count_, 0,
       [](uint64_t accumulator, const std::vector<uint8_t> &row) { return accumulator + kInt64Len + row.size(); });
   }
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(*std::max_element(raw_data_size_.begin(), raw_data_size_.end()) <= page_size_,
-                                 "Page size is too small to save a row!");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(
+    *std::max_element(raw_data_size_.begin(), raw_data_size_.end()) <= page_size_,
+    "Invalid data, Page size: " + std::to_string(page_size_) + " is too small to save a raw row!");
   return Status::OK();
 }
 
@@ -1081,15 +1101,16 @@ Status ShardWriter::SetBlobDataSize(const std::vector<std::vector<uint8_t>> &blo
   blob_data_size_ = std::vector<uint64_t>(row_count_);
   (void)std::transform(blob_data.begin(), blob_data.end(), blob_data_size_.begin(),
                        [](const std::vector<uint8_t> &row) { return kInt64Len + row.size(); });
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(*std::max_element(blob_data_size_.begin(), blob_data_size_.end()) <= page_size_,
-                                 "Page size is too small to save a row!");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(
+    *std::max_element(blob_data_size_.begin(), blob_data_size_.end()) <= page_size_,
+    "Invalid data, Page size: " + std::to_string(page_size_) + " is too small to save a blob row!");
   return Status::OK();
 }
 
 Status ShardWriter::SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page) {
   // Get last raw page
   auto last_raw_page_id = shard_header_->GetLastPageIdByType(shard_id, kPageTypeRaw);
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_raw_page_id >= 0, "Invalid last_raw_page_id.");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_raw_page_id >= 0, "Invalid data, last_raw_page_id should be positive.");
   RETURN_IF_NOT_OK(shard_header_->GetPage(shard_id, last_raw_page_id, &last_raw_page));
   return Status::OK();
 }
@@ -1097,7 +1118,7 @@ Status ShardWriter::SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &l
 Status ShardWriter::SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &last_blob_page) {
   // Get last blob page
   auto last_blob_page_id = shard_header_->GetLastPageIdByType(shard_id, kPageTypeBlob);
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_blob_page_id >= 0, "Invalid last_blob_page_id.");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_blob_page_id >= 0, "Invalid data, last_blob_page_id should be positive.");
   RETURN_IF_NOT_OK(shard_header_->GetPage(shard_id, last_blob_page_id, &last_blob_page));
   return Status::OK();
 }

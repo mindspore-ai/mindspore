@@ -61,20 +61,20 @@ Status ShardHeader::InitializeHeader(const std::vector<json> &headers, bool load
 
 Status ShardHeader::CheckFileStatus(const std::string &path) {
   auto realpath = FileUtils::GetRealPath(path.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path: " + path);
+  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Failed to get real path, path: " + path);
   std::ifstream fin(realpath.value(), std::ios::in | std::ios::binary);
-  CHECK_FAIL_RETURN_UNEXPECTED(fin, "Failed to open file. path: " + path);
+  CHECK_FAIL_RETURN_UNEXPECTED(fin, "Failed to open file, file path: " + path);
   // fetch file size
   auto &io_seekg = fin.seekg(0, std::ios::end);
   if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
     fin.close();
-    RETURN_STATUS_UNEXPECTED("File seekg failed. path: " + path);
+    RETURN_STATUS_UNEXPECTED("Failed to seekg file, file path: " + path);
   }
 
   size_t file_size = fin.tellg();
   if (file_size < kMinFileSize) {
     fin.close();
-    RETURN_STATUS_UNEXPECTED("Invalid file. path: " + path);
+    RETURN_STATUS_UNEXPECTED("Invalid file content, file " + path + " size is smaller than the lower limit.");
   }
   fin.close();
   return Status::OK();
@@ -86,18 +86,18 @@ Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json
   // read header size
   json json_header;
   std::ifstream fin(common::SafeCStr(path), std::ios::in | std::ios::binary);
-  CHECK_FAIL_RETURN_UNEXPECTED(fin.is_open(), "Failed to open file. path: " + path);
+  CHECK_FAIL_RETURN_UNEXPECTED(fin.is_open(), "Failed to open file, file path: " + path);
 
   uint64_t header_size = 0;
   auto &io_read = fin.read(reinterpret_cast<char *>(&header_size), kInt64Len);
   if (!io_read.good() || io_read.fail() || io_read.bad()) {
     fin.close();
-    RETURN_STATUS_UNEXPECTED("File read failed");
+    RETURN_STATUS_UNEXPECTED("Failed to read file, file path: " + path);
   }
 
   if (header_size > kMaxHeaderSize) {
     fin.close();
-    RETURN_STATUS_UNEXPECTED("Invalid file content. path: " + path);
+    RETURN_STATUS_UNEXPECTED("Invalid file content, incorrect file or file header is exceeds the upper limit.");
   }
 
   // read header content
@@ -105,7 +105,7 @@ Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json
   auto &io_read_content = fin.read(reinterpret_cast<char *>(&header_content[0]), header_size);
   if (!io_read_content.good() || io_read_content.fail() || io_read_content.bad()) {
     fin.close();
-    RETURN_STATUS_UNEXPECTED("File read failed. path: " + path);
+    RETURN_STATUS_UNEXPECTED("Failed to read file, file path: " + path);
   }
 
   fin.close();
@@ -114,7 +114,7 @@ Status ShardHeader::ValidateHeader(const std::string &path, std::shared_ptr<json
   try {
     json_header = json::parse(raw_header_content);
   } catch (json::parse_error &e) {
-    RETURN_STATUS_UNEXPECTED("Json parse error: " + std::string(e.what()));
+    RETURN_STATUS_UNEXPECTED("Json parse failed: " + std::string(e.what()));
   }
   *header_ptr = std::make_shared<json>(json_header);
   return Status::OK();
@@ -178,15 +178,16 @@ void ShardHeader::GetHeadersOneTask(int start, int end, std::vector<json> &heade
   }
   for (int x = start; x < end; ++x) {
     std::shared_ptr<json> header;
-    if (ValidateHeader(realAddresses[x], &header).IsError()) {
+    auto status = ValidateHeader(realAddresses[x], &header);
+    if (status.IsError()) {
       thread_status = true;
       return;
     }
     (*header)["shard_addresses"] = realAddresses;
     if (std::find(kSupportedVersion.begin(), kSupportedVersion.end(), (*header)["version"]) ==
         kSupportedVersion.end()) {
-      MS_LOG(ERROR) << "Version wrong, file version is: " << (*header)["version"].dump()
-                    << ", lib version is: " << kVersion;
+      MS_LOG(ERROR) << "Invalid version, file version " << (*header)["version"].dump() << " can not match lib version "
+                    << kVersion << ".";
       thread_status = true;
       return;
     }
@@ -204,7 +205,8 @@ Status ShardHeader::InitByFiles(const std::vector<std::string> &file_paths) {
   shard_addresses_ = std::move(file_names);
   shard_count_ = file_paths.size();
   CHECK_FAIL_RETURN_UNEXPECTED(shard_count_ != 0 && (shard_count_ <= kMaxShardCount),
-                               "shard count is invalid. shard count: " + std::to_string(shard_count_));
+                               "Invalid input, The number of MindRecord files " + std::to_string(shard_count_) +
+                                 "is not int range (0, " + std::to_string(kMaxShardCount) + "].");
   pages_.resize(shard_count_);
   return Status::OK();
 }
@@ -223,10 +225,10 @@ Status ShardHeader::ParseIndexFields(const json &index_fields) {
 
 Status ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
   // set shard_index when load_dataset is false
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    shard_count_ <= kMaxFileCount,
-    "The number of mindrecord files is greater than max value: " + std::to_string(kMaxFileCount));
-  if (pages_.empty() && shard_count_ <= kMaxFileCount) {
+  CHECK_FAIL_RETURN_UNEXPECTED(shard_count_ <= kMaxFileCount, "Invalid input, The number of MindRecord files " +
+                                                                std::to_string(shard_count_) + "is not int range (0, " +
+                                                                std::to_string(kMaxFileCount) + "].");
+  if (pages_.empty()) {
     pages_.resize(shard_count_);
   }
 
@@ -259,7 +261,7 @@ Status ShardHeader::ParseStatistics(const json &statistics) {
   for (auto &statistic : statistics) {
     CHECK_FAIL_RETURN_UNEXPECTED(
       statistic.find("desc") != statistic.end() && statistic.find("statistics") != statistic.end(),
-      "Deserialize statistics failed, statistic: " + statistics.dump());
+      "Failed to deserialize statistics, statistic info: " + statistics.dump());
     std::string statistic_description = statistic["desc"].get<std::string>();
     json statistic_body = statistic["statistics"];
     std::shared_ptr<Statistics> parsed_statistic = Statistics::Build(statistic_description, statistic_body);
@@ -274,7 +276,7 @@ Status ShardHeader::ParseSchema(const json &schemas) {
     // change how we get schemaBody once design is finalized
     CHECK_FAIL_RETURN_UNEXPECTED(schema.find("desc") != schema.end() && schema.find("blob_fields") != schema.end() &&
                                    schema.find("schema") != schema.end(),
-                                 "Deserialize schema failed. schema: " + schema.dump());
+                                 "Failed to deserialize schema, schema info: " + schema.dump());
     std::string schema_description = schema["desc"].get<std::string>();
     std::vector<std::string> blob_fields = schema["blob_fields"].get<std::vector<std::string>>();
     json schema_body = schema["schema"];
@@ -371,7 +373,7 @@ Status ShardHeader::GetPage(const int &shard_id, const int &page_id, std::shared
     return Status::OK();
   }
   page_ptr = nullptr;
-  RETURN_STATUS_UNEXPECTED("Failed to Get Page.");
+  RETURN_STATUS_UNEXPECTED("Failed to get Page, 'page_id': " + std::to_string(page_id));
 }
 
 Status ShardHeader::SetPage(const std::shared_ptr<Page> &new_page) {
@@ -381,7 +383,7 @@ Status ShardHeader::SetPage(const std::shared_ptr<Page> &new_page) {
     pages_[shard_id][page_id] = new_page;
     return Status::OK();
   }
-  RETURN_STATUS_UNEXPECTED("Failed to Set Page.");
+  RETURN_STATUS_UNEXPECTED("Failed to set Page, 'page_id': " + std::to_string(page_id));
 }
 
 Status ShardHeader::AddPage(const std::shared_ptr<Page> &new_page) {
@@ -391,7 +393,7 @@ Status ShardHeader::AddPage(const std::shared_ptr<Page> &new_page) {
     pages_[shard_id].push_back(new_page);
     return Status::OK();
   }
-  RETURN_STATUS_UNEXPECTED("Failed to Add Page.");
+  RETURN_STATUS_UNEXPECTED("Failed to add Page, 'page_id': " + std::to_string(page_id));
 }
 
 int64_t ShardHeader::GetLastPageId(const int &shard_id) {
@@ -426,17 +428,17 @@ Status ShardHeader::GetPageByGroupId(const int &group_id, const int &shard_id, s
     }
   }
   page_ptr = nullptr;
-  RETURN_STATUS_UNEXPECTED("Failed to get page by group id: " + group_id);
+  RETURN_STATUS_UNEXPECTED("Failed to get Page, 'group_id': " + std::to_string(group_id));
 }
 
 int ShardHeader::AddSchema(std::shared_ptr<Schema> schema) {
   if (schema == nullptr) {
-    MS_LOG(ERROR) << "Schema is illegal";
+    MS_LOG(ERROR) << "The pointer of schema is null.";
     return -1;
   }
 
   if (!schema_.empty()) {
-    MS_LOG(ERROR) << "Only support one schema";
+    MS_LOG(ERROR) << "The schema can not be added twice.";
     return -1;
   }
 
@@ -471,10 +473,12 @@ std::shared_ptr<Index> ShardHeader::InitIndexPtr() {
 
 Status ShardHeader::CheckIndexField(const std::string &field, const json &schema) {
   // check field name is or is not valid
-  CHECK_FAIL_RETURN_UNEXPECTED(schema.find(field) != schema.end(), "Filed can not found in schema.");
-  CHECK_FAIL_RETURN_UNEXPECTED(schema[field]["type"] != "Bytes", "bytes can not be as index field.");
+  CHECK_FAIL_RETURN_UNEXPECTED(schema.find(field) != schema.end(),
+                               "Invalid input, field [" + field + "] can not found in schema.");
+  CHECK_FAIL_RETURN_UNEXPECTED(schema[field]["type"] != "Bytes",
+                               "Invalid input, byte type field [" + field + "] can not set as an index field.");
   CHECK_FAIL_RETURN_UNEXPECTED(schema.find(field) == schema.end() || schema[field].find("shape") == schema[field].end(),
-                               "array can not be as index field.");
+                               "Invalid input, array type field [" + field + "] can not set as an index field.");
   return Status::OK();
 }
 
@@ -482,7 +486,7 @@ Status ShardHeader::AddIndexFields(const std::vector<std::string> &fields) {
   if (fields.empty()) {
     return Status::OK();
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(!GetSchemas().empty(), "Schema is empty.");
+  CHECK_FAIL_RETURN_UNEXPECTED(!GetSchemas().empty(), "Invalid data, schema is empty.");
   // create index Object
   std::shared_ptr<Index> index = InitIndexPtr();
   for (const auto &schemaPtr : schema_) {
@@ -495,7 +499,8 @@ Status ShardHeader::AddIndexFields(const std::vector<std::string> &fields) {
       field_set.insert(item.second);
     }
     for (const auto &field : fields) {
-      CHECK_FAIL_RETURN_UNEXPECTED(field_set.find(field) == field_set.end(), "Add same index field twice.");
+      CHECK_FAIL_RETURN_UNEXPECTED(field_set.find(field) == field_set.end(),
+                                   "Invalid data, the same index field [" + field + "] can not added twice.");
       // check field name is or is not valid
       RETURN_IF_NOT_OK(CheckIndexField(field, schema));
       field_set.insert(field);
@@ -510,9 +515,10 @@ Status ShardHeader::AddIndexFields(const std::vector<std::string> &fields) {
 Status ShardHeader::GetAllSchemaID(std::set<uint64_t> &bucket_count) {
   // get all schema id
   for (const auto &schema : schema_) {
-    auto bucket_it = bucket_count.find(schema->GetSchemaID());
-    CHECK_FAIL_RETURN_UNEXPECTED(bucket_it == bucket_count.end(), "Schema duplication.");
-    bucket_count.insert(schema->GetSchemaID());
+    auto schema_id = schema->GetSchemaID();
+    CHECK_FAIL_RETURN_UNEXPECTED(bucket_count.find(schema_id) == bucket_count.end(),
+                                 "Invalid data, duplicate schema exist, schema id: " + std::to_string(schema_id));
+    bucket_count.insert(schema_id);
   }
   return Status::OK();
 }
@@ -532,18 +538,20 @@ Status ShardHeader::AddIndexFields(std::vector<std::pair<uint64_t, std::string>>
     field_set.insert(item);
   }
   for (const auto &field : fields) {
-    CHECK_FAIL_RETURN_UNEXPECTED(field_set.find(field) == field_set.end(), "Add same index field twice.");
+    CHECK_FAIL_RETURN_UNEXPECTED(field_set.find(field) == field_set.end(),
+                                 "Invalid data, the same index field [" + field.second + "] can not added twice.");
     uint64_t schema_id = field.first;
     std::string field_name = field.second;
 
     // check schemaId is or is not valid
-    CHECK_FAIL_RETURN_UNEXPECTED(bucket_count.find(schema_id) != bucket_count.end(), "Invalid schema id: " + schema_id);
+    CHECK_FAIL_RETURN_UNEXPECTED(bucket_count.find(schema_id) != bucket_count.end(),
+                                 "Invalid data, schema id [" + std::to_string(schema_id) + "] is invalid.");
     // check field name is or is not valid
     std::shared_ptr<Schema> schema_ptr;
     RETURN_IF_NOT_OK(GetSchemaByID(schema_id, &schema_ptr));
     json schema = schema_ptr->GetSchema().at("schema");
     CHECK_FAIL_RETURN_UNEXPECTED(schema.find(field_name) != schema.end(),
-                                 "Schema " + std::to_string(schema_id) + " do not contain the field: " + field_name);
+                                 "Invalid data, field [" + field_name + "] is not found in schema.");
     RETURN_IF_NOT_OK(CheckIndexField(field_name, schema));
     field_set.insert(field);
     // add field into index
@@ -570,8 +578,10 @@ std::shared_ptr<Index> ShardHeader::GetIndex() { return index_; }
 
 Status ShardHeader::GetSchemaByID(int64_t schema_id, std::shared_ptr<Schema> *schema_ptr) {
   RETURN_UNEXPECTED_IF_NULL(schema_ptr);
-  int64_t schemaSize = schema_.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(schema_id >= 0 && schema_id < schemaSize, "schema id is invalid.");
+  int64_t schema_size = schema_.size();
+  CHECK_FAIL_RETURN_UNEXPECTED(schema_id >= 0 && schema_id < schema_size,
+                               "Invalid data, schema id [" + std::to_string(schema_id) + "] is not in range [0, " +
+                                 std::to_string(schema_size) + ").");
   *schema_ptr = schema_.at(schema_id);
   return Status::OK();
 }
@@ -579,17 +589,19 @@ Status ShardHeader::GetSchemaByID(int64_t schema_id, std::shared_ptr<Schema> *sc
 Status ShardHeader::GetStatisticByID(int64_t statistic_id, std::shared_ptr<Statistics> *statistics_ptr) {
   RETURN_UNEXPECTED_IF_NULL(statistics_ptr);
   int64_t statistics_size = statistics_.size();
-  CHECK_FAIL_RETURN_UNEXPECTED(statistic_id >= 0 && statistic_id < statistics_size, "statistic id is invalid.");
+  CHECK_FAIL_RETURN_UNEXPECTED(statistic_id >= 0 && statistic_id < statistics_size,
+                               "Invalid data, statistic id [" + std::to_string(statistic_id) +
+                                 "] is not in range [0, " + std::to_string(statistics_size) + ").");
   *statistics_ptr = statistics_.at(statistic_id);
   return Status::OK();
 }
 
 Status ShardHeader::PagesToFile(const std::string dump_file_name) {
   auto realpath = FileUtils::GetRealPath(dump_file_name.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + dump_file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Failed to get real path, path: " + dump_file_name);
   // write header content to file, dump whatever is in the file before
   std::ofstream page_out_handle(realpath.value(), std::ios_base::trunc | std::ios_base::out);
-  CHECK_FAIL_RETURN_UNEXPECTED(page_out_handle.good(), "Failed to open page file.");
+  CHECK_FAIL_RETURN_UNEXPECTED(page_out_handle.good(), "Failed to open page file, path: " + dump_file_name);
   auto pages = SerializePage();
   for (const auto &shard_pages : pages) {
     page_out_handle << shard_pages << "\n";
@@ -603,10 +615,11 @@ Status ShardHeader::FileToPages(const std::string dump_file_name) {
     v.clear();
   }
   auto realpath = FileUtils::GetRealPath(dump_file_name.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + dump_file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Failed to get real path, path: " + dump_file_name);
   // attempt to open the file contains the page in json
   std::ifstream page_in_handle(realpath.value());
-  CHECK_FAIL_RETURN_UNEXPECTED(page_in_handle.good(), "No page file exists.");
+  CHECK_FAIL_RETURN_UNEXPECTED(page_in_handle.good(),
+                               "Invalid file, page file does not exist, path: " + dump_file_name);
   std::string line;
   while (std::getline(page_in_handle, line)) {
     RETURN_IF_NOT_OK(ParsePage(json::parse(line), -1, true));

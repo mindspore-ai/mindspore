@@ -67,20 +67,20 @@ std::vector<std::string> Schema::PopulateBlobFields(json schema) {
 
 bool Schema::ValidateNumberShape(const json &it_value) {
   if (it_value.find("shape") == it_value.end()) {
-    MS_LOG(ERROR) << it_value["type"].dump() << " supports shape only.";
+    MS_LOG(ERROR) << "Invalid data, 'shape' object can not found in " << it_value.dump();
     return false;
   }
 
   auto shape = it_value["shape"];
   if (!shape.is_array()) {
-    MS_LOG(ERROR) << "Shape " << it_value["type"].dump() << ", format is wrong.";
+    MS_LOG(ERROR) << "Invalid data, shape [" << it_value["shape"].dump() << "] is invalid.";
     return false;
   }
 
   int num_negtive_one = 0;
   for (const auto &i : shape) {
     if (i == 0 || i < -1) {
-      MS_LOG(ERROR) << "Shape " << it_value["shape"].dump() << ", dimension is wrong.";
+      MS_LOG(ERROR) << "Invalid data, shape [" << it_value["shape"].dump() << "]dimension is invalid.";
       return false;
     }
     if (i == -1) {
@@ -89,7 +89,8 @@ bool Schema::ValidateNumberShape(const json &it_value) {
   }
 
   if (num_negtive_one > 1) {
-    MS_LOG(ERROR) << "Shape " << it_value["shape"].dump() << ", have at most 1 variable-length dimension.";
+    MS_LOG(ERROR) << "Invalid data, shape [" << it_value["shape"].dump()
+                  << "] have more than 1 variable dimension(-1).";
     return false;
   }
 
@@ -98,25 +99,26 @@ bool Schema::ValidateNumberShape(const json &it_value) {
 
 bool Schema::Validate(json schema) {
   if (schema.size() == kInt0) {
-    MS_LOG(ERROR) << "Schema is null";
+    MS_LOG(ERROR) << "Invalid data, schema is empty.";
     return false;
   }
 
   for (json::iterator it = schema.begin(); it != schema.end(); ++it) {
     // make sure schema key name must be composed of '0-9' or 'a-z' or 'A-Z' or '_'
     if (!ValidateFieldName(it.key())) {
-      MS_LOG(ERROR) << "Field name must be composed of '0-9' or 'a-z' or 'A-Z' or '_', fieldName: " << it.key();
+      MS_LOG(ERROR) << "Invalid data, field [" << it.key()
+                    << "] in schema is not composed of '0-9' or 'a-z' or 'A-Z' or '_'.";
       return false;
     }
 
     json it_value = it.value();
     if (it_value.find("type") == it_value.end()) {
-      MS_LOG(ERROR) << "No 'type' field exist: " << it_value.dump();
+      MS_LOG(ERROR) << "Invalid data, 'type' object can not found in field [" << it_value.dump() << "].";
       return false;
     }
 
     if (kFieldTypeSet.find(it_value["type"]) == kFieldTypeSet.end()) {
-      MS_LOG(ERROR) << "Wrong type: " << it_value["type"].dump();
+      MS_LOG(ERROR) << "Invalid data, type [" << it_value["type"].dump() << "] is not supported.";
       return false;
     }
 
@@ -125,12 +127,12 @@ bool Schema::Validate(json schema) {
     }
 
     if (it_value["type"] == "bytes" || it_value["type"] == "string") {
-      MS_LOG(ERROR) << it_value["type"].dump() << " can not 1 field only.";
+      MS_LOG(ERROR) << "Invalid data, field [" << it_value.dump() << "] is invalid.";
       return false;
     }
 
     if (it_value.size() != kInt2) {
-      MS_LOG(ERROR) << it_value["type"].dump() << " can have at most 2 fields.";
+      MS_LOG(ERROR) << "Invalid data, field [" << it_value.dump() << "] is invalid.";
       return false;
     }
 

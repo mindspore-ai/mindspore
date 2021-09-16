@@ -45,13 +45,13 @@ Status ShardSegment::GetCategoryFields(std::shared_ptr<vector<std::string>> *fie
   int rc = sqlite3_exec(database_paths_[0], common::SafeCStr(sql), SelectCallback, &field_names, &errmsg);
   if (rc != SQLITE_OK) {
     std::ostringstream oss;
-    oss << "Error in select statement, sql: " << sql + ", error: " << errmsg;
+    oss << "Failed to execute sql [ " << common::SafeCStr(sql) << " ], " << errmsg;
     sqlite3_free(errmsg);
     sqlite3_close(database_paths_[0]);
     database_paths_[0] = nullptr;
     RETURN_STATUS_UNEXPECTED(oss.str());
   } else {
-    MS_LOG(INFO) << "Get " << static_cast<int>(field_names.size()) << " records from index.";
+    MS_LOG(INFO) << "Succeed to get " << static_cast<int>(field_names.size()) << " records from index.";
   }
 
   uint32_t idx = kStartFieldId;
@@ -60,7 +60,8 @@ Status ShardSegment::GetCategoryFields(std::shared_ptr<vector<std::string>> *fie
       sqlite3_free(errmsg);
       sqlite3_close(database_paths_[0]);
       database_paths_[0] = nullptr;
-      RETURN_STATUS_UNEXPECTED("idx is out of range.");
+      RETURN_STATUS_UNEXPECTED("Invalid data, field_names size must be greater than 1, but got " +
+                               std::to_string(field_names[idx].size()));
     }
     candidate_category_fields_.push_back(field_names[idx][1]);
     idx += 2;
@@ -79,18 +80,15 @@ Status ShardSegment::SetCategoryField(std::string category_field) {
     current_category_field_ = category_field;
     return Status::OK();
   }
-  RETURN_STATUS_UNEXPECTED("Field " + category_field + " is not a candidate category field.");
+  RETURN_STATUS_UNEXPECTED("Invalid data, field '" + category_field + "' is not a candidate category field.");
 }
 
 Status ShardSegment::ReadCategoryInfo(std::shared_ptr<std::string> *category_ptr) {
   RETURN_UNEXPECTED_IF_NULL(category_ptr);
-  MS_LOG(INFO) << "Read category begin";
   auto category_info_ptr = std::make_shared<CATEGORY_INFO>();
   RETURN_IF_NOT_OK(WrapCategoryInfo(&category_info_ptr));
   // Convert category info to json string
   *category_ptr = std::make_shared<std::string>(ToJsonForCategory(*category_info_ptr));
-
-  MS_LOG(INFO) << "Read category end";
 
   return Status::OK();
 }
@@ -99,7 +97,7 @@ Status ShardSegment::WrapCategoryInfo(std::shared_ptr<CATEGORY_INFO> *category_i
   RETURN_UNEXPECTED_IF_NULL(category_info_ptr);
   std::map<std::string, int> counter;
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateFieldName(current_category_field_),
-                               "Category field error from index, it is: " + current_category_field_);
+                               "Invalid data, field: " + current_category_field_ + "is invalid.");
   std::string sql = "SELECT " + current_category_field_ + ", COUNT(" + current_category_field_ +
                     ") AS `value_occurrence` FROM indexes GROUP BY " + current_category_field_ + ";";
 
@@ -109,13 +107,13 @@ Status ShardSegment::WrapCategoryInfo(std::shared_ptr<CATEGORY_INFO> *category_i
     char *errmsg = nullptr;
     if (sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, &field_count, &errmsg) != SQLITE_OK) {
       std::ostringstream oss;
-      oss << "Error in select statement, sql: " << sql + ", error: " << errmsg;
+      oss << "Failed to execute sql [ " << common::SafeCStr(sql) << " ], " << errmsg;
       sqlite3_free(errmsg);
       sqlite3_close(db);
       db = nullptr;
       RETURN_STATUS_UNEXPECTED(oss.str());
     } else {
-      MS_LOG(INFO) << "Get " << static_cast<int>(field_count.size()) << " records from index.";
+      MS_LOG(INFO) << "Succeed to get " << static_cast<int>(field_count.size()) << " records from index.";
     }
 
     for (const auto &field : field_count) {
@@ -156,13 +154,14 @@ Status ShardSegment::ReadAtPageById(int64_t category_id, int64_t page_no, int64_
   auto category_info_ptr = std::make_shared<CATEGORY_INFO>();
   RETURN_IF_NOT_OK(WrapCategoryInfo(&category_info_ptr));
   CHECK_FAIL_RETURN_UNEXPECTED(category_id < static_cast<int>(category_info_ptr->size()) && category_id >= 0,
-                               "Invalid category id, id: " + std::to_string(category_id));
+                               "Invalid data, category_id: " + std::to_string(category_id) +
+                                 " must be in the range [0, " + std::to_string(category_info_ptr->size()) + "].");
   int total_rows_in_category = std::get<2>((*category_info_ptr)[category_id]);
   // Quit if category not found or page number is out of range
   CHECK_FAIL_RETURN_UNEXPECTED(total_rows_in_category > 0 && page_no >= 0 && n_rows_of_page > 0 &&
                                  page_no * n_rows_of_page < total_rows_in_category,
-                               "Invalid page no / page size, page no: " + std::to_string(page_no) +
-                                 ", page size: " + std::to_string(n_rows_of_page));
+                               "Invalid data, page no: " + std::to_string(page_no) +
+                                 "or page size: " + std::to_string(n_rows_of_page) + " is invalid.");
 
   auto row_group_summary = ReadRowGroupSummary();
 
@@ -234,7 +233,7 @@ Status ShardSegment::ReadAtPageByName(std::string category_name, int64_t page_no
     }
   }
 
-  RETURN_STATUS_UNEXPECTED("Category name can not match.");
+  RETURN_STATUS_UNEXPECTED("category_name: " + category_name + " could not found.");
 }
 
 Status ShardSegment::ReadAllAtPageById(int64_t category_id, int64_t page_no, int64_t n_rows_of_page,
@@ -243,15 +242,15 @@ Status ShardSegment::ReadAllAtPageById(int64_t category_id, int64_t page_no, int
   auto category_info_ptr = std::make_shared<CATEGORY_INFO>();
   RETURN_IF_NOT_OK(WrapCategoryInfo(&category_info_ptr));
   CHECK_FAIL_RETURN_UNEXPECTED(category_id < static_cast<int64_t>(category_info_ptr->size()),
-                               "Invalid category id: " + std::to_string(category_id));
+                               "Invalid data, category_id: " + std::to_string(category_id) +
+                                 " must be in the range [0, " + std::to_string(category_info_ptr->size()) + "].");
 
   int total_rows_in_category = std::get<2>((*category_info_ptr)[category_id]);
   // Quit if category not found or page number is out of range
   CHECK_FAIL_RETURN_UNEXPECTED(total_rows_in_category > 0 && page_no >= 0 && n_rows_of_page > 0 &&
                                  page_no * n_rows_of_page < total_rows_in_category,
-                               "Invalid page no / page size / total size, page no: " + std::to_string(page_no) +
-                                 ", page size of page: " + std::to_string(n_rows_of_page) +
-                                 ", total size: " + std::to_string(total_rows_in_category));
+                               "Invalid data, page no: " + std::to_string(page_no) +
+                                 "or page size: " + std::to_string(n_rows_of_page) + " is invalid.");
   auto row_group_summary = ReadRowGroupSummary();
 
   int i_start = page_no * n_rows_of_page;
@@ -278,7 +277,7 @@ Status ShardSegment::ReadAllAtPageById(int64_t category_id, int64_t page_no, int
       continue;
     }
     CHECK_FAIL_RETURN_UNEXPECTED(number_of_rows <= static_cast<int>(labels.size()),
-                                 "Invalid row number of page: " + number_of_rows);
+                                 "Invalid data, number_of_rows: " + std::to_string(number_of_rows) + " is invalid.");
     for (int i = 0; i < number_of_rows; ++i, ++idx) {
       if (idx >= i_start && idx < i_end) {
         auto images_ptr = std::make_shared<std::vector<uint8_t>>();
@@ -305,7 +304,7 @@ Status ShardSegment::ReadAllAtPageByName(std::string category_name, int64_t page
       break;
     }
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(category_id != -1, "Invalid category name.");
+  CHECK_FAIL_RETURN_UNEXPECTED(category_id != -1, "category_name: " + category_name + " could not found.");
   return ReadAllAtPageById(category_id, page_no, n_rows_of_page, pages_ptr);
 }
 

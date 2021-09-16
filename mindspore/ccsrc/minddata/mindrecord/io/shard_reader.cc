@@ -56,7 +56,7 @@ ShardReader::ShardReader()
 Status ShardReader::GetMeta(const std::string &file_path, std::shared_ptr<json> meta_data_ptr,
                             std::shared_ptr<std::vector<std::string>> *addresses_ptr) {
   RETURN_UNEXPECTED_IF_NULL(addresses_ptr);
-  CHECK_FAIL_RETURN_UNEXPECTED(IsLegalFile(file_path), "Invalid file path: " + file_path);
+  CHECK_FAIL_RETURN_UNEXPECTED(IsLegalFile(file_path), "Invalid file, path: " + file_path);
   std::shared_ptr<json> header_ptr;
   RETURN_IF_NOT_OK(ShardHeader::BuildSingleHeader(file_path, &header_ptr));
 
@@ -79,13 +79,14 @@ Status ShardReader::Init(const std::vector<std::string> &file_paths, bool load_d
   } else if (file_paths.size() >= 1 && load_dataset == false) {
     file_paths_ = file_paths;
   } else {
-    RETURN_STATUS_UNEXPECTED("Error in parameter file_path or load_dataset.");
+    RETURN_STATUS_UNEXPECTED("Invalid data, number of MindRecord files [" + std::to_string(file_paths.size()) +
+                             "] or 'load_dataset' [" + std::to_string(load_dataset) + "]is invalid.");
   }
   for (const auto &file : file_paths_) {
     auto meta_data_ptr = std::make_shared<json>();
     RETURN_IF_NOT_OK(GetMeta(file, meta_data_ptr, &addresses_ptr));
     CHECK_FAIL_RETURN_UNEXPECTED(*meta_data_ptr == *first_meta_data_ptr,
-                                 "Mindrecord files meta information is different.");
+                                 "Invalid data, MindRecord files meta data is not consistent.");
     sqlite3 *db = nullptr;
     RETURN_IF_NOT_OK(VerifyDataset(&db, file));
     database_paths_.push_back(db);
@@ -113,20 +114,21 @@ Status ShardReader::Init(const std::vector<std::string> &file_paths, bool load_d
 
   if (num_rows_ > LAZY_LOAD_THRESHOLD) {
     lazy_load_ = true;
-    MS_LOG(WARNING) << "The number of samples is larger than " << LAZY_LOAD_THRESHOLD
-                    << ", enable lazy load mode. If you want to speed up data loading, "
-                    << "it is recommended that you save multiple samples into one record when creating mindrecord file,"
-                    << " so that you can enable fast loading mode, and don't forget to adjust your batch size "
-                    << "according to the current samples.";
+    MS_LOG(WARNING)
+      << "The number of samples is larger than " << LAZY_LOAD_THRESHOLD
+      << ", enable lazy load mode. If you want to speed up data loading, "
+      << "it is recommended that you save multiple samples into one record when creating MindRecord files,"
+      << " so that you can enable fast loading mode, and don't forget to adjust your batch size "
+      << "according to the current samples.";
   }
 
   auto disk_size = page_size_ * row_group_summary.size();
   auto compression_size = shard_header_->GetCompressionSize();
   total_blob_size_ = disk_size + compression_size;
-  MS_LOG(INFO) << "Blob data size, on disk: " << disk_size << " , additional uncompression: " << compression_size
-               << " , Total: " << total_blob_size_;
+  MS_LOG(INFO) << "Blob data size on disk: " << disk_size << " , additional uncompression size: " << compression_size
+               << " , Total blob size: " << total_blob_size_;
 
-  MS_LOG(INFO) << "Get meta from mindrecord file & index file successfully.";
+  MS_LOG(INFO) << "Succeed to get meta from mindrecord file & index file.";
 
   return Status::OK();
 }
@@ -135,26 +137,27 @@ Status ShardReader::VerifyDataset(sqlite3 **db, const string &file) {
   // sqlite3_open create a database if not found, use sqlite3_open_v2 instead of it
   CHECK_FAIL_RETURN_UNEXPECTED(
     sqlite3_open_v2(common::SafeCStr(file + ".db"), db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK,
-    "Invalid database file: " + file + ".db, error: " + sqlite3_errmsg(*db));
-  MS_LOG(DEBUG) << "Opened database successfully";
+    "Invalid database file, path: " + file + ".db, " + sqlite3_errmsg(*db));
+  MS_LOG(DEBUG) << "Succeed to Open database, path: " << file << ".db.";
 
   string sql = "SELECT NAME from SHARD_NAME;";
   std::vector<std::vector<std::string>> name;
   char *errmsg = nullptr;
   if (sqlite3_exec(*db, common::SafeCStr(sql), SelectCallback, &name, &errmsg) != SQLITE_OK) {
     std::ostringstream oss;
-    oss << "Error in execute sql: [ " << sql + " ], error: " << errmsg;
+    oss << "Failed to execute sql [ " << sql + " ], " << errmsg;
     sqlite3_free(errmsg);
     sqlite3_close(*db);
     RETURN_STATUS_UNEXPECTED(oss.str());
   } else {
-    MS_LOG(DEBUG) << "Get " << static_cast<int>(name.size()) << " records from index.";
+    MS_LOG(DEBUG) << "Succeed to get " << static_cast<int>(name.size()) << " records from index.";
     std::shared_ptr<std::string> fn_ptr;
     RETURN_IF_NOT_OK(GetFileName(file, &fn_ptr));
     if (name.empty() || name[0][0] != *fn_ptr) {
       sqlite3_free(errmsg);
       sqlite3_close(*db);
-      RETURN_STATUS_UNEXPECTED("Invalid file, DB file can not match file: " + file);
+      RETURN_STATUS_UNEXPECTED("Invalid database file, shard name [" + *fn_ptr + "] can not match [" + name[0][0] +
+                               "].");
     }
   }
   return Status::OK();
@@ -171,7 +174,7 @@ Status ShardReader::CheckColumnList(const std::vector<std::string> &selected_col
     }
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!std::any_of(std::begin(inSchema), std::end(inSchema), [](int x) { return x == 0; }),
-                               "Column not found in schema.");
+                               "Invalid data, column is not found in schema.");
   return Status::OK();
 }
 
@@ -186,7 +189,7 @@ Status ShardReader::Open() {
     }
 
     auto realpath = FileUtils::GetRealPath(dir.value().data());
-    CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + file);
+    CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Failed to get real path, path: " + file);
 
     std::optional<std::string> whole_path = "";
     FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
@@ -194,12 +197,11 @@ Status ShardReader::Open() {
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
     fs->open(whole_path.value(), std::ios::in | std::ios::binary);
     if (!fs->good()) {
-      CHECK_FAIL_RETURN_UNEXPECTED(
-        !fs->fail(),
-        "Maybe reach the maximum number of open files, use \"ulimit -a\" to view \"open files\" and further resize");
-      RETURN_STATUS_UNEXPECTED("Failed to open file: " + file);
+      RETURN_STATUS_UNEXPECTED(
+        "Failed to open file: " + file +
+        ", reach the maximum number of open files, use \"ulimit -a\" to view \"open files\" and further resize");
     }
-    MS_LOG(INFO) << "Open shard file successfully.";
+    MS_LOG(INFO) << "Succeed to open shard file.";
     file_streams_.push_back(fs);
   }
   return Status::OK();
@@ -218,7 +220,7 @@ Status ShardReader::Open(int n_consumer) {
       }
 
       auto realpath = FileUtils::GetRealPath(dir.value().data());
-      CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + file);
+      CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Failed to get real path, path: " + file);
 
       std::optional<std::string> whole_path = "";
       FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
@@ -226,14 +228,13 @@ Status ShardReader::Open(int n_consumer) {
       std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
       fs->open(whole_path.value(), std::ios::in | std::ios::binary);
       if (!fs->good()) {
-        CHECK_FAIL_RETURN_UNEXPECTED(
-          !fs->fail(),
-          "Maybe reach the maximum number of open files, use \"ulimit -a\" to view \"open files\" and further resize");
-        RETURN_STATUS_UNEXPECTED("Failed to open file: " + file);
+        RETURN_STATUS_UNEXPECTED(
+          "Failed to open file: " + file +
+          ", reach the maximum number of open files, use \"ulimit -a\" to view \"open files\" and further resize");
       }
       file_streams_random_[j].push_back(fs);
     }
-    MS_LOG(INFO) << "Open shard file successfully.";
+    MS_LOG(INFO) << "Succeed to open file, path: " << file;
   }
   return Status::OK();
 }
@@ -255,7 +256,7 @@ void ShardReader::FileStreamsOperator() {
     if (database_paths_[i] != nullptr) {
       auto ret = sqlite3_close(database_paths_[i]);
       if (ret != SQLITE_OK) {
-        MS_LOG(ERROR) << "Close db failed. Error code: " << ret << ".";
+        MS_LOG(ERROR) << "Failed to close database, error code: " << ret << ".";
       }
       database_paths_[i] = nullptr;
     }
@@ -387,13 +388,15 @@ Status ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::string
       }
     } catch (std::out_of_range &e) {
       fs->close();
-      RETURN_STATUS_UNEXPECTED("Out of range: " + std::string(e.what()));
+      RETURN_STATUS_UNEXPECTED("Out of range exception raised in ConvertLabelToJson function, " +
+                               std::string(e.what()));
     } catch (std::invalid_argument &e) {
       fs->close();
-      RETURN_STATUS_UNEXPECTED("Invalid argument: " + std::string(e.what()));
+      RETURN_STATUS_UNEXPECTED("Invalid argument exception raised in ConvertLabelToJson function, " +
+                               std::string(e.what()));
     } catch (...) {
       fs->close();
-      RETURN_STATUS_UNEXPECTED("Exception was caught while convert label to json.");
+      RETURN_STATUS_UNEXPECTED("Unknown exception raised in ConvertLabelToJson function");
     }
   }
 
@@ -410,20 +413,21 @@ Status ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, con
   int rc = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, &labels, &errmsg);
   if (rc != SQLITE_OK) {
     std::ostringstream oss;
-    oss << "Error in execute sql: [ " << sql + " ], error: " << errmsg;
+    oss << "Failed to execute sql [ " << sql + " ], " << errmsg;
     sqlite3_free(errmsg);
     sqlite3_close(db);
     db = nullptr;
     RETURN_STATUS_UNEXPECTED(oss.str());
   }
-  MS_LOG(INFO) << "Get " << static_cast<int>(labels.size()) << " records from shard " << shard_id << " index.";
+  MS_LOG(INFO) << "Succeed to get " << static_cast<int>(labels.size()) << " records from shard "
+               << std::to_string(shard_id) << " index.";
 
   std::string file_name = file_paths_[shard_id];
   auto realpath = FileUtils::GetRealPath(file_name.data());
   if (!realpath.has_value()) {
     sqlite3_free(errmsg);
     sqlite3_close(db);
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + file_name);
+    RETURN_STATUS_UNEXPECTED("Failed to get real path, path: " + file_name);
   }
 
   std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
@@ -432,7 +436,7 @@ Status ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, con
     if (!fs->good()) {
       sqlite3_free(errmsg);
       sqlite3_close(db);
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file_name);
+      RETURN_STATUS_UNEXPECTED("Failed to open file, path: " + file_name);
     }
   }
   sqlite3_free(errmsg);
@@ -446,7 +450,7 @@ Status ShardReader::GetAllClasses(const std::string &category_field,
     index_columns[field.second] = field.first;
   }
   CHECK_FAIL_RETURN_UNEXPECTED(index_columns.find(category_field) != index_columns.end(),
-                               "Index field " + category_field + " does not exist.");
+                               "Invalid data, index field " + category_field + " does not exist.");
   std::shared_ptr<std::string> fn_ptr;
   RETURN_IF_NOT_OK(
     ShardIndexGenerator::GenerateFieldName(std::make_pair(index_columns[category_field], category_field), &fn_ptr));
@@ -474,10 +478,11 @@ void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string
     sqlite3_free(errmsg);
     sqlite3_close(db);
     db = nullptr;
-    MS_LOG(ERROR) << "Error in select sql statement, sql: " << common::SafeCStr(sql) << ", error: " << errmsg;
+    MS_LOG(ERROR) << "Failed to execute sql [ " << common::SafeCStr(sql) << " ], " << errmsg;
     return;
   }
-  MS_LOG(INFO) << "Get " << static_cast<int>(columns.size()) << " records from shard " << shard_id << " index.";
+  MS_LOG(INFO) << "Succeed to get " << static_cast<int>(columns.size()) << " records from shard "
+               << std::to_string(shard_id) << " index.";
   std::lock_guard<std::mutex> lck(shard_locker_);
   for (int i = 0; i < static_cast<int>(columns.size()); ++i) {
     category_ptr->emplace(columns[i][0]);
@@ -620,13 +625,13 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
   char *errmsg = nullptr;
   int rc = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, &image_offsets, &errmsg);
   if (rc != SQLITE_OK) {
-    MS_LOG(ERROR) << "Error in select statement, sql: " << sql << ", error: " << errmsg;
+    MS_LOG(ERROR) << "Failed to execute sql [ " << common::SafeCStr(sql) << " ], " << errmsg;
     sqlite3_free(errmsg);
     sqlite3_close(db);
     db = nullptr;
     return std::vector<std::vector<uint64_t>>();
   } else {
-    MS_LOG(DEBUG) << "Get " << static_cast<int>(image_offsets.size()) << " records from index.";
+    MS_LOG(DEBUG) << "Succeed to get " << static_cast<int>(image_offsets.size()) << " records from index.";
   }
   std::vector<std::vector<uint64_t>> res;
   for (int i = static_cast<int>(image_offsets.size()) - 1; i >= 0; i--) res.emplace_back(std::vector<uint64_t>{0, 0});
@@ -665,9 +670,9 @@ Status ShardReader::GetPagesByCategory(int shard_id, const std::pair<std::string
     sqlite3_free(errmsg);
     sqlite3_close(db);
     db = nullptr;
-    RETURN_STATUS_UNEXPECTED("Error in select statement, sql: " + sql + ", error: " + ss);
+    RETURN_STATUS_UNEXPECTED(std::string("Failed to execute sql [") + common::SafeCStr(sql) + " ], " + ss);
   } else {
-    MS_LOG(DEBUG) << "Get " << page_ids.size() << "pages from index.";
+    MS_LOG(DEBUG) << "Succeed to get " << page_ids.size() << "pages from index.";
   }
   for (int i = 0; i < static_cast<int>(page_ids.size()); ++i) {
     (*pages_ptr)->emplace_back(std::stoull(page_ids[i][0]));
@@ -708,11 +713,11 @@ Status ShardReader::QueryWithCriteria(sqlite3 *db, const string &sql, const stri
                                       std::shared_ptr<std::vector<std::vector<std::string>>> labels_ptr) {
   sqlite3_stmt *stmt = nullptr;
   if (sqlite3_prepare_v2(db, common::SafeCStr(sql), -1, &stmt, 0) != SQLITE_OK) {
-    RETURN_STATUS_UNEXPECTED(std::string("SQL error: could not prepare statement, sql: ") + sql);
+    RETURN_STATUS_UNEXPECTED("Failed to prepare statement sql [ " + sql + " ].");
   }
   int index = sqlite3_bind_parameter_index(stmt, ":criteria");
   if (sqlite3_bind_text(stmt, index, common::SafeCStr(criteria), -1, SQLITE_STATIC) != SQLITE_OK) {
-    RETURN_STATUS_UNEXPECTED("SQL error: could not bind parameter, index: " + std::to_string(index) +
+    RETURN_STATUS_UNEXPECTED("Failed to bind parameter of sql, index: " + std::to_string(index) +
                              ", field value: " + criteria);
   }
   int rc = sqlite3_step(stmt);
@@ -735,11 +740,11 @@ Status ShardReader::GetLabelsFromBinaryFile(int shard_id, const std::vector<std:
   RETURN_UNEXPECTED_IF_NULL(labels_ptr);
   std::string file_name = file_paths_[shard_id];
   auto realpath = FileUtils::GetRealPath(file_name.data());
-  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Failed to get real path, path=" + file_name);
 
   std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
   fs->open(realpath.value(), std::ios::in | std::ios::binary);
-  CHECK_FAIL_RETURN_UNEXPECTED(fs->good(), "Invalid file, failed to open file: " + file_name);
+  CHECK_FAIL_RETURN_UNEXPECTED(fs->good(), "Failed to open file, path: " + file_name);
   // init the return
   for (unsigned int i = 0; i < label_offsets.size(); ++i) {
     (*labels_ptr)->emplace_back(json{});
@@ -755,13 +760,13 @@ Status ShardReader::GetLabelsFromBinaryFile(int shard_id, const std::vector<std:
     auto &io_seekg = fs->seekg(page_size_ * raw_page_id + header_size_ + label_start, std::ios::beg);
     if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
       fs->close();
-      RETURN_STATUS_UNEXPECTED("Failed to seekg file.");
+      RETURN_STATUS_UNEXPECTED("Failed to seekg file, path: " + file_name);
     }
 
     auto &io_read = fs->read(reinterpret_cast<char *>(&label_raw[0]), len);
     if (!io_read.good() || io_read.fail() || io_read.bad()) {
       fs->close();
-      RETURN_STATUS_UNEXPECTED("Failed to read file.");
+      RETURN_STATUS_UNEXPECTED("Failed to read file, path: " + file_name);
     }
 
     json label_json = json::from_msgpack(label_raw);
@@ -793,13 +798,13 @@ Status ShardReader::GetLabelsFromPage(int page_id, int shard_id, const std::vect
     int rc = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, label_offset_ptr.get(), &errmsg);
     if (rc != SQLITE_OK) {
       std::ostringstream oss;
-      oss << "Error in execute sql: [ " << sql + " ], error: " << errmsg;
+      oss << "Failed to execute sql [ " << common::SafeCStr(sql) << " ], " << errmsg;
       sqlite3_free(errmsg);
       sqlite3_close(db);
       db = nullptr;
       RETURN_STATUS_UNEXPECTED(oss.str());
     }
-    MS_LOG(DEBUG) << "Get " << label_offset_ptr->size() << " records from index.";
+    MS_LOG(DEBUG) << "Succeed to get " << label_offset_ptr->size() << " records from index.";
     sqlite3_free(errmsg);
   }
   // get labels from binary file
@@ -832,13 +837,13 @@ Status ShardReader::GetLabels(int page_id, int shard_id, const std::vector<std::
       int rc = sqlite3_exec(db, common::SafeCStr(sql), SelectCallback, labels.get(), &errmsg);
       if (rc != SQLITE_OK) {
         std::ostringstream oss;
-        oss << "Error in execute sql: [ " << sql + " ], error: " << errmsg;
+        oss << "Failed to execute sql [ " << common::SafeCStr(sql) << " ], " << errmsg;
         sqlite3_free(errmsg);
         sqlite3_close(db);
         db = nullptr;
         RETURN_STATUS_UNEXPECTED(oss.str());
       } else {
-        MS_LOG(DEBUG) << "Get " << static_cast<int>(labels->size()) << " records from index.";
+        MS_LOG(DEBUG) << "Succeed to get " << static_cast<int>(labels->size()) << " records from index.";
       }
       sqlite3_free(errmsg);
     }
@@ -885,7 +890,7 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
   }
 
   if (map_schema_id_fields.find(category_field) == map_schema_id_fields.end()) {
-    MS_LOG(ERROR) << "Field " << category_field << " does not exist.";
+    MS_LOG(ERROR) << "Invalid data, field " << category_field << " does not exist.";
     return -1;
   }
   std::shared_ptr<std::string> fn_ptr;
@@ -898,8 +903,7 @@ int64_t ShardReader::GetNumClasses(const std::string &category_field) {
   for (int x = 0; x < shard_count; x++) {
     int rc = sqlite3_open_v2(common::SafeCStr(file_paths_[x] + ".db"), &db, SQLITE_OPEN_READONLY, nullptr);
     if (SQLITE_OK != rc) {
-      MS_LOG(ERROR) << "Invalid file, failed to open database: " << file_paths_[x] + ".db, error: "
-                    << sqlite3_errmsg(db);
+      MS_LOG(ERROR) << "Failed to open database: " << file_paths_[x] + ".db, " << sqlite3_errmsg(db);
       return -1;
     }
     threads[x] = std::thread(&ShardReader::GetClassesInShard, this, db, x, sql, category_ptr);
@@ -930,7 +934,6 @@ Status ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, b
       num_samples = op->GetNumSamples(num_samples, 0);
       if (num_padded > 0 && root == true) {
         num_samples += num_padded;
-        MS_LOG(DEBUG) << "Padding samples work on shuffle sampler.";
         root = false;
       }
     } else if (std::dynamic_pointer_cast<ShardCategory>(op)) {
@@ -943,8 +946,9 @@ Status ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, b
         if (tmp != 0 && num_samples != -1) {
           num_samples = std::min(num_samples, tmp);
         }
-        CHECK_FAIL_RETURN_UNEXPECTED(num_samples != -1, "Number of samples exceeds the upper limit: " +
-                                                          std::to_string(std::numeric_limits<int64_t>::max()));
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          num_samples != -1, "Invalid input, number of samples: " + std::to_string(num_samples) +
+                               " exceeds the upper limit: " + std::to_string(std::numeric_limits<int64_t>::max()));
       }
     } else if (std::dynamic_pointer_cast<ShardSample>(op)) {
       if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
@@ -952,8 +956,9 @@ Status ShardReader::CountTotalRows(const std::vector<std::string> &file_paths, b
         if (root == true) {
           sampler_op->SetNumPaddedSamples(num_padded);
           num_samples = op->GetNumSamples(num_samples, 0);
-          CHECK_FAIL_RETURN_UNEXPECTED(
-            num_samples != -1, "Dataset size plus number of padded samples is not divisible by number of shards.");
+          CHECK_FAIL_RETURN_UNEXPECTED(num_samples != -1, "Invalid data, dataset size plus number of padded samples: " +
+                                                            std::to_string(num_samples) +
+                                                            " can not be divisible by number of shards.");
           root = false;
         }
       } else {
@@ -1013,13 +1018,14 @@ Status ShardReader::Launch(bool is_sample_read) {
   // Start provider consumer threads
   thread_set_ = std::vector<std::thread>(n_consumer_);
   CHECK_FAIL_RETURN_UNEXPECTED(n_consumer_ > 0 && n_consumer_ <= kMaxConsumerCount,
-                               "Number of consumer is out of range.");
+                               "Invalid data, number of consumer: " + std::to_string(n_consumer_) +
+                                 " exceeds the upper limit: " + std::to_string(kMaxConsumerCount));
 
   for (int x = 0; x < n_consumer_; ++x) {
     thread_set_[x] = std::thread(&ShardReader::ConsumerByRow, this, x);
   }
 
-  MS_LOG(INFO) << "Launch read thread successfully.";
+  MS_LOG(INFO) << "Succeed to launch read thread.";
   return Status::OK();
 }
 
@@ -1032,15 +1038,16 @@ Status ShardReader::CreateTasksByCategory(const std::shared_ptr<ShardOperator> &
   if (std::dynamic_pointer_cast<ShardPkSample>(op)) {
     num_samples = std::dynamic_pointer_cast<ShardPkSample>(op)->GetNumSamples();
     CHECK_FAIL_RETURN_UNEXPECTED(
-      num_samples >= 0, "Invalid parameter, num_samples must be greater than or equal to 0, but got " + num_samples);
+      num_samples >= 0,
+      "Invalid input, num_samples must be greater than or equal to 0, but got " + std::to_string(num_samples));
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(num_elements > 0,
-                               "Invalid parameter, num_elements must be greater than 0, but got " + num_elements);
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_elements > 0, "Invalid input, num_elements must be greater than 0, but got " + std::to_string(num_elements));
   if (categories.empty() == true) {
     std::string category_field = category_op->GetCategoryField();
     int64_t num_categories = category_op->GetNumCategories();
-    CHECK_FAIL_RETURN_UNEXPECTED(num_categories > 0,
-                                 "Invalid parameter, num_categories must be greater than 0, but got " + num_elements);
+    CHECK_FAIL_RETURN_UNEXPECTED(num_categories > 0, "Invalid input, num_categories must be greater than 0, but got " +
+                                                       std::to_string(num_elements));
     auto category_ptr = std::make_shared<std::set<std::string>>();
     RETURN_IF_NOT_OK(GetAllClasses(category_field, category_ptr));
     int i = 0;
@@ -1095,12 +1102,14 @@ Status ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int,
   RETURN_IF_NOT_OK(ReadAllRowGroup(selected_columns_, &row_group_ptr));
   auto &offsets = std::get<0>(*row_group_ptr);
   auto &local_columns = std::get<1>(*row_group_ptr);
-  CHECK_FAIL_RETURN_UNEXPECTED(shard_count_ <= kMaxFileCount, "shard count is out of range.");
+  CHECK_FAIL_RETURN_UNEXPECTED(shard_count_ <= kMaxFileCount,
+                               "Invalid data, number of shards: " + std::to_string(shard_count_) +
+                                 " exceeds the upper limit: " + std::to_string(kMaxFileCount));
   int sample_count = 0;
   for (int shard_id = 0; shard_id < shard_count_; shard_id++) {
     sample_count += offsets[shard_id].size();
   }
-  MS_LOG(DEBUG) << "There are " << sample_count << " records in the dataset.";
+  MS_LOG(DEBUG) << "Succeed to get " << sample_count << " records from dataset.";
 
   // Init the tasks_ size
   tasks_.ResizeTask(sample_count);
@@ -1131,9 +1140,11 @@ Status ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, int,
 Status ShardReader::CreateLazyTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                                          const std::vector<std::shared_ptr<ShardOperator>> &operators) {
   CheckIfColumnInIndex(selected_columns_);
-  CHECK_FAIL_RETURN_UNEXPECTED(shard_count_ <= kMaxFileCount, "shard count is out of range.");
+  CHECK_FAIL_RETURN_UNEXPECTED(shard_count_ <= kMaxFileCount,
+                               "Invalid data, number of shards: " + std::to_string(shard_count_) +
+                                 " exceeds the upper limit: " + std::to_string(kMaxFileCount));
   uint32_t sample_count = shard_sample_count_[shard_sample_count_.size() - 1];
-  MS_LOG(DEBUG) << "There are " << sample_count << " records in the dataset.";
+  MS_LOG(DEBUG) << "Succeed to get " << sample_count << " records from dataset.";
 
   // Init the tasks_ size
   tasks_.ResizeTask(sample_count);
@@ -1189,7 +1200,7 @@ Status ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint
   } else {
     RETURN_IF_NOT_OK(CreateTasksByCategory(operators[category_operator]));
   }
-  MS_LOG(DEBUG) << "Created initial list of tasks. There are " << tasks_.Size() << " to start with before sampling.";
+  MS_LOG(DEBUG) << "Succeed to create " << tasks_.Size() << " initial task to start with before sampling.";
   tasks_.InitSampleIds();
 
   for (uint32_t operator_no = 0; operator_no < operators.size(); operator_no++) {
@@ -1206,8 +1217,8 @@ Status ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint
 
   if (tasks_.permutation_.empty()) tasks_.MakePerm();
   num_rows_ = tasks_.Size();
-  MS_LOG(INFO) << "Total rows is " << num_rows_
-               << " and total amount sampled initially is: " << tasks_.sample_ids_.size();
+  MS_LOG(INFO) << "The total number of samples is " << num_rows_
+               << ", the number of samples after sampling is: " << tasks_.sample_ids_.size();
 
   return Status::OK();
 }
@@ -1216,7 +1227,9 @@ Status ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_id,
                                     std::shared_ptr<TASK_CONTENT> *task_content_ptr) {
   RETURN_UNEXPECTED_IF_NULL(task_content_ptr);
   // All tasks are done
-  CHECK_FAIL_RETURN_UNEXPECTED(task_id < static_cast<int>(tasks_.Size()), "task id is out of range.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    task_id < static_cast<int>(tasks_.Size()),
+    "Invalid data, task id: " + std::to_string(task_id) + " exceeds the upper limit: " + std::to_string(tasks_.Size()));
   uint32_t shard_id = 0;
   uint32_t group_id = 0;
   uint32_t blob_start = 0;
@@ -1259,7 +1272,7 @@ Status ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_id,
   // read the blob from data file
   std::shared_ptr<Page> page_ptr;
   RETURN_IF_NOT_OK(shard_header_->GetPageByGroupId(group_id, shard_id, &page_ptr));
-  MS_LOG(DEBUG) << "Success to get page by group id.";
+  MS_LOG(DEBUG) << "Success to get page by group id: " << group_id;
 
   // Pack image list
   std::vector<uint8_t> images(blob_end - blob_start);
@@ -1306,7 +1319,7 @@ void ShardReader::ConsumerByRow(int consumer_id) {
     auto task_content_ptr =
       std::make_shared<TASK_CONTENT>(TaskType::kCommonTask, std::vector<std::tuple<std::vector<uint8_t>, json>>());
     if (ConsumerOneTask(tasks_.sample_ids_[sample_id_pos], consumer_id, &task_content_ptr).IsError()) {
-      MS_LOG(ERROR) << "Error in ConsumerOneTask.";
+      MS_LOG(ERROR) << "Error raised in ConsumerOneTask function.";
       return;
     }
     const auto &batch = (*task_content_ptr).second;
@@ -1407,12 +1420,12 @@ void ShardReader::ShuffleTask() {
     if (std::dynamic_pointer_cast<ShardShuffle>(op) && has_sharding == false) {
       auto s = (*op)(tasks_);
       if (s.IsError()) {
-        MS_LOG(WARNING) << "Redo randomSampler failed.";
+        MS_LOG(WARNING) << "Failed to redo randomSampler in new epoch.";
       }
     } else if (std::dynamic_pointer_cast<ShardDistributedSample>(op)) {
       auto s = (*op)(tasks_);
       if (s.IsError()) {
-        MS_LOG(WARNING) << "Redo distributeSampler failed.";
+        MS_LOG(WARNING) << "Failed to redo distributeSampler in new epoch.";
       }
     }
   }
