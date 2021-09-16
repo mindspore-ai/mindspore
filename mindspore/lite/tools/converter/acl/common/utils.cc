@@ -22,6 +22,7 @@
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"
 #include "utils/utils.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -81,21 +82,19 @@ STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int
   } else {
     cnode_abstract = cnode->abstract();
   }
-  if (cnode_abstract == nullptr) {
-    MS_LOG(ERROR) << "Abstract cnode is nullptr. " << cnode->fullname_with_scope();
-    return lite::RET_ERROR;
-  }
+  CHECK_NULL_RETURN(cnode_abstract);
   if (!mindspore::utils::isa<mindspore::abstract::AbstractTensorPtr>(cnode_abstract)) {
     MS_LOG(ERROR) << "Abstract is not abstract tensor. " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
   auto cnode_abstract_tensor = cnode_abstract->cast<mindspore::abstract::AbstractTensorPtr>();
+  CHECK_NULL_RETURN(cnode_abstract_tensor);
   if (!mindspore::utils::isa<mindspore::abstract::ShapePtr>(cnode_abstract_tensor->BuildShape())) {
     MS_LOG(ERROR) << "Shape of abstract tensor should be ShapePtr. " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
   auto shape_ptr = mindspore::utils::cast<mindspore::abstract::ShapePtr>(cnode_abstract_tensor->BuildShape());
-
+  CHECK_NULL_RETURN(shape_ptr);
   if (shape_ptr->shape().empty()) {
     MS_LOG(WARNING) << "Shape is empty " << cnode->fullname_with_scope();
   }
