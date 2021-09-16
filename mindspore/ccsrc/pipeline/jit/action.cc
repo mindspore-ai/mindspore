@@ -177,7 +177,7 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
   auto merge_node = func_graph->NewCNode(new_output_nodes);
   abstract::AbstractBasePtrList new_output_abs{original_output_abs, added_output_abs};
   merge_node->set_abstract(std::make_shared<abstract::AbstractTuple>(new_output_abs));
-  MS_LOG(DEBUG) << "Merge node info: " << merge_node->DebugString(2);
+  MS_LOG(DEBUG) << "Merge node info: " << merge_node->DebugString();
   func_graph->set_output(merge_node);
 
   // Clear
