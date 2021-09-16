@@ -55,7 +55,7 @@ int SplitLineToMap(std::ifstream *ifs, std::map<std::string, std::map<std::strin
   }
   std::string raw_line;
   size_t num_of_line = 0;
-  size_t kMaxLineCount = 9999;
+  const size_t kMaxLineCount = 9999;
   std::string section = "DEFAULT";
   while (std::getline(*ifs, raw_line)) {
     if (num_of_line > kMaxLineCount) {
