@@ -18,6 +18,7 @@ NOTE:
     This is an experimental interface that is subject to change and/or deletion.
 """
 from .transformer import *
+from .moe import *
 from .layers import FixedSparseAttention
 from .loss import CrossEntropyLoss
 from .op_parallel_config import OpParallelConfig
@@ -27,3 +28,4 @@ __all__.extend(transformer.__all__)
 __all__.extend(loss.__all__)
 __all__.extend(op_parallel_config.__all__)
 __all__.extend(layers.__all__)
+__all__.extend(moe.__all__)
