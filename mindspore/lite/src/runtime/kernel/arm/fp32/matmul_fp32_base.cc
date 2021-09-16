@@ -18,14 +18,11 @@
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 
+using mindspore::lite::kCHWDimNumber;
+using mindspore::lite::kHWDimNumber;
 using mindspore::lite::RET_NULL_PTR;
 
 namespace mindspore::kernel {
-namespace {
-constexpr size_t HWDIMS = 2;
-constexpr size_t CHWDIMS = 3;
-}  // namespace
-
 int MatmulBaseFloatRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto op = reinterpret_cast<MatmulFp32BaseCPUKernel *>(cdata);
   auto error_code = op->FloatRun(task_id);
@@ -431,11 +428,11 @@ int MatmulFp32BaseCPUKernel::BroadcastMatmulRun() {
     int delta = i;
     int a_offset = 0;
     int b_offset = 0;
-    for (size_t j = 0; j < a_shape.size() - HWDIMS; ++j) {
+    for (size_t j = 0; j < a_shape.size() - kHWDimNumber; ++j) {
       if (j > 0) {
         delta = delta % batch_sizes_[j];
       }
-      if (j < (a_shape.size() - CHWDIMS)) {
+      if (j < (a_shape.size() - kCHWDimNumber)) {
         a_offset +=
           (delta / batch_sizes_[j + 1] * a_shape[j] / std::max(a_shape[j], b_shape[j])) * a_batch_sizes_[j + 1];
         b_offset +=

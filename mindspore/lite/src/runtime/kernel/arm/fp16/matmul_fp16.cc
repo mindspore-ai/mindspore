@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <algorithm>
 #include "src/runtime/kernel/arm/fp16/matmul_fp16.h"
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 
+using mindspore::lite::kCHWDimNumber;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::kHWDimNumber;
+using mindspore::lite::kNCHWDimNumber;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
+
 void MatmulFP16CPUKernel::InitAShape() {
   auto a_shape = in_tensors_[0]->shape();
   if (a_shape.empty()) {
@@ -33,7 +37,7 @@ void MatmulFP16CPUKernel::InitAShape() {
   for (size_t i = 0; i < a_shape.size() - 2; ++i) {
     batch *= a_shape[i];
   }
-  params_->batch = batch;
+  a_batch_ = batch;
   params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - 2];
   params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
   params_->row_16_ = UP_ROUND(params_->row_, row_tile_);
@@ -48,7 +52,7 @@ void MatmulFP16CPUKernel::InitBShape() {
   for (size_t i = 0; i < b_shape.size() - 2; ++i) {
     batch *= b_shape[i];
   }
-  params_->batch = batch;
+  b_batch_ = batch;
   params_->col_ = params_->b_transpose_ ? b_shape[b_shape.size() - 2] : b_shape[b_shape.size() - 1];
   params_->col_8_ = UP_ROUND(params_->col_, 8);
   params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
@@ -81,10 +85,55 @@ int MatmulFP16CPUKernel::Init() {
   }
   return ReSize();
 }
+int MatmulFP16CPUKernel::InitBroadcastParams() {
+  auto a_shape = in_tensors_[kInputIndex]->shape();
+  if (a_shape.size() < kNCHWDimNumber) {
+    int add_nums = kNCHWDimNumber - a_shape.size();
+    for (size_t i = 0; i < add_nums; ++i) {
+      a_shape.insert(a_shape.begin(), 1);
+    }
+  }
+  auto b_shape = in_tensors_[kWeightIndex]->shape();
+  if (b_shape.size() < kNCHWDimNumber) {
+    int add_nums = kNCHWDimNumber - b_shape.size();
+    for (size_t i = 0; i < add_nums; ++i) {
+      b_shape.insert(b_shape.begin(), 1);
+    }
+  }
+
+  for (int i = a_shape.size() - kCHWDimNumber; i >= 0; --i) {
+    if (static_cast<int>(a_shape.size() - kCHWDimNumber) == i) {
+      batch_sizes_[i] = std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes_[i] = a_shape[i];
+      b_batch_sizes_[i] = b_shape[i];
+    } else {
+      batch_sizes_[i] = batch_sizes_[i + 1] * std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes_[i] = a_batch_sizes_[i + 1] * a_shape[i];
+      b_batch_sizes_[i] = b_batch_sizes_[i + 1] * b_shape[i];
+    }
+  }
+
+  int out_batch = 1;
+  for (size_t i = 0; i < a_shape.size() - kHWDimNumber; ++i) {
+    out_batch *= MSMAX(a_shape[i], b_shape[i]);
+    if (a_shape[i] < b_shape[i] && a_shape[i] == 1) {
+      a_broadcast_ = true;
+    } else if (a_shape[i] > b_shape[i] && b_shape[i] == 1) {
+      b_broadcast_ = true;
+    } else if (a_shape[i] != b_shape[i]) {
+      MS_LOG(ERROR) << "matmul don't support broadcast for dimension " << a_shape << " and " << b_shape;
+      return RET_ERROR;
+    }
+  }
+  params_->batch = out_batch;
+  return RET_OK;
+}
 
 int MatmulFP16CPUKernel::ReSize() {
   InitAShape();
   InitBShape();
+  InitBroadcastParams();
+
   return MatmulBaseFP16CPUKernel::ReSize();
 }
 
