@@ -45,7 +45,8 @@ class DataPrepareActor : public MemoryAwareActor {
         strategy_(GraphExecutionStrategy::kPipeline),
         host_data_source_actor_(host_data_source_actor),
         host_tensor_queue_(host_tensor_queue),
-        first_running_(true) {}
+        first_running_(true),
+        loop_count_aid_(nullptr) {}
   ~DataPrepareActor() override = default;
 
   void Init() override;
@@ -102,6 +103,8 @@ class DataPrepareActor : public MemoryAwareActor {
   // The output controls contain the data source actors and the no input kernel actors.
   std::vector<AID> data_source_aids_;
   std::vector<AID> no_input_kernel_aids_;
+  // If has no data source actor and kernel actor, then need send to loop count actor.
+  const AID *loop_count_aid_;
 
   // The nodes need continuous memory, which must allocate in the begin of step running. The first bool of pair
   // expresses the inputs of node need continuous memory, the second bool of pair expresses the outputs of node need

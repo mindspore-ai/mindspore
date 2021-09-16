@@ -329,13 +329,6 @@ bool GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vecto
   // Trigger data prepare actor running.
   Async(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors, &op_context);
 
-  // Trigger output actor running when there are no data source actor and kernel actor.
-  if ((actor_set->data_source_actors_.size() == 0) && (actor_set->kernel_actors_.size() == 0)) {
-    MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
-    Async(actor_set->output_actor_->GetAID(), &OutputActor::CollectLoopCount, actor_set->output_actor_->loop_count_,
-          &op_context);
-  }
-
   // Get the run result.
   auto result_future = result[0].GetFuture();
   result_future.Wait();
@@ -1392,6 +1385,12 @@ void GraphScheduler::LinkControlArrowForDataPrepareActor(DataPrepareActor *data_
     MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
     (void)data_prepare_actor->no_input_kernel_aids_.emplace_back(no_input_kernel_actor->GetAID());
     no_input_kernel_actor->input_controls_num_++;
+  }
+
+  // Data prepare actor --> loop count actor.
+  if ((actor_set->data_source_actors_.size() + actor_set->no_input_kernel_actors_.size() == 0) &&
+      (actor_set->loop_count_actor_ != nullptr)) {
+    data_prepare_actor->loop_count_aid_ = &(actor_set->loop_count_actor_->GetAID());
   }
 }
 
