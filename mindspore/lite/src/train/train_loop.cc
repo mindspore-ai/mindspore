@@ -37,6 +37,7 @@ TrainLoop::~TrainLoop() {}
 
 int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCallBack *> cbs, LoadDataFunc load_func) {
   MS_CHECK_TRUE_MSG(train_session_ != nullptr && ds != nullptr, RET_ERROR, "graph data cannot be nullptr");
+  MS_CHECK_GE(epochs, 0, RET_ERROR);
   auto ret = train_session_->Train();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "TrainLoop train failed";
