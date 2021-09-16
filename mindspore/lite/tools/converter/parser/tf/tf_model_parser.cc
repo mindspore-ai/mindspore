@@ -128,7 +128,7 @@ STATUS SetFloatTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
   }
   if (tensor_proto.tensor_content().size() == shape_size * sizeof(float)) {
     const auto addr = reinterpret_cast<const float *>(tensor_proto.tensor_content().data());
-    if (::memcpy_s(tensor_data, shape_size * sizeof(float), addr, shape_size * sizeof(float)) != EOK) {
+    if (::memcpy_s(tensor_data, (*tensor_info)->Size(), addr, shape_size * sizeof(float)) != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed";
       delete[] tensor_data;
       return RET_ERROR;
@@ -163,7 +163,7 @@ STATUS SetInt32TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
   }
   if (shape_size != 0 && tensor_proto.tensor_content().size() == shape_size * sizeof(int32_t)) {
     const auto addr = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
-    if (::memcpy_s(tensor_data, shape_size * sizeof(int32_t), addr, shape_size * sizeof(int32_t)) != EOK) {
+    if (::memcpy_s(tensor_data, (*tensor_info)->Size(), addr, shape_size * sizeof(int32_t)) != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed";
       delete[] tensor_data;
       return RET_ERROR;
@@ -284,12 +284,13 @@ STATUS SetStringTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::
     return RET_ERROR;
   }
   auto tensor_info_data = reinterpret_cast<uint8_t *>((*tensor_info)->data_c());
-  if (memcpy_s(tensor_info_data, shape_str.size(), shape_str.data(), shape_str.size()) != EOK) {
+  if (memcpy_s(tensor_info_data, (*tensor_info)->Size(), shape_str.data(), shape_str.size()) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";
     return RET_ERROR;
   }
-  if (memcpy_s(tensor_info_data + shape_str.size(), (*tensor_data).size(), (*tensor_data).data(),
-               (*tensor_data).size()) != EOK) {
+  MS_CHECK_TRUE_RET((*tensor_info)->Size() >= (*tensor_data).size(), RET_ERROR);
+  if (memcpy_s(tensor_info_data + shape_str.size(), (*tensor_info)->Size() - (*tensor_data).size(),
+               (*tensor_data).data(), (*tensor_data).size()) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";
     return RET_ERROR;
   }

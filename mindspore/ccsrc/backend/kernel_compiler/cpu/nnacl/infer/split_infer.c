@@ -44,7 +44,7 @@ int SplitInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
     return NNACL_INPUT_TENSOR_ERROR;
   }
   int split_dim = param->split_dim_ < 0 ? ((int)(input->shape_size_)) + param->split_dim_ : param->split_dim_;
-  if (split_dim > (int)(input->shape_size_)) {
+  if (split_dim >= (int)(input->shape_size_)) {
     return NNACL_ERR;
   }
   if ((int)(outputs_size) != num_split_) {

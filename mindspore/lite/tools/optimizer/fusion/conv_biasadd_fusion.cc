@@ -52,7 +52,8 @@ bool FuseBias(const lite::DataInfo &add_bias, const lite::DataInfo &conv_bias, s
     return false;
   }
   std::vector<float> add_bias_data(add_bias.data_.size() / sizeof(float));
-  if (memcpy_s(add_bias_data.data(), add_bias.data_.size(), add_bias.data_.data(), add_bias.data_.size()) != EOK) {
+  if (memcpy_s(add_bias_data.data(), add_bias_data.size() * sizeof(float), add_bias.data_.data(),
+               add_bias.data_.size()) != EOK) {
     return false;
   }
   fusion_bias->resize(out_channel, 0);
@@ -61,7 +62,8 @@ bool FuseBias(const lite::DataInfo &add_bias, const lite::DataInfo &conv_bias, s
         conv_bias.data_.size() != out_channel * sizeof(float)) {
       return false;
     }
-    if (memcpy_s(fusion_bias->data(), conv_bias.data_.size(), conv_bias.data_.data(), conv_bias.data_.size()) != EOK) {
+    if (memcpy_s(fusion_bias->data(), fusion_bias->size() * sizeof(float), conv_bias.data_.data(),
+                 conv_bias.data_.size()) != EOK) {
       return false;
     }
   }

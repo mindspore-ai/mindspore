@@ -19,7 +19,7 @@
 #include "nnacl/infer/infer_register.h"
 
 int SpaceSetOutputShapeFromParam(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
-                                 size_t outputs_size, OpParameter *parameter) {
+                                 size_t outputs_size, const OpParameter *parameter) {
   const TensorC *input = inputs[0];
   if (input->format_ != Format_NHWC) {
     return NNACL_FORMAT_ERROR;
@@ -27,10 +27,10 @@ int SpaceSetOutputShapeFromParam(const TensorC *const *inputs, size_t inputs_siz
   if (input->shape_size_ != 4) {
     return NNACL_ERR;
   }
-  SpaceToBatchParameter *param = (SpaceToBatchParameter *)parameter;
-  int *block_shape = param->block_sizes_;
+  const SpaceToBatchParameter *param = (const SpaceToBatchParameter *)parameter;
+  const int *block_shape = param->block_sizes_;
   int block_shape_size = param->m_;
-  int *padding = param->paddings_;
+  const int *padding = param->paddings_;
   int padding_left = 0;
   int padding_right = 0;
   int block_w = 1;

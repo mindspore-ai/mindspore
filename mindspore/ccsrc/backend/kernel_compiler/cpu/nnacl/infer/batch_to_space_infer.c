@@ -17,7 +17,7 @@
 #include "nnacl/infer/batch_to_space_infer.h"
 #include "nnacl/infer/infer_register.h"
 
-int SetOutputShapeFromParam(const TensorC *const *inputs, TensorC **outputs, OpParameter *parameter) {
+int SetOutputShapeFromParam(const TensorC *const *inputs, TensorC **outputs, const OpParameter *parameter) {
   int input_shape[MAX_SHAPE_SIZE] = {0};
   size_t input_shape_size = 0;
   ShapeSet(input_shape, &input_shape_size, inputs[0]->shape_, inputs[0]->shape_size_);
@@ -26,9 +26,9 @@ int SetOutputShapeFromParam(const TensorC *const *inputs, TensorC **outputs, OpP
     return NNACL_PARAM_INVALID;
   }
 
-  BatchToSpaceParameter *param = (BatchToSpaceParameter *)parameter;
-  int32_t *block_shape = param->block_shape_;
-  int32_t *crops = param->crops_;
+  const BatchToSpaceParameter *param = (const BatchToSpaceParameter *)parameter;
+  const int32_t *block_shape = param->block_shape_;
+  const int32_t *crops = param->crops_;
   int mul_block_shape = 1;
 
   for (size_t i = 0; i < 2; ++i) {
