@@ -57,11 +57,11 @@ class MinCut {
   // we can use (i xor 1) to get the inverse edge for any edge i.
   // e.g. edge_0 and edge_1 are a couple, 0^1=1, 1^1=0.
   void AddEdge(size_t from, size_t to, size_t capacity, size_t inv_capacity) {
-    edges_.emplace_back(Edge{to, capacity});
-    nodes_[from].out_edges.emplace_back(edges_.size() - 1);
+    (void)edges_.emplace_back(Edge{to, capacity});
+    (void)nodes_[from].out_edges.emplace_back(edges_.size() - 1);
     // inverse edge
-    edges_.emplace_back(Edge{from, inv_capacity});
-    nodes_[to].out_edges.emplace_back(edges_.size() - 1);
+    (void)edges_.emplace_back(Edge{from, inv_capacity});
+    (void)nodes_[to].out_edges.emplace_back(edges_.size() - 1);
   }
 
   bool BfsSetDepth() {
@@ -155,9 +155,9 @@ class MinCut {
     std::vector<std::pair<size_t, TransOpType>> one_node_ops;
     for (size_t i = 1; i <= origin_nodes_num_; ++i) {
       if (nodes_[i].format == kFormatA && nodes_[i + origin_nodes_num_].format != kFormatA) {
-        one_node_ops.emplace_back(i, kTransAB);
+        (void)one_node_ops.emplace_back(i, kTransAB);
       } else if (nodes_[i].format != kFormatA && nodes_[i + origin_nodes_num_].format == kFormatA) {
-        one_node_ops.emplace_back(i, kTransBA);
+        (void)one_node_ops.emplace_back(i, kTransBA);
       }
     }
     return one_node_ops;
@@ -167,9 +167,9 @@ class MinCut {
     std::vector<std::pair<std::pair<size_t, size_t>, TransOpType>> two_node_ops;
     for (auto i : original_edges_) {
       if (nodes_[i.first + origin_nodes_num_].format == kFormatA && nodes_[i.second].format != kFormatA) {
-        two_node_ops.emplace_back(i, kTransAB);
+        (void)two_node_ops.emplace_back(i, kTransAB);
       } else if (nodes_[i.first + origin_nodes_num_].format != kFormatA && nodes_[i.second].format == kFormatA) {
-        two_node_ops.emplace_back(i, kTransBA);
+        (void)two_node_ops.emplace_back(i, kTransBA);
       }
     }
     return two_node_ops;
@@ -279,9 +279,9 @@ class Mutator {
   // visit nodes bidirectionally
   void VisitNode(const NodePtr &node) {
     if (visited_.count(node) > 0) return;
-    visited_.insert(node);
+    (void)visited_.insert(node);
     if (op_checker_.IsTransformOp(node)) {
-      trans_ops_.insert(node);
+      (void)trans_ops_.insert(node);
     } else if (!IsFlexibleOp(node)) {
       if (node->NodeType() != NType::Output) {
         fmt_type[{node, -1}] = op_checker_.GetFormatType(node->format);
@@ -296,7 +296,7 @@ class Mutator {
       }
       return;
     } else {
-      flexible_ops_.insert(node);
+      (void)flexible_ops_.insert(node);
       fmt_type[{node, -1}] = FormatType::kFormatUnknown;
     }
 
@@ -312,7 +312,7 @@ class Mutator {
 
   void RemoveTransOp() {
     for (auto &node : trans_ops_) {
-      visited_.erase(node);
+      (void)visited_.erase(node);
       node->ReplaceWith(node->input(0));
       // clear inputs, so that the node will not be the basenode again.
       node->SetInputs({});
@@ -334,7 +334,7 @@ class Mutator {
           cur_id = GetId({node, SizeToInt(i)});
         }
         auto input_id = GetId({node->input(i), -1});
-        graph_edges_.emplace_back(input_id, cur_id);
+        (void)graph_edges_.emplace_back(input_id, cur_id);
       }
     }
   }
@@ -368,7 +368,7 @@ class Mutator {
         trans_op->SetInputs({node_from});
       }
       if (ori_node_[node_id_to].second >= 0) {
-        node_to->SetInput(ori_node_[node_id_to].second, trans_op);
+        node_to->SetInput(IntToSize(ori_node_[node_id_to].second), trans_op);
       } else {
         for (size_t i = 0; i < node_to->inputs().size(); i++) {
           if (node_to->input(i) == node_from) {
@@ -386,7 +386,7 @@ class Mutator {
       id = node_id_.size();
       ori_node_.push_back(node);
       // set format_type for new id.
-      graph_vertex_.emplace_back(id, fmt_type[node]);
+      (void)graph_vertex_.emplace_back(id, fmt_type[node]);
     }
     return id;
   }
@@ -407,7 +407,6 @@ class Mutator {
 bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const std::string &trans_op_name) {
   ori_trans_op_num_ = 0;
   auto &ops = litegraph->ops();
-  std::set<NodePtr> visited;
   bool changed = true;
   auto check_is_trans_op = [&trans_op_name](const NodePtr &node) { return node->As<PrimOp>()->op() == trans_op_name; };
   auto ori_trans_op_num = std::count_if(ops.begin(), ops.end(), check_is_trans_op);
@@ -447,7 +446,7 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
       auto new_node = CreateNewFuseCNode(kernel_graph, new_funcgraph, inputs, outputs);
       SetNewKernelInfo(new_node, new_funcgraph, inputs, outputs);
-      mng->Replace(node, new_node);
+      (void)mng->Replace(node, new_node);
       mng->AddFuncGraph(new_funcgraph);
     }
   }

@@ -46,7 +46,7 @@ void Node::DumpTensor(std::ostringstream &os) const {
 void Node::AddInput(const NodePtr &new_input) {
   MS_EXCEPTION_IF_NULL(new_input);
   new_input->AddUser(this, inputs_.size());
-  inputs_.emplace_back(new_input);
+  (void)inputs_.emplace_back(new_input);
 }
 
 void Node::SetInput(size_t i, const NodePtr &new_input) {

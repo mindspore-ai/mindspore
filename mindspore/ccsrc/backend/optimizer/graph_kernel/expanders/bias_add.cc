@@ -31,9 +31,9 @@ class BiasAdd : public OpExpander {
     support_format->AddFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
     support_format->AddFormat({kOpFormat_NCHW, kOpFormat_DEFAULT});
     support_format->AddFormat({kOpFormat_NHWC, kOpFormat_DEFAULT});
-    validators_.emplace_back(std::move(support_format));
+    (void)validators_.emplace_back(std::move(support_format));
     auto attrs = std::initializer_list<std::string>{"format"};
-    validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
+    (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~BiasAdd() = default;
   NodePtrList Expand() override {

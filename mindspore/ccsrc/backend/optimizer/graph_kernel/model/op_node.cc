@@ -205,7 +205,7 @@ DShape ToNz(const DShape &default_shape) {
   DShape leading_shape;
   DShape tail_shape;
   if (default_shape.size() > nz_size) {
-    leading_shape.insert(leading_shape.end(), default_shape.begin(), default_shape.end() - nz_size);
+    (void)leading_shape.insert(leading_shape.end(), default_shape.begin(), default_shape.end() - SizeToLong(nz_size));
   }
   if (default_shape.size() == 1 || (default_shape.size() >= nz_size && default_shape[len - nz_size] == 1)) {
     // (32) or (N, 1, 32) -> (N, 2, 1, 1, 16)
@@ -227,7 +227,7 @@ DShape ToNz(const DShape &default_shape) {
     }
     tail_shape = {default_shape[1] / 16, default_shape[0] / 16, 16, 16};
   }
-  leading_shape.insert(leading_shape.end(), tail_shape.begin(), tail_shape.end());
+  (void)leading_shape.insert(leading_shape.end(), tail_shape.begin(), tail_shape.end());
   return leading_shape;
 }
 
@@ -248,7 +248,7 @@ DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
   for (auto &s : shapes) {
     std::vector<int64_t> cur(max_dim - s.size(), 1);
     cur.insert(cur.end(), s.begin(), s.end());
-    align_shapes.emplace_back(cur);
+    (void)align_shapes.emplace_back(cur);
   }
   std::vector<int64_t> output_shape(max_dim, 1);
   for (size_t i = 0; i < max_dim; i++) {
@@ -266,7 +266,7 @@ DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
   return output_shape;
 }
 
-DShape ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+DShape ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &) {
   if (std::all_of(inputs.begin(), inputs.end(), [](const NodePtr &input) {
         return input->format == kOpFormat_DEFAULT || input->format == kOpFormat_NHWC || input->format == kOpFormat_NCHW;
       })) {
@@ -310,7 +310,7 @@ TypeId CastOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
   return kernel::DtypeToTypeId(GetValue<std::string>(dst_type));
 }
 
-void SelectOp::CheckType(const NodePtrList &inputs, const DAttrs &attrs) {
+void SelectOp::CheckType(const NodePtrList &inputs, const DAttrs &) {
   if (inputs[0]->type != TypeId::kNumberTypeBool) {
     MS_LOG(EXCEPTION) << "Select's input[0] should be bool type";
   }

@@ -251,8 +251,7 @@ bool GraphKernelComplexExpander::CanExpand(const CNodePtr &node) const {
   return has_complex;
 }
 
-// Just test for complex op, then will be deleted
-ExpanderPtr GraphKernelComplexExpander::GetExpander(const AnfNodePtr &node) {
+ExpanderPtr GraphKernelComplexExpander::GetExpander(const AnfNodePtr &) {
   return std::make_shared<ComplexOpExpander>();
 }
 bool ComplexOpExpander::ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
