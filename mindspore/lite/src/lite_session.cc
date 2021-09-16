@@ -894,8 +894,9 @@ int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &
     inputs_[i]->FreeData();
     inputs_[i]->set_shape(dims[i]);
   }
-
-  executor_->Resize(inputs, dims);
+  if (!is_train_session_) {
+    executor_->Resize(inputs, dims);
+  }
   return RET_OK;
 }
 
