@@ -4,3 +4,6 @@
 [submodule "graphengine"]
 	path = graphengine
 	url = https://gitee.com/mindspore/graphengine.git
+[submodule "tests/models"]
+	path = tests/models
+	url = https://gitee.com/mindspore/models.git
