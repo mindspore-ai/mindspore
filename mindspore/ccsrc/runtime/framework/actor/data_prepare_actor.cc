@@ -17,6 +17,7 @@
 #include "runtime/framework/actor/data_prepare_actor.h"
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "runtime/framework/actor/kernel_actor.h"
+#include "runtime/framework/actor/loop_count_actor.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
@@ -158,6 +159,11 @@ void DataPrepareActor::SendOutput(OpContext<DeviceTensor> *const context) {
   auto source_aid = const_cast<AID *>(&GetAID());
   for (auto &kernel_aid : no_input_kernel_aids_) {
     Async(kernel_aid, &KernelActor::RunOpControl, source_aid, context);
+  }
+
+  // Trigger loop count actor running when there are no data source actor and kernel actor.
+  if ((data_source_aids_.size() + no_input_kernel_aids_.size() == 0) && (loop_count_aid_ != nullptr)) {
+    Async(*loop_count_aid_, &LoopCountActor::RunOpControl, source_aid, context);
   }
 }
 
