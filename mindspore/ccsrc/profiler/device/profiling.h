@@ -59,8 +59,8 @@ class ProfilerManager {
   ~ProfilerManager() = default;
   ProfilerManager(const ProfilerManager &) = delete;
   ProfilerManager &operator=(const ProfilerManager &) = delete;
-  bool GetProfilingEnableFlag();
-  void RecordOneStepStartEndInfo();
+  bool GetProfilingEnableFlag() const;
+  void RecordOneStepStartEndInfo() const;
   std::string GetProfilingOptions() const;
 
  private:

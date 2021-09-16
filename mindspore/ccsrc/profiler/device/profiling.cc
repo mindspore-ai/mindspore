@@ -95,7 +95,7 @@ std::shared_ptr<ProfilerManager> &ProfilerManager::GetInstance() {
   return profiler_manager_inst_;
 }
 
-bool ProfilerManager::GetProfilingEnableFlag() {
+bool ProfilerManager::GetProfilingEnableFlag() const {
 #if ENABLE_GPU
   return profiler::gpu::GPUProfiler::GetInstance()->GetEnableFlag();
 #endif
@@ -107,7 +107,7 @@ bool ProfilerManager::GetProfilingEnableFlag() {
   return false;
 }
 
-void ProfilerManager::RecordOneStepStartEndInfo() {
+void ProfilerManager::RecordOneStepStartEndInfo() const {
 #if ENABLE_GPU
   auto gpu_profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   if (gpu_profiler_inst->GetEnableFlag()) {
