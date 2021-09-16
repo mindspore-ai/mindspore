@@ -17,7 +17,6 @@ from collections import OrderedDict
 import json
 import os
 import stat
-from importlib import import_module
 
 from google.protobuf.text_format import ParseError
 
@@ -30,9 +29,9 @@ from mindspore.profiler.parser.container import MemoryNode as Node
 from mindspore.profiler.parser.container import MemoryTensor as Tensor
 import mindspore._c_expression as c_expression
 
-try:
-    MemoryProto = import_module("mindspore.train.memory_profiling_pb2.MemoryProto")
-except ModuleNotFoundError:
+if not c_expression.security.enable_security():
+    from mindspore.train.memory_profiling_pb2 import MemoryProto
+else:
     MemoryProto = None
 
 GIGABYTES = 1024 * 1024 * 1024
