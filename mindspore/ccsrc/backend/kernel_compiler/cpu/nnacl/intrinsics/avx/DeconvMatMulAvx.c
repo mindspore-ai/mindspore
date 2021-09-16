@@ -138,7 +138,7 @@ void Deconv4X24AvxKernel(const float *src, const float *weight, float *dst, int 
   _mm256_storeu_ps(dst + C2NUM * stride + C24NUM, res12);
 }
 
-void DeconvMatmulAvx(const float *a, const float *b, float *c, int depth, int row, int col, int plane) {
+void DeconvMatmulAvx(const float *a, const float *b, float *c, int depth, int row, int col, const int plane) {
   NNACL_CHECK_ZERO_RETURN(plane);
   int col_num = 0;
   int col_block = UP_DIV(col / plane, C8NUM);
