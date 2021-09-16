@@ -1248,6 +1248,6 @@ STATUS OnnxModelParser::BuildParameterNodeForQuantParam(const void *data, const 
   return RET_OK;
 }
 
-REG_MODEL_PARSER(kFmkTypeOnnx, converter::LiteModelParserCreator<OnnxModelParser>)
+REG_MODEL_PARSER(kFmkTypeOnnx, LiteModelParserCreator<OnnxModelParser>)
 }  // namespace lite
 }  // namespace mindspore

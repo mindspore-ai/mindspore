@@ -29,7 +29,7 @@
 #include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/model_parser.h"
+#include "include/registry/model_parser.h"
 #include "include/registry/model_parser_registry.h"
 #include "ops/primitive_c.h"
 

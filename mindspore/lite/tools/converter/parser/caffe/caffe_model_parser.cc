@@ -576,5 +576,5 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
   }
   return layer.name();
 }
-REG_MODEL_PARSER(kFmkTypeCaffe, converter::LiteModelParserCreator<CaffeModelParser>)
+REG_MODEL_PARSER(kFmkTypeCaffe, LiteModelParserCreator<CaffeModelParser>)
 }  // namespace mindspore::lite

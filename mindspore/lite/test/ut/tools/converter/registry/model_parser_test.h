@@ -20,9 +20,9 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "include/registry/model_parser.h"
 #include "include/registry/model_parser_registry.h"
 #include "ut/tools/converter/registry/node_parser_test.h"
-#include "tools/converter/model_parser.h"
 
 namespace mindspore {
 class ModelParserTest : public converter::ModelParser {

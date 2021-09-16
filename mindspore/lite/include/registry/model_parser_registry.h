@@ -23,6 +23,9 @@
 
 using mindspore::converter::FmkType;
 namespace mindspore {
+namespace converter {
+class ModelParser;
+}  // namespace converter
 namespace registry {
 /// \brief ModelParserCreator defined function pointer to get a ModelParser class.
 typedef converter::ModelParser *(*ModelParserCreator)();

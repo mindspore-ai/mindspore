@@ -24,7 +24,6 @@
 #include "ops/fusion/add_fusion.h"
 #include "ops/addn.h"
 #include "ops/custom.h"
-#include "tools/converter/model_parser.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ut/tools/converter/registry/model_parser_test.h"
