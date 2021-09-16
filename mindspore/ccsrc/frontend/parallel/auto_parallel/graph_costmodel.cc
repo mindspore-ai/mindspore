@@ -101,8 +101,8 @@ void CostGraph::StrategyPropagate(const std::map<OperatorInfoPtr, StrategyPtr> &
   }
 }
 
-void CheckShardingConsisitency(std::map<OperatorInfoPtr, StrategyPtr> configured_ops, OperatorInfoPtr curr_op,
-                               OperatorInfoPtr another_op, CostPtr cost, EdgePtr edge) {
+void CheckShardingConsisitency(std::map<OperatorInfoPtr, StrategyPtr> configured_ops, const OperatorInfoPtr &curr_op,
+                               const OperatorInfoPtr &another_op, const CostPtr &cost, const EdgePtr &edge) {
   if ((configured_ops.find(another_op) == configured_ops.end()) &&
       (cost == nullptr || cost->communication_cost_ != 0.0)) {
     PrintStrategy(another_op->selected_strategy());
@@ -117,7 +117,7 @@ void CheckShardingConsisitency(std::map<OperatorInfoPtr, StrategyPtr> configured
 void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
                     std::map<OperatorInfoPtr, StrategyPtr> configured_ops, std::map<OperatorInfoPtr, bool> *visited) {
   std::queue<std::pair<std::pair<OperatorInfoPtr, StrategyPtr>, size_t>> next_level;
-  next_level.push({{op, op_stra}, 0});
+  (void)next_level.emplace(std::make_pair(op, op_stra), 0);
   while (!next_level.empty()) {
     auto curr_op = next_level.front().first.first;
     auto configured_stra = next_level.front().first.second;
@@ -150,7 +150,7 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
         PrintStrategy(curr_op->selected_strategy());
         MS_LOG(EXCEPTION) << next_op->name() << "'s strategy is null in the edge: " << edge->edge_name();
       }
-      next_level.push({{next_op, next_op_stra}, curr_depth + 1});
+      (void)next_level.emplace(std::make_pair(next_op, next_op_stra), curr_depth + 1);
     }
     for (auto &edge : curr_op->prev_edges()) {
       const auto &prev_op = edge->prev_operator();
@@ -178,7 +178,7 @@ void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
         PrintStrategy(curr_op->selected_strategy());
         MS_LOG(EXCEPTION) << prev_op->name() << "'s strategy is null in the edge: " << edge->edge_name();
       }
-      next_level.push({{prev_op, prev_op_stra}, curr_depth + 1});
+      (void)next_level.emplace(std::make_pair(prev_op, prev_op_stra), curr_depth + 1);
     }
     next_level.pop();
   }
@@ -852,7 +852,7 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
     op1->ReplaceSuccEdge(ith_edge->next_operator(), new_edge);
     ith_edge->next_operator()->ReplacePreEdge(op1, new_edge);
     (void)op1_new_succ_edges->erase(op1_new_succ_edges->begin() + SizeToLong(i));
-    (void)op1_new_succ_edges->emplace(op1_new_succ_edges->begin() + i, new_edge);
+    (void)op1_new_succ_edges->emplace(op1_new_succ_edges->begin() + SizeToLong(i), new_edge);
   }
   for (size_t i = 0; i < op2_old_succ_edges->size(); ++i) {
     auto &new_cost_map = op2_new_edges_cost->at(i);

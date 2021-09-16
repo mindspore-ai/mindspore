@@ -1794,12 +1794,11 @@ void MatmulDDSCost::CalculateOutputInMemory() {
 }
 
 // Taking account of input
-void MatmulDDSCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+void MatmulDDSCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
   bool keep_mem =
     (std::find(is_parameter_.begin(), is_parameter_.end(), true) != is_parameter_.end()) ||
     (std::find(is_parameter_involve_.begin(), is_parameter_involve_.end(), true) != is_parameter_involve_.end());
   std::fill(is_inputs_should_in_memory_.begin(), is_inputs_should_in_memory_.end(), keep_mem);
 }
-
 }  // namespace parallel
 }  // namespace mindspore

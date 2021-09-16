@@ -72,26 +72,26 @@ GroupManager::GroupManager() { groups_.clear(); }
 
 #if !defined(NO_DLIB) || defined(ENABLE_GPU)
 bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const std::string &group_name,
-                                         const std::vector<uint32_t> ranks, int device_id) {
+                                         const std::vector<uint32_t> ranks, uint32_t device_id) {
   // The group operation thread must be same with nccl init thread in the GPU device.
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) ||
       (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice)) {
     return CommManager::GetInstance().CreateGroupSync(group_name, ranks);
   } else {
-    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, IntToUint(device_id));
+    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
     MS_EXCEPTION_IF_NULL(executor);
     return executor->CreateCommGroup(group_name, ranks);
   }
 }
 
 bool GroupManager::DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name,
-                                          int device_id) {
+                                          uint32_t device_id) {
   // The group operation thread must be same with nccl init thread in the GPU device.
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) ||
       (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice)) {
     return CommManager::GetInstance().DestroyGroup(group_name);
   } else {
-    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, IntToUint(device_id));
+    auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
     MS_EXCEPTION_IF_NULL(executor);
     return executor->DestroyCommGroup(group_name);
   }
@@ -125,7 +125,7 @@ Status CreateGroups(const std::vector<std::pair<std::string, std::vector<uint32_
 }
 #else
 bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const std::string &group_name,
-                                         const std::vector<uint32_t> ranks, int device_id) {
+                                         const std::vector<uint32_t> ranks, uint32_t device_id) {
   MS_LOG(WARNING) << "Create group in stub";
   auto executor = parallel::ExecutorManager::Instance().GetExecutor(device_name, device_id);
   MS_EXCEPTION_IF_NULL(executor);
@@ -133,7 +133,7 @@ bool GroupManager::CreateGroupByExecutor(const std::string &device_name, const s
 }
 
 bool GroupManager::DestroyGroupByExecutor(const std::string &device_name, const std::string &group_name,
-                                          int device_id) {
+                                          uint32_t device_id) {
   MS_LOG(WARNING) << "Destroy group in stub";
   auto executor = parallel::ExecutorManager::Instance().GetExecutor(device_name, device_id);
   MS_EXCEPTION_IF_NULL(executor);
@@ -282,6 +282,5 @@ Status GroupManager::FindGroup(const std::string &name, mindspore::parallel::Gro
 }
 
 void GroupManager::Clear() { (void)DestroyAllGroups(); }
-
 }  // namespace parallel
 }  // namespace mindspore
