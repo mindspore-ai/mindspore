@@ -155,6 +155,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   static void RunOpHideNopNode(const KernelGraphPtr &kernel_graph);
   virtual void ReportWarningMessage() {}
   virtual void ReportErrorMessage() {}
+  virtual void SetThreadContext() {}
 #ifdef ENABLE_DEBUGGER
   // set debugger
   void SetDebugger() {

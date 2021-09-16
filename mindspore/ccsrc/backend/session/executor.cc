@@ -214,6 +214,9 @@ void Executor::WorkerLoop() {
       return;
     }
     try {
+      if (task->session_ != nullptr) {
+        task->session_->SetThreadContext();
+      }
       task->Run();
       if (task->session_ != nullptr) {
         task->session_->ReportWarningMessage();
