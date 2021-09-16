@@ -63,14 +63,58 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  std::vector<MSTensor> outputs;
-  ret = model.Predict(FLAGS_image_path, &outputs);
+  std::cout << "Check if data preprocess exists: " << model.HasPreprocess() << std::endl;
+
+  // way 1, construct a common MSTensor
+  std::vector<MSTensor> inputs1 = {ReadFileToTensor(FLAGS_image_path)};
+  std::vector<MSTensor> outputs1;
+
+  ret = model.PredictWithPreprocess(inputs1, &outputs1);
   if (ret.IsError()) {
     std::cout << "ERROR: Predict failed." << std::endl;
     return 1;
   }
 
-  auto shape = outputs[0].Shape();
+  std::ofstream o1("result1.txt", std::ios::out);
+  o1.write(reinterpret_cast<const char *>(outputs1[0].MutableData()), std::streamsize(outputs1[0].DataSize()));
+
+  // way 2, construct a pointer of MSTensor, be careful of destroy
+  MSTensor *tensor = MSTensor::CreateImageTensor(FLAGS_image_path);
+  std::vector<MSTensor> inputs2 = {*tensor};
+  MSTensor::DestroyTensorPtr(tensor);
+  std::vector<MSTensor> outputs2;
+
+  ret = model.PredictWithPreprocess(inputs2, &outputs2);
+  if (ret.IsError()) {
+    std::cout << "ERROR: Predict failed." << std::endl;
+    return 1;
+  }
+
+  std::ofstream o2("result2.txt", std::ios::out);
+  o2.write(reinterpret_cast<const char *>(outputs2[0].MutableData()), std::streamsize(outputs2[0].DataSize()));
+
+  // way 3, split preprocess and predict
+  std::vector<MSTensor> inputs3 = {ReadFileToTensor(FLAGS_image_path)};
+  std::vector<MSTensor> outputs3;
+
+  ret = model.Preprocess(inputs3, &outputs3);
+  if (ret.IsError()) {
+    std::cout << "ERROR: Preprocess failed." << std::endl;
+    return 1;
+  }
+
+  std::vector<MSTensor> outputs4;
+  ret = model.Predict(outputs3, &outputs4);
+  if (ret.IsError()) {
+    std::cout << "ERROR: Preprocess failed." << std::endl;
+    return 1;
+  }
+
+  std::ofstream o3("result3.txt", std::ios::out);
+  o3.write(reinterpret_cast<const char *>(outputs4[0].MutableData()), std::streamsize(outputs4[0].DataSize()));
+
+  // check shape
+  auto shape = outputs1[0].Shape();
   std::cout << "Output Shape: " << std::endl;
   for (auto s : shape) {
     std::cout << s << ", ";

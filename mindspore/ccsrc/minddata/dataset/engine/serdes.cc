@@ -376,5 +376,18 @@ Status Serdes::ParseMindIRPreprocess(const std::string &dataset_json, const std:
   return Status::OK();
 }
 
+// In the current stage, there is a cyclic dependency between libmindspore.so and c_dataengine.so,
+// we make a C function here and dlopen by libminspore.so to avoid linking explicitly,
+// will be fix after decouling libminspore.so into multi submodules
+extern "C" {
+// ParseMindIRPreprocess_C has C-linkage specified, but returns user-defined type 'mindspore::Status'
+// which is incompatible with C
+void ParseMindIRPreprocess_C(const std::string &dataset_json, const std::string &process_column,
+                             std::vector<std::shared_ptr<mindspore::dataset::Execute>> *data_graph, Status *s) {
+  Status ret = Serdes::ParseMindIRPreprocess(dataset_json, process_column, data_graph);
+  *s = Status(ret);
+}
+}
+
 }  // namespace dataset
 }  // namespace mindspore

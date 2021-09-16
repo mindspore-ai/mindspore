@@ -665,5 +665,41 @@ Status Execute::DeviceMemoryRelease() {
   return Status::OK();
 }
 
+Status Execute::Run(const std::vector<std::shared_ptr<dataset::Execute>> &data_graph,
+                    const std::vector<mindspore::MSTensor> &inputs, std::vector<mindspore::MSTensor> *outputs) {
+  std::vector<MSTensor> transform_inputs = inputs;
+  std::vector<MSTensor> transform_outputs;
+  if (!data_graph.empty()) {
+    for (auto exes : data_graph) {
+      CHECK_FAIL_RETURN_UNEXPECTED(exes != nullptr, "Given execute object is null.");
+      Status ret = exes->operator()(transform_inputs, &transform_outputs);
+      if (ret != kSuccess) {
+        MS_LOG(ERROR) << "Run preprocess failed:" << ret.GetErrDescription();
+        return ret;
+      }
+      MS_LOG(DEBUG) << "transform_outputs[0].Shape: " << transform_outputs[0].Shape();
+      transform_inputs = transform_outputs;
+    }
+    *outputs = std::move(transform_outputs);
+  } else {
+    std::string msg = "The set of Executors can not be empty.";
+    MS_LOG(ERROR) << msg;
+    RETURN_STATUS_UNEXPECTED(msg);
+  }
+  return Status::OK();
+}
+
+// In the current stage, there is a cyclic dependency between libmindspore.so and c_dataengine.so,
+// we make a C function here and dlopen by libminspore.so to avoid linking explicitly,
+// will be fix after decouling libminspore.so into multi submodules
+extern "C" {
+// ExecuteRun_C has C-linkage specified, but returns user-defined type 'mindspore::Status' which is incompatible with C
+void ExecuteRun_C(const std::vector<std::shared_ptr<dataset::Execute>> &data_graph,
+                  std::vector<mindspore::MSTensor> &inputs, std::vector<mindspore::MSTensor> *outputs, Status *s) {
+  Status ret = Execute::Run(data_graph, inputs, outputs);
+  *s = Status(ret);
+}
+}
+
 }  // namespace dataset
 }  // namespace mindspore

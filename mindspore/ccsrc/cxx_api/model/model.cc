@@ -94,13 +94,29 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
   return impl_->Predict(inputs, outputs);
 }
 
-Status Model::Predict(const std::vector<char> &input, std::vector<MSTensor> *outputs, const MSKernelCallBack &before,
-                      const MSKernelCallBack &after) {
+Status Model::PredictWithPreprocess(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                                    const MSKernelCallBack &before, const MSKernelCallBack &after) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Failed because this model has not been built.";
     return kMCFailed;
   }
-  return impl_->Predict(CharToString(input), outputs);
+  return impl_->PredictWithPreprocess(inputs, outputs);
+}
+
+Status Model::Preprocess(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Failed because this model has not been built.";
+    return kMCFailed;
+  }
+  return impl_->Preprocess(inputs, outputs);
+}
+
+bool Model::HasPreprocess() {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Failed because this model has not been built.";
+    return false;
+  }
+  return impl_->HasPreprocess();
 }
 
 std::vector<MSTensor> Model::GetInputs() {
