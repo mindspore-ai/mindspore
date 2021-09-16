@@ -557,7 +557,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::Searc
   std::vector<size_t> indices;
   for (size_t i = 0; i < cs.size(); ++i) {
     if (cs[i]) {
-      origin_indices.emplace(cs[i], i);
+      (void)origin_indices.emplace(cs[i], i);
       indices.push_back(i);
     }
   }

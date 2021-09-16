@@ -25,7 +25,7 @@ class ExpandDims : public OpExpander {
  public:
   ExpandDims() {
     std::initializer_list<std::string> attrs{"axis"};
-    validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
+    (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~ExpandDims() = default;
   NodePtrList Expand() override {
@@ -44,9 +44,9 @@ class ExpandDims : public OpExpander {
         MS_LOG(EXCEPTION) << "ExpandDims axis " << x << " is out of range of size " << new_shape.size();
       }
       if (x >= 0) {
-        new_shape.insert(new_shape.begin() + x, 1LL);
+        (void)new_shape.insert(new_shape.begin() + x, 1LL);
       } else {
-        new_shape.insert(new_shape.begin() + (x + rank + 1), 1LL);
+        (void)new_shape.insert(new_shape.begin() + (x + rank + 1), 1LL);
       }
     }
     return new_shape;

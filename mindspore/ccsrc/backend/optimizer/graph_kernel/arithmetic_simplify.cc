@@ -87,8 +87,7 @@ class PatternTree {
 
  protected:
   // set attributes for certain pattern node if needed;
-  virtual std::unordered_map<PatternNodePtr, graphkernel::DAttrs> SetAttributes(
-    const graphkernel::NodePtr &origin_root) {
+  virtual std::unordered_map<PatternNodePtr, graphkernel::DAttrs> SetAttributes(const graphkernel::NodePtr &) {
     auto right_pattern = std::make_shared<PatternNodePtrList>();
     DfsTraverse(right_pattern, rhs_root_);
     std::unordered_map<PatternNodePtr, graphkernel::DAttrs> attrs_map;
@@ -389,8 +388,8 @@ class ExtraReduce1PatternTree : public PatternTree {
       auto second_axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
       std::set<int64_t> st(first_axis.begin(), first_axis.end());
       std::unordered_map<int64_t, int64_t> mp;
-      size_t shift = 0;
-      for (size_t n = 0; n < first_reduce->inputs()[0]->shape.size(); n++) {
+      int64_t shift = 0;
+      for (int64_t n = 0; n < SizeToLong(first_reduce->inputs()[0]->shape.size()); n++) {
         if (st.find(n) != st.end()) {
           shift++;
         } else {

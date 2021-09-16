@@ -59,8 +59,7 @@ class TsaChecker : public AtomicAddChecker {
   }
 };
 
-AnfNodePtr TsaAtomicAddToFirstTensor::FindTsaFirstRealInputInGraph(const KernelGraphPtr &main_graph,
-                                                                   const AnfNodePtr &node) {
+AnfNodePtr TsaAtomicAddToFirstTensor::FindTsaFirstRealInputInGraph(const KernelGraphPtr &, const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(cnode);

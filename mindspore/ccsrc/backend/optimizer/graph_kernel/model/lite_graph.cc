@@ -58,7 +58,7 @@ const NodePtrList &LiteGraph::GetOrderedNodes() {
   std::function<void(NodePtr)> dfs;
   std::set<NodePtr> visited;
   dfs = [&dfs, &outdegrees, &visited](const NodePtr &node) {
-    visited.insert(node);
+    (void)visited.insert(node);
     for (auto &input : node->inputs()) {
       if (input->NodeType() == NType::Primitive) {
         ++outdegrees[input];
@@ -81,7 +81,7 @@ const NodePtrList &LiteGraph::GetOrderedNodes() {
       --outdegrees[input];
       if (outdegrees[input] == 0) {
         stack.push_back(input);
-        outdegrees.erase(input);
+        (void)outdegrees.erase(input);
       }
     }
   }

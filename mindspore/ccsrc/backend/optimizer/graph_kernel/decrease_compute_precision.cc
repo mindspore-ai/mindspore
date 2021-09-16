@@ -31,7 +31,6 @@
 
 namespace mindspore {
 namespace opt {
-
 // Add CastCNode
 CNodePtr AddCastCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                       const TypeId &input_type, const TypeId &output_type, const std::vector<size_t> &origin_shape,
@@ -267,6 +266,5 @@ bool DecreaseComputePrecision::Run(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-
 }  // namespace opt
 }  // namespace mindspore
