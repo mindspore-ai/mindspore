@@ -100,7 +100,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         ...        return self._backbone
         ...
         >>> loss_net = MyWithLossCell(net, loss_fn)
-        >>> train_net = boost.BoostTrainOneStepCellTrainOneStepCell(loss_net, optim)
+        >>> train_net = boost.BoostTrainOneStepCell(loss_net, optim)
     """
 
     def __init__(self, network, optimizer, sens=1.0):
@@ -117,9 +117,9 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             if self.max_accumulation_step <= 1:
                 self.max_accumulation_step = 1
                 self.use_grad_accumulation = False
-        self._accumulation_step = Parameter(Tensor(0, dtype=mstype.int32), name="accumulation_step")
+        self.accumulation_step = Parameter(Tensor(0, dtype=mstype.int32), name="accumulation_step")
         if self.use_grad_accumulation:
-            self._grad_accumulation = self.weights.clone(prefix="grad_accumulation", init='zeros')
+            self.grad_accumulation = self.weights.clone(prefix="grad_accumulation", init='zeros')
 
         self.freeze_nets = None
         self.step = Parameter(Tensor(0, dtype=mstype.int32))
@@ -134,13 +134,13 @@ class BoostTrainOneStepCell(TrainOneStepCell):
                                            self.grad, self.use_grad_accumulation, self.mean, self.degree,
                                            self.max_accumulation_step)
 
-        self.enable_adasum = self._check_adasum_enable(optimizer, self.reducer_flag)
+        self.enable_adasum = self.check_adasum_enable(optimizer, self.reducer_flag)
         self.sync_tensor = Parameter(Tensor(0, dtype=mstype.int32))
         if self.enable_adasum:
             _rank = _get_global_rank()
             _rank_size = get_group_size()
             _device_number = 8
-            self._device_number = _device_number
+            self.device_number = _device_number
             group_number = _rank_size // _device_number
 
             self.server_rank = _rank % _device_number
@@ -195,19 +195,19 @@ class BoostTrainOneStepCell(TrainOneStepCell):
 
     def gradient_accumulation_process(self, loss, grads):
         """gradient accumulation algorithm process."""
-        loss = F.depend(loss, self.hyper_map(F.partial(gradient_accumulation_op, self._max_accumulation_step),
-                                             self._grad_accumulation, grads))
-        self._accumulation_step += 1
+        loss = F.depend(loss, self.hyper_map(F.partial(gradient_accumulation_op, self.max_accumulation_step),
+                                             self.grad_accumulation, grads))
+        self.accumulation_step += 1
 
-        if self._accumulation_step >= self._max_accumulation_step:
+        if self.accumulation_step >= self.max_accumulation_step:
             if self.enable_adasum:
-                loss = F.depend(loss, self.adasum_process(loss, self._grad_accumulation))
+                loss = F.depend(loss, self.adasum_process(loss, self.grad_accumulation))
             else:
-                loss = F.depend(loss, self.optimizer(self._grad_accumulation))
-            self._accumulation_step = 0
+                loss = F.depend(loss, self.optimizer(self.grad_accumulation))
+            self.accumulation_step = 0
 
-        if self._accumulation_step == 0:
-            loss = F.depend(loss, self.hyper_map(F.partial(gradient_clear_op), self._grad_accumulation))
+        if self.accumulation_step == 0:
+            loss = F.depend(loss, self.hyper_map(F.partial(gradient_clear_op), self.grad_accumulation))
 
         return loss
 
@@ -220,7 +220,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         adasum_res = self.adasum(delta_w, rank_weights, grad_clone)
         sync_tensor = F.depend(self.sync_tensor, adasum_res)
         sync_flag = self.adasum.sync_barrier(sync_tensor)
-        for i in range(self._device_number):
+        for i in range(self.device_number):
             weight_tuple = self.weights[self.start[i] : self.end[i]]
             node_rank = F.depend(weight_tuple, sync_flag)
             update_weights = self.adasum.broadcast_list[i](node_rank)
@@ -230,7 +230,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
                 self.hyper_map(F.partial(_save_weight), weight_tuple, update_weights)
         return loss
 
-    def _check_adasum_enable(self, optimizer, reducer_flag):
+    def check_adasum_enable(self, optimizer, reducer_flag):
         if not getattr(optimizer, "adasum", None) or not reducer_flag:
             return False
         _rank_size = get_group_size()
@@ -277,8 +277,8 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
-        >>> from mindspore.ops import operations as P
-        >>> from mindspore.nn.wrap.cell_wrapper import WithLossCell
+        >>> import mindspore.ops as ops
+        >>> from mindspore.nn import WithLossCell
         >>> from mindspore.common import dtype as mstype
         >>>
         >>> class Net(nn.Cell):
@@ -356,7 +356,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
                 loss = self.gradient_accumulation_process(loss, grads)
             else:
                 if self.enable_adasum:
-                    loss = F.depend(loss, self.adasum_process(loss, self._grad_accumulation))
+                    loss = F.depend(loss, self.adasum_process(loss, self.grad_accumulation))
                 else:
                     loss = F.depend(loss, self.optimizer(grads))
         return loss, cond, scaling_sens
