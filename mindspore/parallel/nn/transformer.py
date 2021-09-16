@@ -26,7 +26,6 @@ from mindspore import context
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator
 from mindspore import log as logger
@@ -34,8 +33,9 @@ from mindspore.parallel._utils import _get_parallel_mode
 from mindspore.context import ParallelMode
 from .layers import _LayerNorm, _Linear, _check_input_shape, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
-    _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value, Router
+    _check_shape_equal, _check_past_none_input_none, _check_input_dtype, _check_input_shape_value
 from .op_parallel_config import default_dpmp_config, _PipeLineConfig, OpParallelConfig, _Config, _check_config
+from .moe import default_moe_config, MoE
 
 __all__ = [
     "AttentionMask",
@@ -47,35 +47,8 @@ __all__ = [
     "TransformerEncoderLayer",
     "TransformerDecoderLayer",
     "Transformer",
-    "MoEConfig",
     "TransformerOpParallelConfig",
     "EmbeddingOpParallelConfig"]
-
-
-class MoEConfig:
-    r"""
-        The configuration of MoE (Mixture of Expert).
-
-        Args:
-            expert_num (int): The number of experts employed. Default: 1
-            capacity_factor (float): The factor is used to indicate how much to expand expert capacity,
-                which is >=1.0. Default: 1.1.
-            aux_loss_factor (float): The factor is used to indicate how much the load balance loss (produced by the
-                router) to be added to the entire model loss, which is < 1.0. Default: 0.05.
-            num_experts_chosen (int): The number of experts is chosen by each token. Default: 1.
-            noisy_policy (string): The noisy policy is used in routing tokens to experts. Default: None.
-            noisy_epsilon (float): The parameter is used in adding noises in routing tokens to experts. Default: 1e-2.
-    """
-    def __init__(self, expert_num=1, capacity_factor=1.1, aux_loss_factor=0.05,
-                 num_experts_chosen=1, noisy_policy=None, noisy_epsilon=1e-2):
-        self.expert_num = expert_num
-        self.capacity_factor = capacity_factor
-        self.aux_loss_factor = aux_loss_factor
-        self.num_experts_chosen = num_experts_chosen
-        self.noisy_policy = noisy_policy
-        self.noisy_epsilon = noisy_epsilon
-
-default_moe_config = MoEConfig()
 
 
 class EmbeddingOpParallelConfig(_Config):
@@ -402,126 +375,6 @@ class FeedForward(Cell):
         # returned shape is [bs, seq_length, hidden_size]
         output = self.dropout(output)
         return output
-
-
-@constexpr
-def calculate_expert_capacity(k, tokens_per_device, capacity_factor, expert_dim):
-    return math.ceil(k * tokens_per_device * capacity_factor / expert_dim)
-
-
-class MoE(Cell):
-    """
-    The mixture of experts (MoE) implementation. The implementation includes a router and a FeedForward layer.
-    The router dispatches tokens to experts in FeedForward, then FeedForward does computation, and the final output is
-    obtained by multiplying FeedForward's output and router's combine weight.
-
-    Args:
-        hidden_size (int): The dimension of the inputs.
-        ffn_hidden_size (int): The intermediate hidden size.
-        dropout_rate (float): The dropout rate for the second linear's output.
-        hidden_act (str): The activation of the internal feedforward layer. Supports 'relu',
-                         'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
-                         'hsigmoid', 'logsigmoid' and so on. Default: gelu.
-        param_init_type (dtype.Number): The parameter initialization type. Can be dtype.float32 or dtype.float16.
-        moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
-        parallel_config(OpParallelConfig): The config of parallel setting, see `OpParallelConfig`.
-                                           Default `default_dpmp_config`, a instance of `OpParallelConfig` with default
-                                           args.
-
-    Inputs:
-        - **x** (Tensor) - should be `[batch, seq_length, hidden_size]`. Float tensor.
-
-    Outputs:
-        Tensor, the output of this layer after mapping. The shape is `[batch, seq_length, hidden_size]`.
-    """
-    def __init__(self, hidden_size,
-                 ffn_hidden_size,
-                 dropout_rate,
-                 hidden_act='gelu',
-                 param_init_type=mstype.float32,
-                 moe_config=default_moe_config,
-                 parallel_config=default_dpmp_config):
-        super(MoE, self).__init__()
-        self.hidden_size = hidden_size
-        self.expert_dim = moe_config.expert_num
-        self.capacity_factor = moe_config.capacity_factor
-        self.aux_loss_factor = moe_config.aux_loss_factor
-        self.num_experts_chosen = moe_config.num_experts_chosen
-        self.expert_parallel = parallel_config.data_parallel
-        self.dp = parallel_config.data_parallel
-
-        self.ffn = FeedForward(hidden_size=hidden_size,
-                               ffn_hidden_size=ffn_hidden_size,
-                               dropout_rate=dropout_rate,
-                               hidden_act=hidden_act,
-                               expert_num=self.expert_dim,
-                               param_init_type=param_init_type,
-                               parallel_config=parallel_config)
-        self.reshape = P.Reshape()
-        self.shape = P.Shape()
-        self.transpose = P.Transpose().shard(((self.dp, 1, 1),))
-        self.transpose2 = P.Transpose().shard(((self.dp, 1, 1, 1),))
-        self.transpose3 = P.Transpose().shard(((self.dp, 1, 1, 1),))
-        self.transpose4 = P.Transpose().shard(((self.dp, 1, 1),))
-        self.transpose5 = P.Transpose().shard(((self.dp, 1, 1),))
-        self.batch_mm = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
-        self.batch_mm2 = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
-        self.mul = P.Mul().shard(((), ()))
-        self.router = Router(d_model=hidden_size, moe_config=moe_config, routing_policy=None,
-                             training=True, parallel_config=parallel_config)
-        self.cast = P.Cast()
-
-
-    def construct(self, input_tensor):
-        bs = self.shape(input_tensor)[0]
-        input_tensor = self.reshape(input_tensor, (-1, self.hidden_size))
-        bs_and_dmodel = self.shape(input_tensor)
-        tokens_per_device = bs_and_dmodel[0] / self.expert_parallel
-        input_tensor = self.reshape(input_tensor, (self.expert_parallel, tokens_per_device, self.hidden_size))
-
-        expert_capacity = calculate_expert_capacity(self.num_experts_chosen, tokens_per_device,
-                                                    self.capacity_factor, self.expert_dim)
-        # dispatch_tensor's shape: (self.expert_parallel, tokens_per_device, self.expert_dim, expert_capacity)
-        # combine_tensor's shape: (self.expert_parallel, tokens_per_device, self.expert_dim, expert_capacity)
-        dispatch_tensor, combine_tensor, aux_loss = self.router(input_tensor)
-
-        # after transpose, input_tensor's shape: (self.expert_parallel, self.hidden_size, tokens_per_device)
-        input_tensor = self.transpose(input_tensor, (0, 2, 1))
-        dispatch_tensor = self.reshape(dispatch_tensor, (self.expert_parallel, tokens_per_device,
-                                                         self.expert_dim * expert_capacity))
-        dispatch_tensor = self.cast(dispatch_tensor, F.dtype(input_tensor))
-        # expert_input's shape: (self.expert_parallel, self.hidden_size, self.expert_dim * expert_capacity)
-        expert_input = self.batch_mm(input_tensor, dispatch_tensor)
-        expert_input = self.reshape(expert_input, (self.expert_parallel, self.hidden_size, self.expert_dim,
-                                                   expert_capacity))
-        # expert_input's shape: (self.expert_dim, self.expert_parallel, expert_capacity, self.hidden_size)
-        expert_input = self.transpose2(expert_input, (2, 0, 3, 1))
-        expert_input = self.reshape(expert_input, (self.expert_dim, self.expert_parallel * expert_capacity,
-                                                   self.hidden_size))
-
-        # expert_output's shape: (self.expert_dim, self.expert_parallel*expert_capacity, self.hidden_size)
-        expert_output = self.ffn(expert_input)
-        expert_output = self.reshape(expert_output, (self.expert_dim, self.expert_parallel,
-                                                     expert_capacity, self.hidden_size))
-        # expert_output's shape: (self.expert_parallel, self.hidden_size, self.expert_dim, expert_capacity)
-        expert_output = self.transpose3(expert_output, (1, 3, 0, 2))
-        expert_output = self.reshape(expert_output, (self.expert_parallel, self.hidden_size,
-                                                     self.expert_dim*expert_capacity))
-        combine_tensor = self.reshape(combine_tensor, (self.expert_parallel, tokens_per_device,
-                                                       self.expert_dim*expert_capacity))
-        # combine_tensor's shape: (self.expert_parallel, self.expert_dim*expert_capacity, tokens_per_device)
-        combine_tensor = self.transpose4(combine_tensor, (0, 2, 1))
-        combine_tensor = self.cast(combine_tensor, F.dtype(expert_output))
-
-        # combined_output's shape: (self.expert_parallel, self.hidden_size, tokens_per_device)
-        combined_output = self.batch_mm2(expert_output, combine_tensor)
-        # combined_output's shape: (self.expert_parallel, tokens_per_device, self.hidden_size)
-        combined_output = self.transpose5(combined_output, (0, 2, 1))
-        combined_output = self.reshape(combined_output, (bs_and_dmodel[0], bs_and_dmodel[1]))
-        combined_output = self.reshape(combined_output, (bs, -1, self.hidden_size))
-
-        aux_loss = self.mul(self.aux_loss_factor, aux_loss)
-        return combined_output, aux_loss
 
 
 class AttentionMask(Cell):
