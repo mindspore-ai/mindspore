@@ -182,20 +182,6 @@ BaseRef GetNodeOutputTensorFromInputs(const session::KernelWithIndex &node_outpu
       MS_LOG(EXCEPTION) << "Input idx:" << input_idx << "out of range:" << input_tensors.size();
     }
     if (graph->inputs()[input_idx] == node) {
-      size_t output_index = node_output_pair.second;
-      bool is_internal_output = graph->IsInternalOutput(node, output_index);
-      if (!is_internal_output && !AnfAlgo::IsParameterWeight(param_node) &&
-          input_tensors[input_idx]->device_address() != nullptr) {
-        TypeId type_id = AnfAlgo::GetOutputDeviceDataType(node, output_index);
-        if (type_id == kTypeUnknown) {
-          type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
-        }
-        auto tensor = std::make_shared<tensor::Tensor>(*input_tensors[input_idx], type_id);
-        MS_EXCEPTION_IF_NULL(tensor);
-        tensor->set_device_address(input_tensors[input_idx]->device_address());
-        tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
-        return tensor;
-      }
       return input_tensors[input_idx];
     }
   }
