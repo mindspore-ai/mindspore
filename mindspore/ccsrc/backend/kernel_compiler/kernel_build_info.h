@@ -60,6 +60,8 @@ class KernelBuildInfo {
 
   std::string GetInputReshapeType(size_t input_index) const;
 
+  std::string GetInputValueDepend(size_t input_index) const;
+
   bool IsInputDefaultPadding() const;
 
   bool IsOutputDefaultPadding() const;
@@ -113,6 +115,7 @@ class KernelBuildInfo {
   std::vector<TypeId> inputs_device_type_;
   std::vector<TypeId> outputs_device_type_;
   std::vector<nlohmann::json> output_data_desc_;
+  std::vector<std::string> input_value_depend_;
   FusionType fusion_type_;
   Processor processor_;
 };
@@ -132,6 +135,7 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
       kernel_build_info_->inputs_device_type_.emplace_back(kernel_build_info->GetInputDeviceType(index));
       kernel_build_info_->inputs_format_.emplace_back(kernel_build_info->GetInputFormat(index));
       kernel_build_info_->input_reshape_type_.emplace_back(kernel_build_info->GetInputReshapeType(index));
+      kernel_build_info_->input_value_depend_.emplace_back(kernel_build_info->GetInputValueDepend(index));
     }
     for (size_t index = 0; index < kernel_build_info->GetOutputNum(); ++index) {
       kernel_build_info_->outputs_device_type_.emplace_back(kernel_build_info->GetOutputDeviceType(index));
@@ -155,6 +159,8 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
   void SetOutputsDeviceType(const std::vector<TypeId> &outputs_device_type);
 
   void SetInputsReshapeType(const std::vector<std::string> &input_reshape_type);
+
+  void SetInputsValueDepend(const std::vector<std::string> &input_value_depend);
 
   void SetOutputsReshapeType(const std::vector<std::string> &output_reshape_type);
 

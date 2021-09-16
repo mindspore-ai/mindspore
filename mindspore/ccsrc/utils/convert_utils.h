@@ -62,6 +62,18 @@ bool Isomorphic(const FuncGraphPtr &g1, const FuncGraphPtr &g2, FuncGraphPairMap
 
 tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
 
+template <typename T>
+std::vector<T> TensorValueToVector(const tensor::TensorPtr &tensor) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  std::vector<T> value;
+  auto element_size = tensor->data().size();
+  auto *data = static_cast<T *>(tensor->data_c());
+  for (auto i = 0; i < element_size; i++) {
+    value.push_back(data[i]);
+  }
+  return value;
+}
+
 void TensorValueToTensor(const ValuePtr &value, std::vector<tensor::TensorPtr> *tensors);
 
 size_t CountValueNum(const ValueTuplePtr &value_tuple);

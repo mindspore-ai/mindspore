@@ -107,20 +107,23 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
     std::vector<std::string> inputs_format;
     std::vector<TypeId> inputs_device_type;
     std::vector<std::string> inputs_reshape_type;
+    std::vector<std::string> inputs_value_depend;
     // input
     if (!GenBuilderItem(true, kernel_build_info_index, real_input_tensor_num, inputs_info, dyn_input_sizes,
-                        &inputs_format, &inputs_device_type, &inputs_reshape_type)) {
+                        &inputs_format, &inputs_device_type, &inputs_reshape_type, &inputs_value_depend)) {
       break;
     }
     builder.SetInputsDeviceType(inputs_device_type);
     builder.SetInputsFormat(inputs_format);
     builder.SetInputsReshapeType(inputs_reshape_type);
+    builder.SetInputsValueDepend(inputs_value_depend);
     // output
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_device_type;
     std::vector<std::string> outputs_reshape_type;
+    std::vector<std::string> outputs_value_depend;
     if (!GenBuilderItem(false, kernel_build_info_index, real_output_tensor_num, outputs_info, dyn_input_sizes,
-                        &outputs_format, &outputs_device_type, &outputs_reshape_type)) {
+                        &outputs_format, &outputs_device_type, &outputs_reshape_type, &outputs_value_depend)) {
       break;
     }
     builder.SetOutputsDeviceType(outputs_device_type);
@@ -308,10 +311,12 @@ std::vector<int64_t> TbeKernelSelect::GetNodeDynamicInputs() {
 bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_index, size_t real_io_tensor_num,
                                      const std::vector<std::shared_ptr<OpIOInfo>> &ios_info,
                                      const std::vector<int64_t> &dyn_input_sizes, std::vector<std::string> *formats,
-                                     std::vector<TypeId> *device_types, std::vector<std::string> *reshape_types) {
+                                     std::vector<TypeId> *device_types, std::vector<std::string> *reshape_types,
+                                     std::vector<std::string> *value_depends) {
   MS_EXCEPTION_IF_NULL(formats);
   MS_EXCEPTION_IF_NULL(device_types);
   MS_EXCEPTION_IF_NULL(reshape_types);
+  MS_EXCEPTION_IF_NULL(value_depends);
   size_t dynamic_input_index = 0;
   size_t real_io_tensor_index = 0;
   size_t io_info_index = 0;
@@ -325,6 +330,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
     }
     const std::string &io_param_type = io_info_item->param_type();
     auto reshape_type = io_info_item->reshape_type();
+    auto value_depend = io_info_item->value_depend();
     if (io_param_type == kParamTypeDynamic) {
       // dynamic io
       if (is_input) {
@@ -337,6 +343,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
           device_types->emplace_back(tbe::DtypeToTypeId(kernel_build_info_dtype));
           formats->emplace_back(kernel_build_info_format);
           reshape_types->emplace_back(reshape_type);
+          value_depends->emplace_back(value_depend);
         }
         dynamic_input_index++;
         real_io_tensor_index += LongToSize(dynamic_input_size);
@@ -348,6 +355,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
           device_types->emplace_back(tbe::DtypeToTypeId(kernel_build_info_dtype));
           formats->emplace_back(kernel_build_info_format);
           reshape_types->emplace_back(reshape_type);
+          value_depends->emplace_back(value_depend);
         }
         real_io_tensor_index += real_io_tensor_num;
       }
@@ -356,6 +364,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
       device_types->emplace_back(tbe::DtypeToTypeId(kernel_build_info_dtype));
       formats->emplace_back(kernel_build_info_format);
       reshape_types->emplace_back(reshape_type);
+      value_depends->emplace_back(value_depend);
       real_io_tensor_index++;
     } else {
       MS_LOG(EXCEPTION) << "op info's param type is not match: " << io_param_type;
@@ -382,6 +391,7 @@ void TbeKernelSelect::CreateNewOpIOInfo(const mindspore::kernel::OpIOInfo &op_io
   op_io_info_new->set_need_compile(op_io_info.need_compile());
   op_io_info_new->set_reshape_type(op_io_info.reshape_type());
   op_io_info_new->set_shape(op_io_info.shape());
+  op_io_info_new->set_value_depend(op_io_info.value_depend());
   // dtype
   std::vector<std::string> dtype_new;
   auto dtype = op_io_info.dtypes();
@@ -557,6 +567,7 @@ void TbeKernelSelect::CreateNewOpIOInfo(const mindspore::kernel::OpIOInfo &op_io
   op_io_info_new->set_need_compile(op_io_info.need_compile());
   op_io_info_new->set_reshape_type(op_io_info.reshape_type());
   op_io_info_new->set_shape(op_io_info.shape());
+  op_io_info_new->set_value_depend(op_io_info.value_depend());
   // dtype  && format
   op_io_info_new->set_dtypes(support_dtype);
   op_io_info_new->set_formats(support_format);
