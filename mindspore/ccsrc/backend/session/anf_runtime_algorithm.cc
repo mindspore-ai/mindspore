@@ -1754,79 +1754,76 @@ bool AnfRuntimeAlgorithm::IsScalarOutput(const CNodePtr &cnode, size_t index) {
   return shape.size() == kShape1dDims && shape[0] == 1;
 }
 
-void AnfRuntimeAlgorithm::ReorderOptimizerExecList(NotNull<std::vector<CNodePtr> *> node_list) {
-  std::vector<CNodePtr> all_opt_list;
-  std::vector<CNodePtr> non_opt_list;
-  std::vector<CNodePtr> trans_list;
-  std::vector<CNodePtr> transpose_list;
-  std::vector<CNodePtr> cast_list;
-  for (const auto &node : *node_list) {
-    MS_EXCEPTION_IF_NULL(node);
-    auto trans_pose_func = [&](const CNodePtr &node) -> bool {
-      MS_EXCEPTION_IF_NULL(node);
-      if (AnfAlgo::GetCNodeName(node) == prim::kPrimTranspose->name()) {
-        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, 0), 0);
-        MS_EXCEPTION_IF_NULL(kernel_index.first);
-        if (kernel_index.first->isa<CNode>() && kOptOperatorSet.find(AnfAlgo::GetCNodeName(
-                                                  kernel_index.first->cast<CNodePtr>())) != kOptOperatorSet.end()) {
-          return true;
+namespace {
+std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const std::string &node_name, bool only_seed) {
+  std::map<size_t, std::vector<CNodePtr>> insert_nodes;
+  std::set<size_t> invalid_position;
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    auto &node = nodes[i];
+    if (AnfAlgo::GetCNodeName(node) != node_name) {
+      continue;
+    }
+    if (only_seed) {
+      bool is_seed = true;
+      auto input_size = node->inputs().size() - 1;
+      for (size_t k = 0; k < input_size; ++k) {
+        auto input = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, k), 0).first;
+        if (input != nullptr && input->isa<CNode>()) {
+          is_seed = false;
+          break;
         }
       }
-      return false;
-    };
-
-    auto trans_data_func = [&](const CNodePtr &node) -> bool {
-      MS_EXCEPTION_IF_NULL(node);
-      if (AnfAlgo::GetCNodeName(node) == prim::kPrimTransData->name()) {
-        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, 0), 0);
-        MS_EXCEPTION_IF_NULL(kernel_index.first);
-        if (kernel_index.first->isa<CNode>() && kOptOperatorSet.find(AnfAlgo::GetCNodeName(
-                                                  kernel_index.first->cast<CNodePtr>())) != kOptOperatorSet.end()) {
-          return true;
-        }
-        if (!kernel_index.first->isa<CNode>()) {
-          return false;
-        }
-        return trans_pose_func(kernel_index.first->cast<CNodePtr>());
+      if (!is_seed) {
+        continue;
       }
-      return false;
-    };
-
-    auto cast_func = [&](const CNodePtr &node) -> bool {
-      MS_EXCEPTION_IF_NULL(node);
-      if (AnfAlgo::GetCNodeName(node) == prim::kPrimCast->name()) {
-        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, 0), 0);
-        MS_EXCEPTION_IF_NULL(kernel_index.first);
-        if (kernel_index.first->isa<CNode>() && kOptOperatorSet.find(AnfAlgo::GetCNodeName(
-                                                  kernel_index.first->cast<CNodePtr>())) != kOptOperatorSet.end()) {
-          return true;
+    }
+    bool found = false;
+    for (size_t j = i + 1; j < nodes.size(); ++j) {
+      auto &child = nodes[j];
+      auto input_size = child->inputs().size() - 1;
+      for (size_t k = 0; k < input_size; ++k) {
+        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0);
+        if (kernel_index.first == node) {
+          found = true;
+          break;
         }
-        if (!kernel_index.first->isa<CNode>()) {
-          return false;
-        }
-        return trans_data_func(kernel_index.first->cast<CNodePtr>());
       }
-      return false;
-    };
-
-    if (trans_pose_func(node)) {
-      (void)transpose_list.emplace_back(node);
-    } else if (trans_data_func(node)) {
-      (void)trans_list.emplace_back(node);
-    } else if (cast_func(node)) {
-      (void)cast_list.emplace_back(node);
-    } else if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(node)) != kOptOperatorSet.end()) {
-      (void)all_opt_list.emplace_back(node);
-    } else {
-      (void)non_opt_list.emplace_back(node);
+      if (found) {
+        (void)invalid_position.insert(i);
+        auto iter = insert_nodes.find(j);
+        if (iter != insert_nodes.end()) {
+          iter->second.emplace_back(node);
+        } else {
+          insert_nodes[j] = {node};
+        }
+        break;
+      }
     }
   }
+  std::vector<CNodePtr> result;
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    auto iter = insert_nodes.find(i);
+    if (iter != insert_nodes.end()) {
+      (void)result.insert(result.end(), iter->second.begin(), iter->second.end());
+    }
+    if (invalid_position.find(i) != invalid_position.end()) {
+      continue;
+    }
+    result.emplace_back(nodes[i]);
+  }
+  return result;
+}
+}  // namespace
+
+void AnfRuntimeAlgorithm::ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list) {
+  std::vector<CNodePtr> result;
+  std::copy(node_list->begin(), node_list->end(), std::back_inserter(result));
+  result = DelayExecNode(result, "TransData", true);
+  result = DelayExecNode(result, "Cast", true);
+  result = DelayExecNode(result, "AdamApplyOneWithDecay", false);
+  result = DelayExecNode(result, "AdamApplyOne", false);
   node_list->clear();
-  (void)std::copy(non_opt_list.begin(), non_opt_list.end(), std::back_inserter(*node_list));
-  (void)std::copy(all_opt_list.begin(), all_opt_list.end(), std::back_inserter(*node_list));
-  (void)std::copy(transpose_list.begin(), transpose_list.end(), std::back_inserter(*node_list));
-  (void)std::copy(trans_list.begin(), trans_list.end(), std::back_inserter(*node_list));
-  (void)std::copy(cast_list.begin(), cast_list.end(), std::back_inserter(*node_list));
+  std::copy(result.begin(), result.end(), std::back_inserter(*node_list));
 }
 
 void AnfRuntimeAlgorithm::ReorderPosteriorExecList(NotNull<std::vector<CNodePtr> *> node_list) {
