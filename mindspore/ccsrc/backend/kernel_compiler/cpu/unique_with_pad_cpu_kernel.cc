@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ bool UniqueWithPadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &input
     UniqueCPUKernel::LaunchKernel<float, int>(inputs, workspace, outputs);
     PadOutput<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Not support data type: " << dtype_;
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
   return true;
 }

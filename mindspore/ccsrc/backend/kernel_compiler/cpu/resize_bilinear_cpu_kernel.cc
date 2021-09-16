@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,24 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kResizeBilinearInputSize = 4;
+constexpr size_t kResizeBilinearAttrSize = 2;
+}  // namespace
 void ResizeBilinearCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   CheckParam(kernel_node);
   shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   size_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
   align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  if (shape_.size() < kResizeBilinearInputSize) {
+    MS_LOG(EXCEPTION) << "Input shape size should be " << kResizeBilinearInputSize << ", but got " << shape_.size();
+  }
+
+  if (size_.size() < kResizeBilinearAttrSize) {
+    MS_LOG(EXCEPTION) << "Attr SIZE shape size should be " << kResizeBilinearAttrSize << ", but got " << size_.size();
+  }
 
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
@@ -42,6 +54,8 @@ bool ResizeBilinearCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
     LaunchKernel<float16, float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float, float>(inputs, outputs);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
   return true;
 }

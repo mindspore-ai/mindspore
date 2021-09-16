@@ -15,12 +15,10 @@
  */
 
 #include "backend/kernel_compiler/cpu/stridedslice_cpu_kernel.h"
-
 #include <utility>
 #include <functional>
 #include <algorithm>
 #include <unordered_map>
-
 #include "common/thread_pool.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
@@ -40,6 +38,7 @@ int NormalizePos(int pos, int dim_len, PosType pos_type) {
 }
 
 void StridedSliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (input_shape_.size() > DIMENSION_8D || input_shape_.empty()) {

@@ -20,12 +20,27 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kResizeNearestNeighborInputSize = 4;
+constexpr size_t kResizeNearestNeighborOutputSize = 2;
+}  // namespace
 void ResizeNearestNeighborCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   CheckParam(kernel_node);
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   std::vector<int64_t> output_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
   align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  if (input_shape.size() < kResizeNearestNeighborInputSize) {
+    MS_LOG(EXCEPTION) << "Input_0 shape size should be " << kResizeNearestNeighborInputSize << ", but got "
+                      << input_shape.size();
+  }
+
+  if (output_size.size() < kResizeNearestNeighborOutputSize) {
+    MS_LOG(EXCEPTION) << "Output shape size should be " << kResizeNearestNeighborOutputSize << ", but got "
+                      << output_size.size();
+  }
+
   batch_size_ = input_shape[0];
   channel_ = input_shape[1];
   in_height_ = input_shape[2];
@@ -50,6 +65,8 @@ bool ResizeNearestNeighborCPUKernel::Launch(const std::vector<kernel::AddressPtr
     LaunchKernel<int32_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
   return true;
 }

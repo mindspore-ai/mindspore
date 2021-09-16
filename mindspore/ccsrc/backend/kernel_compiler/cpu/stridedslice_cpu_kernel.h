@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <memory>
-
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "nnacl/fp32/strided_slice_fp32.h"

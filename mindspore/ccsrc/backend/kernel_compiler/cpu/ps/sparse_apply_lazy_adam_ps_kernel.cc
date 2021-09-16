@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/ps/sparse_apply_lazy_adam_ps_kernel.h"
 #include <memory>
 #include "backend/kernel_compiler/common_utils.h"
@@ -22,9 +23,16 @@
 namespace mindspore {
 namespace kernel {
 namespace ps {
+constexpr size_t kSparseApplyLazyAdamPSInputSize = 5;
+
 void SparseApplyLazyAdamPSKernel::InitKernel(
   const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
+  MS_EXCEPTION_IF_NULL(shapes);
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
+  if (shape_vec.size() < kSparseApplyLazyAdamPSInputSize) {
+    MS_LOG(EXCEPTION) << "SparseApplyLazyAdamPSKernel needs " << kSparseApplyLazyAdamPSInputSize
+                      << " input shapes, but got " << shape_vec.size();
+  }
   std::vector<size_t> &var_shape = *(shape_vec[0]);
   std::vector<size_t> &m_shape = *(shape_vec[1]);
   std::vector<size_t> &v_shape = *(shape_vec[2]);
@@ -35,6 +43,12 @@ void SparseApplyLazyAdamPSKernel::InitKernel(
   Shard(&m_shape, 0);
   Shard(&v_shape, 0);
 
+  if (var_shape.empty()) {
+    MS_LOG(EXCEPTION) << "var must be at least 1D";
+  }
+  if (var_shape.size() != grad_shape.size()) {
+    MS_LOG(EXCEPTION) << "var and grad should have the same shape size";
+  }
   if (!IsSameShape(var_shape, m_shape)) {
     MS_LOG(EXCEPTION) << "var and m should have the same shape";
   }
@@ -65,6 +79,9 @@ void SparseApplyLazyAdamPSKernel::InitKernel(
 }
 
 void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+  if (shapes.empty() || shapes[0].empty()) {
+    MS_LOG(EXCEPTION) << "Shape should not empty";
+  }
   const std::vector<size_t> &indices_shape = shapes[0];
   indices_size_ = indices_shape[0];
   workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_;

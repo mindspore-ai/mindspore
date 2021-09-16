@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,9 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
 void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (x_shape_.size() < 1) {
+    MS_LOG(EXCEPTION) << "Input shape size should not less than 1";
+  }
   for (size_t i = 0; i < x_shape_.size() - 1; ++i) {
     outer_size_ *= x_shape_[i];
   }
@@ -98,7 +101,6 @@ void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 void TopKCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   size_t element_size = outer_size_ * inner_size_;
-  // id
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
 }
 
@@ -109,6 +111,8 @@ bool TopKCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     LaunchKernel<float16>(inputs, workspaces, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, workspaces, outputs);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
   return true;
 }

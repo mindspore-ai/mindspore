@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/ps/apply_momentum_ps_kernel.h"
 
 namespace mindspore {

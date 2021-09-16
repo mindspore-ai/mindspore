@@ -64,7 +64,7 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   if (iter != launch_map_.end()) {
     launch_func_ = iter->second;
   } else {
-    MS_LOG(EXCEPTION) << "Input data type: " << dtype_ << "is not supported for Transpose kernel on CPU.";
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
 }
 

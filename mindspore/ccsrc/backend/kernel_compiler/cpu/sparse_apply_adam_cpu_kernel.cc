@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/sparse_apply_adam_cpu_kernel.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -104,14 +105,17 @@ void SparseApplyAdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> v_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
   std::vector<size_t> grad_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
   std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 10);
+  if (var_shape.empty()) {
+    MS_LOG(EXCEPTION) << "var must be at least 1D";
+  }
   if (!IsSameShape(var_shape, m_shape)) {
     MS_LOG(EXCEPTION) << "var and m should have the same shape";
   }
   if (!IsSameShape(var_shape, v_shape)) {
     MS_LOG(EXCEPTION) << "var and v should have the same shape";
   }
-  if (var_shape.empty()) {
-    MS_LOG(EXCEPTION) << "var must be at least 1D";
+  if (var_shape.size() != grad_shape.size()) {
+    MS_LOG(EXCEPTION) << "var and grad should have the same shape size";
   }
   var_first_dim_size_ = var_shape[0];
   for (size_t i = 1; i < var_shape.size(); ++i) {
@@ -201,8 +205,10 @@ bool SparseApplyAdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   }
   if (indices_data_type_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, workspace);
-  } else {
+  } else if (indices_data_type_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, workspace);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported indices data type: " << indices_data_type_;
   }
   return true;
 }

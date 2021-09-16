@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,7 @@ bool SubAndFilterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
   } else if (input_x_dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(ERROR) << "input x dtype only support int32, int64";
-    return false;
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << input_x_dtype_;
   }
   return true;
 }

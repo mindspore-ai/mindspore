@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,14 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kMinIndiceRank = 2;
+
 template <typename T>
 void Compute(const ComputeParams<T> *params, const size_t start, const size_t end) {
-  MS_EXCEPTION_IF_NULL(params);
   T *x = params->x_;
   int *indices = params->indices_;
   T *updates = params->updates_;
   std::vector<int> *out_strides = params->out_strides_;
-  MS_EXCEPTION_IF_NULL(out_strides);
 
   for (int i = SizeToInt(start); i < SizeToInt(end); ++i) {
     int offset = 0;
@@ -50,6 +50,7 @@ void Compute(const ComputeParams<T> *params, const size_t start, const size_t en
 }  // namespace
 
 void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   Check(kernel_node);
   auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
@@ -58,7 +59,7 @@ void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (indices_unit_rank > shape.size()) {
     MS_LOG(EXCEPTION) << "Value of last dimension of indices is greater than shape rank";
   }
-  if (indices_shape.size() < 2) {
+  if (indices_shape.size() < kMinIndiceRank) {
     MS_LOG(EXCEPTION) << "Indices dimension less than 2";
   }
   if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
@@ -97,8 +98,7 @@ bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inp
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(ERROR) << "Only support float16, float32";
-    return false;
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
   return true;
 }

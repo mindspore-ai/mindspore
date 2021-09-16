@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-#include <functional>
-
 #include "backend/kernel_compiler/cpu/sparse_tensor_dense_matmul_cpu_kernel.h"
+#include <functional>
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kSparseTensorDenseMatmulOutputShapeSize = 2;
+constexpr size_t kSparseTensorDenseMatmulDenseShapeSize = 2;
+}  // namespace
 template <typename I, typename T>
 void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   adj_st_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
   adj_dt_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
@@ -41,6 +45,14 @@ void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_n
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   values_size_ = values_shape[0];
   b_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE);
+  if (b_shape_.size() != kSparseTensorDenseMatmulDenseShapeSize) {
+    MS_LOG(EXCEPTION) << "Dense shape size should equal to " << kSparseTensorDenseMatmulDenseShapeSize << ", but got "
+                      << b_shape_.size();
+  }
+  if (output_shape_.size() != kSparseTensorDenseMatmulOutputShapeSize) {
+    MS_LOG(EXCEPTION) << "Output shape size not equal to " << kSparseTensorDenseMatmulOutputShapeSize << ", but got "
+                      << output_shape_.size();
+  }
 }
 
 template <typename I, typename T>

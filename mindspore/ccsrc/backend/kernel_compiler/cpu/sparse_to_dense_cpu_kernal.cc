@@ -20,13 +20,18 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kIndicesShapeSize = 2;
+}  // namespace
+
 template <typename I, typename T>
 void SparseToDenseCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   CheckParam(kernel_node);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (indices_shape.size() != 2) {
-    MS_LOG(EXCEPTION) << "SparseToDense requires 'indices' should be a 2-D Tensor, but got " << indices_shape.size()
-                      << "-D";
+  if (indices_shape.size() != kIndicesShapeSize) {
+    MS_LOG(EXCEPTION) << "SparseToDense requires 'indices' should be a " << kIndicesShapeSize << "-D Tensor, but got "
+                      << indices_shape.size() << "-D";
   }
   auto values_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {

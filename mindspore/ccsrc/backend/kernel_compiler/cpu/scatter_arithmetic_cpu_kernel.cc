@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/scatter_arithmetic_cpu_kernel.h"
 #include <map>
 #include <limits>
@@ -20,13 +21,22 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kInputNum = 3;
+constexpr size_t kOutputNum = 1;
+}  // namespace
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   CheckParam(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   input_size_ = 1;
   inner_size_ = 1;
+  if (input_shape.empty()) {
+    MS_LOG(EXCEPTION) << "Input shape is empty";
+  }
+
   for (size_t i = 1; i < input_shape.size(); i++) {
     inner_size_ *= input_shape[i];
   }

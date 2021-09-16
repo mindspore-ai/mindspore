@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPLIT_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPLIT_CPU_KERNEL_H_
+
 #include <vector>
 #include <memory>
 #include <thread>
@@ -43,13 +45,13 @@ class SplitCPUKernel : public CPUKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node);
   void LaunchSplit(T *input, T **output, size_t size);
-  int64_t axis_;
-  int64_t output_num_;
-  int64_t axis_step_;
+  int64_t axis_{1};
+  int64_t output_num_{1};
+  int64_t axis_step_{1};
 
-  size_t input_size_;
-  size_t dims_after_axis_;
-  size_t dims_current_after_axis_;
+  size_t input_size_{1};
+  size_t dims_after_axis_{1};
+  size_t dims_current_after_axis_{1};
 
   std::vector<std::vector<size_t>> output_shape_list_;
   std::vector<int> input_shape_;

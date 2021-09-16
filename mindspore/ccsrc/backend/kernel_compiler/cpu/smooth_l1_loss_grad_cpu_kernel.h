@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SMOOTH_L1_LOSS_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SMOOTH_L1_LOSS_GRAD_CPU_KERNEL_H_
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -37,8 +38,8 @@ class SmoothL1LossGradCPUKernel : public CPUKernel {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
-  float beta_ = 1.0;
-  uint64_t tensor_size_ = 1;
+  float beta_{1.0};
+  uint64_t tensor_size_{1};
 };
 
 MS_REG_CPU_KERNEL_T(SmoothL1LossGrad,

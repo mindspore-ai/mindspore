@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class RMSPropCPUKernel : public CPUKernel {
  public:
-  RMSPropCPUKernel() : size_(1), use_center_(false), decay_(0.0), momentum_(0.9), epsilon_(1e-12) {}
+  RMSPropCPUKernel() {}
   ~RMSPropCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -41,11 +41,11 @@ class RMSPropCPUKernel : public CPUKernel {
                               float *learning_rate, float *decay, float *epsilon);
 
  private:
-  size_t size_;
-  bool use_center_;
-  float decay_;
-  float momentum_;
-  float epsilon_;
+  size_t size_{1};
+  bool use_center_{false};
+  float decay_{0.f};
+  float momentum_{0.9f};
+  float epsilon_{1e-12};
   TypeId dtype_{kTypeUnknown};
 };
 

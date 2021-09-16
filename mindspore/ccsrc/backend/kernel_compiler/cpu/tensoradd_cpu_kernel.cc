@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/tensoradd_cpu_kernel.h"
 #include <functional>
 #include <vector>

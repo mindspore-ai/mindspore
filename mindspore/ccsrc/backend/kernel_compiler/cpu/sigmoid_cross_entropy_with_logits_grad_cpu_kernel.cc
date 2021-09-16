@@ -20,6 +20,7 @@
 namespace mindspore {
 namespace kernel {
 void SigmoidCrossEntropyWithLogitsGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   CheckParam(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -36,7 +37,7 @@ bool SigmoidCrossEntropyWithLogitsGradCPUKernel::Launch(const std::vector<kernel
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Input dtype only support float16, float32, float64!";
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
   return true;
 }

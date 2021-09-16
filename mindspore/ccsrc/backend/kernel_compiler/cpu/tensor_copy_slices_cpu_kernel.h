@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <memory>
-
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
@@ -37,8 +36,8 @@ class TensorCopySlicesCPUKernel : public CPUKernel {
 
  private:
   TypeId data_type_;
-  size_t offset_;
-  size_t copy_size_;
+  size_t offset_{0};
+  size_t copy_size_{0};
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> update_shape_;
   std::vector<int64_t> output_shape_;

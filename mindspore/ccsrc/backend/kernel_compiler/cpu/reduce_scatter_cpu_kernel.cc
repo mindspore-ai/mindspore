@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,15 @@ constexpr auto kRanksGroup = "group";
 ReduceScatterCPUKernel::ReduceScatterCPUKernel() : op_type_(kMPIOpTypeSum) {}
 
 void ReduceScatterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  auto op = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("op");
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto primitive = AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op = primitive->GetAttr("op");
   if (op != nullptr) {
     op_type_ = GetValue<std::string>(op);
   }
 
-  auto ranks_group = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kRanksGroup);
+  auto ranks_group = primitive->GetAttr(kRanksGroup);
   if (ranks_group != nullptr) {
     ranks_group_ = GetValue<std::vector<int>>(ranks_group);
   } else {

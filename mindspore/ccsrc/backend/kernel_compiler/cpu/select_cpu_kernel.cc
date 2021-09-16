@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 void SelectCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 3) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but SelectCpuKernel needs 3 input.";

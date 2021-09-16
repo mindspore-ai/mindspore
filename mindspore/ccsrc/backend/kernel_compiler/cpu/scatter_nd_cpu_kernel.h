@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ND_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ND_CPU_KERNEL_H_
+
 #include <vector>
 #include <unordered_map>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
@@ -23,9 +24,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUM = 2;
-constexpr size_t OUTPUT_NUM = 1;
-constexpr size_t MIN_INDICE_RANK = 2;
 template <typename S, typename T>
 struct ComputeParams {
   T *target_{nullptr};
@@ -51,8 +49,8 @@ class ScatterNdCPUKernel : public CPUKernel {
  private:
   void Check(const CNodePtr &kernel_node);
 
-  int unit_size_{0};
-  size_t num_units_{0};
+  int unit_size_{1};
+  size_t num_units_{1};
   int indices_unit_rank_{0};
   std::vector<int> out_strides_;
 };

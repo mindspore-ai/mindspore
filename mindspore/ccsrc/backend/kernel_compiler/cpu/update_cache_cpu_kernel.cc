@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ namespace kernel {
 void UpdateCacheCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
-
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   indices_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
 
@@ -44,8 +43,7 @@ bool UpdateCacheCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (indices_dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(ERROR) << "indices dtype only support int32, int64";
-    return false;
+    MS_LOG(EXCEPTION) << "Unsupported indices data type: " << indices_dtype_;
   }
   return true;
 }
@@ -54,7 +52,7 @@ template <typename T>
 void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &outputs) {
   auto node_ = node_wpt_.lock();
-  if (!node_) {
+  if (node_ == nullptr) {
     MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
   }
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 1);
@@ -81,14 +79,13 @@ void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     if (indices[i] < 0 || indices[i] >= max_num_) continue;
 
     char *tmp = update + i * one_length_size;
-    if (static_cast<size_t>(indices[i]) * one_length_size + one_length_size <= max_size) {
-      int ret = memcpy_s(input_x + static_cast<size_t>(indices[i]) * one_length_size,
-                         max_size - static_cast<size_t>(indices[i]) * one_length_size, tmp, one_length_size);
-      if (ret != 0) {
-        MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
-      }
-    } else {
+    if (static_cast<size_t>(indices[i]) * one_length_size + one_length_size > max_size) {
       MS_LOG(EXCEPTION) << "Memcpy out of size";
+    }
+    int ret = memcpy_s(input_x + static_cast<size_t>(indices[i]) * one_length_size,
+                       max_size - static_cast<size_t>(indices[i]) * one_length_size, tmp, one_length_size);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
     }
   }
 }

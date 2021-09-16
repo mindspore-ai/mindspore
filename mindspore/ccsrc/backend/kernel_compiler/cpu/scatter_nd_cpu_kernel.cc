@@ -22,14 +22,16 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kScatterNdInputSize = 2;
+constexpr size_t kScatterNdOutputSize = 1;
+constexpr size_t kMinIndiceRank = 2;
+
 template <typename S, typename T>
 void Compute(const ComputeParams<S, T> *params, const size_t start, const size_t end) {
-  MS_EXCEPTION_IF_NULL(params);
   T *target = params->target_;
   S *indices = params->indices_;
   T *updates = params->updates_;
   std::vector<int> *out_strides = params->out_strides_;
-  MS_EXCEPTION_IF_NULL(out_strides);
 
   for (size_t i = start; i < end; ++i) {
     int offset = 0;
@@ -52,6 +54,7 @@ void Compute(const ComputeParams<S, T> *params, const size_t start, const size_t
 
 template <typename S, typename T>
 void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   Check(kernel_node);
   auto shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -60,7 +63,7 @@ void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
   if (indices_unit_rank > shape.size()) {
     MS_LOG(EXCEPTION) << "Value of last dimension of indices is greater than shape rank";
   }
-  if (indices_shape.size() < MIN_INDICE_RANK) {
+  if (indices_shape.size() < kMinIndiceRank) {
     MS_LOG(EXCEPTION) << "Indices has dimension less than 2";
   }
   if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
@@ -72,20 +75,17 @@ void ScatterNdCPUKernel<S, T>::InitKernel(const CNodePtr &kernel_node) {
     }
   }
   indices_unit_rank_ = SizeToInt(indices_unit_rank);
-  unit_size_ = 1;
   for (size_t i = indices_shape.size() - 1; i < updates_shape.size(); ++i) {
     unit_size_ *= SizeToInt(updates_shape[i]);
   }
-  constexpr int TWO = 2;
-  constexpr int THREE = 3;
-  num_units_ = 1;
-  num_units_ *= updates_shape[indices_shape.size() - TWO];
-  for (int i = SizeToInt(indices_shape.size()) - THREE; i >= 0; i--) {
+
+  num_units_ *= updates_shape[indices_shape.size() - 2];
+  for (int i = SizeToInt(indices_shape.size()) - 3; i >= 0; i--) {
     num_units_ *= updates_shape[IntToSize(i)];
   }
   int out_stride = 1;
   out_strides_.push_back(out_stride);
-  for (int i = indices_unit_rank_ - TWO; i >= 0; i--) {
+  for (int i = indices_unit_rank_ - 2; i >= 0; i--) {
     out_stride *= SizeToInt(shape[IntToSize(i + 1)]);
     out_strides_.push_back(out_stride);
   }
@@ -123,11 +123,11 @@ bool ScatterNdCPUKernel<S, T>::Launch(const std::vector<kernel::AddressPtr> &inp
 template <typename S, typename T>
 void ScatterNdCPUKernel<S, T>::Check(const CNodePtr &kernel_node) {
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != INPUT_NUM) {
+  if (input_num != kScatterNdInputSize) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but ScatterNd needs 2 input.";
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != OUTPUT_NUM) {
+  if (output_num != kScatterNdOutputSize) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ScatterNd needs 1 output.";
   }
 }

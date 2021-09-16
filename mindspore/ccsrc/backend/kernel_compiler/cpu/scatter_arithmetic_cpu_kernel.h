@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ARITHMETIC_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ARITHMETIC_CPU_KERNEL_H_
+
 #include <vector>
 #include <string>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
@@ -22,8 +24,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kInputNum = 3;
-constexpr size_t kOutputNum = 1;
 template <typename T>
 class ScatterArithmeticCPUKernel : public CPUKernel {
  public:
@@ -53,9 +53,9 @@ class ScatterArithmeticCPUKernel : public CPUKernel {
 
   void ScatterUpdate(T *input, const int *indices, const T *updates);
 
-  size_t input_size_{0};
-  size_t inner_size_{0};
-  size_t indices_size_{0};
+  size_t input_size_{1};
+  size_t inner_size_{1};
+  size_t indices_size_{1};
   std::string kernel_name_;
   enum input_list_ { INPUT, INDICES, UPDATES };
 };
