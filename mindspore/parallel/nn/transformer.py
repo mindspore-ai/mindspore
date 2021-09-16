@@ -769,6 +769,7 @@ class MultiHeadAttention(Cell):
                  parallel_config=default_dpmp_config):
         super(MultiHeadAttention, self).__init__()
         _check_config(parallel_config)
+        self.is_parallel_mode = _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
         self.src_seq_length = src_seq_length
         self.tgt_seq_length = tgt_seq_length
         self.hidden_size = hidden_size
@@ -784,7 +785,7 @@ class MultiHeadAttention(Cell):
         if num_heads % parallel_config.model_parallel != 0:
             raise ValueError(f"The number of heads {num_heads} must be a "
                              f"multiple of parallel_config.model_parallel {parallel_config.model_parallel}.")
-        if batch_size % parallel_config.data_parallel != 0:
+        if self.is_parallel_mode and batch_size % parallel_config.data_parallel != 0:
             raise ValueError(f"The batch size {batch_size} must be a "
                              f"multiple of parallel_config.data_parallel {parallel_config.data_parallel}.")
         # Output layer

@@ -280,7 +280,8 @@ class _Linear(Cell):
         self.expert_num = expert_num
         if self.expert_num > 1:
             self.expert_flag = True
-            self.weight = Parameter(initializer(weight_init, [self.expert_num] + weight_shape), name="weight")
+            self.weight = Parameter(initializer(weight_init, [self.expert_num] + weight_shape, param_init_type),
+                                    name="weight")
             self.matmul = P.BatchMatMul(transpose_b=transpose_b)
         else:
             self.expert_flag = False

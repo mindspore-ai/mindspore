@@ -281,6 +281,28 @@ def test_transformer_wrong_head():
                           parallel_config=error_test_config)
         del net
 
+
+def test_transformer_wrong_dp_no_error():
+    set_auto_parallel_context(device_num=32, full_batch=False, parallel_mode=ParallelMode.DATA_PARALLEL,
+                              pipeline_stages=pipeline_config.pipeline_stage, global_rank=0)
+    check_config = TransformerOpParallelConfig(data_parallel=8, model_parallel=1, vocab_emb_dp=False)
+    net = Transformer(batch_size=4, src_seq_length=20, tgt_seq_length=10, encoder_layers=2,
+                      decoder_layers=2, hidden_size=64, num_heads=2, ffn_hidden_size=64,
+                      parallel_config=check_config)
+    del net
+
+
+def test_transformer_wrong_semi_auto_dp_error():
+    set_auto_parallel_context(device_num=32, full_batch=False, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                              pipeline_stages=pipeline_config.pipeline_stage, global_rank=0)
+    check_config = TransformerOpParallelConfig(data_parallel=16, model_parallel=1, vocab_emb_dp=False)
+    with pytest.raises(ValueError):
+        net = Transformer(batch_size=4, src_seq_length=20, tgt_seq_length=10, encoder_layers=2,
+                          decoder_layers=2, hidden_size=64, num_heads=2, ffn_hidden_size=64,
+                          parallel_config=check_config)
+        del net
+
+
 def test_encoder():
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
