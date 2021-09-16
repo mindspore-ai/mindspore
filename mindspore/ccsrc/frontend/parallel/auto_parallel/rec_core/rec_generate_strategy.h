@@ -34,6 +34,8 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
 Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                         const size_t iter_graph, const size_t iter_ops);
 Strategys PrepareBiasAdd(const std::shared_ptr<Dimensions> &s);
+Strategys PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                              Dimensions basic_stra);
 Strategys PrepareOneHot(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                         const size_t iter_graph, const size_t iter_ops);
 Strategys PrepareAxisRelatedStrategy(const std::shared_ptr<Graph> &graph,
