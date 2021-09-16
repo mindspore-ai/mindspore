@@ -120,16 +120,14 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
                                    OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
 
-  if (first_running_) {
+  // Convert actor running data from input tensors.
+  if (input_tensors.size() > 0) {
     PrepareDataForDeviceTensorStore(input_tensors, context);
-    // The step execution mode has no concept of first running.
-    first_running_ = (strategy_ == GraphExecutionStrategy::kStep) ? true : false;
-  }
-
-  if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    PrepareDataForHostTensorQueue(input_tensors, context);
-  } else if (strategy_ == GraphExecutionStrategy::kStep) {
-    PrepareDataForStepMode(input_tensors, context);
+    if (strategy_ == GraphExecutionStrategy::kPipeline) {
+      PrepareDataForHostTensorQueue(input_tensors, context);
+    } else if (strategy_ == GraphExecutionStrategy::kStep) {
+      PrepareDataForStepMode(input_tensors, context);
+    }
   }
 
   // Allocate continuous memory and send output to trigger the step running.

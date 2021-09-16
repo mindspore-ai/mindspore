@@ -45,7 +45,6 @@ class DataPrepareActor : public MemoryAwareActor {
         strategy_(GraphExecutionStrategy::kPipeline),
         host_data_source_actor_(host_data_source_actor),
         host_tensor_queue_(host_tensor_queue),
-        first_running_(true),
         loop_count_aid_(nullptr) {}
   ~DataPrepareActor() override = default;
 
@@ -98,7 +97,6 @@ class DataPrepareActor : public MemoryAwareActor {
   GraphExecutionStrategy strategy_;
   HostQueueDSActorPtr host_data_source_actor_;
   HostTensorQueuePtr host_tensor_queue_;
-  bool first_running_;
 
   // The output controls contain the data source actors and the no input kernel actors.
   std::vector<AID> data_source_aids_;
