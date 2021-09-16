@@ -96,7 +96,7 @@ static ParameterUsersInfo FindRefKeyNodeUsers(const RefKeyPair &ref_key_pair, bo
   return parameter_user_info;
 }
 
-static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &)) {
+static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node) {
   // In this case, node is a Parameter
   ParameterUsersInfo parameter_user_info;
   MS_EXCEPTION_IF_NULL(node->func_graph());
@@ -156,13 +156,16 @@ ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)
     return FindRefKeyNodeUsers(cnode_with_refkeys, IsCareNode);
   } else if (node->isa<Parameter>()) {
     // the node is a parameter node
-    return FindParameterNodeUsers(node, IsCareNode);
+    return FindParameterNodeUsers(node);
   }
 
   return parameter_users_info;
 }
 
-static bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter) {
+static bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter, size_t max_depth) {
+  if (max_depth > MAX_RECURSIVE_DEPTH) {
+    MS_LOG(EXCEPTION) << "Recursive call is larger than 100000.";
+  }
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(parameter);
   auto manager = graph->manager();
@@ -175,8 +178,8 @@ static bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &paramet
     if (IsValueNode<FuncGraph>(use_node->input(0))) {
       auto graph_sub = GetValueNode<FuncGraphPtr>(use_node->input(0));
       auto parameters = graph_sub->parameters();
-      auto parameter_sub = parameters[node_user.second - 1];
-      return IsUsedParameter(graph_sub, parameter_sub);
+      auto parameter_sub = parameters[IntToSize(node_user.second - 1)];
+      return IsUsedParameter(graph_sub, parameter_sub, max_depth + 1);
     }
     if (use_node->input(0)->isa<CNode>()) {
       auto cnode = use_node->input(0)->cast<CNodePtr>();
@@ -185,8 +188,8 @@ static bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &paramet
       }
       auto graph_sub = GetValueNode<FuncGraphPtr>(cnode->input(1));
       auto parameters = graph_sub->parameters();
-      auto parameter_sub = parameters[node_user.second - 1];
-      return IsUsedParameter(graph_sub, parameter_sub);
+      auto parameter_sub = parameters[IntToSize(node_user.second - 1)];
+      return IsUsedParameter(graph_sub, parameter_sub, max_depth + 1);
     }
     return true;
   }
@@ -225,15 +228,15 @@ static ParameterSliceInfo GetParameterSliceInfo(const std::pair<AnfNodePtr, int6
     size_t input_tensor_info_size = op_info->inputs_tensor_info().size();
     if (SizeToLong(input_tensor_info_size) <= user_input_index - 1) {
       MS_LOG(EXCEPTION) << op_info->name() << ": the size of inputs tensor info is " << input_tensor_info_size
-                        << ", but the index is " << user_input_index - 1;
+                        << ", but the index is " << (user_input_index - 1);
     }
-    tensor_info = op_info->inputs_tensor_info()[user_input_index - 1];
+    tensor_info = op_info->inputs_tensor_info()[LongToSize(user_input_index - 1)];
   }
 
   ParameterSliceInfo parameter_slice_info;
   parameter_slice_info.slice_shape = tensor_info.slice_shape();
   parameter_slice_info.group_ranks = GetGroupByTensorInfo(tensor_info);
-  MS_LOG(DEBUG) << "The op name is " << op_info->name() << ", the parameter index is " << user_input_index - 1
+  MS_LOG(DEBUG) << "The op name is " << op_info->name() << ", the parameter index is " << (user_input_index - 1)
                 << ", the slice shape is " << tensor_info.slice_shape() << ", the origin shape is "
                 << tensor_info.shape() << ", the group rank list is " << parameter_slice_info.group_ranks;
   return parameter_slice_info;
@@ -348,7 +351,7 @@ void HandleNoUsedParameter(const FuncGraphPtr &root) {
   auto dev_num = g_device_manager->stage_device_num();
   auto parameters = root->parameters();
   for (auto &parameter : parameters) {
-    if (IsUsedParameter(root, parameter)) {
+    if (IsUsedParameter(root, parameter, 0)) {
       continue;
     }
     auto parameter_shape = GetNodeShape(parameter);
@@ -405,7 +408,7 @@ static void InsertFullySplitParamGradAccu(const std::pair<AnfNodePtr, int> &node
   OperatorAttrs attrs;
   auto py_instance = CreatOpInstance(attrs, "_VirtualAdd", "grad_accu");
   auto value_node = NewValueNode(py_instance);
-  std::vector<AnfNodePtr> virtual_node_input = {value_node, cnode->input(node_user.second), accu_parameter};
+  std::vector<AnfNodePtr> virtual_node_input = {value_node, cnode->input(IntToSize(node_user.second)), accu_parameter};
   auto graph = cnode->func_graph();
   auto virtual_node = graph->NewCNode(virtual_node_input);
   manager->SetEdge(cnode, node_user.second, virtual_node);
@@ -539,7 +542,6 @@ void HandleAdaFactorOpt(const FuncGraphPtr &root) {
     auto param = param_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param);
     std::string param_name = param->name();
-
     if (param_name.find(EXP_AVG) != std::string::npos) {
       continue;
     }

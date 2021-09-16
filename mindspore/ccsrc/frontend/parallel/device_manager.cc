@@ -83,8 +83,13 @@ bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &back
   for (auto &ele : stage_map) {
     MS_LOG(DEBUG) << "Obtained stage id: " << ele;
   }
-
-  g_device_manager = std::make_shared<DeviceManager>();
+  if (g_device_manager) {
+    auto gm = g_device_manager->group_manager();
+    g_device_manager = std::make_shared<DeviceManager>();
+    g_device_manager->set_group_manager(gm);
+  } else {
+    g_device_manager = std::make_shared<DeviceManager>();
+  }
   if (g_device_manager->Init(devices, global_rank, stage_map, backend) == SUCCESS) {
     MS_LOG(INFO) << "Device initialization succeeds.";
     return true;

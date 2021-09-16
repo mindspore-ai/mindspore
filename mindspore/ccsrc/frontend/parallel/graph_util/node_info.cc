@@ -404,7 +404,7 @@ bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_o
   return false;
 }
 
-void SetUserAttrs(const std::unordered_map<std::string, ValuePtr> &origin_prim_attrs, PrimitivePtr self_prim) {
+void SetUserAttrs(const std::unordered_map<std::string, ValuePtr> &origin_prim_attrs, const PrimitivePtr &self_prim) {
   MS_EXCEPTION_IF_NULL(self_prim);
   for (auto attr_name : filter_attrs) {
     auto iter = origin_prim_attrs.find(attr_name);

@@ -84,7 +84,8 @@ void InsertVirtualDivOp(const VirtualDivOp &virtual_div_op, const CNodePtr &node
 
 std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
 
-std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph);
+std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph,
+                                    size_t max_depth);
 
 // Generate and init parallel operator
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
@@ -112,7 +113,7 @@ void CoverSliceShape(const FuncGraphPtr &root);
 void SetVirtualDatasetStrategy(const CNodePtr &node);
 bool IsInsertVirtualOutput(const FuncGraphPtr &root);
 // Create parallel operator for primitive node(has strategy)
-void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_training = true);
+void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes);
 
 TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_pair);
 
