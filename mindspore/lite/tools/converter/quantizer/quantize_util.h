@@ -24,6 +24,7 @@
 #include <memory>
 #include <string>
 #include <cmath>
+#include <set>
 #include <array>
 #include <vector>
 #include <algorithm>
@@ -80,7 +81,7 @@ class QuantStrategy {
 
   bool CanConvOpQuantized(const CNodePtr &node) const;
   bool CanMulOpQuantized(const CNodePtr &node) const;
-  static bool CanOpPostQuantized(const AnfNodePtr &node);
+  static bool CanOpFullQuantized(const AnfNodePtr &node);
   bool CanTensorQuantized(const AnfNodePtr &inputNode) const;
 
   size_t m_weight_size_;
@@ -223,7 +224,7 @@ STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   if (quant_type == QuantType_PostTraining) {
-    quant_param_holder->AddInputQuantParam(quant_params);
+    quant_param_holder->set_input_quant_param(index, quant_params);
   } else {
     quant_param_holder->set_input_quant_param(index, quant_params);
   }
@@ -240,5 +241,6 @@ FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &);
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 
+bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types);
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_

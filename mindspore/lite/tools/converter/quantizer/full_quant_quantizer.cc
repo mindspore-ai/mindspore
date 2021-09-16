@@ -18,6 +18,7 @@
 #include <dirent.h>
 #include <future>
 #include <map>
+#include <set>
 #include <memory>
 #include <algorithm>
 #include <unordered_map>
@@ -50,6 +51,11 @@ using std::string;
 using std::vector;
 
 namespace mindspore::lite::quant {
+namespace {
+static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
+                                                         prim::kPrimMatMul, prim::kPrimFullConnection,
+                                                         prim::kPrimLayerNormFusion};
+}
 namespace {
 STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const std::vector<double> &input_scales,
                                     const float *raw_datas, const QuantParamHolderPtr &quant_param_holder,
@@ -409,17 +415,17 @@ STATUS Calibrator::UpdateDataFrequency(const vector<float> &data, const std::uni
   return RET_OK;
 }
 
-STATUS Calibrator::AddQuantizedOp(const CNodePtr &node) {
-  if (node == nullptr) {
-    MS_LOG(ERROR) << "To be quantized node is null";
+STATUS Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "To be quantized cnode is null";
     return RET_ERROR;
   }
-  string node_name = node->fullname_with_scope();
+  string node_name = cnode->fullname_with_scope();
   std::unique_ptr<DivergInfo> input_diverg = std::make_unique<DivergInfo>(
-    node, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
+    cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
   MS_CHECK_TRUE_MSG(input_diverg != nullptr, RET_NULL_PTR, "input_diverg is nullptr.");
   std::unique_ptr<DivergInfo> output_diverg = std::make_unique<DivergInfo>(
-    node, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
+    cnode, kDefaultBinNumber, bit_num_, quant_max_, quant_min_, full_quant_param_.activation_quant_method);
   MS_CHECK_TRUE_MSG(output_diverg != nullptr, RET_NULL_PTR, "output_diverg is nullptr.");
   inputs_diverg_info_[node_name].push_back(std::move(input_diverg));
   outputs_diverg_info_[node_name].push_back(std::move(output_diverg));
@@ -461,7 +467,7 @@ FullQuantQuantizer::~FullQuantQuantizer() {
 }
 
 STATUS FullQuantQuantizer::SetInOutQuantParam(double scale, int zero_point, struct MaxMin *max_min,
-                                              const PrimitivePtr &primitive, bool is_input) const {
+                                              const PrimitivePtr &primitive, bool is_input, size_t index) const {
   MS_ASSERT(max_min != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
@@ -483,9 +489,9 @@ STATUS FullQuantQuantizer::SetInOutQuantParam(double scale, int zero_point, stru
   quant_param.multiplier = 1;
   std::vector<schema::QuantParamT> quant_params = {quant_param};
   if (is_input) {
-    quant_param_holder->AddInputQuantParam(quant_params);
+    quant_param_holder->set_input_quant_param(index, quant_params);
   } else {
-    quant_param_holder->AddOutputQuantParam(quant_params);
+    quant_param_holder->set_output_quant_param(index, quant_params);
   }
   return RET_OK;
 }
@@ -589,7 +595,12 @@ STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePt
   std::vector<schema::QuantParamT> quant_params;
   for (double bias_scale : bias_scales) {
     schema::QuantParamT quant_param;
-    quant_param.scale = bias_scale;
+    if (bias_scale == 0) {
+      MS_LOG(WARNING) << "bias_scale == 0";
+      quant_param.scale = 1;
+    } else {
+      quant_param.scale = bias_scale;
+    }
     quant_param.zeroPoint = 0;
     quant_param.inited = true;
     quant_params.emplace_back(quant_param);
@@ -603,7 +614,7 @@ STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePt
     MS_LOG(ERROR) << "compute bias data failed.";
     return RET_ERROR;
   }
-  quant_param_holder->AddInputQuantParam(quant_params);
+  quant_param_holder->set_input_quant_param(2, quant_params);
   auto ret = SetTensorData(bias_param, quant_datas.data(), shape_size * sizeof(int32_t));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "set tensor data failed.";
@@ -638,6 +649,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
   auto op_name = cnode->fullname_with_scope();
   auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(primitive_quant_holder != nullptr, RET_NULL_PTR, "primitive_quant_holder is nullptr.");
+  size_t activation_input_index = 0;
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
     MS_ASSERT(input_node != nullptr);
@@ -648,9 +660,6 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       }
     }
     if (input_node->isa<mindspore::CNode>()) {
-      if (primitive->name() == ops::kNameGather) {
-        continue;
-      }
       auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
       auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
       if (input_cnode_primitive == nullptr) {
@@ -663,25 +672,25 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
                         "input_primitive_quant_holder is nullptr.");
       if (input_primitive_quant_holder->IsOutputQuantParamsInited()) {
         auto quant_param = input_primitive_quant_holder->get_output_quant_params().front();
-        primitive_quant_holder->AddInputQuantParam(quant_param);
+        primitive_quant_holder->set_input_quant_param(activation_input_index, quant_param);
       } else {
         // do input quant
-        auto &info = (*inputs_diverg_info)[op_name][i - 1];
+        auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
         auto input_scale = info->GetScale().second;
         auto input_zp = info->GetZeropoint().second;
         struct MaxMin input_min_max {};
         input_min_max.max = info->max;
         input_min_max.min = info->min;
-        SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true);
+        return SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, i - 1);
       }
     } else if (is_graph_input) {
-      auto &info = (*inputs_diverg_info)[op_name][i - 1];
+      auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
       auto input_scale = info->GetScale().second;
       auto input_zp = info->GetZeropoint().second;
       struct MaxMin input_min_max {};
       input_min_max.max = info->max;
       input_min_max.min = info->min;
-      SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true);
+      return SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, i - 1);
     } else {
       MS_LOG(DEBUG) << "node: " << op_name << " input " << i << " not a cnode";
       // get dtype
@@ -755,8 +764,8 @@ STATUS FullQuantQuantizer::QuantNode() {
 
       if (input_primitive_quant_holder->get_output_quant_params().size() > index) {
         auto quant_param = input_primitive_quant_holder->get_output_quant_params()[index];
-        primitive_quant_holder->AddInputQuantParam(quant_param);
-        primitive_quant_holder->AddOutputQuantParam(quant_param);
+        primitive_quant_holder->set_input_quant_param(0, quant_param);
+        primitive_quant_holder->set_output_quant_param(0, quant_param);
       } else {
         MS_LOG(WARNING) << "this TupleGetItem node's input node: " << input_cnode->fullname_with_scope()
                         << "'s output quant_params size: "
@@ -764,8 +773,7 @@ STATUS FullQuantQuantizer::QuantNode() {
       }
       primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
       continue;
-    } else if (op_type == ops::kNameConv2DFusion || op_type == ops::kNameConv2dTransposeFusion ||
-               op_type == ops::kNameFullConnection || op_type == ops::kNameLayerNormFusion) {
+    } else if (CheckNodeInSet(cnode, has_bias_operator)) {
       // do input quant
       auto &info = (*inputs_diverg_info)[op_name][0];
       auto input_scale = info->GetScale().second;
@@ -773,7 +781,7 @@ STATUS FullQuantQuantizer::QuantNode() {
       struct MaxMin input_min_max {};
       input_min_max.max = info->max;
       input_min_max.min = info->min;
-      SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true);
+      SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, 0);
       // do weight quant
       auto weight = cnode->input(2);
       bool per_channel = false;
@@ -795,14 +803,15 @@ STATUS FullQuantQuantizer::QuantNode() {
     }
     // do output quant, there may multi-output
     auto &infos = (*outputs_diverg_info)[op_name];
-    for (auto &info : infos) {
+    for (size_t index = 0; index < infos.size(); index++) {
+      auto &info = infos.at(index);
       auto output_scale = info->GetScale().second;
       auto output_zp = info->GetZeropoint().second;
       struct MaxMin output_min_max {};
       output_min_max.max = info->max;
       output_min_max.min = info->min;
 
-      SetInOutQuantParam(output_scale, output_zp, &output_min_max, primitive, false);
+      SetInOutQuantParam(output_scale, output_zp, &output_min_max, primitive, false, index);
       primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
     }
   }
@@ -835,7 +844,7 @@ STATUS FullQuantQuantizer::PreProcess() {
       MS_LOG(ERROR) << " cnode is null";
       return RET_NULL_PTR;
     }
-    if (mindspore::lite::quant::QuantStrategy::CanOpPostQuantized(anf)) {
+    if (mindspore::lite::quant::QuantStrategy::CanOpFullQuantized(anf)) {
       calibrator_->AddQuantizedOp(cnode);
     }
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -860,8 +869,8 @@ STATUS FullQuantQuantizer::CheckFp32TensorVec(const std::string &node_name,
   auto *tensor = tensor_vec[0];
   MS_ASSERT(tensor != nullptr);
   if (tensor->data_type() != kNumberTypeFloat32) {
-    MS_LOG(WARNING) << "node: " << node_name << " will not quantize"
-                    << " tensor data_type: " << tensor->data_type();
+    MS_LOG(INFO) << "node: " << node_name << " will not quantize"
+                 << " tensor data_type: " << tensor->data_type();
     return RET_ERROR;
   }
   return RET_OK;
@@ -898,12 +907,15 @@ STATUS FullQuantQuantizer::DoInference() {
       if (diverg_info_map->find(callParam.node_name) == diverg_info_map->end()) {
         return true;
       }
-      if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
-        return false;
+      if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, beforeOutputs) != RET_OK) {
+        return true;
       }
-      if ((*diverg_info_map)[callParam.node_name].size() == 1 &&
-          (callParam.node_type == kTypeConcat || callParam.node_type == kTypeAdd)) {
+      bool is_init = beforeInputs.size() > 1 && (*diverg_info_map)[callParam.node_name].size() == 1;
+      if (is_init) {
         for (size_t i = 1; i < beforeInputs.size(); i++) {
+          if (beforeInputs.at(i)->data_type() != kNumberTypeFloat32 || beforeInputs.at(i)->IsConst()) {
+            continue;
+          }
           auto input_diverg = std::make_unique<DivergInfo>();
           MS_CHECK_TRUE_MSG(input_diverg != nullptr, RET_NULL_PTR, "input_diverg is nullptr.");
           *input_diverg = *((*diverg_info_map)[callParam.node_name][0]);
@@ -930,9 +942,10 @@ STATUS FullQuantQuantizer::DoInference() {
         return true;
       }
       if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
-        return false;
+        return true;
       }
-      if ((*diverg_info_map)[callParam.node_name].size() == 1 && afterOutputs.size() > 1) {
+      bool is_init = afterOutputs.size() > 1 && (*diverg_info_map)[callParam.node_name].size() == 1;
+      if (is_init) {
         for (size_t i = 1; i < afterOutputs.size(); i++) {
           auto output_diverg = std::make_unique<DivergInfo>();
           MS_CHECK_TRUE_MSG(output_diverg != nullptr, RET_NULL_PTR, "output_diverg is nullptr.");
@@ -1263,7 +1276,6 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
 
   // add quant_cast
   quant::QuantCast quant_cast;
-  quant_cast.SetInputDataDType(kNumberTypeFloat32);
   status = quant_cast.Run(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "add QuantCast error";
@@ -1342,14 +1354,14 @@ bool FullQuantQuantizer::OpOutputChMeanDataHandle(OperationType type, const stri
 KernelCallBack FullQuantQuantizer::GetBeforeCallBack(bool int8_op) {
   KernelCallBack before_call_back;
   if (!int8_op) {
-    before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-                              const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
+    before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                              const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
                               const CallBackParam &callParam) -> bool {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
-        if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
+        if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, before_inputs) != RET_OK) {
           return false;
         }
-        auto tensor = beforeInputs[0];
+        auto tensor = before_inputs[0];
         MS_ASSERT(tensor != nullptr);
         size_t elem_count = tensor->ElementsNum();
         std::vector<float> fp32_op_input(elem_count);
@@ -1366,15 +1378,15 @@ KernelCallBack FullQuantQuantizer::GetBeforeCallBack(bool int8_op) {
       return true;
     };
   } else {
-    before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-                              const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
+    before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                              const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
                               const CallBackParam &callParam) -> bool {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         vector<float> fp32_op_input;
         while (!OpInputDataHandle(FETCH, callParam.node_name, &fp32_op_input)) {
           std::this_thread::sleep_for(std::chrono::milliseconds(kMillisecondsBase));
         }
-        auto tensor = beforeInputs[0];
+        auto tensor = before_inputs[0];
         MS_ASSERT(tensor != nullptr);
         auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
         if (lite_tensor == nullptr) {

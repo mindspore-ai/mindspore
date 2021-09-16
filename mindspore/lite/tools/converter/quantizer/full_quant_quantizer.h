@@ -106,8 +106,8 @@ class FullQuantQuantizer : public Quantizer {
 
   STATUS QuantNode();
 
-  STATUS SetInOutQuantParam(double scale, int32_t zero_point, struct MaxMin *max_min, const PrimitivePtr &primitive,
-                            bool is_input) const;
+  STATUS SetInOutQuantParam(double scale, int zero_point, struct MaxMin *max_min, const PrimitivePtr &primitive,
+                            bool is_input, size_t index) const;
 
   STATUS DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, const PrimitivePtr &primitive,
                        bool per_channel) const;
@@ -191,7 +191,7 @@ class Calibrator {
 
   size_t GetInputNum() const { return data_pre_process_param_.calibrate_path_vector.size(); }
 
-  STATUS AddQuantizedOp(const CNodePtr &node);
+  STATUS AddQuantizedOp(const CNodePtr &cnode);
 
   static STATUS RecordMaxMinValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
 

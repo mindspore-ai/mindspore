@@ -28,10 +28,6 @@ class QuantCast {
   QuantCast() = default;
   virtual ~QuantCast() = default;
   STATUS Run(const FuncGraphPtr &graph);
-  void SetInputDataDType(TypeId dataType) { this->input_data_dtype_ = dataType; }
-
- private:
-  TypeId input_data_dtype_ = kNumberTypeFloat32;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_CAST_H
