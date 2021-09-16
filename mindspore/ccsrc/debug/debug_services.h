@@ -138,6 +138,10 @@ class DebugServices {
         bool check_tensor_name = found != std::string::npos && w_name.substr(found + 1) == tensor_name;
         bool check_node_name = (w_type && (node_name == w_name || w_name == "*")) || (!w_type && node_name == w_name);
         if (check_tensor_name || check_node_name) {
+          // online debugger only support single card
+          if (check_node_device_list.empty()) {
+            return w_name;
+          }
           auto device_vec = std::get<1>(check_node_device_list[indx]);
           auto root_graph_vec = std::get<1>(check_node_graph_list[indx]);
           auto iter1 = std::find(device_vec.begin(), device_vec.end(), tensor_device_id);
