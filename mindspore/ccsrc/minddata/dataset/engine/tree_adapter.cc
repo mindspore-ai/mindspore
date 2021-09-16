@@ -153,7 +153,9 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
   // This will evolve in the long run
   tree_ = std::make_unique<ExecutionTree>();
   // disable profiling if this is only a getter pass
+#ifndef ENABLE_SECURITY
   if (usage_ == kDeGetter) tree_->GetProfilingManager()->DisableProfiling();
+#endif
   // Build the Execution tree from the child of the IR root node, which represent the root of the input IR tree
   std::shared_ptr<DatasetOp> root_op;
   RETURN_IF_NOT_OK(BuildExecutionTreeRecur(root_ir->Children()[0], &root_op));
@@ -218,8 +220,9 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_UNEXPECTED_IF_NULL(row);
   row->clear();  // make sure row is empty
-
+#ifndef ENABLE_SECURITY
   bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
+#endif
 
   // When cur_db_ is a nullptr, it means this is the first call to get_next, launch ExecutionTree
   if (!launched_) {
@@ -229,9 +232,11 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   RETURN_IF_NOT_OK(tree_->root()->GetNextRow(row));  // first buf can't be eof or empty buf with none flag
   if (row->eoe()) {                                  // return empty tensor if 1st buf is a ctrl buf (no rows)
     MS_LOG(INFO) << "End of data iteration.";
+#ifndef ENABLE_SECURITY
     if (isProfilingEnable) {
       tree_->SetEpochEnd();
     }
+#endif
     return Status::OK();
   }
   if (row->eof()) {
@@ -241,6 +246,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   }
 
   // Record profiling info
+#ifndef ENABLE_SECURITY
   if (tracing_ != nullptr) {
     uint64_t end_time = ProfilingTime::GetCurMilliSecond();
     cur_batch_num_++;
@@ -249,6 +255,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
     RETURN_IF_NOT_OK(
       tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_, end_time));
   }
+#endif
   return Status::OK();
 }
 
@@ -258,9 +265,15 @@ Status TreeAdapter::Launch() {
   launched_ = true;
   // Profiling
   std::shared_ptr<Tracing> node;
+#ifndef ENABLE_SECURITY
   Status s = tree_->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
+#else
+  Status s = Status::OK();
+#endif
   if (s.IsOk()) {
+#ifndef ENABLE_SECURITY
     tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
+#endif
     cur_connector_size_ = tree_->root()->ConnectorSize();
     cur_connector_capacity_ = tree_->root()->ConnectorCapacity();
   }

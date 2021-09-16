@@ -90,13 +90,15 @@ class TreeAdapter {
 
   std::unordered_map<std::string, int32_t> column_name_map_;
   std::shared_ptr<DatasetNode> root_ir_;
-  std::unique_ptr<ExecutionTree> tree_;              // current connector capacity of root op, used for profiling
-  bool optimize_;                                    // Flag to enable optional optimization pass
+  std::unique_ptr<ExecutionTree> tree_;  // current connector capacity of root op, used for profiling
+  bool optimize_;                        // Flag to enable optional optimization pass
+#ifndef ENABLE_SECURITY
   std::shared_ptr<DatasetIteratorTracing> tracing_;  // trace profiling data
-  int32_t cur_batch_num_;                            // current batch number, used for profiling
-  int32_t cur_connector_size_;                       // current connector size of root op, used for profiling
-  int32_t cur_connector_capacity_;                   // current connector capacity of root op, used for profiling
-  UsageFlag usage_;                                  // usage of this tree adapter (type of consumer)
+#endif
+  int32_t cur_batch_num_;           // current batch number, used for profiling
+  int32_t cur_connector_size_;      // current connector size of root op, used for profiling
+  int32_t cur_connector_capacity_;  // current connector capacity of root op, used for profiling
+  UsageFlag usage_;                 // usage of this tree adapter (type of consumer)
   bool launched_;
   // State flags for the lifecycle of the tree
   enum CompileState {

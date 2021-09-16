@@ -126,8 +126,10 @@ Status DeviceQueueOp::CheckExceptions(const TensorRow &row) const {
 }
 
 Status DeviceQueueOp::operator()() {
+#ifndef ENABLE_SECURITY
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
     "Detect first batch", std::bind(&DeviceQueueOp::DetectFirstBatch, this), nullptr, id()));
+#endif
   TaskManager::FindMe()->Post();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
 
@@ -168,17 +170,22 @@ Status DeviceQueueOp::operator()() {
 #ifdef ENABLE_TDTQUE
 Status DeviceQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue, sending data to Ascend.";
+#ifndef ENABLE_SECURITY
   uint64_t batch_start_time, end_time;
   uint64_t batch_record_start, batch_record_end;
+#endif
   int64_t send_batch = 0;
   int32_t tdt_cost = 0;
+#ifndef ENABLE_SECURITY
   int32_t connector_size = 0;
   int32_t connector_capacity = 0;
+#endif
   bool is_break_loop = false;
 
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   int64_t sending_num = cfg->sending_batches();  // Get the current sending_num
 
+#ifndef ENABLE_SECURITY
   std::shared_ptr<DeviceQueueTracing> profiling_node;
   bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
   if (isProfilingEnable) {
@@ -188,11 +195,16 @@ Status DeviceQueueOp::SendDataToAscend() {
     batch_start_time = ProfilingTime::GetCurMilliSecond();
     connector_capacity = ChildOpConnectorCapacity();
   }
+#else
+  bool isProfilingEnable = false;
+#endif
 #ifdef ENABLE_DUMP_IR
   md_channel_info_->RecordBatchQueue(ChildOpConnectorSize());
   md_channel_info_->RecordPreprocessBatch(0);
 #endif
+#ifndef ENABLE_SECURITY
   batch_record_start = ProfilingTime::GetCurMilliSecond();
+#endif
   TensorRow curr_row;
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
   first_fetch_flag_ = true;
@@ -211,9 +223,11 @@ Status DeviceQueueOp::SendDataToAscend() {
         MS_LOG(INFO) << "Loading dataset and push first batch into device successful.";
         first_push_flag_ = true;
       }
+#ifndef ENABLE_SECURITY
       DetectPerBatchTime(&batch_record_start, &batch_record_end);
       ProfilingRecorder(isProfilingEnable, profiling_node, send_batch, tdt_cost, &batch_start_time, &end_time,
                         connector_capacity, connector_size);
+#endif
       send_batch++;
 #ifdef ENABLE_DUMP_IR
       md_channel_info_->RecordBatchQueue(ChildOpConnectorSize());
@@ -229,10 +243,12 @@ Status DeviceQueueOp::SendDataToAscend() {
       // wait when sending num is not 0, and sending num no larger than already sending batch
       LimitSendingBatches(send_batch, &sending_num, cfg);
 
+#ifndef ENABLE_SECURITY
       if (isProfilingEnable) {
         connector_size = ChildOpConnectorSize();
         connector_capacity = ChildOpConnectorCapacity();
       }
+#endif
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
     }
     if (curr_row.eoe() && send_epoch_end_) {
@@ -256,11 +272,13 @@ Status DeviceQueueOp::SendDataToAscend() {
       MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
       stop_send_ = true;
     }
+#ifndef ENABLE_SECURITY
     if (isProfilingEnable) {
       connector_size = ChildOpConnectorSize();
       connector_capacity = ChildOpConnectorCapacity();
       tree_->SetEpochEnd();
     }
+#endif
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
   }
 
@@ -383,8 +401,11 @@ Status DeviceQueueOp::PushDataToGPU() {
   TaskManager::FindMe()->Post();
   uint64_t batch_start_time = 0;
   int32_t push_cost = 0;
+#ifndef ENABLE_SECURITY
   int32_t connector_size = 0;
   int32_t connector_capacity = 0;
+#endif
+#ifndef ENABLE_SECURITY
   std::shared_ptr<DeviceQueueTracing> profiling_node;
   bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
   if (isProfilingEnable) {
@@ -394,6 +415,7 @@ Status DeviceQueueOp::PushDataToGPU() {
     batch_start_time = ProfilingTime::GetCurMilliSecond();
     connector_capacity = gpu_item_connector_->capacity();
   }
+#endif
 #ifdef ENABLE_DUMP_IR
   md_channel_info_->RecordBatchQueue(gpu_item_connector_->size());
   md_channel_info_->RecordPreprocessBatch(0);
@@ -431,6 +453,7 @@ Status DeviceQueueOp::PushDataToGPU() {
     }
     RETURN_IF_NOT_OK(RetryPushData(handle, items));
     send_batch++;
+#ifndef ENABLE_SECURITY
     if (isProfilingEnable) {
       uint64_t end_time = ProfilingTime::GetCurMilliSecond();
       // record push data time
@@ -446,6 +469,7 @@ Status DeviceQueueOp::PushDataToGPU() {
       connector_size = gpu_item_connector_->size();
       connector_capacity = gpu_item_connector_->capacity();
     }
+#endif
 #ifdef ENABLE_DUMP_IR
     md_channel_info_->RecordBatchQueue(gpu_item_connector_->size());
     md_channel_info_->RecordPreprocessBatch(send_batch);
@@ -538,8 +562,10 @@ Status DeviceQueueOp::WorkerEntry(int32_t worker_id) {
 Status DeviceQueueOp::SendDataToGPU() {
   RETURN_IF_NOT_OK(LaunchParallelCopyThread());
   MS_LOG(INFO) << "Device queue, sending data to GPU.";
+#ifndef ENABLE_SECURITY
   uint64_t batch_record_start, batch_record_end;
   batch_record_start = ProfilingTime::GetCurMilliSecond();
+#endif
   TensorRow current_row;
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
   first_fetch_flag_ = true;
@@ -554,7 +580,9 @@ Status DeviceQueueOp::SendDataToGPU() {
         MS_LOG(INFO) << "Loading dataset and push first batch into device successful.";
         first_push_flag_ = true;
       }
+#ifndef ENABLE_SECURITY
       DetectPerBatchTime(&batch_record_start, &batch_record_end);
+#endif
       if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
         RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
       } else {
@@ -642,6 +670,7 @@ void DeviceQueueOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
+#ifndef ENABLE_SECURITY
 void DeviceQueueOp::ProfilingRecorder(bool isProfilingEnable, std::shared_ptr<DeviceQueueTracing> profiling_node,
                                       int64_t send_batch, int32_t tdt_cost, uint64_t *batch_start_time,
                                       uint64_t *end_time, int32_t connector_capacity, int32_t connector_size) {
@@ -692,5 +721,6 @@ void DeviceQueueOp::DetectPerBatchTime(uint64_t *start_time, uint64_t *end_time)
   }
   *start_time = *end_time;
 }
+#endif
 }  // namespace dataset
 }  // namespace mindspore

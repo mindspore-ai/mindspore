@@ -24,7 +24,9 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
+#ifndef ENABLE_SECURITY
 #include "minddata/dataset/engine/perf/profiling.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -78,16 +80,20 @@ Status DatasetIterator::GetNextAsMap(TensorMap *out_map) {
 // Constructor of the DatasetIterator
 DatasetIterator::DatasetIterator(std::shared_ptr<ExecutionTree> exe_tree)
     : root_(exe_tree->root()),
+#ifndef ENABLE_SECURITY
       tracing_(nullptr),
+#endif
       cur_batch_num_(0),
       cur_connector_size_(0),
       cur_connector_capacity_(0),
       eof_handled_(false) {
   std::shared_ptr<Tracing> node;
+#ifndef ENABLE_SECURITY
   Status s = exe_tree->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
   if (s.IsOk()) {
     tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
   }
+#endif
 }
 
 DatasetIterator::~DatasetIterator() = default;
@@ -100,20 +106,21 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   }
   // clear the old tensor row
   out_row->clear();
-
+#ifndef ENABLE_SECURITY
   bool isProfilingEnable = root_->Tree()->GetProfilingManager()->IsProfilingEnable();
-
+#endif
   // Once eof is handled, always return empty row.  Class must be destroyed and recreated if you
   // want to iterate again.
   if (eof_handled_) {
     std::string err = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs.";
     RETURN_STATUS_UNEXPECTED(err);
   }
-
+#ifndef ENABLE_SECURITY
   if (tracing_ != nullptr) {
     cur_connector_size_ = root_->ConnectorSize();
     cur_connector_capacity_ = root_->ConnectorCapacity();
   }
+#endif
   RETURN_IF_NOT_OK(root_->GetNextRow(out_row));
 
   // Since GetNextRow was used rather than GetNextInput(), it means we need to manually
@@ -123,9 +130,11 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   // The next row in the pipeline might be an EOF or a TensorRow for next epoch
   if (out_row->eoe()) {
     MS_LOG(INFO) << "End of data iteration.";
+#ifndef ENABLE_SECURITY
     if (isProfilingEnable) {
       root_->Tree()->SetEpochEnd();
     }
+#endif
     return Status::OK();
   }
 
@@ -138,12 +147,13 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
     std::string err = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs.";
     RETURN_STATUS_UNEXPECTED(err);
   }
-
+#ifndef ENABLE_SECURITY
   if (tracing_ != nullptr) {
     cur_batch_num_++;
     RETURN_IF_NOT_OK(tracing_->Record(static_cast<int32_t>(CONNECTOR_DEPTH), cur_connector_capacity_, cur_batch_num_,
                                       cur_connector_size_, ProfilingTime::GetCurMilliSecond()));
   }
+#endif
   return Status::OK();
 }
 

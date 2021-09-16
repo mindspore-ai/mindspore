@@ -103,11 +103,12 @@ class DeviceQueueOp : public PipelineOp {
   }
 
   Status operator()() override;
-
+#ifndef ENABLE_SECURITY
   // Record the pipeline profiling info
   void ProfilingRecorder(bool isProfilingEnable, std::shared_ptr<DeviceQueueTracing> profiling_node, int64_t send_batch,
                          int32_t tdt_cost, uint64_t *batch_start_time, uint64_t *end_time, int32_t connector_capacity,
                          int32_t connector_size);
+#endif
 
   // Op name getter
   // @return Name of the current Op
@@ -156,13 +157,13 @@ class DeviceQueueOp : public PipelineOp {
 #endif
 
   Status SendDataToCPU();
-
+#ifndef ENABLE_SECURITY
   // Create async thread to detect whether it takes too long and unable to fetch first batch
   Status DetectFirstBatch();
 
   // Detect the cost time of each batch, present alarm message if cost too long
   void DetectPerBatchTime(uint64_t *start_time, uint64_t *end_time);
-
+#endif
   std::atomic<bool> first_fetch_flag_;
 
   std::unique_ptr<ChildIterator> child_iterator_;

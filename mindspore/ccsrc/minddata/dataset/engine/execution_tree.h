@@ -29,7 +29,9 @@
 #endif
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/util/status.h"
+#ifndef ENABLE_SECURITY
 #include "mindspore/ccsrc/minddata/dataset/engine/perf/profiling.h"
+#endif
 namespace mindspore {
 namespace dataset {
 // Forward declares
@@ -190,7 +192,9 @@ class ExecutionTree {
   }
 
   /// \brief Getter for profiling manager, no ownership
+#ifndef ENABLE_SECURITY
   ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
+#endif
 
  private:
   /// \brief A helper functions for doing the recursive printing
@@ -201,12 +205,14 @@ class ExecutionTree {
   void PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp> &dataset_op, std::string indent, bool last,
                  bool detailed) const;
 
-  std::unique_ptr<TaskGroup> tg_;                        // Class for worker management
-  std::shared_ptr<DatasetOp> root_;                      // The root node of the tree
-  int32_t id_count_;                                     // Counter for generating operator id's
-  uint32_t prepare_flags_;                               // Flags used during tree prepare
-  TreeState tree_state_;                                 // Tracking the current tree state
+  std::unique_ptr<TaskGroup> tg_;    // Class for worker management
+  std::shared_ptr<DatasetOp> root_;  // The root node of the tree
+  int32_t id_count_;                 // Counter for generating operator id's
+  uint32_t prepare_flags_;           // Flags used during tree prepare
+  TreeState tree_state_;             // Tracking the current tree state
+#ifndef ENABLE_SECURITY
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
+#endif
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   // This rank_id is for numa and device_queue, one process work with only one rank_id,
   // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
