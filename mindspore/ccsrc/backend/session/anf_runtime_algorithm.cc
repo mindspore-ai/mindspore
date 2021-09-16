@@ -2123,9 +2123,16 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const A
   return device_shape;
 }
 
-void AnfRuntimeAlgorithm::GetAllVisitedCNode(const CNodePtr &anf_node, std::vector<AnfNodePtr> *used_kernels) {
+void AnfRuntimeAlgorithm::GetAllVisitedCNode(const CNodePtr &anf_node, std::vector<AnfNodePtr> *used_kernels,
+                                             std::set<AnfNodePtr> *visited) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(used_kernels);
+  MS_EXCEPTION_IF_NULL(visited);
+  if (visited->find(anf_node) != visited->end()) {
+    MS_LOG(INFO) << "Node:" << anf_node->fullname_with_scope() << " has already been visited";
+    return;
+  }
+  visited->insert(anf_node);
   auto input_size = anf_node->inputs().size() - 1;
   for (size_t i = 0; i < input_size; ++i) {
     auto input = AnfAlgo::GetInputNode(anf_node, i);
@@ -2134,7 +2141,7 @@ void AnfRuntimeAlgorithm::GetAllVisitedCNode(const CNodePtr &anf_node, std::vect
     }
     auto input_cnode = input->cast<CNodePtr>();
     if (!IsRealKernelCNode(input_cnode) || opt::IsNopNode(input_cnode)) {
-      GetAllVisitedCNode(input_cnode, used_kernels);
+      GetAllVisitedCNode(input_cnode, used_kernels, visited);
     } else {
       used_kernels->push_back(input);
     }

@@ -213,9 +213,10 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node, const std::vector<
     }
     operator_info << ") ";
   }
-  operator_info << "is not support. This error means the current type is not supported, please refer to the MindSpore "
-                   "doc for supported types";
-  MS_EXCEPTION(TypeError) << operator_info.str() << " Trace: " << trace::DumpSourceLines(kernel_node);
+  operator_info
+    << "is not support. This error means the current input type is not supported, please refer to the MindSpore "
+       "doc for supported types.\n";
+  MS_EXCEPTION(TypeError) << operator_info.str() << "Trace: " << trace::DumpSourceLines(kernel_node);
 }
 
 void UpdateDynamicKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {

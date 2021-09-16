@@ -311,7 +311,8 @@ class AnfRuntimeAlgorithm {
   // Find real input nodes.
   static void GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *result,
                                    std::set<AnfNodePtr> *visited);
-  static void GetAllVisitedCNode(const CNodePtr &cnode, std::vector<AnfNodePtr> *used_kernels);
+  static void GetAllVisitedCNode(const CNodePtr &cnode, std::vector<AnfNodePtr> *used_kernels,
+                                 std::set<AnfNodePtr> *visited);
   static void InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_graph);
   static AnfNodeIndexSet GetUpdateStateUsers(const FuncGraphManagerPtr &manager, const AnfNodePtr &node);
   // Get node real inputs, skip `MakeTuple`, `TupleGetItem`, `Depend`, `Load`, `UpdateState` etc.
