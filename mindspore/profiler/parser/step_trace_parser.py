@@ -189,6 +189,16 @@ class BaseStepTraceParser:
             except ValueError as err:
                 log.warning("Unable to parse file names: %s. %s", step_trace_files, err)
                 step_trace_files = []
+        else:
+            training_trace_files = list(
+                filter(
+                    lambda file: file.startswith('training_trace') and not file.endswith('.done'),
+                    files
+                )
+            )
+            if len(training_trace_files) >= 1:
+                log.warning("The training_trace file structure is changed, please upgrade "
+                            "mindspore and regenerate profiling data")
 
         file_paths = [os.path.join(input_dir, file) for file in step_trace_files]
         log.info("Find %d step trace files.", len(file_paths))
@@ -366,6 +376,19 @@ class BaseStepTraceParser:
 class GpuStepTraceParser(BaseStepTraceParser):
     """The parser for gpu step trace data."""
 
+    def get_fp_bp(self, f_obj, all_step_fp, all_step_bp):
+        """Parser the fp and bp."""
+        fp_start, bp_end = 0, 1
+        if self._is_gpu_kernel_async_launch:
+            for line in f_obj:
+                line = line.strip().split()
+                all_step_fp.append(line[1].split(',')[0])
+                all_step_bp.append(line[2].split(',')[0])
+        else:
+            lines = f_obj.readlines()
+            all_step_fp.append(lines[fp_start].split()[0])
+            all_step_bp.append(lines[bp_end].split()[0])
+
     def record_point_info(self, source_file, output_path):
         """
         Record point info into json.
@@ -377,21 +400,12 @@ class GpuStepTraceParser(BaseStepTraceParser):
         Returns:
             dict, parsed point info.
         """
-        fp_start, bp_end = 0, 1
         all_step_points = []
         all_step_fp = []
         all_step_bp = []
         try:
             with open(source_file, 'r') as f_obj:
-                if self._is_gpu_kernel_async_launch:
-                    for line in f_obj:
-                        line = line.strip().split()
-                        all_step_fp.append(line[1].split(',')[0])
-                        all_step_bp.append(line[2].split(',')[0])
-                else:
-                    lines = f_obj.readlines()
-                    all_step_fp.append(lines[fp_start].split()[0])
-                    all_step_bp.append(lines[bp_end].split()[0])
+                self.get_fp_bp(f_obj, all_step_fp, all_step_bp)
         except (IOError, OSError) as err:
             log.warning(f'Failed to read {source_file}', err)
             raise ProfilerIOException
@@ -478,6 +492,42 @@ class GpuStepTraceParser(BaseStepTraceParser):
         self._record_average_info()
         log.info("Finish to parse step trace file.")
 
+    def _parse_one_step(self, line):
+        """
+        Parse step text line to dict obj.
+
+        Args:
+            line (str): The step trace line text, it contains five parts, each part is separated by a space.
+                part 1: start_op_name,start_op_time
+                part 2: fp_op_name,fp_time
+                part 3: bp_op_name,bp_time
+                part 4: end_op_name,end_time
+                part 5: [reduce_op_name,reduce1_start],it contains multiple reduce, each reduce is separated by a space.
+        """
+
+        line = line.strip().split()
+        start_time = int(line[0].split(',')[1][:-1])
+        fp_time = int(line[1].split(',')[1][:-1])
+        bp_time = int(line[2].split(',')[1][:-1])
+        end_time = int(line[3].split(',')[1][:-1])
+        reduce_info = {}
+        reduce_time_info = []
+
+        for reduce_item in line[4:]:
+            # add communication op start and end time, time unit from ns to 10ns.
+            reduce_time_info.append(reduce_item.split(',')[1][:-1])
+            reduce_time_info.append(reduce_item.split(',')[2][:-1])
+        step_trace = {
+            'start': start_time,
+            'fp': fp_time,
+            'bp': bp_time,
+            'end': end_time
+        }
+        if reduce_time_info:
+            reduce_info['ops'] = reduce_time_info
+        step_trace['reduce'] = reduce_info
+        self._record_trace_event(step_trace)
+
     def _parse_async_launch(self, source_file):
         """Parse source step trace files generated from async launch kernel."""
         log.info("Start to parse step trace file.")
@@ -486,27 +536,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
         try:
             with open(source_file, 'r') as f_obj:
                 for line in f_obj:
-                    line = line.strip().split()
-                    start_time = int(line[0].split(',')[1][:-1])
-                    fp_time = int(line[1].split(',')[1][:-1])
-                    bp_time = int(line[2].split(',')[1][:-1])
-                    end_time = int(line[3].split(',')[1][:-1])
-                    reduce_info = {}
-                    reduce_time_info = []
-                    for reduce_item in line[4:]:
-                        # add communication op start and end time, time unit from ns to 10ns.
-                        reduce_time_info.append(reduce_item.split(',')[1][:-1])
-                        reduce_time_info.append(reduce_item.split(',')[2][:-1])
-                    step_trace = {
-                        'start': start_time,
-                        'fp': fp_time,
-                        'bp': bp_time,
-                        'end': end_time
-                    }
-                    if reduce_time_info:
-                        reduce_info['ops'] = reduce_time_info
-                    step_trace['reduce'] = reduce_info
-                    self._record_trace_event(step_trace)
+                    self._parse_one_step(line)
 
         except (IOError, OSError) as err:
             log.warning(f'Failed to read {source_file}', err)

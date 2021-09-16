@@ -138,8 +138,8 @@ class Profiler:
             self._cpu_profiler.init(self._output_path)
             self._cpu_profiler.step_profiling_enable(True)
         if self._device_target and self._device_target == "GPU":
-            GPUProfiler = c_expression.GPUProfiler
-            self._gpu_profiler = GPUProfiler.get_instance()
+            gpu_profiler = c_expression.GPUProfiler
+            self._gpu_profiler = gpu_profiler.get_instance()
             self._gpu_profiler.init(self._output_path)
             self._gpu_profiler.step_profiling_enable(True)
             if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":

@@ -736,37 +736,36 @@ class BottleneckAnalyzer:
                 continue
 
             if self.op_names[op_id] == "Batch":
-                pass
-            else:
-                in_op_id, out_q = self.__get_non_inline_child_recur(
-                    op_id), self.queue_utilization_pct[op_id]
-                if in_op_id == self.op_id_not_exist and out_q != self.queue_usage_not_exist:
-                    # This is a leaf node since input queue does not exist and output queue exists
-                    if out_q < self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
-                        queue_usage_analysis.append(("Leaf op {} is using {}% of its output queue."
-                                                     "Setting num_parallel_workers"
-                                                     ">{} might speed up I/O.").format(self.pipeline_ops[op_id],
-                                                                                       out_q,
-                                                                                       self.num_workers[op_id]))
-                elif self.op_names[op_id] == "DeviceQueue" and in_op_id != self.op_id_not_exist:
-                    # if this is device_queue op,
-                    if self.queue_empty_freq_pct[in_op_id] > self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
-                        queue_usage_analysis.append((
-                            "{}'s input queue is empty {}% of the time. This might indicate dataset bottlenecks."
-                            " Hence host cannot keep up with the device {}% of the time."
-                            " Device waits whenever input queue is empty.").format(self.pipeline_ops[op_id],
-                                                                                   self.queue_empty_freq_pct[in_op_id],
-                                                                                   self.queue_empty_freq_pct[in_op_id]))
-                elif in_op_id != self.op_id_not_exist and out_q != self.queue_usage_not_exist:
-                    in_q = self.queue_utilization_pct[in_op_id]
-                    if in_q != self.queue_usage_not_exist and in_q - out_q > self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM:
-                        queue_usage_analysis.append((
-                            "{}'s input queue usage={}% is greater output queue usage={}%."
-                            " This indicates child op {} might be producing faster than its parent {} can consume."
-                            " If this op has low CPU utilization, try increasing "
-                            "prefetch_size or increasing num_workers.").format(self.pipeline_ops[op_id],
-                                                                               in_q, out_q, self.pipeline_ops[in_op_id],
-                                                                               self.pipeline_ops[op_id]))
+                continue
+            in_op_id, out_q = self.__get_non_inline_child_recur(
+                op_id), self.queue_utilization_pct[op_id]
+            if in_op_id == self.op_id_not_exist and out_q != self.queue_usage_not_exist:
+                # This is a leaf node since input queue does not exist and output queue exists
+                if out_q < self._LEAF_OUTPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
+                    queue_usage_analysis.append(("Leaf op {} is using {}% of its output queue."
+                                                 "Setting num_parallel_workers"
+                                                 ">{} might speed up I/O.").format(self.pipeline_ops[op_id],
+                                                                                   out_q,
+                                                                                   self.num_workers[op_id]))
+            elif self.op_names[op_id] == "DeviceQueue" and in_op_id != self.op_id_not_exist:
+                # if this is device_queue op,
+                if self.queue_empty_freq_pct[in_op_id] > self._DEVICEQUEUE_INPUT_QUEUE_EMPTY_FREQ_PCT_MAXIMUM:
+                    queue_usage_analysis.append((
+                        "{}'s input queue is empty {}% of the time. This might indicate dataset bottlenecks."
+                        " Hence host cannot keep up with the device {}% of the time."
+                        " Device waits whenever input queue is empty.").format(self.pipeline_ops[op_id],
+                                                                               self.queue_empty_freq_pct[in_op_id],
+                                                                               self.queue_empty_freq_pct[in_op_id]))
+            elif in_op_id != self.op_id_not_exist and out_q != self.queue_usage_not_exist:
+                in_q = self.queue_utilization_pct[in_op_id]
+                if in_q != self.queue_usage_not_exist and in_q - out_q > self._IN_OUT_QUEUE_UTIL_PCT_DIFF_MAXIMUM:
+                    queue_usage_analysis.append((
+                        "{}'s input queue usage={}% is greater output queue usage={}%."
+                        " This indicates child op {} might be producing faster than its parent {} can consume."
+                        " If this op has low CPU utilization, try increasing "
+                        "prefetch_size or increasing num_workers.").format(self.pipeline_ops[op_id],
+                                                                           in_q, out_q, self.pipeline_ops[in_op_id],
+                                                                           self.pipeline_ops[op_id]))
         return queue_usage_analysis
 
     def analyze_bottleneck(self):
