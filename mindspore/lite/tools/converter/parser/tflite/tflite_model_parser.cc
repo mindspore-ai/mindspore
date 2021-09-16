@@ -183,7 +183,7 @@ STATUS TfliteModelParser::ConvertOps(const std::unique_ptr<tflite::SubGraphT> &t
     op_idx++;
     // parse primitive
     MS_LOG(INFO) << "parse node :" << op_name;
-    ops::PrimitiveC *primitive_c;
+    ops::PrimitiveC *primitive_c = nullptr;
     auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeTflite, op_type);
     if (node_parser != nullptr) {
       primitive_c = node_parser->Parse(op, tflite_subgraph, tflite_model_);

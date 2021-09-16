@@ -47,16 +47,16 @@ static int DoApplyMomentum(float *weight, float *accumulate, float learning_rate
 
 int ApplyMomentumCPUKernel::Execute(int task_id) {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
-  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->data());
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(weight);
-  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->data());
+  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(SECOND_INPUT)->data());
   CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
-  auto gradient = reinterpret_cast<float *>(in_tensors_.at(3)->data());
+  auto gradient = reinterpret_cast<float *>(in_tensors_.at(FOURTH_INPUT)->data());
   CHECK_NULL_RETURN(gradient);
-  CHECK_NULL_RETURN(in_tensors_.at(4)->data());
-  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->data())[0];
-  int length = in_tensors_.at(0)->ElementsNum();
+  CHECK_NULL_RETURN(in_tensors_.at(FIFTH_INPUT)->data());
+  float moment = reinterpret_cast<float *>(in_tensors_.at(FIFTH_INPUT)->data())[0];
+  int length = in_tensors_.at(FIRST_INPUT)->ElementsNum();
 
   MS_CHECK_TRUE_RET(thread_count_ > 0, RET_ERROR);
   int stride = UP_DIV(length, thread_count_);
@@ -117,15 +117,15 @@ std::vector<int> ApplyMomentumCPUKernel::GetOptimizerParamsIdxs() const {
 }
 
 int ApplyMomentumCPUKernel::OptimizerStep() {
-  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->data());
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(FIRST_INPUT)->data());
   CHECK_NULL_RETURN(weight);
-  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->data());
+  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(SECOND_INPUT)->data());
   CHECK_NULL_RETURN(accumulate);
   float learning_rate = lr_;
-  CHECK_NULL_RETURN(in_tensors_.at(4)->data());
-  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->data())[0];
+  CHECK_NULL_RETURN(in_tensors_.at(FIFTH_INPUT)->data());
+  float moment = reinterpret_cast<float *>(in_tensors_.at(FIFTH_INPUT)->data())[0];
 
-  size_t length = in_tensors_.at(0)->ElementsNum();
+  size_t length = in_tensors_.at(FIRST_INPUT)->ElementsNum();
 
   if (grad_sum_ != nullptr && valid_grad_sum_) {
     size_t start = 0;
