@@ -48,7 +48,7 @@ ops::PrimitiveC *TfliteDeConvParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_pad_mode(padMode);
 
   // get weight tensor
-  if (tflite_op->inputs.size() < 3) {
+  if (tflite_op->inputs.size() < FOURTH_INPUT) {
     MS_LOG(ERROR) << "the tflite_op shape is illegal";
     return nullptr;
   }
@@ -58,7 +58,7 @@ ops::PrimitiveC *TfliteDeConvParser::Parse(const std::unique_ptr<tflite::Operato
     return nullptr;
   }
   auto weight_shape = weight_tensor->shape;
-  if (weight_shape.empty() || weight_shape.size() < 4) {
+  if (weight_shape.empty() || weight_shape.size() < FIFTH_INPUT) {
     MS_LOG(ERROR) << "the weight shape is illegal";
     return nullptr;
   }
