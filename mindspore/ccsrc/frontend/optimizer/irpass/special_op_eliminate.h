@@ -63,6 +63,10 @@ class SpecialOpEliminater : public OptimizerCaller {
     for (auto &eliminater : eliminaters_) {
       new_node = (*eliminater)(optimizer, node);
       if (new_node != nullptr) {
+        if (IsPrimitiveCNode(node, prim::kPrimHookBackward)) {
+          MS_LOG(WARNING)
+            << "Hook operation does not work in graph mode or ms_function, it will be eliminated during compilation.";
+        }
         return new_node;
       }
     }

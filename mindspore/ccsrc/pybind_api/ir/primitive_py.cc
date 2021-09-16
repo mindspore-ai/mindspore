@@ -219,6 +219,12 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
   auto cell_id = GetValue<std::string>(this->GetAttr(kCellIDAttrName));
   auto iter = hook_grad_.find(cell_id);
   if (iter != hook_grad_.end()) {
+    py::object code_obj = py::getattr(hook_, "__code__");
+    py::object co_name = py::getattr(code_obj, "co_name");
+    if (std::string(py::str(co_name)) == "staging_specialize") {
+      MS_LOG(EXCEPTION) << "Decorating hook function with '@ms_function' is not supported.";
+    }
+
     py::tuple convert_args(input_param_nums - 1);
     py::tuple input_args(input_param_nums - 1);
     input_args[0] = iter->second;
@@ -243,6 +249,12 @@ BaseRef PrimitivePy::RunCellHookFunction(const py::tuple &py_args) const {
 }
 
 BaseRef PrimitivePy::RunVariableHookFunction(const py::tuple &py_args) const {
+  py::object code_obj = py::getattr(hook_, "__code__");
+  py::object co_name = py::getattr(code_obj, "co_name");
+  if (std::string(py::str(co_name)) == "staging_specialize") {
+    MS_LOG(EXCEPTION) << "Decorating hook function with '@ms_function' is not supported.";
+  }
+
   constexpr size_t grad_output_index = 2;
   SyncData(py_args[grad_output_index]);
   py::object obj = hook_(py::make_tuple(py_args[grad_output_index]));
