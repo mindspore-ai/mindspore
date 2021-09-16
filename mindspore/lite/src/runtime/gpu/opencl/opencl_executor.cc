@@ -108,6 +108,11 @@ int OpenCLExecutor::Tune(kernel::OpenCLKernel *op_kernel) {
     MS_LOG(ERROR) << "tuning kernel failed, name: " << op_kernel->name();
     return ret;
   }
+  ret = op_kernel->PostProcess();
+  if (ret != RET_OK) {
+    MS_LOG(WARNING) << "PostProcess kernel failed, name: " << op_kernel->name() << " in tuning";
+    return ret;
+  }
   return RET_OK;
 }
 }  // namespace mindspore::lite::opencl
