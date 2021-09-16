@@ -36,6 +36,21 @@
 namespace mindspore {
 namespace session {
 using AnfWithOutIndex = std::pair<AnfNodePtr, size_t>;
+using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
+struct KernelWithIndexCmp {
+  bool operator()(const KernelWithIndex &key1, const KernelWithIndex &key2) const {
+    if (key1.first != key2.first) {
+      return key1.first < key2.first;
+    }
+    if (key1.second != key2.second) {
+      return key1.second < key2.second;
+    }
+    return false;
+  }
+};
+
+using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::KernelWithIndexCmp>;
+
 class KernelGraph : public FuncGraph {
  public:
   KernelGraph() : graph_id_(0), start_label_(nullptr), end_goto_(nullptr), current_epoch_(0), is_dynamic_shape_(false) {
@@ -260,8 +275,21 @@ class KernelGraph : public FuncGraph {
   void SetOptimizerFlag();
   void SetInputNodes();
   const std::vector<AnfNodePtr> &input_nodes() const { return input_nodes_; }
+  void SetInputTensors(const std::vector<tensor::TensorPtr> &input_tensors) { input_tensors_ = input_tensors; }
+  const std::vector<tensor::TensorPtr> &input_tensors() const { return input_tensors_; }
+
+  void SetOutputNodeToTensor(const KernelMapTensor &node_to_tensor) { output_node_to_tensor_ = node_to_tensor; }
+
+  tensor::TensorPtr GetNodeOutputTensor(const session::KernelWithIndex &output_index) const {
+    auto iter = output_node_to_tensor_.find(output_index);
+    if (iter != output_node_to_tensor_.end()) {
+      return utils::cast<tensor::TensorPtr>(iter->second);
+    }
+    return nullptr;
+  }
+
   bool has_optimizer() const { return has_optimizer_; }
-  bool IsUpdatedParameter(const ParameterPtr &param) {
+  bool IsUpdatedParameter(const ParameterPtr &param) const {
     if (updated_parameters_.find(param) != updated_parameters_.end()) {
       return true;
     }
@@ -428,6 +456,8 @@ class KernelGraph : public FuncGraph {
   std::map<AnfNodePtr, AnfNodePtr> edge_to_;
   std::stack<AnfNodePtr> loop_nodes_;
   std::vector<AnfNodePtr> input_nodes_;
+  std::vector<tensor::TensorPtr> input_tensors_;
+  KernelMapTensor output_node_to_tensor_;
   std::unordered_map<uint32_t, std::weak_ptr<session::KernelGraph>> pre_graphs_;
   std::unordered_map<uint32_t, std::weak_ptr<session::KernelGraph>> post_graphs_;
   // The send/recv pairs inserted for allreduce, the key is allreduce kernel, the first of pair is send node, the second

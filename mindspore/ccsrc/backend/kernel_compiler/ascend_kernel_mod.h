@@ -43,11 +43,8 @@ class AscendKernelMod : public KernelMod {
     return false;
 #endif
   }
-  void SetStream(void *stream) { stream_ = stream; }
-  void *GetStream() { return stream_; }
 
  protected:
-  void *stream_{nullptr};
   uint32_t block_dim_{1};
   uint32_t stream_id_{0};
 };

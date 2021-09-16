@@ -173,6 +173,10 @@ void AscendKernelRuntime::ClearGraphModelMap() {
 
 void AscendKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   SetCurrentContext();
+  auto mem_scheduler = mem_scheduler_manager_.GetMemScheduler(graph_id);
+  if (mem_scheduler != nullptr) {
+    mem_scheduler->Clear();
+  }
   MS_LOG(DEBUG) << "Clear graph:" << graph_id << " data dumper";
 #ifndef ENABLE_SECURITY
   if (auto dumper_iter = graph_data_dumper_.find(graph_id); dumper_iter != graph_data_dumper_.end()) {
@@ -722,25 +726,6 @@ bool AscendKernelRuntime::Run(session::KernelGraph *const graph, bool is_task_si
     ret = LaunchKernels(graph);
   }
 
-  return ret;
-}
-
-bool AscendKernelRuntime::LaunchKernel(const AnfNodePtr &kernel) {
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  AddressPtrList kernel_inputs = kernel_mod->GetInputsAddr();
-  AddressPtrList kernel_workspaces = kernel_mod->GetWorkSpacesAddr();
-  AddressPtrList kernel_outputs = kernel_mod->GetOutputsAddr();
-  bool ret;
-  if (pynative_mode_profiling_flag_) {
-    auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
-    MS_EXCEPTION_IF_NULL(ascend_kernel_mod);
-    auto stream = ascend_kernel_mod->GetStream();
-    ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs, kernel_workspaces,
-                                            kernel_outputs, stream);
-  } else {
-    ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
-  }
   return ret;
 }
 

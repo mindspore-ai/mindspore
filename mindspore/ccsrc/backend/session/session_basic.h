@@ -88,7 +88,6 @@ struct GraphOutputInfo {
   std::vector<tensor::TensorPtr> graph_output_tensors;
 };
 
-using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::KernelWithIndexCmp>;
 class Executor;
 
 class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
