@@ -354,10 +354,11 @@ Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), new_type, output));
 
   auto in_itr = input->begin<float>();
+  auto in_end = input->end<float>();
   auto out_itr = (*output)->begin<float16>();
   auto out_end = (*output)->end<float16>();
 
-  for (; out_itr != out_end; ++in_itr, ++out_itr) {
+  for (; (in_itr != in_end) && (out_itr != out_end); ++in_itr, ++out_itr) {
     float element = *in_itr;
     float float16_max = static_cast<float>(std::numeric_limits<float16>::max());
     float float16_min = static_cast<float>(std::numeric_limits<float16>::lowest());

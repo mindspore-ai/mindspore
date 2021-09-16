@@ -33,6 +33,8 @@ namespace dataset {
 // Constructor
 ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit) {
   tg_ = std::make_unique<TaskGroup>();
+  root_ = nullptr;
+  prepare_flags_ = 0;
 #ifndef ENABLE_SECURITY
   profiling_manager_ = std::make_unique<ProfilingManager>(this);
 #endif

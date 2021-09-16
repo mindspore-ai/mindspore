@@ -270,6 +270,9 @@ Status CocoOp::ParseAnnotationIds() {
     }
 
     std::ifstream in(realpath.value());
+    if (!in.is_open()) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open annotation file: " + annotation_path_);
+    }
     in >> js;
   } catch (const std::exception &err) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open JSON file: " + annotation_path_ + ".");

@@ -64,7 +64,7 @@ class DvppDecodeResizeCropJpeg final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] crop Parameter vector of two integers for each dimension after final crop, with respect to H,W order.
   /// \param[in] resize Parameter vector of two integers for each dimension after resize, with respect to H,W order.
-  explicit DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop, std::vector<uint32_t> resize);
+  DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop, std::vector<uint32_t> resize);
 
   /// \brief Destructor.
   ~DvppDecodeResizeCropJpeg() = default;

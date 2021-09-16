@@ -34,21 +34,22 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<DeviceTensor> &input, std:
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetDeviceBuffer() != nullptr, "The input image buffer on device is empty");
     APP_ERROR ret = processor_->PNG_D();
     if (ret != APP_ERR_OK) {
-      processor_->Release();
+      ret = processor_->Release();
+      CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release memory failed.");
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     std::shared_ptr<DvppDataInfo> DecodeOut(processor_->Get_Decode_DeviceData());
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
-    mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output);
-    (*output)->SetAttributes(DecodeOut->data, DecodeOut->dataSize, DecodeOut->width, DecodeOut->widthStride,
-                             DecodeOut->height, DecodeOut->heightStride);
+    RETURN_IF_NOT_OK(mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output));
+    RETURN_IF_NOT_OK((*output)->SetAttributes(DecodeOut->data, DecodeOut->dataSize, DecodeOut->width,
+                                              DecodeOut->widthStride, DecodeOut->height, DecodeOut->heightStride));
     if (!((*output)->HasDeviceData())) {
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-  } catch (const cv::Exception &e) {
+  } catch (const std::exception &e) {
     std::string error = "[ERROR] Fail in DvppDecodeJpegOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
@@ -95,8 +96,6 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<Tensor> &input, std::share
     }
 
     // Third part end where we execute the core function of dvpp
-    /* 测试Device内存
-     */
     auto data = std::static_pointer_cast<unsigned char>(process.Get_Memory_Data());
     unsigned char *ret_ptr = data.get();
     std::shared_ptr<DvppDataInfo> DecodeOut(process.Get_Decode_DeviceData());
@@ -109,10 +108,12 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<Tensor> &input, std::share
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-    process.device_memory_release();
-    process.Release();
+    ret = process.device_memory_release();
+    CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release device memory failed.");
+    ret = process.Release();
+    CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release host memory failed.");
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
-  } catch (const cv::Exception &e) {
+  } catch (const std::exception &e) {
     std::string error = "[ERROR] Fail in DvppDecodePngOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }

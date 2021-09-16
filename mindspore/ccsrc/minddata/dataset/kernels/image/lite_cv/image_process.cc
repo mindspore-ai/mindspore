@@ -1447,9 +1447,7 @@ void SVBkSb(int m, int n, int nb, LiteMat w, LiteMat u, LiteMat v, const LiteMat
   int nm = std::min(m, n);
 
   for (int i = 0; i < n; i++) {
-    for (int j = 0; j < nb; j++) {
-      dst.ptr<T>(i)[0] = 0;
-    }
+    dst.ptr<T>(i)[0] = 0;
   }
 
   for (int i = 0; i < nm; i++) {

@@ -316,7 +316,13 @@ class BPlusTree {
 
   void Init() {
     typename LeafNode::alloc_type alloc(alloc_);
-    auto *p = alloc.allocate(1);
+    LeafNode *p;
+    try {
+      p = alloc.allocate(1);
+    } catch (std::bad_alloc &e) {
+      p = nullptr;
+      return;
+    }
     root_ = new (p) LeafNode(alloc_);
     all_.Prepend(p);
     leaf_nodes_.Append(p);

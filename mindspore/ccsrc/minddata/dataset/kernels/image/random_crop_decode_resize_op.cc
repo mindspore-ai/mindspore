@@ -50,7 +50,7 @@ Status RandomCropDecodeResizeOp::Compute(const TensorRow &input, TensorRow *outp
       int w_in = 0;
       RETURN_IF_NOT_OK(GetJpegImageInfo(input[i], &w_in, &h_in));
       if (i == 0) {
-        (void)GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width);
+        RETURN_IF_NOT_OK(GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width));
       }
       std::shared_ptr<Tensor> decoded_tensor = nullptr;
       RETURN_IF_NOT_OK(JpegCropAndDecode(input[i], &decoded_tensor, x, y, crop_width, crop_height));

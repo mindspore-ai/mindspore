@@ -151,6 +151,9 @@ inline std::map<std::string, T> PadInfoCharToString(const std::map<std::vector<c
 
 template <class T>
 inline void TensorMapCharToString(const std::map<std::vector<char>, T> *c, std::unordered_map<std::string, T> *s) {
+  if (c == nullptr || s == nullptr) {
+    return;
+  }
   for (auto ch : *c) {
     auto key = std::string(ch.first.begin(), ch.first.end());
     auto val = ch.second;
