@@ -296,6 +296,7 @@ class RefreshCrdVel(PrimitiveWithInfer):
     def __init__(self, atom_numbers, dt_inverse, dt, exp_gamma, half_exp_gamma_plus_half):
         validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         validator.check_value_type('dt', dt, float, self.name)
+        validator.check_value_type('dt_inverse', dt_inverse, float, self.name)
         validator.check_value_type('exp_gamma', dt, float, self.name)
         validator.check_value_type('half_exp_gamma_plus_half', half_exp_gamma_plus_half, float, self.name)
         self.atom_numbers = atom_numbers
@@ -317,15 +318,15 @@ class RefreshCrdVel(PrimitiveWithInfer):
         n = self.atom_numbers
         validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", cls_name)
         validator.check_int(len(vel_shape), 2, Rel.EQ, "vel_dim", cls_name)
-        validator.check_int(len(test_frc_shape), 2, Rel.EQ, "frc_dim", cls_name)
+        validator.check_int(len(test_frc_shape), 2, Rel.EQ, "test_frc_dim", cls_name)
         validator.check_int(len(mass_inverse_shape), 1, Rel.EQ, "mass_inverse_dim", cls_name)
 
         validator.check_int(crd_shape[0], n, Rel.EQ, "crd_shape[0]", cls_name)
         validator.check_int(crd_shape[1], 3, Rel.EQ, "crd_shape[1]", cls_name)
         validator.check_int(vel_shape[0], n, Rel.EQ, "vel_shape[0]", cls_name)
         validator.check_int(vel_shape[1], 3, Rel.EQ, "vel_shape[1]", cls_name)
-        validator.check_int(test_frc_shape[0], n, Rel.EQ, "frc_shape[0]", cls_name)
-        validator.check_int(test_frc_shape[1], 3, Rel.EQ, "frc_shape[1]", cls_name)
+        validator.check_int(test_frc_shape[0], n, Rel.EQ, "test_frc_shape[0]", cls_name)
+        validator.check_int(test_frc_shape[1], 3, Rel.EQ, "test_frc_shape[1]", cls_name)
         validator.check_int(mass_inverse_shape[0], n, Rel.EQ, "mass_inverse_shape[0]", cls_name)
         return [1,]
 
@@ -590,7 +591,7 @@ class MDIterationLeapFrogLiujianWithMaxVel(PrimitiveWithInfer):
         - **acc** (Tensor) - The acceleration of each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
         - **rand_state** (Tensor) - Random state to generate random force.
-          The data type is float32 and the shape is :math:`(math.ceil(atom_numbers * 3.0 / 4.0) * 16, )`.
+          The data type is float32 and the shape is :math:`(math.ceil(n * 3.0 / 4.0) * 16, )`.
         - **rand_frc** (Tensor) - The random forces.
           The data type is float32 and the shape is :math:`(n, 3)`.
 
@@ -703,6 +704,7 @@ class GetCenterOfMass(PrimitiveWithInfer):
             outputs=['center_of_mass'])
 
     def infer_shape(self, start, end, crd, atom_mass, residue_mass_inverse):
+        n = crd[0]
         m = self.residue_numbers
         validator.check_int(len(start), 1, Rel.EQ, "start_dim", self.name)
         validator.check_int(len(end), 1, Rel.EQ, "end_dim", self.name)
@@ -711,6 +713,9 @@ class GetCenterOfMass(PrimitiveWithInfer):
         validator.check_int(len(residue_mass_inverse), 1, Rel.EQ, "residue_mass_inverse_dim", self.name)
         validator.check_int(start[0], m, Rel.EQ, "start_shape", self.name)
         validator.check_int(end[0], m, Rel.EQ, "end_shape", self.name)
+        validator.check_int(crd[0], n, Rel.EQ, "crd_shape[0]", self.name)
+        validator.check_int(crd[1], 3, Rel.EQ, "crd_shape[1]", self.name)
+        validator.check_int(atom_mass[0], n, Rel.EQ, "atom_mass_shape[0]", self.name)
         validator.check_int(residue_mass_inverse[0], m, Rel.EQ, "residue_mass_inverse_shape", self.name)
         return [m, 3]
 
@@ -771,6 +776,7 @@ class MapCenterOfMass(PrimitiveWithInfer):
 
     def infer_shape(self, start, end, center_of_mass, box_length, no_wrap_crd, crd, scaler):
         m = self.residue_numbers
+        n = crd[0]
         validator.check_int(len(start), 1, Rel.EQ, "start_dim", self.name)
         validator.check_int(len(end), 1, Rel.EQ, "end_dim", self.name)
         validator.check_int(len(center_of_mass), 2, Rel.EQ, "center_of_mass_dim", self.name)
@@ -781,12 +787,13 @@ class MapCenterOfMass(PrimitiveWithInfer):
 
         validator.check_int(start[0], m, Rel.EQ, "start_shape", self.name)
         validator.check_int(end[0], m, Rel.EQ, "end_shape", self.name)
-        validator.check_int(center_of_mass[0], m, Rel.EQ, "center_of_mass_shape", self.name)
+        validator.check_int(center_of_mass[0], m, Rel.EQ, "center_of_mass_shape[0]", self.name)
+        validator.check_int(center_of_mass[1], 3, Rel.EQ, "center_of_mass_shape[1]", self.name)
         validator.check_int(box_length[0], 3, Rel.EQ, "box_length_shape", self.name)
         validator.check_int(scaler[0], 1, Rel.EQ, "scaler_shape", self.name)
-        validator.check_int(no_wrap_crd[0], 1, Rel.GE, "no_wrap_crd_shape[0]", self.name)
+        validator.check_int(no_wrap_crd[0], n, Rel.EQ, "no_wrap_crd_shape[0]", self.name)
         validator.check_int(no_wrap_crd[1], 3, Rel.EQ, "no_wrap_crd_shape[1]", self.name)
-        validator.check_int(crd[0], 1, Rel.GE, "crd_shape[0]", self.name)
+        validator.check_int(crd[0], n, Rel.EQ, "crd_shape[0]", self.name)
         validator.check_int(crd[1], 3, Rel.EQ, "crd_shape[1]", self.name)
         return [1,]
 
@@ -1112,7 +1119,7 @@ class MDIterationLeapFrogWithMaxVel(PrimitiveWithInfer):
         - **acc** (Tensor) - The acceleration of each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
         - **inverse_mass** (Tensor) - The inverse value of mass of each atom.
-          The data type is float32 and the shape is :math:`(n, 3)`.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Outputs:
         - **res** (Tensor) - The return value after updating successfully.
@@ -1146,9 +1153,8 @@ class MDIterationLeapFrogWithMaxVel(PrimitiveWithInfer):
         validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", self.name)
         validator.check_int(len(frc), 2, Rel.EQ, "frc_dim", self.name)
         validator.check_int(len(acc), 2, Rel.EQ, "acc_dim", self.name)
-        validator.check_int(len(inverse_mass), 1, Rel.EQ, "inverse_mass", self.name)
-        validator.check_int(inverse_mass[0], n, Rel.EQ, "inverse_mass_shape[0]", self.name)
-        validator.check_int(inverse_mass[1], 3, Rel.EQ, "inverse_mass_shape[1]", self.name)
+        validator.check_int(len(inverse_mass), 1, Rel.EQ, "inverse_mass_dim", self.name)
+        validator.check_int(inverse_mass[0], n, Rel.EQ, "inverse_mass_shape", self.name)
         validator.check_int(vel[0], n, Rel.EQ, "vel_shape[0]", self.name)
         validator.check_int(vel[1], 3, Rel.EQ, "vel_shape[1]", self.name)
         validator.check_int(crd[0], n, Rel.EQ, "crd_shape[0]", self.name)
@@ -1275,7 +1281,7 @@ class BondForceWithAtomEnergyAndVirial(PrimitiveWithInfer):
         self.add_prim_attr('bond_numbers', self.bond_numbers)
         self.add_prim_attr('atom_numbers', self.atom_numbers)
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'bond_k', 'bond_r0'],
-                                outputs=['frc_f', 'atom_e', 'atom_v'])
+                                outputs=['frc_f', 'atom_e', 'atom_virial'])
 
     def infer_shape(self, uint_crd_f_shape, scaler_f_shape, atom_a_shape, atom_b_shape, bond_k_shape, bond_r0_shape):
         cls_name = self.name
@@ -1383,6 +1389,7 @@ class LJForceWithVirialEnergy(PrimitiveWithInfer):
         cls_name = self.name
         n = self.atom_numbers
         q = d_lj_a[0]
+        m = self.max_neighbor_numbers
         validator.check_int(len(uint_crd), 2, Rel.EQ, "uint_crd_dim", cls_name)
         validator.check_int(len(ljtype), 1, Rel.EQ, "LJtype_dim", cls_name)
         validator.check_int(len(charge), 1, Rel.EQ, "charge_dim", cls_name)
@@ -1399,7 +1406,7 @@ class LJForceWithVirialEnergy(PrimitiveWithInfer):
         validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
-        validator.check_int(nl_serial[1], 800, Rel.EQ, "nl_serial_shape[1]", cls_name)
+        validator.check_int(nl_serial[1], m, Rel.EQ, "nl_serial_shape[1]", cls_name)
         validator.check_int(d_lj_a[0], q, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return [n, 3], [n,], [n,]
@@ -1487,6 +1494,7 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
         cls_name = self.name
         n = self.atom_numbers
         q = d_lj_a[0]
+        m = nl_serial[1]
         validator.check_int(len(uint_crd), 2, Rel.EQ, "uint_crd_dim", cls_name)
         validator.check_int(len(ljtype), 1, Rel.EQ, "LJtype_dim", cls_name)
         validator.check_int(len(charge), 1, Rel.EQ, "charge_dim", cls_name)
@@ -1504,7 +1512,7 @@ class LJForceWithPMEDirectForceUpdate(PrimitiveWithInfer):
         validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
-        validator.check_int(nl_serial[1], 800, Rel.EQ, "nl_serial_shape[1]", cls_name)
+        validator.check_int(nl_serial[1], m, Rel.EQ, "nl_serial_shape[1]", cls_name)
         validator.check_int(d_lj_a[0], q, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         validator.check_int(beta[0], 1, Rel.EQ, "beta_shape", cls_name)
@@ -1689,6 +1697,7 @@ class PMEExcludedForceUpdate(PrimitiveWithInfer):
                     excluded_atom_numbers_shape, beta):
         cls_name = self.name
         n = self.atom_numbers
+        e = self.excluded_numbers
         validator.check_int(len(uint_crd_shape), 2, Rel.EQ, "uint_crd_dim", cls_name)
         validator.check_int(len(scaler_shape), 1, Rel.EQ, "scaler_dim", cls_name)
         validator.check_int(len(charge_shape), 1, Rel.EQ, "charge_dim", cls_name)
@@ -1702,7 +1711,7 @@ class PMEExcludedForceUpdate(PrimitiveWithInfer):
         validator.check_int(charge_shape[0], n, Rel.EQ, "charge_shape", cls_name)
         validator.check_int(excluded_list_start_shape[0], n, Rel.EQ, "excluded_list_start_shape", cls_name)
         validator.check_int(excluded_atom_numbers_shape[0], n, Rel.EQ, "excluded_atom_numbers_shape", cls_name)
-        validator.check_int(excluded_list_shape[0], 0, Rel.GE, "excluded_list_shape", cls_name)
+        validator.check_int(excluded_list_shape[0], e, Rel.EQ, "excluded_list_shape", cls_name)
         validator.check_int(beta[0], 1, Rel.EQ, "beta_shape", cls_name)
         return [n, 3]
 
@@ -1800,6 +1809,7 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
         cls_name = self.name
         n = self.atom_numbers
         q = d_lj_a[0]
+        m = self.max_neighbor_numbers
         validator.check_int(len(uint_crd), 2, Rel.EQ, "uint_crd_dim", cls_name)
         validator.check_int(len(ljtype), 1, Rel.EQ, "LJtype_dim", cls_name)
         validator.check_int(len(charge), 1, Rel.EQ, "charge_dim", cls_name)
@@ -1816,7 +1826,7 @@ class LJForceWithVirialEnergyUpdate(PrimitiveWithInfer):
         validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
-        validator.check_int(nl_serial[1], 800, Rel.EQ, "nl_serial_shape[1]", cls_name)
+        validator.check_int(nl_serial[1], m, Rel.EQ, "nl_serial_shape[1]", cls_name)
         validator.check_int(d_lj_a[0], q, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         validator.check_int(beta[0], 1, Rel.EQ, "beta_shape[0]", cls_name)
@@ -1897,7 +1907,7 @@ class Dihedral14ForceWithAtomEnergyVirial(PrimitiveWithInfer):
         self.init_prim_io_names(
             inputs=['uint_crd_f', 'LJtype', 'charge', 'boxlength', 'a_14', 'b_14', 'lj_scale_factor',
                     'cf_scale_factor', 'LJ_type_A', 'LJ_type_B'],
-            outputs=['frc_f', 'atom_energy', 'atom_virial'])
+            outputs=['frc', 'atom_energy', 'atom_virial'])
         self.add_prim_attr('dihedral_14_numbers', self.dihedral_14_numbers)
         self.add_prim_attr('atom_numbers', self.atom_numbers)
 
@@ -2011,7 +2021,7 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, atom_numbers, excluded_numbers, beta, fftx, ffty, fftz, box_length_0, box_length_1,
                  box_length_2, max_neighbor_numbers=800, need_update=0):
-        """Initialize PMEEnergy"""
+        """Initialize PMEEnergyUpdate"""
         validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         validator.check_value_type('excluded_numbers', excluded_numbers, int, self.name)
         validator.check_value_type('beta', beta, float, self.name)
@@ -2055,6 +2065,7 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
         cls_name = self.name
         n = self.atom_numbers
         m = self.max_neighbor_numbers
+        e = self.excluded_numbers
         validator.check_int(len(uint_crd), 2, Rel.EQ, "uint_crd_dim", cls_name)
         validator.check_int(len(charge), 1, Rel.EQ, "charge_dim", cls_name)
         validator.check_int(len(nl_numbers), 1, Rel.EQ, "nl_numbers_dim", cls_name)
@@ -2069,11 +2080,11 @@ class PMEEnergyUpdate(PrimitiveWithInfer):
         validator.check_int(uint_crd[1], 3, Rel.EQ, "uint_crd_shape[1]", cls_name)
         validator.check_int(charge[0], n, Rel.EQ, "charge_shape", cls_name)
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape[0]", cls_name)
-        validator.check_int(nl_serial[0], n, Rel.LE, "nl_serial_shape[0]", cls_name)
+        validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], m, Rel.LE, "nl_serial_shape[1]", cls_name)
         validator.check_int(excluded_list_start[0], n, Rel.EQ, "excluded_list_start_shape", cls_name)
         validator.check_int(excluded_atom_numbers[0], n, Rel.EQ, "excluded_atom_numbers_shape", cls_name)
-        validator.check_int(excluded_list[0], 0, Rel.GE, "excluded_list_shape", cls_name)
+        validator.check_int(excluded_list[0], e, Rel.EQ, "excluded_list_shape", cls_name)
         validator.check_int(factor[0], 1, Rel.EQ, "factor_shape", cls_name)
         validator.check_int(beta[0], 1, Rel.EQ, "beta_shape", cls_name)
         validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
