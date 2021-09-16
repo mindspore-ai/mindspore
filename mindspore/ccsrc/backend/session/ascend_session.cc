@@ -571,11 +571,6 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(root_graph));
   // build kernel
   BuildKernel(root_graph);
-#ifdef ENABLE_DEBUGGER
-  if (debugger_ && debugger_->partial_memory()) {
-    debugger_->PreExecute(root_graph);
-  }
-#endif
   SetSummaryNodes(root_graph.get());
   // Alloc memory for child graph's inputs
   AssignStaticMemory(NOT_NULL(root_graph), NOT_NULL(&memo));
