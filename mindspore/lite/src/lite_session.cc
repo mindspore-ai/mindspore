@@ -714,6 +714,12 @@ int LiteSession::Init(InnerContext *context) {
     is_running_.store(false);
     return ret;
   }
+
+#ifdef MS_COMPILE_IOS
+  context_->thread_pool()->SetMaxSpinCount(kDefaulLiteIosSpinCount);
+  context_->thread_pool()->SetMinSpinCount(kDefaulLiteIosSpinCount);
+#endif
+
   if (context->delegate != nullptr) {
 #ifndef DELEGATE_CLIP
     delegate_ = context->delegate;

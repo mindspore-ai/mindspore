@@ -307,7 +307,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "Repalce delegate kernels failed.";
     return ret;
   }
-  this->context_->thread_pool()->SetMaxSpinCount(kMinSpinCount);
+  context_->thread_pool()->UnInitSpinCount();
 #endif
 
   ret = CheckCpuValid(dst_kernels);

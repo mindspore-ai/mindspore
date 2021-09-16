@@ -122,7 +122,10 @@ class ThreadPool {
   void SetActorThreadNum(size_t actor_thread_num) { actor_thread_num_ = actor_thread_num; }
   void SetKernelThreadNum(size_t kernel_thread_num) { kernel_thread_num_ = kernel_thread_num; }
   size_t GetKernelThreadNum() const { return kernel_thread_num_; }
-  int SetMaxSpinCount(int max_spin_count);
+  void InitSpinCount();
+  void UnInitSpinCount();
+  void SetMaxSpinCount(int spin_count) { max_spin_count_ = spin_count; }
+  void SetMinSpinCount(int spin_count) { min_spin_count_ = spin_count; }
 
  protected:
   ThreadPool() = default;
@@ -145,6 +148,8 @@ class ThreadPool {
   size_t actor_thread_num_{0};
   size_t kernel_thread_num_{0};
   bool occupied_actor_thread_{true};
+  int max_spin_count_{kDefaultSpinCount};
+  int min_spin_count_{kMinSpinCount};
 };
 
 }  // namespace mindspore
