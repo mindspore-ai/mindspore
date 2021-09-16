@@ -33,6 +33,7 @@ def test_log_stdout():
     logger.info("2 test log message info :%s", log_str)
     logger.warning("3 test log message warning :%s", log_str)
     logger.debug("4 test log message debug:%s", log_str)
+    logger.exception("5 test log message exception :{}".format(log_str))
     # Clean up _global_logger to avoid affecting for next usecase
     _clear_logger(logger)
 

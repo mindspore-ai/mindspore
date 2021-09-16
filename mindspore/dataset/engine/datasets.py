@@ -2456,8 +2456,8 @@ def _watch_dog(eot, pids):
                 wait_pid()
             ## multiprocessing.queue may hang in .get() forever when put() process was killed.
             ## We have to exit main process otherwise main process will hang.
-            logger.error("The subprocess of dataset may exit unexpected or be killed, "
-                         "main process will exit.")
+            logger.exception("The subprocess of dataset may exit unexpected or be killed, "
+                             "main process will exit.")
             os.kill(os.getpid(), signal.SIGTERM)
 
 
@@ -2608,7 +2608,7 @@ class _ExceptHookHandler:
         sys.excepthook = self.__handler_exception
 
     def __handler_exception(self, ex_type, value, tb):
-        logger.error("Uncaught exception: ", exc_info=(ex_type, value, tb))
+        logger.exception("Uncaught exception: ", exc_info=(ex_type, value, tb))
         _mp_pool_exit_preprocess()
 
 

@@ -191,6 +191,8 @@ int StrToInt(const std::string &env) {
     return INFO;
   } else if (env == "3") {
     return ERROR;
+  } else if (env == "4") {
+    return EXCEPTION;
   }
   return WARNING;
 }

@@ -117,7 +117,7 @@ class TrtLogger : public nvinfer1::ILogger {
     if (str_level.size() == 1) {
       int ch = str_level.c_str()[0];
       ch = ch - '0';  // subtract ASCII code of '0', which is 48
-      if (ch >= mindspore::DEBUG && ch <= mindspore::ERROR) {
+      if (ch >= mindspore::DEBUG && ch <= mindspore::EXCEPTION) {
         log_level_ = static_cast<MsLogLevel>(ch);
       }
     }
