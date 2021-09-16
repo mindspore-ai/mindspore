@@ -28,13 +28,6 @@ class ExpandDims : public OpExpander {
     (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~ExpandDims() = default;
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
-    const auto &input_x = inputs[0];
-    auto shape = MakeValue(ExpandDims::InferShape(input_x->shape, GetAxisList(this->attrs_["axis"])));
-    auto result = gb.Emit("Reshape", {input_x}, {{"shape", shape}});
-    return {result};
-  }
 
   static ShapeVector InferShape(const ShapeVector &shape, const std::vector<int64_t> &axis) {
     ShapeVector new_shape = shape;
@@ -50,6 +43,15 @@ class ExpandDims : public OpExpander {
       }
     }
     return new_shape;
+  }
+
+ protected:
+  NodePtrList Expand() override {
+    const auto &inputs = gb.Get()->inputs();
+    const auto &input_x = inputs[0];
+    auto shape = MakeValue(ExpandDims::InferShape(input_x->shape, GetAxisList(this->attrs_["axis"])));
+    auto result = gb.Emit("Reshape", {input_x}, {{"shape", shape}});
+    return {result};
   }
 };
 OP_EXPANDER_REGISTER("ExpandDims", ExpandDims);

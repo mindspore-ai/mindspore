@@ -51,10 +51,14 @@ class OpExpanderFactory {
 
 class OpExpanderRegister {
  public:
-  OpExpanderRegister(const std::string &name, const OpExpanderFactory::RegFunc &func) {
+  OpExpanderRegister(const std::string &name, const OpExpanderFactory::RegFunc &func) : func_(func) {
     OpExpanderFactory::Instance().Register(name, func);
   }
   ~OpExpanderRegister() = default;
+
+ private:
+  // for pclint-plus
+  OpExpanderFactory::RegFunc func_;
 };
 
 #define OP_EXPANDER_REGISTER(name, cls)                   \

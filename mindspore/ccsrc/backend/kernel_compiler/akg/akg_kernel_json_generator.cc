@@ -16,7 +16,7 @@
 
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 
-#if ENABLE_GPU
+#ifdef ENABLE_GPU
 #include <cuda.h>
 #endif
 #include "backend/kernel_compiler/akg/akg_kernel_attrs_process.h"
@@ -842,7 +842,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
 }
 
 void ComputeCapability::GetComputeCapability() {
-#if ENABLE_GPU
+#ifdef ENABLE_GPU
   int a, b;
   auto ret = cuDeviceGetAttribute(&a, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
   if (ret != CUDA_SUCCESS) {
@@ -856,6 +856,7 @@ void ComputeCapability::GetComputeCapability() {
   }
   this->compute_capability_ = std::to_string(a) + "." + std::to_string(b);
 #endif
+  this->compute_capability_ = "Unknown";
   return;
 }
 }  // namespace kernel

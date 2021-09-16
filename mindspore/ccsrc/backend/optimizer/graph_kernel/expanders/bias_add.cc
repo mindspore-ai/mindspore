@@ -36,6 +36,8 @@ class BiasAdd : public OpExpander {
     (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~BiasAdd() = default;
+
+ protected:
   NodePtrList Expand() override {
     const auto &inputs = gb.Get()->inputs();
     auto input_x = inputs[0];

@@ -124,18 +124,19 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
     return *static_cast<TM *>(std::static_pointer_cast<graphkernel::ConstTensorNode>(i)->data()->data_c());
   });
 
-  std::unordered_map<std::string, std::function<TM(const std::vector<TM> &)>> func_map;
-  func_map["Add"] = [](const std::vector<TM> &n) { return n[0] + n[1]; };
-  func_map["Sub"] = [](const std::vector<TM> &n) { return n[0] - n[1]; };
-  func_map["Mul"] = [](const std::vector<TM> &n) { return n[0] * n[1]; };
-  func_map["RealDiv"] = [](const std::vector<TM> &n) { return n[0] / n[1]; };
-  func_map["Neg"] = [](const std::vector<TM> &n) { return -n[0]; };
-  func_map["Reciprocal"] = [](const std::vector<TM> &n) { return TM(1) / n[0]; };
-  func_map["Log"] = [](const std::vector<TM> &n) { return log(n[0]); };
-  func_map["Exp"] = [](const std::vector<TM> &n) { return exp(n[0]); };
-  func_map["Abs"] = [](const std::vector<TM> &n) { return n[0] < TM(0) ? (-n[0]) : n[0]; };
-  func_map["Sqrt"] = [](const std::vector<TM> &n) { return sqrt(n[0]); };
-  func_map["Rsqrt"] = [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); };
+  std::unordered_map<std::string, std::function<TM(const std::vector<TM> &)>> func_map = {
+    {"Add", [](const std::vector<TM> &n) { return n[0] + n[1]; }},
+    {"Sub", [](const std::vector<TM> &n) { return n[0] - n[1]; }},
+    {"Mul", [](const std::vector<TM> &n) { return n[0] * n[1]; }},
+    {"RealDiv", [](const std::vector<TM> &n) { return n[0] / n[1]; }},
+    {"Neg", [](const std::vector<TM> &n) { return -n[0]; }},
+    {"Reciprocal", [](const std::vector<TM> &n) { return TM(1) / n[0]; }},
+    {"Log", [](const std::vector<TM> &n) { return log(n[0]); }},
+    {"Exp", [](const std::vector<TM> &n) { return exp(n[0]); }},
+    {"Abs", [](const std::vector<TM> &n) { return n[0] < TM(0) ? (-n[0]) : n[0]; }},
+    {"Sqrt", [](const std::vector<TM> &n) { return sqrt(n[0]); }},
+    {"Rsqrt", [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); }},
+  };
 
   if (func_map.find(op) == func_map.end()) return nullptr;
   return std::make_shared<tensor::Tensor>(static_cast<TD>(func_map[op](inputs_tm)), TypeIdToType(tid));
