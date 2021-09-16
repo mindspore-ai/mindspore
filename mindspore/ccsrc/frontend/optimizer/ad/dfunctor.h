@@ -199,9 +199,11 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
 
   GraphDebugInfoPtr debug_info = nullptr;
   {
-    TraceGuard guard(std::make_shared<TraceGradFprop>(bprop_fg->debug_info()));
+    TraceGuard guard(std::make_shared<TraceCopy>(bprop_fg->debug_info()));
     debug_info = std::make_shared<GraphDebugInfo>();
-    debug_info->set_name(primal->ToString());
+  }
+  if (debug_info->trace_info() != nullptr && debug_info->trace_info()->debug_info() != nullptr) {
+    debug_info->trace_info()->debug_info()->set_name(primal->ToString());
   }
   cloned_bprop_fg->debug_info()->set_name("");
   cloned_bprop_fg->debug_info()->set_trace_info(std::make_shared<TraceGradBprop>(debug_info));
