@@ -113,13 +113,14 @@ std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBa
 
 namespace {
 constexpr char kCompileCacheFilePath[] = "compile_cache.mindir";
-
+#ifdef ENABLE_DUMP_IR
 std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) {
   std::ostringstream oss;
   int spaces = 2;
   oss << std::setfill('0') << std::setw(spaces) << stage_idx << "_" << action_name;
   return oss.str();
 }
+#endif
 
 AbstractBasePtr ArgsToAbstract(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);

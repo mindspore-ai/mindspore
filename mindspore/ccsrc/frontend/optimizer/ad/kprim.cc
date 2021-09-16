@@ -151,7 +151,7 @@ void ExportBpropToMindIR(const PrimitivePtr &prim, const FuncGraphPtr &func_grap
   func_graph->set_bprop_hash(GetBpropHash());
   auto bprop_mindir_path = bprop_dir + kBpropMindIRDir;
   std::optional<std::string> bprop_mindir_realpath =
-    Common::CreatePrefixPath(bprop_mindir_path + prim->name() + kBpropMindIRSuffix);
+    Common::CreatePrefixPath(bprop_mindir_path + prim->name() + kBpropMindIRSuffix, true);
   if (!bprop_mindir_realpath.has_value()) {
     MS_LOG(ERROR) << "Failed to get the realpath of bprop mindir: " << bprop_mindir_path << prim->name()
                   << kBpropMindIRSuffix;
