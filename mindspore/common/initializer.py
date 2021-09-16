@@ -197,10 +197,12 @@ def _calculate_gain(nonlinearity, param=None):
             # True/False are instances of int, hence check above
             negative_slope = param
         else:
-            raise ValueError("negative_slope {} not a valid number".format(param))
+            raise ValueError("negative_slope {} is not a valid number. "
+                             "It should be bool, int, or float type.".format(param))
         res = math.sqrt(2.0 / (1 + negative_slope ** 2))
     else:
-        raise ValueError("Unsupported nonlinearity {}".format(nonlinearity))
+        raise ValueError("Unsupported nonlinearity {}, the argument 'nonlinearity' should be one of "
+                         "'sigmoid', 'tanh', 'relu' or 'leaky_relu'.".format(nonlinearity))
     return res
 
 
@@ -495,7 +497,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
         >>> tensor3 = initializer(0, [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
-        raise TypeError("Unsupported init type '{}'.".format(type(init)))
+        raise TypeError("Unsupported init type '{}', init should be 'Tensor', 'number', 'str' "
+                        "or 'initializer' type".format(type(init)))
 
     if isinstance(init, Tensor):
         init_shape = init.shape
@@ -512,7 +515,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
     for value in shape if shape is not None else ():
         if not isinstance(value, int) or value <= 0:
-            raise ValueError(f"shape is invalid, shape value must be positive integer, shape:{shape}")
+            raise ValueError(f"Shape is invalid, the value of shape must be positive integer, but got shape:{shape}")
 
     if isinstance(init, str):
         init = _INITIALIZER_ALIAS[init.lower()]()

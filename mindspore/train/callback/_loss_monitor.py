@@ -39,7 +39,8 @@ class LossMonitor(Callback):
     def __init__(self, per_print_times=1):
         super(LossMonitor, self).__init__()
         if not isinstance(per_print_times, int) or per_print_times < 0:
-            raise ValueError("print_step must be int and >= 0.")
+            raise ValueError("'Per_print_times' must be int and >= 0, "
+                             "but got {}".format(per_print_times))
         self._per_print_times = per_print_times
 
     def step_end(self, run_context):
