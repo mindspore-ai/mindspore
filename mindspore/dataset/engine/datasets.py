@@ -2430,7 +2430,7 @@ def wait_pid():
 # and thread can't be a member function otherwise python won't collect and release resources.
 def _watch_dog(eot, pids):
     """
-    This thread is for monitoring subprocesses forked by BatchDataset
+    This thread is for monitoring subprocesses forked by GeneratorDataset/MapDataset/BatchDataset
     """
     while not eot.is_set():
         subprocess_exit_num = 0
@@ -2456,7 +2456,7 @@ def _watch_dog(eot, pids):
                 wait_pid()
             ## multiprocessing.queue may hang in .get() forever when put() process was killed.
             ## We have to exit main process otherwise main process will hang.
-            logger.error("The subprocess of BatchDataset may exit unexpected or be killed, "
+            logger.error("The subprocess of dataset may exit unexpected or be killed, "
                          "main process will exit.")
             os.kill(os.getpid(), signal.SIGTERM)
 
