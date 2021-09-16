@@ -736,6 +736,8 @@ int TrainSession::SetOptimizerParams(const std::vector<tensor::MSTensor *> &para
       }
     }
     if (!found) {
+      MS_LOG(ERROR) << "Tensor " << param->tensor_name() << " with " << param->ElementsNum() << " elelmts and type "
+                    << param->data_type() << " is not a valid params tensor";
       return RET_ERROR;
     }
   }
@@ -1081,6 +1083,10 @@ int TrainSession::UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &featu
 
 session::LiteSession *session::TrainSession::CreateTrainSession(const std::string &fn, const lite::Context *context,
                                                                 bool train_mode, const lite::TrainCfg *cfg) {
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "context cannot be nullptr";
+    return nullptr;
+  }
   auto session = std::make_unique<lite::TrainSession>();
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed";

@@ -71,8 +71,7 @@ class OptimizerKernel : public InnerKernel {
     for (size_t ix = 0; ix < indices.size(); ix++) {
       auto param = in_tensors_.at(indices[ix]);
       if (param->data() == nullptr) {
-        MS_LOG(ERROR) << "Tensor: " << param->tensor_name() << "has no data";
-        return params;
+        continue;
       }
       params.push_back(param);
     }
@@ -97,10 +96,6 @@ class OptimizerKernel : public InnerKernel {
         found = true;
         break;
       }
-    }
-    if (!found) {
-      MS_LOG(ERROR) << "Tensor " << param->tensor_name() << " with " << param->ElementsNum() << " elelmts and type "
-                    << param->data_type() << " is not a vlid params tensor";
     }
     return found;
   }
