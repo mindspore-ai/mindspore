@@ -569,5 +569,4 @@ session::LiteSession *ModelImpl::CreateLiteSession(lite::InnerContext *context) 
   }
   return session;
 }
-
 }  // namespace mindspore

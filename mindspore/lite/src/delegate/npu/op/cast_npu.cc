@@ -20,12 +20,12 @@
 namespace mindspore {
 int CastNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                          const std::vector<mindspore::MSTensor> &out_tensors) {
-  CHECK_LESS_RETURN(in_tensors.size(), 2);
+  CHECK_LESS_RETURN(in_tensors.size(), C2NUM);
   auto in_tensor = in_tensors[1];
   CHECK_NULL_RETURN(in_tensor);
   CHECK_NULL_RETURN(in_tensor.Data().get());
 
-  if (in_tensors.size() >= 2 && in_tensor.ElementNum() == 1) {
+  if (in_tensors.size() >= C2NUM && in_tensor.ElementNum() == 1) {
     dst_type_ = reinterpret_cast<const int *>(in_tensor.Data().get())[0];
   } else {
     MS_LOG(WARNING) << "NPU dst dtype is attribute.";
