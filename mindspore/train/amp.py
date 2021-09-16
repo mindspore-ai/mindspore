@@ -133,6 +133,17 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             O2 is recommended on GPU, O3 is recommended on Ascend.Property of `keep_batchnorm_fp32` , `cast_model_type`
             and `loss_scale_manager` determined by `level` setting may be overwritten by settings in `kwargs` .
 
+        boost_level (str): Option for argument `level` in `mindspore.boost` , level for boost mode
+            training. Supports ["O0", "O1", "O2"]. Default: "O0".
+
+            - O0: Do not change.
+            - O1: Enable the boost mode, the performance is improved by about 20%, and
+              the accuracy is the same as the original accuracy.
+            - O2: Enable the boost mode, the performance is improved by about 30%, and
+              the accuracy is reduced by less than 3%.
+
+            If O1 or O2 mode is set, the boost related library will take effect automatically.
+
         cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32` . If set, the
             network will be casted to `cast_model_type` ( `mstype.float16` or `mstype.float32` ), but not to be casted
             to the type determined by `level` setting.

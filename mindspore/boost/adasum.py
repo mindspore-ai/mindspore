@@ -108,7 +108,7 @@ def _adasum_opt_rollback_process(left_send, delta_w, send, recv):
 
 
 class AdaSum(Cell):
-    """
+    r"""
     The Adaptive Summation, or AdaSum, is a novel algorithm for improving distributed data
     parallel training of Deep Learning models.
 
@@ -117,7 +117,13 @@ class AdaSum(Cell):
         optimizer (Union[Cell]): Optimizer for updating the weights.
         sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
 
-    Return:
+    Inputs:
+        - **delta_weights** (Tuple(Tensor)) - Tuple of gradients.
+        - **parameters** (Tuple(Parameter)) - Tuple of current parameters.
+        - **old_parameters** (Tuple(Parameter)) - Tuple of last parameters.
+
+    Outputs:
+        - **adasum_parameters** (Tuple(Tensor)) - Tuple of parameters after adasum process.
     """
     def __init__(self, rank, device_number, group_number, parameter_tuple):
         super(AdaSum, self).__init__()
