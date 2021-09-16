@@ -126,7 +126,7 @@ void TraceGraphEval() {
   oss << std::endl;
   DumpInferStack(oss);
   oss << "\n*************************************************************************************";
-  MS_LOG(ERROR) << oss.str();
+  MS_LOG(INFO) << oss.str();
 }
 
 class AnalyzeFailExporter : public AnfExporter {
