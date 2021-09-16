@@ -89,8 +89,8 @@ You can start training using python or shell scripts. The usage of shell scripts
 ```shell
 # training example
   python:
-      GPU: python train.py --dataset_path ~/imagenet/train/ --device_targe GPU
-      CPU: python train.py --dataset_path ~/cifar10/train/ --device_targe CPU
+      GPU: python train.py --dataset_path ~/imagenet/train/ --device_target GPU
+      CPU: python train.py --dataset_path ~/cifar10/train/ --device_target CPU
   shell:
       GPU: bash run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
       CPU: bash run_train.sh CPU ~/cifar10/train/
@@ -121,8 +121,8 @@ You can start training using python or shell scripts. The usage of shell scripts
 ```shell
 # infer example
   python:
-    GPU: python eval.py --dataset_path ~/imagenet/val/ --checkpoint_path mobilenet_199.ckpt --device_targe GPU
-    CPU: python eval.py --dataset_path ~/cifar10/val/ --checkpoint_path mobilenet_199.ckpt --device_targe CPU
+    GPU: python eval.py --dataset_path ~/imagenet/val/ --checkpoint_path mobilenet_199.ckpt --device_target GPU
+    CPU: python eval.py --dataset_path ~/cifar10/val/ --checkpoint_path mobilenet_199.ckpt --device_target CPU
 
   shell:
     GPU: bash run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt
