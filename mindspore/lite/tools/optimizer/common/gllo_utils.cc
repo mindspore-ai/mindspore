@@ -130,7 +130,7 @@ STATUS DoTransposeData(const tensor::TensorPtr &tensor, schema::Format src_forma
   MS_CHECK_TRUE_RET(originWeightData != nullptr, RET_ERROR);
   T *weightData = static_cast<T *>(originWeightData);
   TransposeData<T>(origin_shape, new_shape, perm, weightData, &buf);
-  if (memcpy_s(tensor->data_c(), count * sizeof(T), buf.data(), count * sizeof(T)) != EOK) {
+  if (memcpy_s(tensor->data_c(), tensor->Size(), buf.data(), count * sizeof(T)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed.";
     return RET_ERROR;
   }

@@ -64,6 +64,9 @@ int UnsqueezeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
         ShapePush(out_shape, &out_shape_size, 1);
         ax_itr++;
       } else {
+        if (in_itr >= input->shape_size_) {
+          return NNACL_ERR;
+        }
         ShapePush(out_shape, &out_shape_size, input->shape_[in_itr]);
         in_itr++;
       }
