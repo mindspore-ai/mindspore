@@ -277,14 +277,20 @@ def judge_indexes_types(dtypes, target_type):
 
 
 @constexpr
+def check_type_invalid(dtype, target_type):
+    """Checks whether the dtype is valid."""
+    return dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type)
+
+
+@constexpr
 def check_type_valid(dtype, target_type, op_name):
     """Checks whether the dtype is valid."""
     if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
         if op_name in (TENSOR_GETITEM, TENSOR_SETITEM):
             raise IndexError(
-                f"The '{op_name}' doesn't supoort {dtype}' and expect to receive {target_type}.")
+                f"The '{op_name}' doesn't support {dtype}' and expect to receive {target_type}.")
         raise TypeError(
-            f"The '{op_name}' doesn't supoort {dtype}' and expect to receive {target_type}.")
+            f"The '{op_name}' doesn't support {dtype}' and expect to receive {target_type}.")
 
 
 @constexpr
@@ -834,3 +840,8 @@ def use_copy_slice(tuple_index):
                 isinstance(tuple_index[1], slice) and tuple_index[1].step in (1, None) and
                 all(x == slice(None, None, None) for x in tuple_index[2:]))
     return False
+
+
+@constexpr
+def gen_exception_msg(msg_format, *args):
+    return msg_format.format(args)

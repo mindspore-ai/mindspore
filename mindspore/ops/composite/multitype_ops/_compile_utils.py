@@ -164,7 +164,7 @@ def tensor_item(data, *args):
 def tensor_itemset(data, *args):
     """Tensor setitem by index and value."""
     if not args:
-        const_utils.raise_value_error("itemset must have at least one argument")
+        const_utils.raise_value_error("'Tensor.itemset()' must have at least one argument, but got None.")
     if len(args) == 2:
         if const_utils.judge_index_type(F.typeof(args[0]), mstype.int64):
             return tensor_itemset_by_number_with_number(data, args[0], args[1])
@@ -172,7 +172,9 @@ def tensor_itemset(data, *args):
             return tensor_itemset_by_tuple_with_number(data, args[0], args[1])
         const_utils.raise_type_error("The index object cannot be interpreted as an integer")
     if len(args) > 2:
-        const_utils.raise_value_error("incorrect number of indices for array")
+        exp_msg = const_utils.gen_exception_msg("'Tensor.itemset()' must have at most 2 argument, but got {}.",
+                                                len(args))
+        const_utils.raise_value_error(exp_msg)
     return tensor_itemset_with_number(data, args[0])
 
 
@@ -181,10 +183,16 @@ tensor_operator_registry.register("itemset", tensor_itemset)
 
 
 def tensor_itemset_with_number(data, number_value):
+    """set value of tensor whose shape is (1,)"""
     if not const_utils.judge_index_type(F.typeof(number_value), mstype.number_type):
-        const_utils.raise_index_error("The Tensor could only use the number value for itemset")
+        exp_msg = const_utils.gen_exception_msg(
+            "'Tensor.itemset()' only support number input, but got {}", number_value)
+        const_utils.raise_index_error(exp_msg)
     if data.shape != (1,):
-        const_utils.raise_index_error("The Tensor without shape (1,) could not use the itemset api with only one args")
+        exp_msg = const_utils.gen_exception_msg(
+            "Only tensor which shape is (1,) support 1 arg that means omit index, "
+            "but the tensor shape is {} and got 1 input.", data.shape)
+        const_utils.raise_index_error(exp_msg)
     return const_utils.make_tensor((number_value,), F.dtype(data))
 
 
@@ -197,7 +205,9 @@ def tensor_itemset_by_number_with_number(data, int_index, number_value):
 
 def tensor_itemset_by_tuple_with_number(data, tuple_index, nubmer_value):
     if len(tuple_index) != data.ndim:
-        const_utils.raise_value_error("incorrect number of indices for array")
+        exp_msg = const_utils.gen_exception_msg(
+            "Tuple index len({}) is not same to tensor dimension({})", len(tuple_index), data.ndim)
+        const_utils.raise_index_error(exp_msg)
     return tensor_setitem_by_tuple_with_number(data, tuple_index, nubmer_value)
 
 
@@ -234,7 +244,9 @@ def _transform_ellipsis_to_slice(data, tuple_index, op_name):
     ellipsis_cnt = len(ellipsis_positions)
     # pylint: disable=chained-comparison
     if ellipsis_occupy_dims < 0 and ellipsis_cnt >= 0:
-        const_utils.raise_index_error("too many indices for array")
+        exp_msg = const_utils.gen_exception_msg(
+            "Tuple index {} out rang of tensor shape {}.", tuple_index, data_shape)
+        const_utils.raise_index_error(exp_msg)
 
     tuple_index_new = ()
     for i, index in enumerate(tuple_index):
@@ -257,7 +269,7 @@ def _expand_data_dims(data, tuple_index):
             expand_positions += (i,)
         elif const_utils.judge_index_type(index_type, mstype.bool_):
             if not index:
-                const_utils.raise_index_error("Dose not support 'False'.")
+                const_utils.raise_index_error("Bool element of tuple index must be 'True', but got 'False'.")
             tuple_index_new += (const_utils.make_tensor([0], mstype.int64),)
             expand_positions += (i,)
         else:
@@ -284,7 +296,9 @@ def tensor_index_by_number(data, number_index):
         return _tensor_index_by_bool(data, number_index)
     if isinstance(number_index, int):
         return _tensor_index_by_integer(data, number_index)
-    return const_utils.raise_index_error("Only support integers, slices(`:`), ellipsis(`...`), None and bool.")
+    exp_msg = const_utils.gen_exception_msg(
+        "Number index of tensor must be int or bool, but got {}.", number_index)
+    return const_utils.raise_index_error(exp_msg)
 
 
 def _tensor_index_by_bool(data, bool_value):
@@ -326,7 +340,7 @@ def tensor_index_by_list(data, list_index):
     if const_utils.judge_indexes_types(indexes_types, mstype.int_type + (mstype.bool_,)):
         tensor_index = const_utils.sequence_to_index(list_index, data_shape[0])
         if tensor_index is False:
-            const_utils.raise_index_error("Getitem does not support empty list, this will reference shape '0'.")
+            const_utils.raise_index_error("When tensor is indexed by list, the list can't be empty.")
         return F.gather(data, tensor_index, 0)
 
     tuple_index_new = ()
@@ -408,12 +422,17 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
         elif i in sequence_positions:
             tensor_index = const_utils.sequence_to_index(index, dim_size)
             if tensor_index is False:
-                const_utils.raise_index_error('Tensor with size 0 is not supported')
+                const_utils.raise_index_error("The sequence element(tuple/list) in tuple index can't be empty.")
             tuple_index_new += (tensor_index,)
             tensor_indexes.append(tensor_index)
             tensor_positions += (i,)
         elif i in tensor_positions:
             const_utils.check_type_valid(F.dtype(index), mstype.int_type, op_name)
+            invalid = const_utils.check_type_invalid(F.dtype(index), mstype.int_type)
+            if invalid:
+                exp_msg = const_utils.gen_exception_msg(
+                    "The tensor element in tuple index must be int type, but got {}.", F.dtype(index))
+                const_utils.raise_index_error(exp_msg)
             tensor_index = F.cast(index, mstype.int64)
             tuple_index_new += (tensor_index,)
             tensor_indexes.append(tensor_index)
@@ -488,7 +507,11 @@ def _generate_indices_from_tuple(data, tuple_index, op_name, fancy_position):
             tensor_indexes.append(tensor_index)
             tensor_positions += (i,)
         elif i in tensor_positions:
-            const_utils.check_type_valid(F.dtype(index), mstype.int_type, op_name)
+            invalid = const_utils.check_type_invalid(F.dtype(index), mstype.int_type)
+            if invalid:
+                exp_msg = const_utils.gen_exception_msg(
+                    "The tensor element in tuple index must be int type, but got {}.", F.dtype(index))
+                const_utils.raise_index_error(exp_msg)
             tensor_index = F.cast(index, mstype.int64)
             tuple_index_new += (tensor_index,)
             tensor_indexes.append(tensor_index)
@@ -645,7 +668,10 @@ def tensor_setitem_by_tensor_with_number(data, index, value):
 def tensor_setitem_by_tensor_with_sequence(data, index, value):
     """Assigns the tensor by tensor with tuple value."""
     index_dtype = F.dtype(index)
-    const_utils.check_type_valid(index_dtype, (mstype.int32, mstype.int64), const_utils.TENSOR_SETITEM)
+    invalid = const_utils.check_type_invalid(index_dtype, (mstype.int32, mstype.int64))
+    if invalid:
+        exp_msg = const_utils.gen_exception_msg("The tensor index must be int type, but got {}.", index_dtype)
+        const_utils.raise_index_error(exp_msg)
     return _tensor_setitem_by_tensor_with_sequence(data, index, value)
 
 
