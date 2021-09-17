@@ -532,36 +532,61 @@ def set_context(**kwargs):
 
     Some configurations are device specific, see the below table for details:
 
-    =======================      ===========================  =========================
-    Function Classification      Configuration Parameters     Hardware Platform Support
-    =======================      ===========================  =========================
-    System Configuration         device_id                    CPU/GPU/Ascend
-                                 device_target                CPU/GPU/Ascend
-                                 max_device_memory            GPU
-                                 variable_memory_max_size     Ascend
-    Debug Configuration          save_graphs                  CPU/GPU/Ascend
-                                 save_graphs_path             CPU/GPU/Ascend
-                                 enable_dump                  Ascend
-                                 save_dump_path               Ascend
-                                 enable_profiling             Ascend
-                                 profiling_options            Ascend
-                                 print_file_path              Ascend
-                                 env_config_path              CPU/GPU/Ascend
-                                 precompile_only              CPU/GPU/Ascend
-                                 reserve_class_name_in_scope  CPU/GPU/Ascend
-                                 pynative_synchronize         GPU/Ascend
-    Executive Control            mode                         CPU/GPU/Ascend
-                                 enable_graph_kernel          Ascend/GPU
-                                 graph_kernel_flags           Ascend/GPU
-                                 enable_reduce_precision      Ascend
-                                 auto_tune_mode               Ascend
-                                 check_bprop                  CPU/GPU/Ascend
-                                 max_call_depth               CPU/GPU/Ascend
-                                 enable_sparse                CPU/GPU/Ascend
-                                 grad_for_scalar              CPU/GPU/Ascend
-                                 save_compile_cache           CPU/GPU/Ascend
-                                 load_compile_cache           CPU/GPU/Ascend
-    =======================      ===========================  =========================
+    +-------------------------+------------------------------+----------------------------+
+    | Function Classification |   Configuration Parameters   |   Hardware Platform Support|
+    +=========================+==============================+============================+
+    | System Configuration    |   device_id                  |   CPU/GPU/Ascend           |
+    |                         +------------------------------+----------------------------+
+    |                         |   device_target              |   CPU/GPU/Ascend           |
+    |                         +------------------------------+----------------------------+
+    |                         |  max_device_memory           |  GPU                       |
+    |                         +------------------------------+----------------------------+
+    |                         |  variable_memory_max_size    |  Ascend                    |
+    +-------------------------+------------------------------+----------------------------+
+    | Debug Configuration     |  save_graphs                 |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  save_graphs_path            |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_dump                 |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  save_dump_path              |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_profiling            |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  profiling_options           |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  print_file_path             |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  env_config_path             |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  precompile_only             |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  reserve_class_name_in_scope |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  pynative_synchronize        |  GPU/Ascend                |
+    +-------------------------+------------------------------+----------------------------+
+    | Executive Control       |   mode                       |   CPU/GPU/Ascend           |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_graph_kernel         |  Ascend/GPU                |
+    |                         +------------------------------+----------------------------+
+    |                         |  graph_kernel_flags          |  Ascend/GPU                |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_reduce_precision     |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  auto_tune_mode              |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  check_bprop                 |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  max_call_depth              |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_sparse               |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  grad_for_scalar             |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  save_compile_cache          |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  load_compile_cache          |  CPU/GPU/Ascend            |
+    +-------------------------+------------------------------+----------------------------+
 
     Args:
         device_id (int): ID of the target device, the value must be in [0, device_num_per_host-1],
@@ -617,18 +642,15 @@ def set_context(**kwargs):
               operator name.
 
             - aic_metrics:
-                the values are as follows:
-              ArithmeticUtilization:
-                percentage statistics of various calculation indicators.
-              PipeUtilization:
-                the time-consuming ratio of calculation unit and handling unit, this item is
+
+              the values are as follows:
+
+              - ArithmeticUtilization: Percentage statistics of various calculation indicators.
+              - PipeUtilization: The time-consuming ratio of calculation unit and handling unit, this item is
                 the default value.
-              Memory:
-                percentage of external memory read and write instructions.
-              MemoryL0:
-                percentage of internal memory read and write instructions.
-              ResourceConflictRatio:
-                proportion of pipline queue instructions.
+              - Memory: Percentage of external memory read and write instructions.
+              - MemoryL0: Percentage of internal memory read and write instructions.
+              - ResourceConflictRatio: Proportion of pipline queue instructions.
 
             The profiling_options is like '{"output":'/home/data/output', 'training_trace':'on'}'
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
@@ -638,21 +660,30 @@ def set_context(**kwargs):
             If it is not set, an error will be reported: prompt to set the upper absolute path.
         env_config_path (str): Config path for DFX.
             Through context.set_context(env_config_path="./mindspore_config.json")
+
             configure RDR:
-                enable: controls whether the RDR is enabled to collects the key data during training and
-                    saves key data in the fault scenario. When set to true, the RDR will be turned on.
-                    When set to false, the RDR will be turned off.
-                path: sets the path where RDR saves data. The current path must be absolute.
+
+            - enable: controls whether the RDR is enabled to collects the key data during training and
+              saves key data in the fault scenario. When set to true, the RDR will be turned on.
+              When set to false, the RDR will be turned off.
+            - path: sets the path where RDR saves data. The current path must be absolute.
+
             Memory reuse:
-                mem_Reuse: controls whether the memory reuse function is turned on. When set to True,
-                the memory reuse function is turned on. When set to False, the memory reuse function is turned off.
+
+            - mem_Reuse: controls whether the memory reuse function is turned on. When set to True,
+            - the memory reuse function is turned on. When set to False, the memory reuse function is turned off.
+
         precompile_only (bool): Whether to only precompile the network. Default: False.
             If set to True, the network will only be compiled, not executed.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
             Each node has a scope. A scope of a subnode is the name of its parent node. If reserve_class_name_in_scope
             is set, the class name will be saved after keyword 'net-' in the scope.
-            For example:Default/net-Net1/net-Net2 (reserve_class_name_in_scope=True)
-                         Default/net/net (reserve_class_name_in_scope=False)
+            For example:
+
+            Default/net-Net1/net-Net2 (reserve_class_name_in_scope=True)
+
+            Default/net/net (reserve_class_name_in_scope=False)
+
         pynative_synchronize (bool): Whether to enable synchronous execution of the device in PyNative mode.
             Default: False. When the value is set to False, the operator is executed asynchronously on the device.
             When an error occurs in the execution of the operator, the specific error script code location cannot
@@ -673,28 +704,34 @@ def set_context(**kwargs):
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Experienced user only.
             For example, context.set_context(graph_kernel_flags=”–opt_level=2 –dump_as_text”). Some general options:
-            opt_level: Set the optimization level.
-                Default: 2. Graph kernel fusion can be enabled equivalently by setting opt_level greater than 0.
-                Available values are:
-                0: Disable graph kernel fusion;
-                1: enable the basic fusion of operators;
-                2: includes all optimizations of level 1,
-                    and turns on more optimizations such as CSE, arithmetic simplication and so on;
-                3: includes all optimizations of level 2, and turns on more optimizations such as SitchingFusion,
-                    ParallelFusion and so on. Optimizations of this level are radical and unstable in some scenarios.
-                    Be caution when using this level.
-                dump_as_text: dump detail info as text files. Default: false.
+
+            - opt_level: Set the optimization level.
+              Default: 2. Graph kernel fusion can be enabled equivalently by setting opt_level greater than 0.
+              Available values are:
+
+              - 0: Disable graph kernel fusion;
+              - 1: enable the basic fusion of operators;
+              - 2: includes all optimizations of level 1,
+                and turns on more optimizations such as CSE, arithmetic simplication and so on;
+              - 3: includes all optimizations of level 2, and turns on more optimizations such as SitchingFusion,
+                ParallelFusion and so on. Optimizations of this level are radical and unstable in some scenarios.
+                Be caution when using this level.
+
+            - dump_as_text: dump detail info as text files. Default: false.
+
             More options can refer to the implementation code. These options can also be set by environment
             variable MS_GRAPH_KERNEL_FLAGS, without modifying network source code.
             For example, export MS_GRAPH_KERNEL_FLAGS=”–opt_level=2 –dump_as_text”.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance.
             Default: NO_TUNE. The value must be in ['RL', 'GA', 'RL,GA'].
-            RL: Reinforcement Learning tune.
-            GA: Genetic Algorithm tune.
-            RL,GA: When both RL and GA optimization are enabled, the tool automatically selects RL or GA based on
-                   different types of operators in the network model. The sequence of RL and GA is not differentiated.
-                   (Automatic selection).
+
+            - RL: Reinforcement Learning tune.
+            - GA: Genetic Algorithm tune.
+            - RL,GA: When both RL and GA optimization are enabled, the tool automatically selects RL or GA based on
+              different types of operators in the network model. The sequence of RL and GA is not differentiated.
+              (Automatic selection).
+
             For more information about the enable operator tuning tool settings, please check
             `Enable the operator optimization tool <https://www.mindspore.cn/docs/programming_guide/en
             /master/enable_auto_tune.html>`_.
@@ -706,7 +743,7 @@ def set_context(**kwargs):
             set larger too, otherwise a `core dumped` exception may be raised because of system stack overflow.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
             For details of sparsity and sparse tensor, please check
-             `sparse tensor <https://www.mindspore.cn/docs/programming_guide/en/master/tensor.html#sparse-tensor>`_.
+            `sparse tensor <https://www.mindspore.cn/docs/programming_guide/en/master/tensor.html#sparse-tensor>`_.
         grad_for_scalar (bool):  Whether to get gradient for scalar. Default: False.
             When grad_for_scalar is set to True, the function's scalar input can be derived.
             The default value is False. Because the back-end does not support scaling operations currently,
