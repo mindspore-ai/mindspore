@@ -21,7 +21,7 @@ from functools import wraps
 from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32_not_zero, \
     check_list_same_size, check_non_negative_float32, check_non_negative_int32, check_pos_float32, check_pos_int32, \
     check_value, parse_user_args, type_check
-from .utils import FadeShape, ScaleType
+from .utils import FadeShape, GainType, ScaleType
 
 
 def check_amplitude_to_db(method):
@@ -381,6 +381,27 @@ def check_fade(method):
         type_check(fade_out_len, (int,), "fade_out_len")
         check_non_negative_int32(fade_out_len, "fade_out_len")
         type_check(fade_shape, (FadeShape,), "fade_shape")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_vol(method):
+    """Wrapper method to check the parameters of Vol."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [gain, gain_type], _ = parse_user_args(method, *args, **kwargs)
+        # type check gain
+        type_check(gain, (int, float), "gain")
+        # type check gain_type and value check gain
+        type_check(gain_type, (GainType,), "gain_type")
+        if gain_type == GainType.AMPLITUDE:
+            check_non_negative_float32(gain, "gain")
+        elif gain_type == GainType.POWER:
+            check_pos_float32(gain, "gain")
+        else:
+            check_float32(gain, "gain")
         return method(self, *args, **kwargs)
 
     return new_method

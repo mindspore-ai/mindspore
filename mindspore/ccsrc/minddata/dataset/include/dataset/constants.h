@@ -79,6 +79,13 @@ enum class ScaleType {
   kPower = 1,      ///< Audio scale is power.
 };
 
+/// \brief The scale for gain type.
+enum class GainType {
+  kAmplitude = 0,  ///< Audio gain type is amplitude.
+  kPower = 1,      ///< Audio gain type is power.
+  kDb = 2,         ///< Audio gain type is db.
+};
+
 /// \brief The method of padding.
 enum class BorderType {
   kConstant = 0,  ///< Fill the border with constant values.

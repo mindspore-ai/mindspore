@@ -24,5 +24,6 @@ add_library(audio-kernels OBJECT
         mu_law_decoding_op.cc
         time_masking_op.cc
         time_stretch_op.cc
+        vol_op.cc
         )
 

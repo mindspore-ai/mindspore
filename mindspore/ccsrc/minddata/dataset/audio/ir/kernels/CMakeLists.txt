@@ -23,5 +23,6 @@ add_library(audio-ir-kernels OBJECT
         mu_law_decoding_ir.cc
         time_masking_ir.cc
         time_stretch_ir.cc
+        vol_ir.cc
         )
 

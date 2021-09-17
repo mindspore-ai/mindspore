@@ -160,6 +160,7 @@ constexpr char kLowpassBiquadOp[] = "LowpassBiquadOp";
 constexpr char kMuLawDecodingOp[] = "MuLawDecodingOp";
 constexpr char kTimeMaskingOp[] = "TimeMaskingOp";
 constexpr char kTimeStretchOp[] = "TimeStretchOp";
+constexpr char kVolOp[] = "VolOp";
 
 // data
 constexpr char kConcatenateOp[] = "ConcatenateOp";

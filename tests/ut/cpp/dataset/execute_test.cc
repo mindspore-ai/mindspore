@@ -1057,3 +1057,28 @@ TEST_F(MindDataTestExecute, TestFadeWithInvalidArg) {
   Status s04 = Transform04(input_04, &input_04);
   EXPECT_FALSE(s04.IsOk());
 }
+TEST_F(MindDataTestExecute, TestVolDefalutValue) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestVolDefalutValue.";
+  std::shared_ptr<Tensor> input_tensor_;
+  TensorShape s = TensorShape({2, 6});
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<float>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 6.0f, 5.0f, 4.0f, 3.0f, 2.0f, 1.0f}), s, &input_tensor_));
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> vol_op = std::make_shared<audio::Vol>(0.333);
+  mindspore::dataset::Execute transform({vol_op});
+  Status status = transform(input_tensor, &input_tensor);
+  EXPECT_TRUE(status.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestVolGainTypePower) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestVolGainTypePower.";
+  std::shared_ptr<Tensor> input_tensor_;
+  TensorShape s = TensorShape({4, 3});
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<double>({4.0f, 5.0f, 3.0f, 5.0f, 4.0f, 6.0f, 6.0f, 1.0f, 2.0f, 3.0f, 2.0f, 1.0f}), s, &input_tensor_));
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  std::shared_ptr<TensorTransform> vol_op = std::make_shared<audio::Vol>(0.2, GainType::kPower);
+  mindspore::dataset::Execute transform({vol_op});
+  Status status = transform(input_tensor, &input_tensor);
+  EXPECT_TRUE(status.IsOk());
+}

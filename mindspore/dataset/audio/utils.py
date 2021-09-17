@@ -19,12 +19,6 @@ enum for audio ops
 from enum import Enum
 
 
-class ScaleType(str, Enum):
-    """Scale Type"""
-    POWER: str = "power"
-    MAGNITUDE: str = "magnitude"
-
-
 class FadeShape(str, Enum):
     """Fade Shape"""
     LINEAR: str = "linear"
@@ -32,3 +26,16 @@ class FadeShape(str, Enum):
     LOGARITHMIC: str = "logarithmic"
     QUARTERSINE: str = "quarter_sine"
     HALFSINE: str = "half_sine"
+
+
+class GainType(str, Enum):
+    """Gain Type"""
+    POWER: str = "power"
+    AMPLITUDE: str = "amplitude"
+    DB: str = "db"
+
+
+class ScaleType(str, Enum):
+    """Scale Type"""
+    POWER: str = "power"
+    MAGNITUDE: str = "magnitude"

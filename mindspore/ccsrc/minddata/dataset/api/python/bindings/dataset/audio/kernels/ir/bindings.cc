@@ -41,6 +41,7 @@
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
+#include "minddata/dataset/audio/ir/kernels/vol_ir.h"
 
 namespace mindspore {
 namespace dataset {
@@ -292,5 +293,22 @@ PYBIND_REGISTER(
       }));
   }));
 
+PYBIND_REGISTER(VolOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::VolOperation, TensorOperation, std::shared_ptr<audio::VolOperation>>(
+                    *m, "VolOperation")
+                    .def(py::init([](float gain, GainType gain_type) {
+                      auto vol = std::make_shared<audio::VolOperation>(gain, gain_type);
+                      THROW_IF_ERROR(vol->ValidateParams());
+                      return vol;
+                    }));
+                }));
+
+PYBIND_REGISTER(GainType, 0, ([](const py::module *m) {
+                  (void)py::enum_<GainType>(*m, "GainType", py::arithmetic())
+                    .value("DE_GAINTYPE_AMPLITUDE", GainType::kAmplitude)
+                    .value("DE_GAINTYPE_POWER", GainType::kPower)
+                    .value("DE_GAINTYPE_DB", GainType::kDb)
+                    .export_values();
+                }));
 }  // namespace dataset
 }  // namespace mindspore
