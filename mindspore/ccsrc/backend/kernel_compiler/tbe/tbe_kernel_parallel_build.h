@@ -64,7 +64,7 @@ class ParallelBuildManager {
 
   // Interactive with real backend, who could be implemented by Python.
   static int StartCompileOp(const nlohmann::json &kernel_json);
-  static std::string ProcessTbeJob(const nlohmann::json &kernel_json);
+  std::string ProcessTbeJob(const nlohmann::json &kernel_json);
   static bool WaitOne(int *task_id, std::string *task_result, std::string *build_result);
   void ResetTaskInfo() noexcept;
   AnfNodePtr GetAnfNodeByTaskID(int32_t task_id);

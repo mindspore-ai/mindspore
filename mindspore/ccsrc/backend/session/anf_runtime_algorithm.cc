@@ -2234,11 +2234,11 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
       MS_EXCEPTION_IF_NULL(abs);
       auto tuple_get_item_indexk = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
       auto abs_i = abs->elements()[tuple_get_item_indexk];
-      args_spec_list.emplace_back(abs_i);
+      (void)args_spec_list.emplace_back(abs_i);
     } else if (cnode_input->isa<CNode>() && AnfAlgo::GetCNodeName(cnode_input) == prim::kPrimReshape->name()) {
-      args_spec_list.emplace_back(cnode_input->abstract());
+      (void)args_spec_list.emplace_back(cnode_input->abstract());
     } else {
-      args_spec_list.emplace_back(real_input->abstract());
+      (void)args_spec_list.emplace_back(real_input->abstract());
     }
   }
   auto eval_result = opt::CppInferShape(primitive, args_spec_list);
