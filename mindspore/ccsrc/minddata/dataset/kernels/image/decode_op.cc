@@ -38,12 +38,13 @@ Status DecodeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   IO_CHECK(input, output);
   // check the input tensor shape
   if (input->Rank() != 1) {
-    RETURN_STATUS_UNEXPECTED("Decode: invalid input shape, only support 1D input.");
+    RETURN_STATUS_UNEXPECTED("Decode: invalid input shape, only support 1D input, got rank: " +
+                             std::to_string(input->Rank()));
   }
   if (is_rgb_format_) {  // RGB colour mode
     return Decode(input, output);
   } else {  // BGR colour mode
-    RETURN_STATUS_UNEXPECTED("Decode: only support RGB image.");
+    RETURN_STATUS_UNEXPECTED("Decode: only support Decoded into RGB image, check input parameter first.");
   }
 }
 Status DecodeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {

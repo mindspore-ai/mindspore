@@ -258,7 +258,8 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
 
 bool ResizeCubic(const LiteMat &input, LiteMat &dst, int dst_w, int dst_h) {
   if (input.data_type_ != LDataType::UINT8 || input.channel_ != 3) {
-    MS_LOG(ERROR) << "Unsupported data type, only support input image of uint8 dtype and 3 channel.";
+    MS_LOG(ERROR) << "Unsupported data type, only support input image of uint8 dtype and 3 channel, got channel: " +
+                       std::to_string(input.channel_);
     return false;
   }
   int x_size = dst_w, y_size = dst_h;

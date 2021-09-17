@@ -26,11 +26,13 @@ NormalizePadOp::NormalizePadOp(float mean_r, float mean_g, float mean_b, float s
                                std::string dtype) {
   Status s = Tensor::CreateFromVector<float>({mean_r, mean_g, mean_b}, &mean_);
   if (s.IsError()) {
-    MS_LOG(ERROR) << "NormalizePad: invalid mean value.";
+    MS_LOG(ERROR) << "NormalizePad: invalid mean value, got: (" + std::to_string(mean_r) + std::to_string(mean_g) +
+                       std::to_string(mean_b) + ").";
   }
   s = Tensor::CreateFromVector<float>({std_r, std_g, std_b}, &std_);
   if (s.IsError()) {
-    MS_LOG(ERROR) << "NormalizePad: invalid std value.";
+    MS_LOG(ERROR) << "NormalizePad: invalid std value, got: (" + std::to_string(std_r) + std::to_string(std_g) +
+                       std::to_string(std_b) + ").";
   }
   dtype_ = dtype;
 }

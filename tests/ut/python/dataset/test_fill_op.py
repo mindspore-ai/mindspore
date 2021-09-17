@@ -97,7 +97,7 @@ def test_fillop_error_handling():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
-    assert "fill datatype does not match the input datatype" in str(error_info.value)
+    assert "fill datatype is string but the input datatype is not string" in str(error_info.value)
 
 
 if __name__ == "__main__":

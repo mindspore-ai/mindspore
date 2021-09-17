@@ -60,7 +60,9 @@ void CutMixBatchOp::GetCropBox(int height, int width, float lam, int *x, int *y,
 
 Status CutMixBatchOp::ValidateCutMixBatch(const TensorRow &input) {
   if (input.size() < kMinLabelShapeSize) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: invalid input, both image and label columns are required.");
+    RETURN_STATUS_UNEXPECTED(
+      "CutMixBatch: invalid input, size of input should be 2 (including image and label), but got: " +
+      std::to_string(input.size()));
   }
   std::vector<int64_t> image_shape = input.at(0)->shape().AsVector();
   std::vector<int64_t> label_shape = input.at(1)->shape().AsVector();
@@ -68,26 +70,33 @@ Status CutMixBatchOp::ValidateCutMixBatch(const TensorRow &input) {
   // Check inputs
   if (image_shape.size() != kExpectedImageShapeSize || image_shape[0] != label_shape[0]) {
     RETURN_STATUS_UNEXPECTED(
-      "CutMixBatch: please make sure images are HWC or CHW "
-      "and batched before calling CutMixBatch.");
+      "CutMixBatch: please make sure images are <H,W,C> or <C,H,W> format, and batched before calling CutMixBatch.");
   }
   if (!input.at(1)->type().IsInt()) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: Wrong labels type. The second column (labels) must only include int types.");
+    RETURN_STATUS_UNEXPECTED(
+      "CutMixBatch: Wrong labels type. The second column (labels) must only include int types, but got:" +
+      input.at(1)->type().ToString());
   }
   if (label_shape.size() != kMinLabelShapeSize && label_shape.size() != kMaxLabelShapeSize) {
     RETURN_STATUS_UNEXPECTED(
       "CutMixBatch: wrong labels shape. "
       "The second column (labels) must have a shape of NC or NLC where N is the batch size, "
       "L is the number of labels in each row, and C is the number of classes. "
-      "labels must be in one-hot format and in a batch.");
+      "labels must be in one-hot format and in a batch, but got rank: " +
+      std::to_string(label_shape.size()));
   }
+  std::string shape_info = "(";
+  for (auto i : image_shape) {
+    shape_info = shape_info + std::to_string(i) + ", ";
+  }
+  shape_info.replace(shape_info.end() - 1, shape_info.end(), ")");
   if ((image_shape[kDimensionOne] != kValueOne && image_shape[kDimensionOne] != kValueThree) &&
       image_batch_format_ == ImageBatchFormat::kNCHW) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the NCHW format.");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the <N,C,H,W> format, got shape: " + shape_info);
   }
   if ((image_shape[kDimensionThree] != kValueOne && image_shape[kDimensionThree] != kValueThree) &&
       image_batch_format_ == ImageBatchFormat::kNHWC) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the NHWC format.");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the <N,H,W,C> format, got shape: " + shape_info);
   }
 
   return Status::OK();
@@ -184,8 +193,9 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Calculate random labels
   std::vector<int64_t> rand_indx;
-  CHECK_FAIL_RETURN_UNEXPECTED(images.size() <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
-                               "The size of \"images\" must not be more than \"INT64_MAX\".");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    images.size() <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
+    "The size of \"images\" must not be more than \"INT64_MAX\", but got: " + std::to_string(images.size()));
   for (int64_t idx = 0; idx < static_cast<int64_t>(images.size()); idx++) rand_indx.push_back(idx);
   std::shuffle(rand_indx.begin(), rand_indx.end(), rnd_);
   std::gamma_distribution<float> gamma_distribution(alpha_, 1);
@@ -205,7 +215,8 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
     float x1 = gamma_distribution(rnd_);
     float x2 = gamma_distribution(rnd_);
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - x1) > x2,
-                                 "CutMixBatchOp: gamma_distribution x1 and x2 are too large.");
+                                 "CutMixBatchOp: gamma_distribution x1 and x2 are too large, got x1: " +
+                                   std::to_string(x1) + ", x2:" + std::to_string(x2));
     float lam = x1 / (x1 + x2);
     double random_number = uniform_distribution(rnd_);
     if (random_number < prob_) {

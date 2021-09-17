@@ -335,7 +335,7 @@ def test_mixup_batch_fail3():
                 images_mixup = image.asnumpy()
             else:
                 images_mixup = np.append(images_mixup, image.asnumpy(), axis=0)
-    error_message = "input lack of images or labels"
+    error_message = "size of input data should be 2 (including images or labels)"
     assert error_message in str(error.value)
 
 

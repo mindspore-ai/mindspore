@@ -30,7 +30,7 @@ uint32_t RandomChoiceOp::NumInput() {
   for (auto &op : ops_) {
     uint32_t cur_num = op->NumInput();
     if (num_input != cur_num && cur_num > 0) {
-      MS_LOG(WARNING) << "Unable to determine NumInput, ops in RandomChoice don't take the same number of input.";
+      MS_LOG(WARNING) << "Unable to determine Num of Input, ops in RandomChoice don't take the same number of input.";
       return 0;
     }
   }

@@ -39,8 +39,9 @@ MixUpBatchOp::MixUpBatchOp(float alpha) : alpha_(alpha) { rnd_.seed(GetSeed()); 
 Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tensor> *out_labels,
                                    std::vector<int64_t> *rand_indx, const std::vector<int64_t> &label_shape,
                                    const float lam, const size_t images_size) {
-  CHECK_FAIL_RETURN_UNEXPECTED(images_size <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
-                               "The \"images_size\" must not be more than \"INT64_MAX\".");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    images_size <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
+    "The \'images_size\' must not be more than \'INT64_MAX\', but got: " + std::to_string(images_size));
   for (int64_t i = 0; i < static_cast<int64_t>(images_size); i++) rand_indx->push_back(i);
   std::shuffle(rand_indx->begin(), rand_indx->end(), rnd_);
 
@@ -76,7 +77,8 @@ Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tenso
 
 Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   if (input.size() < 2) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: input lack of images or labels");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: size of input data should be 2 (including images or labels), but got: " +
+                             std::to_string(input.size()));
   }
 
   std::vector<std::shared_ptr<CVTensor>> images;
@@ -85,14 +87,14 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
 
   // Check inputs
   if (image_shape.size() != kExpectedImageShapeSize || image_shape[0] != label_shape[0]) {
-    RETURN_STATUS_UNEXPECTED(
-      "MixUpBatch: "
-      "please make sure images are HWC or CHW and batched before calling MixUpBatch.");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: rank of image shape should be: " + std::to_string(kExpectedImageShapeSize) +
+                             ", but got: " + std::to_string(image_shape.size()) +
+                             ", make sure image shape are <H,W,C> or <C,H,W> and batched before calling MixUpBatch.");
   }
   if (!input.at(1)->type().IsInt()) {
     RETURN_STATUS_UNEXPECTED(
-      "MixUpBatch: wrong labels type. "
-      "The second column (labels) must only include int types.");
+      "MixUpBatch: wrong labels type. The second column (labels) must only include int types, but got: " +
+      input.at(1)->type().ToString());
   }
 
   if (label_shape.size() != kMinLabelShapeSize && label_shape.size() != kMaxLabelShapeSize) {
@@ -100,11 +102,12 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
       "MixUpBatch: wrong labels shape. "
       "The second column (labels) must have a shape of NC or NLC where N is the batch size, "
       "L is the number of labels in each row, and C is the number of classes. "
-      "labels must be in one-hot format and in a batch.");
+      "labels must be in one-hot format and in a batch, but got rank: " +
+      std::to_string(label_shape.size()));
   }
   if ((image_shape[dimension_one] != value_one && image_shape[dimension_one] != value_three) &&
       (image_shape[dimension_three] != value_one && image_shape[dimension_three] != value_three)) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: images must be in the shape of HWC or CHW.");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: images shape is not <H,W,C> or <C,H,W>.");
   }
 
   // Move images into a vector of CVTensors
@@ -116,8 +119,11 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   std::gamma_distribution<float> distribution(alpha_, 1);
   float x1 = distribution(rnd_);
   float x2 = distribution(rnd_);
-  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - x1) > x2, "multiplication out of bounds");
-  CHECK_FAIL_RETURN_UNEXPECTED(x1 + x2 != 0.0, "addition out of bounds");
+  CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<float_t>::max() - x1) > x2,
+                               "multiplication out of bounds, with multipliers: " + std::to_string(x1) + " and " +
+                                 std::to_string(x2) +
+                                 ", which result in the out of bounds product:" + std::to_string(x1 * x2));
+  CHECK_FAIL_RETURN_UNEXPECTED(x1 + x2 != 0.0, "addition of variable(x1 and x2) of Gamma should not be 0.");
   float lam = x1 / (x1 + x2);
 
   // Calculate random labels
@@ -138,7 +144,7 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
       input.at(0)->type(), start_addr_of_index, &out));
     std::shared_ptr<CVTensor> rand_image = CVTensor::AsCVTensor(std::move(out));
     if (!rand_image->mat().data) {
-      RETURN_STATUS_UNEXPECTED("MixUpBatch: allocate memory failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] MixUpBatch: allocate memory failed.");
     }
     images[i]->mat() = lam * images[i]->mat() + (1 - lam) * rand_image->mat();
   }

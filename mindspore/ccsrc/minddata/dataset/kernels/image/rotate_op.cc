@@ -45,9 +45,7 @@ RotateOp::RotateOp(float degrees, InterpolationMode resample, bool expand, std::
 
 Status RotateOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->shape().Size() == 2 || input->shape().Size() == 3,
-    "Rotate: image shape " + std::to_string(input->shape().Size()) + " is not <H,W,C> or <H,W>.");
+  RETURN_IF_NOT_OK(ValidateImageRank("Rotate", input->shape().Size()));
 #ifndef ENABLE_ANDROID
   return Rotate(input, output, center_, degrees_, interpolation_, expand_, fill_r_, fill_g_, fill_b_);
 #else
@@ -70,11 +68,14 @@ Status RotateOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kMDUnexpectedError, "Rotate: invalid input shape.");
+  return Status(StatusCode::kMDUnexpectedError,
+                "Rotate: invalid input shape, expected 2D or 3D input, but got input dimension is:" +
+                  std::to_string(inputs[0].Rank()));
 #else
   if (inputs.size() != NumInput())
     return Status(StatusCode::kMDUnexpectedError,
-                  "The size of the input argument vector does not match the number of inputs");
+                  "The size of the input argument vector: " + std::to_string(inputs.size()) +
+                    ", does not match the number of inputs: " + std::to_string(NumInput()));
   outputs = inputs;
   return Status::OK();
 #endif

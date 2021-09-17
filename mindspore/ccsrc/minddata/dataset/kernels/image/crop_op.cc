@@ -27,13 +27,13 @@ namespace dataset {
 
 Status CropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->shape().Size() >= 2,
-    "Crop: the shape size " + std::to_string(input->shape().Size()) + " of input is invalid.");
+  RETURN_IF_NOT_OK(ValidateImageRank("Crop", input->shape().Size()));
   int32_t input_h = static_cast<int>(input->shape()[0]);
   int32_t input_w = static_cast<int>(input->shape()[1]);
-  CHECK_FAIL_RETURN_UNEXPECTED(y_ + height_ <= input_h, "Crop: Crop height dimension exceeds image dimensions.");
-  CHECK_FAIL_RETURN_UNEXPECTED(x_ + width_ <= input_w, "Crop: Crop width dimension exceeds image dimensions.");
+  CHECK_FAIL_RETURN_UNEXPECTED(y_ + height_ <= input_h, "Crop: Crop height dimension: " + std::to_string(y_ + height_) +
+                                                          " exceeds image height: " + std::to_string(input_h));
+  CHECK_FAIL_RETURN_UNEXPECTED(x_ + width_ <= input_w, "Crop: Crop width dimension: " + std::to_string(x_ + width_) +
+                                                         " exceeds image width: " + std::to_string(input_w));
   return Crop(input, output, x_, y_, width_, height_);
 }
 

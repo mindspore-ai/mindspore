@@ -373,7 +373,7 @@ def test_cutmix_batch_fail5():
                 images_cutmix = image.asnumpy()
             else:
                 images_cutmix = np.append(images_cutmix, image.asnumpy(), axis=0)
-    error_message = "both image and label columns are required"
+    error_message = "size of input should be 2 (including image and label)"
     assert error_message in str(error.value)
 
 
@@ -400,7 +400,7 @@ def test_cutmix_batch_fail6():
                 images_cutmix = image.asnumpy()
             else:
                 images_cutmix = np.append(images_cutmix, image.asnumpy(), axis=0)
-    error_message = "image doesn't match the NCHW format."
+    error_message = "image doesn't match the <N,C,H,W> format"
     assert error_message in str(error.value)
 
 

@@ -15,6 +15,7 @@
  */
 
 #include "minddata/dataset/kernels/image/random_color_op.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
 namespace mindspore {
 namespace dataset {
@@ -26,7 +27,8 @@ RandomColorOp::RandomColorOp(float t_lb, float t_ub) : rnd_(GetSeed()), dist_(t_
 Status RandomColorOp::Compute(const std::shared_ptr<Tensor> &in, std::shared_ptr<Tensor> *out) {
   IO_CHECK(in, out);
   if (in->Rank() != 3 || in->shape()[2] != 3) {
-    RETURN_STATUS_UNEXPECTED("RandomColor: image shape is not <H,W,C> or channel is not 3.");
+    RETURN_STATUS_UNEXPECTED("RandomColor: image shape is not <H,W,C> or channel is not 3, got rank: " +
+                             std::to_string(in->Rank()) + ", and channel: " + std::to_string(in->shape()[2]));
   }
   // 0.5 pixel precision assuming an 8 bit image
   const auto eps = 0.00195;

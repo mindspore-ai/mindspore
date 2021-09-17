@@ -373,6 +373,11 @@ Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::share
 Status ComputePatchSize(const std::shared_ptr<CVTensor> &input_cv,
                         std::shared_ptr<std::pair<int32_t, int32_t>> *patch_size, int32_t num_height, int32_t num_width,
                         SliceMode slice_mode);
+
+/// \brief Validate image rank.
+/// \param[in] op_name operator name.
+/// \param[in] rank refers to the rank of input image shape.
+Status ValidateImageRank(const std::string &op_name, int32_t rank);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

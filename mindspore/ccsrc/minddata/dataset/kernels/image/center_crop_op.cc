@@ -34,8 +34,12 @@ Status CenterCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
   std::string err_msg;
   std::string err_head = "CenterCrop: ";
   dsize_t rank = input->shape().Rank();
-  err_msg += (rank < 2 || rank > 3) ? "image shape is not <H,W,C> or <H,W> \t" : "";
-  err_msg += (crop_het_ <= 0 || crop_wid_ <= 0) ? "crop size needs to be positive integers\t" : "";
+  err_msg +=
+    (rank < 2 || rank > 3) ? "image shape is not <H,W,C> or <H,W>, but got rank: " + std::to_string(rank) + "\t" : "";
+  err_msg += (crop_het_ <= 0 || crop_wid_ <= 0)
+               ? "crop size needs to be positive integers, but got crop height:" + std::to_string(crop_het_) +
+                   ", crop width: " + std::to_string(crop_wid_) + "\t"
+               : "";
 
   if (err_msg.length() != 0) RETURN_STATUS_UNEXPECTED(err_head + err_msg);
 
@@ -45,7 +49,10 @@ Status CenterCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
 
   constexpr int64_t pad_limit = 3;
   CHECK_FAIL_RETURN_UNEXPECTED((top < input->shape()[0] * pad_limit && left < input->shape()[1] * pad_limit),
-                               "CenterCrop: CenterCropOp padding size is more than 3 times the original size.");
+                               "CenterCrop: CenterCropOp padding size is more than 3 times the original size, got pad"
+                               " top: " +
+                                 std::to_string(top) + "pad left: " + std::to_string(left) + ", and original size: " +
+                                 std::to_string(input->shape()[0]) + ", " + std::to_string(input->shape()[1]));
 
   if (top > 0 && left > 0) {  // padding only
     return Pad(input, output, top / 2 + top % 2, top / 2, left / 2 + left % 2, left / 2, BorderType::kConstant);
@@ -73,7 +80,9 @@ Status CenterCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kMDUnexpectedError, "CenterCrop: invalid input shape.");
+  return Status(StatusCode::kMDUnexpectedError,
+                "CenterCrop: invalid input shape, expected 2D or 3D input, but got input dimension is:" +
+                  std::to_string(inputs[0].Rank()));
 }
 }  // namespace dataset
 }  // namespace mindspore

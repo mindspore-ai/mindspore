@@ -29,10 +29,11 @@ Status PosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
   uint8_t mask_value = ~((uint8_t)(1 << (8 - bit_)) - 1);
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
   if (!input_cv->mat().data) {
-    RETURN_STATUS_UNEXPECTED("Posterize: load image failed.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Posterize: load image failed.");
   }
   if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("Posterize: input image is not in shape of <H,W,C> or <H,W>");
+    RETURN_STATUS_UNEXPECTED("Posterize: input image is not in shape of <H,W,C> or <H,W>, but got rank: " +
+                             std::to_string(input_cv->Rank()));
   }
   std::vector<uint8_t> lut_vector;
   for (std::size_t i = 0; i < 256; i++) {
@@ -42,7 +43,7 @@ Status PosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
 
   cv::Mat output_img;
   CHECK_FAIL_RETURN_UNEXPECTED(in_image.depth() == CV_8U || in_image.depth() == CV_8S,
-                               "Posterize: input image data type can not be float, "
+                               "Posterize: data type of input image should be int, "
                                "but got " +
                                  input->type().ToString());
   cv::LUT(in_image, lut_vector, output_img);

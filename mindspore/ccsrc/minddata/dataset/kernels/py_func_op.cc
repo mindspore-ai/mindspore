@@ -97,7 +97,7 @@ ShapeMisMatch:
 
 TimeoutError:
   ret = Status(StatusCode::kMDTimeOut, __LINE__, __FILE__,
-               "Expected that PyFunc should return numpy array, got None. If python_multiprocessing is True, "
+               "Expected that PyFunc should return numpy array, got None. If \'python_multiprocessing\' is True, "
                "PyFunc may execute time out.");
   goto ComputeReturn;
 }
