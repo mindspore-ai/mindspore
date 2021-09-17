@@ -504,13 +504,16 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   }
   std::vector<AnfNodePtr> states;
   states.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  constexpr int recursive_level = 2;
   for (auto &node : isolated_nodes_) {
     MS_EXCEPTION_IF_NULL(node);
-    MS_LOG(DEBUG) << "Adding dependency, node: " << node->DebugString(2) << " in " << func_graph_->ToString();
+    MS_LOG(DEBUG) << "Adding dependency, node: " << node->DebugString(recursive_level) << " in "
+                  << func_graph_->ToString();
     if (node->func_graph() == func_graph_) {
       states.emplace_back(node);
     } else {
-      MS_LOG(INFO) << "Ignored FV dependency, node: " << node->DebugString(2) << " in " << func_graph_->ToString();
+      MS_LOG(INFO) << "Ignored FV dependency, node: " << node->DebugString(recursive_level) << " in "
+                   << func_graph_->ToString();
     }
   }
   isolated_nodes_.clear();

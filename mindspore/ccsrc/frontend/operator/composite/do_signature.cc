@@ -91,7 +91,7 @@ bool GetTensorOrScalarTypeInfo(const TypePtr &arg_type_origin, TypeId *arg_type_
   return false;
 }
 
-TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, std::vector<size_t> indices) {
+TypeId GetMaxTypeId(const std::vector<TypePtr> &input_types, const std::vector<size_t> &indices) {
   TypeId max_type_id = kTypeUnknown;
   size_t max_type_number = 0;
   bool has_int8 = false;

@@ -541,7 +541,8 @@ void GraphExecutorPy::GetWeightInfo(
     return;
   }
   cnode = x->cast<CNodePtr>();
-  if (cnode == nullptr || IsPrimitiveCNode(cnode, prim::kPrimLoad) || cnode->size() != 4) {
+  constexpr size_t expect_input_size = 4;
+  if (cnode == nullptr || IsPrimitiveCNode(cnode, prim::kPrimLoad) || cnode->size() != expect_input_size) {
     return;
   }
   const size_t fakequant_index = 2;

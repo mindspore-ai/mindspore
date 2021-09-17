@@ -688,17 +688,21 @@ class PConstant : public PBase<PConstant<T> > {
     char *source_data = reinterpret_cast<char *>(GetPointerToTensorData(x));
     MS_EXCEPTION_IF_NULL(source_data);
     if (x_tensor_ptr->DataSize() == 1) {
+      auto tensor_type_byte = GetTypeByte(tensor_type_ptr);
       for (int i = 0; i < new_tensor_ptr->ElementsNum(); i++) {
-        ret = memcpy_s(data + i * GetTypeByte(tensor_type_ptr), GetTypeByte(tensor_type_ptr), source_data,
-                       GetTypeByte(tensor_type_ptr));
+        ret = memcpy_s(data + i * tensor_type_byte, tensor_type_byte, source_data, tensor_type_byte);
+        if (ret != 0) {
+          MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << tensor_type_byte << ", dest size "
+                       << tensor_type_byte;
+        }
       }
     } else {
       ret = memcpy_s(data, mem_size, source_data, mem_size);
-    }
-    if (ret != 0) {
-      MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << mem_size << "dest size"
-                   << new_tensor_ptr->DataSize();
-      return nullptr;
+      if (ret != 0) {
+        MS_LOG(INFO) << "memcpy_s error, error no " << ret << ", source size " << mem_size << ", dest size "
+                     << new_tensor_ptr->DataSize();
+        return nullptr;
+      }
     }
     auto new_vnode = NewValueNode(new_tensor_ptr);
     new_vnode->set_abstract(new_tensor_ptr->ToAbstract());

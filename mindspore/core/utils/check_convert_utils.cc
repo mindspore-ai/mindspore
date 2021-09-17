@@ -429,9 +429,8 @@ abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::string &
   return shape;
 }
 
-void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type,
-                                 const string &value_name, int64_t value, const string &prim_name,
-                                 ExceptionType exception_type) {
+void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type, const string &,
+                                 int64_t value, const string &prim_name, ExceptionType) {
   auto iter = kCompareMap<float>.find(compare_type);
   if (iter == kCompareMap<float>.end()) {
     MS_EXCEPTION(NotExistsError) << "the compare type :" << compare_type << " is not in the compare map";
@@ -481,8 +480,8 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
   auto check_type = _CheckTypeSame(types, prim_name, check_list, false);
   std::string input_names = "";
   for (const auto &item : types) {
-    input_names.append(item.first);
-    input_names.append(", ");
+    (void)input_names.append(item.first);
+    (void)input_names.append(", ");
   }
   return CheckTypeValid(input_names, check_type, check_list, prim_name);
 }
@@ -684,10 +683,10 @@ std::vector<int64_t> CheckAndConvertUtils::CheckAttrIntOrTupleInt(const std::str
   MS_EXCEPTION_IF_NULL(attr);
   if (attr->isa<ValueTuple>()) {
     std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
-    is_correct = std::all_of(attr_vec.begin(), attr_vec.end(), [&result](const ValuePtr &e) -> int64_t {
+    is_correct = std::all_of(attr_vec.begin(), attr_vec.end(), [&result](const ValuePtr &e) -> bool {
       MS_EXCEPTION_IF_NULL(e);
       if (e->isa<Int64Imm>()) {
-        result.emplace_back(GetValue<int64_t>(e));
+        (void)result.emplace_back(GetValue<int64_t>(e));
         return true;
       }
       return false;

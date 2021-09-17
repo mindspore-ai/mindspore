@@ -40,7 +40,7 @@ struct Edge {
 struct EdgeHash {
   std::size_t operator()(const Edge &e) const noexcept {
     const std::hash<AnfNodePtr> node_hash;
-    return hash_combine({node_hash(e.cnode), static_cast<size_t>(e.index), node_hash(e.input)});
+    return hash_combine({node_hash(e.cnode), IntToSize(e.index), node_hash(e.input)});
   }
 };
 
@@ -79,10 +79,10 @@ class SetEdge : public Change {
   ~SetEdge() override = default;
 
   void Apply(ChangeCounter *counter) override {
-    auto &old_input = edge_.cnode->input(edge_.index);
+    auto &old_input = edge_.cnode->input(IntToSize(edge_.index));
     counter->del_nodes.add(old_input);
     counter->del_edges.add(edge_.cnode, edge_.index, old_input);
-    edge_.cnode->set_input(edge_.index, edge_.input);
+    edge_.cnode->set_input(IntToSize(edge_.index), edge_.input);
     counter->new_nodes.add(edge_.input);
     counter->new_edges.add(std::move(edge_));
   }
@@ -341,7 +341,7 @@ void FuncGraphManager::AddFuncGraph(const FuncGraphPtr &func_graph, bool is_root
   std::vector<AnfNodePtr> new_nodes = func_graph->parameters();
   auto return_node = func_graph->get_return();
   if (return_node != nullptr) {
-    new_nodes.emplace_back(std::move(return_node));
+    (void)new_nodes.emplace_back(std::move(return_node));
   }
 
   // Acquire all nodes from func_graph.
@@ -504,7 +504,7 @@ static inline void FollowGraph(const FuncGraphPtr &fg, size_t seen, std::vector<
     return;
   }
   if (auto ret = fg->get_return(); ret != nullptr && ret->seen_ != seen) {
-    nodes->emplace_back(std::move(ret));
+    (void)nodes->emplace_back(std::move(ret));
   }
 }
 
@@ -546,7 +546,7 @@ void FuncGraphManager::AcquireNodes(std::vector<AnfNodePtr> &&nodes) {
       ProcessInputsEdgeAdd(cnode);
       // Follow inputs.
       auto &inputs = cnode->inputs();
-      nodes.insert(nodes.end(), inputs.begin(), inputs.end());
+      (void)nodes.insert(nodes.end(), inputs.begin(), inputs.end());
     }
   }
 }
@@ -589,7 +589,7 @@ FuncGraphSet FuncGraphManager::MaybeDropNodes(std::vector<AnfNodePtr> &&nodes) {
       ProcessInputsEdgeRemove(cnode);
       // Handle inputs nodes.
       auto &inputs = cnode->inputs();
-      nodes.insert(nodes.end(), inputs.begin(), inputs.end());
+      (void)nodes.insert(nodes.end(), inputs.begin(), inputs.end());
     }
     // Remove it from all_nodes_;
     (void)all_nodes_.erase(node);
@@ -816,7 +816,7 @@ void FuncGraphTransaction::AddEdge(const AnfNodePtr &src_node, const AnfNodePtr 
   if (cnode == nullptr) {
     MS_LOG(EXCEPTION) << "src_node should be a cnode, but cast failed.";
   }
-  changes_.emplace_back(std::make_unique<change::AddEdge>(cnode, v));
+  (void)changes_.emplace_back(std::make_unique<change::AddEdge>(cnode, v));
 }
 
 void FuncGraphTransaction::Commit() { manager_->CommitChanges(std::move(changes_)); }

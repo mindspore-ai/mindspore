@@ -1376,7 +1376,7 @@ class AutoMonadConverter {
     auto depend = NewValueNode(prim::kPrimDepend);
     // If isolated nodes dependencies exist.
     if (IsPrimitiveCNode(output, prim::kPrimDepend) &&
-        IsPrimitiveCNode(output->cast<CNodePtr>()->input(2), prim::kPrimStopGradient)) {
+        IsPrimitiveCNode(output->cast<CNodePtr>()->input(kDependAttachNodeIndex), prim::kPrimStopGradient)) {
       // Insert new Depend node before isolated Depend node.
       auto isolated_depend = output->cast<CNodePtr>();
       auto &orig_output = isolated_depend->input(1);

@@ -140,7 +140,7 @@ bool DynamicParser::ParseAssignExprNode(const std::shared_ptr<parse::ParseFuncti
   return false;
 }
 
-bool DynamicParser::ParseAugAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
+bool DynamicParser::ParseAugAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &, const py::object &node,
                                            const std::vector<std::string> &compare_prim) {
   MS_LOG(DEBUG) << "Parse augassign expr";
   bool ret = false;

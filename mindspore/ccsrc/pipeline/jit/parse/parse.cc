@@ -411,8 +411,9 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
   auto is_expand = py::cast<bool>(expand_info[0]);
   if (is_expand) {
     // Process the expr statement
-    if (expand_info.size() < 2) {
-      MS_LOG(EXCEPTION) << "expand_info size:" << expand_info.size() << " less than 2.";
+    constexpr size_t expect_size = 2;
+    if (expand_info.size() < expect_size) {
+      MS_LOG(EXCEPTION) << "expand_info size:" << expand_info.size() << " less than " << expect_size << ".";
     }
     py::object value_object = expand_info[1];
     // Make a Expr CNode.
@@ -1834,8 +1835,10 @@ AnfNodePtr Parser::HandleInterpret(const FunctionBlockPtr &block, const AnfNodeP
   if (value_node->interpret()) {
     const auto script_text = py::cast<std::string>(ast()->GetAstNodeText(value_object));
     py::dict global_dict = block->global_py_params();
+    constexpr int recursive_level = 3;
     MS_LOG(INFO) << "[" << block->func_graph()->ToString() << "] script_text: " << script_text
-                 << ", value_node: " << value_node->DebugString(3) << ", global_dict: " << py::str(global_dict);
+                 << ", value_node: " << value_node->DebugString(recursive_level)
+                 << ", global_dict: " << py::str(global_dict);
     // Prepare global parameters.
     ValuePtr globals_converted_value = nullptr;
     if (!ConvertData(global_dict, &globals_converted_value)) {
