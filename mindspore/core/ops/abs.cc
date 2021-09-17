@@ -38,9 +38,17 @@ void ImpleAbs(void *origin, void *target, size_t size) {
   }
 }
 
-abstract::ShapePtr AbsInferShape(const std::vector<AbstractBasePtr> &input_args) {
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  return std::make_shared<abstract::Shape>(in_shape);
+abstract::ShapePtr AbsInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto x = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
+  auto shape_element = x->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  return shape_element;
 }
 
 TypePtr AbsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -55,7 +63,7 @@ AbstractBasePtr AbsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
 
-  return abstract::MakeAbstract(AbsInferShape(input_args), AbsInferType(primitive, input_args));
+  return abstract::MakeAbstract(AbsInferShape(primitive, input_args), AbsInferType(primitive, input_args));
 }
 
 ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -75,7 +83,7 @@ ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 
   auto data_size = x_tensor->DataSize();
   auto dtype = x_tensor->data_type();
-  auto shape = AbsInferShape(input_args);
+  auto shape = AbsInferShape(prim, input_args);
   auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape->shape());
   auto x_datac = x_tensor->data_c();
   auto result_datac = result_tensor->data_c();

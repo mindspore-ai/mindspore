@@ -15,6 +15,7 @@
 
 """tbe ops"""
 from .abs import _abs_tbe
+from .abs_ds import _abs_ds_tbe
 from .inplace_add import _inplace_add_tbe
 from .inplace_sub import _inplace_sub_tbe
 from .abs_grad import _abs_grad_tbe
