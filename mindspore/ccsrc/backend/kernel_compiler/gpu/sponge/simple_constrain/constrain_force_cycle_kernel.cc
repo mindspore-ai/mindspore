@@ -29,6 +29,5 @@ MS_REG_GPU_KERNEL_THREE(ConstrainForceCycle,
                           .AddInputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
                         ConstrainForceCycleGpuKernel, float, int, unsigned int)
-
 }  // namespace kernel
 }  // namespace mindspore

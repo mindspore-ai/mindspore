@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  RefreshUintCrd. This is an experimental interface that is subject to change and/or deletion.
  */
 #include "backend/kernel_compiler/gpu/sponge/simple_constrain/refresh_uint_crd_kernel.h"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  ConstrainForceVirial. This is an experimental interface that is subject to change and/or deletion.
  */
 
@@ -37,6 +37,5 @@ MS_REG_GPU_KERNEL_THREE(ConstrainForceVirial,
                           .AddOutputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
                         ConstrainForceVirialGpuKernel, float, int, unsigned int)
-
 }  // namespace kernel
 }  // namespace mindspore

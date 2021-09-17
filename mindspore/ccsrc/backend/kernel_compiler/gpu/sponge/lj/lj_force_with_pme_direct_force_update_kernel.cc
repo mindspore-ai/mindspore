@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  LJForceWithPMEDirectForceUpdate. This is an experimental interface that is subject to change and/or deletion.
  */
 #include "backend/kernel_compiler/gpu/sponge/lj/lj_force_with_pme_direct_force_update_kernel.h"

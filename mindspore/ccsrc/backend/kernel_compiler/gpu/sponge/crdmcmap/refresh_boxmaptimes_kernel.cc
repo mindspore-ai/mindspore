@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  RefreshBoxmapTimes. This is an experimental interface that is subject to change and/or deletion.
  */
 
@@ -30,6 +30,5 @@ MS_REG_GPU_KERNEL_TWO(RefreshBoxmapTimes,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       RefreshBoxmaptimesGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

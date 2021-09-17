@@ -26,6 +26,5 @@ MS_REG_GPU_KERNEL_TWO(RestrainForce,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       RestrainForceGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore
