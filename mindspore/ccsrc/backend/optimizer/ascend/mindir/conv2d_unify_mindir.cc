@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ constexpr auto kAttrOffsetA = "offset_a";
 constexpr auto kAttrPadList = "pad_list";
 constexpr auto kAttrMode = "mode";
 constexpr auto kAttrChannelMultiplier = "channel_multiplier";
-constexpr auto kAttrPerm = "perm";
 constexpr auto kAttrInputSizes = "input_sizes";
 constexpr auto kAttrInputSize = "input_size";
 constexpr auto kIndex2 = 2;

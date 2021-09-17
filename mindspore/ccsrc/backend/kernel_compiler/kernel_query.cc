@@ -55,8 +55,8 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
         buffer << "Kernel node's output size [" << output_tensor_num << "]"
                << " cannot match the kernel's output size [" << kernel_info->GetOutputNum() << "]";
       } else {
-        buffer << "Kernel node's output size [" << input_tensor_num << "]"
-               << " cannot match the kernel's output size [" << kernel_info->GetInputNum() << "]";
+        buffer << "Kernel node's input size [" << input_tensor_num << "]"
+               << " cannot match the kernel's input size [" << kernel_info->GetInputNum() << "]";
       }
       MS_LOG(INFO) << "Kernel [ " << index << " ] :" << kernel_info->ToString() << buffer.str();
     }
