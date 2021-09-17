@@ -809,7 +809,8 @@ int64_t GetAttrGroups(const AnfNodePtr &node, const size_t index) {
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
     if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
-      if (AnfAlgo::GetCNodeName(cnode) == kAllReduceOpName) {
+      auto node_name = AnfAlgo::GetCNodeName(cnode);
+      if (node_name == kAllReduceOpName || node_name == kBroadcastOpName) {
         // if index not exists in fracz_group_idx, return default value 1
         auto fz_group_idx = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
         int64_t out_index = SizeToLong(index);
