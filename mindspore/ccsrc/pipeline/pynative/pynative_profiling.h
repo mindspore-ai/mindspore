@@ -28,30 +28,29 @@ class PynativeProfiler {
  public:
   PynativeProfiler(const PynativeProfiler &) = delete;
   PynativeProfiler &operator=(const PynativeProfiler &) = delete;
-  static void SetForwardTimePoint(const std::string &stage_name, const std::string &flag);
-  static void SetRealRunOpName(const std::string &name);
-  static void SetBackwardTimePoint(const std::string &stage_name, const std::string &flag);
-  static void SetBackwardRunOpImplOpName(const std::string &name);
-  static void SetOpNameAndLaunchTime(const std::pair<std::string, std::pair<double, double>> &name_start_end) {
-    op_name_launch_time_vec_.push_back(name_start_end);
-  }
-
   static void SetEnableProfilingFlag();
-  static void SingleOpForwardHostProfilingData();
-  static void SingleOpBackwardHostProfilingData();
-  static void SingleOpDeviceProfilingData();
+  static void Reset();
+  static void SetDeviceOpNameAndLaunchTimePoint(
+    const std::pair<std::string, std::pair<double, double>> &name_start_end);
+  static void SetDeviceOpNameAndLaunchCostTime(const std::pair<std::string, double> &name_time);
+  static void ExportDeviceInfoToFile();
+  static void ExportDeviceInfoToScreen();
+  static void SetStageTimePoint(const std::string &stage_name, const std::string &flag);
+  static double SetStageTimePointWithReturn(const std::string &stage_name, const std::string &flag);
+  static void SetStageStatTime(const std::string &stage_name, double cost_time);
+  static void ExportStageTimePointToFile();
+  static void ExportStageTimePointToScreen();
+  static void ExportStageStatTimeToFile();
+  static void ExportStageStatTimeToScreen();
 
  private:
   PynativeProfiler() = default;
   ~PynativeProfiler() = default;
   inline static bool enable_profiler_flag_ = false;
-  inline static int real_run_op_index_ = 0;
-  inline static std::string real_run_op_name_;
-  inline static std::vector<std::pair<std::string, std::pair<std::string, double>>> forward_data_;
-  inline static int backward_run_grad_graph_index_ = 0;
-  inline static std::vector<std::string> backward_run_op_impl_op_name_;
-  inline static std::vector<std::pair<std::string, std::pair<std::string, double>>> backward_data_;
-  inline static std::vector<std::pair<std::string, std::pair<double, double>>> op_name_launch_time_vec_;
+  inline static std::vector<std::pair<std::string, std::pair<std::string, double>>> stage_time_point_vec_;
+  inline static std::vector<std::pair<std::string, double>> stage_stat_time_vec_;
+  inline static std::vector<std::pair<std::string, std::pair<double, double>>> op_name_launch_time_point_vec_;
+  inline static std::vector<std::pair<std::string, double>> op_name_launch_time_vec_;
 };
 }  // namespace mindspore
 
