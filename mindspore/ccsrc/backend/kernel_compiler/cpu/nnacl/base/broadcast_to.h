@@ -25,6 +25,9 @@ extern "C" {
 int broadcast_to_int(const int *input, BroadcastShapeInfo *shape_info, int *output);
 int broadcast_to_float(const float *input, BroadcastShapeInfo *shape_info, float *output);
 int broadcast_to_bool(const bool *input, BroadcastShapeInfo *shape_info, bool *output);
+#ifdef ENABLE_FP16
+int broadcast_to_float16_t(const float16_t *input, BroadcastShapeInfo *shape_info, float16_t *output);
+#endif
 #ifdef __cplusplus
 }
 #endif

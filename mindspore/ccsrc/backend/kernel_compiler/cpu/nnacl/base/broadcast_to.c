@@ -50,9 +50,7 @@ void pad_input_shape(int *input_shape, int input_shape_len, int output_shape_len
     int *input_shape = shape_info->input_shape_;                                                       \
     const int *output_shape = shape_info->output_shape_;                                               \
     const int dim_max = shape_info->output_shape_size_ - 1;                                            \
-    const size_t bool_length = 1, number_length = 4;                                                   \
-    const char *type_name = "bool";                                                                    \
-    const size_t data_length = strcmp(#type, type_name) ? number_length : bool_length;                 \
+    const size_t data_length = sizeof(type);                                                           \
     const size_t temp_length = accumulate(output_shape, 0, dim_max);                                   \
     type *data_temp = (type *)malloc(temp_length * data_length);                                       \
     if (data_temp == NULL) {                                                                           \
@@ -101,3 +99,6 @@ void pad_input_shape(int *input_shape, int input_shape_len, int output_shape_len
 BROADCAST_TO(int)
 BROADCAST_TO(float)
 BROADCAST_TO(bool)
+#ifdef ENABLE_FP16
+BROADCAST_TO(float16_t)
+#endif

@@ -891,7 +891,8 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, cpu_desc, op_parameter,
                                                  kernel);
   if (ret == RET_OK) {
-    MS_LOG(DEBUG) << "Get TypeId(" << kernel_data_type << ") op success: " << PrimitiveCurVersionTypeName(op_type);
+    MS_LOG(DEBUG) << "Get TypeId(expect = " << kernel_data_type << ", real = " << cpu_desc.data_type
+                  << ") op success: " << PrimitiveCurVersionTypeName(op_type);
     if (is_train_session_) {
       (*kernel)->Init();
       RestoreTensorData(&restored_origin_tensors);

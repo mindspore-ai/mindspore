@@ -25,25 +25,17 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BroadcastTo;
 
 namespace mindspore::kernel {
-BroadcastToCPUKernel::~BroadcastToCPUKernel() {
-  if (shape_info_ != nullptr) {
-    free(shape_info_);
-    shape_info_ = nullptr;
-  }
-}
-
 int BroadcastToCPUKernel::ReSize() {
   auto input_shape = in_tensors_.at(0)->shape();
   for (size_t i = 0; i < input_shape.size(); ++i) {
-    shape_info_->input_shape_[i] = input_shape[i];
+    shape_info_.input_shape_[i] = input_shape[i];
   }
-
-  shape_info_->input_shape_size_ = static_cast<int>(input_shape.size());
   auto output_shape = out_tensors_.at(0)->shape();
   for (size_t i = 0; i < output_shape.size(); ++i) {
-    shape_info_->output_shape_[i] = output_shape[i];
+    shape_info_.output_shape_[i] = output_shape[i];
   }
-  shape_info_->output_shape_size_ = static_cast<int>(output_shape.size());
+  shape_info_.input_shape_size_ = static_cast<int>(input_shape.size());
+  shape_info_.output_shape_size_ = static_cast<int>(output_shape.size());
 
   data_type_ = in_tensors_.at(0)->data_type();
   MS_ASSERT(data_type_ == out_tensors_.at(0)->data_type());
@@ -53,11 +45,6 @@ int BroadcastToCPUKernel::ReSize() {
 int BroadcastToCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  shape_info_ = reinterpret_cast<BroadcastShapeInfo *>(malloc(sizeof(BroadcastShapeInfo)));
-  if (shape_info_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc BroadcastShapeInfo failed!";
-    return RET_ERROR;
-  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -65,22 +52,24 @@ int BroadcastToCPUKernel::Init() {
 }
 
 int BroadcastToCPUKernel::Run() {
+  const auto input_data = in_tensors_.at(0)->data();
+  auto output_data = out_tensors_.at(0)->data();
+  CHECK_NULL_RETURN(input_data);
+  CHECK_NULL_RETURN(output_data);
+
   switch (data_type_) {
-    case kNumberTypeFloat32: {
-      const auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data());
-      auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data());
-      CHECK_NULL_RETURN(input_data);
-      CHECK_NULL_RETURN(output_data);
-      return BroadcastTo(float, input_data, shape_info_, output_data);
-    }
+    case kNumberTypeFloat32:
+      return BroadcastTo(float, reinterpret_cast<const float *>(input_data), &shape_info_,
+                         reinterpret_cast<float *>(output_data));
+#ifdef ENABLE_FP16
+    case kNumberTypeFloat16:
+      return BroadcastTo(float16_t, reinterpret_cast<const float16_t *>(input_data), &shape_info_,
+                         reinterpret_cast<float16_t *>(output_data));
+#endif
     case kNumberTypeInt32:
-    case kNumberTypeInt: {
-      const auto input_data = reinterpret_cast<int *>(in_tensors_.at(0)->data());
-      auto output_data = reinterpret_cast<int *>(out_tensors_.at(0)->data());
-      CHECK_NULL_RETURN(input_data);
-      CHECK_NULL_RETURN(output_data);
-      return BroadcastTo(int, input_data, shape_info_, output_data);
-    }
+    case kNumberTypeInt:
+      return BroadcastTo(int, reinterpret_cast<const int *>(input_data), &shape_info_,
+                         reinterpret_cast<int *>(output_data));
     default:
       MS_LOG(ERROR) << "UnSupported data type: " << data_type_;
       return RET_ERROR;
@@ -89,4 +78,7 @@ int BroadcastToCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
+#ifdef ENABLE_FP16
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
+#endif
 }  // namespace mindspore::kernel
