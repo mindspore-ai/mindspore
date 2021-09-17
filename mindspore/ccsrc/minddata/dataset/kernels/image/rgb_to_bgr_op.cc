@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status RgbToBgrOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   auto input_type = input->type();
@@ -32,6 +31,5 @@ Status RgbToBgrOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
 
   return RgbToBgr(input, output);
 }
-
 }  // namespace dataset
 }  // namespace mindspore

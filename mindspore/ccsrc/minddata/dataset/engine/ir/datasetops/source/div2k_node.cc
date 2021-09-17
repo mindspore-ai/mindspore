@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor for DIV2KNode
 DIV2KNode::DIV2KNode(const std::string &dataset_dir, const std::string &usage, const std::string &downgrade,
                      int32_t scale, bool decode, std::shared_ptr<SamplerObj> sampler,

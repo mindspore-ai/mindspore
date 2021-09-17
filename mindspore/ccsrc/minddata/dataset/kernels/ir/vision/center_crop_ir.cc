@@ -60,7 +60,6 @@ Status CenterCropOperation::from_json(nlohmann::json op_params, std::shared_ptr<
   *operation = std::make_shared<CenterCropOperation>(size);
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -65,7 +65,6 @@ Status ResizePreserveAROperation::from_json(nlohmann::json op_params, std::share
   *operation = std::make_shared<vision::ResizePreserveAROperation>(height, width, img_orientation);
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

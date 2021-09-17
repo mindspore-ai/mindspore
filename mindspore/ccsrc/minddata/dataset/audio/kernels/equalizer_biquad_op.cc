@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 constexpr float_t EqualizerBiquadOp::kQ = 0.707;
 
 Status EqualizerBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {

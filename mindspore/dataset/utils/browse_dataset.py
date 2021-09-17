@@ -20,6 +20,7 @@ import importlib
 import numpy as np
 from mindspore import log as logger
 
+
 def imshow_det_bbox(image,
                     bboxes,
                     labels,

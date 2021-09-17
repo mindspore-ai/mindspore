@@ -399,13 +399,11 @@ Status DeviceQueueOp::PushDataToGPU() {
   // Every thread use cuda api should SetThreadDevice
   RETURN_IF_NOT_OK(SetThreadDevice());
   TaskManager::FindMe()->Post();
+#ifndef ENABLE_SECURITY
   uint64_t batch_start_time = 0;
   int32_t push_cost = 0;
-#ifndef ENABLE_SECURITY
   int32_t connector_size = 0;
   int32_t connector_capacity = 0;
-#endif
-#ifndef ENABLE_SECURITY
   std::shared_ptr<DeviceQueueTracing> profiling_node;
   bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
   if (isProfilingEnable) {

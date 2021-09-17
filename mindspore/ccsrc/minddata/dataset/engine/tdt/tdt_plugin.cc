@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 constexpr auto kUnknownErrorString = "Unknown error occurred";
 
 TdtPlugin::TdtPlugin(const std::string &channel_name, int32_t device_id) {
@@ -240,6 +239,5 @@ void TdtPlugin::ReportErrorMessage() {
     MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
   }
 }
-
 }  // namespace dataset
 }  // namespace mindspore

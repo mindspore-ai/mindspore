@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 // AngleOperation
 AngleOperation::AngleOperation() {}
 
@@ -31,7 +30,6 @@ std::shared_ptr<TensorOp> AngleOperation::Build() {
   std::shared_ptr<AngleOp> tensor_op = std::make_shared<AngleOp>();
   return tensor_op;
 }
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

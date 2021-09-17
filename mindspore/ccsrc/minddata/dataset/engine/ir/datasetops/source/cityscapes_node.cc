@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Constructor for CityscapesNode
 CityscapesNode::CityscapesNode(const std::string &dataset_dir, const std::string &usage,
                                const std::string &quality_mode, const std::string &task, bool decode,
@@ -114,7 +113,6 @@ Status CityscapesNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
   sample_size = sampler_rt->CalculateNumSamples(num_rows);
-
   if (sample_size == -1) {
     RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), &sample_size));
   }

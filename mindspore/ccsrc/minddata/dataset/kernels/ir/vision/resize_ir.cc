@@ -79,7 +79,6 @@ Status ResizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
   *operation = std::make_shared<vision::ResizeOperation>(size, interpolation);
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

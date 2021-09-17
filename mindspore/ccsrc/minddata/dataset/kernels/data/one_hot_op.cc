@@ -37,6 +37,5 @@ Status OneHotOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   if (!outputs.empty()) return Status::OK();
   return Status(StatusCode::kMDUnexpectedError, "OneHot: invalid input shape.");
 }
-
 }  // namespace dataset
 }  // namespace mindspore

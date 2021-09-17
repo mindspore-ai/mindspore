@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 SBUNode::SBUNode(const std::string &dataset_dir, bool decode, const std::shared_ptr<SamplerObj> &sampler,
                  const std::shared_ptr<DatasetCache> &cache)
     : MappableSourceNode(std::move(cache)), dataset_dir_(dataset_dir), decode_(decode), sampler_(sampler) {}

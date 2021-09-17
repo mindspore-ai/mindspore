@@ -21,9 +21,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
-
 ComplexNormOperation::ComplexNormOperation(float power) : power_(power) {}
 
 ComplexNormOperation::~ComplexNormOperation() = default;
@@ -46,7 +44,6 @@ std::shared_ptr<TensorOp> ComplexNormOperation::Build() {
 }
 
 std::string ComplexNormOperation::Name() const { return kComplexNormOperation; }
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

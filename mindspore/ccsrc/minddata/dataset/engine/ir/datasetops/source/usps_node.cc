@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 USPSNode::USPSNode(std::string dataset_dir, std::string usage, int32_t num_samples, ShuffleMode shuffle,
                    int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache)
     : NonMappableSourceNode(std::move(cache)),
@@ -168,6 +167,5 @@ Status USPSNode::MakeSimpleProducer() {
   num_samples_ = 0;
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 // BandpassBiquadOperation
 BandpassBiquadOperation::BandpassBiquadOperation(int32_t sample_rate, float central_freq, float Q,
                                                  bool const_skirt_gain)

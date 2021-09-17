@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
 EqualizerBiquadOperation::EqualizerBiquadOperation(int32_t sample_rate, float center_freq, float gain, float Q)
     : sample_rate_(sample_rate), center_freq_(center_freq), gain_(gain), Q_(Q) {}
