@@ -788,7 +788,7 @@ void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node
   // However, the segment_sum operation needs two inputs, To solve this
   // We maintain a dict to count the times of the same operations,
   // and bind the inputs according to the times of the op appears.
-  static std::unordered_map<AnfNodePtr, int> input_map = {};
+  std::unordered_map<AnfNodePtr, int> input_map = {};
   static int appear_count = 0;
   for (auto &replace_input : replace_graph->first) {
     auto pre_node = node->input(LongToSize(replace_input.second));
