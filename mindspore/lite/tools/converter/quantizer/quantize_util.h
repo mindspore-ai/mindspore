@@ -223,7 +223,7 @@ STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
     return RET_ERROR;
   }
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
-  if (quant_type == QuantType_PostTraining) {
+  if (quant_type == QuantType_QUANT_ALL) {
     quant_param_holder->set_input_quant_param(index, quant_params);
   } else {
     quant_param_holder->set_input_quant_param(index, quant_params);

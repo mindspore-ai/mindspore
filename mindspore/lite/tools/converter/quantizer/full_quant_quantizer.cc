@@ -516,7 +516,7 @@ STATUS FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNo
   auto quant_max_t = quant_max;
   auto quant_min_t = quant_min;
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
-  auto status = FixedBitQuantFilter<int8_t>(tensor_info, primitive, QuantType_PostTraining, quant_max_t, quant_min_t,
+  auto status = FixedBitQuantFilter<int8_t>(tensor_info, primitive, QuantType_QUANT_ALL, quant_max_t, quant_min_t,
                                             bit_num_t, weight_quant_type, kNumberTypeInt8);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
@@ -1179,7 +1179,7 @@ STATUS FullQuantQuantizer::CollectDataFrequency() {
         return true;
       }
       if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
-        return false;
+        return true;
       }
       for (size_t i = 0; i < (*diverg_info_map)[callParam.node_name].size(); i++) {
         auto tensor = beforeInputs[i];
@@ -1201,7 +1201,7 @@ STATUS FullQuantQuantizer::CollectDataFrequency() {
         return true;
       }
       if (FullQuantQuantizer::CheckFp32TensorVec(call_param.node_name, after_outputs) != RET_OK) {
-        return false;
+        return true;
       }
       int output_i = 0;
       for (const auto &tensor : after_outputs) {
@@ -1301,7 +1301,7 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   if (calibrator_->GetBiasCorrection()) {
     // init in8 session
     MS_LOG(INFO) << "create quant session";
-    flags.commonQuantParam.quant_type = schema::QuantType_PostTraining;
+    flags.commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
     auto int8_sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
     int8_session_ = int8_sm.session;
     int8_model_ = int8_sm.model;
@@ -1374,7 +1374,7 @@ KernelCallBack FullQuantQuantizer::GetBeforeCallBack(bool int8_op) {
                               const CallBackParam &callParam) -> bool {
       if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
         if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, before_inputs) != RET_OK) {
-          return false;
+          return true;
         }
         auto tensor = before_inputs[0];
         MS_ASSERT(tensor != nullptr);
@@ -1537,7 +1537,7 @@ KernelCallBack FullQuantQuantizer::GetFloatAfterCallBack() {
                                           const CallBackParam &callParam) -> bool {
     if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
       if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
-        return false;
+        return true;
       }
       auto tensor = afterOutputs[0];
       MS_ASSERT(tensor != nullptr);

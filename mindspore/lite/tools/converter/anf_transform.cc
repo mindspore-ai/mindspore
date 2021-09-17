@@ -368,7 +368,7 @@ void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGr
 
 int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   // quant
-  if (config->commonQuantParam.quant_type == schema::QuantType_PostTraining) {
+  if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {
     this->m_quantizer_ = std::make_unique<quant::FullQuantQuantizer>(old_graph, config->commonQuantParam.bit_num);
     if (m_quantizer_ == nullptr) {
       MS_LOG(ERROR) << "New FullQuantQuantizer failed";
