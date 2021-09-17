@@ -539,11 +539,12 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   const int substr_len = 2;
   const int header_len_offset = 8;
   const int header_offset = 9;
+  const int header_len_buffer_size = 2;
   const int type_offset = 10;
   // get header length
   infile.seekg(0, std::ios::beg);
-  auto header_len_buffer = std::make_unique<std::vector<char>>(header_len_offset + 2);
-  if (!infile.read(header_len_buffer->data(), header_len_offset + 2)) {
+  auto header_len_buffer = std::make_unique<std::vector<char>>(header_len_offset + header_len_buffer_size);
+  if (!infile.read(header_len_buffer->data(), header_len_offset + header_len_buffer_size)) {
     MS_LOG(ERROR) << "Failed to parse header length from " << file_path;
     return;
   }

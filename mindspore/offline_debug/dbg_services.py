@@ -42,6 +42,7 @@ def get_version():
                          "Please recompile mindspore without `-s on`.")
     return cds.DbgServices(False).GetVersion()
 
+
 class DbgLogger:
     """
     Offline Debug Services Logger
@@ -367,6 +368,7 @@ class DbgServices():
             tensor_stat_data_list_ret.append(tensor_stat_data)
         return tensor_stat_data_list_ret
 
+
 class TensorInfo():
     """
     Tensor Information class.
@@ -522,6 +524,7 @@ class TensorInfo():
 
         return self.instance.get_is_output()
 
+
 class TensorData():
     """
     TensorData class.
@@ -623,6 +626,7 @@ class TensorData():
 
         return self.instance.get_shape()
 
+
 class TensorBaseData():
 
     """
@@ -707,6 +711,8 @@ class TensorBaseData():
         """
 
         return self.instance.shape()
+
+
 class TensorStatData():
 
     """
@@ -1055,6 +1061,7 @@ class TensorStatData():
         """
         return self.instance.pos_inf_count()
 
+
 class WatchpointHit():
     """
     WatchpointHit class.
@@ -1285,6 +1292,7 @@ class WatchpointHit():
         """
 
         return self.instance.get_root_graph_id()
+
 
 class Parameter():
     """

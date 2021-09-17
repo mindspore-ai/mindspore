@@ -104,6 +104,7 @@ class ConvertToolLoader:
         if str(toolkit_path) in sys.path:
             sys.path.remove(str(toolkit_path))
 
+
 def parse_args(file_list, output_path):
     """Helper function to parse the input argument for the conversion configuration."""
     args_dict = dict()

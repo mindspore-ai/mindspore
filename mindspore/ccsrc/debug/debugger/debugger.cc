@@ -603,7 +603,6 @@ void Debugger::SendHeartbeat(int32_t period) {
   SetEnableHeartbeat(CheckDebuggerEnabled());
   while (enable_heartbeat_) {
     EventReply reply = grpc_client_->SendHeartbeat(heartbeat);
-
     if (reply.status() != reply.OK) {
       MS_LOG(ERROR) << "Error: SendHeartbeat failed";
       num_heartbeat_fail++;
