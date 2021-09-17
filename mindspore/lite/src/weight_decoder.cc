@@ -277,7 +277,7 @@ int WeightDecoder::UnPackToInt(const schema::Tensor &src_tensor, lite::Tensor *d
     return RET_NO_CHANGE;
   }
   auto quant_param = quant_params->Get(0);
-  if (quant_param == nullptr || !quant_param->inited()) {
+  if (quant_param == nullptr) {
     return RET_NO_CHANGE;
   }
   auto dst_data = dst_tensor->data();
