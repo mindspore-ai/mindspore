@@ -51,8 +51,10 @@ class AscendDeviceAddress : public DeviceAddress {
                           const std::string &format) const override;
   void ClearDeviceMemory() override;
   DeviceAddressType DeviceType() const override { return DeviceAddressType::kAscend; }
+#ifndef ENABLE_SECURITY
   bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
                      TypeId host_type, bool trans_flag) const override;
+#endif
 #ifdef ENABLE_DEBUGGER
   bool LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                      const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev) const override;

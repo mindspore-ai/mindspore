@@ -1,5 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/debug/)
 include_directories(${CMAKE_BINARY_DIR})
+file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" MSVERSION)
+add_definitions(-DMSVERSION=\"${MSVERSION}\")
 
 set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/anf_ir_dump.cc"
