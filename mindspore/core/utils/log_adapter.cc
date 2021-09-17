@@ -54,15 +54,15 @@ static std::string GetLogLevel(MsLogLevel level) {
     _TO_STRING(DEBUG), _TO_STRING(INFO), _TO_STRING(WARNING), _TO_STRING(ERROR), _TO_STRING(EXCEPTION),
   };
 #undef _TO_STRING
-  if (level > EXCEPTION) {
-    level = EXCEPTION;
+  if (level > this_thread_max_log_level) {
+    level = this_thread_max_log_level;
   }
   return std::string(level_names[level]);
 }
 
 // convert MsLogLevel to corresponding glog level
 static int GetGlogLevel(MsLogLevel level) {
-  switch (level) {
+  switch (level >= this_thread_max_log_level ? this_thread_max_log_level : level) {
     case DEBUG:
     case INFO:
       return google::GLOG_INFO;
@@ -153,7 +153,9 @@ void LogWriter::operator^(const LogStream &stream) const {
   thread_local bool running = false;
   if (!running) {
     running = true;
-    OutputLog(msg);
+    if (this_thread_max_log_level >= EXCEPTION) {
+      OutputLog(msg);
+    }
     if (trace_provider_ != nullptr) {
       trace_provider_(oss);
     }
