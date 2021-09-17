@@ -102,7 +102,6 @@ std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path
         temp_path[i] = '\0';
         std::string path_handle(temp_path);
         if (!fs->FileExist(path_handle)) {
-          MS_LOG(INFO) << "Dir " << path_handle << " does not exit, creating...";
           if (!fs->CreateDir(path_handle)) {
             MS_LOG(ERROR) << "Create " << path_handle << " dir error";
             return std::nullopt;
@@ -114,7 +113,6 @@ std::optional<std::string> FileUtils::CreateNotExistDirs(const std::string &path
   }
 
   if (!fs->FileExist(path)) {
-    MS_LOG(INFO) << "Dir " << path << " does not exit, creating...";
     if (!fs->CreateDir(path)) {
       MS_LOG(ERROR) << "Create " << path << " dir error";
       return std::nullopt;

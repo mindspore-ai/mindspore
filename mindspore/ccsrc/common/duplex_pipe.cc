@@ -48,8 +48,7 @@ int DuplexPipe::Open(const std::initializer_list<std::string> &arg_list, bool ap
     close(fd2_[1]);
     DP_EXCEPTION << "fork failed, errno: " << errno;
   } else if (pid_ == 0) {  // Remote process
-    DP_INFO << "Remote process, id: " << getpid() << ", " << fd1_[0] << "/" << fd2_[1];
-    DP_INFO << "Execute: arg_list:" << arg_list;
+    // Here cannot record log before execvp called, because glog will warn "File Exist" if log to file.
     remote_stdout_ = dup(STDOUT_FILENO);
     remote_stdin_ = dup(STDIN_FILENO);
     close(fd1_[1]);
