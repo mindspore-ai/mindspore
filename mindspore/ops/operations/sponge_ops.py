@@ -2334,7 +2334,7 @@ class LJEnergy(PrimitiveWithInfer):
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial_shape[1]", cls_name)
         validator.check_int(len(d_lj_a), 1, Rel.EQ, "d_LJ_A_dim", cls_name)
-        validator.check_int(d_lj_a[0], 3, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
+        validator.check_int(d_lj_a[0], q, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return charge
 
@@ -2426,7 +2426,7 @@ class LJForce(PrimitiveWithInfer):
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial_shape[1]", cls_name)
         validator.check_int(len(d_lj_a), 1, Rel.EQ, "d_LJ_A_dim", cls_name)
-        validator.check_int(d_lj_a[0], 3, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
+        validator.check_int(d_lj_a[0], q, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return uint_crd
 
@@ -2522,7 +2522,7 @@ class LJForceWithPMEDirectForce(PrimitiveWithInfer):
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
         validator.check_int(nl_serial[1], 800, Rel.EQ, "nl_serial_shape[1]", cls_name)
         validator.check_int(len(d_lj_a), 1, Rel.EQ, "d_LJ_A_dim", cls_name)
-        validator.check_int(d_lj_a[0], 3, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
+        validator.check_int(d_lj_a[0], q, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
         return uint_crd
 
@@ -2632,7 +2632,6 @@ class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
           veclocity overflows, scale it to the upper limit. The data type is float32.
         - **is_max_velocity** (Scalar) - whether the max velocity control is
           open or not. The data type is int32.
-
         - **mass_inverse** (Tensor) - The inverse value of
           mass of each atom. The data type is float32 and the shape is :math:`(n,)`.
         - **sqrt_mass** (Tensor) - The inverse square root value

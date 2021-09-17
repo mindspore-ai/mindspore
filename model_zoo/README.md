@@ -84,7 +84,6 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
     - [High Performance Computing](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc)
         - [GOMO](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/ocean_model/README.md)
         - [Molecular_Dynamics](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/molecular_dynamics/README.md)
-        - [SPONGE](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/hpc/sponge/README.md)
         - [PINNs](https://gitee.com/mindspore/mindspore/blob/master/model_zoo/research/hpc/pinns/README.md)
 - [Community](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/community)
 
