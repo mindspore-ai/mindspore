@@ -410,14 +410,18 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
                                      std::vector<unsigned int> *root_graph_id) {
   std::lock_guard<std::mutex> lg(lock_);
   auto t1 = std::chrono::high_resolution_clock::now();
-  if (watchpoint_table_.empty()) return;
+  if (watchpoint_table_.empty()) {
+    return;
+  }
   // vector to store execution order of tensors hit
   std::vector<int> exec_order;
   std::vector<std::string> time_stamps;
   int tensor_list_size = tensor_list->size();
   uint64_t tensor_list_byte_size = 0;
   MS_LOG(INFO) << "tensor list size: " << tensor_list_size;
-  if (tensor_list_size == 0) return;
+  if (tensor_list_size == 0) {
+    return;
+  }
   // default value for number of threads
   const int default_thread_num = 16;
   int max_thread_num = default_thread_num;
@@ -1165,7 +1169,7 @@ void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::
   tensor_loader_->SearchTensors(name, &result_list);
 
   for (auto result : result_list) {
-    if (!std::get<1>(result)) {
+    if (std::get<1>(result) == nullptr) {
       continue;
     }
     ret_name->push_back(std::get<0>(result));
@@ -1205,7 +1209,7 @@ bool DebugServices::IsWatchPoint(const std::string &kernel_name, const CNodePtr 
 }
 
 bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const {
-  if (kernel && w_name.length() > 0) {
+  if (kernel != nullptr && w_name.length() > 0) {
     auto input_size = AnfAlgo::GetInputTensorNum(kernel);
     for (size_t j = 0; j < input_size; ++j) {
       auto input_kernel = kernel->input(j + 1);
@@ -1221,13 +1225,7 @@ bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNode
 }
 #endif
 
-void DebugServices::EmptyTensor() { tensor_loader_->EmptyTensor(); }
-
 std::vector<std::shared_ptr<TensorData>> DebugServices::GetTensor() const { return tensor_loader_->GetTensor(); }
-
-uint32_t DebugServices::GetTensorLoaderIterNum() const { return tensor_loader_->GetIterNum(); }
-
-void DebugServices::SetTensorLoaderIterNum(uint32_t iter_num) { tensor_loader_->set_iter_num(iter_num); }
 
 void DebugServices::EmptyCurrentTensor() { tensor_loader_->EmptyCurrentTensor(); }
 
@@ -1243,10 +1241,6 @@ bool DebugServices::DumpTensorToFile(const std::string &tensor_name, bool trans_
 
 bool DebugServices::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
   return tensor_loader_->LoadNewTensor(tensor, keep_prev);
-}
-
-std::unordered_map<unsigned int, DebugServices::watchpoint_t> DebugServices::GetWatchpointTable() {
-  return watchpoint_table_;
 }
 
 void DebugServices::ResetLoadedTensors() {
@@ -1268,7 +1262,9 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensor(const CNod
   for (size_t j = 0; j < output_size; ++j) {
     auto tensor_name_with_slot = kernel_name + ":" + std::to_string(j);
     auto tensor = tensor_loader_->GetTensor(tensor_name_with_slot);
-    if (tensor) result.push_back(tensor);
+    if (tensor != nullptr) {
+      result.push_back(tensor);
+    }
   }
   return result;
 }

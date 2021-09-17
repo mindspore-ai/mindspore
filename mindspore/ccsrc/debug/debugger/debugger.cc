@@ -291,6 +291,7 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
   }
 }
 void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
+  MS_EXCEPTION_IF_NULL(graph_ptr);
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   CheckDatasetSinkMode();
@@ -379,7 +380,7 @@ uint32_t Debugger::GetRankID() {
 }
 void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
   uint32_t rank_id = GetRankID();
-  if (debugger_->DebuggerBackendEnabled()) {
+  if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     MS_EXCEPTION_IF_NULL(kernel_graph);
     (void)E2eDump::DumpParametersAndConstData(kernel_graph.get(), rank_id, debugger_.get());
   } else {
@@ -388,7 +389,7 @@ void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
 }
 
 void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
-  if (debugger_->DebuggerBackendEnabled()) {
+  if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     uint32_t rank_id = GetRankID();
     (void)E2eDump::DumpSingleNodeData(node, graph_id, rank_id, debugger_.get());
   }
@@ -429,8 +430,10 @@ void Debugger::PostExecuteGraphDebugger() {
     return;
   }
   // LoadParametersAndConst for all the graphs
-  for (auto graph : graph_ptr_list_) {
-    debugger_->LoadParametersAndConst(graph);
+  if (debugger_) {
+    for (auto graph : graph_ptr_list_) {
+      debugger_->LoadParametersAndConst(graph);
+    }
   }
   // debug used for dump
   if (debugger_ && debugger_->CheckDebuggerDumpEnabled()) {
@@ -453,7 +456,7 @@ void Debugger::PostExecute() {
   if (pipeline::GraphExecutorPy::GetDebugTerminate()) {
     return;
   }
-  if (debugger_->DebuggerBackendEnabled()) {
+  if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     // analyze tensor data and send the watchpoints been hit
     if (debugger_enabled_ && !is_dataset_graph_) {
       if (device_target_ != kGPUDevice) {
@@ -516,17 +519,8 @@ void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
   }
 }
 
-void Debugger::PostDebugOp() {
-  // access lock for public method
-  std::lock_guard<std::mutex> a_lock(access_lock_);
-  // suspend if debugger is enabled
-  if (debugger_enabled_ && !is_dataset_graph_) {
-    MS_LOG(INFO) << "Debugger suspend at debug_op";
-    CommandLoop();
-  }
-}
-
 void Debugger::LoadGraphs(const KernelGraphPtr &graph_ptr) {
+  MS_EXCEPTION_IF_NULL(graph_ptr);
   if (graph_ptr_ != graph_ptr) {
     MS_LOG(INFO) << "LoadGraphs Debugger got new graph: " << graph_ptr->graph_id();
     // save new graph_ptr
@@ -547,6 +541,7 @@ void Debugger::LoadGraphs(const KernelGraphPtr &graph_ptr) {
 
 // In single graph cases, check single graph ptr
 void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
+  MS_EXCEPTION_IF_NULL(graph_ptr);
   if (graph_ptr_ != graph_ptr) {
     MS_LOG(INFO) << "CheckGraphPtr Debugger got new graph: " << graph_ptr->graph_id();
     // save new graph_ptr
@@ -566,6 +561,7 @@ void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
 
 void Debugger::CheckDatasetGraph() {
   // print parameter node names
+  MS_EXCEPTION_IF_NULL(graph_ptr_);
   const auto &params = graph_ptr_->inputs();
   for (const auto &param : params) {
     MS_LOG(INFO) << "param: " << GetKernelNodeName(param);
@@ -602,6 +598,7 @@ void Debugger::SendHeartbeat(int32_t period) {
 
   SetEnableHeartbeat(CheckDebuggerEnabled());
   while (enable_heartbeat_) {
+    MS_EXCEPTION_IF_NULL(grpc_client_);
     EventReply reply = grpc_client_->SendHeartbeat(heartbeat);
 
     if (reply.status() != reply.OK) {
@@ -624,6 +621,7 @@ void Debugger::SendHeartbeat(int32_t period) {
 void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
   if (SendMetadata(true)) {
     // send graph to Mindinsight server
+    MS_EXCEPTION_IF_NULL(grpc_client_);
     EventReply reply = grpc_client_->SendGraph(graph_proto);
     if (reply.status() != reply.OK) {
       MS_LOG(ERROR) << "Error: SendGraph failed";
@@ -635,6 +633,7 @@ void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
 
 bool Debugger::SendMetadata(bool version_check) {
   // prepare metadata
+  MS_EXCEPTION_IF_NULL(graph_ptr_);
   std::string device_name = std::to_string(device_id_) + ":" + std::to_string(graph_ptr_->graph_id());
   Metadata metadata;
   metadata.set_device_name(device_name);
@@ -647,6 +646,7 @@ bool Debugger::SendMetadata(bool version_check) {
   // set graph munber to not_dataset_graph_sum_
   metadata.set_graph_num(not_dataset_graph_sum_);
 
+  MS_EXCEPTION_IF_NULL(grpc_client_);
   EventReply reply_metadata = grpc_client_->SendMetadata(metadata);
 
   bool ret = false;
@@ -681,6 +681,7 @@ void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_prot
   if (!SendMetadata(true)) {
     return;
   }
+  MS_EXCEPTION_IF_NULL(grpc_client_);
   // send multiple graphs to mindinght server
   // split graph into chunks if one graph is larger than chunk size
   std::list<Chunk> chunked_graph_proto_list;
@@ -716,6 +717,7 @@ void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_prot
 
 void Debugger::CommandLoop() {
   // prepare metadata
+  MS_EXCEPTION_IF_NULL(graph_ptr_);
   std::string device_name = std::to_string(device_id_) + ":" + std::to_string(graph_ptr_->graph_id());
   Metadata metadata;
 
@@ -732,6 +734,7 @@ void Debugger::CommandLoop() {
 
   while (!run) {
     // wait for command
+    MS_EXCEPTION_IF_NULL(grpc_client_);
     EventReply reply = grpc_client_->WaitForCommand(metadata);
     if (reply.status() != reply.OK) {
       MS_LOG(ERROR) << "Error: WaitForCommand failed";
@@ -885,6 +888,7 @@ void Debugger::ViewValueLevel(const EventReply &reply) {
     }
     MS_LOG(INFO) << "tensor dtype: " << tensor.data_type();
   }
+  MS_EXCEPTION_IF_NULL(grpc_client_);
   EventReply send_tensors_reply = grpc_client_->SendTensors(tensors);
   if (send_tensors_reply.status() != debugger::EventReply::OK) {
     MS_LOG(ERROR) << "Error: SendTensors failed";
@@ -1127,6 +1131,7 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
 void Debugger::SendWatchpoints(const std::list<WatchpointHit> &points) {
   // send info about watchpoint
   if (!points.empty()) {
+    MS_EXCEPTION_IF_NULL(grpc_client_);
     EventReply reply = grpc_client_->SendWatchpointHits(points);
     if (reply.status() != reply.OK) {
       MS_LOG(ERROR) << "Error: SendWatchpointHits failed";
@@ -1140,16 +1145,6 @@ bool Debugger::DumpTensorToFile(const std::string &tensor_name, bool trans_flag,
   return debug_services_.get()->DumpTensorToFile(tensor_name, trans_flag, filepath, host_fmt, host_shape, host_type,
                                                  device_type, addr_format, slot);
 }
-
-bool Debugger::DebugServicesIsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel) const {
-  return debug_services_.get()->IsWatchPoint(kernel_name, kernel);
-}
-
-void Debugger::EmptyTensor() { debug_services_.get()->EmptyTensor(); }
-
-void Debugger::SetTensorLoaderIterNum(uint32_t iter_num) { debug_services_.get()->SetTensorLoaderIterNum(iter_num); }
-
-uint32_t Debugger::GetTensorLoaderIterNum() const { return debug_services_.get()->GetTensorLoaderIterNum(); }
 
 bool Debugger::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
   return debug_services_.get()->LoadNewTensor(tensor, keep_prev);
@@ -1273,14 +1268,6 @@ void Debugger::SetCurNode(const std::string &cur_name) {
 
 std::string Debugger::run_level() const { return run_level_; }
 
-void Debugger::SetStepNum(int32_t cur_num_step) {
-  // access lock for public method
-  std::lock_guard<std::mutex> a_lock(access_lock_);
-  num_step_ = cur_num_step;
-}
-
-int32_t Debugger::step_num() const { return num_step_; }
-
 void Debugger::SetTrainingDone(bool training_done) { training_done_ = training_done; }
 
 bool Debugger::CheckPort(const std::string &port) const {
@@ -1377,6 +1364,7 @@ void Debugger::LoadParametersAndConst() {
 void Debugger::LoadParametersAndConst(const KernelGraphPtr &graph) {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
   MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(graph_ptr_);
   // load parameters
   MS_LOG(INFO) << "Start to load Parameters for graph " << graph->graph_id() << ".";
   const auto &parameters = graph_ptr_->inputs();
@@ -1432,6 +1420,8 @@ void Debugger::LoadGraphOutputs() {
 }
 
 void Debugger::UpdateStepNum(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(debugger_);
   // update step number if we are processing the first graph (to support multigraph)
   if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()) &&
       (graph->graph_id() == debugger_->GetFirstRunGraphId())) {

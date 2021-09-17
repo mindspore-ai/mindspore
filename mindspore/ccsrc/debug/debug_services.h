@@ -90,7 +90,9 @@ class DebugServices {
     bool hit;
     double_t actual_value;
     void Evaluate(double_t actualValue, std::string inequality_type) {
-      if (std::isnan(actualValue)) return;
+      if (std::isnan(actualValue)) {
+        return;
+      }
 
       actual_value = actualValue;
       // if cannot extract inequality type from watchpoint
@@ -164,17 +166,6 @@ class DebugServices {
              condition.type == SD_LT || condition.type == MAX_MIN_LT;
     }
 
-    bool min_max_enabled() const {
-      return condition.type == MAX_LT || condition.type == MAX_GT || condition.type == MIN_LT ||
-             condition.type == MIN_GT || condition.type == MAX_MIN_LT || condition.type == MAX_MIN_GT ||
-             (condition.type == INIT && (!parameter_list[1].disabled || !parameter_list[2].disabled)) ||
-             (condition.type == TOO_LARGE && (!parameter_list[1].disabled || !parameter_list[2].disabled)) ||
-             (condition.type == TOO_SMALL && (!parameter_list[1].disabled || !parameter_list[2].disabled));
-    }
-    // inf or nan related condition set
-    bool inf_nan_enabled() const {
-      return condition.type == HAS_INF || condition.type == HAS_NAN || condition.type == GENERAL_OVERFLOW;
-    }
     // mean or sd related condition set
     bool mean_sd_enabled() const {
       return condition.type == MEAN_LT || condition.type == MEAN_GT || condition.type == SD_LT ||
@@ -185,7 +176,6 @@ class DebugServices {
       return (condition.type == TOO_LARGE && !parameter_list[0].disabled) ||
              (condition.type == TOO_SMALL && !parameter_list[0].disabled);
     }
-    bool zero_percentage_enabled() const { return condition.type == ALL_ZERO || condition.type == INIT; }
 
     bool tensor_update_ratio_mean_enabled() const {
       return condition.type == CHANGE_TOO_LARGE || condition.type == CHANGE_TOO_SMALL;
@@ -372,15 +362,10 @@ class DebugServices {
 
   bool IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const;
 #endif
-  void EmptyTensor();
 
   std::vector<std::shared_ptr<TensorData>> GetTensor() const;
 
   void AddAnalyzedTensorToCache(const bool recheck, const unsigned int id, const std::string &tensor_name);
-
-  uint32_t GetTensorLoaderIterNum() const;
-
-  void SetTensorLoaderIterNum(uint32_t iter_num);
 
   void EmptyCurrentTensor();
 
@@ -391,8 +376,6 @@ class DebugServices {
 #endif
 
   bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev);
-
-  std::unordered_map<unsigned int, watchpoint_t> GetWatchpointTable();
 
   void ResetLoadedTensors();
 #ifdef ONLINE_DBG_MODE

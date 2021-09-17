@@ -52,7 +52,6 @@ class DumpJsonParser {
   std::string path() const { return path_; }
   std::string iteration_string() const { return iteration_; }
   std::string net_name() const { return net_name_; }
-  uint32_t input_output() const { return input_output_; }
   uint32_t op_debug_mode() const { return op_debug_mode_; }
   bool trans_flag() const { return trans_flag_; }
   uint32_t cur_dump_iter() const { return cur_dump_iter_; }

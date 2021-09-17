@@ -506,11 +506,6 @@ void DebuggerProtoExporter::ExportValueNodes(const std::map<AnfNodePtr, size_t> 
 
 void DebuggerProtoExporter::InitModelInfo() { model_.set_ir_version(debugger::IR_VERSION); }
 
-std::string GetDebuggerFuncGraphProtoString(const FuncGraphPtr &func_graph) {
-  DebuggerProtoExporter exporter;
-  return exporter.GetFuncGraphProtoString(func_graph);
-}
-
 debugger::ModelProto GetDebuggerFuncGraphProto(const FuncGraphPtr &func_graph) {
   DebuggerProtoExporter exporter;
   return exporter.GetFuncGraphProto(func_graph);

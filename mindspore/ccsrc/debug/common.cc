@@ -181,8 +181,8 @@ std::optional<std::string> Common::GetConfigFile(const std::string &env) {
   if (env.empty()) {
     MS_LOG(EXCEPTION) << "Invalid env";
   }
-  auto config_path_str = std::getenv(env.c_str());
-  if (config_path_str == nullptr) {
+  auto config_path_str = common::GetEnv(env);
+  if (config_path_str.empty()) {
     MS_LOG(ERROR) << "Please export env:" << env;
     return std::nullopt;
   }

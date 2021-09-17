@@ -1863,6 +1863,7 @@ void AscendSession::LoadGraphsToDbg(NotNull<KernelGraphPtr> graph,
 
   MS_LOG(INFO) << "Start to do LoadGraphsToDbg in graph: " << graph->graph_id();
 
+  MS_EXCEPTION_IF_NULL(debugger_);
   debugger_->LoadGraphs(graph);
   MS_LOG(INFO) << "graph_sum_: " << graph_sum_;
   for (auto &child_graph : graph->child_graph_order()) {
