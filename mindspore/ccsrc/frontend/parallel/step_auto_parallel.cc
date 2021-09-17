@@ -248,7 +248,7 @@ void InitCostGraph() {
 }
 
 void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const PrimitivePtr &prim,
-                           std::unordered_map<std::string, ValuePtr> attrs, bool is_last_nodes, StrategyMap *stra_map,
+                           std::unordered_map<std::string, ValuePtr> attrs, bool, StrategyMap *stra_map,
                            const std::string &strategy_key_name) {
   // In this case, the configured strategy should be extracted to help setting cost
   StrategyPtr strategyPtr;
@@ -272,7 +272,7 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
       auto total_device_num = g_device_manager->GetDeviceListByStageId(0).size();
       // 'used_devices == 1' means that ALL-1 strategy, which is valid in auto-parallel
       if (used_devices == 1) {
-        configured_stra_ops_.insert({operator_info, strategyPtr});
+        (void)configured_stra_ops_.emplace(operator_info, strategyPtr);
         return;
       }
       // 'used_devices == -1' means that 'used_devices_' is not set
@@ -284,7 +284,7 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
                              "in package 'mindspore.parallel'.";
       }
     }
-    configured_stra_ops_.insert({operator_info, strategyPtr});
+    (void)configured_stra_ops_.emplace(operator_info, strategyPtr);
   }
 }
 
@@ -361,7 +361,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
         MS_LOG(EXCEPTION) << "No available strategy for: " << operator_info->name();
       }
       MS_EXCEPTION_IF_NULL(swc_vec[0]->strategy_ptr);
-      configured_stra_ops_.insert({operator_info, swc_vec[0]->strategy_ptr});
+      (void)configured_stra_ops_.emplace(operator_info, swc_vec[0]->strategy_ptr);
     }
     // If 'approximation' is enabled, the 'strategy_cost' of each operator is approximated
     auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
@@ -386,7 +386,7 @@ bool IsFindWrong(const OperatorInfoPtr current_op_ptr, const std::string &prim_n
 }
 
 // Using CNode's UniqueIds to construct nodes
-Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
+Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &) {
   MS_LOG(INFO) << "Constructing nodes for cost graph begins.";
   // The map from CNode's UniqueId to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
@@ -501,7 +501,7 @@ void SetOperatorToCNode(const OperatorInfoPtr &current_op_ptr, const PrimitivePt
 }
 
 // Using CNode's UniqueIdThroughCopys to construct nodes
-Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
+Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &) {
   MS_LOG(INFO) << "Constructing nodes for cost graph begins.";
   // The map from CNode's UniqueIdThroughCopy to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
@@ -642,7 +642,7 @@ void CreateEdgeBetweenTwoOps(const OperatorInfoPtr &prev_op_info, const Operator
       MS_LOG(EXCEPTION) << "Edge cost re-initialization failed.";
     }
     MS_LOG(INFO) << "Set strategy for: " << prev_op_info->name() << " under the strategy of: " << node_op_info->name();
-    configured_stra_ops_.insert({prev_op_info, cast_stra});
+    (void)configured_stra_ops_.emplace(prev_op_info, cast_stra);
   }
   MS_LOG(INFO) << "Successfully adding the edge between " << prev_op_info->name() << " and " << node_op_info->name();
   (*edge_count)++;

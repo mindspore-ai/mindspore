@@ -353,7 +353,7 @@ StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithZeroComm(const StrategyPt
   for (auto &key_value : cost_map_) {
     const auto &candidate_prev_op_stra = key_value.first.first;
     if (prev_op_stra->IsEqual(candidate_prev_op_stra) && (key_value.second[0]->communication_cost_ == 0.0)) {
-      next_op_stras.push_back({key_value.first.second, key_value.second[0]->computation_cost_});
+      next_op_stras.emplace_back(key_value.first.second, key_value.second[0]->computation_cost_);
     }
   }
   if (next_op_stras.empty()) {
@@ -365,7 +365,9 @@ StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithZeroComm(const StrategyPt
                     " minimum computation costs.";
   }
   std::sort(next_op_stras.begin(), next_op_stras.end(),
-            [](std::pair<StrategyPtr, double> a, std::pair<StrategyPtr, double> b) { return a.second <= b.second; });
+            [](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
+              return a.second <= b.second;
+            });
   return next_op_stras[0].first;
 }
 
@@ -374,7 +376,7 @@ StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithZeroComm(const StrategyPt
   for (auto &key_value : cost_map_) {
     const auto &candidate_next_op_stra = key_value.first.second;
     if (next_op_stra->IsEqual(candidate_next_op_stra) && (key_value.second[0]->communication_cost_ == 0.0)) {
-      prev_op_stras.push_back({key_value.first.first, key_value.second[0]->computation_cost_});
+      prev_op_stras.emplace_back(key_value.first.first, key_value.second[0]->computation_cost_);
     }
   }
   if (prev_op_stras.empty()) {
@@ -386,7 +388,9 @@ StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithZeroComm(const StrategyPt
                     "computation costs.";
   }
   std::sort(prev_op_stras.begin(), prev_op_stras.end(),
-            [](std::pair<StrategyPtr, double> a, std::pair<StrategyPtr, double> b) { return a.second <= b.second; });
+            [](const std::pair<StrategyPtr, double> &a, const std::pair<StrategyPtr, double> &b) {
+              return a.second <= b.second;
+            });
   return prev_op_stras[0].first;
 }
 
