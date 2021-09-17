@@ -19,10 +19,10 @@
 
 namespace mindspore {
 namespace kernel {
-size_t NmsRoundUpPower2(int v) {
+uint32_t NmsRoundUpPower2(int v) {
   constexpr uint32_t ONE = 1, TWO = 2, FOUR = 4, EIGHT = 8, SIXTEEN = 16;
   v--;
-  size_t value = IntToSize(v);
+  uint32_t value = IntToUint(v);
   value |= value >> ONE;
   value |= value >> TWO;
   value |= value >> FOUR;
@@ -216,7 +216,7 @@ void NMSWithMaskCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   num_input_ = SizeToInt(input_shape[0]);  //  Get N values in  [N, 5] data.
-  ceil_power_2 = NmsRoundUpPower2(num_input_);
+  ceil_power_2 = static_cast<size_t>(NmsRoundUpPower2(num_input_));
 
   workspace_size_list_.push_back(ceil_power_2 * sizeof(T));                           //  data buff
   workspace_size_list_.push_back(ceil_power_2 * sizeof(int));                         //  index buff

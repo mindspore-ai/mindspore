@@ -129,7 +129,7 @@ class MovieReview(DataProcessor):
         self.Pos = []
         self.Neg = []
         for filename in self.files:
-            with codecs.open(filename, 'r') as f:
+            with codecs.open(filename, 'r', 'Latin1') as f:
                 ff = f.read()
             with codecs.open(filename, 'w', 'utf-8') as file_object:
                 file_object.write(ff)

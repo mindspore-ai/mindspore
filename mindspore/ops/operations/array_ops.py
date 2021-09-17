@@ -6000,6 +6000,7 @@ class SearchSorted(PrimitiveWithInfer):
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return mstype.tensor_type(mstype.int32) if self.out_int32 else mstype.tensor_type(mstype.int64)
 
+
 class TensorScatterMax(PrimitiveWithInfer):
     """
     By comparing the value at the position indicated by the index in input_x with the value in the update,

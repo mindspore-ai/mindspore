@@ -23,8 +23,8 @@ template <typename T, typename U>
 void AtomicAddTask(T *const address, const T val) {
   auto *address_as_ull = reinterpret_cast<U *>(address);
   U old = *address_as_ull;
-  U assumed;
-  T desired;
+  U assumed = U(0);
+  T desired = T(0);
   do {
     assumed = old;
     T *assumed_t = reinterpret_cast<T *>(&assumed);
