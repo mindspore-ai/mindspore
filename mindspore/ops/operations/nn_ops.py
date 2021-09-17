@@ -1333,7 +1333,7 @@ class Conv2D(Primitive):
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad", not case sensitive. Default: "valid".
+            "same", "valid", "pad". Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input `x`. The total number of padding will be calculated in horizontal and vertical
@@ -1415,7 +1415,7 @@ class Conv2D(Primitive):
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
 
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
@@ -1459,7 +1459,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 3.
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad". Default: "valid", not case sensitive.
+            "same", "valid", "pad". Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input `x`. The total number of padding will be calculated in horizontal and vertical
@@ -1546,7 +1546,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
                              f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}")
@@ -2079,8 +2079,7 @@ class Conv2DBackpropInput(Primitive):
             and width of the 2D convolution window. Single int means the value is for both the height and the width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
-        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad", not case sensitive.
-            Default: "valid".
+        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
         pad (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
                     top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
                     padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
@@ -2174,7 +2173,7 @@ class Conv2DBackpropInput(Primitive):
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
                              f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}.")
@@ -2404,8 +2403,7 @@ class NLLLoss(PrimitiveWithInfer):
         \end{array}\right.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum', not case sensitive.
-            Default: "mean".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum', Default: "mean".
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only support float32 or float16.
@@ -2449,7 +2447,7 @@ class NLLLoss(PrimitiveWithInfer):
     def __init__(self, reduction="mean"):
         """Initialize NLLLoss"""
         self.init_prim_io_names(inputs=['x', 'target', "weight"], outputs=['loss'])
-        self.reduction = validator.check_string(reduction.lower(), ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
         self.add_prim_attr('reduction', self.reduction)
 
     def infer_shape(self, x_shape, t_shape, w_shape):
@@ -2763,8 +2761,7 @@ class SoftMarginLoss(Primitive):
         \text{loss}(x, y) = \sum_i \frac{\log(1 + \exp(-y[i]*x[i]))}{\text{x.nelement}()}
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum', not case sensitive.
-            Default: "mean".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
 
     Inputs:
         - **logits** (Tensor) - Predict data. Data type must be float16 or float32.
@@ -2796,7 +2793,7 @@ class SoftMarginLoss(Primitive):
     def __init__(self, reduction="mean"):
         """Initialize SoftMarginLoss"""
         self.init_prim_io_names(inputs=['predict', 'label'], outputs=['loss'])
-        self.reduction = validator.check_string(reduction.lower(), ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
 
 class L2Loss(PrimitiveWithInfer):
@@ -4117,7 +4114,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, reduction='mean'):
         """Initialize BCEWithLogitsLoss"""
-        self.reduction = validator.check_string(reduction.lower(), ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
     def infer_shape(self, logits, label, weight, pos_weight):
         validator.check('logits_shape', logits, 'label_shape', label, Rel.EQ, self.name)
@@ -5332,7 +5329,7 @@ class KLDivLoss(PrimitiveWithInfer):
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'sum', not case sensitive. Default: 'mean'.
+            Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float32.
@@ -5370,7 +5367,7 @@ class KLDivLoss(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, reduction='mean'):
         """Initialize KLDivLoss."""
-        self.reduction = validator.check_string(reduction.lower(), ['none', 'mean', 'sum'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
     def infer_shape(self, x_shape, y_shape):
         validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
@@ -5414,7 +5411,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'sum', not case sensitive. Default: 'mean'.
+            Its value must be one of 'none', 'mean', 'sum'. Default: 'mean'.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float16 or float32,
@@ -5457,7 +5454,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, reduction='mean'):
         """Initialize BinaryCrossEntropy."""
-        self.reduction = validator.check_string(reduction.lower(), ['none', 'mean', 'sum'], 'reduction', self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
     def infer_shape(self, x_shape, y_shape, weight_shape):
         validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
@@ -8395,7 +8392,8 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         out_channel (int): The dimension of the output.
         kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
         mode (int): Modes for different convolutions. Not currently used.
-        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
+        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad", not case sensitive.
+            Default: "valid".
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
                     head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four
                     integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
@@ -8587,8 +8585,8 @@ class CTCLossV2(Primitive):
         validator.check_value_type("blank", blank, [int], self.name)
         self.add_prim_attr("blank", blank)
         validator.check_value_type("reduction", reduction, [str], self.name)
-        self.reduction = self.reduction.lower()
-        validator.check_string(self.reduction.lower(), ['none'], 'reduction', self.name)
+        self.reduction = reduction.lower()
+        validator.check_string(self.reduction, ['none'], 'reduction', self.name)
         self.add_prim_attr("reduction", self.reduction)
         validator.check_value_type("zero_infinity", zero_infinity, [bool], self.name)
         self.add_prim_attr("zero_infinity", zero_infinity)
