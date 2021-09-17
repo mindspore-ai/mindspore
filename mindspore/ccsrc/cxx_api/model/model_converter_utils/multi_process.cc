@@ -26,7 +26,9 @@
 namespace mindspore {
 namespace {
 constexpr uint64_t kSharedMemorySize = 100ull << 20;  // 100 MB
-}
+constexpr int kOneMillisecond = 1000;                 // 1ms
+constexpr int kOneHundredMilliseconds = 100000;       // 100ms
+}  // namespace
 
 MultiProcess::MultiProcess() = default;
 
@@ -63,7 +65,7 @@ Status MultiProcess::MainProcess(const ProcessFuncCall &parent_process, const Pr
   shmat_data_addr_ = shmat_addr_ + sizeof(MessageFlag) * kMsgStructNum;
   shmat_data_max_size_ =
     memory_size_ - (reinterpret_cast<uintptr_t>(shmat_data_addr_) - reinterpret_cast<uintptr_t>(shmat_addr_));
-  MS_LOG_INFO << "Shm addr " << (uint64_t)shmat_addr_;
+  MS_LOG_INFO << "Shm addr " << (uintptr_t)shmat_addr_;
   if (pid == 0) {
     ChildProcess(child_process);
     shared_memory.Detach();
@@ -134,7 +136,7 @@ void MultiProcess::ChildProcess(const ProcessFuncCall &child_process) {
     MS_LOG_ERROR << "Catch child process runtime error: " << ex.what();
   }
   stopped_ = true;
-  send_msg_->stop = true;
+  send_msg_->stop = 1;
   heartbeat_thread.join();
 }
 
@@ -162,7 +164,7 @@ Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
     send_msg_->read_ready_flag = 1;
     MS_LOG_INFO << "Send start " << cur_offset << ", msg len " << sub_msg_len << ", total len " << msg_len;
     while (!send_msg_->read_finish_flag && !peer_stopped_) {
-      (void)usleep(1000);  // 1ms
+      (void)usleep(kOneMillisecond);  // 1ms
     }
     if (peer_stopped_) {
       if (!send_msg_->read_finish_flag) {
@@ -183,7 +185,7 @@ Status MultiProcess::ReceiveMsg(const CreateBufferCall &create_buffer_call) {
   do {
     MS_LOG_INFO << "Receive start from " << cur_offset;
     while (!receive_msg_->read_ready_flag && !peer_stopped_) {
-      (void)usleep(1000);  // 1ms
+      (void)usleep(kOneMillisecond);  // 1ms
     }
     if (peer_stopped_) {
       return kMEFailed;
@@ -230,7 +232,7 @@ void MultiProcess::HeartbeatThreadFuncInner() {
       }
     }
     send_msg_->heartbeat += 1;
-    (void)usleep(100000);  // sleep 100 ms
+    (void)usleep(kOneHundredMilliseconds);  // sleep 100 ms
   }
 }
 }  // namespace mindspore

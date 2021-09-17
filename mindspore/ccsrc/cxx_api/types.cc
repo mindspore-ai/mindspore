@@ -220,7 +220,7 @@ MSTensor *MSTensor::CreateImageTensor(const std::vector<char> &image_file) noexc
       return nullptr;
     }
 
-    size_t size = ifs.tellg();
+    size_t size = static_cast<size_t>(ifs.tellg());
     MSTensor *ret =
       new MSTensor(file, mindspore::DataType::kNumberTypeUInt8, {static_cast<int64_t>(size)}, nullptr, size);
 
@@ -231,7 +231,7 @@ MSTensor *MSTensor::CreateImageTensor(const std::vector<char> &image_file) noexc
       return nullptr;
     }
 
-    auto &io_read = ifs.read(reinterpret_cast<char *>(ret->MutableData()), size);
+    auto &io_read = ifs.read(reinterpret_cast<char *>(ret->MutableData()), static_cast<std::streamsize>(size));
     if (!io_read.good() || io_read.fail() || io_read.bad()) {
       ifs.close();
       MS_LOG(ERROR) << "Failed to read file: " + file;

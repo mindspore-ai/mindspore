@@ -376,7 +376,7 @@ struct DeviceTypeSetRegister {
 #endif
     });
   }
-  DeviceTypeSetRegister(DeviceTypeSetRegister &) = delete;
+  DeviceTypeSetRegister(const DeviceTypeSetRegister &) = delete;
   DeviceTypeSetRegister &operator=(const DeviceTypeSetRegister &) = delete;
   ~DeviceTypeSetRegister() = default;
 } device_type_set_regsiter;

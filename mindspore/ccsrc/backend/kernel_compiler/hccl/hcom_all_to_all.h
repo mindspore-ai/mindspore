@@ -34,7 +34,7 @@ class HcomAllToAllKernel : public HcclKernel {
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
  private:
-  HcclDataType data_type_;
+  HcclDataType data_type_ = {};
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCOM_ALL_TO_ALL_H_
