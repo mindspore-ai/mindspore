@@ -16,11 +16,9 @@
 #include <map>
 #include <string>
 #include <algorithm>
-#include <memory>
-#include <vector>
+
 #include "ops/less_equal.h"
 #include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
@@ -33,21 +31,23 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
 }
 
 TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "nullptr";
-  }
+  MS_EXCEPTION_IF_NULL(prim);
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim->name());
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  return std::make_shared<TensorType>(kBool);
 }
 }  // namespace
 
 AbstractBasePtr LessEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  auto infer_shape = InferShape(primitive, input_args);
+  auto infer_type = InferType(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameLessEqual, LessEqual);
+REGISTER_PRIMITIVE_EVAL_IMPL(LessEqual, prim::kPrimLessEqual, LessEqualInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
