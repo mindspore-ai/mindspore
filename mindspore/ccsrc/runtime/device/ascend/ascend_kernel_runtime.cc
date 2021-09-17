@@ -807,8 +807,9 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
     auto wait_stream = stream_id_map_[curr_stream_id];
     auto stream_num = stream_id_map_.size();
     std::vector<bool> stream_hit(stream_num, false);
-    std::vector<AnfNodePtr> visited_kernels;
-    AnfAlgo::GetAllVisitedCNode(kernel, &visited_kernels);
+    std::vector<AnfNodePtr> used_kernels;
+    std::set<AnfNodePtr> visited_kernels;
+    AnfAlgo::GetAllVisitedCNode(kernel, &used_kernels, &visited_kernels);
     bool found_depend = false;
     for (int k = SizeToInt(i) - 1; k >= 0; --k) {
       auto pre_cnode = kernels[k];
@@ -817,7 +818,7 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
         found_depend = true;
         continue;
       }
-      for (auto &visited : visited_kernels) {
+      for (auto &visited : used_kernels) {
         if (visited == pre_cnode && !stream_hit[pre_cnode_stream_id]) {
           stream_hit[pre_cnode_stream_id] = true;
           found_depend = true;
