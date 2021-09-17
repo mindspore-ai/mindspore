@@ -23,7 +23,6 @@ void PServerKernel::Shard(std::vector<size_t> *shape, int axis) {
   MS_EXCEPTION_IF_NULL(shape);
   if ((*shape).size() <= IntToSize(axis)) {
     MS_LOG(EXCEPTION) << "Shape size is invalid.";
-    return;
   }
   (*shape)[IntToSize(axis)] =
     LongToSize(Util::LocalShard(SizeToLong((*shape)[IntToSize(axis)]), SizeToLong(rank_id_), SizeToLong(pserver_num_)));

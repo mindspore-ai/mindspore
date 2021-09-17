@@ -22,6 +22,7 @@ namespace kernel {
 
 template <typename T>
 void SortCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_count != 1) {
     MS_LOG(EXCEPTION) << input_count << " inputs were provided, but Sort expects 1.";

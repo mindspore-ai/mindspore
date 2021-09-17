@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/cpu/tensor_copy_slices_cpu_kernel.h"
-
 #include <functional>
 #include <unordered_map>
 #include "abstract/utils.h"
@@ -25,6 +24,7 @@
 namespace mindspore {
 namespace kernel {
 void TensorCopySlicesCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);

@@ -145,6 +145,9 @@ class SparseOptimizerCPUKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(sparse_grad->indices_);
     MS_EXCEPTION_IF_NULL(each_bucket_size);
     size_t bucket_num = each_bucket_size->size();
+    if (bucket_num < 1) {
+      MS_LOG(EXCEPTION) << "Bucket num must > 0!";
+    }
     for (size_t i = 0; i < sparse_grad->indices_size_; ++i) {
       T index = sparse_grad->indices_[i];
       if (index >= 0 && LongToSize(index) < max_index) {
@@ -202,6 +205,9 @@ class SparseOptimizerCPUKernel : public CPUKernel {
     MS_LOG(DEBUG) << "Start";
     MS_EXCEPTION_IF_NULL(segment);
     MS_EXCEPTION_IF_NULL(segment->indices_);
+    if (param.thread_num_ < 1) {
+      MS_EXCEPTION(ArgumentError) << "Input param thread num must > 0!";
+    }
     std::vector<size_t> bucket_data_num(param.thread_num_, 0);
     for (size_t i = 0; i < segment->indices_size_; ++i) {
       T index = segment->indices_[i];

@@ -37,6 +37,9 @@ void TileCPUKernel::TileMultipleCompute(void) {
   if (one_dim_tile_) {
     tile_parameter_.fast_multiple_ = static_cast<size_t>(multiple);
     tile_parameter_.fast_stride_ = static_cast<size_t>(x_shape_[mul_index] * tile_parameter_.in_strides_[mul_index]);
+    if (tile_parameter_.fast_stride_ == 0) {
+      MS_LOG(EXCEPTION) << "Fast stride is equal to 0";
+    }
     tile_parameter_.fast_outer_size_ = static_cast<size_t>(input_size_ / tile_parameter_.fast_stride_);
   }
 }
@@ -46,13 +49,21 @@ void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
   y_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   std::vector<int64_t> multiples_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
   (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
-                       [](const int64_t &value) { return static_cast<int>(value); });
+                       [](const int64_t &value) { return LongToInt(value); });
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   size_t ones = multiples_.size() - x_shape_.size();
   if (ones > 0) {
     for (size_t i = 0; i < ones; ++i) {
       x_shape_.insert(x_shape_.begin(), 1);
     }
+  }
+  if (x_shape_.size() > MAX_TILE_DIM_SIZE) {
+    MS_LOG(EXCEPTION) << "Input shape size should not greater than " << MAX_TILE_DIM_SIZE << ", but got "
+                      << x_shape_.size();
+  }
+  if (y_shape_.size() < x_shape_.size()) {
+    MS_LOG(EXCEPTION) << "Output shape size should not less than input shape size, but got output shape: " << y_shape_
+                      << ", input shape: " << x_shape_;
   }
 
   input_size_ = 1;
@@ -76,6 +87,7 @@ void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
 }
 
 void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   CheckParam(kernel_node);
   TileTensorParamrInit(kernel_node);
 
@@ -94,7 +106,7 @@ void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (iter != launch_map_.end()) {
     launch_func_ = iter->second;
   } else {
-    MS_LOG(EXCEPTION) << "Input data type: " << dtype_ << "is not supported for Tile kernel on CPU.";
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
 }
 

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
+
 #include "backend/kernel_compiler/cpu/split_cpu_kernel.h"
+#include <algorithm>
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "common/thread_pool.h"
 
@@ -22,18 +23,26 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 void SplitCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis");
   output_num_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num");
+  if (output_num_ == 0) {
+    MS_LOG(EXCEPTION) << "Attr output_num is equal to 0";
+  }
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
-                       [](const int &value) { return static_cast<int>(value); });
+                       [](const size_t &value) { return SizeToInt(value); });
+  if (input_shape_.size() < 1 || input_shape_.size() > SPLIT_STRIDES_SIZE) {
+    MS_LOG(EXCEPTION) << "Inpu shape size should not less than 1 or greater than " << SPLIT_STRIDES_SIZE << ", but got "
+                      << input_shape_.size();
+  }
   CheckParam(kernel_node);
 }
 
 template <typename T>
 void SplitCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  (void)workspace_size_list_.emplace_back((sizeof(T *) * static_cast<size_t>(output_num_)));
+  (void)workspace_size_list_.emplace_back((sizeof(T *) * LongToSize(output_num_)));
 }
 
 template <typename T>
@@ -47,8 +56,8 @@ bool SplitCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
 template <typename T>
 void SplitCPUKernel<T>::LaunchSplit(T *input, T **output, size_t /* size */) {
   SplitParameter param;
-  param.num_split_ = static_cast<int>(output_num_);
-  param.split_dim_ = static_cast<int>(axis_);
+  param.num_split_ = LongToInt(output_num_);
+  param.split_dim_ = LongToInt(axis_);
   param.strides_[input_shape_.size() - 1] = 1;
   for (int i = SizeToInt(input_shape_.size()) - 2; i >= 0; i--) {  // from -2 to 0 dim
     param.strides_[i] = param.strides_[i + 1] * input_shape_[i + 1];
@@ -94,7 +103,7 @@ void SplitCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
   if (input_num != 1) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but Split needs 1 input.";
   }
-  if (dims == 0) {
+  if (dims == 0 || dims > SPLIT_STRIDES_SIZE) {
     MS_LOG(EXCEPTION) << "Input dims is " << dims << ", scalar is not supported.";
   }
   if (axis_ < -dims || axis_ >= dims) {

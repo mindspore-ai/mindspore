@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "nnacl/errorcode.h"
 #include "nnacl/fp32/rmsprop_fp32.h"
 #include "utils/ms_utils.h"
@@ -69,6 +70,7 @@ void RMSPropCPUKernel<T>::LaunchRMSPropUseCenter(T *variable, T *mean_square, T 
 
 template <typename T>
 void RMSPropCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto node_name = AnfAlgo::GetCNodeName(kernel_node);
   if (node_name == "ApplyCenteredRMSProp") {
     use_center_ = true;

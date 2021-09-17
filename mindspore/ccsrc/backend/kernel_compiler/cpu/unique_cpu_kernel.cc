@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,13 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kBucketSortThreshold = 100000;
 void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
   CheckParam(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (input_shape.empty()) {
+    MS_LOG(EXCEPTION) << "Input shape is empty";
+  }
   input_size_ = input_shape[0];
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (AnfAlgo::HasNodeAttr(SORTED, kernel_node)) {
@@ -48,7 +52,7 @@ bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float, int>(inputs, workspace, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Not support type: " << dtype_;
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
   if (!node_wpt_.expired()) {
     auto node_ = node_wpt_.lock();

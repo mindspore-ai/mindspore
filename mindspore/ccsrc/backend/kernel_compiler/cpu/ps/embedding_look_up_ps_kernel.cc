@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,22 @@ namespace kernel {
 namespace ps {
 using mindspore::ps::Util;
 constexpr int kAxis = 0;
+constexpr size_t kEmbeddingLookUpPSInputSize = 3;
+
 void EmbeddingLookUpPSKernel::InitKernel(
   const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
+  if (shape_vec.size() < kEmbeddingLookUpPSInputSize) {
+    MS_LOG(EXCEPTION) << "EmbeddingLookUpPSKernel needs " << kEmbeddingLookUpPSInputSize << " input shapes, but got "
+                      << shape_vec.size();
+  }
+  for (auto shape : shape_vec) {
+    MS_EXCEPTION_IF_NULL(shape);
+  }
   input_shape_ = *(shape_vec[0]);
+  if (input_shape_.empty()) {
+    MS_LOG(EXCEPTION) << "Input shape should not empty";
+  }
   first_dim_size_ = input_shape_[0];
   for (size_t i = 1; i < input_shape_.size(); ++i) {
     outer_dim_size_ *= input_shape_[i];
@@ -56,6 +68,9 @@ void EmbeddingLookUpPSKernel::InitKernel(
 }
 
 void EmbeddingLookUpPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+  if (shapes.empty() || shapes[0].empty()) {
+    MS_LOG(EXCEPTION) << "Shape should not empty";
+  }
   const auto &indices_shape = shapes[0];
   indices_lens_ = indices_shape[0];
 

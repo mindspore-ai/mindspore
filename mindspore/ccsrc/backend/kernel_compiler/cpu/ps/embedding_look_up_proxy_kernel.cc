@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/ps/embedding_look_up_proxy_kernel.h"
 #include <vector>
 #include <algorithm>
@@ -28,6 +29,11 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   size_t axis = kShape2dDims - input_shape.size();
+  if (input_shape.empty() || input_shape.size() > kShape2dDims) {
+    MS_LOG(EXCEPTION) << "Input shape should not empty or greater than " << kShape2dDims << "-D, but got "
+                      << input_shape.size();
+  }
+
   for (auto dim : input_shape) {
     input_dims_ *= dim;
   }

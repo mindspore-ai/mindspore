@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@
 namespace mindspore {
 namespace kernel {
 void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   CheckParam(kernel_node);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   std::vector<int64_t> begin_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
   (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
-                       [](const int64_t &value) { return static_cast<int>(value); });
+                       [](const int64_t &value) { return LongToInt(value); });
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   auto strides = prim->GetAttr(STRIDES);
@@ -34,9 +35,9 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
     std::vector<int64_t> end_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
     (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
+                         [](const int64_t &value) { return LongToInt(value); });
     (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
+                         [](const int64_t &value) { return LongToInt(value); });
     if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "stride|end|input size must be equal";
     }
@@ -44,7 +45,7 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   } else {
     std::vector<int64_t> size_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
     (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
+                         [](const int64_t &value) { return LongToInt(value); });
     if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "begin|size|input size must be equal";
     }
@@ -88,8 +89,7 @@ bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   } else if (dtype_ == kNumberTypeFloat64) {
     ret = LaunchKernel<double>(inputs, outputs);
   } else {
-    MS_LOG(ERROR) << "Slice op only support input_x bool,int32,float32 and float64";
-    return false;
+    MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
   }
   return ret;
 }

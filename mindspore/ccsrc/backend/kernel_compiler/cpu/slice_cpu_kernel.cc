@@ -33,6 +33,7 @@ int NormalizeBeginPos(int begin_pos, int dim_len) {
 }
 
 void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   static const std::unordered_map<TypeId, int> type_size_map = {{kNumberTypeBool, sizeof(bool)},
                                                                 {kNumberTypeInt32, sizeof(int)},
                                                                 {kNumberTypeFloat32, sizeof(float)},
