@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  LJForceWithVirialEnergy. This is an experimental interface that is subject to change and/or deletion.
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_LJ_DIRECT_CF_FORCE_WITH_LJ_VIRIAL_DIRECT_CF_ENERGY_KERNEL_H_

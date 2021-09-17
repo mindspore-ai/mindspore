@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  Constrain. This is an experimental interface that is subject to change and/or deletion.
  */
 #include "backend/kernel_compiler/gpu/sponge/simple_constrain/constrain_kernel.h"
@@ -37,6 +37,5 @@ MS_REG_GPU_KERNEL_THREE(Constrain,
                           .AddOutputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
                         ConstrainGpuKernel, float, int, unsigned int)
-
 }  // namespace kernel
 }  // namespace mindspore

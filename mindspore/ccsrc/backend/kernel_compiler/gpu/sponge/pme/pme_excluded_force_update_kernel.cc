@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  PMEExcludedForceUpdate. This is an experimental interface that is subject to change and/or deletion.
  */
 #include "backend/kernel_compiler/gpu/sponge/pme/pme_excluded_force_update_kernel.h"

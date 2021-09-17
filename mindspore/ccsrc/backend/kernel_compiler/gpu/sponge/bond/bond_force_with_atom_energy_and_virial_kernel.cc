@@ -30,6 +30,5 @@ MS_REG_GPU_KERNEL_THREE(BondForceWithAtomEnergyAndVirial,
                           .AddOutputAttr(kNumberTypeFloat32)
                           .AddOutputAttr(kNumberTypeFloat32),
                         BondForceWithAtomEnergyAndVirialGpuKernel, float, int, unsigned int)
-
 }  // namespace kernel
 }  // namespace mindspore

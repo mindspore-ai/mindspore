@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  LJForceWithVirialEnergy. This is an experimental interface that is subject to change and/or deletion.
  */
 #include "backend/kernel_compiler/gpu/sponge/lj/lj_direct_cf_force_with_lj_virial_direct_cf_energy_kernel.h"

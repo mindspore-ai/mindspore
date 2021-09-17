@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  CalculateNowrapCrd. This is an experimental interface that is subject to change and/or deletion.
  */
 
@@ -29,6 +29,5 @@ MS_REG_GPU_KERNEL_TWO(CalculateNowrapCrd,
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       CalculateNoWrapCrdGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

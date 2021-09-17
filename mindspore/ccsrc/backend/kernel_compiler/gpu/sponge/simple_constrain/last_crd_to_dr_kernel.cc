@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  LastCrdToDr. This is an experimental interface that is subject to change and/or deletion.
  */
 #include "backend/kernel_compiler/gpu/sponge/simple_constrain/last_crd_to_dr_kernel.h"
@@ -32,6 +32,5 @@ MS_REG_GPU_KERNEL_TWO(LastCrdToDr,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       LastCrdToDrGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

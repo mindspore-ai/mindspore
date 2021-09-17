@@ -34,6 +34,5 @@ MS_REG_GPU_KERNEL_TWO(Dihedral14ForceWithAtomEnergyVirial,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       Dihedral14LJCFForceWithAtomEnergyAndVirialGpuKernel, float, int)
-
 }  // namespace kernel
 }  // namespace mindspore

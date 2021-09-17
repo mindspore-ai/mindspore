@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  ConstrainForceVirial. This is an experimental interface that is subject to change and/or deletion.
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONG_SIMPLE_CONSTRAIN_CONSTRAIN_FORCE_VIRIAL_KERNEL_H_

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  PMEEnergyUpdate. This is an experimental interface that is subject to change and/or deletion.
  */
 #include "backend/kernel_compiler/gpu/cuda_impl/sponge/pme/pme_energy_update_impl.cuh"

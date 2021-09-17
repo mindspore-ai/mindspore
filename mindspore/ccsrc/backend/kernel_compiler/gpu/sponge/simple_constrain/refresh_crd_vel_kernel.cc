@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  RefreshCrdVel. This is an experimental interface that is subject to change and/or deletion.
  */
 
@@ -30,6 +30,5 @@ MS_REG_GPU_KERNEL_TWO(RefreshCrdVel,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       RefreshCrdVelGpuKernel, float, unsigned int)
-
 }  // namespace kernel
 }  // namespace mindspore

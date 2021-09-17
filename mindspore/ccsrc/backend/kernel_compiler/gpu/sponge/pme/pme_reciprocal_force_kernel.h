@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- *Note:
+ * Note:
  *  PMEReciprocalForce. This is an experimental interface that is subject to change and/or deletion.
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_SPONGE_PME_PME_RECIPROCAL_FORCE_KERNEL_H_
