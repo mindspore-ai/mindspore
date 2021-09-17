@@ -1371,6 +1371,18 @@ void KernelGraph::SetOptimizerFlag() {
   }
 }
 
+bool KernelGraph::isDatasetGraph() const {
+  // check if there is GetNext or InitDataSetQueue node
+  const auto &nodes = execution_order_;
+  for (const auto &node : nodes) {
+    auto node_name = AnfAlgo::GetCNodeName(node);
+    if (node_name == prim::kPrimInitDataSetQueue->name()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
 
 KernelGraph::~KernelGraph() {
