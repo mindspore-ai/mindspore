@@ -15,7 +15,7 @@
  */
 #include "nnacl/int8/relux_int8.h"
 
-void ReluXInt8(const int8_t *src, int length, int8_t *dst, ReluXQuantArg *arg) {
+void ReluXInt8(const int8_t *src, int length, int8_t *dst, const ReluXQuantArg *arg) {
   for (int i = 0; i < length; ++i) {
     if (src[i] <= arg->input_arg.zp_) {
       dst[i] = arg->output_arg.zp_;

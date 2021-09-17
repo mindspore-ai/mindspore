@@ -23,8 +23,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoSplitWithOverlapParallel(char *in_data, char **out_data, int slice_idx, const SplitWithOverlapParameter *param,
-                               const int *start_indices, const int *end_indices);
+int DoSplitWithOverlapParallel(const char *in_data, char **out_data, int slice_idx,
+                               const SplitWithOverlapParameter *param, const int *start_indices,
+                               const int *end_indices);
 #ifdef __cplusplus
 }
 #endif

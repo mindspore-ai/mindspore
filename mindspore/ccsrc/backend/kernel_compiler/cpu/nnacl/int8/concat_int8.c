@@ -18,7 +18,8 @@
 #include "nnacl/concat_parameter.h"
 #include <string.h>
 
-void Int8Concat(int8_t **inputs, int8_t *output, ConcatParameter *para, int axis, int64_t real_dst_count, int task_id) {
+void Int8Concat(int8_t **inputs, int8_t *output, const ConcatParameter *para, int axis, int64_t real_dst_count,
+                int task_id) {
   float output_scale = para->quant_arg_.out_args_.scale_;
   const float output_inverse_scale = 1.f / output_scale;
   int input_num = para->input_num_;
@@ -38,7 +39,7 @@ void Int8Concat(int8_t **inputs, int8_t *output, ConcatParameter *para, int axis
     for (int i = 0; i < input_num; i++) {
       const int *input_shape = para->input_shapes_[i];
       int64_t in_copy_size = input_shape[axis] * after_axis_size;
-      int8_t *input_ptr = inputs[i] + k * in_copy_size;
+      const int8_t *input_ptr = inputs[i] + k * in_copy_size;
       if (input_quant[i].scale_ == output_scale && input_quant[i].zp_ == output_zp) {
         memcpy(output, input_ptr, in_copy_size);
       } else {

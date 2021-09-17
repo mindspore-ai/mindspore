@@ -18,15 +18,16 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int DoSplitWithOverlapParallel(char *in_data, char **out_data, int slice_idx, const SplitWithOverlapParameter *param,
-                               const int *start_indices, const int *end_indices) {
+int DoSplitWithOverlapParallel(const char *in_data, char **out_data, int slice_idx,
+                               const SplitWithOverlapParameter *param, const int *start_indices,
+                               const int *end_indices) {
   int start_index = start_indices[slice_idx];
   int end_index = end_indices[slice_idx];
 
   int input_stride = param->split_dim_size_ * param->inner_stride_ * param->element_bytes_;
   int out_stride = (end_index - start_index) * param->inner_stride_ * param->element_bytes_;
 
-  char *src_ptr = in_data + start_index * param->inner_stride_ * param->element_bytes_;
+  const char *src_ptr = in_data + start_index * param->inner_stride_ * param->element_bytes_;
   char *dst_ptr = out_data[slice_idx];
 
   for (int i = 0; i < param->outer_total_dim_; i++) {

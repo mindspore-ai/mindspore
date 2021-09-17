@@ -22,11 +22,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Int8Crop(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
-void Int8Crop1D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
-void Int8Crop2D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
-void Int8Crop3D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
-void Int8Crop4D(const int8_t *input, int8_t *output, int task_id, CropParameter *para);
+void Int8Crop(const int8_t *input, int8_t *output, int task_id, const CropParameter *para);
+void Int8Crop1D(const int8_t *input, int8_t *output, int task_id, const CropParameter *para);
+void Int8Crop2D(const int8_t *input, int8_t *output, int task_id, const CropParameter *para);
+void Int8Crop3D(const int8_t *input, int8_t *output, int task_id, const CropParameter *para);
+void Int8Crop4D(const int8_t *input, int8_t *output, int task_id, const CropParameter *para);
 #ifdef __cplusplus
 }
 #endif

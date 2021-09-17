@@ -23,10 +23,10 @@ int DoSplit(void *in_data, void **out_data, const int *input_shape, int offset, 
             const SplitParameter *split_param, int data_size) {
   int8_t *int8_in = (int8_t *)in_data;
 
-  int num_split = split_param->num_split_;
-  int *split_sizes = split_param->split_sizes_;
+  const int num_split = split_param->num_split_;
+  const int *split_sizes = split_param->split_sizes_;
   const int *strides = split_param->strides_;
-  int split_dim = split_param->split_dim_;
+  const int split_dim = split_param->split_dim_;
   int in_stride = strides[split_dim];
 
   int in_stride_bytes = in_stride * data_size;
