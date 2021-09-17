@@ -57,21 +57,49 @@ dependencies {
 
 }
 
+def getFlatVersion(path) {
+    def version = new ByteArrayOutputStream()
+    def cmd = path + ' --version'
+    exec {
+        ExecSpec execSpec ->
+            executable 'bash'
+            args '-c', cmd
+            standardOutput = version
+    }
+    return version.toString().split()[2]
+}
+
 import io.netifi.flatbuffers.plugin.tasks.FlatBuffers
 
 flatbuffers {
-    String msLib = System.getenv("MSLIBS_CACHE_PATH").toString()
-    FileTree msLibTree = fileTree(dir: msLib, include: ["flatbuffers_*/bin/flatc"])  //flatbuffers_*/bin/flatc
+   String msLib = System.getenv("MSLIBS_CACHE_PATH").toString()
+    FileTree msLibTree = fileTree(dir: msLib, include: ["flatbuffers_*/bin/flatc"])
     String msLibPath = ''
-    msLibTree.each {File file ->
-        msLibPath = file.toString()
+    String libPath = ''
+    msLibTree.find {File file ->
+        libPath = file.toString()
+        println('flatc Path: ' + libPath)
+        String version = getFlatVersion(libPath)
+        println('version: ' + version)
+        if ('1.11.0' == version) {
+            msLibPath = libPath
+            return true
+        }
     }
-    if (msLibTree.empty) {
-        flatcPath = '../../../build/_deps/flatbuffers-src/_build/flatc'
-    } else {
+    if (file('../../../build/_deps/flatbuffers-src/_build/flatc').exists()) {
+        String version = getFlatVersion('../../../build/_deps/flatbuffers-src/_build/flatc')
+        println('version: ' + version)
+        if ('1.11.0' == version) {
+            flatcPath = '../../../build/_deps/flatbuffers-src/_build/flatc'
+        } else {
+            println('the version of build flatc is not valid, will find the other flatc')
+        }
+    } else if (msLibPath != '' && file(msLibPath).exists()){
         flatcPath = msLibPath
+    } else {
+        println("the needed flatc of version 1.11.0 is not exist, please check")
     }
-    println("-----------------flatc path: " + flatcPath + "-----------------")
+    println("the used flatc path: " + flatcPath)
 }
 
 task createFlatBuffers(type: FlatBuffers) {
