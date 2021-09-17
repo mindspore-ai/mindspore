@@ -12,17 +12,17 @@ if(WIN32)
 endif()
 
 if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/flatbuffers/repository/archive/v1.11.0.tar.gz")
-    set(MD5 "8a391b9cd64afb9bf2b25c4e7715239d")
+    set(REQ_URL "https://gitee.com/mirrors/flatbuffers/repository/archive/v2.0.0.tar.gz")
+    set(MD5 "4181afaa9c279bd6c690a36bc15a23d2")
 else()
-    set(REQ_URL "https://github.com/google/flatbuffers/archive/v1.11.0.tar.gz")
-    set(MD5 "02c64880acb89dbd57eebacfd67200d8")
+    set(REQ_URL "https://github.com/google/flatbuffers/archive/v2.0.0.tar.gz")
+    set(MD5 "a27992324c3cbf86dd888268a23d17bd")
 endif()
 
 if(APPLE)
     set(FLATBUFFERS_PATCH ${TOP_DIR}/third_party/patch/flatbuffers/flatbuffers.patch001)
     mindspore_add_pkg(flatbuffers
-            VER 1.11.0
+            VER 2.0.0
             LIBS flatbuffers
             EXE flatc
             URL ${REQ_URL}
@@ -31,7 +31,7 @@ if(APPLE)
             CMAKE_OPTION -DFLATBUFFERS_BUILD_TESTS=OFF -DCMAKE_INSTALL_LIBDIR=lib)
 else()
     mindspore_add_pkg(flatbuffers
-            VER 1.11.0
+            VER 2.0.0
             LIBS flatbuffers
             EXE flatc
             URL ${REQ_URL}

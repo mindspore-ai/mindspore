@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace lite {
-
 int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor) {
 #ifndef STRING_KERNEL_CLIP
   if (tensor == nullptr) {

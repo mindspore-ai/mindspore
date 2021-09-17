@@ -49,7 +49,7 @@ dependencies {
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.14.9'
 
     // https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java
-    compile group: 'com.google.flatbuffers', name: 'flatbuffers-java', version: '1.11.0'
+    compile group: 'com.google.flatbuffers', name: 'flatbuffers-java', version: '2.0.0'
 
     compile(group: 'org.bouncycastle',name: 'bcprov-jdk15on', version: '1.68')
     implementation project(':common')
@@ -81,7 +81,7 @@ flatbuffers {
         println('flatc Path: ' + libPath)
         String version = getFlatVersion(libPath)
         println('version: ' + version)
-        if ('1.11.0' == version) {
+        if ('2.0.0' == version) {
             msLibPath = libPath
             return true
         }
@@ -89,7 +89,7 @@ flatbuffers {
     if (file('../../../build/_deps/flatbuffers-src/_build/flatc').exists()) {
         String version = getFlatVersion('../../../build/_deps/flatbuffers-src/_build/flatc')
         println('version: ' + version)
-        if ('1.11.0' == version) {
+        if ('2.0.0' == version) {
             flatcPath = '../../../build/_deps/flatbuffers-src/_build/flatc'
         } else {
             println('the version of build flatc is not valid, will find the other flatc')
@@ -97,7 +97,7 @@ flatbuffers {
     } else if (msLibPath != '' && file(msLibPath).exists()){
         flatcPath = msLibPath
     } else {
-        println("the needed flatc of version 1.11.0 is not exist, please check")
+        println("the needed flatc of version 2.0.0 is not exist, please check")
     }
     println("the used flatc path: " + flatcPath)
 }
