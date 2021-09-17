@@ -92,7 +92,7 @@ class AnfExporter {
   void OutputParameters(std::ofstream &ofs, const std::vector<AnfNodePtr> &parameters,
                         OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> *param_map);
 
-  void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
+  virtual void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
   void OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_graph);
 
   void OutputCNodeText(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,

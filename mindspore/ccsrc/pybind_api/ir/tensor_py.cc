@@ -161,7 +161,7 @@ class TensorDataNumpy : public TensorData {
   const void *const_data() const override { return buffer_.ptr; }
 
   /// To string.
-  std::string ToString(const TypeId type, const ShapeVector &shape, bool use_comma) const override {
+  std::string ToString(const TypeId, const ShapeVector &, bool use_comma) const override {
     if (use_comma) {
       // Call python np.array2string(data_, separator=', ') to convert string with comma.
       py::dict kwargs;
