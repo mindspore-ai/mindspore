@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,11 @@
 
 package com.mindspore.flclient.model;
 
+/**
+ * feature class
+ *
+ * @since v1.0
+ */
 public class Feature {
     int[] inputIds;
     int[] inputMasks;
@@ -23,6 +28,15 @@ public class Feature {
     int labelIds;
     int seqLen;
 
+    /**
+     * constructor
+     *
+     * @param inputIds input id
+     * @param inputMasks input masks
+     * @param tokenIds token ids
+     * @param labelIds label ids
+     * @param seqLen seq len
+     */
     public Feature(int[] inputIds, int[] inputMasks, int[] tokenIds, int labelIds, int seqLen) {
         this.inputIds = inputIds;
         this.inputMasks = inputMasks;
