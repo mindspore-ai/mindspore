@@ -18,7 +18,8 @@ Validator Functions for Offline Debugger APIs.
 from functools import wraps
 
 import mindspore.offline_debug.dbg_services as cds
-from mindspore.offline_debug.mi_validator_helpers import parse_user_args, type_check, type_check_list, check_dir, check_uint32, check_uint64, check_iteration
+from mindspore.offline_debug.mi_validator_helpers import parse_user_args, type_check, \
+    type_check_list, check_dir, check_uint32, check_uint64, check_iteration
 
 
 def check_init(method):
@@ -190,6 +191,7 @@ def check_tensor_data_init(method):
 
     return new_method
 
+
 def check_tensor_base_data_init(method):
     """Wrapper method to check the parameters of DbgServices TensorBaseData init."""
 
@@ -205,6 +207,7 @@ def check_tensor_base_data_init(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
 
 def check_tensor_stat_data_init(method):
     """Wrapper method to check the parameters of DbgServices TensorBaseData init."""
@@ -236,6 +239,7 @@ def check_tensor_stat_data_init(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
 
 def check_watchpoint_hit_init(method):
     """Wrapper method to check the parameters of DbgServices WatchpointHit init."""

@@ -27,8 +27,10 @@
 #include "pybind11/stl.h"
 #include "pybind11/stl_bind.h"
 
+#include "utils/ms_utils.h"
 #include "debug/debug_services.h"
 namespace py = pybind11;
+namespace common = mindspore::common;
 
 struct parameter_t {
   parameter_t(const std::string &name, bool disabled, double value, bool hit, double actual_value)
