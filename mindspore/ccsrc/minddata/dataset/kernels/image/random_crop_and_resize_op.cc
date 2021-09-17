@@ -65,7 +65,7 @@ Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output)
     int h_in = input[i]->shape()[0];
     int w_in = input[i]->shape()[1];
     if (i == 0) {
-      (void)GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width);
+      RETURN_IF_NOT_OK(GetCropBox(h_in, w_in, &x, &y, &crop_height, &crop_width));
     }
     RETURN_IF_NOT_OK(CropAndResize(input[i], &(*output)[i], x, y, crop_height, crop_width, target_height_,
                                    target_width_, interpolation_));

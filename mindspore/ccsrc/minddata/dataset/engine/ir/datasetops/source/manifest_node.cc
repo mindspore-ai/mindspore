@@ -77,6 +77,11 @@ Status ManifestNode::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+  if (access(dataset_file_.c_str(), R_OK) == -1) {
+    std::string err_msg = "ManifestNode: No access to specified annotation file: " + dataset_file_;
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
 
   RETURN_IF_NOT_OK(ValidateDatasetSampler("ManifestNode", sampler_));
 

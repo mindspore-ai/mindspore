@@ -38,6 +38,11 @@ std::string CutMixBatchOperation::Name() const { return kCutMixBatchOperation; }
 Status CutMixBatchOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateFloatScalarPositive("CutMixBatch", "alpha", alpha_));
   RETURN_IF_NOT_OK(ValidateProbability("CutMixBatch", prob_));
+  if (image_batch_format_ != ImageBatchFormat::kNHWC && image_batch_format_ != ImageBatchFormat::kNCHW) {
+    std::string err_msg = "CutMixBatch: Invalid ImageBatchFormat, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 

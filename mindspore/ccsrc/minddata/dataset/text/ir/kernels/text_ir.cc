@@ -65,7 +65,16 @@ BasicTokenizerOperation::BasicTokenizerOperation(bool lower_case, bool keep_whit
       preserve_unused_token_(preserve_unused_token),
       with_offsets_(with_offsets) {}
 
-Status BasicTokenizerOperation::ValidateParams() { return Status::OK(); }
+Status BasicTokenizerOperation::ValidateParams() {
+  if (normalize_form_ != NormalizeForm::kNone && normalize_form_ != NormalizeForm::kNfc &&
+      normalize_form_ != NormalizeForm::kNfkc && normalize_form_ != NormalizeForm::kNfd &&
+      normalize_form_ != NormalizeForm::kNfkd) {
+    std::string err_msg = "BasicTokenizer: Invalid NormalizeForm, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
 
 std::shared_ptr<TensorOp> BasicTokenizerOperation::Build() {
   std::shared_ptr<BasicTokenizerOp> tensor_op = std::make_shared<BasicTokenizerOp>(
@@ -94,6 +103,14 @@ BertTokenizerOperation::~BertTokenizerOperation() = default;
 Status BertTokenizerOperation::ValidateParams() {
   if (vocab_ == nullptr) {
     std::string err_msg = "BertTokenizer: vocab object type is incorrect or null.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (normalize_form_ != NormalizeForm::kNone && normalize_form_ != NormalizeForm::kNfc &&
+      normalize_form_ != NormalizeForm::kNfkc && normalize_form_ != NormalizeForm::kNfd &&
+      normalize_form_ != NormalizeForm::kNfkd) {
+    std::string err_msg = "BertTokenizer: Invalid NormalizeForm, check input value of enum.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -138,6 +155,12 @@ Status JiebaTokenizerOperation::ValidateParams() {
 
   if (mp_path_.empty()) {
     std::string err_msg = "JiebaTokenizer: The dict of MPSegment in cppjieba is not provided.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (mode_ != JiebaMode::kMix && mode_ != JiebaMode::kMp && mode_ != JiebaMode::kHmm) {
+    std::string err_msg = "JiebaTokenizer: Invalid JiebaMode, check input value of enum.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -264,7 +287,16 @@ std::shared_ptr<TensorOp> NgramOperation::Build() {
 // NormalizeUTF8Operation
 NormalizeUTF8Operation::NormalizeUTF8Operation(NormalizeForm normalize_form) : normalize_form_(normalize_form) {}
 
-Status NormalizeUTF8Operation::ValidateParams() { return Status::OK(); }
+Status NormalizeUTF8Operation::ValidateParams() {
+  if (normalize_form_ != NormalizeForm::kNone && normalize_form_ != NormalizeForm::kNfc &&
+      normalize_form_ != NormalizeForm::kNfkc && normalize_form_ != NormalizeForm::kNfd &&
+      normalize_form_ != NormalizeForm::kNfkd) {
+    std::string err_msg = "NormalizeUTF8: Invalid NormalizeForm, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
 
 std::shared_ptr<TensorOp> NormalizeUTF8Operation::Build() {
   std::shared_ptr<NormalizeUTF8Op> tensor_op = std::make_shared<NormalizeUTF8Op>(normalize_form_);
@@ -308,6 +340,11 @@ SentencePieceTokenizerOperation::SentencePieceTokenizerOperation(const std::stri
     : vocab_(nullptr), vocab_path_(vocab_path), load_type_(SPieceTokenizerLoadType::kFile), out_type_(out_type) {}
 
 Status SentencePieceTokenizerOperation::ValidateParams() {
+  if (out_type_ != SPieceTokenizerOutType::kString && out_type_ != SPieceTokenizerOutType::kInt) {
+    std::string err_msg = "SentencePieceTokenizer: Invalid SPieceTokenizerOutType, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   if (load_type_ == SPieceTokenizerLoadType::kModel) {
     if (vocab_ == nullptr) {
       std::string err_msg = "SentencePieceTokenizer: vocab object type is incorrect or null.";

@@ -50,6 +50,13 @@ Status RandomCropOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorPadding("RandomCrop", padding_));
   // fill_value
   RETURN_IF_NOT_OK(ValidateVectorFillvalue("RandomCrop", fill_value_));
+  // padding_mode
+  if (padding_mode_ != BorderType::kConstant && padding_mode_ != BorderType::kEdge &&
+      padding_mode_ != BorderType::kReflect && padding_mode_ != BorderType::kSymmetric) {
+    std::string err_msg = "RandomCrop: Invalid BorderType, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 

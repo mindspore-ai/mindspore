@@ -35,21 +35,22 @@ Status DvppDecodeJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input, std
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetDeviceBuffer() != nullptr, "The input image buffer on device is empty");
     APP_ERROR ret = processor_->JPEG_D();
     if (ret != APP_ERR_OK) {
-      processor_->Release();
+      ret = processor_->Release();
+      CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release memory failed.");
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     std::shared_ptr<DvppDataInfo> DecodeOut(processor_->Get_Decode_DeviceData());
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
-    mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output);
-    (*output)->SetAttributes(DecodeOut->data, DecodeOut->dataSize, DecodeOut->width, DecodeOut->widthStride,
-                             DecodeOut->height, DecodeOut->heightStride);
+    RETURN_IF_NOT_OK(mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output));
+    RETURN_IF_NOT_OK((*output)->SetAttributes(DecodeOut->data, DecodeOut->dataSize, DecodeOut->width,
+                                              DecodeOut->widthStride, DecodeOut->height, DecodeOut->heightStride));
     if (!((*output)->HasDeviceData())) {
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-  } catch (const cv::Exception &e) {
+  } catch (const std::exception &e) {
     std::string error = "[ERROR] Fail in DvppDecodeJpegOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
@@ -106,16 +107,18 @@ Status DvppDecodeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
 
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
-    mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, output);
-    (*output)->SetYuvShape(decoded_width, decoded_widthStride, decoded_height, decoded_heightStride);
+    RETURN_IF_NOT_OK(mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, output));
+    RETURN_IF_NOT_OK((*output)->SetYuvShape(decoded_width, decoded_widthStride, decoded_height, decoded_heightStride));
     if (!((*output)->HasData())) {
       std::string error = "[ERROR] Fail to get the Output result from device memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-    process.device_memory_release();
-    process.Release();
+    ret = process.device_memory_release();
+    CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release device memory failed.");
+    ret = process.Release();
+    CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release host memory failed.");
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
-  } catch (const cv::Exception &e) {
+  } catch (const std::exception &e) {
     std::string error = "[ERROR] Fail in DvppDecodeJpegOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }

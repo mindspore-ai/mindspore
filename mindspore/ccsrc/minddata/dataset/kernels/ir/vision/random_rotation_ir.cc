@@ -78,6 +78,14 @@ Status RandomRotationOperation::ValidateParams() {
   }
   // fill_value
   RETURN_IF_NOT_OK(ValidateVectorFillvalue("RandomRotation", fill_value_));
+  // interpolation
+  if (interpolation_mode_ != InterpolationMode::kLinear &&
+      interpolation_mode_ != InterpolationMode::kNearestNeighbour && interpolation_mode_ != InterpolationMode::kCubic &&
+      interpolation_mode_ != InterpolationMode::kArea) {
+    std::string err_msg = "RandomRotation: Invalid InterpolationMode, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 

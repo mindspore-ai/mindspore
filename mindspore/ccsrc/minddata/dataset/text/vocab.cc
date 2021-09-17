@@ -41,6 +41,9 @@ WordIdType Vocab::Lookup(const WordType &word) const {
 #ifdef ENABLE_PYTHON
 Status Vocab::BuildFromPyList(const py::list &words, const py::list &special_tokens, bool prepend_special,
                               std::shared_ptr<Vocab> *vocab) {
+  if (vocab == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromPyList: input vocab can not be null");
+  }
   // check of duplication on both words and special_tokens will be performed in python
   // special_tokens and words both need to be unique, and shouldn't overlap
   std::unordered_map<WordType, WordIdType> word2id;
@@ -62,6 +65,9 @@ Status Vocab::BuildFromPyList(const py::list &words, const py::list &special_tok
 }
 
 Status Vocab::BuildFromPyDict(const py::dict &words, std::shared_ptr<Vocab> *vocab) {
+  if (vocab == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromPyDict: input vocab can not be null");
+  }
   std::unordered_map<WordType, WordIdType> word2id;
   for (auto p : words) {
     word2id[py::str(p.first)] = py::reinterpret_borrow<py::int_>(p.second);
@@ -79,6 +85,9 @@ void Vocab::append_word(const std::string &word) {
 
 Status Vocab::BuildFromUnorderedMap(const std::unordered_map<WordType, WordIdType> &words,
                                     std::shared_ptr<Vocab> *vocab) {
+  if (vocab == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromUnorderedMap: input vocab can not be null");
+  }
   // Validate parameters and build map
   std::unordered_map<WordType, WordIdType> word2id;
   for (auto p : words) {
@@ -93,6 +102,9 @@ Status Vocab::BuildFromUnorderedMap(const std::unordered_map<WordType, WordIdTyp
 
 Status Vocab::BuildFromVector(const std::vector<WordType> &words, const std::vector<WordType> &special_tokens,
                               bool prepend_special, std::shared_ptr<Vocab> *vocab) {
+  if (vocab == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromVector: input vocab can not be null");
+  }
   std::unordered_map<WordType, WordIdType> word2id;
 
   // if special is added in front, normal words id will start from number of special tokens
@@ -123,18 +135,16 @@ Status Vocab::BuildFromVector(const std::vector<WordType> &words, const std::vec
 Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delimiter, int32_t vocab_size,
                                const std::vector<WordType> &special_tokens, bool prepend_special,
                                std::shared_ptr<Vocab> *vocab) {
+  if (vocab == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromFileCpp: input vocab can not be null");
+  }
   // Validate parameters
   auto realpath = FileUtils::GetRealPath(path.data());
-  if (!realpath.has_value()) {
-    RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(realpath.has_value(), "Get real path failed, path=" + path);
 
-  if (vocab_size < 0 && vocab_size != -1) {
-    RETURN_STATUS_UNEXPECTED(
-      "from_file: "
-      "vocab_size should be either -1 or positive integer, but got " +
-      std::to_string(vocab_size));
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    !(vocab_size < 0 && vocab_size != -1),
+    "from_file: vocab_size should be either -1 or positive integer, but got: " + std::to_string(vocab_size));
 
   std::string duplicate_sp;
   for (const WordType &sp : special_tokens) {
@@ -144,12 +154,8 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
       }
     }
   }
-  if (!duplicate_sp.empty()) {
-    RETURN_STATUS_UNEXPECTED(
-      "from_file: "
-      "special_tokens contains duplicate word: " +
-      duplicate_sp);
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(duplicate_sp.empty(),
+                               "from_file: special_tokens contains duplicate word: " + duplicate_sp);
 
   std::unordered_set<std::string> specials;
   // used to check that words in file don't contain any special token that already exists
@@ -160,24 +166,19 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
   std::unordered_map<WordType, WordIdType> word2id;
 
   std::fstream handle(realpath.value(), std::ios::in);
-  if (!handle.good() || !handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("from_file: fail to open: " + realpath.value());
-  }
+  CHECK_FAIL_RETURN_UNEXPECTED(handle.good() && handle.is_open(), "from_file: fail to open: " + realpath.value());
+
   std::string word;
   while (std::getline(handle, word)) {
     if (!delimiter.empty()) {
       // if delimiter is not found, find_first_of would return std::string::npos which is -1
       word = word.substr(0, word.find_first_of(delimiter));
     }
-    if (word2id.find(word) != word2id.end()) {
-      RETURN_STATUS_UNEXPECTED("from_file: word_list contains duplicate word:" + word + ".");
-    }
-    if (specials.find(word) != specials.end()) {
-      RETURN_STATUS_UNEXPECTED(
-        "from_file: "
-        "special_tokens and word_list contain duplicate word: " +
-        word);
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(word2id.find(word) == word2id.end(),
+                                 "from_file: word_list contains duplicate word:" + word);
+    CHECK_FAIL_RETURN_UNEXPECTED(specials.find(word) == specials.end(),
+                                 "from_file: special_tokens and word_list contain duplicate word:" + word);
+
     word2id[word] = word_id++;
     // break if enough row is read, if vocab_size is smaller than 0
     if (word2id.size() == vocab_size) break;
@@ -195,6 +196,9 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
 
 Status Vocab::BuildFromFile(const std::string &path, const std::string &delimiter, int32_t vocab_size,
                             const py::list &special_tokens, bool prepend_special, std::shared_ptr<Vocab> *vocab) {
+  if (vocab == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Vocab::BuildFromFile: input vocab can not be null");
+  }
   // python validator checks special_tokens doesn't contain any duplicate words
   std::unordered_set<std::string> specials;
   // used to check that words in file don't contain any special token that already exists

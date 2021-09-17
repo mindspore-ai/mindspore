@@ -181,7 +181,7 @@ bool CheckIsValidUtf8(const std::string &str);
 
 /// \brief judge if a path is legal file
 /// \param path file path
-/// \return parent path
+/// \return Whether the path is legal or not
 bool IsLegalFile(const std::string &path);
 
 enum DiskSizeType { kTotalSize = 0, kFreeSize };

@@ -269,11 +269,10 @@ class NormalizePad final : public TensorTransform {
   ///     The standard deviation values must be in range (0.0, 255.0].
   /// \param[in] dtype The output datatype of Tensor.
   ///     The standard deviation values must be "float32" or "float16"（default = "float32"）.
-  explicit NormalizePad(const std::vector<float> &mean, const std::vector<float> &std,
-                        const std::string &dtype = "float32")
+  NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype = "float32")
       : NormalizePad(mean, std, StringToChar(dtype)) {}
 
-  explicit NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::vector<char> &dtype);
+  NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::vector<char> &dtype);
 
   /// \brief Destructor.
   ~NormalizePad() = default;
@@ -332,7 +331,7 @@ class RandomColor final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] t_lb Lower bound random weights.
   /// \param[in] t_ub Upper bound random weights.
-  explicit RandomColor(float t_lb, float t_ub);
+  RandomColor(float t_lb, float t_ub);
 
   /// \brief Destructor.
   ~RandomColor() = default;

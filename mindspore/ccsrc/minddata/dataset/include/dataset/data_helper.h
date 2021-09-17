@@ -45,6 +45,7 @@ class DataHelper {
   ///     Creates the output directory if doesn't exist
   /// \param[in] in_dir Image folder directory that takes in images
   /// \param[in] out_dir Directory containing output json files
+  /// \return Status The status code returned
   Status CreateAlbum(const std::string &in_dir, const std::string &out_dir) {
     return CreateAlbumIF(StringToChar(in_dir), StringToChar(out_dir));
   }
@@ -339,6 +340,7 @@ class DataHelper {
   }
 
   /// \brief Write pointer to bin, use pointer to avoid memcpy
+  /// \note The value of `length`` must be equal to the length of `data`
   /// \param[in] in_file File name to write to
   /// \param[in] data Pointer to data
   /// \param[in] length Length of values to write from pointer
@@ -346,16 +348,22 @@ class DataHelper {
   template <typename T>
   Status WriteBinFile(const std::string &in_file, T *data, size_t length) {
     try {
+      if (data == nullptr) {
+        return Status(kMDUnexpectedError, "input data can not be null");
+      }
       std::ofstream o(in_file, std::ios::binary | std::ios::out);
       if (!o.is_open()) {
         return Status(kMDUnexpectedError, "Error opening Bin file to write");
       }
       o.write(reinterpret_cast<const char *>(data), std::streamsize(length * sizeof(T)));
+      if (!o.good()) {
+        return Status(kMDUnexpectedError, "Error writing Bin file");
+      }
       o.close();
     }
     // Catch any exception and convert to Status return code
     catch (const std::exception &err) {
-      return Status(kMDUnexpectedError, "Write bin file failed ");
+      return Status(kMDUnexpectedError, "Write bin file failed");
     }
     return Status::OK();
   }
@@ -370,7 +378,7 @@ class DataHelper {
   size_t DumpData(const unsigned char *tensor_addr, const size_t &tensor_size, void *addr, const size_t &buffer_size);
 
   /// \brief Helper function to delete key in json file
-  /// note This function will return okay even if key not found
+  /// \note This function will return okay even if key not found
   /// \param[in] in_file Json file to remove key from
   /// \param[in] key The key to remove
   /// \return Status The status code returned
@@ -383,9 +391,9 @@ class DataHelper {
   void Print(std::ostream &out) const;
 
   /// \brief << Stream output operator overload
-  /// \notes This allows you to write the debug print info using stream operators
+  /// \note This allows you to write the debug print info using stream operators
   /// \param out Reference to the output stream being overloaded
-  /// \param ds Reference to the DataSchema to display
+  /// \param dh Reference to the DataSchema to display
   /// \return The output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, const DataHelper &dh) {
     dh.Print(out);

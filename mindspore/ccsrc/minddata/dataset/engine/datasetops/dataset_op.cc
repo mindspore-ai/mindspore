@@ -100,6 +100,7 @@ Status DatasetOp::RemoveChild(std::shared_ptr<DatasetOp> child) {
 }
 
 Status DatasetOp::InsertAsParent(std::shared_ptr<DatasetOp> to_add) {
+  RETURN_UNEXPECTED_IF_NULL(to_add);
   for (auto &prev_parent : this->parent_) {
     RETURN_IF_NOT_OK(prev_parent->RemoveChild(shared_from_this()));
     RETURN_IF_NOT_OK(prev_parent->AddChild(to_add));

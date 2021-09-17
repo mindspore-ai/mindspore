@@ -34,6 +34,9 @@ Status SentencePieceVocab::BuildFromFile(const std::vector<std::string> &path_li
                                          const float character_coverage, const SentencePieceModel model_type,
                                          const std::unordered_map<std::string, std::string> &params,
                                          std::shared_ptr<SentencePieceVocab> *vocab) {
+  if (vocab == nullptr) {
+    RETURN_STATUS_UNEXPECTED("SentencePieceVocab::BuildFromFile: input vocab can not be null");
+  }
   std::unordered_map<std::string, std::string> unorder_map;
 
   // the input of sentence is comma separated string
@@ -85,6 +88,9 @@ Status SentencePieceVocab::BuildFromFile(const std::vector<std::string> &path_li
 
 Status SentencePieceVocab::SaveModel(const std::shared_ptr<SentencePieceVocab> *vocab, std::string path,
                                      std::string filename) {
+  if (vocab == nullptr) {
+    RETURN_STATUS_UNEXPECTED("SentencePieceVocab::SaveModel: input vocab can not be null");
+  }
   auto realpath = FileUtils::GetRealPath(path.data());
   if (!realpath.has_value()) {
     RETURN_STATUS_UNEXPECTED("Get real path failed, path=" + path);

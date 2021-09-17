@@ -550,6 +550,9 @@ def check_bucket_batch_by_length(method):
         if element_length_function is None and len(column_names) != 1:
             raise ValueError("If element_length_function is not specified, exactly one column name should be passed.")
 
+        if element_length_function is not None and not callable(element_length_function):
+            raise TypeError("element_length_function object is not callable.")
+
         # check bucket_boundaries: must be list of int, positive and strictly increasing
         if not bucket_boundaries:
             raise ValueError("bucket_boundaries cannot be empty.")

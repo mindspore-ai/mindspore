@@ -34,6 +34,13 @@ std::string ResizeOperation::Name() const { return kResizeOperation; }
 
 Status ResizeOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorSize("Resize", size_));
+  // interpolation
+  if (interpolation_ != InterpolationMode::kLinear && interpolation_ != InterpolationMode::kNearestNeighbour &&
+      interpolation_ != InterpolationMode::kCubic && interpolation_ != InterpolationMode::kArea) {
+    std::string err_msg = "Resize: Invalid InterpolationMode, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 

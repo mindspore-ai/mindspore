@@ -519,12 +519,12 @@ inline std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const
 
 class MnistDataset : public Dataset {
  public:
-  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
-  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
-                        const std::shared_ptr<DatasetCache> &cache);
-  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+               const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+               const std::shared_ptr<DatasetCache> &cache);
+  MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+               const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
   ~MnistDataset() = default;
 };
 

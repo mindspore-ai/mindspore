@@ -194,8 +194,11 @@ std::shared_ptr<TensorOperation> CenterCrop::Parse(const MapTargetDevice &env) {
                    [](int32_t i) { return (uint32_t)i; });
     return std::make_shared<DvppCropJpegOperation>(usize_);
 #endif  // ENABLE_ACL
+  } else if (env == MapTargetDevice::kCpu) {
+    return std::make_shared<CenterCropOperation>(data_->size_);
   }
-  return std::make_shared<CenterCropOperation>(data_->size_);
+  MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
+  return nullptr;
 }
 
 #ifndef ENABLE_ANDROID
@@ -273,8 +276,11 @@ std::shared_ptr<TensorOperation> Decode::Parse(const MapTargetDevice &env) {
 #ifdef ENABLE_ACL
     return std::make_shared<DvppDecodeJpegOperation>();
 #endif  // ENABLE_ACL
+  } else if (env == MapTargetDevice::kCpu) {
+    return std::make_shared<DecodeOperation>(data_->rgb_);
   }
-  return std::make_shared<DecodeOperation>(data_->rgb_);
+  MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
+  return nullptr;
 }
 
 #ifdef ENABLE_ACL
@@ -291,7 +297,11 @@ std::shared_ptr<TensorOperation> DvppDecodeResizeJpeg::Parse() {
 }
 
 std::shared_ptr<TensorOperation> DvppDecodeResizeJpeg::Parse(const MapTargetDevice &env) {
-  return std::make_shared<DvppDecodeResizeOperation>(data_->resize_);
+  if (env == MapTargetDevice::kAscend310) {
+    return std::make_shared<DvppDecodeResizeOperation>(data_->resize_);
+  }
+  MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kAscend310.";
+  return nullptr;
 }
 
 // DvppDecodeResizeCrop Transform Operation.
@@ -309,7 +319,11 @@ std::shared_ptr<TensorOperation> DvppDecodeResizeCropJpeg::Parse() {
 }
 
 std::shared_ptr<TensorOperation> DvppDecodeResizeCropJpeg::Parse(const MapTargetDevice &env) {
-  return std::make_shared<DvppDecodeResizeCropOperation>(data_->crop_, data_->resize_);
+  if (env == MapTargetDevice::kAscend310) {
+    return std::make_shared<DvppDecodeResizeCropOperation>(data_->crop_, data_->resize_);
+  }
+  MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kAscend310.";
+  return nullptr;
 }
 
 // DvppDecodePng Transform Operation.
@@ -318,7 +332,11 @@ DvppDecodePng::DvppDecodePng() {}
 std::shared_ptr<TensorOperation> DvppDecodePng::Parse() { return std::make_shared<DvppDecodePngOperation>(); }
 
 std::shared_ptr<TensorOperation> DvppDecodePng::Parse(const MapTargetDevice &env) {
-  return std::make_shared<DvppDecodePngOperation>();
+  if (env == MapTargetDevice::kAscend310) {
+    return std::make_shared<DvppDecodePngOperation>();
+  }
+  MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kAscend310.";
+  return nullptr;
 }
 #endif  // ENABLE_ACL
 
@@ -389,8 +407,11 @@ std::shared_ptr<TensorOperation> Normalize::Parse(const MapTargetDevice &env) {
 #ifdef ENABLE_ACL
     return std::make_shared<DvppNormalizeOperation>(data_->mean_, data_->std_);
 #endif  // ENABLE_ACL
+  } else if (env == MapTargetDevice::kCpu) {
+    return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_);
   }
-  return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_);
+  MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
+  return nullptr;
 }
 
 #ifndef ENABLE_ANDROID
@@ -828,8 +849,11 @@ std::shared_ptr<TensorOperation> Resize::Parse(const MapTargetDevice &env) {
                    [](int32_t i) { return (uint32_t)i; });
     return std::make_shared<DvppResizeJpegOperation>(usize_);
 #endif  // ENABLE_ACL
+  } else if (env == MapTargetDevice::kCpu) {
+    return std::make_shared<ResizeOperation>(data_->size_, data_->interpolation_);
   }
-  return std::make_shared<ResizeOperation>(data_->size_, data_->interpolation_);
+  MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
+  return nullptr;
 }
 
 // ResizePreserveAR Transform Operation.

@@ -39,21 +39,22 @@ Status DvppResizeJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input, std
     }
     APP_ERROR ret = processor_->JPEG_R(last_step);
     if (ret != APP_ERR_OK) {
-      processor_->Release();
+      ret = processor_->Release();
+      CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release memory failed.");
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
     std::shared_ptr<DvppDataInfo> ResizeOut(processor_->Get_Resized_DeviceData());
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
-    mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output);
-    (*output)->SetAttributes(ResizeOut->data, ResizeOut->dataSize, ResizeOut->width, ResizeOut->widthStride,
-                             ResizeOut->height, ResizeOut->heightStride);
+    RETURN_IF_NOT_OK(mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output));
+    RETURN_IF_NOT_OK((*output)->SetAttributes(ResizeOut->data, ResizeOut->dataSize, ResizeOut->width,
+                                              ResizeOut->widthStride, ResizeOut->height, ResizeOut->heightStride));
     if (!((*output)->HasDeviceData())) {
       std::string error = "[ERROR] Fail to get the Output result from device memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-  } catch (const cv::Exception &e) {
+  } catch (const std::exception &e) {
     std::string error = "[ERROR] Fail in DvppResizeJpegOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
@@ -115,16 +116,18 @@ Status DvppResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shar
     uint32_t resized_width = ResizeOut->width;
     uint32_t resized_widthStride = ResizeOut->widthStride;
     const DataType dvpp_data_type(DataType::DE_UINT8);
-    mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, output);
-    (*output)->SetYuvShape(resized_width, resized_widthStride, resized_height, resized_heightStride);
+    RETURN_IF_NOT_OK(mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, output));
+    RETURN_IF_NOT_OK((*output)->SetYuvShape(resized_width, resized_widthStride, resized_height, resized_heightStride));
     if (!((*output)->HasData())) {
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-    process.device_memory_release();
-    process.Release();
+    ret = process.device_memory_release();
+    CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release device memory failed.");
+    ret = process.Release();
+    CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "Release host memory failed.");
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
-  } catch (const cv::Exception &e) {
+  } catch (const std::exception &e) {
     std::string error = "[ERROR] Fail in DvppResizeJpegOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
@@ -136,7 +139,8 @@ Status DvppResizeJpegOp::SetAscendResource(const std::shared_ptr<DeviceResource>
   if (!processor_) {
     RETURN_STATUS_UNEXPECTED("Resource initialize fail, please check your env");
   }
-  processor_->SetResizeParas(resized_width_, resized_height_);
+  APP_ERROR ret = processor_->SetResizeParas(resized_width_, resized_height_);
+  CHECK_FAIL_RETURN_UNEXPECTED(ret == APP_ERR_OK, "SetResizeParas failed.");
   return Status::OK();
 }
 

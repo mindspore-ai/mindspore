@@ -52,6 +52,13 @@ void TFRecordNode::Print(std::ostream &out) const {
 // Validator for TFRecordNode
 Status TFRecordNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
+
+  if (shuffle_ != ShuffleMode::kFalse && shuffle_ != ShuffleMode::kFiles && shuffle_ != ShuffleMode::kGlobal) {
+    std::string err_msg = "TFRecordNode: Invalid ShuffleMode, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
   if (dataset_files_.empty()) {
     std::string err_msg = "TFRecordNode: dataset_files is not specified.";
     MS_LOG(ERROR) << err_msg;

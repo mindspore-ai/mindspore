@@ -932,9 +932,9 @@ class CelebADataset : public Dataset {
   /// \param[in] decode Decode the images after reading (default=false).
   /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                         const std::shared_ptr<Sampler> &sampler, bool decode,
-                         const std::set<std::vector<char>> &extensions, const std::shared_ptr<DatasetCache> &cache);
+  CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                const std::shared_ptr<Sampler> &sampler, bool decode, const std::set<std::vector<char>> &extensions,
+                const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of CelebADataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -943,9 +943,8 @@ class CelebADataset : public Dataset {
   /// \param[in] decode Decode the images after reading (default=false).
   /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
-                         bool decode, const std::set<std::vector<char>> &extensions,
-                         const std::shared_ptr<DatasetCache> &cache);
+  CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                bool decode, const std::set<std::vector<char>> &extensions, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of CelebADataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -954,9 +953,9 @@ class CelebADataset : public Dataset {
   /// \param[in] decode Decode the images after reading (default=false).
   /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                         const std::reference_wrapper<Sampler> sampler, bool decode,
-                         const std::set<std::vector<char>> &extensions, const std::shared_ptr<DatasetCache> &cache);
+  CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                const std::reference_wrapper<Sampler> sampler, bool decode,
+                const std::set<std::vector<char>> &extensions, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CelebADataset.
   ~CelebADataset() = default;
@@ -1027,24 +1026,24 @@ class Cifar10Dataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit Cifar10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                          const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  Cifar10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                 const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of Cifar10Dataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] usage Part of dataset of CIFAR10, can be "train", "test" or "all".
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit Cifar10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
-                          const std::shared_ptr<DatasetCache> &cache);
+  Cifar10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                 const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of Cifar10Dataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] usage Part of dataset of CIFAR10, can be "train", "test" or "all".
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit Cifar10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                          const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  Cifar10Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                 const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Cifar10Dataset.
   ~Cifar10Dataset() = default;
@@ -1101,24 +1100,24 @@ class Cifar100Dataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit Cifar100Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                           const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  Cifar100Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                  const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of Cifar100Dataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] usage Part of dataset of CIFAR100, can be "train", "test" or "all".
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit Cifar100Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
-                           const std::shared_ptr<DatasetCache> &cache);
+  Cifar100Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+                  const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of Cifar100Dataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] usage Part of dataset of CIFAR100, can be "train", "test" or "all".
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit Cifar100Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                           const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  Cifar100Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                  const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of Cifar100Dataset.
   ~Cifar100Dataset() = default;
@@ -1181,9 +1180,9 @@ class CityscapesDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-  explicit CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                             const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
-                             const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                    const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
+                    const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of CityscapesDataset.
   /// \param[in] dataset_dir The dataset dir to be read.
@@ -1196,9 +1195,9 @@ class CityscapesDataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-  explicit CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                             const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
-                             const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+  CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                    const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
+                    const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of CityscapesDataset.
   /// \param[in] dataset_dir The dataset dir to be read.
@@ -1211,9 +1210,9 @@ class CityscapesDataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-  explicit CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                             const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
-                             const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  CityscapesDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                    const std::vector<char> &quality_mode, const std::vector<char> &task, bool decode,
+                    const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CityscapesDataset.
   ~CityscapesDataset() = default;
@@ -1303,9 +1302,9 @@ class CLUEDataset : public Dataset {
   /// \param[in] shard_id The shard ID within num_shards. This argument should be
   ///     specified only when num_shards is also specified (Default = 0).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit CLUEDataset(const std::vector<std::vector<char>> &dataset_files, const std::vector<char> &task,
-                       const std::vector<char> &usage, int64_t num_samples, ShuffleMode shuffle, int32_t num_shards,
-                       int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
+  CLUEDataset(const std::vector<std::vector<char>> &dataset_files, const std::vector<char> &task,
+              const std::vector<char> &usage, int64_t num_samples, ShuffleMode shuffle, int32_t num_shards,
+              int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CLUEDataset.
   ~CLUEDataset() = default;
@@ -1484,10 +1483,10 @@ class CSVDataset : public Dataset {
   /// \param[in] shard_id The shard ID within num_shards. This argument should be
   ///    specified only when num_shards is also specified (Default = 0).
   /// \param[in] cache Tensor cache to use.(default=nullptr which means no cache is used).
-  explicit CSVDataset(const std::vector<std::vector<char>> &dataset_files, char field_delim,
-                      const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
-                      const std::vector<std::vector<char>> &column_names, int64_t num_samples, ShuffleMode shuffle,
-                      int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
+  CSVDataset(const std::vector<std::vector<char>> &dataset_files, char field_delim,
+             const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
+             const std::vector<std::vector<char>> &column_names, int64_t num_samples, ShuffleMode shuffle,
+             int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of CSVDataset.
   ~CSVDataset() = default;
@@ -1538,9 +1537,9 @@ class DIV2KDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::vector<char> &downgrade, int32_t scale, bool decode,
-                        const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const std::vector<char> &downgrade,
+               int32_t scale, bool decode, const std::shared_ptr<Sampler> &sampler,
+               const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of DIV2KDataset.
   /// \param[in] dataset_dir The dataset dir to be read.
@@ -1551,9 +1550,8 @@ class DIV2KDataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::vector<char> &downgrade, int32_t scale, bool decode, const Sampler *sampler,
-                        const std::shared_ptr<DatasetCache> &cache);
+  DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const std::vector<char> &downgrade,
+               int32_t scale, bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of DIV2KDataset.
   /// \param[in] dataset_dir The dataset dir to be read.
@@ -1564,9 +1562,9 @@ class DIV2KDataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::vector<char> &downgrade, int32_t scale, bool decode,
-                        const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  DIV2KDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const std::vector<char> &downgrade,
+               int32_t scale, bool decode, const std::reference_wrapper<Sampler> sampler,
+               const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of DIV2KDataset.
   ~DIV2KDataset() = default;
@@ -1641,8 +1639,8 @@ class FlickrDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-  explicit FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
-                         const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
+                const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of FlickrDataset.
   /// \param[in] dataset_dir The dataset dir to be read
@@ -1650,8 +1648,8 @@ class FlickrDataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-  explicit FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
-                         const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+  FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
+                const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of FlickrDataset.
   /// \param[in] dataset_dir The dataset dir to be read
@@ -1659,8 +1657,8 @@ class FlickrDataset : public Dataset {
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-  explicit FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
-                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  FlickrDataset(const std::vector<char> &dataset_dir, const std::vector<char> &annotation_file, bool decode,
+                const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of FlickrDataset.
   ~FlickrDataset() = default;
@@ -1725,10 +1723,10 @@ class ImageFolderDataset : public Dataset {
   /// \param[in] extensions File extensions to be read.
   /// \param[in] class_indexing a class name to label map.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode,
-                              const std::shared_ptr<Sampler> &sampler, const std::set<std::vector<char>> &extensions,
-                              const std::map<std::vector<char>, int32_t> &class_indexing,
-                              const std::shared_ptr<DatasetCache> &cache);
+  ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode, const std::shared_ptr<Sampler> &sampler,
+                     const std::set<std::vector<char>> &extensions,
+                     const std::map<std::vector<char>, int32_t> &class_indexing,
+                     const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of ImageFolderDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -1737,10 +1735,10 @@ class ImageFolderDataset : public Dataset {
   /// \param[in] extensions File extensions to be read.
   /// \param[in] class_indexing a class name to label map.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode, const Sampler *sampler,
-                              const std::set<std::vector<char>> &extensions,
-                              const std::map<std::vector<char>, int32_t> &class_indexing,
-                              const std::shared_ptr<DatasetCache> &cache);
+  ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode, const Sampler *sampler,
+                     const std::set<std::vector<char>> &extensions,
+                     const std::map<std::vector<char>, int32_t> &class_indexing,
+                     const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of ImageFolderDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -1749,11 +1747,10 @@ class ImageFolderDataset : public Dataset {
   /// \param[in] extensions File extensions to be read.
   /// \param[in] class_indexing a class name to label map.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode,
-                              const std::reference_wrapper<Sampler> sampler,
-                              const std::set<std::vector<char>> &extensions,
-                              const std::map<std::vector<char>, int32_t> &class_indexing,
-                              const std::shared_ptr<DatasetCache> &cache);
+  ImageFolderDataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> sampler,
+                     const std::set<std::vector<char>> &extensions,
+                     const std::map<std::vector<char>, int32_t> &class_indexing,
+                     const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of ImageFolderDataset.
   ~ImageFolderDataset() = default;
@@ -1833,10 +1830,9 @@ class ManifestDataset : public Dataset {
   ///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
   /// \param[in] decode Decode the images after reading (default=false).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit ManifestDataset(const std::vector<char> &dataset_file, const std::vector<char> &usage,
-                           const std::shared_ptr<Sampler> &sampler,
-                           const std::map<std::vector<char>, int32_t> &class_indexing, bool decode,
-                           const std::shared_ptr<DatasetCache> &cache);
+  ManifestDataset(const std::vector<char> &dataset_file, const std::vector<char> &usage,
+                  const std::shared_ptr<Sampler> &sampler, const std::map<std::vector<char>, int32_t> &class_indexing,
+                  bool decode, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of ManifestDataset.
   /// \param[in] dataset_file The dataset file to be read.
@@ -1846,9 +1842,9 @@ class ManifestDataset : public Dataset {
   ///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
   /// \param[in] decode Decode the images after reading (default=false).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit ManifestDataset(const std::vector<char> &dataset_file, const std::vector<char> &usage,
-                           const Sampler *sampler, const std::map<std::vector<char>, int32_t> &class_indexing,
-                           bool decode, const std::shared_ptr<DatasetCache> &cache);
+  ManifestDataset(const std::vector<char> &dataset_file, const std::vector<char> &usage, const Sampler *sampler,
+                  const std::map<std::vector<char>, int32_t> &class_indexing, bool decode,
+                  const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of ManifestDataset.
   /// \param[in] dataset_file The dataset file to be read.
@@ -1858,10 +1854,10 @@ class ManifestDataset : public Dataset {
   ///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
   /// \param[in] decode Decode the images after reading (default=false).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit ManifestDataset(const std::vector<char> &dataset_file, const std::vector<char> &usage,
-                           const std::reference_wrapper<Sampler> sampler,
-                           const std::map<std::vector<char>, int32_t> &class_indexing, bool decode,
-                           const std::shared_ptr<DatasetCache> &cache);
+  ManifestDataset(const std::vector<char> &dataset_file, const std::vector<char> &usage,
+                  const std::reference_wrapper<Sampler> sampler,
+                  const std::map<std::vector<char>, int32_t> &class_indexing, bool decode,
+                  const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Destructor of ManifestDataset.
   ~ManifestDataset() = default;
@@ -1945,10 +1941,10 @@ class MindDataDataset : public Dataset {
   ///    ShuffleMode::kGlobal - Shuffle both the files and samples.
   ///    ShuffleMode::kInfile - Shuffle samples in file.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
-                           const std::shared_ptr<Sampler> &sampler, const nlohmann::json *padded_sample,
-                           int64_t num_padded, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
-                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
+                  const std::shared_ptr<Sampler> &sampler, const nlohmann::json *padded_sample, int64_t num_padded,
+                  ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                  const std::shared_ptr<DatasetCache> &cache = nullptr);
 
   /// \brief Constructor of MindDataDataset.
   /// \param[in] dataset_file File name of one component of a mindrecord source. Other files with identical source
@@ -1965,10 +1961,10 @@ class MindDataDataset : public Dataset {
   ///    ShuffleMode::kGlobal - Shuffle both the files and samples.
   ///    ShuffleMode::kInfile - Shuffle samples in file.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
-                           const Sampler *sampler, const nlohmann::json *padded_sample, int64_t num_padded,
-                           ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
-                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
+                  const Sampler *sampler, const nlohmann::json *padded_sample, int64_t num_padded,
+                  ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                  const std::shared_ptr<DatasetCache> &cache = nullptr);
 
   /// \brief Constructor of MindDataDataset.
   /// \param[in] dataset_file File name of one component of a mindrecord source. Other files with identical source
@@ -1985,10 +1981,10 @@ class MindDataDataset : public Dataset {
   ///    ShuffleMode::kGlobal - Shuffle both the files and samples.
   ///    ShuffleMode::kInfile - Shuffle samples in file.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
-                           const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
-                           int64_t num_padded, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
-                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  MindDataDataset(const std::vector<char> &dataset_file, const std::vector<std::vector<char>> &columns_list,
+                  const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
+                  int64_t num_padded, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                  const std::shared_ptr<DatasetCache> &cache = nullptr);
 
   /// \brief Constructor of MindDataDataset.
   /// \param[in] dataset_files List of dataset files to be read directly.
@@ -2004,11 +2000,11 @@ class MindDataDataset : public Dataset {
   ///    ShuffleMode::kGlobal - Shuffle both the files and samples.
   ///    ShuffleMode::kInfile - Shuffle data within each file.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
-                           const std::vector<std::vector<char>> &columns_list, const std::shared_ptr<Sampler> &sampler,
-                           const nlohmann::json *padded_sample, int64_t num_padded,
-                           ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
-                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
+                  const std::vector<std::vector<char>> &columns_list, const std::shared_ptr<Sampler> &sampler,
+                  const nlohmann::json *padded_sample, int64_t num_padded,
+                  ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                  const std::shared_ptr<DatasetCache> &cache = nullptr);
 
   /// \brief Constructor of MindDataDataset.
   /// \param[in] dataset_files List of dataset files to be read directly.
@@ -2024,11 +2020,11 @@ class MindDataDataset : public Dataset {
   ///    ShuffleMode::kGlobal - Shuffle both the files and samples.
   ///    ShuffleMode::kInfile - Shuffle data within each file.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
-                           const std::vector<std::vector<char>> &columns_list, const Sampler *sampler,
-                           const nlohmann::json *padded_sample, int64_t num_padded,
-                           ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
-                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
+                  const std::vector<std::vector<char>> &columns_list, const Sampler *sampler,
+                  const nlohmann::json *padded_sample, int64_t num_padded,
+                  ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                  const std::shared_ptr<DatasetCache> &cache = nullptr);
 
   /// \brief Constructor of MindDataDataset.
   /// \param[in] dataset_files List of dataset files to be read directly.
@@ -2044,11 +2040,11 @@ class MindDataDataset : public Dataset {
   ///    ShuffleMode::kGlobal - Shuffle both the files and samples.
   ///    ShuffleMode::kInfile - Shuffle samples in file.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
-                           const std::vector<std::vector<char>> &columns_list,
-                           const std::reference_wrapper<Sampler> sampler, const nlohmann::json *padded_sample,
-                           int64_t num_padded, ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
-                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  MindDataDataset(const std::vector<std::vector<char>> &dataset_files,
+                  const std::vector<std::vector<char>> &columns_list, const std::reference_wrapper<Sampler> sampler,
+                  const nlohmann::json *padded_sample, int64_t num_padded,
+                  ShuffleMode shuffle_mode = ShuffleMode::kGlobal,
+                  const std::shared_ptr<DatasetCache> &cache = nullptr);
 
   /// \brief Destructor of MindDataDataset.
   ~MindDataDataset() = default;
@@ -2214,24 +2210,24 @@ class MnistDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+               const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of MnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] usage Part of dataset of MNIST, can be "train", "test" or "all".
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
-                        const std::shared_ptr<DatasetCache> &cache);
+  MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const Sampler *sampler,
+               const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of MnistDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] usage Part of dataset of MNIST, can be "train", "test" or "all".
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
-                        const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+  MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+               const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
 
   /// Destructor of MnistDataset.
   ~MnistDataset() = default;
@@ -2342,24 +2338,24 @@ class SBUDataset : public Dataset {
   /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit SBUDataset(const std::vector<char> &dataset_dir, bool decode, const std::shared_ptr<Sampler> &sampler,
-                      const std::shared_ptr<DatasetCache> &cache);
+  SBUDataset(const std::vector<char> &dataset_dir, bool decode, const std::shared_ptr<Sampler> &sampler,
+             const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of SBUDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit SBUDataset(const std::vector<char> &dataset_dir, bool decode, const Sampler *sampler,
-                      const std::shared_ptr<DatasetCache> &cache);
+  SBUDataset(const std::vector<char> &dataset_dir, bool decode, const Sampler *sampler,
+             const std::shared_ptr<DatasetCache> &cache);
 
   /// \brief Constructor of SBUDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
   /// \param[in] decode Decode the images after reading.
   /// \param[in] sampler Sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use.
-  explicit SBUDataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> sampler,
-                      const std::shared_ptr<DatasetCache> &cache);
+  SBUDataset(const std::vector<char> &dataset_dir, bool decode, const std::reference_wrapper<Sampler> sampler,
+             const std::shared_ptr<DatasetCache> &cache);
 
   /// Destructor of SBUDataset.
   ~SBUDataset() = default;
@@ -2422,9 +2418,8 @@ class TextFileDataset : public Dataset {
   /// \param[in] shard_id The shard ID within num_shards. This argument should be
   ///     specified only when num_shards is also specified (Default = 0).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit TextFileDataset(const std::vector<std::vector<char>> &dataset_files, int64_t num_samples,
-                           ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
-                           const std::shared_ptr<DatasetCache> &cache);
+  TextFileDataset(const std::vector<std::vector<char>> &dataset_files, int64_t num_samples, ShuffleMode shuffle,
+                  int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// Destructor of TextFileDataset.
   ~TextFileDataset() = default;
@@ -2582,9 +2577,8 @@ class USPSDataset : public Dataset {
   /// \param[in] shard_id The shard ID within num_shards. This argument should be
   ///     specified only when num_shards is also specified (Default = 0).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
-  explicit USPSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
-                       ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
-                       const std::shared_ptr<DatasetCache> &cache);
+  USPSDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, int64_t num_samples,
+              ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, const std::shared_ptr<DatasetCache> &cache);
 
   /// Destructor of USPSDataset.
   ~USPSDataset() = default;
@@ -2628,10 +2622,9 @@ class VOCDataset : public Dataset {
   ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] extra_metadata Flag to add extra meta-data to row (default=false).
-  explicit VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
-                      const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
-                      bool decode, const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache,
-                      bool extra_metadata);
+  VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task, const std::vector<char> &usage,
+             const std::map<std::vector<char>, int32_t> &class_indexing, bool decode,
+             const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache, bool extra_metadata);
 
   /// \brief Constructor of VOCDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -2642,10 +2635,9 @@ class VOCDataset : public Dataset {
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] extra_metadata Flag to add extra meta-data to row (default=false).
-  explicit VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
-                      const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
-                      bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache,
-                      bool extra_metadata);
+  VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task, const std::vector<char> &usage,
+             const std::map<std::vector<char>, int32_t> &class_indexing, bool decode, const Sampler *sampler,
+             const std::shared_ptr<DatasetCache> &cache, bool extra_metadata);
 
   /// \brief Constructor of VOCDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
@@ -2656,10 +2648,10 @@ class VOCDataset : public Dataset {
   /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] extra_metadata Flag to add extra meta-data to row (default=false).
-  explicit VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task,
-                      const std::vector<char> &usage, const std::map<std::vector<char>, int32_t> &class_indexing,
-                      bool decode, const std::reference_wrapper<Sampler> sampler,
-                      const std::shared_ptr<DatasetCache> &cache, bool extra_metadata);
+  VOCDataset(const std::vector<char> &dataset_dir, const std::vector<char> &task, const std::vector<char> &usage,
+             const std::map<std::vector<char>, int32_t> &class_indexing, bool decode,
+             const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache,
+             bool extra_metadata);
 
   /// Destructor of VOCDataset.
   ~VOCDataset() = default;

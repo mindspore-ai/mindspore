@@ -127,14 +127,14 @@ using FLOAT64_C3 = Chn3<double>;
 using FLOAT64_C4 = Chn4<double>;
 
 enum LPixelType {
-  BGR = 0,
-  RGB = 1,
-  RGBA = 2,
-  RGBA2GRAY = 3,
-  RGBA2BGR = 4,
-  RGBA2RGB = 5,
-  NV212BGR = 6,
-  NV122BGR = 7,
+  BGR = 0,       /**< Pixel in BGR type. */
+  RGB = 1,       /**< Pixel in RGB type. */
+  RGBA = 2,      /**< Pixel in RGBA type. */
+  RGBA2GRAY = 3, /**< Convert image from RGBA to GRAY. */
+  RGBA2BGR = 4,  /**< Convert image from RGBA to BGR. */
+  RGBA2RGB = 5,  /**< Convert image from RGBA to RGB. */
+  NV212BGR = 6,  /**< Convert image from NV21 to BGR. */
+  NV122BGR = 7,  /**< Convert image from NV12 to BGR. */
 };
 
 enum WARP_BORDER_MODE { WARP_BORDER_MODE_CONSTANT };
@@ -142,21 +142,21 @@ enum WARP_BORDER_MODE { WARP_BORDER_MODE_CONSTANT };
 class LDataType {
  public:
   enum Type : uint8_t {
-    UNKNOWN = 0,
-    BOOL,
-    INT8,
-    UINT8,
-    INT16,
-    UINT16,
-    INT32,
-    UINT32,
-    INT64,
-    UINT64,
-    FLOAT16,
-    FLOAT32,
-    FLOAT64,
-    DOUBLE,
-    NUM_OF_TYPES
+    UNKNOWN = 0, /**< Unknown data type. */
+    BOOL,        /**< BOOL data type. */
+    INT8,        /**< INT8 data type. */
+    UINT8,       /**< UINT8 data type. */
+    INT16,       /**< INT16 data type. */
+    UINT16,      /**< UINT16 data type. */
+    INT32,       /**< INT32 data type. */
+    UINT32,      /**< UINT32 data type. */
+    INT64,       /**< INT64 data type. */
+    UINT64,      /**< UINT64 data type. */
+    FLOAT16,     /**< FLOAT16 data type. */
+    FLOAT32,     /**< FLOAT32 data type. */
+    FLOAT64,     /**< FLOAT64 data type. */
+    DOUBLE,      /**< DOUBLE data type. */
+    NUM_OF_TYPES /**< number of types. */
   };
 
   LDataType() : type_(UNKNOWN) {}
@@ -179,20 +179,20 @@ class LDataType {
 
  public:
   static inline const uint8_t SIZE_IN_BYTES[] = {
-    0,  // UNKNOWN
-    1,  // BOOL
-    1,  // INT8
-    1,  // UINT8
-    2,  // INT16
-    2,  // UINT16
-    4,  // INT32
-    4,  // UINT32
-    8,  // INT64
-    8,  // UINT64
-    2,  // FLOAT16
-    4,  // FLOAT32
-    8,  // FLOAT64
-    8,  // DOUBLE
+    0, /**< Unknown size. */
+    1, /**< Size of BOOL. */
+    1, /**< Size of INT8. */
+    1, /**< Size of UINT8. */
+    2, /**< Size of INT16. */
+    2, /**< Size of UINT16. */
+    4, /**< Size of INT32. */
+    4, /**< Size of UINT32. */
+    8, /**< Size of INT64. */
+    8, /**< Size of UINT64. */
+    2, /**< Size of FLOAT16. */
+    4, /**< Size of FLOAT32. */
+    8, /**< Size of FLOAT64. */
+    8, /**< Size of DOUBLE. */
   };
 
   Type type_;

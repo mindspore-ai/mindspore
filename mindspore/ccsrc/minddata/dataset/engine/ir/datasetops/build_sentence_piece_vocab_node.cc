@@ -70,6 +70,13 @@ Status BuildSentenceVocabNode::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
+  if (model_type_ != SentencePieceModel::kUnigram && model_type_ != SentencePieceModel::kBpe &&
+      model_type_ != SentencePieceModel::kChar && model_type_ != SentencePieceModel::kWord) {
+    std::string err_msg = "BuildSentenceVocabNode: Invalid SentencePieceModel, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
   if (vocab_size_ <= 0) {
     std::string err_msg =
       "BuildSentenceVocabNode: vocab_size should be positive, but got: " + std::to_string(vocab_size_);

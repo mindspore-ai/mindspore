@@ -133,7 +133,7 @@ APP_ERROR DvppCommon::DeInit(void) {
 
   ret = acldvppDestroyChannel(dvppChannelDesc_);
   if (ret != APP_ERR_OK) {
-    MS_LOG(ERROR) << "Failed to destory dvpp channel, ret = " << ret << ".";
+    MS_LOG(ERROR) << "Failed to destroy dvpp channel, ret = " << ret << ".";
     return ret;
   }
 
@@ -155,7 +155,7 @@ APP_ERROR DvppCommon::DestroyResource() {
   if (vdecChannelDesc_ != nullptr) {
     ret = aclvdecDestroyChannel(vdecChannelDesc_);
     if (ret != APP_ERR_OK) {
-      MS_LOG(ERROR) << "Failed to destory dvpp channel, ret = " << ret;
+      MS_LOG(ERROR) << "Failed to destroy dvpp channel, ret = " << ret;
     }
     aclvdecDestroyChannelDesc(vdecChannelDesc_);
     vdecChannelDesc_ = nullptr;
@@ -1066,7 +1066,7 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
     return ret;
   }
 
-  // In TransferImageH2D function, device buffer will be alloced to store the input image before decode
+  // In TransferImageH2D function, device buffer will be allocated to store the input image before decode
   // Need to pay attention to release of the buffer
   ret = TransferImageH2D(imageInfo, inputImage_);
   if (ret != APP_ERR_OK) {
@@ -1167,7 +1167,7 @@ APP_ERROR DvppCommon::CombinePngdProcess(const RawData &imageInfo, acldvppPixelF
     return ret;
   }
 
-  // In TransferImageH2D function, device buffer will be alloced to store the input image
+  // In TransferImageH2D function, device buffer will be allocated to store the input image
   // Need to pay attention to release of the buffer
   ret = TransferImageH2D(imageInfo, inputImage_);
   if (ret != APP_ERR_OK) {
@@ -1231,8 +1231,8 @@ APP_ERROR DvppCommon::TransferYuvDataH2D(const DvppDataInfo &imageinfo) {
     RELEASE_DVPP_DATA(device_ptr);
     return ret;
   }
-  /* Important!!! decodedImage_ speifies the image in deocded format(RGB OR YUV)
-   * Not essentailly to be the image after decode.(Specifies the data not in RAW encode format)
+  /* Important!!! decodedImage_ speifies the image in decoded format(RGB OR YUV)
+   * Not essentially to be the image after decode.(Specifies the data not in RAW encode format)
    * It can also be the image after resize(Very important)
    */
   decodedImage_ = std::make_shared<DvppDataInfo>();
@@ -1321,7 +1321,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo, acldvppPixelFormat 
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
     return ret;
   }
-  // In TransferImageH2D function, device buffer will be alloced to store the input image before decode
+  // In TransferImageH2D function, device buffer will be allocated to store the input image before decode
   // Need to pay attention to release of the buffer
   ret = TransferImageH2D(imageInfo, inputImage_);
   if (ret != APP_ERR_OK) {
@@ -1380,7 +1380,7 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo) {
     return ret;
   }
 
-  // In TransferImageH2D function, device buffer will be alloced to store the input image
+  // In TransferImageH2D function, device buffer will be allocated to store the input image
   // Need to pay attention to release of the buffer
   ret = TransferImageH2D(imageInfo, inputImage_);
   if (ret != APP_ERR_OK) {
@@ -1428,7 +1428,7 @@ APP_ERROR DvppCommon::CreateStreamDesc(std::shared_ptr<DvppDataInfo> data) {
     modelInBuff = nullptr;
     return APP_ERR_ACL_FAILURE;
   }
-  // Create input stream desc which need to be destoryed in vdec callback function
+  // Create input stream desc which need to be destroyed in vdec callback function
   streamInputDesc_ = acldvppCreateStreamDesc();
   if (streamInputDesc_ == nullptr) {
     MS_LOG(ERROR) << "Failed to create input stream description.";
@@ -1476,14 +1476,14 @@ APP_ERROR DvppCommon::CombineVdecProcess(std::shared_ptr<DvppDataInfo> data, voi
   }
 
   void *picOutBufferDev = nullptr;
-  // picOutBufferDev need to be destoryed in vdec callback function
+  // picOutBufferDev need to be destroyed in vdec callback function
   ret = acldvppMalloc(&picOutBufferDev, dataSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc memory with " << dataSize << " bytes, ret = " << ret << ".";
     return APP_ERR_ACL_BAD_ALLOC;
   }
 
-  // picOutputDesc_ will be destoryed in vdec callback function
+  // picOutputDesc_ will be destroyed in vdec callback function
   picOutputDesc_ = acldvppCreatePicDesc();
   if (picOutputDesc_ == NULL) {
     return APP_ERR_ACL_BAD_ALLOC;
@@ -1538,10 +1538,10 @@ APP_ERROR DvppCommon::VdecSendEosFrame() const {
     return ret;
   }
 
-  // destory input stream desc
+  // destroy input stream desc
   ret = acldvppDestroyStreamDesc(eosStreamDesc);
   if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Fail to destory dvpp stream desc for eos, ret = " << ret << ".";
+    MS_LOG(ERROR) << "Fail to destroy dvpp stream desc for eos, ret = " << ret << ".";
     return ret;
   }
   return ret;
@@ -1738,7 +1738,7 @@ APP_ERROR DvppCommon::CombineJpegeProcess(const RawData &imageInfo, uint32_t wid
   inputImage_->format = format;
   inputImage_->width = width;
   inputImage_->height = height;
-  // In TransferImageH2D function, device buffer will be alloced to store the input image
+  // In TransferImageH2D function, device buffer will be allocated to store the input image
   // Need to pay attention to release of the buffer
   APP_ERROR ret = TransferImageH2D(imageInfo, inputImage_);
   if (ret != APP_ERR_OK) {

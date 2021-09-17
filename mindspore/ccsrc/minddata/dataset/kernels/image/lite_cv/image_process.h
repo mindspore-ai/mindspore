@@ -47,10 +47,10 @@ namespace dataset {
   static_cast<int16_t>(::std::min(::std::max(static_cast<int>(X + (X >= 0.f ? 0.5f : -0.5f)), -32768), 32767));
 
 enum PaddBorderType {
-  PADD_BORDER_CONSTANT = 0,
-  PADD_BORDER_REPLICATE = 1,
-  PADD_BORDER_REFLECT_101 = 4,
-  PADD_BORDER_DEFAULT = PADD_BORDER_REFLECT_101
+  PADD_BORDER_CONSTANT = 0,                     /**< Fills the border with constant values. */
+  PADD_BORDER_REPLICATE = 1,                    /**< Fills the border with replicate mode. */
+  PADD_BORDER_REFLECT_101 = 4,                  /**< Fills the border with reflect 101 mode. */
+  PADD_BORDER_DEFAULT = PADD_BORDER_REFLECT_101 /**< Default pad mode, use reflect 101 mode. */
 };
 
 struct BoxesConfig {

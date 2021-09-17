@@ -113,10 +113,10 @@ class BertTokenizer final : public TensorTransform {
   /// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]' and
   ///   '[MASK]' (default=true).
   /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
-  explicit BertTokenizer(const std::shared_ptr<Vocab> &vocab, const std::vector<char> &suffix_indicator,
-                         int32_t max_bytes_per_token, const std::vector<char> &unknown_token, bool lower_case,
-                         bool keep_whitespace, const NormalizeForm normalize_form, bool preserve_unused_token,
-                         bool with_offsets);
+  BertTokenizer(const std::shared_ptr<Vocab> &vocab, const std::vector<char> &suffix_indicator,
+                int32_t max_bytes_per_token, const std::vector<char> &unknown_token, bool lower_case,
+                bool keep_whitespace, const NormalizeForm normalize_form, bool preserve_unused_token,
+                bool with_offsets);
 
   /// \brief Destructor
   ~BertTokenizer() = default;
@@ -162,8 +162,8 @@ class JiebaTokenizer final : public TensorTransform {
   ///   - JiebaMode.kHMM, tokenizes with Hidden Markov Model Segment algorithm.
   ///   - JiebaMode.kMIX, tokenizes with a mix of MPSegment and HMMSegment algorithms.
   /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
-  explicit JiebaTokenizer(const std::string &hmm_path, const std::string &mp_path,
-                          const JiebaMode &mode = JiebaMode::kMix, bool with_offsets = false)
+  JiebaTokenizer(const std::string &hmm_path, const std::string &mp_path, const JiebaMode &mode = JiebaMode::kMix,
+                 bool with_offsets = false)
       : JiebaTokenizer(StringToChar(hmm_path), StringToChar(mp_path), mode, with_offsets) {}
 
   /// \brief Constructor.
@@ -177,8 +177,8 @@ class JiebaTokenizer final : public TensorTransform {
   ///   - JiebaMode.kHMM, tokenizes with Hidden Markov Model Segment algorithm.
   ///   - JiebaMode.kMIX, tokenizes with a mix of MPSegment and HMMSegment algorithms.
   /// \param[in] with_offsets Whether to output offsets of tokens (default=false).
-  explicit JiebaTokenizer(const std::vector<char> &hmm_path, const std::vector<char> &mp_path, const JiebaMode &mode,
-                          bool with_offsets);
+  JiebaTokenizer(const std::vector<char> &hmm_path, const std::vector<char> &mp_path, const JiebaMode &mode,
+                 bool with_offsets);
 
   /// \brief Destructor
   ~JiebaTokenizer() = default;
@@ -255,8 +255,8 @@ class Lookup final : public TensorTransform {
   ///    runtime error will be thrown (default={}, means no unknown_token is specified).
   /// \param[in] data_type mindspore::DataType of the tensor after lookup; must be numeric, including bool.
   ///   (default=mindspore::DataType::kNumberTypeInt32).
-  explicit Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::vector<char>> &unknown_token,
-                  mindspore::DataType data_type = mindspore::DataType::kNumberTypeInt32);
+  Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::vector<char>> &unknown_token,
+         mindspore::DataType data_type = mindspore::DataType::kNumberTypeInt32);
 
   /// \brief Destructor
   ~Lookup() = default;
@@ -296,8 +296,8 @@ class Ngram final : public TensorTransform {
   /// \param[in] right_pad {"pad_token", pad_width}. Padding performed on right side of the sequence.pad_width will
   ///    be capped at n-1. right_pad=("-",2) would pad the right side of the sequence with "--" (default={"", 0}}).
   /// \param[in] separator Symbol used to join strings together (default=" ").
-  explicit Ngram(const std::vector<int32_t> &ngrams, const std::pair<std::vector<char>, int32_t> &left_pad,
-                 const std::pair<std::vector<char>, int32_t> &right_pad, const std::vector<char> &separator);
+  Ngram(const std::vector<int32_t> &ngrams, const std::pair<std::vector<char>, int32_t> &left_pad,
+        const std::pair<std::vector<char>, int32_t> &right_pad, const std::vector<char> &separator);
 
   /// \brief Destructor
   ~Ngram() = default;
@@ -348,7 +348,7 @@ class RegexReplace final : public TensorTransform {
   /// \param[in] replace The string to replace the matched element.
   /// \param[in] replace_all Confirm whether to replace all. If false, only replace the first matched element;
   ///   if true, replace all matched elements (default=true).
-  explicit RegexReplace(std::string pattern, std::string replace, bool replace_all = true)
+  RegexReplace(std::string pattern, std::string replace, bool replace_all = true)
       : RegexReplace(StringToChar(pattern), StringToChar(replace), replace_all) {}
 
   /// \brief Constructor.
@@ -356,7 +356,7 @@ class RegexReplace final : public TensorTransform {
   /// \param[in] replace The string to replace the matched element.
   /// \param[in] replace_all Confirm whether to replace all. If false, only replace the first matched element;
   ///   if true, replace all matched elements (default=true).
-  explicit RegexReplace(const std::vector<char> &pattern, const std::vector<char> &replace, bool replace_all);
+  RegexReplace(const std::vector<char> &pattern, const std::vector<char> &replace, bool replace_all);
 
   /// \brief Destructor
   ~RegexReplace() = default;

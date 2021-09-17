@@ -314,9 +314,9 @@ std::shared_ptr<TensorOperation> RegexTokenizer::Parse() {
 // SentencePieceTokenizer
 struct SentencePieceTokenizer::Data {
   Data(const std::shared_ptr<SentencePieceVocab> &vocab, SPieceTokenizerOutType out_type)
-      : vocab_(vocab), out_type_(out_type) {}
+      : vocab_(vocab), vocab_path_(""), out_type_(out_type) {}
   Data(const std::vector<char> &vocab_path, SPieceTokenizerOutType out_type)
-      : vocab_path_(CharToString(vocab_path)), out_type_(out_type) {}
+      : vocab_(nullptr), vocab_path_(CharToString(vocab_path)), out_type_(out_type) {}
   std::shared_ptr<SentencePieceVocab> vocab_;
   std::string vocab_path_;
   SPieceTokenizerOutType out_type_;
