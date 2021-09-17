@@ -119,7 +119,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void *ReallocData();
 
-  void *data() override;
+  void *data() override { return data_; };
 
   virtual void *data() const { return data_; }
 

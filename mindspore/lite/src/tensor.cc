@@ -329,11 +329,6 @@ void *Tensor::MutableData() {
   return this->data_;
 }
 
-void *Tensor::data() {
-  Prepare();
-  return this->data_;
-}
-
 void Tensor::IncRefCount() {
   ref_count_++;
   if (allocator_ != nullptr) {

@@ -826,7 +826,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
   return actors;
 }
 
-int MindrtInit() { return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", ""); }
+int MindrtInit() { return mindspore::Initialize("", "", "", ""); }
 
 void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &actor_list) {
   for (const auto &actor : actor_list) {
