@@ -36,7 +36,4 @@ if(MSLITE_ENABLE_CONVERTER)
         target_link_libraries(codegen PRIVATE
                 ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
     endif()
-    if(NOT WIN32 AND "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        add_custom_command(TARGET codegen POST_BUILD COMMAND strip ${CODEGEN_PATH})
-    endif()
 endif()

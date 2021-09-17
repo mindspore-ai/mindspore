@@ -18,7 +18,7 @@ else()
         set(opencv_CXXFLAGS "${opencv_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
     endif()
     set(opencv_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
-    set(opencv_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
+    set(opencv_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack -s")
 endif()
 
 if(ENABLE_GITEE)
@@ -49,7 +49,7 @@ if(MSVC)
     mindspore_add_pkg(opencv
             VER 4.5.1
             LIBS opencv_core451.lib opencv_imgcodecs451.lib opencv_imgproc451.lib
-            LIB_PATH x64/vc15/lib
+            LIB_PATH x64/*/lib
             URL ${REQ_URL}
             MD5 ${MD5}
             CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DWITH_PROTOBUF=OFF -DWITH_WEBP=OFF -DWITH_IPP=OFF
