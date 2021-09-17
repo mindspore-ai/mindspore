@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // constructor
 FrequencyMaskingOp::FrequencyMaskingOp(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start,
                                        float mask_value)

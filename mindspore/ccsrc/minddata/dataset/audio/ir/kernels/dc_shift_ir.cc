@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 // DCShiftOperation
 DCShiftOperation::DCShiftOperation(float shift, float limiter_gain) : shift_(shift), limiter_gain_(limiter_gain) {}
 
@@ -43,7 +42,6 @@ Status DCShiftOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

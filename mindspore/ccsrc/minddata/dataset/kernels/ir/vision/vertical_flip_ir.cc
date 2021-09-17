@@ -21,9 +21,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 #ifndef ENABLE_ANDROID
 
 // VerticalFlipOperation
@@ -46,7 +44,6 @@ Status VerticalFlipOperation::from_json(nlohmann::json op_params, std::shared_pt
 }
 
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

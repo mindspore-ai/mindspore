@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status VolOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   std::shared_ptr<Tensor> input_tensor;
@@ -50,6 +49,5 @@ Status VolOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataTy
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

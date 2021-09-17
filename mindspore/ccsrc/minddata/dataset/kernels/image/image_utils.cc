@@ -489,9 +489,9 @@ Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] ConvertColor: load image failed.");
     }
-    if (input_cv->Rank() == 3) {
+    if (input_cv->Rank() == DEFAULT_IMAGE_RANK) {
       int num_channels = input_cv->shape()[CHANNEL_INDEX];
-      if (num_channels != 3 && num_channels != 4) {
+      if (num_channels != DEFAULT_IMAGE_CHANNELS && num_channels != MAX_IMAGE_CHANNELS) {
         RETURN_STATUS_UNEXPECTED("ConvertColor: number of channels of image should be 3 or 4, but got:" +
                                  std::to_string(num_channels));
       }
@@ -991,7 +991,6 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
         *itr = std::min(std::max((*itr), 0.0f), 1.0f);
       }
       *output = input;
-
     } else {
       std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
       if (!input_cv->mat().data) {

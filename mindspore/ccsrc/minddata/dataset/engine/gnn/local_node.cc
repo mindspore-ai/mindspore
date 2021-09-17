@@ -140,7 +140,6 @@ Status LocalNode::AddAdjacent(const std::shared_ptr<Node> &node, const std::shar
 
 Status LocalNode::GetEdgeByAdjNodeId(const NodeIdType &adj_node_id, EdgeIdType *out_edge_id) {
   auto itr = adjacent_nodes_.find(adj_node_id);
-
   if (itr != adjacent_nodes_.end()) {
     (*out_edge_id) = itr->second;
   } else {

@@ -19,9 +19,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 RgbToBgrOperation::RgbToBgrOperation() = default;
 
 // RGB2BGROperation
@@ -37,7 +35,6 @@ Status RgbToBgrOperation::from_json(nlohmann::json op_params, std::shared_ptr<Te
   *operation = std::make_shared<vision::RgbToBgrOperation>();
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -104,7 +104,6 @@ Status AffineOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
   *operation = std::make_shared<vision::AffineOperation>(degrees, translation, scale, shear, interpolation, fill_value);
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

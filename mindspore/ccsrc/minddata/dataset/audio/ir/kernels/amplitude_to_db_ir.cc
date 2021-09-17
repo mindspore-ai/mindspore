@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 // AmplitudeToDBOperation
 AmplitudeToDBOperation::AmplitudeToDBOperation(ScaleType stype, float ref_value, float amin, float top_db)
     : stype_(stype), ref_value_(ref_value), amin_(amin), top_db_(top_db) {}

@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status ContrastOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   TensorShape input_shape = input->shape();
@@ -54,6 +53,5 @@ Status ContrastOp::OutputType(const std::vector<DataType> &inputs, std::vector<D
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

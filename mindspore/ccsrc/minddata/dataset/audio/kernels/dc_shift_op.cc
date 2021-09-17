@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status DCShiftOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // input <..., time>.
@@ -50,6 +49,5 @@ Status DCShiftOp::OutputType(const std::vector<DataType> &inputs, std::vector<Da
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -965,6 +965,7 @@ def check_gaussian_blur(method):
 
     return new_method
 
+
 def check_convert_color(method):
     """Wrapper method to check the parameters of convertcolor."""
 

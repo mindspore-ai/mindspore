@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 /// \brief Generate linearly spaced vector.
 /// \param[in] start - Value of the startpoint.
 /// \param[in] end - Value of the endpoint.

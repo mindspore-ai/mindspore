@@ -42,7 +42,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
 // AllpassBiquad Transform Operation.
 struct AllpassBiquad::Data {

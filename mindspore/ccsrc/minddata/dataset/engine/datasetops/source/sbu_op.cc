@@ -229,6 +229,5 @@ Status SBUOp::ReplaceAll(std::string *str, const std::string &from, const std::s
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

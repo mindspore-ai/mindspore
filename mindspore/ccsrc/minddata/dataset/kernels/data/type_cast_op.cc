@@ -34,6 +34,5 @@ Status TypeCastOp::OutputType(const std::vector<DataType> &inputs, std::vector<D
   outputs[0] = type_;
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

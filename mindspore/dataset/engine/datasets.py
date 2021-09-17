@@ -2426,6 +2426,7 @@ def wait_pid():
         # waitpid may be failed for some reasons so we ignore this error
         pass
 
+
 # Dataset need _watch_dog thread to monitoring fork multi-processing,
 # and thread can't be a member function otherwise python won't collect and release resources.
 def _watch_dog(eot, pids):
@@ -3692,7 +3693,7 @@ class SamplerFn:
         if multi_process is True:
             try:
                 self.eof = multiprocessing.Event()
-            except:
+            except Exception:
                 raise RuntimeError("Init multiprocessing.Event() failed, This might be caused by insufficient shm,"
                                    + " and the recommended shm size is at least 5 GB.")
         else:
@@ -3710,7 +3711,7 @@ class SamplerFn:
             if multi_process is True:
                 try:
                     worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size)
-                except:
+                except Exception:
                     raise RuntimeError("Init multiprocessing.Queue() failed, This might be caused by insufficient shm,"
                                        + " and the recommended shm size is at least 5 GB.")
                 worker.daemon = True

@@ -42,6 +42,7 @@
 #define DEFAULT_IMAGE_RANK 3      // images are hwc channels in general
 #define MAX_BIT_VALUE 255         // max bit value after decode is 256
 #define MIN_IMAGE_CHANNELS 1      // image ops support minimum of 1 channel
+#define MAX_IMAGE_CHANNELS 4      // image ops support maximum of 4 channel
 #define MIN_IMAGE_DIMENSION 2     // images are at least 2 dimensional
 namespace mindspore {
 namespace dataset {

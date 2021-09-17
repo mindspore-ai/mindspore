@@ -347,6 +347,5 @@ Status USPSOp::ComputeColMap() {
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

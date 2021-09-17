@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const float TimeStretchOp::kHopLength = std::numeric_limits<float>::quiet_NaN();
 const int TimeStretchOp::kNFreq = 201;
 const float TimeStretchOp::kFixedRate = std::numeric_limits<float>::quiet_NaN();

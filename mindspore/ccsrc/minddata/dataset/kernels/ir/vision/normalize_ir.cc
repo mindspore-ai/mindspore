@@ -55,7 +55,6 @@ Status NormalizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<T
   *operation = std::make_shared<vision::NormalizeOperation>(mean, std);
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

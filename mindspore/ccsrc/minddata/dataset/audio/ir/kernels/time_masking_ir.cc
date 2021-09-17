@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 TimeMaskingOperation::TimeMaskingOperation(bool iid_masks, int32_t time_mask_param, int32_t mask_start,
                                            float mask_value)
     : iid_masks_(iid_masks), time_mask_param_(time_mask_param), mask_start_(mask_start), mask_value_(mask_value) {}
