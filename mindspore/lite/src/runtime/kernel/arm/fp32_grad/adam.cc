@@ -62,7 +62,7 @@ static int DoAdam(float *m, float *v, const float *gradient, float *weight, floa
 }
 
 int AdamCPUKernel::Execute(int task_id) {
-  CHECK_LESS_RETURN(in_tensors_.size(), 10);
+  CHECK_LESS_RETURN(in_tensors_.size(), INPUT_MAX_NUM);
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
@@ -133,7 +133,7 @@ std::vector<int> AdamCPUKernel::GetOptimizerParamsIdxs() const {
 }
 
 int AdamCPUKernel::OptimizerStep() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 9);
+  CHECK_LESS_RETURN(in_tensors_.size(), INPUT_MAX_NUM - 1);
   auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());

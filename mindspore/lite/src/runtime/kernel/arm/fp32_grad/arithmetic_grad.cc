@@ -29,11 +29,11 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ArithmeticGradCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 3);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(in_tensors_.at(2));
-  CHECK_LESS_RETURN(out_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), FOURTH_INPUT);
+  CHECK_NULL_RETURN(in_tensors_.at(FIRST_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(SECOND_INPUT));
+  CHECK_NULL_RETURN(in_tensors_.at(THIRD_INPUT));
+  CHECK_LESS_RETURN(out_tensors_.size(), THIRD_INPUT);
   auto dx1 = out_tensors_[0];
   auto dx2 = out_tensors_[1];
   CHECK_NULL_RETURN(dx1);

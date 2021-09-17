@@ -30,6 +30,8 @@
 namespace mindspore {
 namespace lite {
 namespace {
+constexpr auto kNumFlagOne = 1;
+constexpr auto kNumFlagTwo = 2;
 constexpr auto kCommonAttrValueNum = 2;
 constexpr auto kNamePaddingMode = "padding_mode";
 constexpr auto kNameCeilMode = "ceil_mode";
@@ -164,7 +166,7 @@ STATUS PrimitiveMapper::MoveAttrMap(const CNodePtr &cnode, const PrimitivePtr &d
 }
 
 STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                       const PrimitivePtr &dst_prim, const std::string &attr_name, int flag) {
+                                       const PrimitivePtr &dst_prim, const std::string &attr_name, size_t flag) {
   auto attr_val = dst_prim->GetAttr(attr_name);
   if (attr_val == nullptr) {
     MS_LOG(INFO) << "There is no attr: " << attr_name;
@@ -173,14 +175,14 @@ STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNo
 
   auto inputs = cnode->inputs();
   switch (flag) {
-    case (1): {
+    case (kNumFlagOne): {
       auto value_data = opt::CastToVec2DInt(attr_val);
       auto param_node =
         opt::BuildIntVec2DParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
       inputs.push_back(param_node);
       break;
     }
-    case (2): {
+    case (kNumFlagTwo): {
       auto value_data = GetValue<float>(attr_val);
       auto param_node =
         opt::BuildFloatValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);

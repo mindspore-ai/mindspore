@@ -35,7 +35,7 @@ int ConvolutionGradFilterCPUKernel::ReSize() {
   // x is in input 1
   // dw is output 0
 
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), THIRD_INPUT);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(out_tensors_.at(0));
   auto *x_tensor = in_tensors_.at(1);
