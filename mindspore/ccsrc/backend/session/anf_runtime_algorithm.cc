@@ -2245,7 +2245,7 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
   node->set_abstract(eval_result);
 }
 
-void AnfRuntimeAlgorithm::InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_graph) {
+void AnfRuntimeAlgorithm::InsertMakeTupleForOutput(const NotNull<KernelGraphPtr> &root_graph) {
   auto return_node = root_graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
   if (return_node->size() <= kReturnDataIndex) {
