@@ -41,7 +41,7 @@ class _Config:
 
 class OpParallelConfig(_Config):
     r"""
-        OpParallelConfig for the setting the data parallel and model parallel.
+        OpParallelConfig for the setting data parallel and model parallel.
 
         Args:
             data_parallel (int): The data parallel way. Default: 1
@@ -81,7 +81,7 @@ class OpParallelConfig(_Config):
 
 class _PipeLineConfig(_Config):
     r"""
-        PPConfig for the setting the data parallel, model parallel
+        PPConfig for the setting data parallel, model parallel
 
         Args:
             pipeline_stage (int): The number of the pipeline stages. Default: 1
