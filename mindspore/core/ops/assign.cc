@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace ops {
-
 AbstractBasePtr InferImplAssign(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
