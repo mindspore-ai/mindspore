@@ -34,6 +34,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #endif
 #include "debug/debugger/tensor_summary.h"
+#include "utils/file_utils.h"
 #ifdef ONLINE_DBG_MODE
 namespace mindspore {
 #endif
@@ -1281,14 +1282,18 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
   std::string overflow_bin_path;
 
 #ifdef ONLINE_DBG_MODE
+  if (DumpJsonParser::GetInstance().path().empty()) {
+    // Dump config is not set.
+    return false;
+  }
   auto debugger = Debugger::GetInstance();
   overflow_bin_path = DumpJsonParser::GetInstance().GetOpOverflowBinPath(debugger->GetGraphPtr()->graph_id());
-  std::string check_overflow_bin_path = RealPath(overflow_bin_path);
-  if (check_overflow_bin_path.empty()) {
+  auto realpath = FileUtils::GetRealPath(overflow_bin_path.c_str());
+  if (!realpath.has_value()) {
     MS_LOG(INFO) << "Get real path failed for overflow_bin_path.";
     return false;
   }
-  overflow_bin_path = check_overflow_bin_path;
+  overflow_bin_path = realpath.value();
 #else
   overflow_bin_path = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
                       std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
@@ -1471,7 +1476,7 @@ std::string DebugServices::RealPath(const std::string &input_path) {
       MS_LOG(EXCEPTION) << "The length of file name : " << file_name.length() << " exceeds limit: " << NAME_MAX;
     }
     if (realpath(prefix_path.c_str(), real_path) == nullptr) {
-      MS_LOG(WARNING) << "The dir " << prefix_path << " does not exist.";
+      MS_LOG(ERROR) << "The dir " << prefix_path << " does not exist.";
       return "";
     }
 
