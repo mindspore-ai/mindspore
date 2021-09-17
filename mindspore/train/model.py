@@ -58,18 +58,18 @@ class _StepSync(Callback):
 
 class Model:
     """
-    High-Level API for Training or Testing.
+    High-Level API for training or inference.
 
     `Model` groups layers into an object with training and inference features.
 
     Args:
         network (Cell): A training or testing network.
         loss_fn (Cell): Objective function, if loss_fn is None, the
-                             network should contain the logic of loss and grads calculation, and the logic
-                             of parallel if needed. Default: None.
+                             network should contain the logic of loss and grads calculation,
+                             and parallel if needed. Default: None.
         optimizer (Cell): Optimizer for updating the weights. Default: None.
         metrics (Union[dict, set]): A Dictionary or a set of metrics to be evaluated by the model during
-                        training and testing. eg: {'accuracy', 'recall'}. Default: None.
+                        training and inference. eg: {'accuracy', 'recall'}. Default: None.
         eval_network (Cell): Network for evaluation. If not defined, `network` and `loss_fn` would be wrapped as
                              `eval_network` . Default: None.
         eval_indexes (list): When defining the `eval_network`, if `eval_indexes` is None, all outputs of the
@@ -845,7 +845,8 @@ class Model:
                 Default: True.
 
         Returns:
-            Dict, which returns the loss value and metrics values for the model in the test mode.
+            Dict, the key is the metric name defined by users and the value is the metrics value for
+            the model in the test mode.
 
         Examples:
             >>> from mindspore import Model, nn
@@ -905,8 +906,8 @@ class Model:
             This is a pre-compile function. The arguments should be the same with model.predict() function.
 
         Args:
-           predict_data (Tensor): The predict data, can be bool, int, float, str, None, tensor,
-                         or tuple, list and dict that store these types.
+           predict_data (Optional[Tensor, list[Tensor], tuple[Tensor]]): The predict data, can be a single tensor,
+           a list of tensor, or a tuple of tensor.
 
         Returns:
             Tensor, array(s) of predictions.
@@ -972,7 +973,7 @@ class Model:
                          returned and passed to the network. Otherwise, a tuple (data, label) should
                          be returned. The data and label would be passed to the network and loss
                          function respectively.
-            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
+            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink. Default: True.
             sink_size (int): Control the amount of data in each sink.
