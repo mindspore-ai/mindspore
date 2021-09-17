@@ -88,8 +88,8 @@ void DumpGraphForDebug(NotNull<KernelGraphPtr> kg) {
 }
 #endif
 
-void DumpExecuteOrder(NotNull<KernelGraphPtr> kg) {
 #ifndef ENABLE_SECURITY
+void DumpExecuteOrder(NotNull<KernelGraphPtr> kg) {
   if (!IsSaveGraph()) {
     return;
   }
@@ -138,8 +138,8 @@ void DumpExecuteOrder(NotNull<KernelGraphPtr> kg) {
     index++;
   }
   fout.close();
-#endif
 }
+#endif
 
 // Return kNoLabel when label id attribute not set for the graph.
 uint32_t GetGraphLabel(const KernelGraphPtr &kg) {
