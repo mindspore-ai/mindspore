@@ -33,6 +33,7 @@ namespace {
 constexpr int kBase = 10;
 constexpr int kQuantBitNumInt16 = 16;
 constexpr int kPathLengthUpperLimit = 1024;
+constexpr int kMinShapeSizeInStr = 2;
 }  // namespace
 Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX", "");
@@ -216,6 +217,11 @@ int Flags::InitInTensorShape() {
   for (const auto &shape_str : shape_strs) {
     shape.clear();
     auto string_split = StrSplit(shape_str, std::string(":"));
+    if (string_split.size() != kMinShapeSizeInStr) {
+      std::cerr << "INPUT ILLEGAL: input_shape support format e.g. \"inTensor1:1,32,32,32;inTensor2:1,1,32,32,4\""
+                << std::endl;
+      return RET_INPUT_PARAM_INVALID;
+    }
     auto name = string_split[0];
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
