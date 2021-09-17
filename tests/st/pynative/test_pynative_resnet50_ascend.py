@@ -66,7 +66,7 @@ class MyTimeMonitor(Callback):
 
     def step_end(self, run_context):
         step_msseconds = (time.time() - self.step_time) * 1000
-        if step_msseconds < 370:
+        if step_msseconds < 400:
             self.total = self.total + 1
         print(f"step time:{step_msseconds}", flush=True)
 
@@ -457,7 +457,7 @@ def test_pynative_resnet50_with_env(queue, device_id, device_num):
     queue.put(good_steps)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
 def test_pynative_resnet50_8p():
