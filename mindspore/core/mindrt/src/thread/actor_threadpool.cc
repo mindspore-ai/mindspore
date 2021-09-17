@@ -41,7 +41,7 @@ void ActorWorker::RunWithSpin() {
     } else {
       YieldAndDeactive();
     }
-    if (spin_count_ >= max_spin_count_) {
+    if (spin_count_ > max_spin_count_) {
       WaitUntilActive();
       spin_count_ = 0;
     }
@@ -58,11 +58,15 @@ bool ActorWorker::RunQueueActorTask() {
   return true;
 }
 
-bool ActorWorker::Active() {
+bool ActorWorker::ActorActive() {
   if (status_ != kThreadIdle) {
     return false;
   }
-  status_ = kThreadBusy;
+  {
+    std::lock_guard<std::mutex> _l(mutex_);
+    active_num_++;
+    status_ = kThreadBusy;
+  }
   cond_var_.notify_one();
   return true;
 }
@@ -70,6 +74,7 @@ bool ActorWorker::Active() {
 ActorThreadPool::~ActorThreadPool() {
   // wait until actor queue is empty
   bool terminate = false;
+  int count = 0;
   do {
     {
 #ifdef USE_HQUEUE
@@ -80,9 +85,12 @@ ActorThreadPool::~ActorThreadPool() {
 #endif
     }
     if (!terminate) {
+      for (auto &worker : workers_) {
+        worker->Active();
+      }
       std::this_thread::yield();
     }
-  } while (!terminate);
+  } while (!terminate && count++ < kMaxCount);
   for (auto &worker : workers_) {
     delete worker;
     worker = nullptr;
@@ -124,7 +132,7 @@ void ActorThreadPool::PushActorToQueue(ActorBase *actor) {
   // active one idle actor thread if exist
   for (size_t i = 0; i < actor_thread_num_; ++i) {
     auto worker = reinterpret_cast<ActorWorker *>(workers_[i]);
-    if (worker->Active()) {
+    if (worker->ActorActive()) {
       break;
     }
   }
