@@ -733,8 +733,8 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   if (!enable_mem_scheduler) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
     MS_EXCEPTION_IF_NULL(runtime_instance);
-    runtime_instance->AssignStaticMemoryInput(child_graph.get());
-    runtime_instance->AssignStaticMemoryValueNode(child_graph.get());
+    runtime_instance->AssignStaticMemoryInput(*child_graph);
+    runtime_instance->AssignStaticMemoryValueNode(*child_graph);
   }
 }
 
@@ -822,7 +822,7 @@ void AscendSession::BindAddressToTensor(
   }
 }
 
-void AscendSession::LaunchFunc(const KernelGraphPtr &graph, const std::vector<int64_t> &tensors_mask,
+void AscendSession::LaunchFunc(const KernelGraphPtr &graph,
                                const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                                bool is_dynamic_shape, const std::vector<tensor::TensorPtr> &input_tensors) {
   // Wait for AllReduce
@@ -887,7 +887,7 @@ void AscendSession::PrepareForOutputTensor(const KernelGraphPtr &graph,
   // Create DeviceAddress For Output Tensor(contain: Shape, Format, DType)
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
   runtime_instance->RunOpMallocPre(*graph, input_tensors);
-  runtime_instance->UpdateRefNodeOutputMem(graph.get());
+  runtime_instance->UpdateRefNodeOutputMem(*graph);
   // CREATE OUTPUT TENSOR ADDRESS
   UpdateOutputs(graph, outputs, input_tensors, tensor_to_node);
 }
@@ -951,7 +951,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   auto &task_manager = PynativeTaskManager::GetInstance();
   if (!cache_miss && task_manager.QueueEmpty()) {
     // Cache match and there are no task in Queue. Just Launch immediately.
-    LaunchFunc(graph, tensors_mask, tensor_to_node, op_run_info->is_dynamic_shape, *input_tensors);
+    LaunchFunc(graph, tensor_to_node, op_run_info->is_dynamic_shape, *input_tensors);
   } else {
     auto run_op_context = std::make_shared<RunOpContext>(graph_info, op_run_info->is_dynamic_shape, graph, tensors_mask,
                                                          *input_tensors, tensor_to_node);
@@ -1320,7 +1320,7 @@ void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kerne
   }
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  if (!runtime_instance->GenDynamicKernel(kernel_graph.get())) {
+  if (!runtime_instance->GenDynamicKernel(*kernel_graph)) {
     MS_LOG(DEBUG) << "Graph:" << kernel_graph->graph_id() << " failed to generate dynamic kernel!";
   }
   MS_LOG(DEBUG) << "Finish!";
@@ -1460,7 +1460,7 @@ void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
   InitMemReuseExecOrder(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->AssignMemory(kernel_graph);
+  runtime_instance->AssignMemory(*kernel_graph);
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -1469,7 +1469,7 @@ void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
+  runtime_instance->RunOpAssignMemory(input_tensors, *kernel_graph);
 }
 
 void AscendSession::RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &input_tensors,
@@ -1478,21 +1478,21 @@ void AscendSession::RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &in
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph, tensor_to_node);
+  runtime_instance->RunOpAssignMemory(input_tensors, *kernel_graph, tensor_to_node);
 }
 
 void AscendSession::RunOpGenKernelEvent(const KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->GenKernelEvents(graph);
+  runtime_instance->GenKernelEvents(*graph);
 }
 
 void AscendSession::RunOpMemoryClear(const KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpClearMemory(kernel_graph);
+  runtime_instance->RunOpClearMemory(*kernel_graph);
 }
 
 void AscendSession::Load(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -1503,7 +1503,7 @@ void AscendSession::Load(const std::shared_ptr<KernelGraph> &kernel_graph) const
   (void)device::KernelAdjust::GetInstance().StepLoadCtrlInputs(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  bool ret_ok = runtime_instance->Load(kernel_graph.get(), is_task_sink);
+  bool ret_ok = runtime_instance->Load(*kernel_graph, is_task_sink);
   if (!ret_ok) {
     MS_LOG(EXCEPTION) << "Load task error!";
   }
@@ -1525,7 +1525,7 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
     DumpSetup(kernel_graph);
 #endif
   }
-  bool ret_ok = runtime_instance->Run(kernel_graph.get(), is_task_sink);
+  bool ret_ok = runtime_instance->Run(*kernel_graph, is_task_sink);
   if (is_task && is_task_sink) {
 #ifndef ENABLE_SECURITY
     Dump(kernel_graph);
@@ -1599,7 +1599,7 @@ void AscendSession::LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph)
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  (void)runtime_instance->LoadData(kernel_graph.get());
+  (void)runtime_instance->LoadData(*kernel_graph);
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -1884,8 +1884,8 @@ void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->ClearGlobalIdleMem();
-  runtime_instance->AssignStaticMemoryInput(graph.get().get());
-  runtime_instance->AssignStaticMemoryValueNode(graph.get().get());
+  runtime_instance->AssignStaticMemoryInput(*graph.get());
+  runtime_instance->AssignStaticMemoryValueNode(*graph.get());
   for (auto &child_graph : graph->child_graph_order()) {
     AssignStaticMemory(NOT_NULL(child_graph.lock()), memo);
   }
@@ -1977,8 +1977,7 @@ void AscendSession::ExecuteAllTaskInQueue() {
     while (!launch_tasks.empty()) {
       auto &launch_task = launch_tasks.front();
       const auto &context = launch_task->context();
-      LaunchFunc(context->graph(), context->tensor_mask(), context->tensor_to_node(), context->is_dynamic_shape(),
-                 context->input_tensors());
+      LaunchFunc(context->graph(), context->tensor_to_node(), context->is_dynamic_shape(), context->input_tensors());
       launch_tasks.pop();
     }
 

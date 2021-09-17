@@ -43,10 +43,10 @@ class GPUKernelRuntime : public KernelRuntime {
   bool Init() override;
   void ReleaseDeviceRes() override;
   void ClearGraphRuntimeResource(uint32_t graph_id) override;
-  void AssignMemory(session::KernelGraph *graph) override;
-  bool Run(session::KernelGraph *graph, bool is_task_sink) override;
-  bool GenDynamicKernel(const session::KernelGraph *graph) override { return true; }
-  bool RunDynamicKernelAsync(const session::KernelGraph *graph) override { return true; }
+  void AssignMemory(const session::KernelGraph &graph) override;
+  bool Run(const session::KernelGraph &graph, bool is_task_sink) override;
+  bool GenDynamicKernel(const session::KernelGraph &graph) override { return true; }
+  bool RunDynamicKernelAsync(const session::KernelGraph &graph) override { return true; }
   DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kGPU; }
   std::shared_ptr<DeviceEvent> CreateDeviceEvent() override;
   void *compute_stream() const override { return stream_; }

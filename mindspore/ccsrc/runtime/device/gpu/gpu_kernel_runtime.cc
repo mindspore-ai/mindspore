@@ -431,7 +431,7 @@ void GPUKernelRuntime::FetchMemUnitSize(const session::KernelGraph *graph) {
   }
 }
 
-void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
+void GPUKernelRuntime::AssignMemory(const session::KernelGraph &graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(mem_manager_);
@@ -441,18 +441,17 @@ void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
   bool is_enable_dynamic_mem = context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL);
   if (is_enable_dynamic_mem) {
     // Use the dynamic memory pool.
-    InitKernelRefCount(graph);
-    InitMemorySwapInfo(graph);
-    InitKernelOutputAddress(graph);
-    InitKernelWorkspaceAddress(graph);
-    SaveGraphOutputNode(graph);
+    InitKernelRefCount(&graph);
+    InitMemorySwapInfo(&graph);
+    InitKernelOutputAddress(&graph);
+    InitKernelWorkspaceAddress(&graph);
+    SaveGraphOutputNode(&graph);
   } else {
     AssignDynamicMemory(graph);
   }
 }
 
-bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
-  MS_EXCEPTION_IF_NULL(graph);
+bool GPUKernelRuntime::Run(const session::KernelGraph &graph, bool is_task_sink) {
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
   bool ret = true;
@@ -462,7 +461,7 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
   bool is_enable_pynative_infer = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
   bool is_pynative_mode = (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
   if (is_enable_dynamic_mem && !is_pynative_mode && !is_enable_pynative_infer) {
-    auto graph_id = graph->graph_id();
+    auto graph_id = graph.graph_id();
     auto iter = mem_swap_map_.find(graph_id);
     if (iter == mem_swap_map_.end()) {
       MS_LOG(EXCEPTION) << "Find memory swap map failed.";
@@ -476,11 +475,11 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
     mem_reuse_util_ = mem_reuse_iter->second;
     MS_EXCEPTION_IF_NULL(mem_reuse_util_);
 
-    ret = RunOneStep(graph);
+    ret = RunOneStep(&graph);
   } else {
-    if (graph->is_dynamic_shape()) {
+    if (graph.is_dynamic_shape()) {
       // run dynamic shape graph in pynative
-      ret = RunOpLaunchKernelDynamic(graph);
+      ret = RunOpLaunchKernelDynamic(&graph);
     } else {
       ret = LaunchKernels(graph);
     }

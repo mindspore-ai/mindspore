@@ -493,7 +493,7 @@ AbstractBasePtr InferImplReduceScatter(const AnalysisEnginePtr &, const Primitiv
   if (tmp_shape.empty()) {
     MS_LOG(EXCEPTION) << "shape size is 0";
   }
-  tmp_shape[0] = IntMulWithOverflowCheck(tmp_shape[0], rank_size);
+  tmp_shape[0] = LongMulWithOverflowCheck(tmp_shape[0], rank_size);
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(tmp_shape));
 }
 

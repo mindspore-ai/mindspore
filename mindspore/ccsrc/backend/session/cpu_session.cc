@@ -209,7 +209,7 @@ void CPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_gra
 }
 
 void CPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
-  bool ret = runtime_.Run(kernel_graph.get(), false);
+  bool ret = runtime_.Run(*kernel_graph, false);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run graph failed";
   }
@@ -291,7 +291,7 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   runtime_.CreateOutputTensors(kernel_graph.get(), *input_tensors, outputs, &tensor_to_node);
   runtime_.BindInputOutput(kernel_graph.get(), *input_tensors, outputs);
 
-  bool ret = runtime_.Run(kernel_graph.get(), false);
+  bool ret = runtime_.Run(*kernel_graph, false);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Run Op failed";
   }
@@ -301,7 +301,7 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
     UpdateOutputAbstract(kernel_graph, op_run_info);
   }
   SetOutputFlags(*outputs);
-  runtime_.RunOpClearMemory(kernel_graph.get());
+  runtime_.RunOpClearMemory(*kernel_graph);
 }
 
 void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) {

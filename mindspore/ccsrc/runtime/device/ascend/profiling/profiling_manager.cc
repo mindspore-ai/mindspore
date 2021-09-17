@@ -227,7 +227,7 @@ rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t len) {
   return RT_ERROR_NONE;
 }
 
-bool ProfilingManager::StopProfiling() {
+bool ProfilingManager::StopProfiling() const {
   MS_LOG(INFO) << "StopProfiling";
   if (!IsProfiling()) {
     MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";

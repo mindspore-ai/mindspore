@@ -99,7 +99,7 @@ void DumpJsonParser::Parse() {
   std::ifstream json_file(dump_config_file.value());
   if (!json_file.is_open()) {
     MS_LOG(EXCEPTION) << "Dump file:" << dump_config_file.value() << " open failed."
-                      << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+                      << " Errno:" << errno;
   }
 
   nlohmann::json j;
@@ -586,13 +586,13 @@ bool DumpJsonParser::OutputNeedDump() const {
   return input_output_ == kDumpInputAndOutput || input_output_ == kDumpOutputOnly;
 }
 
-void DumpJsonParser::UpdateNeedDumpKernels(NotNull<const session::KernelGraph *> kernel_graph) {
+void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_graph) {
   if (!async_dump_enabled_) {
     return;
   }
   MS_LOG(INFO) << "Update async dump kernel list for hccl";
   std::map<std::string, uint32_t> update_kernels;
-  for (const auto &kernel : kernel_graph->execution_order()) {
+  for (const auto &kernel : kernel_graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
         DumpJsonParser::GetInstance().NeedDump(GetKernelNodeName(kernel))) {

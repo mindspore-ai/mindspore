@@ -812,8 +812,7 @@ std::string TbeKernelJsonCreator::GetDeviceOutputFormat(const AnfNodePtr &anf_no
   return format;
 }
 
-void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list,
-                      const AnfNodePtr &anf_node) {
+void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list) {
   for (size_t i = 0; i < input_json.size(); i++) {
     for (size_t m = 0; m < input_json[i].size(); m++) {
       size_t size_i = 1;
@@ -840,8 +839,7 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
   }
 }
 
-void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *output_size_list,
-                       const AnfNodePtr &anf_node) {
+void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *output_size_list) {
   for (size_t i = 0; i < output_json.size(); i++) {
     for (size_t m = 0; m < output_json[i].size(); m++) {
       size_t size_i = 1;
@@ -878,8 +876,8 @@ bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<si
   }
   input_size_list->clear();
   output_size_list->clear();
-  GetInputSizeList(kernel_json[kJOpInfo][kJInputs], input_size_list, anf_node);
-  GetOutputSizeList(kernel_json[kJOpInfo][kJOutputs], output_size_list, anf_node);
+  GetInputSizeList(kernel_json[kJOpInfo][kJInputs], input_size_list);
+  GetOutputSizeList(kernel_json[kJOpInfo][kJOutputs], output_size_list);
   return true;
 }
 

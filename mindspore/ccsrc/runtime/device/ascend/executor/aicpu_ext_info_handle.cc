@@ -142,10 +142,9 @@ bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const No
   }
 
   auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, input_index);
-  auto data_type = AnfAlgo::GetInputDeviceDataType(anf_node, input_index);
   std::vector<int64_t> tmp_shape;
   std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(tmp_shape), SizeToLong);
-  return UpdateShapeAndType(tmp_shape, data_type, NOT_NULL(input_shape_and_type_[input_index]));
+  return UpdateShapeAndType(tmp_shape, NOT_NULL(input_shape_and_type_[input_index]));
 }
 
 bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const NotNull<AnfNodePtr> &anf_node) {
@@ -171,8 +170,7 @@ bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const 
 
   std::vector<int64_t> tmp_shape;
   std::transform(shape.begin(), shape.end(), std::back_inserter(tmp_shape), SizeToLong);
-  return UpdateShapeAndType(tmp_shape, AnfAlgo::GetOutputDeviceDataType(anf_node, output_index),
-                            NOT_NULL(output_shape_and_type_[output_index]));
+  return UpdateShapeAndType(tmp_shape, NOT_NULL(output_shape_and_type_[output_index]));
 }
 
 bool AicpuExtInfoHandler::GetOutputShapeAndType(uint32_t output_index, NotNull<std::vector<int64_t> *> shape,
@@ -182,7 +180,7 @@ bool AicpuExtInfoHandler::GetOutputShapeAndType(uint32_t output_index, NotNull<s
   return true;
 }
 
-bool AicpuExtInfoHandler::UpdateShapeAndType(const std::vector<int64_t> &shape, TypeId data_type,
+bool AicpuExtInfoHandler::UpdateShapeAndType(const std::vector<int64_t> &shape,
                                              NotNull<AicpuShapeAndType *> shape_and_type) {
   if (shape.empty() || shape.size() > kernel::kMaxShapeDims) {
     MS_LOG(ERROR) << "Invalid shape:" << shape.size();

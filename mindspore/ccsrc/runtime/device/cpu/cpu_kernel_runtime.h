@@ -36,7 +36,7 @@ class CPUKernelRuntime : public KernelRuntime {
   ~CPUKernelRuntime() override = default;
 
   bool Init();
-  bool Run(session::KernelGraph *graph, bool is_task_sink) override;
+  bool Run(const session::KernelGraph &graph, bool is_task_sink) override;
   void AssignKernelAddress(session::KernelGraph *kernel_graph);
   void CreateOutputTensors(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
                            VectorRef *outputs, std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node);
@@ -44,8 +44,8 @@ class CPUKernelRuntime : public KernelRuntime {
                        VectorRef *outputs);
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
-  bool GenDynamicKernel(const session::KernelGraph *graph) override { return true; }
-  bool RunDynamicKernelAsync(const session::KernelGraph *graph) override { return true; }
+  bool GenDynamicKernel(const session::KernelGraph &graph) override { return true; }
+  bool RunDynamicKernelAsync(const session::KernelGraph &graph) override { return true; }
   DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kCPU; };
 
  protected:

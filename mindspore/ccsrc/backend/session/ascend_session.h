@@ -153,7 +153,7 @@ class AscendSession : public SessionBasic {
                               VectorRef *outputs) const;
   std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) override;
 
-  void LaunchFunc(const KernelGraphPtr &graph, const std::vector<int64_t> &tensors_mask,
+  void LaunchFunc(const KernelGraphPtr &graph,
                   const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node, bool is_dynamic_shape,
                   const std::vector<tensor::TensorPtr> &input_tensors);
   KernelGraphPtr CreateKernelGraph(const GraphInfo &graph_info, OpRunInfo *op_run_info,
