@@ -595,58 +595,31 @@ void ResetTopCellInfo(const TopCellInfoPtr &top_cell, const py::args &args) {
   top_cell->set_input_args_id(input_args_id);
 }
 
-void CreateNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, const OpExecInfoPtr &op_exec_info,
-                                 const ValuePtr &added_out, const FuncGraphPtr &ms_func_graph,
-                                 const FuncGraphPtr &grad_graph) {
-  MS_EXCEPTION_IF_NULL(top_cell);
+void RunReplace(const CNodePtr &added_make_tuple, const std::vector<tensor::TensorPtr> &total_output_tensors,
+                const FuncGraphPtr &grad_graph) {
   MS_EXCEPTION_IF_NULL(grad_graph);
-  MS_EXCEPTION_IF_NULL(op_exec_info);
-  MS_EXCEPTION_IF_NULL(ms_func_graph);
-  // Get Added forward nodes.
-  auto merge_node = ms_func_graph->output();
-  MS_EXCEPTION_IF_NULL(merge_node);
-  auto merge_make_tuple = merge_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(merge_make_tuple);
-  if (merge_make_tuple->size() != 3) {
-    MS_LOG(EXCEPTION) << "The input size of merge make tuple node should be 3, but it is: " << merge_make_tuple->size();
-  }
-  const auto &added_forward_node = merge_make_tuple->input(2);
-  MS_EXCEPTION_IF_NULL(added_forward_node);
-  if (added_forward_node->isa<ValueNode>()) {
-    MS_LOG(DEBUG) << "The added forward make tuple node info: " << added_forward_node->DebugString();
-    std::vector<tensor::TensorPtr> total_output_tensors;
-    TensorValueToTensor(added_out, &total_output_tensors);
-    top_cell->set_op_info_with_ms_func_forward_tensors(op_exec_info->op_info, total_output_tensors);
-    return;
-  }
-  auto added_make_tuple = added_forward_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(added_make_tuple);
-  MS_LOG(DEBUG) << "The added forward make tuple node info: " << added_make_tuple->DebugString();
-
-  // Get Added forward output tensors when forward func graph has been ran.
-  std::vector<tensor::TensorPtr> total_output_tensors;
-  TensorValueToTensor(added_out, &total_output_tensors);
-  // Create new output tensors for forward nodes, it will also work in grad graph with same value node.
   size_t index = 0;
   for (size_t i = 1; i < added_make_tuple->size(); ++i) {
     auto cnode = added_make_tuple->input(i)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    MS_LOG(DEBUG) << "Create New output tensor for cnode: " << cnode->DebugString();
+    MS_LOG(DEBUG) << "Replace new output tensors for cnode: " << cnode->DebugString();
     auto output_vnode = cnode->forward().first;
     MS_EXCEPTION_IF_NULL(output_vnode);
     grad_graph->AddValueNode(output_vnode);
     MS_LOG(DEBUG) << "Original output value node: " << output_vnode << " info: " << output_vnode->ToString();
-    // Create new tensor.
     size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     if (index + output_num > total_output_tensors.size()) {
       MS_LOG(EXCEPTION) << "The size of total_output_tensors: " << total_output_tensors.size()
                         << ", but the current index: " << index << ", output num: " << output_num;
     }
+    // Get new tensors.
     std::vector<ValuePtr> new_values;
-    std::for_each(total_output_tensors.begin() + index, total_output_tensors.begin() + index + output_num,
-                  [&new_values](const auto &tensor) { new_values.push_back(tensor); });
+    for (size_t j = index; j < index + output_num; ++j) {
+      new_values.push_back(total_output_tensors[j]);
+    }
     index = index + output_num;
-    // Create new value.
+    // Replace new tensors.
     if (output_num == 1) {
       output_vnode->set_value(new_values[0]);
     } else if (output_num > 1) {
@@ -656,12 +629,46 @@ void CreateNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, const OpExecInf
     }
     MS_LOG(DEBUG) << "New output value node: " << output_vnode << " info: " << output_vnode->ToString();
   }
-
   // Save op info with new tensors for current running ms_function func graph.
   if (index != total_output_tensors.size()) {
     MS_LOG(EXCEPTION) << "The index: " << index
                       << " should be equal to the size of total_output_tensors: " << total_output_tensors.size();
   }
+}
+
+void ReplaceNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, const OpExecInfoPtr &op_exec_info,
+                                  const ValuePtr &added_out, const FuncGraphPtr &ms_func_graph,
+                                  const FuncGraphPtr &grad_graph) {
+  MS_EXCEPTION_IF_NULL(top_cell);
+  MS_EXCEPTION_IF_NULL(grad_graph);
+  MS_EXCEPTION_IF_NULL(op_exec_info);
+  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  // Get added forward nodes.
+  auto merge_node = ms_func_graph->output();
+  MS_EXCEPTION_IF_NULL(merge_node);
+  auto merge_make_tuple = merge_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(merge_make_tuple);
+  constexpr size_t merge_output_size = 3;
+  if (merge_make_tuple->size() != merge_output_size) {
+    MS_LOG(EXCEPTION) << "The input size of merge make tuple node should be 3, but it is: " << merge_make_tuple->size();
+  }
+  constexpr size_t added_output_index = 2;
+  const auto &added_forward_node = merge_make_tuple->input(added_output_index);
+  MS_EXCEPTION_IF_NULL(added_forward_node);
+  if (added_forward_node->isa<ValueNode>()) {
+    MS_LOG(DEBUG) << "The added forward output node is value node: " << added_forward_node->DebugString();
+    std::vector<tensor::TensorPtr> total_output_tensors;
+    TensorValueToTensor(added_out, &total_output_tensors);
+    top_cell->set_op_info_with_ms_func_forward_tensors(op_exec_info->op_info, total_output_tensors);
+    return;
+  }
+  // Replace new output tensors for forward nodes, it will also work in grad graph with same value node.
+  auto added_make_tuple = added_forward_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(added_make_tuple);
+  MS_LOG(DEBUG) << "The added forward make tuple node info: " << added_make_tuple->DebugString();
+  std::vector<tensor::TensorPtr> total_output_tensors;
+  TensorValueToTensor(added_out, &total_output_tensors);
+  RunReplace(added_make_tuple, total_output_tensors, grad_graph);
   top_cell->set_op_info_with_ms_func_forward_tensors(op_exec_info->op_info, total_output_tensors);
 }
 
@@ -2743,7 +2750,7 @@ void GradExecutor::RunGradGraph(py::object *ret, const py::object &cell, const p
   }
   // High order
   if (top_cell()->vm_compiled()) {
-    MakeNestedCnode(cell, cell_id, converted_args, resource, *ret);
+    MakeNestedCnode(cell, converted_args, resource, *ret);
   } else if (GetHighOrderStackSize() >= ARG_SIZE) {
     SwitchTopcell();
   }
@@ -2765,7 +2772,7 @@ void GradExecutor::SwitchTopcell() {
   set_top_cell(outer_top_cell);
 }
 
-void GradExecutor::MakeNestedCnode(const py::object &cell, const std::string &cell_id, const py::tuple &forward_args,
+void GradExecutor::MakeNestedCnode(const py::object &cell, const py::tuple &forward_args,
                                    const pipeline::ResourcePtr &resource, const py::object &out) {
   if (cell_stack_.empty()) {
     MS_LOG(DEBUG) << "No nested grad find";
@@ -2894,7 +2901,8 @@ void GradExecutor::GradMsFunctionInner(const std::string &phase, const py::objec
     MS_LOG(EXCEPTION) << "The output value of ms_function func graph should be a tuple.";
   }
   auto tuple_out = py::cast<py::tuple>(out);
-  if (tuple_out.size() != 2) {
+  constexpr size_t tuple_out_size = 2;
+  if (tuple_out.size() != tuple_out_size) {
     MS_LOG(EXCEPTION) << "The tuple size of output value of ms_function func graph should be 2.";
   }
   py::object actual_out = tuple_out[0];
@@ -2921,7 +2929,7 @@ void GradExecutor::GradMsFunctionInner(const std::string &phase, const py::objec
   if (!need_construct_graph()) {
     MS_LOG(EXCEPTION) << "The flag of need construct graph is False.";
   }
-  CreateNewTensorsInGradGraph(top_cell(), op_exec_info, added_out, ms_func_graph, grad_graph);
+  ReplaceNewTensorsInGradGraph(top_cell(), op_exec_info, added_out, ms_func_graph, grad_graph);
 
   // Clone new ms_function func graph and grad graph.
   auto new_ms_func_graph = BasicClone(ms_func_graph);

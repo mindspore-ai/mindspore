@@ -224,8 +224,8 @@ class GradExecutor {
   // Higher derivative
   inline bool IsNestedGrad() const;
   void SwitchTopcell();
-  void MakeNestedCnode(const py::object &cell, const std::string &cell_id, const py::tuple &forward_args,
-                       const pipeline::ResourcePtr &resource, const py::object &out);
+  void MakeNestedCnode(const py::object &cell, const py::tuple &forward_args, const pipeline::ResourcePtr &resource,
+                       const py::object &out);
   void PushCellStack(const std::string &cell_id);
   void PopCellStack();
   TopCellInfoPtr PopHighOrderGraphStack();
