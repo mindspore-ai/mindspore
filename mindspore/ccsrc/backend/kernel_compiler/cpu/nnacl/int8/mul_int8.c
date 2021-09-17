@@ -115,7 +115,7 @@ void FastMul(const int8_t *input0_data, const int8_t *input1_data, int8_t *outpu
   }
 #ifdef ENABLE_ARM
   int32x4_t output_multiplier_vec = vdupq_n_s32(quant_arg->output_multiplier_);
-  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << quant_arg->shift_left_);
+  int32x4_t left_shift_out_vec = vdupq_n_s32(1 << (size_t)quant_arg->shift_left_);
   int32x4_t right_shift_out_vec = vdupq_n_s32(-quant_arg->shift_right_);
   int16x8_t out_zp_vec = vdupq_n_s16(quant_arg->out_quant_arg_.zp_);
   int8x16_t out_min_vec = vdupq_n_s8(quant_arg->output_activation_min_);
@@ -199,10 +199,10 @@ void FastMul(const int8_t *input0_data, const int8_t *input1_data, int8_t *outpu
     for (; j < depth; ++j) {
       const int32_t input0_val = zp1 + input0_data[j];
       const int32_t input1_val = zp2 + input1_data[0];
-      int32_t mul_result =
-        RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(input0_val * input1_val * (1 << quant_arg->shift_left_),
-                                                              quant_arg->output_multiplier_),
-                            quant_arg->shift_right_);
+      int32_t mul_result = RoundingDivideByPOT(
+        SaturatingRoundingDoublingHighMul(input0_val * input1_val * (1 << (size_t)quant_arg->shift_left_),
+                                          quant_arg->output_multiplier_),
+        quant_arg->shift_right_);
 
       mul_result += quant_arg->out_quant_arg_.zp_;
       mul_result = mul_result < quant_arg->output_activation_max_ ? mul_result : quant_arg->output_activation_max_;
@@ -224,10 +224,10 @@ void Mul(const int8_t *input0_data, const int8_t *input1_data, int8_t *output_da
   for (; index < real_dst_count; ++index) {
     const int32_t input0_val = quant_arg->in_quant_args_[0].zp_ + input0_data[index];
     const int32_t input1_val = quant_arg->in_quant_args_[1].zp_ + input1_data[index];
-    int32_t mul_result =
-      RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(input0_val * input1_val * (1 << quant_arg->shift_left_),
-                                                            quant_arg->output_multiplier_),
-                          quant_arg->shift_right_);
+    int32_t mul_result = RoundingDivideByPOT(
+      SaturatingRoundingDoublingHighMul(input0_val * input1_val * (1 << (size_t)quant_arg->shift_left_),
+                                        quant_arg->output_multiplier_),
+      quant_arg->shift_right_);
 
     mul_result += quant_arg->out_quant_arg_.zp_;
     mul_result = mul_result < quant_arg->output_activation_max_ ? mul_result : quant_arg->output_activation_max_;

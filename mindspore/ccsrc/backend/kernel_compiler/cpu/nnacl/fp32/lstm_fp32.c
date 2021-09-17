@@ -154,20 +154,23 @@ void UpdataOutput(const float *cell_state, const float *output_gate, float *hidd
 
 void UpdateLstmGate(float *gate_buffer, const float *input, const float *weight, const float *bias, int row, int deep,
                     int col, int col_align, bool is_vec, float *packed_ptr) {
+  const float *weight_i = weight;
+  const float *bias_i = bias;
+  float *gate_i = gate_buffer;
   for (int i = 0; i < 4; i++) {
-    const float *weight_i;
+    LstmMatMul(gate_i, input, weight_i, bias_i, row, deep, col, col_align, is_vec, packed_ptr);
+
 #ifdef ENABLE_AVX
     if (is_vec) {
-      weight_i = weight + deep * col_align * i;
+      weight_i += deep * col_align;
     } else {
-      weight_i = weight + deep * col * i;
+      weight_i += deep * col;
     }
 #else
-    weight_i = weight + deep * col * i;
+    weight_i += deep * col;
 #endif
-    const float *bias_i = bias + col_align * i;
-    float *gate = gate_buffer + row * col * i;
-    LstmMatMul(gate, input, weight_i, bias_i, row, deep, col, col_align, is_vec, packed_ptr);
+    bias_i += col_align;
+    gate_i += row * col;
   }
 }
 
@@ -228,7 +231,7 @@ void LstmStepUnit(float *output, float *input_gate, float *forget_gate, float *c
 
 void LstmUnidirectional(float *output, const float *packed_input, const float *weight_i, const float *weight_h,
                         const float *input_bias, const float *state_bias, float *hidden_state, float *cell_state,
-                        float *buffer[6], const LstmParameter *lstm_param, bool is_backward) {
+                        float *buffer[7], const LstmParameter *lstm_param, bool is_backward) {
   float *gate = buffer[1];
   for (int i = 0; i < 4; i++) {
     const float *weight_loop = weight_i + lstm_param->input_size_ * lstm_param->input_col_align_ * i;
@@ -256,7 +259,7 @@ void LstmUnidirectional(float *output, const float *packed_input, const float *w
 }
 
 void Lstm(float *output, const float *input, const float *weight_i, const float *weight_h, const float *input_bias,
-          const float *state_bias, float *hidden_state, float *cell_state, float *buffer[6],
+          const float *state_bias, float *hidden_state, float *cell_state, float *buffer[7],
           const LstmParameter *lstm_param) {
   // forward
   float *packed_input = buffer[0];

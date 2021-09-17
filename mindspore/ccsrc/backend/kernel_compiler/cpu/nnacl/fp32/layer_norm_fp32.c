@@ -68,7 +68,7 @@ void LayerNormGammaAndBeta(float *dst, const float *src, const float *gamma_data
 }
 
 int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_data, float *dst_data, float *out_mean,
-              float *out_deno, LayerNormParameter *param, size_t task_id) {
+              float *out_deno, const LayerNormParameter *param, size_t task_id) {
   if (src_data == NULL || dst_data == NULL || gamma_data == NULL || beta_data == NULL) {
     return NNACL_NULL_PTR;
   }
