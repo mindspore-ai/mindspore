@@ -140,15 +140,16 @@ class AnalyzeFailExporter : public AnfExporter {
   void OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                    std::map<AnfNodePtr, int> *const apply_map) override;
 
- private:
+ protected:
   std::string GetNodeType(const AnfNodePtr &nd) override;
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
   AnfNodeConfigPtr GetForwardConfig(const AnfNodeConfigPtr &cfg);
   void ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
-  void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
+  void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node) override;
   std::unordered_map<FuncGraphPtr, TaggedNodeMap> CreateTaggedNodeMap(
     const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack);
 
+ private:
   AnalysisContextPtr current_context_ = nullptr;
   AnalysisEnginePtr engine_ = nullptr;
 };

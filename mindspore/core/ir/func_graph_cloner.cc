@@ -349,7 +349,7 @@ void FilterMonadInput(const AnfNodePtrList &old_inputs, AnfNodePtrList *new_inpu
                       AnfNodePtr *possible_io_monad) {
   AnfNodePtr local_u_monad = nullptr, local_io_monad = nullptr;
   std::copy_if(old_inputs.cbegin(), old_inputs.cend(), std::back_inserter(*new_inputs),
-               [&local_u_monad, &local_io_monad](const auto &input) {
+               [&local_u_monad, &local_io_monad](const auto &input) -> bool {
                  if (HasAbstractUMonad(input)) {
                    if (local_u_monad != nullptr) {
                      MS_LOG(EXCEPTION) << "Cannot have multiple U Monad in one call, first: "
