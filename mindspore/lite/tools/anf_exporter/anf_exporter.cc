@@ -95,7 +95,7 @@ int AnfExporter::SetPostTrainOutputTensorType(const std::unique_ptr<schema::Meta
                                               const std::unique_ptr<schema::CNodeT> &dst_node) {
   auto first_output_index = dst_node->outputIndex[0];
   auto first_tensor_output = meta_graph->allTensors[first_output_index].get();
-  if (dst_node->quantType == schema::QuantType_PostTraining) {
+  if (dst_node->quantType == schema::QuantType_QUANT_ALL) {
     if (primitive->name() != mindspore::ops::kNameQuantDTypeCast) {
       first_tensor_output->dataType = kNumberTypeInt8;
     } else {
