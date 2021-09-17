@@ -65,8 +65,8 @@ class FixedLossScaleManager(LossScaleManager):
     """
     def __init__(self, loss_scale=128.0, drop_overflow_update=True):
         if loss_scale < 1:
-            raise ValueError("loss_scale must be >= 1, "
-                             "but got loss_scale {}".format(loss_scale))
+            raise ValueError("The argument 'loss_scale' must be >= 1, "
+                             "but got {}".format(loss_scale))
         self._loss_scale = loss_scale
         self._drop_overflow_update = drop_overflow_update
 
@@ -131,12 +131,12 @@ class DynamicLossScaleManager(LossScaleManager):
                  scale_factor=2,
                  scale_window=2000):
         if init_loss_scale < 1.0:
-            raise ValueError("loss_scale must be > 1, but got loss_scale {}".format(init_loss_scale))
+            raise ValueError("The argument 'init_loss_scale' must be > 1, but got {}".format(init_loss_scale))
         self.loss_scale = init_loss_scale
         validator.check_positive_int(scale_window, "scale_window", self.__class__.__name__)
         self.scale_window = scale_window
         if scale_factor <= 0:
-            raise ValueError("Scale factor should be > 0, but got scale_factor {}".format(scale_factor))
+            raise ValueError("The argument 'scale_factor' must be > 0, but got {}".format(scale_factor))
         self.scale_factor = scale_factor
         self.increase_ratio = scale_factor
         self.decrease_ratio = 1 / scale_factor
