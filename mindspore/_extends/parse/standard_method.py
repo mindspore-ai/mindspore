@@ -1603,20 +1603,21 @@ def check_is_tensor_bool_cond(shp):
     """check if tensor is a bool condition"""
     if shp in ((), (1,)):
         return True
-    raise ValueError("The truth value of an array with several elements is ambiguous.")
+    raise ValueError(f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is {shp}")
 
 
 @constexpr
 def const_tensor_to_bool(x):
     """convert bool tensor to bool condition"""
     if x is None:
-        raise ValueError("Only constant tensor bool can be converted to bool")
+        raise ValueError("Only tensor which shape is () or (1,) can be converted to bool, but got None")
     x = x.asnumpy()
     if x.shape == ():
         return bool(x)
     if x.shape == (1,):
         return bool(x[0])
-    raise ValueError("The truth value of an array with several elements is ambiguous.")
+    raise ValueError(
+        f"Only tensor which shape is () or (1,) can be converted to bool, but got tensor shape is {x.shape}")
 
 
 @constexpr
