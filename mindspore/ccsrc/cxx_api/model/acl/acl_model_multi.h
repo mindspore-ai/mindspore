@@ -21,6 +21,7 @@
 #include <optional>
 #include <vector>
 #include <string>
+#include <map>
 
 namespace mindspore {
 namespace compile {
@@ -41,6 +42,7 @@ class AclModelMulti : public AclModel {
 
  private:
   void SetInputs();
+  void SetOutput();
 
   std::optional<bool> is_multi_graph_;
   std::shared_ptr<compile::MsBackend> backend_;

@@ -20,6 +20,8 @@
 #include <map>
 #include <string>
 #include <algorithm>
+#include <numeric>
+#include <functional>
 #include "backend/session/session_basic.h"
 #include "backend/session/session_factory.h"
 #include "cxx_api/factory.h"
@@ -33,6 +35,14 @@ namespace mindspore {
 API_FACTORY_REG(ModelImpl, Ascend310, AclModelMulti);
 
 namespace {
+std::map<DataType, size_t> kDtypeMap = {
+  {DataType::kNumberTypeBool, sizeof(bool)},       {DataType::kNumberTypeInt8, sizeof(int8_t)},
+  {DataType::kNumberTypeInt16, sizeof(int16_t)},   {DataType::kNumberTypeInt32, sizeof(int32_t)},
+  {DataType::kNumberTypeInt64, sizeof(int64_t)},   {DataType::kNumberTypeFloat16, sizeof(float16)},
+  {DataType::kNumberTypeFloat32, sizeof(float)},   {DataType::kNumberTypeFloat64, sizeof(double)},
+  {DataType::kNumberTypeUInt8, sizeof(uint8_t)},   {DataType::kNumberTypeUInt16, sizeof(uint16_t)},
+  {DataType::kNumberTypeUInt32, sizeof(uint32_t)}, {DataType::kNumberTypeUInt64, sizeof(uint64_t)}};
+
 class MSTensorRef : public BaseRef {
  public:
   static VectorRef Convert(const std::vector<MSTensor> &tensors) {
@@ -369,6 +379,8 @@ Status AclModelMulti::Build() {
                          return abstract;
                        });
   (void)InferMindir(ModelImpl::GetFuncGraph(), broaded_args);
+  // set output
+  SetOutput();
   // create vm
   auto backend = CreateBackend(std::make_shared<AclModelOptions>(model_context_));
   auto context_ptr = MsContext::GetInstance();
@@ -446,6 +458,51 @@ void AclModelMulti::SetInputs() {
     }
   } else {
     MS_LOG(DEBUG) << "inputs_ has been set.";
+  }
+}
+
+void AclModelMulti::SetOutput() {
+  if (outputs_.empty()) {
+    auto fg = ModelImpl::GetFuncGraph();
+    MS_EXCEPTION_IF_NULL(fg);
+    const auto output = fg->output();
+    MS_EXCEPTION_IF_NULL(output);
+    auto abs = output->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+
+    // DataType
+    DataType type_id;
+    if (abs->isa<abstract::AbstractTensor>()) {
+      auto abs_tensor = abs->cast<abstract::AbstractTensorPtr>();
+      auto ele = abs_tensor->element();
+      MS_EXCEPTION_IF_NULL(ele);
+      MS_EXCEPTION_IF_NULL(ele->GetTypeTrack());
+      type_id = static_cast<DataType>(ele->GetTypeTrack()->type_id());
+    } else {
+      MS_EXCEPTION_IF_NULL(abs->GetTypeTrack());
+      type_id = static_cast<DataType>(abs->GetTypeTrack()->type_id());
+    }
+    // Shape
+    auto shape_track = abs->GetShapeTrack();
+    MS_EXCEPTION_IF_NULL(shape_track);
+    std::vector<int64_t> shape = {};
+    if (shape_track->isa<abstract::Shape>()) {
+      auto shapeptr = shape_track->cast<abstract::ShapePtr>();
+      shape = static_cast<std::vector<int64_t>>(shapeptr->shape());
+    }
+    // Size
+    size_t ato_size = 0;
+    if (kDtypeMap.find(type_id) != kDtypeMap.end()) {
+      ato_size = kDtypeMap[type_id];
+    }
+    int64_t ele_num = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+    size_t size = ato_size * ele_num;
+    // create tensor
+    auto output_tensor = MSTensor::CreateTensor("", type_id, shape, nullptr, size);
+    outputs_.emplace_back(*output_tensor);
+    MSTensor::DestroyTensorPtr(output_tensor);
+  } else {
+    MS_LOG(DEBUG) << "outputs_ has been set.";
   }
 }
 

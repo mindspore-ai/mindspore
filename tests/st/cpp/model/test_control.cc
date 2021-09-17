@@ -72,6 +72,17 @@ TEST_F(TestControl, InferIfbyIf) {
   EXPECT_EQ(inputs_before[4].Shape()[2], 4);
   EXPECT_EQ(inputs_before[4].Shape()[3], 5);
 
+  // assert outputs
+  std::vector<MSTensor> outputs_before = control_model.GetOutputs();
+  ASSERT_EQ(1, outputs_before.size());
+  EXPECT_EQ(outputs_before[0].DataType(), DataType::kNumberTypeFloat32);
+  ASSERT_TRUE(outputs_before[0].DataSize() == sizeof(float) * input_data.size());
+  ASSERT_EQ(outputs_before[0].Shape().size(), 4);
+  EXPECT_EQ(outputs_before[0].Shape()[0], 2);
+  EXPECT_EQ(outputs_before[0].Shape()[1], 3);
+  EXPECT_EQ(outputs_before[0].Shape()[2], 4);
+  EXPECT_EQ(outputs_before[0].Shape()[3], 5);
+
   // prepare input
   std::vector<MSTensor> outputs;
   std::vector<MSTensor> inputs;
@@ -130,6 +141,17 @@ TEST_F(TestControl, InferSimpleWhile) {
   EXPECT_EQ(inputs_before[2].Shape()[2], 4);
   EXPECT_EQ(inputs_before[2].Shape()[3], 5);
 
+  // assert outputs
+  std::vector<MSTensor> outputs_before = control_model.GetOutputs();
+  ASSERT_EQ(1, outputs_before.size());
+  EXPECT_EQ(outputs_before[0].DataType(), DataType::kNumberTypeFloat32);
+  ASSERT_TRUE(outputs_before[0].DataSize() == sizeof(float) * input_data.size());
+  ASSERT_EQ(outputs_before[0].Shape().size(), 4);
+  EXPECT_EQ(outputs_before[0].Shape()[0], 2);
+  EXPECT_EQ(outputs_before[0].Shape()[1], 3);
+  EXPECT_EQ(outputs_before[0].Shape()[2], 4);
+  EXPECT_EQ(outputs_before[0].Shape()[3], 5);
+
   // prepare input
   std::vector<MSTensor> outputs;
   std::vector<MSTensor> inputs;
@@ -172,6 +194,15 @@ TEST_F(TestControl, InferRecursive) {
   ASSERT_EQ(inputs_before[0].DataSize(), sizeof(int32_t));
   ASSERT_EQ(inputs_before[0].Shape().size(), 1);
   EXPECT_EQ(inputs_before[0].Shape()[0], 1);
+
+  // assert outputs
+  std::vector<MSTensor> outputs_before = control_model.GetOutputs();
+  ASSERT_EQ(1, outputs_before.size());
+  EXPECT_EQ(outputs_before[0].DataType(), DataType::kNumberTypeInt32);
+  ASSERT_TRUE(outputs_before[0].DataSize() == sizeof(int32_t));
+  ASSERT_EQ(outputs_before[0].Shape().size(), 1);
+  EXPECT_EQ(outputs_before[0].Shape()[0], 1);
+
 
   // prepare input
   std::vector<MSTensor> outputs;
@@ -226,6 +257,14 @@ TEST_F(TestControl, InferMixedWhileIf) {
   ASSERT_EQ(inputs_before[4].Shape().size(), 1);
   EXPECT_EQ(inputs_before[4].Shape()[0], 1);
 
+  // assert outputs
+  std::vector<MSTensor> outputs_before = control_model.GetOutputs();
+  ASSERT_EQ(1, outputs_before.size());
+  EXPECT_EQ(outputs_before[0].DataType(), DataType::kNumberTypeInt32);
+  ASSERT_TRUE(outputs_before[0].DataSize() == sizeof(int32_t));
+  ASSERT_EQ(outputs_before[0].Shape().size(), 1);
+  EXPECT_EQ(outputs_before[0].Shape()[0], 1);
+
   // prepare input
   std::vector<MSTensor> outputs;
   std::vector<MSTensor> inputs;
@@ -279,6 +318,14 @@ TEST_F(TestControl, InferSingleFor) {
   ASSERT_EQ(inputs_before[2].Shape().size(), 1);
   EXPECT_EQ(inputs_before[2].Shape()[0], 1);
 
+  // assert outputs
+  std::vector<MSTensor> outputs_before = control_model.GetOutputs();
+  ASSERT_EQ(1, outputs_before.size());
+  EXPECT_EQ(outputs_before[0].DataType(), DataType::kNumberTypeInt32);
+  ASSERT_TRUE(outputs_before[0].DataSize() == sizeof(int32_t));
+  ASSERT_EQ(outputs_before[0].Shape().size(), 1);
+  EXPECT_EQ(outputs_before[0].Shape()[0], 1);
+
   // prepare input
   std::vector<MSTensor> outputs;
   std::vector<MSTensor> inputs;
@@ -324,6 +371,12 @@ TEST_F(TestControl, InferSingleOr) {
   ASSERT_EQ(inputs_before[1].Shape().size(), 1);
   EXPECT_EQ(inputs_before[1].Shape()[0], 2);
 
+  // assert outputs
+  std::vector<MSTensor> outputs_before = control_model.GetOutputs();
+  ASSERT_EQ(1, outputs_before.size());
+  EXPECT_EQ(outputs_before[0].DataType(), DataType::kNumberTypeFloat32);
+  ASSERT_TRUE(outputs_before[0].DataSize() == sizeof(float));
+
   // prepare input
   std::vector<MSTensor> outputs;
   std::vector<MSTensor> inputs;
@@ -338,6 +391,13 @@ TEST_F(TestControl, InferSingleOr) {
 
   // infer
   ASSERT_TRUE(control_model.Predict(inputs, &outputs) == kSuccess);
+
+  // assert outputs
+  std::vector<MSTensor> outputs_after = control_model.GetOutputs();
+  ASSERT_EQ(1, outputs_after.size());
+  EXPECT_EQ(outputs_after[0].DataType(), DataType::kNumberTypeFloat32);
+  ASSERT_TRUE(outputs_after[0].DataSize() == sizeof(float));
+  EXPECT_EQ(outputs_after[0].Shape().size(), outputs_before[0].Shape().size());
 
   // assert output
   ASSERT_TRUE(outputs.size() == 1);
@@ -374,6 +434,17 @@ TEST_F(TestControl, InferSingleSwitch) {
   EXPECT_EQ(inputs_before[1].Shape()[0], 1);
   ASSERT_EQ(inputs_before[2].Shape().size(), 1);
   EXPECT_EQ(inputs_before[2].Shape()[0], 1);
+
+  // assert outputs
+  std::vector<MSTensor> outputs_before = control_model.GetOutputs();
+  ASSERT_EQ(1, outputs_before.size());
+  EXPECT_EQ(outputs_before[0].DataType(), DataType::kNumberTypeFloat32);
+  ASSERT_TRUE(outputs_before[0].DataSize() == sizeof(float) * 224 * 224);
+  ASSERT_EQ(outputs_before[0].Shape().size(), 4);
+  EXPECT_EQ(outputs_before[0].Shape()[0], 1);
+  EXPECT_EQ(outputs_before[0].Shape()[1], 1);
+  EXPECT_EQ(outputs_before[0].Shape()[2], 224);
+  EXPECT_EQ(outputs_before[0].Shape()[3], 224);
 
   // prepare input
   std::vector<MSTensor> outputs;
