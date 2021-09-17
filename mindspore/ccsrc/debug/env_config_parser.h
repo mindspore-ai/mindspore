@@ -54,7 +54,7 @@ class EnvConfigParser {
   // rdr
   bool rdr_enabled_{false};
   bool has_rdr_setting_{false};
-  std::string rdr_path_{"./rdr/"};
+  std::string rdr_path_{"./"};
 #endif
 
   // memreuse
