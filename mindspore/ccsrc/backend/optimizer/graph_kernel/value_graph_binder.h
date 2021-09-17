@@ -19,15 +19,13 @@
 #include "ir/func_graph.h"
 #include "backend/optimizer/common/pass.h"
 
-namespace mindspore {
-namespace opt {
-class BindValueToGraph : public Pass {
+namespace mindspore::graphkernel {
+class BindValueToGraph : public opt::Pass {
  public:
   BindValueToGraph() : Pass("bind_value_to_graph") {}
   ~BindValueToGraph() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 using BindValueToGraphPtr = std::shared_ptr<BindValueToGraph>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_VALUE_GRAPH_BINDER_H_

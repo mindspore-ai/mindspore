@@ -217,7 +217,7 @@ void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
 
   // Graph kernel fusion optimization
   if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-    opt::GraphKernelOptimize(graph);
+    graphkernel::GraphKernelOptimize(graph);
     graph->SetExecOrderByDefault();
   }
 

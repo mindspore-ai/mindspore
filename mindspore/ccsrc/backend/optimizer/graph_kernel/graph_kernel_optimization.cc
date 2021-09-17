@@ -50,12 +50,15 @@
 #include "backend/optimizer/graph_kernel/transform_op_optimizer.h"
 #include "backend/optimizer/graph_kernel/rewrite_output_shape.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 using context::OptLevel_1;
 using context::OptLevel_2;
 using context::OptLevel_3;
 using context::OptLevel_MAX;
+using opt::CommonSubexpressionElimination;
+using opt::GetitemTuple;
+using opt::GraphOptimizer;
+
 namespace {
 inline unsigned int GetPassLevelByFlag(bool flag) { return flag ? OptLevel_1 : OptLevel_MAX; }
 }  // namespace
@@ -220,5 +223,4 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
 }
 
 void GraphKernelOptimize(const KernelGraphPtr &kernel_graph) { GraphKernelOptimizer().Run(kernel_graph); }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

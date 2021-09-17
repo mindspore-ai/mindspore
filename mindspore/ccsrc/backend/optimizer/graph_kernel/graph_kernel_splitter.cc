@@ -30,8 +30,15 @@
 #include "debug/anf_ir_dump.h"
 #include "utils/context/graph_kernel_flags.h"
 
-namespace mindspore {
-namespace kernel {
+namespace mindspore::graphkernel {
+using kernel::kJsonKeyBufferStitch;
+using kernel::kJsonKeyOpDesc;
+using kernel::kJsonKeyOutputDesc;
+using kernel::kJsonKeyPtrAddress;
+using kernel::kJsonKeyRecomputeOps;
+using kernel::kJsonKeyStitchAtomicOp;
+using kernel::kJsonKeyStitchOp;
+using kernel::kJsonKeyTensorName;
 namespace {
 StitchInfo GetStitchInfo(const nlohmann::json &kernel_json) {
   StitchInfo info;
@@ -175,9 +182,7 @@ bool SplitNodesDecoder::DecodeSplitNodes(const nlohmann::json &kernel_json,
   MS_LOG(DEBUG) << "decode cnodes success, size: " << res_graphs->size();
   return true;
 }
-}  // namespace kernel
 
-namespace opt {
 namespace {
 void TraverseFuncGraphFromCNode(const CNodePtr &cnode, const std::function<void(AnfNodePtr &)> &callback) {
   std::unordered_set<AnfNodePtr> visited;
@@ -769,7 +774,7 @@ class CostModelSplitSchemer : public SplitSchemer {
     split_plan_.clear();
     for (const auto &graph_desc : graph_descs) {
       AnfNodePtrList res_graph;
-      if (!kernel::SplitNodesDecoder::DecodeSplitNodes(graph_desc, address_node_map, &res_graph)) {
+      if (!SplitNodesDecoder::DecodeSplitNodes(graph_desc, address_node_map, &res_graph)) {
         MS_LOG(ERROR) << "Failed decode sub graph, " << graph_desc;
         return false;
       }
@@ -923,5 +928,4 @@ bool GraphKernelSplitter::Run(const FuncGraphPtr &func_graph) {
   mng->KeepRoots({func_graph});
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

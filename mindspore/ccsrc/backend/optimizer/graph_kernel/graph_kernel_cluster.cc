@@ -35,8 +35,7 @@
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 using context::OpLevel_0;
 using context::OpLevel_1;
 std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
@@ -523,5 +522,4 @@ bool GraphKernelCluster::Run(const FuncGraphPtr &func_graph) {
   (void)std::make_shared<SpreadUpdateState>()->Run(func_graph);
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

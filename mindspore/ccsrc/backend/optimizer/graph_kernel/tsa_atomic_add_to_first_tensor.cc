@@ -37,8 +37,7 @@
 #include "backend/session/kernel_graph.h"
 #include "debug/anf_ir_dump.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 class TsaChecker : public AtomicAddChecker {
  public:
   explicit TsaChecker(const PrimitivePtr &target) { target_type_ = target; }
@@ -262,5 +261,4 @@ bool TsaAtomicAddToFirstTensor::Run(const FuncGraphPtr &func_graph) {
 
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

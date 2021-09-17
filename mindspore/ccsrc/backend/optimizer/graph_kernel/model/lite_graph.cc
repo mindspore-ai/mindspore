@@ -29,9 +29,7 @@
 #include "backend/optimizer/graph_kernel/model/op_node.h"
 #include "backend/optimizer/graph_kernel/model/op_register.h"
 
-namespace mindspore {
-namespace opt {
-namespace graphkernel {
+namespace mindspore::graphkernel::inner {
 std::string LiteGraph::Dump() const {
   std::ostringstream os;
   os << name_ << "(";
@@ -122,6 +120,4 @@ NodePtr LiteGraph::GraphBuilder::Op(const std::string &op, const NodeBase &basei
 PrimOpPtr LiteGraph::GraphBuilder::CreateOp(const std::string &op, const std::string &node_name) {
   return OpRegistry::Instance().NewOp(op, node_name);
 }
-}  // namespace graphkernel
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::inner

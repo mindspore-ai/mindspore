@@ -40,8 +40,7 @@
 #include "runtime/device/gpu/kernel_info_setter.h"
 #endif
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 bool IsMakeTupleOut(const AnfNodePtr &out, AnfNodePtrList *real_outs) {
   MS_EXCEPTION_IF_NULL(real_outs);
@@ -809,16 +808,16 @@ void OpListFilter(std::vector<PrimitivePtr> *ops, const std::vector<std::string>
   }
 }
 
-graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
-  graphkernel::LiteGraph::GraphBuilder gb(GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)));
-  std::map<AnfNodePtr, graphkernel::NodePtr> node_map;
+inner::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
+  inner::LiteGraph::GraphBuilder gb(GetValue<std::string>(func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)));
+  std::map<AnfNodePtr, inner::NodePtr> node_map;
   auto todos = TopoSort(func_graph->output());
   const auto &params = func_graph->parameters();
   auto ExtractBuildInfo = [](const AnfNodePtr &node) {
     auto shape = GetDeviceShape(node);
     auto type = AnfAlgo::GetOutputDeviceDataType(node, 0);
     auto format = AnfAlgo::GetOutputFormat(node, 0);
-    return graphkernel::NodeBase({shape, type, format});
+    return inner::NodeBase({shape, type, format});
   };
   // set inputs
   for (size_t i = 0; i < params.size(); i++) {
@@ -831,7 +830,7 @@ graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
     if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) break;
     auto prim = AnfAlgo::GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(prim);
-    graphkernel::NodePtrList inputs;
+    inner::NodePtrList inputs;
     (void)std::transform(cnode->inputs().begin() + 1, cnode->inputs().end(), std::back_inserter(inputs),
                          [&node_map, &gb](const AnfNodePtr &no) {
                            auto iter = node_map.find(no);
@@ -848,7 +847,7 @@ graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
   // set outputs
   auto output_node = func_graph->output();
   if (AnfAlgo::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
-    graphkernel::NodePtrList outputs;
+    inner::NodePtrList outputs;
     auto mt = output_node->cast<CNodePtr>();
     (void)std::transform(mt->inputs().begin() + 1, mt->inputs().end(), std::back_inserter(outputs),
                          [&node_map](const AnfNodePtr &no) { return node_map[no]; });
@@ -859,9 +858,9 @@ graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph) {
   return gb.Get();
 }
 
-FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, AnfNodePtrList *outputs) {
+FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, AnfNodePtrList *outputs) {
   auto func_graph = std::make_shared<FuncGraph>();
-  std::map<graphkernel::NodePtr, AnfNodePtr> node_map;
+  std::map<inner::NodePtr, AnfNodePtr> node_map;
   for (const auto &inp : lite_graph->inputs()) {
     auto param = func_graph->add_parameter();
     node_map[inp] = param;
@@ -873,21 +872,21 @@ FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, Anf
   }
   // Create CNodes.
   for (const auto &op_node : lite_graph->GetOrderedNodes()) {
-    if (op_node->NodeType() != graphkernel::NType::Primitive) {
+    if (op_node->NodeType() != inner::NType::Primitive) {
       MS_LOG(EXCEPTION) << "Node " << op_node->name() << "should be a Primitive node";
     }
-    auto op = std::static_pointer_cast<graphkernel::PrimOp>(op_node);
+    auto op = std::static_pointer_cast<inner::PrimOp>(op_node);
     AnfNodePtrList inputs = {NewValueNode(std::make_shared<Primitive>(op->op(), op->attrs()))};
     (void)std::transform(op->inputs().begin(), op->inputs().end(), std::back_inserter(inputs),
-                         [&node_map](const graphkernel::NodePtr &inp) -> AnfNodePtr {
+                         [&node_map](const inner::NodePtr &inp) -> AnfNodePtr {
                            auto iter = node_map.find(inp);
                            if (iter != node_map.end()) {
                              return iter->second;
                            } else {
-                             if (inp->NodeType() != graphkernel::NType::Value) {
+                             if (inp->NodeType() != inner::NType::Value) {
                                MS_LOG(EXCEPTION) << "Node " << inp->name() << "should be a Value node";
                              }
-                             auto inp_value = inp->As<graphkernel::ConstTensorNode>()->data();
+                             auto inp_value = inp->As<inner::ConstTensorNode>()->data();
                              auto value_node = NewValueNode(inp_value);
                              value_node->set_abstract(inp_value->ToAbstract());
                              value_node->set_kernel_info(std::make_shared<device::KernelInfo>());
@@ -911,7 +910,7 @@ FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, Anf
     AnfNodePtrList mt_inputs;
     AbstractBasePtrList out_abs_list;
     (void)std::transform(lite_graph->GetOutputs().begin(), lite_graph->GetOutputs().end(),
-                         std::back_inserter(mt_inputs), [&node_map, &out_abs_list](const graphkernel::NodePtr &out) {
+                         std::back_inserter(mt_inputs), [&node_map, &out_abs_list](const inner::NodePtr &out) {
                            auto out_node = node_map[out];
                            MS_EXCEPTION_IF_NULL(out_node);
                            (void)out_abs_list.emplace_back(out_node->abstract());
@@ -967,5 +966,4 @@ std::vector<PrimitivePtr> GetValidOps(
   }
   return valid_ops;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

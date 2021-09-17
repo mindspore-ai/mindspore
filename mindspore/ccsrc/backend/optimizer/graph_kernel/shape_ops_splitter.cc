@@ -31,8 +31,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "debug/anf_ir_dump.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 AnfNodePtr CloneCNode(const AnfNodePtr &anf_node) {
   auto func_graph = anf_node->func_graph();
@@ -135,5 +134,4 @@ bool ShapeOpsSplitter::Run(const FuncGraphPtr &func_graph) {
   }
   return result;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

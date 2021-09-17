@@ -19,9 +19,7 @@
 
 #include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 
-namespace mindspore {
-namespace opt {
-namespace expanders {
+namespace mindspore::graphkernel::expanders {
 class StandardNormal : public OpExpander {
  public:
   StandardNormal() {
@@ -39,6 +37,4 @@ class StandardNormal : public OpExpander {
   }
 };
 OP_EXPANDER_REGISTER("StandardNormal", StandardNormal);
-}  // namespace expanders
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::expanders

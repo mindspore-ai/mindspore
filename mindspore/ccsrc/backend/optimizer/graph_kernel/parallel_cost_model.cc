@@ -16,12 +16,12 @@
 
 #include "backend/optimizer/graph_kernel/parallel_cost_model.h"
 
+#include <algorithm>
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "pipeline/jit/parse/python_adapter.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 std::string CommonDimInfo::ToString() {
   std::ostringstream buffer;
   buffer << "Dim(" << dim_info_ << ")";
@@ -117,5 +117,4 @@ ParallelCostModelPtr ParellelCostModelWarehouse::GetParallelCostModel(const std:
   }
   return cost_model_;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

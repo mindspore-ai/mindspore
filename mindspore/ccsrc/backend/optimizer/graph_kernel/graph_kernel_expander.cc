@@ -38,8 +38,7 @@
 #include "vm/segment_runner.h"
 #include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 using context::OpLevel_0;
 using context::OpLevel_1;
@@ -265,5 +264,4 @@ bool GraphKernelExpander::Run(const FuncGraphPtr &func_graph) {
   return DoExpand(func_graph);
 }
 bool GraphKernelComplexExpander::Run(const FuncGraphPtr &func_graph) { return DoExpand(func_graph); }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

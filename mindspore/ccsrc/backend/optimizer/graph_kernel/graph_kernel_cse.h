@@ -19,9 +19,9 @@
 #include <vector>
 #include "backend/optimizer/pass/common_subexpression_elimination.h"
 
-namespace mindspore {
-namespace opt {
-class GraphKernelCSE : public Pass {
+namespace mindspore::graphkernel {
+using opt::BackendCSE;
+class GraphKernelCSE : public opt::Pass {
  public:
   explicit GraphKernelCSE(const std::vector<PrimitivePtr> &black_list = {})
       : Pass("graph_kernel_cse"), black_list_(black_list) {}
@@ -42,6 +42,5 @@ class GraphKernelBackendCSE : public BackendCSE {
  private:
   std::vector<PrimitivePtr> black_list_;
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_CSE_H_

@@ -25,8 +25,7 @@
 #include "backend/optimizer/graph_kernel/add_atomic_clean.h"
 #include "backend/session/kernel_graph.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 /*
  * output = SubGraph(input_x, indices, update) {
  *   %0 = TensorScatterAdd(%para1, %para2, %para3)
@@ -58,7 +57,6 @@ class TsaAtomicAddToFirstTensor : public AtomicCleanInsertter {
   size_t tsa_first_input_index_{0};  // sub-graph parameter index.
 };
 using TsaAtomicAddToFirstTensorPtr = std::shared_ptr<TsaAtomicAddToFirstTensor>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_TSA_ATOMIC_ADD_TO_FIRST_TENSOR_H_

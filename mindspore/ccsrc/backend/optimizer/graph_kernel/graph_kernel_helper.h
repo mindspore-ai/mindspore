@@ -33,8 +33,7 @@
 #include <nlohmann/json.hpp>
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 using kernel::DumpOption;
 
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
@@ -50,8 +49,6 @@ constexpr auto kJsonKeyGraphMode = "graph_mode";
 constexpr auto kAllTarget = "ALL";
 
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
-inline const PrimitivePtr kPrimUnPadAkg = std::make_shared<Primitive>("UnPadAkg");
-inline const PrimitivePtr kPrimPadAkg = std::make_shared<Primitive>("PadAkg");
 struct DataInfo {
   std::string format{kOpFormat_DEFAULT};
   ShapeVector shape{1};
@@ -137,14 +134,13 @@ ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t d
 AbstractBasePtr GetOutputAbstract(const AnfNodePtr &node, size_t output_idx);
 
 // functions to graphkernel model
-graphkernel::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph);
-FuncGraphPtr LiteGraph2AnfGraph(const graphkernel::LiteGraphPtr &lite_graph, AnfNodePtrList *outputs = nullptr);
+inner::LiteGraphPtr AnfGraph2LiteGraph(const FuncGraphPtr &func_graph);
+FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, AnfNodePtrList *outputs = nullptr);
 
 // remove parameter which is not used
 void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
 
 std::vector<PrimitivePtr> GetValidOps(
   const std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> &ops_with_level, unsigned int level);
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_

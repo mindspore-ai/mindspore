@@ -23,9 +23,7 @@
 
 #include "backend/optimizer/graph_kernel/model/node.h"
 
-namespace mindspore {
-namespace opt {
-namespace graphkernel {
+namespace mindspore::graphkernel::inner {
 #define OP_CREATOR(cls) \
   [](const std::string &op, const std::string &name) -> PrimOpPtr { return std::make_shared<cls>(op, name); }
 
@@ -84,8 +82,5 @@ class OpRegistry {
   ~OpRegistry() = default;
   std::unordered_map<std::string, std::function<PrimOpPtr(const std::string &, const std::string &)>> creators;
 };
-
-}  // namespace graphkernel
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::inner
 #endif

@@ -30,8 +30,8 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/optimizer/graph_kernel/decrease_transfer_precision.h"
-namespace mindspore {
-namespace opt {
+
+namespace mindspore::graphkernel {
 static const size_t GK_MIN_SIZE = 2;  // 2
 
 int64_t ObtainGetItemIndex(const AnfNodePtr &getitem) {
@@ -289,5 +289,4 @@ bool DecreaseTransferPrecision::Process_Son(const FuncGraphPtr &, const AnfNodeP
   (void)mng->Replace(old_input, cnode);
   return true;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

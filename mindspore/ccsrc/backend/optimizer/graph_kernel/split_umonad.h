@@ -18,9 +18,8 @@
 
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
-namespace mindspore {
-namespace opt {
-class SplitAssign : public PatternProcessPass {
+namespace mindspore::graphkernel {
+class SplitAssign : public opt::PatternProcessPass {
  public:
   explicit SplitAssign(bool multigraph = true) : PatternProcessPass("split_assign", multigraph) {}
   ~SplitAssign() override = default;
@@ -37,6 +36,5 @@ class OpUMonadExpander : public DefaultExpander {
  private:
   size_t input_idx_;
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_UMONAD_H_

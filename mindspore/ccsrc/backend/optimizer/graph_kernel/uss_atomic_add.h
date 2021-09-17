@@ -25,8 +25,7 @@
 #include "backend/optimizer/graph_kernel/add_atomic_clean.h"
 #include "backend/session/kernel_graph.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 /*
  * output = SubGraph(input_x, segment_ids) {
  *   %0 = UnsortedSegmentSum(%para1, %para2)
@@ -48,7 +47,6 @@ class UssAtomicAdd : public AtomicCleanInsertter {
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 using UssAtomicAddPtr = std::shared_ptr<UssAtomicAdd>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_USS_ATOMIC_ADD_H_

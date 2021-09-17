@@ -20,9 +20,8 @@
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
 
-namespace mindspore {
-namespace opt {
-class DecreaseTransferPrecision : public Pass {
+namespace mindspore::graphkernel {
+class DecreaseTransferPrecision : public opt::Pass {
  public:
   DecreaseTransferPrecision() : Pass("decrease_transfer_precision") {}
   ~DecreaseTransferPrecision() override = default;
@@ -33,6 +32,5 @@ class DecreaseTransferPrecision : public Pass {
                       size_t index = 0);
   bool Process_Son(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t index);
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_DECREASE_TRANSFER_PRECISION_H_

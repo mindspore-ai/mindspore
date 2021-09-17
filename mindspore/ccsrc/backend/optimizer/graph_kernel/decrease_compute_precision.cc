@@ -29,8 +29,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/decrease_compute_precision.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 // Add CastCNode
 CNodePtr AddCastCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                       const TypeId &input_type, const TypeId &output_type, const std::vector<size_t> &origin_shape,
@@ -266,5 +265,4 @@ bool DecreaseComputePrecision::Run(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

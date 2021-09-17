@@ -21,8 +21,7 @@
 #include "backend/optimizer/common/pass.h"
 #include "ir/func_graph.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 /**
  * @brief Spread the input tuple of UpdateState
  * @example
@@ -35,7 +34,7 @@ namespace opt {
  *   %2 = op2
  *   UpdateState(U, %1, %2)
  */
-class SpreadUpdateState : public Pass {
+class SpreadUpdateState : public opt::Pass {
  public:
   SpreadUpdateState() : Pass("spread_update_state") {}
   ~SpreadUpdateState() override = default;
@@ -55,7 +54,7 @@ class SpreadUpdateState : public Pass {
  *   %3 = make_tuple(%1, %2)
  *   UpdateState(U, %3)
  */
-class ShrinkUpdateState : public Pass {
+class ShrinkUpdateState : public opt::Pass {
  public:
   ShrinkUpdateState() : Pass("shrink_update_state") {}
   ~ShrinkUpdateState() override = default;
@@ -106,7 +105,7 @@ AnfNodePtrList SpreadTuples(const AnfNodePtrList &nodes, size_t begin_index = 0)
  *      %3 = tuple_getitem(%1, 1)   // the Sub
  *      %4 = UpdateState(U, %2, %3)
  */
-class ExtendOutputForUpdateState : public Pass {
+class ExtendOutputForUpdateState : public opt::Pass {
  public:
   ExtendOutputForUpdateState() : Pass("extend_output_for_update_state") {}
   ~ExtendOutputForUpdateState() = default;
@@ -153,12 +152,11 @@ class ExtendOutputForUpdateState : public Pass {
  *      %4 = tuple_getitem(%1, 2)
  *      %5 = UpdateState(U, %2)  // only keep %2
  */
-class MergeOutputForUpdateState : public Pass {
+class MergeOutputForUpdateState : public opt::Pass {
  public:
   MergeOutputForUpdateState() : Pass("merge_output_for_update_state") {}
   ~MergeOutputForUpdateState() = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_UPDATE_STATE_FORMATTER_H_

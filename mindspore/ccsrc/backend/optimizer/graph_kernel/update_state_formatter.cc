@@ -25,8 +25,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 AnfNodePtrList GetUpdateStateList(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   AnfNodePtrList result;
@@ -287,5 +286,4 @@ bool MergeOutputForUpdateState::Run(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

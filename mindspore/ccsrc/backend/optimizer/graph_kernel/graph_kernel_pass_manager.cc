@@ -23,9 +23,8 @@
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
-namespace mindspore {
-namespace opt {
-void GraphKernelPassManager::AddPass(const PassPtr &pass, unsigned int pass_level, bool supported_device) {
+namespace mindspore::graphkernel {
+void GraphKernelPassManager::AddPass(const opt::PassPtr &pass, unsigned int pass_level, bool supported_device) {
   MS_EXCEPTION_IF_NULL(pass);
   auto pass_id = passes_.size();
   auto pass_name = pass->name();
@@ -47,7 +46,7 @@ void GraphKernelPassManager::AddPass(const PassPtr &pass, unsigned int pass_leve
   enabled_.push_back(enable);
 }
 
-std::string GraphKernelPassManager::GetPassFullname(size_t pass_id, const PassPtr &pass) const {
+std::string GraphKernelPassManager::GetPassFullname(size_t pass_id, const opt::PassPtr &pass) const {
   return "stage" + std::to_string(stage_) + "_" + name() + "_" + std::to_string(pass_id) + "_" + pass->name();
 }
 
@@ -67,5 +66,4 @@ bool GraphKernelPassManager::Run(const FuncGraphPtr &func_graph) const {
   }
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

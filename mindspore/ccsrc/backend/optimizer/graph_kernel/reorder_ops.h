@@ -22,8 +22,7 @@
 #include <string>
 #include "backend/optimizer/common/pass.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 struct NodeIOInfo {
   std::vector<std::string> inputs_format;
   std::vector<std::string> outputs_format;
@@ -31,7 +30,7 @@ struct NodeIOInfo {
   std::vector<TypeId> outputs_type;
 };
 
-class ReorderOps : public Pass {
+class ReorderOps : public opt::Pass {
  public:
   ReorderOps() : Pass("reorder_ops") {}
   ~ReorderOps() override = default;
@@ -51,6 +50,5 @@ class ReorderOps : public Pass {
   bool ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph);
 };
 using ReorderOpsPtr = std::shared_ptr<ReorderOps>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_REORDER_OPS_H_

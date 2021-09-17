@@ -30,10 +30,10 @@ namespace prim {
 inline const PrimitivePtr kPrimUserDefined = std::make_shared<Primitive>("UserDefined");
 }
 
-namespace opt {
+namespace graphkernel {
 class Graph;
 using GraphPtr = std::shared_ptr<Graph>;
-class GraphKernelCluster : public Pass {
+class GraphKernelCluster : public opt::Pass {
  public:
   GraphKernelCluster() : Pass("graph_kernel_cluster") {}
   ~GraphKernelCluster() override = default;
@@ -61,6 +61,6 @@ class GraphKernelCluster : public Pass {
   std::stringstream dump_buf_;
   std::vector<PrimitivePtr> op_list_;
 };
-}  // namespace opt
+}  // namespace graphkernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_CLUSTER_H_

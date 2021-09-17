@@ -24,8 +24,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 bool IsCNodePrimitveEqual(const CNodePtr &main, const CNodePtr &node, const std::vector<PrimitivePtr> &black_list) {
   auto main_primitive = AnfAlgo::GetCNodePrimitive(main);
@@ -136,5 +135,4 @@ bool GraphKernelCSE::Run(const FuncGraphPtr &func_graph) {
   auto graphkernel_backend_cse = std::make_shared<GraphKernelBackendCSE>(black_list_);
   return graphkernel_backend_cse->Cse(func_graph, func_graph->manager());
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

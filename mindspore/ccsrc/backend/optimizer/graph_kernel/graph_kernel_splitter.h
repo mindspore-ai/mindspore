@@ -24,8 +24,7 @@
 #include "ir/func_graph.h"
 #include "backend/optimizer/common/pass.h"
 
-namespace mindspore {
-namespace kernel {
+namespace mindspore::graphkernel {
 struct StitchInfo {
   std::vector<std::string> stitch_ops;
   std::vector<std::string> stitch_atomic_ops;
@@ -38,16 +37,13 @@ class SplitNodesDecoder {
   static bool DecodeSplitNodes(const nlohmann::json &kernel_json,
                                const std::map<std::string, AnfNodePtr> &address_node_map, AnfNodePtrList *res_graphs);
 };
-}  // namespace kernel
 
-namespace opt {
-class GraphKernelSplitter : public Pass {
+class GraphKernelSplitter : public opt::Pass {
  public:
   GraphKernelSplitter() : Pass("graph_kernel_splitter") {}
   ~GraphKernelSplitter() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 using GraphKernelSplitterPtr = std::shared_ptr<GraphKernelSplitter>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_SPLITTER_H_

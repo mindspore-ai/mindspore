@@ -19,16 +19,15 @@
 #include "ir/func_graph.h"
 #include "backend/optimizer/common/pass.h"
 
-namespace mindspore {
-namespace opt {
-class SaveOutputShape : public Pass {
+namespace mindspore::graphkernel {
+class SaveOutputShape : public opt::Pass {
  public:
   explicit SaveOutputShape(const std::string &pass_name = "save_output_shape") : Pass(pass_name) {}
   ~SaveOutputShape() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 
-class RewriteOutputShape : public Pass {
+class RewriteOutputShape : public opt::Pass {
  public:
   explicit RewriteOutputShape(const std::string &pass_name = "rewrite_output_shape") : Pass(pass_name) {}
   ~RewriteOutputShape() override = default;
@@ -37,6 +36,5 @@ class RewriteOutputShape : public Pass {
  private:
   void Process(const AnfNodePtr &node, size_t index, const AbstractBasePtr &abstract);
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_REWRITE_OUTPUT_SHAPE_H_

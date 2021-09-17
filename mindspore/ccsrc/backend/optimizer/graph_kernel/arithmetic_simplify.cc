@@ -29,8 +29,7 @@
 #include "ir/anf.h"
 #include "utils/context/graph_kernel_flags.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 // operator which follows commutative rules
 static std::unordered_set<std::string> commutative_ops{"Add", "Mul"};
 
@@ -51,8 +50,8 @@ class PatternNode {
   std::vector<PatternNodePtr> inputs_;
 };
 
-using ParaMap = std::unordered_map<char, graphkernel::NodePtr>;
-using ConstMap = std::unordered_map<std::string, graphkernel::NodePtr>;
+using ParaMap = std::unordered_map<char, inner::NodePtr>;
+using ConstMap = std::unordered_map<std::string, inner::NodePtr>;
 
 /* This class works to store a kind of pattern tree; it needs a string expression to construct;
  Ex."Pow(Exp(A),B)=Exp(Mul(A,B))"
@@ -78,26 +77,25 @@ class PatternTree {
   void DfsTraverse(const std::shared_ptr<PatternNodePtrList> &res, const PatternNodePtr &cur) const;
   // leverage pattern tree node and lite node's mapping relation to build lite node graph from pattern tree's right
   // side
-  graphkernel::NodePtr AlterGraph(const std::shared_ptr<ParaMap> &para_to_ref,
-                                  const std::shared_ptr<ConstMap> &const_to_ref,
-                                  const graphkernel::NodePtr &origin_root);
+  inner::NodePtr AlterGraph(const std::shared_ptr<ParaMap> &para_to_ref, const std::shared_ptr<ConstMap> &const_to_ref,
+                            const inner::NodePtr &origin_root);
   // invoke DfsMatchGraph
-  graphkernel::NodePtrList MatchGraph(const graphkernel::NodePtr &root, const std::shared_ptr<ParaMap> &para_to_ref,
-                                      const std::shared_ptr<ConstMap> &const_to_ref);
+  inner::NodePtrList MatchGraph(const inner::NodePtr &root, const std::shared_ptr<ParaMap> &para_to_ref,
+                                const std::shared_ptr<ConstMap> &const_to_ref);
 
  protected:
   // set attributes for certain pattern node if needed;
-  virtual std::unordered_map<PatternNodePtr, graphkernel::DAttrs> SetAttributes(const graphkernel::NodePtr &) {
+  virtual std::unordered_map<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &) {
     auto right_pattern = std::make_shared<PatternNodePtrList>();
     DfsTraverse(right_pattern, rhs_root_);
-    std::unordered_map<PatternNodePtr, graphkernel::DAttrs> attrs_map;
+    std::unordered_map<PatternNodePtr, inner::DAttrs> attrs_map;
     for (auto &i : (*right_pattern)) {
       attrs_map[i] = {};
     }
     return attrs_map;
   }
   // check attributes meet requirements for certain pattern node if needed;
-  virtual bool CheckAttributes(const graphkernel::NodePtr &origin_root) const { return true; }
+  virtual bool CheckAttributes(const inner::NodePtr &origin_root) const { return true; }
 
  private:
   PatternNodePtr lhs_root_ = nullptr;  // left side's root
@@ -164,14 +162,14 @@ PatternNodePtr PatternTree::BuildTree(const std::string &pattern_str) {
   return nullptr;
 }
 
-graphkernel::NType PatternNodeType(const std::string &n) {
+inner::NType PatternNodeType(const std::string &n) {
   // return (Primitive， Parameter or Value)
   if (n.length() > 0 && '0' <= n[n.length() - 1] && n[n.length() - 1] <= '9') {
-    return graphkernel::NType::Value;
+    return inner::NType::Value;
   } else if (n.length() == 1 && 'A' <= n[0] && n[0] <= 'Z') {
-    return graphkernel::NType::Parameter;
+    return inner::NType::Parameter;
   } else {
-    return graphkernel::NType::Primitive;
+    return inner::NType::Primitive;
   }
 }
 
@@ -185,11 +183,11 @@ std::string CleanStr(const std::string &s) {
   return res;
 }
 
-bool CheckCurNode(const graphkernel::NodePtr &tmp_node, const std::string &tmp_pattern_op,
+bool CheckCurNode(const inner::NodePtr &tmp_node, const std::string &tmp_pattern_op,
                   const std::shared_ptr<ParaMap> &para_to_ref, const std::shared_ptr<ConstMap> &const_to_ref) {
   // put lite graph node's mapping to pattern node into "para_to_ref" and "const_to_ref"
   switch (PatternNodeType(tmp_pattern_op)) {
-    case graphkernel::NType::Parameter: {
+    case inner::NType::Parameter: {
       if (para_to_ref->find(tmp_pattern_op[0]) != para_to_ref->end()) {
         if ((*para_to_ref)[tmp_pattern_op[0]] != tmp_node) {
           return false;
@@ -199,16 +197,16 @@ bool CheckCurNode(const graphkernel::NodePtr &tmp_node, const std::string &tmp_p
       }
       break;
     }
-    case graphkernel::NType::Value: {
-      if (tmp_node->NodeType() != graphkernel::NType::Value) {
+    case inner::NType::Value: {
+      if (tmp_node->NodeType() != inner::NType::Value) {
         return false;
       }
-      auto node_value_str = std::static_pointer_cast<graphkernel::ConstTensorNode>(tmp_node)->ToString();
+      auto node_value_str = std::static_pointer_cast<inner::ConstTensorNode>(tmp_node)->ToString();
       double node_value = std::stod(CleanStr(node_value_str));
       if (StartWith(tmp_pattern_op, "const")) {
         if (const_to_ref->find(tmp_pattern_op) != const_to_ref->end()) {
           auto pattern_value_str =
-            std::static_pointer_cast<graphkernel::ConstTensorNode>((*const_to_ref)[tmp_pattern_op])->ToString();
+            std::static_pointer_cast<inner::ConstTensorNode>((*const_to_ref)[tmp_pattern_op])->ToString();
           double pattern_value = std::stod(CleanStr(pattern_value_str));
           if (pattern_value != node_value) return false;
         } else {
@@ -222,9 +220,9 @@ bool CheckCurNode(const graphkernel::NodePtr &tmp_node, const std::string &tmp_p
       }
       break;
     }
-    case graphkernel::NType::Primitive: {
-      if (tmp_node->NodeType() != graphkernel::NType::Primitive ||
-          std::static_pointer_cast<graphkernel::PrimOp>(tmp_node)->op() != tmp_pattern_op) {
+    case inner::NType::Primitive: {
+      if (tmp_node->NodeType() != inner::NType::Primitive ||
+          std::static_pointer_cast<inner::PrimOp>(tmp_node)->op() != tmp_pattern_op) {
         return false;
       }
       break;
@@ -237,9 +235,9 @@ bool CheckCurNode(const graphkernel::NodePtr &tmp_node, const std::string &tmp_p
 
 // recursion for thr match of lite node graph and pattern tree's left side, store the mapping of pattern tree node to
 // lite graph
-bool DfsMatchGraph(const graphkernel::NodePtr &tmp_node, const PatternNodePtr &tmp_pattern,
+bool DfsMatchGraph(const inner::NodePtr &tmp_node, const PatternNodePtr &tmp_pattern,
                    const std::shared_ptr<ParaMap> &para_to_ref, const std::shared_ptr<ConstMap> &const_to_ref,
-                   const std::shared_ptr<graphkernel::NodePtrList> &res) {
+                   const std::shared_ptr<inner::NodePtrList> &res) {
   std::string tmp_pattern_op = tmp_pattern->op();
   if (!CheckCurNode(tmp_node, tmp_pattern_op, para_to_ref, const_to_ref)) {
     return false;
@@ -250,7 +248,7 @@ bool DfsMatchGraph(const graphkernel::NodePtr &tmp_node, const PatternNodePtr &t
   if (tmp_pattern_inputs.size() != 0 && tmp_node_inputs.size() != tmp_pattern_inputs.size()) {
     return false;
   }
-  if (PatternNodeType(tmp_pattern_op) == graphkernel::NType::Primitive) {
+  if (PatternNodeType(tmp_pattern_op) == inner::NType::Primitive) {
     // exchange inputs for the node who meets commutative rules
     if (commutative_ops.find(tmp_pattern_op) != commutative_ops.end()) {
       ParaMap para_to_ref_copy = *para_to_ref;
@@ -291,7 +289,7 @@ void PatternTree::DfsTraverse(const std::shared_ptr<PatternNodePtrList> &res, co
     return;
   }
   for (auto &p : cur->inputs()) {
-    if (PatternNodeType(p->op()) == graphkernel::NType::Primitive) {
+    if (PatternNodeType(p->op()) == inner::NType::Primitive) {
       DfsTraverse(res, p);
     }
   }
@@ -299,10 +297,9 @@ void PatternTree::DfsTraverse(const std::shared_ptr<PatternNodePtrList> &res, co
 }
 
 // invoke DfsMatchGraph
-graphkernel::NodePtrList PatternTree::MatchGraph(const graphkernel::NodePtr &root,
-                                                 const std::shared_ptr<ParaMap> &para_to_ref,
-                                                 const std::shared_ptr<ConstMap> &const_to_ref) {
-  auto res = std::make_shared<graphkernel::NodePtrList>();
+inner::NodePtrList PatternTree::MatchGraph(const inner::NodePtr &root, const std::shared_ptr<ParaMap> &para_to_ref,
+                                           const std::shared_ptr<ConstMap> &const_to_ref) {
+  auto res = std::make_shared<inner::NodePtrList>();
   if (!DfsMatchGraph(root, lhs_root_, para_to_ref, const_to_ref, res)) {
     return {};
   }
@@ -314,21 +311,21 @@ graphkernel::NodePtrList PatternTree::MatchGraph(const graphkernel::NodePtr &roo
 
 // leverage pattern tree node and lite node's mapping relation to build new lite node graph from pattern tree's right
 // side
-graphkernel::NodePtr PatternTree::AlterGraph(const std::shared_ptr<ParaMap> &para_to_ref,
-                                             const std::shared_ptr<ConstMap> &const_to_ref,
-                                             const graphkernel::NodePtr &origin_root) {
+inner::NodePtr PatternTree::AlterGraph(const std::shared_ptr<ParaMap> &para_to_ref,
+                                       const std::shared_ptr<ConstMap> &const_to_ref,
+                                       const inner::NodePtr &origin_root) {
   auto res = std::make_shared<PatternNodePtrList>();
   DfsTraverse(res, rhs_root_);
   auto all_attrs = SetAttributes(origin_root);
-  graphkernel::LiteGraph::GraphBuilder gb("");
-  std::unordered_map<PatternNodePtr, graphkernel::NodePtr> pattern_to_ref;
+  inner::LiteGraph::GraphBuilder gb("");
+  std::unordered_map<PatternNodePtr, inner::NodePtr> pattern_to_ref;
   for (auto &n : (*res)) {
-    if (PatternNodeType(n->op()) != graphkernel::NType::Primitive) continue;
-    graphkernel::NodePtrList inputs;
+    if (PatternNodeType(n->op()) != inner::NType::Primitive) continue;
+    inner::NodePtrList inputs;
     for (auto &i : n->inputs()) {
-      if (PatternNodeType(i->op()) == graphkernel::NType::Primitive) {
+      if (PatternNodeType(i->op()) == inner::NType::Primitive) {
         inputs.push_back(pattern_to_ref[i]);
-      } else if (PatternNodeType(i->op()) == graphkernel::NType::Parameter) {
+      } else if (PatternNodeType(i->op()) == inner::NType::Parameter) {
         inputs.push_back((*para_to_ref)[i->op()[0]]);
       } else {
         if (StartWith(i->op(), "const")) {
@@ -344,7 +341,7 @@ graphkernel::NodePtr PatternTree::AlterGraph(const std::shared_ptr<ParaMap> &par
   }
   auto &alter_graph = gb.Get()->ops();
   if (alter_graph.empty()) {
-    if (PatternNodeType(rhs_root_->op()) == graphkernel::NType::Parameter) {
+    if (PatternNodeType(rhs_root_->op()) == inner::NType::Parameter) {
       return (*para_to_ref)[rhs_root_->op()[0]];
     } else {
       if (StartWith(rhs_root_->op(), "const")) {
@@ -365,12 +362,11 @@ class ExtraReduce1PatternTree : public PatternTree {
   ~ExtraReduce1PatternTree() = default;
 
  protected:
-  bool CheckAttributes(const graphkernel::NodePtr &origin_root) const override {
+  bool CheckAttributes(const inner::NodePtr &origin_root) const override {
     return (GetValue<bool>((origin_root->inputs()[0])->attrs().find("keep_dims")->second) ==
             GetValue<bool>(origin_root->attrs().find("keep_dims")->second));
   }
-  std::unordered_map<PatternNodePtr, graphkernel::DAttrs> SetAttributes(
-    const graphkernel::NodePtr &origin_root) override {
+  std::unordered_map<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     std::vector<int64_t> axis;
     std::set<int64_t> axis_set;
@@ -412,8 +408,7 @@ class ExtraReduce2PatternTree : public PatternTree {
   ~ExtraReduce2PatternTree() = default;
 
  protected:
-  std::unordered_map<PatternNodePtr, graphkernel::DAttrs> SetAttributes(
-    const graphkernel::NodePtr &origin_root) override {
+  std::unordered_map<PatternNodePtr, inner::DAttrs> SetAttributes(const inner::NodePtr &origin_root) override {
     auto attrs_map = PatternTree::SetAttributes(origin_root);
     bool keep_dims = GetValue<bool>(origin_root->attrs().find("keep_dims")->second);
     auto axis = GetValue<std::vector<int64_t>>(origin_root->attrs().find("axis")->second);
@@ -430,8 +425,8 @@ class ExtraReduce2PatternTree : public PatternTree {
  Here we cannot transform Neg(Neg(A)) to A because Neg(A) is a input of Mul. OutsideRely is responsible for checking
  this case.
  */
-bool OutsideRely(const graphkernel::NodePtrList &nodes, const graphkernel::NodePtr &root) {
-  std::unordered_set<graphkernel::Node *> nodes_can_simplify;
+bool OutsideRely(const inner::NodePtrList &nodes, const inner::NodePtr &root) {
+  std::unordered_set<inner::Node *> nodes_can_simplify;
   std::for_each(nodes.begin(), nodes.end(), [&nodes_can_simplify](auto n) { nodes_can_simplify.insert(n.get()); });
   for (auto &n : nodes) {
     if (n == root) {
@@ -549,17 +544,17 @@ std::unordered_map<std::string, std::vector<PatternTreePtr>> GetExpressions() {
 }
 
 // arithmetic simplify
-bool ArithmeticSimplify::DoArithmeticTrans(const graphkernel::LiteGraphPtr &litegraph) {
+bool ArithmeticSimplify::DoArithmeticTrans(const inner::LiteGraphPtr &litegraph) {
   auto ops_list = litegraph->ops();
   bool changed = false;
-  graphkernel::NodePtrList matched_nodes;
+  inner::NodePtrList matched_nodes;
   auto para_to_ref = std::make_shared<ParaMap>();    // A（B，C ...)->Node* mapping
   auto const_to_ref = std::make_shared<ConstMap>();  // const->Node* mapping
   PatternTreePtr cur_pattern;
   auto iter = ops_list.rbegin();
   while (iter != ops_list.rend()) {
     bool can_simplify = false;
-    auto this_op = std::static_pointer_cast<graphkernel::PrimOp>(*iter)->op();
+    auto this_op = std::static_pointer_cast<inner::PrimOp>(*iter)->op();
     if (expressions_map_.find(this_op) != expressions_map_.end()) {
       for (auto p : expressions_map_[this_op]) {
         cur_pattern = p;
@@ -573,13 +568,13 @@ bool ArithmeticSimplify::DoArithmeticTrans(const graphkernel::LiteGraphPtr &lite
         matched_nodes = p->MatchGraph(*iter, para_to_ref, const_to_ref);
         if (!matched_nodes.empty()) {
           auto right_root_type = PatternNodeType(p->rhs_root()->op());
-          if (right_root_type == graphkernel::NType::Primitive && OutsideRely(matched_nodes, *iter)) {
+          if (right_root_type == inner::NType::Primitive && OutsideRely(matched_nodes, *iter)) {
             continue;
           }
           // if no outside rely,then this is a successful match
           can_simplify = true;
           // get the new node to replace
-          graphkernel::NodePtr alter_graph_node = cur_pattern->AlterGraph(para_to_ref, const_to_ref, *iter);
+          inner::NodePtr alter_graph_node = cur_pattern->AlterGraph(para_to_ref, const_to_ref, *iter);
           (*iter)->ReplaceWith(alter_graph_node);
           ops_list = litegraph->GetOrderedNodes();
           iter = ops_list.rbegin();
@@ -596,12 +591,12 @@ bool ArithmeticSimplify::DoArithmeticTrans(const graphkernel::LiteGraphPtr &lite
 }
 
 // constant fold
-bool ArithmeticSimplify::DoConstantFold(const graphkernel::LiteGraphPtr &litegraph) {
+bool ArithmeticSimplify::DoConstantFold(const inner::LiteGraphPtr &litegraph) {
   auto ops_list = litegraph->GetOrderedNodes();
   bool changed = false;
   auto iter = ops_list.begin();
   while (iter != ops_list.end()) {
-    auto this_op = std::static_pointer_cast<graphkernel::PrimOp>(*iter);
+    auto this_op = std::static_pointer_cast<inner::PrimOp>(*iter);
     auto value = this_op->InferValue(this_op->inputs(), this_op->attrs(), this_op->op());
     if (value != nullptr) {
       (*iter)->ReplaceWith(value);
@@ -615,16 +610,16 @@ bool ArithmeticSimplify::DoConstantFold(const graphkernel::LiteGraphPtr &litegra
   return changed;
 }
 
-void ReorganizeEmptyGraph(const graphkernel::LiteGraphPtr &litegraph) {
+void ReorganizeEmptyGraph(const inner::LiteGraphPtr &litegraph) {
   auto &outputs = litegraph->GetOutputs();
   for (size_t i = 0; i < outputs.size(); i++) {
-    if (outputs[i]->NodeType() == graphkernel::NType::Value) {
-      graphkernel::LiteGraph::GraphBuilder gb;
+    if (outputs[i]->NodeType() == inner::NType::Value) {
+      inner::LiteGraph::GraphBuilder gb;
       std::vector<int64_t> new_shape = {1};
       auto op_ptr = gb.Emit("BroadcastTo", {outputs[i]}, {{"shape", MakeValue(new_shape)}});
       litegraph->output()->SetInput(i, op_ptr);
-    } else if (outputs[i]->NodeType() == graphkernel::NType::Parameter) {
-      graphkernel::LiteGraph::GraphBuilder gb;
+    } else if (outputs[i]->NodeType() == inner::NType::Parameter) {
+      inner::LiteGraph::GraphBuilder gb;
       auto op_ptr = gb.Emit("Reshape", {outputs[i]}, {{"shape", MakeValue(outputs[i]->shape)}});
       litegraph->output()->SetInput(i, op_ptr);
     }
@@ -639,7 +634,7 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   for (auto node : func_graph->GetOrderedCnodes()) {
     if (AnfAlgo::IsGraphKernel(node)) {
       auto sub_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-      graphkernel::LiteGraphPtr lg = AnfGraph2LiteGraph(sub_graph);
+      inner::LiteGraphPtr lg = AnfGraph2LiteGraph(sub_graph);
       bool find_pattern = true;
       bool change_anf_graph = false;
       while (find_pattern) {
@@ -665,5 +660,4 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
   }
   return do_simplify;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

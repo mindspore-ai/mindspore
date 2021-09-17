@@ -25,8 +25,7 @@
 #include "backend/optimizer/graph_kernel/add_atomic_clean.h"
 #include "backend/session/kernel_graph.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 class StitchAtomicCleanInsertter : public AtomicCleanInsertter {
  public:
   StitchAtomicCleanInsertter() : AtomicCleanInsertter("stitch_atomic_clean") {}
@@ -44,7 +43,5 @@ class StitchAtomicCleanInsertter : public AtomicCleanInsertter {
   AnfNodePtr stitch_node_{nullptr};
 };
 using StitchAtomicCleanInsertterPtr = std::shared_ptr<StitchAtomicCleanInsertter>;
-}  // namespace opt
-}  // namespace mindspore
-
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADD_STITCH_ATOMIC_CLEAN_GPU_H_

@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 #include "backend/optimizer/graph_kernel/cast_matmul_fusion.h"
-#include <tuple>
+
+#include <vector>
+#include <string>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 // Update matmul's BuildInfo as last input changed
 void UpdateBuildInfo(const AnfNodePtr &matmul_node, const AnfNodePtr &cast_node) {
@@ -105,5 +106,4 @@ bool CastMatmulFusion::Run(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

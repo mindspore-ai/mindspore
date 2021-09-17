@@ -31,9 +31,7 @@
 #include "utils/utils.h"
 #include "backend/kernel_compiler/common_utils.h"
 
-namespace mindspore {
-namespace opt {
-namespace graphkernel {
+namespace mindspore::graphkernel::inner {
 void Node::DumpTensor(std::ostringstream &os) const {
   os << name_ << "[";
   for (size_t i = 0; i < shape.size(); i++) {
@@ -84,6 +82,4 @@ void Node::ReplaceWith(const NodePtr &other_node) {
     }
   }
 }
-}  // namespace graphkernel
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::inner
