@@ -33,7 +33,11 @@ class OpenCLSubGraph : public SubGraphKernel {
                  Kernel *kernel)
       : SubGraphKernel(inKernels, outKernels, nodes, kernel) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
-    subgraph_type_ = kGpuSubGraph;
+    if (nodes.front()->desc().data_type == kNumberTypeFloat16) {
+      subgraph_type_ = kGpuFp16SubGraph;
+    } else {
+      subgraph_type_ = kGpuFp32SubGraph;
+    }
     desc_.arch = kernel::KERNEL_ARCH::kGPU;
     static std::atomic_int index = 0;
     this->set_name("GpuSubGraph" + std::to_string(index++));

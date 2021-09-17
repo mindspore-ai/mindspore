@@ -219,7 +219,7 @@ int OpenCLSubGraph::Init() {
 
 int OpenCLSubGraph::UpdateTensorDataTypePass() {
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
-  if (is_fp16) {
+  if (is_fp16 && subgraph_type() == kGpuFp16SubGraph) {
     std::set<lite::Tensor *> out_set;
     auto in_tensors = this->in_tensors();
     auto out_tensors = this->out_tensors();
@@ -299,6 +299,7 @@ void OpenCLSubGraph::GetInOutNodes() {
 }
 
 int OpenCLSubGraph::Prepare() {
+  ocl_runtime_->SetFp16Enable(subgraph_type() == kGpuFp16SubGraph);
   for (const auto tensor : in_tensors()) {
     MS_ASSERT(tensor);
     tensor->set_allocator(allocator_);
