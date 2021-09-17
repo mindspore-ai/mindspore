@@ -1675,7 +1675,8 @@ class _Pool(PrimitiveWithInfer):
         for shape_value in out_shape:
             if shape_value <= 0:
                 raise ValueError(f"For '{self.name}', the each element of the output shape must be larger than 0, "
-                                 f"but got one of shape in output shape is {shape_value}.")
+                                 f"but got output shape: {out_shape}. The input shape: {x_shape}, "
+                                 f"kernel size: {self.kernel_size}, strides: {self.strides}.")
         return out_shape
 
     def infer_dtype(self, x_dtype):

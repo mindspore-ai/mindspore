@@ -78,7 +78,7 @@ rel_fns = {
 
 rel_strs = {
     # scalar compare
-    Rel.EQ: "== {}",
+    Rel.EQ: "= {}",
     Rel.NE: "!= {}",
     Rel.LT: "< {}",
     Rel.LE: "<= {}",
@@ -222,8 +222,8 @@ class Validator:
         rel_fn = Rel.get_fns(rel)
         if not rel_fn(arg_value, value):
             rel_str = Rel.get_strs(rel).format(f'{value_name}: {value}')
-            msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
-            raise excp_cls(f'{msg_prefix} `{arg_name}` should be {rel_str}, but got {arg_value}.')
+            msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
+            raise excp_cls(f'{msg_prefix} \'{arg_name}\' should be {rel_str}, but got {arg_value}.')
         return arg_value
 
     @staticmethod
@@ -401,7 +401,7 @@ class Validator:
                 msg_prefix = f"For '{prim_name}', Parameter"
             else:
                 msg_prefix = "Parameter"
-            raise TypeError(f"{msg_prefix} should be isinstance of bool, but got {arg_value}.")
+            raise TypeError(f"{msg_prefix} should be a bool, but got {type(arg_value).__name__}.")
         return arg_value
 
     @staticmethod
@@ -521,8 +521,8 @@ class Validator:
             arg1_name, arg1_type = arg1
             arg2_name, arg2_type = arg2
             if arg1_type != arg2_type:
-                raise TypeError(f'For \'{prim_name}\', type of `{arg2_name}` should be same as `{arg1_name}`,'
-                                f' but `{arg1_name}` with type {arg1_type} and `{arg2_name}` with type {arg2_type}.')
+                raise TypeError(f"For '{prim_name}', type of '{arg2_name}' should be same as '{arg1_name}',"
+                                f" but got '{arg1_name} with type {arg1_type} and '{arg2_name}' with type {arg2_type}.")
             return arg1
 
         elem_types = map(_check_type_valid, args.items())
