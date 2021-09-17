@@ -28,6 +28,10 @@ def main():
     cache_admin_dir = os.path.join(os.path.dirname(mindspore.__file__), "bin")
     os.chdir(cache_admin_dir)
     cache_admin = os.path.join(cache_admin_dir, "cache_admin")
+
+    if not os.path.exists(cache_admin):
+        raise RuntimeError("Dataset cache is not supported on your mindspore version.")
+
     cache_server = os.path.join(cache_admin_dir, "cache_server")
     os.chmod(cache_admin, stat.S_IRWXU)
     os.chmod(cache_server, stat.S_IRWXU)
