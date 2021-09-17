@@ -334,7 +334,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
 
   // Before adjusting map_a, check GetA1A2() and GetOptPynativeGradEpiloguePhases().
-  OptPassGroupMap map_a({{"a_1", a_1},
+  OptPassGroupMap map_a({{"switch_simplify", opt::OptPassConfig({irpass.switch_simplify_})},
+                         {"a_1", a_1},
                          {"updatestate_depend_eliminate", updatestate_depend_eliminate},
                          {"updatestate_assign_eliminate", updatestate_assign_eliminate},
                          {"updatestate_loads_eliminate", updatestate_loads_eliminate},
@@ -360,7 +361,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
 OptPassGroupMap GetA1A2(const opt::irpass::OptimizeIRPassLib &irpass) {
   auto opt_a = GetOptPassesA(irpass);
-  constexpr auto a1_a2_len = 6;
+  constexpr auto a1_a2_len = 7;
   OptPassGroupMap a1_a2(opt_a.begin(), opt_a.begin() + a1_a2_len);
   return a1_a2;
 }

@@ -30,6 +30,8 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/tensor.h"
 #include "frontend/operator/ops.h"
+#include "abstract/abstract_value.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -170,6 +172,7 @@ class InlinerBase : public AnfVisitor {
       }
     }
     // Or, just make a clone for not single used fg.
+    MS_LOG(INFO) << "Run InlineClone in inline pass, subgraph number may increase.";
     return InlineClone(fg, node->func_graph(), args, inputs[0]->scope());
   }
 
@@ -279,6 +282,30 @@ class InlinerBase : public AnfVisitor {
     return node->func_graph()->NewCNode(node_inputs);
   }
 
+  bool CheckSwitchBranchAbstract(const AbstractBasePtr &branch_abstract) {
+    if (branch_abstract != nullptr && branch_abstract->isa<abstract::AbstractError>()) {
+      auto branch_abstract_value = branch_abstract->GetValueTrack();
+      MS_EXCEPTION_IF_NULL(branch_abstract_value);
+      auto branch_abstract_value_string_imm = branch_abstract_value->cast<StringImmPtr>();
+      if (branch_abstract_value_string_imm != nullptr) {
+        auto branch_abstract_value_string_imm_value = branch_abstract_value_string_imm->value();
+        return branch_abstract_value_string_imm_value == kDeadNodeName ||
+               branch_abstract_value_string_imm_value == kPolyNodeName;
+      }
+    }
+    return false;
+  }
+
+  bool CheckSwitchInputs(const std::vector<AnfNodePtr> &sw_inputs) {
+    auto true_branch_abstract = sw_inputs[kSwitchTrueKernelGraphIndex]->abstract();
+    auto false_branch_abstract = sw_inputs[kSwitchFalseKernelGraphIndex]->abstract();
+    // When branch has dead node or poly node, do not perform inline.
+    if (CheckSwitchBranchAbstract(true_branch_abstract) || CheckSwitchBranchAbstract(false_branch_abstract)) {
+      return true;
+    }
+    return !sw_inputs[1]->isa<ValueNode>() || IsValueNode<tensor::Tensor>(sw_inputs[1]);
+  }
+
   // This is a try-best algorithm to find a graph which may generate branch call.
   // It does not handle high-order function call. For high-orderer call branch, it still may be inlined.
   bool GraphHasBranch(FuncGraphPtr fg) {
@@ -293,7 +320,7 @@ class InlinerBase : public AnfVisitor {
         if (sw_inputs.size() != 4) {
           MS_LOG(EXCEPTION) << "switch inputs should be 4";
         }
-        if (!sw_inputs[1]->isa<ValueNode>() || IsValueNode<tensor::Tensor>(sw_inputs[1])) {
+        if (CheckSwitchInputs(sw_inputs)) {
           has_branch = true;
           break;
         }
