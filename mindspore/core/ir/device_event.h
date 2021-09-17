@@ -25,7 +25,7 @@ class DeviceEvent {
   virtual void RecordEvent() = 0;
   virtual bool NeedWait() = 0;
   virtual void SyncEvent() = 0;
-  virtual void ElapsedTime(float *cost_time, DeviceEvent *other) = 0;
+  virtual void ElapsedTime(float *cost_time, const DeviceEvent *other) = 0;
   virtual void set_wait_stream(void *stream) = 0;
   virtual void set_record_stream(void *stream) = 0;
 };

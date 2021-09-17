@@ -76,9 +76,9 @@ void AscendEvent::SyncEvent() {
   }
 }
 
-void AscendEvent::ElapsedTime(float *cost_time, DeviceEvent *other) {
+void AscendEvent::ElapsedTime(float *cost_time, const DeviceEvent *other) {
   MS_EXCEPTION_IF_NULL(event_);
-  auto ascend_other = static_cast<AscendEvent *>(other);
+  auto ascend_other = static_cast<const AscendEvent *>(other);
   MS_EXCEPTION_IF_NULL(ascend_other);
   MS_EXCEPTION_IF_NULL(ascend_other->event_);
   auto ret = rtEventElapsedTime(cost_time, event_, ascend_other->event_);

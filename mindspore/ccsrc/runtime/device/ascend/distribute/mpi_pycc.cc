@@ -24,7 +24,7 @@ namespace device {
 namespace ascend {
 namespace collective {
 MpiPycc &MpiPycc::instance() {
-  static MpiPycc instance;
+  static MpiPycc instance = {};
   return instance;
 }
 

@@ -47,9 +47,9 @@ void GpuEvent::SyncEvent() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventSynchronize(event_), "cudaEventSynchronize failed");
 }
 
-void GpuEvent::ElapsedTime(float *cost_time, DeviceEvent *other) {
+void GpuEvent::ElapsedTime(float *cost_time, const DeviceEvent *other) {
   MS_EXCEPTION_IF_NULL(event_);
-  auto gpu_event = static_cast<GpuEvent *>(other);
+  auto gpu_event = static_cast<const GpuEvent *>(other);
   MS_EXCEPTION_IF_NULL(gpu_event);
   MS_EXCEPTION_IF_NULL(gpu_event->event_);
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventElapsedTime(cost_time, event_, gpu_event->event_),

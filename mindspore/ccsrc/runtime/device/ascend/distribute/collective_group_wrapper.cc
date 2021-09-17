@@ -16,7 +16,8 @@
 
 #include "runtime/device/ascend/distribute/collective_group_wrapper.h"
 
-void InitMPI() { MPICollective::instance().Init(); }
+extern "C" {
+void InitMPI() { (void)MPICollective::instance().Init(); }
 void FinalizeMPI() { MPICollective::instance().FinalizeMPI(); }
 int GetRankIdByGroup(const std::string &name) { return MPICollective::instance().GetRankIdByGroup(name); }
 int GetGroupSize(const std::string &name) { return MPICollective::instance().GetGroupSize(name); }
@@ -26,3 +27,4 @@ bool CreateCommForGroup(const std::string &name, const std::vector<unsigned int>
   return MPICollective::instance().CreateCommGroup(name, ranks);
 }
 void DestroyHcclComm() { MPICollective::instance().DestroyHcclComm(); }
+}

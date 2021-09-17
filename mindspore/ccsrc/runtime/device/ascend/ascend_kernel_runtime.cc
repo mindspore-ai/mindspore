@@ -76,7 +76,6 @@ using mindspore::device::ascend::ProfilingUtils;
 #endif
 using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::ge::model_runner::ModelRunner;
-using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 using mindspore::kernel::tbe::TbeUtils;
 using std::vector;
 
@@ -100,7 +99,7 @@ std::string GetRankIdStr() {
     return std::to_string(rank);
   }
   std::string rank_id_str;
-  rank_id_str = std::getenv("RANK_ID");
+  rank_id_str = common::GetEnv("RANK_ID");
   if (rank_id_str.empty()) {
     MS_LOG(EXCEPTION) << "Invalid environment variable 'RANK_ID', it should not be empty.";
   }
@@ -749,7 +748,7 @@ void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernel
         if (ret != RT_ERROR_NONE) {
           MS_LOG(EXCEPTION) << "create communication stream failed, ret:" << ret;
         }
-        auto id = stream_id_map_.size();
+        auto id = SizeToUint(stream_id_map_.size());
         group_stream_id_map_[group] = id;
         stream_id_map_[id] = stream;
         AnfAlgo::SetStreamId(id, node.get());
@@ -811,7 +810,7 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
     AnfAlgo::GetAllVisitedCNode(kernel, &visited_kernels);
     bool found_depend = false;
     for (int k = SizeToInt(i) - 1; k >= 0; --k) {
-      auto pre_cnode = kernels[k];
+      auto pre_cnode = kernels[IntToSize(k)];
       auto pre_cnode_stream_id = AnfAlgo::GetStreamId(pre_cnode);
       if (pre_cnode_stream_id == curr_stream_id) {
         found_depend = true;
@@ -1228,7 +1227,9 @@ int AscendKernelRuntime::DeleteDumpFile(std::string path) {
       if (strcmp(dirinfo->d_name, ".") == 0 || strcmp(dirinfo->d_name, "..") == 0) continue;
       result = DeleteDumpFile(filepath);
       if (!result) {
-        rmdir(filepath.c_str());
+        if (rmdir(filepath.c_str()) == -1) {
+          MS_LOG(WARNING) << "Delete dir " << filepath << " failed!";
+        }
       }
     }
     if (closedir(dir) == -1) {

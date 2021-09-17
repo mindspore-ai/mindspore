@@ -30,7 +30,7 @@ class GpuEvent : public DeviceEvent {
   void RecordEvent() override;
   bool NeedWait() override;
   void SyncEvent() override;
-  void ElapsedTime(float *cost_time, DeviceEvent *other) override;
+  void ElapsedTime(float *cost_time, const DeviceEvent *other) override;
   void set_wait_stream(void *wait_stream) override { wait_stream_ = static_cast<cudaStream_t>(wait_stream); }
   void set_record_stream(void *record_stream) override { record_stream_ = static_cast<cudaStream_t>(record_stream); }
 
