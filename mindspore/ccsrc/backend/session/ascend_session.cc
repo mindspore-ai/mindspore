@@ -292,7 +292,7 @@ void UpdateCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
                            size_t *input_ctrl_size) {
   if (graph->input_ctrl_tensors()) {
     auto &dump_json_parser = DumpJsonParser::GetInstance();
-    bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || graph->isDatasetGraph());
+    bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || graph->IsDatasetGraph());
     if (sink_mode || !dump_json_parser.async_dump_enabled()) {
       *input_ctrl_size = LoadCtrlInputTensor(graph, inputs);
     } else {

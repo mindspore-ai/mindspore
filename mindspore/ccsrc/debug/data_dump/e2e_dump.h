@@ -48,8 +48,6 @@ class E2eDump {
 
   static bool isDatasetGraph(const session::KernelGraph *graph);
 
-  static bool CheckDatasetGraph(const session::KernelGraph *graph);
-
   // Dump data when task error.
   static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
                             std::string *kernel_name, const Debugger *debugger);
