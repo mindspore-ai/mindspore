@@ -294,6 +294,30 @@ def test_NeighborExchange_attr_check_send_rank_ids_is_tuple_failed():
         _cell_graph_executor.compile(net, _x1)
 
 
+def test_NeighborExchange_attr_check_send_rank_ids_is_tuple_2_failed():
+    """
+    Feature: NeighborExchange
+    Description: send_rank_ids should be list, but a tuple is given
+    Expectation: throw TypeError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = NeighborExchange(send_rank_ids=(0,), recv_rank_ids=[1, 2],
+                                              recv_shapes=([32, 32], [32, 64]),
+                                              send_shapes=([32, 16],), recv_type=ms.float32)
+
+        def construct(self, x1):
+            out = self.alltoallv((x1,))
+            return out[0]
+
+    net = Net()
+    with pytest.raises(TypeError):
+        _cell_graph_executor.compile(net, _x1)
+
+
 def test_NeighborExchange_attr_check_send_rank_ids_is_float_failed():
     """
     Feature: NeighborExchange
@@ -330,6 +354,30 @@ def test_NeighborExchange_attr_check_recv_rank_ids_is_tuple_failed():
         def __init__(self):
             super(Net, self).__init__()
             self.alltoallv = NeighborExchange(send_rank_ids=[0], recv_rank_ids=([1, 2],),
+                                              recv_shapes=([32, 32], [32, 64]),
+                                              send_shapes=([32, 16],), recv_type=ms.float32)
+
+        def construct(self, x1):
+            out = self.alltoallv((x1,))
+            return out[0]
+
+    net = Net()
+    with pytest.raises(TypeError):
+        _cell_graph_executor.compile(net, _x1)
+
+
+def test_NeighborExchange_attr_check_recv_rank_ids_is_tuple_2_failed():
+    """
+    Feature: NeighborExchange
+    Description: recv_rank_ids should be list, but a tuple is given
+    Expectation: throw TypeError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = NeighborExchange(send_rank_ids=[0], recv_rank_ids=(1, 2,),
                                               recv_shapes=([32, 32], [32, 64]),
                                               send_shapes=([32, 16],), recv_type=ms.float32)
 
@@ -380,6 +428,30 @@ def test_NeighborExchange_attr_check_send_shape_not_tuple_failed():
             self.alltoallv = NeighborExchange(send_rank_ids=[1], recv_rank_ids=[1, 2],
                                               recv_shapes=([32, 32], [32, 64]),
                                               send_shapes=([32, 16]), recv_type=ms.float32)
+
+        def construct(self, x1):
+            out = self.alltoallv((x1,))
+            return out[0]
+
+    net = Net()
+    with pytest.raises(TypeError):
+        _cell_graph_executor.compile(net, _x1)
+
+
+def test_NeighborExchange_attr_check_send_shape_list_failed():
+    """
+    Feature: NeighborExchange
+    Description: send_shapes should be tuple(list), but a list(list) is given
+    Expectation: throw TypeError
+    """
+    context.set_auto_parallel_context(device_num=8, global_rank=0)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.alltoallv = NeighborExchange(send_rank_ids=[1], recv_rank_ids=[1, 2],
+                                              recv_shapes=([32, 32], [32, 64]),
+                                              send_shapes=[[32, 16]], recv_type=ms.float32)
 
         def construct(self, x1):
             out = self.alltoallv((x1,))
