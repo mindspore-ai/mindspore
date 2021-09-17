@@ -917,6 +917,7 @@ MSTensor::DestroyTensorPtr(tensor);
 2. Multiplatform support, including Android, IoT Devices.
 3. Support offline model weight preprocessing while compiling.
 4. Support offline memory reuse computing for minimum runtime buffer size.
+5. Support kernel register for custom op. Third-party hardware like NNIE can be accessed through it.
 
 ### API Change
 
