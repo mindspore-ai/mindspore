@@ -32,7 +32,7 @@ void ActorWorker::RunWithSpin() {
   SetAffinity();
 #if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
   static std::atomic_int index = {0};
-  pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
+  (void)pthread_setname_np(pthread_self(), ("ActorThread_" + std::to_string(index++)).c_str());
 #endif
   while (alive_) {
     // only run either local KernelTask or PoolQueue ActorTask

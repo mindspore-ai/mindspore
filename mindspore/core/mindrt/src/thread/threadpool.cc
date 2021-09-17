@@ -58,7 +58,7 @@ void Worker::Run() {
   SetAffinity();
 #if !defined(__APPLE__) && !defined(SUPPORT_MSVC)
   static std::atomic_int index = {0};
-  pthread_setname_np(pthread_self(), ("KernelThread_" + std::to_string(index++)).c_str());
+  (void)pthread_setname_np(pthread_self(), ("KernelThread_" + std::to_string(index++)).c_str());
 #endif
   while (alive_) {
     if (RunLocalKernelTask()) {
@@ -81,7 +81,7 @@ bool Worker::RunLocalKernelTask() {
   int task_id = task_id_.load(std::memory_order_consume);
   task->status |= task->func(task->content, task_id, lhs_scale_, rhs_scale_);
   task_.store(nullptr, std::memory_order_relaxed);
-  ++task->finished;
+  (void)++task->finished;
   return true;
 }
 
@@ -134,7 +134,7 @@ int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_li
   size_t core_num = std::thread::hardware_concurrency();
   thread_num = thread_num < core_num ? thread_num : core_num;
   THREAD_INFO("ThreadInfo, Num: [%zu], CoreNum: [%zu]", thread_num, core_num);
-  if (thread_num <= 0) {
+  if (thread_num == 0) {
     THREAD_ERROR("thread num is invalid");
     return THREAD_ERROR;
   }
@@ -196,7 +196,7 @@ void ThreadPool::SyncRunTask(Task *task, int start_num, int task_num) const {
     float rhs_scale = (i + 1) * per_scale;
     rhs_scale = i == task_num - 1 ? kMaxScale : rhs_scale;
     task->status |= task->func(task->content, i, lhs_scale, rhs_scale);
-    ++task->finished;
+    (void)++task->finished;
   }
 }
 
@@ -257,7 +257,7 @@ void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, Task *task,
     THREAD_RETURN_IF_NULL(worker);
     worker->Active(task, i);
     if (worker == curr) {
-      worker->RunLocalKernelTask();
+      (void)worker->RunLocalKernelTask();
     }
   }
 }
