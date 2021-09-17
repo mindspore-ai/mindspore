@@ -721,7 +721,7 @@ def set_context(**kwargs):
 
             More options can refer to the implementation code. These options can also be set by environment
             variable MS_GRAPH_KERNEL_FLAGS, without modifying network source code.
-            For example, export MS_GRAPH_KERNEL_FLAGS=”–opt_level=2 –dump_as_text”.
+            For example, export MS_GRAPH_KERNEL_FLAGS="–opt_level=2 –dump_as_text".
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance.
             Default: NO_TUNE. The value must be in ['RL', 'GA', 'RL,GA'].

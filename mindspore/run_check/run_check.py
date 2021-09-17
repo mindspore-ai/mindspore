@@ -45,6 +45,7 @@ def _check_mul():
 def run_check():
     """
     Provide a convenient API to check if the installation is successful or failed.
+    If there is no return value, the verification status will be displayed directly.
 
     Examples:
         >>> import mindspore
