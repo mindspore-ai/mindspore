@@ -50,7 +50,6 @@ if(ENABLE_MINDDATA)
             ./dataset/*.cc
             ./ir/dtype/*.cc
             ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv/*.cc
-            ./debug/*.cc
             ./device/*.cc
             ./ir/*.cc
             ./kernel/*.cc
@@ -70,7 +69,11 @@ if(ENABLE_MINDDATA)
             ./cxx_api/*.cc
             ./tbe/*.cc
             )
-
+    if(NOT ENABLE_SECURITY)
+        file(GLOB_RECURSE UT_SRCS_DEBUG RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+                ./debug/*.cc)
+        list(APPEND UT_SRCS ${UT_SRCS_DEBUG})
+    endif()
     if(NOT ENABLE_PYTHON)
         set(PYTHON_RELATED_SRCS
                 dataset/filter_op_test.cc
@@ -190,6 +193,7 @@ if(ENABLE_SECURITY)
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/profiling.cc")
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/memory_profiling.cc")
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/ascend_profiling.cc")
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/data_dump/dump_json_parser.cc")
 endif()
 
 add_library(_ut_mindspore_obj OBJECT ${MINDSPORE_SRC_LIST})

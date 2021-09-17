@@ -33,12 +33,10 @@ class Common {
   ~Common() = default;
   static std::optional<std::string> CreatePrefixPath(const std::string &input_path,
                                                      const bool support_relative_path = false);
-  static std::optional<std::string> GetRealPath(const std::string &input_path);
   static std::optional<std::string> GetConfigFile(const std::string &env);
   static bool IsStrLengthValid(const std::string &str, size_t length_limit, const std::string &error_message = "");
   static bool IsPathValid(const std::string &path, size_t length_limit, const std::string &error_message = "");
   static bool IsFilenameValid(const std::string &filename, size_t length_limit, const std::string &error_message = "");
-  static bool CreateNotExistDirs(const std::string &path);
 
   static std::string AddId(const std::string &filename, const std::string &suffix);
   static bool SaveStringToFile(const std::string filename, const std::string string_info);

@@ -87,96 +87,6 @@ bool Common::CommonFuncForConfigPath(const std::string &default_path, const std:
   return true;
 }
 
-std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
-  if (input_path.length() >= PATH_MAX) {
-    MS_LOG(ERROR) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
-    return std::nullopt;
-  }
-  auto path_split_pos = input_path.find_last_of('/');
-  if (path_split_pos == std::string::npos) {
-    path_split_pos = input_path.find_last_of('\\');
-  }
-  // get real path
-  char real_path[PATH_MAX] = {0};
-  // input_path is dir + file_name
-  if (path_split_pos != std::string::npos) {
-    std::string prefix_path = input_path.substr(0, path_split_pos);
-    std::string file_name = input_path.substr(path_split_pos);
-    if (!CreateNotExistDirs(prefix_path)) {
-      MS_LOG(ERROR) << "Create dir " << prefix_path << " Failed!";
-      return std::nullopt;
-    }
-#if defined(SYSTEM_ENV_POSIX)
-    if (file_name.length() > NAME_MAX) {
-      MS_LOG(ERROR) << "The length of file name : " << file_name.length() << " exceeds limit: " << NAME_MAX;
-      return std::nullopt;
-    }
-    if (realpath(common::SafeCStr(prefix_path), real_path) == nullptr) {
-      MS_LOG(ERROR) << "The dir " << prefix_path << " does not exist.";
-      return std::nullopt;
-    }
-#elif defined(SYSTEM_ENV_WINDOWS)
-    if (_fullpath(real_path, common::SafeCStr(prefix_path), PATH_MAX) == nullptr) {
-      MS_LOG(ERROR) << "The dir " << prefix_path << " does not exist.";
-      return std::nullopt;
-    }
-#endif
-    return std::string(real_path) + file_name;
-  }
-  // input_path is only file_name
-#if defined(SYSTEM_ENV_POSIX)
-  if (input_path.length() > NAME_MAX) {
-    MS_LOG(ERROR) << "The length of file name : " << input_path.length() << " exceeds limit: " << NAME_MAX;
-    return std::nullopt;
-  }
-  if (realpath(common::SafeCStr(input_path), real_path) == nullptr) {
-    MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
-  }
-#elif defined(SYSTEM_ENV_WINDOWS)
-  if (_fullpath(real_path, common::SafeCStr(input_path), PATH_MAX) == nullptr) {
-    MS_LOG(INFO) << "The file " << input_path << " does not exist, it will be created.";
-  }
-#endif
-  return std::string(real_path);
-}
-
-bool Common::CreateNotExistDirs(const std::string &path) {
-  std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
-  MS_EXCEPTION_IF_NULL(fs);
-  char temp_path[PATH_MAX] = {0};
-  if (path.length() >= PATH_MAX) {
-    MS_LOG(ERROR) << "Path length is equal to or max than " << PATH_MAX;
-    return false;
-  }
-  for (uint32_t i = 0; i < path.length(); i++) {
-    temp_path[i] = path[i];
-    if (temp_path[i] == '\\' || temp_path[i] == '/') {
-      if (i != 0) {
-        char tmp_char = temp_path[i];
-        temp_path[i] = '\0';
-        std::string path_handle(temp_path);
-        if (!fs->FileExist(path_handle)) {
-          MS_LOG(INFO) << "Dir " << path_handle << " does not exit, creating...";
-          if (!fs->CreateDir(path_handle)) {
-            MS_LOG(ERROR) << "Create " << path_handle << " dir error";
-            return false;
-          }
-        }
-        temp_path[i] = tmp_char;
-      }
-    }
-  }
-
-  if (!fs->FileExist(path)) {
-    MS_LOG(INFO) << "Dir " << path << " does not exit, creating...";
-    if (!fs->CreateDir(path)) {
-      MS_LOG(ERROR) << "Create " << path << " dir error";
-      return false;
-    }
-  }
-  return true;
-}
-
 std::optional<std::string> Common::GetConfigFile(const std::string &env) {
   if (env.empty()) {
     MS_LOG(EXCEPTION) << "Invalid env";
@@ -333,7 +243,7 @@ bool Common::SaveStringToFile(const std::string filename, const std::string stri
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return false;
   }
-  auto real_path = GetRealPath(filename);
+  auto real_path = FileUtils::GetRealPath(common::SafeCStr(filename));
   if (!real_path.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. path=" << filename;
     return false;

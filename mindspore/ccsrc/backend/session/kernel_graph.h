@@ -373,7 +373,7 @@ class KernelGraph : public FuncGraph {
   void set_is_need_gil(bool flag) { is_need_gil_ = flag; }
   bool is_need_gil() { return is_need_gil_; }
 
-  bool isDatasetGraph() const;
+  bool IsDatasetGraph() const;
 
  private:
   // remove value node form graph

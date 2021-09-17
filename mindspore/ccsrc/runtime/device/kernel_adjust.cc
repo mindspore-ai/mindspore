@@ -708,7 +708,7 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::K
 
 bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
-  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || kernel_graph_ptr->isDatasetGraph());
+  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || kernel_graph_ptr->IsDatasetGraph());
   if (!sink_mode && dump_json_parser.async_dump_enabled()) {
     InitCtrlInputs(kernel_graph_ptr);
     return true;
