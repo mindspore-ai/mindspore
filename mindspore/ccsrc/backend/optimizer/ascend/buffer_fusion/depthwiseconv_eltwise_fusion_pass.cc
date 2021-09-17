@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace opt {
 void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnode,
-                                                            const session::KernelGraph & /*kernel_graph*/,
+                                                            const session::KernelGraph & /* kernel_graph */,
                                                             FusedNodeRecord *candidate_fusion, bool is_order) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);

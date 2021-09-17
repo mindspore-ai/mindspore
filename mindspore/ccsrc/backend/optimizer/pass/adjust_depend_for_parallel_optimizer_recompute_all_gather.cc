@@ -120,7 +120,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
         auto new_depend = graph->NewCNode(inputs);
         new_depend->set_abstract(depend_node->abstract());
         manager->SetEdge(node, 1, AnfAlgo::GetInputNode(depend_cnode, 0));
-        manager->Replace(allgather_next_node, new_depend);
+        (void)manager->Replace(allgather_next_node, new_depend);
         changed = true;
       }
     } else if (IsPrimitiveCNode(depend_node, prim::kPrimCast) &&
@@ -140,7 +140,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
         auto new_depend = graph->NewCNode(inputs);
         new_depend->set_abstract(cast_depend_node->abstract());
         manager->SetEdge(depend_node, 1, AnfAlgo::GetInputNode(cast_depend_cnode, 0));
-        manager->Replace(allgather_next_node, new_depend);
+        (void)manager->Replace(allgather_next_node, new_depend);
         changed = true;
       }
     } else {
@@ -149,6 +149,5 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
   }
   return changed;
 }
-
 }  // namespace opt
 }  // namespace mindspore

@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace opt {
 void MatmulEltwiseFusionPass::MatchMatmulEltwise(const CNodePtr &cnode, const AnfNodePtr &relu_input,
-                                                 const session::KernelGraph & /*kernel_graph*/,
+                                                 const session::KernelGraph & /* kernel_graph */,
                                                  FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);

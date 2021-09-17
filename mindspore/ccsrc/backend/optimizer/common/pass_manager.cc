@@ -32,10 +32,10 @@ void CacheManager::Update(const AnfNodePtr &node) {
   auto type_iter = type_map_.find(node);
   auto shape_iter = shape_map_.find(node);
   if (type_iter != type_map_.end()) {
-    type_map_.erase(type_iter);
+    (void)type_map_.erase(type_iter);
   }
   if (shape_iter != shape_map_.end()) {
-    shape_map_.erase(shape_iter);
+    (void)shape_map_.erase(shape_iter);
   }
 }
 
@@ -55,12 +55,12 @@ TypeId CacheManager::GetOutputType(const AnfNodePtr &node, size_t index) {
   TypeId result = kTypeUnknown;
   for (size_t i = 0; i < output_nums; i++) {
     auto output_type = AnfAlgo::GetOutputInferDataType(node, i);
-    index_to_types.emplace(i, output_type);
+    (void)index_to_types.emplace(i, output_type);
     if (index == i) {
       result = output_type;
     }
   }
-  type_map_.emplace(node, index_to_types);
+  (void)type_map_.emplace(node, index_to_types);
   return result;
 }
 
@@ -80,12 +80,12 @@ std::vector<size_t> CacheManager::GetOutputShape(const AnfNodePtr &node, size_t 
   std::vector<size_t> result = {};
   for (size_t i = 0; i < output_nums; i++) {
     auto output_shape = AnfAlgo::GetOutputInferShape(node, i);
-    index_to_shapes.emplace(i, output_shape);
+    (void)index_to_shapes.emplace(i, output_shape);
     if (index == i) {
       result = output_shape;
     }
   }
-  shape_map_.emplace(node, index_to_shapes);
+  (void)shape_map_.emplace(node, index_to_shapes);
   return result;
 }
 
@@ -135,7 +135,7 @@ void PassManager::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &
     std::ostringstream oss;
     oss << "verbose_ir_files"
         << "/";
-    oss << pass_fullname + ".ir";
+    oss << (pass_fullname + ".ir");
     DumpIR(oss.str(), func_graph, true);
   }
 #endif

@@ -96,18 +96,18 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
       auto const_func_graph = GetValueNode<FuncGraphPtr>(new_node);
       MS_EXCEPTION_IF_NULL(const_func_graph);
       if (!const_func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
-        todo.push_back({const_func_graph->output(), const_func_graph});
+        (void)todo.emplace_back(const_func_graph->output(), const_func_graph);
       }
     } else if (new_node && new_node->isa<CNode>()) {
       if (AnfAlgo::IsGraphKernel(new_node)) {
-        todo.push_back({new_node, func_graph});
+        (void)todo.emplace_back(new_node, func_graph);
       }
       auto cnode = new_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       AddOutputAndCallerToMap(cnode, &subgraph_out_caller_map);
       auto inputs = cnode->inputs();
-      std::for_each(inputs.begin(), inputs.end(), [&fg, &todo](AnfNodePtr &node) {
-        todo.emplace_back(std::pair<AnfNodePtr, FuncGraphPtr>(node, fg));
+      (void)std::for_each(inputs.begin(), inputs.end(), [&fg, &todo](AnfNodePtr &node) {
+        (void)todo.emplace_back(std::pair<AnfNodePtr, FuncGraphPtr>(node, fg));
       });
     }
     changes = changes || change;
