@@ -85,6 +85,7 @@ constexpr char kCSVNode[] = "CSVDataset";
 constexpr char kDIV2KNode[] = "DIV2KDataset";
 constexpr char kEMnistNode[] = "EMnistDataset";
 constexpr char kFakeImageNode[] = "FakeImageDataset";
+constexpr char kFashionMnistNode[] = "FashionMnistDataset";
 constexpr char kFlickrNode[] = "FlickrDataset";
 constexpr char kGeneratorNode[] = "GeneratorDataset";
 constexpr char kImageFolderNode[] = "ImageFolderDataset";

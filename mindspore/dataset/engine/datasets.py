@@ -3279,6 +3279,128 @@ class RangeDataset(MappableDataset):
         return self.dataset_size
 
 
+class FashionMnistDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing the FASHION-MNIST dataset.
+
+    The generated dataset has two columns :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test` or `all`. `train` will read from 60,000
+            train samples, `test` will read from 10,000 test samples, `all` will read from all 70,000 samples.
+            (default=None, will read all samples)
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> fashion_mnist_dataset_dir = "/path/to/fashion_mnist_dataset_directory"
+        >>>
+        >>> # Read 3 samples from FASHIONMNIST dataset
+        >>> dataset = ds.FashionMnistDataset(dataset_dir=fashion_mnist_dataset_dir, num_samples=3)
+        >>>
+        >>> # Note: In FASHIONMNIST dataset, each dictionary has keys "image" and "label"
+
+    About Fashion-MNIST dataset:
+
+    Fashion-MNIST is a dataset of Zalando's article images—consisting of a training set of 60,000 examples and
+    a test set of 10,000 examples. Each example is a 28x28 grayscale image, associated with a label from 10 classes.
+    We intend Fashion-MNIST to serve as a direct drop-in replacement for the original MNIST dataset for benchmarking
+    machine learning algorithms. It shares the same image size and structure of training and testing splits.
+
+    Here is the original Fashion-MNIST dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── fashionmnist_dataset_dir
+             ├── t10k-images-idx3-ubyte
+             ├── t10k-labels-idx1-ubyte
+             ├── train-images-idx3-ubyte
+             └── train-labels-idx1-ubyte
+
+    Citation:
+
+    .. code-block::
+
+        @online{xiao2017/online,
+          author       = {Han Xiao and Kashif Rasul and Roland Vollgraf},
+          title        = {Fashion-MNIST: a Novel Image Dataset for Benchmarking Machine Learning Algorithms},
+          date         = {2017-08-28},
+          year         = {2017},
+          eprintclass  = {cs.LG},
+          eprinttype   = {arXiv},
+          eprint       = {cs.LG/1708.07747},
+        }
+    """
+
+    @check_mnist_cifar_dataset
+    def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None, shuffle=None,
+                 sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.FashionMnistNode(self.dataset_dir, self.usage, self.sampler)
+
+
 class ImageFolderDataset(MappableDataset):
     """
     A source dataset that reads images from a tree of directories.

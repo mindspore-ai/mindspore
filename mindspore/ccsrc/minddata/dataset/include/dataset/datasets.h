@@ -2109,6 +2109,81 @@ inline std::shared_ptr<FakeImageDataset> FakeImage(int32_t num_images, const std
   return std::make_shared<FakeImageDataset>(num_images, image_size, num_classes, base_seed, sampler, cache);
 }
 
+/// \class FashionMnistDataset
+/// \brief A source dataset that reads and parses FASHION-MNIST dataset.
+class FashionMnistDataset : public Dataset {
+ public:
+  /// \brief Constructor of FashionMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Usage of FASHION-MNIST, can be "train", "test" or "all".
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit FashionMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                               const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of FashionMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Usage of FASHION-MNIST, can be "train", "test" or "all".
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit FashionMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                               const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of FashionMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Usage of FASHION-MNIST, can be "train", "test" or "all".
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit FashionMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                               const std::reference_wrapper<Sampler> sampler,
+                               const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of FashionMnistDataset.
+  ~FashionMnistDataset() = default;
+};
+
+/// \brief Function to create a FashionMnistDataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of FASHION-MNIST, can be "train", "test" or "all" (default = "all").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the FashionMnistDataset.
+inline std::shared_ptr<FashionMnistDataset> FashionMnist(
+  const std::string &dataset_dir, const std::string &usage = "all",
+  const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<FashionMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a FashionMnistDataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of FASHION-MNIST, can be "train", "test" or "all".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the FashionMnistDataset.
+inline std::shared_ptr<FashionMnistDataset> FashionMnist(const std::string &dataset_dir, const std::string &usage,
+                                                         const Sampler *sampler,
+                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<FashionMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a FashionMnistDataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of FASHION-MNIST, can be "train", "test" or "all".
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the FashionMnistDataset.
+inline std::shared_ptr<FashionMnistDataset> FashionMnist(const std::string &dataset_dir, const std::string &usage,
+                                                         const std::reference_wrapper<Sampler> sampler,
+                                                         const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<FashionMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
 /// \class FlickrDataset
 /// \brief A source dataset for reading and parsing Flickr dataset.
 class FlickrDataset : public Dataset {

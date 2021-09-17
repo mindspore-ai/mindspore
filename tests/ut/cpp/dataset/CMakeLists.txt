@@ -25,6 +25,7 @@ SET(DE_UT_SRCS
         c_api_dataset_div2k_test.cc
         c_api_dataset_emnist_test.cc
         c_api_dataset_fake_image_test.cc
+        c_api_dataset_fashion_mnist_test.cc
         c_api_dataset_flickr_test.cc
         c_api_dataset_iterator_test.cc
         c_api_dataset_manifest_test.cc
