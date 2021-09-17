@@ -156,10 +156,10 @@ class _LayerNorm(Cell):
         self.sqrt = P.Sqrt()
         self.sub1 = P.Sub()
         self.sub2 = P.Sub()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.eps = eps
         self.mul = P.Mul()
-        self.add2 = P.TensorAdd()
+        self.add2 = P.Add()
         self.real_div = P.RealDiv()
 
     def construct(self, x):
@@ -293,7 +293,7 @@ class _Linear(Cell):
                 if bias_init.ndim != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError("Bias init shape error.")
             self.bias = Parameter(initializer(bias_init, [out_channels], param_init_type), name="bias")
-            self.bias_add = P.TensorAdd()
+            self.bias_add = P.Add()
         self.act_name = activation
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
         if activation is not None and not isinstance(self.activation, (Cell, Primitive)):

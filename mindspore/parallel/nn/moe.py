@@ -206,7 +206,7 @@ class _CumSum(Cell):
         self.start = Tensor(0, mstype.int32)
         self.limit = Tensor(0, mstype.int32)
         self.delta = Tensor(1, mstype.int32)
-        self.add = P.TensorAdd().shard(((1,), ()))
+        self.add = P.Add().shard(((1,), ()))
 
     def construct(self, expert_mask):
         # origin_shape: (expert_parallel, tokens_per_device, self.expert_dim)
