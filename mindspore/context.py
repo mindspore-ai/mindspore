@@ -411,7 +411,7 @@ def set_auto_parallel_context(**kwargs):
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
                        should be set as True. Default: False. The interface is not be recommended currently,
                        it is better using 'dataset_strategy' to replace it.
-        dataset_strategy Union[str, tuple]: Dataset sharding strategy. Default: "data_parallel".
+        dataset_strategy (Union[str, tuple]): Dataset sharding strategy. Default: "data_parallel".
                        dataset_strategy="data_parallel" is equal to full_batch=False, dataset_strategy="full_batch" is
                        equal to full_batch=True. For dataset load into net by model parallel strategy likes
                        ds_stra ((1, 8), (1, 8)), it requires using set_auto_parallel_context(dataset_strategy=ds_stra).
