@@ -57,8 +57,8 @@ class TbeJsonCreator {
   bool GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
   void GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
   virtual void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {}
-  bool GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
-  bool GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr, nlohmann::json *attrs_json);
+  void GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
+  void GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr, nlohmann::json *attrs_json);
   bool AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *attrs_ptr,
                               nlohmann::json *attrs_json);
   virtual bool AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
