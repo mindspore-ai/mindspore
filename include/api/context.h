@@ -227,10 +227,14 @@ class MS_API GPUDeviceInfo : public DeviceInfoContext {
   /// \return The device id.
   uint32_t GetDeviceID() const;
 
-  void SetGpuTrtInferMode(bool gpu_trt_infer_mode);
-  bool GetGpuTrtInferMode() const;
+  /// \brief Set the precision mode.
+  ///
+  /// \param[in] precision_mode Optional "origin", "fp16". "origin" is set as default.
+  inline void SetPrecisionMode(const std::string &precision_mode);
 
-  inline void SetPrecisionMode(const std::string &precison_mode);
+  /// \brief Get the precision mode.
+  ///
+  /// \return The precision mode.
   inline std::string GetPrecisionMode() const;
 
   /// \brief Set enables to perform the float16 inference
