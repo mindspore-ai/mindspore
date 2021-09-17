@@ -114,6 +114,7 @@ int PackLeftMatrix(Matrix *matrix, int row_tile) {
         default:
           if (malloced) {
             free(matrix->packed_data_);
+            matrix->packed_data_ = NULL;
             return NNACL_ERR;
           }
           break;
@@ -174,6 +175,7 @@ int PackRightMatrix(Matrix *matrix, int col_tile) {
         default:
           if (malloced) {
             free(matrix->packed_data_);
+            matrix->packed_data_ = NULL;
             return NNACL_ERR;
           }
           break;
@@ -247,7 +249,7 @@ static void RelativeShiftSlice(const float *input_data, float *output_data, cons
   }
 }
 
-static void RelativeShift(Matrix *x, float *pad_buf, float *slice_buf) {
+static void RelativeShift(const Matrix *x, float *pad_buf, float *slice_buf) {
   int x_area = x->row_ * x->col_;
   int pad_area = x->row_ * (x->col_ + 1);
   int slice_area = x->row_ * (x->col_ / 2);
@@ -270,7 +272,7 @@ static void RelativeShift(Matrix *x, float *pad_buf, float *slice_buf) {
 static void ElementOptAddDiv(const float *input0, const float *input1, const float input2, float *output,
                              const int batch, const int area) {
   int index = 0;
-  float mul = 1 / input2;
+  const float mul = 1 / input2;
   for (int b = 0; b < batch; b++) {
     const float *cur_input0 = input0 + b * area;
     const float *cur_input1 = input1 + b * area;
@@ -314,7 +316,7 @@ static bool GetTransposeParameter(TransposeParameter *param, const int in_shape[
   return true;
 }
 
-void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, Matrix *wq_mat, Matrix *bq_mat,
+void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, const Matrix *wq_mat, Matrix *bq_mat,
                    Matrix *q2wq_mat, Matrix *pu_mat, Matrix *pv_mat, Matrix *q2wq_with_pos_mat,
                    Matrix *q2wq_with_pu_trans_mat, Matrix *q2wq_with_pv_trans_mat) {
   int num_heads = param->num_heads_;
@@ -379,7 +381,7 @@ void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, Mat
   }
 }
 
-void KMulWeightK(RelativePositionAttentionParameter *param, Matrix *k_mat, Matrix *wk_mat, Matrix *bk_mat,
+void KMulWeightK(RelativePositionAttentionParameter *param, Matrix *k_mat, const Matrix *wk_mat, Matrix *bk_mat,
                  Matrix *k2wk_mat, Matrix *k2wk_trans_mat) {
   int num_heads = param->num_heads_;
   int d_model = param->d_model_;
@@ -410,7 +412,7 @@ void KMulWeightK(RelativePositionAttentionParameter *param, Matrix *k_mat, Matri
   TransposeDimsFp32(k2wk, k2wk_trans_data, k2wk_out_shape, &k2wk_trans_param, 0, 1);
 }
 
-void VMulWeightV(RelativePositionAttentionParameter *param, Matrix *v_mat, Matrix *wv_mat, Matrix *bv_mat,
+void VMulWeightV(RelativePositionAttentionParameter *param, Matrix *v_mat, const Matrix *wv_mat, Matrix *bv_mat,
                  Matrix *v2wv_mat, Matrix *v2wv_trans_mat) {
   int num_heads = param->num_heads_;
   int d_model = param->d_model_;
@@ -441,7 +443,7 @@ void VMulWeightV(RelativePositionAttentionParameter *param, Matrix *v_mat, Matri
   TransposeDimsFp32(v2wv, v2wv_trans_data, v2wv_out_shape, &v2wv_trans_param, 0, 1);
 }
 
-void PMulWeightP(RelativePositionAttentionParameter *param, Matrix *p_mat, Matrix *wp_mat, Matrix *p2wp_mat,
+void PMulWeightP(RelativePositionAttentionParameter *param, Matrix *p_mat, const Matrix *wp_mat, Matrix *p2wp_mat,
                  Matrix *p2wp_trans_mat) {
   int num_heads = param->num_heads_;
   int d_model = param->d_model_;
@@ -511,7 +513,7 @@ void CalculateLogits(RelativePositionAttentionParameter *param, Matrix *q2wq_wit
 }
 
 void RelPosAttention(RelativePositionAttentionParameter *param, Matrix *logits_mat, Matrix *softmax_mat,
-                     Matrix *v2wv_trans_mat, Matrix *logits2v_mat, Matrix *logits2v_trans_mat, Matrix *wo_mat,
+                     Matrix *v2wv_trans_mat, Matrix *logits2v_mat, Matrix *logits2v_trans_mat, const Matrix *wo_mat,
                      Matrix *bo_mat, Matrix *output_mat) {
   int num_heads = param->num_heads_;
   int d_model = param->d_model_;

@@ -399,6 +399,7 @@ int SubGraph::CreatePartialInBelongAnf() {
   call_cnode->set_fullname_with_scope(graph_name + "/call");
   // replace belong-graph's output
   auto return_node = belong_anf_->get_return();
+  // return node should has 2 inputs
   MS_ASSERT(return_node != nullptr && return_node->inputs().size() == 2);
   auto ori_output = return_node->inputs().at(1);
   manager->Replace(ori_output, call_cnode);

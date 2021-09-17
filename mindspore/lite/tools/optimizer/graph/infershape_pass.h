@@ -38,7 +38,7 @@ class InferShapePass : public Pass {
   STATUS SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   void SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
   STATUS SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
-  void ResetSubGraphInput();
+  bool ResetSubGraphInput();
 
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};

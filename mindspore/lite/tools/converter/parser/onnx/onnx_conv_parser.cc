@@ -42,6 +42,7 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
       for (int i = 0; i < size; ++i) {
         weight_shape.emplace_back((*node_iter).dims(i));
       }
+      // filter of conv should have at lease two dims
       if (size < 2) {
         MS_LOG(ERROR) << "index out of dims range";
         return RET_ERROR;
@@ -73,11 +74,13 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
     } else {
       return RET_NO_CHANGE;
     }
+    // filter of conv should have at lease four dims
     if (dims.size() < 4) {
       MS_LOG(ERROR) << "index out of dims range";
       return RET_ERROR;
     }
     *channel_out = dims.at(0);
+    // the fourth dim of filter of conv is channel dim
     if (INT_MUL_OVERFLOW_THRESHOLD(dims.at(3), group, INT64_MAX)) {
       MS_LOG(ERROR) << "channel in overflow";
       return RET_ERROR;
