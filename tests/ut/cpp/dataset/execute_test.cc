@@ -1082,3 +1082,18 @@ TEST_F(MindDataTestExecute, TestVolGainTypePower) {
   Status status = transform(input_tensor, &input_tensor);
   EXPECT_TRUE(status.IsOk());
 }
+
+TEST_F(MindDataTestExecute, TestMagphaseEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMagphaseEager.";
+  float power = 1.0;
+  std::vector<mindspore::MSTensor> output_tensor;
+  std::shared_ptr<Tensor> test;
+  std::vector<float> test_vector = {3, 4, -3, 4, 3, -4, -3, -4,
+                                    5, 12, -5, 12, 5, -12, -5, -12};
+  Tensor::CreateFromVector(test_vector, TensorShape({2, 4, 2}), &test);
+  auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
+  std::shared_ptr<TensorTransform> magphase(new audio::Magphase({power}));
+  auto transform = Execute({magphase});
+  Status rc = transform({input_tensor}, &output_tensor);
+  ASSERT_TRUE(rc.IsOk());
+}

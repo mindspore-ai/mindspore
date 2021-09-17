@@ -38,6 +38,7 @@
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -258,6 +259,17 @@ PYBIND_REGISTER(
         return lowpass_biquad;
       }));
   }));
+
+PYBIND_REGISTER(MagphaseOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<audio::MagphaseOperation, TensorOperation, std::shared_ptr<audio::MagphaseOperation>>(
+                      *m, "MagphaseOperation")
+                      .def(py::init([](float power) {
+                        auto magphase = std::make_shared<audio::MagphaseOperation>(power);
+                        THROW_IF_ERROR(magphase->ValidateParams());
+                        return magphase;
+                      }));
+                }));
 
 PYBIND_REGISTER(
   MuLawDecodingOperation, 1, ([](const py::module *m) {

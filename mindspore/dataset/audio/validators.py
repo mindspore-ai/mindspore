@@ -333,13 +333,30 @@ def check_masking(method):
     return new_method
 
 
+def check_power(power):
+    """Wrapper method to check the parameters of power."""
+    type_check(power, (int, float), "power")
+    check_non_negative_float32(power, "power")
+
+
 def check_complex_norm(method):
     """Wrapper method to check the parameters of ComplexNorm."""
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [power], _ = parse_user_args(method, *args, **kwargs)
-        type_check(power, (int, float), "power")
-        check_non_negative_float32(power, "power")
+        check_power(power)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_magphase(method):
+    """Wrapper method to check the parameters of Magphase."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [power], _ = parse_user_args(method, *args, **kwargs)
+        check_power(power)
         return method(self, *args, **kwargs)
 
     return new_method
