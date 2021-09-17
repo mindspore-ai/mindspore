@@ -19,7 +19,6 @@ if(ENABLE_D OR ENABLE_ACL)
     file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
             "akg_kernel_register.cc"
             "model/acl/*.cc"
-            "model/acl/model_converter.cc"
             "model/model_converter_utils/*.cc"
             "graph/acl/*.cc"
             )

@@ -75,5 +75,4 @@ ATTR_MAP(L2Normalize) = {
   {"epsilon", ATTR_DESC(eps, AnyTraits<float>())}};
 OUTPUT_MAP(L2Normalize) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(L2Normalize, kNameL2Normalize, ADPT_DESC(L2Normalize))
-
 }  // namespace mindspore::transform
