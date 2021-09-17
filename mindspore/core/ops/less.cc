@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,16 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
-  return kBool;
+  return std::make_shared<TensorType>(kBool);
 }
 }  // namespace
 
 AbstractBasePtr LessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  auto shape = InferShape(primitive, input_args);
+  auto type = InferType(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_C(kNameLess, Less);
+REGISTER_PRIMITIVE_EVAL_IMPL(Less, prim::kPrimLess, LessInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
