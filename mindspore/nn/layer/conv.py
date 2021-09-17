@@ -737,7 +737,7 @@ class Conv3dTranspose(_Conv):
         Tensor, the shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Raises:
         TypeError: If `in_channels`, `out_channels` or `group` is not an int.

@@ -301,7 +301,7 @@ class UniformInt(PrimitiveWithInfer):
         Tensor. The shape is the same as the input 'shape', and the data type is int32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = (2, 4)
@@ -362,7 +362,7 @@ class UniformReal(StandardNormal):
         ValueError: If `shape` is not a constant value.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = (2, 2)

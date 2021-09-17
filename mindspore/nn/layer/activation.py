@@ -734,7 +734,7 @@ class LogSigmoid(Cell):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.LogSigmoid()

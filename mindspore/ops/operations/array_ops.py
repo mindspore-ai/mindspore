@@ -3475,6 +3475,11 @@ class ScatterNd(PrimitiveWithInfer):
 
     `updates` is a tensor of rank `Q-1+P-N`. Its shape is: :math:`(i_0, i_1, ..., i_{Q-2}, shape_N, ..., shape_{P-1})`.
 
+    The following figure shows the calculation process of inserting two slices in the first dimension of a rank-3
+    with two matrices of new values:
+
+    .. image:: api_img/ScatterNd.png
+
     Inputs:
         - **indices** (Tensor) - The index of scattering in the new tensor with int32 or int64 data type.
           The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
@@ -3498,6 +3503,30 @@ class ScatterNd(PrimitiveWithInfer):
 
     Examples:
         >>> op = ops.ScatterNd()
+        >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2],
+        ...                             [3, 3, 3, 3], [4, 4, 4, 4]],
+        ...                            [[1, 1, 1, 1], [2, 2, 2, 2],
+        ...                             [3, 3, 3, 3], [4, 4, 4, 4]]]), mindspore.float32)
+        >>> shape = (4, 4, 4)
+        >>> output = op(indices, updates, shape)
+        >>> print(output)
+        [[[1. 1. 1. 1.]
+          [2. 2. 2. 2.]
+          [3. 3. 3. 3.]
+          [4. 4. 4. 4.]]
+         [[0. 0. 0. 0.]
+          [0. 0. 0. 0.]
+          [0. 0. 0. 0.]
+          [0. 0. 0. 0.]]
+         [[1. 1. 1. 1.]
+          [2. 2. 2. 2.]
+          [3. 3. 3. 3.]
+          [4. 4. 4. 4.]]
+         [[0. 0. 0. 0.]
+          [0. 0. 0. 0.]
+          [0. 0. 0. 0.]
+          [0. 0. 0. 0.]]]
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([3.2, 1.1]), mindspore.float32)
         >>> shape = (3, 3)
@@ -5690,7 +5719,7 @@ class Sort(PrimitiveWithInfer):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
