@@ -18,8 +18,8 @@
 #include "nnacl/errorcode.h"
 
 #if defined(ENABLE_ARM) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
-MS_FLOAT32X4 OptimizedPowerSimd(MS_FLOAT32X4 x, const void *exponent) {
-  int exp = abs((int)(*(float *)exponent));
+MS_FLOAT32X4 OptimizedPowerSimd(MS_FLOAT32X4 x, const float *exponent) {
+  int exp = abs((int)(*exponent));
   MS_FLOAT32X4 result = MS_MOVQ_F32(1.0f);
   while (exp) {
     if (exp % 2) {
@@ -28,15 +28,15 @@ MS_FLOAT32X4 OptimizedPowerSimd(MS_FLOAT32X4 x, const void *exponent) {
     x = MS_MULQ_F32(x, x);
     exp = exp / 2;
   }
-  if (*(float *)exponent >= 0) {
+  if (*exponent >= 0) {
     return result;
   }
   return MS_DIVQ_F32(MS_MOVQ_F32(1), result);
 }
 #endif
 
-float OptimizedPowerScalar(float x, const void *exponent) {
-  int exp = abs((int)(*(float *)exponent));
+float OptimizedPowerScalar(float x, const float *exponent) {
+  int exp = abs((int)(*exponent));
   float result = 1;
   while (exp) {
     if (exp % 2) {
@@ -45,7 +45,7 @@ float OptimizedPowerScalar(float x, const void *exponent) {
     x *= x;
     exp = exp / 2;
   }
-  return *(float *)exponent >= 0 ? result : 1 / result;
+  return *exponent >= 0 ? result : 1 / result;
 }
 
 void PowerBroadCast(const float *input, const float *exponent, float *output, int len, float scale, float shift) {

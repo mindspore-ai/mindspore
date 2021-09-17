@@ -26,7 +26,8 @@ bool CheckPermTransFormat(const int *perm, const int *perm_transformat, const in
   return true;
 }
 
-int SetOutputShape(int perms_num, const TensorC *input, TensorC *output, int *perm, size_t perm_size, int *out_shape) {
+int SetOutputShape(int perms_num, const TensorC *input, TensorC *output, const int *perm, size_t perm_size,
+                   int *out_shape) {
   // set output shape
   size_t in_shape_size = input->shape_size_;
   output->shape_size_ = in_shape_size;
