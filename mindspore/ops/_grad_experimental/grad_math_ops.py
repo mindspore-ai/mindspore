@@ -21,6 +21,39 @@ from .. import functional as F
 from .. import operations as P
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
+from ..operations import _grad_ops as G
+from ..primitive import constexpr
+
+
+transpose = P.Transpose()
+
+
+@constexpr
+def _generate_perm(x_dim):
+    perm = tuple(range(x_dim - 2))
+    return perm
+
+
+@bprop_getters.register(P.Cdist)
+def get_bprop_cdist(self):
+    """Generate bprop for Cdist"""
+    input_grad = G.CdistGrad(p=self.p)
+
+    def bprop(input_x, input_y, out, dout):
+        dout_shape = F.shape(dout)
+        dout_dim = len(dout_shape)
+        dout_perm_part1 = _generate_perm(dout_dim)
+        dout_perm_part2 = (dout_dim - 1, dout_dim - 2)
+        dout_perm = dout_perm_part1 + dout_perm_part2
+        out_perm = dout_perm
+        dout_transpose = transpose(dout, dout_perm)
+        out_transpose = transpose(out, out_perm)
+        dx = input_grad(dout, input_x, input_y, out)
+        dy = input_grad(dout_transpose, input_y, input_x, out_transpose)
+        return dx, dy
+
+    return bprop
+
 
 @bprop_getters.register(P.Lerp)
 def get_bprop_index_lerp(self):

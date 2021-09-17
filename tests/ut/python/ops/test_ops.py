@@ -1366,6 +1366,11 @@ test_case_math_ops = [
                                   clip_norm=1.0, use_norm=None),
         'desc_inputs': [],
         'skip': ['backward']}),
+    ('Cdist', {
+        'block': P.Cdist(p=2.0),
+        'desc_inputs': [Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32)),
+                        Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))]}),
     ('Embedding_1', {
         'block': Embedding(vocab_size=10, embedding_size=3),
         'desc_inputs': [Tensor(np.array([0, 2, 2, 7]).astype(np.int32))],

@@ -2246,6 +2246,15 @@ class SoftShrinkGrad(Primitive):
         validator.check_number("lambd", lambd, 0, Rel.GE, self.name)
 
 
+class CdistGrad(Primitive):
+    """Computes gradient for Cdist."""
+
+    @prim_attr_register
+    def __init__(self, p=2.0):
+        validator.check_value_type("p", p, [float], self.name)
+        self.init_prim_io_names(inputs=['grad', 'input_x', 'input_y', 'cdist'], outputs=['output'])
+
+
 class HShrinkGrad(Primitive):
     """
     Computes gradients for HShrinkGrad operation.
