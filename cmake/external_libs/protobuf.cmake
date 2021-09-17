@@ -38,7 +38,7 @@ string(REPLACE " -Werror" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/protobuf_source/repository/archive/v3.13.0.tar.gz")
-    set(MD5 "f4489cb88922ad9c58cbe3308d59cee5")
+    set(MD5 "140dc2486b9358e3015aec7a8ece525c")
 else()
     set(REQ_URL "https://github.com/protocolbuffers/protobuf/archive/v3.13.0.tar.gz")
     set(MD5 "1a6274bc4a65b55a6fa70e264d796490")

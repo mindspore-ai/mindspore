@@ -411,7 +411,6 @@ void AscendKernelCompileManager::QueryFinishJob(const std::string &job_type) {
   }
 }
 
-// 融合算子查询记录以及查询结果解析
 void AscendKernelCompileManager::QueryFusionFinishJob(KernelModMap *kernel_mode_ret) {
   MS_EXCEPTION_IF_NULL(build_manager_);
   MS_EXCEPTION_IF_NULL(kernel_mode_ret);

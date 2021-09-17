@@ -23,7 +23,7 @@ endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/glog/repository/archive/v0.4.0.tar.gz")
-    set(MD5 "22fe340ddc231e6c8e46bc295320f8ee")
+    set(MD5 "1e63d5e35a607bade6380a61ae61bceb")
 else()
     set(REQ_URL "https://github.com/google/glog/archive/v0.4.0.tar.gz")
     set(MD5 "0daea8785e6df922d7887755c3d100d0")
