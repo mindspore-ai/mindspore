@@ -244,7 +244,7 @@ void TbeJsonCreator::AddOpNameForComputeNode(nlohmann::json *kernel_json) {
   }
 }
 
-bool TbeJsonCreator::GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *attrs_json) {
+void TbeJsonCreator::GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *attrs_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_info);
   MS_EXCEPTION_IF_NULL(attrs_json);
@@ -289,10 +289,9 @@ bool TbeJsonCreator::GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &o
   if (!AttrsJsonPostProcessing(anf_node, op_info, attrs_json)) {
     MS_LOG(EXCEPTION) << "PostProcessing node attr error, node: " << anf_node->fullname_with_scope();
   }
-  return true;
 }
 
-bool TbeJsonCreator::GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
+void TbeJsonCreator::GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
   auto cnode = anf_node->cast<CNodePtr>();
@@ -312,7 +311,6 @@ bool TbeJsonCreator::GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json
   if (!attrs_desc.empty()) {
     (*compute_json)[kJAttrDesc] = attrs_desc;
   }
-  return true;
 }
 
 void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
