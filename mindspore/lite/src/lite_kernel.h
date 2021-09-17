@@ -69,7 +69,8 @@ enum SubGraphType {
   kNotSubGraph = 0,
   kCpuFP32SubGraph,
   kCpuFP16SubGraph,
-  kGpuSubGraph,
+  kGpuFp32SubGraph,
+  kGpuFp16SubGraph,
   kNpuSubGraph,
   kApuSubGraph,
   kCustomSubGraph

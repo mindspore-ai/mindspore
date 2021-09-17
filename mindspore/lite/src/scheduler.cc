@@ -352,8 +352,8 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   MS_LOG(DEBUG) << "schedule kernels success.";
 
   for (auto subgraph : *dst_kernels) {
+    MS_LOG(DEBUG) << "[subgraph] : " << subgraph->name() << ",  type:" << subgraph->subgraph_type();
     if (subgraph->desc().arch == kernel::KERNEL_ARCH::kDelegate) {
-      MS_LOG(DEBUG) << "NPU subgraph : " << subgraph->name();
       continue;
     }
     std::vector<kernel ::LiteKernel *> kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
@@ -903,40 +903,45 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 
 #ifdef GPU_OPENCL
 int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                             OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel) {
+                             OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel,
+                             TypeId prefer_data_type) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(kernel != nullptr);
-  if (context_->IsGpuEnabled()) {
-    // support more data type like int32
-    kernel::KernelKey gpu_desc{kernel::KERNEL_ARCH::kGPU, desc.data_type, desc.type};
-    if (desc.data_type == kNumberTypeFloat32 && context_->IsGpuFloat16Enabled()) {
-      gpu_desc.data_type = kNumberTypeFloat16;
-    }
-    int ret;
-#ifndef WEIGHT_DECODE_CLIP
-    // weight dequant
-    ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
-    if (ret != RET_OK) {
-      MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
-      return RET_NOT_SUPPORT;
-    }
-#endif
-    // we don't need to restore tensor for copy data
-    ret = CopyConstTensorData(in_tensors, op_parameter->type_);
-    if (ret != RET_OK) {
-      MS_LOG(DEBUG) << "CopyConstTensorsData failed: " << ret;
-      return RET_NOT_SUPPORT;
-    }
-    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, gpu_desc,
-                                                   op_parameter, kernel);
-    if (ret == RET_OK) {
-      MS_LOG(DEBUG) << "Get gpu op success: " << PrimitiveCurVersionTypeName(gpu_desc.type);
-    } else {
-      MS_LOG(DEBUG) << "Get gpu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(gpu_desc.type);
-    }
-    return ret;
+  if (!context_->IsGpuEnabled()) {
+    return RET_NOT_SUPPORT;
   }
-  return RET_NOT_SUPPORT;
+
+  // support more data type like int32
+  kernel::KernelKey gpu_desc{kernel::KERNEL_ARCH::kGPU, desc.data_type, desc.type};
+  if (desc.data_type == kNumberTypeFloat32 && context_->IsGpuFloat16Enabled()) {
+    gpu_desc.data_type = kNumberTypeFloat16;
+  }
+  if (prefer_data_type == kNumberTypeFloat16 || prefer_data_type == kNumberTypeFloat32) {
+    gpu_desc.data_type = prefer_data_type;
+  }
+  int ret;
+#ifndef WEIGHT_DECODE_CLIP
+  // weight dequant
+  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32);
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
+    return RET_NOT_SUPPORT;
+  }
+#endif
+  // we don't need to restore tensor for copy data
+  ret = CopyConstTensorData(in_tensors, op_parameter->type_);
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "CopyConstTensorsData failed: " << ret;
+    return RET_NOT_SUPPORT;
+  }
+  ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, gpu_desc, op_parameter,
+                                                 kernel);
+  if (ret == RET_OK) {
+    MS_LOG(DEBUG) << "Get gpu op success: " << PrimitiveCurVersionTypeName(gpu_desc.type);
+  } else {
+    MS_LOG(DEBUG) << "Get gpu op failed, scheduler to cpu: " << PrimitiveCurVersionTypeName(gpu_desc.type);
+  }
+  return ret;
 }
 #endif
 
@@ -1029,7 +1034,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   bool gpu_priority = DeviceTypePriority(context_, DT_GPU, DT_CPU);
   bool use_gpu_kernel = node->device_type_ == DT_GPU || node->device_type_ == kDefaultDeviceType;
   if (gpu_priority && use_gpu_kernel) {
-    status = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel);
+    status = FindGpuKernel(in_tensors, out_tensors, op_parameter, desc, &kernel, prefer_data_type);
     if (status == RET_OK) {
       return kernel;
     } else {
@@ -1121,7 +1126,7 @@ kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKerne
   if (type == kernel::kCustomSubGraph) {
     sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, innerkernel);
   }
-  if (type == kernel::kGpuSubGraph) {
+  if (type == kernel::kGpuFp16SubGraph || type == kernel::kGpuFp32SubGraph) {
 #if GPU_OPENCL
     sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(input_kernels, output_kernels, kernels, innerkernel);
     if (sub_graph == nullptr) {
@@ -1179,12 +1184,19 @@ kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel, con
   auto desc = kernel->desc();
   if (desc.provider != kernel::kBuiltin) {
     if (desc.arch == kernel::KERNEL_ARCH::kGPU) {
-      return kernel::kGpuSubGraph;
+      if (desc.data_type == kNumberTypeFloat16) {
+        return kernel::kGpuFp16SubGraph;
+      }
+      return kernel::kGpuFp32SubGraph;
     }
     return kernel::kCustomSubGraph;
   }
   if (desc.arch == kernel::KERNEL_ARCH::kGPU) {
-    return kernel::kGpuSubGraph;
+    if (desc.data_type == kNumberTypeFloat16) {
+      return kernel::kGpuFp16SubGraph;
+    } else {
+      return kernel::kGpuFp32SubGraph;
+    }
   } else if (desc.arch == kernel::KERNEL_ARCH::kNPU) {
     return kernel::kNpuSubGraph;
   } else if (desc.arch == kernel::KERNEL_ARCH::kAPU) {
@@ -1440,13 +1452,27 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
 }
 
 namespace {
+bool KernelFitCurrentSubGraphCPUFp32(TypeId data_type) {
+  return (data_type == kNumberTypeFloat32 || data_type == kNumberTypeFloat || data_type == kNumberTypeInt8 ||
+          data_type == kNumberTypeInt || data_type == kNumberTypeInt32 || data_type == kNumberTypeInt64 ||
+          data_type == kNumberTypeUInt8 || data_type == kNumberTypeBool);
+}
+
 bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const kernel::LiteKernel &kernel) {
   switch (subgraph_type) {
     case kernel::SubGraphType::kNotSubGraph:
     case kernel::SubGraphType::kApuSubGraph:
       return false;
-    case kernel::SubGraphType::kGpuSubGraph:
-      return kernel.desc().arch == kernel::KERNEL_ARCH::kGPU;
+    case kernel::SubGraphType::kGpuFp16SubGraph:
+      if (kernel.desc().arch != kernel::KERNEL_ARCH::kGPU) {
+        return false;
+      }
+      return (kernel.desc().data_type == kNumberTypeFloat16);
+    case kernel::SubGraphType::kGpuFp32SubGraph:
+      if (kernel.desc().arch != kernel::KERNEL_ARCH::kGPU) {
+        return false;
+      }
+      return (kernel.desc().data_type != kNumberTypeFloat16);
     case kernel::SubGraphType::kNpuSubGraph:
       return kernel.desc().arch == kernel::KERNEL_ARCH::kNPU;
     case kernel::SubGraphType::kCpuFP16SubGraph: {
@@ -1462,10 +1488,7 @@ bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const ke
       if (desc.arch != kernel::KERNEL_ARCH::kCPU) {
         return false;
       }
-      return (desc.data_type == kNumberTypeFloat32 || desc.data_type == kNumberTypeFloat ||
-              desc.data_type == kNumberTypeInt8 || desc.data_type == kNumberTypeInt ||
-              desc.data_type == kNumberTypeInt32 || desc.data_type == kNumberTypeInt64 ||
-              desc.data_type == kNumberTypeUInt8 || desc.data_type == kNumberTypeBool);
+      return KernelFitCurrentSubGraphCPUFp32(desc.data_type);
     }
     default:
       return false;

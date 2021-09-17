@@ -32,7 +32,7 @@ int CheckRuntime(mindspore::session::LiteSession *session) {
   int cpu_kernel_count = 0;
   int gpu_kernel_count = 0;
   for (auto kernel : kernels) {
-    if (kernel->subgraph_type() == mindspore::kernel::kGpuSubGraph) {
+    if (kernel->subgraph_type() == mindspore::kernel::kGpuFp32SubGraph) {
       gpu_kernel_count++;
     }
     if (kernel->subgraph_type() == mindspore::kernel::kCpuFP32SubGraph) {

@@ -81,7 +81,8 @@ class Scheduler {
 
 #ifdef GPU_OPENCL
   int FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                    OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel);
+                    OpParameter *op_parameter, const kernel::KernelKey &desc, kernel::LiteKernel **kernel,
+                    TypeId prefer_data_type);
 #endif
   int FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                          const Model::Node *node, TypeId data_type, kernel::LiteKernel **kernel);
