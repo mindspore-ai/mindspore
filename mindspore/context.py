@@ -702,7 +702,8 @@ def set_context(**kwargs):
             of back propagation node outputs is the same as input parameters. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
             The max_call_depth parameter needs to be set when the nested call is too deep or the number
-            of subgraphs is too large.
+            of subgraphs is too large. If max_call_depth is set larger than before, the system max stack depth should be
+            set larger too, otherwise a `core dumped` exception may be raised because of system stack overflow.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
             For details of sparsity and sparse tensor, please check
              `sparse tensor <https://www.mindspore.cn/docs/programming_guide/en/master/tensor.html#sparse-tensor>`_.
