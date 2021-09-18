@@ -241,7 +241,7 @@ ValuePtr ConvertPrimitive(const py::object &obj, bool use_signature = false) {
   auto obj_type = data_converter::GetObjType(obj);
   if (obj_type == RESOLVE_TYPE_CLASS_TYPE) {
     auto desc = py::cast<std::string>(python_adapter::CallPyObjMethod(obj, PYTHON_GET_OBJ_DESC, obj));
-    // desc has format "<class xxxx>", strip the '<' and '>' by offset 1;
+    // desc has format "<class xxxx>", strip the '<' and '>' by offset 1.
     return std::make_shared<ClassType>(obj, std::string(desc.begin() + 1, desc.end() - 1));
   }
   py::object adapter_obj = obj;
@@ -341,7 +341,7 @@ ValuePtr ConvertOtherObj(const py::object &obj) {
   if (obj_type == RESOLVE_TYPE_CLASS_TYPE) {
     MS_LOG(DEBUG) << "Resolve the class type, need create class instance.";
     std::string desc = py::str(obj);
-    // desc has format "<class xxxx>", strip the '<' and '>' by offset 1;
+    // desc has format "<class xxxx>", strip the '<' and '>' by offset 1.
     return std::make_shared<ClassType>(obj, std::string(desc.begin() + 1, desc.end() - 1));
   }
   if (obj_type == RESOLVE_TYPE_FUNCTION || obj_type == RESOLVE_TYPE_METHOD) {

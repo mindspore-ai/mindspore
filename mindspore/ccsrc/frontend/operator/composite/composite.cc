@@ -411,6 +411,9 @@ FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
 
 abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
   if (fn_leaf_ == nullptr) {
+    if (args_spec_list.empty()) {
+      MS_LOG(EXCEPTION) << "The args spec list is empty.";
+    }
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     // Assert that hypermap's function param does not contain free variables
     if (args_spec_list[0]->isa<FuncGraphAbstractClosure>()) {

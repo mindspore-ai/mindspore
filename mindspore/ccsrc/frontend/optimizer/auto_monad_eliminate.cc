@@ -31,7 +31,7 @@ std::unordered_set<FuncGraphPtr> GetAllSubGraphs(const std::unordered_set<AnfNod
   for (auto node : call_partial) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    int fg_idx = IsPrimitiveCNode(cnode, prim::kPrimCall) ? 0 : 1;
+    size_t fg_idx = IsPrimitiveCNode(cnode, prim::kPrimCall) ? 0 : 1;
     auto fg_value_node = cnode->input(fg_idx)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(fg_value_node);
     auto value = fg_value_node->value();

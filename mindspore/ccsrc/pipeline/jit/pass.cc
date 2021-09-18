@@ -193,13 +193,13 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
   });
 
   if (pynative::PynativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
-    map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
+    (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
     opt::OptPassConfig env_eliminate = opt::OptPassConfig({
       irpass.incorporate_call_,
       irpass.incorporate_call_switch_,
       irpass.incorporate_getitem_set_,
     });
-    map.emplace_back(std::make_pair("env_eliminate", env_eliminate));
+    (void)map.emplace_back(std::make_pair("env_eliminate", env_eliminate));
   }
 
   auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", res, map);
@@ -229,7 +229,7 @@ void AddParallelRenormalize(OptPassGroupMap *map_a) {
     auto parallel_end_opt =
       find_if(map_a->begin(), map_a->end(), [](auto opt_pair) { return opt_pair.first == "grad"; });
     if (parallel_end_opt != map_a->end()) {
-      map_a->insert(parallel_end_opt, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
+      (void)map_a->insert(parallel_end_opt, {"parallel_renormalize", opt::OptPassConfig::Renormalize()});
     }
   }
 }
@@ -467,7 +467,7 @@ OptPassGroupMap GetOptPassesC(const opt::irpass::OptimizeIRPassLib &) {
   return OptPassGroupMap({{"renormalize", opt::OptPassConfig::Renormalize()}});
 }
 
-OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &irpass) {
+OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &) {
   opt::OptPassConfig control_group = opt::OptPassConfig(opt::irpass::ConvertSwitchReplacement());
   OptPassGroupMap map({
     {"control_group", control_group},
