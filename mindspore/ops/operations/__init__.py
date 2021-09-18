@@ -34,7 +34,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Stack, Unpack, Unsta
                         UnsortedSegmentProd, UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch,
                         BatchToSpace, SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence,
                         EmbeddingLookup, Unique, GatherD, Identity, Range, MaskedFill, MaskedSelect, SearchSorted,
-                        TensorScatterMax, TensorScatterMin, TensorScatterSub)
+                        TensorScatterMax, TensorScatterMin, TensorScatterSub, ScatterElements)
 from .comm_ops import (AllGather, AllReduce, NeighborExchange, AlltoAll, AllSwap, ReduceScatter, Broadcast,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
                        _VirtualOutput, _VirtualDiv, _GetTensorSlice, _VirtualAdd, _VirtualAssignAdd, _VirtualAccuGrad,
@@ -120,7 +120,7 @@ from .sponge_update_ops import (ConstrainForceCycleWithVirial, RefreshUintCrd, L
                                 Dihedral14ForceWithAtomEnergyVirial, PMEEnergyUpdate,
                                 ConstrainForceVirial, ConstrainForce, Constrain)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
-from ._inner_ops import (MatmulDDS, DSDMatmul)
+from ._inner_ops import (MatmulDDS, DSDMatmul, NonZero)
 
 __all__ = [
     'Unique',
@@ -469,6 +469,8 @@ __all__ = [
     "TensorScatterMax",
     "TensorScatterMin",
     "TensorScatterSub",
+    "ScatterElements",
+    "NonZero",
     "SoftShrink",
     "FFT3D",
     "IFFT3D",

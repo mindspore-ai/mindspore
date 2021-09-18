@@ -36,15 +36,10 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
-  if (x_shp.size() != y_shp.size() || x_shp.size() < 3) {
-    MS_EXCEPTION(ValueError) << "For BatchMatMul, input x, y should have the same dimension size and should be greater"
-                             << "or equal to 3, while x size = " << x_shp.size() << ", y size = " << y_shp.size();
-  }
-  for (size_t i = 0; i < x_shp.size() - 2; ++i) {
-    if (x_shp[i] != y_shp[i]) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << " shapes in dim[" << i << "] are not the same"
-                               << "while x1 is " << x_shp[i] << ", x2 is " << y_shp[i];
-    }
+  if (x_shp.size() < 3 || y_shp.size() < 2) {
+    MS_EXCEPTION(ValueError) << "For BatchMatMul, input x should be greater or equal to 3, input y should be greater "
+                                "or equal to 2 while x size = "
+                             << x_shp.size() << ", y size = " << y_shp.size();
   }
   std::vector<int> x_last(x_shp.end() - 2, x_shp.end());
   std::vector<int> y_last(y_shp.end() - 2, y_shp.end());
@@ -78,9 +73,10 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   bool y_not_dyn =
     std::all_of(y_shp.begin(), y_shp.end(), [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
   if (x_not_dyn && y_not_dyn) {
-    size_t offset = x_shp.size() - 2;
-    auto x_c = x_shp[offset + (transpose_a ? 0 : 1)];
-    auto y_r = y_shp[offset + (transpose_b ? 1 : 0)];
+    size_t x_offset = x_shp.size() - 2;
+    size_t y_offset = y_shp.size() - 2;
+    auto x_c = x_shp[x_offset + (transpose_a ? 0 : 1)];
+    auto y_r = y_shp[y_offset + (transpose_b ? 1 : 0)];
     if (x_c != y_r) {
       MS_LOG(EXCEPTION) << "BatchMatMul shape error, got x_col: " << x_c << ", y_row: " << y_r
                         << ". In BatchMatMul x_col and y_row should be equal.";
@@ -92,18 +88,16 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   auto make_shape = [&transpose_a, &transpose_b](ShapeVector &output, const ShapeVector xshp,
                                                  const ShapeVector yshp) -> void {
     for (size_t i = 0; i < xshp.size() - 2; i++) {
-      if (xshp[i] != yshp[i]) {
-        if (xshp[i] > 0 && yshp[i] > 0) {
-          MS_LOG(EXCEPTION) << "BatchMatMul input x, y are different at index " << i << ".";
-        }
+      if (xshp[i] < 0) {
         output.push_back(abstract::Shape::SHP_ANY);
       } else {
         output.push_back(xshp[i]);
       }
     }
-    size_t offset = xshp.size() - 2;
-    output.push_back(xshp[offset + (transpose_a ? 1 : 0)]);
-    output.push_back(yshp[offset + (transpose_b ? 0 : 1)]);
+    size_t x_offset = xshp.size() - 2;
+    size_t y_offset = yshp.size() - 2;
+    output.push_back(xshp[x_offset + (transpose_a ? 1 : 0)]);
+    output.push_back(yshp[y_offset + (transpose_b ? 0 : 1)]);
     return;
   };
   make_shape(ret_shape, x_shp, y_shp);

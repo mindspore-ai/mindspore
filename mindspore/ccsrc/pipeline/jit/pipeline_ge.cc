@@ -332,11 +332,12 @@ py::object ExtractGeneralCnodeRet(const AbstractBasePtr &cnode_data, const py::t
     if (!shape->isa<abstract::Shape>()) {
       MS_LOG(EXCEPTION) << "The shape of the tensor derived is not Shape, is " << shape->ToString();
     }
+
     auto shape_me = shape->cast<abstract::ShapePtr>()->shape();
     auto shape_ge = py::cast<Tensor &>(data[*count]).shape();
-    if (shape_ge != shape_me) {
-      MS_LOG(EXCEPTION) << "The shape of the " << *count << "th tensor returned: " << shape_ge
-                        << " is not the same as the shape of the tensor derived: " << shape_me;
+    if (shape_ge != shape_me) {  // dynamic shape
+      MS_LOG(WARNING) << "The shape of the " << *count << "th tensor returned: " << shape_ge
+                      << " is not the same as the shape of the tensor derived: " << shape_me;
     }
 
     return data[(*count)++];

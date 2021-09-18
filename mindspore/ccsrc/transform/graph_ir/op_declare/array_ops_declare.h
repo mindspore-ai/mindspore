@@ -61,6 +61,9 @@ DECLARE_OP_USE_OUTPUT(ReverseSequence)
 DECLARE_OP_ADAPTER(EditDistance)
 DECLARE_OP_USE_OUTPUT(EditDistance)
 
+DECLARE_OP_ADAPTER(NonZero)
+DECLARE_OP_USE_OUTPUT(NonZero)
+
 DECLARE_OP_ADAPTER(Unsqueeze)
 DECLARE_OP_USE_OUTPUT(Unsqueeze)
 }  // namespace mindspore::transform

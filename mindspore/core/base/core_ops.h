@@ -225,6 +225,7 @@ inline const PrimitivePtr kPrimDynamicGRUV2Grad = std::make_shared<Primitive>("D
 inline const PrimitivePtr kPrimScatterAdd = std::make_shared<Primitive>("ScatterAdd");
 inline const PrimitivePtr kPrimScatterSub = std::make_shared<Primitive>("ScatterSub");
 inline const PrimitivePtr kPrimScatterUpdate = std::make_shared<Primitive>("ScatterUpdate");
+inline const PrimitivePtr kPrimScatterElements = std::make_shared<Primitive>("ScatterElements");
 inline const PrimitivePtr kPrimTensorCopySlices = std::make_shared<Primitive>("TensorCopySlices");
 inline const PrimitivePtr kPrimMapUniform = std::make_shared<Primitive>("MapUniform");
 inline const PrimitivePtr kPrimSplit = std::make_shared<Primitive>("Split");
@@ -250,6 +251,7 @@ inline const PrimitivePtr kPrimMaskedFill = std::make_shared<Primitive>("MaskedF
 inline const PrimitivePtr kPrimMaskedSelect = std::make_shared<Primitive>("MaskedSelect");
 inline const PrimitivePtr kPrimDiag = std::make_shared<Primitive>(kDiag);
 inline const PrimitivePtr kPrimDiagPart = std::make_shared<Primitive>(kDiagPart);
+inline const PrimitivePtr kPrimNonZero = std::make_shared<Primitive>("NonZero");
 
 // NN
 inline const PrimitivePtr kPrimAdam = std::make_shared<Primitive>("Adam");

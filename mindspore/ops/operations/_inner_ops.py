@@ -1345,3 +1345,35 @@ class MatmulDDSGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, q, k, local_prob, global_prob, local_prob_grad, global_prob_grad):
         return q, k
+
+
+class NonZero(Primitive):
+    """
+    Returns the indices of the elements that are non-zero (in row-major order - by dimension).
+
+    Args:
+        transpose (bool): Permutes the dimensions of the output tensor according to input permutation,
+                          default is false
+
+    Inputs:
+        - **x** (Tensor), input array of rank >= 2.
+
+    Outputs:
+        2-D Tensor, int64, indices of elements that are non-zero.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> op = ops.NonZero(True)
+        >>> data = Tensor(np.array([[1, 0, 0], [0, 0, 1]]), mindspore.float32)
+        >>> output = op(data)
+        >>> print(output)
+        [[ 0 0]
+         [ 1 1]]
+    """
+    @prim_attr_register
+    def __init__(self, transpose=False):
+        """Initialize ScatterElements"""
+        validator.check_value_type("transpose", transpose, [bool], self.name)
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
