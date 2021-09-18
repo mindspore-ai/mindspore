@@ -232,7 +232,9 @@ def get_level():
         >>> import os
         >>> os.environ['GLOG_v'] = '0'
         >>> from mindspore import log as logger
-        >>> logger.get_level()
+        >>> level = logger.get_level()
+        >>> print(level)
+        '0'
     """
     # level and glog level mapping dictionary
     level_to_glog_level = dict(zip(_name_to_level.values(), _gloglevel_to_name.keys()))
@@ -356,7 +358,10 @@ def get_log_config():
         >>> os.environ['logger_backupCount'] = '10'
         >>> os.environ['GLOG_stderrthreshold'] = '2'
         >>> from mindspore import log as logger
-        >>> logger.get_log_config()
+        >>> config= logger.get_log_config()
+        >>> print(config)
+        {'GLOG_v': '1', 'GLOG_logtostderr': '0', 'GLOG_log_dir': '/var/log',
+         'logger_maxBytes': '5242880', 'logger_backupCount': '10', 'GLOG_stderrthreshold': '2'}
     """
     logger = _get_logger()
     handler = logger.handlers[0]
