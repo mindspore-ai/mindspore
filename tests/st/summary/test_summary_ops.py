@@ -93,6 +93,7 @@ class TestSummaryOps:
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
     @pytest.mark.env_onecard
+    @pytest.mark.security_off
     def test_summary_ops(self):
         """Test summary operators."""
         ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)

@@ -41,6 +41,7 @@ std::string CNode::fullname_with_scope() {
     return fullname_with_scope_;
   }
 
+#ifndef ENABLE_SECURITY
   if (IsApply(prim::kPrimScalarSummary) || IsApply(prim::kPrimTensorSummary) || IsApply(prim::kPrimImageSummary) ||
       IsApply(prim::kPrimHistogramSummary)) {
     std::string tag = GetValue<std::string>(GetValueNode(input(1)));
@@ -55,40 +56,40 @@ std::string CNode::fullname_with_scope() {
       name = tag + "[:Tensor]";
     }
     fullname_with_scope_ = name;
-  } else {
-    // cnode input 0 should be primitive ptr or funcgraph ptr
-    auto value_ptr = input(0)->cast<ValueNodePtr>();
-    if (value_ptr == nullptr) {
-      MS_LOG(WARNING) << "Input 0 of cnode is not a value node, its type is " << input(0)->type_name() << ".";
-      fullname_with_scope_ = id_generator::get_id(shared_from_base<CNode>());
-      return fullname_with_scope_;
-    }
-    auto input_value = value_ptr->value();
-    if (input_value == nullptr) {
-      MS_LOG(WARNING) << "Value of input 0 of cnode is nullptr.";
-      fullname_with_scope_ = id_generator::get_id(shared_from_base<CNode>());
-      return fullname_with_scope_;
-    }
-
-    auto prim = input_value->cast<PrimitivePtr>();
-    MS_EXCEPTION_IF_NULL(scope());
-    fullname_with_scope_ = scope()->name() + "/";
-    if (prim != nullptr) {
-      fullname_with_scope_ += prim->name();
-    } else {
-      auto func_graph = input_value->cast<FuncGraphPtr>();
-      MS_EXCEPTION_IF_NULL(func_graph);
-      auto fg_flag = func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
-      if (fg_flag != nullptr) {
-        auto fg_name = GetValue<std::string>(fg_flag);
-        fullname_with_scope_ += "GraphKernel_" + fg_name;
-      } else {
-        fullname_with_scope_ += func_graph->ToString();
-      }
-    }
-    fullname_with_scope_ += "-op" + id_generator::get_id(shared_from_base<CNode>());
+    return fullname_with_scope_;
+  }
+#endif
+  // cnode input 0 should be primitive ptr or funcgraph ptr
+  auto value_ptr = input(0)->cast<ValueNodePtr>();
+  if (value_ptr == nullptr) {
+    MS_LOG(WARNING) << "Input 0 of cnode is not a value node, its type is " << input(0)->type_name() << ".";
+    fullname_with_scope_ = id_generator::get_id(shared_from_base<CNode>());
+    return fullname_with_scope_;
+  }
+  auto input_value = value_ptr->value();
+  if (input_value == nullptr) {
+    MS_LOG(WARNING) << "Value of input 0 of cnode is nullptr.";
+    fullname_with_scope_ = id_generator::get_id(shared_from_base<CNode>());
+    return fullname_with_scope_;
   }
 
+  auto prim = input_value->cast<PrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(scope());
+  fullname_with_scope_ = scope()->name() + "/";
+  if (prim != nullptr) {
+    fullname_with_scope_ += prim->name();
+  } else {
+    auto func_graph = input_value->cast<FuncGraphPtr>();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto fg_flag = func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+    if (fg_flag != nullptr) {
+      auto fg_name = GetValue<std::string>(fg_flag);
+      fullname_with_scope_ += "GraphKernel_" + fg_name;
+    } else {
+      fullname_with_scope_ += func_graph->ToString();
+    }
+  }
+  fullname_with_scope_ += "-op" + id_generator::get_id(shared_from_base<CNode>());
   return fullname_with_scope_;
 }
 

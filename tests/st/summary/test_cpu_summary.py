@@ -62,6 +62,7 @@ def train_summary_record(test_writer, steps):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.security_off
 def test_summary_step2_summary_record1():
     """Test record 10 step summary."""
     if platform.system() == "Windows":

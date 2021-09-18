@@ -23,8 +23,11 @@ import numpy as np
 from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
 
 from .._utils import _make_directory
-from ..._c_expression import EventWriter_
 from ._summary_adapter import package_init_event
+from ..._c_expression import security
+if not security.enable_security():
+    from ..._c_expression import EventWriter_
+
 
 FREE_DISK_SPACE_TIMES = 32
 FILE_MODE = 0o400
@@ -41,7 +44,7 @@ class BaseWriter:
         """Write some metadata etc."""
 
     @property
-    def writer(self) -> EventWriter_:
+    def writer(self):
         """Get the writer."""
         if self._writer is not None:
             return self._writer

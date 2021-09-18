@@ -14,6 +14,7 @@
 # ============================================================================
 """ test nn ops """
 import numpy as np
+import pytest
 
 import mindspore
 import mindspore.context as context
@@ -25,6 +26,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
+from mindspore._c_expression import security
+from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -32,6 +35,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
 context.set_context(mode=context.GRAPH_MODE)
+
 
 def conv3x3(in_channels, out_channels, stride=1, padding=1):
     """3x3 convolution """
@@ -520,17 +524,9 @@ test_cases = [
         'desc_inputs': [[128, 32, 32, 64]],
         'desc_bprop': [[128, 32, 32, 64]],
     }),
-    ('ScalarSummary', {
-        'block': ScalarSummaryNet(),
-        'desc_inputs': [Tensor(2.2)],
-    }),
     ('L2Normalize', {
         'block': L2NormalizeNet(),
         'desc_inputs': [Tensor(np.array([[1.0, 2, 3], [4.0, 5, 6], [7.0, 8, 9]]), mindspore.float32)],
-    }),
-    ('HistogramSummary', {
-        'block': HistogramSummaryNet(),
-        'desc_inputs': [[1, 2, 3]],
     }),
     ('FusedBatchNormGrad', {
         'block': FusedBatchNormGrad(nn.BatchNorm2d(num_features=512, eps=1e-5, momentum=0.1)),
@@ -751,6 +747,33 @@ test_cases_for_verify_exception = [
         'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
     }),
 ]
+
+
+@security_off_wrap
+@non_graph_engine
+@mindspore_test(pipeline_for_verify_exception_for_case_by_case_config)
+def test_summary_nn_ops():
+    if security.enable_security():
+        return []
+    test_cases_for_summary_ops = [
+        ('ScalarSummary', {
+            'block': ScalarSummaryNet(),
+            'desc_inputs': [Tensor(2.2)],
+        }),
+        ('HistogramSummary', {
+            'block': HistogramSummaryNet(),
+            'desc_inputs': [[1, 2, 3]],
+        }),
+    ]
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    return test_cases_for_summary_ops
+
+
+def test_summary_nn_ops_security_on():
+    if security.enable_security():
+        with pytest.raises(ValueError) as exc:
+            ScalarSummaryNet()
+        assert str(exc.value) == 'The Summary is not supported, please without `-s on` and recompile source.'
 
 
 @non_graph_engine

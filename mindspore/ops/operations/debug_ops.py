@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 """debug_ops"""
 from types import FunctionType, MethodType
 
@@ -22,6 +21,7 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ..primitive import prim_attr_register, Primitive, PrimitiveWithInfer
+
 
 def _check_mode(class_name):
     """Check for PyNative mode."""
@@ -87,6 +87,10 @@ class ScalarSummary(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize ScalarSummary."""
+
+        if security.enable_security():
+            raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
+
         self.add_prim_attr("side_effect_io", True)
 
 
@@ -126,6 +130,10 @@ class ImageSummary(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize ImageSummary."""
+
+        if security.enable_security():
+            raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
+
         self.add_prim_attr("side_effect_io", True)
 
     def __infer__(self, name, value):
@@ -178,6 +186,10 @@ class TensorSummary(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize TensorSummary."""
+
+        if security.enable_security():
+            raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
+
         self.add_prim_attr("side_effect_io", True)
 
 
@@ -218,6 +230,10 @@ class HistogramSummary(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize HistogramSummary."""
+
+        if security.enable_security():
+            raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
+
         self.add_prim_attr("side_effect_io", True)
 
     def __infer__(self, name, value):

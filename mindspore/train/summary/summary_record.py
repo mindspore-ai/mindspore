@@ -23,7 +23,7 @@ from collections import defaultdict
 from mindspore import log as logger
 from mindspore.nn import Cell
 
-from ..._c_expression import Tensor
+from ..._c_expression import Tensor, security
 from ..._checkparam import Validator
 from .._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type
 from ._summary_adapter import get_event_file_name, package_graph_event
@@ -145,6 +145,9 @@ class SummaryRecord:
 
     def __init__(self, log_dir, file_prefix="events", file_suffix="_MS",
                  network=None, max_file_size=None, raise_exception=False, export_options=None):
+
+        if security.enable_security():
+            raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
 
         self._event_writer = None
         self._mode, self._data_pool = 'train', defaultdict(list)

@@ -58,10 +58,16 @@ bool IsOneOfPrimitive(const AnfNodePtr &node, const PrimitiveSet &prim_set) {
 }
 
 bool IsRealKernelCNode(const CNodePtr &cnode) {
+#ifndef ENABLE_SECURITY
   static const PrimitiveSet virtual_prims = {
     prim::kPrimImageSummary, prim::kPrimScalarSummary, prim::kPrimTensorSummary, prim::kPrimHistogramSummary,
     prim::kPrimMakeTuple,    prim::kPrimStateSetItem,  prim::kPrimTupleGetItem,  prim::kPrimReturn,
     prim::kPrimPartial,      prim::kPrimDepend,        prim::kPrimUpdateState,   prim::kPrimLoad};
+#else
+  static const PrimitiveSet virtual_prims = {prim::kPrimMakeTuple,   prim::kPrimStateSetItem, prim::kPrimTupleGetItem,
+                                             prim::kPrimReturn,      prim::kPrimPartial,      prim::kPrimDepend,
+                                             prim::kPrimUpdateState, prim::kPrimLoad};
+#endif
   if (cnode->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << cnode->DebugString();
   }

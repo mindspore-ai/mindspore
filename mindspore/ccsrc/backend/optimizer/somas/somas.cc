@@ -340,7 +340,9 @@ bool Somas::InitSomasTensors(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   InitBasicInfo(graph);
   IndependentNodeOutputProcess(graph);
+#ifndef ENABLE_SECURITY
   SummaryInputProcess(graph);
+#endif
   RefNodeProcess(graph);
   NonTaskSplitProcess(graph);
   UnReuseNodeProcess(graph);
@@ -743,6 +745,7 @@ void Somas::IndependentNodeOutputProcess(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "Special Tensor total size: Independent Node output " << total_size;
 }
 
+#ifndef ENABLE_SECURITY
 void Somas::SummaryInputProcess(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   bool summary_exist = graph->summary_node_exist();
@@ -782,6 +785,7 @@ void Somas::SummaryInputProcess(const session::KernelGraph *graph) {
 
   MS_LOG(INFO) << "Special Tensor total size: SummaryNodes: " << total_summary_size;
 }
+#endif
 
 void Somas::RefNodeProcess(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);

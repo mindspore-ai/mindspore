@@ -176,8 +176,10 @@ class KernelGraph : public FuncGraph {
   bool executable() const { return executable_; }
   // set executable of graph
   void set_executable(bool executable) { executable_ = executable; }
+#ifndef ENABLE_SECURITY
   // set summary_node of graph
   void set_summary_node_exist(bool summary_node_exist) { summary_node_exist_ = summary_node_exist; }
+#endif
   // check whether exist summary node in graph
   bool summary_node_exist() const { return summary_node_exist_; }
   // set invalid inputs for control sink

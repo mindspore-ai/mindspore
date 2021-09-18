@@ -548,10 +548,12 @@ inline const PrimitivePtr kPrimGenerateInverseIndex = std::make_shared<Primitive
 
 // Debug ops
 inline const PrimitivePtr kPrimAssert = std::make_shared<Primitive>("Assert");
+#ifndef ENABLE_SECURITY
 inline const PrimitivePtr kPrimScalarSummary = std::make_shared<Primitive>("ScalarSummary");
 inline const PrimitivePtr kPrimImageSummary = std::make_shared<Primitive>("ImageSummary");
 inline const PrimitivePtr kPrimTensorSummary = std::make_shared<Primitive>("TensorSummary");
 inline const PrimitivePtr kPrimHistogramSummary = std::make_shared<Primitive>("HistogramSummary");
+#endif
 inline const PrimitivePtr kPrimDebug = std::make_shared<Primitive>("Debug");
 
 // Dynamic shape testing

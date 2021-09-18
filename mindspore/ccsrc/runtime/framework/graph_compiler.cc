@@ -353,8 +353,9 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   MS_EXCEPTION_IF_NULL(session_);
   session_->InitAllBucket(graph, device_context);
-
+#ifndef ENABLE_SECURITY
   session_->SetSummaryNodes(graph.get());
+#endif
   SetSummaryNodesRefCount(graph.get());
 #ifdef ENABLE_DUMP_IR
   // Dump .pb graph after graph optimization.
@@ -525,13 +526,17 @@ const std::vector<KernelWithIndex> &GraphCompiler::GetGraphOutputNodes(GraphId g
 
 void GraphCompiler::RegisterSummaryCallBackFunc(const CallBackFunc &callback) const {
   MS_EXCEPTION_IF_NULL(session_);
+#ifndef ENABLE_SECURITY
   session_->RegisterSummaryCallBackFunc(callback);
+#endif
 }
 
 void GraphCompiler::Summary(const std::vector<KernelGraphPtr> &graphs) const {
   MS_EXCEPTION_IF_NULL(session_);
   for (const auto &graph : graphs) {
+#ifndef ENABLE_SECURITY
     session_->Summary(graph.get());
+#endif
   }
 }
 
