@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class RMSPropCPUKernel : public CPUKernel {
  public:
-  RMSPropCPUKernel() {}
+  RMSPropCPUKernel() = default;
   ~RMSPropCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;

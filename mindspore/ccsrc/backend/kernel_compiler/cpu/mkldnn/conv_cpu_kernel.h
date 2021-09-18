@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CONV_CPU_KERNEL_H_
 
@@ -35,7 +36,6 @@ class ConvCPUKernel : public MKLCPUKernel {
 
 MS_REG_CPU_KERNEL(Conv2D, KernelAttr(), ConvCPUKernel);
 MS_REG_CPU_KERNEL(Conv3D, KernelAttr(), ConvCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 

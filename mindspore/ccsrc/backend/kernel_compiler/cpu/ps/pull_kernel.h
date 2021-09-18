@@ -44,6 +44,7 @@ class PullKernel : public CPUKernel {
     return true;
   }
   void Init(const CNodePtr &kernel_node) {
+    MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but pull needs 2 inputs.";

@@ -24,6 +24,7 @@ constexpr size_t kSparseApplyFtrlPSInputSize = 5;
 
 void SparseApplyFtrlPSKernel::InitKernel(
   const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
+  MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(shapes);
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   if (shape_vec.size() < kSparseApplyFtrlPSInputSize) {

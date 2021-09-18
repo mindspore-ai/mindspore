@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,26 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kAddNInputsMinNum = 2;
+constexpr size_t kAddNOutputsNum = 1;
+
 void AddInt(const int *in_0, const int *in_1, int *out, int start, int end) {
   int ret = ElementAddInt(in_0 + start, in_1 + start, out + start, end - start);
   if (ret != NNACL_OK) {
     MS_LOG(EXCEPTION) << "Add failed.";
   }
 }
+}  // namespace
 
 void AddNCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_num_ = AnfAlgo::GetInputTensorNum(kernel_node);
+  if (input_num_ < kAddNInputsMinNum) {
+    MS_LOG(EXCEPTION) << "Input numbers should not less " << kAddNInputsMinNum << ", but got " << input_num_;
+  }
+  CheckParam(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   std::vector<size_t> src0_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> src1_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
@@ -52,6 +61,8 @@ void AddNCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool AddNCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                            const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAddNOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32) {
     SetArgumentHandle(DNNL_ARG_SRC_0, inputs[0]->addr);
     SetArgumentHandle(DNNL_ARG_SRC_1, inputs[1]->addr);
@@ -92,10 +103,6 @@ void AddNCPUKernel::CheckParam(const CNodePtr &kernel_node) {
     if (src0_shape != src_shape) {
       MS_LOG(EXCEPTION) << "AddN input shapes must be equal.";
     }
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but AddNCPUKernel needs 1 output.";
   }
 }
 }  // namespace kernel

@@ -19,6 +19,9 @@
 #define UNSORTEDSEGMENTSUM(type, type1)                                                                          \
   int UnsortedSegmentSum_##type##_##type1(const type *input, int unit_num, int input_dim1, const type1 *indices, \
                                           type *output, int output_dim0, int output_dim1) {                      \
+    NNACL_CHECK_NULL_RETURN_ERR(input);                                                                          \
+    NNACL_CHECK_NULL_RETURN_ERR(indices);                                                                        \
+    NNACL_CHECK_NULL_RETURN_ERR(output);                                                                         \
     if (input_dim1 == 0) {                                                                                       \
       return NNACL_ERR;                                                                                          \
     }                                                                                                            \

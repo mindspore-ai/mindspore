@@ -19,9 +19,14 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kSigmoidCrossEntropyWithLogitsInputsNum = 2;
+constexpr size_t kSigmoidCrossEntropyWithLogitsOutputsNum = 1;
+}  // namespace
+
 void SigmoidCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (const uint64_t &d : x_shape) {
@@ -45,12 +50,14 @@ bool SigmoidCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kernel::Ad
 template <typename T>
 void SigmoidCrossEntropyWithLogitsCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                           const std::vector<AddressPtr> &outputs) {
-  auto logits_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto labels_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  T zero = (T)0.0;
-  T one = (T)1.0;
-  T two = (T)2.0;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSigmoidCrossEntropyWithLogitsInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSigmoidCrossEntropyWithLogitsOutputsNum, kernel_name_);
+  auto *logits_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *labels_addr = reinterpret_cast<T *>(inputs[1]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto zero = static_cast<T>(0.0);
+  auto one = static_cast<T>(1.0);
+  auto two = static_cast<T>(2.0);
   for (uint64_t i = 0; i < tensor_size_; ++i) {
     if (logits_addr[i] >= zero) {
       output_addr[i] = static_cast<T>(log1p(static_cast<float>(exp(logits_addr[i] - two * logits_addr[i])))) -
@@ -58,17 +65,6 @@ void SigmoidCrossEntropyWithLogitsCPUKernel::LaunchKernel(const std::vector<Addr
     } else {
       output_addr[i] = static_cast<T>(log1p(static_cast<float>(exp(logits_addr[i])))) - logits_addr[i] * labels_addr[i];
     }
-  }
-}
-
-void SigmoidCrossEntropyWithLogitsCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
-    MS_LOG(EXCEPTION) << "SigmoidCrossEntropyWithLogitsCPUKernel needs 2 inputs, but gets " << input_num;
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "SigmoidCrossEntropyWithLogitsCPUKernel expects 1 output, but gets" << output_num;
   }
 }
 }  // namespace kernel

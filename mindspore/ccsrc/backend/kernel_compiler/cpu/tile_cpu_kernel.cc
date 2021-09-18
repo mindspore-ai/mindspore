@@ -20,10 +20,15 @@
 
 namespace mindspore {
 namespace kernel {
-void TileCPUKernel::TileMultipleCompute(void) {
+namespace {
+constexpr size_t kTileInputsNum = 1;
+constexpr size_t kTileOutputsNum = 1;
+}  // namespace
+
+void TileCPUKernel::TileMultipleCompute() {
   int large_one_multiple_count_ = 0;
   int multiple = 0;
-  int mul_index = 0;
+  size_t mul_index = 0;
   for (size_t i = 0; i < multiples_.size(); i++) {
     tile_parameter_.multiples_[i] = multiples_[i];
     if (tile_parameter_.multiples_[i] > 1) {
@@ -47,6 +52,10 @@ void TileCPUKernel::TileMultipleCompute(void) {
 void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
   x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   y_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  if (x_shape_.size() > MAX_TILE_DIM_SIZE || x_shape_.size() > y_shape_.size()) {
+    MS_LOG(EXCEPTION) << "Tile input shape should not be greater than default max size :" << MAX_TILE_DIM_SIZE
+                      << " and output shape : " << y_shape_.size() << ", but got input shape " << x_shape_.size();
+  }
   std::vector<int64_t> multiples_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
   (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
                        [](const int64_t &value) { return LongToInt(value); });
@@ -54,16 +63,8 @@ void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
   size_t ones = multiples_.size() - x_shape_.size();
   if (ones > 0) {
     for (size_t i = 0; i < ones; ++i) {
-      x_shape_.insert(x_shape_.begin(), 1);
+      (void)x_shape_.insert(x_shape_.begin(), 1);
     }
-  }
-  if (x_shape_.size() > MAX_TILE_DIM_SIZE) {
-    MS_LOG(EXCEPTION) << "Input shape size should not greater than " << MAX_TILE_DIM_SIZE << ", but got "
-                      << x_shape_.size();
-  }
-  if (y_shape_.size() < x_shape_.size()) {
-    MS_LOG(EXCEPTION) << "Output shape size should not less than input shape size, but got output shape: " << y_shape_
-                      << ", input shape: " << x_shape_;
   }
 
   input_size_ = 1;
@@ -88,7 +89,7 @@ void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
 
 void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   TileTensorParamrInit(kernel_node);
 
   launch_map_[kNumberTypeInt8] = &TileCPUKernel::LaunchKernel<int8_t>;
@@ -112,6 +113,8 @@ void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool TileCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                            const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTileInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTileOutputsNum, kernel_name_);
   launch_func_(this, inputs, outputs);
   return true;
 }
@@ -131,17 +134,6 @@ void TileCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
   }
 
   Tile(x_addr, y_addr, &tile_parameter_);
-}
-
-void TileCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but TileCPUKernel needs 1 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but TileCPUKernel needs 1 output.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

@@ -20,12 +20,18 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kSparseTensorDenseMatmulInputsNum = 4;
+constexpr size_t kSparseTensorDenseMatmulOutputsNum = 1;
 constexpr size_t kSparseTensorDenseMatmulOutputShapeSize = 2;
 constexpr size_t kSparseTensorDenseMatmulDenseShapeSize = 2;
+constexpr size_t kIndicesSizeNum = 2;
+constexpr size_t kIndices2rdDimNum = 2;
 }  // namespace
+
 template <typename I, typename T>
 void SparseTensorDenseMatmulCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   adj_st_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_ST);
   adj_dt_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ADJ_dT);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
@@ -59,11 +65,8 @@ template <typename I, typename T>
 bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                                     const std::vector<kernel::AddressPtr> & /* workspace */,
                                                     const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != kInputNum || outputs.size() != kOutputNum) {
-    MS_LOG(ERROR) << "SparseTensorDenseMatmul requires 4 inputs and 1 output, but got " << inputs.size()
-                  << " inputs and " << outputs.size() << " output.";
-    return false;
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseMatmulInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseMatmulOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
     MS_LOG(WARNING) << "SparseTensorDenseMatmul output memory size should be greater than 0, but got 0.";
     return true;
@@ -72,13 +75,16 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
     MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul memset output failed!";
   }
 
+  const size_t b_index = 3;
   const auto *a_indices = reinterpret_cast<I *>(inputs[0]->addr);
   const auto *a_values = reinterpret_cast<T *>(inputs[1]->addr);
-  const auto *b = reinterpret_cast<T *>(inputs[3]->addr);
+  const auto *b = reinterpret_cast<T *>(inputs[b_index]->addr);
   auto *out = reinterpret_cast<T *>(outputs[0]->addr);
   const size_t indices_length = inputs[0]->size / sizeof(I);
   const size_t values_length = inputs[1]->size / sizeof(T);
-  const size_t b_length = inputs[3]->size / sizeof(T);
+  const size_t b_length = inputs[b_index]->size / sizeof(T);
+
+  const size_t dim_num = 2;
   const size_t out_dim_0 = output_shape_[0];
   const size_t out_dim_1 = output_shape_[1];
   const size_t b_dim_0 = b_shape_[0];
@@ -86,14 +92,14 @@ bool SparseTensorDenseMatmulCPUKernel<I, T>::Launch(const std::vector<kernel::Ad
   const size_t same_dim = adj_dt_ ? b_dim_1 : b_dim_0;
 
   for (size_t i = 0; i < values_size_; ++i) {
-    if (i * 2 + 1 >= indices_length) {  // the interval is 2
+    if (i * dim_num + 1 >= indices_length) {
       MS_LOG(EXCEPTION) << "The index of a_indices out of bounds.";
     }
     if (i >= values_length) {
       MS_LOG(EXCEPTION) << "The index of a_values out of bounds.";
     }
-    const int row = adj_st_ ? a_indices[i * 2 + 1] : a_indices[i * 2];
-    const int col = adj_st_ ? a_indices[i * 2] : a_indices[i * 2 + 1];
+    const int row = adj_st_ ? a_indices[i * dim_num + 1] : a_indices[i * dim_num];
+    const int col = adj_st_ ? a_indices[i * dim_num] : a_indices[i * dim_num + 1];
     if (row >= SizeToInt(out_dim_0) || row < 0 || col >= SizeToInt(same_dim) || col < 0) {
       MS_EXCEPTION(ValueError) << "The indices including out of bounds index, row range: [0, " << out_dim_0
                                << "), col range: [0, " << same_dim << "), but got row: " << row << ", col: " << col;

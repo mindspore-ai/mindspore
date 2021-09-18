@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,15 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kTensorAddInputsSize = 2;
+constexpr size_t kTensorAddOutputsSize = 1;
+}  // namespace
+
 template <typename T>
 void TensorAddCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   // Init shape ans strides
   input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
@@ -33,6 +39,8 @@ template <typename T>
 bool TensorAddCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTensorAddInputsSize, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTensorAddOutputsSize, kernel_name_);
   T *input_addr_a = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_addr_b = reinterpret_cast<T *>(inputs[1]->addr);
   T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);

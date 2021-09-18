@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_STRIDESLICE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_STRIDESLICE_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -37,14 +37,13 @@ class StridedSliceCPUKernel : public CPUKernel {
 
  private:
   enum ParallelStrategy { kOnSplitAxis, kOnOuter };
-
   void InitSliceParam(const std::vector<int64_t> &begin, const std::vector<int64_t> &end,
                       const std::vector<int64_t> &stride);
   bool MatchParallelPattern();
   void InitParallelParam();
-  void ParallelRun(uint8_t *input_addr, uint8_t *output_addr, int thread_num);
-  int RunTaskOnOuter(uint8_t *input_addr, uint8_t *output_addr, int start_pos);
-  int RunTaskOnSplitAxis(uint8_t *input_addr, uint8_t *output_addr, int start_pos);
+  void ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num);
+  int RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
+  int RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos);
 
   TypeId dtype_;
   int data_size_{4};
@@ -70,4 +69,4 @@ MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat64).Ad
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_STRIDESLICE_CPU_KERNEL_H_

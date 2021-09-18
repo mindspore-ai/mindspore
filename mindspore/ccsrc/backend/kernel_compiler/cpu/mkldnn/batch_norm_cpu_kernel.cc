@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/batch_norm_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -20,9 +21,15 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kBatchNormInputsNum = 5;
+constexpr size_t kBatchNormOutputsNum = 5;
+constexpr size_t kBatchNormInputShapeSize = 4;
+constexpr size_t kBatchNormInputShapeSize2 = 2;
+}  // namespace
+
 void BatchNormCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t tensor_size = shape[1] * 2 * type_size;  // [2, c] to store scale and bias
@@ -31,12 +38,13 @@ void BatchNormCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 
 void BatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   is_train = AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
   momentum = AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (x_shape.size() == 2) {
-    (void)x_shape.insert(x_shape.end(), 2, 1);  // expand 2 dim: NC -> NCHW
-  } else if (x_shape.size() != 4) {
+  if (x_shape.size() == kBatchNormInputShapeSize2) {
+    (void)x_shape.insert(x_shape.end(), kBatchNormInputShapeSize - kBatchNormInputShapeSize2, 1);
+  } else if (x_shape.size() != kBatchNormInputShapeSize) {
     MS_LOG(EXCEPTION) << "Batchnorm only support nchw input!";
   }
   batch_size = x_shape[0];
@@ -67,9 +75,8 @@ void BatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool BatchNormCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
                                 const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 5 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormOutputsNum, kernel_name_);
   auto wksp = reinterpret_cast<float *>(workspace[0]->addr);
   auto scale_ret = memcpy_s(wksp, workspace[0]->size, inputs[1]->addr, inputs[1]->size);
   auto max_size = workspace[0]->size - inputs[1]->size;

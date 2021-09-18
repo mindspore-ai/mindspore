@@ -37,10 +37,9 @@ class SmoothL1LossCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
-  float beta_ = 1.0;
+  float beta_{1.0};
   TypeId dtype_{kTypeUnknown};
-  uint64_t tensor_size_ = 1;
+  uint64_t tensor_size_{1};
 };
 
 MS_REG_CPU_KERNEL_T(

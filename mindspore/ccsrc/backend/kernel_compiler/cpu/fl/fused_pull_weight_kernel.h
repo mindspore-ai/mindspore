@@ -44,7 +44,6 @@ class FusedPullWeightKernel : public CPUKernel {
     if (inputs.size() != weight_full_names_.size()) {
       MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but FusedPullWeightKernel needs "
                         << weight_full_names_.size() << " weights as inputs.";
-      return false;
     }
 
     std::shared_ptr<fl::FBBuilder> fbb = std::make_shared<fl::FBBuilder>();
@@ -67,7 +66,6 @@ class FusedPullWeightKernel : public CPUKernel {
     MS_LOG(INFO) << "Launching pulling weight for federated learning iteration " << fl_iteration_;
     if (!BuildPullWeightReq(fbb)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPullWeight failed.";
-      return false;
     }
 
     std::shared_ptr<std::vector<unsigned char>> pull_weight_rsp_msg = nullptr;
@@ -98,13 +96,11 @@ class FusedPullWeightKernel : public CPUKernel {
         fbb = std::make_shared<fl::FBBuilder>();
         if (!BuildPullWeightReq(fbb)) {
           MS_LOG(EXCEPTION) << "Building request for FusedDownloadWeightsByKeys failed.";
-          return false;
         }
         continue;
       } else if (retcode != schema::ResponseCode_SUCCEED) {
         MS_LOG(EXCEPTION) << "FusedPullWeight failed. Server return code: " << pull_weight_rsp->retcode()
                           << ", reason: " << pull_weight_rsp->reason()->str();
-        return false;
       } else {
         MS_LOG(DEBUG) << "FusedPullWeight succeed.";
       }
@@ -115,13 +111,11 @@ class FusedPullWeightKernel : public CPUKernel {
       const std::string &weight_name = weight_full_names_[i];
       if (feature_map.count(weight_name) == 0) {
         MS_LOG(EXCEPTION) << "The weights for " << weight_name << " is not pulled from server.";
-        return false;
       }
       int ret =
         memcpy_s(inputs[i]->addr, inputs[i]->size, feature_map[weight_name].addr, feature_map[weight_name].size);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-        return false;
       }
     }
     MS_LOG(INFO) << "Pull weights for " << weight_full_names_ << " success. Iteration: " << fl_iteration_;
@@ -147,7 +141,6 @@ class FusedPullWeightKernel : public CPUKernel {
       MS_LOG(EXCEPTION)
         << "Attributes of FusedPullWeightKernel are invalid: server number is 0 or weight_full_names_ is "
            "empty or indices_ is UINT32_MAX.";
-      return;
     }
 
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -186,7 +179,6 @@ class FusedPullWeightKernel : public CPUKernel {
     if (fbs_feature_map->size() != weight_full_names_.size()) {
       MS_LOG(EXCEPTION) << "FusedPullWeightKernel should get " << weight_full_names_.size() << " weights, but got "
                         << fbs_feature_map->size() << " weights.";
-      return {};
     }
 
     std::map<std::string, Address> feature_map;

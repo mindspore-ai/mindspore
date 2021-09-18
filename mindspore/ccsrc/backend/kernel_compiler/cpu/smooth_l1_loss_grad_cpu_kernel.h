@@ -37,7 +37,6 @@ class SmoothL1LossGradCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
   float beta_{1.0};
   uint64_t tensor_size_{1};
 };
