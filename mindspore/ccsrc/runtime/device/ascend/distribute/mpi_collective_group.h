@@ -42,9 +42,10 @@ class MPICollective {
   int GetRankIdByGroup(const std::string &name);
   int GetGroupSize(const std::string &name);
   HcclComm GetGroupComm(const std::string &name);
-  int GetDeviceId();
+  int GetDeviceId() const;
   bool CreateCommGroup(const std::string &name, const std::vector<unsigned int> &ranks);
   void DestroyHcclComm();
+  std::map<std::string, HcclComm> group_comm_;
 
  private:
   MPICollective();
@@ -55,7 +56,6 @@ class MPICollective {
   int rank_size_;
   MPI_Group comm_group_world_;
   std::map<std::string, std::pair<int, int>> group_info_;
-  std::map<std::string, HcclComm> group_comm_;
 };
 #define CHECK_RET(expression, result, message)                                       \
   {                                                                                  \

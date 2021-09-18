@@ -23,7 +23,7 @@ namespace device {
 namespace ascend {
 namespace collective {
 HcclCollectiveGroup &HcclCollectiveGroup::instance() {
-  static HcclCollectiveGroup instance;
+  static HcclCollectiveGroup instance = {};
   return instance;
 }
 
@@ -83,7 +83,7 @@ int HcclCollectiveGroup::GetDeviceId() const {
 }
 void HcclCollectiveGroup::CreateCommGroup(const std::string &name, const std::vector<unsigned int> &ranks) {
   MS_EXCEPTION_IF_NULL(create_comm_for_group_);
-  create_comm_for_group_(name, ranks);
+  (void)create_comm_for_group_(name, ranks);
 }
 void HcclCollectiveGroup::DestroyCommGroup() {
   MS_EXCEPTION_IF_NULL(destroy_hccl_comm_);

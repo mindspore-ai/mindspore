@@ -404,7 +404,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   return sync_ok;
 }
 
-bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
+bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, TypeId type, const void *src_ptr,
                                              const std::string &format) const {
   MS_LOG(INFO) << "SyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
@@ -553,7 +553,7 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
   tensor_data->SetTensor(out_tensor);
   tensor_data->SetDataPtr(static_cast<char *>(out_tensor->data_c()));
-  tensor_data->SetByteSize(out_tensor->data().nbytes());
+  tensor_data->SetByteSize(LongToSize(out_tensor->data().nbytes()));
   tensor_data->SetType((unsigned int)host_type);
   tensor_data->SetShape(out_tensor->shape());
   ret = Debugger::GetInstance()->LoadNewTensor(tensor_data, keep_prev);
