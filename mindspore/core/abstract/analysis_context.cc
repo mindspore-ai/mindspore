@@ -225,7 +225,7 @@ void AnalysisContext::ClearContext() {
 AnalysisContextPtr AnalysisContext::CreateContext(const AnalysisContextPtr &parent, const FuncGraphPtr &fg,
                                                   const AbstractBasePtrList &args_spec_list) {
   auto context = std::make_shared<AnalysisContext>(parent, fg, args_spec_list);
-  all_context_.emplace_back(context);
+  (void)all_context_.emplace_back(context);
   return context;
 }
 }  // namespace abstract

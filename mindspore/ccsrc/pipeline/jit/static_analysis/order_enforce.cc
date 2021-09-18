@@ -51,7 +51,7 @@ class OrderEnforcer {
   AnfNodePtrList MakeTopoSortMap() {
     auto nodes = TopoSort(func_graph_->get_return());
     for (size_t i = 0; i < nodes.size(); ++i) {
-      topo_sort_map_.emplace(nodes[i], i);
+      (void)topo_sort_map_.emplace(nodes[i], i);
     }
     return nodes;
   }
@@ -106,12 +106,12 @@ class OrderEnforcer {
     for (auto &user : users) {
       auto &user_node = user.first;
       if (IsPrimitiveCNode(user_node, prim::kPrimUpdateState)) {
-        update_states.emplace_back(user_node);
+        (void)update_states.emplace_back(user_node);
         continue;
       }
       if (IsPrimitiveCNode(user_node, prim::kPrimMakeTuple)) {
         auto make_tuple_users = FindUpdateStateUsers(user_node);
-        update_states.insert(update_states.end(), make_tuple_users.begin(), make_tuple_users.end());
+        (void)update_states.insert(update_states.end(), make_tuple_users.begin(), make_tuple_users.end());
       }
     }
     return update_states;
@@ -125,7 +125,7 @@ class OrderEnforcer {
       auto &input = inputs[index];
       if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
         std::vector<AnfNodePtr> update_states = FindUpdateStateUsers(input);
-        all_update_states.insert(all_update_states.end(), update_states.begin(), update_states.end());
+        (void)all_update_states.insert(all_update_states.end(), update_states.begin(), update_states.end());
       }
     }
     // Find the last update_state by topo sort order.
@@ -210,7 +210,7 @@ class OrderEnforcer {
             auto special_real_users = FindNodeUsers(load_user);
             real_users.insert(special_real_users.begin(), special_real_users.end());
           } else {
-            real_users.insert(load_user);
+            (void)real_users.insert(load_user);
           }
         }
         AddInputEdges(update_state, real_users);
@@ -247,7 +247,7 @@ class OrderEnforcer {
         continue;
       }
       if (!IsDependOn(load_user, update_state)) {
-        processed_nodes_.insert(load_user);
+        (void)processed_nodes_.insert(load_user);
         if (!IsInUpdateState(load_user, update_state)) {
           manager_->AddEdge(update_state, load_user);
         }
@@ -319,7 +319,7 @@ class OrderEnforcer {
     for (auto &user : iter->second) {
       auto &user_node = user.first;
       if (pred == nullptr || pred(user_node)) {
-        users.emplace(user_node);
+        (void)users.emplace(user_node);
       }
     }
     return users;
