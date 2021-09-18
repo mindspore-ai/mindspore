@@ -1343,3 +1343,45 @@ TEST_F(MindDataTestPipeline, TestFadeWithInvalidArg) {
   std::shared_ptr<Iterator> iter_02 = ds_02->CreateIterator();
   EXPECT_EQ(iter_02, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestMagphase) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMagphase.";
+
+  float power = 2.0;
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {1, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<TensorTransform> magphase(new audio::Magphase(power));
+  auto ds1 = ds->Map({magphase}, {"col1"}, {"mag", "phase"});
+  EXPECT_NE(ds1, nullptr);
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+  EXPECT_EQ(i, 8);
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestMagphaseWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMagphaseWrongArgs.";
+
+  float power_wrong = -1.0;
+  std::shared_ptr<TensorTransform> magphase(new audio::Magphase(power_wrong));
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+
+  //Magphase: power must be greater than or equal to 0.
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(8, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->Map({magphase}, {"col1"}, {"mag", "phase"});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

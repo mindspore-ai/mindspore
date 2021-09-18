@@ -443,6 +443,26 @@ class LowpassBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Separate a complex-valued spectrogram with shape (..., 2) into its magnitude and phase.
+class Magphase final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] power Power of the norm, which must be non-negative (Default: 1.0).
+  explicit Magphase(float power);
+
+  /// \brief Destructor.
+  ~Magphase() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief MuLawDecoding TensorTransform.
 /// \note Decode mu-law encoded signal.
 class MuLawDecoding final : public TensorTransform {

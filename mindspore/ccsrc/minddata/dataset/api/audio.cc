@@ -34,6 +34,7 @@
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -315,6 +316,16 @@ LowpassBiquad::LowpassBiquad(int32_t sample_rate, float cutoff_freq, float Q)
 std::shared_ptr<TensorOperation> LowpassBiquad::Parse() {
   return std::make_shared<LowpassBiquadOperation>(data_->sample_rate_, data_->cutoff_freq_, data_->Q_);
 }
+
+// Magphase Transform Operation.
+struct Magphase::Data {
+  explicit Data(float power) : power_(power) {}
+  float power_;
+};
+
+Magphase::Magphase(float power) : data_(std::make_shared<Data>(power)) {}
+
+std::shared_ptr<TensorOperation> Magphase::Parse() { return std::make_shared<MagphaseOperation>(data_->power_); }
 
 // MuLawDecoding Transform Operation.
 struct MuLawDecoding::Data {

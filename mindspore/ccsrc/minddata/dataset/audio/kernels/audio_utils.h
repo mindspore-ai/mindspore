@@ -365,6 +365,13 @@ Status Vol(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 
   return Status::OK();
 }
+
+/// \brief Separate a complex-valued spectrogram with shape (…, 2) into its magnitude and phase.
+/// \param input: Complex tensor.
+/// \param output: The magnitude and phase of the complex tensor.
+/// \param power: Power of the norm.
+Status Magphase(const TensorRow &input, TensorRow *output, float power);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

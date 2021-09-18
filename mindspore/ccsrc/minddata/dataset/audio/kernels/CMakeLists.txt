@@ -21,6 +21,7 @@ add_library(audio-kernels OBJECT
         highpass_biquad_op.cc
         lfilter_op.cc
         lowpass_biquad_op.cc
+        magphase_op.cc
         mu_law_decoding_op.cc
         time_masking_op.cc
         time_stretch_op.cc

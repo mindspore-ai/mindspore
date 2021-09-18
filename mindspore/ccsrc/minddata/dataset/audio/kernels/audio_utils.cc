@@ -630,5 +630,23 @@ Status Fade(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   }
   return Status::OK();
 }
+
+Status Magphase(const TensorRow &input, TensorRow *output, float power) {
+  std::shared_ptr<Tensor> mag;
+  std::shared_ptr<Tensor> phase;
+
+  RETURN_IF_NOT_OK(ComplexNorm(input[0], &mag, power));
+  if (input[0]->type() == DataType(DataType::DE_FLOAT64)) {
+    RETURN_IF_NOT_OK(Angle<double>(input[0], &phase));
+  } else {
+    std::shared_ptr<Tensor> tmp;
+    RETURN_IF_NOT_OK(TypeCast(input[0], &tmp, DataType(DataType::DE_FLOAT32)));
+    RETURN_IF_NOT_OK(Angle<float>(tmp, &phase));
+  }
+  (*output).push_back(mag);
+  (*output).push_back(phase);
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

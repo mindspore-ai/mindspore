@@ -27,7 +27,7 @@ from .utils import FadeShape, GainType, ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
     check_deemph_biquad, check_equalizer_biquad, check_fade, check_highpass_biquad, check_lfilter, \
-    check_lowpass_biquad, check_masking, check_mu_law_decoding, check_time_stretch, check_vol
+    check_lowpass_biquad, check_magphase, check_masking, check_mu_law_decoding, check_time_stretch, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -577,6 +577,30 @@ class LowpassBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.LowpassBiquadOperation(self.sample_rate, self.cutoff_freq, self.Q)
+
+
+class Magphase(AudioTensorOperation):
+    """
+    Separate a complex-valued spectrogram with shape (..., 2) into its magnitude and phase.
+
+    Args:
+        power (float): Power of the norm, which must be non-negative (default=1.0).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([2, 4, 2])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Magphase()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_magphase
+    def __init__(self, power=1.0):
+        self.power = power
+
+    def parse(self):
+        return cde.MagphaseOperation(self.power)
 
 
 class MuLawDecoding(AudioTensorOperation):
