@@ -26,7 +26,7 @@
 #include "runtime/framework/graph_compiler.h"
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/data_source_actor.h"
-#include "runtime/framework/actor/memory_aware_actor.h"
+#include "runtime/framework/actor/debug_aware_actor.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
 
@@ -36,11 +36,12 @@ using mindspore::device::DeviceContext;
 
 // The data prepare actor is used to prepare data for device tensor store and host tensor queue to represent the begin
 // of one step.
-class DataPrepareActor : public MemoryAwareActor {
+class DataPrepareActor : public DebugAwareActor {
  public:
-  DataPrepareActor(const std::string &name, const AID &memory_manager_aid, const GraphCompilerInfo *graph_compiler_info,
-                   const HostQueueDSActorPtr &host_data_source_actor, const HostTensorQueuePtr &host_tensor_queue)
-      : MemoryAwareActor(name, KernelTransformType::kDataPrepareActor, nullptr, memory_manager_aid),
+  DataPrepareActor(const std::string &name, const AID &memory_manager_aid, const AID *debug_aid,
+                   const GraphCompilerInfo *graph_compiler_info, const HostQueueDSActorPtr &host_data_source_actor,
+                   const HostTensorQueuePtr &host_tensor_queue)
+      : DebugAwareActor(name, KernelTransformType::kDataPrepareActor, nullptr, memory_manager_aid, debug_aid),
         graph_compiler_info_(graph_compiler_info),
         strategy_(GraphExecutionStrategy::kPipeline),
         host_data_source_actor_(host_data_source_actor),
@@ -52,6 +53,10 @@ class DataPrepareActor : public MemoryAwareActor {
 
   // The process entry of data prepare.
   void PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors, OpContext<DeviceTensor> *const context);
+
+  // The debug related operation interface.
+  void SendDebugReq(OpContext<DeviceTensor> *const context) override;
+  void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
   // The continuous memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;

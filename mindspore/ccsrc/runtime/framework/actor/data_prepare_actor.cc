@@ -18,6 +18,7 @@
 #include "runtime/framework/actor/memory_manager_actor.h"
 #include "runtime/framework/actor/kernel_actor.h"
 #include "runtime/framework/actor/loop_count_actor.h"
+#include "runtime/framework/actor/debug_actor.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
@@ -128,9 +129,29 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
     } else if (strategy_ == GraphExecutionStrategy::kStep) {
       PrepareDataForStepMode(input_tensors, context);
     }
+
+    // Debug actor is blocked, must wait debug actor callback message to process continue.
+    if (debug_aid_ != nullptr && strategy_ == GraphExecutionStrategy::kPipeline) {
+      SendDebugReq(context);
+      return;
+    }
   }
 
   // Allocate continuous memory and send output to trigger the step running.
+  if (continuous_memory_alloc_list_list_.size() > 0) {
+    SendMemoryAllocReq(context);
+  } else {
+    SendOutput(context);
+  }
+}
+
+void DataPrepareActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
+  Async(*debug_aid_, &DebugActor::DebugOnStepBegin, graph_compiler_info_->graphs_,
+        graph_compiler_info_->device_contexts_, context, &GetAID());
+}
+
+void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
   if (continuous_memory_alloc_list_list_.size() > 0) {
     SendMemoryAllocReq(context);
   } else {
