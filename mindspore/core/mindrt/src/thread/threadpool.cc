@@ -135,8 +135,8 @@ int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_li
   thread_num = thread_num < core_num ? thread_num : core_num;
   THREAD_INFO("ThreadInfo, Num: [%zu], CoreNum: [%zu]", thread_num, core_num);
   if (thread_num == 0) {
-    THREAD_ERROR("thread num is invalid");
-    return THREAD_ERROR;
+    THREAD_INFO("Current thread as working thread.");
+    return THREAD_OK;
   }
   std::lock_guard<std::mutex> _l(pool_mutex_);
   for (size_t i = 0; i < thread_num; ++i) {
