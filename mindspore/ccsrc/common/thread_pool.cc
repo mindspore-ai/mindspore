@@ -127,6 +127,7 @@ ThreadPool::~ThreadPool() {
   try {
     ClearThreadPool();
   } catch (...) {
+    // exit
   }
 }
 }  // namespace common

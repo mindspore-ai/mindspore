@@ -138,7 +138,7 @@ void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, cnode.get());
   auto prim_op = AnfAlgo::GetCNodePrimitive(cnode);
   if (prim_op != nullptr) {
-    prim_op->AddAttr("cast_type", TypeIdToType(cast_dtype));
+    (void)prim_op->AddAttr("cast_type", TypeIdToType(cast_dtype));
   }
 }
 

@@ -68,32 +68,33 @@ AnfNodePtr CreateGRUV2HiddenGradCellNode(const FuncGraphPtr &func_graph, const C
   CreateMultipleOutputsOfAnfNode(func_graph, dynamic_gru_v2_grad_cnode, kDynamicGRUV2GradOutputNum,
                                  &dynamic_gru_grad_outputs);
   if (cur_t == 0) {
-    gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["dh"]]);
+    (void)gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["dh"]]);
   } else {
     MS_EXCEPTION_IF_NULL(last_gru_hidden_grad_node);
     std::vector<AnfNodePtr> last_gru_hidden_grad_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, last_gru_hidden_grad_node->cast<CNodePtr>(),
                                    kGRUV2HiddenGradCellOutputNum, &last_gru_hidden_grad_outputs);
-    gru_v2_hidden_grad_cell_inputs.emplace_back(last_gru_hidden_grad_outputs[hidden_grad_output_index["dh_prev"]]);
+    (void)gru_v2_hidden_grad_cell_inputs.emplace_back(
+      last_gru_hidden_grad_outputs[hidden_grad_output_index["dh_prev"]]);
   }
   if (cur_t < t_size - 1) {
-    gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["h"]]);
+    (void)gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["h"]]);
   } else {
-    gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["init_h"]]);
+    (void)gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["init_h"]]);
   }
-  gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["dy"]]);
+  (void)gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["dy"]]);
   auto input_dh = dynamic_gru_v2_grad_inputs[input_index["dh"]];
   dh_dtype = AnfAlgo::GetOutputInferDataType(input_dh, 0);
   if (cur_t == 0) {
-    gru_v2_hidden_grad_cell_inputs.emplace_back(input_dh);
+    (void)gru_v2_hidden_grad_cell_inputs.emplace_back(input_dh);
   } else {
     MS_EXCEPTION_IF_NULL(last_matmul_node);
-    gru_v2_hidden_grad_cell_inputs.emplace_back(last_matmul_node);
+    (void)gru_v2_hidden_grad_cell_inputs.emplace_back(last_matmul_node);
   }
-  gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["update"]]);
-  gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["reset"]]);
-  gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["new"]]);
-  gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["hidden_new"]]);
+  (void)gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["update"]]);
+  (void)gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["reset"]]);
+  (void)gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["new"]]);
+  (void)gru_v2_hidden_grad_cell_inputs.emplace_back(dynamic_gru_v2_grad_inputs[input_index["hidden_new"]]);
   auto gru_v2_hidden_grad_cell_op = func_graph->NewCNode(gru_v2_hidden_grad_cell_inputs);
 
   std::vector<size_t> dh_prev_shape =
@@ -132,7 +133,7 @@ void AddTLoopNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_gru_v2
     CreateMultipleOutputsOfAnfNode(func_graph, gru_hidden_grad_cnode, kGRUV2HiddenGradCellOutputNum,
                                    &hidden_grad_outputs);
     auto dgate_h = hidden_grad_outputs[hidden_grad_output_index["dgate_h"]];
-    matmul_inputs.emplace_back(dgate_h);
+    (void)matmul_inputs.emplace_back(dgate_h);
     auto weight_hidden = dynamic_gru_v2_grad_inputs[input_index["weight_hidden"]];
     std::vector<AnfNodePtr> reshape_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
                                               weight_hidden};
@@ -140,7 +141,7 @@ void AddTLoopNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_gru_v2
     auto reshape_out_shape = {IntToSize(1), AnfAlgo::GetOutputInferShape(weight_hidden, 0)[0],
                               AnfAlgo::GetOutputInferShape(weight_hidden, 0)[1]};
     AnfAlgo::SetOutputInferTypeAndShape({dh_dtype}, {reshape_out_shape}, reshape.get());
-    matmul_inputs.emplace_back(reshape);
+    (void)matmul_inputs.emplace_back(reshape);
     auto matmul_node = func_graph->NewCNode(matmul_inputs);
     MS_EXCEPTION_IF_NULL(matmul_node);
     std::vector<size_t> out_shape = {1, batch_size, hidden_size};
@@ -150,15 +151,15 @@ void AddTLoopNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_gru_v2
 
     last_hidden_grad_node = gru_hidden_grad_cell_node;
     last_matmul_node = matmul_node;
-    gru_hidden_grad_cells.emplace_back(gru_hidden_grad_cell_node);
-    matmul_nodes.emplace_back(matmul_node);
+    (void)gru_hidden_grad_cells.emplace_back(gru_hidden_grad_cell_node);
+    (void)matmul_nodes.emplace_back(matmul_node);
   }
   // Add last GRUV2HiddenGradCell node
   auto gru_hidden_grad_cell_node = CreateGRUV2HiddenGradCellNode(
     func_graph, dynamic_gru_v2_grad_cnode, last_hidden_grad_node, last_matmul_node, gate_order, t_size);
-  gru_hidden_grad_cells.emplace_back(gru_hidden_grad_cell_node);
-  result_nodes->emplace_back(gru_hidden_grad_cells);
-  result_nodes->emplace_back(matmul_nodes);
+  (void)gru_hidden_grad_cells.emplace_back(gru_hidden_grad_cell_node);
+  (void)result_nodes->emplace_back(gru_hidden_grad_cells);
+  (void)result_nodes->emplace_back(matmul_nodes);
 }
 
 AnfNodePtr AddTConcatNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &gru_hidden_grad_nodes,
@@ -171,7 +172,7 @@ AnfNodePtr AddTConcatNode(const FuncGraphPtr &func_graph, const std::vector<AnfN
     std::vector<AnfNodePtr> gru_hidden_grad_node_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, gru_hidden_grad_node_i, kGRUV2HiddenGradCellOutputNum,
                                    &gru_hidden_grad_node_outputs);
-    concat_inputs.emplace_back(gru_hidden_grad_node_outputs[concat_output_index]);
+    (void)concat_inputs.emplace_back(gru_hidden_grad_node_outputs[concat_output_index]);
   }
   auto concat_t_node = func_graph->NewCNode(concat_inputs);
   auto out_dims = AnfAlgo::GetOutputInferShape(gru_hidden_grad_nodes[kIndex0], concat_output_index);
@@ -196,18 +197,18 @@ std::vector<AnfNodePtr> AddGRUHiddenGradNode(const FuncGraphPtr &func_graph,
     MS_LOG(EXCEPTION) << "result_node is empty, DynamicGRUGrad fission failed.";
   }
   auto gru_hidden_grad_nodes = result_nodes[kIndex0];
-  result.emplace_back(gru_hidden_grad_nodes[gru_hidden_grad_nodes.size() - 1]);
+  (void)result.emplace_back(gru_hidden_grad_nodes[gru_hidden_grad_nodes.size() - 1]);
   if (t_size > 1) {
     // add dnt_x concat node [t_size, batch_size, hidden_size]
     auto dnt_x_concat_t_node = AddTConcatNode(func_graph, gru_hidden_grad_nodes, hidden_grad_output_index["dnt_x"]);
     // add dgate_h concat node [t_size, batch_size, 3 * hidden_size]
     auto dgate_h_concat_t_node = AddTConcatNode(func_graph, gru_hidden_grad_nodes, hidden_grad_output_index["dgate_h"]);
-    result.emplace_back(dgate_h_concat_t_node);
-    result.emplace_back(dnt_x_concat_t_node);
+    (void)result.emplace_back(dgate_h_concat_t_node);
+    (void)result.emplace_back(dnt_x_concat_t_node);
   } else {
     auto node = result_nodes[kIndex0][kIndex0];
-    result.emplace_back(node);
-    result.emplace_back(node);
+    (void)result.emplace_back(node);
+    (void)result.emplace_back(node);
   }
   return result;
 }
@@ -267,8 +268,8 @@ AnfNodePtr AddHConcatNode(const FuncGraphPtr &func_graph, const CNodePtr &dynami
   }
   std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
   auto init_h_reshape = CreateHReshape(func_graph, dynamic_gru_v2_grad_cnode->input(input_index["init_h"]));
-  concat_inputs.emplace_back(init_h_reshape);
-  concat_inputs.emplace_back(splitv_outputs[kIndex0]);
+  (void)concat_inputs.emplace_back(init_h_reshape);
+  (void)concat_inputs.emplace_back(splitv_outputs[kIndex0]);
   auto concat = func_graph->NewCNode(concat_inputs);
   // Set infer data type and shape
   std::vector<size_t> output_shape = {t_size, batch_size, hidden_size};
@@ -288,13 +289,13 @@ AnfNodePtr AddDwhMatmulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &dg
   MS_EXCEPTION_IF_NULL(node);
   // BatchMatMul
   std::vector<AnfNodePtr> matmul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimBatchMatMul->name()))};
-  matmul_inputs.emplace_back(node);
+  (void)matmul_inputs.emplace_back(node);
   if (t_size == 1) {
     std::vector<AnfNodePtr> dgate_h_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, dgate_h, kGRUV2HiddenGradCellOutputNum, &dgate_h_outputs);
-    matmul_inputs.emplace_back(dgate_h_outputs[hidden_grad_output_index["dgate_h"]]);
+    (void)matmul_inputs.emplace_back(dgate_h_outputs[hidden_grad_output_index["dgate_h"]]);
   } else {
-    matmul_inputs.emplace_back(dgate_h);
+    (void)matmul_inputs.emplace_back(dgate_h);
   }
   auto batch_matmul = func_graph->NewCNode(matmul_inputs);
   std::vector<size_t> shape = {t_size, hidden_size, kGateNum * hidden_size};
@@ -312,9 +313,9 @@ AnfNodePtr CreateDgateHSplitVDNode(const FuncGraphPtr &func_graph, const AnfNode
   if (t_size == 1) {
     std::vector<AnfNodePtr> dgate_h_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, dgate_h, kGRUV2HiddenGradCellOutputNum, &dgate_h_outputs);
-    splitvd_input.emplace_back(dgate_h_outputs[hidden_grad_output_index["dgate_h"]]);
+    (void)splitvd_input.emplace_back(dgate_h_outputs[hidden_grad_output_index["dgate_h"]]);
   } else {
-    splitvd_input.emplace_back(dgate_h);
+    (void)splitvd_input.emplace_back(dgate_h);
   }
   auto split_vd = func_graph->NewCNode(splitvd_input);
   auto dtypes = {AnfAlgo::GetOutputInferDataType(dgate_h, 0), AnfAlgo::GetOutputInferDataType(dgate_h, 0)};
@@ -341,9 +342,9 @@ AnfNodePtr CreateDgateXConcatDNode(const FuncGraphPtr &func_graph, const AnfNode
   if (t_size == 1) {
     std::vector<AnfNodePtr> dnt_x_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, dnt_x, kGRUV2HiddenGradCellOutputNum, &dnt_x_outputs);
-    concat_inputs.emplace_back(dnt_x_outputs[hidden_grad_output_index["dnt_x"]]);
+    (void)concat_inputs.emplace_back(dnt_x_outputs[hidden_grad_output_index["dnt_x"]]);
   } else {
-    concat_inputs.emplace_back(dnt_x);
+    (void)concat_inputs.emplace_back(dnt_x);
   }
   auto concat_op = func_graph->NewCNode(concat_inputs);
   std::vector<size_t> shape = {t_size, batch_size, kGateNum * hidden_size};

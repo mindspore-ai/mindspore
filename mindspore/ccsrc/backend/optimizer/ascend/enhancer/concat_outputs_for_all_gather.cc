@@ -104,7 +104,7 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
     const std::vector<TypeId> &dtypes = {std::get<0>(output_info)[i]};
     const auto &shape = std::get<1>(output_info)[i];
     std::vector<std::vector<size_t>> shapes = {shape};
-    shapes[0][0] *= rank_size;
+    shapes[0][0] *= LongToSize(rank_size);
     AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, concat.get());
     AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(0)), concat);
     AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(rank_size), concat);

@@ -544,7 +544,8 @@ std::vector<size_t> ChannelLastDeviceShape(const std::vector<size_t> &shape) {
   auto dim = shape.size();
   std::vector<int64_t> axis;
   axis.resize(dim);
-  std::iota(axis.begin() + 1, axis.end(), 2);
+  int step_value = 2;
+  std::iota(axis.begin() + 1, axis.end(), step_value);
   axis[dim - 1] = 1;
 
   std::vector<size_t> device_shape;
@@ -634,8 +635,8 @@ std::vector<size_t> FracNZDeviceShape(const std::vector<size_t> &shape) {
   } else {
     (void)std::copy(shape.begin(), shape.end() - 2, std::back_inserter(device_shape));
   }
-  auto h1 = (shape[shape.size() - 2] - 1) / kCubeSize + 1;
-  auto w1 = (shape[shape.size() - 1] - 1) / kCubeSize + 1;
+  auto h1 = (shape[shape.size() - kDim2] - 1) / kCubeSize + 1;
+  auto w1 = (shape[shape.size() - kDim1] - 1) / kCubeSize + 1;
   device_shape.push_back(w1);
   device_shape.push_back(h1);
   device_shape.push_back(kCubeSize);
@@ -706,8 +707,12 @@ std::vector<size_t> FracZNRNNDeviceShape(const std::vector<size_t> &shape,
   }
   size_t input_size = LongToSize(input_hidden_size[0]);
   size_t hidden_size = LongToSize(input_hidden_size[1]);
-  auto dim_last1 = shape[shape.size() - 1];
-  auto dim_last2 = shape[shape.size() - 2];
+  auto dim_last1 = shape[shape.size() - kDim1];
+  auto dim_last2 = shape[shape.size() - kDim2];
+  if (hidden_size == 0) {
+    MS_LOG(EXCEPTION) << "Hidden_size should not be 0.";
+  }
+  // cppcheck-suppress *
   if (dim_last1 % hidden_size != 0) {
     MS_LOG(EXCEPTION) << "Last dim of shape " << shape << " should be multiple of hidden_size " << hidden_size;
   }
@@ -717,9 +722,9 @@ std::vector<size_t> FracZNRNNDeviceShape(const std::vector<size_t> &shape,
 
   std::vector<size_t> device_shape = shape;
   if (dim_last2 == input_size || dim_last2 == hidden_size) {
-    device_shape[shape.size() - 2] = DivCeil(dim_last2, NUM16);
+    device_shape[shape.size() - kDim2] = DivCeil(dim_last2, NUM16);
   } else if (dim_last2 == input_size + hidden_size) {
-    device_shape[shape.size() - 2] = DivCeil(input_size, NUM16) + DivCeil(hidden_size, NUM16);
+    device_shape[shape.size() - kDim2] = DivCeil(input_size, NUM16) + DivCeil(hidden_size, NUM16);
   } else {
     MS_LOG(EXCEPTION) << "The second-last dim value of shape is invalid.";
   }
@@ -743,22 +748,22 @@ std::vector<int64_t> FracZNRNNDeviceDynamicShape(const std::vector<int64_t> &sha
 
   std::vector<int64_t> device_shape = shape;
   if (dim_last2 == Shape::SHP_ANY) {
-    device_shape[shape.size() - 2] = Shape::SHP_ANY;
+    device_shape[shape.size() - kDim2] = Shape::SHP_ANY;
   } else if (dim_last2 == input_size || dim_last2 == hidden_size) {
-    device_shape[shape.size() - 2] = DivCeil(dim_last2, NUM16);
+    device_shape[shape.size() - kDim2] = DivCeil(dim_last2, NUM16);
   } else if (dim_last2 == input_size + hidden_size) {
-    device_shape[shape.size() - 2] = DivCeil(input_size, NUM16) + DivCeil(hidden_size, NUM16);
+    device_shape[shape.size() - kDim2] = DivCeil(input_size, NUM16) + DivCeil(hidden_size, NUM16);
   } else {
     MS_LOG(EXCEPTION) << "The second-last dim value of shape is invalid.";
   }
   if (dim_last1 == Shape::SHP_ANY) {
-    device_shape[shape.size() - 1] = Shape::SHP_ANY;
+    device_shape[shape.size() - kDim1] = Shape::SHP_ANY;
   } else {
     if (dim_last1 % hidden_size != 0) {
       MS_LOG(EXCEPTION) << "Last dim of shape " << shape << " should be multiple of hidden_size " << hidden_size;
     }
     int64_t n_num = shape[shape.size() - 1] / hidden_size;
-    device_shape[shape.size() - 1] = n_num * DivCeil(hidden_size, C0);
+    device_shape[shape.size() - kDim1] = n_num * DivCeil(hidden_size, C0);
   }
   device_shape.push_back(NUM16);
   device_shape.push_back(C0);
@@ -768,6 +773,9 @@ std::vector<int64_t> FracZNRNNDeviceDynamicShape(const std::vector<int64_t> &sha
 std::vector<size_t> NDRNNBiasDeviceShape(const std::vector<size_t> &shape, const int64_t hidden_size = 16) {
   if (shape.empty()) {
     MS_LOG(EXCEPTION) << "Format ND_RNN_BIAS don't support empty shape.";
+  }
+  if (hidden_size <= 0) {
+    MS_LOG(EXCEPTION) << "Hidden_size should be greater than 0, but got " << hidden_size;
   }
   size_t hid_size = LongToSize(hidden_size);
   // cppcheck-suppress *
@@ -792,6 +800,10 @@ std::vector<int64_t> NDRNNBiasDeviceDynamicShape(const std::vector<int64_t> &sha
   if (dim_last1 == Shape::SHP_ANY) {
     device_shape[shape.size() - 1] = Shape::SHP_ANY;
   } else {
+    if (hidden_size <= 0) {
+      MS_LOG(EXCEPTION) << "Hidden_size should be greater than 0, but got " << hidden_size;
+    }
+    // cppcheck-suppress *
     if (dim_last1 % hidden_size != 0) {
       MS_LOG(EXCEPTION) << "Last dim of shape " << shape << " should be multiple of hidden_size " << hidden_size;
     }
@@ -1380,17 +1392,17 @@ bool TransShapeToNz(const std::vector<size_t> &host_shape, std::vector<size_t> *
       return true;
     default:
       auto size = host_shape.size();
-      if (size < 2) {
+      if (size < kDim2) {
         MS_LOG(ERROR) << "Illegal size.";
         return false;
       }
       size_t times = 1;
-      for (size_t i = 0; i != size - 2; i++) {
+      for (size_t i = 0; i != size - kDim2; i++) {
         times *= host_shape[i];
       }
       hw_shape->push_back(times);
-      hw_shape->push_back(host_shape[size - 2]);
-      hw_shape->push_back(host_shape[size - 1]);
+      hw_shape->push_back(host_shape[size - kDim2]);
+      hw_shape->push_back(host_shape[size - kDim1]);
       return true;
   }
 }
@@ -1403,7 +1415,7 @@ bool NchwToFracNz(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Trans shape failed..";
     return false;
   }
-  if (hw_shape.size() < 3 || args.device_shape.size() < 4) {
+  if (hw_shape.size() < kDim3 || args.device_shape.size() < kDim4) {
     MS_LOG(ERROR) << "Invalid shape size.";
     return false;
   }
@@ -1465,7 +1477,7 @@ bool FracNzToNchw(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Trans shape failed..";
     return false;
   }
-  if (hw_shape.size() < 3 || args.device_shape.size() < 4) {
+  if (hw_shape.size() < kDim3 || args.device_shape.size() < kDim4) {
     MS_LOG(ERROR) << "Invalid shape size.";
     return false;
   }

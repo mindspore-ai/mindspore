@@ -274,8 +274,8 @@ AnfNodePtr RemoveNodeFromUpdateState(session::KernelGraph *kernel_graph, const A
   auto updatestate_cnode = updatestate->cast<CNodePtr>();
   auto inputs = updatestate_cnode->inputs();
   std::vector<AnfNodePtr> new_inputs;
-  std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(new_inputs),
-               [node](const AnfNodePtr &input) { return node != input; });
+  (void)std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(new_inputs),
+                     [node](const AnfNodePtr &input) { return node != input; });
   auto new_updatestate = kernel_graph->NewCNode(new_inputs);
   new_updatestate->set_scope(updatestate->scope());
   new_updatestate->set_abstract(updatestate->abstract());
@@ -300,7 +300,7 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
           // Ensuring normal fusion requires eliminating the node of the updatestate
           if (AnfAlgo::CheckPrimitiveType(use_node.first, prim::kPrimUpdateState)) {
             auto new_updatestate = RemoveNodeFromUpdateState(kernel_graph, node, use_node.first);
-            manager->Replace(use_node.first, new_updatestate);
+            (void)manager->Replace(use_node.first, new_updatestate);
             continue;
           }
           if (std::find(fusion_info.anf_nodes.begin(), fusion_info.anf_nodes.end(), use_node.first) ==
@@ -316,7 +316,7 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
         for (auto &user : users) {
           if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimUpdateState)) {
             auto new_updatestate = RemoveNodeFromUpdateState(kernel_graph, node, user.first);
-            manager->Replace(user.first, new_updatestate);
+            (void)manager->Replace(user.first, new_updatestate);
             continue;
           }
           if (AnfAlgo::CheckPrimitiveType(user.first, prim::kPrimTupleGetItem)) {

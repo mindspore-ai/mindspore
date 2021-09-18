@@ -145,7 +145,7 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
     if (communication_op_node_size == 0) {
       return false;
     }
-    segment_index->emplace_back(communication_op_node_size - 1);
+    (void)segment_index->emplace_back(communication_op_node_size - 1);
     return true;
   }
 
@@ -352,6 +352,9 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
       size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(input_node, 0);
       TypeId output_type = AnfAlgo::GetOutputDeviceDataType(input_node, 0);
       size_t type_size = GetTypeByte(TypeIdToType(output_type));
+      if (type_size == 0) {
+        MS_LOG(EXCEPTION) << "Divisor 'type_size' should not be 0.";
+      }
       tensor_size = (tensor_size / kAlignSize + 1) * kAlignSize / type_size;
       fusion_total_size += static_cast<int64_t>(tensor_size);
     }
