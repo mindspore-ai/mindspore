@@ -1,7 +1,5 @@
 /**
- * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
- *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +22,9 @@
 #include <vector>
 #include <list>
 #include <utility>
-#include <string>
 #include <functional>
 #include <memory>
-#include "utils/log_adapter.h"
+#include "utils/hashing.h"
 
 namespace mindspore {
 // Implementation of OrderedSet that keeps insertion order
@@ -88,7 +85,7 @@ class OrderedSet {
 
   // insert an element to the OrderedSet after the given position.
   std::pair<iterator, bool> insert(iterator pos, const element_type &e) {
-    auto result = mapped_data_.emplace(e, ordered_data_.end());
+    auto result = map_.emplace(e, ordered_data_.end());
     if (result.second) {
       result.first->second = ordered_data_.emplace(pos, e);
     }
@@ -107,82 +104,60 @@ class OrderedSet {
 
   // Remove an element, if removed return true, otherwise return false
   bool erase(const element_type &e) {
-    auto pos = mapped_data_.find(e);
-    if (pos == mapped_data_.end()) {
+    auto pos = map_.find(e);
+    if (pos == map_.end()) {
       return false;
     }
     // erase the sequential data first
     (void)ordered_data_.erase(pos->second);
-    (void)mapped_data_.erase(pos);
+    (void)map_.erase(pos);
     return true;
   }
 
   iterator erase(iterator pos) {
-    (void)mapped_data_.erase(*pos);
+    (void)map_.erase(*pos);
     return ordered_data_.erase(pos);
   }
 
   iterator erase(const_iterator pos) {
-    (void)mapped_data_.erase(*pos);
+    (void)map_.erase(*pos);
     return ordered_data_.erase(pos);
   }
 
   // Return the container size
-  std::size_t size() const { return mapped_data_.size(); }
+  std::size_t size() const { return map_.size(); }
 
-  bool empty() const { return mapped_data_.size() == 0; }
-
-  // Return the string contents in orderset, using ordered_data
-  std::string toString() {
-    std::ostringstream res;
-    res << "orderset content:\n";
-    for (auto &item : ordered_data_) {
-      res << std::to_string(reinterpret_cast<uintptr_t>(item.get())) << " ";
-    }
-    return res.str();
-  }
+  bool empty() const { return map_.size() == 0; }
 
   // Clear the elements
   void clear() {
-    mapped_data_.clear();
+    map_.clear();
     ordered_data_.clear();
   }
 
   // Reserve memory for the number of entries.
-  void reserve(size_t num_entries) { mapped_data_.reserve(num_entries); }
+  void reserve(size_t num_entries) { map_.reserve(num_entries); }
 
   // Compare two orderedset, if the order is not equal shall return false
   bool operator==(const OrderedSet &other) const { return ordered_data_ == other.ordered_data_; }
 
-  // Remove and return the first element in the OrderedSet
-  T pop() {
-    if (ordered_data_.size() != 0) {
-      T res = ordered_data_.front();
-      (void)mapped_data_.erase(res);
-      (void)ordered_data_.erase(ordered_data_.begin());
-      return res;
-    }
-    MS_LOG(EXCEPTION) << "pop() on empty OrderedSet";
+  element_type pop() {
+    element_type e = std::move(ordered_data_.front());
+    (void)map_.erase(e);
+    (void)ordered_data_.erase(ordered_data_.begin());
+    return e;
   }
 
-  T &back() {
-    if (ordered_data_.size() != 0) {
-      return ordered_data_.back();
-    }
-    MS_LOG(EXCEPTION) << "back() on empty OrderedSet";
-  }
+  element_type &back() { return ordered_data_.back(); }
+  element_type &front() { return ordered_data_.front(); }
 
-  T &front() {
-    if (ordered_data_.size() != 0) {
-      return ordered_data_.front();
-    }
-    MS_LOG(EXCEPTION) << "front() on empty OrderedSet";
-  }
+  const element_type &back() const { return ordered_data_.back(); }
+  const element_type &front() const { return ordered_data_.front(); }
 
   // Return true if there are no common elements
   bool is_disjoint(const OrderedSet &other) {
     for (auto &item : other.ordered_data_) {
-      if (mapped_data_.find(item) != mapped_data_.end()) {
+      if (map_.find(item) != map_.end()) {
         return false;
       }
     }
@@ -192,7 +167,7 @@ class OrderedSet {
   // Test whether this is subset of other
   bool is_subset(const OrderedSet &other) {
     for (auto &item : ordered_data_) {
-      if (other.mapped_data_.find(item) == other.mapped_data_.end()) {
+      if (other.map_.find(item) == other.map_.end()) {
         return false;
       }
     }
@@ -233,7 +208,7 @@ class OrderedSet {
   ordered_set_type intersection(const OrderedSet &other) {
     ordered_set_type res(ordered_data_);
     for (auto &item : ordered_data_) {
-      if (other.mapped_data_.find(item) == other.mapped_data_.end()) {
+      if (other.map_.find(item) == other.map_.end()) {
         (void)res.erase(item);
       }
     }
@@ -245,7 +220,7 @@ class OrderedSet {
   ordered_set_type symmetric_difference(const OrderedSet &other) {
     ordered_set_type res(ordered_data_);
     for (auto &item : other.ordered_data_) {
-      if (mapped_data_.find(item) != mapped_data_.end()) {
+      if (map_.find(item) != map_.end()) {
         (void)res.erase(item);
       } else {
         res.add(item);
@@ -284,26 +259,26 @@ class OrderedSet {
   }
   ordered_set_type operator-(const OrderedSet &other) { return difference(other); }
 
-  bool contains(const element_type &e) const { return (mapped_data_.find(e) != mapped_data_.end()); }
+  bool contains(const element_type &e) const { return (map_.find(e) != map_.end()); }
 
   const_iterator find(const element_type &e) const {
-    auto iter = mapped_data_.find(e);
-    if (iter == mapped_data_.end()) {
+    auto iter = map_.find(e);
+    if (iter == map_.end()) {
       return ordered_data_.end();
     }
     return iter->second;
   }
 
   iterator find(const element_type &e) {
-    auto iter = mapped_data_.find(e);
-    if (iter == mapped_data_.end()) {
+    auto iter = map_.find(e);
+    if (iter == map_.end()) {
       return ordered_data_.end();
     }
     return iter->second;
   }
 
   // Return the count of an element in set
-  std::size_t count(const element_type &e) const { return mapped_data_.count(e); }
+  std::size_t count(const element_type &e) const { return map_.count(e); }
 
   iterator begin() { return ordered_data_.begin(); }
   iterator end() { return ordered_data_.end(); }
@@ -315,7 +290,270 @@ class OrderedSet {
   const_iterator cend() const { return ordered_data_.cend(); }
 
  private:
-  map_type mapped_data_;
+  map_type map_;
+  sequential_type ordered_data_;
+};
+
+// OrderedSet that specially optimized for shared_ptr.
+template <class T>
+class OrderedSet<std::shared_ptr<T>> {
+ public:
+  using element_type = std::shared_ptr<T>;
+  using key_type = const T *;
+  using hash_t = PointerHash<T>;
+  using sequential_type = std::list<element_type>;
+  using vector_type = std::vector<element_type>;
+  using iterator = typename sequential_type::iterator;
+  using const_iterator = typename sequential_type::const_iterator;
+  using reverse_iterator = typename sequential_type::reverse_iterator;
+  using const_reverse_iterator = typename sequential_type::const_reverse_iterator;
+  using map_type = std::unordered_map<key_type, iterator, hash_t>;
+  using ordered_set_type = OrderedSet<std::shared_ptr<T>>;
+
+  OrderedSet() = default;
+  ~OrderedSet() = default;
+
+  OrderedSet(const OrderedSet &os) {
+    for (auto &item : os.ordered_data_) {
+      add(item);
+    }
+  }
+
+  OrderedSet(OrderedSet &&os) = default;
+
+  explicit OrderedSet(const sequential_type &other) {
+    reserve(other.size());
+    for (auto &item : other) {
+      add(item);
+    }
+  }
+
+  explicit OrderedSet(const vector_type &other) {
+    reserve(other.size());
+    for (auto &item : other) {
+      add(item);
+    }
+  }
+
+  OrderedSet &operator=(const OrderedSet &other) {
+    if (this != &other) {
+      clear();
+      reserve(other.size());
+      for (auto &item : other.ordered_data_) {
+        add(item);
+      }
+    }
+    return *this;
+  }
+
+  OrderedSet &operator=(OrderedSet &&other) = default;
+
+  std::pair<iterator, bool> insert(iterator pos, const element_type &e) {
+    auto [map_iter, inserted] = map_.emplace(e.get(), iterator{});
+    if (inserted) {
+      map_iter->second = ordered_data_.emplace(pos, e);
+    }
+    return {map_iter->second, inserted};
+  }
+
+  std::pair<iterator, bool> insert(iterator pos, element_type &&e) {
+    auto [map_iter, inserted] = map_.emplace(e.get(), iterator{});
+    if (inserted) {
+      map_iter->second = ordered_data_.emplace(pos, std::move(e));
+    }
+    return {map_iter->second, inserted};
+  }
+
+  void add(const element_type &e) { (void)insert(ordered_data_.end(), e); }
+
+  void add(element_type &&e) { (void)insert(ordered_data_.end(), std::move(e)); }
+
+  std::pair<iterator, bool> insert(const element_type &e) { return insert(ordered_data_.end(), e); }
+
+  std::pair<iterator, bool> insert(element_type &&e) { return insert(ordered_data_.end(), std::move(e)); }
+
+  void push_back(const element_type &e) { (void)insert(ordered_data_.end(), e); }
+
+  void push_front(const element_type &e) { (void)insert(ordered_data_.begin(), e); }
+
+  bool erase(const element_type &e) {
+    auto pos = map_.find(e.get());
+    if (pos == map_.end()) {
+      return false;
+    }
+    auto iter = pos->second;
+    (void)map_.erase(pos);
+    (void)ordered_data_.erase(iter);
+    return true;
+  }
+
+  iterator erase(iterator pos) {
+    (void)map_.erase(pos->get());
+    return ordered_data_.erase(pos);
+  }
+
+  iterator erase(const_iterator pos) {
+    (void)map_.erase(pos->get());
+    return ordered_data_.erase(pos);
+  }
+
+  std::size_t size() const { return ordered_data_.size(); }
+
+  bool empty() const { return ordered_data_.empty(); }
+
+  void clear() {
+    map_.clear();
+    ordered_data_.clear();
+  }
+
+  void reserve(size_t num_entries) { map_.reserve(num_entries); }
+
+  bool operator==(const OrderedSet &other) const { return ordered_data_ == other.ordered_data_; }
+
+  element_type pop() {
+    element_type e = std::move(ordered_data_.front());
+    (void)map_.erase(e.get());
+    (void)ordered_data_.erase(ordered_data_.begin());
+    return e;
+  }
+
+  element_type &back() { return ordered_data_.back(); }
+  element_type &front() { return ordered_data_.front(); }
+
+  const element_type &back() const { return ordered_data_.back(); }
+  const element_type &front() const { return ordered_data_.front(); }
+
+  // Return true if there are no common elements.
+  bool is_disjoint(const OrderedSet &other) {
+    return std::all_of(begin(), end(), [&other](const auto &e) { return !other.contains(e); });
+  }
+
+  // Test whether this is subset of other.
+  bool is_subset(const OrderedSet &other) {
+    return std::all_of(begin(), end(), [&other](const auto &e) { return other.contains(e); });
+  }
+
+  // Add elements in other to this orderedset.
+  void update(const OrderedSet &other) {
+    for (auto &item : other.ordered_data_) {
+      add(item);
+    }
+  }
+
+  void update(const std::shared_ptr<OrderedSet> &other) { update(*other); }
+
+  void update(const sequential_type &other) {
+    for (auto &item : other) {
+      add(item);
+    }
+  }
+
+  void update(const vector_type &other) {
+    for (auto &item : other) {
+      add(item);
+    }
+  }
+
+  ordered_set_type get_union(const OrderedSet &other) {
+    ordered_set_type res(ordered_data_);
+    res.update(other);
+    return res;
+  }
+
+  // Get the union with other set, this operator may cost time because of copy.
+  ordered_set_type operator|(const OrderedSet &other) { return get_union(other); }
+
+  // Return the intersection of two sets.
+  ordered_set_type intersection(const OrderedSet &other) {
+    ordered_set_type res;
+    for (auto &item : ordered_data_) {
+      if (other.contains(item)) {
+        res.add(item);
+      }
+    }
+    return res;
+  }
+
+  ordered_set_type operator&(const OrderedSet &other) { return intersection(other); }
+
+  // Return the symmetric difference of two sets.
+  ordered_set_type symmetric_difference(const OrderedSet &other) {
+    ordered_set_type res(ordered_data_);
+    for (auto &item : other) {
+      if (contains(item)) {
+        (void)res.erase(item);
+      } else {
+        res.add(item);
+      }
+    }
+    return res;
+  }
+
+  ordered_set_type operator^(const OrderedSet &other) { return symmetric_difference(other); }
+
+  // Remove elements which is also in others.
+  void difference_update(const OrderedSet &other) {
+    for (auto &item : other) {
+      (void)erase(item);
+    }
+  }
+
+  void difference_update(const sequential_type &other) {
+    for (auto &item : other) {
+      (void)erase(item);
+    }
+  }
+
+  void difference_update(const vector_type &other) {
+    for (auto &item : other) {
+      (void)erase(item);
+    }
+  }
+
+  // Return the set with elements that are not in the others.
+  ordered_set_type difference(const OrderedSet &other) {
+    ordered_set_type res;
+    for (auto &item : ordered_data_) {
+      if (!other.contains(item)) {
+        res.add(item);
+      }
+    }
+    return res;
+  }
+
+  ordered_set_type operator-(const OrderedSet &other) { return difference(other); }
+
+  bool contains(const element_type &e) const { return (map_.find(e.get()) != map_.end()); }
+
+  const_iterator find(const element_type &e) const {
+    auto iter = map_.find(e.get());
+    if (iter == map_.end()) {
+      return ordered_data_.end();
+    }
+    return iter->second;
+  }
+
+  iterator find(const element_type &e) {
+    auto iter = map_.find(e.get());
+    if (iter == map_.end()) {
+      return ordered_data_.end();
+    }
+    return iter->second;
+  }
+
+  std::size_t count(const element_type &e) const { return map_.count(e.get()); }
+
+  iterator begin() { return ordered_data_.begin(); }
+  iterator end() { return ordered_data_.end(); }
+
+  const_iterator begin() const { return ordered_data_.cbegin(); }
+  const_iterator end() const { return ordered_data_.cend(); }
+
+  const_iterator cbegin() const { return ordered_data_.cbegin(); }
+  const_iterator cend() const { return ordered_data_.cend(); }
+
+ private:
+  map_type map_;
   sequential_type ordered_data_;
 };
 }  // namespace mindspore

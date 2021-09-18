@@ -74,7 +74,7 @@ static ParameterUsersInfo FindRefKeyNodeUsers(const RefKeyPair &ref_key_pair, bo
     if ((c == nullptr) || !IsValueNode<Primitive>(c->input(0)) || !IsCareNode(c)) {
       continue;
     }
-    parameter_user_info.second.second.add(candidate);
+    parameter_user_info.second.second.insert(candidate);
   }
 
   // Find the corresponding Parameter being used
@@ -242,19 +242,20 @@ static ParameterSliceInfo GetParameterSliceInfo(const std::pair<AnfNodePtr, int6
 void CheckParameterSplit(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
     ParameterUsersInfo parameter_users_info = FindParameterUsers(node, IsParallelCareNode);
-    auto users_set = parameter_users_info.second.second;
+    auto &users_set = parameter_users_info.second.second;
     if (users_set.size() <= 1) {
       continue;
     }
 
     auto parameter_name = parameter_users_info.first;
     MS_LOG(INFO) << "The parameter: " << parameter_name << " has " << users_set.size() << " users";
-    auto first_user = users_set.pop();
+    auto &first_user = users_set.front();
     ParameterSliceInfo parameter_slice_info = GetParameterSliceInfo(first_user);
     Shape first_user_slice_shape = parameter_slice_info.slice_shape;
     RankList first_user_group_list = parameter_slice_info.group_ranks;
 
-    for (auto &user : users_set) {
+    for (auto iter = users_set.begin() + 1; iter != users_set.end(); ++iter) {
+      auto &user = *iter;
       ParameterSliceInfo user_slice_info = GetParameterSliceInfo(user);
       Shape user_slice_shape = user_slice_info.slice_shape;
       RankList user_group_list = user_slice_info.group_ranks;

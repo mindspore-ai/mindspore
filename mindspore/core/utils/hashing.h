@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_UTILS_HASHING_H_
 
 #include <initializer_list>
+#include <memory>
 
 namespace mindspore {
 inline std::size_t hash_combine(std::size_t hash_sum, std::size_t hash_val) {
@@ -32,5 +33,22 @@ inline std::size_t hash_combine(const std::initializer_list<std::size_t> &hash_v
   }
   return hash_sum;
 }
+
+template <typename T>
+struct PointerHash {
+  constexpr std::size_t operator()(const T *ptr) const noexcept {
+    constexpr int shift_bits = (sizeof(std::size_t) == 8 ? 3 : 1);
+    return (reinterpret_cast<std::size_t>(ptr) >> shift_bits);
+  }
+};
+
+template <typename T>
+struct PointerHash<std::shared_ptr<T>> {
+  constexpr std::size_t operator()(const std::shared_ptr<T> &ptr) const noexcept {
+    constexpr int shift_bits = (sizeof(std::size_t) == 8 ? 3 : 1);
+    return (reinterpret_cast<std::size_t>(ptr.get()) >> shift_bits);
+  }
+};
+
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_HASHING_H_

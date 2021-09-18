@@ -22,7 +22,8 @@
 #include <unordered_map>
 
 #include "utils/visible.h"
-#include "utils/ordered_set.h"
+#include "utils/compact_set.h"
+#include "utils/hashing.h"
 #include "ir/anf.h"
 
 namespace mindspore::api {
@@ -33,20 +34,8 @@ using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 class FuncGraphManager;
 using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 
-struct MS_CORE_API AnfNodeIndexPairHasher {
-  std::size_t operator()(const std::pair<AnfNodePtr, int> &p1) const {
-    return std::hash<const AnfNode *>{}(p1.first.get());
-  }
-};
-
-struct MS_CORE_API AnfNodeIndexPairEqual {
-  bool operator()(const std::pair<AnfNodePtr, int> &lhs, const std::pair<AnfNodePtr, int> &rhs) const {
-    return lhs == rhs;
-  }
-};
-
-using AnfNodeIndexSet = OrderedSet<std::pair<AnfNodePtr, int>, AnfNodeIndexPairHasher, AnfNodeIndexPairEqual>;
-using NodeUsersMap = std::unordered_map<AnfNodePtr, AnfNodeIndexSet>;
+using AnfNodeIndexSet = CompactSet<std::pair<AnfNodePtr, int>>;
+using NodeUsersMap = std::unordered_map<AnfNodePtr, AnfNodeIndexSet, PointerHash<AnfNodePtr>>;
 
 class MS_CORE_API FuncGraphManager {
  public:
