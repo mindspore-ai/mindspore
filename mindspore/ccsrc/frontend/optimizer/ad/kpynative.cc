@@ -197,6 +197,7 @@ class PynativeAdjoint {
                   FuncGraphType fg_type = kBackwardPropagate)
       : tape_(tape), op_args_(op_args), out_(out), fg_(fg), fg_type_(fg_type) {}
 
+  ~PynativeAdjoint() = default;
   AnfNodePtrList &users() { return users_; }
   const ValuePtrList &op_args() const { return op_args_; }
   const ValuePtr &out() const { return out_; }
