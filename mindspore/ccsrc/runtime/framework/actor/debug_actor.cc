@@ -77,7 +77,24 @@ void DebugActor::DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vecto
                                   OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
   MS_EXCEPTION_IF_NULL(op_context);
   MS_EXCEPTION_IF_NULL(from_aid);
+#ifdef ENABLE_DEBUGGER
+  auto debugger = Debugger::GetInstance();
+  if (debugger != nullptr && debugger->DebuggerBackendEnabled()) {
+    debugger->PreExecuteGraphDebugger(graphs);
+  }
+#endif
 
+#ifndef ENABLE_SECURITY
+  if (DumpJsonParser::GetInstance().e2e_dump_enabled()) {
+    DumpJsonParser::GetInstance().ClearGraph();
+    for (size_t i = 0; i < graphs.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(device_contexts[i]);
+      if (device_contexts[i]->GetDeviceAddressType() == device::DeviceAddressType::kCPU) {
+        DumpJsonParser::GetInstance().SaveGraph(graphs[i].get());
+      }
+    }
+  }
+#endif
   // Call back to the from actor to process after debug finished.
   Async(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
