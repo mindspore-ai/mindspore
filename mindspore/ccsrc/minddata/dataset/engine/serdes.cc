@@ -83,7 +83,7 @@ Status Serdes::SaveJSONToFile(nlohmann::json json_string, const std::string &fil
   return Status::OK();
 }
 
-Status Serdes::Deserialize(std::string json_filepath, std::shared_ptr<DatasetNode> *ds) {
+Status Serdes::Deserialize(const std::string &json_filepath, std::shared_ptr<DatasetNode> *ds) {
   nlohmann::json json_obj;
   CHECK_FAIL_RETURN_UNEXPECTED(json_filepath.size() != 0, "Json path is null");
   std::ifstream json_in(json_filepath);
@@ -130,7 +130,7 @@ Status Serdes::ConstructPipeline(nlohmann::json json_obj, std::shared_ptr<Datase
   return Status::OK();
 }
 
-Status Serdes::CreateNode(std::shared_ptr<DatasetNode> child_ds, nlohmann::json json_obj,
+Status Serdes::CreateNode(const std::shared_ptr<DatasetNode> &child_ds, nlohmann::json json_obj,
                           std::shared_ptr<DatasetNode> *ds) {
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("op_type") != json_obj.end(), "Failed to find op_type in json.");
   std::string op_type = json_obj["op_type"];
@@ -144,7 +144,8 @@ Status Serdes::CreateNode(std::shared_ptr<DatasetNode> child_ds, nlohmann::json 
   return Status::OK();
 }
 
-Status Serdes::CreateDatasetNode(nlohmann::json json_obj, std::string op_type, std::shared_ptr<DatasetNode> *ds) {
+Status Serdes::CreateDatasetNode(const nlohmann::json &json_obj, const std::string &op_type,
+                                 std::shared_ptr<DatasetNode> *ds) {
   if (op_type == kAlbumNode) {
     RETURN_IF_NOT_OK(AlbumNode::from_json(json_obj, ds));
   } else if (op_type == kCelebANode) {
@@ -179,8 +180,8 @@ Status Serdes::CreateDatasetNode(nlohmann::json json_obj, std::string op_type, s
   return Status::OK();
 }
 
-Status Serdes::CreateDatasetOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj, std::string op_type,
-                                          std::shared_ptr<DatasetNode> *result) {
+Status Serdes::CreateDatasetOperationNode(const std::shared_ptr<DatasetNode> &ds, const nlohmann::json &json_obj,
+                                          const std::string &op_type, std::shared_ptr<DatasetNode> *result) {
   if (op_type == kBatchNode) {
     RETURN_IF_NOT_OK(BatchNode::from_json(json_obj, ds, result));
   } else if (op_type == kMapNode) {

@@ -118,7 +118,7 @@ class FillOperation : public TensorOperation {
 
 class MaskOperation : public TensorOperation {
  public:
-  explicit MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, DataType dtype);
+  explicit MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, const DataType &dtype);
 
   ~MaskOperation() = default;
 

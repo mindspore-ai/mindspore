@@ -29,8 +29,8 @@ namespace dataset {
 class USPSNode : public NonMappableSourceNode {
  public:
   /// \brief Constructor.
-  USPSNode(std::string dataset_dir, std::string usage, int32_t num_samples, ShuffleMode shuffle, int32_t num_shards,
-           int32_t shard_id, std::shared_ptr<DatasetCache> cache);
+  USPSNode(const std::string &dataset_dir, const std::string &usage, int32_t num_samples, ShuffleMode shuffle,
+           int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
   ~USPSNode() = default;
