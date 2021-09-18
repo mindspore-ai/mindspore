@@ -62,6 +62,12 @@ Status VirtualOutputInfo::GenerateStrategies(int64_t stage_id) {
   } else {
     total_dev_num = LongToSize(stage_device_size_);
   }
+
+  if (total_dev_num == 0) {
+    MS_LOG(ERROR) << name_ << ": The total devices num is 0";
+    return FAILED;
+  }
+
   for (auto &shape : inputs_shape_) {
     Shape temp;
     if (!shape.empty()) {
