@@ -855,8 +855,9 @@ void ComputeCapability::GetComputeCapability() {
     return;
   }
   this->compute_capability_ = std::to_string(a) + "." + std::to_string(b);
-#endif
+#else
   this->compute_capability_ = "Unknown";
+#endif
   return;
 }
 }  // namespace kernel
