@@ -27,7 +27,6 @@
 #include "thread/threadpool.h"
 
 namespace mindspore {
-#define MAX_PATH_SIZE (256)
 
 enum Arch {
   UnKnown_Arch = 0,
@@ -152,13 +151,13 @@ int SetArch(std::vector<CpuInfo> *freq_set, int core_num) {
             enum Arch arch = GetArch(cpu_part);
             if (arch == UnKnown_Arch) {
               THREAD_ERROR("cpu's architecture is unknown.");
-              fclose(fp);
+              (void)fclose(fp);
               return THREAD_ERROR;
             }
             count++;
             if (count > core_num) {
               THREAD_ERROR("number of cpu_part in /proc/cpuinfo is more than core_num.");
-              fclose(fp);
+              (void)fclose(fp);
               return THREAD_ERROR;
             }
             archs[count - 1] = arch;
@@ -169,13 +168,13 @@ int SetArch(std::vector<CpuInfo> *freq_set, int core_num) {
   }
   if (count < core_num) {
     THREAD_ERROR("number of cpu_part in /proc/cpuinfo is less than core_num.");
-    fclose(fp);
+    (void)fclose(fp);
     return THREAD_ERROR;
   }
   for (int i = 0; i < core_num; ++i) {
     (*freq_set)[i].arch = archs[i];
   }
-  fclose(fp);
+  (void)fclose(fp);
   return THREAD_OK;
 }
 
@@ -206,7 +205,7 @@ int GetMaxFrequency(int core_id) {
       max_freq = freq;
     }
   }
-  fclose(fp);
+  (void)fclose(fp);
   return max_freq;
 }
 
