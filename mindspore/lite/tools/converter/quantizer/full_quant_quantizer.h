@@ -157,8 +157,8 @@ class FullQuantQuantizer : public Quantizer {
 
   STATUS QuantNode();
 
-  STATUS SetInOutQuantParam(double scale, int zero_point, struct MaxMin *max_min, const PrimitivePtr &primitive,
-                            bool is_input, size_t index) const;
+  STATUS SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DivergInfo> &info,
+                            const PrimitivePtr &primitive, bool is_input, size_t index) const;
 
   STATUS DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, const PrimitivePtr &primitive,
                        bool per_channel) const;

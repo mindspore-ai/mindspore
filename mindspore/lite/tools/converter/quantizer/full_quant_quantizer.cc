@@ -463,27 +463,35 @@ FullQuantQuantizer::~FullQuantQuantizer() {
   delete int8_model_;
 }
 
-STATUS FullQuantQuantizer::SetInOutQuantParam(double scale, int zero_point, struct MaxMin *max_min,
+STATUS FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DivergInfo> &info,
                                               const PrimitivePtr &primitive, bool is_input, size_t index) const {
-  MS_ASSERT(max_min != nullptr);
-  MS_ASSERT(primitive != nullptr);
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
   schema::QuantParamT quant_param;
-  if (scale == 0) {
-    MS_LOG(WARNING) << "The input or output values are very close to 0, so set the scale to 1.";
-    quant_param.scale = 1;
-  } else {
-    quant_param.scale = scale;
+  TypeId type_id = kTypeUnknown;
+  if (opt::GetDataTypeFromAnfNode(input_node, &type_id) != RET_OK) {
+    MS_LOG(ERROR) << "Get data type failed.";
+    return RET_ERROR;
   }
-  quant_param.zeroPoint = zero_point;
-  quant_param.max = max_min->max;
-  quant_param.min = max_min->min;
-  quant_param.numBits = bit_num;
-  quant_param.narrowRange = false;
-  quant_param.inited = true;
-  quant_param.roundType = 1;
-  quant_param.multiplier = 1;
+  if (type_id == kNumberTypeFloat32 && info != nullptr) {
+    auto scale = info->GetScale().second;
+    if (scale == 0) {
+      MS_LOG(WARNING) << "The input or output values are very close to 0, so set the scale to 1.";
+      quant_param.scale = 1;
+    } else {
+      quant_param.scale = scale;
+    }
+    quant_param.zeroPoint = info->GetZeropoint().second;
+    quant_param.max = info->max;
+    quant_param.min = info->min;
+    quant_param.numBits = bit_num;
+    quant_param.narrowRange = false;
+    quant_param.inited = true;
+    quant_param.roundType = 1;
+    quant_param.multiplier = 1;
+  } else {
+    quant_param.inited = false;
+  }
   std::vector<schema::QuantParamT> quant_params = {quant_param};
   if (is_input) {
     quant_param_holder->set_input_quant_param(index, quant_params);
@@ -650,6 +658,11 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
     return RET_ERROR;
   }
   if (type_id != kNumberTypeFloat32) {
+    ret = SetInOutQuantParam(input_node, nullptr, primitive, true, input_index);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Set In/Out quant param failed.";
+      return ret;
+    }
     return RET_CONTINUE;
   }
   if (CheckNodeInSet(cnode, has_bias_operator)) {
@@ -700,12 +713,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
     if (is_graph_input) {
       // do input quant
       auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
-      auto input_scale = info->GetScale().second;
-      auto input_zp = info->GetZeropoint().second;
-      struct MaxMin input_min_max {};
-      input_min_max.max = info->max;
-      input_min_max.min = info->min;
-      ret = SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, i - 1);
+      ret = SetInOutQuantParam(input_node, info, primitive, true, i - 1);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Set activation quant failed.";
         return ret;
@@ -727,12 +735,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       } else {
         // do input quant
         auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
-        auto input_scale = info->GetScale().second;
-        auto input_zp = info->GetZeropoint().second;
-        struct MaxMin input_min_max {};
-        input_min_max.max = info->max;
-        input_min_max.min = info->min;
-        ret = SetInOutQuantParam(input_scale, input_zp, &input_min_max, primitive, true, i - 1);
+        ret = SetInOutQuantParam(input_node, info, primitive, true, i - 1);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "Set activation quant failed.";
           return ret;
@@ -819,13 +822,11 @@ STATUS FullQuantQuantizer::QuantNode() {
     auto &infos = (*outputs_diverg_info)[op_name];
     for (size_t index = 0; index < infos.size(); index++) {
       auto &info = infos.at(index);
-      auto output_scale = info->GetScale().second;
-      auto output_zp = info->GetZeropoint().second;
-      struct MaxMin output_min_max {};
-      output_min_max.max = info->max;
-      output_min_max.min = info->min;
-
-      SetInOutQuantParam(output_scale, output_zp, &output_min_max, primitive, false, index);
+      auto ret = SetInOutQuantParam(cnode, info, primitive, false, index);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Set In/Out quant param failed.";
+        return ret;
+      }
       primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_ALL);
     }
   }
