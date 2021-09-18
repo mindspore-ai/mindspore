@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_BROADCAST_TO_CPU_KERNEL_H
-#define MINDSPORE_BROADCAST_TO_CPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BROADCAST_TO_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BROADCAST_TO_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
-#include "nnacl/base/broadcast_to.h"
+#include "backend/kernel_compiler/cpu/nnacl/base/broadcast_to.h"
 
 namespace mindspore {
 namespace kernel {
@@ -38,7 +39,7 @@ class BroadcastToCPUKernel : public CPUKernel {
  private:
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
-  BroadcastShapeInfo shape_info_;
+  BroadcastShapeInfo shape_info_{};
 };
 
 MS_REG_CPU_KERNEL_T(BroadcastTo, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -50,4 +51,4 @@ MS_REG_CPU_KERNEL_T(BroadcastTo, KernelAttr().AddInputAttr(kNumberTypeBool).AddO
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_BROADCAST_TO_CPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BROADCAST_TO_CPU_KERNEL_H_

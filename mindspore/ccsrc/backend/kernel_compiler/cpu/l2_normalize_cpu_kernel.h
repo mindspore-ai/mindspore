@@ -16,10 +16,10 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2_NORMALIZE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2_NORMALIZE_CPU_KERNEL_H_
-#include <memory>
+
 #include <vector>
-#include <limits>
-#include <utility>
+#include <memory>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 

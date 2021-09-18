@@ -122,7 +122,10 @@ class Profiler:
 
     def __init__(self, **kwargs):
         if c_expression.security.enable_security():
-            raise Runtime("Profiler is not supported if compiled with \'-s on\'")
+            raise RuntimeError("Profiler is not supported if compiled with \'-s on\'")
+
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Profiler is not supported in PyNative mode")
 
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()

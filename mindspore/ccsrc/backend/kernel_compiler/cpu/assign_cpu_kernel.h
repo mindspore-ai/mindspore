@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ASSIGN_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ASSIGN_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
 #include <unordered_map>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -36,8 +38,8 @@ class AssignCPUKernel : public CPUKernel {
 
  private:
   size_t batch_size_{1};
+  size_t input_x_dtype_size_{4};
   TypeId input_x_dtype_{kTypeUnknown};
-  size_t input_x_dtype_size_ = 4;
 };
 
 MS_REG_CPU_KERNEL(

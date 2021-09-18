@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NN_BINARY_CROSS_ENTROPY_KERNEL_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NN_BINARY_CROSS_ENTROPY_KERNEL_H
 
 #include <vector>
 #include <string>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
+enum ReductionType { kNone, kMean, kSum };
+
 class BinaryCrossEntropyCpuKernel : public CPUKernel {
  public:
-  BinaryCrossEntropyCpuKernel() : input_size_(1), reduction_(1), weight_defined_(false) {}
+  BinaryCrossEntropyCpuKernel() = default;
   ~BinaryCrossEntropyCpuKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -34,15 +38,14 @@ class BinaryCrossEntropyCpuKernel : public CPUKernel {
 
  private:
   template <typename T>
-  void LaunchToScalar(const int &input_size, const int &reduction, T *loss, T *tmp_loss);
+  void LaunchToScalar(const int &input_size, const int &reduction, T *loss, T *tmp_loss) const;
   template <typename T>
-  void Launchkernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
   TypeId dtype_{kTypeUnknown};
-  size_t input_size_;
-  int reduction_;
-  bool weight_defined_;  // true: there are 3 inputs, false: there are 2 inputs(no [weight])
+  size_t input_size_{1};
+  ReductionType reduction_{kNone};
+  bool weight_defined_{false};  // true: there are 3 inputs, false: there are 2 inputs(no [weight])
 };
 MS_REG_CPU_KERNEL(BinaryCrossEntropy,
                   KernelAttr()

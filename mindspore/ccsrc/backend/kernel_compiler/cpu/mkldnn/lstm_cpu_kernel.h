@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,18 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_CPU_KERNEL_H_
+
 #if defined(__x86_64__) || defined(__amd64__) || defined(_M_IX86) || defined(_M_X64)
 #define PLATFORM_86
 #endif
 #ifdef PLATFORM_86
 #include <pmmintrin.h>
 #endif
+
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
+
 namespace mindspore {
 namespace kernel {
 class LstmCPUKernel : public MKLCPUKernel {
@@ -41,18 +44,20 @@ class LstmCPUKernel : public MKLCPUKernel {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
-  int weight_size_ = 0;
-  int weight_h_size_ = 0;
-  int input_size_;
-  int hidden_size_;
-  int num_layers_;
-  int batch_size_;
-  int seq_len_;
-  int num_directions_;
-  bool bidirectional_;
-  bool has_bias_;
-  size_t reserve_size_;
-  bool is_training;
+
+  int weight_size_{0};
+  int weight_h_size_{0};
+  int input_size_{0};
+  int hidden_size_{0};
+  int num_layers_{0};
+  int batch_size_{0};
+  int seq_len_{0};
+  int num_directions_{0};
+  bool bidirectional_{false};
+  bool has_bias_{false};
+  bool is_training{false};
+  size_t reserve_size_{0};
+
   dnnl::memory::dims weights_dims_;
   dnnl::memory::dims weights_h_dims_;
   dnnl::memory::dims bias_dims_;

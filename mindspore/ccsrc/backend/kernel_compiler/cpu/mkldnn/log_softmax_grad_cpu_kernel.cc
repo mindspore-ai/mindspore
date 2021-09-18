@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/log_softmax_grad_cpu_kernel.h"
+#include <algorithm>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kLogSoftmaxGradInputsNum = 2;
+constexpr size_t kLogSoftmaxGradOutputsNum = 1;
+}  // namespace
+
 void LogSoftmaxGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   int axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis >= SizeToInt(src_shape.size())) {
@@ -47,9 +55,8 @@ void LogSoftmaxGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool LogSoftmaxGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 2 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "LogSoftmaxGrad error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLogSoftmaxGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxGradOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_DST, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[1]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);

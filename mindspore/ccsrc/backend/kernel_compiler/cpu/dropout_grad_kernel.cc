@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "backend/kernel_compiler/cpu/dropout_grad_kernel.h"
+
 #include <vector>
 #include "runtime/device/cpu/cpu_device_address.h"
-#include "backend/kernel_compiler/cpu/dropout_grad_kernel.h"
-#include "nnacl/fp32_grad/dropout_grad.h"
+
+#include "backend/kernel_compiler/cpu/nnacl/fp32_grad/dropout_grad.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kDropoutGradInputsNum = 2;
+constexpr size_t kDropoutGradOutputsNum = 1;
+}  // namespace
+
 void DropoutGradCpuBwdKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto input_mask_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (input_shape.size() != input_mask_shape.size()) {
@@ -35,8 +43,8 @@ void DropoutGradCpuBwdKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   keep_prob_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
-  if (keep_prob_ == 0) {
-    MS_LOG(EXCEPTION) << "The keep_prob is zero.";
+  if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
+    MS_LOG(EXCEPTION) << kernel_name_ << "requires keep_prob should be in (0.0, 1.0], but got " << keep_prob_;
   }
 }
 
@@ -51,12 +59,15 @@ void DropoutGradCpuBwdKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 
 bool DropoutGradCpuBwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                      const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDropoutGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDropoutGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     DropoutBackwardKernel<float16>(inputs, workspace, outputs, keep_prob_);
   } else if (dtype_ == kNumberTypeFloat32) {
     DropoutBackwardKernel<float>(inputs, workspace, outputs, keep_prob_);
   } else {
-    MS_LOG(ERROR) << "Input data type: " << dtype_ << " is not supported for DropoutGrad kernel for CPU.";
+    MS_LOG(EXCEPTION) << kernel_name_ << " only support float16 and float32 on CPU, but got "
+                      << TypeIdToType(dtype_)->ToString();
   }
 
   return true;

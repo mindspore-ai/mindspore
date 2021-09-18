@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/lstm_cpu_kernel.h"
 #include <string>
 #include "utils/ms_utils.h"
@@ -21,9 +22,18 @@
 
 namespace mindspore {
 namespace kernel {
-const int kMaxLSTMLayer = 100;
-const int kOutputWorkSpaceIndex = 3;
-const int kGateNum = 4;
+namespace {
+constexpr size_t kLstmInputsNum = 4;
+constexpr size_t kLstmOutputsNum = 5;
+constexpr int kMaxLSTMLayer = 100;
+constexpr int kOutputWorkSpaceIndex = 3;
+constexpr int kGateNum = 4;
+
+using tag = dnnl::memory::format_tag;
+using dim = dnnl::memory::dims;
+using dt = dnnl::memory::data_type;
+}  // namespace
+
 void LstmCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   output_size_list_[kOutputWorkSpaceIndex] = reserve_size_;
@@ -46,8 +56,7 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 #endif
   MS_EXCEPTION_IF_NULL(kernel_node);
-  using tag = dnnl::memory::format_tag;
-  using dim = dnnl::memory::dims;
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
   auto eng = MKLKernelEngine::Get().engine();
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
@@ -70,10 +79,10 @@ void LstmCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_desc = formatted_md(dst_dims, tag::tnc);
   dnnl::memory::desc dst_h_desc = formatted_md(dst_h_dims, tag::ldnc);
   dnnl::memory::desc dst_c_desc = formatted_md(dst_c_dims, tag::ldnc);
-  if (!kernel_node->HasAttr(kAttrIsTraining)) {
-    is_training = true;
-  } else {
+  if (kernel_node->HasAttr(kAttrIsTraining)) {
     is_training = GetValue<bool>(kernel_node->GetAttr(kAttrIsTraining));
+  } else {
+    is_training = true;
   }
   auto prop_kind = dnnl::prop_kind::forward_training;
   if (!is_training) {
@@ -106,9 +115,9 @@ void LstmCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
   bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
-  input_size_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size"));
-  hidden_size_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size"));
-  num_layers_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers"));
+  input_size_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size"));
+  hidden_size_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size"));
+  num_layers_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers"));
   has_bias_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
   batch_size_ = SizeToInt(src_shape[1]);
   seq_len_ = SizeToInt(src_shape[0]);

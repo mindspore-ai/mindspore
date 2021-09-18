@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define BroadcastTo(type, input, shape_info, output) broadcast_to_##type(input, shape_info, output)
+#define BROADCAST_TO(type, input, shape_info, output) broadcast_to_##type(input, shape_info, output)
 int broadcast_to_int(const int *input, BroadcastShapeInfo *shape_info, int *output);
 int broadcast_to_float(const float *input, BroadcastShapeInfo *shape_info, float *output);
 int broadcast_to_bool(const bool *input, BroadcastShapeInfo *shape_info, bool *output);

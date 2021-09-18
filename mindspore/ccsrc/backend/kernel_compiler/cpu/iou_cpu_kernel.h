@@ -23,10 +23,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUMS = 2;
-constexpr size_t OUTPUT_NUMS = 1;
-constexpr size_t BOX_COORDINATE_LEN = 4;
-
 template <typename T>
 class IOUCPUKernel : public CPUKernel {
  public:

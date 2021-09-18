@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -31,55 +32,53 @@ class CumSumCPUKernel : public CPUKernel {
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  void Reshape();
 
   template <typename T>
   void InitWorkspaceSize();
 
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-
-  template <typename T>
-  void LaunchCumSum(const T *input_addr, T *output_addr, T *ws_addr, size_t start, size_t end);
-
- private:
-  void CheckParam(const CNodePtr &kernel_node);
-
-  void Reshape();
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
   template <typename T>
   void LeftMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                size_t start, size_t end);
+                size_t start, size_t end) const;
 
   template <typename T>
   void RightMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                 size_t start, size_t end);
+                 size_t start, size_t end) const;
 
   template <typename T>
   void Copy(T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2, size_t start,
-            size_t end);
+            size_t end) const;
 
   template <typename T>
   void CumSumKernelReverse(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride,
-                           size_t stride2, size_t start, size_t end);
+                           size_t stride2, size_t start, size_t end) const;
 
   template <typename T>
   void CumSumKernel(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
-                    size_t start, size_t end);
+                    size_t start, size_t end) const;
+
+  template <typename T>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs) const;
+
+  template <typename T>
+  void LaunchCumSum(const T *input_addr, T *output_addr, T *ws_addr, size_t start, size_t end) const;
 
   std::vector<size_t> shape_;
   std::vector<size_t> dst_shape;
-  size_t input_size_0_;
-  size_t stride_;
-  size_t stride2_;
-  size_t dims_[3] = {};
-  int exclusive_;
-  int reverse_;
-  int axis_;
+  size_t input_size_0_{0};
+  size_t stride_{0};
+  size_t stride2_{0};
+  size_t dims_[3]{0};
+  int exclusive_{0};
+  int reverse_{0};
+  int axis_{0};
   TypeId dtype_{kTypeUnknown};
 };
 

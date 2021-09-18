@@ -39,7 +39,7 @@ void pad_input_shape(int *input_shape, int input_shape_len, int output_shape_len
   }
 }
 
-#define BROADCAST_TO(type)                                                                             \
+#define BROADCAST_TO_IMPL(type)                                                                        \
   int broadcast_to_##type(const type *input, BroadcastShapeInfo *shape_info, type *output) {           \
     if (input == NULL || output == NULL) {                                                             \
       return NNACL_NULL_PTR;                                                                           \
@@ -96,9 +96,9 @@ void pad_input_shape(int *input_shape, int input_shape_len, int output_shape_len
     return NNACL_OK;                                                                                   \
   }
 
-BROADCAST_TO(int)
-BROADCAST_TO(float)
-BROADCAST_TO(bool)
+BROADCAST_TO_IMPL(int)
+BROADCAST_TO_IMPL(float)
+BROADCAST_TO_IMPL(bool)
 #ifdef ENABLE_FP16
-BROADCAST_TO(float16_t)
+BROADCAST_TO_IMPL(float16_t)
 #endif

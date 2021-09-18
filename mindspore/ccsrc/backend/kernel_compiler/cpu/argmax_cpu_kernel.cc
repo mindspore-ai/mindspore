@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/argmax_cpu_kernel.h"
+
+#include <string>
+
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kArgMaxInputsNum = 1;
+constexpr size_t kArgMaxOutputsNum = 1;
+constexpr char kKernelName[] = "ArgMax";
+
 size_t get_element_num(const std::vector<size_t> &shape) {
   size_t size = 1;
   for (size_t i = 0; i < shape.size(); i++) {
@@ -30,17 +38,14 @@ size_t get_element_num(const std::vector<size_t> &shape) {
 template <typename T>
 bool check_validation(const std::vector<size_t> &shape, const size_t num_before_axis, const size_t num_after_axis,
                       const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "Wrong number of inputs or outputs!";
-    return false;
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kArgMaxInputsNum, kKernelName);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kArgMaxOutputsNum, kKernelName);
   size_t data_size = sizeof(T);
   size_t input_size = get_element_num(shape) * data_size;
   size_t output_num = num_before_axis * num_after_axis;
   size_t output_size = output_num * sizeof(int);
   if (inputs[0]->size != input_size || outputs[0]->size != output_size) {
     MS_LOG(EXCEPTION) << "Invalid input or output data size!";
-    return false;
   }
   return true;
 }
@@ -49,24 +54,28 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
 template <typename T>
 void ArgmaxCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t shape_len = shape_.size();
+  if (shape_len == 0) {
+    MS_LOG(EXCEPTION) << "Shape size should be greater than 0";
+  }
   int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += SizeToLong(shape_len);
   if (axis < 0) {
     MS_LOG(EXCEPTION) << "Invalid axis:" << axis << ", should in range [-1, " << (shape_len - 1) << "]";
   }
-  axis = axis % static_cast<int64_t>(shape_len);
+  axis = axis % SizeToLong(shape_len);
   num_before_axis_ = 1;
   num_after_axis_ = 1;
   for (size_t i = 0; i < shape_len; i++) {
-    if (static_cast<int64_t>(i) < axis) {
+    if (SizeToLong(i) < axis) {
       num_before_axis_ *= shape_[i];
-    } else if (static_cast<int64_t>(i) > axis) {
+    } else if (SizeToLong(i) > axis) {
       num_after_axis_ *= shape_[i];
     }
   }
-  dim_axis_ = shape_[axis];
+  dim_axis_ = shape_[LongToSize(axis)];
 }
 
 template <typename T>
@@ -76,8 +85,8 @@ bool ArgmaxCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, c
     return false;
   }
 
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output = reinterpret_cast<int32_t *>(outputs[0]->addr);
+  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *output = reinterpret_cast<int32_t *>(outputs[0]->addr);
 
   std::vector<float> array_axis(dim_axis_);
   for (size_t i = 0; i < num_before_axis_; i++) {

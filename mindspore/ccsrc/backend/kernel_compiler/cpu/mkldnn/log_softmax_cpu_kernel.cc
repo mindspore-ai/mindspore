@@ -13,15 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/log_softmax_cpu_kernel.h"
+#include <algorithm>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kLogSoftmaxInputsNum = 1;
+constexpr size_t kLogSoftmaxOutputsNum = 1;
+}  // namespace
+
 void LogSoftmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   int axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis >= SizeToInt(src_shape.size())) {
@@ -41,9 +49,8 @@ void LogSoftmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool LogSoftmaxCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Log softmax error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLogSoftmaxInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLogSoftmaxOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
   ExecutePrimitive();

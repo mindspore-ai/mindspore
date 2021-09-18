@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <functional>
+
 #include "backend/kernel_compiler/cpu/check_valid_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 

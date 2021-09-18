@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_APPLY_MOMENTUM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_APPLY_MOMENTUM_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
-#include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
+
+#include "backend/kernel_compiler/cpu/cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class ApplyMomentumCPUKernel : public MKLCPUKernel {
+class ApplyMomentumCPUKernel : public CPUKernel {
  public:
   ApplyMomentumCPUKernel() = default;
   ~ApplyMomentumCPUKernel() override = default;

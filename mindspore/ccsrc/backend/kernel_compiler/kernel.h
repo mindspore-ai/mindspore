@@ -199,6 +199,7 @@ class KernelMod {
   void *GetStream() const { return stream_; }
 
  protected:
+  std::string kernel_name_;
   std::string unique_name_;
   std::string fullname_;
   bool is_monad_{false};

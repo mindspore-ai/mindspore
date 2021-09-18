@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/allgather_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "runtime/device/cpu/mpi/mpi_interface.h"
@@ -21,28 +22,25 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kAllGatherInputsNum = 1;
+constexpr size_t kAllGatherOutputsNum = 1;
 constexpr auto kRanksGroup = "group";
-constexpr auto kAllGatherInputNum = 1;
 }  // namespace
 
 void AllGatherCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != kAllGatherInputNum) {
-    MS_LOG(EXCEPTION) << "Allgather input num:" << input_num;
-  }
-
-  auto ranks_group = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kRanksGroup);
-  if (ranks_group != nullptr) {
-    ranks_group_ = GetValue<std::vector<int>>(ranks_group);
-  } else {
-    MS_LOG(EXCEPTION) << "Miss attribute " << kRanksGroup;
-  }
+  CHECK_KERNEL_INPUTS_NUM(input_num, kAllGatherInputsNum, kernel_name_);
+  ranks_group_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, kRanksGroup);
 }
 
 bool AllGatherCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAllGatherInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAllGatherOutputsNum, kernel_name_);
+  auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   auto input_data_num = inputs[0]->size / sizeof(float);
   return MPIAllGather(input_addr, output_addr, ranks_group_, input_data_num);
 }

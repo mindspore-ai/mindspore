@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAM_WEIGHT_DECAY_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ADAM_WEIGHT_DECAY_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kSizeFloat32 = sizeof(float);
-constexpr size_t kScalarIndex = 0;
-constexpr size_t kAdamWeightDecayInputNum = 9;
-constexpr size_t kAdamWeightDecayOutputNum = 3;
-
 class AdamWeightDecayCPUKernel : public CPUKernel {
  public:
   AdamWeightDecayCPUKernel() = default;
