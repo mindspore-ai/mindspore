@@ -37,6 +37,7 @@ int ResizeBaseCPUKernel::CheckParameters() {
     MS_LOG(ERROR) << "cast ResizeParameter failed.";
     return RET_NULL_PTR;
   }
+  MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "thread_num_ should not be 0");
   method_ = parameter->method_;
   if (method_ == schema::ResizeMethod::ResizeMethod_UNKNOWN) {
     MS_LOG(ERROR) << "Resize method can not be unknown.";

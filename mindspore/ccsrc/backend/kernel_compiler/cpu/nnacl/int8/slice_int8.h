@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 int SliceInt8NoParallel(const int8_t *input, int8_t *output, SliceParameter *param, const QuantMulArg *multiplier);
-int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param, int thread_id);
+int SliceInt8(const int8_t *input, int8_t *output, const SliceParameter *param, int thread_id);
 #ifdef __cplusplus
 }
 #endif
