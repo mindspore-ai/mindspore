@@ -121,6 +121,7 @@ function GenerateWeightQuantConfig() {
 function parse_line() {
     i=1
     loss_name=
+    inputShapes=
     enable_fp16="false"
     virtual_batch="false"
     accuracy_limit=0.5
@@ -168,6 +169,10 @@ function parse_line() {
           "code_example")
              ret=1
              ;;
+          "inputShapes")
+            i=$(($i+1))
+            inputShapes=${line_array[i]}
+            ;;
           *)
             check=`echo "${line_array[i]}" | grep -E '^\-?[0-9]*\.?[0-9]+$'`
             if [ "${check}" != "" ] ; then
@@ -227,6 +232,7 @@ function Run_x86() {
             --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
             --exportFile=${export_file} \
             --virtualBatch=${virtual_batch} \
+            --inputShapes=${inputShapes} \
             --lossName=${loss_name} " >> ${run_x86_log_file}
         ${run_valgrind} ./tools/benchmark_train/benchmark_train \
             --modelFile=${model_file} \
@@ -236,6 +242,7 @@ function Run_x86() {
             --accuracyThreshold=${accuracy_limit} --inferenceFile=${inference_file} \
             --exportFile=${export_file} \
             --virtualBatch=${virtual_batch} \
+            --inputShapes=${inputShapes} \
             --lossName=${loss_name} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86'${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
@@ -362,6 +369,7 @@ function Run_arm() {
         --inferenceFile=${inference_file} \
         --exportFile=${export_file} \
         --virtualBatch=${virtual_batch} \
+        --inputShapes=${inputShapes} \
         --lossName=${loss_name}
 ENDM
 )
