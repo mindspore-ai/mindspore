@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DEBUG_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DEBUG_ACTOR_H_
 
+#include <vector>
 #include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/hardware/device_context.h"
@@ -36,6 +37,10 @@ class DebugActor : public ActorBase {
   // The debug of each node.
   void Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_, const DeviceContext *device_context,
              OpContext<DeviceTensor> *const op_context, const AID *from_aid);
+
+  // The debug on step begin.
+  void DebugOnStepBegin(std::vector<KernelGraphPtr> graphs, std::vector<DeviceContext *> device_contexts,
+                        OpContext<DeviceTensor> *const op_context, const AID *from_aid);
 
   // The debug on step end.
   void DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid);

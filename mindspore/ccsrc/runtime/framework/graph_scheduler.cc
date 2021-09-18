@@ -654,8 +654,8 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
   }
 
   auto actor_name = graph_compiler_info.name_ + "_DataPrepareActor";
-  auto data_prepare_actor = std::make_shared<DataPrepareActor>(actor_name, memory_manager_aid_, &graph_compiler_info,
-                                                               host_queue_ds_actor, host_queue);
+  auto data_prepare_actor = std::make_shared<DataPrepareActor>(actor_name, memory_manager_aid_, debug_aid_,
+                                                               &graph_compiler_info, host_queue_ds_actor, host_queue);
   MS_LOG(INFO) << "Create data prepare actor: " << actor_name;
   MS_EXCEPTION_IF_NULL(data_prepare_actor);
 
