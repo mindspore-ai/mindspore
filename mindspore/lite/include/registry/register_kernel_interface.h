@@ -39,7 +39,8 @@ class MS_API RegisterKernelInterface {
   /// \param[in] creator Define the KernelInterface create function.
   ///
   /// \return Status as a status identification of registering.
-  static Status CustomReg(const std::string &provider, const std::string &op_type, KernelInterfaceCreator creator);
+  inline static Status CustomReg(const std::string &provider, const std::string &op_type,
+                                 KernelInterfaceCreator creator);
 
   /// \brief Static method to register op whose primitive type is ordinary.
   ///
@@ -48,7 +49,7 @@ class MS_API RegisterKernelInterface {
   /// \param[in] creator Define the KernelInterface create function.
   ///
   /// \return Status as a status identification of registering.
-  static Status Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator);
+  inline static Status Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator);
 
   /// \brief Static method to get registration of a certain op.
   ///
@@ -56,7 +57,14 @@ class MS_API RegisterKernelInterface {
   /// \param[in] primitive Define the attributes of a certain op.
   ///
   /// \return Boolean value to represent registration of a certain op is existing or not.
-  static std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
+  inline static std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
+                                                                            const schema::Primitive *primitive);
+
+ private:
+  static Status CustomReg(const std::vector<char> &provider, const std::vector<char> &op_type,
+                          KernelInterfaceCreator creator);
+  static Status Reg(const std::vector<char> &provider, int op_type, KernelInterfaceCreator creator);
+  static std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::vector<char> &provider,
                                                                      const schema::Primitive *primitive);
 };
 
@@ -81,6 +89,20 @@ class MS_API KernelInterfaceReg {
     RegisterKernelInterface::CustomReg(provider, op_type, creator);
   }
 };
+
+Status RegisterKernelInterface::CustomReg(const std::string &provider, const std::string &op_type,
+                                          KernelInterfaceCreator creator) {
+  return CustomReg(StringToChar(provider), StringToChar(op_type), creator);
+}
+
+Status RegisterKernelInterface::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
+  return Reg(StringToChar(provider), op_type, creator);
+}
+
+std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInterface(
+  const std::string &provider, const schema::Primitive *primitive) {
+  return GetKernelInterface(StringToChar(provider), primitive);
+}
 
 /// \brief Defined registering macro to register ordinary op, which called by user directly.
 ///

@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_OPENCL_RUNTIME_WRAPPER_H
 #define MINDSPORE_LITE_INCLUDE_REGISTRY_OPENCL_RUNTIME_WRAPPER_H
+
 #include <vector>
 #include <map>
 #include <memory>
@@ -26,6 +27,7 @@
 #include "CL/cl2.hpp"
 #include "include/api/allocator.h"
 #include "include/api/status.h"
+#include "include/api/dual_abi_helper.h"
 
 namespace mindspore::registry::opencl {
 class OpenCLRuntimeWrapper {
@@ -39,7 +41,7 @@ class OpenCLRuntimeWrapper {
   /// \param[in] source Define OpenCl source.
   ///
   /// \return Status as a status identification of loading code.
-  Status LoadSource(const std::string &program_name, const std::string &source);
+  inline Status LoadSource(const std::string &program_name, const std::string &source);
 
   /// \brief Building OpenCL code.
   ///
@@ -49,8 +51,8 @@ class OpenCLRuntimeWrapper {
   /// \param[in] build_options_ext Define OpenCl kernel build options.
   ///
   /// \return Status as a status identification of build Kernel
-  Status BuildKernel(cl::Kernel *kernel, const std::string &program_name, const std::string &kernel_name,
-                     const std::vector<std::string> &build_options_ext = {});
+  inline Status BuildKernel(cl::Kernel *kernel, const std::string &program_name, const std::string &kernel_name,
+                            const std::vector<std::string> &build_options_ext = {});
 
   /// \brief Set kernel argument
   ///
@@ -114,6 +116,23 @@ class OpenCLRuntimeWrapper {
   uint64_t GetMaxImage2DHeight();
 
   uint64_t GetImagePitchAlignment();
+
+ private:
+  Status LoadSource(const std::vector<char> &program_name, const std::vector<char> &source);
+
+  Status BuildKernel(cl::Kernel *kernel, const std::vector<char> &program_name, const std::vector<char> &kernel_name,
+                     const std::vector<std::vector<char>> &build_options_ext);
 };
+
+Status OpenCLRuntimeWrapper::LoadSource(const std::string &program_name, const std::string &source) {
+  return LoadSource(StringToChar(program_name), StringToChar(source));
+}
+
+Status OpenCLRuntimeWrapper::BuildKernel(cl::Kernel *kernel, const std::string &program_name,
+                                         const std::string &kernel_name,
+                                         const std::vector<std::string> &build_options_ext) {
+  return BuildKernel(kernel, StringToChar(program_name), StringToChar(kernel_name),
+                     VectorStringToChar(build_options_ext));
+}
 }  // namespace mindspore::registry::opencl
 #endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_OPENCL_RUNTIME_WRAPPER_H

@@ -221,7 +221,7 @@ class MS_API MSTensor {
   /// \brief Set the name for the MSTensor. Only valid for Lite.
   ///
   /// \param[in] The name of the MSTensor.
-  void SetTensorName(const std::string &name);
+  inline void SetTensorName(const std::string &name);
 
   /// \brief Set the Allocator for the MSTensor. Only valid for Lite.
   ///
@@ -275,6 +275,7 @@ class MS_API MSTensor {
   MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
            size_t data_len);
   std::vector<char> CharName() const;
+  void SetTensorName(const std::vector<char> &name);
 
   friend class ModelImpl;
   std::shared_ptr<Impl> impl_;
@@ -332,6 +333,10 @@ MSTensor::MSTensor(const std::string &name, enum DataType type, const std::vecto
     : MSTensor(StringToChar(name), type, shape, data, data_len) {}
 
 std::string MSTensor::Name() const { return CharToString(CharName()); }
+
+void MSTensor::SetTensorName(const std::string &name) {
+  return SetTensorName(StringToChar(name));
+}
 
 using Key = struct Key {
   const size_t max_key_len = 32;

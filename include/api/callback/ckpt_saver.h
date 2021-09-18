@@ -21,13 +21,21 @@
 #include <vector>
 #include <memory>
 #include "include/api/callback/callback.h"
+#include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 
 class CkptSaver: public TrainCallBack {
  public:
-  explicit CkptSaver(int save_every_n, const std::string &filename_prefix);
+  inline CkptSaver(int save_every_n, const std::string &filename_prefix);
   virtual ~CkptSaver();
+
+ private:
+  CkptSaver(int save_every_n, const std::vector<char> &filename_prefix);
 };
+
+CkptSaver::CkptSaver(int save_every_n, const std::string &filename_prefix)
+    : CkptSaver(save_every_n, StringToChar(filename_prefix)) {}
+
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CALLBACK_CKPT_SAVER_H

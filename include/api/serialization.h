@@ -68,9 +68,9 @@ class MS_API Serialization {
                             const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
   static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);
   static Status ExportModel(const Model &model, ModelType model_type, Buffer *model_data);
-  static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file,
-                            QuantizationType quantization_type = kNoQuant, bool export_inference_only = true,
-                            std::vector<std::string> output_tensor_name = {});
+  inline static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file,
+                                   QuantizationType quantization_type = kNoQuant, bool export_inference_only = true,
+                                   std::vector<std::string> output_tensor_name = {});
 
  private:
   static Status Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph, const Key &dec_key,
@@ -80,6 +80,9 @@ class MS_API Serialization {
                      const std::vector<char> &dec_mode);
   static Status Load(const std::vector<std::vector<char>> &files, ModelType model_type, std::vector<Graph> *graphs,
                      const Key &dec_key, const std::vector<char> &dec_mode);
+  static Status ExportModel(const Model &model, ModelType model_type, const std::vector<char> &model_file,
+                            QuantizationType quantization_type, bool export_inference_only,
+                            const std::vector<std::vector<char>> &output_tensor_name);
 };
 
 Status Serialization::Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
@@ -96,5 +99,13 @@ Status Serialization::Load(const std::vector<std::string> &files, ModelType mode
                            const Key &dec_key, const std::string &dec_mode) {
   return Load(VectorStringToChar(files), model_type, graphs, dec_key, StringToChar(dec_mode));
 }
+
+Status Serialization::ExportModel(const Model &model, ModelType model_type, const std::string &model_file,
+                                  QuantizationType quantization_type, bool export_inference_only,
+                                  std::vector<std::string> output_tensor_name) {
+  return ExportModel(model, model_type, StringToChar(model_file), quantization_type, export_inference_only,
+                     VectorStringToChar(output_tensor_name));
+}
+
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_SERIALIZATION_H

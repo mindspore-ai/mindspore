@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include "include/lite_utils.h"
+#include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 namespace registry {
@@ -36,13 +37,13 @@ class MS_API PassRegistry {
   ///
   /// \param[in] pass_name Define the name of the pass, a string which should guarantee uniqueness.
   /// \param[in] pass Define pass instance.
-  PassRegistry(const std::string &pass_name, const PassBasePtr &pass);
+  inline PassRegistry(const std::string &pass_name, const PassBasePtr &pass);
 
   /// \brief Constructor of PassRegistry to assign which passes are required for external extension.
   ///
   /// \param[in] position Define the place where assigned passes will run.
   /// \param[in] names Define the names of the passes.
-  PassRegistry(PassPosition position, const std::vector<std::string> &names);
+  inline PassRegistry(PassPosition position, const std::vector<std::string> &names);
 
   /// \brief Destructor of PassRegistrar.
   ~PassRegistry() = default;
@@ -52,16 +53,35 @@ class MS_API PassRegistry {
   /// \param[in] position Define the place where assigned passes will run.
   ///
   /// \return Passes' Name Vector.
-  static std::vector<std::string> GetOuterScheduleTask(PassPosition position);
+  inline static std::vector<std::string> GetOuterScheduleTask(PassPosition position);
 
   /// \brief Static method to obtain pass instance according to passes' name.
   ///
   /// \param[in] pass_names Define the name of pass.
   ///
   /// \return Pass Instance Vector.
-  static PassBasePtr GetPassFromStoreRoom(const std::string &pass_name);
+  inline static PassBasePtr GetPassFromStoreRoom(const std::string &pass_name);
+
+ private:
+  PassRegistry(const std::vector<char> &pass_name, const PassBasePtr &pass);
+  PassRegistry(PassPosition position, const std::vector<std::vector<char>> &names);
+  static std::vector<std::vector<char>> GetOuterScheduleTaskInner(PassPosition position);
+  static PassBasePtr GetPassFromStoreRoom(const std::vector<char> &pass_name_char);
 };
 
+PassRegistry::PassRegistry(const std::string &pass_name, const PassBasePtr &pass)
+    : PassRegistry(StringToChar(pass_name), pass) {}
+
+PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &names)
+    : PassRegistry(position, VectorStringToChar(names)) {}
+
+std::vector<std::string> PassRegistry::GetOuterScheduleTask(PassPosition position) {
+  return VectorCharToString(GetOuterScheduleTaskInner(position));
+}
+
+PassBasePtr PassRegistry::GetPassFromStoreRoom(const std::string &pass_name) {
+  return GetPassFromStoreRoom(StringToChar(pass_name));
+}
 /// \brief Defined registering macro to register Pass, which called by user directly.
 ///
 /// \param[in] name Define the name of the pass, a string which should guarantee uniqueness.

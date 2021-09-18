@@ -37,18 +37,21 @@ void RegPass(const std::string &pass_name, const PassBasePtr &pass) {
 }
 }  // namespace
 
-PassRegistry::PassRegistry(const std::string &pass_name, const PassBasePtr &pass) { RegPass(pass_name, pass); }
+PassRegistry::PassRegistry(const std::vector<char> &pass_name, const PassBasePtr &pass) {
+  RegPass(CharToString(pass_name), pass);
+}
 
-PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &names) {
+PassRegistry::PassRegistry(PassPosition position, const std::vector<std::vector<char>> &names) {
   std::unique_lock<std::mutex> lock(pass_mutex);
-  external_assigned_passes[position] = names;
+  external_assigned_passes[position] = VectorCharToString(names);
 }
 
-std::vector<std::string> PassRegistry::GetOuterScheduleTask(PassPosition position) {
-  return external_assigned_passes[position];
+std::vector<std::vector<char>> PassRegistry::GetOuterScheduleTaskInner(PassPosition position) {
+  return VectorStringToChar(external_assigned_passes[position]);
 }
 
-PassBasePtr PassRegistry::GetPassFromStoreRoom(const std::string &pass_name) {
+PassBasePtr PassRegistry::GetPassFromStoreRoom(const std::vector<char> &pass_name_char) {
+  std::string pass_name = CharToString(pass_name_char);
   return outer_pass_storage.find(pass_name) == outer_pass_storage.end() ? nullptr : outer_pass_storage[pass_name];
 }
 }  // namespace registry
