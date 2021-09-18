@@ -1269,6 +1269,9 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
     DumpIR("after_adjust_kernel.ir", kernel_graph);
   }
 #endif
+  auto execution_order = kernel_graph->execution_order();
+  AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
+  kernel_graph->set_execution_order(execution_order);
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -2021,7 +2024,7 @@ void AscendSession::UpdateOutputTensors(const VectorRef *outputs,
         }
         const auto &address = AnfAlgo::GetMutableOutputAddr(node, output_index);
         tensor->set_device_address(address);
-        if (IsVMGraphTaskSink()) {
+        if (IsVMGraphTaskSink() && tensor->NeedSyncDeviceToHostImmediately()) {
           auto dst_device_address = AssignExtraMemForGraphOutput(tensor, node, output_index);
           MS_EXCEPTION_IF_NULL(dst_device_address);
           if (!dst_device_address->SyncDeviceToDevice(trans::GetRuntimePaddingShape(node, output_index),

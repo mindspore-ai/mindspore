@@ -276,7 +276,7 @@ class AnfRuntimeAlgorithm {
   static bool IsSwitchCall(const CNodePtr &call_node);
   static bool IsScalarInput(const CNodePtr &cnode, size_t index);
   static bool IsScalarOutput(const CNodePtr &cnode, size_t index);
-  static void ReorderOptimizerExecList(NotNull<std::vector<CNodePtr> *> node_list);
+  static void ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list);
   static void ReorderPosteriorExecList(NotNull<std::vector<CNodePtr> *> node_list);
   // get fix output precision of cnode.
   static TypeId GetCNodeOutputPrecision(const AnfNodePtr &node);
