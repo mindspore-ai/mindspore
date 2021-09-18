@@ -164,7 +164,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 class ScriptInfo {
  public:
   explicit ScriptInfo(const py::object &obj) : py_obj_(obj) {}
-
+  ~ScriptInfo() = default;
   // Key for user data.
   constexpr static char key[] = "ScriptInfo";
 
