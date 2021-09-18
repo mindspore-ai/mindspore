@@ -623,6 +623,13 @@ class Squeeze(PrimitiveWithInfer):
 
     If `axis` is specified, it will remove the dimensions of size 1 in the given `axis`.
     It `axis` is None, it will remove all the dimensions of size 1.
+    For example, if input is of shape: (A×1×B×C×1×D), then the out tensor will be of shape: (A×B×C×D);
+    When dim is given, a squeeze operation is done only in the given dimension.
+    If input is of shape: (A×1×B), squeeze(input, 0) leaves the tensor unchanged,
+    but squeeze(input, 1) will squeeze the tensor to the shape (A×B).
+
+    Please note that in dynamic graph mode, the output Tensor will share data with the input Tensor,
+    and there is no Tensor data copy process.
 
     Note:
         The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.

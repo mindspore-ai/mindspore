@@ -984,6 +984,10 @@ class ReduceProd(_Reduce):
 class CumProd(PrimitiveWithInfer):
     """
     Computes the cumulative product of the tensor x along axis.
+    For example, if input is a vector of size N, the result will also be a vector of size N, with elements.
+
+    .. math::
+        y_i = x_1 * x_2 * x_3 * ... * x_i
 
     Args:
         exclusive (bool): If true, perform exclusive cumulative product. Default: False.
@@ -1148,14 +1152,14 @@ class BatchMatMul(MatMul):
 
     .. math::
 
-        \\text{output}[..., :, :] = \\text{matrix}(x[..., :, :]) * \\text{matrix}(y[..., :, :])
+        \text{output}[..., :, :] = \text{matrix}(x[..., :, :]) * \text{matrix}(y[..., :, :])
 
     The two input tensors must have the same rank and the rank must be not less than `3`.
 
     Args:
-        transpose_x (bool): If true, the last two dimensions of `x` is transposed before multiplication.
+        transpose_a (bool): If true, the last two dimensions of `x` is transposed before multiplication.
             Default: False.
-        transpose_y (bool): If true, the last two dimensions of `y` is transposed before multiplication.
+        transpose_b (bool): If true, the last two dimensions of `y` is transposed before multiplication.
             Default: False.
 
     Inputs:
@@ -1169,7 +1173,7 @@ class BatchMatMul(MatMul):
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
 
     Raises:
-        TypeError: If `transpose_x` or `transpose_y` is not a bool.
+        TypeError: If `transpose_a` or `transpose_b` is not a bool.
         ValueError: If length of shape of `x` is not equal to length of shape of `y` or
                     length of shape of `x` is less than 3.
 
@@ -2212,6 +2216,9 @@ class Log1p(Primitive):
     """
     Returns the natural logarithm of one plus the input tensor element-wise.
 
+    .. math::
+        out_i = {log_e}(x_i + 1)
+
     Inputs:
         - **x** (Tensor) - The input tensor. With float16 or float32 data type.
           The value must be greater than -1.
@@ -2325,7 +2332,7 @@ class Erfc(PrimitiveWithInfer):
 
 
 class Minimum(_MathBinaryOp):
-    """
+    r"""
     Computes the minimum of input tensors element-wise.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
@@ -2334,6 +2341,10 @@ class Minimum(_MathBinaryOp):
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
+    If one of the elements being compared is a NaN, then that element is returned.
+
+    .. math::
+        output_i = min(x_i, y_i)
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2388,6 +2399,10 @@ class Maximum(_MathBinaryOp):
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
+    If one of the elements being compared is a NaN, then that element is returned.
+
+    .. math::
+        output_i = max(x_i, y_i)
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2543,7 +2558,7 @@ class Div(_MathBinaryOp):
 
 
 class DivNoNan(_MathBinaryOp):
-    """
+    r"""
     Computes a safe divide and returns 0 if the y is zero.
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
@@ -2552,6 +2567,12 @@ class DivNoNan(_MathBinaryOp):
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
+
+    .. math::
+        output_{i} = \begin{cases}
+        0, & \text{ if } y_{i} = 0\\
+        x_{i} / y_{i}, & \text{ if } y_{i} \ne 0
+        \end{cases}
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2603,6 +2624,12 @@ class MulNoNan(_MathBinaryOp):
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors, the shapes of them could be broadcasted.
     When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
+    .. math::
+        output_{ij} = \begin{cases}
+        0, & if\ x_{ij} = 0\ or\ y_{ij} = 0;\\
+        x_{ij} * y_{ij}, & otherwise.
+        \end{cases}
 
     Note:
         The shapes of `x` and `y` should be the same or can be broadcasted.
@@ -5092,8 +5119,12 @@ class Eps(PrimitiveWithInfer):
 
 class LinSpace(PrimitiveWithInfer):
     r"""
-    Generates values in an interval (inclusive of start and stop) and returns the corresponding
-    interpolated array with **num** number of ticks.
+    The OP returns a Tensor whose value is num evenly spaced in the interval start and stop (including start and stop),
+    and the length of the output Tensor is num.
+
+    .. math::
+        step = (stop - start)/(num - 1)\\
+        output = [start, start+step, start+2*step, ... , stop]
 
     Inputs:
         - **start** (Tensor[float32]) - Start value of interval, With shape of 0-D.

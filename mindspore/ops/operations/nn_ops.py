@@ -137,6 +137,20 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
     That is, for any input size, the size of the specified output is H x W.
     The number of output features is equal to the number of input planes.
 
+    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
+    H is the feature height, and W is the feature width.
+
+    For avg adaptive pool2d:
+    ..  math::
+        \begin{align}
+        h_{start} &= floor(i * H_{in} / H_{out})\\
+        h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
+        w_{start} &= floor(j * W_{in} / W_{out})\\
+        w_{end} &= ceil((j + 1) * W_{in} / W_{out})\\
+        Output(i,j) &= \frac{\sum Input[h_{start}:h_{end}, w_{start}:w_{end}]}{(h_{end}- h_{start})
+        * (w_{end}- w_{start})}
+        \end{align}
+
     Args:
         output_size (Union[int, tuple]): The target output size is H x W.
             ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
@@ -151,16 +165,15 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
 
         Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
 
-        If `output_size` contains `None`:
+    .. math::
 
-        - `out_shape = input_x_shape[-2] + output_size[1]`: If `output_size` is `(None, w)`
-        - `out_shape = output_size[0] + input_x_shape[-1]`: If `output_size` is `(h, None)`
-        - `out_shape = input_x_shape[-2:]: If output_size` is `(None, None)`
-
-        If `output_size` does not contain `None`:
-
-        - `out_shape = (h, h)`: If `output_size` is `h`
-        - `out_shape = (h, w)`: If `output_size` is `(h, w)`
+        out\_shape = \begin{cases}
+        input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
+        output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
+        input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
+        (h, h), & \text{if output_size is h;}\\
+        (h, w), & \text{if output_size is (h, w)}
+        \end{cases}
 
     Raises:
         ValueError: If `output_size` is a tuple and if `output_size` length is not 2.
@@ -419,12 +432,17 @@ class Softsign(PrimitiveWithInfer):
 
 class ReLU(Primitive):
     r"""
-    Computes ReLU (Rectified Linear Unit) of input tensors element-wise.
+    Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
 
-    It returns :math:`\max(x,\  0)` element-wise.
+    It returns max(x, 0) element-wise. Specially, the neurons with the negative output
+    will be suppressed and the active neurons will stay the same.
+
+    .. math::
+
+        ReLU(x) = (x)^+ = max(0, x)
 
     Note:
-        In general, this operator is more commonly used. The difference from `ReLuV2` is that the operator will
+        In general, this operator is more commonly used. The difference from `ReLuV2` is that the `ReLuV2` will
         output one more Mask.
 
     Inputs:
@@ -432,7 +450,7 @@ class ReLU(Primitive):
           additional dimensions, with number data type.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_x`.
+        Tensor of shape :math:`(N, *)`, with the same type and shape as the `input_x`.
 
     Raises:
         TypeError: If dtype of `input_x` is not number.
@@ -606,9 +624,14 @@ class ReLU6(PrimitiveWithCheck):
 
 class ReLUV2(Primitive):
     r"""
-    Computes ReLU (Rectified Linear Unit) of input tensors element-wise.
+    Rectified Linear Unit activation function.
 
-    It returns :math:`\max(x,\  0)` element-wise.
+    It returns element-wise :math:`\max(0, x)`, specially, the neurons with the negative output
+    will be suppressed and the active neurons will stay the same.
+
+    .. math::
+
+        \text{ReLU}(x) = (x)^+ = \max(0, x)
 
     Note:
         The difference from `ReLu` is that the operator will output one more Mask,
@@ -1415,7 +1438,7 @@ class Conv2D(Primitive):
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
 
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
@@ -1546,7 +1569,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
                              f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}")
@@ -1619,7 +1642,7 @@ class _Pool(PrimitiveWithInfer):
            of two `int` for height and width. Default: 1.
         strides (Union[int, tuple[int]]): The stride of the window, that must be
             a tuple of two `int` for height and width. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid".
             Default: "valid".
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: "NCHW".
@@ -1705,7 +1728,7 @@ class MaxPool(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid".
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -1772,7 +1795,7 @@ class MaxPoolWithArgmax(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid".
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -1852,7 +1875,7 @@ class MaxPool3D(PrimitiveWithInfer):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid".
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -2012,7 +2035,7 @@ class AvgPool(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid".
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -2173,7 +2196,7 @@ class Conv2DBackpropInput(Primitive):
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', the 'pad' must be zero when 'pad_mode' is not \"pad\", "
                              f"but got 'pad' is {pad} and 'pad_mode' is {pad_mode}.")
@@ -2403,7 +2426,7 @@ class NLLLoss(PrimitiveWithInfer):
         \end{array}\right.
 
     Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum', Default: "mean".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only support float32 or float16.
@@ -2608,13 +2631,39 @@ class ApplyMomentum(PrimitiveWithInfer):
     Refer to the paper `On the importance of initialization and momentum in deep
     learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_  for more details.
 
-    Refer to :class:`mindspore.nn.Momentum` for more details about the formula and usage.
+    .. math::
+            v_{t+1} = v_{t} \ast u + gradients
+
+    If use_nesterov is True:
+
+    .. math::
+            p_{t+1} =  p_{t} - (grad \ast lr + v_{t+1} \ast u \ast lr)
+
+    If use_nesterov is False:
+
+    .. math::
+            p_{t+1} = p_{t} - lr \ast v_{t+1}
+
+    Here: where grad, lr, p, v and u denote the gradients, learning_rate, params, moments, and momentum respectively.
 
     Inputs of `variable`, `accumulation` and `gradient` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
     relatively highest priority data type.
     Data type conversion of Parameter is not supported. RuntimeError exception will be thrown.
+
+    Refer to :class:`mindspore.nn.Momentum` for more details about the formula and usage.
+
+    Note:
+        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
+        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
+        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
+
+        When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
+        but the gradient centralization can only be applied to the parameters of the convolution layer.
+        If the parameters of the non convolution layer are set to True, an error will be reported.
+
+        To improve parameter groups performance, the customized order of parameters can be supported.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumulation tensors
@@ -4056,7 +4105,8 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     .. math::
 
         \begin{array}{ll} \\
-            L_{ij} = -W_{ij}[Y_{ij}log(X_{ij}) + (1 - Y_{ij})log(1 - X_{ij})]
+            p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
+            L_{ij} = -[Y_{ij} * log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
         \end{array}
 
     :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
@@ -4072,6 +4122,23 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     the first method is to provide the loss value directly,
     the second method is to calculate the average value of all losses,
     and the third method is to calculate the sum of all losses.
+
+    This operator will multiply the output by the corresponding weight.
+    The tensor weight assigns different weights to each piece of data in the batch,
+    and the tensor pos_weight adds corresponding weights to the positive examples of each category.
+
+    In addition, it can trade off recall and precision by adding weights to positive examples.
+    In the case of multi-label classification the loss can be described as:
+
+    .. math::
+        \begin{array}{ll} \\
+            p_{ij,c} = sigmoid(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
+            L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
+        \end{array}
+
+    where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
+    n is the number of the sample in the batch and p_c is the weight of the positive answer for the class c.
+    p_c>1 increases the recall, p_c<1 increases the precision.
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',
@@ -4147,8 +4214,23 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
 
 
 class Pad(PrimitiveWithInfer):
-    """
+    r"""
     Pads the input tensor according to the paddings.
+    For example,
+    to pad only the last dimension of the input tensor, then pad has the form (padding_left,padding_right);
+    to pad the last 2 dimensions of the input tensor, then use
+    (padding_left,padding_right, padding_top,padding_bottom);
+    to pad the last 3 dimensions, use
+    (padding_left,padding_right, padding_top,padding_bottom padding_front,padding_back).
+
+    .. math::
+        \text{ input_x_shape} = (N_{1},N_{2},...,N_{n})\\
+        \begin{aligned}
+            \text{output_shape = }(&N_{1}+paddings[0,0]+paddings[0,1], \\
+                             & N_{2}+paddings[1,0]+paddings[1,1], \\
+                             &... , \\
+                             & N_{n}+paddings[n-1,0]+paddings[n-1,1])
+            \end{aligned}
 
     Args:
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
@@ -5754,6 +5836,9 @@ class ApplyAdadelta(PrimitiveWithInfer):
 class ApplyAdagrad(PrimitiveWithInfer):
     r"""
     Updates relevant entries according to the adagrad scheme.
+    It has been proposed in Adaptive Subgradient Methods for Online Learning and Stochastic Optimization.
+    This module can adaptively assign different learning rates for each parameter in view of the uneven number
+    of samples for different parameters.
 
     .. math::
         \begin{array}{ll} \\
@@ -7259,16 +7344,24 @@ class Dropout(PrimitiveWithCheck):
 
 class Dropout2D(PrimitiveWithInfer):
     """
-    During training, randomly zeroes some of the channels of the input tensor
-    with probability 1-`keep_prob` from a Bernoulli distribution.
+    During training, randomly zeroes some of the channels of the input tensor with probability 1-`keep_prob`
+    from a Bernoulli distribution(For a 4-dimensional tensor with a shape of NCHW, the channel feature map refers
+    to a 2-dimensional feature map with the shape of HW).
+
+    For example, the j_th channel of the i_th sample in the batched input is a 2D tensor input[i,j].
+    Each channel will be zeroed out independently on every forward call with probability 1-`keep_prob` using samples
+    from a Bernoulli distribution.
+
+    Dropout2D can improve the independence between channel feature maps.
 
     Args:
         keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
             means dropping out 20% of channels. Default: 0.5.
 
     Inputs:
-        - **x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`. The data type should be int8, int16,
-          int32, int64, float16 or float32.
+        - **x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`, where N is the batch size, C is the number
+        of channels, H is the feature height, and W is the feature width. The data type should be int8, int16, int32,
+        int64, float16 or float32.
 
     Outputs:
         - **output** (Tensor) - With the same shape and data type as `x`.
@@ -7310,15 +7403,23 @@ class Dropout2D(PrimitiveWithInfer):
 class Dropout3D(PrimitiveWithInfer):
     """
     During training, randomly zeroes some of the channels of the input tensor
-    with probability 1-`keep_prob` from a Bernoulli distribution.
+    with probability 1-`keep_prob` from a Bernoulli distribution(For a 5-dimensional tensor with a shape of NCDHW,
+    the channel feature map refers to a 3-dimensional feature map with a shape of DHW).
+
+    For example, the j_th channel of the i_th sample in the batched input is a 3D tensor input[i,j,k].
+    Each channel will be zeroed out independently on every forward call with probability 1-`keep_prob`
+    using samples from a Bernoulli distribution.
+
+    Dropout3D can improve the independence between channel feature maps.
 
     Args:
         keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
             means dropping out 20% of channels. Default: 0.5.
 
     Inputs:
-        - **x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`. The data type should be int8, int16,
-          int32, int64, float16 or float32.
+        - **x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`, where N is the batch size, C is the number
+        of channels, D is the feature depth, H is the feature height, and W is the feature width.
+        The data type should be int8, int16, int32, int64, float16 or float32.
 
     Outputs:
         - **output** (Tensor) - With the same shape and data type as `x`.
@@ -7361,8 +7462,14 @@ class CTCLoss(Primitive):
     r"""
     Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
 
+    The bottom layer of this interface calls the implementation of the third-party baidu-research::warp-ctc.
     The CTC algorithm is proposed in `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with
     Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_.
+
+    CTCLoss calculates loss between a continuous time series and a target sequence.
+    CTCLoss sums over the probability of input to target, producing a loss value which is differentiable with
+    respect to each input node. The alignment of input to target is assumed to be “many-to-one”,
+    such that the length of target series must be less than or equal to the length of input.
 
     Args:
         preprocess_collapse_repeated (bool): If true, repeated labels will be collapsed prior to the CTC calculation.
@@ -8060,7 +8167,7 @@ class AvgPool3D(Primitive):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "SAME", "VALID", "PAD", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "SAME", "VALID", "PAD".
             Default: "VALID".
 
             - same: Adopts the way of completion. The depth, height and width of the output will be the same as
@@ -8392,8 +8499,7 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         out_channel (int): The dimension of the output.
         kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
         mode (int): Modes for different convolutions. Not currently used.
-        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad", not case sensitive.
-            Default: "valid".
+        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
                     head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four
                     integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
@@ -8669,7 +8775,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
             other is for the width of the kernel.
         mode (int): Modes for different convolutions. Default is 1. It is currently not used.
         pad_mode (str): Specifies padding mode. The optional values are
-            "same", "valid", "pad", not case sensitive. Default: "valid".
+            "same", "valid", "pad". Default: "valid".
 
             - same: Adopts the way of completion. The depth, height and width of the output will be the same as
               the input. The total number of padding will be calculated in depth, horizontal and vertical
