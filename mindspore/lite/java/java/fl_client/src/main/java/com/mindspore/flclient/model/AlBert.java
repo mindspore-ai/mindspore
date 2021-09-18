@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,29 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.lite.LiteSession;
 import com.mindspore.lite.MSTensor;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
+/**
+ * albert
+ *
+ * @since v1.0
+ */
 public class AlBert extends TrainModel {
     private static final Logger logger = Logger.getLogger(AlBert.class.toString());
 
-    private static final int NUM_OF_CLASS = 4;
+    private static final int NUM_OF_CLASS = 5;
+
+    private static final int TRAIN_BERT_INPUTS = 4;
+
+    private static final int EVAL_BERT_INPUTS = 3;
 
     List<Feature> features;
 
@@ -42,16 +53,48 @@ public class AlBert extends TrainModel {
 
     private ByteBuffer labelIdBufffer;
 
+    private void fillInputBuffer(int batchIdx, boolean isTrainMode, List<Integer> labels) {
+        for (int i = 0; i < batchSize; i++) {
+            Feature feature = features.get(batchIdx * batchSize + i);
+            for (int j = 0; j < dataSize; j++) {
+                inputIdBufffer.putInt(feature.inputIds[j]);
+                tokenIdBufffer.putInt(feature.tokenIds[j]);
+                maskIdBufffer.putInt(feature.inputMasks[j]);
+            }
+            if (!isTrainMode) {
+                labels.add(feature.labelIds);
+            }
+            if (isTrainMode) {
+                for (int j = 0; j < dataSize; j++) {
+                    labelIdBufffer.putInt(feature.inputIds[j]);
+                }
+            }
+        }
+    }
+
     @Override
-    public int initSessionAndInputs(String modelPath, boolean trainMod) {
-        int ret = -1;
-        trainSession = SessionUtil.initSession(modelPath);
-        if (trainSession == null) {
+    public int initSessionAndInputs(String modelPath, boolean isTrainMode) {
+        if (modelPath == null) {
             logger.severe(Common.addTag("session init failed"));
+            return -1;
+        }
+        int ret = -1;
+        Optional<LiteSession> optTrainSession = SessionUtil.initSession(modelPath);
+        if (!optTrainSession.isPresent()) {
+            logger.severe(Common.addTag("session init failed"));
+            return -1;
+        }
+        trainSession = optTrainSession.get();
+        List<MSTensor> inputs = trainSession.getInputs();
+        if (inputs.size() < 1) {
+            logger.severe(Common.addTag("inputs size error"));
             return ret;
         }
-        List<MSTensor> inputs = trainSession.getInputs();
         MSTensor labelIdTensor = inputs.get(0);
+        if (labelIdTensor == null) {
+            logger.severe(Common.addTag("labelId tensor is null"));
+            return ret;
+        }
         int inputSize = labelIdTensor.elementsNum(); // labelId,tokenId,inputId,maskId has same size
         batchSize = labelIdTensor.getShape()[0];
         if (batchSize <= 0) {
@@ -65,54 +108,53 @@ public class AlBert extends TrainModel {
         inputIdBufffer.order(ByteOrder.nativeOrder());
         tokenIdBufffer.order(ByteOrder.nativeOrder());
         maskIdBufffer.order(ByteOrder.nativeOrder());
-        if (trainMod) {
-            labelIdBufffer = ByteBuffer.allocateDirect(batchSize * Integer.BYTES);
+        if (isTrainMode) {
+            labelIdBufffer = ByteBuffer.allocateDirect(inputSize * Integer.BYTES);
             labelIdBufffer.order(ByteOrder.nativeOrder());
         }
         numOfClass = NUM_OF_CLASS;
+        logger.info(Common.addTag("init session and input success"));
         return 0;
     }
 
     @Override
-    public List<Integer> fillModelInput(int batchIdx, boolean trainMod) {
+    public List<Integer> fillModelInput(int batchIdx, boolean isTrainMode) {
         inputIdBufffer.clear();
         tokenIdBufffer.clear();
         maskIdBufffer.clear();
-        if (trainMod) {
+        if (isTrainMode) {
             labelIdBufffer.clear();
         }
         List<Integer> labels = new ArrayList<>();
-        for (int i = 0; i < batchSize; i++) {
-            Feature feature = features.get(batchIdx * batchSize + i);
-            for (int j = 0; j < dataSize; j++) {
-                inputIdBufffer.putInt(feature.inputIds[j]);
-            }
-            for (int j = 0; j < dataSize; j++) {
-                tokenIdBufffer.putInt(feature.tokenIds[j]);
-            }
-            for (int j = 0; j < dataSize; j++) {
-                maskIdBufffer.putInt(feature.inputMasks[j]);
-            }
-            if(trainMod) {
-                labelIdBufffer.putInt(feature.labelIds);
-            }
-            if (!trainMod) {
-                labels.add(feature.labelIds);
-            }
+        if ((batchIdx + 1) * batchSize - 1 >= features.size()) {
+            logger.severe(Common.addTag("fill model input failed"));
+            return new ArrayList<>();
         }
-
+        fillInputBuffer(batchIdx, isTrainMode, labels);
         List<MSTensor> inputs = trainSession.getInputs();
+        if (inputs.size() != TRAIN_BERT_INPUTS && inputs.size() != EVAL_BERT_INPUTS) {
+            logger.severe(Common.addTag("bert input size error"));
+            return new ArrayList<>();
+        }
         MSTensor labelIdTensor;
         MSTensor tokenIdTensor;
         MSTensor inputIdTensor;
         MSTensor maskIdTensor;
-        if (trainMod) {
-            labelIdTensor = inputs.get(3);
-            tokenIdTensor = inputs.get(0);
-            inputIdTensor = inputs.get(1);
-            maskIdTensor = inputs.get(2);
+        if (isTrainMode) {
+            if (inputs.size() != TRAIN_BERT_INPUTS) {
+                logger.severe(Common.addTag("train bert input size error"));
+                return new ArrayList<>();
+            }
+            labelIdTensor = inputs.get(0);
+            tokenIdTensor = inputs.get(1);
+            inputIdTensor = inputs.get(2);
+            maskIdTensor = inputs.get(3);
             labelIdTensor.setData(labelIdBufffer);
         } else {
+            if (inputs.size() != EVAL_BERT_INPUTS) {
+                logger.severe(Common.addTag("eval bert input size error"));
+                return new ArrayList<>();
+            }
             tokenIdTensor = inputs.get(0);
             inputIdTensor = inputs.get(1);
             maskIdTensor = inputs.get(2);
@@ -140,6 +182,7 @@ public class AlBert extends TrainModel {
         trainSampleSize = features.size();
         batchNum = features.size() / batchSize;
         logger.info(Common.addTag("after pad samples size:" + features.size()));
+        logger.info(Common.addTag("after pad batch num:" + batchNum));
         return 0;
     }
 }

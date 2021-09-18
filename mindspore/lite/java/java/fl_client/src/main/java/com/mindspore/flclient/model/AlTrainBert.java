@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,24 @@ import com.mindspore.flclient.Common;
 
 import java.util.logging.Logger;
 
+/**
+ * al train bert for train
+ *
+ * @since v1.0
+ */
 public class AlTrainBert extends AlBert {
     private static final Logger logger = Logger.getLogger(AlTrainBert.class.toString());
 
     private static volatile AlTrainBert alTrainBert;
 
+    private AlTrainBert() {
+    }
+
+    /**
+     * get singleton instance
+     *
+     * @return singleton instance
+     */
     public static AlTrainBert getInstance() {
         AlTrainBert localRef = alTrainBert;
         if (localRef == null) {
@@ -38,14 +51,20 @@ public class AlTrainBert extends AlBert {
         return localRef;
     }
 
+    /**
+     * init data set
+     *
+     * @param dataFile data file
+     * @param vocabFile vocab file
+     * @param idsFile ids file
+     * @return data set size
+     */
     public int initDataSet(String dataFile, String vocabFile, String idsFile) {
-        features = DataSet.init(dataFile, vocabFile, idsFile, true);
-        if (features == null) {
-            logger.severe(Common.addTag("features cannot be null"));
+        if (dataFile == null || vocabFile == null || idsFile == null) {
+            logger.severe(Common.addTag("dataFile,idsFile,vocabFile cannot be empty"));
             return -1;
         }
+        features = DataSet.init(dataFile, vocabFile, idsFile, true);
         return features.size();
     }
 }
-
-

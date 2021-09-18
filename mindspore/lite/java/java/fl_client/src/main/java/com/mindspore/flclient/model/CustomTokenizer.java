@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Huawei Technologies Co., Ltd
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021-2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,68 +23,136 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 
+/**
+ * custom tokenizer class
+ *
+ * @since v1.0
+ */
 public class CustomTokenizer {
     private static final Logger logger = Logger.getLogger(CustomTokenizer.class.toString());
     private Map<String, Integer> vocabs = new HashMap<>();
-    private Boolean doLowerCase = Boolean.TRUE;
-    private int maxInputChars = 100;
-    private String[] NotSplitStrs = {"UNK"};
-    private String unkToken = "[UNK]";
+    private final int maxInputChars = 100;
+    private final String[] notSplitStrs = {"UNK"};
     private int maxSeqLen = 8;
-    private int vocabSize = 11682;
-    private Map<String, Integer> labelMap = new HashMap<String, Integer>() {{
-        put("good", 0);
-        put("leimu", 1);
-        put("xiaoku", 2);
-        put("xin", 3);
-        put("other", 4);
-    }};
+    private Map<String, Integer> labelMap = new HashMap<String, Integer>() {
+        {
+            put("good", 0);
+            put("leimu", 1);
+            put("xiaoku", 2);
+            put("xin", 3);
+            put("other", 4);
+        }
+    };
 
-    public void init(String vocabFile, String idsFile, boolean trainMod, boolean doLowerCase) {
-        this.doLowerCase = doLowerCase;
-        Path vocabPath = Paths.get(vocabFile);
-        List<String> vocabLines = null;
-        try {
-            vocabLines = Files.readAllLines(vocabPath, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            logger.severe(Common.addTag("read vocab file failed," + e.getMessage()));
+    private List<String> getPieceToken(String token) {
+        List<String> subTokens = new ArrayList<>();
+        boolean isBad = false;
+        int start = 0;
+        int tokenLen = token.length();
+        while (start < tokenLen) {
+            int end = tokenLen;
+            String curStr = "";
+            while (start < end) {
+                String subStr = token.substring(start, end);
+                if (start > 0) {
+                    subStr = "##" + subStr;
+                }
+                if (vocabs.get(subStr) != null) {
+                    curStr = subStr;
+                    break;
+                }
+                end = end - 1;
+            }
+            if (curStr.isEmpty()) {
+                isBad = true;
+                break;
+            }
+            subTokens.add(curStr);
+            start = end;
         }
-        if (vocabLines == null) {
-            logger.severe(Common.addTag("vocabLines cannot be null"));
-            return;
-        }
-        Path idsPath = Paths.get(idsFile);
-        List<String> idsLines = null;
-        try {
-            idsLines = Files.readAllLines(idsPath, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            logger.severe(Common.addTag("read ids file failed," + e.getMessage()));
-        }
-        if (idsLines == null) {
-            logger.severe(Common.addTag("idsLines cannot be null"));
-            return;
-        }
-        for (int i = 0; i < idsLines.size(); ++i) {
-            vocabs.put(vocabLines.get(i), Integer.parseInt(idsLines.get(i)));
+        if (isBad) {
+            return new ArrayList<>(Collections.singletonList("[UNK]"));
+        } else {
+            return subTokens;
         }
     }
 
-    // is chinses or punctuation
+    /**
+     * init tokenizer
+     *
+     * @param vocabFile vocab file path
+     * @param idsFile word id file path
+     * @param isTrainMode if work in trainMod
+     * @param isLowerCase if need do lowercase
+     */
+    public void init(String vocabFile, String idsFile, boolean isTrainMode, boolean isLowerCase) {
+        if (vocabFile == null || idsFile == null) {
+            logger.severe(Common.addTag("idsFile,vocabFile cannot be empty"));
+            return;
+        }
+        Path vocabPath = Paths.get(vocabFile);
+        List<String> vocabLines;
+        try {
+            vocabLines = Files.readAllLines(vocabPath, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            logger.severe(Common.addTag("read vocab file failed, please check vocab file path"));
+            return;
+        }
+        Path idsPath = Paths.get(idsFile);
+        List<String> idsLines;
+        try {
+            idsLines = Files.readAllLines(idsPath, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            logger.severe(Common.addTag("read ids file failed, please check ids file path"));
+            return;
+        }
+        for (int i = 0; i < idsLines.size(); ++i) {
+            try {
+                vocabs.put(vocabLines.get(i), Integer.parseInt(idsLines.get(i)));
+            } catch (NumberFormatException e) {
+                logger.severe(Common.addTag("id lines has invalid content"));
+                return;
+            }
+        }
+        if (!isTrainMode) {
+            maxSeqLen = 256;
+        }
+    }
+
+    /**
+     * check char is chinese char or punc char
+     *
+     * @param trimChar input char
+     * @return ture if char is chinese char or punc char,else false
+     */
     public Boolean isChineseOrPunc(char trimChar) {
         // is chinese char
         if (trimChar >= '\u4e00' && trimChar <= '\u9fa5') {
             return true;
         }
         // is puncuation char
-        return (trimChar >= 33 && trimChar <= 47) || (trimChar >= 58 && trimChar <= 64) || (trimChar >= 91 && trimChar
-                <= 96) || (trimChar >= 123 && trimChar <= 126);
+        boolean isFrontPuncChar = (trimChar >= 33 && trimChar <= 47) || (trimChar >= 58 && trimChar <= 64);
+        boolean isBackPuncChar = (trimChar >= 91 && trimChar <= 96) || (trimChar >= 123 && trimChar <= 126);
+        return isFrontPuncChar || isBackPuncChar;
     }
 
+    /**
+     * split text
+     *
+     * @param text input text
+     * @return split string array
+     */
     public String[] splitText(String text) {
-        if (text.isEmpty()) {
+        if (text == null) {
             return new String[0];
         }
         // clean remove white and control char
@@ -100,71 +168,71 @@ public class CustomTokenizer {
         return cleanText.toString().trim().split("\\s+");
     }
 
-    //   input = "unaffable" , output = ["un", "##aff", "##able"]
+    /**
+     * combine token to piece
+     *
+     * @param tokens input tokens
+     * @return pieces
+     */
     public List<String> wordPieceTokenize(String[] tokens) {
+        if (tokens == null) {
+            return new ArrayList<>();
+        }
         List<String> outputTokens = new ArrayList<>();
         for (String token : tokens) {
-            List<String> subTokens = new ArrayList<>();
-            boolean isBad = false;
-            int start = 0;
-            while (start < token.length()) {
-                int end = token.length();
-                String curStr = "";
-                while (start < end) {
-                    String subStr = token.substring(start, end);
-                    if (start > 0) {
-                        subStr = "##" + subStr;
-                    }
-                    if (vocabs.get(subStr) != null) {
-                        curStr = subStr;
-                        break;
-                    }
-                    end = end - 1;
-                }
-                if (curStr.isEmpty()) {
-                    isBad = true;
-                    break;
-                }
-                subTokens.add(curStr);
-                start = end;
-            }
-            if (isBad) {
-                outputTokens.add(unkToken);
-            } else {
-                outputTokens.addAll(subTokens);
-            }
+            List<String> subTokens = getPieceToken(token);
+            outputTokens.addAll(subTokens);
         }
         return outputTokens;
-
     }
 
-    public List<Integer> convertTokensToIds(List<String> tokens, boolean cycTrunc) {
+    /**
+     * convert token to id
+     *
+     * @param tokens input tokens
+     * @param isCycTrunc if need cyc trunc
+     * @return ids
+     */
+    public List<Integer> convertTokensToIds(List<String> tokens, boolean isCycTrunc) {
         int seqLen = tokens.size();
+        List<String> truncTokens;
         if (tokens.size() > maxSeqLen - 2) {
-            if (cycTrunc) {
+            if (isCycTrunc) {
                 int randIndex = (int) (Math.random() * seqLen);
                 if (randIndex > seqLen - maxSeqLen + 2) {
                     List<String> rearPart = tokens.subList(randIndex, seqLen);
                     List<String> frontPart = tokens.subList(0, randIndex + maxSeqLen - 2 - seqLen);
                     rearPart.addAll(frontPart);
-                    tokens = rearPart;
+                    truncTokens = rearPart;
                 } else {
-                    tokens = tokens.subList(randIndex, randIndex + maxSeqLen - 2);
+                    truncTokens = tokens.subList(randIndex, randIndex + maxSeqLen - 2);
                 }
             } else {
-                tokens = tokens.subList(0, maxSeqLen - 2);
+                truncTokens = tokens.subList(0, maxSeqLen - 2);
             }
+        } else {
+            truncTokens = new ArrayList<>(tokens);
         }
-        tokens.add(0, "[CLS]");
-        tokens.add("[SEP]");
-        List<Integer> ids = new ArrayList<>(tokens.size());
-        for (String token : tokens) {
+        truncTokens.add(0, "[CLS]");
+        truncTokens.add("[SEP]");
+        List<Integer> ids = new ArrayList<>(truncTokens.size());
+        for (String token : truncTokens) {
             ids.add(vocabs.getOrDefault(token, vocabs.get("[UNK]")));
         }
         return ids;
     }
 
-    public void addRandomMaskAndReplace(Feature feature, boolean keepFirstUnchange, boolean keepLastUnchange) {
+    /**
+     * add random mask and replace feature
+     *
+     * @param feature text feature
+     * @param isKeptFirst if keep first char not change
+     * @param isKeptLast if keep last char not change
+     */
+    public void addRandomMaskAndReplace(Feature feature, boolean isKeptFirst, boolean isKeptLast) {
+        if (feature == null) {
+            return;
+        }
         int[] masks = new int[maxSeqLen];
         Arrays.fill(masks, 1);
         int[] replaces = new int[maxSeqLen];
@@ -180,14 +248,15 @@ public class CustomTokenizer {
                 } else if (rand2 < 0.9) {
                     masks[i] = 1;
                 } else {
+                    int vocabSize = 11682;
                     replaces[i] = (int) (Math.random() * vocabSize);
                 }
             }
-            if (keepFirstUnchange) {
+            if (isKeptFirst) {
                 masks[i] = 1;
                 replaces[i] = 0;
             }
-            if (keepLastUnchange) {
+            if (isKeptLast) {
                 masks[feature.seqLen - 1] = 1;
                 replaces[feature.seqLen - 1] = 0;
             }
@@ -195,10 +264,20 @@ public class CustomTokenizer {
         }
     }
 
-    public Feature getFeatures(List<Integer> tokens, String label) {
+    /**
+     * get feature
+     *
+     * @param tokens input tokens
+     * @param label input label
+     * @return feature
+     */
+    public Optional<Feature> getFeatures(List<Integer> tokens, String label) {
+        if (tokens == null || label == null) {
+            logger.warning(Common.addTag("tokens or label is null"));
+            return Optional.empty();
+        }
         if (!labelMap.containsKey(label)) {
-            logger.severe(Common.addTag("label map not contains label:" + label));
-            return null;
+            return Optional.empty();
         }
         int[] segmentIds = new int[maxSeqLen];
         Arrays.fill(segmentIds, 0);
@@ -210,13 +289,24 @@ public class CustomTokenizer {
         for (int i = 0; i < tokens.size(); i++) {
             inputIds[i] = tokens.get(i);
         }
-        return new Feature(inputIds, masks, segmentIds, labelMap.get(label), tokens.size());
+        return Optional.of(new Feature(inputIds, masks, segmentIds, labelMap.get(label), tokens.size()));
     }
 
-    public List<Integer> tokenize(String text, boolean trainMod) {
+    /**
+     * tokenize text to tokens
+     *
+     * @param text input tokens
+     * @param isTrainMode if work in train mod
+     * @return tokens
+     */
+    public List<Integer> tokenize(String text, boolean isTrainMode) {
+        if (text == null) {
+            logger.warning(Common.addTag("text is empty,skip it"));
+            return new ArrayList<>();
+        }
         String[] splitTokens = splitText(text);
         List<String> wordPieceTokens = wordPieceTokenize(splitTokens);
-        return convertTokensToIds(wordPieceTokens, trainMod); // trainMod need cyclicTrunc
+        return convertTokensToIds(wordPieceTokens, isTrainMode); // trainMod need cyclicTrunc
     }
 }
 
