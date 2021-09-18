@@ -98,13 +98,11 @@ inline void Transpose8X8Fp32Arm64(const float *src_ptr, float *dst_ptr, int src_
 
 void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel) {
   int hw8 = plane / C8NUM * C8NUM;
-  int task_start = 0;
-  int task_end = plane;
   int batch = plane * channel;
   for (int n = 0; n < batches; n++) {
     const float *src_batch = (const float *)src + n * batch;
     float *dst_batch = reinterpret_cast<float *>(dst) + n * batch;
-    int hw = task_start;
+    int hw = 0;
     for (; hw < hw8; hw += C8NUM) {
       int c = 0;
 #ifdef ENABLE_ARM64
@@ -122,7 +120,7 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
         }
       }
     }
-    for (; hw < task_end; hw++) {
+    for (; hw < plane; hw++) {
       const float *src_ptr = src_batch + hw * channel;
       float *dst_ptr = dst_batch + hw;
       for (size_t i = 0; i < channel; i++) {

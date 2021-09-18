@@ -145,6 +145,7 @@ int LstmFP32Coder::MallocRunBuffer(CoderContext *const context) {
       kNumberTypeFloat32, lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float), kWorkspace));
     MS_CHECK_PTR(buffer_[5]);
   }
+  buffer_[6] = nullptr;
   return RET_OK;
 }
 
