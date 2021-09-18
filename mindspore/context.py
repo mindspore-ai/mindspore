@@ -609,50 +609,10 @@ def set_context(**kwargs):
         save_dump_path (str): When the program is executed on Ascend, operators can dump data in this path.
             The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
             So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
-        enable_profiling (bool): Whether to open profiling. Default: False.
-        profiling_options (str): Set profiling collection options, operators can profiling data here.
-            The values of profiling collection options are as follows, supporting the collection of multiple data.
-
-            - output: The saving path of the profiling collection result. The directory specified by this
-              parameter should be created in advance in the training environment (container or host side) and ensure
-              that the running user configured during installation has read and write permissions. It supports the
-              configuration of absolute or relative paths(relative to the current path when executing the command line).
-              The absolute path configuration starts with '/', for example:/home/data/output.
-              The relative path configuration starts with the directory name, for example: output.
-
-            - training_trace: collect iterative trajectory data, that is, the training task and software information of
-              the AI software stack, to realize performance analysis of the training task, focusing on data
-              enhancement, forward and backward calculation, gradient aggregation update and other related data.
-              The value is on/off.
-
-            - task_trace: collect task trajectory data, that is, the hardware information of the HWTS/AICore of
-              the Ascend 910 processor, and analyze the information of beginning and ending of the task.
-              The value is on/off.
-
-            - aicpu: collect profiling data enhanced by aicpu data. The value is on/off.
-
-            - fp_point: specify the start position of the forward operator of the training network iteration trajectory,
-              which is used to record the start timestamp of the forward calculation. The configuration value is
-              the name of the first operator specified in the forward direction. When the value is empty,
-              the system will automatically obtain the forward operator name.
-
-            - bp_point: specify the end position of the iteration trajectory reversal operator of the training network,
-              record the end timestamp of the backward calculation. The configuration value is the name of the operator
-              after the specified reverse. When the value is empty, the system will automatically obtain the backward
-              operator name.
-
-            - aic_metrics:
-
-              the values are as follows:
-
-              - ArithmeticUtilization: Percentage statistics of various calculation indicators.
-              - PipeUtilization: The time-consuming ratio of calculation unit and handling unit, this item is
-                the default value.
-              - Memory: Percentage of external memory read and write instructions.
-              - MemoryL0: Percentage of internal memory read and write instructions.
-              - ResourceConflictRatio: Proportion of pipline queue instructions.
-
-            The profiling_options is like '{"output":'/home/data/output', 'training_trace':'on'}'
+        enable_profiling (bool): This parameters is deprecated, and will be deleted in the next version.
+            Please use mindspore.profiler.Profiler api instead.
+        profiling_options (str): This parameters is deprecated, and will be deleted in the next version.
+            Please use mindspore.profiler.Profiler api instead.
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
             a file by default, and print_file_path is not set, the screen will be displayed.
             If the saved file already exists, the timestamp suffix will be added to the file. Saving data to a file
@@ -800,6 +760,10 @@ def set_context(**kwargs):
     for key, value in kwargs.items():
         if key == "enable_auto_mixed_precision":
             logger.warning(f" '{key}' mixing accuracy is controlled by amp, '{key}' will be deleted later.")
+            continue
+        if key in ('enable_profiling', 'profiling_options'):
+            logger.warning(f" '{key}' is deprecated. Please use Profiler instead. The parameter will"
+                           "be deleted in the next version.")
             continue
         if not _check_target_specific_cfgs(device, key):
             continue
