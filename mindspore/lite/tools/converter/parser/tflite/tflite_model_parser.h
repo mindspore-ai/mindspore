@@ -34,7 +34,12 @@ class TfliteModelParser : public converter::ModelParser {
  public:
   TfliteModelParser() = default;
 
-  ~TfliteModelParser() override = default;
+  ~TfliteModelParser() override {
+    if (tflite_model_buf_ != nullptr) {
+      delete[] tflite_model_buf_;
+      tflite_model_buf_ = nullptr;
+    }
+  }
 
   api::FuncGraphPtr Parse(const converter::ConverterParameters &flag) override;
 
