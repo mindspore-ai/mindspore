@@ -181,7 +181,7 @@ void DynamicBroadcastGradientArgsKernel::Execute() {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_num = AnfAlgo::GetInputTensorNum(cnode);
-  if (input_num != 2) {
+  if (input_num != kInputNum) {
     MS_LOG(EXCEPTION) << "Invalid Input Num:" << input_num;
   }
 

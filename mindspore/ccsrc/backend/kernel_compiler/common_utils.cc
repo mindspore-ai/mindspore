@@ -986,7 +986,7 @@ size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &
   size_t size = start.size();
   size_t offset = 0;
   for (size_t i = 0; i < size; ++i) {
-    offset += SizetMulWithOverflowCheck(LongToSize(dim_offset[i]), start[i]);
+    offset += SizetMulWithOverflowCheck(LongToSize(dim_offset[i]), LongToSize(start[i]));
     if (stop[i] - start[i] != 1) {
       break;
     }

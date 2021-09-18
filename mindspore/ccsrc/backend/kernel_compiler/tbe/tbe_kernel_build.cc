@@ -559,8 +559,9 @@ void TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
       auto value = primitive->GetAttr(attr_name);
       std::string type = attr_ptr->type();
       if (!ParseAttrValue(type, value, &attr_obj)) {
+        const int kRecursive_level = 2;
         MS_LOG(EXCEPTION) << "Op name: " << op_info->op_name() << " attr: " << attr_name
-                          << ", node debug: " << anf_node->DebugString(2);
+                          << ", node debug: " << anf_node->DebugString(kRecursive_level);
       }
       attr_obj[kJValid] = true;
     } else {
@@ -1137,7 +1138,8 @@ void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_
   constexpr size_t DIM3 = 3;
   constexpr size_t DIM4 = 4;
   constexpr size_t C0 = 16;
-  if ((fusion_data_type == kFusionAddN || fusion_data_type == kFusionAdd) && shape.size() == 5) {
+  constexpr size_t kShapeSize5 = 5;
+  if ((fusion_data_type == kFusionAddN || fusion_data_type == kFusionAdd) && shape.size() == kShapeSize5) {
     std::vector<size_t> spec_shape = {};
     (void)spec_shape.emplace_back(shape[DIM0]);
     (void)spec_shape.emplace_back(shape[DIM1]);

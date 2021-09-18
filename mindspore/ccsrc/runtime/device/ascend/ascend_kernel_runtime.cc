@@ -99,8 +99,7 @@ std::string GetRankIdStr() {
     auto rank = HcclCollectiveGroup::instance().GetRankId();
     return std::to_string(rank);
   }
-  std::string rank_id_str;
-  rank_id_str = common::GetEnv("RANK_ID");
+  auto rank_id_str = common::GetEnv("RANK_ID");
   if (rank_id_str.empty()) {
     MS_LOG(EXCEPTION) << "Invalid environment variable 'RANK_ID', it should not be empty.";
   }
@@ -321,7 +320,6 @@ void AscendKernelRuntime::PreInit() {
   }
 }
 #endif
-
 bool AscendKernelRuntime::Init() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1038,10 +1036,11 @@ bool AscendKernelRuntime::InitDevice() {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "create communication stream failed, ret:" << ret;
   }
+  const int kCommunicationStreamID = 2;
   stream_id_map_[0] = stream_;
   stream_id_map_[1] = independent_stream_;
-  stream_id_map_[2] = communication_stream_;
-  group_stream_id_map_[kHcclWorldGroup] = 2;
+  stream_id_map_[kCommunicationStreamID] = communication_stream_;
+  group_stream_id_map_[kHcclWorldGroup] = kCommunicationStreamID;
   return true;
 }
 
