@@ -131,4 +131,5 @@ int TransposeInt8CPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Transpose, LiteKernelCreator<TransposeInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Transpose, LiteKernelCreator<TransposeInt8CPUKernel>)
 }  // namespace mindspore::kernel
