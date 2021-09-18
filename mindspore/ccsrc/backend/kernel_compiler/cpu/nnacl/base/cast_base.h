@@ -115,6 +115,12 @@ inline void BoolToInt32(const bool *input, int32_t *output, int number) {
   }
 }
 
+inline void Float32ToBool(const float *input, bool *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (bool)input[i];
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif
