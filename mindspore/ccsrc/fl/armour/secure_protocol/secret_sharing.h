@@ -56,7 +56,6 @@ class SecretSharing {
 
  private:
   BIGNUM *bn_prim_;
-  size_t degree_;
   // addition in finite field
   bool field_add(BIGNUM *z, const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx);
   // multiplication in finite field

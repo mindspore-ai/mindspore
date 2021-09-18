@@ -57,6 +57,5 @@ int Masking::GetMasking(std::vector<float> *noise, int noise_len, const uint8_t 
   return 0;
 }
 #endif
-
 }  // namespace armour
 }  // namespace mindspore

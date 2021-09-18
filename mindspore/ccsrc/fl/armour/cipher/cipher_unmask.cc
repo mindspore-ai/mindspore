@@ -46,14 +46,13 @@ bool CipherUnmask::UnMask(const std::map<std::string, AddressPtr> &data) {
     size_t size_data = iter->second->size / sizeof(float);
     float *in_data = reinterpret_cast<float *>(iter->second->addr);
     for (size_t i = 0; i < size_data; ++i) {
-      in_data[i] = in_data[i] + noise[i + sum_size] / data_size;
+      in_data[i] = in_data[i] + noise[i + IntToSize(sum_size)] / data_size;
     }
-    sum_size += size_data;
+    sum_size += IntToSize(size_data);
     for (size_t i = 0; i < data.size(); ++i) {
       MS_LOG(INFO) << " index : " << i << " in_data unmask: " << in_data[i] * data_size;
     }
   }
-
   MS_LOG(INFO) << "CipherMgr::UnMask sum_size : " << sum_size;
   MS_LOG(INFO) << "CipherMgr::UnMask feature_map : " << cipher_init_->featuremap_;
   clock_t end_time = clock();

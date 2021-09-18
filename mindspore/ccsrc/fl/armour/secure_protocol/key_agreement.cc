@@ -29,18 +29,18 @@ PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
   return NULL;
 }
 
-PrivateKey *KeyAgreement::FromPrivateBytes(unsigned char *data, int len) {
+PrivateKey *KeyAgreement::FromPrivateBytes(uint8_t *data, int len) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return NULL;
 }
 
-PublicKey *KeyAgreement::FromPublicBytes(unsigned char *data, int len) {
+PublicKey *KeyAgreement::FromPublicBytes(uint8_t *data, int len) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return NULL;
 }
 
-int KeyAgreement::ComputeSharedKey(PrivateKey *privKey, PublicKey *peerPublicKey, int key_len,
-                                   const unsigned char *salt, int salt_len, unsigned char *exchangeKey) {
+int KeyAgreement::ComputeSharedKey(PrivateKey *privKey, PublicKey *peerPublicKey, int key_len, const uint8_t *salt,
+                                   int salt_len, uint8_t *exchangeKey) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return -1;
 }
@@ -160,7 +160,7 @@ PrivateKey *KeyAgreement::GeneratePrivKey() {
 }
 
 PublicKey *KeyAgreement::GeneratePubKey(PrivateKey *privKey) {
-  unsigned char *pubKeyBytes;
+  uint8_t *pubKeyBytes;
   size_t len = 0;
   if (privKey == nullptr) {
     return NULL;
@@ -228,6 +228,5 @@ int KeyAgreement::ComputeSharedKey(PrivateKey *privKey, PublicKey *peerPublicKey
   return privKey->Exchange(peerPublicKey, key_len, salt, salt_len, exchangeKey);
 }
 #endif
-
 }  // namespace armour
 }  // namespace mindspore

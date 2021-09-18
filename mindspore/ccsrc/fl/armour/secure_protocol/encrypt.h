@@ -37,10 +37,10 @@ class SymmetricEncrypt : Encrypt {};
 
 class AESEncrypt : SymmetricEncrypt {
  public:
-  AESEncrypt(const unsigned char *key, int key_len, const uint8_t *ivec, int ivec_len, AES_MODE mode);
+  AESEncrypt(const uint8_t *key, int key_len, const uint8_t *ivec, int ivec_len, AES_MODE mode);
   ~AESEncrypt();
-  int EncryptData(const uint8_t *data, const int len, uint8_t *encrypt_data, int *encrypt_len);
-  int DecryptData(const uint8_t *encrypt_data, const int encrypt_len, uint8_t *data, int *len);
+  int EncryptData(const uint8_t *data, const int len, uint8_t *encrypt_data, int *encrypt_len) const;
+  int DecryptData(const uint8_t *encrypt_data, const int encrypt_len, uint8_t *data, int *len) const;
 
  private:
   const uint8_t *priv_key_;
@@ -48,10 +48,10 @@ class AESEncrypt : SymmetricEncrypt {
   const uint8_t *ivec_;
   int ivec_len_;
   AES_MODE aes_mode_;
-  const int evp_aes_encrypt(const uint8_t *data, const int len, const uint8_t *key, const uint8_t *ivec,
-                            uint8_t *encrypt_data, int *encrypt_len);
-  const int evp_aes_decrypt(const uint8_t *encrypt_data, const int len, const uint8_t *key, const uint8_t *ivec,
-                            uint8_t *decrypt_data, int *decrypt_len);
+  int evp_aes_encrypt(const uint8_t *data, const int len, const uint8_t *key, const uint8_t *ivec,
+                      uint8_t *encrypt_data, int *encrypt_len) const;
+  int evp_aes_decrypt(const uint8_t *encrypt_data, const int len, const uint8_t *key, const uint8_t *ivec,
+                      uint8_t *decrypt_data, int *decrypt_len) const;
 };
 
 }  // namespace armour

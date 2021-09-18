@@ -29,18 +29,18 @@ AESEncrypt::AESEncrypt(const uint8_t *key, int key_len, const uint8_t *ivec, int
 AESEncrypt::~AESEncrypt() {}
 
 #if defined(_WIN32)
-int AESEncrypt::EncryptData(const unsigned char *data, const int len, unsigned char *encrypt_data, int *encrypt_len) {
+int AESEncrypt::EncryptData(const uint8_t *data, const int len, uint8_t *encrypt_data, int *encrypt_len) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return -1;
 }
 
-int AESEncrypt::DecryptData(const unsigned char *encrypt_data, const int encrypt_len, unsigned char *data, int *len) {
+int AESEncrypt::DecryptData(const uint8_t *encrypt_data, const int encrypt_len, uint8_t *data, int *len) {
   MS_LOG(ERROR) << "Unsupported feature in Windows platform.";
   return -1;
 }
 
 #else
-int AESEncrypt::EncryptData(const unsigned char *data, const int len, unsigned char *encrypt_data, int *encrypt_len) {
+int AESEncrypt::EncryptData(const uint8_t *data, const int len, uint8_t *encrypt_data, int *encrypt_len) const {
   int ret;
   if (priv_key_ == nullptr || ivec_ == nullptr) {
     MS_LOG(ERROR) << "private key or init vector is invalid.";
@@ -65,7 +65,7 @@ int AESEncrypt::EncryptData(const unsigned char *data, const int len, unsigned c
   return 0;
 }
 
-int AESEncrypt::DecryptData(const unsigned char *encrypt_data, const int encrypt_len, unsigned char *data, int *len) {
+int AESEncrypt::DecryptData(const uint8_t *encrypt_data, const int encrypt_len, uint8_t *data, int *len) const {
   int ret = 0;
   if (priv_key_ == nullptr || ivec_ == nullptr) {
     MS_LOG(ERROR) << "private key or init vector is invalid.";
@@ -94,8 +94,8 @@ int AESEncrypt::DecryptData(const unsigned char *encrypt_data, const int encrypt
   return 0;
 }
 
-const int AESEncrypt::evp_aes_encrypt(const uint8_t *data, const int len, const uint8_t *key, const uint8_t *ivec,
-                                      uint8_t *encrypt_data, int *encrypt_len) {
+int AESEncrypt::evp_aes_encrypt(const uint8_t *data, const int len, const uint8_t *key, const uint8_t *ivec,
+                                uint8_t *encrypt_data, int *encrypt_len) const {
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
   if (ctx == NULL) {
     return -1;
@@ -156,8 +156,8 @@ const int AESEncrypt::evp_aes_encrypt(const uint8_t *data, const int len, const 
   return 0;
 }
 
-const int AESEncrypt::evp_aes_decrypt(const uint8_t *encrypt_data, const int len, const uint8_t *key,
-                                      const uint8_t *ivec, uint8_t *decrypt_data, int *decrypt_len) {
+int AESEncrypt::evp_aes_decrypt(const uint8_t *encrypt_data, const int len, const uint8_t *key, const uint8_t *ivec,
+                                uint8_t *decrypt_data, int *decrypt_len) const {
   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
   if (ctx == NULL) {
     return -1;
@@ -218,6 +218,5 @@ const int AESEncrypt::evp_aes_decrypt(const uint8_t *encrypt_data, const int len
   return 0;
 }
 #endif
-
 }  // namespace armour
 }  // namespace mindspore
