@@ -57,7 +57,7 @@ abstract::ShapePtr IndexAddInferShape(const PrimitivePtr &primitive, const std::
 TypePtr IndexAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
   const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInteger("IndexAdd infer", input_args.size(), kEqual, input_num, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
