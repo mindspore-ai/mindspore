@@ -92,5 +92,6 @@ ops::PrimitiveC *CaffeConvolutionParser::Parse(const caffe::LayerParameter &prot
 }
 
 CaffeNodeRegistrar g_caffeConvolutionParser("Convolution", new CaffeConvolutionParser());
+CaffeNodeRegistrar g_caffeDepthwiseConvolutionParser("DepthwiseConv", new CaffeConvolutionParser());
 }  // namespace lite
 }  // namespace mindspore

@@ -149,7 +149,9 @@ int CaffeConvBaseParser::ParseGroup(const caffe::ConvolutionParameter &convParam
   if (convParam.has_group()) {
     return convParam.group();
   } else {
-    return layerType == "ConvolutionDepthwise" ? static_cast<int>(convParam.num_output()) : 1;
+    return layerType == "ConvolutionDepthwise" || layerType == "DepthwiseConv"
+             ? static_cast<int>(convParam.num_output())
+             : 1;
   }
 }
 
