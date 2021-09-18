@@ -189,7 +189,10 @@ file(GLOB PROTO_FILE ""
         ${TOP_DIR}/third_party/proto/onnx/onnx.proto)
 
 ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${PROTO_FILE})
+
 add_library(proto_mid OBJECT ${PROTO_SRCS})
+target_compile_options(proto_mid PRIVATE "-Wno-array-bounds")
+
 set(TFLITE_FBS_FILES
         ${TOP_DIR}/third_party/proto/tensorflow/lite/schema.fbs
         )

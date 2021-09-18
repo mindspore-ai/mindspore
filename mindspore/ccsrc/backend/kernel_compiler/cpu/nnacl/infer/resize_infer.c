@@ -44,8 +44,8 @@ int HandleTwoInputs(const TensorC *const *inputs, ResizeParameter *param) {
           return NNACL_INFER_INVALID;
         }
 
-        MS_CHECK_INT_MUL_NOT_OVERFLOW(data[1], GetHeight(input), NNACL_ERRCODE_MUL_OVERFLOW);
-        MS_CHECK_INT_MUL_NOT_OVERFLOW(data[2], GetWidth(input), NNACL_ERRCODE_MUL_OVERFLOW);
+        MS_CHECK_INT_MUL_NOT_OVERFLOW((int)(data[1]), GetHeight(input), NNACL_ERRCODE_MUL_OVERFLOW);
+        MS_CHECK_INT_MUL_NOT_OVERFLOW((int)(data[2]), GetWidth(input), NNACL_ERRCODE_MUL_OVERFLOW);
         param->new_height_ = round(data[1] * GetHeight(input));
         param->new_width_ = round(data[2] * GetWidth(input));
       }
