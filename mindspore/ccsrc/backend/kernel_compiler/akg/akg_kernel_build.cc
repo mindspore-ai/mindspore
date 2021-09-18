@@ -49,8 +49,23 @@ namespace kernel {
 
 #define INCREASE_LIST_SIZE(list_idx, val) kernel_lists_[list_idx][kMaxKernelNum_] += val
 
+constexpr int32_t MAX_ERROR_LEN = 1024;
 constexpr int32_t PROCESS_NUM = 16;
 constexpr int32_t TIME_OUT = 300;
+
+inline std::string GetErrorInfo() {
+  char buf[MAX_ERROR_LEN + 1] = {0};
+  auto ret = strerror_r(errno, buf, MAX_ERROR_LEN);
+#if (_POSIX_C_SOURCE >= 200112L) && !_GNU_SOURCE
+  if (ret != 0 || strlen(buf) == 0) {
+    return "Call strerror_r failed";
+  }
+
+  return std::string(buf);
+#else
+  return std::string(ret);
+#endif
+}
 
 bool AkgKernelPool::LockMng::TryLock() const {
   // Try to lock 100 times. Return errno if lock unsuccessfully
@@ -68,7 +83,7 @@ bool AkgKernelPool::LockMng::TryLock() const {
   }
 
   if (ret == -1) {
-    MS_LOG(ERROR) << "Failed to acquire the lock, errno:" << strerror(errno) << ".";
+    MS_LOG(ERROR) << "Failed to acquire the lock, error msg:" << GetErrorInfo() << ".";
     return false;
   }
 
@@ -78,7 +93,7 @@ bool AkgKernelPool::LockMng::TryLock() const {
 void AkgKernelPool::LockMng::Unlock() const {
   auto ret = lockf(fd_, F_ULOCK, 0);
   if (ret == -1) {
-    MS_LOG(ERROR) << "Failed to release the lock, errno:" << strerror(errno);
+    MS_LOG(ERROR) << "Failed to release the lock, error msg:" << GetErrorInfo();
   }
 }
 
@@ -86,14 +101,14 @@ std::string AkgKernelPool::GetCurrentPath() const {
   char cwd[PATH_MAX];
   char *ret = getcwd(cwd, sizeof(cwd));
   if (ret == nullptr) {
-    MS_LOG(ERROR) << "Get current work directory failed, errno:" << strerror(errno);
+    MS_LOG(ERROR) << "Get current work directory failed, error msg:" << GetErrorInfo();
     return "";
   }
 
   char abspath[PATH_MAX];
   char *res = realpath(cwd, abspath);
   if (res == nullptr) {
-    MS_LOG(ERROR) << "Change to realpath failed, errno:" << strerror(errno);
+    MS_LOG(ERROR) << "Change to realpath failed, error msg:" << GetErrorInfo();
     return "";
   }
 
@@ -121,14 +136,14 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
     if (id != -1) {
       auto ret = shmctl(id, IPC_STAT, &buf);
       if (ret == -1) {
-        MS_LOG(ERROR) << "Failed to get the info of shared memory, errno:" << strerror(errno);
+        MS_LOG(ERROR) << "Failed to get the info of shared memory, error msg:" << GetErrorInfo();
         return nullptr;
       }
 
       if (buf.shm_nattch == 0) {
         ret = shmctl(id, IPC_RMID, nullptr);
         if (ret < 0) {
-          MS_LOG(EXCEPTION) << "Realse shared_mem failed, errno:" << strerror(errno);
+          MS_LOG(EXCEPTION) << "Realse shared_mem failed, error msg:" << GetErrorInfo();
         }
       }
     }
@@ -147,7 +162,7 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
     }
 
     if (shm_id_ == -1) {
-      MS_LOG(ERROR) << "Create shared_mem failed, error no:" << strerror(errno);
+      MS_LOG(ERROR) << "Create shared_mem failed, error msg:" << GetErrorInfo();
       return nullptr;
     }
   } else {
@@ -156,7 +171,7 @@ void *AkgKernelPool::CreateSharedMem(const std::string &path) {
 
   auto local_addr = shmat(shm_id_, nullptr, 0);
   if (local_addr == reinterpret_cast<void *>(-1)) {
-    MS_LOG(ERROR) << "Attach to shared_mem failed, error no:" << strerror(errno);
+    MS_LOG(ERROR) << "Attach to shared_mem failed, error msg:" << GetErrorInfo();
     return nullptr;
   }
 
@@ -175,7 +190,7 @@ int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
 
   fd_ = open(kKeyName_, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
   if (fd_ == -1) {
-    MS_LOG(ERROR) << "open file <" << kKeyName_ << "> failed, errno:" << strerror(errno);
+    MS_LOG(ERROR) << "open file <" << kKeyName_ << "> failed, error msg:" << GetErrorInfo();
     return -1;
   }
 
@@ -195,17 +210,19 @@ int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
   return 0;
 }
 
-AkgKernelPool::~AkgKernelPool() {
+int32_t AkgKernelPool::Release() {
   {
     LockMng lock(fd_);
     if (!lock.locked_) {
-      MS_LOG(EXCEPTION) << "Failed to acquire lock.";
+      MS_LOG(ERROR) << "Failed to acquire lock.";
+      return -1;
     }
 
     struct shmid_ds buf;
     auto ret = shmctl(shm_id_, IPC_STAT, &buf);
     if (ret == -1) {
-      MS_LOG(EXCEPTION) << "Failed to get the info of shared memory, errno:" << strerror(errno);
+      MS_LOG(ERROR) << "Failed to get the info of shared memory, error msg:" << GetErrorInfo();
+      return -1;
     }
 
     bool need_delete_by_last = false;
@@ -218,14 +235,16 @@ AkgKernelPool::~AkgKernelPool() {
     // Detach shared memory
     ret = shmdt(reinterpret_cast<void *>(kernel_lists_[0]));
     if (ret < 0) {
-      MS_LOG(EXCEPTION) << "Shared_mem detach failed, errno:" << strerror(errno);
+      MS_LOG(ERROR) << "Shared_mem detach failed, error msg:" << GetErrorInfo();
+      return -1;
     }
 
     // Realse shared_memroy
     if (is_creator_ || need_delete_by_last) {
       ret = shmctl(shm_id_, IPC_RMID, nullptr);
       if (ret < 0) {
-        MS_LOG(EXCEPTION) << "Realse shared_mem failed, errno:" << strerror(errno);
+        MS_LOG(ERROR) << "Realse shared_mem failed, error msg:" << GetErrorInfo();
+        return -1;
       }
     }
   }
@@ -234,6 +253,8 @@ AkgKernelPool::~AkgKernelPool() {
   if (fd_ != -1) {
     (void)close(fd_);
   }
+
+  return 0;
 }
 
 int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
@@ -494,6 +515,11 @@ bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build
   ret = kp.UpdateAndWait(fetched_ids);
   if (ret != 0) {
     MS_LOG(ERROR) << "AkgKernelPool UpdateAndWait failed.";
+    return false;
+  }
+
+  if (kp.Release() != 0) {
+    MS_LOG(ERROR) << "AkgKernelPool release failed.";
     return false;
   }
 

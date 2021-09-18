@@ -44,7 +44,7 @@ class UssChecker : public AtomicAddChecker {
   explicit UssChecker(const PrimitivePtr &target) { target_type_ = target; }
   virtual ~UssChecker() = default;
 
- private:
+ protected:
   bool CanActivateAtomicAdd(const AnfNodePtr &anf_node) override { return FindCandidate(anf_node); }
 };
 

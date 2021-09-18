@@ -44,7 +44,7 @@ class TsaChecker : public AtomicAddChecker {
   explicit TsaChecker(const PrimitivePtr &target) { target_type_ = target; }
   virtual ~TsaChecker() = default;
 
- private:
+ protected:
   bool CanActivateAtomicAdd(const AnfNodePtr &anf_node) override {
     if (!FindCandidate(anf_node)) {
       return false;
