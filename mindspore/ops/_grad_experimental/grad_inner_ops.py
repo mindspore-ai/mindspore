@@ -20,6 +20,7 @@ from ..operations import _inner_ops as inner
 from .. import functional as F
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 
+
 @bprop_getters.register(inner.TensorCopySlices)
 def get_bprop_tensor_copy_slices(self):
     """Generate bprop for TensorCopySlices"""

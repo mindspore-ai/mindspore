@@ -53,25 +53,26 @@ class KernelRuntime {
   KernelRuntime() = default;
   virtual ~KernelRuntime();
   virtual bool Init() = 0;
-  virtual void AssignMemory(session::KernelGraph *graph);
-  void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, session::KernelGraph *graph,
+  virtual void AssignMemory(const session::KernelGraph &graph);
+  void RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph &graph,
                          const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node = {});
   void RunOpAssignCommunicationOutput(const AnfNodePtr &node) const;
   void RunOpAssignCommunicationInput(const AnfNodePtr &node) const;
-  void RunOpClearMemory(const session::KernelGraph *graph) const;
+  void RunOpClearMemory(const session::KernelGraph &graph) const;
   void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors);
 #ifdef ENABLE_DEBUGGER
   static bool DumpDataEnabled();
   static bool DumpDataEnabledIteration();
 #endif
-  virtual bool LoadData(session::KernelGraph *graph);
-  virtual bool Load(session::KernelGraph *graph, bool is_task_sink);
-  virtual bool Run(session::KernelGraph *graph, bool is_task_sink) = 0;
-  virtual bool GenDynamicKernel(const session::KernelGraph *graph) = 0;
-  virtual bool RunDynamicKernelAsync(const session::KernelGraph *graph) = 0;
-  bool LaunchKernels(const session::KernelGraph *graph);
-  virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
-  virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
+  virtual bool LoadData(const session::KernelGraph &graph);
+  virtual bool Load(const session::KernelGraph &graph, bool is_task_sink);
+  virtual bool Run(const session::KernelGraph &graph, bool is_task_sink) = 0;
+  virtual bool GenDynamicKernel(const session::KernelGraph &graph) = 0;
+  virtual bool RunDynamicKernelAsync(const session::KernelGraph &graph) = 0;
+  bool LaunchKernels(const session::KernelGraph &graph);
+  virtual void AssignStaticMemoryInput(const session::KernelGraph &graph);
+  virtual void AssignStaticMemoryValueNode(const session::KernelGraph &graph);
+
   virtual void ClearGraphRuntimeResource(uint32_t graph_id);
   virtual bool SyncStream() = 0;
   virtual bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) = 0;
@@ -107,13 +108,13 @@ class KernelRuntime {
   virtual void PreInit() {}
 #endif
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
-  virtual void GenKernelEvents(const session::KernelGraph *graph);
+  virtual void GenKernelEvents(const session::KernelGraph &graph);
   virtual std::shared_ptr<DeviceEvent> CreateDeviceEvent() { return nullptr; }
   virtual std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() { return nullptr; }
   virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
-  void UpdateRefNodeOutputMem(const session::KernelGraph *graph);
+  void UpdateRefNodeOutputMem(const session::KernelGraph &graph);
   virtual DeviceAddressPtr AssignExtraStaticMem(const TensorPtr &tensor, const AnfNodePtr &node, size_t index);
   virtual void *GetModelStream(uint32_t graph_id) const { return nullptr; }
 
@@ -125,8 +126,8 @@ class KernelRuntime {
   virtual bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index);
   virtual bool KernelMemNotReuse(const AnfNodePtr &node);
 
-  void AssignStaticMemory(session::KernelGraph *graph);
-  void AssignDynamicMemory(session::KernelGraph *graph);
+  void AssignStaticMemory(const session::KernelGraph &graph);
+  void AssignDynamicMemory(const session::KernelGraph &graph);
   void AssignNodeOutputMem(MemType type, const AnfNodePtr &node, int index);
   void AssignWorkSpaceMem(MemType type, const AnfNodePtr &node);
 
@@ -141,35 +142,35 @@ class KernelRuntime {
   virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
 
  private:
-  void UseMemSchedulerIfNeeded(const session::KernelGraph *graph);
-  bool LaunchKernel(const session::KernelGraph *graph, const AnfNodePtr &kernel,
+  void UseMemSchedulerIfNeeded(const session::KernelGraph &graph);
+  bool LaunchKernel(const session::KernelGraph &graph, const AnfNodePtr &kernel,
                     const std::shared_ptr<MemScheduler> &mem_scheduler, bool mock = false);
-  void ResetNodeAddress(session::KernelGraph *graph);
+  void ResetNodeAddress(const session::KernelGraph &graph);
   void AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem_scheduler, const AnfNodePtr &kernel,
                            AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
                            AddressPtrList *kernel_outputs);
   static void GetOrMallocAddress(const std::shared_ptr<MemScheduler> &mem_scheduler,
                                  const DeviceAddress *device_address, const kernel::AddressPtr &kernel_addr);
-  void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph *graph);
-  void SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph *graph,
+  void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph);
+  void SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph,
                              const AnfNodePtr &kernel, bool mock);
-  void AssignStaticMemoryOutput(const session::KernelGraph *graph);
-  bool LaunchKernelMod(const session::KernelGraph *graph, bool mock = false);
+  void AssignStaticMemoryOutput(const session::KernelGraph &graph);
+  bool LaunchKernelMod(const session::KernelGraph &graph, bool mock = false);
   void LaunchKernelEvent(const std::vector<std::vector<std::function<void()>>> &run_events, size_t index) const;
   void DebugStreamSync(const CNodePtr &kernel);
   static void GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs,
                                      const std::shared_ptr<MemScheduler> &mem_schedule = nullptr);
-  void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph *graph);
+  void RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors, const session::KernelGraph &graph);
   void RunOpAssignOutputMemory(const AnfNodePtr &kernel,
                                const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node = {});
   void RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel);
-  void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, session::KernelGraph *graph);
+  void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, const session::KernelGraph &graph);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);
   DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index) const;
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
-  void GetFirstPSEmbeddingCache(const session::KernelGraph *graph, AnfNodePtr *const first_cache_input_index,
+  void GetFirstPSEmbeddingCache(const session::KernelGraph &graph, AnfNodePtr *const first_cache_input_index,
                                 size_t *const first_cache_size);
-  void CheckIfSupportPSEmbeddingCache(const session::KernelGraph *graph);
+  void CheckIfSupportPSEmbeddingCache(const session::KernelGraph &graph);
   void CheckSparsePSEmbeddingCache(const CNodePtr &node);
 #endif
   void RunOpGetCommunicationInputInfo(const AnfNodePtr &node, size_t *total_size,

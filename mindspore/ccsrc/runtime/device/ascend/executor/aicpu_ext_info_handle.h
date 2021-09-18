@@ -65,8 +65,7 @@ class AicpuExtInfoHandler {
   bool ParseExtInputShape(AicpuExtInfo *aicpu_ext_info);
   bool ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info);
 
-  static bool UpdateShapeAndType(const std::vector<int64_t> &shape, TypeId data_type,
-                                 NotNull<AicpuShapeAndType *> shape_and_type);
+  static bool UpdateShapeAndType(const std::vector<int64_t> &shape, NotNull<AicpuShapeAndType *> shape_and_type);
 
   static void GetShapeAndType(NotNull<const AicpuShapeAndType *> shape_and_type, NotNull<std::vector<int64_t> *> shape,
                               NotNull<TypeId *> data_type);

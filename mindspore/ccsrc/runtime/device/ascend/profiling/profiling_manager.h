@@ -49,7 +49,7 @@ class ProfilingManager {
   bool ReportProfilingData(const map<uint32_t, string> &op_taskId_map) const;
   bool ProfRegisterCtrlCallback() const;
   bool StartupProfiling(uint32_t device_id);
-  bool StopProfiling();
+  bool StopProfiling() const;
 
   inline bool IsProfiling() const {
     auto profiler_manager = profiler::ProfilerManager::GetInstance();

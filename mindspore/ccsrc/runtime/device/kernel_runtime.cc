@@ -46,12 +46,11 @@ constexpr float kMaxMemReuseFactor = 0.8;
 constexpr float kMinMemReuseFactor = 0.5;
 constexpr float kRetryFactor = 0.1;
 namespace {
-std::vector<AnfNodePtr> GetGraphInputs(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto graph_inputs = graph->inputs();
+std::vector<AnfNodePtr> GetGraphInputs(const session::KernelGraph &graph) {
+  auto graph_inputs = graph.inputs();
   std::vector<AnfNodePtr> result(graph_inputs.begin(), graph_inputs.end());
   std::set<AnfNodePtr> inputs_set(graph_inputs.begin(), graph_inputs.end());
-  auto kernels = graph->execution_order();
+  auto kernels = graph.execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto input_num = AnfAlgo::GetInputTensorNum(kernel);
@@ -71,9 +70,9 @@ std::vector<AnfNodePtr> GetGraphInputs(const session::KernelGraph *graph) {
 constexpr size_t kMinInputSize = 2;
 KernelRuntime::~KernelRuntime() {}
 
-bool KernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) { return true; }
+bool KernelRuntime::Load(const session::KernelGraph &graph, bool is_task_sink) { return true; }
 
-bool KernelRuntime::LoadData(session::KernelGraph *) { return false; }
+bool KernelRuntime::LoadData(const session::KernelGraph &) { return false; }
 
 bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
   MS_EXCEPTION_IF_NULL(kernel);
@@ -85,7 +84,7 @@ bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_
   return false;
 }
 
-void KernelRuntime::AssignMemory(session::KernelGraph *graph) {
+void KernelRuntime::AssignMemory(const session::KernelGraph &graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
@@ -262,9 +261,8 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
   }
 }
 
-void KernelRuntime::ResetNodeAddress(session::KernelGraph *kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto kernels = kernel_graph->execution_order();
+void KernelRuntime::ResetNodeAddress(const session::KernelGraph &kernel_graph) {
+  auto kernels = kernel_graph.execution_order();
   for (auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -303,39 +301,38 @@ void KernelRuntime::ResetNodeAddress(session::KernelGraph *kernel_graph) {
   }
 }
 
-void KernelRuntime::RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors, session::KernelGraph *graph,
+void KernelRuntime::RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors,
+                                      const session::KernelGraph &graph,
                                       const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node) {
-  MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->ResetDynamicMemory();
 
-  for (const auto &node : graph->execution_order()) {
+  for (const auto &node : graph.execution_order()) {
     RunOpAssignCommunicationOutput(node);
     RunOpAssignCommunicationInput(node);
   }
 
   RunOpAssignInputMemory(input_tensors, graph);
   AssignStaticMemoryValueNode(graph);
-  for (const auto &node : graph->execution_order()) {
+  for (const auto &node : graph.execution_order()) {
     RunOpAssignOutputMemory(node, tensor_to_node);
     RunOpAssignWorkSpaceMemory(node);
   }
   UpdateRefNodeOutputMem(graph);
 }
 
-void KernelRuntime::RunOpClearMemory(const session::KernelGraph *graph) const {
-  MS_EXCEPTION_IF_NULL(graph);
+void KernelRuntime::RunOpClearMemory(const session::KernelGraph &graph) const {
   // clear input parameter memory resource
-  for (const auto &input_node : graph->inputs()) {
+  for (const auto &input_node : graph.inputs()) {
     MS_EXCEPTION_IF_NULL(input_node);
     AnfAlgo::SetOutputAddr(nullptr, 0, input_node.get());
   }
   // clear input value node memory resource
-  for (const auto &value_node : graph->graph_value_nodes()) {
+  for (const auto &value_node : graph.graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node);
     AnfAlgo::SetOutputAddr(nullptr, 0, value_node.get());
   }
-  for (const auto &cnode : graph->execution_order()) {
+  for (const auto &cnode : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
     // clear output memory resource
     size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
@@ -372,23 +369,22 @@ bool KernelRuntime::DumpDataEnabledIteration() {
 }
 #endif
 
-void KernelRuntime::AssignStaticMemory(session::KernelGraph *graph) {
+void KernelRuntime::AssignStaticMemory(const session::KernelGraph &graph) {
   AssignStaticMemoryInput(graph);
   AssignStaticMemoryValueNode(graph);
   AssignStaticMemoryOutput(graph);
 }
 
 void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> &input_tensors,
-                                           const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+                                           const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  if (input_tensors.size() != graph->inputs().size()) {
+  if (input_tensors.size() != graph.inputs().size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size()
-                      << " should be equal to graph input parameter size " << graph->inputs().size();
+                      << " should be equal to graph input parameter size " << graph.inputs().size();
   }
 
-  for (size_t input_index = 0; input_index < graph->inputs().size(); ++input_index) {
-    auto item = graph->inputs()[input_index];
+  for (size_t input_index = 0; input_index < graph.inputs().size(); ++input_index) {
+    auto item = graph.inputs()[input_index];
     MS_EXCEPTION_IF_NULL(item);
     if (!item->isa<Parameter>()) {
       continue;
@@ -400,7 +396,9 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(current_tensor->device_address());
       if (output_address != nullptr && output_address->DeviceType() == GetTargetDeviceAddressType()) {
         if (output_address->ptr_ == nullptr) {
-          mem_manager_->MallocMemFromMemPool(output_address, output_address->size());
+          if (!mem_manager_->MallocMemFromMemPool(output_address, output_address->size())) {
+            MS_LOG(EXCEPTION) << "Allocate memory failed, size:" << output_address->size();
+          }
         }
 
         AnfAlgo::SetOutputAddr(output_address, index, item.get());
@@ -448,7 +446,9 @@ void KernelRuntime::RunOpAssignOutputMemory(
       MS_EXCEPTION_IF_NULL(address);
       if (address->ptr() == nullptr) {
         MS_EXCEPTION_IF_NULL(mem_manager_);
-        mem_manager_->MallocMemFromMemPool(address, address->size());
+        if (!mem_manager_->MallocMemFromMemPool(address, address->size())) {
+          MS_LOG(EXCEPTION) << "Allocate memory failed, size:" << address->size();
+        }
       }
       continue;
     }
@@ -489,14 +489,13 @@ void KernelRuntime::RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel) {
   }
 }
 
-void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, session::KernelGraph *graph) {
+void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, const session::KernelGraph &graph) {
   if (pre_output_value == nullptr) {
     return;
   }
   std::vector<tensor::TensorPtr> pre_output_tensors;
   TensorValueToTensor(pre_output_value, &pre_output_tensors);
-  MS_EXCEPTION_IF_NULL(graph);
-  auto output_nodes = graph->outputs();
+  auto output_nodes = graph.outputs();
   if (pre_output_tensors.size() != output_nodes.size()) {
     MS_LOG(EXCEPTION) << "The size of pre output tensors [" << pre_output_tensors.size()
                       << "] is not equal to the size of output nodes of graph [" << output_nodes.size() << "]";
@@ -536,13 +535,12 @@ void KernelRuntime::RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value
   }
 }
 
-void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph->graph_id();
+  MS_LOG(INFO) << "AssignStaticMemoryInput start for graph " << graph.graph_id();
   auto graph_inputs = GetGraphInputs(graph);
-  auto graph_valid_input = graph->valid_inputs();
-  graph_inputs.insert(graph_inputs.end(), graph->child_graph_result().begin(), graph->child_graph_result().end());
+  auto graph_valid_input = graph.valid_inputs();
+  graph_inputs.insert(graph_inputs.end(), graph.child_graph_result().begin(), graph.child_graph_result().end());
   std::vector<AnfNodePtr> need_alloc_nodes;
   auto add_need_alloc_nodes = [&need_alloc_nodes, graph, this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
@@ -553,7 +551,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
       return;
     }
     auto input_param = node->cast<ParameterPtr>();
-    if (input_param != nullptr && !input_param->IsUsedByRealKernelInGraph(graph->graph_id())) {
+    if (input_param != nullptr && !input_param->IsUsedByRealKernelInGraph(graph.graph_id())) {
       return;
     }
     need_alloc_nodes.push_back(node);
@@ -611,7 +609,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
         CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id, {item, index});
       MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
                    << " node:" << item->fullname_with_scope() << " index: " << index;
-      if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph->graph_id()) == nullptr) {
+      if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph.graph_id()) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
@@ -620,10 +618,9 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "AssignStaticMemoryInput end";
 }
 
-void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "AssignStaticMemoryOutput start for graph " << graph->graph_id();
-  auto nodes = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
+void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph &graph) {
+  MS_LOG(INFO) << "AssignStaticMemoryOutput start for graph " << graph.graph_id();
+  auto nodes = AnfAlgo::GetAllOutput(graph.output(), {prim::kPrimTupleGetItem});
   std::vector<session::KernelWithIndex> non_communication_op;
   // Assign Communicate Op Memory firstly.
   for (const auto &node : nodes) {
@@ -647,9 +644,8 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) 
   MS_LOG(INFO) << "AssignStaticMemoryOutput end";
 }
 
-void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto &kernels = graph->execution_order();
+void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph &graph) {
+  auto &kernels = graph.execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto output_num = AnfAlgo::GetOutputTensorNum(kernel);
@@ -659,8 +655,8 @@ void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph *graph) {
     }
     for (size_t i = 0; i < output_num; ++i) {
       session::AnfWithOutIndex out_pair(kernel, i);
-      if (graph->IsInRefOutputMap(out_pair)) {
-        auto origin_pair = graph->GetRefCorrespondOutput(out_pair);
+      if (graph.IsInRefOutputMap(out_pair)) {
+        auto origin_pair = graph.GetRefCorrespondOutput(out_pair);
         MS_EXCEPTION_IF_NULL(origin_pair.first);
         auto origin_node_output_addr = AnfAlgo::GetMutableOutputAddr(origin_pair.first, origin_pair.second);
         MS_EXCEPTION_IF_NULL(origin_node_output_addr);
@@ -682,10 +678,9 @@ void KernelRuntime::AssignCommunicationNodeMem(MemType type, const AnfNodePtr &n
   AssignWorkSpaceMem(type, node);
 }
 
-void KernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto &kernels = graph->execution_order();
-  if (kernels.empty() || graph_kernel_events_map_.find(graph->graph_id()) != graph_kernel_events_map_.end()) {
+void KernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
+  auto &kernels = graph.execution_order();
+  if (kernels.empty() || graph_kernel_events_map_.find(graph.graph_id()) != graph_kernel_events_map_.end()) {
     return;
   }
   auto kernel_events =
@@ -736,7 +731,7 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
       kernel_post_run_events[i].emplace_back([post_event]() { post_event->WaitEvent(); });
     }
   }
-  graph_kernel_events_map_[graph->graph_id()] = std::move(kernel_events);
+  graph_kernel_events_map_[graph.graph_id()] = std::move(kernel_events);
 }
 
 void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNodePtr &node) {
@@ -989,15 +984,14 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   }
 }
 
-void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+void KernelRuntime::AssignStaticMemoryValueNode(const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  MS_LOG(DEBUG) << "AssignStaticMemoryValueNode start for graph " << graph->graph_id();
+  MS_LOG(DEBUG) << "AssignStaticMemoryValueNode start for graph " << graph.graph_id();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   // order the value nodes
   std::map<std::string, ValueNodePtr> value_nodes_map;
-  for (auto &node : graph->graph_value_nodes()) {
+  for (auto &node : graph.graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(node);
     value_nodes_map[node->fullname_with_scope()] = node;
   }
@@ -1007,22 +1001,18 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(value_node);
     if (NodeOutputDeviceAddressExist(value_node, 0)) {
       MS_LOG(DEBUG) << "value_node[" << value_node->DebugString() << "] address already exist";
-
-      // TODO(jojo): PyNaitve Infer ?
       auto device_address = AnfAlgo::GetMutableOutputAddr(value_node, 0);
       if (device_address->ptr_ == nullptr) {
         if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
           if (!mem_manager_->MallocMemFromMemPool(device_address, device_address->size_)) {
             MS_LOG(EXCEPTION) << "MallocMemFromMemPool failed";
           }
-
         } else {
-          if (mem_manager_->MallocMem(kStaticMem, device_address->size_, device_address, graph->graph_id())) {
+          if (mem_manager_->MallocMem(kStaticMem, device_address->size_, device_address, graph.graph_id())) {
             MS_LOG(EXCEPTION) << "MallocMem kStaticMem failed";
           }
         }
       }
-
       continue;
     }
     auto &node_value = value_node->value();
@@ -1042,7 +1032,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
       } else {
         MS_LOG(INFO) << "Assign Static Memory for Value node, size:" << tensor_size
                      << " node:" << value_node->fullname_with_scope();
-        if (mem_manager_->MallocMem(kStaticMem, tensor_size, address, graph->graph_id()) == nullptr) {
+        if (mem_manager_->MallocMem(kStaticMem, tensor_size, address, graph.graph_id()) == nullptr) {
           MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem
                             << ", tensor size is: " << tensor_size;
         }
@@ -1057,8 +1047,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
   MS_LOG(DEBUG) << "AssignStaticMemoryValueNode end";
 }
 
-void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+void KernelRuntime::AssignDynamicMemory(const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -1078,7 +1067,7 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
   } else {
     MS_LOG(INFO) << "Memory Reuse is disable...";
   }
-  auto &execution_nodes = graph->execution_order();
+  auto &execution_nodes = graph.execution_order();
   std::vector<CNodePtr> compute_nodes;
   // communication nodes first
   for (auto &node : execution_nodes) {
@@ -1338,17 +1327,16 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
 }
 
 void KernelRuntime::SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler,
-                                          const session::KernelGraph *graph, const AnfNodePtr &kernel, bool mock) {
-  MS_EXCEPTION_IF_NULL(graph);
+                                          const session::KernelGraph &graph, const AnfNodePtr &kernel, bool mock) {
   MS_EXCEPTION_IF_NULL(mem_scheduler);
   MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   for (size_t j = 0; j < kernel_mod->GetOutputSizeList().size(); ++j) {
-    auto tensor = graph->GetNodeOutputTensor(std::make_pair(kernel, j));
+    auto tensor = graph.GetNodeOutputTensor(std::make_pair(kernel, j));
     auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, j, true);
     if (mock) {
-      if (graph->IsInternalOutput(kernel, j) && device_address != nullptr) {
+      if (graph.IsInternalOutput(kernel, j) && device_address != nullptr) {
         mem_scheduler->SetMemPriority(device_address.get(), kMemPriorityHigh);
       }
       continue;
@@ -1377,11 +1365,10 @@ void KernelRuntime::SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &m
 }
 
 void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler,
-                                          const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+                                          const session::KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(mem_scheduler);
-  auto &input_nodes = graph->input_nodes();
-  auto &input_tensors = graph->input_tensors();
+  auto &input_nodes = graph.input_nodes();
+  auto &input_tensors = graph.input_tensors();
   if (input_tensors.size() != input_nodes.size()) {
     MS_LOG_EXCEPTION << "Invalid input tensor size:" << input_tensors.size() << " vs node size:" << input_nodes.size();
   }
@@ -1407,9 +1394,8 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
   }
 }
 
-bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph, const AnfNodePtr &kernel,
+bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNodePtr &kernel,
                                  const std::shared_ptr<MemScheduler> &mem_scheduler, bool mock) {
-  MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -1456,21 +1442,21 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph, const AnfNod
   return ret;
 }
 
-bool KernelRuntime::LaunchKernelMod(const session::KernelGraph *graph, bool mock) {
+bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::shared_ptr<MemScheduler> mem_scheduler = nullptr;
   auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
   if (enable_mem_scheduler) {
-    mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph->graph_id());
+    mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
     MS_EXCEPTION_IF_NULL(mem_scheduler);
     mem_scheduler->SetMemHandler(mem_manager_);
     mem_scheduler->RecordMemUsage();
     InitGraphInputTensors(mem_scheduler, graph);
   }
-  const auto &kernels = graph->execution_order();
+  const auto &kernels = graph.execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernel_list;
-  auto iter = graph_dynamic_kernel_map_.find(graph->graph_id());
+  auto iter = graph_dynamic_kernel_map_.find(graph.graph_id());
   if (iter != graph_dynamic_kernel_map_.end()) {
     dynamic_kernel_list = iter->second;
   }
@@ -1480,7 +1466,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph *graph, bool mock
   }
   std::vector<std::vector<std::function<void()>>> kernel_pre_run_events;
   std::vector<std::vector<std::function<void()>>> kernel_post_run_events;
-  auto events_iter = graph_kernel_events_map_.find(graph->graph_id());
+  auto events_iter = graph_kernel_events_map_.find(graph.graph_id());
   if (events_iter != graph_kernel_events_map_.end()) {
     kernel_pre_run_events = events_iter->second.first;
     kernel_post_run_events = events_iter->second.second;
@@ -1528,13 +1514,12 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph *graph, bool mock
   return true;
 }
 
-void KernelRuntime::UseMemSchedulerIfNeeded(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+void KernelRuntime::UseMemSchedulerIfNeeded(const session::KernelGraph &graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto enable_mem_scheduler = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
   if (enable_mem_scheduler) {
-    auto mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph->graph_id());
+    auto mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
     if (mem_scheduler->need_record_event()) {
       (void)LaunchKernelMod(graph, true);
     }
@@ -1551,8 +1536,7 @@ void KernelRuntime::UseMemSchedulerIfNeeded(const session::KernelGraph *graph) {
   }
 }
 
-bool KernelRuntime::LaunchKernels(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+bool KernelRuntime::LaunchKernels(const session::KernelGraph &graph) {
   UseMemSchedulerIfNeeded(graph);
   if (!LaunchKernelMod(graph)) {
     MS_LOG(ERROR) << "LaunchKernelMod failed!";
@@ -1574,11 +1558,10 @@ void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
 }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
-void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph *graph,
+void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph &graph,
                                              AnfNodePtr *const first_cache_input_index,
                                              size_t *const first_cache_size) {
-  MS_EXCEPTION_IF_NULL(graph);
-  for (const auto &kernel : graph->execution_order()) {
+  for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_name = AnfAlgo::GetCNodeName(kernel);
     if (kernel_name != kGatherV2OpName && kernel_name != kSparseGatherV2OpName) {
@@ -1647,13 +1630,12 @@ void KernelRuntime::CheckSparsePSEmbeddingCache(const CNodePtr &node) {
   }
 }
 
-void KernelRuntime::CheckIfSupportPSEmbeddingCache(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+void KernelRuntime::CheckIfSupportPSEmbeddingCache(const session::KernelGraph &graph) {
   AnfNodePtr first_cache_input_index = nullptr;
   size_t first_cache_size = 0;
   GetFirstPSEmbeddingCache(graph, &first_cache_input_index, &first_cache_size);
   MS_EXCEPTION_IF_NULL(first_cache_input_index);
-  for (const auto &kernel : graph->execution_order()) {
+  for (const auto &kernel : graph.execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     auto kernel_name = AnfAlgo::GetCNodeName(kernel);
     if (kernel_name != kGatherV2OpName && kernel_name != kSparseGatherV2OpName) {

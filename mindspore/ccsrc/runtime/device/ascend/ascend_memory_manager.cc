@@ -197,11 +197,11 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
   }
 }
 
-void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
+void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph &graph) {
   MemoryManager::MallocSomasDynamicMem(graph);
 #ifndef ENABLE_SECURITY
   if (MemoryProfiling::GetInstance().IsMemoryProfilingEnable()) {
-    somas_reuse_util_ptr_->ConvertToProfilingNode(graph->graph_id());
+    somas_reuse_util_ptr_->ConvertToProfilingNode(graph.graph_id());
   }
 #endif
 }

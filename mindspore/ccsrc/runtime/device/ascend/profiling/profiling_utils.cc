@@ -210,7 +210,7 @@ void ProfilingUtils::GetTraceBpEnd(const session::KernelGraph &kernel_graph, con
   if (bp_end_str.empty()) {
     trace_info->trace_bp_end = trace_info->trace_iter_end;
   } else {
-    trace_info->trace_bp_end.insert(bp_end_str);
+    (void)trace_info->trace_bp_end.insert(bp_end_str);
   }
 }
 

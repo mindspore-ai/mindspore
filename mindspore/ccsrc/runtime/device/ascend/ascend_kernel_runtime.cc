@@ -19,6 +19,7 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
+#include <set>
 #include "utils/signal_util.h"
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "runtime/device/ascend/distribute/ascend_collective.h"
@@ -372,8 +373,7 @@ bool AscendKernelRuntime::Init() {
   return true;
 }
 
-bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+bool AscendKernelRuntime::LoadData(const session::KernelGraph &graph) {
 #ifdef ENABLE_DEBUGGER
   MS_LOG(INFO) << "Start load step";
   for (const auto &graph_ptr : debugger_->GetGraphPtrList()) {
@@ -412,7 +412,7 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id, node_index);
 }
 
-bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
+bool AscendKernelRuntime::Load(const session::KernelGraph &graph, bool is_task_sink) {
   if (!is_task_sink) {
     MS_LOG(INFO) << "Graph mode with not task sink";
     GenKernelEvents(graph);
@@ -428,10 +428,9 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
   return true;
 }
 
-bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph &graph) {
   MS_LOG(INFO) << "GenDynamicKernel start";
-  auto cnode_list = graph->execution_order();
+  auto cnode_list = graph.execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernels;
   for (const auto &cnode : cnode_list) {
     MS_EXCEPTION_IF_NULL(cnode);
@@ -445,15 +444,14 @@ bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
     dynamic_kernel->Initialize();
     dynamic_kernels.emplace_back(dynamic_kernel);
   }
-  graph_dynamic_kernel_map_[graph->graph_id()] = std::move(dynamic_kernels);
+  graph_dynamic_kernel_map_[graph.graph_id()] = std::move(dynamic_kernels);
   MS_LOG(INFO) << "GenDynamicKernel end";
   return true;
 }
 
-bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+bool AscendKernelRuntime::GenTask(const session::KernelGraph &graph) {
   SetCurrentContext();
-  if (graph->is_dynamic_shape()) {
+  if (graph.is_dynamic_shape()) {
     if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && (ConfigManager::GetInstance().iter_num() > 1)) {
       MS_LOG(EXCEPTION) << "Dynamic shape is not supported with dataset_sink_mode.";
     }
@@ -465,9 +463,9 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
     MS_LOG(INFO) << "Dynamic Shape Graph Generate Dynamic kernel";
     return GenDynamicKernel(graph);
   }
-  MS_LOG(INFO) << "GenTask start. GraphId:" << graph->graph_id();
+  MS_LOG(INFO) << "GenTask start. GraphId:" << graph.graph_id();
 #ifndef ENABLE_SECURITY
-  DumpJsonParser::GetInstance().UpdateNeedDumpKernels(NOT_NULL(graph));
+  DumpJsonParser::GetInstance().UpdateNeedDumpKernels(graph);
 #endif
 #ifdef MEM_REUSE_DEBUG
   if (!EnvConfigParser::GetInstance().GetSysMemreuse()) {
@@ -476,19 +474,19 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   }
 #endif
   vector<std::shared_ptr<TaskInfo>> task_info_list;
-  auto anf_node_list = graph->execution_order();
+  auto anf_node_list = graph.execution_order();
   auto task_generator = TaskGenerator();
-  if (!task_generator.GenTasks(anf_node_list, &task_info_list, graph->graph_id())) {
+  if (!task_generator.GenTasks(anf_node_list, &task_info_list, graph.graph_id())) {
     return false;
   }
   // Store the task_info_list
-  auto insert_ret = task_map_.insert(std::make_pair(graph->graph_id(), task_info_list));
+  auto insert_ret = task_map_.insert(std::make_pair(graph.graph_id(), task_info_list));
   if (!insert_ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
   }
   // Graph may have no compute node, such TensorAddGrad.
   if (task_info_list.empty()) {
-    MS_LOG(WARNING) << "Graph " << graph->graph_id() << " have no compute node";
+    MS_LOG(WARNING) << "Graph " << graph.graph_id() << " have no compute node";
     return true;
   }
   AscendStreamAssign &assign_instance = AscendStreamAssign::GetInstance();
@@ -500,13 +498,13 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   assign_instance.GetHcomStreams(&force_copy_stream_list);
   MS_LOG(INFO) << "Call DavinciModel total stream num:" << resource_manager.get_cur_stream_num()
                << ", total event num:" << resource_manager.get_cur_event_num()
-               << ", total label num:" << graph->label_num()
+               << ", total label num:" << graph.label_num()
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
   auto model = std::make_shared<ge::model_runner::DavinciModel>(
     task_info_list, wait_active_stream_list, force_copy_stream_list, 0, 0, 0, 0, 0, 0,
-    resource_manager.get_cur_stream_num(), graph->label_num(), resource_manager.get_cur_event_num(), 0);
-  auto ret = graph_model_map_.insert(std::make_pair(graph->graph_id(), model));
+    resource_manager.get_cur_stream_num(), graph.label_num(), resource_manager.get_cur_event_num(), 0);
+  auto ret = graph_model_map_.insert(std::make_pair(graph.graph_id(), model));
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
   }
@@ -514,23 +512,22 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   return true;
 }
 
-bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+bool AscendKernelRuntime::LoadTask(const session::KernelGraph &graph) {
   SetCurrentContext();
-  if (graph->is_dynamic_shape()) {
+  if (graph.is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic Shape Graph Skip Load Task Step";
     return true;
   }
 
-  MS_LOG(INFO) << "LoadTask start. GraphId:" << graph->graph_id();
+  MS_LOG(INFO) << "LoadTask start. GraphId:" << graph.graph_id();
   if (GraphWithEmptyTaskList(graph)) {
     MS_LOG(WARNING) << "LoadTask end, task list is empty";
     return true;
   }
 
-  auto model_iter = graph_model_map_.find(graph->graph_id());
+  auto model_iter = graph_model_map_.find(graph.graph_id());
   if (model_iter == graph_model_map_.end()) {
-    MS_LOG(ERROR) << "GraphId:" << graph->graph_id() << " Invalid! Graph LoadTask without GenTask.";
+    MS_LOG(ERROR) << "GraphId:" << graph.graph_id() << " Invalid! Graph LoadTask without GenTask.";
     return false;
   }
 
@@ -540,7 +537,7 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
 #ifndef ENABLE_SECURITY
   std::function<void *()> model_handle =
     std::bind(&ModelRunner::GetModelHandle, &ModelRunner::Instance(), model_iter->first);
-  DistributeDebugTask(NOT_NULL(graph), NOT_NULL(model_handle));
+  DistributeDebugTask(graph, NOT_NULL(model_handle));
 #endif
 
   try {
@@ -556,9 +553,9 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   if (ProfilingManager::GetInstance().IsProfiling()) {
     auto task_ids = ModelRunner::Instance().GetTaskIdList(model_iter->first);
     auto stream_ids = ModelRunner::Instance().GetStreamIdList(model_iter->first);
-    ProfilingUtils::ReportProfilingData(task_ids, stream_ids, *graph);
+    ProfilingUtils::ReportProfilingData(task_ids, stream_ids, graph);
   }
-  LaunchDataDump(graph->graph_id());
+  LaunchDataDump(graph.graph_id());
 #endif
 
   ModelRunner::Instance().LoadModelComplete(model_iter->first);
@@ -566,18 +563,18 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
 }
 
 #ifndef ENABLE_SECURITY
-void AscendKernelRuntime::DistributeDebugTask(NotNull<const session::KernelGraph *> graph,
+void AscendKernelRuntime::DistributeDebugTask(const session::KernelGraph &graph,
                                               const NotNull<std::function<void *()>> &model_handle) {
   if (!DumpJsonParser::GetInstance().async_dump_enabled()) {
     return;
   }
   MS_LOG(INFO) << "Start Distribute Debug Task";
-  auto data_dumper = std::make_shared<DataDumper>(graph.get(), model_handle);
+  auto data_dumper = std::make_shared<DataDumper>(&graph, model_handle);
   MS_EXCEPTION_IF_NULL(data_dumper);
-  auto ret = graph_data_dumper_.try_emplace(graph->graph_id(), data_dumper);
+  auto ret = graph_data_dumper_.try_emplace(graph.graph_id(), data_dumper);
   data_dumper->OpDebugRegister();
   if (!ret.second) {
-    MS_LOG(WARNING) << "[DataDump] Insert graphId:" << graph->graph_id() << " data dumper failed";
+    MS_LOG(WARNING) << "[DataDump] Insert graphId:" << graph.graph_id() << " data dumper failed";
   }
 }
 
@@ -671,8 +668,7 @@ std::string AscendKernelRuntime::GetDumpPath() {
 }
 
 #ifndef ENABLE_SECURITY
-void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
+void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph &graph) {
   const std::string path = GetDumpPath();
   if (access(path.c_str(), F_OK) == 0) {
     if (!DeleteDumpDir(path)) {
@@ -697,10 +693,9 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *grap
 }
 #endif
 
-bool AscendKernelRuntime::Run(session::KernelGraph *const graph, bool is_task_sink) {
+bool AscendKernelRuntime::Run(const session::KernelGraph &graph, bool is_task_sink) {
   const uint64_t kUSecondInSecond = 1000000;
   SignalGuard sg(IntHandler);
-  MS_EXCEPTION_IF_NULL(graph);
   bool ret = false;
 
   if (is_task_sink) {
@@ -784,10 +779,9 @@ void AscendKernelRuntime::SetKernelModStream(const std::vector<CNodePtr> &kernel
                        [](const std::pair<void *, size_t> &item) { return item.second; });
 }
 
-void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto &kernels = graph->execution_order();
-  if (kernels.empty() || graph_kernel_events_map_.find(graph->graph_id()) != graph_kernel_events_map_.end()) {
+void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
+  auto &kernels = graph.execution_order();
+  if (kernels.empty() || graph_kernel_events_map_.find(graph.graph_id()) != graph_kernel_events_map_.end()) {
     return;
   }
   std::vector<size_t> last_stream_nodes;
@@ -840,7 +834,7 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph *graph) {
     }
   }
   ProcessBoundaryEvent(kernels, &kernel_post_run_events, last_stream_nodes);
-  graph_kernel_events_map_[graph->graph_id()] = std::move(kernel_events);
+  graph_kernel_events_map_[graph.graph_id()] = std::move(kernel_events);
 }
 
 void AscendKernelRuntime::ProcessBoundaryEvent(const std::vector<CNodePtr> &kernels,
@@ -882,12 +876,11 @@ void AscendKernelRuntime::ProcessBoundaryEvent(const std::vector<CNodePtr> &kern
   }
 }
 
-bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "RunExecutorAsync start. GraphId:" << graph->graph_id();
-  auto iter = graph_dynamic_kernel_map_.find(graph->graph_id());
+bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &graph) {
+  MS_LOG(INFO) << "RunExecutorAsync start. GraphId:" << graph.graph_id();
+  auto iter = graph_dynamic_kernel_map_.find(graph.graph_id());
   if (iter == graph_dynamic_kernel_map_.end()) {
-    MS_LOG(ERROR) << "GraphId:" << graph->graph_id() << " Not Found! Please generator executor first";
+    MS_LOG(ERROR) << "GraphId:" << graph.graph_id() << " Not Found! Please generator executor first";
     return false;
   }
 
@@ -919,16 +912,15 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
   return true;
 }
 
-bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
-  current_graph_ = graph;
+bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
+  current_graph_ = &graph;
   SetCurrentContext();
-  MS_EXCEPTION_IF_NULL(graph);
-  if (graph->is_dynamic_shape()) {
+  if (graph.is_dynamic_shape()) {
     MS_LOG(INFO) << "Dynamic Shape Graph Run Task Async";
     return RunDynamicKernelAsync(graph);
   }
 
-  MS_LOG(INFO) << "RunTask start. GraphId:" << graph->graph_id();
+  MS_LOG(INFO) << "RunTask start. GraphId:" << graph.graph_id();
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -937,13 +929,13 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
     return true;
   }
 
-  if (!CheckGraphIdValid(graph->graph_id())) {
-    MS_LOG(ERROR) << "GraphId:" << graph->graph_id() << " Invalid! Graph RunTask without GenTask.";
+  if (!CheckGraphIdValid(graph.graph_id())) {
+    MS_LOG(ERROR) << "GraphId:" << graph.graph_id() << " Invalid! Graph RunTask without GenTask.";
     return false;
   }
 
   try {
-    ModelRunner::Instance().RunModel(graph->graph_id());
+    ModelRunner::Instance().RunModel(graph.graph_id());
   } catch (const std::exception &) {
 #ifndef ENABLE_SECURITY
     DumpTaskExceptionInfo(graph);
@@ -1139,9 +1131,8 @@ bool AscendKernelRuntime::DestroyHccl() {
   return true;
 }
 
-bool AscendKernelRuntime::GraphWithEmptyTaskList(const session::KernelGraph *graph) const {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto iter = task_map_.find(graph->graph_id());
+bool AscendKernelRuntime::GraphWithEmptyTaskList(const session::KernelGraph &graph) const {
+  auto iter = task_map_.find(graph.graph_id());
   if (iter == task_map_.end()) {
     MS_LOG(EXCEPTION) << "Unknown graph ptr";
   }

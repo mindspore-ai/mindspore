@@ -248,7 +248,7 @@ void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->AssignMemory(kernel_graph);
+  runtime_instance->AssignMemory(*kernel_graph);
 }
 
 void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors,
@@ -256,21 +256,21 @@ void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
+  runtime_instance->RunOpAssignMemory(input_tensors, *kernel_graph);
 }
 
 void GPUSession::RunOpGenKernelEvent(const KernelGraph *graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->GenKernelEvents(graph);
+  runtime_instance->GenKernelEvents(*graph);
 }
 
 void GPUSession::RunOpClearMemory(KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpClearMemory(kernel_graph);
+  runtime_instance->RunOpClearMemory(*kernel_graph);
 }
 
 namespace {
@@ -626,7 +626,7 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
 void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  if (!runtime_instance->Run(kernel_graph.get(), false)) {
+  if (!runtime_instance->Run(*kernel_graph, false)) {
     MS_LOG(EXCEPTION) << "GPU execute graph failed!";
   }
 }
