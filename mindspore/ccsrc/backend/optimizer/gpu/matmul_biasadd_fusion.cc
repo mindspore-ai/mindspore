@@ -81,11 +81,18 @@ const AnfNodePtr MatMulBiasAddFusion::Process(const FuncGraphPtr &graph, const A
     return nullptr;
   }
 
+  auto load_w = graph->NewCNode({NewValueNode(prim::kPrimLoad), w_input, u_input});
+  MS_EXCEPTION_IF_NULL(load_w);
+  load_w->set_abstract(w_input->abstract());
+  auto load_bias = graph->NewCNode({NewValueNode(prim::kPrimLoad), bias_input, u_input});
+  MS_EXCEPTION_IF_NULL(load_bias);
+  load_bias->set_abstract(bias_input->abstract());
+
   // Fused into a FusedMatMulBiasAdd operator.
   auto prim = std::make_shared<Primitive>(kFusedMatMulBiasAddName);
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_value = NewValueNode(prim);
-  std::vector<AnfNodePtr> inputs = {prim_value, x_input, w_input, bias_input};
+  std::vector<AnfNodePtr> inputs = {prim_value, x_input, load_w, load_bias};
   auto fused_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fused_node);
 
