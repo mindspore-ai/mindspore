@@ -35,7 +35,7 @@ typedef struct ReluXQuantArg {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ReluXInt8(const int8_t *src, int length, int8_t *dst, ReluXQuantArg *arg);
+void ReluXInt8(const int8_t *src, int length, int8_t *dst, const ReluXQuantArg *arg);
 #ifdef __cplusplus
 }
 #endif

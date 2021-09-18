@@ -23,7 +23,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Int8Concat(int8_t **inputs, int8_t *output_ptr, ConcatParameter *para, int axis, int64_t real_dst_count,
+void Int8Concat(int8_t **inputs, int8_t *output_ptr, const ConcatParameter *para, int axis, int64_t real_dst_count,
                 int task_id);
 #ifdef __cplusplus
 }

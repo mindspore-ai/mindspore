@@ -18,7 +18,7 @@
 #include "nnacl/reshape_parameter.h"
 #include <string.h>
 
-void Int8Reshape(int8_t *input_ptr, int8_t *output_ptr, int64_t real_dst_count, ReshapeQuantArg para) {
+void Int8Reshape(const int8_t *input_ptr, int8_t *output_ptr, int64_t real_dst_count, ReshapeQuantArg para) {
   if (para.in_args_.scale_ == para.out_args_.scale_ && para.in_args_.zp_ == para.out_args_.zp_) {
     memcpy(output_ptr, input_ptr, real_dst_count);
   } else {

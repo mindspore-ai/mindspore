@@ -115,11 +115,11 @@ int DoStridedSliceIntFp64Bool(const void *in_data, void *out_data, StridedSliceP
 }
 
 int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *param) {
-  if (param->data_type != kDataTypeFloat && param->data_type != kDataTypeFloat16) {
-    return DoStridedSliceIntFp64Bool(in_data, out_data, param);
-  }
   if (in_data == NULL || out_data == NULL || param == NULL) {
     return NNACL_NULL_PTR;
+  }
+  if (param->data_type != kDataTypeFloat && param->data_type != kDataTypeFloat16) {
+    return DoStridedSliceIntFp64Bool(in_data, out_data, param);
   }
   if (param->num_axes_ > DIMENSION_8D) {
     return NNACL_PARAM_INVALID;

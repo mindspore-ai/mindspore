@@ -210,7 +210,7 @@ void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, 
 void Quantize(const float *input_data, int length, float scale, int zero_point, int8_t *output_data);
 
 // dequantize from int8 to float
-void Dequantize(int8_t *input_data, int length, float scale, int zero_point, float *output_data);
+void Dequantize(const int8_t *input_data, int length, float scale, int zero_point, float *output_data);
 
 #ifdef __cplusplus
 }

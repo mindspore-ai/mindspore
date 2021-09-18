@@ -102,7 +102,7 @@ void Quantize(const float *input_data, int length, float scale, int zero_point, 
 }
 
 // dequantize from int8 to float
-void Dequantize(int8_t *input_data, int length, float scale, int zero_point, float *output_data) {
+void Dequantize(const int8_t *input_data, int length, float scale, int zero_point, float *output_data) {
   for (int i = 0; i < length; ++i) {
     output_data[i] = scale * (input_data[i] - zero_point);
   }

@@ -24,8 +24,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Int8DoSplit(int8_t *in_data, int8_t **out_data, const int *input_shape, int offset, int num_unit,
-                SplitParameter *split_param);
+int Int8DoSplit(const int8_t *in_data, int8_t **out_data, const int *input_shape, int offset, int num_unit,
+                const SplitParameter *split_param);
 #ifdef __cplusplus
 }
 #endif
