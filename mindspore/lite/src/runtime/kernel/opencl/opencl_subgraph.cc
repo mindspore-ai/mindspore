@@ -108,6 +108,8 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       new_tensor = nullptr;
       return RET_ERROR;
     }
+
+    parameter->op_parameter.is_zero_shape_ = false;
     parameter->op_parameter.type_ = PRIM_TO_FORMAT;
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);

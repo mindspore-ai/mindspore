@@ -318,10 +318,6 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 
   FindAllInoutKernels(*dst_kernels);
 
-#ifndef RUNTIME_PASS_CLIP
-  RuntimePass(context_, dst_kernels, src_tensors_);
-#endif
-
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (IsControlFlowParttern(*dst_kernels)) {
     ret = ConstructControlFlowMainGraph(dst_kernels);
@@ -341,6 +337,10 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     }
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   }
+#endif
+
+#ifndef RUNTIME_PASS_CLIP
+  RuntimePass(dst_kernels, src_tensors_);
 #endif
 
   ret = InitKernels(*dst_kernels);
