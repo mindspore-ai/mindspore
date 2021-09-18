@@ -25,7 +25,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DivInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count, DivQuantArg *para);
+int DivInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
+            const DivQuantArg *para);
 #ifdef __cplusplus
 }
 #endif

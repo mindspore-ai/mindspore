@@ -17,7 +17,7 @@
 #include "nnacl/int8/softmax_int8.h"
 
 int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int *exp_data, int *sum_data,
-                SoftmaxQuantArg *quant_param, SoftmaxParameter *parameter) {
+                const SoftmaxQuantArg *quant_param, SoftmaxParameter *parameter) {
   int32_t axis = parameter->axis_;
   int n_dim = parameter->n_dim_;
   int *input_shape = parameter->input_shape_;

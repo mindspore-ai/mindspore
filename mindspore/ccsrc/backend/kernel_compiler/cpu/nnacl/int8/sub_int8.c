@@ -76,7 +76,8 @@ void SubInt8NEON(const int8_t *input0_data, const int8_t *input1_data, int8_t *o
 }
 #endif
 
-int SubInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count, SubQuantArg *para) {
+int SubInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
+            const SubQuantArg *para) {
   int index = 0;
 #ifdef ENABLE_NEON
   SubInt8NEON(input0_data, input1_data, output_data, real_dst_count, para, &index);
