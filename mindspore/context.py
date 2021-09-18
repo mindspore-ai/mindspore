@@ -509,6 +509,7 @@ def _check_target_specific_cfgs(device, arg_key):
                    ", ignore it.")
     return False
 
+
 @args_unreset_check(device_id=int, variable_memory_max_size=str, max_device_memory=str)
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
                  save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
