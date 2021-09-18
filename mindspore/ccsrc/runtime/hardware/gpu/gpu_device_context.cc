@@ -148,9 +148,9 @@ void GPUDeviceContext::Destroy() {
 
   if (GpuBufferMgr::GetInstance().IsInit()) {
     if (!GpuBufferMgr::GetInstance().IsClosed() && !GpuBufferMgr::GetInstance().CloseNotify()) {
-      MS_LOG(EXCEPTION) << "Could not close gpu data queue.";
+      MS_LOG(ERROR) << "Could not close gpu data queue.";
     }
-    CHECK_OP_RET_WITH_EXCEPT(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
+    CHECK_OP_RET_WITH_ERROR(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
   }
 
   // Release stream, cudnn and cublas handle, etc.

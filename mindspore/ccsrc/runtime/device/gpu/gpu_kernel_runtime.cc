@@ -271,10 +271,10 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
   if (GpuBufferMgr::GetInstance().IsInit()) {
     if (!GpuBufferMgr::GetInstance().IsClosed()) {
       if (!GpuBufferMgr::GetInstance().CloseNotify()) {
-        MS_LOG(EXCEPTION) << "Could not close gpu data queue.";
+        MS_LOG(ERROR) << "Could not close gpu data queue.";
       }
     }
-    CHECK_OP_RET_WITH_EXCEPT(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
+    CHECK_OP_RET_WITH_ERROR(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
   }
 
   // Destroy remaining memory swap events and free host memory.
