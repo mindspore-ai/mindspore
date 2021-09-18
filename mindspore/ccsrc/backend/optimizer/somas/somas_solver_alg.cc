@@ -160,7 +160,7 @@ bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const 
         int64_t accumulator = 0;
         for (auto block_tensor = block.m_start_tensor_; block_tensor != nullptr; block_tensor = block_tensor->right_) {
           if ((*constraints)[block_tensor->index_].IsBitTrue(allocated_tensor->index_) == false) {
-            int64_t start_first_contiguous = allocated_offset - accumulator - block_tensor->size_;
+            int64_t start_first_contiguous = allocated_offset - accumulator - SizeToLong(block_tensor->size_);
             int64_t end_first_contiguous = allocated_offset - accumulator + allocated_size;
             if (start_first_contiguous > start_offset) {
               l_interval.emplace_back(Interval(start_first_contiguous, end_first_contiguous));
@@ -170,7 +170,7 @@ bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const 
               }
             }
           }
-          accumulator += block_tensor->size_;
+          accumulator += SizeToLong(block_tensor->size_);
         }
         allocated_tensor = allocated_tensor->right_;
       }
@@ -219,7 +219,7 @@ void FootPrint::addElem(BlockTensor *block, const size_t &offset) {
 void FootPrint::printStats() {
   MS_LOG(DEBUG) << "Footprint blocks: " << m_starts_.size() << " \toffset: " << m_offset_;
 }
-bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, std::shared_ptr<FootPrint> foot_print,
+bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, const std::shared_ptr<FootPrint> &foot_print,
                          const std::vector<DynamicBitSet> *pConstraints) {
   MS_EXCEPTION_IF_NULL(foot_print);
   auto start = std::chrono::system_clock::now();
@@ -231,9 +231,8 @@ bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, std::shared_ptr<F
   m_tensors_allocated_ = 0;
   SomasSolverTensorDescPtr tensor = nullptr;
 
-  for (size_t i = 0; i < (*block_tensors_v).size(); i++) {
-    BlockTensor &block = (*block_tensors_v)[i];
-    if (block.m_bre_allocate_ == false) {
+  for (auto &block : *block_tensors_v) {
+    if (!block.m_bre_allocate_) {
       offset = block.m_start_tensor_->offset_;
       pair<uint32_t, size_t> aux;
       aux.first = foot_print->m_solId_;

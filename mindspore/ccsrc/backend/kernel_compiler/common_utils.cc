@@ -150,7 +150,6 @@ FusionType GetFusionTypeByName(const std::string &name) {
       transform(name_upper.begin(), name_upper.end(), name_upper.begin(), ::toupper);
       return fusion_name_upper == name_upper;
     });
-
   if (iter == fusion_type_name_maps.end()) {
     MS_LOG(EXCEPTION) << "Illegal fusion name: " << name;
   }

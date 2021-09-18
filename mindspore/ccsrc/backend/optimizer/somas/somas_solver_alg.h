@@ -159,7 +159,7 @@ class FastHeuristic {
 
   void setAlignment(const size_t &a) { m_alignment_ = a; }
   void Destroy();
-  bool Eval(vector<BlockTensor> *block_tensors_v, std::shared_ptr<FootPrint> foot_print,
+  bool Eval(vector<BlockTensor> *block_tensors_v, const std::shared_ptr<FootPrint> &foot_print,
             const std::vector<DynamicBitSet> *pConstraints);
 
  private:
