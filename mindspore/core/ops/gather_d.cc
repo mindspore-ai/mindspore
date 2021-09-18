@@ -55,8 +55,7 @@ TypePtr GatherDInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   auto prim_name = prim->name();
   // check
   std::set<TypePtr> valid_x_type = {kTensorType};
-  auto x_type =
-    CheckAndConvertUtils::CheckTensorTypeValid("x_type", input_args[0]->BuildType(), valid_x_type, prim_name);
+  auto x_type = CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_x_type, prim_name);
   return x_type;
 }
 }  // namespace
@@ -66,9 +65,9 @@ AbstractBasePtr GatherDInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto prim_name = primitive->name();
   // check
   std::set<TypePtr> valid_types = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[kInputIndex2]->BuildType(), valid_types,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("index", input_args[kInputIndex2]->BuildType(), valid_types,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckSubClass("dim_type", input_args[kInputIndex1]->BuildType(), valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckSubClass("dim", input_args[kInputIndex1]->BuildType(), valid_types, prim_name);
   return abstract::MakeAbstract(GatherDInferShape(primitive, input_args), GatherDInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(GatherD, prim::kPrimGatherD, GatherDInfer, nullptr, true);

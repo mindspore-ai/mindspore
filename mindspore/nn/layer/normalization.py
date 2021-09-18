@@ -86,7 +86,8 @@ class _BatchNorm(Cell):
             gamma_init, num_features), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
             beta_init, num_features), name="beta", requires_grad=affine)
-        self.group_device_num = validator.check_positive_int(device_num_each_group)
+        self.group_device_num = validator.check_positive_int(device_num_each_group, "device_num_each_group",
+                                                             self.cls_name)
         self.process_groups = process_groups
         self.is_global = False
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
@@ -177,7 +178,7 @@ class _BatchNorm(Cell):
     def _check_rank_ids(self, process_groups, rank_size):
         seen = set()
         for rid in itertools.chain(*process_groups):
-            validator.check_int_range(rid, 0, rank_size, Rel.INC_LEFT, "rank id in process_groups")
+            validator.check_int_range(rid, 0, rank_size, Rel.INC_LEFT, "rank id in process_groups", self.cls_name)
             if rid in seen:
                 raise ValueError(f"For '{self.cls_name}', rank id in 'process_groups' should not be duplicated, "
                                  f"but got {process_groups}.")
@@ -696,7 +697,8 @@ class GlobalBatchNorm(_BatchNorm):
                                               use_batch_statistics,
                                               device_num_each_group,
                                               input_dims='both')
-        self.group_device_num = validator.check_positive_int(device_num_each_group)
+        self.group_device_num = validator.check_positive_int(device_num_each_group, "device_num_each_group",
+                                                             self.cls_name)
         if self.group_device_num <= 1:
             raise ValueError(f"For '{self.cls_name}', the 'device_num_each_group' must be greater than 1, "
                              f"but got {self.group_device_num}.")
@@ -1102,8 +1104,8 @@ class GroupNorm(Cell):
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros'):
         """Initialize GroupNorm."""
         super(GroupNorm, self).__init__()
-        self.num_groups = validator.check_positive_int(num_groups)
-        self.num_channels = validator.check_positive_int(num_channels)
+        self.num_groups = validator.check_positive_int(num_groups, "num_groups", self.cls_name)
+        self.num_channels = validator.check_positive_int(num_channels, "num_channels", self.cls_name)
         if num_channels % num_groups != 0:
             raise ValueError(f"For '{self.cls_name}', the 'num_channels' should be divided by 'num_groups', "
                              f"but got 'num_channels': {num_channels}, 'num_groups': {num_groups}.")
