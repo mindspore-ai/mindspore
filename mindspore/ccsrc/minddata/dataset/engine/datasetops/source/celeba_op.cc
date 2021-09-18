@@ -138,7 +138,7 @@ bool CelebAOp::CheckDatasetTypeValid() {
     Path folder_path(folder_path_);
     partition_file_.open((folder_path / "list_eval_partition.txt").ToString());
     if (!partition_file_.is_open()) {
-      MS_LOG(ERROR) << "Invalid file, fail to open celeba partition file, path="
+      MS_LOG(ERROR) << "Invalid file, fail to open CelebA partition file, path="
                     << (folder_path / "list_eval_partition.txt").ToString();
       return false;
     }
