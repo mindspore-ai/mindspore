@@ -42,7 +42,7 @@ class Option {
  public:
   Option() : data(), state(NONE) {}
 
-  explicit Option(const T &t) : data(t), state(SOME) {}
+  explicit Option(const T t) : data(t), state(SOME) {}
 
   explicit Option(T &&t) : data(std::move(t)), state(SOME) {}
 
