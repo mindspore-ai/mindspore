@@ -54,7 +54,7 @@ class MS_CORE_API String : public Object {
 
   TypePtr DeepCopy() const override { return std::make_shared<String>(); }
   std::string ToString() const override { return std::string("String"); }
-  std::string ToReprString() const override { return "string"; }
+  std::string ToReprString() const override { return "string_"; }
   std::string DumpText() const override { return "String"; }
 };
 using StringPtr = std::shared_ptr<String>;
