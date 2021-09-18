@@ -34,7 +34,7 @@ Status AmplitudeToDBOp::Compute(const std::shared_ptr<Tensor> &input, std::share
 
   float top_db = top_db_;
   float multiplier = stype_ == ScaleType::kPower ? 10.0 : 20.0;
-  float amin = 1e-10;
+  const float amin = 1e-10;
   float db_multiplier = std::log10(std::max(amin_, ref_value_));
 
   // typecast

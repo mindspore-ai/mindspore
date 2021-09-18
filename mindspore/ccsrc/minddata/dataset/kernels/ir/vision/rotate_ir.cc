@@ -22,11 +22,22 @@ namespace mindspore {
 namespace dataset {
 namespace vision {
 // RotateOperation
-RotateOperation::RotateOperation(FixRotationAngle angle) : angle_id_(static_cast<uint64_t>(angle)) {}
+RotateOperation::RotateOperation(FixRotationAngle angle)
+    : angle_id_(static_cast<uint64_t>(angle)),
+      degrees_(0),
+      interpolation_mode_(InterpolationMode::kLinear),
+      expand_(false),
+      center_({}),
+      fill_value_({}) {}
 
 RotateOperation::RotateOperation(float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
                                  std::vector<uint8_t> fill_value)
-    : degrees_(degrees), interpolation_mode_(resample), expand_(expand), center_(center), fill_value_(fill_value) {}
+    : angle_id_(0),
+      degrees_(degrees),
+      interpolation_mode_(resample),
+      expand_(expand),
+      center_(center),
+      fill_value_(fill_value) {}
 
 RotateOperation::~RotateOperation() = default;
 
