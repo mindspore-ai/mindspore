@@ -42,13 +42,7 @@ class WeightQuantizer : public Quantizer {
   ~WeightQuantizer() override;
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
-  STATUS DoConvQuantize(const CNodePtr &cnode);
-  STATUS DoMulQuantize(const CNodePtr &cnode);
   STATUS DoOptimizerQuantize(const CNodePtr &cnode);
-  STATUS DoLstmQuantize(const CNodePtr &cnode);
-  STATUS DoGatherQuantize(const CNodePtr &cnode);
-
-  STATUS ProcessLstmWeightByIndex(const CNodePtr &cnode, const PrimitivePtr &primitive, const int &index);
 
   int quant_max_{127};
   int quant_min_{-128};
