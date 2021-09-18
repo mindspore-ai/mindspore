@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 
 #include "backend/kernel_compiler/cpu/slice_cpu_kernel.h"
-
 #include <algorithm>
 #include <unordered_map>
-
 #include "common/thread_pool.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kSliceInputsNum = 1;
+constexpr size_t kSliceOutputsNum = 1;
+}  // namespace
+
 int NormalizeBeginPos(int begin_pos, int dim_len) {
   if (begin_pos < 0) {
     int normal_pos = begin_pos + dim_len;
@@ -34,6 +37,7 @@ int NormalizeBeginPos(int begin_pos, int dim_len) {
 
 void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   static const std::unordered_map<TypeId, int> type_size_map = {{kNumberTypeBool, sizeof(bool)},
                                                                 {kNumberTypeInt32, sizeof(int)},
                                                                 {kNumberTypeFloat32, sizeof(float)},
@@ -84,29 +88,29 @@ void SliceCPUKernel::InitSliceParam(const std::vector<size_t> &input_shape, cons
   slice_param_.param_length_ = DIMENSION_8D;
 }
 
-void SliceSimpleDim2(const int8_t *input, int8_t *output, SliceParameter *param, int data_size, size_t row_size) {
-  size_t copy_size = data_size * param->size_[1];
+void SliceSimpleDim2(const int8_t *input, int8_t *output, const SliceParameter *param, int data_size, size_t row_size) {
+  size_t copy_size = IntToSize(data_size * param->size_[1]);
   for (size_t i = 0; i < row_size; ++i) {
     auto dst = output + data_size * param->size_[1] * i;
     auto src = input + data_size * (param->shape_[1] * i + param->begin_[1]);
-    (void)memcpy_s(dst, copy_size, src, copy_size);
+    auto ret = memcpy_s(dst, copy_size, src, copy_size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "Memcpy failed.";
+    }
   }
 }
 
 bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                             const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(ERROR) << "Slice requires 1 input and 1 output, but got " << inputs.size() << " input and " << outputs.size()
-                  << " output.";
-    return false;
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSliceInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSliceOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
     MS_LOG(WARNING) << "Slice output memory size should be greater than 0, but got 0.";
     return true;
   }
+
   auto input_addr = inputs[0]->addr;
   auto output_addr = outputs[0]->addr;
-
   if (origin_dim_size_ == 2) {
     auto task = [this, &input_addr, &output_addr](size_t start, size_t end) {
       auto src =

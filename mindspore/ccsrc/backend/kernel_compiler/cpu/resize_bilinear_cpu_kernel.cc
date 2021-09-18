@@ -21,24 +21,26 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kResizeBilinearInputSize = 4;
+constexpr size_t kResizeBilinearInputsNum = 1;
+constexpr size_t kResizeBilinearOutputsNum = 1;
+constexpr size_t kResizeBilinearInputsShapeSize = 4;
 constexpr size_t kResizeBilinearAttrSize = 2;
 }  // namespace
+
 void ResizeBilinearCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   size_ = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
   align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (shape_.size() < kResizeBilinearInputSize) {
-    MS_LOG(EXCEPTION) << "Input shape size should be " << kResizeBilinearInputSize << ", but got " << shape_.size();
+  if (shape_.size() != kResizeBilinearInputsShapeSize) {
+    MS_LOG(EXCEPTION) << "Input shape size should be " << kResizeBilinearInputsShapeSize << ", but got "
+                      << shape_.size();
   }
-
-  if (size_.size() < kResizeBilinearAttrSize) {
-    MS_LOG(EXCEPTION) << "Attr SIZE shape size should be " << kResizeBilinearAttrSize << ", but got " << size_.size();
+  if (size_.size() != kResizeBilinearAttrSize) {
+    MS_LOG(EXCEPTION) << "Size attr requires " << kResizeBilinearAttrSize << " elements, but got " << size_.size();
   }
-
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
   size_t out_height = size_[0];
@@ -50,6 +52,8 @@ void ResizeBilinearCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool ResizeBilinearCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBilinearInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBilinearOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16, float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -62,10 +66,9 @@ bool ResizeBilinearCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
 
 template <typename T1, typename T2>
 void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                           const std::vector<AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T2 *>(outputs[0]->addr);
-
+                                           const std::vector<AddressPtr> &outputs) const {
+  const auto *input_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
+  auto *output_addr = reinterpret_cast<T2 *>(outputs[0]->addr);
   size_t batch_size = shape_[0];
   size_t channel = shape_[1];
   size_t in_height = shape_[2];
@@ -84,7 +87,6 @@ void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   std::vector<CachedInterpolation> ys(out_height + 1);
   std::vector<CachedInterpolation> xs(out_width + 1);
-
   ComputeInterpolationWeights(out_height, in_height, height_scale, ys.data());
   ComputeInterpolationWeights(out_width, in_width, width_scale, xs.data());
 
@@ -109,17 +111,6 @@ void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
       output_addr += out_hw_size;
       input_addr += in_hw_size;
     }
-  }
-}
-
-void ResizeBilinearCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "ResizeBilinear needs 1 inputs, but gets " << input_num;
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "ResizeBilinear expects 1 output, but gets" << output_num;
   }
 }
 }  // namespace kernel

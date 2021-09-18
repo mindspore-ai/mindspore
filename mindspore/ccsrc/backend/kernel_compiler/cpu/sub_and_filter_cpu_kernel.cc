@@ -20,8 +20,14 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kSubAndFilterInputsNum = 3;
+constexpr size_t kSubAndFilterOutputNum = 2;
+}  // namespace
+
 void SubAndFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
@@ -29,6 +35,8 @@ void SubAndFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool SubAndFilterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSubAndFilterInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSubAndFilterOutputNum, kernel_name_);
   if (input_x_dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
   } else if (input_x_dtype_ == kNumberTypeInt64) {
@@ -42,11 +50,9 @@ bool SubAndFilterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
 template <typename T>
 void SubAndFilterCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  if (!node_) {
-    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
-  }
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
+  auto node = node_wpt_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
 
   batch_size_ = 1;
   for (size_t i = 0; i < indices_shape.size(); ++i) {
@@ -71,12 +77,12 @@ void SubAndFilterCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   MS_LOG(INFO) << "SubAndFilter output count is " << count;
   std::vector<size_t> out_shape;
   (void)out_shape.emplace_back(count);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
   std::vector<TypeId> dtypes(output_num);
   for (size_t i = 0; i < output_num; i++) {
-    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
+    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node, i);
   }
-  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, out_shape}, node_.get());
+  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, out_shape}, node.get());
 }
 }  // namespace kernel
 }  // namespace mindspore

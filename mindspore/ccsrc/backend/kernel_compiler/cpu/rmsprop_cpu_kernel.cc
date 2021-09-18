@@ -21,6 +21,11 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kCenteredRMSPropInputsNum = 9;
+constexpr size_t kRMSPropInputsNum = 5;
+}  // namespace
+
 template <typename T>
 void RMSPropCPUKernel<T>::LaunchRMSPropUnuseCenter(T *variable, T *mean_square, T *moment, T *gradients,
                                                    float *learning_rate) {
@@ -71,6 +76,7 @@ void RMSPropCPUKernel<T>::LaunchRMSPropUseCenter(T *variable, T *mean_square, T 
 template <typename T>
 void RMSPropCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto node_name = AnfAlgo::GetCNodeName(kernel_node);
   if (node_name == "ApplyCenteredRMSProp") {
     use_center_ = true;
@@ -92,6 +98,7 @@ template <typename T>
 bool RMSPropCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &) {
   if (!use_center_) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCenteredRMSPropInputsNum, kernel_name_);
     float *variable = reinterpret_cast<float *>(inputs[0]->addr);
     float *mean_square = reinterpret_cast<float *>(inputs[1]->addr);
     float *moment = reinterpret_cast<float *>(inputs[2]->addr);
@@ -102,6 +109,7 @@ bool RMSPropCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
     MS_LOG(INFO) << "RMSPropCPUKernel lens:" << lens << " size_:" << size_;
     LaunchRMSPropUnuseCenter(variable, mean_square, moment, gradients, learning_rate);
   } else {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRMSPropInputsNum, kernel_name_);
     T *variable = reinterpret_cast<float *>(inputs[0]->addr);
     T *mean_gradients = reinterpret_cast<float *>(inputs[1]->addr);
     T *mean_square = reinterpret_cast<float *>(inputs[2]->addr);

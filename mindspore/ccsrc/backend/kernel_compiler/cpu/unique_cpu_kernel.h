@@ -57,7 +57,6 @@ class UniqueCPUKernel : public CPUKernel {
                     const std::vector<AddressPtr> &outputs);
 
  protected:
-  virtual void CheckParam(const CNodePtr &kernel_node);
   size_t input_size_{0};
   TypeId dtype_{kTypeUnknown};
   size_t output_size_{0};

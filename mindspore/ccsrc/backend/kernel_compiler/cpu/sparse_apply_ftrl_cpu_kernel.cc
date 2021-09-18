@@ -21,7 +21,9 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kSparseApplyFtrlInputSize = 5;
+constexpr size_t kSparseApplyFtrlInputsNum = 5;
+constexpr size_t kSparseApplyFtrlWorkspaceSize = 4;
+
 template <typename T>
 void ComputeFtrl(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
   MS_EXCEPTION_IF_NULL(input_params);
@@ -74,8 +76,10 @@ void SparseApplyFtrlCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) 
   CPUKernel::InitInputOutputSize(kernel_node);
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
-  } else {
+  } else if (indices_data_type_ == kNumberTypeInt64) {
     InitWorkspaceSize<int64_t>();
+  } else {
+    MS_LOG(EXCEPTION) << "Input data type " << indices_data_type_ << " is unsupported";
   }
 }
 
@@ -135,15 +139,15 @@ void SparseApplyFtrlCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 void SparseApplyFtrlCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &workspace) const {
-  auto var = reinterpret_cast<float *>(inputs[0]->addr);
-  auto accum = reinterpret_cast<float *>(inputs[1]->addr);
-  auto linear = reinterpret_cast<float *>(inputs[2]->addr);
-  auto grad = reinterpret_cast<float *>(inputs[3]->addr);
-  auto indices = reinterpret_cast<T *>(inputs[4]->addr);
-  auto new_grad = reinterpret_cast<float *>(workspace[0]->addr);
-  auto new_indices = reinterpret_cast<T *>(workspace[1]->addr);
-  auto workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
-  auto workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
+  auto *var = reinterpret_cast<float *>(inputs[0]->addr);
+  auto *accum = reinterpret_cast<float *>(inputs[1]->addr);
+  auto *linear = reinterpret_cast<float *>(inputs[2]->addr);
+  auto *grad = reinterpret_cast<float *>(inputs[3]->addr);
+  auto *indices = reinterpret_cast<T *>(inputs[4]->addr);
+  auto *new_grad = reinterpret_cast<float *>(workspace[0]->addr);
+  auto *new_indices = reinterpret_cast<T *>(workspace[1]->addr);
+  auto *workspace_grad = reinterpret_cast<float *>(workspace[2]->addr);
+  auto *workspace_indices = reinterpret_cast<T *>(workspace[3]->addr);
 
   SparseGradient<T> unique_sparse_grad({new_grad, new_indices, indices_size_});
   SparseGradient<T> workspace_sparse_grad({workspace_grad, workspace_indices, indices_size_});
@@ -173,10 +177,8 @@ void SparseApplyFtrlCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
 bool SparseApplyFtrlCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &workspace,
                                       const std::vector<kernel::AddressPtr> &) {
-  if (inputs.size() < kSparseApplyFtrlInputSize) {
-    MS_LOG(EXCEPTION) << "error input output size!";
-  }
-
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyFtrlInputsNum, kernel_name_);
+  CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseApplyFtrlWorkspaceSize, kernel_name_);
   if (indices_data_type_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, workspace);
   } else if (indices_data_type_ == kNumberTypeInt64) {

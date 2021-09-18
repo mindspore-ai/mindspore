@@ -25,8 +25,17 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kTransposeInputsNum = 1;
+constexpr size_t kTransposeOutputsNum = 1;
+
+// kMaxTransposeSerialSize = 64 * 3 * 512 * 512
+constexpr size_t kMaxTransposeSerialSize = 50331648;
+}  // namespace
+
 void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   auto tmp = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
@@ -86,34 +95,36 @@ void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     output_shape[i] = SizeToInt(output_shape_[i]);
   }
   size_t data_count = (inputs[0]->size) / sizeof(T);
-  if (axes_.size() <= DIMENSION_6D && data_count < MAX_TRANSPOSE_SERIAL_SIZE) {
-    int res = static_cast<int>(NNACL_ERR);
-    if constexpr (std::is_same_v<T, int8_t>) {
-      res = DoTransposeInt8(input_addr, output_addr, output_shape, &transpose_param_);
-    } else if constexpr (std::is_same_v<T, int16_t>) {
-      res = DoTransposeInt16(input_addr, output_addr, output_shape, &transpose_param_);
-    } else if constexpr (std::is_same_v<T, int32_t>) {
-      res = DoTransposeInt32(input_addr, output_addr, output_shape, &transpose_param_);
-    } else if constexpr (std::is_same_v<T, int64_t>) {
-      res = DoTransposeInt64(input_addr, output_addr, output_shape, &transpose_param_);
-    } else if constexpr (std::is_same_v<T, uint8_t>) {
-      res = DoTransposeUInt8(input_addr, output_addr, output_shape, &transpose_param_);
-    } else if constexpr (std::is_same_v<T, uint16_t>) {
-      res = DoTransposeUInt16(input_addr, output_addr, output_shape, &transpose_param_);
-    } else if constexpr (std::is_same_v<T, uint32_t>) {
-      res = DoTransposeUInt32(input_addr, output_addr, output_shape, &transpose_param_);
-    } else if constexpr (std::is_same_v<T, uint64_t>) {
-      res = DoTransposeUInt64(input_addr, output_addr, output_shape, &transpose_param_);
-    } else if constexpr (std::is_same_v<T, float>) {
-      res = DoTransposeFp32(input_addr, output_addr, output_shape, &transpose_param_);
-    } else if constexpr (std::is_same_v<T, bool>) {
-      res = DoTransposeBool(input_addr, output_addr, output_shape, &transpose_param_);
-    }
-    if (res != NNACL_OK) {
-      MS_LOG(ERROR) << "Transpose run failed";
-    }
-  } else {
+  if (axes_.size() > DIMENSION_6D || data_count >= kMaxTransposeSerialSize) {
     ParallelRun(input_addr, output_addr, output_shape, data_count);
+    return;
+  }
+  int res = static_cast<int>(NNACL_OK);
+  if constexpr (std::is_same_v<T, int8_t>) {
+    res = DoTransposeInt8(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, int16_t>) {
+    res = DoTransposeInt16(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, int32_t>) {
+    res = DoTransposeInt32(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, int64_t>) {
+    res = DoTransposeInt64(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, uint8_t>) {
+    res = DoTransposeUInt8(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, uint16_t>) {
+    res = DoTransposeUInt16(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, uint32_t>) {
+    res = DoTransposeUInt32(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, uint64_t>) {
+    res = DoTransposeUInt64(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, float>) {
+    res = DoTransposeFp32(input_addr, output_addr, output_shape, &transpose_param_);
+  } else if constexpr (std::is_same_v<T, bool>) {
+    res = DoTransposeBool(input_addr, output_addr, output_shape, &transpose_param_);
+  } else {
+    MS_LOG(EXCEPTION) << "Transpose not support the type: " << typeid(T).name();
+  }
+  if (res != static_cast<int>(NNACL_OK)) {
+    MS_LOG(EXCEPTION) << "Transpose run failed.";
   }
 }
 
@@ -121,7 +132,8 @@ template <typename T>
 void TransposeCPUFwdKernel::ParallelRun(const T *input_addr, T *output_addr, const int *output_shape, size_t count) {
   auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   const float block_size = 128.0;
-  size_t thread_num = count < block_size * max_thread_num ? FloatToSize(std::ceil(count / block_size)) : max_thread_num;
+  const size_t thread_num =
+    count < block_size * max_thread_num ? FloatToSize(std::ceil(count / block_size)) : max_thread_num;
   std::vector<common::Task> tasks;
   std::function<void(const T *, T *, const int *, TransposeParameter *, int, int)> TransposeDims;
 

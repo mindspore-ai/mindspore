@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/batch_norm_grad_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -20,9 +21,15 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kBatchNormGradInputsNum = 6;
+constexpr size_t kBatchNormGradOutputsNum = 3;
+constexpr size_t kBatchNormGradInputShapeSize = 4;
+constexpr size_t kBatchNormGradInputShapeSize2 = 2;
+}  // namespace
+
 void BatchNormGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
-  MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, Y_BACKPROP);
   size_t tensor_size = shape[C] * SCALE_SHIFT_NUM * type_size;
@@ -35,6 +42,7 @@ void BatchNormGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 
 void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (x_shape.size() == NC) {
     (void)x_shape.insert(x_shape.end(), (NCHW - NC), 1);
@@ -76,10 +84,9 @@ void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool BatchNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &workspace,
                                     const std::vector<kernel::AddressPtr> &outputs) {
-  constexpr size_t INPUT_NUM = 5;
-  if (inputs.size() < INPUT_NUM || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormGradOutputsNum, kernel_name_);
+
   auto wksp_in = reinterpret_cast<float *>(workspace[SCALE_BIAS]->addr);
   auto scale_ret = memcpy_s(wksp_in, workspace[SCALE_BIAS]->size, inputs[SCALE]->addr, inputs[SCALE]->size);
   if (scale_ret != 0) {

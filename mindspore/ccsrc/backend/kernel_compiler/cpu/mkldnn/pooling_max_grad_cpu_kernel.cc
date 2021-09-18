@@ -23,8 +23,17 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kMaxPoolingGradInputsNum = 3;
+constexpr size_t kMaxPoolingGradOutputsNum = 1;
+constexpr size_t kMaxPoolingGradKernelSize = 4;
+constexpr size_t kMaxPoolingGradStrideSize = 4;
+constexpr size_t kMaxPoolingGradInputShapeSize = 4;
+}  // namespace
+
 void MaxPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   src_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   dst_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<int> kernel_sizes;
@@ -32,10 +41,11 @@ void MaxPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto kernel_sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
   auto strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   (void)std::transform(kernel_sizes_me.begin(), kernel_sizes_me.end(), std::back_inserter(kernel_sizes),
-                       [](const int64_t &value) { return static_cast<int>(value); });
+                       [](const int64_t &value) { return LongToInt(value); });
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  if (kernel_sizes.size() != 4 || strides.size() != 4 || src_shape_.size() != 4 || dst_shape_.size() != 4) {
+                       [](const int64_t &value) { return LongToInt(value); });
+  if (kernel_sizes.size() != kMaxPoolingGradKernelSize || strides.size() != kMaxPoolingGradStrideSize ||
+      src_shape_.size() != kMaxPoolingGradInputShapeSize || dst_shape_.size() != kMaxPoolingGradInputShapeSize) {
     MS_LOG(EXCEPTION) << "Pooling grad invalid input size!";
   }
   std::vector<int> padding_r;
@@ -105,9 +115,8 @@ void MaxPoolingGradCPUKernel::ChannelPoolingGrad(const float *input, const float
 bool MaxPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 3 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Pooling grad error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolingGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolingGradOutputsNum, kernel_name_);
 
   auto input = reinterpret_cast<float *>(inputs[0]->addr);
   auto diff = reinterpret_cast<float *>(inputs[2]->addr);

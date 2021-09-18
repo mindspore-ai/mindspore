@@ -37,7 +37,6 @@ class SparseToDenseCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
   std::vector<size_t> output_shape_;
   size_t values_size_{0};
 };

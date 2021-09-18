@@ -23,7 +23,11 @@
 namespace mindspore {
 namespace kernel {
 namespace ps {
+constexpr size_t kEmbeddingLookUpProxyInputsNum = 2;
+constexpr size_t kEmbeddingLookUpProxyOutputsNum = 1;
+
 void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   EmbeddingLookUpCPUKernel::InitKernel(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
@@ -46,12 +50,12 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
     key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
   }
   std::vector<float> values;
-  std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(values),
-                 [](size_t dim) -> float { return SizeToFloat(dim); });
-  std::transform(indices_shape.begin(), indices_shape.end(), std::back_inserter(values),
-                 [](size_t dim) -> float { return SizeToFloat(dim); });
-  std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(values),
-                 [](size_t dim) -> float { return SizeToFloat(dim); });
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(values),
+                       [](size_t dim) -> float { return SizeToFloat(dim); });
+  (void)std::transform(indices_shape.begin(), indices_shape.end(), std::back_inserter(values),
+                       [](size_t dim) -> float { return SizeToFloat(dim); });
+  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(values),
+                       [](size_t dim) -> float { return SizeToFloat(dim); });
   MS_LOG(INFO) << "Init embedding lookup proxy kernel, input shape:" << input_shape
                << ", indices_shape:" << indices_shape << ", output_shape:" << output_shape;
   std::vector<int64_t> lens{SizeToLong(input_shape.size()), SizeToLong(indices_shape.size()),
@@ -66,12 +70,8 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
 bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "Inputs size is " << inputs.size() << ", but EmbeddingLookUpProxyKernel needs 2.";
-  }
-  if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "Outputs size is " << outputs.size() << ", but EmbeddingLookUpProxyKernel needs 1.";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEmbeddingLookUpProxyInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEmbeddingLookUpProxyOutputsNum, kernel_name_);
   auto indices_addr = reinterpret_cast<int *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   size_t input_size = inputs[1]->size;
@@ -84,7 +84,6 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
   auto ret = memcpy_s(lookup_ids.data(), lookup_ids.size() * sizeof(int), indices_addr, input_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
-    return false;
   }
   mindspore::ps::Worker::GetInstance().DoPSEmbeddingLookup(key_, lookup_ids, &lookup_result,
                                                            mindspore::ps::kEmbeddingLookupCmd);
@@ -92,7 +91,6 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
   auto ret2 = memcpy_s(output_addr, outputs[0]->size, lookup_result.data(), output_size);
   if (ret2 != EOK) {
     MS_LOG(EXCEPTION) << "Lookup result memcpy failed.";
-    return false;
   }
   return true;
 }

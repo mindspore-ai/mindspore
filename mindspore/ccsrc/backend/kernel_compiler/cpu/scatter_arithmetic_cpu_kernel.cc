@@ -22,15 +22,34 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputNum = 3;
-constexpr size_t kOutputNum = 1;
+constexpr size_t kScatterArithmeticInputsNum = 3;
+constexpr size_t kScatterArithmeticOutputsNum = 1;
 }  // namespace
+
+template <typename T>
+void ScatterArithmeticCPUKernel<T>::InitComputeFunc() {
+  static const std::map<std::string, TypeComputeFunc> scatterArithmeticFuncMap{
+    {prim::kPrimScatterAdd->name(), &ScatterArithmeticCPUKernel<T>::ScatterAdd},
+    {prim::kPrimScatterSub->name(), &ScatterArithmeticCPUKernel<T>::ScatterSub},
+    {prim::kPrimScatterMul->name(), &ScatterArithmeticCPUKernel<T>::ScatterMul},
+    {prim::kPrimScatterDiv->name(), &ScatterArithmeticCPUKernel<T>::ScatterDiv},
+    {prim::kPrimScatterMax->name(), &ScatterArithmeticCPUKernel<T>::ScatterMax},
+    {prim::kPrimScatterMin->name(), &ScatterArithmeticCPUKernel<T>::ScatterMin},
+    {prim::kPrimScatterUpdate->name(), &ScatterArithmeticCPUKernel<T>::ScatterUpdate}};
+  if (scatterArithmeticFuncMap.find(kernel_name_) == scatterArithmeticFuncMap.end()) {
+    MS_LOG(EXCEPTION) << "ScatterArithmeticCPUKernel does not support " << kernel_name_;
+  }
+  compute_func_ = scatterArithmeticFuncMap.at(kernel_name_);
+}
+
 template <typename T>
 void ScatterArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (input_shape.size() < 1) {
+    MS_LOG(EXCEPTION) << "Input shape size should not less than 1";
+  }
   input_size_ = 1;
   inner_size_ = 1;
   if (input_shape.empty()) {
@@ -46,52 +65,30 @@ void ScatterArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < indices_shape.size(); i++) {
     indices_size_ *= indices_shape[i];
   }
-}
-
-template <typename T>
-void ScatterArithmeticCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) const {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != kInputNum) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but ScatterAdd needs 3 inputs.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kOutputNum) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ScatterAdd has 1 output.";
-  }
+  InitComputeFunc();
 }
 
 template <typename T>
 bool ScatterArithmeticCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                           const std::vector<kernel::AddressPtr> &workspace,
+                                           const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
-  static const std::map<std::string, std::function<void(ScatterArithmeticCPUKernel *, T *, const int *, const T *)>>
-    kScatterArithmeticBinOpFuncMap{{"ScatterAdd", &ScatterArithmeticCPUKernel<T>::ScatterAdd},
-                                   {"ScatterSub", &ScatterArithmeticCPUKernel<T>::ScatterSub},
-                                   {"ScatterMul", &ScatterArithmeticCPUKernel<T>::ScatterMul},
-                                   {"ScatterDiv", &ScatterArithmeticCPUKernel<T>::ScatterDiv},
-                                   {"ScatterMax", &ScatterArithmeticCPUKernel<T>::ScatterMax},
-                                   {"ScatterMin", &ScatterArithmeticCPUKernel<T>::ScatterMin},
-                                   {"ScatterUpdate", &ScatterArithmeticCPUKernel<T>::ScatterUpdate}};
-  if (kScatterArithmeticBinOpFuncMap.find(kernel_name_) != kScatterArithmeticBinOpFuncMap.end()) {
-    T *input = reinterpret_cast<T *>(inputs[INPUT]->addr);
-    int *indices = reinterpret_cast<int *>(inputs[INDICES]->addr);
-    T *updates = reinterpret_cast<T *>(inputs[UPDATES]->addr);
-    T *output = reinterpret_cast<T *>(outputs[0]->addr);
-    kScatterArithmeticBinOpFuncMap.at(kernel_name_)(this, input, indices, updates);
-    auto bufferSize = outputs[0]->size;
-    auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "Memory copy failed!";
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "Not support operator:" << kernel_name_;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterArithmeticInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterArithmeticOutputsNum, kernel_name_);
+  auto *input = reinterpret_cast<T *>(inputs[INPUT_INDEX_]->addr);
+  auto *indices = reinterpret_cast<int *>(inputs[INDICES_INDEX_]->addr);
+  auto *updates = reinterpret_cast<T *>(inputs[UPDATES_INDEX_]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[OUTPUT_INDEX_]->addr);
+  compute_func_(this, input, indices, updates);
+  auto bufferSize = outputs[OUTPUT_INDEX_]->size;
+  auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "Memory copy failed!";
   }
   return true;
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterAdd(T *input, const int *indices, const T *updates) {
+void ScatterArithmeticCPUKernel<T>::ScatterAdd(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
@@ -102,7 +99,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterAdd(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterSub(T *input, const int *indices, const T *updates) {
+void ScatterArithmeticCPUKernel<T>::ScatterSub(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
@@ -113,7 +110,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterSub(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterMul(T *input, const int *indices, const T *updates) {
+void ScatterArithmeticCPUKernel<T>::ScatterMul(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
@@ -124,32 +121,32 @@ void ScatterArithmeticCPUKernel<T>::ScatterMul(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterDiv(T *input, const int *indices, const T *updates) {
+void ScatterArithmeticCPUKernel<T>::ScatterDiv(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     for (size_t j = 0; j < inner_size_; j++) {
       auto dividend = input[indices[i] * inner_size_ + j];
       auto divisor = updates[i * inner_size_ + j];
-      if (divisor == 0) {
-        if (dividend == 0) {
-          input[indices[i] * inner_size_ + j] = std::numeric_limits<T>::quiet_NaN();
-          continue;
-        }
-        if (std::numeric_limits<T>::has_infinity) {
-          input[indices[i] * inner_size_ + j] =
-            dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
-        } else {
-          input[indices[i] * inner_size_ + j] =
-            dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
-        }
+      if (divisor != 0) {
+        input[indices[i] * inner_size_ + j] = dividend / divisor;
         continue;
       }
-      input[indices[i] * inner_size_ + j] = dividend / divisor;
+      if (dividend == 0) {
+        input[indices[i] * inner_size_ + j] = std::numeric_limits<T>::quiet_NaN();
+        continue;
+      }
+      if (std::numeric_limits<T>::has_infinity) {
+        input[indices[i] * inner_size_ + j] =
+          dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+      } else {
+        input[indices[i] * inner_size_ + j] =
+          dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+      }
     }
   }
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterMax(T *input, const int *indices, const T *updates) {
+void ScatterArithmeticCPUKernel<T>::ScatterMax(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
@@ -162,7 +159,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterMax(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterMin(T *input, const int *indices, const T *updates) {
+void ScatterArithmeticCPUKernel<T>::ScatterMin(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
@@ -175,7 +172,7 @@ void ScatterArithmeticCPUKernel<T>::ScatterMin(T *input, const int *indices, con
 }
 
 template <typename T>
-void ScatterArithmeticCPUKernel<T>::ScatterUpdate(T *input, const int *indices, const T *updates) {
+void ScatterArithmeticCPUKernel<T>::ScatterUpdate(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;

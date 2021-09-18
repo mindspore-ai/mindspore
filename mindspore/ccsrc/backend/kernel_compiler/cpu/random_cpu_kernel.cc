@@ -20,6 +20,13 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kUniformIntInputsNum = 3;
+constexpr size_t kUniformRealInputsNum = 1;
+constexpr size_t kUniformIntOutputsNum = 1;
+constexpr size_t kUniformRealOutputsNum = 1;
+constexpr size_t kStandardNormalOutputsNum = 1;
+}  // namespace
 void StandardNormal(float *output, std::normal_distribution<float> distribution,
                     std::default_random_engine random_generator, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
@@ -60,12 +67,6 @@ void LaunchStandardNormal(unsigned int seed, const std::vector<AddressPtr> &outp
 
 void LaunchUniformInt(unsigned int seed, const std::vector<AddressPtr> &inputs,
                       const std::vector<AddressPtr> &outputs) {
-  if (inputs.size() != 3) {
-    MS_LOG(EXCEPTION) << "Expect input number 3, actual got input number " << inputs.size();
-  }
-  if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "Expect output number 1, actual got output number " << outputs.size();
-  }
   // Init min/max values.
   int min_val = reinterpret_cast<int *>(inputs[1]->addr)[0];
   int max_val = reinterpret_cast<int *>(inputs[2]->addr)[0];
@@ -75,7 +76,6 @@ void LaunchUniformInt(unsigned int seed, const std::vector<AddressPtr> &inputs,
 
   // Init output address.
   auto output = reinterpret_cast<int *>(outputs[0]->addr);
-  MS_EXCEPTION_IF_NULL(output);
 
   // Init sample number.
   size_t num_sample = outputs[0]->size / sizeof(int);
@@ -92,15 +92,8 @@ void LaunchUniformInt(unsigned int seed, const std::vector<AddressPtr> &inputs,
 
 void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &inputs,
                        const std::vector<AddressPtr> &outputs) {
-  if (inputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "Expect input number 1, actual got input number " << inputs.size();
-  }
-  if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "Expect output number 1, actual got output number " << outputs.size();
-  }
   // Init output address.
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
-  MS_EXCEPTION_IF_NULL(output);
 
   // Init sample number.
   size_t num_sample = outputs[0]->size / sizeof(int);
@@ -117,22 +110,12 @@ void LaunchUniformReal(unsigned int seed, const std::vector<AddressPtr> &inputs,
 
 void RandomCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  auto iter = kRandomOpTypeMap.find(kernel_name);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  auto iter = kRandomOpTypeMap.find(kernel_name_);
   if (iter == kRandomOpTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "Random operation " << kernel_name << " is not supported.";
+    MS_LOG(EXCEPTION) << "Random operation " << kernel_name_ << " is not supported.";
   } else {
     random_op_type_ = iter->second;
-  }
-
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if ((random_op_type_ == RANDOM_OP_NORMAL) && input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but random op needs 1 input.";
-  }
-
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but random op needs 1 output.";
   }
 
   seed_ = LongToInt(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed")));
@@ -152,10 +135,15 @@ bool RandomCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
   }
 
   if (random_op_type_ == RANDOM_OP_NORMAL) {
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStandardNormalOutputsNum, kernel_name_);
     LaunchStandardNormal(RNG_seed, outputs);
   } else if (random_op_type_ == RANDOM_OP_UNIFORM_INT) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformIntInputsNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformIntOutputsNum, kernel_name_);
     LaunchUniformInt(RNG_seed, inputs, outputs);
   } else if (random_op_type_ == RANDOM_OP_UNIFORM_REAL) {
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUniformRealInputsNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUniformRealOutputsNum, kernel_name_);
     LaunchUniformReal(RNG_seed, inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "Random operation " << random_op_type_ << " is not supported.";

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/assignadd_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -20,13 +21,19 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kAssignAddInputsNum = 2;
+constexpr size_t kAssignAddOutputsNum = 1;
+}  // namespace
+
 void AssignAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src0_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> src1_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (src1_shape.size() == 0 && src0_shape.size() == 0) {
-    src0_shape.insert(src0_shape.begin(), 1);
-    src1_shape.insert(src1_shape.begin(), 1);
+    (void)src0_shape.insert(src0_shape.begin(), 1);
+    (void)src1_shape.insert(src1_shape.begin(), 1);
   }
   if (src0_shape.size() != src1_shape.size() && src1_shape.size() > 1) {
     MS_LOG(EXCEPTION) << "AssignAdd only support same dim input or tensor * scalar " << src0_shape.size() << " vs "
@@ -49,9 +56,8 @@ void AssignAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool AssignAddCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 2) {
-    MS_LOG(EXCEPTION) << "AssignAdd error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAssignAddInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAssignAddOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC_0, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_SRC_1, inputs[1]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
@@ -59,7 +65,6 @@ bool AssignAddCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   auto ret = memcpy_s(inputs[0]->addr, inputs[0]->size, outputs[0]->addr, outputs[0]->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "Memcpy_s error, errorno " << ret;
-    return false;
   }
   return true;
 }

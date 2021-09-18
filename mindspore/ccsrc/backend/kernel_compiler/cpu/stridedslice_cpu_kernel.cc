@@ -24,21 +24,25 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kStridedSliceInputsNum = 1;
+constexpr size_t kStridedSliceOutputsNum = 1;
+}  // namespace
+
 enum PosType { kBegin, kEnd };
 
 int NormalizePos(int pos, int dim_len, PosType pos_type) {
-  if (pos < 0) {
-    int normal_pos = pos + dim_len;
-    int threshold = pos_type == kBegin ? 0 : -1;
-    normal_pos = std::max(normal_pos, threshold);
-    return normal_pos;
+  if (pos >= 0) {
+    int max_pos = pos_type == kBegin ? dim_len - 1 : dim_len;
+    return std::min(pos, max_pos);
   }
-  int max_pos = pos_type == kBegin ? dim_len - 1 : dim_len;
-  return std::min(pos, max_pos);
+  int min_pos = pos_type == kBegin ? 0 : -1;
+  return std::max(pos + dim_len, min_pos);
 }
 
 void StridedSliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (input_shape_.size() > DIMENSION_8D || input_shape_.empty()) {
@@ -70,18 +74,17 @@ bool StridedSliceCPUKernel::MatchParallelPattern() {
   // Example 2:
   // input shape info:  [1, 46, 40]
   // output shape info: [1, 20, 40]
-  if (input_shape_.size() != output_shape_.size()) {
-    return false;
-  }
-  std::vector<int> axis_list;
-  for (size_t i = 0; i < input_shape_.size(); ++i) {
-    if (input_shape_[i] != output_shape_[i]) {
-      (void)axis_list.emplace_back(i);
+  if (input_shape_.size() == output_shape_.size()) {
+    std::vector<int> axis_list;
+    for (size_t i = 0; i < input_shape_.size(); ++i) {
+      if (input_shape_[i] != output_shape_[i]) {
+        (void)axis_list.emplace_back(i);
+      }
     }
-  }
-  if (axis_list.size() == 1) {
-    split_axis_ = axis_list.front();
-    return true;
+    if (axis_list.size() == 1) {
+      split_axis_ = axis_list.front();
+      return true;
+    }
   }
   return false;
 }
@@ -123,8 +126,9 @@ void StridedSliceCPUKernel::InitSliceParam(const std::vector<int64_t> &begin, co
   slice_param_.data_type = type_pair->second.first;
 
   for (size_t i = 0; i < DIMENSION_8D; i++) {
+    int dim_len;
     if (i < begin.size()) {
-      int dim_len = SizeToInt(input_shape_[i]);
+      dim_len = SizeToInt(input_shape_[i]);
       int begin_pos = LongToInt(begin[i]);
       int end_pos = LongToInt(end[i]);
       int stride_size = LongToInt(stride[i]);
@@ -142,7 +146,7 @@ void StridedSliceCPUKernel::InitSliceParam(const std::vector<int64_t> &begin, co
         slice_param_.ends_[i] = slice_param_.begins_[i] - 1;
       }
     } else if (i < input_shape_.size()) {
-      int dim_len = SizeToInt(input_shape_[i]);
+      dim_len = SizeToInt(input_shape_[i]);
       slice_param_.in_shape_[i] = dim_len;
       slice_param_.begins_[i] = 0;
       slice_param_.ends_[i] = dim_len;
@@ -158,10 +162,10 @@ void StridedSliceCPUKernel::InitSliceParam(const std::vector<int64_t> &begin, co
   slice_param_.num_axes_ = DIMENSION_8D;
 }
 
-int StridedSliceCPUKernel::RunTaskOnOuter(uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
+int StridedSliceCPUKernel::RunTaskOnOuter(const uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
   int begin_index = slice_param_.begins_[split_axis_];
   int inner_size = inner_ * data_size_;
-  uint8_t *cur_in_ptr = input_addr + (start_pos * input_shape_[split_axis_] + begin_index) * inner_size;
+  const uint8_t *cur_in_ptr = input_addr + (start_pos * input_shape_[split_axis_] + begin_index) * inner_size;
   uint8_t *cur_out_ptr = output_addr + start_pos * output_shape_[split_axis_] * inner_size;
   int cur_outer = outer_ - start_pos;
   if (cur_outer <= 0) {
@@ -173,10 +177,10 @@ int StridedSliceCPUKernel::RunTaskOnOuter(uint8_t *input_addr, uint8_t *output_a
   return common::SUCCESS;
 }
 
-int StridedSliceCPUKernel::RunTaskOnSplitAxis(uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
+int StridedSliceCPUKernel::RunTaskOnSplitAxis(const uint8_t *input_addr, uint8_t *output_addr, int start_pos) {
   int begin_index = slice_param_.begins_[split_axis_];
   int inner_size = inner_ * data_size_;
-  uint8_t *cur_in_ptr = input_addr + (start_pos * slice_param_.strides_[split_axis_] + begin_index) * inner_size;
+  const uint8_t *cur_in_ptr = input_addr + (start_pos * slice_param_.strides_[split_axis_] + begin_index) * inner_size;
   uint8_t *cur_out_ptr = output_addr + start_pos * inner_size;
   int cal_axis_num = output_shape_[split_axis_] - start_pos;
   if (cal_axis_num <= 0) {
@@ -187,10 +191,10 @@ int StridedSliceCPUKernel::RunTaskOnSplitAxis(uint8_t *input_addr, uint8_t *outp
   return common::SUCCESS;
 }
 
-void StridedSliceCPUKernel::ParallelRun(uint8_t *input_addr, uint8_t *output_addr, int thread_num) {
+void StridedSliceCPUKernel::ParallelRun(const uint8_t *input_addr, uint8_t *output_addr, int thread_num) {
   int thread_index = 0;
   std::vector<common::Task> tasks;
-  std::function<int(StridedSliceCPUKernel *, uint8_t *, uint8_t *, int)> execute_func;
+  std::function<int(StridedSliceCPUKernel *, const uint8_t *, uint8_t *, int)> execute_func;
   if (parallel_strategy_ == kOnOuter) {
     execute_func = &StridedSliceCPUKernel::RunTaskOnOuter;
   } else if (parallel_strategy_ == kOnSplitAxis) {
@@ -208,13 +212,10 @@ void StridedSliceCPUKernel::ParallelRun(uint8_t *input_addr, uint8_t *output_add
 }
 
 bool StridedSliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                   const std::vector<kernel::AddressPtr> & /* workspace */,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(ERROR) << "StridedSlice requires 1 input and 1 output, but got " << inputs.size() << " input and "
-                  << outputs.size() << " output.";
-    return false;
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kStridedSliceInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStridedSliceOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
     MS_LOG(WARNING) << "StridedSlice output memory size should be greater than 0, but got 0.";
     return true;

@@ -173,9 +173,11 @@ void TransposeDim6Fp32(const float *in_data, float *out_data, const int *strides
 
 void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_shape,
                        const TransposeParameter *transpose_param, int task_id, int thread_num) {
-  if (thread_num == 0) {
-    return;
-  }
+  NNACL_CHECK_NULL_RETURN_VOID(in_data);
+  NNACL_CHECK_NULL_RETURN_VOID(out_data);
+  NNACL_CHECK_NULL_RETURN_VOID(output_shape);
+  NNACL_CHECK_NULL_RETURN_VOID(transpose_param);
+  NNACL_CHECK_ZERO_RETURN(thread_num);
   int *perm = (int *)(transpose_param->perm_);
   int *strides = (int *)(transpose_param->strides_);
   int *out_strides = (int *)(transpose_param->out_strides_);
@@ -206,9 +208,10 @@ void TransposeDimsFp32(const float *in_data, float *out_data, const int *output_
 
 int DoTransposeFp32(const float *in_data, float *out_data, const int *output_shape,
                     const TransposeParameter *transpose_param) {
-  if (in_data == NULL || out_data == NULL) {
-    return NNACL_ERR;
-  }
+  NNACL_CHECK_NULL_RETURN_ERR(in_data);
+  NNACL_CHECK_NULL_RETURN_ERR(out_data);
+  NNACL_CHECK_NULL_RETURN_ERR(output_shape);
+  NNACL_CHECK_NULL_RETURN_ERR(transpose_param);
   int *perm = (int *)(transpose_param->perm_);
   int *strides = (int *)(transpose_param->strides_);
   int *out_strides = (int *)(transpose_param->out_strides_);

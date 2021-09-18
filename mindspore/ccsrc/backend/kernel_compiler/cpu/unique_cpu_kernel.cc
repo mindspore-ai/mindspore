@@ -23,10 +23,9 @@ constexpr size_t kBucketSortThreshold = 100000;
 void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_wpt_ = kernel_node;
-  CheckParam(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "Input shape is empty";
+  if (input_shape.size() != 1) {
+    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but UniqueCPUKernel only support 1d.";
   }
   input_size_ = input_shape[0];
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
@@ -109,21 +108,6 @@ void UniqueCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
     Unique(params);
   }
   output_size_ = static_cast<size_t>(params->output_size_);
-}
-
-void UniqueCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but UniqueCPUKernel only support 1d.";
-  }
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but UniqueCPUKernel needs 1 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 2) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but UniqueCPUKernel needs 2 output.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

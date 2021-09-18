@@ -35,10 +35,10 @@ class SubAndFilterCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
- private:
   size_t batch_size_{1};
   TypeId input_x_dtype_{kTypeUnknown};
   CNodeWeakPtr node_wpt_;

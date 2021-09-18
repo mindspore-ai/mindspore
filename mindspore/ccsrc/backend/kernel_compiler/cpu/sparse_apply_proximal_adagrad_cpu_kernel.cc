@@ -21,7 +21,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kSparseApplyProximalAdagradInputSize = 7;
+constexpr size_t kSparseApplyProximalAdagradInputsNum = 7;
+constexpr size_t kSparseApplyProximalAdagradWorkspaceSize = 4;
 
 template <typename T>
 void ComputeProximalAdagrad(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
@@ -70,13 +71,16 @@ void SparseApplyProximalAdagradCPUKernel::InitInputOutputSize(const CNodePtr &ke
   CPUKernel::InitInputOutputSize(kernel_node);
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
-  } else {
+  } else if (indices_data_type_ == kNumberTypeInt64) {
     InitWorkspaceSize<int64_t>();
+  } else {
+    MS_LOG(EXCEPTION) << "Input data type " << indices_data_type_ << " is unsupported";
   }
 }
 
 void SparseApplyProximalAdagradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> var_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   std::vector<size_t> accum_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   std::vector<size_t> lr_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
@@ -160,9 +164,8 @@ void SparseApplyProximalAdagradCPUKernel::LaunchKernel(const std::vector<kernel:
 bool SparseApplyProximalAdagradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                                  const std::vector<kernel::AddressPtr> &workspace,
                                                  const std::vector<kernel::AddressPtr> &) {
-  if (inputs.size() < kSparseApplyProximalAdagradInputSize) {
-    MS_LOG(EXCEPTION) << "Wrong input size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyProximalAdagradInputsNum, kernel_name_);
+  CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseApplyProximalAdagradWorkspaceSize, kernel_name_);
   if (indices_data_type_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, workspace);
   } else if (indices_data_type_ == kNumberTypeInt64) {

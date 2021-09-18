@@ -23,14 +23,15 @@
 namespace mindspore {
 namespace kernel {
 namespace ps {
-constexpr size_t kSparseApplyLazyAdamPSInputSize = 5;
+constexpr size_t kSparseApplyLazyAdamPSInputsSize = 11;
 
 void SparseApplyLazyAdamPSKernel::InitKernel(
   const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
+  MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(shapes);
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
-  if (shape_vec.size() < kSparseApplyLazyAdamPSInputSize) {
-    MS_LOG(EXCEPTION) << "SparseApplyLazyAdamPSKernel needs " << kSparseApplyLazyAdamPSInputSize
+  if (shape_vec.size() < kSparseApplyLazyAdamPSInputsSize) {
+    MS_LOG(EXCEPTION) << "SparseApplyLazyAdamPSKernel needs " << kSparseApplyLazyAdamPSInputsSize
                       << " input shapes, but got " << shape_vec.size();
   }
   std::vector<size_t> &var_shape = *(shape_vec[0]);
@@ -70,7 +71,7 @@ void SparseApplyLazyAdamPSKernel::InitKernel(
     MS_LOG(ERROR) << "The first dimension of grad shape must be equal to indices";
   }
   if (AnfAlgo::HasNodeAttr(USE_NESTEROV, cnode)) {
-    use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(cnode, "use_nesterov");
+    use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(cnode, USE_NESTEROV);
   }
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
@@ -89,6 +90,10 @@ void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<std::vector<size_t>> 
 }
 
 void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
+  if (inputs.size() < kSparseApplyLazyAdamPSInputsSize) {
+    MS_LOG(EXCEPTION) << "Input shape size should not less than " << kSparseApplyLazyAdamPSInputsSize << ", but got "
+                      << inputs.size();
+  }
   const auto &indices_addr = inputs[10];
   indices_size_ = indices_addr->size / sizeof(int);
   workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_;

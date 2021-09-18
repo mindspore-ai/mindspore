@@ -21,23 +21,25 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kResizeBilinearGradInput0Size = 4;
-constexpr size_t kResizeBilinearGradInput1Size = 4;
+constexpr size_t kResizeBilinearGradInputsNum = 2;
+constexpr size_t kResizeBilinearGradOutputNum = 1;
+constexpr size_t kResizeBilinearGradInputsDoutShapeSize = 4;
+constexpr size_t kResizeBilinearGradInputsXShapeSize = 4;
 }  // namespace
+
 void ResizeBilinearGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   size_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   align_corners_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (shape_.size() < kResizeBilinearGradInput0Size) {
-    MS_LOG(EXCEPTION) << "Input_0 shape size should be " << kResizeBilinearGradInput0Size << ", but got "
+  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  if (shape_.size() < kResizeBilinearGradInputsDoutShapeSize) {
+    MS_LOG(EXCEPTION) << "Input dout shape should be " << kResizeBilinearGradInputsDoutShapeSize << ", but got "
                       << shape_.size();
   }
-
-  if (size_.size() < kResizeBilinearGradInput1Size) {
-    MS_LOG(EXCEPTION) << "Input_1 shape size should be " << kResizeBilinearGradInput1Size << ", but got "
+  if (size_.size() < kResizeBilinearGradInputsXShapeSize) {
+    MS_LOG(EXCEPTION) << "Input x shape should be " << kResizeBilinearGradInputsXShapeSize << ", but got "
                       << size_.size();
   }
 
@@ -45,7 +47,6 @@ void ResizeBilinearGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   size_t in_width = shape_[3];
   size_t out_height = size_[2];
   size_t out_width = size_[3];
-
   height_scale = Scaling(out_height, in_height, align_corners_);
   width_scale = Scaling(out_width, in_width, align_corners_);
 }
@@ -53,6 +54,8 @@ void ResizeBilinearGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool ResizeBilinearGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBilinearGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBilinearGradOutputNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -65,9 +68,9 @@ bool ResizeBilinearGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &
 
 template <typename T>
 void ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &outputs) {
-  auto dloss_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+                                               const std::vector<AddressPtr> &outputs) const {
+  const auto *dloss_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
   auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
@@ -109,17 +112,6 @@ void ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
       output_addr += out_hw_size;
       dloss_addr += in_hw_size;
     }
-  }
-}
-
-void ResizeBilinearGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
-    MS_LOG(EXCEPTION) << "ResizeBilinearGrad needs 2 inputs, but gets " << input_num;
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "ResizeBilinear Gradexpects 1 output, but gets" << output_num;
   }
 }
 }  // namespace kernel

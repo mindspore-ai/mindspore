@@ -23,8 +23,17 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kAvgPoolingGradInputsNum = 3;
+constexpr size_t kkAvgPoolingGradOutputsNum = 1;
+constexpr size_t kAvgPoolingGradKernelSize = 4;
+constexpr size_t kkAvgPoolingGradStrideSize = 4;
+constexpr size_t kkAvgPoolingGradPadSize = 2;
+}  // namespace
+
 void AvgPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> dst_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
@@ -34,10 +43,10 @@ void AvgPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<int64_t> kernel_sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
   std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   (void)std::transform(kernel_sizes_me.begin(), kernel_sizes_me.end(), std::back_inserter(origin_kernel_sizes),
-                       [](const int64_t &value) { return static_cast<int>(value); });
+                       [](const int64_t &value) { return LongToInt(value); });
   (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  if (origin_kernel_sizes.size() != 4 || strides.size() != 4) {
+                       [](const int64_t &value) { return LongToInt(value); });
+  if (origin_kernel_sizes.size() != kAvgPoolingGradKernelSize || strides.size() != kkAvgPoolingGradStrideSize) {
     MS_LOG(EXCEPTION) << "Invalid kernel size " << origin_kernel_sizes.size() << " or stride size " << strides.size();
   }
   std::vector<int> stride{strides[2], strides[3]};
@@ -49,7 +58,7 @@ void AvgPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> kernel_size({IntToSize(origin_kernel_sizes[2]), IntToSize(origin_kernel_sizes[3])});
   std::vector<int> dummy_dilation{1, 1};
   GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dummy_dilation);
-  if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
+  if (int_padding_l.size() != kkAvgPoolingGradPadSize || int_padding_r.size() != kkAvgPoolingGradPadSize) {
     MS_LOG(EXCEPTION) << "Pooling avg get padding failed";
   }
   dnnl::memory::dims padding_l{int_padding_l[0], int_padding_l[1]};
@@ -77,9 +86,8 @@ void AvgPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool AvgPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 3 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Pooling avg grad error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAvgPoolingGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kkAvgPoolingGradOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, inputs[1]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[2]->addr);

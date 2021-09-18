@@ -20,18 +20,16 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kUnsortedSegmentInputsNum = 2;
+constexpr size_t kUnsortedSegmentOutputsNum = 1;
+}  // namespace
+
 void UnsortedSegmentSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but UnsortedSegmentSum needs 2 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but UnsortedSegmentSum needs 1 output.";
-  }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  segment_ids_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  segment_ids_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 1);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto segment_ids_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -53,6 +51,8 @@ void UnsortedSegmentSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool UnsortedSegmentSumCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnsortedSegmentInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUnsortedSegmentOutputsNum, kernel_name_);
   void *input_addr = inputs[0]->addr;
   void *indices_addr = inputs[1]->addr;
   void *output_addr = outputs[0]->addr;

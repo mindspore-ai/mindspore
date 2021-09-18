@@ -39,10 +39,10 @@ class SearchSortedCPUKernel : public CPUKernel {
   void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   bool right_{false};
+  size_t search_len{0};
   std::vector<size_t> sequence_shape_;
   std::vector<size_t> values_shape_;
   std::vector<size_t> output_shape_;
-  size_t search_len{0};
 };
 
 MS_REG_CPU_KERNEL_T_S(
