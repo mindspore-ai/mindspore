@@ -169,7 +169,7 @@ void PipelineTransformer::LabelMicroBatch() {
         auto micro = SetMicroBatch(data_user.first, micro_size);
         SetStridedSliceStrategy(data_user.first);
         auto cnode = data_user.first->cast<CNodePtr>();
-        BroadCastMicroBatch(cnode, &node_user_map, micro);
+        BroadCastMicroBatch(cnode, &node_user_map, micro, 0);
       }
     }
   }
@@ -246,6 +246,10 @@ void PipelineTransformer::BroadCastColoring() {
         auto user_node = user_pair.first->cast<CNodePtr>();
         auto user_node_stage = user_node->stage();
         if (stage > user_node_stage) {
+          if (IsValueNode<FuncGraph>(user_node->input(0))) {
+            MS_LOG(EXCEPTION) << "The stage setting is incorrect. PreNode's stage:" << stage
+                              << " is larger than NextNode's stage:" << user_node_stage;
+          }
           user_node->set_stage(stage);
           need_coloring = true;
         }

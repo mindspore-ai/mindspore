@@ -190,7 +190,7 @@ class OperatorInfo {
  protected:
   // needed by rec_parser
   std::string type_;
-  bool is_last_node_;
+  bool is_last_node_ = false;
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
   virtual Status InferForwardCommunication() = 0;
