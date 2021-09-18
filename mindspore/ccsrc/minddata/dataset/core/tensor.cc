@@ -530,9 +530,7 @@ Status Tensor::GetItemPtr(uchar **ptr, const std::vector<dsize_t> &index, offset
     RETURN_IF_NOT_OK(shape_.ToFlatIndex(index, &flat_idx));
     offset_t length_temp = 0;
     RETURN_IF_NOT_OK(GetStringAt(flat_idx, ptr, &length_temp));
-    if (length != nullptr) {
-      *length = length_temp;
-    }
+    *length = length_temp;
     return Status::OK();
   } else {
     std::string err = "data type not compatible";

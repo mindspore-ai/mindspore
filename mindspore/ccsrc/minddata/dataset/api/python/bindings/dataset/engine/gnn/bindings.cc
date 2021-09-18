@@ -57,13 +57,13 @@ PYBIND_REGISTER(
              return out;
            })
       .def("get_edges_from_nodes",
-           [](gnn::GraphData &g, std::vector<std::pair<gnn::NodeIdType, gnn::NodeIdType>> node_list) {
+           [](gnn::GraphData &g, const std::vector<std::pair<gnn::NodeIdType, gnn::NodeIdType>> &node_list) {
              std::shared_ptr<Tensor> out;
              THROW_IF_ERROR(g.GetEdgesFromNodes(node_list, &out));
              return out;
            })
       .def("get_all_neighbors",
-           [](gnn::GraphData &g, std::vector<gnn::NodeIdType> node_list, gnn::NodeType neighbor_type,
+           [](gnn::GraphData &g, const std::vector<gnn::NodeIdType> &node_list, gnn::NodeType neighbor_type,
               OutputFormat format) {
              std::shared_ptr<Tensor> out;
              THROW_IF_ERROR(g.GetAllNeighbors(node_list, neighbor_type, format, &out));

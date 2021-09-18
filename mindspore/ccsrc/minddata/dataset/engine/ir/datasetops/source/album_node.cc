@@ -164,7 +164,7 @@ Status AlbumNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode
   std::shared_ptr<DatasetCache> cache = nullptr;
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   *ds = std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler, cache);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)((*ds)->SetNumWorkers(json_obj["num_parallel_workers"]));
   return Status::OK();
 }
 #endif

@@ -21,6 +21,7 @@
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
+#include "minddata/dataset/util/status.h"
 
 namespace {
 const int BUFFER_SIZE = 2048;
@@ -39,7 +40,7 @@ mode_t SetFileDefaultUmask() { return umask(DEFAULT_FILE_PERMISSION); }
  */
 MDAclProcess::MDAclProcess(uint32_t resizeWidth, uint32_t resizeHeight, uint32_t cropWidth, uint32_t cropHeight,
                            aclrtContext context, bool is_crop, aclrtStream stream,
-                           std::shared_ptr<DvppCommon> dvppCommon)
+                           const std::shared_ptr<DvppCommon> &dvppCommon)
     : resizeWidth_(resizeWidth),
       resizeHeight_(resizeHeight),
       cropWidth_(cropWidth),
@@ -51,7 +52,7 @@ MDAclProcess::MDAclProcess(uint32_t resizeWidth, uint32_t resizeHeight, uint32_t
       processedInfo_(nullptr) {}
 
 MDAclProcess::MDAclProcess(uint32_t ParaWidth, uint32_t ParaHeight, aclrtContext context, bool is_crop,
-                           aclrtStream stream, std::shared_ptr<DvppCommon> dvppCommon)
+                           aclrtStream stream, const std::shared_ptr<DvppCommon> &dvppCommon)
     : contain_crop_(is_crop), context_(context), stream_(stream), dvppCommon_(dvppCommon), processedInfo_(nullptr) {
   if (is_crop) {
     resizeWidth_ = 0;
@@ -67,7 +68,7 @@ MDAclProcess::MDAclProcess(uint32_t ParaWidth, uint32_t ParaHeight, aclrtContext
 }
 
 MDAclProcess::MDAclProcess(aclrtContext context, bool is_crop, aclrtStream stream,
-                           std::shared_ptr<DvppCommon> dvppCommon)
+                           const std::shared_ptr<DvppCommon> &dvppCommon)
     : resizeWidth_(0),
       resizeHeight_(0),
       cropWidth_(0),
@@ -192,9 +193,18 @@ APP_ERROR MDAclProcess::H2D_Sink(const std::shared_ptr<mindspore::dataset::Tenso
 
   const mindspore::dataset::DataType dvpp_data_type(mindspore::dataset::DataType::DE_UINT8);
   const mindspore::dataset::TensorShape dvpp_shape({1, 1, 1});
-  mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, &device_input);
-  device_input->SetAttributes(deviceInputData->data, deviceInputData->dataSize, deviceInputData->width,
-                              deviceInputData->widthStride, deviceInputData->height, deviceInputData->heightStride);
+  auto rc = mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, &device_input);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Failed to allocate memory, error msg is " << rc;
+    return APP_ERR_ACL_BAD_ALLOC;
+  }
+  rc =
+    device_input->SetAttributes(deviceInputData->data, deviceInputData->dataSize, deviceInputData->width,
+                                deviceInputData->widthStride, deviceInputData->height, deviceInputData->heightStride);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Failed to initialize device attribution, error msg is " << rc;
+    return APP_ERR_ACL_INVALID_PARAM;
+  }
   return APP_ERR_OK;
 }
 
@@ -225,8 +235,16 @@ APP_ERROR MDAclProcess::D2H_Pop(const std::shared_ptr<mindspore::dataset::Device
   uint32_t _output_height_ = device_output->GetYuvStrideShape()[2];
   uint32_t _output_heightStride_ = device_output->GetYuvStrideShape()[3];
   const mindspore::dataset::DataType dvpp_data_type(mindspore::dataset::DataType::DE_UINT8);
-  mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, &output);
-  output->SetYuvShape(_output_width_, _output_widthStride_, _output_height_, _output_heightStride_);
+  auto rc = mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, &output);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Failed to allocate memory, error msg is " << rc;
+    return APP_ERR_ACL_BAD_ALLOC;
+  }
+  rc = output->SetYuvShape(_output_width_, _output_widthStride_, _output_height_, _output_heightStride_);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Failed to set yuv shape, error msg is " << rc;
+    return APP_ERR_ACL_INVALID_PARAM;
+  }
   if (!output->HasData()) {
     return APP_ERR_COMM_ALLOC_MEM;
   }
@@ -399,7 +417,11 @@ APP_ERROR MDAclProcess::JPEG_R_(const DvppDataInfo &ImageInfo) {
   uint32_t pri_w = decoded_image->widthStride;
   // Define the resize shape
   DvppDataInfo resizeOut;
-  ResizeConfigFilter(resizeOut, pri_w, pri_h);
+  ret = ResizeConfigFilter(resizeOut, pri_w, pri_h);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to config resize parameter, ret = " << ret << ".";
+    return ret;
+  }
   ret = dvppCommon_->CombineResizeProcess(*decoded_image, resizeOut, true);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to process resize, ret = " << ret << ".";
@@ -422,8 +444,12 @@ APP_ERROR MDAclProcess::JPEG_R_(std::string &last_step) {
   uint32_t pri_h = input_image->heightStride;
   uint32_t pri_w = input_image->widthStride;
   DvppDataInfo resizeOut;
-  ResizeConfigFilter(resizeOut, pri_w, pri_h);
-  APP_ERROR ret = dvppCommon_->CombineResizeProcess(*input_image, resizeOut, true);
+  auto ret = ResizeConfigFilter(resizeOut, pri_w, pri_h);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to config resize, ret = " << ret << ".";
+    return ret;
+  }
+  ret = dvppCommon_->CombineResizeProcess(*input_image, resizeOut, true);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to process resize, ret = " << ret << ".";
     return ret;
@@ -760,7 +786,11 @@ APP_ERROR MDAclProcess::JPEG_DRC_(const RawData &ImageInfo) {
   uint32_t pri_w = decodeOutData->widthStride;
   // Define output of resize jpeg image
   DvppDataInfo resizeOut;
-  ResizeConfigFilter(resizeOut, pri_w, pri_h);
+  ret = ResizeConfigFilter(resizeOut, pri_w, pri_h);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to config resize, ret = " << ret << ".";
+    return ret;
+  }
   // Run resize application function
   ret = dvppCommon_->CombineResizeProcess(*decodeOutData, resizeOut, true);
   if (ret != APP_ERR_OK) {
@@ -882,7 +912,11 @@ APP_ERROR MDAclProcess::JPEG_DR_(const RawData &ImageInfo) {
   uint32_t pri_h = decodeOutData->heightStride;
   uint32_t pri_w = decodeOutData->widthStride;
   DvppDataInfo resizeOut;
-  ResizeConfigFilter(resizeOut, pri_w, pri_h);
+  ret = ResizeConfigFilter(resizeOut, pri_w, pri_h);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to config resize, ret = " << ret << ".";
+    return ret;
+  }
   // Run resize application function
   ret = dvppCommon_->CombineResizeProcess(*decodeOutData, resizeOut, true);
   if (ret != APP_ERR_OK) {
@@ -934,7 +968,8 @@ void MDAclProcess::CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropi
   cropinfo.roi = cfg;
 }
 
-APP_ERROR MDAclProcess::ResizeConfigFilter(DvppDataInfo &resizeinfo, const uint32_t pri_w_, const uint32_t pri_h_) {
+APP_ERROR MDAclProcess::ResizeConfigFilter(DvppDataInfo &resizeinfo, const uint32_t pri_w_,
+                                           const uint32_t pri_h_) const {
   if (resizeWidth_ != 0) {  // 如果输入参数个数为2，按指定参数缩放
     resizeinfo.width = resizeWidth_;
     resizeinfo.widthStride = DVPP_ALIGN_UP(resizeWidth_, VPC_STRIDE_WIDTH);
