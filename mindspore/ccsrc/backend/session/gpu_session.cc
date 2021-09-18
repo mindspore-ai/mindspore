@@ -455,8 +455,10 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   std::string exec_order_name = "graph_exec_order." + std::to_string(graph->graph_id());
   (void)mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_SESSION, exec_order_name, kernels);
 #endif
+#ifndef ENABLE_SECURITY
   // Get summary nodes.
   SetSummaryNodes(graph.get());
+#endif
   // Dump .pb graph after graph optimization
 #ifdef ENABLE_DUMP_IR
   if (save_graphs) {
@@ -523,9 +525,11 @@ void GPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_gra
   // Summary
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+#ifndef ENABLE_SECURITY
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_GPU_SUMMARY)) {
     Summary(kernel_graph.get());
   }
+#endif
 #ifdef ENABLE_DEBUGGER
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     debugger_->LoadParametersAndConst(kernel_graph);

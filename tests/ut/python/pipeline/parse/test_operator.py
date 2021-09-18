@@ -166,7 +166,6 @@ def test_ops():
                 if [1, 2, 3] is not None:
                     if self.str_a + self.str_b == "helloworld":
                         if q == 86:
-                            print("hello world")
                             return ret
             return x
 

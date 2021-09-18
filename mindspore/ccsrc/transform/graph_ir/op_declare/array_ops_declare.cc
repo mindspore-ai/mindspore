@@ -32,10 +32,12 @@ REG_ADPT_DESC(Constant, kNameConst, ADPT_DESC(Constant, Const))
 // ScalarSummary
 INPUT_MAP(Summary) = {{2, INPUT_DESC(x)}};
 ATTR_MAP(Summary) = EMPTY_ATTR_MAP;
+#ifndef ENABLE_SECURITY
 REG_ADPT_DESC(ScalarSummary, prim::kPrimScalarSummary->name(), ADPT_DESC(Summary))
 REG_ADPT_DESC(ImageSummary, prim::kPrimImageSummary->name(), ADPT_DESC(Summary))
 REG_ADPT_DESC(TensorSummary, prim::kPrimTensorSummary->name(), ADPT_DESC(Summary))
 REG_ADPT_DESC(HistogramSummary, prim::kPrimHistogramSummary->name(), ADPT_DESC(Summary))
+#endif
 REG_ADPT_DESC(Debug, prim::kPrimDebug->name(), ADPT_DESC(Summary))
 
 // Data

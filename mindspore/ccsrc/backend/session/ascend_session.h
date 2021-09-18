@@ -89,8 +89,10 @@ class AscendSession : public SessionBasic {
  private:
   // compile child graph when session have multiple child graphs
   void CompileChildGraph(const KernelGraphPtr &child_graph);
+#ifndef ENABLE_SECURITY
   void RecurseSetSummaryNodes(KernelGraph *graph, std::map<std::string, std::pair<AnfNodePtr, int>> *summary);
   void SetSummaryNodes(KernelGraph *graph) override;
+#endif
   void InitRuntimeResource();
   void SelectKernel(const KernelGraph &kernel_graph) const;
   void HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const;
@@ -128,7 +130,9 @@ class AscendSession : public SessionBasic {
   const std::vector<GraphType> &GetGraphOrderType(GraphId final_graph_id) const;
   // sync initial tensors' data to device
   void SyncInitialTenosrToDevice();
+#ifndef ENABLE_SECURITY
   void SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph);
+#endif
   // create parameter to receive data from multiple branch output
   void CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
   void SelectKernel(NotNull<KernelGraphPtr> root_graph);

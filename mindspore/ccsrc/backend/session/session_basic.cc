@@ -355,6 +355,7 @@ void DumpGraphOutput(const Any &any, size_t recurse_level = 0) {
   MS_LOG(INFO) << tab_str;
 }
 
+#ifndef ENABLE_SECURITY
 bool ExistSummaryNode(const KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto ret = graph->get_return();
@@ -368,6 +369,7 @@ bool ExistSummaryNode(const KernelGraph *graph) {
   }
   return false;
 }
+#endif
 
 BaseRef CreateNodeOutputPlaceholder(const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
                                     const std::vector<tensor::TensorPtr> &input_tensors,
@@ -1153,9 +1155,12 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
     graph->set_manager(manager);
   }
   graph->SetExecOrderByDefault();
+
+#ifndef ENABLE_SECURITY
   if (ExistSummaryNode(graph.get())) {
     graph->set_summary_node_exist(true);
   }
+#endif
 
   UnifyMindIR(graph);
   // Update Graph Dynamic Shape Attr
@@ -1564,9 +1569,13 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   graph->SetInputNodes();
   SetInputNodeUsage(graph, manager);
   graph->SetExecOrderByDefault();
+
+#ifndef ENABLE_SECURITY
   if (ExistSummaryNode(graph.get())) {
     graph->set_summary_node_exist(true);
   }
+#endif
+
   all_out_graph->push_back(graph);
   return graph;
 }
@@ -1795,6 +1804,7 @@ void SessionBasic::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::Te
   }
 }
 
+#ifndef ENABLE_SECURITY
 void SessionBasic::RegisterSummaryCallBackFunc(const CallBackFunc &callback) {
   MS_EXCEPTION_IF_NULL(callback);
   summary_callback_ = callback;
@@ -1874,6 +1884,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
   // call callback function here
   summary_callback_(0, params_list);
 }
+#endif
 
 namespace {
 bool CNodeFirstInputIsPrimitive(const AnfNodePtr &node) {

@@ -607,7 +607,9 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(root_graph));
   // build kernel
   BuildKernel(root_graph);
+#ifndef ENABLE_SECURITY
   SetSummaryNodes(root_graph.get());
+#endif
   // Alloc memory for child graph's inputs
   AssignStaticMemory(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
@@ -634,6 +636,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   return graph_id;
 }
 
+#ifndef ENABLE_SECURITY
 void AscendSession::SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto graph_order = GetGraphOrder(kernel_graph->graph_id());
@@ -649,6 +652,7 @@ void AscendSession::SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> 
   }
   kernel_graph->set_summary_node_exist(false);
 }
+#endif
 
 void AscendSession::BuildGraphImpl(GraphId graph_id) {
   MS_LOG(INFO) << "Start";
@@ -760,7 +764,9 @@ void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_g
 void AscendSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                      const std::vector<tensor::TensorPtr> &, VectorRef *const) {
   // summary
+#ifndef ENABLE_SECURITY
   Summary(kernel_graph.get());
+#endif
 #ifdef ENABLE_DEBUGGER
   // load tensor from device for debugger
   if (debugger_ && debugger_->debugger_enabled()) {
@@ -1603,6 +1609,7 @@ void AscendSession::LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph)
   MS_LOG(INFO) << "Finish!";
 }
 
+#ifndef ENABLE_SECURITY
 void AscendSession::RecurseSetSummaryNodes(KernelGraph *graph,
                                            std::map<std::string, std::pair<AnfNodePtr, int>> *summary) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -1640,6 +1647,7 @@ void AscendSession::SetSummaryNodes(KernelGraph *graph) {
   graph->set_summary_nodes(summary);
   MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
 }
+#endif
 
 void AscendSession::MergeGraphExecOrder() {
   MS_LOG(INFO) << "Start!";

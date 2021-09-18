@@ -530,6 +530,7 @@ TEST_F(TestConvert, TestSquareOps) {
   ASSERT_TRUE(ret);
 }
 
+#ifndef ENABLE_SECURITY
 TEST_F(TestConvert, TestScalarSummaryOps) {
   auto prim = prim::kPrimScalarSummary;
   // should have only 1 input.
@@ -548,6 +549,7 @@ TEST_F(TestConvert, TestHistogramSummaryOps) {
   bool ret = MakeDfGraph(prim, 2);
   ASSERT_TRUE(ret);
 }
+#endif
 
 TEST_F(TestConvert, TestGreaterOps) {
   auto prim = std::make_shared<Primitive>("Greater");

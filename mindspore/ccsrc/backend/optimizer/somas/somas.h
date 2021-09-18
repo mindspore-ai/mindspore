@@ -115,7 +115,9 @@ class Somas {
   void InitSomasInputTensors(const session::KernelGraph *graph);
   void GetNextOutputProcess(const session::KernelGraph *graph);
   void IndependentNodeOutputProcess(const session::KernelGraph *graph);
+#ifndef ENABLE_SECURITY
   void SummaryInputProcess(const session::KernelGraph *graph);
+#endif
   void RefNodeProcess(const session::KernelGraph *graph);
   void NonTaskSplitProcess(const session::KernelGraph *graph);
   void UnReuseNodeProcess(const session::KernelGraph *graph);

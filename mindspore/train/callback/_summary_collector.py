@@ -36,6 +36,7 @@ from mindspore.train.callback._dataset_graph import DatasetGraph
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.loss.loss import LossBase
 from mindspore.train._utils import check_value_type
+from ..._c_expression import security
 
 HYPER_CONFIG_ENV_NAME = "MINDINSIGHT_HYPER_CONFIG"
 HYPER_CONFIG_LEN_LIMIT = 100000
@@ -194,6 +195,10 @@ class SummaryCollector(Callback):
                  collect_tensor_freq=None,
                  max_file_size=None,
                  export_options=None):
+
+        if security.enable_security():
+            raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
+
         super(SummaryCollector, self).__init__()
 
         self._summary_dir = self._process_summary_dir(summary_dir)

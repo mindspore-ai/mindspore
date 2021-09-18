@@ -22,7 +22,9 @@
 #include "utils/symbolic.h"
 #include "pybind_api/api_register.h"
 #include "pipeline/jit/parse/python_adapter.h"
+#ifndef ENABLE_SECURITY
 #include "utils/summary/event_writer.h"
+#endif
 #include "utils/config_manager.h"
 #include "utils/mpi/mpi_config.h"
 #include "utils/ms_utils.h"
@@ -48,7 +50,9 @@ using GraphExecutorPy = mindspore::pipeline::GraphExecutorPy;
 using Pipeline = mindspore::pipeline::Pipeline;
 using PrimitivePy = mindspore::PrimitivePy;
 using MetaFuncGraph = mindspore::MetaFuncGraph;
+#ifndef ENABLE_SECURITY
 using EventWriter = mindspore::summary::EventWriter;
+#endif  // ENABLE_SECURITY
 using OpLib = mindspore::kernel::OpLib;
 using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
@@ -311,6 +315,7 @@ PYBIND11_MODULE(_c_expression, m) {
     }
   }});
 
+#ifndef ENABLE_SECURITY
   (void)py::class_<EventWriter, std::shared_ptr<EventWriter>>(m, "EventWriter_")
     .def(py::init<const std::string &>())
     .def("GetFileName", &EventWriter::GetFileName, "Get the file name.")
@@ -320,6 +325,7 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("Flush", &EventWriter::Flush, "Flush the event.")
     .def("Close", &EventWriter::Close, "Close the write.")
     .def("Shut", &EventWriter::Shut, "Final close the write.");
+#endif  // ENABLE_SECURITY
 
   (void)py::class_<OpLib, std::shared_ptr<OpLib>>(m, "Oplib")
     .def(py::init())

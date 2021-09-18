@@ -23,6 +23,7 @@ from mindspore import Tensor
 from mindspore.nn.optim import Momentum
 from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 from mindspore.train.callback import Callback
+from tests.security_utils import security_off_wrap
 from .....dataset_mock import MindData
 
 CUR_DIR = os.getcwd()
@@ -62,6 +63,7 @@ def get_test_data(step):
 
 
 # Test: call method on parse graph code
+@security_off_wrap
 def test_image_summary_sample():
     """ test_image_summary_sample """
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE") as test_writer:
@@ -157,6 +159,7 @@ class ImageSummaryCallback(Callback):
         self._summary_record.flush()
 
 
+@security_off_wrap
 def test_image_summary_train():
     """ test_image_summary_train """
     dataset = get_dataset()
@@ -166,6 +169,7 @@ def test_image_summary_train():
         model.train(2, dataset, callbacks=[callback])
 
 
+@security_off_wrap
 def test_image_summary_data():
     """ test_image_summary_data """
     dataset = get_dataset()

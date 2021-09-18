@@ -126,6 +126,7 @@ class TestSummary:
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
     @pytest.mark.env_onecard
+    @pytest.mark.security_off
     def test_summary_with_sink_mode_false(self):
         """Test summary with sink mode false, and num samples is 64."""
         summary_dir = self._run_network(num_samples=10)
@@ -148,6 +149,7 @@ class TestSummary:
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
     @pytest.mark.env_onecard
+    @pytest.mark.security_off
     def test_summary_with_sink_mode_true(self):
         """Test summary with sink mode true, and num samples is 64."""
         summary_dir = self._run_network(dataset_sink_mode=True, num_samples=10)
@@ -167,6 +169,7 @@ class TestSummary:
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.env_onecard
+    @pytest.mark.security_off
     def test_summarycollector_user_defind(self):
         """Test SummaryCollector with user-defined."""
         summary_dir = self._run_network(dataset_sink_mode=True, num_samples=2,

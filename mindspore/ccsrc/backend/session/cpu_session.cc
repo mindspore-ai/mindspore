@@ -146,7 +146,9 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   MS_LOG(INFO) << "Assign kernel address";
   runtime_.AssignKernelAddress(graph.get());
   // set summary node
+#ifndef ENABLE_SECURITY
   SetSummaryNodes(graph.get());
+#endif
   runtime_.IncreaseSummaryRefCount(graph->summary_nodes());
   DumpGraph(graph);
   return graph_id;
@@ -205,7 +207,9 @@ void CPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_grap
 
 void CPUSession::PostExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph,
                                   const std::vector<tensor::TensorPtr> &, VectorRef *const) {
+#ifndef ENABLE_SECURITY
   Summary(kernel_graph.get());
+#endif
 }
 
 void CPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {

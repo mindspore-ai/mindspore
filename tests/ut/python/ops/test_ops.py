@@ -31,6 +31,8 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.nn.layer import normalization
+from mindspore._c_expression import security
+from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -2866,16 +2868,6 @@ test_case_other_ops = [
         'block': P.IOU(),
         'desc_inputs': [Tensor(np.ones((256, 4), np.float16)), Tensor(np.ones((128, 4), np.float16))],
         'desc_bprop': [convert([128, 256], np.float16)]}),
-    ('Summary', {
-        'block': SummaryNet(),
-        'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
-                        Tensor(np.array([1.2]).astype(np.float32))],
-        'skip': ['backward']}),
-    ('HistogramSummary', {
-        'block': HistogramSummaryNet(),
-        'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
-                        Tensor(np.array([1.2]).astype(np.float32))],
-        'skip': ['backward']}),
     ('PopulationCount', {
         'block': P.PopulationCount(),
         'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.int16))],
@@ -3044,6 +3036,38 @@ def test_exec():
 def test_backward_exec():
     context.set_context(mode=context.GRAPH_MODE)
     return test_backward_exec_case
+
+
+@security_off_wrap
+@non_graph_engine
+@mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
+def test_summary_ops():
+    if security.enable_security():
+        return []
+    test_cases_for_summary_ops = [
+        ('Summary', {
+            'block': SummaryNet(),
+            'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
+                            Tensor(np.array([1.2]).astype(np.float32))],
+            'skip': ['backward']}),
+        ('HistogramSummary', {
+            'block': HistogramSummaryNet(),
+            'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
+                            Tensor(np.array([1.2]).astype(np.float32))],
+            'skip': ['backward']}),
+    ]
+    context.set_context(mode=context.GRAPH_MODE)
+    return test_cases_for_summary_ops
+
+
+def test_summary_ops_security_on():
+    if security.enable_security():
+        with pytest.raises(ValueError) as exc:
+            SummaryNet()
+        assert str(exc.value) == 'The Summary is not supported, please without `-s on` and recompile source.'
+        with pytest.raises(ValueError) as exc:
+            HistogramSummaryNet()
+        assert str(exc.value) == 'The Summary is not supported, please without `-s on` and recompile source.'
 
 
 raise_set = [

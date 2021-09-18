@@ -23,6 +23,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.train.summary._summary_adapter import _calc_histogram_bins
 from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 from tests.summary_utils import SummaryReader
+from tests.security_utils import security_off_wrap
 
 CUR_DIR = os.getcwd()
 SUMMARY_DIR = os.path.join(CUR_DIR, "/test_temp_summary_event_file/")
@@ -48,6 +49,7 @@ def _wrap_test_data(input_data: Tensor):
     }]
 
 
+@security_off_wrap
 def test_histogram_summary():
     """Test histogram summary."""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -61,6 +63,7 @@ def test_histogram_summary():
             assert event.summary.value[0].histogram.count == 6
 
 
+@security_off_wrap
 def test_histogram_multi_summary():
     """Test histogram multiple step."""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -83,6 +86,8 @@ def test_histogram_multi_summary():
                 event = reader.read_event()
                 assert event.summary.value[0].histogram.count == size
 
+
+@security_off_wrap
 def test_histogram_summary_empty_tensor():
     """Test histogram summary, input is an empty tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -97,6 +102,7 @@ def test_histogram_summary_empty_tensor():
             assert event.summary.value[0].histogram.count == 0
 
 
+@security_off_wrap
 def test_histogram_summary_same_value():
     """Test histogram summary, input is an ones tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -116,6 +122,7 @@ def test_histogram_summary_same_value():
             assert len(event.summary.value[0].histogram.buckets) == _calc_histogram_bins(dim1 * dim2)
 
 
+@security_off_wrap
 def test_histogram_summary_high_dims():
     """Test histogram summary, input is a 4-dimension tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -136,6 +143,7 @@ def test_histogram_summary_high_dims():
             assert event.summary.value[0].histogram.count == tensor_data.size
 
 
+@security_off_wrap
 def test_histogram_summary_nan_inf():
     """Test histogram summary, input tensor has nan."""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -160,6 +168,7 @@ def test_histogram_summary_nan_inf():
             assert event.summary.value[0].histogram.nan_count == 1
 
 
+@security_off_wrap
 def test_histogram_summary_all_nan_inf():
     """Test histogram summary, input tensor has no valid number."""
     with tempfile.TemporaryDirectory() as tmp_dir:
