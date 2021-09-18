@@ -153,6 +153,26 @@ MS_EXPORT std::string GetTimeString();
 
 MS_EXPORT extern int g_ms_submodule_log_levels[];
 
+#if defined(_WIN32) || defined(_WIN64)
+MS_EXPORT extern enum MsLogLevel this_thread_max_log_level;
+#define MS_LOG_TRY_CATCH_SCOPE
+#else
+MS_EXPORT extern thread_local enum MsLogLevel this_thread_max_log_level;
+class TryCatchGuard {
+ public:
+  TryCatchGuard() {
+    origin_log_level_ = this_thread_max_log_level;
+    this_thread_max_log_level = MsLogLevel::WARNING;
+  }
+
+  ~TryCatchGuard() { this_thread_max_log_level = origin_log_level_; }
+
+ private:
+  enum MsLogLevel origin_log_level_;
+};
+#define MS_LOG_TRY_CATCH_SCOPE mindspore::TryCatchGuard mindspore_log_try_catch_guard
+#endif
+
 class LogWriter {
  public:
   using ExceptionHandler = std::function<void(ExceptionType, const std::string &msg)>;
@@ -192,7 +212,8 @@ class LogWriter {
                        excp_type) ^                                                                                    \
     mindspore::LogStream()
 
-#define IS_OUTPUT_ON(level) ((level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID])
+#define IS_OUTPUT_ON(level) \
+  ((level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID] && (level) <= mindspore::this_thread_max_log_level)
 
 #define MS_LOG(level) MS_LOG_##level
 

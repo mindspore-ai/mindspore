@@ -20,4 +20,9 @@ namespace mindspore {
 std::map<void **, std::thread *> acl_handle_map;
 // set default log level to WARNING for all sub modules
 int g_ms_submodule_log_levels[NUM_SUBMODUES] = {WARNING};
+#if defined(_WIN32) || defined(_WIN64)
+enum MsLogLevel this_thread_max_log_level = EXCEPTION;
+#else
+thread_local enum MsLogLevel this_thread_max_log_level = EXCEPTION;
+#endif
 }  // namespace mindspore

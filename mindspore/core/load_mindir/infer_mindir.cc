@@ -149,6 +149,7 @@ void MindIREngine::Init(const AbstractBasePtrList &args) {
 AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(prim);
   try {
+    MS_LOG_TRY_CATCH_SCOPE;
     static auto &prim_eval_implement_map = abstract::GetPrimitiveToEvalImplMap();
     auto ret = prim_eval_implement_map.find(prim);
     if (ret != prim_eval_implement_map.end()) {
@@ -203,6 +204,7 @@ void MindIREngine::EvalReturnPrimitive(const PrimitivePtr &prim, const CNodePtr 
   auto it = func_graph_result_.find(funcName);
   if (it != func_graph_result_.end()) {
     try {
+      MS_LOG_TRY_CATCH_SCOPE;
       result = result->Join(it->second);
     } catch (const std::exception &e) {
       MS_LOG(WARNING) << "Join abstract for return node " << node->DebugString() << " failed, exception: " << e.what();
@@ -280,6 +282,7 @@ void MindIREngine::EvalPartialAbastract(const abstract::PartialAbstractClosurePt
 void MindIREngine::SaveNodeInferResult(const AnfNodePtr &node, const AbstractBasePtr &result) {
   auto answer = result;
   try {
+    MS_LOG_TRY_CATCH_SCOPE;
     auto it = infer_resut_.find(node);
     if (it != infer_resut_.end()) {
       MS_LOG(DEBUG) << node->ToString() << " result: " << it->second->ToString();
@@ -291,6 +294,7 @@ void MindIREngine::SaveNodeInferResult(const AnfNodePtr &node, const AbstractBas
     }
   } catch (const std::exception &e) {
     MS_LOG(WARNING) << "Join abstract for node " << node->DebugString() << " failed, exception: " << e.what();
+    return;
   }
 
   MS_LOG(DEBUG) << node->ToString() << " result: " << answer->ToString();
