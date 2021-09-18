@@ -354,11 +354,11 @@ void SelectTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
                                             nlohmann::json *input_desc) {
   MS_EXCEPTION_IF_NULL(anf_node);
   GenDesJsonCommon(input_desc);
-  auto shape = TbeJsonUtils::GetInputOriShapeForTbeBuild(anf_node, real_input_index);
-  if (shape.empty()) {
-    shape.emplace_back(1);
+  auto ori_shape = TbeJsonUtils::GetInputOriShapeForTbeBuild(anf_node, real_input_index);
+  if (ori_shape.empty()) {
+    ori_shape.emplace_back(1);
   }
-  auto ori_shape = shape;
+  auto shape = ori_shape;
 
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
   auto format = def_format;
@@ -390,13 +390,9 @@ void CheckTbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_ou
   if (ori_shape.empty()) {
     ori_shape.emplace_back(1);
   }
-  shape = TbeJsonUtils::GetOutputDeviceShapeForTbeBuild(anf_node, node_out_idx);
-  if (shape.empty()) {
-    shape.emplace_back(1);
-  }
+  shape = ori_shape;
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
-  auto format = AnfAlgo::GetOutputFormat(anf_node, node_out_idx);
-  format = TbeAdapter::FormatPass(format, ori_shape.size());
+  auto format = def_format;
 
   (*output_desc)[kJDataType] = tbe::TypeIdToString(AnfAlgo::GetOutputDeviceDataType(anf_node, node_out_idx));
   (*output_desc)[kJDtype] = GetJsonValue<std::string>(*output_desc, kJDataType);
@@ -415,14 +411,10 @@ void CheckTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t re
   if (ori_shape.empty()) {
     ori_shape.emplace_back(1);
   }
-  auto shape = TbeJsonUtils::GetInputDeviceShapeForTbeBuild(anf_node, real_input_index);
-  if (shape.empty()) {
-    shape.emplace_back(1);
-  }
+  auto shape = ori_shape;
 
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
-  auto format = AnfAlgo::GetInputFormat(anf_node, real_input_index);
-  format = TbeAdapter::FormatPass(format, ori_shape.size());
+  auto format = def_format;
   (*input_desc)[kJDtype] = tbe::TypeIdToString(AnfAlgo::GetInputDeviceDataType(anf_node, real_input_index));
   (*input_desc)[kJDataType] = GetJsonValue<std::string>(*input_desc, kJDtype);
   (*input_desc)[kJOriShape] = ori_shape;

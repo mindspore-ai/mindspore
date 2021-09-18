@@ -78,7 +78,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_common) {
   EXPECT_TRUE(tbe_json_creator_select->GenJson(relu1, &kernel_json));
   EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 4297213426602035622U);
   EXPECT_TRUE(tbe_json_creator_check->GenJson(relu1, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 6011570351795510237U);
+  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 4297213426602035622U);
   EXPECT_TRUE(tbe_json_creator_build->GenJson(relu1, &kernel_json));
   EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 6011570351795510237U);
 }
@@ -121,7 +121,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_conv2d_backprop_filter) {
   EXPECT_TRUE(tbe_json_creator_select->GenJson(conv2d_backprop_filter, &kernel_json));
   EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 3804649253898608226U);
   EXPECT_TRUE(tbe_json_creator_check->GenJson(conv2d_backprop_filter, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 4580870880229487185U);
+  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 3804649253898608226U);
   EXPECT_TRUE(tbe_json_creator_build->GenJson(conv2d_backprop_filter, &kernel_json));
   EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 4580870880229487185U);
 }
@@ -179,7 +179,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_dynamic_rnn) {
   EXPECT_TRUE(tbe_json_creator_select->GenJson(dynamic_rnn, &kernel_json));
   EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 13058640182660031121U);
   EXPECT_TRUE(tbe_json_creator_check->GenJson(dynamic_rnn, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 4729701784171992376U);
+  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 13058640182660031121U);
   EXPECT_TRUE(tbe_json_creator_build->GenJson(dynamic_rnn, &kernel_json));
   EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 4729701784171992376U);
 }
@@ -233,7 +233,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_layer_norm) {
   EXPECT_TRUE(tbe_json_creator_select->GenJson(layer_norm, &kernel_json));
   EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 1114128635775386802U);
   EXPECT_TRUE(tbe_json_creator_check->GenJson(layer_norm, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 9247341733773157591U);
+  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 2175017419293202360U);
   EXPECT_TRUE(tbe_json_creator_build->GenJson(layer_norm, &kernel_json));
   EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 9247341733773157591U);
 }
