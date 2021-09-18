@@ -118,12 +118,12 @@ void RandomChoiceWithMaskCPUKernel::InitInputOutputSize(const CNodePtr &kernel_n
   CPUKernel::InitInputOutputSize(kernel_node);
 
   GetInputTotalCount(dims_, &input_total_count, input_dim_size);
-  size_t temp_output_length = count_ > 0 ? count_ : input_total_count;
+  int temp_output_length = count_ > 0 ? count_ : input_total_count;
 
   workspace_size_list_.push_back(IntToSize(input_total_count) * sizeof(int));
-  workspace_size_list_.push_back(temp_output_length * sizeof(int));
-  workspace_size_list_.push_back(temp_output_length * sizeof(int));
-  workspace_size_list_.push_back(temp_output_length * IntToSize(input_dim_size) * sizeof(int));
+  workspace_size_list_.push_back(IntToSize(temp_output_length) * sizeof(int));
+  workspace_size_list_.push_back(IntToSize(temp_output_length) * sizeof(int));
+  workspace_size_list_.push_back(IntToSize(temp_output_length) * IntToSize(input_dim_size) * sizeof(int));
 }
 
 bool RandomChoiceWithMaskCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
