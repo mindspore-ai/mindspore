@@ -15,7 +15,7 @@
 """Boost Mode Cell Wrapper."""
 from mindspore.nn.wrap import TrainOneStepCell
 import mindspore.context as context
-from mindspore.context import ParallelMode, get_auto_parallel_context
+from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_gradients_mean
 from mindspore.communication.management import get_group_size, create_group
 from mindspore.nn.cell import Cell
@@ -26,6 +26,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+from .boost import AutoBoost
 from .grad_freeze import FreezeOpt, freeze_cell
 from .adasum import AdaSum
 from .grad_accumulation import gradient_accumulation_op, gradient_clear_op
@@ -142,9 +143,12 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             self.weights = self.optimizer.parameters
         self.train_strategy = getattr(self.optimizer, 'train_strategy', None)
 
+        auto_boost = AutoBoost()
         self.use_grad_accumulation = self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.STAND_ALONE)
+        self.use_grad_accumulation = self.use_grad_accumulation & auto_boost.boost_config["grad_accumulation"]
+        self.max_accumulation_step = 1
         if self.use_grad_accumulation:
-            self.max_accumulation_step = get_auto_parallel_context("grad_accumulation_step")
+            self.max_accumulation_step = auto_boost.grad_accumulation_step
             if self.max_accumulation_step <= 1:
                 self.max_accumulation_step = 1
                 self.use_grad_accumulation = False
@@ -170,7 +174,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         if self.enable_adasum:
             _rank = _get_global_rank()
             _rank_size = get_group_size()
-            _device_number = 8
+            _device_number = auto_boost.device_number
             self.device_number = _device_number
             group_number = _rank_size // _device_number
 
@@ -214,6 +218,9 @@ class BoostTrainOneStepCell(TrainOneStepCell):
 
         Inputs:
             - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+
+        Outputs:
+            - **loss** (Tensor) -  Tensor with shape :math:`()`.
         """
         if self.train_strategy is None:
             step = self.step
@@ -235,6 +242,9 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         Inputs:
             - **loss** (Tensor) -  Tensor with shape :math:`()`.
             - **grads** (Tuple(Tensor)) - Tuple of gradient tensors.
+
+        Outputs:
+            - **loss** (Tensor) -  Tensor with shape :math:`()`.
         """
         loss = F.depend(loss, self.hyper_map(F.partial(gradient_accumulation_op, self.max_accumulation_step),
                                              self.grad_accumulation, grads))
@@ -259,6 +269,9 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         Inputs:
             - **loss** (Tensor) -  Tensor with shape :math:`()`.
             - **grads** (Tuple(Tensor)) - Tuple of gradient tensors.
+
+        Outputs:
+            - **loss** (Tensor) -  Tensor with shape :math:`()`.
         """
         loss = F.depend(loss, self.optimizer(grads))
         rank_weights = self.weights[self.start[self.server_rank]: self.end[self.server_rank]]
@@ -281,9 +294,9 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         r"""
         Check adasum enable.
 
-        Inputs:
-            - **optimizer** (Union[Cell]) - Optimizer for updating the weights.
-            - **reducer_flag** (bool) - Reducer flag.
+        Args:
+            optimizer (Union[Cell]) - Optimizer for updating the weights.
+            reducer_flag (bool) - Reducer flag.
         """
         if not getattr(optimizer, "adasum", None) or not reducer_flag:
             return False

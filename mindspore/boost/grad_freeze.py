@@ -168,7 +168,7 @@ class GradientFreeze:
         total_steps (numbers.Number): Steps of the whole training.
 
     Examples:
-        >>> gradient_freeze_class = acc.GradientFreeze(10, 1, 0.5, 2000)
+        >>> gradient_freeze_class = boost.GradientFreeze(10, 1, 0.5, 2000)
         >>> network, optimizer = gradient_freeze_class.freeze_generate(network, optimizer)
     """
     def __init__(self, param_groups, freeze_type, freeze_p, total_steps):
@@ -183,9 +183,9 @@ class GradientFreeze:
         r"""
         Split parameter groups for gradients freezing training.
 
-        Inputs:
-            - **net** (Cell) - The training network.
-            - **freeze_para_groups_number** (int) - The number of gradient freeze groups.
+        Args:
+            net (Cell) - The training network.
+            freeze_para_groups_number (int) - The number of gradient freeze groups.
         """
         grouped_params = []
         tmp = []
@@ -210,11 +210,11 @@ class GradientFreeze:
         r"""
         Generate index sequence for gradient freezing training.
 
-        Inputs:
-            - **parameter_groups_number** (int) - The number of parameter groups.
-            - **freeze_strategy** (int) - Gradient freeze grouping strategy, select from [0, 1].
-            - **freeze_p** (float) - Gradient freezing probability.
-            - **total_steps** (int) - Total training steps.
+        Args:
+            parameter_groups_number (int) - The number of parameter groups.
+            freeze_strategy (int) - Gradient freeze grouping strategy, select from [0, 1].
+            freeze_p (float) - Gradient freezing probability.
+            total_steps (int) - Total training steps.
         """
         total_step = int(total_steps * 1.01)
         if parameter_groups_number <= 1:
@@ -252,9 +252,9 @@ class GradientFreeze:
         r"""
         Generate freeze network and optimizer.
 
-        Inputs:
-            - **network** (Cell) - The training network.
-            - **optimizer** (Cell) - Optimizer for updating the weights.
+        Args:
+            network (Cell) - The training network.
+            optimizer (Cell) - Optimizer for updating the weights.
         """
         train_para_groups = self.split_parameters_groups(
             network, self._param_groups)
@@ -273,16 +273,16 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
     r"""
     Generate freeze network and optimizer.
 
-    Inputs:
-        - **reducer_flag** (bool) - Reducer flag.
-        - **network** (Cell) - The training network.
-        - **optimizer** (Cell) - Optimizer for updating the weights.
-        - **sens** (Tensor) -  Tensor with shape :math:`()`
-        - **grad** (Tuple(Tensor)) - Tuple of gradient tensors.
-        - **use_grad_accumulation** (bool) - Use gradient accumulation flag.
-        - **mean** (bool) - Gradients mean flag. default: None.
-        - **degree** (int) - Device number. default: None.
-        - **max_accumulation_step** (int) - Max accumulation steps. default: 1.
+    Args:
+        reducer_flag (bool) - Reducer flag.
+        network (Cell) - The training network.
+        optimizer (Cell) - Optimizer for updating the weights.
+        sens (Tensor) -  Tensor with shape :math:`()`
+        grad (Tuple(Tensor)) - Tuple of gradient tensors.
+        use_grad_accumulation (bool) - Use gradient accumulation flag.
+        mean (bool) - Gradients mean flag. default: None.
+        degree (int) - Device number. default: None.
+        max_accumulation_step (int) - Max accumulation steps. default: 1.
 
     Examples:
         >>> import numpy as np

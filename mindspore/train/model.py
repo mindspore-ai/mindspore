@@ -97,6 +97,7 @@ class Model:
               the accuracy is the same as the original accuracy.
             - O2: Enable the boost mode, the performance is improved by about 30%, and
               the accuracy is reduced by less than 3%.
+            If you want to config boost mode by yourself, you can set boost_config_dict as `boost.py`.
     Examples:
         >>> from mindspore import Model, nn
         >>>
@@ -187,9 +188,9 @@ class Model:
 
     def _check_kwargs(self, kwargs):
         for arg in kwargs:
-            if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32']:
+            if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32', 'boost_config_dict']:
                 raise ValueError(f"The argument in 'kwargs' should be 'loss_scale_manager' or "
-                                 f"'keep_batchnorm_fp32', but got '{arg}'.")
+                                 f"'keep_batchnorm_fp32' or 'boost_config_dict', but got '{arg}'.")
 
     def _check_reuse_dataset(self, dataset):
         if not hasattr(dataset, '__model_hash__'):
@@ -199,7 +200,10 @@ class Model:
 
     def _build_boost_network(self, kwargs):
         """Build the boost network."""
-        processor = AutoBoost(self._boost_level, kwargs)
+        boost_config_dict = ""
+        if 'boost_config_dict' in kwargs:
+            boost_config_dict = kwargs['boost_config_dict']
+        processor = AutoBoost(self._boost_level, boost_config_dict)
         if processor.level not in ["O1", "O2"]:
             return
         if self._optimizer is None:

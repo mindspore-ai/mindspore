@@ -87,6 +87,29 @@ def _check_kwargs(key_words):
             validator.check_value_type('loss_scale_manager', loss_scale_manager, LossScaleManager)
 
 
+def _check_level(level, boost_level):
+    """Check level."""
+    if not isinstance(level, str):
+        raise TypeError("The argument `level` must be a string in ['O0', 'O2', 'O3', 'auto'], \
+                         but got type {}.".format(type(level)))
+    validator.check('level', level, "", ['O0', 'O2', 'O3', 'auto'], Rel.IN)
+    validator.check('boost_level', boost_level, "", ['O0', 'O1', 'O2'], Rel.IN)
+
+    if level == "auto":
+        device_target = context.get_context('device_target')
+        if device_target == "GPU":
+            level = "O2"
+        elif device_target == "Ascend":
+            level = "O3"
+        else:
+            raise ValueError("Level `auto` only support when `device_target` is GPU or Ascend.")
+
+    enable_boost = False
+    if boost_level in ["O1", "O2"]:
+        enable_boost = True
+
+    return level, enable_boost
+
 def _add_loss_network(network, loss_fn, cast_model_type):
     """Add loss network."""
 
@@ -159,20 +182,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     """
     validator.check_value_type('network', network, nn.Cell)
     validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt))
-    if not isinstance(level, str):
-        raise TypeError(f"The argument `level` must be a string in ['O0', 'O2', 'O3', 'auto'], "
-                        f"but got type {str(type(level))}.")
-    validator.check('level', level, "", ['O0', 'O2', 'O3', 'auto'], Rel.IN)
-    validator.check('boost_level', boost_level, "", ['O0', 'O1', 'O2'], Rel.IN)
 
-    if level == "auto":
-        device_target = context.get_context('device_target')
-        if device_target == "GPU":
-            level = "O2"
-        elif device_target == "Ascend":
-            level = "O3"
-        else:
-            raise ValueError("Level `auto` only support when `device_target` is GPU or Ascend.")
+    level, enable_boost = _check_level(level, boost_level)
 
     _check_kwargs(kwargs)
     config = dict(_config_level[level], **kwargs)
@@ -188,10 +199,6 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
 
     if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
         network = _VirtualDatasetCell(network)
-
-    enable_boost = False
-    if boost_level in ["O1", "O2"]:
-        enable_boost = True
 
     loss_scale = 1.0
     if config["loss_scale_manager"] is not None:
