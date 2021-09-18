@@ -174,6 +174,7 @@ bool NormFusion::GetNormTypeAndAxis(const FuncGraphPtr &func_graph, const CNodeP
       return false;
     }
   }
+  // shape input has 4 dim && mean input has 2 dim and mean is in [1, 2 ,...]
   if (shape_size == 4 && mean_axes.size() == 2 && mean_axes[0] == 1 && mean_axes[1] == 2) {
     if (params_shape.size() == 1 && params_shape.back() == shape.back()) {
       *type = schema::PrimitiveType_InstanceNorm;
@@ -389,6 +390,7 @@ std::map<string, int> NormFusion::ShapeSizeInfer(const FuncGraphPtr &func_graph)
       int in_shape_size = 0;
       if (utils::isa<CNodePtr>(cnode->input(i))) {
         in_shape_size = node_shape_size[cnode->input(i)->fullname_with_scope()];
+        // second input of reshape is shape
         if (prim_type == schema::PrimitiveType_Reshape && i == 2 &&
             node_shape.find(cnode->input(i)->fullname_with_scope()) != node_shape.end()) {
           in_shape_size = node_shape[cnode->input(i)->fullname_with_scope()].at(0);
@@ -398,6 +400,7 @@ std::map<string, int> NormFusion::ShapeSizeInfer(const FuncGraphPtr &func_graph)
         auto ret = GetTensorInfoFromAbstract(&tensor_info, cnode, i);
         if (ret == RET_OK) {
           in_shape_size = tensor_info->shape().size();
+          // second input of reshape is shape
           if (prim_type == schema::PrimitiveType_Reshape && i == 2) {
             in_shape_size = tensor_info->shape().at(0);
           }

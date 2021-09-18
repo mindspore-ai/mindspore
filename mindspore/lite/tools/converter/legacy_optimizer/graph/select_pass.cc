@@ -168,6 +168,7 @@ std::unique_ptr<CNodeT> CreateSwitchCNode(const schema::CNodeT &select_node, int
   MS_CHECK_TRUE_MSG(switch_node->primitive->value.value != nullptr, nullptr, "Create SwitchT failed");
   switch_node->inputIndex = {select_node.inputIndex.front()};
   decltype(select_node.inputIndex.begin()) first_iter, last_iter;
+  // select op will duplicate inputs
   if (part_id == 0) {
     first_iter = select_node.inputIndex.begin() + 1;
     last_iter = select_node.inputIndex.begin() + 1 + (select_node.inputIndex.size() - 1) / 2;
@@ -177,6 +178,7 @@ std::unique_ptr<CNodeT> CreateSwitchCNode(const schema::CNodeT &select_node, int
   }
   std::vector<int> part_input_index(first_iter, last_iter);
   switch_node->inputIndex.insert(switch_node->inputIndex.end(), part_input_index.begin(), part_input_index.end());
+  // select op will duplicate inputs
   MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD((part_input_index.size()), static_cast<size_t>(2), SIZE_MAX), nullptr,
                      "int mul overflow");
   std::vector<std::unique_ptr<TensorT>> switch_output_tensors1(part_input_index.size() * 2);
@@ -225,6 +227,7 @@ STATUS SingleSelectPass::ConvertSelectToSwitch() {
   merge_node->primitive->value.value = new (std::nothrow) MergeT();
   CHECK_NULL_RETURN(merge_node->primitive->value.value);
 
+  // select op will duplicate outputs
   MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW_THRESHOLD((select_node_->outputIndex.size()), static_cast<size_t>(2), SIZE_MAX),
                      RET_ERROR, "int mul overflow");
   std::vector<int> merge_input_indexes(select_node_->outputIndex.size() * 2);

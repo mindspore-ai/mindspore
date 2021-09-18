@@ -34,7 +34,7 @@ bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::str
     auto pass_outer = registry::PassRegistry::GetPassFromStoreRoom(pass_name);
     if (pass_outer != nullptr) {
       if (!pass_outer->Execute(func_graph)) {
-        MS_LOG(ERROR) << "run pass failed, pass name is " << pass_name;
+        MS_LOG(WARNING) << "run pass failed, pass name is " << pass_name;
         return false;
       }
       continue;
@@ -59,7 +59,7 @@ bool RunExternalPass(const FuncGraphPtr &func_graph, registry::PassPosition posi
   }
   auto schedule_task = registry::PassRegistry::GetOuterScheduleTask(position);
   if (!RunOptimizerPass(func_graph, schedule_task)) {
-    MS_LOG(ERROR) << "run external scheduled task failed.";
+    MS_LOG(WARNING) << "run external scheduled task failed.";
     return false;
   }
   return true;

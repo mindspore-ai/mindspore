@@ -45,17 +45,17 @@ int PackRightMatrix(Matrix *matrix, int col_tile);
 
 int PackAttentionBias(Matrix *matrix, int tile);
 
-void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, Matrix *wq_mat, Matrix *bq_mat,
+void QWithPosition(RelativePositionAttentionParameter *param, Matrix *q_mat, const Matrix *wq_mat, Matrix *bq_mat,
                    Matrix *q2wq_mat, Matrix *pu_mat, Matrix *pv_mat, Matrix *q2wq_with_pos_mat,
                    Matrix *q2wq_with_pu_trans_mat, Matrix *q2wq_with_pv_trans_mat);
 
-void KMulWeightK(RelativePositionAttentionParameter *param, Matrix *k_mat, Matrix *wk_mat, Matrix *bk_mat,
+void KMulWeightK(RelativePositionAttentionParameter *param, Matrix *k_mat, const Matrix *wk_mat, Matrix *bk_mat,
                  Matrix *k2wk_mat, Matrix *k2wk_trans_mat);
 
-void VMulWeightV(RelativePositionAttentionParameter *param, Matrix *v_mat, Matrix *wv_mat, Matrix *bv_mat,
+void VMulWeightV(RelativePositionAttentionParameter *param, Matrix *v_mat, const Matrix *wv_mat, Matrix *bv_mat,
                  Matrix *v2wv_mat, Matrix *v2wv_trans_mat);
 
-void PMulWeightP(RelativePositionAttentionParameter *param, Matrix *p_mat, Matrix *wp_mat, Matrix *p2wp_mat,
+void PMulWeightP(RelativePositionAttentionParameter *param, Matrix *p_mat, const Matrix *wp_mat, Matrix *p2wp_mat,
                  Matrix *p2wp_trans_mat);
 
 void CalculateLogits(RelativePositionAttentionParameter *param, Matrix *q2wq_with_pu_trans_mat,
@@ -64,7 +64,7 @@ void CalculateLogits(RelativePositionAttentionParameter *param, Matrix *q2wq_wit
                      Matrix *logits_with_v_shifted_mat, Matrix *logits_mat);
 
 void RelPosAttention(RelativePositionAttentionParameter *param, Matrix *logits_mat, Matrix *softmax_mat,
-                     Matrix *v2wv_trans_mat, Matrix *logits2v_mat, Matrix *logits2v_trans_mat, Matrix *wo_mat,
+                     Matrix *v2wv_trans_mat, Matrix *logits2v_mat, Matrix *logits2v_trans_mat, const Matrix *wo_mat,
                      Matrix *bo_mat, Matrix *output_mat);
 #ifdef __cplusplus
 }
