@@ -146,7 +146,7 @@ const std::map<CompareEnum, std::string> kCompareToString = {
 
 const std::map<CompareRange, std::pair<std::string, std::string>> kCompareRangeToString = {
   {kIncludeNeither, {"in (", ")"}},
-  {kIncludeLeft, {" in [", ")"}},
+  {kIncludeLeft, {"in [", ")"}},
   {kIncludeRight, {"in (", "]"}},
   {kIncludeBoth, {"in [", "]"}}};
 
@@ -175,14 +175,14 @@ class CheckAndConvertUtils {
     if (prim_name.empty()) {
       buffer << "The attribute[" << arg_name << "] must ";
     } else {
-      buffer << "For primitive[" << prim_name << "]'s " << arg_name << " must ";
+      buffer << "The primitive[" << prim_name << "]'s " << arg_name << " must ";
     }
     auto iter_to_string = kCompareToString.find(compare_operator);
     if (iter_to_string == kCompareToString.end()) {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
                                    << " cannot find in the compare string map";
     }
-    buffer << iter_to_string->second << "\'" << match_value << "\' , but got \'" << arg_value << "\'";
+    buffer << iter_to_string->second << match_value << " , but got " << arg_value << ".";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
 
@@ -204,7 +204,7 @@ class CheckAndConvertUtils {
     if (prim_name.empty()) {
       buffer << "The attribute[" << arg_name << "] must ";
     } else {
-      buffer << "For primitive[" << prim_name << "] " << arg_name << " must ";
+      buffer << "The primitive[" << prim_name << "] " << arg_name << " must ";
     }
     auto iter_to_string = kCompareRangeToString.find(compare_operator);
     if (iter_to_string == kCompareRangeToString.end()) {
@@ -212,8 +212,8 @@ class CheckAndConvertUtils {
                                    << " cannot find in the compare string map";
     }
     auto range_strng = iter_to_string->second;
-    buffer << range_strng.first << range.first << "," << range.second << range_strng.second << " ,but got "
-           << arg_value;
+    buffer << range_strng.first << range.first << "," << range.second << range_strng.second << " ,but got " << arg_value
+           << ".";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
 
@@ -242,23 +242,23 @@ class CheckAndConvertUtils {
     if (prim_name.empty()) {
       buffer << "The attribute[" << arg_name << "]:";
     } else {
-      buffer << "For primitive[" << prim_name << "]'s " << arg_name << ":";
+      buffer << "The primitive[" << prim_name << "]'s " << arg_name << ":";
     }
     auto iter_to_string = kCompareToString.find(compare_type);
     if (iter_to_string == kCompareToString.end()) {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_type << " cannot find in the compare string map";
     }
 
-    buffer << " \"{";
+    buffer << " [";
     for (auto item : arg_value) {
       buffer << item << ",";
     }
-    buffer << "}\"";
-    buffer << " must " << iter_to_string->second << " \"{";
+    buffer << "]";
+    buffer << " must " << iter_to_string->second << "[";
     for (auto item : value) {
       buffer << item << ",";
     }
-    buffer << "}\" ";
+    buffer << "]";
     MS_EXCEPTION(exception_type) << buffer.str();
   }
 
@@ -272,7 +272,7 @@ class CheckAndConvertUtils {
     MS_EXCEPTION_IF_NULL(args_spec);
     auto arg = dyn_cast<T>(args_spec);
     if (arg == nullptr) {
-      MS_EXCEPTION(TypeError) << "Primitive[" << op << "]'s input[" << index << "] should be a "
+      MS_EXCEPTION(TypeError) << "The primitive[" << op << "]'s input[" << index << "] should be a "
                               << abstract::ReportNameTraits<T>::name << ", but got "
                               << args_spec_list[index]->BuildType()->ToString() << ".";
     }
@@ -319,7 +319,8 @@ class CheckAndConvertUtils {
 
  private:
   static TypePtr _CheckTypeSame(const std::map<std::string, TypePtr> &args, const std::string &prim_name,
-                                const std::set<TypePtr> &check_list, const bool allow_mix);
+                                const bool allow_mix);
+  static std::string GetErrorTypeString(const std::set<TypePtr> &check_list, const TypePtr &check_type);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_CHECK_CONVERT_UTILS_H_
