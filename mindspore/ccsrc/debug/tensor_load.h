@@ -120,10 +120,6 @@ class TensorLoader {
     return nullptr;
   }
 
-  uint32_t GetIterNum() const { return iter_num_; }
-
-  std::map<std::string, std::shared_ptr<TensorData>> GetTensorMap() { return tensor_list_map_; }
-
   std::shared_ptr<TensorData> GetPrevTensor(const std::string &tensor_name) {
     if (tensor_list_map_.find(tensor_name + ":prev") != tensor_list_map_.end()) {
       return tensor_list_map_[tensor_name + ":prev"];
@@ -151,8 +147,6 @@ class TensorLoader {
   }
 
   void EmptyCurrentTensor() { tensor_list_map_.clear(); }
-
-  void set_iter_num(uint32_t iter_num) { this->iter_num_ = iter_num; }
 
   bool EnableMemoryControl() { return mem_total_ > 0; }
 

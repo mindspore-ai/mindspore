@@ -792,6 +792,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
         gpu_kernel->PostExecute();
       }
 #ifdef ENABLE_DEBUGGER
+      MS_EXCEPTION_IF_NULL(debugger_);
       // called once per kernel to collect the outputs to the kernel (does a SyncDeviceToHost)
       LoadKernelData(debugger_.get(), kernel, kernel_inputs, kernel_workspaces, kernel_outputs, exec_order, stream_,
                      dump_enabled, kernel == last_kernel);
@@ -802,6 +803,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     if (!UpdateMemorySwapTask(kernel, mock, profiling)) {
 #ifdef ENABLE_DEBUGGER
       if (!mock) {
+        MS_EXCEPTION_IF_NULL(debugger_);
         // invalidate current data collected by the debugger
         debugger_->ClearCurrentData();
       }

@@ -102,20 +102,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void PostExecuteNode(const CNodePtr &kernel, bool last_kernel);
 
-  // suspend the execution after a debug_op
-  void PostDebugOp();
-
   bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
                         const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
                         TypeId device_type, const std::string &addr_format, size_t slot) const;
-
-  bool DebugServicesIsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
-
-  void EmptyTensor();
-
-  void SetTensorLoaderIterNum(uint32_t iter_num);
-
-  uint32_t GetTensorLoaderIterNum() const;
 
   bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev);
 
@@ -128,10 +117,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void SetCurNode(const std::string &cur_name);
 
   std::string run_level() const;
-
-  void SetStepNum(int32_t cur_num_step);
-
-  int32_t step_num() const;
 
   // check if any feature that uses the debugger backend is enabled
   bool DebuggerBackendEnabled() const;
@@ -291,8 +276,6 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
 using DebuggerPtr = std::shared_ptr<Debugger>;
 // get debugger ModelProto
-std::string GetDebuggerFuncGraphProtoString(const FuncGraphPtr &func_graph);
-
 ModelProto GetDebuggerFuncGraphProto(const FuncGraphPtr &func_graph);
 
 // for getting proto DataType from Type of Tensor
