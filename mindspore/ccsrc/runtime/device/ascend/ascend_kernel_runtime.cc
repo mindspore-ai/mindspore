@@ -469,7 +469,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph &graph) {
 #ifdef MEM_REUSE_DEBUG
   if (!EnvConfigParser::GetInstance().GetSysMemreuse()) {
     // Get normal graph ir for memreuse
-    mindspore::memreuse::MemReuseChecker::GetInstance().CheckNormalIR(graph);
+    mindspore::memreuse::MemReuseChecker::GetInstance().CheckNormalIR(&graph);
   }
 #endif
   vector<std::shared_ptr<TaskInfo>> task_info_list;
