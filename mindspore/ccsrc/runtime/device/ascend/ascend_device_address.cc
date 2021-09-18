@@ -95,7 +95,7 @@ void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) 
   }
 }
 
-bool AsyncMemcpy(void *dst, uint64_t dst_size, const void *src, uint64_t src_size) {
+bool DataSync(void *dst, uint64_t dst_size, const void *src, uint64_t src_size) {
   if (dst == src) {
     MS_LOG(INFO) << "dst addr is same with src addr, no need memcpy data.";
     return true;
@@ -414,8 +414,8 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, T
   }
   bool sync_ok = false;
   if (format_ == format && type_id_ == type) {
-    if (!AsyncMemcpy(ptr_, size_, src_ptr, size)) {
-      MS_LOG(ERROR) << "AsyncMemcpy failed!";
+    if (!DataSync(ptr_, size_, src_ptr, size)) {
+      MS_LOG(ERROR) << "DataSync failed!";
       return false;
     }
     sync_ok = true;

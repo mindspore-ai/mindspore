@@ -24,7 +24,7 @@ kernel::KernelBuildInfoPtr KernelInfo::GetMutableSelectKernelBuildInfo() const {
 
 const DeviceAddress *KernelInfo::GetOutputAddr(size_t index) const {
   if (index >= output_address_list_.size()) {
-    MS_LOG(ERROR) << "Index [" << index << "] out of range 0~" << output_address_list_.size() - 1;
+    MS_LOG(ERROR) << "Index [" << index << "] out of range 0~" << (output_address_list_.size() - 1);
     return nullptr;
   }
   return output_address_list_[index].get();

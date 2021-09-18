@@ -1120,6 +1120,5 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
 
   kernel_graph_ptr->set_execution_order(new_execution_order);
 }
-
 }  // namespace device
 }  // namespace mindspore

@@ -38,7 +38,6 @@ HcclTask::HcclTask(const ModelContext &model_context, const std::shared_ptr<Hccl
   priority_ = model_context.priority();
   rt_model_handle_ = model_context.rt_model_handle();
   auto stream_list = model_context.stream_list();
-
   if (stream_list.size() == 1) {
     stream_ = stream_list[0];
   } else if (stream_list.size() > task_info_->stream_id()) {

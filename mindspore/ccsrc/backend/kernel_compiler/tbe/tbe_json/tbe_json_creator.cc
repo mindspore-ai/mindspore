@@ -32,7 +32,6 @@
 #include "backend/kernel_compiler/tbe/tbe_json/tbe_json_utils.h"
 
 namespace mindspore::kernel {
-
 namespace {
 std::unordered_map<std::string, TypeID> type_id_map = {{kVTypeInt, TypeID::kIntID},
                                                        {kVTypeInt64, TypeID::kInt64ID},

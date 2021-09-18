@@ -26,7 +26,6 @@
 #include "utils/json_operation_utils.h"
 
 namespace mindspore::kernel {
-
 bool TbeJsonUtils::GetInputsRealNum(const AnfNodePtr &anf_node, const std::vector<OpIOInfoPtr> &inputs_ptr,
                                     std::vector<size_t> *inputs_num) {
   MS_EXCEPTION_IF_NULL(anf_node);

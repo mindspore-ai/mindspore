@@ -45,6 +45,12 @@ constexpr int kInt32 = 3;
 constexpr int kUint8 = 4;
 constexpr int kUint64 = 10;
 constexpr int kBool = 12;
+constexpr size_t kC0 = 16;
+constexpr size_t kShapeIndex0 = 0;
+constexpr size_t kShapeIndex1 = 1;
+constexpr size_t kShapeIndex2 = 2;
+constexpr size_t kShapeIndex3 = 3;
+constexpr size_t kShapeIndex4 = 4;
 int TypeStrToDstType(const std::string &type_str) {
   std::unordered_map<std::string, int> type_name_type_id_map = {
     {"Float", kFloat}, {"Float32", kFloat}, {"Float16", kFloat16}, {"Int8", kInt8},
@@ -70,11 +76,7 @@ std::unordered_set<std::string> TbeAdapter::input_order_adjusted_ops_ = {kConv2D
                                                                          kMaximumGradOpName,
                                                                          kApplyCenteredRMSPropOpName};
 
-std::map<std::string, FAttrsPass> TbeAdapter::build_json_attr_pass_map_ = {
-  // TODO(xxx): tbeadapter max and min
-  // {"MaximumGrad", TbeAdapter::MaximumGradAttrJsonPass},
-  // {"MinimumGrad", TbeAdapter::MinimumGradAttrJsonPass},
-  {"Cast", TbeAdapter::CastAttrJsonPass}};
+std::map<std::string, FAttrsPass> TbeAdapter::build_json_attr_pass_map_ = {{"Cast", TbeAdapter::CastAttrJsonPass}};
 
 bool TbeAdapter::DynamicInputAdjusted(const std::shared_ptr<AnfNode> &anf_node,
                                       std::vector<std::vector<nlohmann::json>> const &inputs_list,
@@ -318,17 +320,17 @@ void TbeAdapter::FusionDescJsonPass(const AnfNodePtr &node, nlohmann::json *outp
   std::vector<size_t> shape = (*output_desc)["shape"];
   if ((fusion_data_type == kFusionAddN || fusion_data_type == kFusionAdd) && shape.size() == kShape5dDims) {
     std::vector<size_t> spec_shape = {};
-    spec_shape.emplace_back(shape[0]);
-    spec_shape.emplace_back(shape[1]);
-    spec_shape.emplace_back(shape[2] * shape[3]);
-    spec_shape.emplace_back(shape[4]);
+    spec_shape.emplace_back(shape[kShapeIndex0]);
+    spec_shape.emplace_back(shape[kShapeIndex1]);
+    spec_shape.emplace_back(shape[kShapeIndex2] * shape[kShapeIndex3]);
+    spec_shape.emplace_back(shape[kShapeIndex4]);
     (*output_desc)["shape"] = spec_shape;
   } else if (fusion_data_type == kFusionReLUGradV2) {
     std::vector<size_t> spec_shape = {};
-    spec_shape.emplace_back(shape[0]);
-    spec_shape.emplace_back(shape[1]);
-    spec_shape.emplace_back(shape[2] * shape[3]);
-    spec_shape.emplace_back(16);
+    spec_shape.emplace_back(shape[kShapeIndex0]);
+    spec_shape.emplace_back(shape[kShapeIndex1]);
+    spec_shape.emplace_back(shape[kShapeIndex2] * shape[kShapeIndex3]);
+    spec_shape.emplace_back(kC0);
     (*output_desc)["shape"] = spec_shape;
     (*output_desc)["data_type"] = "bool";
   }
@@ -482,7 +484,6 @@ void TbeAdapter::LayerNormAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::jso
     }
   }
 }
-
 }  // namespace tbe
 }  // namespace kernel
 }  // namespace mindspore
