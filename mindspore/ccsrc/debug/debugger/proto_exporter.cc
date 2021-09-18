@@ -568,8 +568,7 @@ void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &s
   // write to pb file
   std::ofstream ofs(realpath.value());
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << realpath.value() << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
     return;
   }
   ofs << graph_proto;

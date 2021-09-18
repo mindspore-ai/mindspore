@@ -216,7 +216,7 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
 
     auto call_node = func_graph->NewCNodeInOrder(inputs2);
     if (reverse_) {
-      constexpr size_t kCallNodePosition = 2;
+      constexpr auto kCallNodePosition = 2;
       (void)inputs.insert(inputs.begin() + kCallNodePosition, call_node);
     } else {
       inputs.emplace_back(call_node);

@@ -66,5 +66,19 @@ inline std::string GetSaveGraphsPathName(const std::string &file_name, const std
   }
   return save_graphs_path + "/rank_" + std::to_string(GetRank()) + "/" + file_name;
 }
+
+inline std::string ErrnoToString(const int error_number) {
+  std::ostringstream ret_info;
+  ret_info << " Errno: " << error_number;
+#if defined(SYSTEM_ENV_POSIX)
+  char err_info[MAX_FILENAME_LENGTH];
+  ret_info << ", ErrInfo: " << strerror_r(error_number, err_info, sizeof(err_info));
+#elif defined(SYSTEM_ENV_WINDOWS)
+  char err_info[MAX_FILENAME_LENGTH];
+  (void)strerror_s(err_info, sizeof(err_info), error_number);
+  ret_info << ", ErrInfo: " << err_info;
+#endif
+  return ret_info.str();
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_COMMON_H_

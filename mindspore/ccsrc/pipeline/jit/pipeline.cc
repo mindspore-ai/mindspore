@@ -216,8 +216,7 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   ChangeFileMode(realpath.value(), S_IRWXU);
   std::ofstream fout(realpath.value());
   if (!fout.is_open()) {
-    MS_LOG(EXCEPTION) << "Open cache file '" << realpath.value() << "' failed!"
-                      << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(EXCEPTION) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
   }
   FuncGraphPtr fg = resource->func_graph();
   mind_ir::ModelProto fg_model = GetBinaryProto(fg, true);

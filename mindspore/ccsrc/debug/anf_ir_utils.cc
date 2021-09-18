@@ -617,8 +617,7 @@ void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPt
 
   std::ofstream ofs(filename);
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << filename << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open file '" << filename << "' failed!" << ErrnoToString(errno);
     return;
   }
 
