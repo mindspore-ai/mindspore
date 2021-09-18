@@ -113,7 +113,7 @@ bool IsSerializableBprop(const std::string &prim_name) {
 }
 
 std::string GetBpropHash() {
-  static std::string bprop_hash;
+  static std::string bprop_hash = std::string();
   if (bprop_hash.empty()) {
     auto bprop_dir = GetBpropDir();
     auto realpath = FileUtils::GetRealPath(common::SafeCStr(bprop_dir));
