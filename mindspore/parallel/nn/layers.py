@@ -95,12 +95,17 @@ def _check_input_shape(input_shape, param_name, func_name, target_len):
 
 
 @constexpr
-def _check_past_none_input_none(use_past, param_name, func_name, input_tensor, default_value=None):
+def _check_past_none_input_none(use_past, param_name, func_name, default_value, is_tensor, is_default):
     """ If the past is True, check whether the inputs is None"""
-    if not use_past and input_tensor is not default_value:
-        raise ValueError(f"{func_name} {param_name} should be {default_value}, if use_past is False.")
-    if use_past and input_tensor is default_value:
-        raise ValueError(f"{func_name} {param_name} should not be {default_value}, if use_past is True.")
+    if not use_past:
+        if is_tensor:
+            raise TypeError(f"{func_name} {param_name} should be {default_value}, if use_pat is False, but found "
+                            f"a tensor")
+        if not is_default:
+            raise TypeError(f"{func_name} {param_name} should be {default_value}, if use_pat is False.")
+    else:
+        if not is_tensor:
+            raise TypeError(f"{func_name} {param_name} should be tensor, if use_pat is True")
     return True
 
 
