@@ -144,13 +144,14 @@ void ArrayToRawMemory(const py::array &array, const AddressPtr &address) {
       MS_LOG(EXCEPTION) << "Failed to get buffer from the input!";
     }
 
-    auto buffer = std::make_unique<char[]>(pybuf.len);
+    auto buffer = std::make_unique<char[]>(LongToSize(pybuf.len));
     if (PyBuffer_ToContiguous(buffer.get(), &pybuf, pybuf.len, 'C')) {
       PyBuffer_Release(&pybuf);
       MS_LOG(EXCEPTION) << "Can't copy numpy.ndarray to a contiguous buffer.";
     }
     PyBuffer_Release(&pybuf);
-    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, buffer.get(), pybuf.len), EOK, "memcpy failed.");
+    CHECK_RET_WITH_EXCEPT(memcpy_s(address->addr, address->size, buffer.get(), LongToSize(pybuf.len)), EOK,
+                          "memcpy failed.");
   }
 }
 

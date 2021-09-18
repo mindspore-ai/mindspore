@@ -62,7 +62,7 @@ class PyFuncCpuKernel : public CPUKernel {
   // The Python object is not acceptable for `Primitive` attribute. So we pass an unique key instead of Python function.
   // ME store the Python function to a dict, and pass the key to backend kernel.
   // The kernel get the Python functhon by the key from the dict when the kernel is first invoked.
-  size_t func_id_;
+  int64_t func_id_;
   py::function py_func_;
   // Input and output specifications.
   PyFuncArgumentInfo input_infos_;
