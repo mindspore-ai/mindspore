@@ -43,7 +43,7 @@ Status Linspace(std::shared_ptr<Tensor> *output, T start, T end, int n) {
   TensorShape out_shape({n});
   std::vector<T> linear_vect(n);
   T interval = (n == 1) ? 0 : ((end - start) / (n - 1));
-  for (int i = 0; i < linear_vect.size(); ++i) {
+  for (auto i = 0; i < linear_vect.size(); ++i) {
     linear_vect[i] = start + i * interval;
   }
   std::shared_ptr<Tensor> out_t;
@@ -158,13 +158,14 @@ template <typename T>
 Status PadComplexTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int length, int dim) {
   TensorShape input_shape = input->shape();
   std::vector<int64_t> pad_shape_vec = {input_shape[0], input_shape[1], input_shape[2], input_shape[3]};
-  pad_shape_vec[dim] += length;
+  pad_shape_vec[dim] += static_cast<int64_t>(length);
   TensorShape input_shape_with_pad(pad_shape_vec);
   std::vector<T> in_vect(input_shape_with_pad[0] * input_shape_with_pad[1] * input_shape_with_pad[2] *
                          input_shape_with_pad[3]);
   auto itr_input = input->begin<T>();
-  int input_cnt = 0;
-  for (int ind = 0; ind < in_vect.size(); ind++) {
+  int64_t input_cnt = 0;
+  /*lint -e{446} ind is modified in the body of the for loop */
+  for (int ind = 0; ind < static_cast<int>(in_vect.size()); ind++) {
     in_vect[ind] = (*itr_input);
     input_cnt = (input_cnt + 1) % (input_shape[2] * input_shape[3]);
     itr_input++;
@@ -210,18 +211,18 @@ Status Phase(const std::shared_ptr<Tensor> &angle_0, const std::shared_ptr<Tenso
   }
 
   // concat phase time 0
-  int ind = 0;
+  int64_t ind = 0;
   auto itr_p0 = phase_time0->begin<T>();
-  phase.insert(phase.begin(), (*itr_p0));
+  (void)phase.insert(phase.begin(), (*itr_p0));
   while (itr_p0 != phase_time0->end<T>()) {
     itr_p0++;
     ind += phase_shape[2];
     phase[ind] = (*itr_p0);
   }
-  phase.erase(phase.begin() + static_cast<int>(angle_0->Size()), phase.end());
+  (void)phase.erase(phase.begin() + static_cast<int>(angle_0->Size()), phase.end());
 
   // cal phase accum
-  for (ind = 0; ind < phase.size(); ind++) {
+  for (ind = 0; ind < static_cast<int64_t>(phase.size()); ind++) {
     if (ind % phase_shape[2] != 0) {
       phase[ind] = phase[ind] + phase[ind - 1];
     }
@@ -267,12 +268,13 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
     return Status::OK();
   }
   // calculate time step and alphas
-  int ind = 0;
   std::vector<dsize_t> time_steps_0, time_steps_1;
   std::vector<T> alphas;
-  for (T val = 0;; ind++) {
-    val = ind * rate;
-    if (val >= input_shape[-2]) break;
+  for (int ind = 0;; ind++) {
+    auto val = ind * rate;
+    if (val >= input_shape[-2]) {
+      break;
+    }
     int val_int = static_cast<int>(val);
     time_steps_0.push_back(val_int);
     time_steps_1.push_back(val_int + 1);
@@ -327,7 +329,7 @@ Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *outpu
   return Status::OK();
 }
 
-Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
+Status TimeStretch(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
                    float n_freq) {
   std::shared_ptr<Tensor> phase_advance;
   switch (input->type().value()) {
@@ -366,7 +368,7 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
   TensorShape input_shape = input->shape();
   // squeeze input
   TensorShape squeeze_shape = TensorShape({-1, input_shape[-2], input_shape[-1]});
-  input->Reshape(squeeze_shape);
+  (void)input->Reshape(squeeze_shape);
 
   int check_dim_ind = (axis == 1) ? -2 : -1;
   CHECK_FAIL_RETURN_UNEXPECTED(0 <= mask_start && mask_start <= input_shape[check_dim_ind],
@@ -413,7 +415,7 @@ Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     }
   }
   // unsqueeze input
-  input->Reshape(input_shape);
+  (void)input->Reshape(input_shape);
   *output = input;
   return Status::OK();
 }
@@ -422,7 +424,7 @@ template <typename T>
 Status Norm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power) {
   // calculate the output dimension
   auto input_size = input->shape().AsVector();
-  int32_t dim_back = input_size.back();
+  int32_t dim_back = static_cast<int32_t>(input_size.back());
   CHECK_FAIL_RETURN_UNEXPECTED(
     dim_back == 2, "ComplexNorm: expect complex input of shape <..., 2>, but got: " + std::to_string(dim_back));
   input_size.pop_back();
@@ -452,11 +454,11 @@ Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
       std::shared_ptr<Tensor> input_tensor;
       RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
 
-      Norm<float>(input_tensor, output, power);
+      RETURN_IF_NOT_OK(Norm<float>(input_tensor, output, power));
     } else if (input->type().value() == DataType::DE_FLOAT32) {
-      Norm<float>(input, output, power);
+      RETURN_IF_NOT_OK(Norm<float>(input, output, power));
     } else if (input->type().value() == DataType::DE_FLOAT64) {
-      Norm<double>(input, output, power);
+      RETURN_IF_NOT_OK(Norm<double>(input, output, power));
     } else {
       RETURN_STATUS_UNEXPECTED("ComplexNorm: input tensor type should be int, float or double, but got: " +
                                input->type().ToString());
@@ -469,7 +471,7 @@ Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
 
 template <typename T>
 float sgn(T val) {
-  return (static_cast<T>(0) < val) - (val < static_cast<T>(0));
+  return static_cast<float>(static_cast<T>(0) < val) - static_cast<float>(val < static_cast<T>(0));
 }
 
 template <typename T>

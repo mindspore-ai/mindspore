@@ -29,7 +29,7 @@ namespace dataset {
 
 // Constructor for DIV2KNode
 DIV2KNode::DIV2KNode(const std::string &dataset_dir, const std::string &usage, const std::string &downgrade,
-                     int32_t scale, bool decode, std::shared_ptr<SamplerObj> sampler,
+                     int32_t scale, bool decode, const std::shared_ptr<SamplerObj> &sampler,
                      std::shared_ptr<DatasetCache> cache)
     : MappableSourceNode(std::move(cache)),
       dataset_dir_(dataset_dir),
@@ -109,7 +109,7 @@ Status DIV2KNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
 
 // Get the shard id of node
 Status DIV2KNode::GetShardId(int32_t *shard_id) {
-  *shard_id = sampler_->ShardId();
+  *shard_id = static_cast<int32_t>(sampler_->ShardId());
   return Status::OK();
 }
 

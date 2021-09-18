@@ -143,7 +143,7 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
     no_of_samples_ = std::min(no_of_samples_, total_no);
     taking = no_of_samples_ - no_of_samples_ % no_of_categories;
   } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
-    CHECK_FAIL_RETURN_UNEXPECTED(indices_.size() <= static_cast<size_t>(total_no),
+    CHECK_FAIL_RETURN_UNEXPECTED(static_cast<int>(indices_.size()) <= total_no,
                                  "Invalid input, indices size: " + std::to_string(indices_.size()) +
                                    " need to be less than  dataset size: " + std::to_string(total_no) + ".");
   } else {  // constructor TopPercent

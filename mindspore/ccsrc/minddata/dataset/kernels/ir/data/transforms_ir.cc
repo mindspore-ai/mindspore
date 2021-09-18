@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <typeinfo>
+#include <utility>
 
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 

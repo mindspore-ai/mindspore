@@ -30,7 +30,7 @@ class DIV2KNode : public MappableSourceNode {
  public:
   /// \brief Constructor.
   DIV2KNode(const std::string &dataset_dir, const std::string &usage, const std::string &downgrade, int32_t scale,
-            bool decode, std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetCache> cache);
+            bool decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache);
 
   /// \brief Destructor.
   ~DIV2KNode() = default;
@@ -99,8 +99,8 @@ class DIV2KNode : public MappableSourceNode {
  private:
   std::string dataset_dir_;
   std::string usage_;
-  int32_t scale_;
   std::string downgrade_;
+  int32_t scale_;
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
 };

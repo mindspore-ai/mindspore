@@ -277,7 +277,7 @@ Status LFilter(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
 /// \param phase_advance: Expected phase advance in each bin.
 /// \param output: Tensor after stretch in time domain.
 /// \return Status code.
-Status TimeStretch(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
+Status TimeStretch(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rate, float hop_length,
                    float n_freq);
 
 /// \brief Apply a mask along axis.

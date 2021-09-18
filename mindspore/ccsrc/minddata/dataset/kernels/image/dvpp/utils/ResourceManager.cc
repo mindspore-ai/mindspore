@@ -91,7 +91,7 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
     MS_LOG(ERROR) << "Failed to init acl.";
     return APP_ERR_COMM_FAILURE;
   }
-  std::copy(resourceInfo.deviceIds.begin(), resourceInfo.deviceIds.end(), std::back_inserter(deviceIds_));
+  (void)std::copy(resourceInfo.deviceIds.begin(), resourceInfo.deviceIds.end(), std::back_inserter(deviceIds_));
   MS_LOG(INFO) << "Initialized acl successfully.";
   // Open device and create context for each chip, note: it create one context for each chip
   for (size_t i = 0; i < deviceIds_.size(); i++) {
