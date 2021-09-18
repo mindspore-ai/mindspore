@@ -48,22 +48,28 @@ void CheckAttr(const PrimitivePtr &primitive, const std::string &shape_attr_name
   ValuePtrList attr_shapes;
   try {
     auto attr = primitive->GetAttr(shape_attr_name);
+    if (attr->cast<ValueTuplePtr>() == nullptr) {
+      MS_EXCEPTION(TypeError);
+    }
     attr_shapes = GetValue<ValuePtrList>(attr);
   } catch (const std::exception &) {
-    MS_EXCEPTION(TypeError) << "Attr " << shape_attr_name << " should be a tuple(list, list, ...).";
+    MS_EXCEPTION(TypeError) << "Attr " << shape_attr_name << " must be a tuple(list, list, ...).";
   }
   if (!attr_shapes.empty()) {
     auto ele = attr_shapes[0]->cast<ValueSequeuePtr>();
     if (ele == nullptr) {
-      MS_EXCEPTION(TypeError) << "Attr " << shape_attr_name << " must be a tuple.";
+      MS_EXCEPTION(TypeError) << "Attr " << shape_attr_name << " must be a tuple(list, list, ...).";
     }
   }
   std::vector<int64_t> attr_rank_ids;
   try {
     auto attr = primitive->GetAttr(rank_ids_attr_name);
+    if (attr->cast<ValueTuplePtr>() != nullptr) {
+      MS_EXCEPTION(TypeError);
+    }
     attr_rank_ids = GetValue<std::vector<int64_t>>(attr);
   } catch (const std::exception &) {
-    MS_EXCEPTION(TypeError) << "Attr " << rank_ids_attr_name << " should be a list[int, int, ...].";
+    MS_EXCEPTION(TypeError) << "Attr " << rank_ids_attr_name << " must be a list[int, int, ...].";
   }
   if (attr_shapes.size() != attr_rank_ids.size()) {
     MS_EXCEPTION(ValueError) << "Invalid " << primitive->name() << " attr " << shape_attr_name << " size "
