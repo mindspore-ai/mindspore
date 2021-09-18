@@ -356,7 +356,8 @@ bool LessBatchNormalization::MatchStructureNode(const CNodePtr &cnode, const int
   }
   const auto &use_pattern = std::get<1>(patternTuple);
   int32_t use_index = index % static_cast<int32_t>(use_pattern.size());
-  if (!IsPrimitiveCNode(cnode, use_pattern[use_index]) && use_pattern[use_index] != prim::kPrimTupleGetItem) {
+  if (!IsPrimitiveCNode(cnode, use_pattern[IntToSize(use_index)]) &&
+      use_pattern[IntToSize(use_index)] != prim::kPrimTupleGetItem) {
     return false;
   }
   return true;
@@ -411,9 +412,9 @@ AnfNodePtr LessBatchNormalization::operator()(const OptimizerPtr &optimizer, con
     Reset();
     const auto &current_pattern = kNeedMatchPattern.at(match_pattern_);
     size_t sum_match_node = 0;
-    (void)std::for_each(current_pattern.begin(), current_pattern.end(), [&](const kStructureTuple &t) {
+    (void)std::for_each(current_pattern.begin(), current_pattern.end(), [&, this](const kStructureTuple &t) {
       sum_match_node += std::get<0>(t);
-      (void)total_match_node_.emplace_back(sum_match_node);
+      (void)this->total_match_node_.emplace_back(sum_match_node);
     });
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr || cnode->inputs().empty()) {

@@ -359,8 +359,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
   ChangeFileMode(real_filepath.value(), S_IWUSR);
   std::ofstream ofs(real_filepath.value());
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << real_filepath.value() << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open file '" << real_filepath.value() << "' failed!" << ErrnoToString(errno);
     return false;
   }
 

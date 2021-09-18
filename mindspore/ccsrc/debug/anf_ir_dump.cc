@@ -608,8 +608,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   std::ofstream fout(realpath.value());
   std::ostringstream buffer;
   if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
     return;
   }
 
@@ -651,8 +650,7 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
   std::ofstream fout(realpath.value());
   std::ostringstream buffer;
   if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
     return;
   }
 

@@ -583,7 +583,7 @@ void ConvertSwitchReplacement::TransformSwitchBranchReplace(const AnfNodePtr &no
   auto cloned_g1 = InlineClone(trans_g1, fg, params);
   auto cloned_g2 = InlineClone(trans_g2, fg, params);
   auto new_node = internal::TransformMergeBranches({cond, cloned_g1, cloned_g2}, {true_output, false_output}, fg);
-  fg->manager()->Replace(node, new_node);
+  (void)fg->manager()->Replace(node, new_node);
 }
 }  // namespace irpass
 }  // namespace opt

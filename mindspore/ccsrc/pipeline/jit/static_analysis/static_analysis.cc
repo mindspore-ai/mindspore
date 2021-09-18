@@ -573,9 +573,9 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
       }
     }
   }
-  forward_count_++;
+  (void)forward_count_++;
   auto res = ObtainEvalResultWithCache(new_conf);
-  forward_count_--;
+  (void)forward_count_--;
   return res;
 }
 

@@ -344,8 +344,7 @@ bool Common::SaveStringToFile(const std::string filename, const std::string stri
   ofs.open(real_path.value());
 
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!"
-                  << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!" << ErrnoToString(errno);
     return false;
   }
   ofs << string_info << std::endl;

@@ -431,7 +431,7 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector
 // Perform a conditional jump using switch operation.
 // The first CNode select graph with condition, and than execute this graph
 void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr &true_block,
-                                    const FunctionBlockPtr &false_block, bool unroll_loop) {
+                                    const FunctionBlockPtr &false_block, bool) {
   MS_EXCEPTION_IF_NULL(true_block);
   MS_EXCEPTION_IF_NULL(false_block);
   if (func_graph_->get_return() != nullptr) {

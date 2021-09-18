@@ -224,8 +224,7 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   ChangeFileMode(file_path_str, S_IWUSR);
   std::ofstream fd(file_path_str, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!fd.is_open()) {
-    MS_LOG(EXCEPTION) << "Open file " << file_path_str << " failed."
-                      << " Errno:" << errno << " ErrInfo:" << strerror(errno);
+    MS_LOG(EXCEPTION) << "Open file " << file_path_str << " failed." << ErrnoToString(errno);
   }
   std::string npy_header = GenerateNpyHeader(shape, type);
   if (!npy_header.empty()) {
