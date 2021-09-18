@@ -367,6 +367,7 @@ Status DataSchema::LoadSchemaFile(const std::string &schema_file_path,
     } else {
       Status rc = this->ColumnOrderLoad(column_tree, columns_to_load);
       if (rc.IsError()) {
+        rc.SetErrDescription(rc.GetErrDescription() + " file: " + schema_file_path);
         in.close();
         return rc;
       }
@@ -395,7 +396,11 @@ Status DataSchema::LoadSchemaString(const std::string &schema_json_string,
       // layout decides
       RETURN_IF_NOT_OK(this->AnyOrderLoad(column_tree));
     } else {
-      RETURN_IF_NOT_OK(this->ColumnOrderLoad(column_tree, columns_to_load));
+      Status rc = this->ColumnOrderLoad(column_tree, columns_to_load);
+      if (rc.IsError()) {
+        rc.SetErrDescription(rc.GetErrDescription() + " file content: " + schema_json_string);
+        return rc;
+      }
     }
   } catch (const std::exception &err) {
     // Catch any exception and convert to Status return code

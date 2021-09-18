@@ -2596,7 +2596,6 @@ class _PythonCallable:
 
 def _mp_pool_exit_preprocess():
     if check_iterator_cleanup() is False:
-        logger.info("Execution preprocessing process before map exit.")
         # Set the iterator_cleanup flag to True before exiting, and wait 3s for all apply_async
         # applied to the multiprocessing task to prevent multiprocessing from hang when exiting
         _set_iterator_cleanup()
