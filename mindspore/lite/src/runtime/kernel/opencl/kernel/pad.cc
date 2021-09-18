@@ -35,29 +35,29 @@ int PadOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<PadParameter *>(op_parameter_);
   MS_ASSERT(param);
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2) {
-    MS_LOG(ERROR) << "Pad only support 1 input Tensor.";
+    MS_LOG(WARNING) << "Pad only support 1 input Tensor.";
     return RET_ERROR;
   }
   if (out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "Pad only support 1 output Tensor.";
+    MS_LOG(WARNING) << "Pad only support 1 output Tensor.";
     return RET_ERROR;
   }
   auto in_ndim = in_tensors_.front()->shape().size();
   if (in_ndim < DIMENSION_1D || in_ndim > DIMENSION_4D) {
-    MS_LOG(ERROR) << "Pad only supports 1D-4D input Tensor but get " << in_ndim << "D.";
+    MS_LOG(WARNING) << "Pad only supports 1D-4D input Tensor but get " << in_ndim << "D.";
     return RET_ERROR;
   }
   auto out_ndim = in_tensors_.front()->shape().size();
   if (out_ndim < DIMENSION_1D || out_ndim > DIMENSION_4D) {
-    MS_LOG(ERROR) << "Pad only supports 1D-4D output Tensor but get " << out_ndim << "D.";
+    MS_LOG(WARNING) << "Pad only supports 1D-4D output Tensor but get " << out_ndim << "D.";
     return RET_ERROR;
   }
   if (in_ndim != out_ndim) {
-    MS_LOG(ERROR) << "Pad: input ndim != output ndim.";
+    MS_LOG(WARNING) << "Pad: input ndim != output ndim.";
     return RET_ERROR;
   }
   if (param->pad_mode_ != PaddingMode_CONSTANT) {
-    MS_LOG(ERROR) << "Pad only support CONSTANT MODE.";
+    MS_LOG(WARNING) << "Pad only support CONSTANT MODE.";
     return RET_ERROR;
   }
   // Compatibility code
@@ -66,7 +66,7 @@ int PadOpenCLKernel::CheckSpecs() {
   }
   auto pad_shape = in_tensors_.at(1)->shape();
   if (pad_shape.size() != DIMENSION_2D || pad_shape[0] != in_ndim || pad_shape[1] != DIMENSION_2D) {
-    MS_LOG(ERROR) << "pad tensor shape invalid.";
+    MS_LOG(WARNING) << "pad tensor shape invalid.";
     return RET_ERROR;
   }
   return RET_OK;

@@ -33,17 +33,17 @@ namespace mindspore::kernel {
 int PowerOpenCLKernel::CheckSpecs() {
   if ((in_tensors_.size() != INPUT_TENSOR_SIZE_1 && in_tensors_.size() != INPUT_TENSOR_SIZE_2) ||
       out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << "out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << "out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_2 &&
       in_tensors_.at(0)->shape().size() != in_tensors_.at(1)->shape().size()) {
-    MS_LOG(ERROR) << "Unsupported input->shape.size " << in_tensors_.at(0)->shape().size()
-                  << "!=" << in_tensors_.at(1)->shape().size();
+    MS_LOG(WARNING) << "Unsupported input->shape.size " << in_tensors_.at(0)->shape().size()
+                    << "!=" << in_tensors_.at(1)->shape().size();
     return RET_ERROR;
   }
   if (in_tensors_.at(0)->shape().size() > DIMENSION_4D) {
-    MS_LOG(ERROR) << "in_tensors_->shape.size must be less than 4";
+    MS_LOG(WARNING) << "in_tensors_->shape.size must be less than 4";
     return RET_ERROR;
   }
   return RET_OK;

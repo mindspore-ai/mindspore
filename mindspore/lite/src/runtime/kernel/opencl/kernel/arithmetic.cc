@@ -41,13 +41,13 @@ namespace mindspore::kernel {
 int ArithmeticOpenCLKernel::CheckSpecs() {
   for (auto &tensor : in_tensors_) {
     if (tensor->data_type() != kNumberTypeFloat32 && tensor->data_type() != kNumberTypeFloat16) {
-      MS_LOG(ERROR) << "ArithmeticOpenCLKernel only support fp32/fp16 input";
+      MS_LOG(WARNING) << "ArithmeticOpenCLKernel only support fp32/fp16 input";
       return RET_ERROR;
     }
   }
   for (auto &tensor : out_tensors_) {
     if (tensor->data_type() != kNumberTypeFloat32 && tensor->data_type() != kNumberTypeFloat16) {
-      MS_LOG(ERROR) << "ArithmeticOpenCLKernel only support fp32/fp16 output";
+      MS_LOG(WARNING) << "ArithmeticOpenCLKernel only support fp32/fp16 output";
       return RET_ERROR;
     }
   }

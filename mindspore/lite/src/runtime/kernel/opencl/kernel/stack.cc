@@ -72,32 +72,32 @@ int StackOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<StackParameter *>(this->op_parameter_);
   axis_ = param->axis_;
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 && out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << " only support input size = 2 and output size = 1";
+    MS_LOG(WARNING) << " only support input size = 2 and output size = 1";
     return RET_ERROR;
   }
   for (auto &tensor : in_tensors_) {
     if (tensor->data_type() != kNumberTypeFloat32 && tensor->data_type() != kNumberTypeFloat16) {
-      MS_LOG(ERROR) << " only support fp32/fp16 input";
+      MS_LOG(WARNING) << " only support fp32/fp16 input";
       return RET_ERROR;
     }
   }
   for (auto &tensor : out_tensors_) {
     if (tensor->data_type() != kNumberTypeFloat32 && tensor->data_type() != kNumberTypeFloat16) {
-      MS_LOG(ERROR) << " only support fp32/fp16 output";
+      MS_LOG(WARNING) << " only support fp32/fp16 output";
       return RET_ERROR;
     }
   }
   if (in_tensors_[0]->shape().size() > DIMENSION_4D || in_tensors_[0]->shape().size() <= 0) {
-    MS_LOG(ERROR) << " only support 0<dim<=4";
+    MS_LOG(WARNING) << " only support 0<dim<=4";
     return RET_ERROR;
   }
   axis_ = axis_ < 0 ? axis_ + in_tensors_[0]->shape().size() : axis_;
   if (axis_ > 3) {
-    MS_LOG(ERROR) << " only support  axis <= 3 ";
+    MS_LOG(WARNING) << " only support  axis <= 3 ";
     return RET_ERROR;
   }
   if (axis_ > in_tensors_[0]->shape().size()) {
-    MS_LOG(ERROR) << " stack  axis must been <= in_tensors_[0]->shape().size() ";
+    MS_LOG(WARNING) << " stack  axis must been <= in_tensors_[0]->shape().size() ";
     return RET_ERROR;
   }
   return RET_OK;

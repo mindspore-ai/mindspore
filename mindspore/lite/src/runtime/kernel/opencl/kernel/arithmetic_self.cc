@@ -29,15 +29,15 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 int ArithmeticSelfOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   if (!IsArithmeticSelf(type())) {
-    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(type());
+    MS_LOG(WARNING) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(type());
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape().size() != DIMENSION_4D && in_tensors_[0]->shape().size() != DIMENSION_2D) {
-    MS_LOG(ERROR) << " only support dim = 4 or 2 but your dim = " << in_tensors_[0]->shape().size();
+    MS_LOG(WARNING) << " only support dim = 4 or 2 but your dim = " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   return RET_OK;

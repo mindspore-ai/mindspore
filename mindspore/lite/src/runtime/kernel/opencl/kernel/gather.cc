@@ -32,33 +32,33 @@ using mindspore::schema::PrimitiveType_Gather;
 namespace mindspore::kernel {
 int GatherOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_3) {
-    MS_LOG(ERROR) << "GatherOpenCLKernel only supports 3 input Tensor but get " << in_tensors_.size();
+    MS_LOG(WARNING) << "GatherOpenCLKernel only supports 3 input Tensor but get " << in_tensors_.size();
     return RET_ERROR;
   }
   if (out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "GatherOpenCLKernel only supports 1 output Tensor but get " << out_tensors_.size();
+    MS_LOG(WARNING) << "GatherOpenCLKernel only supports 1 output Tensor but get " << out_tensors_.size();
     return RET_ERROR;
   }
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (!in_tensors_.at(1)->IsConst() && enable_fp16_) {
-    MS_LOG(ERROR) << "GatherOpenCLKernel Unsupportted intensor1 = tensor and datatype = fp16  ";
+    MS_LOG(WARNING) << "GatherOpenCLKernel Unsupportted intensor1 = tensor and datatype = fp16  ";
     return RET_ERROR;
   }
   int input_ndim = in_tensors_.front()->shape().size();
   if (input_ndim < 0 || input_ndim > DIMENSION_4D) {
-    MS_LOG(ERROR) << "GatherOpenCLKernel only supports 1-4D input Tensor but get " << input_ndim << "D.";
+    MS_LOG(WARNING) << "GatherOpenCLKernel only supports 1-4D input Tensor but get " << input_ndim << "D.";
     return RET_ERROR;
   }
   int indices_ndim = in_tensors_.at(1)->shape().size();
   if (indices_ndim > DIMENSION_1D) {
-    MS_LOG(ERROR) << "GatherOpenCLKernel only supports 1D indices Tensor but get " << indices_ndim << "D.";
+    MS_LOG(WARNING) << "GatherOpenCLKernel only supports 1D indices Tensor but get " << indices_ndim << "D.";
     return RET_ERROR;
   }
 
   TypeId data_type = in_tensors_.at(1)->data_type();
   if (data_type != kNumberTypeInt32 && data_type != kNumberTypeInt64 && data_type != kNumberTypeFloat32 &&
       data_type != kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "GatherOpenCLKernel only supports Int32/Int64/Float32/Float16 indices Tensor.";
+    MS_LOG(WARNING) << "GatherOpenCLKernel only supports Int32/Int64/Float32/Float16 indices Tensor.";
     return RET_ERROR;
   }
 
@@ -67,14 +67,14 @@ int GatherOpenCLKernel::CheckSpecs() {
   }
   axis_ = *reinterpret_cast<int32_t *>(in_tensors_.at(2)->data());
   if (in_tensors_.at(2)->data() == nullptr) {
-    MS_LOG(ERROR) << "GatherOpenCLKernel need Axis.";
+    MS_LOG(WARNING) << "GatherOpenCLKernel need Axis.";
     return RET_ERROR;
   }
   if (axis_ < 0) {
     axis_ += input_ndim;
   }
   if (axis_ < 0 || axis_ >= input_ndim) {
-    MS_LOG(ERROR) << "axis is invalid: axis=" << axis_ << ".";
+    MS_LOG(WARNING) << "axis is invalid: axis=" << axis_ << ".";
     return RET_ERROR;
   } else {
     return RET_OK;
