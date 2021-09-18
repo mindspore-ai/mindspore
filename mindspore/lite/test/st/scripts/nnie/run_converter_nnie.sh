@@ -18,7 +18,8 @@ function Run_Converter() {
 
     # generate converter_lite config file
     ms_config_file=${x86_path}/converter_for_nnie.cfg
-    echo 'plugin_path='${x86_path}'/mindspore-lite-'${version}'-linux-x64/tools/converter/providers/Hi3516D/libmslite_nnie_converter.so' > ${ms_config_file}
+    echo "[registry]" > ${ms_config_file}
+    echo 'plugin_path='${x86_path}'/mindspore-lite-'${version}'-linux-x64/tools/converter/providers/Hi3516D/libmslite_nnie_converter.so' >> ${ms_config_file}
     echo -e 'disable_fusion=off\n' >> ${ms_config_file}
 
     echo ' ' > ${run_converter_log_file}
