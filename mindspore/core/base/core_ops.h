@@ -34,6 +34,8 @@ inline const std::unordered_map<std::string, ValuePtr> kSideEffectPropagate = {
 
 constexpr auto kGetNext = "GetNext";
 constexpr auto kGather = "Gather";
+constexpr auto kCdist = "Cdist";
+constexpr auto kCdistGrad = "CdistGrad";
 // Arithmetic
 constexpr auto kScalarAdd = "ScalarAdd";
 constexpr auto kScalarSub = "ScalarSub";
@@ -513,6 +515,8 @@ inline const PrimitivePtr kPrimAtanGrad = std::make_shared<Primitive>("AtanGrad"
 inline const PrimitivePtr kPrimAsinhGrad = std::make_shared<Primitive>("AsinhGrad");
 inline const PrimitivePtr kPrimAcoshGrad = std::make_shared<Primitive>("AcoshGrad");
 inline const PrimitivePtr kPrimFloorMod = std::make_shared<Primitive>("FloorMod");
+inline const PrimitivePtr kPrimCdist = std::make_shared<Primitive>(kCdist);
+inline const PrimitivePtr kPrimCdistGrad = std::make_shared<Primitive>(kCdistGrad);
 inline const PrimitivePtr kPrimWhere = std::make_shared<Primitive>("Where");
 inline const PrimitivePtr kPrimIndexAdd = std::make_shared<Primitive>("IndexAdd");
 inline const PrimitivePtr kPrimIdentityMath = std::make_shared<Primitive>("Identity", kSideEffectPropagate);

@@ -400,6 +400,8 @@ from .selu import _selu_tbe
 from .centralization import _centralization_tbe
 from .exp_ds import _exp_ds_tbe
 from .log_ds import _log_ds_tbe
+from .cdist import _cdist_tbe
+from .cdist_grad import _cdist_grad_tbe
 from .neg_ds import _neg_ds_tbe
 from .not_equal_ds import _not_ds_equal_tbe
 from .reciprocal_ds import _reciprocal_ds_tbe
