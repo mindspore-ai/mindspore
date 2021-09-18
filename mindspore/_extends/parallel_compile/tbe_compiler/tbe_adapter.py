@@ -56,7 +56,7 @@ def _tune_init(job: TbeJob):
     if op_bank_update:
         sync_op_tune_params("tbe.common.tiling.tiling_api", "reset_repository", False, "")
 
-    def tune_init_impl():
+    if need_ga or need_rl or offline_tune:
         try:
             import auto_tune.auto_tune_main as at_atm
             from schedule_search.rl_online_tune import rl_tune_init  # pylint: disable=unused-import
@@ -76,11 +76,6 @@ def _tune_init(job: TbeJob):
                   "export PYTHONPATH=${fwk_path}/python/site-packages/auto_tune.egg/auto_tune:$PYTHONPATH" \
                   "export PYTHONPATH=${fwk_path}/python/site-packages/schedule_search.egg:$PYTHONPATH"
             job.error(msg)
-            return False
-        finally:
-            return True
-    if need_ga or need_rl or offline_tune:
-        if not tune_init_impl():
             return False
     else:
         return True
