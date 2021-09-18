@@ -24,8 +24,7 @@
 #include "nlohmann/json.hpp"
 #include "utils/ms_context.h"
 
-namespace mindspore {
-namespace context {
+namespace mindspore::graphkernel {
 namespace {
 // Split string to tokens
 std::vector<std::string> GetTokens(const std::string &str, const std::string &delim) {
@@ -150,6 +149,15 @@ class FlagRegister {
 };
 }  // namespace
 
+std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  // Use the environment variable in priority
+  auto env_flags = std::getenv("MS_GRAPH_KERNEL_FLAGS");
+  std::string flags = env_flags ? std::string(env_flags) : context->get_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS);
+  return std::make_pair(flags, context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL));
+}
+
 void GraphKernelFlags::Refresh() {
   auto flag_map = ParseFlags(flags_cache_);
   RegisterFlags(&flag_map);
@@ -239,5 +247,4 @@ std::string GraphKernelFlags::DumpAllFlags() const {
 
   return json.dump();
 }
-}  // namespace context
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

@@ -23,6 +23,7 @@
 #include <tuple>
 #include <algorithm>
 
+#include "utils/ms_context.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -40,8 +41,6 @@
 
 namespace mindspore::graphkernel {
 namespace {
-using context::OpLevel_0;
-using context::OpLevel_1;
 constexpr size_t kAssignInputIdx = 1;
 constexpr size_t kLambOptimizerInputIdx = 12;
 constexpr size_t kLambWeightInputIdx = 4;
@@ -95,7 +94,7 @@ std::vector<PrimitivePtr> GetExpandOps() {
     {kGPUDevice, OpLevel_0, prim::kPrimOnesLike},
     {kGPUDevice, OpLevel_0, prim::kPrimStandardNormal},
   };
-  const auto &flags = context::GraphKernelFlags::GetInstance();
+  const auto &flags = GraphKernelFlags::GetInstance();
   std::vector<PrimitivePtr> expand_ops = GetValidOps(expand_ops_with_level, flags.fusion_ops_level);
   OpListFilter(&expand_ops, flags.enable_expand_ops_only, flags.enable_expand_ops, flags.disable_expand_ops);
   return expand_ops;

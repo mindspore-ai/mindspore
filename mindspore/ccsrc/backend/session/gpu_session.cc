@@ -165,7 +165,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayFusion>());
-  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+  if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     pm->AddPass(std::make_shared<opt::CastAllFusion>("cast_all"));
   }
   pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));
@@ -229,7 +229,7 @@ void GPUSession::RunOpHardwareOptimize(const std::shared_ptr<KernelGraph> &kerne
 }
 
 void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
-  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+  if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
   graphkernel::GraphKernelOptimize(kernel_graph);
@@ -607,7 +607,7 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
           auto new_address = std::make_shared<device::gpu::GPUDeviceAddress>(nullptr, address->GetSize());
           AnfAlgo::SetOutputAddr(new_address, output_index, node.get());
           (*new_to_old_device_address)[new_address] = address;
-          if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+          if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
             auto runtime_instance =
               device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
             MS_EXCEPTION_IF_NULL(runtime_instance);

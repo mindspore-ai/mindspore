@@ -468,7 +468,7 @@ void MemReuseUtil::SetAllInfo(const KernelGraph *graph) {
   MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph);
 #endif
 
-  enable_visit_kernel_cache_ = context::GraphKernelFlags::GetInstance().IsEnableGraphKernel();
+  enable_visit_kernel_cache_ = graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel();
 }
 
 uint8_t *MemReuseUtil::GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const {

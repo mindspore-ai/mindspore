@@ -591,7 +591,7 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
 }
 
 std::string AkgKernelBuilder::CollectBuildAttrs() {
-  auto &flags = context::GraphKernelFlags::GetInstance();
+  auto &flags = graphkernel::GraphKernelFlags::GetInstance();
   nlohmann::json attrs;
   if (flags.online_tuning > 0) {
     attrs["online_tuning"] = flags.online_tuning;

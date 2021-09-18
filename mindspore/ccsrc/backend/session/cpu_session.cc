@@ -107,7 +107,7 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
 
 void CPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
 #ifdef ENABLE_AKG
-  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+  if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
   graphkernel::GraphKernelOptimize(kernel_graph);

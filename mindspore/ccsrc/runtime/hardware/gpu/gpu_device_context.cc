@@ -216,7 +216,7 @@ void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   opt::CommonFinalOptimization(graph);
 
   // Graph kernel fusion optimization
-  if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+  if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     graphkernel::GraphKernelOptimize(graph);
     graph->SetExecOrderByDefault();
   }
@@ -278,7 +278,7 @@ void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayFusion>());
-  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+  if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     pm->AddPass(std::make_shared<opt::CastAllFusion>("cast_all"));
   }
   pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));

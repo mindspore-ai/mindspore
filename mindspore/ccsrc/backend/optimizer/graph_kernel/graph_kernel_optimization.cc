@@ -51,10 +51,6 @@
 #include "backend/optimizer/graph_kernel/rewrite_output_shape.h"
 
 namespace mindspore::graphkernel {
-using context::OptLevel_1;
-using context::OptLevel_2;
-using context::OptLevel_3;
-using context::OptLevel_MAX;
 using opt::CommonSubexpressionElimination;
 using opt::GetitemTuple;
 using opt::GraphOptimizer;
@@ -127,7 +123,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   pm->AddPass(std::make_shared<GraphKernelCSE>(), OptLevel_2);
 
   // Eliminate unnecessary transform ops
-  auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_trans_op_optimize);
+  auto level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_trans_op_optimize);
   pm->AddPass(std::make_shared<TransformOpOptimizer>(), level, is_gpu);
   return pm;
 }
@@ -161,11 +157,11 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   pm->AddPass(std::make_shared<AtomicCleanInsertter>(), OptLevel_2, is_gpu || is_ascend);
 
   // Enable atomic add for stitch nodes.
-  auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_stitch_fusion);
+  auto level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_stitch_fusion);
   pm->AddPass(std::make_shared<StitchAtomicCleanInsertter>(), level, is_gpu);
 
   // Enable low precision
-  auto level_low_precision = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_low_precision);
+  auto level_low_precision = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_low_precision);
   pm->AddPass(std::make_shared<DecreaseTransferPrecision>(), level_low_precision);
   pm->AddPass(std::make_shared<DecreaseComputePrecision>(), level_low_precision, is_ascend);
 
@@ -179,7 +175,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
 PassManagerPtr GraphKernelOptimizer::Combine() const {
   auto pm = std::make_shared<GraphKernelPassManager>(5, "combine");
   // Enable parallel fusion for gpu device
-  auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_parallel_fusion);
+  auto level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_parallel_fusion);
   pm->AddPass(std::make_shared<ParallelOpFusion>(kGPUDevice, ParallelConfig(7)), level, is_gpu);
 
   return pm;

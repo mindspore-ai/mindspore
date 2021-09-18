@@ -27,6 +27,7 @@
 
 #include "base/core_ops.h"
 #include "ir/graph_utils.h"
+#include "utils/ms_context.h"
 #include "utils/file_utils.h"
 #include "utils/context/graph_kernel_flags.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -36,8 +37,6 @@
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
 
 namespace mindspore::graphkernel {
-using context::OpLevel_0;
-using context::OpLevel_1;
 std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
   std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> clusterable_ops_with_level = {
     // all target
@@ -104,7 +103,7 @@ std::vector<PrimitivePtr> GraphKernelCluster::GetClusterableOpList() {
     {kGPUDevice, OpLevel_0, prim::kPrimStridedSlice},
     {kGPUDevice, OpLevel_0, prim::kPrimUserDefined},
   };
-  const auto &flags = context::GraphKernelFlags::GetInstance();
+  const auto &flags = GraphKernelFlags::GetInstance();
   std::vector<PrimitivePtr> clusterable_ops = GetValidOps(clusterable_ops_with_level, flags.fusion_ops_level);
   OpListFilter(&clusterable_ops, flags.enable_cluster_ops_only, flags.enable_cluster_ops, flags.disable_cluster_ops);
   return clusterable_ops;
@@ -433,7 +432,7 @@ void GraphKernelCluster::CreateFuncGraph(const FuncGraphPtr &func_graph, const s
   std::tie(new_node, std::ignore) = FuseNodesToSubGraph(old_nodes, func_graph, "fusion");
   std::shared_ptr<Pass> eliminate_getitem_pass = std::make_shared<opt::GetitemTuple>();
   (void)eliminate_getitem_pass->Run(AnfAlgo::GetCNodeFuncGraphPtr(new_node));
-  if (context::GraphKernelFlags::GetInstance().dump_as_text) {
+  if (GraphKernelFlags::GetInstance().dump_as_text) {
     DumpClusterInfo(old_nodes, new_node);
   }
 }
@@ -512,7 +511,7 @@ bool GraphKernelCluster::Run(const FuncGraphPtr &func_graph) {
   Init(func_graph);
   bool changed = Process(func_graph);
   if (changed) {
-    if (context::GraphKernelFlags::GetInstance().dump_as_text) {
+    if (GraphKernelFlags::GetInstance().dump_as_text) {
       DumpToFile();
     }
     mng->RemoveRoots();
