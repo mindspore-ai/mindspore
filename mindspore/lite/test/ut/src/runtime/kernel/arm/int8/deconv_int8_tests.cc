@@ -384,6 +384,7 @@ TEST_F(TestDeconvInt8, DeConvInt8Test1) {
   auto deconv_param = new ConvParameter();
   auto *ctx = new lite::InnerContext;
   deconv_param->op_parameter_.thread_num_ = 1;
+  deconv_param->op_parameter_.is_zero_shape_ = false;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   int8_t *correct;
   int total_size = DeConvInt8TestInit1(&inputs_, &outputs_, deconv_param, &correct);

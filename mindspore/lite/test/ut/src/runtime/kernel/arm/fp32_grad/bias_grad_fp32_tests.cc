@@ -32,6 +32,7 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   // prepare stage
   ArithmeticParameter *bias_param = static_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   ASSERT_NE(bias_param, nullptr);
+  bias_param->op_parameter_.is_zero_shape_ = false;
 
   size_t input_size;
   std::string input_path = "./operators/biasgradfp32_1_dy_10_28_28_7.bin";
@@ -85,6 +86,7 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
 TEST_F(TestBiasGradFp32, BiasGrad2DFp32) {
   // prepare stage
   ArithmeticParameter *bias_param = static_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+  bias_param->op_parameter_.is_zero_shape_ = false;
   ASSERT_NE(bias_param, nullptr);
 
   size_t input_size;

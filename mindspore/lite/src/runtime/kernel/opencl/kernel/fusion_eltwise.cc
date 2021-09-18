@@ -119,6 +119,8 @@ FusionEltwiseParameter *CreateParam(LiteKernel *node,
     MS_LOG(ERROR) << "Parameter is nullptr.";
     return nullptr;
   }
+
+  param->op_parameter_.is_zero_shape_ = false;
   return param;
 }
 
