@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/lstm_grad_cpu_kernel.h"
 #include <cstring>
 #include <string>
@@ -22,8 +23,17 @@
 
 namespace mindspore {
 namespace kernel {
-const int kMaxLSTMLayer = 100;
-const int kInputWorkSpaceIndex = 10;
+namespace {
+constexpr size_t kLstmGradInputsNum = 11;
+constexpr size_t kLstmGradOutputsNum = 4;
+constexpr int kMaxLSTMLayer = 100;
+constexpr int kInputWorkSpaceIndex = 10;
+
+using tag = dnnl::memory::format_tag;
+using dim = dnnl::memory::dims;
+using dt = dnnl::memory::data_type;
+}  // namespace
+
 void LSTMGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   input_size_list_[kInputWorkSpaceIndex] = reserve_size_;
@@ -31,8 +41,7 @@ void LSTMGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 
 void LSTMGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  using tag = dnnl::memory::format_tag;
-  using dim = dnnl::memory::dims;
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   CheckParam(kernel_node);
   auto eng = MKLKernelEngine::Get().engine();
   dnnl::rnn_direction direction = dnnl::rnn_direction::unidirectional;
@@ -167,8 +176,8 @@ void LSTMGradCPUKernel::ResetMemory(const dnnl::memory &mem, const string name) 
 
 bool LSTMGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
-  using dt = dnnl::memory::data_type;
-  using tag = dnnl::memory::format_tag;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kLstmGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kLstmGradOutputsNum, kernel_name_);
   auto eng = MKLKernelEngine::Get().engine();
   // construct fw memory
   auto user_weights_memory = dnnl::memory(dnnl::memory::desc{{weights_dims_}, dt::f32, tag::ldgoi}, eng);

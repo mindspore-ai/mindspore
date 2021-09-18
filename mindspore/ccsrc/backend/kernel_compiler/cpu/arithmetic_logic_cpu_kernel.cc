@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,26 @@
  */
 
 #include "backend/kernel_compiler/cpu/arithmetic_logic_cpu_kernel.h"
-#include <cmath>
+
 #include <string>
-#include <map>
+#include <cmath>
+#include <unordered_map>
 #include <functional>
+
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kMaxLessSerialSize = 15000;
+constexpr size_t kInputsNum = 2;
+constexpr size_t kOutputsNum = 1;
+}  // namespace
+
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *out) const {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
-  if (output_size_ > MAX_LESS_SERIAL_SIZE) {
+  if (output_size_ > kMaxLessSerialSize) {
     auto task = [&](size_t start, size_t end) {
       auto iter = base_iter;
       iter.SetPos(start);
@@ -50,7 +58,7 @@ void ArithmeticLogicCPUKernel<T>::Less(const T *input1, const T *input2, bool *o
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *out) const {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -66,7 +74,7 @@ void ArithmeticLogicCPUKernel<T>::Equal(const T *input1, const T *input2, bool *
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, bool *out) const {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -82,7 +90,7 @@ void ArithmeticLogicCPUKernel<T>::NotEqual(const T *input1, const T *input2, boo
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, bool *out) const {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -96,7 +104,7 @@ void ArithmeticLogicCPUKernel<T>::LogicalAnd(const T *input1, const T *input2, b
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bool *out) const {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -110,7 +118,7 @@ void ArithmeticLogicCPUKernel<T>::LogicalOr(const T *input1, const T *input2, bo
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool *out) const {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -126,7 +134,7 @@ void ArithmeticLogicCPUKernel<T>::Greater(const T *input1, const T *input2, bool
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2, bool *out) const {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -142,7 +150,7 @@ void ArithmeticLogicCPUKernel<T>::GreaterEqual(const T *input1, const T *input2,
 }
 
 template <typename T>
-void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bool *out) {
+void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bool *out) const {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = base_iter;
@@ -157,26 +165,31 @@ void ArithmeticLogicCPUKernel<T>::LessEqual(const T *input1, const T *input2, bo
   CPUKernelUtils::ParallelFor(task, output_size_);
 }
 
-static const std::map<std::string, OperateType> kArithmeticBinOpTypeMap = {
-  {prim::kPrimGreater->name(), GREATER},       {prim::kPrimGreaterEqual->name(), GREATEREQUAL},
-  {prim::kPrimLogicalAnd->name(), LOGICALAND}, {prim::kPrimLessEqual->name(), LESSEQUAL},
-  {prim::kPrimLogicalOr->name(), LOGICALOR},   {prim::kPrimLess->name(), LESS},
-  {prim::kPrimNotEqual->name(), NOTEQUAL},     {prim::kPrimEqual->name(), EQUAL}};
+template <typename T>
+void ArithmeticLogicCPUKernel<T>::InitComputeFunc() {
+  static const std::unordered_map<std::string, TypeComputeFunc> arithmeticLogicFuncMap{
+    {prim::kPrimGreater->name(), &ArithmeticLogicCPUKernel<T>::Greater},
+    {prim::kPrimGreaterEqual->name(), &ArithmeticLogicCPUKernel<T>::GreaterEqual},
+    {prim::kPrimLogicalAnd->name(), &ArithmeticLogicCPUKernel<T>::LogicalAnd},
+    {prim::kPrimLessEqual->name(), &ArithmeticLogicCPUKernel<T>::LessEqual},
+    {prim::kPrimLogicalOr->name(), &ArithmeticLogicCPUKernel<T>::LogicalOr},
+    {prim::kPrimLess->name(), &ArithmeticLogicCPUKernel<T>::Less},
+    {prim::kPrimNotEqual->name(), &ArithmeticLogicCPUKernel<T>::NotEqual},
+    {prim::kPrimEqual->name(), &ArithmeticLogicCPUKernel<T>::Equal}};
+  if (arithmeticLogicFuncMap.find(kernel_name_) == arithmeticLogicFuncMap.end()) {
+    MS_LOG(EXCEPTION) << "ArithmeticLogicCPUKernel does not support " << kernel_name_;
+  }
+  compute_func_ = arithmeticLogicFuncMap.at(kernel_name_);
+}
 
 template <typename T>
 void ArithmeticLogicCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (kArithmeticBinOpTypeMap.find(kernel_name) != kArithmeticBinOpTypeMap.end()) {
-    operate_type_ = kArithmeticBinOpTypeMap.at(kernel_name);
-  } else {
-    MS_LOG(EXCEPTION) << "Not support " << kernel_name;
-  }
-
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape1_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   input_shape2_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (output_shape_.size() == 0) {
+  if (output_shape_.empty()) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }
 
@@ -200,36 +213,19 @@ void ArithmeticLogicCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   if (dtype_ != AnfAlgo::GetInputDeviceDataType(kernel_node, 1)) {
     MS_LOG(EXCEPTION) << "Input0 and input1 must has the same data type";
   }
-  target_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
+  InitComputeFunc();
 }
 
 template <typename T>
 bool ArithmeticLogicCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> & /* workspace */,
                                          const std::vector<AddressPtr> &outputs) {
-  T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input2 = reinterpret_cast<T *>(inputs[1]->addr);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  const auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
-
-  if (operate_type_ == LESS) {
-    Less(input1, input2, output);
-  } else if (operate_type_ == EQUAL) {
-    Equal(input1, input2, output);
-  } else if (operate_type_ == NOTEQUAL) {
-    NotEqual(input1, input2, output);
-  } else if (operate_type_ == GREATER) {
-    Greater(input1, input2, output);
-  } else if (operate_type_ == GREATEREQUAL) {
-    GreaterEqual(input1, input2, output);
-  } else if (operate_type_ == LESSEQUAL) {
-    LessEqual(input1, input2, output);
-  } else if (operate_type_ == LOGICALAND) {
-    LogicalAnd(input1, input2, output);
-  } else if (operate_type_ == LOGICALOR) {
-    LogicalOr(input1, input2, output);
-  } else {
-    MS_LOG(EXCEPTION) << "Not support " << operate_type_;
-  }
+  compute_func_(this, input1, input2, output);
   return true;
 }
 }  // namespace kernel

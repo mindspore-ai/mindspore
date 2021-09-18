@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_APPLY_ADAGRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_APPLY_ADAGRAD_CPU_KERNEL_H_
 
 #include <thread>
 #include <vector>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -34,11 +36,14 @@ class ApplyAdagradCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  static void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
   template <typename T>
-  void LaunchApplyAdagrad(T const var, T const accum, const T lr, const T gradient, size_t start, size_t end);
+  void LaunchApplyAdagrad(T *var, T *accum, const T *lr, const T *gradient, size_t start, size_t end) const;
+
   bool update_slots_{true};
   TypeId dtype_{kTypeUnknown};
 };

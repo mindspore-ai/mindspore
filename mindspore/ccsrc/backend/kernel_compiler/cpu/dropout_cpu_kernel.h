@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DROPOUT_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DROPOUT_CPU_KERNEL_H_
+
 #include <memory>
 #include <vector>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -33,17 +35,16 @@ class DropoutCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  template <typename T>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> mask_shape_;
   TypeId dtype_{kTypeUnknown};
-  float keep_prob_ = 0.0;
-  uint64_t tensor_size_ = 1;
+  float keep_prob_{0.0};
+  uint64_t tensor_size_{1};
 };
 
 MS_REG_CPU_KERNEL(Dropout, KernelAttr(), DropoutCPUKernel);

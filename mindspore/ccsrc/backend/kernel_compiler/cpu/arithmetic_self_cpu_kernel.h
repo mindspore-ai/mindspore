@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_SELF_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_SELF_CPU_KERNEL_H_
+
 #include <memory>
 #include <vector>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
-
-const float MAX_NEG_SERIAL_SIZE = 5000;
-const float MAX_SQUARE_SERIAL_SIZE = 5000;
 
 namespace mindspore {
 namespace kernel {
@@ -35,13 +35,12 @@ class ArithmeticSelfCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  template <typename T>
-  void LaunchKernelLogic(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
  private:
-  OperateType operate_type_{SQUARE};
+  template <typename T>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+
+  void LaunchLogicalNot(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+
   TypeId dtype_{kTypeUnknown};
   TypeId target_dtype_{kTypeUnknown};
 };

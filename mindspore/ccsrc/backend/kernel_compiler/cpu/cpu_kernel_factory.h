@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CPU_KERNEL_FACTORY_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CPU_KERNEL_FACTORY_H_
 
@@ -23,15 +24,16 @@
 #include <utility>
 #include <vector>
 
-#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
 using mindspore::device::cpu::KernelAttr;
 using CPUKernelCreator = std::function<std::shared_ptr<CPUKernel>()>;
+
 class CPUKernelFactory {
  public:
   static CPUKernelFactory &GetInstance();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
+
 #include <algorithm>
 #include <utility>
 #include <cmath>
+
 #include "common/thread_pool.h"
 #include "utils/profile.h"
 
@@ -52,10 +55,11 @@ void CPUKernel::Init(const CNodePtr &kernel_node) {
 }
 
 void CPUKernelUtils::ExpandDimsTo4(std::vector<size_t> *shape) {
+  MS_EXCEPTION_IF_NULL(shape);
   auto len = shape->size();
   if (len < 4) {
     for (size_t i = 0; i < 4 - len; ++i) {
-      shape->insert(shape->begin(), 1);
+      (void)shape->insert(shape->begin(), 1);
     }
   }
 }
@@ -79,6 +83,7 @@ size_t CPUKernelUtils::GetElementNumOnAxis(const std::vector<size_t> &shape, int
 
 void CPUKernelUtils::GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num) {
   size_t accumulation = 1;
+  MS_EXCEPTION_IF_NULL(element_num);
   (void)element_num->emplace_back(1);
   for (size_t i = shape.size() - 1; i > 0; --i) {
     accumulation *= shape[i];
@@ -112,6 +117,7 @@ void CPUKernelUtils::ParallelFor(const CTask &task, size_t count, float block_si
 void CPUKernelUtils::ParallelForAutoSearch(const CTask &task, size_t count, ParallelSearchInfo *parallel_search_info) {
   const size_t MAX_POW = 6;
   const size_t AVG_COUNT = 5;
+  MS_EXCEPTION_IF_NULL(parallel_search_info);
   size_t current_pow = parallel_search_info->search_count / AVG_COUNT;
   if (current_pow < MAX_POW) {
     if (parallel_search_info->search_count % AVG_COUNT == 0) {
@@ -276,12 +282,12 @@ void BroadcastIterator::GenNextPos() {
 void BroadcastIterator::BroadcastShape() {
   int input_dimension_a = input_shape_a_.size();
   if (input_dimension_a < output_dimension_) {
-    input_shape_a_.insert(input_shape_a_.begin(), output_dimension_ - input_dimension_a, 1);
+    (void)input_shape_a_.insert(input_shape_a_.begin(), IntToSize(output_dimension_ - input_dimension_a), 1);
   }
 
   int input_dimension_b = input_shape_b_.size();
   if (input_dimension_b < output_dimension_) {
-    input_shape_b_.insert(input_shape_b_.begin(), output_dimension_ - input_dimension_b, 1);
+    (void)input_shape_b_.insert(input_shape_b_.begin(), IntToSize(output_dimension_ - input_dimension_b), 1);
   }
 }
 
@@ -297,10 +303,10 @@ void BroadcastIterator::InitStrides() {
 
   // Update strides for broadcast
   // While the axis value is 1, the stride is 0
-  std::transform(input_strides_a_.begin(), input_strides_a_.end(), input_shape_a_.begin(), input_strides_a_.begin(),
-                 [](const auto &a, const auto &b) { return b == 1 ? 0 : a; });
-  std::transform(input_strides_b_.begin(), input_strides_b_.end(), input_shape_b_.begin(), input_strides_b_.begin(),
-                 [](const auto &a, const auto &b) { return b == 1 ? 0 : a; });
+  (void)std::transform(input_strides_a_.begin(), input_strides_a_.end(), input_shape_a_.begin(),
+                       input_strides_a_.begin(), [](const auto &a, const auto &b) { return b == 1 ? 0 : a; });
+  (void)std::transform(input_strides_b_.begin(), input_strides_b_.end(), input_shape_b_.begin(),
+                       input_strides_b_.begin(), [](const auto &a, const auto &b) { return b == 1 ? 0 : a; });
 }
 
 TransposeIterator::TransposeIterator(std::vector<size_t> output_shape, std::vector<size_t> axes,

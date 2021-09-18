@@ -19,10 +19,62 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kCTCLossInputsNum = 4;
+constexpr size_t kCTCLossOutputsNum = 2;
+
+template <typename T>
+inline T LogSumExp(const T logprob1, const T logprob2) {
+  T kLogZero_ = -std::numeric_limits<T>::infinity();
+  if (logprob1 <= kLogZero_) {
+    return logprob2;
+  }
+  if (logprob2 <= kLogZero_) {
+    return logprob1;
+  }
+  return (logprob1 > logprob2) ? logprob1 + static_cast<T>(log1p(exp(logprob2 - logprob1)))
+                               : logprob2 + static_cast<T>(log1p(exp(logprob1 - logprob2)));
+}
+
+template <typename T>
+void InnerSoftMax(const T *inputs_addr, std::vector<std::vector<T>> *softmax_probs, const uint32_t sequence_length,
+                  size_t num_class, size_t batch_size, size_t b) {
+  for (size_t t = 0; t < sequence_length; ++t) {
+    auto maxCoeff = static_cast<T>(0);
+    auto sumCoeff = static_cast<T>(0);
+
+    for (size_t c = 0; c < num_class; ++c) {
+      if (inputs_addr[t * batch_size * num_class + b * num_class + c] > maxCoeff) {
+        maxCoeff = inputs_addr[t * batch_size * num_class + b * num_class + c];
+      }
+    }
+
+    for (size_t c = 0; c < num_class; ++c) {
+      sumCoeff += static_cast<T>(exp(inputs_addr[t * batch_size * num_class + b * num_class + c] - maxCoeff));
+      (*softmax_probs)[c][t] =
+        static_cast<T>(exp(inputs_addr[t * batch_size * num_class + b * num_class + c] - maxCoeff));
+    }
+
+    for (size_t c = 0; c < num_class; ++c) {
+      (*softmax_probs)[c][t] /= sumCoeff;
+    }
+  }
+}
+
+template <typename T>
+void MatrixFromVector(uint32_t row, uint32_t col, std::vector<std::vector<T>> *array2D, const T init_value) {
+  array2D->resize(row);
+  for (size_t i = 0; i < row; ++i) {
+    (*array2D)[i].resize(col, init_value);
+  }
+}
+}  // namespace
+
 void CTCLossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   probs_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  indice_dims_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  indices_dims_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   labels_dims_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
@@ -32,14 +84,13 @@ void CTCLossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (labels_dims_.size() != 1) {
     MS_LOG(EXCEPTION) << "Labels dims: " << labels_dims_.size() << " not support.";
   }
-  if (indice_dims_.size() != 2) {
-    MS_LOG(EXCEPTION) << "Labels indice dims: " << indice_dims_.size() << " not support.";
+  if (indices_dims_.size() != 2) {
+    MS_LOG(EXCEPTION) << "Labels indice dims: " << indices_dims_.size() << " not support.";
   }
 
-  preprocess_collapse_repeated_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "preprocess_collapse_repeated");
-  ctc_merge_repeated_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "ctc_merge_repeated");
-  ignore_longer_outputs_than_inputs_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "ignore_longer_outputs_than_inputs");
-
+  preprocess_collapse_repeated_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, PCR);
+  ctc_merge_repeated_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, CTR);
+  ignore_longer_outputs_than_inputs_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, ILOTI);
   max_time_ = probs_shape_[0];
   batch_size_ = probs_shape_[1];
   num_class_ = probs_shape_[2];
@@ -48,31 +99,23 @@ void CTCLossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool CTCLossCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCTCLossInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCTCLossOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
+  } else {
+    MS_LOG(EXCEPTION) << kernel_name_ << " only support float16 and float32 on CPU, but got "
+                      << TypeIdToType(dtype_)->ToString();
   }
   return true;
-}
-
-template <typename T>
-inline T LogSumExp(const T logprob1, const T logprob2) {
-  T kLogZero_ = -std::numeric_limits<T>::infinity();
-  if (logprob1 <= kLogZero_) {
-    return logprob2;
-  } else if (logprob2 <= kLogZero_) {
-    return logprob1;
-  } else {
-    return (logprob1 > logprob2) ? logprob1 + static_cast<T>(log1p(exp(logprob2 - logprob1)))
-                                 : logprob2 + static_cast<T>(log1p(exp(logprob1 - logprob2)));
-  }
 }
 
 template <typename TT>
 void CTCLossCPUKernel::CalculateFwdVar(const std::vector<uint32_t> &label_with_blank,
                                        const std::vector<std::vector<TT>> &y,
-                                       std::vector<std::vector<TT>> *log_alpha_b) {
+                                       std::vector<std::vector<TT>> *log_alpha_b) const {
   int U = label_with_blank.size();
   int T = (*log_alpha_b)[0].size();
   TT kLogZero_ = -std::numeric_limits<TT>::infinity();
@@ -112,7 +155,7 @@ void CTCLossCPUKernel::CalculateFwdVar(const std::vector<uint32_t> &label_with_b
 template <typename TT>
 void CTCLossCPUKernel::CalculateBwdVar(const std::vector<uint32_t> &label_with_blank,
                                        const std::vector<std::vector<TT>> &y,
-                                       std::vector<std::vector<TT>> *log_beta_b) {
+                                       std::vector<std::vector<TT>> *log_beta_b) const {
   int T = (*log_beta_b)[0].size();
   int U = label_with_blank.size();
   if (U > 1) {
@@ -154,7 +197,7 @@ void CTCLossCPUKernel::CalculateGrad(const std::vector<uint32_t> &label_with_bla
                                      const std::vector<std::vector<TT>> &y,
                                      const std::vector<std::vector<TT>> &log_alpha_b,
                                      const std::vector<std::vector<TT>> &log_beta_b, const TT log_pzx,
-                                     std::vector<std::vector<TT>> *dy) {
+                                     std::vector<std::vector<TT>> *dy) const {
   auto dy_b = dy;
   TT kLogZero_ = -std::numeric_limits<TT>::infinity();
   if (log_pzx <= kLogZero_) {
@@ -179,8 +222,8 @@ void CTCLossCPUKernel::CalculateGrad(const std::vector<uint32_t> &label_with_bla
   }
 }
 
-void CTCLossCPUKernel::GenLableWithBlank(const uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
-                                         std::vector<std::vector<uint32_t>> *label_with_blank) {
+void CTCLossCPUKernel::GenLabelWithBlank(const uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
+                                         std::vector<std::vector<uint32_t>> *label_with_blank) const {
   for (size_t b = 0; b < batch_size_; ++b) {
     std::vector<uint32_t> l;
     const std::vector<uint32_t> &label = batch_label[b];
@@ -197,11 +240,9 @@ void CTCLossCPUKernel::GenLableWithBlank(const uint32_t *seq_len, const std::vec
         }
       }
     }
-    if (!ignore_longer_outputs_than_inputs_) {
-      if (l.size() > seq_len[b]) {
-        MS_LOG(EXCEPTION) << "Input time(sequence length) should greater than output size(label length), but gets "
-                          << seq_len[b] << "< " << l.size();
-      }
+    if (!ignore_longer_outputs_than_inputs_ && l.size() > seq_len[b]) {
+      MS_LOG(EXCEPTION) << "Input time(sequence length) should greater than output size(label length), but gets "
+                        << seq_len[b] << "< " << l.size();
     }
 
     (*label_with_blank)[b].reserve(2 * l.size() + 1);
@@ -214,46 +255,14 @@ void CTCLossCPUKernel::GenLableWithBlank(const uint32_t *seq_len, const std::vec
 }
 
 template <typename T>
-void InnerSoftMax(const T *inputs_addr, std::vector<std::vector<T>> *softmax_probs, const uint32_t sequence_length,
-                  size_t num_class, size_t batch_size, size_t b) {
-  for (size_t t = 0; t < sequence_length; ++t) {
-    T maxCoeff(T(0));
-    T sumCoeff(T(0));
-
-    for (size_t c = 0; c < num_class; ++c) {
-      if (inputs_addr[t * batch_size * num_class + b * num_class + c] > maxCoeff) {
-        maxCoeff = inputs_addr[t * batch_size * num_class + b * num_class + c];
-      }
-    }
-
-    for (size_t c = 0; c < num_class; ++c) {
-      sumCoeff += static_cast<T>(exp(inputs_addr[t * batch_size * num_class + b * num_class + c] - maxCoeff));
-      (*softmax_probs)[c][t] =
-        static_cast<T>(exp(inputs_addr[t * batch_size * num_class + b * num_class + c] - maxCoeff));
-    }
-
-    for (size_t c = 0; c < num_class; ++c) {
-      (*softmax_probs)[c][t] /= sumCoeff;
-    }
-  }
-}
-
-template <typename T>
-void MatrixfromVector(uint32_t row, uint32_t col, std::vector<std::vector<T>> *array2D, const T init_value) {
-  array2D->resize(row);
-  for (size_t i = 0; i < row; ++i) {
-    (*array2D)[i].resize(col, init_value);
-  }
-}
-
-template <typename T>
-void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto labels_indices_addr = reinterpret_cast<uint64_t *>(inputs[1]->addr);
-  auto labels_values_addr = reinterpret_cast<uint32_t *>(inputs[2]->addr);
-  auto sequence_length_addr = reinterpret_cast<uint32_t *>(inputs[3]->addr);
-  auto loss_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto gradient_addr = reinterpret_cast<T *>(outputs[1]->addr);
+void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                    const std::vector<AddressPtr> &outputs) const {
+  const auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *labels_indices_addr = reinterpret_cast<uint64_t *>(inputs[1]->addr);
+  const auto *labels_values_addr = reinterpret_cast<uint32_t *>(inputs[2]->addr);
+  const auto *sequence_length_addr = reinterpret_cast<uint32_t *>(inputs[3]->addr);
+  auto *loss_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *gradient_addr = reinterpret_cast<T *>(outputs[1]->addr);
 
   std::vector<std::vector<uint32_t>> label_batch;
   std::vector<std::vector<uint32_t>> labels_with_blank;
@@ -266,18 +275,21 @@ void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   T kLogZero_ = -std::numeric_limits<T>::infinity();
   // check validation of sequence length
   for (size_t b = 0; b < batch_size_; ++b) {
-    if (sequence_length_addr[b] == uint32_t(0)) {
+    if (sequence_length_addr[b] == static_cast<uint32_t>(0)) {
       MS_LOG(EXCEPTION) << "Sequence length should > 0, but gets " << sequence_length_addr[b];
     }
-
     if (sequence_length_addr[b] > max_time_) {
       MS_LOG(EXCEPTION) << "Max time should be greater than sequence length, but gets " << max_time_ << " < "
                         << sequence_length_addr[b];
     }
   }
-
-  for (size_t i = 0; i < indice_dims_[0]; ++i) {
-    each_label_length[labels_indices_addr[i * 2]]++;
+  for (size_t i = 0; i < indices_dims_[0]; ++i) {
+    const size_t factor = 2;
+    auto index = labels_indices_addr[i * factor];
+    if (index >= SizeToUlong(each_label_length.size())) {
+      MS_LOG(EXCEPTION) << "Index: " << index << "out of the bounds of the vector.";
+    }
+    each_label_length[index]++;
   }
 
   // convert label format of label_value and label_indices to batch_label
@@ -291,7 +303,7 @@ void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   }
 
   // convert label to label with blank
-  GenLableWithBlank(sequence_length_addr, label_batch, &labels_with_blank);
+  GenLabelWithBlank(sequence_length_addr, label_batch, &labels_with_blank);
 
   for (size_t b = 0; b < batch_size_; ++b) {
     std::vector<uint32_t> label_with_blank = labels_with_blank[b];
@@ -300,12 +312,11 @@ void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const
     std::vector<std::vector<T>> dy;
     std::vector<std::vector<T>> log_alpha_b;
     std::vector<std::vector<T>> log_beta_b;
-    MatrixfromVector(num_class_, sequence_length_addr[b], &y_b, kLogZero_);
-    MatrixfromVector(y_b.size(), y_b[0].size(), &dy, T(0));
-    MatrixfromVector(label_with_blank.size(), sequence_length_addr[b], &log_alpha_b, kLogZero_);
-    MatrixfromVector(label_with_blank.size(), sequence_length_addr[b], &log_beta_b, kLogZero_);
+    MatrixFromVector(num_class_, sequence_length_addr[b], &y_b, kLogZero_);
+    MatrixFromVector(y_b.size(), y_b[0].size(), &dy, T(0));
+    MatrixFromVector(label_with_blank.size(), sequence_length_addr[b], &log_alpha_b, kLogZero_);
+    MatrixFromVector(label_with_blank.size(), sequence_length_addr[b], &log_beta_b, kLogZero_);
     InnerSoftMax(inputs_addr, &y_b, sequence_length_addr[b], num_class_, batch_size_, b);
-
     CalculateFwdVar(label_with_blank, y_b, &log_alpha_b);
     CalculateBwdVar(label_with_blank, y_b, &log_beta_b);
 
@@ -313,9 +324,7 @@ void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const
     for (size_t u = 0; u < label_with_blank.size(); ++u) {
       log_pzx = LogSumExp(log_pzx, log_alpha_b[u][0] + log_beta_b[u][0]);
     }
-
     loss_addr[b] = -log_pzx;
-
     CalculateGrad(label_with_blank, y_b, log_alpha_b, log_beta_b, log_pzx, &dy);
 
     for (size_t t = 0; t < sequence_length_addr[b]; ++t) {
@@ -323,17 +332,6 @@ void CTCLossCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const
         gradient_addr[t * batch_size_ * num_class_ + b * num_class_ + c] = dy[c][t];
       }
     }
-  }
-}
-
-void CTCLossCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 4) {
-    MS_LOG(EXCEPTION) << "CTCLossCPUKernel needs 4 inputs, but gets " << input_num;
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 2) {
-    MS_LOG(EXCEPTION) << "CTCLossCPUKernel expects 2 outputs, but gets" << output_num;
   }
 }
 }  // namespace kernel

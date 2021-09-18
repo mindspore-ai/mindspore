@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ELTWISE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ELTWISE_CPU_KERNEL_H_
+
 #include <memory>
 #include <vector>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
@@ -32,8 +34,9 @@ class EltWiseCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  dnnl::eltwise_forward::desc GetForwardEltwiseDesc(const CNodePtr &kernel_node, const dnnl::memory::desc src_desc);
-  dnnl::prop_kind DnnlForward = dnnl::prop_kind::forward_training;
+  dnnl::eltwise_forward::desc GetForwardEltwiseDesc(const dnnl::memory::desc src_desc);
+
+  dnnl::prop_kind dnnl_forward_{dnnl::prop_kind::forward_training};
 };
 
 MS_REG_CPU_KERNEL(Elu, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

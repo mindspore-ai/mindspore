@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_cpu_kernel.h"
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 
@@ -24,8 +26,10 @@ namespace kernel {
 void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pad_mode,
                               const std::vector<size_t> &src_shape, const std::vector<size_t> &kernel_size,
                               const std::vector<int> &stride, std::vector<int> *padding_l, std::vector<int> *padding_r,
-                              const std::vector<int> &dilation) {
+                              const std::vector<int> &dilation) const {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(padding_l);
+  MS_EXCEPTION_IF_NULL(padding_r);
   auto dim = src_shape.size();
   if (dim < 2) {
     MS_LOG(EXCEPTION) << "Set pad only support src dim >= 2!";
@@ -65,7 +69,7 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
 }
 
 bool MKLCPUKernel::BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
-                                   std::vector<size_t> *dst_shape) {
+                                   std::vector<size_t> *dst_shape) const {
   MS_EXCEPTION_IF_NULL(src0_shape);
   MS_EXCEPTION_IF_NULL(src1_shape);
   MS_EXCEPTION_IF_NULL(dst_shape);
@@ -115,20 +119,19 @@ dnnl::memory::format_tag MKLCPUKernel::GetDefaultFormatTag(const dnnl::memory::d
     dnnl::memory::format_tag::a,      dnnl::memory::format_tag::ab,    dnnl::memory::format_tag::abc,
     dnnl::memory::format_tag::abcd,   dnnl::memory::format_tag::abcde, dnnl::memory::format_tag::abcdef,
     dnnl::memory::format_tag::abcdefg};
-
-  auto rank = dims.size();
+  size_t rank = dims.size();
   if (rank > tag_vec.size()) {
     MS_LOG(EXCEPTION) << "The kernel does not support construct " << rank << "-D tensor dnnl memory format_tag.";
   }
   return tag_vec[rank - 1];
 }
 
-dnnl::memory::desc MKLCPUKernel::GetDefaultMemDesc(const std::vector<size_t> &shape) {
+dnnl::memory::desc MKLCPUKernel::GetDefaultMemDesc(const std::vector<size_t> &shape) const {
   dnnl::memory::dims dims;
-  if (shape.size() == 0) {
-    dims.insert(dims.end(), 1);
+  if (shape.empty()) {
+    (void)dims.insert(dims.end(), 1);
   } else {
-    dims.insert(dims.end(), shape.begin(), shape.end());
+    (void)dims.insert(dims.end(), shape.begin(), shape.end());
   }
   dnnl::memory::format_tag mem_tag = GetDefaultFormatTag(dims);
   dnnl::memory::desc mem_desc(dims, dnnl::memory::data_type::f32, mem_tag);
