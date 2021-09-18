@@ -99,6 +99,5 @@ bool CipherInit::Check_Parames() {
 
   return true;
 }
-
 }  // namespace armour
 }  // namespace mindspore

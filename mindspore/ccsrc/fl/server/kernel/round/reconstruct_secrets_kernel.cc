@@ -54,7 +54,6 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
                                       const std::vector<AddressPtr> &outputs) {
   bool response = false;
   size_t iter_num = LocalMetaStore::GetInstance().curr_iter_num();
-  // MS_LOG(INFO) << "ITERATION NUMBER IS : " << LocalMetaStore::GetInstance().curr_iter_num();
   size_t total_duration = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   MS_LOG(INFO) << "Iteration number is " << iter_num << ", ReconstructSecretsKernel total duration is "
                << total_duration;
@@ -125,12 +124,13 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
 void ReconstructSecretsKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {
   MS_LOG(INFO) << "ITERATION NUMBER IS : " << LocalMetaStore::GetInstance().curr_iter_num();
   if (ps::PSContext::instance()->encrypt_type() == ps::kPWEncryptType) {
+    int sleep_time = 5;
     while (!Executor::GetInstance().IsAllWeightAggregationDone()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
     }
     MS_LOG(INFO) << "start unmask";
     while (!Executor::GetInstance().Unmask()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
     }
     MS_LOG(INFO) << "end unmask";
     Executor::GetInstance().set_unmasked(true);

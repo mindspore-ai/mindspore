@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace armour {
-
 void CipherMetaStorage::GetClientSharesFromServer(
   const char *list_name, std::map<std::string, std::vector<clientshare_str>> *clients_shares_list) {
   if (clients_shares_list == nullptr) {
@@ -55,7 +54,7 @@ void CipherMetaStorage::GetClientListFromServer(const char *list_name, std::vect
   const fl::UpdateModelClientList &client_list_pb = client_list_pb_out.client_list();
   size_t client_list_num = IntToSize(client_list_pb.fl_id_size());
   for (size_t i = 0; i < client_list_num; ++i) {
-    std::string fl_id = client_list_pb.fl_id(i);
+    std::string fl_id = client_list_pb.fl_id(SizeToInt(i));
     clients_list->push_back(fl_id);
   }
 }
@@ -71,7 +70,6 @@ void CipherMetaStorage::GetClientKeysFromServer(
   const fl::ClientKeys &clients_keys_pb = clients_keys_pb_out.client_keys();
 
   for (auto iter = clients_keys_pb.client_keys().begin(); iter != clients_keys_pb.client_keys().end(); ++iter) {
-    // const PairClientKeys & pair_client_keys_pb = clients_keys_pb.client_keys(i);
     std::string fl_id = iter->first;
     fl::KeysPb keys_pb = iter->second;
     std::vector<uint8_t> cpk(keys_pb.key(0).begin(), keys_pb.key(0).end());
@@ -280,9 +278,9 @@ bool CipherMetaStorage::UpdateClientShareToServer(
   for (size_t index = 0; index < size_shares; ++index) {
     // new item
     fl::ClientShareStr *client_share_str_new_p = shares_pb.add_clientsharestrs();
-    std::string fl_id_new = (*shares)[index]->fl_id()->str();
-    int index_new = (*shares)[index]->index();
-    auto share = (*shares)[index]->share();
+    std::string fl_id_new = (*shares)[SizeToInt(index)]->fl_id()->str();
+    int index_new = (*shares)[SizeToInt(index)]->index();
+    auto share = (*shares)[SizeToInt(index)]->share();
     if (share == nullptr) return false;
     client_share_str_new_p->set_share(reinterpret_cast<const char *>(share->data()), share->size());
     client_share_str_new_p->set_fl_id(fl_id_new);

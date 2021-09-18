@@ -201,6 +201,5 @@ void CipherKeys::ClearKeys() {
   fl::server::DistributedMetadataStore::GetInstance().ResetMetadata(fl::server::kCtxClientsKeys);
   fl::server::DistributedMetadataStore::GetInstance().ResetMetadata(fl::server::kCtxGetKeysClientList);
 }
-
 }  // namespace armour
 }  // namespace mindspore

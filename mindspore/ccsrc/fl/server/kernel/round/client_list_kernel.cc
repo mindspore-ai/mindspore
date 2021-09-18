@@ -55,7 +55,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
   PBMetadata client_list_pb_out = DistributedMetadataStore::GetInstance().GetMetadata(kCtxUpdateModelClientList);
   const UpdateModelClientList &client_list_pb = client_list_pb_out.client_list();
   for (size_t i = 0; i < IntToSize(client_list_pb.fl_id_size()); ++i) {
-    client_list.push_back(client_list_pb.fl_id(i));
+    client_list.push_back(client_list_pb.fl_id(SizeToInt(i)));
   }
   if (static_cast<uint64_t>(client_list.size()) < update_model_client_needed) {
     MS_LOG(INFO) << "The server is not ready. update_model_client_needed: " << update_model_client_needed;

@@ -116,7 +116,7 @@ bool CipherShares::GetSecrets(const schema::GetShareSecrets *get_secrets_req,
                                                                &encrypted_shares_all);
   size_t encrypted_shares_num = encrypted_shares_all.size();
   if (cipher_init_->share_secrets_threshold > encrypted_shares_num) {  // the client num is not enough, return false.
-    BuildGetSecretsRsp(fbb, schema::ResponseCode_SucNotReady, iteration, next_req_time, nullptr);
+    BuildGetSecretsRsp(fbb, schema::ResponseCode_SucNotReady, IntToSize(iteration), next_req_time, nullptr);
     MS_LOG(INFO) << "GetSecrets: the encrypted shares num is not enough: share_secrets_threshold: "
                  << cipher_init_->share_secrets_threshold << "encrypted_shares_num: " << encrypted_shares_num;
     return false;
@@ -125,7 +125,7 @@ bool CipherShares::GetSecrets(const schema::GetShareSecrets *get_secrets_req,
   std::string fl_id = get_secrets_req->fl_id()->str();
   // the client is not in share secrets client list.
   if (encrypted_shares_all.find(fl_id) == encrypted_shares_all.end()) {
-    BuildGetSecretsRsp(fbb, schema::ResponseCode_RequestError, iteration, next_req_time, nullptr);
+    BuildGetSecretsRsp(fbb, schema::ResponseCode_RequestError, IntToSize(iteration), next_req_time, nullptr);
     MS_LOG(ERROR) << "GetSecrets: client is not in share secrets client list.";
     return false;
   }
@@ -134,7 +134,7 @@ bool CipherShares::GetSecrets(const schema::GetShareSecrets *get_secrets_req,
     cipher_init_->cipher_meta_storage_.UpdateClientToServer(fl::server::kCtxGetSecretsClientList, fl_id);
   if (!retcode_client) {
     MS_LOG(ERROR) << "update get secrets clients failed";
-    BuildGetSecretsRsp(fbb, schema::ResponseCode_SucNotReady, iteration, next_req_time, nullptr);
+    BuildGetSecretsRsp(fbb, schema::ResponseCode_SucNotReady, IntToSize(iteration), next_req_time, nullptr);
     return false;
   }
 
@@ -174,7 +174,7 @@ bool CipherShares::GetSecrets(const schema::GetShareSecrets *get_secrets_req,
     encrypted_shares.push_back(one_clientshare);
   }
 
-  BuildGetSecretsRsp(fbb, schema::ResponseCode_SUCCEED, iteration, next_req_time, &encrypted_shares);
+  BuildGetSecretsRsp(fbb, schema::ResponseCode_SUCCEED, IntToSize(iteration), next_req_time, &encrypted_shares);
   MS_LOG(INFO) << "CipherShares::GetSecrets Success";
   clock_t end_time = clock();
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);

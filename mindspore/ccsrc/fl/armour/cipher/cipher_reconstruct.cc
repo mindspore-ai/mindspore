@@ -58,12 +58,11 @@ bool CipherReconStruct::CombineMask(std::vector<Share *> *shares_tmp,
       for (int i = 0; i < static_cast<int>(cipher_init_->secrets_minnums_); ++i) {
         shares_tmp->at(i)->index = (iter->second)[i].index;
         shares_tmp->at(i)->len = (iter->second)[i].share.size();
-        if (memcpy_s(shares_tmp->at(i)->data, SHARE_MAX_SIZE, (iter->second)[i].share.data(), shares_tmp->at(i)->len) !=
-            0) {
+        if (memcpy_s(shares_tmp->at(i)->data, IntToSize(SHARE_MAX_SIZE), (iter->second)[i].share.data(),
+                     shares_tmp->at(i)->len) != 0) {
           MS_LOG(ERROR) << "shares_tmp copy failed";
           retcode = false;
         }
-        std::string print_share_data(reinterpret_cast<const char *>(shares_tmp->at(i)->data), shares_tmp->at(i)->len);
       }
       MS_LOG(INFO) << "end assign secrets shares to public shares ";
 
@@ -169,7 +168,7 @@ bool CipherReconStruct::ReconstructSecretsGenNoise(const std::vector<string> &cl
     MS_LOG(ERROR) << "share size: " << iter->second.size();
   }
   std::vector<Share *> shares_tmp;
-  if (!MallocShares(&shares_tmp, cipher_init_->secrets_minnums_)) {
+  if (!MallocShares(&shares_tmp, (SizeToInt)(cipher_init_->secrets_minnums_))) {
     MS_LOG(ERROR) << "Reconstruct malloc shares_tmp invalid.";
     DeleteShares(&shares_tmp);
     return false;
@@ -356,7 +355,7 @@ void CipherReconStruct::BuildReconstructSecretsRsp(const std::shared_ptr<fl::ser
   auto fbs_reason = fbb->CreateString(reason);
   auto fbs_next_req_time = fbb->CreateString(next_req_time);
   schema::ReconstructSecretBuilder rsp_reconstruct_secret_builder(*(fbb.get()));
-  rsp_reconstruct_secret_builder.add_retcode(retcode);
+  rsp_reconstruct_secret_builder.add_retcode(static_cast<int>(retcode));
   rsp_reconstruct_secret_builder.add_reason(fbs_reason);
   rsp_reconstruct_secret_builder.add_iteration(iteration);
   rsp_reconstruct_secret_builder.add_next_req_time(fbs_next_req_time);
@@ -413,8 +412,8 @@ bool CipherReconStruct::GetSuvNoise(const std::vector<std::string> &clients_shar
       }
 
       std::vector<float> noise_tmp;
-      if (Masking::GetMasking(&noise_tmp, cipher_init_->featuremap_, (const uint8_t *)secret1, SECRET_MAX_LEN,
-                              pw_iv.data(), pw_iv.size()) < 0) {
+      if (Masking::GetMasking(&noise_tmp, SizeToInt(cipher_init_->featuremap_), (const uint8_t *)secret1,
+                              SECRET_MAX_LEN, pw_iv.data(), pw_iv.size()) < 0) {
         MS_LOG(ERROR) << "Get Masking failed\n";
         return false;
       }
@@ -504,6 +503,5 @@ void CipherReconStruct::DeleteShares(std::vector<Share *> *shares_tmp) {
   }
   return;
 }
-
 }  // namespace armour
 }  // namespace mindspore
