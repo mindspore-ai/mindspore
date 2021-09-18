@@ -31,19 +31,3 @@ def test_hccl_init_fail():
     assert grep_ret == 0
     grep_ret = os.system(f"grep 'Invalid ranktable, with rankID' {sh_path}/test_hccl_init_fail.log -c")
     assert grep_ret == 0
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
-def test_tbe_compile_fail():
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-    ret = os.system(f"sh {sh_path}/run_tbe_compile_fail.sh")
-    assert ret == 0
-    grep_ret = os.system(f"grep 'Ascend error occurred, error message:' {sh_path}/test_tbe_compile_fail.log -c")
-    assert grep_ret == 0
-    grep_ret = os.system(f"grep 'E60011:' {sh_path}/test_tbe_compile_fail.log -c")
-    assert grep_ret == 0
-    grep_ret = os.system(r"grep 'In op\[conv2d\], the \[strideh\] must in range \[1, 63\], actual is \[99\]' "
-                         + f"{sh_path}/test_tbe_compile_fail.log -c")
-    assert grep_ret == 0
