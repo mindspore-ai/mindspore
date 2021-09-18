@@ -520,9 +520,6 @@ FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph) {
 int AnfExporter::SetMetaGraphInput(const FuncGraphPtr &func_graph,
                                    const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
   MS_ASSERT(func_graph != nullptr);
-  if (!reorder_input_) {
-    return RET_OK;
-  }
   meta_graphT->inputIndex.clear();
   for (const auto &input : func_graph->get_inputs()) {
     auto iter = graph_inputs_map_.find(input);
@@ -557,7 +554,6 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
                                         bool train_flag) {
   this->train_flag_ = train_flag;
   // hardcode for nnie and train
-  this->reorder_input_ = !(ConverterContext::GetInstance()->GetGraphInputTensorNames().empty());
   this->graph_inputs_map_.clear();
   auto meta_graphT = std::make_unique<schema::MetaGraphT>();
   MS_CHECK_TRUE_MSG(meta_graphT != nullptr, nullptr, "meta_graphT is nullptr");
@@ -768,11 +764,7 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
       if (IsContain(graph_inputs_, input_node->cast<AnfNodePtr>()) &&
           graph_inputs_has_exported_.find(input_node) == graph_inputs_has_exported_.end()) {
         graph_inputs_has_exported_.insert(input_node);
-        if (reorder_input_) {
-          graph_inputs_map_[input_node] = meta_graphT->allTensors.size() - 1;
-        } else {
-          meta_graphT->inputIndex.push_back(meta_graphT->allTensors.size() - 1);
-        }
+        graph_inputs_map_[input_node] = meta_graphT->allTensors.size() - 1;
       }
     } else if (input_node->isa<ValueNode>()) {
       auto ret = ConvertInputValueNode(cnode, i, primitive_c, meta_graphT, fb_node);

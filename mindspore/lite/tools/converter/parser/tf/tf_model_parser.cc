@@ -451,7 +451,6 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
   } else {
     if (root_graph) {
       graph_input_names_.emplace_back(node.name());  // only root graph need set graph input names
-      ConverterContext::GetInstance()->AddGraphInputTensorNames(node.name());
     }
   }
 
