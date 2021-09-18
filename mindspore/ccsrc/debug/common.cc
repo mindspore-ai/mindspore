@@ -369,6 +369,9 @@ struct GlogLogDirRegister {
     if (logtostderr != nullptr && log_dir != nullptr) {
       std::string logtostderr_str = std::string(logtostderr);
       std::string log_dir_str = std::string(log_dir);
+      if (logtostderr_str != "0") {
+        return;
+      }
       const char *rank_id = std::getenv("RANK_ID");
       const char *gpu_rank_id = std::getenv("OMPI_COMM_WORLD_RANK");
       std::string rank = "0";
@@ -381,19 +384,11 @@ struct GlogLogDirRegister {
         rank = std::string(rank_id);
         both_exist = true;
       }
-      log_dir_str += "/rank_" + rank + "/logs";
-      auto real_log_dir_str = Common::CreatePrefixPath(log_dir_str);
+      log_dir_str += "/rank_" + rank + "/logs/";
+      auto real_log_dir_str = Common::CreatePrefixPath(log_dir_str, true);
       // While 'GLOG_logtostderr' = 0, logs output to files. 'GLOG_log_dir' must be specified as the path of log files.
       // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
-      if (logtostderr_str == "0" && real_log_dir_str.has_value()) {
-        if (!Common::IsPathValid(real_log_dir_str.value(), MAX_DIRECTORY_LENGTH, "")) {
-          MS_LOG(ERROR) << "The path of log files, which set by 'GLOG_log_dir', is invalid";
-          exit(EXIT_FAILURE);
-        } else if (!FileUtils::CreateNotExistDirs(real_log_dir_str.value())) {
-          MS_LOG(ERROR) << "Create the path of log files, which set by 'GLOG_log_dir', failed.";
-          exit(EXIT_FAILURE);
-        }
-      } else if (logtostderr_str == "0") {
+      if (!real_log_dir_str.has_value()) {
         MS_LOG(ERROR) << "The path of log files, which set by 'GLOG_log_dir', is invalid.";
         exit(EXIT_FAILURE);
       }
