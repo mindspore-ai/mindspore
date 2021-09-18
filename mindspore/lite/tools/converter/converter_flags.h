@@ -28,6 +28,9 @@
 #include "tools/converter/quantizer/quant_params.h"
 
 namespace mindspore {
+namespace lite {
+class ConfigFileParser;
+}  // namespace lite
 namespace converter {
 using mindspore::schema::QuantType;
 enum ParallelSplitType { SplitNo = 0, SplitByUserRatio = 1, SplitByUserAttr = 2 };
@@ -58,6 +61,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   int InitInTensorShape();
 
   int InitGraphInputFormat();
+
+  int InitExtendedIntegrationInfo(const lite::ConfigFileParser &config_file_parser);
 
   int Init(int argc, const char **argv);
 

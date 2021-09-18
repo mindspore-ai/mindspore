@@ -36,6 +36,7 @@ namespace converter {
 using mindspore::lite::RET_INPUT_PARAM_INVALID;
 using mindspore::lite::RET_OK;
 namespace {
+constexpr size_t kPluginPathMaxNum = 10;
 constexpr int kQuantBitNumInt16 = 16;
 constexpr int kPathLengthUpperLimit = 1024;
 constexpr int kMinShapeSizeInStr = 2;
@@ -212,6 +213,33 @@ int Flags::InitGraphInputFormat() {
   return RET_OK;
 }
 
+int Flags::InitExtendedIntegrationInfo(const lite::ConfigFileParser &config_file_parser) {
+  auto extended_info = config_file_parser.GetRegistryInfoString();
+  if (!extended_info.plugin_path.empty()) {
+    const char *delimiter = ";";
+    auto relative_path = lite::SplitStringToVector(extended_info.plugin_path, *delimiter);
+    if (relative_path.size() > kPluginPathMaxNum) {
+      MS_LOG(ERROR) << "extended plugin library's num is too big, which shouldn't be larger than 10.";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    for (size_t i = 0; i < relative_path.size(); i++) {
+      this->pluginsPath.push_back(lite::RealPath(relative_path[i].c_str()));
+    }
+  }
+
+  if (!extended_info.disable_fusion.empty()) {
+    if (extended_info.disable_fusion == "on") {
+      this->disableFusion = true;
+    } else if (extended_info.disable_fusion == "off") {
+      this->disableFusion = false;
+    } else {
+      std::cerr << "CONFIG SETTING ILLEGAL: disable_fusion should be on/off" << std::endl;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
 int Flags::InitConfigFile() {
   lite::ConfigFileParser config_file_parser;
   auto ret = config_file_parser.ParseConfigFile(this->configFile);
@@ -242,27 +270,11 @@ int Flags::InitConfigFile() {
     MS_LOG(ERROR) << "Parse mixed bit weight quant param failed.";
     return ret;
   }
-  auto plugins_path_str = GetStrFromConfigFile(this->configFile, "plugin_path");
-  if (!plugins_path_str.empty()) {
-    const char *delimiter = ";";
-    auto relative_path = lite::SplitStringToVector(plugins_path_str, *delimiter);
-    for (size_t i = 0; i < relative_path.size(); i++) {
-      this->pluginsPath.push_back(lite::RealPath(relative_path[i].c_str()));
-    }
+  ret = InitExtendedIntegrationInfo(config_file_parser);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse extended integration info failed.";
+    return ret;
   }
-
-  auto disable_fusion_flag = GetStrFromConfigFile(this->configFile, "disable_fusion");
-  if (!disable_fusion_flag.empty()) {
-    if (disable_fusion_flag == "on") {
-      this->disableFusion = true;
-    } else if (disable_fusion_flag == "off") {
-      this->disableFusion = false;
-    } else {
-      std::cerr << "CONFIG SETTING ILLEGAL: disable_fusion should be on/off" << std::endl;
-      return RET_INPUT_PARAM_INVALID;
-    }
-  }
-
   (void)CheckOfflineParallelConfig(this->configFile, &parallel_split_config_);
   return RET_OK;
 }
