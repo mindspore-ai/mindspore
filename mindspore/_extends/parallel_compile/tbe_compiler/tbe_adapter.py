@@ -55,6 +55,7 @@ def _tune_init(job: TbeJob):
         os.environ["ENABLE_TUNE_DUMP"] = "TRUE"
     if op_bank_update:
         sync_op_tune_params("tbe.common.tiling.tiling_api", "reset_repository", False, "")
+
     if need_ga or need_rl or offline_tune:
         try:
             import auto_tune.auto_tune_main as at_atm
@@ -65,7 +66,6 @@ def _tune_init(job: TbeJob):
                     job.error("check soc version failed in tune init")
                     job.error("GATune run Failed. Run .o Failed, because soc_version doesn't match the device")
                     return False
-
         except ImportError:
             msg = "TBEException", \
                   "No module named `auto_tune` or `schedule_search`. If you want tune your op's performance," \
@@ -350,6 +350,8 @@ def get_prebuild_output(op_name):
         res = json.loads(params_str)
     except ValueError:
         res = {}
+    finally:
+        pass
     return res
 
 
@@ -513,6 +515,8 @@ def rl_tune_single_op(job: TbeJob):
         job.error(
             "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
         return False
+    finally:
+        pass
     tune_op_module_name = op_module_name + "@" + py_module_path
     base_kernel = job.content["SocInfo"]["op_debug_dir"] + "/kernel_meta/" + op_kernel_name + ".o"
     from schedule_search.rl_online_tune import dispatch_single_tune_task
@@ -542,6 +546,8 @@ def rl_tune_fusion_op(job: TbeJob):
         job.error(
             "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
         return False
+    finally:
+        pass
     l1_size = job.content["l1_size"]
     base_kernel = job.content["SocInfo"]["op_debug_dir"] + "/kernel_meta/" + op_kernel_name + ".o"
     compute_op_list = get_compute_op_list(job.content)

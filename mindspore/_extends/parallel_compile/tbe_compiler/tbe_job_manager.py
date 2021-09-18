@@ -127,6 +127,8 @@ class TbeJobManager:
             job.error("Error message:{}".format(traceback.format_exc()))
             job.error_manager(e)
             return self.add_to_finished_jobs(job, JobStatus.JOB_FAILED)
+        finally:
+            pass
 
     def initialize_handler(self, job: TbeJob):
         """ Initialize job handler """

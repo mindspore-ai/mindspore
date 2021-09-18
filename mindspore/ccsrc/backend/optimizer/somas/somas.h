@@ -52,9 +52,9 @@ class Somas {
   std::string SomasInfo(bool calc_hash = false) const;
   std::string SomasMemory() const;
   void DumpSomasInfoIR(const string filename) const;
-  void DumpSomasMemoryIR(const string filename) const;
+  void DumpSomasMemoryIR(const string &filename) const;
 
-  static bool NodeSort(SomasNodePtr, SomasNodePtr);
+  static bool NodeSort(const SomasNodePtr &node1, const SomasNodePtr &node2);
 #ifndef ENABLE_SECURITY
   void ConvertToProfilingNode(uint32_t graph_id);
 #endif
@@ -133,8 +133,8 @@ class Somas {
   std::string GetSplitName(const string &scope_name) const;
   size_t CalcLowerBound() const;
   void GenGraphStatisticInfo();
-  SomasParameterPtr GetSomasParameter(AnfNodePtr node, size_t index);
-  SomasParameterPtr CreateSomasParameter(AnfNodePtr node, size_t index);
+  SomasParameterPtr GetSomasParameter(const AnfNodePtr &node, size_t index);
+  SomasParameterPtr CreateSomasParameter(const AnfNodePtr &node, size_t index);
   void InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel);
   void InitAtomicCleanInputs(bool is_all_nop_node, const CNodePtr &kernel);
   void ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &calc_tensor,

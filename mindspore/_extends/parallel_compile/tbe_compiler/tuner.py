@@ -306,6 +306,8 @@ class TbeTuner:
             log.error(
                 "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
             return False, job_type, compile_info
+        finally:
+            pass
         if self.offline_tune:
             job_type = RL_OFFLINE
             dump_fusion_json(converted_json, self.offline_dump_path)

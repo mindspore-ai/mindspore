@@ -15,6 +15,8 @@
 */
 
 #include "backend/optimizer/somas/somas_tensor.h"
+
+#include <utility>
 #include "backend/optimizer/somas/somas_node.h"
 #include "backend/optimizer/somas/somas_stream.h"
 #include "backend/optimizer/somas/somas.h"
@@ -27,8 +29,8 @@ SomasTensor::SomasTensor(size_t id, SomasNodePtr source_node, SomasStreamPtr sou
       type_(kUnknown),
       offset_(0),
       id_(id),
-      source_node_(source_node),
-      source_stream_(source_stream),
+      source_node_(std::move(source_node)),
+      source_stream_(std::move(source_stream)),
       original_size_(real_size) {
   const size_t alignment = 512;
   const size_t alignment_complement = 31;
