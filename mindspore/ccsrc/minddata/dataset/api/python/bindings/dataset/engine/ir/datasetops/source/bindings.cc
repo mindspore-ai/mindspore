@@ -93,7 +93,7 @@ PYBIND_REGISTER(CityscapesNode, 2, ([](const py::module *m) {
                   (void)py::class_<CityscapesNode, DatasetNode, std::shared_ptr<CityscapesNode>>(
                     *m, "CityscapesNode", "to create a CityscapesNode")
                     .def(py::init([](std::string dataset_dir, std::string usage, std::string quality_mode,
-                                     std::string task, bool decode, py::handle sampler) {
+                                     std::string task, bool decode, const py::handle &sampler) {
                       auto cityscapes = std::make_shared<CityscapesNode>(dataset_dir, usage, quality_mode, task, decode,
                                                                          toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(cityscapes->ValidateParams());
@@ -118,7 +118,7 @@ PYBIND_REGISTER(CocoNode, 2, ([](const py::module *m) {
                   (void)py::class_<CocoNode, DatasetNode, std::shared_ptr<CocoNode>>(*m, "CocoNode",
                                                                                      "to create a CocoNode")
                     .def(py::init([](std::string dataset_dir, std::string annotation_file, std::string task,
-                                     bool decode, py::handle sampler, bool extra_metadata) {
+                                     bool decode, const py::handle &sampler, bool extra_metadata) {
                       std::shared_ptr<CocoNode> coco = std::make_shared<CocoNode>(
                         dataset_dir, annotation_file, task, decode, toSamplerObj(sampler), nullptr, extra_metadata);
                       THROW_IF_ERROR(coco->ValidateParams());
@@ -154,7 +154,7 @@ PYBIND_REGISTER(DIV2KNode, 2, ([](const py::module *m) {
 PYBIND_REGISTER(
   FlickrNode, 2, ([](const py::module *m) {
     (void)py::class_<FlickrNode, DatasetNode, std::shared_ptr<FlickrNode>>(*m, "FlickrNode", "to create a FlickrNode")
-      .def(py::init([](std::string dataset_dir, std::string annotation_file, bool decode, py::handle sampler) {
+      .def(py::init([](std::string dataset_dir, std::string annotation_file, bool decode, const py::handle &sampler) {
         auto flickr =
           std::make_shared<FlickrNode>(dataset_dir, annotation_file, decode, toSamplerObj(sampler), nullptr);
         THROW_IF_ERROR(flickr->ValidateParams());
@@ -213,7 +213,7 @@ PYBIND_REGISTER(MindDataNode, 2, ([](const py::module *m) {
                   (void)py::class_<MindDataNode, DatasetNode, std::shared_ptr<MindDataNode>>(*m, "MindDataNode",
                                                                                              "to create a MindDataNode")
                     .def(py::init([](std::string dataset_file, py::list columns_list, py::handle sampler,
-                                     py::dict padded_sample, int64_t num_padded, ShuffleMode shuffle_mode) {
+                                     const py::dict &padded_sample, int64_t num_padded, ShuffleMode shuffle_mode) {
                       nlohmann::json padded_sample_json;
                       std::map<std::string, std::string> sample_bytes;
                       THROW_IF_ERROR(ToJson(padded_sample, &padded_sample_json, &sample_bytes));
@@ -225,7 +225,7 @@ PYBIND_REGISTER(MindDataNode, 2, ([](const py::module *m) {
                       return minddata;
                     }))
                     .def(py::init([](py::list dataset_file, py::list columns_list, py::handle sampler,
-                                     py::dict padded_sample, int64_t num_padded, ShuffleMode shuffle_mode) {
+                                     const py::dict &padded_sample, int64_t num_padded, ShuffleMode shuffle_mode) {
                       nlohmann::json padded_sample_json;
                       std::map<std::string, std::string> sample_bytes;
                       THROW_IF_ERROR(ToJson(padded_sample, &padded_sample_json, &sample_bytes));
@@ -268,7 +268,7 @@ PYBIND_REGISTER(RandomNode, 2, ([](const py::module *m) {
 PYBIND_REGISTER(SBUNode, 2, ([](const py::module *m) {
                   (void)py::class_<SBUNode, DatasetNode, std::shared_ptr<SBUNode>>(*m, "SBUNode",
                                                                                    "to create an SBUNode")
-                    .def(py::init([](std::string dataset_dir, bool decode, py::handle sampler) {
+                    .def(py::init([](std::string dataset_dir, bool decode, const py::handle &sampler) {
                       auto sbu = std::make_shared<SBUNode>(dataset_dir, decode, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(sbu->ValidateParams());
                       return sbu;
@@ -326,7 +326,8 @@ PYBIND_REGISTER(USPSNode, 2, ([](const py::module *m) {
 PYBIND_REGISTER(VOCNode, 2, ([](const py::module *m) {
                   (void)py::class_<VOCNode, DatasetNode, std::shared_ptr<VOCNode>>(*m, "VOCNode", "to create a VOCNode")
                     .def(py::init([](std::string dataset_dir, std::string task, std::string usage,
-                                     py::dict class_indexing, bool decode, py::handle sampler, bool extra_metadata) {
+                                     const py::dict &class_indexing, bool decode, const py::handle &sampler,
+                                     bool extra_metadata) {
                       std::shared_ptr<VOCNode> voc =
                         std::make_shared<VOCNode>(dataset_dir, task, usage, toStringMap(class_indexing), decode,
                                                   toSamplerObj(sampler), nullptr, extra_metadata);

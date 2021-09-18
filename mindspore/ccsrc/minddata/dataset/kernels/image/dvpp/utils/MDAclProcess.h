@@ -43,13 +43,13 @@ class MDAclProcess {
  public:
   MDAclProcess(uint32_t resizeWidth, uint32_t resizeHeight, uint32_t cropWidth, uint32_t cropHeight,
                aclrtContext context, bool is_crop = true, aclrtStream stream = nullptr,
-               std::shared_ptr<DvppCommon> dvppCommon = nullptr);
+               const std::shared_ptr<DvppCommon> &dvppCommon = nullptr);
 
   MDAclProcess(uint32_t ParaWidth, uint32_t ParaHeight, aclrtContext context, bool is_crop = false,
-               aclrtStream stream = nullptr, std::shared_ptr<DvppCommon> dvppCommon = nullptr);
+               aclrtStream stream = nullptr, const std::shared_ptr<DvppCommon> &dvppCommon = nullptr);
 
   MDAclProcess(aclrtContext context, bool is_crop = false, aclrtStream stream = nullptr,
-               std::shared_ptr<DvppCommon> dvppCommon = nullptr);
+               const std::shared_ptr<DvppCommon> &dvppCommon = nullptr);
 
   ~MDAclProcess(){};
 
@@ -109,7 +109,7 @@ class MDAclProcess {
   // Crop definition
   void CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropinfo, DvppDataInfo &resizeinfo);
   // Resize definition
-  APP_ERROR ResizeConfigFilter(DvppDataInfo &resizeinfo, const uint32_t pri_w_, const uint32_t pri_h_);
+  APP_ERROR ResizeConfigFilter(DvppDataInfo &resizeinfo, const uint32_t pri_w_, const uint32_t pri_h_) const;
   // Initialize DVPP modules used by this sample
   APP_ERROR InitModule();
   // Dvpp process with crop

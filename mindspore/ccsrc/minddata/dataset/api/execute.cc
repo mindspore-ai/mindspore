@@ -215,7 +215,10 @@ Execute::~Execute() {
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
     if (device_resource_) {
-      device_resource_->FinalizeResource();
+      auto rc = device_resource_->FinalizeResource();
+      if (rc.IsError()) {
+        MS_LOG(ERROR) << "Device resource release failed, error msg is " << rc;
+      }
     } else {
       MS_LOG(ERROR) << "Device resource is nullptr which is illegal under case Ascend310";
     }
@@ -525,7 +528,11 @@ std::string Execute::AippCfgGenerator() {
   std::string config_location = "./aipp.cfg";
 #ifdef ENABLE_ACL
   if (info_->init_with_shared_ptr_) {
-    ParseTransforms();
+    auto rc = ParseTransforms();
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "Parse transforms failed, error msg is " << rc;
+      return "";
+    }
     info_->init_with_shared_ptr_ = false;
   }
   std::vector<uint32_t> paras;  // Record the parameters value of each Ascend operators
@@ -538,7 +545,11 @@ std::string Execute::AippCfgGenerator() {
     }
 
     // Define map between operator name and parameter name
-    ops_[i]->to_json(&ir_info);
+    auto rc = ops_[i]->to_json(&ir_info);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "IR information serialize to json failed, error msg is " << rc;
+      return "";
+    }
 
     // Collect the information of operators
     for (auto pos = info_->op2para_map_.equal_range(ops_[i]->Name()); pos.first != pos.second; ++pos.first) {
@@ -601,7 +612,11 @@ std::string Execute::AippCfgGenerator() {
     std::vector<float> aipp_std = AippStdFilter(normalize_paras);
 
     std::map<std::string, std::string> aipp_options;
-    AippInfoCollection(&aipp_options, aipp_size, aipp_mean, aipp_std);
+    auto rc = AippInfoCollection(&aipp_options, aipp_size, aipp_mean, aipp_std);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "Aipp information initialization failed, error msg is " << rc;
+      return "";
+    }
 
     std::string tab_char(4, ' ');
     outfile << "aipp_op {" << std::endl;

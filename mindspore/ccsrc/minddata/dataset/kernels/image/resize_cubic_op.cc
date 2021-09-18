@@ -110,7 +110,7 @@ int calc_coeff(int input_size, int out_size, int input0, int input1, struct inte
     for (; x < kernel_size; x++) {
       coeff[x] = 0;
     }
-    region[xx * 2 + 0] = x_min;
+    region[xx * 2] = x_min;
     region[xx * 2 + 1] = x_max;
   }
 
@@ -146,12 +146,12 @@ Status ImagingHorizontalInterp(LiteMat &output, LiteMat input, int offset, int k
     // obtain the ptr of output, and put calculated value into it
     uint8_t *bgr_buf = output_ptr;
     for (int xx = 0; xx < output.width_; xx++) {
-      int x_min = regions[xx * 2 + 0];
+      int x_min = regions[xx * 2];
       int x_max = regions[xx * 2 + 1];
       k = &kk[xx * kernel_size];
       ss0 = ss1 = ss2 = 1 << (PrecisionBits - 1);
       for (int x = 0; x < x_max; x++) {
-        ss0 += (input_ptr[(yy + offset) * input_width + (x + x_min) * 3 + 0]) * k[x];
+        ss0 += (input_ptr[(yy + offset) * input_width + (x + x_min) * 3]) * k[x];
         ss1 += (input_ptr[(yy + offset) * input_width + (x + x_min) * 3 + 1]) * k[x];
         ss2 += (input_ptr[(yy + offset) * input_width + (x + x_min) * 3 + 2]) * k[x];
       }
@@ -165,8 +165,8 @@ Status ImagingHorizontalInterp(LiteMat &output, LiteMat input, int offset, int k
   return Status::OK();
 }
 
-Status ImagingVerticalInterp(LiteMat &output, LiteMat input, int offset, int kernel_size,
-                             const std::vector<int> &regions, const std::vector<double> &prekk) {
+Status ImagingVerticalInterp(LiteMat &output, LiteMat input, int kernel_size, const std::vector<int> &regions,
+                             const std::vector<double> &prekk) {
   int ss0, ss1, ss2;
 
   // normalize previous calculated coefficients
@@ -181,12 +181,12 @@ Status ImagingVerticalInterp(LiteMat &output, LiteMat input, int offset, int ker
     // obtain the ptr of output, and put calculated value into it
     uint8_t *bgr_buf = output_ptr;
     int32_t *k = &kk[yy * kernel_size];
-    int y_min = regions[yy * 2 + 0];
+    int y_min = regions[yy * 2];
     int y_max = regions[yy * 2 + 1];
     for (int xx = 0; xx < output.width_; xx++) {
       ss0 = ss1 = ss2 = 1 << (PrecisionBits - 1);
       for (int y = 0; y < y_max; y++) {
-        ss0 += (input_ptr[(y + y_min) * input_width + xx * 3 + 0]) * k[y];
+        ss0 += (input_ptr[(y + y_min) * input_width + xx * 3]) * k[y];
         ss1 += (input_ptr[(y + y_min) * input_width + xx * 3 + 1]) * k[y];
         ss2 += (input_ptr[(y + y_min) * input_width + xx * 3 + 2]) * k[y];
       }
@@ -232,7 +232,11 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
     }
     temp.Init(x_size, rect_y1 - rect_y0, 3, LDataType::UINT8, false);
 
-    ImagingHorizontalInterp(temp, input, rect_y0, horiz_kernel, horiz_region, horiz_coeff);
+    auto rc = ImagingHorizontalInterp(temp, input, rect_y0, horiz_kernel, horiz_region, horiz_coeff);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "Image horizontal resize failed, error msg is " << rc;
+      return false;
+    }
     if (temp.IsEmpty()) {
       return false;
     }
@@ -243,7 +247,11 @@ bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, 
   if (vertical_interp) {
     output.Init(input.width_, y_size, 3, LDataType::UINT8, false);
     if (!output.IsEmpty()) {
-      ImagingVerticalInterp(output, input, 0, vert_kernel, vert_region, vert_coeff);
+      auto rc = ImagingVerticalInterp(output, input, vert_kernel, vert_region, vert_coeff);
+      if (rc.IsError()) {
+        MS_LOG(ERROR) << "Image vertical resize failed, error msg is " << rc;
+        return false;
+      }
     }
     if (output.IsEmpty()) {
       return false;

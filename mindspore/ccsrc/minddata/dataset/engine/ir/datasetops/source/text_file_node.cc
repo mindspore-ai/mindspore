@@ -175,7 +175,7 @@ Status TextFileNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetN
   std::shared_ptr<DatasetCache> cache = nullptr;
   RETURN_IF_NOT_OK(DatasetCache::from_json(json_obj, &cache));
   *ds = std::make_shared<TextFileNode>(dataset_files, num_samples, shuffle, num_shards, shard_id, cache);
-  (*ds)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)((*ds)->SetNumWorkers(json_obj["num_parallel_workers"]));
   return Status::OK();
 }
 
