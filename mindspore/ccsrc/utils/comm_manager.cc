@@ -24,7 +24,6 @@
 #include "runtime/hccl_adapter/hccl_adapter.h"
 #include "hccl/hcom.h"
 #include "runtime/device/ascend/distribute/ascend_collective.h"
-using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 #endif
 
 #if defined(ENABLE_GPU)

@@ -106,6 +106,7 @@ std::shared_ptr<LabelGuard> LabelManager::GetLabelInfo(rtModel_t model, const st
   rt_ret = rtLabelListCpy(label_list.data(), label_list.size(), label_info, label_info_size);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rt api rtLabelListCpy failed, ret: " << rt_ret;
+    rtFree(label_info);
     return nullptr;
   }
 
