@@ -291,7 +291,7 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vecto
 void UpdateCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vector<tensor::TensorPtr> *inputs,
                            size_t *input_ctrl_size) {
   if (graph->input_ctrl_tensors()) {
-    bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || graph->isDatasetGraph());
+    bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || graph->IsDatasetGraph());
     if (sink_mode) {
       *input_ctrl_size = LoadCtrlInputTensor(graph, inputs);
     } else {

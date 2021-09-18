@@ -1371,8 +1371,8 @@ void KernelGraph::SetOptimizerFlag() {
   }
 }
 
-bool KernelGraph::isDatasetGraph() const {
-  // check if there is GetNext or InitDataSetQueue node
+bool KernelGraph::IsDatasetGraph() const {
+  // check if there is InitDataSetQueue node
   const auto &nodes = execution_order_;
   for (const auto &node : nodes) {
     auto node_name = AnfAlgo::GetCNodeName(node);

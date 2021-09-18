@@ -21,13 +21,13 @@
 #include <set>
 #include <utility>
 
-#include "debug/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "utils/ms_utils.h"
+#include "utils/file_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -142,7 +142,7 @@ Status SBUOp::ParseSBUData() {
   const Path url_file_name("SBU_captioned_photo_dataset_urls.txt");
   const Path caption_file_name("SBU_captioned_photo_dataset_captions.txt");
   const Path image_folder_name("sbu_images");
-  auto real_folder_path = Common::GetRealPath(folder_path_);
+  auto real_folder_path = FileUtils::GetRealPath(common::SafeCStr(folder_path_));
   CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(), "Get real path failed: " + folder_path_);
   Path root_dir(real_folder_path.value());
 

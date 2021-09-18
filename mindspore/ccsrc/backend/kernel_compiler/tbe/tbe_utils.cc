@@ -195,7 +195,7 @@ nlohmann::json TbeUtils::GenSocInfo() {
 void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &info) {
   auto config_path = TbeUtils::GetOpDebugPath();
   std::string path = config_path + kCceKernelMeta + json_name + kInfoSuffix;
-  auto realpath = Common::GetRealPath(path);
+  auto realpath = Common::CreatePrefixPath(path);
   if (!realpath.has_value()) {
     MS_LOG(WARNING) << "Get real path failed, invalid path: " << realpath.value();
     return;
