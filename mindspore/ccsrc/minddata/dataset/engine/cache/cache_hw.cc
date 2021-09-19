@@ -264,7 +264,6 @@ uint64_t CacheServerHW::GetAvailableMemory() {
     // get title
     std::string::size_type position = line.find(":");
     std::string title = line.substr(0, position);
-
     // get the value of MemAvailable
     if (title == "MemAvailable") {
       std::string::size_type pos1 = line.find_last_of(" ");

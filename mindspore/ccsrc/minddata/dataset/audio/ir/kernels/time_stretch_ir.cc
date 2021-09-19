@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 // TimeStretchOperation
 TimeStretchOperation::TimeStretchOperation(float hop_length, int n_freq, float fixed_rate)
     : hop_length_(hop_length), n_freq_(n_freq), fixed_rate_(fixed_rate) {}

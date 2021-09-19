@@ -20,9 +20,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
-
 GaussianBlurOperation::GaussianBlurOperation(const std::vector<int32_t> kernel_size, const std::vector<float> sigma)
     : kernel_size_(kernel_size), sigma_(sigma) {}
 
@@ -72,7 +70,6 @@ Status GaussianBlurOperation::from_json(nlohmann::json op_params, std::shared_pt
   *operation = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma);
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

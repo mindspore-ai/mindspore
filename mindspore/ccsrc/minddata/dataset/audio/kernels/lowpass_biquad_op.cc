@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const float LowpassBiquadOp::kQ = 0.707;
 // constructor
 
@@ -55,6 +54,5 @@ Status LowpassBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::share
                   static_cast<float16>(a0), static_cast<float16>(a1), static_cast<float16>(a2));
   }
 }
-
 }  // namespace dataset
 }  // namespace mindspore

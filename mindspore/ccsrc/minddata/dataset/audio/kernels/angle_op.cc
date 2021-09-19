@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status AngleOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // if If the last dimension is not 2, then it's not a complex number
@@ -59,6 +58,5 @@ Status AngleOp::OutputType(const std::vector<DataType> &inputs, std::vector<Data
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

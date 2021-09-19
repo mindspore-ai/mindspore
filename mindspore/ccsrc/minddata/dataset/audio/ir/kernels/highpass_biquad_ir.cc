@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
 // HighpassBiquadOperation
 HighpassBiquadOperation::HighpassBiquadOperation(int32_t sample_rate, float cutoff_freq, float Q)

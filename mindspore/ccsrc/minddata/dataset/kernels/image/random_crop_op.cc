@@ -122,6 +122,11 @@ Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   if (input.size() != 1) {
     for (size_t i = 0; i < input.size() - 1; i++) {
+      if (input[i]->Rank() != 2 && input[i]->Rank() != 3) {
+        std::string err_msg =
+          "RandomCropOp: image shape is not <H,W,C> or <H, W>, but got rank:" + std::to_string(input[i]->Rank());
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
       if (input[i]->shape()[0] != input[i + 1]->shape()[0] || input[i]->shape()[1] != input[i + 1]->shape()[1]) {
         RETURN_STATUS_UNEXPECTED("RandomCropOp: The width and height of the image need to be the same size.");
       }

@@ -17,7 +17,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // using 8 bits for result
 constexpr uint8_t PrecisionBits = 22;
 

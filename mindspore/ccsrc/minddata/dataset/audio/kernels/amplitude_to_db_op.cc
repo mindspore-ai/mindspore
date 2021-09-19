@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status AmplitudeToDBOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   if (input->shape().Rank() < 2) {
@@ -50,6 +49,5 @@ Status AmplitudeToDBOp::Compute(const std::shared_ptr<Tensor> &input, std::share
     return AmplitudeToDB<double>(input_tensor, output, multiplier, amin, db_multiplier, top_db);
   }
 }
-
 }  // namespace dataset
 }  // namespace mindspore

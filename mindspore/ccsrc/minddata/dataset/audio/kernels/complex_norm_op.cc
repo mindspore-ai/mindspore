@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // constructor
 ComplexNormOp::ComplexNormOp(float power) : power_(power) {}
 
@@ -53,6 +52,5 @@ Status ComplexNormOp::OutputType(const std::vector<DataType> &inputs, std::vecto
 }
 
 void ComplexNormOp::Print(std::ostream &out) const { out << "ComplexNormOp: power " << power_; }
-
 }  // namespace dataset
 }  // namespace mindspore

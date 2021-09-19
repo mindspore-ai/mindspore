@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status GaussianBlurOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   RETURN_IF_NOT_OK(ValidateImageRank("GaussianBlur", input->Rank()));

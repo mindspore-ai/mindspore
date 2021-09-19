@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 constexpr int32_t FadeOp::kFadeInLen = 0;
 constexpr int32_t FadeOp::kFadeOutLen = 0;
 constexpr FadeShape FadeOp::kFadeShape = FadeShape::kLinear;
