@@ -2448,6 +2448,11 @@ test_case_nn_ops = [
                         Tensor(np.array([[0.3, 0.2], [0.4, 0.1]]).astype(np.float32)),
                         Tensor(0.99, mstype.float32)],
         'skip': ['backward']}),
+    ('GridSampler3D', {
+        'block': P.GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=False),
+        'desc_inputs': [Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32)),
+                        Tensor(np.arange(-0.2, 1, 0.1).reshape((2, 2, 1, 1, 3)).astype(np.float32))],
+        'desc_bprop': [Tensor(np.arange(-1, 1, 0.25).reshape((2, 2, 2, 1, 1)).astype(np.float32))]}),
 ]
 
 test_case_array_ops = [

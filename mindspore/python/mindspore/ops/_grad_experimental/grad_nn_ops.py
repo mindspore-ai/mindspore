@@ -84,3 +84,15 @@ def get_bprop_celu(self):
         return (dx,)
 
     return bprop
+
+
+@bprop_getters.register(P.GridSampler3D)
+def get_bprop_grid_sampler_3d(self):
+    """Grad definition for `GridSampler3D` operation."""
+    grad = G.GridSampler3DGrad(self.interpolation_mode, self.padding_mode, self.align_corners)
+
+    def bprop(input_x, grid, out, dout):
+        dx, dgrid = grad(dout, input_x, grid)
+        return dx, dgrid
+
+    return bprop

@@ -90,7 +90,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2, ApplyAdagradDA,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink,
-                     ApplyAdamWithAmsgrad)
+                     ApplyAdamWithAmsgrad, GridSampler3D)
 from . import _quant_ops
 from ._quant_ops import *
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
@@ -129,6 +129,7 @@ from .custom_ops import (Custom)
 __all__ = [
     'CeLU',
     'Ger',
+    'GridSampler3D',
     'Unique',
     'ReverseSequence',
     'Sort',

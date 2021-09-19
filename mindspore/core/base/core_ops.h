@@ -128,6 +128,8 @@ constexpr auto kConv2DTranspose = "Conv2DTranspose";
 constexpr auto kSparseApplyAdadelta = "SparseApplyAdadelta";
 constexpr auto kRoll = "Roll";
 constexpr auto kTanh = "Tanh";
+constexpr auto kGridSampler3D = "GridSampler3D";
+constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
 
 // Others
 constexpr auto kEnvironCreate = "EnvironCreate";
@@ -485,6 +487,8 @@ inline const PrimitivePtr kPrimApplyAddSign = std::make_shared<Primitive>("Apply
 inline const PrimitivePtr kPrimApplyAdagrad = std::make_shared<Primitive>("ApplyAdagrad");
 inline const PrimitivePtr kPrimApplyAdadelta = std::make_shared<Primitive>("ApplyAdadelta");
 inline const PrimitivePtr kPrimApplyAdamWithAmsgrad = std::make_shared<Primitive>("ApplyAdamWithAmsgrad");
+inline const PrimitivePtr kPrimGridSampler3D = std::make_shared<Primitive>(kGridSampler3D);
+inline const PrimitivePtr kPrimGridSampler3DGrad = std::make_shared<Primitive>(kGridSampler3DGrad);
 
 // Comm ops
 inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");
