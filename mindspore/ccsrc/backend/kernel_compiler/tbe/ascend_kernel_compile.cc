@@ -250,12 +250,15 @@ std::vector<std::string> GetTuneOpsList(const std::string &d) {
   size_t p1 = 0;
   size_t p2 = ops.find(d);
   while (p2 != std::string::npos) {
-    res.emplace_back(ops.substr(p1, p2 - p1));
+    if (p1 < ops.length() && (p2 - p1) < ops.length()) {
+      (void)res.emplace_back(ops.substr(p1, p2 - p1));
+    }
+
     p1 = p2 + 1;
     p2 = ops.find(d, p1);
   }
-  if (p1 != ops.length()) {
-    res.emplace_back(ops.substr(p1));
+  if (p1 <= ops.length()) {
+    (void)res.emplace_back(ops.substr(p1));
   }
   return res;
 }
@@ -274,7 +277,7 @@ void AscendKernelCompileManager::PrintProcessLog(const nlohmann::json &json, int
   auto job_id = GetJsonValue<int>(json, kJobId);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
   std::vector<nlohmann::json> all_logs;
-  std::copy(logs.begin(), logs.end(), std::back_inserter(all_logs));
+  (void)std::copy(logs.begin(), logs.end(), std::back_inserter(all_logs));
   std::sort(all_logs.begin(), all_logs.end(), Order);
   for (const auto &item : all_logs) {
     PrintInfo(item, json_name, job_id, adjust_log_level);
@@ -327,7 +330,7 @@ void AscendKernelCompileManager::QueryResultProcess(const nlohmann::json &json, 
   }
 }
 
-nlohmann::json AscendKernelCompileManager::TurnStrToJson(const std::string &string) {
+nlohmann::json AscendKernelCompileManager::TurnStrToJson(const std::string &string) const {
   nlohmann::json json;
   if (!ParseJson(string, &json)) {
     MS_LOG(EXCEPTION) << "Parse build result error.";
@@ -358,12 +361,12 @@ void AscendKernelCompileManager::ParseTargetJobStatus(const std::string &type, c
       if (type == kPreCompile) {
         build_manager_->PreTaskFinishProcess(task_info.target_job_id, build_result);
       } else {
-        build_manager_->TaskFinishProcess(task_info.target_job_id, build_result);
+        (void)build_manager_->TaskFinishProcess(task_info.target_job_id, build_result);
       }
-      success_job->emplace_back(task_info.target_job_id);
+      (void)success_job->emplace_back(task_info.target_job_id);
     } else if (task_info.job_status == kFailed) {
       if (type == kPreCompile) {
-        success_job->emplace_back(task_info.target_job_id);
+        (void)success_job->emplace_back(task_info.target_job_id);
         MS_LOG(WARNING) << "Single op pre build failed ,op: " << kernel_name
                         << "\n except_msg : " << task_info.except_msg;
       } else {
@@ -396,10 +399,10 @@ void AscendKernelCompileManager::QueryFinishJob(const std::string &job_type) {
       auto job_result = build_manager_->ProcessTbeJob(query_json);
       query_cnt++;
       ParseTargetJobStatus(job_type, job_result, &success_job);
-      iter++;
+      (void)iter++;
     }
     for (auto k : success_job) {
-      job_list_.erase(k);
+      (void)job_list_.erase(k);
     }
     success_job.clear();
     if (!job_list_.empty()) {
@@ -436,21 +439,21 @@ void AscendKernelCompileManager::QueryFusionFinishJob(KernelModMap *kernel_mode_
           if (kernel_mode_item.second != nullptr) {
             (void)kernel_mode_ret->emplace(kernel_mode_item);
           }
-          success_job.emplace_back(task_info.target_job_id);
+          (void)success_job.emplace_back(task_info.target_job_id);
         } else if (task_info.job_status == kFailed) {
           MS_LOG(INFO) << "FusionOp compile failed, json name: " << task_info.json_name
                        << "\n Except_msg: " << task_info.except_msg;
           auto target_id = task_info.target_job_id;
-          success_job.emplace_back(target_id);
+          (void)success_job.emplace_back(target_id);
           build_failed_nums += 1;
         }
       } else {
         MS_LOG(EXCEPTION) << "Fusion op query failed. message: " << build_result;
       }
-      iter++;
+      (void)iter++;
     }
     for (auto k : success_job) {
-      job_list_.erase(k);
+      (void)job_list_.erase(k);
     }
     success_job.clear();
     if (!job_list_.empty()) {
@@ -463,14 +466,14 @@ void AscendKernelCompileManager::QueryFusionFinishJob(KernelModMap *kernel_mode_
   MS_LOG(INFO) << "Compile Fusion Kernel Failed Num: " << build_failed_nums;
 }
 
-bool AscendKernelCompileManager::JsonAssemble(const std::string &job_type, const nlohmann::json &src_json,
+void AscendKernelCompileManager::JsonAssemble(const std::string &job_type, const nlohmann::json &src_json,
                                               nlohmann::json *dst_json) {
   MS_EXCEPTION_IF_NULL(src_json);
   MS_EXCEPTION_IF_NULL(dst_json);
   static size_t job_id = 0;
-  static auto context_ptr = MsContext::GetInstance();
+  auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  static int source_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  static uint32_t source_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   (*dst_json)[kJobType] = job_type;
   (*dst_json)[kJobId] = job_id++;
   (*dst_json)[kSourceId] = source_id;
@@ -500,7 +503,6 @@ bool AscendKernelCompileManager::JsonAssemble(const std::string &job_type, const
   } else {
     (*dst_json)[kJobContent] = src_json;
   }
-  return true;
 }
 
 void AscendKernelCompileManager::GetAllAscendNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph,
@@ -515,7 +517,7 @@ void AscendKernelCompileManager::GetAllAscendNodes(const std::shared_ptr<session
     KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
     if (kernel_type == TBE_KERNEL) {
       if (AnfAlgo::GetKernelMod(anf_node) == nullptr) {
-        tbe_nodes->push_back(anf_node);
+        (void)tbe_nodes->push_back(anf_node);
       }
     }
   }
@@ -544,10 +546,7 @@ void AscendKernelCompileManager::AscendPreBuild(const std::shared_ptr<session::K
     }
     auto json_name = json_creator->GetJsonName();
     nlohmann::json build_json;
-    if (!JsonAssemble(kPreCompile, kernel_json, &build_json)) {
-      MS_LOG(EXCEPTION) << "Assemble json failed, job type: " << kPreCompile
-                        << ", node trace: " << trace::DumpSourceLines(node);
-    }
+    JsonAssemble(kPreCompile, kernel_json, &build_json);
     auto build_result = build_manager_->ProcessTbeJob(build_json);
     auto json_obj = TurnStrToJson(build_result);
     PrintCompileResult(json_obj);
@@ -556,8 +555,8 @@ void AscendKernelCompileManager::AscendPreBuild(const std::shared_ptr<session::K
     if (json_obj.at(kStatus) == kRunning) {
       std::pair<int, nlohmann::json> pair(task_id, build_json);
       std::pair<int, AnfNodePtr> id_node(task_id, node);
-      job_list_.insert(pair);
-      job_id_to_node_.insert(id_node);
+      (void)job_list_.insert(pair);
+      (void)job_id_to_node_.insert(id_node);
     } else if (json_obj.at(kStatus) == kSuccess) {
       std::string build_res = GetJsonValue<std::string>(json_obj, kResult);
       build_manager_->PreTaskFinishProcess(task_id, build_res);
@@ -608,10 +607,7 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
 
     nlohmann::json build_json;
     job_type = is_tune_flag_ ? kTune : kCompile;
-    if (!JsonAssemble(job_type, kernel_json, &build_json)) {
-      MS_LOG(EXCEPTION) << "Assemble json failed, job type: " << kCompile << ", op:[" << op_name << ", "
-                        << node->fullname_with_scope() << "], node trace: " << trace::DumpSourceLines(node);
-    }
+    JsonAssemble(job_type, kernel_json, &build_json);
     auto build_str = build_json.dump(indent);
     MS_LOG(DEBUG) << "Op build json file : " << build_str;
     TbeUtils::SaveJsonInfo(json_name, build_str);
@@ -634,7 +630,7 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
       // job running success, save build result.
       MS_LOG(DEBUG) << "Target job compile success, save build result, json name: " << json_name;
       std::string build_res = GetJsonValue<std::string>(json_obj, kResult);
-      build_manager_->TaskFinishProcess(task_id, build_res);
+      (void)build_manager_->TaskFinishProcess(task_id, build_res);
     } else {
       // job running failed, raise exception (only single op)
       ResetOldTask();
@@ -690,9 +686,7 @@ KernelModMap AscendKernelCompileManager::AscendFusionOpCompile(const std::vector
 
     nlohmann::json build_json;
     const std::string job_type = is_tune_flag_ ? kTune : kFusionCompile;
-    if (!JsonAssemble(job_type, fusion_op, &build_json)) {
-      MS_LOG(EXCEPTION) << "Assemble json failed, job type: [" << kFusionCompile << "], json name: " << json_name;
-    }
+    JsonAssemble(job_type, fusion_op, &build_json);
     auto build_str = build_json.dump(indent);
     MS_LOG(DEBUG) << "FusionOp build json file : " << build_str;
     TbeUtils::SaveJsonInfo(json_name, build_str);
@@ -729,9 +723,8 @@ void AscendKernelCompileManager::PrintInitResult(const nlohmann::json &json) {
   MS_LOG(DEBUG) << "Job: " << job_type << " result processing.";
   // init only concern about result, but don't care about the process.
   if (json.at(kStatus) == kFailed) {
-    auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
-    auto message = FilterExceptionMessage(all_logs);
-    MS_LOG(EXCEPTION) << "Job " << job_type << " running failed, except_msg: " << message;
+    PrintProcessLog(json);
+    MS_LOG(EXCEPTION) << "Job " << job_type << " running failed.";
   }
   MS_LOG(INFO) << "Job: " << job_type << " running success.";
 }
@@ -746,9 +739,7 @@ void AscendKernelCompileManager::TbeInitialize() {
   MS_EXCEPTION_IF_NULL(build_manager_);
   nlohmann::json init_json;
   nlohmann::json soc_info = TbeUtils::GenSocInfo();
-  if (!JsonAssemble(kInitialize, soc_info, &init_json)) {
-    MS_LOG(EXCEPTION) << "Assemble json failed, job type: Initialize.";
-  }
+  JsonAssemble(kInitialize, soc_info, &init_json);
   auto offline_tune = (init_json[kJobContent][kSocInfo][kOfflineTune]).get<bool>();
   op_debug_level_ = (init_json[kJobContent][kSocInfo]["op_debug_level"]).get<std::string>();
   auto auto_tiling_mode = (init_json[kJobContent][kSocInfo]["autoTilingMode"]).get<std::string>();
@@ -799,9 +790,7 @@ std::string AscendKernelCompileManager::AscendOpSelectFormat(const AnfNodePtr &n
   if (!json_creator->GenJson(node, &kernel_info)) {
     MS_LOG(EXCEPTION) << "Gen select json failed. [" << op_name << ", " << node->fullname_with_scope() << "]";
   }
-  if (!JsonAssemble(kSelectFormat, kernel_info, &select_json)) {
-    MS_LOG(EXCEPTION) << "Assemble json failed, job type: SelectFormat";
-  }
+  JsonAssemble(kSelectFormat, kernel_info, &select_json);
   auto select_ret = build_manager_->ProcessTbeJob(select_json);
   auto json_ret = TurnStrToJson(select_ret);
   return OpSelectAndCheckResultProcess(json_ret, node);
@@ -820,9 +809,7 @@ bool AscendKernelCompileManager::AscendOpCheckSupported(const AnfNodePtr &node) 
     MS_LOG(EXCEPTION) << "Gen check supported json failed.[" << op_name << ", " << node->fullname_with_scope()
                       << "], node trace: " << trace::DumpSourceLines(node);
   }
-  if (!JsonAssemble(kCheckSupport, kernel_info, &check_json)) {
-    MS_LOG(EXCEPTION) << "Assemble json failed, job type: CheckSupport. Node trace: " << trace::DumpSourceLines(node);
-  }
+  JsonAssemble(kCheckSupport, kernel_info, &check_json);
   auto check_ret = build_manager_->ProcessTbeJob(check_json);
   auto json_ret = TurnStrToJson(check_ret);
   std::string check_info = OpSelectAndCheckResultProcess(json_ret, node);
