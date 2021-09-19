@@ -18,7 +18,7 @@ ckpt_root = "/home/workspace/mindspore_dataset/checkpoint"
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 geir_root = os.path.join(cur_path, "mindspore_geir")
 arm_main_path = os.path.join(cur_path, "mindir_310infer_exe")
-model_zoo_path = os.path.join(cur_path, "../../../model_zoo")
+model_zoo_path = os.path.join(cur_path, "../../../tests/models")
 
 
 def copy_files(from_, to_, model_name):

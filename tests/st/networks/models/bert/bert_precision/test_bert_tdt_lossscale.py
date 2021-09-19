@@ -31,9 +31,9 @@ from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.model import Model
 import mindspore.nn.learning_rate_schedule as lr_schedules
-from model_zoo.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss
-from model_zoo.official.nlp.bert.src.bert_for_pre_training import BertTrainOneStepWithLossScaleCell
-from model_zoo.official.nlp.bert.src.bert_model import BertConfig
+from tests.models.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss
+from tests.models.official.nlp.bert.src.bert_for_pre_training import BertTrainOneStepWithLossScaleCell
+from tests.models.official.nlp.bert.src.bert_model import BertConfig
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
