@@ -86,7 +86,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   py::dict &global_py_params() { return global_py_params_; }
   void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
   void AddGlobalPyParam(const std::string &name, const py::object &obj) { global_py_params_[py::str(name)] = obj; }
-  void CopyGlobalPyParam(const py::dict &symbols) {
+  void UpdateGlobalPyParam(const py::dict &symbols) {
     for (auto &param : symbols) {
       if (!global_py_params_.contains(param.first)) {
         global_py_params_[param.first] = param.second;
@@ -100,6 +100,25 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void AddLocalPyParam(const std::string &name, const AnfNodePtr &node) {
     local_py_params_keys_.emplace_back(NewValueNode(name));
     local_py_params_values_.emplace_back(node);
+  }
+  // Call this methon only if you need update a variable. Usually variable override.
+  void UpdateLocalPyParam(const std::string &name, const AnfNodePtr &node) {
+    auto iter = std::find_if(local_py_params_keys_.cbegin(), local_py_params_keys_.cend(),
+                             [&name](const AnfNodePtr node) -> bool {
+                               const auto value_node = dyn_cast<ValueNode>(node);
+                               MS_EXCEPTION_IF_NULL(value_node);
+                               const StringImmPtr &str_imm = dyn_cast<StringImm>(value_node->value());
+                               MS_EXCEPTION_IF_NULL(str_imm);
+                               return name == str_imm->value();
+                             });
+    if (iter == local_py_params_keys_.cend()) {
+      MS_LOG(EXCEPTION) << "Only for updating. Should not call this method if 'name' not exist.";
+    }
+    // Find the same position in 'values', and update the node.
+    auto distance = std::distance(local_py_params_keys_.cbegin(), iter);
+    auto values_pos_iter = local_py_params_values_.begin() + distance;
+    MS_LOG(DEBUG) << "Update '" << name << "', " << (*values_pos_iter)->DebugString() << " -> " << node->DebugString();
+    *values_pos_iter = node;
   }
 
  private:
@@ -159,16 +178,6 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   //         break
   //    x = x - 1   #This after block is a dead block
   bool is_dead_block_{false};
-};
-
-class ScriptInfo {
- public:
-  explicit ScriptInfo(const py::object &obj) : py_obj_(obj) {}
-
-  // Key for user data.
-  constexpr static char key[] = "ScriptInfo";
-
-  py::object py_obj_;
 };
 }  // namespace parse
 }  // namespace mindspore

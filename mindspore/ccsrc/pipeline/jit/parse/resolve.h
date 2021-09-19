@@ -119,8 +119,12 @@ class InterpretedObject : public PyObjectWrapper {
       : PyObjectWrapper(obj, name) {}
   ~InterpretedObject() override = default;
   MS_DECLARE_PARENT(InterpretedObject, PyObjectWrapper);
-  abstract::AbstractBasePtr ToAbstract() override;
+  abstract::AbstractBasePtr ToAbstract() override {
+    return std::make_shared<abstract::AbstractScalar>(shared_from_base<InterpretedObject>(),
+                                                      std::make_shared<External>());
+  }
 };
+using InterpretedObjectPtr = std::shared_ptr<InterpretedObject>;
 
 // ClassObject class wrappers dataclass
 class ClassObject : public PyObjectWrapper {

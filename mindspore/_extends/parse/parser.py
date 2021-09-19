@@ -259,10 +259,14 @@ def get_obj_type(obj):
     elif _is_class_instance(obj):
         obj_type = RESOLVE_TYPE_CLASS_INSTANCE
     else:
-        # here for ndarray, just print its shape (in case of the array to large and print many data in screen)
-        is_ndarray = type(obj).__name__ == 'ndarray' and hasattr(obj, 'shape')
-        raise TypeError(f'Not support for this object with type `{type(obj)}` and {"shape" if is_ndarray else "value"} '
-                        f'`{obj.shape if is_ndarray else obj}`.')
+        # Raise a proper error if not using Fallback feature.
+        if support_fallback_ == '1':
+            obj_type = RESOLVE_TYPE_INVALID
+        else:
+            # here for ndarray, just print its shape (in case of the array to large and print many data in screen)
+            is_ndarray = type(obj).__name__ == 'ndarray' and hasattr(obj, 'shape')
+            raise TypeError(f'Not support for this object with type `{type(obj)}` and '
+                            f'{"shape" if is_ndarray else "value"} `{obj.shape if is_ndarray else obj}`.')
     return obj_type
 
 

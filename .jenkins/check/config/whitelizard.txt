@@ -8,7 +8,7 @@ mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/source/csv_op.cc:mi
 mindspore/mindspore/lite/tools/converter/graphdef_transform.cc:mindspore::lite::GraphDefTransform::Transform
 mindspore/mindspore/core/abstract/primitive_infer_map.cc:mindspore::abstract::GetPrimitiveToEvalImplMap
 mindspore/mindspore/ccsrc/frontend/optimizer/irpass.cc:mindspore::opt::irpass::OptimizeIRPassLib::OptimizeIRPassLib
-mindspore/mindspore/ccsrc/frontend/parallel/ops_info/gather_v2_p_info.cc:mindspore::parallel::GatherV2PInfo::CheckStrategy 
+mindspore/mindspore/ccsrc/frontend/parallel/ops_info/gather_v2_p_info.cc:mindspore::parallel::GatherV2PInfo::CheckStrategy
 mindspore/mindspore/ccsrc/runtime/device/gpu/gpu_kernel_runtime.cc:mindspore::device::gpu::GPUKernelRuntime::LaunchKernelDynamic
 mindspore/mindspore/ccsrc/pipeline/jit/init.cc:PYBIND11_MODULE
 mindspore/mindspore/ccsrc/backend/kernel_compiler/gpu/math/unary_op_gpu_kernel.h:mindspore::kernel::UnaryOpGpuKernel::Launch

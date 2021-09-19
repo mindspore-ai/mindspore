@@ -106,8 +106,6 @@ class MS_CORE_API AnfNode : public Base {
         fullname_with_scope_(""),
         hash_(std::hash<const AnfNode *>()),
         kernel_info_(nullptr),
-        stage_(-1),
-        need_grad_(false),
         interpret_(false),
         interpreted_node_(nullptr) {
     scope_ = ScopeManager::GetInstance().GetCurrentScope();
@@ -200,12 +198,6 @@ class MS_CORE_API AnfNode : public Base {
 
   void CloneUserData(const AnfNodePtr &node) { user_data_ = node->user_data_; }
 
-  int64_t stage() { return stage_; }
-  void set_stage(const int &stage) { stage_ = stage; }
-
-  bool grad() { return need_grad_; }
-  void set_grad(const bool &need_grad) { need_grad_ = need_grad; }
-
   bool interpret() { return interpret_; }
   void set_interpret(const bool &interpret) { interpret_ = interpret; }
 
@@ -226,8 +218,6 @@ class MS_CORE_API AnfNode : public Base {
   ScopePtr scope_;
   KernelInfoDevicePtr kernel_info_;
   UserData user_data_;
-  int64_t stage_;
-  bool need_grad_;
   bool interpret_;
   AnfNodePtr interpreted_node_;
 };
