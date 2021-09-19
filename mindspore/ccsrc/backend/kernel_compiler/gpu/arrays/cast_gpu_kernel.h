@@ -36,6 +36,9 @@ class CastGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     S *input_addr = GetPossiblyNullDeviceAddress<S>(inputs, 0);
     T *output_addr = GetPossiblyNullDeviceAddress<T>(outputs, 0);
 
@@ -54,6 +57,12 @@ class CastGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shapes) || CHECK_NULL_INPUT(output_shapes);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'CastGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     input_size_ = 1;
     for (size_t i = 0; i < input_shapes.size(); i++) {
       input_size_ *= input_shapes[i];
@@ -74,6 +83,7 @@ class CastGpuKernel : public GpuKernel {
   void ResetResource() noexcept override {
     input_size_ = 1;
     output_size_ = 1;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -88,6 +98,7 @@ class CastGpuKernel : public GpuKernel {
  private:
   int input_size_;
   int output_size_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

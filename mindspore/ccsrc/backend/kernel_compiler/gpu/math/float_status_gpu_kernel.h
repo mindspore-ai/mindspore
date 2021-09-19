@@ -42,6 +42,9 @@ class FloatStatusGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
 
     switch (kernel_name_) {
@@ -78,6 +81,12 @@ class FloatStatusGpuKernel : public GpuKernel {
       return false;
     }
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'FloatStatusGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     input_size_ = sizeof(T);
     for (size_t x : shape) {
       input_size_ = input_size_ * x;
@@ -125,6 +134,7 @@ class FloatStatusGpuKernel : public GpuKernel {
   Optype kernel_name_;
   size_t input_size_;
   size_t output_size_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

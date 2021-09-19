@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class CtcLossGpuKernel : public GpuKernel {
   CtcLossGpuKernel()
       : label_indice_size_(0),
         label_size_(0),
-        squence_lengths_size_(0),
+        sequence_lengths_size_(0),
         preprocess_collapse_repeated_(false),
         ctc_merge_repeated_(true),
         ignore_longer_outputs_than_inputs_(false) {}
@@ -44,6 +44,9 @@ class CtcLossGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     LaunchInit(inputs, workspace, outputs);
     LaunchFirstHalf(inputs, workspace, outputs, stream_ptr);
     LaunchSecondHalf(inputs, workspace, outputs, stream_ptr);
@@ -53,14 +56,23 @@ class CtcLossGpuKernel : public GpuKernel {
     kernel_node_ = kernel_node;
     InitResource();
     auto probs_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto indice_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto labels_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto sequence_length_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    is_null_input_ = CHECK_NULL_INPUT(probs_shape) || CHECK_NULL_INPUT(indice_dims) || CHECK_NULL_INPUT(labels_dims) ||
+                     CHECK_NULL_INPUT(sequence_length_dims);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'CtclossGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     if (probs_shape.size() != 3) {
       MS_LOG(EXCEPTION) << "probs dims: " << probs_shape.size() << " not support.";
     }
     probs_dims_[0] = probs_shape[0];
     probs_dims_[1] = probs_shape[1];
     probs_dims_[2] = probs_shape[2];
-    auto indice_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto labels_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+
     if (labels_dims.size() != 1) {
       MS_LOG(EXCEPTION) << "labels dims: " << labels_dims.size() << " not support.";
     }
@@ -75,8 +87,8 @@ class CtcLossGpuKernel : public GpuKernel {
     for (auto i : indice_dims) {
       label_indice_size_ *= i;
     }
-    auto squence_length_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    squence_lengths_size_ = squence_length_dims[0] * sizeof(int);
+
+    sequence_lengths_size_ = sequence_length_dims[0] * sizeof(int);
     preprocess_collapse_repeated_ = GetAttr<bool>(kernel_node, "preprocess_collapse_repeated");
     ctc_merge_repeated_ = GetAttr<bool>(kernel_node, "ctc_merge_repeated");
     ignore_longer_outputs_than_inputs_ = GetAttr<bool>(kernel_node, "ignore_longer_outputs_than_inputs");
@@ -185,14 +197,14 @@ class CtcLossGpuKernel : public GpuKernel {
     input_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
     input_size_list_.push_back(label_indice_size_);
     input_size_list_.push_back(label_size_);
-    input_size_list_.push_back(squence_lengths_size_);
+    input_size_list_.push_back(sequence_lengths_size_);
     workspace_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
-    workspace_size_list_.push_back(squence_lengths_size_);
-    workspace_size_list_.push_back(squence_lengths_size_);
+    workspace_size_list_.push_back(sequence_lengths_size_);
+    workspace_size_list_.push_back(sequence_lengths_size_);
     workspace_size_list_.push_back(label_size_);
     workspace_size_list_.push_back(label_size_);
     workspace_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
-    workspace_size_list_.push_back(squence_lengths_size_);
+    workspace_size_list_.push_back(sequence_lengths_size_);
     workspace_size_list_.push_back(sizeof(int));
     output_size_list_.push_back(probs_dims_[1] * sizeof(T));
     output_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
@@ -202,10 +214,10 @@ class CtcLossGpuKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemsetAsync(label_value_pcr, static_cast<int>(0), label_size_, stream),
                                "cudaMemSet failed in CtcLossGpuKernel::Launch.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemsetAsync(cum_labels_length, static_cast<int>(0), squence_lengths_size_, stream),
+                               cudaMemsetAsync(cum_labels_length, static_cast<int>(0), sequence_lengths_size_, stream),
                                "cudaMemSet failed in CtcLossGpuKernel::Launch.");
     CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemsetAsync(label_squence_length, static_cast<int>(0), squence_lengths_size_, stream),
+      kernel_node_, cudaMemsetAsync(label_squence_length, static_cast<int>(0), sequence_lengths_size_, stream),
       "cudaMemSet failed in CtcLossGpuKernel::Launch.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemsetAsync(costs, static_cast<T>(0), probs_dims_[1] * sizeof(T), stream),
@@ -247,10 +259,11 @@ class CtcLossGpuKernel : public GpuKernel {
   size_t probs_dims_[3] = {0};
   int label_indice_size_;
   int label_size_;
-  int squence_lengths_size_;
+  int sequence_lengths_size_;
   bool preprocess_collapse_repeated_;
   bool ctc_merge_repeated_;
   bool ignore_longer_outputs_than_inputs_;
+  bool is_null_input_;
   T kLogZero_ = -std::numeric_limits<T>::infinity();
 
   // Heap parameter

@@ -37,6 +37,9 @@ class LinSpaceGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *start_addr = GetDeviceAddress<T>(inputs, 0);
     T *stop_addr = GetDeviceAddress<T>(inputs, 1);
@@ -58,6 +61,13 @@ class LinSpaceGpuKernel : public GpuKernel {
     }
     auto input_1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto input_2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
+    auto value_count = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_1) || CHECK_NULL_INPUT(input_2) || CHECK_NULL_INPUT(value_count);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'LinspaceGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     // error checking input data
     if ((input_1.size() != 0) || (input_2.size() != 0)) {
       MS_LOG(ERROR) << "For LinShape "
@@ -65,7 +75,7 @@ class LinSpaceGpuKernel : public GpuKernel {
                     << ".";
       return false;
     }
-    auto value_count = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+
     if (value_count.size() != 1) {
       MS_LOG(ERROR) << "For LinShape, output shape incorrect rank. Expect Rank: 1, got Rank: " << value_count.size()
                     << ".";
@@ -78,6 +88,7 @@ class LinSpaceGpuKernel : public GpuKernel {
 
   void ResetResource() noexcept override {
     value_count_ = 0;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -92,6 +103,7 @@ class LinSpaceGpuKernel : public GpuKernel {
 
  private:
   size_t value_count_ = 0;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

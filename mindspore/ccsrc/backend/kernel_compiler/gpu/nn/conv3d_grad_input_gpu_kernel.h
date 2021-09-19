@@ -70,6 +70,16 @@ class Conv3dGradInputGpuKernel : public GpuKernel {
     return true;
   }
 
+  bool CheckNull(const std::vector<size_t> dy_shape, const std::vector<size_t> filter_shape) {
+    is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(filter_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'Conv3dGradInputGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
+    return false;
+  }
+
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     InitResource();
@@ -80,16 +90,16 @@ class Conv3dGradInputGpuKernel : public GpuKernel {
     data_format_ = kOpFormat_NCDHW;
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(dy_shape);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "Conv3dGradInputGpuKernel input is null.";
-      InitSizeLists();
+    if (CheckNull(dy_shape, filter_shape)) {
       return true;
     }
     std::vector<size_t> input_shape;
     GetInputShape(kernel_node, &input_shape);
     compute_format_ = CUDNN_TENSOR_NCHW;
     CheckTensorSize({input_shape});
+    if (input_shape.size() != 5) {
+      MS_LOG(EXCEPTION) << "For 'Conv3dGradInputGpuBkwKernel', the dimension of input must be 5.";
+    }
     n_ = SizeToInt(input_shape[0]);
     c_ = SizeToInt(input_shape[1]);
     old_depth_ = SizeToInt(input_shape[2]);
@@ -103,6 +113,9 @@ class Conv3dGradInputGpuKernel : public GpuKernel {
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (pad_list.size() != 6) {
+      MS_LOG(EXCEPTION) << "For 'Conv3dGradInputGpuBkwKernel', the length of pad_list must be 6.";
+    }
     pad_depth_ = pad_list[0];
     pad_height_ = pad_list[2];
     pad_width_ = pad_list[4];

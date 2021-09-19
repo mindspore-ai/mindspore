@@ -54,6 +54,9 @@ class TensorScatterUpdateGpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *input = GetDeviceAddress<T>(inputs, 0);
     S *indices = GetDeviceAddress<S>(inputs, 1);
@@ -106,7 +109,13 @@ class TensorScatterUpdateGpuFwdKernel : public GpuKernel {
     indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-
+    is_null_input_ = CHECK_NULL_INPUT(update_shapes_) || CHECK_NULL_INPUT(indices_shapes_) ||
+                     CHECK_NULL_INPUT(input_shapes_) || CHECK_NULL_INPUT(output_shapes_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'TensorScatterUpdateGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     std::vector<size_t> shape_me = input_shapes_;
     (void)std::transform(shape_me.begin(), shape_me.end(), std::back_inserter(vec_work_shape_),
                          [](const size_t &value) { return static_cast<S>(value); });
@@ -201,6 +210,7 @@ class TensorScatterUpdateGpuFwdKernel : public GpuKernel {
   size_t indices_dim_0_;
   size_t indices_dim_1_;
   bool memcpy_flag_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -84,6 +84,9 @@ class UnaryOpGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
@@ -207,7 +210,7 @@ class UnaryOpGpuKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "UnaryOpGpuKernel input is null";
+      MS_LOG(WARNING) << "For 'UnaryOpGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

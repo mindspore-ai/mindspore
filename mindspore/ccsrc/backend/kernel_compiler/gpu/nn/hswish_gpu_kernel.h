@@ -36,6 +36,9 @@ class HSwishKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
@@ -54,6 +57,12 @@ class HSwishKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but HSwish has 1 output.";
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'HswishGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     input_size_ = 1;
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
@@ -64,6 +73,7 @@ class HSwishKernel : public GpuKernel {
 
   void ResetResource() noexcept override {
     input_size_ = 1;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -77,6 +87,7 @@ class HSwishKernel : public GpuKernel {
 
  private:
   size_t input_size_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

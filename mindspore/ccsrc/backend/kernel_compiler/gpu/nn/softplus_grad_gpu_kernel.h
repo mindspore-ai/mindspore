@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class SoftplusGpuGradKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *dy_addr = GetDeviceAddress<T>(inputs, 0);
     T *x_addr = GetDeviceAddress<T>(inputs, 1);
     T *dx_addr = GetDeviceAddress<T>(outputs, 0);
@@ -48,6 +51,12 @@ class SoftplusGpuGradKernel : public GpuKernel {
     InitResource();
     input_size_ = sizeof(T);
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SoftplusGradGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     for (auto dim : input_shape) {
       input_size_ *= dim;
     }
@@ -63,6 +72,7 @@ class SoftplusGpuGradKernel : public GpuKernel {
   }
 
  private:
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

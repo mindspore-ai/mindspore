@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &outputs,
               void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     auto nccl_recv_func = reinterpret_cast<Recv>(dlsym(const_cast<void *>(collective_handle_), "Recv"));
     MS_EXCEPTION_IF_NULL(nccl_recv_func);
@@ -64,6 +67,12 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
     nccl_data_type_ = nccl_dtype(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0));
 
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'NcclRecvGpuKernel', output is null";
+      InitSizeLists();
+      return true;
+    }
     size_t output_size =
       std::accumulate(output_shape.begin(), output_shape.end(), sizeof(T), std::multiplies<size_t>());
     output_size_list_.push_back(output_size);
@@ -82,6 +91,7 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   int src_rank_;
+  bool is_null_input_;
   const void *collective_handle_;
 };
 }  // namespace kernel

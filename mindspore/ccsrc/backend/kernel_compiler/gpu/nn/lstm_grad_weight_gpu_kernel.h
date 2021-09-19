@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,9 @@ class LstmGradWeightGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(stream_ptr);
     auto x_addr = GetDeviceAddress<T>(inputs, 0);
     auto hx_addr = GetDeviceAddress<T>(inputs, 1);
@@ -90,6 +93,16 @@ class LstmGradWeightGpuKernel : public GpuKernel {
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'LstmGradWeightGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
+    if (input_shape.size() < 2) {
+      MS_LOG(EXCEPTION) << "For 'LstmGradWeightGpuKernel', the rank of input should be greater than or equal to 2, "
+                        << "but got the rank of input: " << input_shape.size();
+    }
     seq_len_ = SizeToInt(input_shape[0]);
     batch_size_ = SizeToInt(input_shape[1]);
 
@@ -130,6 +143,16 @@ class LstmGradWeightGpuKernel : public GpuKernel {
                                 "set rnn_desc failed");
 #endif
     auto weight_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(weight_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'LstmGradWeightGpuKernel', weight is null.";
+      InitSizeLists();
+      return true;
+    }
+    if (weight_shape.size() < 3) {
+      MS_LOG(EXCEPTION) << "For 'LstmGradWeightGpuKernel', the rank of weight should be greater than or equal to 3, "
+                        << "but got the rank of weight: " << weight_shape.size();
+    }
     size_t weight_size = weight_shape[0] * weight_shape[1] * weight_shape[2] * sizeof(T);
 
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
@@ -227,6 +250,7 @@ class LstmGradWeightGpuKernel : public GpuKernel {
   bool has_bias_;
   bool bidirectional_;
   bool states_init_;
+  bool is_null_input_;
   float dropout_;
 
   size_t weight_size_;

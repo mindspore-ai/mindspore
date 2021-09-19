@@ -40,6 +40,9 @@ class PadGpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_device = GetDeviceAddress<T>(inputs, 0);
     T *output_device = GetDeviceAddress<T>(outputs, 0);
 
@@ -77,6 +80,13 @@ class PadGpuFwdKernel : public GpuKernel {
     }
 
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'PadGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     input_rank_ = input_shape_.size();
 
     std::vector<std::vector<int64_t>> paddings =
@@ -101,7 +111,15 @@ class PadGpuFwdKernel : public GpuKernel {
       output_size_ *= (input_shape_[i] + flattened_paddings_[2 * i] + flattened_paddings_[(2 * i) + 1]);
     }
 
-    std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    if (input_rank_ < 1) {
+      MS_LOG(EXCEPTION) << "For 'PadGpuKernel', the rank of input should be greater than or equal to 1, "
+                        << "but got the rank of input: " << input_rank_;
+    }
+    if (output_shape.size() != input_rank_) {
+      MS_LOG(EXCEPTION) << "For 'PadGpuKernel', the rank of input should be equal to the rank of output, "
+                        << "but got the rank of input: " << input_rank_
+                        << ", the rank of output: " << output_shape.size();
+    }
     strides_.resize(input_rank_);
     strides_[input_rank_ - 1] = 1;
     for (int32_t i = input_rank_ - 2; i >= 0; i--) {
@@ -158,6 +176,7 @@ class PadGpuFwdKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

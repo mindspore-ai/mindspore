@@ -38,6 +38,9 @@ class SliceGradGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *dy = GetDeviceAddress<T>(inputs, 0);
     T *dx = GetDeviceAddress<T>(outputs, 0);
     FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -69,10 +72,22 @@ class SliceGradGpuKernel : public GpuKernel {
       size_ = GetAttr<std::vector<int64_t>>(kernel_node, "end");
     } else {
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+      is_null_input_ = CHECK_NULL_INPUT(input_shape);
+      if (is_null_input_) {
+        MS_LOG(WARNING) << "For 'SliceGradGpuKernel', input is null";
+        InitSizeLists();
+        return true;
+      }
       ShapeNdTo4d(input_shape, &input_shape_);
       size_ = GetAttr<std::vector<int64_t>>(kernel_node, "size");
     }
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(dy_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SliceGradGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     ShapeNdTo4d(dy_shape, &dy_shape_);
     begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
     CalcBeginAndSize(data_format);
@@ -145,6 +160,7 @@ class SliceGradGpuKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
 
   bool is_strided_slice_;
+  bool is_null_input_;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;

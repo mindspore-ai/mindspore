@@ -132,6 +132,10 @@ class SoftmaxGpuKernel : public GpuKernel {
       std::vector<int64_t> axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
       (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
                            [](const int64_t &value) { return static_cast<int>(value); });
+      if (axis.size() < 1) {
+        MS_LOG(EXCEPTION) << "For 'SoftmaxGpuKernel', the rank of axis should be greater than or equal to 1, "
+                          << "but got the rank of axis: " << axis.size();
+      }
       InitSizeByAxis(input_shape, axis[0]);
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -255,6 +259,10 @@ class SoftmaxGpuKernel : public GpuKernel {
       axis_pos += input_shape.size();
     }
 
+    if (axis_pos >= input_shape.size()) {
+      MS_LOG(EXCEPTION) << "For 'SoftmaxGpuKernel', the axis_pos should be less than the rank of input_shape, "
+                        << "but got axis_pos: " << axis_pos << ", the rank of input_shape: " << input_shape.size();
+    }
     // n keep tracks of squeezed size
     size_t n = 1;
     for (size_t i = 0; i < input_shape.size(); i++) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,16 +133,10 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
  private:
   void InferInputOutputSize(const CNodePtr &kernel_node) {
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(logits_shape);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "SoftmaxCrossEntropyWithLogitsGpuKernel input1 is null";
-      InitSizeLists();
-      return;
-    }
     auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(logits_shape);
+    is_null_input_ = CHECK_NULL_INPUT(logits_shape) || CHECK_NULL_INPUT(labels_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "SoftmaxCrossEntropyWithLogitsGpuKernel input2 is null";
+      MS_LOG(WARNING) << "For 'SparseSoftmaxCrossEntropyWithLogitsGpuKernel', input is null";
       InitSizeLists();
       return;
     }
@@ -179,7 +173,7 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
                         << labels_dim_length << ", Logits shape length:" << logits_dim_length;
     }
     if (!std::equal(labels_shape.begin(), labels_shape.end(), logits_shape.begin())) {
-      MS_LOG(EXCEPTION) << "The shape of labels should be the same as the shape of logits except its last demension.";
+      MS_LOG(EXCEPTION) << "The shape of labels should be the same as the shape of logits except its last dimension.";
     }
     return;
   }

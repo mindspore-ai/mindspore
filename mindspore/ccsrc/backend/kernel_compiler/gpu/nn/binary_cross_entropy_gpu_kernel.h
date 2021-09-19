@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_x = GetDeviceAddress<T>(inputs, 0);
     T *input_y = GetDeviceAddress<T>(inputs, 1);
     T *weight = nullptr;
@@ -52,6 +55,12 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'BinaryCrossEntropyGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     weight_defined_ = (input_num == 3);
     for (size_t i = 0; i < input_shape.size(); i++) {
@@ -88,6 +97,7 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
 
  private:
   bool weight_defined_;  // true: there are 3 inputs, false: there are 2 inputs(no [weight])
+  bool is_null_input_;
   size_t input_size_;
   int reduction_;
   size_t workspace_size_;

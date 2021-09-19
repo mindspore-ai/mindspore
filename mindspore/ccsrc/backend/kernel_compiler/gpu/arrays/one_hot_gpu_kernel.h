@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class OneHotGpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     const S *indices = GetDeviceAddress<S>(inputs, 0);
     const T *on_value = GetDeviceAddress<T>(inputs, 1);
@@ -48,6 +51,12 @@ class OneHotGpuFwdKernel : public GpuKernel {
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'OneHotGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     int64_t input_dims = static_cast<int64_t>(input_shape.size());
     int64_t output_dims = static_cast<int64_t>(output_shape.size());
     if (axis >= input_dims || axis >= output_dims) {
@@ -100,6 +109,7 @@ class OneHotGpuFwdKernel : public GpuKernel {
   size_t depth_;
   size_t left_dim_size_;
   size_t right_dim_size_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

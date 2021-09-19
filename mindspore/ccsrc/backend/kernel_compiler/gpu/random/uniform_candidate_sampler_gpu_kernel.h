@@ -41,6 +41,9 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     if (init_seed_ == 0 && cur_seed_ == 0) {
       // Update current seed.
       cur_seed_ = time(NULL);
@@ -103,6 +106,12 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
     }
 
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'UniformCandidateSamplerGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     if (input_shape.size() != 2) {
       MS_LOG(ERROR) << "Input is " << input_shape.size() << "-D, but UniformCandidateSampler supports only 2-D inputs.";
       return false;
@@ -190,6 +199,7 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
   int64_t range_max_;
   size_t input_size_;
   bool remove_accidental_hits_;
+  bool is_null_input_;
   std::vector<T> array_input_;
   std::set<T> set_input_;
   std::default_random_engine generator_;

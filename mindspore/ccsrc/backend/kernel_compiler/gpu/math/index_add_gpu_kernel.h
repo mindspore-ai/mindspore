@@ -44,6 +44,9 @@ class IndexAddGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *dst = GetDeviceAddress<T>(inputs, 0);
     int *index = GetDeviceAddress<int>(inputs, 1);
     T *src = GetDeviceAddress<T>(inputs, 2);
@@ -67,6 +70,12 @@ class IndexAddGpuKernel : public GpuKernel {
     std::vector<size_t> dst_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     std::vector<size_t> index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     std::vector<size_t> src_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    is_null_input_ = CHECK_NULL_INPUT(dst_shape) || CHECK_NULL_INPUT(index_shape) || CHECK_NULL_INPUT(src_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'IndexAddGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     int64_t src_rank = src_shape.size();
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     if (axis < 0) {
@@ -123,6 +132,7 @@ class IndexAddGpuKernel : public GpuKernel {
   size_t dst_axis_size_;
   size_t inner_size_;
   bool use_lock_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

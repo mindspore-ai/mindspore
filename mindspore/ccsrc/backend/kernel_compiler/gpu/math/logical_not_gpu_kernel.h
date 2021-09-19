@@ -39,6 +39,9 @@ class LogicalNotGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     auto input_addr = GetDeviceAddress<T>(inputs, 0);
     auto output_addr = GetDeviceAddress<bool>(outputs, 0);
     LogicalNotImpl(input_num_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -48,6 +51,12 @@ class LogicalNotGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'LogicalGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     input_num_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
     InitSizeLists();
     return true;
@@ -55,6 +64,7 @@ class LogicalNotGpuKernel : public GpuKernel {
 
   void ResetResource() noexcept override {
     input_num_ = 1;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -68,6 +78,7 @@ class LogicalNotGpuKernel : public GpuKernel {
 
  private:
   size_t input_num_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

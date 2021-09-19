@@ -146,7 +146,7 @@ class BatchNormGradGpuKernel : public GpuKernel {
     }
     is_null_input_ = CHECK_NULL_INPUT(shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "BatchNormGradGpuKernel input is null";
+      MS_LOG(WARNING) << "For 'BatchNormGradGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

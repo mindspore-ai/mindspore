@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,9 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+    if (is_null_input_) {
+      return true;
+    }
     T *dy_addr = GetDeviceAddress<T>(inputs, 1);
     S *index_addr = GetDeviceAddress<S>(inputs, 2);
     T *dx_addr = GetDeviceAddress<T>(outputs, 0);
@@ -71,6 +74,13 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
     auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto dx_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(x_shape) || CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(index_shape) ||
+                     CHECK_NULL_INPUT(dx_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'MaxPoolWithArgmaxGradGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     x_size_ = sizeof(T);
     for (auto x : x_shape) {
       x_size_ *= x;
@@ -86,6 +96,11 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
     dx_size_ = sizeof(T);
     for (auto x : dx_shape) {
       dx_size_ *= x;
+    }
+    if (x_shape.size() < 4 || dy_shape.size() < 4) {
+      MS_LOG(EXCEPTION) << "For 'MaxPoolWithArgmaxGradGpuKernel', the rank of x or dy should be greater than "
+                        << "or equal to 4, but got the rank of x: " << x_shape.size()
+                        << ", the rank of dy: " << dy_shape.size();
     }
     n_ = SizeToInt(x_shape[0]);
     c_ = SizeToInt(x_shape[1]);
@@ -116,6 +131,7 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
   int x_width_;
   int dy_height_;
   int dy_width_;
+  bool is_null_input_;
 
   size_t x_size_;
   size_t dy_size_;

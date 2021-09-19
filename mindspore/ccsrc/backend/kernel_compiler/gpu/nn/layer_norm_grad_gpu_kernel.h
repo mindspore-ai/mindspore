@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class LayerNormGradGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     auto x = GetDeviceAddress<T>(inputs, 0);
     auto dy = GetDeviceAddress<T>(inputs, 1);
     auto var = GetDeviceAddress<T>(inputs, 2);
@@ -55,6 +58,12 @@ class LayerNormGradGpuKernel : public GpuKernel {
     int begin_params_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_params_axis"));
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'LayerNormGradGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     if (begin_norm_axis < 0) {
       begin_norm_axis += input_shape.size();
     }
@@ -63,6 +72,11 @@ class LayerNormGradGpuKernel : public GpuKernel {
       begin_params_axis += input_shape.size();
     }
 
+    if (IntToSize(begin_norm_axis) > input_shape.size()) {
+      MS_LOG(EXCEPTION) << "For 'LayerNormGradGpuKernel', begin_norm_axis should be less than or equal to "
+                        << "the rank of input, but got begin_norm_axis: " << IntToSize(begin_norm_axis)
+                        << ", rank of input: " << input_shape.size();
+    }
     for (size_t i = 0; i < IntToSize(begin_norm_axis); i++) {
       input_row_ *= input_shape[i];
     }
@@ -101,6 +115,7 @@ class LayerNormGradGpuKernel : public GpuKernel {
   int input_row_;
   int input_col_;
   int param_dim_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

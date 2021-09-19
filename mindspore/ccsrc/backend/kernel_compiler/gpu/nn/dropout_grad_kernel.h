@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ class DropoutGradGpuBwdKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'DropoutGradGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

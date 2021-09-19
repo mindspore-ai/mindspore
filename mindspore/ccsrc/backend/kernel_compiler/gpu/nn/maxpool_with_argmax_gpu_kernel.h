@@ -54,6 +54,9 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     S *index_addr = GetDeviceAddress<S>(outputs, 1);
@@ -76,6 +79,12 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'MaxPoolWithArgmaxGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     input_size_ = sizeof(T);
     for (auto x : input_shape) {
       input_size_ *= x;
@@ -83,6 +92,11 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     output_size_ = sizeof(T);
     for (auto x : output_shape) {
       output_size_ *= x;
+    }
+    if (input_shape.size() < 4 || output_shape.size() < 4) {
+      MS_LOG(EXCEPTION) << "For 'MaxPoolWithArgmaxGpuKernel', the rank of input or output should be greater than "
+                        << "or equal to 4, but got the rank of input: " << input_shape.size()
+                        << ", the rank of output: " << output_shape.size();
     }
     n_ = SizeToInt(input_shape[0]);
     c_ = SizeToInt(input_shape[1]);
@@ -95,6 +109,10 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
       GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("kernel_size"));
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (window.size() < 3) {
+      MS_LOG(EXCEPTION) << "For 'MaxPoolWithArgmaxGpuKernel', the rank of window should be greater than "
+                        << "or equal to 3, but got the rank of window: " << window.size();
+    }
     window_height_ = window[1];
     window_width_ = window[2];
     std::vector<int> stride;
@@ -102,6 +120,10 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
       GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
     (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (stride.size() < 3) {
+      MS_LOG(EXCEPTION) << "For 'MaxPoolWithArgmaxGpuKernel', the rank of stride should be greater than "
+                        << "or equal to 3, but got the rank of stride: " << stride.size();
+    }
     stride_height_ = stride[1];
     stride_width_ = stride[2];
     pad_mode_ = GetValue<std::string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("pad_mode"));
@@ -123,9 +145,8 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
 
  private:
   void SetPad() {
-    if (stride_height_ == 0) {
-      MS_LOG(EXCEPTION) << "stride height cannot be 0.";
-    }
+    MS_EXCEPTION_IF_ZERO("stride height", stride_height_);
+    MS_EXCEPTION_IF_ZERO("stride width", stride_width_);
 
     pad_height_ = std::max<int>(
       0, (((input_height_ / stride_height_) * stride_height_ == input_height_ ? (input_height_ / stride_height_)
@@ -162,6 +183,7 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
   int stride_width_;
   int output_height_;
   int output_width_;
+  bool is_null_input_;
 
   size_t input_size_;
   size_t output_size_;

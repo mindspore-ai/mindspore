@@ -35,6 +35,9 @@ class ArgmaxGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     S *output = GetDeviceAddress<S>(outputs, 0);
     MS_EXCEPTION_IF_NULL(input);
@@ -46,6 +49,12 @@ class ArgmaxGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ArgmaxGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     int64_t dims = shape.size();
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     if (axis < -dims || axis >= dims) {
@@ -95,6 +104,7 @@ class ArgmaxGpuKernel : public GpuKernel {
   S bound_;
   size_t outer_size_;
   size_t inner_size_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

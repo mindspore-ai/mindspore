@@ -60,6 +60,13 @@ class SliceGpuFwdKernel : public GpuKernel {
     }
     auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(out_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SliceGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     is_1d_to_4d_input_ = input_shape.size() <= 4;
     if (is_1d_to_4d_input_) {
       ShapeNdTo4d(input_shape, &input_shape_);
@@ -79,7 +86,6 @@ class SliceGpuFwdKernel : public GpuKernel {
     } else {
       input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] * sizeof(T);
     }
-    auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
 
     output_size_ = sizeof(T);
     for (size_t x : out_shape) {
