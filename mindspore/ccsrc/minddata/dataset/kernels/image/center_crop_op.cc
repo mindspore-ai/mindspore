@@ -41,7 +41,7 @@ Status CenterCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
                    ", crop width: " + std::to_string(crop_wid_) + "\t"
                : "";
 
-  if (err_msg.length() != 0) RETURN_STATUS_UNEXPECTED(err_head + err_msg);
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(err_msg.length() == 0, err_head + err_msg);
 
   int32_t top = crop_het_ - input->shape()[0];  // number of pixels to pad (top and bottom)
   int32_t left = crop_wid_ - input->shape()[1];

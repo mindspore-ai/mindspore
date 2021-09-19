@@ -34,7 +34,7 @@ static const std::vector<uint8_t> _clip8_table = []() {
 
 static const uint8_t *clip8_table = &_clip8_table[640];
 
-static inline uint8_t clip8(int input) { return clip8_table[input >> PrecisionBits]; }
+static inline uint8_t clip8(unsigned int input) { return clip8_table[input >> PrecisionBits]; }
 
 static inline double cubic_interp(double x) {
   double a = -0.5;
@@ -60,6 +60,10 @@ int calc_coeff(int input_size, int out_size, int input0, int input1, struct inte
   double threshold, scale, interp_scale;
   int kernel_size;
 
+  if (out_size == 0) {
+    MS_LOG(ERROR) << "out_size can not be zero.";
+    return 0;
+  }
   scale = static_cast<double>((input1 - input0)) / out_size;
   if (scale < 1.0) {
     interp_scale = 1.0;
@@ -133,7 +137,7 @@ void normalize_coeff(int out_size, int kernel_size, const std::vector<double> &p
 Status ImagingHorizontalInterp(LiteMat &output, LiteMat input, int offset, int kernel_size,
                                const std::vector<int> &regions, const std::vector<double> &prekk) {
   int ss0, ss1, ss2;
-  int32_t *k;
+  int32_t *k = nullptr;
 
   // normalize previous calculated coefficients
   std::vector<int> kk(prekk.begin(), prekk.end());
@@ -202,7 +206,7 @@ Status ImagingVerticalInterp(LiteMat &output, LiteMat input, int offset, int ker
 }
 
 bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, struct interpolation *interp,
-                        int rect[4]) {
+                        const int rect[4]) {
   int horizontal_interp, vertical_interp, horiz_kernel, vert_kernel, rect_y0, rect_y1;
   std::vector<int> horiz_region, vert_region;
   std::vector<double> horiz_coeff, vert_coeff;
@@ -269,7 +273,11 @@ bool ResizeCubic(const LiteMat &input, LiteMat &dst, int dst_w, int dst_h) {
   struct interpolation interp = {cubic_interp, 2.0};
   bool res = ImageInterpolation(input, output, x_size, y_size, &interp, rect);
 
-  memcpy_s(dst.data_ptr_, output.size_, output.data_ptr_, output.size_);
+  auto ret_code = memcpy_s(dst.data_ptr_, output.size_, output.data_ptr_, output.size_);
+  if (ret_code != 0) {
+    MS_LOG(ERROR) << "memcpy_s failed when copying tensor.";
+    return false;
+  }
   return res;
 }
 }  // namespace dataset

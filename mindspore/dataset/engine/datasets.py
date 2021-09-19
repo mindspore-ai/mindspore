@@ -3692,7 +3692,7 @@ class SamplerFn:
         if multi_process is True:
             try:
                 self.eof = multiprocessing.Event()
-            except:
+            except Exception:
                 raise RuntimeError("Init multiprocessing.Event() failed, This might be caused by insufficient shm,"
                                    + " and the recommended shm size is at least 5 GB.")
         else:
