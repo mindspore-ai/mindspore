@@ -119,6 +119,7 @@ void ParallelBuildManager::SavePreBuildTaskInfo(int32_t task_id, const AnfNodePt
   } else {
     task_info.processor = tbe::GetProcessor(anf_node);
   }
+  task_info.scope_id = 0;
   pre_build_task_map_[task_id] = task_info;
 }
 
