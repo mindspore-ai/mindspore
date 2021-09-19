@@ -92,14 +92,12 @@ class MSTensorRef : public BaseRef {
     if (!utils::isa<MSTensorRef>(other)) {
       return false;
     }
-    return *this == utils::cast<MSTensorRef>(other);
-  }
-
-  bool operator==(MSTensorRef &other) {
-    return (ms_tensor_.Name() == other.ms_tensor_.Name()) && (ms_tensor_.Shape() == other.ms_tensor_.Shape()) &&
-           (ms_tensor_.MutableData() == other.ms_tensor_.MutableData()) &&
-           (ms_tensor_.DataSize() == other.ms_tensor_.DataSize()) &&
-           (ms_tensor_.DataType() == other.ms_tensor_.DataType());
+    auto other_ms_tensor = utils::cast<MSTensorRef>(other).ms_tensor_;
+    auto this_ms_tensor = ms_tensor_;
+    return (this_ms_tensor.Name() == other_ms_tensor.Name()) && (this_ms_tensor.Shape() == other_ms_tensor.Shape()) &&
+           (this_ms_tensor.MutableData() == other_ms_tensor.MutableData()) &&
+           (this_ms_tensor.DataSize() == other_ms_tensor.DataSize()) &&
+           (this_ms_tensor.DataType() == other_ms_tensor.DataType());
   }
 
  private:
