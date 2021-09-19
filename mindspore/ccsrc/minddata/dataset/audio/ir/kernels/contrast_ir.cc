@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 // ContrastOperation
 ContrastOperation::ContrastOperation(float enhancement_amount) : enhancement_amount_(enhancement_amount) {}
 

@@ -20,9 +20,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
-
 MuLawDecodingOperation::MuLawDecodingOperation(int quantization_channels)
     : quantization_channels_(quantization_channels) {}
 
@@ -46,7 +44,6 @@ std::shared_ptr<TensorOp> MuLawDecodingOperation::Build() {
 }
 
 std::string MuLawDecodingOperation::Name() const { return kMuLawDecodingOperation; }
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore

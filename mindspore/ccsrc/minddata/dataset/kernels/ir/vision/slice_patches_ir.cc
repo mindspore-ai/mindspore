@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
 // SlicePatchesOperation
 SlicePatchesOperation::SlicePatchesOperation(int32_t num_height, int32_t num_width, SliceMode slice_mode,

@@ -179,7 +179,6 @@ Status RandomAffineOperation::from_json(nlohmann::json op_params, std::shared_pt
                                                                interpolation, fill_value);
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

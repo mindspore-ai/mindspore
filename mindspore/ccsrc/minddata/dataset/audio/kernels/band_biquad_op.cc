@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status BandBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   TensorShape input_shape = input->shape();
@@ -56,6 +55,5 @@ Status BandBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
                   static_cast<float16>(a0), static_cast<float16>(a1), static_cast<float16>(a2));
   }
 }
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -47,7 +47,7 @@ Status ImagingVerticalInterp(LiteMat &output, LiteMat input, int offset, int ker
 
 /// \brief Mainly logic of Cubic interpolation
 bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, struct interpolation *interp,
-                        int rect[4]);
+                        const int rect[4]);
 
 /// \brief Apply cubic interpolation on input image and obtain the output image
 /// \param[in] input Input image

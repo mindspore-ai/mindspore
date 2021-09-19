@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // constructor
 MuLawDecodingOp::MuLawDecodingOp(int quantization_channels) : quantization_channels_(quantization_channels) {}
 
@@ -49,6 +48,5 @@ Status MuLawDecodingOp::OutputType(const std::vector<DataType> &inputs, std::vec
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

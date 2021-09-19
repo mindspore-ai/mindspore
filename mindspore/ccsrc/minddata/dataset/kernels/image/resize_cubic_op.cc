@@ -17,7 +17,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // using 8 bits for result
 constexpr uint8_t PrecisionBits = 22;
 
@@ -202,7 +201,7 @@ Status ImagingVerticalInterp(LiteMat &output, LiteMat input, int offset, int ker
 }
 
 bool ImageInterpolation(LiteMat input, LiteMat &output, int x_size, int y_size, struct interpolation *interp,
-                        int rect[4]) {
+                        const int rect[4]) {
   int horizontal_interp, vertical_interp, horiz_kernel, vert_kernel, rect_y0, rect_y1;
   std::vector<int> horiz_region, vert_region;
   std::vector<double> horiz_coeff, vert_coeff;

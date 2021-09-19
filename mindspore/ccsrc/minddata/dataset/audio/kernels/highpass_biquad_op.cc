@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 Status HighpassBiquadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   TensorShape input_shape = input->shape();

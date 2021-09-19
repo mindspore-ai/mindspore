@@ -21,7 +21,6 @@
 namespace mindspore {
 namespace dataset {
 namespace audio {
-
 // Vol
 VolOperation::VolOperation(float gain, GainType gain_type) : gain_(gain), gain_type_(gain_type) {}
 

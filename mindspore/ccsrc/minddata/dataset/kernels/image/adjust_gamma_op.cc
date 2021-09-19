@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 constexpr float AdjustGammaOp::kGain = 1.0;
 
 Status AdjustGammaOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {

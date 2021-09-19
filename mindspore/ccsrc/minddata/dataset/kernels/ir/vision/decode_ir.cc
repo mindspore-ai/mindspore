@@ -45,7 +45,6 @@ Status DecodeOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tens
   *operation = std::make_shared<vision::DecodeOperation>(rgb);
   return Status::OK();
 }
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

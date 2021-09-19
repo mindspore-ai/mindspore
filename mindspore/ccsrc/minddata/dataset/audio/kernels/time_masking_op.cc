@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // constructor
 TimeMaskingOp::TimeMaskingOp(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value)
     : time_mask_param_(time_mask_param), mask_start_(mask_start), iid_masks_(iid_masks), mask_value_(mask_value) {

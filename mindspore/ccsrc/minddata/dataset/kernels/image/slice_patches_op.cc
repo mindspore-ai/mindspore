@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 const int32_t SlicePatchesOp::kDefNumH = 1;
 const int32_t SlicePatchesOp::kDefNumW = 1;
 const uint8_t SlicePatchesOp::kDefFillV = 0;
@@ -44,6 +43,5 @@ Status SlicePatchesOp::Compute(const TensorRow &input, TensorRow *output) {
   (void)std::copy(out.begin(), out.end(), std::back_inserter(*output));
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

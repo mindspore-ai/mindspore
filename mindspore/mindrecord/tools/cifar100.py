@@ -65,7 +65,7 @@ def restricted_loads(s):
         raise RuntimeError("Not a valid Cifar100 Dataset.")
     except UnicodeDecodeError:
         raise RuntimeError("Not a valid Cifar100 Dataset.")
-    except:
+    except Exception:
         raise RuntimeError("Unexpected error while Unpickling Cifar100 Dataset.")
 
 
