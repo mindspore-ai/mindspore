@@ -87,7 +87,9 @@ bool FusionBuildTbeJsonCreator::GenOpListJson(const FusionScopeInfo &fusion_scop
   if (!TbeAdapter::GetSpecDataInput(fusion_scope_info, &spec_data_input)) {
     return false;
   }
-  GenDataJson(compute_nodes, compute_list, fusion_json, spec_data_input);
+  if (!GenDataJson(compute_nodes, compute_list, fusion_json, spec_data_input)) {
+    MS_LOG(WARNING) << "Fusion Error: gen fusion data json failed. fusion scope name: " << fusion_scope_info.full_name;
+  }
   (*fusion_json).insert((*fusion_json).end(), compute_list.begin(), compute_list.end());
   MS_LOG(DEBUG) << "End";
   return true;
@@ -202,7 +204,9 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
   }
   std::vector<size_t> inputs_tensor_num;
   auto op_info = tbe::TbeDynamicShapeUtil::FindOp(op_name, anf_node);
-  TbeJsonUtils::GetInputsRealNum(anf_node, op_info->inputs_ptr(), &inputs_tensor_num);
+  if (!TbeJsonUtils::GetInputsRealNum(anf_node, op_info->inputs_ptr(), &inputs_tensor_num)) {
+    return false;
+  }
   size_t need_input_num = std::accumulate(inputs_tensor_num.begin(), inputs_tensor_num.end(), static_cast<size_t>(0));
 
   for (size_t i = input_index; i < need_input_num; ++i) {

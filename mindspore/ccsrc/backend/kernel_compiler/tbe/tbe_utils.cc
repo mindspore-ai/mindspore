@@ -116,6 +116,9 @@ std::string TbeUtils::GetOpDebugPath() {
                       << ". Please check (1) whether the path exists, (2) whether the path has the access "
                          "permission, (3) whether the path is too long. ";
   }
+  if (config_path.empty()) {
+    MS_LOG(EXCEPTION) << "config path is empty.";
+  }
   if (!old_build.empty()) {
     if (config_path[config_path.length() - 1] == '/') {
       debug_path = config_path;

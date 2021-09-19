@@ -477,11 +477,14 @@ void TbeAdapter::LayerNormAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::jso
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(attrs_json);
   if (AnfAlgo::GetCNodeName(anf_node) == parallel::LAYER_NORM) {
-    for (auto json_item = attrs_json->begin(); json_item < attrs_json->end(); json_item++) {
-      if (GetJsonValue<std::string>(*json_item, kJName) == kAttrEpsilon) {
-        json_item = attrs_json->erase(json_item);
+    nlohmann::json new_attrs_json;
+    for (auto &json_item : *attrs_json) {
+      if (GetJsonValue<std::string>(json_item, kJName) == kAttrEpsilon) {
+        continue;
       }
+      new_attrs_json.push_back(json_item);
     }
+    *attrs_json = new_attrs_json;
   }
 }
 }  // namespace tbe
