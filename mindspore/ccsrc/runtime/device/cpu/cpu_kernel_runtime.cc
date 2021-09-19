@@ -232,7 +232,9 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
     }
     (void)bound_addresses_.insert(address);
   }
-  tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
+  if (address->ptr_ != nullptr) {
+    tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
+  }
   session::KernelWithIndex node_index(node, index);
   tensor->SetNeedWait(true);
   tensor->SetIsGraphOutput();
