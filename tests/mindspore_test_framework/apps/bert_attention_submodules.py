@@ -25,7 +25,7 @@ import mindspore.ops.functional as F
 from mindspore import nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.common.tensor import Tensor
-from mindspore.model_zoo.Bert_NEZHA.bert_model import SaturateCast, RelaPosEmbeddingsGenerator
+from mindspore.tests.models.Bert_NEZHA.bert_model import SaturateCast, RelaPosEmbeddingsGenerator
 from mindspore.ops import operations as P
 
 

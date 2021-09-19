@@ -21,10 +21,10 @@ export RANK_SIZE=$DEVICE_NUM
 unset SLOG_PRINT_TO_STDOUT
 export MINDSPORE_HCCL_CONFIG_PATH=$CONFIG_PATH/hccl/rank_table_${DEVICE_NUM}p.json
 CODE_DIR="./"
-if [ -d ${BASE_PATH}/../../../../model_zoo/official/recommend/wide_and_deep ]; then
-    CODE_DIR=${BASE_PATH}/../../../../model_zoo/official/recommend/wide_and_deep
-elif [ -d ${BASE_PATH}/../../model_zoo/official/recommend/wide_and_deep ]; then
-    CODE_DIR=${BASE_PATH}/../../model_zoo/official/recommend/wide_and_deep
+if [ -d ${BASE_PATH}/../../../../tests/models/official/recommend/wide_and_deep ]; then
+    CODE_DIR=${BASE_PATH}/../../../../tests/models/official/recommend/wide_and_deep
+elif [ -d ${BASE_PATH}/../../tests/models/official/recommend/wide_and_deep ]; then
+    CODE_DIR=${BASE_PATH}/../../tests/models/official/recommend/wide_and_deep
 else
      echo "[ERROR] code dir is not found"
 fi

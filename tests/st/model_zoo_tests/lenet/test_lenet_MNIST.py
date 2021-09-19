@@ -24,7 +24,7 @@ from tests.st.model_zoo_tests import utils
 @pytest.mark.env_onecard
 def test_lenet_MNIST():
     cur_path = os.path.dirname(os.path.abspath(__file__))
-    model_path = "{}/../../../../model_zoo/official/cv".format(cur_path)
+    model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "lenet"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)

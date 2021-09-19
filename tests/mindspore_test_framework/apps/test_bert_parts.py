@@ -18,9 +18,9 @@
 import os
 
 import numpy as np
-from mindspore.model_zoo.Bert_NEZHA import EmbeddingLookup, GetMaskedLMOutput, \
+from mindspore.tests.models.Bert_NEZHA import EmbeddingLookup, GetMaskedLMOutput, \
     BertConfig, BertPreTraining, BertNetworkWithLoss
-from mindspore.model_zoo.Bert_NEZHA.bert_model import BertModel
+from mindspore.tests.models.Bert_NEZHA.bert_model import BertModel
 
 from mindspore import Tensor
 from mindspore import nn, context

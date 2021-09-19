@@ -19,8 +19,8 @@ import numpy as np
 
 import mindspore.common.dtype as mstype
 from mindspore import context, nn
-from mindspore.model_zoo.Bert_NEZHA import GetNextSentenceOutput, BertNetworkWithLoss
-from mindspore.model_zoo.Bert_NEZHA.bert_model import BertConfig, \
+from mindspore.tests.models.Bert_NEZHA import GetNextSentenceOutput, BertNetworkWithLoss
+from mindspore.tests.models.Bert_NEZHA.bert_model import BertConfig, \
     EmbeddingLookup, EmbeddingPostprocessor, BertOutput, \
     BertAttention, BertSelfAttention, SaturateCast, TruncatedNormal, \
     BertEncoderCell, BertTransformer, CreateAttentionMaskFromInputMask, BertModel

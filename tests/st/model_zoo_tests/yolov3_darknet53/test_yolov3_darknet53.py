@@ -218,7 +218,7 @@ def test_yolov3_darknet53():
 @pytest.mark.env_single
 def test_yolov3_darknet_8p():
     cur_path = os.path.dirname(os.path.abspath(__file__))
-    model_path = "{}/../../../../model_zoo/official/cv".format(cur_path)
+    model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "yolov3_darknet53"
     dataset_path = os.path.join(utils.data_root, "coco/coco2014/")
     ckpt_path = os.path.join(utils.ckpt_root, "yolov3_darknet/yolov3_darknet53_pretrain.ckpt")
