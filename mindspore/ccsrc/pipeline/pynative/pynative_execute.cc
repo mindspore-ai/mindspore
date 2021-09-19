@@ -1910,6 +1910,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
 
 void ForwardExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear forward res";
+  lazy_build_ = false;
   implicit_cast_map_.clear();
   prim_abs_list_.clear();
   node_abs_map_.clear();
@@ -2098,8 +2099,6 @@ void GradExecutor::InitResourceAndDfBuilder(const std::string &cell_id, const py
       auto cur_top_is_dynamic = top_cell()->is_dynamic();
       MakeNewTopGraph(cell_id, args, false);
       top_cell()->set_is_dynamic(cur_top_is_dynamic);
-    } else {
-      MS_LOG(EXCEPTION) << "cell stack size " << cell_stack_.size() << ", grad_order_ " << grad_order_;
     }
   }
 
@@ -2888,10 +2887,11 @@ void GradExecutor::EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell) {
   auto iter = std::find_if(top_cell_list_.begin(), top_cell_list_.end(),
                            [&](const TopCellInfoPtr &elem) { return elem.get() == top_cell.get(); });
   if (iter == top_cell_list_.end()) {
-    MS_LOG(EXCEPTION) << "Can not find top cell " << top_cell.get() << " cell id " << top_cell->cell_id()
-                      << " from top cell list";
+    MS_LOG(WARNING) << "Can not find top cell " << top_cell.get() << " cell id " << top_cell->cell_id()
+                    << " from top cell list";
+  } else {
+    (void)top_cell_list_.erase(iter);
   }
-  (void)top_cell_list_.erase(iter);
 }
 
 void GradExecutor::GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
@@ -2987,16 +2987,21 @@ void GradExecutor::ClearGrad(const py::object &cell, const py::args &args) {
 
 void GradExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear grad res";
-  grad_order_ = 0;
-  top_cell_switch_counts_ = 0;
   grad_flag_ = false;
   enable_op_cache_ = true;
   grad_is_running_ = false;
   need_renormalize_ = false;
   eliminate_forward_ = true;
+  custom_bprop_cell_count_ = 0;
+  grad_order_ = 0;
+  top_cell_switch_counts_ = 0;
+
+  check_graph_cell_id_.clear();
+  grad_operation_.clear();
   top_cell_ = nullptr;
   curr_g_ = nullptr;
   bprop_cell_list_.clear();
+  already_run_top_cell_.clear();
   ClearCellRes();
   std::stack<std::pair<std::string, bool>>().swap(bprop_grad_stack_);
   std::stack<std::string>().swap(cell_stack_);

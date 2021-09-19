@@ -428,7 +428,7 @@ class Cell(Cell_):
         with self.CellGuard():
             try:
                 output = self.run_construct(cast_inputs, kwargs)
-            except TypeError as err:
+            except Exception as err:
                 _pynative_executor.clear_res()
                 raise err
 
