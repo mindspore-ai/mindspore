@@ -447,7 +447,7 @@ bool EliminateLoadBeforeAssigns(const FuncGraphManagerPtr &manager, const CNodeP
       // If Load used by other nodes, keep load node.
       auto assign_cnode = assign->cast<CNodePtr>();
       if (OnlyUsedByOneNode(ref_node, assign_cnode)) {
-        (void)manager->Replace(ref_node, parameter);
+        manager->Replace(ref_node, parameter);
       } else {
         manager->SetEdge(assign, kInputIndex, parameter);
       }

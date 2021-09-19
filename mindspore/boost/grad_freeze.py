@@ -39,8 +39,8 @@ class FreezeOpt(Cell):
     Optimizer that supports gradients freezing training.
 
     Args:
-        opt (Cell): non-freezing optimizer instance, such as 'Momentum', 'SGD'.
-        train_parameter_groups (Union[tuple, list]): Groups of parameters for gradients freezing training.
+        opt (Optimizer): non-freezing optimizer instance, such as 'Momentum', 'SGD'.
+        train_parameter_groups (Union[Tuple, List]): Groups of parameters for gradients freezing training.
         train_strategy (Union[tuple(int), list(int), Tensor]): Strategy for gradients freezing training.
 
     Supported Platforms:
@@ -120,10 +120,10 @@ class _TrainFreezeCell(Cell):
     Args:
         net (Cell): The training network.
         sens (numbers.Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
-        grad (tuple(Tensor)): The gradients of network parameters and inputs.
+        grad (tuple(tensor)): The gradients of network parameters and inputs.
         grad_reducer (Cell): Constructs a gradient reducer Cell, which applies communication and average operations on
     single-process gradient values.
-        use_grad_accumulation (bool): Whether use grad accumulation.
+        use_grad_accumulation (Bool): Whether use grad accumulation.
         optimizer (Union[Cell]): Optimizer for updating the weights.
         max_accumulation_step (numbers.Number): Max grad accumulation steps. Default: 1.0
 
@@ -162,9 +162,9 @@ class GradientFreeze:
     probability of frozen layers can be configured by users
 
     Args:
-        param_groups (Union[tuple, list]): Groups of parameters for gradients freezing training.
-        freeze_type (int): Strategy of gradients freezing training.
-        freeze_p (float): probability of gradients freezing training.
+        param_groups (Union[Tuple, List]): Groups of parameters for gradients freezing training.
+        freeze_type (Int): Strategy of gradients freezing training.
+        freeze_p (FLoat): probability of gradients freezing training.
         total_steps (numbers.Number): Steps of the whole training.
 
     Examples:

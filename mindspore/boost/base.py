@@ -34,7 +34,7 @@ class OptimizerProcess:
 
     Examples:
         >>> from mindspore import Tensor, Parameter, nn
-        >>> import mindspore.ops import ops
+        >>> from mindspore.ops import operations as P
         >>> from mindspore.boost import OptimizerProcess
         >>>
         >>> class Net(nn.Cell):
@@ -142,7 +142,7 @@ class ParameterProcess:
 
     Examples:
         >>> from mindspore import Tensor, Parameter, nn
-        >>> import mindspore.ops as ops
+        >>> from mindspore.ops import operations as P
         >>> from mindspore.boost import OptimizerProcess
         >>>
         >>> class Net(nn.Cell):

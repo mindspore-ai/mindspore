@@ -41,8 +41,7 @@ class AutoBoost:
     Provide auto accelerating for network.
 
     Args:
-       level (str): boost config level.
-       kwargs (any): Additional configuration parameters related to boost.
+       level (Str): boost config level.
     """
     def __init__(self, level, kwargs):
         if level not in _boost_config_level.keys():
