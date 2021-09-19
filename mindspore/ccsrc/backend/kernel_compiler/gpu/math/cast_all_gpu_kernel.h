@@ -37,6 +37,9 @@ class CastAllGpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     auto in_addr = std::make_unique<T *[]>(num_input_);
     auto out_addr = std::make_unique<S *[]>(num_input_);
@@ -68,6 +71,12 @@ class CastAllGpuFwdKernel : public GpuKernel {
     size_ = std::make_unique<size_t[]>(num_input_);
     for (size_t i = 0; i < num_input_; i++) {
       auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+      is_null_input_ = CHECK_NULL_INPUT(shape);
+      if (is_null_input_) {
+        MS_LOG(WARNING) << "For 'CastAllGpuKernel', input is null";
+        InitSizeLists();
+        return true;
+      }
       size_t s = 1;
       for (auto x : shape) {
         s = s * x;
@@ -100,6 +109,7 @@ class CastAllGpuFwdKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t num_input_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

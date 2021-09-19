@@ -69,6 +69,17 @@ class Conv3dGpuKernel : public GpuKernel {
 
     return true;
   }
+  bool CheckNull(const std::vector<size_t> in_shape, const std::vector<size_t> filter_shape,
+                 const std::vector<size_t> output_shape) {
+    is_null_input_ = CHECK_NULL_INPUT(in_shape) || CHECK_NULL_INPUT(filter_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'Conv3dGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
+    return false;
+  }
+
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     InitResource();
@@ -80,10 +91,7 @@ class Conv3dGpuKernel : public GpuKernel {
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(in_shape);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "Conv3dGpuKernel input is null.";
-      InitSizeLists();
+    if (CheckNull(in_shape, filter_shape, output_shape)) {
       return true;
     }
     CheckTensorSize({in_shape});
@@ -104,6 +112,9 @@ class Conv3dGpuKernel : public GpuKernel {
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (pad_list.size() != 6) {
+      MS_LOG(EXCEPTION) << "For 'Conv3dGpuBkwKernel', the length of pad_list must be 6, but got " << pad_list.size();
+    }
     pad_depth_ = pad_list[0];
     pad_height_ = pad_list[2];
     pad_width_ = pad_list[4];

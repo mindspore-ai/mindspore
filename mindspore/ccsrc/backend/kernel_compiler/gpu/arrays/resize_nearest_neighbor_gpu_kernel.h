@@ -36,6 +36,9 @@ class ResizeNearestNeighborGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
     int size = SizeToInt(output_size_ / sizeof(T));
@@ -61,6 +64,12 @@ class ResizeNearestNeighborGpuKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     shape_size_ = input_shape.size();
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ResizeNearestNeighborGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     if (shape_size_ != RESIZENEARESTNEIGHBOR_DIMENSION) {
       MS_LOG(ERROR) << "Input is " << shape_size_ << "-D, but ResizeNearestNeighbor supports only "
                     << RESIZENEARESTNEIGHBOR_DIMENSION << "-D inputs.";
@@ -100,6 +109,7 @@ class ResizeNearestNeighborGpuKernel : public GpuKernel {
   }
 
   bool align_corners_;
+  bool is_null_input_;
   size_t shape_size_;
   std::vector<int> input_shape_;
   std::vector<int> output_shape_;

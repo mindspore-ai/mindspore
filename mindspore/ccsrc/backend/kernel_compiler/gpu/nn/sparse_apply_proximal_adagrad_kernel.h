@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the
  * "License");
@@ -42,6 +42,9 @@ class SparseApplyProximalAdagradKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *variable = GetDeviceAddress<T>(inputs, 0);
     T *accumulation = GetDeviceAddress<T>(inputs, 1);
     T *learning_rate = GetDeviceAddress<T>(inputs, 2);
@@ -75,26 +78,34 @@ class SparseApplyProximalAdagradKernel : public GpuKernel {
     indices_size_ = sizeof(int);
 
     auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto learning_rate_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
+    auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
+    is_null_input_ = CHECK_NULL_INPUT(variable_shape) || CHECK_NULL_INPUT(accumulation_shape) ||
+                     CHECK_NULL_INPUT(learning_rate_shape) || CHECK_NULL_INPUT(gradient_shape) ||
+                     CHECK_NULL_INPUT(indices_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SparseApplyProximalAdagradGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < variable_shape.size(); i++) {
       variable_size_ *= variable_shape[i];
     }
 
-    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     for (size_t i = 0; i < accumulation_shape.size(); i++) {
       accumulation_size_ *= accumulation_shape[i];
     }
 
-    auto learning_rate_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     for (size_t i = 0; i < learning_rate_shape.size(); i++) {
       learning_rate_size_ *= learning_rate_shape[i];
     }
 
-    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
     for (size_t i = 0; i < gradient_shape.size(); i++) {
       gradient_size_ *= gradient_shape[i];
     }
 
-    auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
     for (size_t i = 0; i < indices_shape.size(); i++) {
       indices_size_ *= indices_shape[i];
     }
@@ -116,6 +127,7 @@ class SparseApplyProximalAdagradKernel : public GpuKernel {
   }
 
   void ResetResource() noexcept override {
+    is_null_input_ = false;
     variable_size_ = 0;
     accumulation_size_ = 0;
     learning_rate_size_ = 0;
@@ -129,6 +141,7 @@ class SparseApplyProximalAdagradKernel : public GpuKernel {
   }
 
  private:
+  bool is_null_input_;
   size_t variable_size_;
   size_t accumulation_size_;
   size_t learning_rate_size_;

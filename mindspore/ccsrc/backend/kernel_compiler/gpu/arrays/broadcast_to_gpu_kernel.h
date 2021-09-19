@@ -37,6 +37,9 @@ class BroadcastToGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
@@ -48,6 +51,12 @@ class BroadcastToGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shapes) || CHECK_NULL_INPUT(output_shapes);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'BroadcastToGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     if (input_shapes.size() > SHAPE_SIZE || output_shapes.size() > SHAPE_SIZE) {
       MS_LOG(EXCEPTION) << "BroadcastTo operation not support dim greater than " << SHAPE_SIZE;
     }
@@ -78,6 +87,7 @@ class BroadcastToGpuKernel : public GpuKernel {
  private:
   size_t input_shape_[4] = {1, 1, 1, 1};
   size_t output_shape_[4] = {1, 1, 1, 1};
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

@@ -46,6 +46,9 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
@@ -78,6 +81,13 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
     output_size_ = sizeof(T);
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'AdaptiveAvgPool2dGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     len = static_cast<uint>(input_shape.size());
 
     if (len < 2) {
@@ -92,7 +102,6 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
       input_size_ *= input_shape[i];
     }
 
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < output_shape.size(); i++) {
       output_size_ *= output_shape[i];
     }
@@ -116,6 +125,7 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
   uint output_height;
   uint output_width;
   uint size;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

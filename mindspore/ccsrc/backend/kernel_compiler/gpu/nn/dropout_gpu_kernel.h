@@ -75,6 +75,7 @@ class DropoutGpuFwdKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'DropoutGpuKernel', input is null.";
       InitSizeLists();
       return true;
     }

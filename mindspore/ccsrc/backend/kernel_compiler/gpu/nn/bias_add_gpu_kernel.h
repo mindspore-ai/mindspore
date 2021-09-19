@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ class BiasAddGpuKernel : public GpuKernel {
     auto num_dims = x_shape.size();
     is_null_input_ = CHECK_NULL_INPUT(x_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "input is null";
+      MS_LOG(WARNING) << "For 'BiasAddGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

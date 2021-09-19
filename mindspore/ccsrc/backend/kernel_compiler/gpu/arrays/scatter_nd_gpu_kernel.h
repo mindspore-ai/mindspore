@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,9 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     S *indices = GetDeviceAddress<S>(inputs, 0);
     T *update = GetDeviceAddress<T>(inputs, 1);
@@ -102,7 +105,13 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
     input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-
+    is_null_input_ =
+      CHECK_NULL_INPUT(input_shapes_) || CHECK_NULL_INPUT(indices_shapes_) || CHECK_NULL_INPUT(output_shapes_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ScatterNdGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     std::vector<int64_t> shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "shape");
     (void)std::transform(shape_me.begin(), shape_me.end(), std::back_inserter(vec_work_shape_),
                          [](const int64_t &value) { return static_cast<S>(value); });
@@ -189,6 +198,7 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
   size_t indices_dim_0_;
   size_t indices_dim_1_;
   bool memcpy_flag_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

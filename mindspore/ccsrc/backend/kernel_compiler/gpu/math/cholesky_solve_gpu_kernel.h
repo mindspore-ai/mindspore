@@ -104,6 +104,12 @@ class CholeskyGpuKernel : public GpuKernel {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(in_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'CholeskySolveGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     split_dim_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "split_dim"));
     if (split_dim_ == 0) {
       if (!InitNoSpltDim(in_shape)) {

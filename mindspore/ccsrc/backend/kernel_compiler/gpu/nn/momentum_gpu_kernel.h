@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,9 @@ class MomentumGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *variable = GetDeviceAddress<T>(inputs, 0);
     T *accumulation = GetDeviceAddress<T>(inputs, 1);
     S *learning_rate = GetDeviceAddress<S>(inputs, 2);
@@ -65,14 +68,23 @@ class MomentumGpuKernel : public GpuKernel {
     momentum_size_ = sizeof(S);
 
     auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    is_null_input_ =
+      CHECK_NULL_INPUT(variable_shape) || CHECK_NULL_INPUT(accumulation_shape) || CHECK_NULL_INPUT(gradient_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'MomentumGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < variable_shape.size(); i++) {
       variable_size_ *= variable_shape[i];
     }
-    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+
     for (size_t i = 0; i < accumulation_shape.size(); i++) {
       accumulation_size_ *= accumulation_shape[i];
     }
-    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+
     for (size_t i = 0; i < gradient_shape.size(); i++) {
       gradient_size_ *= gradient_shape[i];
     }
@@ -92,6 +104,7 @@ class MomentumGpuKernel : public GpuKernel {
 
  private:
   bool use_nesterov_;
+  bool is_null_input_;
   size_t variable_size_;
   size_t accumulation_size_;
   size_t learning_rate_size_;

@@ -52,6 +52,9 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     switch (nccl_kernel_type_) {
       case NCCL_ALL_REDUCE: {
         LaunchAllReduce(inputs, outputs, stream_ptr);
@@ -86,6 +89,12 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; ++i) {
       auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, i);
+      is_null_input_ = CHECK_NULL_INPUT(shape);
+      if (is_null_input_) {
+        MS_LOG(WARNING) << "For 'NcclCollectiveGpuKernel', input is null";
+        InitSizeLists();
+        return true;
+      }
       size_t size = sizeof(T);
       for (size_t j = 0; j < shape.size(); j++) {
         size *= IntToSize(shape[j]);
@@ -96,6 +105,12 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     }
     for (size_t i = 0; i < output_num; ++i) {
       auto shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, i);
+      is_null_input_ = CHECK_NULL_INPUT(shape);
+      if (is_null_input_) {
+        MS_LOG(WARNING) << "For 'NcclCollectiveGpuKernel', output is null";
+        InitSizeLists();
+        return true;
+      }
       size_t size = sizeof(T);
       for (size_t j = 0; j < shape.size(); j++) {
         size *= IntToSize(shape[j]);
@@ -124,6 +139,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     input_size_ = 0;
     output_size_ = 0;
     root_ = 0;
+    is_null_input_ = false;
     collective_handle_ = nullptr;
     comm_stream_ = nullptr;
     input_size_list_.clear();
@@ -239,6 +255,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
   size_t input_size_;
   size_t output_size_;
   int root_;
+  bool is_null_input_;
   const void *collective_handle_;
   cudaStream_t comm_stream_;
 

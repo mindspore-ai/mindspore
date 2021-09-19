@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class ROIAlignGpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     const T *x = GetDeviceAddress<T>(inputs, 0);
     const T *rois = GetDeviceAddress<T>(inputs, 1);
 
@@ -63,10 +66,16 @@ class ROIAlignGpuFwdKernel : public GpuKernel {
     // Get the input shapes
     auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    is_null_input_ = CHECK_NULL_INPUT(x_shape) || CHECK_NULL_INPUT(rois_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ROIAlignGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
 
     auto x_shape_size = x_shape.size();
     if (x_shape_size != 4) {
-      MS_LOG(ERROR) << "x shape size is " << x_shape_size << ", but shoud be 4.";
+      MS_LOG(ERROR) << "x shape size is " << x_shape_size << ", but should be 4.";
       return false;
     }
 
@@ -78,6 +87,10 @@ class ROIAlignGpuFwdKernel : public GpuKernel {
     x_shape_ = {batch_N_, channels_, height_, width_};
     x_size_ = batch_N_ * channels_ * height_ * width_ * sizeof(T);
 
+    if (rois_shape.size() < 2) {
+      MS_LOG(EXCEPTION) << "For 'ROIAlignGpuKernel', the rank of rois_shape should be greater than or equal to 2, "
+                        << "but got the rank of rois_shape: " << rois_shape.size();
+    }
     // Get rois rows and cols
     roi_rows_ = rois_shape[0];
     roi_cols_ = rois_shape[1];
@@ -123,6 +136,7 @@ class ROIAlignGpuFwdKernel : public GpuKernel {
   int channels_;
   int height_;
   int width_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

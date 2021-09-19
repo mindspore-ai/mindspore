@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@ class DynamicShapeGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     S *output_device_address = GetDeviceAddress<S>(outputs, 0);
     size_t prev_node_output_shape_size = prev_node_output_shape_.size() * sizeof(S);
     CHECK_CUDA_RET_WITH_EXCEPT(
@@ -57,6 +60,12 @@ class DynamicShapeGpuKernel : public GpuKernel {
     }
 
     std::vector<size_t> prev_node_output_shape_tmp = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(prev_node_output_shape_tmp);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'DynamicShapeGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     input_size_ = 1;
     for (const size_t &e : prev_node_output_shape_tmp) {
       input_size_ *= e;
@@ -77,6 +86,7 @@ class DynamicShapeGpuKernel : public GpuKernel {
   void ResetResource() noexcept override {
     input_size_ = 0;
     output_size_ = 0;
+    is_null_input_ = false;
     prev_node_output_shape_.clear();
     input_size_list_.clear();
     output_size_list_.clear();
@@ -92,6 +102,7 @@ class DynamicShapeGpuKernel : public GpuKernel {
  private:
   size_t input_size_;
   size_t output_size_;
+  bool is_null_input_;
   std::vector<S> prev_node_output_shape_;
 
   std::vector<size_t> input_size_list_;

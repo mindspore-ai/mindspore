@@ -52,6 +52,9 @@ class BatchNormFoldGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     (void)workspace;
     auto x = GetDeviceAddress<T>(inputs, 0);
     auto mean = GetDeviceAddress<T>(inputs, 1);
@@ -132,6 +135,12 @@ class BatchNormFoldGpuKernel : public GpuKernel {
     freeze_bn_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("freeze_bn")));
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'BatchNormFoldGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     if (input_shape.size() != 4) {
       MS_LOG(ERROR) << "Input shape is " << input_shape.size()
                     << ", but BatchNormFold GpuKernel OP needs 4DTensor input.";
@@ -202,6 +211,7 @@ class BatchNormFoldGpuKernel : public GpuKernel {
   double exp_avg_factor_;
   double epsilon_;
   bool is_training_;
+  bool is_null_input_;
   int freeze_bn_;
   int batch_;
   int channel_;

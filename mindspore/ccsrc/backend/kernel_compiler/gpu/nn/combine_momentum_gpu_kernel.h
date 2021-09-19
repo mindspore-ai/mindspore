@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class CombineMomentumGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     auto stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     for (size_t i = 0; i < num_; i++) {
       if (input_num_ == 6) {
@@ -69,6 +72,12 @@ class CombineMomentumGpuKernel : public GpuKernel {
     for (size_t i = 0; i < num_; i++) {
       element_num_ = 1;
       auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i * input_num_ + input_num_ - 5);
+      is_null_input_ = CHECK_NULL_INPUT(variable_shape);
+      if (is_null_input_) {
+        MS_LOG(WARNING) << "For 'CombineMomentumGpuKernel', input is null";
+        InitSizeLists();
+        return true;
+      }
       for (size_t j = 0; j < variable_shape.size(); j++) {
         element_num_ *= variable_shape[j];
       }
@@ -97,6 +106,7 @@ class CombineMomentumGpuKernel : public GpuKernel {
   std::vector<size_t> elements_;
   size_t num_;
   int input_num_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
