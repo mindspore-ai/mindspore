@@ -542,14 +542,14 @@ std::vector<int64_t> NcdhwDeviceDynamicShape(const std::vector<int64_t> &shape) 
 // eg. [2,3,4] => [2,4,3]; [2,3,4,5] => [2,4,5,3]
 std::vector<size_t> ChannelLastDeviceShape(const std::vector<size_t> &shape) {
   auto dim = shape.size();
-  std::vector<int64_t> axis;
+  std::vector<size_t> axis;
   axis.resize(dim);
   int step_value = 2;
   std::iota(axis.begin() + 1, axis.end(), step_value);
   axis[dim - 1] = 1;
 
   std::vector<size_t> device_shape;
-  std::transform(axis.begin(), axis.end(), std::back_inserter(device_shape), [&shape](int n) { return shape[n]; });
+  std::transform(axis.begin(), axis.end(), std::back_inserter(device_shape), [&shape](size_t n) { return shape[n]; });
 
   return device_shape;
 }
@@ -600,6 +600,9 @@ std::vector<int64_t> FracZDeviceShapeWithGroups(const std::vector<int64_t> &shap
   int64_t c1_dim = Shape::SHP_ANY;
   int64_t g_dim = Shape::SHP_ANY;
   int64_t n1 = Shape::SHP_ANY;
+  if (groups <= 0) {
+    MS_LOG(EXCEPTION) << "The value of groups should be greater than 0, but got " << groups;
+  }
   if (!HasShapeDynamic({shape[kC], shape[kN]})) {
     size_t group_size = LongToSize(groups);
     size_t cin_ori_tmp = LongToSize(shape[kC]);
@@ -1967,6 +1970,9 @@ bool NchwFracZTransWithGroups(const FormatArgs &args, void *result, bool to_devi
     return false;
   }
   size_t e_mult = std::min(Lcm(Lcm(cin_ori, kCubeSize) / cin_ori, Lcm(cout_ori, kCubeSize) / cout_ori), group_size);
+  if (e_mult == 0) {
+    MS_LOG(EXCEPTION) << "The value of e_mult should be greater than 0, but got " << e_mult;
+  }
   size_t cin_opt = DivCeil(e_mult * cin_ori, kCubeSize) * kCubeSize;
   size_t cout_opt = DivCeil(e_mult * cout_ori, kCubeSize) * kCubeSize;
   size_t c1_dim = cin_opt / kCubeSize;
