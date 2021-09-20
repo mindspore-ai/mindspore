@@ -1289,7 +1289,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
     MS_LOG(INFO) << "Get real path failed for overflow_bin_path.";
     return false;
   }
-  overflow_bin_path = realpath.value();
+  overflow_bin_path = realpath.value() + '/';
 #else
   overflow_bin_path = dump_dir_ + "/rank_" + std::to_string(device_id) + "/" + net_name_ + "/" +
                       std::to_string(root_graph_id) + "/" + IterationString(iteration) + "/";
