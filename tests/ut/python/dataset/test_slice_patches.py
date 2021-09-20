@@ -161,7 +161,7 @@ def test_slice_patches_08():
     dataset = dataset.map(input_columns=["image"], output_columns=["img0", "img1", "img2", "img3"],
                           column_order=["img0", "img1", "img2", "img3"],
                           operations=slice_patches_op)
-    for item in dataset.create_dict_iterator(output_numpy=True):
+    for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         patch_shape = item['img0'].shape
         assert patch_shape == (28, 41, 256)
 
@@ -185,7 +185,7 @@ def skip_test_slice_patches_11():
     cols = ['img' + str(x) for x in range(10*13)]
     dataset = dataset.map(input_columns=["image"], output_columns=cols,
                           column_order=cols, operations=slice_patches_op)
-    for item in dataset.create_dict_iterator(output_numpy=True):
+    for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         patch_shape = item['img0'].shape
         assert patch_shape == (700, 538, 256)
 

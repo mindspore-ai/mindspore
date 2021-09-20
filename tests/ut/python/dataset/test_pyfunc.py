@@ -340,7 +340,7 @@ def test_func_with_yield_manifest_dataset_01():
     data = data.map(operations=pass_func, input_columns=["image"], num_parallel_workers=1, python_multiprocessing=True)
     num_iter = 0
     try:
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
     except RuntimeError as e:
         assert "Can not pickle <class 'generator'> object, " in str(e)

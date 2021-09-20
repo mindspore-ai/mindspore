@@ -61,7 +61,7 @@ def test_func_lfilter_pipeline():
     # Filtered waveform by lfilter
     dataset = dataset.map(input_columns=["channel"], operations=lfilter_op, num_parallel_workers=8)
     i = 0
-    for data in dataset.create_dict_iterator(output_numpy=True):
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         count_unequal_element(expect_waveform[i, :], data['channel'], 0.0001, 0.0001)
         i += 1
 

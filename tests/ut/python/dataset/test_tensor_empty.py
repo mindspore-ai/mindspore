@@ -25,7 +25,7 @@ def test_tensor_empty():
 
     data = ds.GeneratorDataset(gen, column_names=["col1", "col2", "col3"])
 
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(np.array([], dtype=np.int64), d[0])
         np.testing.assert_array_equal(np.array([], dtype='S').reshape([0, 4]), d[1])
         np.testing.assert_array_equal(np.array([1], dtype=np.float64), d[2])
@@ -46,7 +46,7 @@ def test_tensor_empty_map():
 
     data = data.map(operations=func, input_columns=["col1", "col2", "col3"])
 
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(np.array([1], dtype=np.int64), d[0])
         np.testing.assert_array_equal(np.array(["Hi"], dtype='S'), d[1])
         np.testing.assert_array_equal(np.array([], dtype=np.float64), d[2])
@@ -60,7 +60,7 @@ def test_tensor_empty_batch():
 
     data = ds.GeneratorDataset(gen, column_names=["col1", "col2", "col3"]).batch(2)
 
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(np.array([], dtype=np.int64).reshape([2, 0]), d[0])
         np.testing.assert_array_equal(np.array([], dtype='S').reshape([2, 0, 4]), d[1])
         np.testing.assert_array_equal(np.array([[1], [1]], dtype=np.float64), d[2])

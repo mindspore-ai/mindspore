@@ -56,7 +56,7 @@ def test_func_deemph_biquad_pipeline():
     # Filtered waveform by deemphbiquad
     dataset = dataset.map(input_columns=["audio"], operations=deemph_biquad_op, num_parallel_workers=8)
     i = 0
-    for data in dataset.create_dict_iterator(output_numpy=True):
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         count_unequal_element(expect_waveform[i, :], data['audio'], 0.0001, 0.0001)
         i += 1
 

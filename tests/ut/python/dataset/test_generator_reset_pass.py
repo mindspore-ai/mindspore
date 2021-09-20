@@ -121,9 +121,9 @@ def test_generator_reset_3():
     concat1 = branch2 + branch3
     concat2 = branch1 + concat1.repeat(3).skip(5).take(15)
 
-    itr = concat2.create_dict_iterator(output_numpy=True)
-
     num_epochs = 5
+    itr = concat2.create_dict_iterator(num_epochs=num_epochs, output_numpy=True)
+
     output = np.array([0])
     golden = np.array([0])
     expected = np.array([2, 1, 2, 1, 12, 22, 23, 10, 11, 12, 10, 11, 12, 22, 23, 10, 11, 12, 10])
@@ -164,7 +164,7 @@ def test_generator_reset_5():
 
     num_epochs = 2
     output = np.array([0])
-    itr = branch1.create_dict_iterator(output_numpy=True)
+    itr = branch1.create_dict_iterator(num_epochs=num_epochs, output_numpy=True)
 
     for _ in range(num_epochs):
         for item in itr:

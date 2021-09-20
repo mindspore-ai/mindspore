@@ -47,7 +47,7 @@ def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
 
     ds_original = ds_original.batch(512)
 
-    for idx, (image, _) in enumerate(ds_original.create_tuple_iterator(output_numpy=True)):
+    for idx, (image, _) in enumerate(ds_original.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         if idx == 0:
             images_original = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -71,7 +71,7 @@ def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
 
     ds_random_sharpness = ds_random_sharpness.batch(512)
 
-    for idx, (image, _) in enumerate(ds_random_sharpness.create_tuple_iterator(output_numpy=True)):
+    for idx, (image, _) in enumerate(ds_random_sharpness.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         if idx == 0:
             images_random_sharpness = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -136,7 +136,7 @@ def test_random_sharpness_c(degrees=(1.6, 1.6), plot=False):
 
     ds_original = ds_original.batch(512)
 
-    for idx, (image, _) in enumerate(ds_original.create_tuple_iterator(output_numpy=True)):
+    for idx, (image, _) in enumerate(ds_original.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         if idx == 0:
             images_original = image
         else:
@@ -159,7 +159,7 @@ def test_random_sharpness_c(degrees=(1.6, 1.6), plot=False):
 
     ds_random_sharpness = ds_random_sharpness.batch(512)
 
-    for idx, (image, _) in enumerate(ds_random_sharpness.create_tuple_iterator(output_numpy=True)):
+    for idx, (image, _) in enumerate(ds_random_sharpness.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         if idx == 0:
             images_random_sharpness = image
         else:
@@ -226,7 +226,7 @@ def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
 
     ds_random_sharpness_py = ds_random_sharpness_py.batch(512)
 
-    for idx, (image, _) in enumerate(ds_random_sharpness_py.create_tuple_iterator(output_numpy=True)):
+    for idx, (image, _) in enumerate(ds_random_sharpness_py.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         if idx == 0:
             images_random_sharpness_py = image
 
@@ -242,7 +242,10 @@ def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
 
     ds_images_random_sharpness_c = ds_images_random_sharpness_c.batch(512)
 
-    for idx, (image, _) in enumerate(ds_images_random_sharpness_c.create_tuple_iterator(output_numpy=True)):
+    for idx, (image, _) in enumerate(
+            ds_images_random_sharpness_c.create_tuple_iterator(
+                num_epochs=1,
+                output_numpy=True)):
         if idx == 0:
             images_random_sharpness_c = image
 

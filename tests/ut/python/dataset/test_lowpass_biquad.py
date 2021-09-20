@@ -62,7 +62,7 @@ def test_lowpass_biquad_pipeline():
     dataset = dataset.map(
         input_columns=["col1"], operations=lowpass_biquad_op, num_parallel_workers=4)
     i = 0
-    for _ in dataset.create_dict_iterator(output_numpy=True):
+    for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         count_unequal_element(expect_waveform[i, :],
                               _["col1"], 0.0001, 0.0001)
         i += 1

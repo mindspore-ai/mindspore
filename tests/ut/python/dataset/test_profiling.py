@@ -191,9 +191,9 @@ def test_profiling_inline_ops_pipeline1():
 
     try:
         num_iter = 0
-        # Note: Do not explicitly set num_epochs argument in create_tuple_iterator() call
+        # Note: set num_epochs=2 in create_tuple_iterator(), so that EpochCtrl op is added to the pipeline
         # Here i refers to index, d refers to data element
-        for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+        for i, d in enumerate(data3.create_tuple_iterator(num_epochs=2, output_numpy=True)):
             num_iter += 1
             t = d
             assert i == t[0][0]
@@ -326,7 +326,7 @@ def test_profiling_basic_pipeline():
 
     try:
         num_iter = 0
-        # Note: If create_tuple_iterator() is called with num_epochs>1, then EpochCtrlOp is added to the pipeline
+        # Note: If create_dict_iterator() is called with num_epochs>1, then EpochCtrlOp is added to the pipeline
         for _ in data1.create_dict_iterator(num_epochs=2):
             num_iter += 1
 
@@ -379,7 +379,7 @@ def test_profiling_cifar10_pipeline():
 
     try:
         num_iter = 0
-        # Note: If create_tuple_iterator() is called with num_epochs=1, then EpochCtrlOp is NOT added to the pipeline
+        # Note: If create_dict_iterator() is called with num_epochs=1, then EpochCtrlOp is NOT added to the pipeline
         for _ in data1.create_dict_iterator(num_epochs=1):
             num_iter += 1
 
@@ -426,7 +426,7 @@ def test_profiling_seq_pipelines_epochctrl3():
     try:
         # Test A - Call create_dict_iterator with num_epochs>1
         num_iter = 0
-        # Note: If create_tuple_iterator() is called with num_epochs>1, then EpochCtrlOp is added to the pipeline
+        # Note: If create_dict_iterator() is called with num_epochs>1, then EpochCtrlOp is added to the pipeline
         for _ in data1.create_dict_iterator(num_epochs=2):
             num_iter += 1
         assert num_iter == 2
@@ -437,7 +437,7 @@ def test_profiling_seq_pipelines_epochctrl3():
 
         # Test B - Call create_dict_iterator with num_epochs=1
         num_iter = 0
-        # Note: If create_tuple_iterator() is called with num_epochs=1,
+        # Note: If create_dict_iterator() is called with num_epochs=1,
         # then EpochCtrlOp should not be NOT added to the pipeline
         for _ in data1.create_dict_iterator(num_epochs=1):
             num_iter += 1
@@ -470,7 +470,7 @@ def test_profiling_seq_pipelines_epochctrl2():
     try:
         # Test A - Call create_dict_iterator with num_epochs=1
         num_iter = 0
-        # Note: If create_tuple_iterator() is called with num_epochs=1, then EpochCtrlOp is NOT added to the pipeline
+        # Note: If create_dict_iterator() is called with num_epochs=1, then EpochCtrlOp is NOT added to the pipeline
         for _ in data2.create_dict_iterator(num_epochs=1):
             num_iter += 1
         assert num_iter == 4
@@ -481,7 +481,7 @@ def test_profiling_seq_pipelines_epochctrl2():
 
         # Test B - Call create_dict_iterator with num_epochs>1
         num_iter = 0
-        # Note: If create_tuple_iterator() is called with num_epochs>1,
+        # Note: If create_dict_iterator() is called with num_epochs>1,
         # then EpochCtrlOp should be added to the pipeline
         for _ in data2.create_dict_iterator(num_epochs=2):
             num_iter += 1

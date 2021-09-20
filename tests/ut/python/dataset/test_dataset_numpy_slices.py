@@ -77,7 +77,7 @@ def test_numpy_slices_list_append():
 
     ds = de.NumpySlicesDataset(res, column_names=["col1"], shuffle=False)
 
-    for i, data in enumerate(ds.create_tuple_iterator(output_numpy=True)):
+    for i, data in enumerate(ds.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert np.equal(data, res[i]).all()
 
 
@@ -99,7 +99,7 @@ def test_numpy_slices_tuple_1():
     np_data = [([1, 2], [3, 4]), ([11, 12], [13, 14]), ([21, 22], [23, 24])]
     ds = de.NumpySlicesDataset(np_data, shuffle=False)
 
-    for i, data in enumerate(ds.create_tuple_iterator(output_numpy=True)):
+    for i, data in enumerate(ds.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert np.equal(data, np_data[i]).all()
 
     assert sum([1 for _ in ds]) == 3
@@ -112,7 +112,7 @@ def test_numpy_slices_tuple_2():
     expected = [[1, 3, 5], [2, 4, 6]]
     ds = de.NumpySlicesDataset(np_data, shuffle=False)
 
-    for i, data in enumerate(ds.create_tuple_iterator(output_numpy=True)):
+    for i, data in enumerate(ds.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert np.equal(data, expected[i]).all()
 
     assert sum([1 for _ in ds]) == 2
@@ -156,7 +156,7 @@ def test_numpy_slices_csv_dict():
 
     ds = de.NumpySlicesDataset(dict(df), shuffle=False)
 
-    for i, data in enumerate(ds.create_tuple_iterator(output_numpy=True)):
+    for i, data in enumerate(ds.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert np.equal(data, res[i]).all()
 
 

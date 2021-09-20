@@ -117,7 +117,7 @@ def test_nested_repeat1():
     data = data.repeat(2)
     data = data.repeat(3)
 
-    for i, d in enumerate(data.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert i % 3 == d[0][0]
 
     assert sum([1 for _ in data]) == 2 * 3 * 3
@@ -129,7 +129,7 @@ def test_nested_repeat2():
     data = data.repeat(1)
     data = data.repeat(1)
 
-    for i, d in enumerate(data.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert i % 3 == d[0][0]
 
     assert sum([1 for _ in data]) == 3
@@ -141,7 +141,7 @@ def test_nested_repeat3():
     data = data.repeat(1)
     data = data.repeat(2)
 
-    for i, d in enumerate(data.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert i % 3 == d[0][0]
 
     assert sum([1 for _ in data]) == 2 * 3
@@ -153,7 +153,7 @@ def test_nested_repeat4():
     data = data.repeat(2)
     data = data.repeat(1)
 
-    for i, d in enumerate(data.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         assert i % 3 == d[0][0]
 
     assert sum([1 for _ in data]) == 2 * 3

@@ -90,7 +90,7 @@ def test_voc_meta_column():
     # scenario one: output 2 columns if without rename meta column
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", decode=True, shuffle=False, extra_metadata=True)
     num = 0
-    for item in data1.create_tuple_iterator():
+    for item in data1.create_tuple_iterator(num_epochs=1):
         assert len(item) == 2
         num += 1
 
@@ -102,7 +102,7 @@ def test_voc_meta_column():
     data2 = data2.map(operations=pyfunc1, input_columns=["image", "target"])
     data2 = data2.rename("_meta-filename", "filename")
     num = 0
-    for item in data2.create_tuple_iterator(output_numpy=True):
+    for item in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
         assert text.to_str(item[2]) == IMAGE_ID[num]
         num += 1
 
@@ -115,7 +115,7 @@ def test_voc_meta_column():
                       column_order=["_meta-filename", "img1", "img2", "label"])
     data3 = data3.rename("_meta-filename", "filename")
     num = 0
-    for item in data3.create_tuple_iterator(output_numpy=True):
+    for item in data3.create_tuple_iterator(num_epochs=1, output_numpy=True):
         assert text.to_str(item[0]) == IMAGE_ID[num]
         num += 1
 
@@ -128,7 +128,7 @@ def test_voc_meta_column():
                       column_order=["_meta-filename", "img1"])
     data4 = data4.rename("_meta-filename", "filename")
     num = 0
-    for item in data4.create_tuple_iterator(output_numpy=True):
+    for item in data4.create_tuple_iterator(num_epochs=1, output_numpy=True):
         assert text.to_str(item[0]) == IMAGE_ID[num]
         num += 1
 
@@ -248,7 +248,7 @@ def test_voc_exception():
     try:
         data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
         data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -258,7 +258,7 @@ def test_voc_exception():
         data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
         data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
         data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -267,7 +267,7 @@ def test_voc_exception():
     try:
         data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
         data = data.map(operations=exception_func, input_columns=["bbox"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -276,7 +276,7 @@ def test_voc_exception():
     try:
         data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
         data = data.map(operations=exception_func, input_columns=["difficult"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -285,7 +285,7 @@ def test_voc_exception():
     try:
         data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
         data = data.map(operations=exception_func, input_columns=["truncate"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -294,7 +294,7 @@ def test_voc_exception():
     try:
         data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
         data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -304,7 +304,7 @@ def test_voc_exception():
         data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
         data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
         data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -313,7 +313,7 @@ def test_voc_exception():
     try:
         data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
         data = data.map(operations=exception_func, input_columns=["target"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
         assert False
     except RuntimeError as e:
@@ -323,7 +323,7 @@ def test_voc_exception():
         data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
         data = data.map(operations=vision.Decode(), input_columns=["target"], num_parallel_workers=1)
         data = data.map(operations=exception_func, input_columns=["target"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator(output_numpy=True):
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
         assert False
     except RuntimeError as e:

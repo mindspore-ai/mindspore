@@ -64,14 +64,14 @@ def test_imagenet_tf_file_dataset_size():
     assert ds_shard_3_0.get_dataset_size() == 4
 
     count = 0
-    for _ in ds_shard_3_0.create_dict_iterator():
+    for _ in ds_shard_3_0.create_dict_iterator(num_epochs=1):
         count += 1
     assert ds_shard_3_0.get_dataset_size() == count
 
     # shard_equal_rows is set to False therefore, get_dataset_size must return count
     ds_shard_4_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=4, shard_id=0)
     count = 0
-    for _ in ds_shard_4_0.create_dict_iterator():
+    for _ in ds_shard_4_0.create_dict_iterator(num_epochs=1):
         count += 1
     assert ds_shard_4_0.get_dataset_size() == count
 
@@ -254,7 +254,7 @@ def test_distributed_get_dataset_size():
     assert dataset1.get_dataset_size() == 2000
 
     count1 = 0
-    for _ in dataset1.create_dict_iterator():
+    for _ in dataset1.create_dict_iterator(num_epochs=1):
         count1 += 1
     assert count1 == 2000
 
@@ -263,7 +263,7 @@ def test_distributed_get_dataset_size():
     assert dataset2.get_dataset_size() == 2500
 
     count2 = 0
-    for _ in dataset2.create_dict_iterator():
+    for _ in dataset2.create_dict_iterator(num_epochs=1):
         count2 += 1
     assert count2 == 2500
 

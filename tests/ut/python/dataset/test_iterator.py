@@ -127,25 +127,25 @@ def test_iterator_weak_ref():
 def test_iterator_exception():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
     try:
-        _ = data.create_dict_iterator(output_numpy="123")
+        _ = data.create_dict_iterator(num_epochs=1, output_numpy="123")
         assert False
     except TypeError as e:
         assert "Argument output_numpy with value 123 is not of type" in str(e)
 
     try:
-        _ = data.create_dict_iterator(output_numpy=123)
+        _ = data.create_dict_iterator(num_epochs=1, output_numpy=123)
         assert False
     except TypeError as e:
         assert "Argument output_numpy with value 123 is not of type" in str(e)
 
     try:
-        _ = data.create_tuple_iterator(output_numpy="123")
+        _ = data.create_tuple_iterator(num_epochs=1, output_numpy="123")
         assert False
     except TypeError as e:
         assert "Argument output_numpy with value 123 is not of type" in str(e)
 
     try:
-        _ = data.create_tuple_iterator(output_numpy=123)
+        _ = data.create_tuple_iterator(num_epochs=1, output_numpy=123)
         assert False
     except TypeError as e:
         assert "Argument output_numpy with value 123 is not of type" in str(e)

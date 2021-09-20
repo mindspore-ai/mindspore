@@ -69,7 +69,7 @@ def test_fillop_string():
 
     data = data.map(operations=fill_op, input_columns=["col"])
     expected = np.array(['error', 'error'], dtype='S')
-    for data_row in data.create_tuple_iterator(output_numpy=True):
+    for data_row in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data_row[0], expected)
 
 
@@ -82,7 +82,7 @@ def test_fillop_bytes():
 
     data = data.map(operations=fill_op, input_columns=["col"])
     expected = np.array([b'abc', b'abc', b'abc'], dtype='S')
-    for data_row in data.create_tuple_iterator(output_numpy=True):
+    for data_row in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(data_row[0], expected)
 
 

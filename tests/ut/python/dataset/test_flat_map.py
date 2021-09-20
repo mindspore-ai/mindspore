@@ -34,7 +34,7 @@ def test_flat_map_1():
     data = data.flat_map(flat_map_func)
 
     count = 0
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         assert isinstance(d[0], np.ndarray)
         count += 1
     assert count == 52
@@ -60,7 +60,7 @@ def test_flat_map_2():
     data = data.flat_map(flat_map_func_2)
 
     count = 0
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         assert isinstance(d[0], np.ndarray)
         count += 1
     assert count == 104

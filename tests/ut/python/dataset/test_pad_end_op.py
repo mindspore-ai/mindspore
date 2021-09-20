@@ -30,7 +30,7 @@ def pad_compare(array, pad_shape, pad_value, res):
         data = data.map(operations=ops.PadEnd(pad_shape, pad_value))
     else:
         data = data.map(operations=ops.PadEnd(pad_shape))
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(res, d[0])
 
 

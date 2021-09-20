@@ -39,7 +39,7 @@ def test_compose():
             data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
             data = data.map(input_columns=["col"], operations=op_list)
             res = []
-            for i in data.create_dict_iterator(output_numpy=True):
+            for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
                 res.append(i["col"].tolist())
             return res
         except (TypeError, ValueError) as e:
@@ -114,7 +114,7 @@ def test_lambdas():
         data = data.map(operations=op_list, input_columns=input_columns, output_columns=output_cols,
                         column_order=output_cols)
         res = []
-        for i in data.create_dict_iterator(output_numpy=True):
+        for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             for col_name in output_cols:
                 res.append(i[col_name].tolist())
         return res
@@ -141,7 +141,7 @@ def test_c_py_compose_transforms_module():
         data = data.map(operations=op_list, input_columns=input_columns, output_columns=output_cols,
                         column_order=output_cols)
         res = []
-        for i in data.create_dict_iterator(output_numpy=True):
+        for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             for col_name in output_cols:
                 res.append(i[col_name].tolist())
         return res
@@ -229,7 +229,7 @@ def test_py_transforms_with_c_vision():
         data = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
         data = data.map(operations=op_list)
         res = []
-        for i in data.create_dict_iterator(output_numpy=True):
+        for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             for col_name in output_cols:
                 res.append(i[col_name].tolist())
         return res
@@ -323,7 +323,7 @@ def test_compose_with_custom_function():
     #
 
     res = []
-    for i in data.create_dict_iterator(output_numpy=True):
+    for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         res.append(i["col0"].tolist())
     assert res == [[[3, 6], [9, 36]]]
 

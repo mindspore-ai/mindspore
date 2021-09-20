@@ -50,8 +50,7 @@ def test_cifar10():
     data1 = data1.repeat(num_repeat)
     data1 = data1.batch(batch_size, True)
     num_epoch = 5
-    # iter1 will always assume there is a next epoch and never shutdown.
-    iter1 = data1.create_tuple_iterator()
+    iter1 = data1.create_tuple_iterator(num_epochs=num_epoch)
     epoch_count = 0
     sample_count = 0
     for _ in range(num_epoch):
@@ -86,7 +85,7 @@ def test_decode_op():
 
     num_epoch = 5
     # iter1 will always assume there is a next epoch and never shutdown.
-    iter1 = data1.create_dict_iterator(output_numpy=True)
+    iter1 = data1.create_dict_iterator(num_epochs=-1, output_numpy=True)
     # iter 2 will stop and shutdown pipeline after num_epoch
     iter2 = data2.create_dict_iterator(num_epoch, output_numpy=True)
     for _ in range(num_epoch):
@@ -169,7 +168,9 @@ def test_generator_dict_2():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
-    iter1 = data1.create_dict_iterator()
+
+    # iter1 will always assume there is a next epoch and never shutdown
+    iter1 = data1.create_dict_iterator(num_epochs=-1)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -192,7 +193,9 @@ def test_generator_dict_3():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
-    iter1 = data1.create_dict_iterator()
+
+    # iter1 will always assume there is a next epoch and never shutdown
+    iter1 = data1.create_dict_iterator(num_epochs=-1)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -200,7 +203,7 @@ def test_generator_dict_3():
             np.testing.assert_array_equal(item["data"].asnumpy(), golden)
             i = i + 1
         assert i == 64
-    # optional
+
     iter1.stop()
     # Expect a AttributeError since iter1 has been stopped.
     with pytest.raises(AttributeError) as info:
@@ -360,7 +363,8 @@ def test_generator_tuple_2():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
-    iter1 = data1.create_tuple_iterator(output_numpy=True)
+    # iter1 will always assume there is a next epoch and never shutdown
+    iter1 = data1.create_tuple_iterator(num_epochs=-1, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -383,7 +387,8 @@ def test_generator_tuple_3():
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
-    iter1 = data1.create_tuple_iterator(output_numpy=True)
+    # iter1 will always assume there is a next epoch and never shutdown
+    iter1 = data1.create_tuple_iterator(num_epochs=-1, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -391,7 +396,7 @@ def test_generator_tuple_3():
             np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64
-    # optional
+
     iter1.stop()
     # Expect a AttributeError since iter1 has been stopped.
     with pytest.raises(AttributeError) as info:
@@ -533,7 +538,8 @@ def test_generator_tuple_repeat_repeat_2():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat(2)
     data1 = data1.repeat(3)
-    iter1 = data1.create_tuple_iterator(output_numpy=True)
+    # iter1 will always assume there is a next epoch and never shutdown
+    iter1 = data1.create_tuple_iterator(num_epochs=-1, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -541,7 +547,7 @@ def test_generator_tuple_repeat_repeat_2():
             np.testing.assert_array_equal(item[0], golden)
             i = i + 1
         assert i == 64 * 2 * 3
-    # optional
+
     iter1.stop()
     # Expect a AttributeError since iter1 has been stopped.
     with pytest.raises(AttributeError) as info:
@@ -559,7 +565,7 @@ def test_generator_tuple_repeat_repeat_3():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat(2)
     data1 = data1.repeat(3)
-    iter1 = data1.create_tuple_iterator(output_numpy=True)
+    iter1 = data1.create_tuple_iterator(num_epochs=15, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -658,7 +664,7 @@ def test_generator_tuple_infinite_repeat_repeat_4():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat()
     data1 = data1.repeat()
-    iter1 = data1.create_tuple_iterator(output_numpy=True)
+    iter1 = data1.create_tuple_iterator(num_epochs=1, output_numpy=True)
 
     i = 0
     for item in iter1:  # each data is a dictionary
@@ -680,7 +686,7 @@ def test_generator_reusedataset():
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data1 = data1.repeat(2)
-    iter1 = data1.create_tuple_iterator(output_numpy=True)
+    iter1 = data1.create_tuple_iterator(num_epochs=10, output_numpy=True)
     for _ in range(10):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -690,7 +696,7 @@ def test_generator_reusedataset():
         assert i == 64 * 2
 
     data1 = data1.repeat(3)
-    iter1 = data1.create_tuple_iterator(output_numpy=True)
+    iter1 = data1.create_tuple_iterator(num_epochs=5, output_numpy=True)
     for _ in range(5):
         i = 0
         for item in iter1:  # each data is a dictionary
@@ -700,7 +706,7 @@ def test_generator_reusedataset():
         assert i == 64 * 2 * 3
 
     data1 = data1.batch(2)
-    iter1 = data1.create_dict_iterator(output_numpy=True)
+    iter1 = data1.create_dict_iterator(num_epochs=5, output_numpy=True)
     for _ in range(5):
         i = 0
         sample = 0
