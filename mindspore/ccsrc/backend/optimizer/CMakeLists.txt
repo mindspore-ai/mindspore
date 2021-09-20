@@ -10,7 +10,7 @@ if("${ENABLE_HIDDEN}" STREQUAL "OFF")
     string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
-if(ENABLE_D)
+if(ENABLE_D OR ENABLE_ACL)
     file(GLOB_RECURSE _D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "ascend/*.cc"
         "graph_kernel/*.cc"
