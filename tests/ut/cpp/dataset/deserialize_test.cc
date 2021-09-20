@@ -530,7 +530,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeConcatAlbumFlickr) {
 
 TEST_F(MindDataTestDeserialize, TestDeserializePyFunc) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-PyFunc.";
-  std::shared_ptr<DatasetNode> ds1;
-  ASSERT_OK(Serdes::Deserialize("./data/dataset/tf_file_dataset/pyvision_dataset_pipeline.json", &ds1));
-  EXPECT_NE(ds1, nullptr);
+  if (Py_IsInitialized() != 0) {
+    std::shared_ptr<DatasetNode> ds1;
+    ASSERT_OK(Serdes::Deserialize("./data/dataset/tf_file_dataset/pyvision_dataset_pipeline.json", &ds1));
+    EXPECT_NE(ds1, nullptr);
+  }
 }
