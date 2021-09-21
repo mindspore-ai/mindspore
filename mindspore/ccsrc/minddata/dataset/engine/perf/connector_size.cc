@@ -15,6 +15,8 @@
  */
 #include "minddata/dataset/engine/perf/connector_size.h"
 #include <fstream>
+#include <algorithm>
+#include <memory>
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/path.h"
@@ -27,10 +29,12 @@ using Qrow = std::vector<int>;
 // Sample action
 Status ConnectorSize::Sample() {
   Qrow cur_row;
-  std::transform(tree_->begin(), tree_->end(), std::back_inserter(cur_row),
-                 [](DatasetOp &op) { return op.ConnectorSize(); });
+  (void)std::transform(tree_->begin(), tree_->end(), std::back_inserter(cur_row),
+                       [](DatasetOp &op) { return op.ConnectorSize(); });
+  std::lock_guard<std::mutex> guard(lock_);
   // Push new row of sample
   sample_table_.push_back(cur_row);
+  (void)ts_.emplace_back(ProfilingTime::GetCurMilliSecond());
   return Status::OK();
 }
 
@@ -70,8 +74,8 @@ Status ConnectorSize::SaveToFile() {
   // Traverse the ExecutionTree for JSON node generation
   for (auto &node : *tree_) {
     std::vector<int32_t> cur_queue_size;
-    std::transform(sample_table_.begin(), sample_table_.end(), std::back_inserter(cur_queue_size),
-                   [&](const ConnectorSizeSample &sample) { return sample[idx]; });
+    (void)std::transform(sample_table_.begin(), sample_table_.end(), std::back_inserter(cur_queue_size),
+                         [&](const ConnectorSizeSample &sample) { return sample[idx]; });
     if (!path.Exists()) {
       json json_node = ParseOpInfo(node, cur_queue_size);
       output["op_info"].push_back(json_node);
@@ -102,5 +106,37 @@ Status ConnectorSize::Init(const std::string &dir_path, const std::string &devic
 }
 
 Status ConnectorSize::Analyze() { return Status::OK(); }
+
+Status ConnectorSize::GetOpConnectorSize(int32_t op_id, uint64_t start_time, uint64_t end_time,
+                                         std::vector<int32_t> *result) {
+  MS_LOG(DEBUG) << "Op_id: " << op_id << " start_ts: " << start_time << " end_ts: " << end_time;
+  CHECK_FAIL_RETURN_UNEXPECTED(start_time < end_time,
+                               "Expected start_time < end_time. Got start_ts: " + std::to_string(start_time) +
+                                 " end_ts: " + std::to_string(end_time));
+  std::lock_guard<std::mutex> guard(lock_);
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    ts_.size() == sample_table_.size(),
+    "Expected ts_.size() == sample_table_.size(). Got ts_.size: " + std::to_string(ts_.size()) +
+      " sample_table_.size: " + std::to_string(sample_table_.size()));
+  // find first ts that is not less than start_ts
+  auto lower = std::lower_bound(ts_.begin(), ts_.end(), start_time);
+  // find first ts that is greater than end_ts
+  auto upper = std::upper_bound(ts_.begin(), ts_.end(), end_time);
+  // get ts_ indices
+  auto start_index = std::distance(ts_.begin(), lower);
+  auto end_index = std::distance(ts_.begin(), upper);
+  MS_LOG(INFO) << "start_index: " << start_index << " end_index: " << end_index;
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index < end_index,
+                               "Expected start_index < end_index. Got start_index: " + std::to_string(start_index) +
+                                 " end_index: " + std::to_string(end_index));
+  // convert indices to sample_table_ iterator
+  auto first_iter = sample_table_.begin() + start_index;
+  auto last_iter = sample_table_.begin() + end_index;
+  // op_id corresponds to the index in sample vector
+  (void)std::transform(first_iter, last_iter, std::back_inserter(*result),
+                       [&](const ConnectorSizeSample &sample) { return sample[op_id]; });
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

@@ -40,6 +40,7 @@ class ConnectorSize : public Sampling {
   // A circular buffer will be implemented in the future to make this table more flexible.
   using ConnectorSizeSample = std::vector<int>;
   using ConnectorSizeSampleTable = std::vector<ConnectorSizeSample>;
+  using Timestamps = std::vector<uint64_t>;
 
  public:
   explicit ConnectorSize(ExecutionTree *tree) : tree_(tree) {}
@@ -62,13 +63,17 @@ class ConnectorSize : public Sampling {
   json ParseOpInfo(const DatasetOp &node, const std::vector<int32_t> &size);
 
   // Change file mode after save throughput data
-  Status ChangeFileMode() { return Status::OK(); }
+  Status ChangeFileMode() override { return Status::OK(); }
 
   Status Analyze() override;
+
+  // Get the vector of connector sizes of given op for samples taken between start and end time
+  Status GetOpConnectorSize(int32_t op_id, uint64_t start_time, uint64_t end_time, std::vector<int32_t> *result);
 
  private:
   ExecutionTree *tree_ = nullptr;          // ExecutionTree pointer
   ConnectorSizeSampleTable sample_table_;  // Dataset structure to store all samples of connector size sampling
+  Timestamps ts_;                          // time of sample
 };
 
 }  // namespace dataset

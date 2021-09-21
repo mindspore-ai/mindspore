@@ -60,7 +60,6 @@ Status Monitor::operator()() {
   RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->Analyze());
   RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->SaveProfilingData());
   RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->ChangeFileMode());
-
   cfg->set_profiler_file_status(true);
   return Status::OK();
 }

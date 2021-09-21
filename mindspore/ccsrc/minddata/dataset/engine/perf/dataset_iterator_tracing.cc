@@ -13,49 +13,66 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <sys/stat.h>
+#include "minddata/dataset/engine/perf/dataset_iterator_tracing.h"
 #include <fstream>
 #include <string>
-#include "minddata/dataset/engine/perf/dataset_iterator_tracing.h"
+#ifndef ENABLE_ANDROID
+#include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 #include "minddata/dataset/util/path.h"
 #include "mindspore/core/utils/ms_utils.h"
 
 namespace mindspore {
 namespace dataset {
 
-Status DatasetIteratorTracing::Record(const int32_t type, const int32_t extra_info, const int32_t batch_num,
-                                      const int32_t value, const uint64_t time_stamp) {
-  // Format: "type extra-info batch-num value"
-  // type: 0: time,  1: connector size
-  // extra-info: if type is 0 - 0: pipeline time, 1: push tdt time, 2: batch time
-  //             if type is 1 - connector capacity
-  // batch-num: batch number
-  // value: if type is 0 - value is time(ms)
-  //        if type is 1 - value is connector size
-  // Examples:
-  // 0 0 20 10 - The 20th batch took 10ms to get data from pipeline.
-  // 1 64 20 5 - Connector size is 5 when get the 20th batch.Connector capacity is 64.
-  std::string data = std::to_string(type) + " " + std::to_string(extra_info) + " " + std::to_string(batch_num) + " " +
-                     std::to_string(value) + " " + std::to_string(time_stamp);
-  value_.emplace_back(data);
-  return Status::OK();
-}
+constexpr int32_t CONNECTOR_CAPACITY_OFFSET = 0;
 
 Status DatasetIteratorTracing::Init(const std::string &dir_path, const std::string &device_id) {
   file_path_ = (Path(dir_path) / Path("dataset_iterator_profiling_" + device_id + ".txt")).ToString();
   return Status::OK();
 }
 
-Status DatasetIteratorTracing::ChangeFileMode() {
-  if (value_.empty()) {
-    return Status::OK();
-  }
+Status DatasetIteratorTracing::GetPipelineTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return {StatusCode::kMDUnexpectedError, "Dataset Iterator Tracing does not record pipeline time."};
+}
 
-  if (chmod(common::SafeCStr(file_path_), S_IRUSR | S_IWUSR) == -1) {
-    std::string err_str = "Change file mode failed," + file_path_;
-    return Status(StatusCode::kMDUnexpectedError, err_str);
+Status DatasetIteratorTracing::GetPushTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return {StatusCode::kMDUnexpectedError, "Dataset Iterator Tracing does not record push time."};
+}
+
+Status DatasetIteratorTracing::GetBatchTime(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return {StatusCode::kMDUnexpectedError, "Dataset Iterator Tracing does not record batch time."};
+}
+
+Status DatasetIteratorTracing::GetConnectorSize(int32_t start_step, int32_t end_step, std::vector<int32_t> *result) {
+  return GetRecordEntry(start_step, end_step, CONNECTOR_CAPACITY_OFFSET, result);
+}
+
+Status DatasetIteratorTracing::GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, float_t *empty_queue_freq) {
+  std::lock_guard<std::mutex> guard(lock_);
+  auto total_steps = records_.size() / records_per_step_;
+  MS_LOG(DEBUG) << "start_step: " << start_step << " end_step: " << end_step;
+  CHECK_FAIL_RETURN_UNEXPECTED(start_step <= total_steps,
+                               "Expected start_step <= total_steps. Got start_step: " + std::to_string(start_step) +
+                                 " total_steps: " + std::to_string(total_steps));
+  CHECK_FAIL_RETURN_UNEXPECTED(end_step <= total_steps,
+                               "Expected end_step <= total_steps. Got end_step: " + std::to_string(end_step) +
+                                 " total_steps: " + std::to_string(total_steps));
+  CHECK_FAIL_RETURN_UNEXPECTED(start_step <= end_step,
+                               "Expected start_step <= end_step. Got start_step: " + std::to_string(start_step) +
+                                 " end_step: " + std::to_string(end_step));
+
+  uint32_t total = end_step - start_step + 1;
+  uint32_t count = 0U;
+  for (auto step_num = start_step; step_num <= end_step; step_num++) {
+    auto idx = (step_num - 1) * records_per_step_ + CONNECTOR_CAPACITY_OFFSET;
+    count += static_cast<uint32_t>(records_[idx].value == 0);
   }
+  *empty_queue_freq = static_cast<float_t>(count) / static_cast<float_t>(total);
   return Status::OK();
 }
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -235,7 +235,7 @@ void ExecutionTree::Iterator::PostOrderTraverse(const std::shared_ptr<DatasetOp>
 ExecutionTree::Iterator::Iterator(const std::shared_ptr<DatasetOp> &root) : ind_(0) {
   // post-order traverse the tree, if root is null, it return
   PostOrderTraverse(root);
-  nodes_.emplace_back(nullptr);
+  (void)nodes_.emplace_back(nullptr);
 }
 
 // Given the number of workers, launches the worker entry function for each. Essentially a

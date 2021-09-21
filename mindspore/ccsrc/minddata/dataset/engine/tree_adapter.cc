@@ -257,8 +257,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
     cur_batch_num_++;
     cur_connector_size_ = tree_->root()->ConnectorSize();
     cur_connector_capacity_ = tree_->root()->ConnectorCapacity();
-    RETURN_IF_NOT_OK(
-      tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_, end_time));
+    tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_, end_time);
   }
 #endif
   return Status::OK();
