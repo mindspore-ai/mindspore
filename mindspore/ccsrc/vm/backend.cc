@@ -699,26 +699,6 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
   }
   return false;
 }
-
-void PrepareForDebuggr(const GraphCompilerInfo &graph_compiler_info) {
-#ifdef ENABLE_DEBUGGER
-  if (Debugger::GetInstance()->DebuggerBackendEnabled()) {
-    Debugger::GetInstance()->PreExecuteGraphDebugger(graph_compiler_info.graphs_);
-  }
-#endif
-
-#ifndef ENABLE_SECURITY
-  if (DumpJsonParser::GetInstance().e2e_dump_enabled()) {
-    DumpJsonParser::GetInstance().ClearGraph();
-    for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
-      MS_EXCEPTION_IF_NULL(graph_compiler_info.device_contexts_[i]);
-      if (graph_compiler_info.device_contexts_[i]->GetDeviceAddressType() == device::DeviceAddressType::kCPU) {
-        DumpJsonParser::GetInstance().SaveGraph(graph_compiler_info.graphs_[i].get());
-      }
-    }
-  }
-#endif
-}
 }  // namespace
 
 void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
@@ -834,10 +814,6 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
     return;
   }
-
-  // Debugger pre-execute graph.
-  PrepareForDebuggr(graph_compiler_info);
-
   // Run actor DAG.
   mindspore::ScopedLongRunning long_running;
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
