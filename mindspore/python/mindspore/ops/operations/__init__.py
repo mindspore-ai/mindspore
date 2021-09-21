@@ -19,7 +19,7 @@ Primitive operator classes.
 A collection of operators to build neural networks or to compute functions.
 """
 
-from .image_ops import (CropAndResize, NonMaxSuppressionV3)
+from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB)
 from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Stack, Unpack, Unstack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, Ones, Zeros, GatherNd, GatherV2, Gather, SparseGatherV2, InvertPermutation,
@@ -128,6 +128,7 @@ from ._inner_ops import (MatmulDDS, DSDMatmul, NonZero)
 from .custom_ops import (Custom)
 
 __all__ = [
+    'HSVToRGB',
     'CeLU',
     'Ger',
     'GridSampler3D',
