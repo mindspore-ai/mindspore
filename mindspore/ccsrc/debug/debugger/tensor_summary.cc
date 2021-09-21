@@ -125,9 +125,15 @@ void TensorSummary<T>::SummarizeTensor(const std::vector<DebugServices::watchpoi
         MS_LOG(DEBUG) << "Current and previous tensor are not the same size.";
       }
     }
-    inf_count_ += std::isinf(current_value);
-    nan_count_ += std::isnan(current_value);
-    zero_count_ += (current_value == 0);
+    if (std::isinf(current_value)) {
+      inf_count_ += 1;
+    }
+    if (std::isnan(current_value)) {
+      nan_count_ += 1;
+    }
+    if (current_value == 0) {
+      zero_count_ += 1;
+    }
     max_ = std::max(max_, current_value);
     min_ = std::min(min_, current_value);
     if (mean_sd_cal_enabled_) {
@@ -140,11 +146,11 @@ void TensorSummary<T>::SummarizeTensor(const std::vector<DebugServices::watchpoi
       range_count.second->ProcessElement(current_value);
     }
     for (auto &mean : means_) {
-      if (mean.first == "curr_prev_diff_mean") {
+      if (mean.first.compare("curr_prev_diff_mean") == 0) {
         mean.second->ProcessElement(std::abs(current_value - previous_value));
-      } else if (mean.first == "abs_prev_mean") {
+      } else if (mean.first.compare("abs_prev_mean") == 0) {
         mean.second->ProcessElement(std::abs(previous_value));
-      } else if (mean.first == "abs_current_mean") {
+      } else if (mean.first.compare("abs_current_mean") == 0) {
         mean.second->ProcessElement(std::abs(current_value));
       }
     }
@@ -166,8 +172,12 @@ void TensorSummary<T>::TensorStatistics(DbgDataType dtype_value) {
         neg_inf_count_ += 1;
       }
     }
-    zero_count_ += (current_value == 0);
-    nan_count_ += std::isnan(current_value);
+    if (current_value == 0) {
+      zero_count_ += 1;
+    }
+    if (std::isnan(current_value)) {
+      nan_count_ += 1;
+    }
     if (!(std::isnan(current_value) || std::isinf(current_value))) {
       // only considering tensor elements with value
       if (std::signbit(current_value) && !(current_value == 0)) {
@@ -193,9 +203,9 @@ std::tuple<bool, int, std::vector<DebugServices::parameter_t>> TensorSummary<T>:
   std::bitset<bit_size> error_code;
   CONDITION_TYPE type = wp.condition.type;
   // bit 0 denotes presence of nan
-  error_code.set(0, nan_count_ > 0);
+  (void)error_code.set(0, nan_count_ > 0);
   // bit 1 denotes presence of inf
-  error_code.set(1, inf_count_ > 0);
+  (void)error_code.set(1, inf_count_ > 0);
 
   if (type == CONDITION_TYPE::HAS_NAN) {
     error_code.reset();
@@ -319,10 +329,10 @@ void TensorSummary<T>::InitCalculators(const std::vector<DebugServices::watchpoi
         range_counts_[wp_id]->set_range_end_inclusive(wp.parameter_list[1].value);
       }
     } else if (wp.tensor_update_ratio_mean_enabled() && prev_tensor_ptr_) {
-      means_.insert({"curr_prev_diff_mean", std::make_unique<MeanCalculator>()});
-      means_.insert({"abs_prev_mean", std::make_unique<MeanCalculator>()});
+      (void)means_.insert({"curr_prev_diff_mean", std::make_unique<MeanCalculator>()});
+      (void)means_.insert({"abs_prev_mean", std::make_unique<MeanCalculator>()});
     } else if (wp.abs_mean_enabled()) {
-      means_.insert({"abs_current_mean", std::make_unique<MeanCalculator>()});
+      (void)means_.insert({"abs_current_mean", std::make_unique<MeanCalculator>()});
     }
   }
 }
