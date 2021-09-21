@@ -72,12 +72,12 @@ class AscendKernelCompileManager {
   void QueryPreBuildFinishJob();
   void QueryFusionFinishJob(KernelModMap *kernel_mode_ret);
   void PrintProcessLog(const nlohmann::json &json, int adjust_log_level);
-  bool JsonAssemble(const std::string &job_type, const nlohmann::json &src_json, nlohmann::json *dst_json);
+  void JsonAssemble(const std::string &job_type, const nlohmann::json &src_json, nlohmann::json *dst_json);
   void PrintInitResult(const nlohmann::json &json);
   void PrintCompileResult(const nlohmann::json &json);
   std::string OpSelectAndCheckResultProcess(const nlohmann::json &json, const AnfNodePtr &node);
   void QueryResultProcess(const nlohmann::json &json, TargetJobStatus *task_info);
-  nlohmann::json TurnStrToJson(const std::string &str);
+  nlohmann::json TurnStrToJson(const std::string &str) const;
 
   static bool tbe_init_flag_;
   static bool is_tune_flag_;
