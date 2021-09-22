@@ -1920,7 +1920,7 @@ class RowTensor:
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> from mindspore import RowTensor
+        >>> from mindspore import Tensor, RowTensor
         >>> class Net(nn.Cell):
         ...     def __init__(self, dense_shape):
         ...         super(Net, self).__init__()
@@ -1961,7 +1961,7 @@ class RowTensor:
 
 class SparseTensor:
     """
-    A sparse representation of a set of nonzero elememts from a tensor at given indices.
+    A sparse representation of a set of nonzero elements from a tensor at given indices.
 
     SparseTensor can only be used in the `Cell`'s construct method.
 
@@ -1985,7 +1985,7 @@ class SparseTensor:
     Examples:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> from mindspore import SparseTensor
+        >>> from mindspore import Tensor, SparseTensor
         >>> class Net(nn.Cell):
         ...     def __init__(self, dense_shape):
         ...         super(Net, self).__init__()
