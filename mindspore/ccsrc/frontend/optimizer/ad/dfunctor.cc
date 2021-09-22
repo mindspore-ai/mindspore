@@ -39,7 +39,6 @@ namespace ad {
 std::unordered_map<FuncGraphPtr, DFunctorPtr> DFunctor::func_graph_to_functor_;
 std::unordered_map<AnfNodePtr, AdjointPtr> DFunctor::anfnode_to_adjoin_definition_;
 
-std::shared_ptr<PynativeDFunctor> py_dfunctor = std::make_shared<PynativeDFunctor>();
 bool lift_fv_before_grad = true;
 
 DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBasePtr &resources)
@@ -295,7 +294,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     auto pynative_exec = pynative::PynativeExecutor::GetInstance();
     auto grad_exec = pynative_exec->grad_executor();
     if (grad_exec->eliminate_forward()) {
-      py_dfunctor->ReplaceEquivdout(k_app, cnode_morph);
+      PynativeDFunctor::ReplaceEquivdout(k_app, cnode_morph);
       cnode_morph->clear_inputs_value();
     }
   }
