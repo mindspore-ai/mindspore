@@ -134,15 +134,23 @@ def get_single_io_arg(info):
     return res
 
 
-def assemble_op_args(compute_op_info):
+def assemble_op_args(compute_op_info, is_single_op_build=False):
     """
     Assemble op args
     :param compute_op_info:
+    :param is_single_op_build: is used for single op build or not
     :return: op args
     """
     inputs_info = compute_op_info["input_desc"] if "input_desc" in compute_op_info.keys() else None
     outputs_info = compute_op_info["output_desc"] if "output_desc" in compute_op_info.keys() else None
-    attrs = compute_op_info["attr_desc"] if "attr_desc" in compute_op_info.keys() else []
+    if is_single_op_build:
+        attrs = []
+        attrs_info = compute_op_info["attrs"] if "attrs" in compute_op_info.keys() else []
+        for item in attrs_info:
+            if item["valid"] and item["name"] != "isRef":
+                attrs.append(item)
+    else:
+        attrs = compute_op_info["attr_desc"] if "attr_desc" in compute_op_info.keys() else []
     inputs = get_input_output_args(inputs_info)
     outputs = get_input_output_args(outputs_info)
     attrs.append(compute_op_info["op_name"])
