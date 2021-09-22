@@ -284,29 +284,19 @@ void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_m
       // Update dump iter for GPU old runtime.
       dump_json_parser.UpdateDumpIter();
     }
-  } else {
-    // If device target is Ascend
+    return;
+  }
+  // If device target is Ascend
+  if (sink_mode && graph->IsDatasetGraph()) {
+    MS_LOG(INFO) << "No need to update iteration for dataset graph.";
+    return;
+  }
+  if (starting_graph_id == INT32_MAX) {
     // Identify the first graph id and not increasing dump iter for the first iteration (initial dump iter = 0).
-    if (starting_graph_id == INT32_MAX) {
-      if (sink_mode) {
-        if (!CheckDatasetGraph(graph)) {
-          starting_graph_id = graph_id;
-        }
-      } else {
-        starting_graph_id = graph_id;
-      }
-
-    } else {
-      // Update dump iter for ascend.
-      // In multi network scripts, dump iter is equal to the number of networks that have been run so far.
-      if (sink_mode) {
-        if (!CheckDatasetGraph(graph)) {
-          dump_json_parser.UpdateDumpIter();
-        }
-      } else {
-        dump_json_parser.UpdateDumpIter();
-      }
-    }
+    starting_graph_id = graph_id;
+  } else {
+    // In multi network scripts, dump iter is equal to the number of networks that have been run so far.
+    dump_json_parser.UpdateDumpIter();
   }
 }
 
@@ -380,19 +370,7 @@ bool E2eDump::isDatasetGraph(const session::KernelGraph *graph) {
   const auto &nodes = graph->execution_order();
   for (const auto &node : nodes) {
     auto node_name = AnfAlgo::GetCNodeName(node);
-    if (node_name == "GetNext" || node_name == "InitDataSetQueue") {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool E2eDump::CheckDatasetGraph(const session::KernelGraph *graph) {
-  // Check if there is a InitDataSetQueue node to identify dataset graph.
-  const auto &nodes = graph->execution_order();
-  for (const auto &node : nodes) {
-    auto node_name = AnfAlgo::GetCNodeName(node);
-    if (node_name == "InitDataSetQueue") {
+    if (node_name == prim::kPrimGetNext->name() || node_name == prim::kPrimInitDataSetQueue->name()) {
       return true;
     }
   }
