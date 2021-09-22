@@ -75,7 +75,9 @@ bool MPICollective::CreateCommGroup(const std::string &name, const std::vector<u
   CHECK_RET(mpi_inited_, true, "HcclCollectiveGroup has not been inited.");
   CHECK_RET(ranks.empty(), false, "Ranks is empty.");
   std::vector<int> group_ranks(ranks.begin(), ranks.end());
-  CHECK_RET(group_comm_.count(name), 0, "Group comm has already been created.");
+  if (group_comm_.count(name) != 0) {
+    return true;
+  }
   CHECK_RET(rtSetDevice(local_rank_id_), RT_ERROR_NONE, "Call rtSetDevice error.");
   HcclRootInfo rootInfo;
   if (static_cast<size_t>(rank_id_) == ranks[0]) {
