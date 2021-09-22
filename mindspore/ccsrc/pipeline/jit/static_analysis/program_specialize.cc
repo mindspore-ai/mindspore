@@ -54,20 +54,6 @@ bool IsVisible(FuncGraphPtr fg, const FuncGraphPtr &parent) {
   }
   return fg == parent;
 }
-
-bool CheckAbstractTensor(const AbstractBasePtr &abs_base) {
-  MS_EXCEPTION_IF_NULL(abs_base);
-  if (abs_base->isa<AbstractTensor>()) {
-    return true;
-  } else if (abs_base->isa<AbstractSequeue>()) {
-    const auto &abs_seq = abs_base->cast<AbstractSequeuePtr>();
-    MS_EXCEPTION_IF_NULL(abs_seq);
-    const auto &elements = abs_seq->elements();
-    return std::all_of(elements.cbegin(), elements.cend(), [](const auto &v) { return CheckAbstractTensor(v); });
-  } else {
-    return false;
-  }
-}
 }  // namespace
 
 FuncGraphPtr ProgramSpecializer::Run(const FuncGraphPtr &fg, const AnalysisContextPtr &context) {
@@ -632,20 +618,16 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
       evalcaches_[eval] = real;
       return std::make_pair(joined_argvals, joined_eval_result->abstract());
     } else {
-      bool all_args_tensor = std::all_of(broaded_argvals.cbegin(), broaded_argvals.cend(),
-                                         [](const AbstractBasePtr &v) { return CheckAbstractTensor(v); });
-      if (all_args_tensor) {
-        ConfigPtrList args_conf_list;
-        (void)std::transform(broaded_argvals.cbegin(), broaded_argvals.cend(), std ::back_inserter(args_conf_list),
-                             [](const AbstractBasePtr &v) -> ConfigPtr { return std::make_shared<VirtualConfig>(v); });
-        MS_LOG(WARNING) << "Cannot find joined argvals in cache, run with broaded argsvals: " << broaded_argvals.size()
-                        << ", " << ::mindspore::ToString(broaded_argvals);
-        ret = eval->SingleRun(engine_, args_conf_list, nullptr);
-        MS_EXCEPTION_IF_NULL(ret);
-        real->SetValue(broaded_argvals, ret);
-        evalcaches_[eval] = real;
-        return std::make_pair(broaded_argvals, ret->abstract());
-      }
+      ConfigPtrList args_conf_list;
+      (void)std::transform(broaded_argvals.cbegin(), broaded_argvals.cend(), std ::back_inserter(args_conf_list),
+                           [](const AbstractBasePtr &v) -> ConfigPtr { return std::make_shared<VirtualConfig>(v); });
+      MS_LOG(WARNING) << "Cannot find joined argvals in cache, run with broaded argsvals: " << broaded_argvals.size()
+                      << ", " << ::mindspore::ToString(broaded_argvals);
+      ret = eval->SingleRun(engine_, args_conf_list, nullptr);
+      MS_EXCEPTION_IF_NULL(ret);
+      real->SetValue(broaded_argvals, ret);
+      evalcaches_[eval] = real;
+      return std::make_pair(broaded_argvals, ret->abstract());
     }
   }
   MS_LOG(DEBUG) << "Choices.size: " << choices.size();
