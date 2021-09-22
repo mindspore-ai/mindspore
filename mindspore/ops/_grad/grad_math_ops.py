@@ -1137,6 +1137,41 @@ def get_bprop_abs(self):
     return bprop
 
 
+@bprop_getters.register(P.Conj)
+def get_bprop_conj(self):
+    """Grad definition for `Conj` operation."""
+    conj = P.Conj()
+
+    def bprop(x, out, dout):
+        dx = conj(dout)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.Real)
+def get_bprop_real(self):
+    """Grad definition for `Real` operation."""
+    cast = P.Cast()
+    dtype = P.DType()
+
+    def bprop(x, out, dout):
+        return (cast(dout, dtype(x)),)
+
+    return bprop
+
+
+@bprop_getters.register(P.Imag)
+def get_bprop_imag(self):
+    """Grad definition for `Imag` operation."""
+    complex_op = P.Complex()
+
+    def bprop(x, out, dout):
+        zeros = zeros_like(dout)
+        return (complex_op(zeros, zeros-1) * dout,)
+
+    return bprop
+
 @bprop_getters.register(P.ScalarCast)
 def get_bprop_scalar_cast(self):
     """Generate bprop for ScalarCast"""

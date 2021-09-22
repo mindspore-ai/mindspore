@@ -49,6 +49,7 @@ enum BroadcastOpType {
   BROADCAST_TYPE_LOGICAL_OR = 22,
   BROADCAST_TYPE_TRUNCATEDIV = 23,
   BROADCAST_TYPE_TRUNCATEMOD = 24,
+  BROADCAST_TYPE_COMPLEX = 25,
   BROADCAST_TYPE_INVALID = 0xffffffff,
 };
 
@@ -76,6 +77,10 @@ template <typename T1, typename T2, typename T3>
 void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                            const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T1 *x0, const T2 *x1,
                            Complex<T3> *y, cudaStream_t stream);
+template <typename T>
+void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1,
+                           Complex<T> *y, cudaStream_t stream);
 
 template <typename T>
 void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,

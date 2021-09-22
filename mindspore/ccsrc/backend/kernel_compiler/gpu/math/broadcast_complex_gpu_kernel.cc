@@ -42,5 +42,13 @@ MS_REG_BROADCAST_COMPLEX_GPU_KERNEL(Div, kNumberTypeComplex64, kNumberTypeFloat3
 MS_REG_BROADCAST_COMPLEX_GPU_KERNEL(Div, kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double);
 MS_REG_BROADCAST_COMPLEX_GPU_KERNEL(RealDiv, kNumberTypeComplex64, kNumberTypeFloat32, Complex<float>, float);
 MS_REG_BROADCAST_COMPLEX_GPU_KERNEL(RealDiv, kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double);
+MS_REG_GPU_KERNEL_THREE(
+  Complex,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
+  BroadcastComplexOpGpuKernel, float, float, Complex<float>)
+MS_REG_GPU_KERNEL_THREE(
+  Complex,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
+  BroadcastComplexOpGpuKernel, double, double, Complex<double>)
 }  // namespace kernel
 }  // namespace mindspore

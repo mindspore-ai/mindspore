@@ -5411,6 +5411,39 @@ class Real(PrimitiveWithInfer):
             output_dtype = mstype.float64
         return output_dtype
 
+class Complex(Primitive):
+    """
+    Returns a complex Tensor from the real part and the imag part.
+
+    Inputs:
+        - **real** (Tensor) - The real input tensor. types: float32, float64.
+        - **imag** (Tensor) - The imag input tensor. types: float32, float64.
+
+    Outputs:
+        Tensor, has the complex type.
+
+    Raises:
+       TypeError: If the dtype of input is not one of: float32, float64.
+                  If the dtypes of two inputs are not same.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> real = Tensor(np.asarray(1, mindspore.complex64)
+        >>> imag = Tensor(np.asarray(2, mindspore.complex64)
+        >>> complex = ops.Complex()
+        >>> output = complex(real, imag)
+        >>> print(output)
+        (1 + 2j)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Complex"""
+        self.init_prim_io_names(inputs=['input_real', 'input_imag'], outputs=['output'])
+
+
 class Imag(PrimitiveWithInfer):
     """
     Returns a new tensor containing imaginary value of the input.

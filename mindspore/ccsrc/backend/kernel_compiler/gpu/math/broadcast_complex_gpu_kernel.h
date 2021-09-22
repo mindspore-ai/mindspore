@@ -118,11 +118,9 @@ class BroadcastComplexOpGpuKernel : public GpuKernel {
  private:
   void GetOpType(const CNodePtr &kernel_node) {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-    static std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap = {{"RealDiv", BROADCAST_TYPE_REALDIV},
-                                                                                  {"Mul", BROADCAST_TYPE_MUL},
-                                                                                  {"Sub", BROADCAST_TYPE_SUB},
-                                                                                  {"Add", BROADCAST_TYPE_ADD},
-                                                                                  {"Div", BROADCAST_TYPE_DIV}};
+    static std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap = {
+      {"RealDiv", BROADCAST_TYPE_REALDIV}, {"Mul", BROADCAST_TYPE_MUL}, {"Sub", BROADCAST_TYPE_SUB},
+      {"Add", BROADCAST_TYPE_ADD},         {"Div", BROADCAST_TYPE_DIV}, {"Complex", BROADCAST_TYPE_COMPLEX}};
 
     auto iter = kBroadcastArithmetricTypeMap.find(kernel_name);
     if (iter != kBroadcastArithmetricTypeMap.end()) {
