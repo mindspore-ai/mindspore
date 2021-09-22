@@ -326,7 +326,11 @@ def tensor_index_by_tensor(data, tensor_index):
     """Tensor getitem by a single tensor"""
     min_data_dim, max_data_dim = 0, 7
     const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
-    const_utils.check_type_valid(F.dtype(tensor_index), mstype.int_type, const_utils.TENSOR_GETITEM)
+    invalid = const_utils.check_type_invalid(F.dtype(tensor_index), mstype.int_type)
+    if invalid:
+        exp_msg = const_utils.gen_exception_msg(
+            "The tensor index must be int type, but got {}.", F.dtype(tensor_index))
+        const_utils.raise_index_error(exp_msg)
     return F.gather(data, tensor_index, 0)
 
 
@@ -427,7 +431,6 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
             tensor_indexes.append(tensor_index)
             tensor_positions += (i,)
         elif i in tensor_positions:
-            const_utils.check_type_valid(F.dtype(index), mstype.int_type, op_name)
             invalid = const_utils.check_type_invalid(F.dtype(index), mstype.int_type)
             if invalid:
                 exp_msg = const_utils.gen_exception_msg(

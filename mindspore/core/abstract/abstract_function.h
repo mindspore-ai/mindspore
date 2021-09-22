@@ -192,7 +192,7 @@ class MS_CORE_API PartialAbstractClosure : public AbstractFuncAtom {
   MS_DECLARE_PARENT(PartialAbstractClosure, AbstractFuncAtom)
 
   AbstractFunctionPtr fn() { return fn_; }
-  AbstractBasePtrList &args() { return args_spec_list_; }
+  const AbstractBasePtrList &args() { return args_spec_list_; }
   ValuePtr RealBuildValue() const override { return fn_->BuildValue(); }
   AnfNodePtr node() { return node_.lock(); }
   void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
