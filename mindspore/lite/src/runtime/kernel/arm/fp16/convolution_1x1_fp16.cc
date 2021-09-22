@@ -94,7 +94,7 @@ int Convolution1x1FP16CPUKernel::MallocWeightBiasData() {
         return RET_ERROR;
       }
     }
-    memset(reinterpret_cast<char *>(packed_weight_), 0, size);
+    memset(packed_weight_, 0, size);
   }
 
   if (in_tensors_.size() == kInputSize2) {
@@ -106,7 +106,7 @@ int Convolution1x1FP16CPUKernel::MallocWeightBiasData() {
         return RET_ERROR;
       }
     }
-    memset(reinterpret_cast<char *>(bias_data_), 0, size);
+    memset(bias_data_, 0, size);
   }
   return RET_OK;
 }
@@ -330,5 +330,4 @@ int Convolution1x1FP16CPUKernel::Run() {
   pack_input_ = nullptr;
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

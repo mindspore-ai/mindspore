@@ -122,5 +122,4 @@ int ConvolutionDepthwiseFp16CPUKernel::Run() {
   }
   return ret;
 }
-
 }  // namespace mindspore::kernel
