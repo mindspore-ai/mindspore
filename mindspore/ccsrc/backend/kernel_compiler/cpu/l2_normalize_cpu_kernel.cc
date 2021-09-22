@@ -15,18 +15,33 @@
  */
 
 #include "backend/kernel_compiler/cpu/l2_normalize_cpu_kernel.h"
-#include "runtime/device/cpu/cpu_device_address.h"
+
+#include <utility>
+#include <limits>
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kL2NormalizeInputsNum = 1;
+constexpr size_t kL2NormalizeOutputsNum = 1;
+}  // namespace
+
 template <typename T>
 void L2NormalizeCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  epsilon_ = static_cast<T>(AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon"));
-  axis_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis"));
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  epsilon_ = static_cast<T>(AnfAlgo::GetNodeAttr<float>(kernel_node, EPSILON));
+  axis_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  CheckParam(kernel_node);
+
+  int dims = SizeToInt(input_shape_.size());
+  if (axis_ < -dims || axis_ >= dims) {
+    MS_LOG(EXCEPTION) << "Attr axis_ " << axis_ << " must be in " << -dims << "~" << dims;
+  }
+  if (epsilon_ == (T)0.0) {
+    MS_LOG(EXCEPTION) << "Attr epsilon can not be zero.";
+  }
   if (axis_ < 0) {
     axis_ += SizeToInt(input_shape_.size());
   }
@@ -112,6 +127,8 @@ template <typename T>
 bool L2NormalizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> & /* workspace */,
                                      const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2NormalizeInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2NormalizeOutputsNum, kernel_name_);
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
@@ -130,25 +147,6 @@ bool L2NormalizeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inpu
   L2NormalizeCPUKernel<T>::CalcOutput(input_addr, reduce_shape, output_size, output_addr, denominator_addr);
 
   return true;
-}
-
-template <typename T>
-void L2NormalizeCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  int dims = SizeToInt(input_shape_.size());
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but L2NormalizeCPUKernel needs 1 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but L2NormalizeCPUKernel needs 1 output.";
-  }
-  if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(EXCEPTION) << "Attr axis_ " << axis_ << " must be in " << -dims << "~" << dims;
-  }
-  if (epsilon_ == (T)0.0) {
-    MS_LOG(EXCEPTION) << "Attr epsilon can not be zero.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

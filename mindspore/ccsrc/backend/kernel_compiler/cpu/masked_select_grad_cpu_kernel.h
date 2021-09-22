@@ -16,16 +16,14 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_SELECTED_GRAD_CPU_KERNEL_H_
-#include <memory>
-#include <unordered_map>
+
 #include <vector>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kInputNum = 3;
-constexpr size_t kOutputNum = 1;
 template <typename T>
 class MaskedSelectGradCPUKernel : public CPUKernel {
  public:

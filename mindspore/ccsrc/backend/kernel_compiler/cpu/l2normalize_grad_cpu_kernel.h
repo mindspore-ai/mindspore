@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2NORMALIZE_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2NORMALIZE_GRAD_CPU_KERNEL_H_
 
 #include <vector>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_SIZE = 3;
-constexpr size_t OUTPUT_SIZE = 1;
 template <typename T>
 class L2NormalizeGradCPUKernel : public CPUKernel {
  public:
@@ -37,7 +37,6 @@ class L2NormalizeGradCPUKernel : public CPUKernel {
 
  private:
   void CheckInputShape(const std::vector<size_t> &output_shape);
-  void CheckIONumber(const CNodePtr &kernel_node);
   std::vector<size_t> OneDimIndexToHighDimIndex(size_t one_dim_index);
   void HighDimIndexToOneDimIndex(size_t *one_dim_index, const std::vector<size_t> &high_dim_index);
   std::vector<T> GetVector(const std::vector<size_t> &high_dim_index, const T *x);

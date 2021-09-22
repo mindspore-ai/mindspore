@@ -15,22 +15,18 @@
  */
 
 #include "backend/kernel_compiler/cpu/masked_select_grad_cpu_kernel.h"
-#include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kMaskedSelectGradInputsNum = 3;
+constexpr size_t kMaskedSelectGradOutputsNum = 1;
+}  // namespace
+
 template <typename T>
 void MaskedSelectGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != kInputNum) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MaskedSelectGradCPUKernel needs " << kInputNum
-                      << " input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kOutputNum) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MaskedSelectGradCPUKernel needs " << kOutputNum
-                      << " output.";
-  }
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, INPUT);
   input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, MASK);
   grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, GRAD);
@@ -44,6 +40,8 @@ template <typename T>
 bool MaskedSelectGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaskedSelectGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaskedSelectGradOutputsNum, kernel_name_);
   auto mask = reinterpret_cast<bool *>(inputs[MASK]->addr);
   auto grad = reinterpret_cast<T *>(inputs[GRAD]->addr);
   auto dx = reinterpret_cast<T *>(outputs[INPUT]->addr);

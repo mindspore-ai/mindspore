@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test cpu profiler"""
 import os
 import shutil
-import glob
+import sys
+
 import numpy as np
 import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -33,21 +36,35 @@ class Net(nn.Cell):
         return self.add(x_, y_)
 
 
-x = np.random.randn(1, 3, 3, 4).astype(np.float32)
-y = np.random.randn(1, 3, 3, 4).astype(np.float32)
-
-
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.security_off
-def test_ascend_profiling():
-    if os.path.isdir("./data_ascend_profiler"):
-        shutil.rmtree("./data_ascend_profiler")
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    profiler = Profiler(output_path="./data_ascend_profiler", is_detail=True, is_show_op_path=False, subgraph="all")
+def test_cpu_profiling():
+    if sys.platform != 'linux':
+        return
+    data_path = os.path.join(os.getcwd(), 'data_cpu_profiler')
+    if os.path.isdir(data_path):
+        shutil.rmtree(data_path)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    device_id = context.get_context("device_id")
+    profiler = Profiler(output_path="data_cpu_profiler")
+    x = np.random.randn(1, 3, 3, 4).astype(np.float32)
+    y = np.random.randn(1, 3, 3, 4).astype(np.float32)
     add = Net()
     add(Tensor(x), Tensor(y))
     profiler.analyse()
-    assert len(glob.glob("./data_ascend_profiler/profiler*/JOB*/data/Framework*")) == 6
+
+    assert os.path.isdir(data_path)
+    assert len(os.listdir(data_path)) == 1
+
+    profiler_dir = os.path.join(data_path, f"{os.listdir(data_path)[0]}/")
+    op_detail_file = f"{profiler_dir}cpu_op_detail_info_{device_id}.csv"
+    op_type_file = f"{profiler_dir}cpu_op_type_info_{device_id}.csv"
+    timeline_file = f"{profiler_dir}cpu_op_execute_timestamp_{device_id}.txt"
+    cpu_profiler_files = (op_detail_file, op_type_file, timeline_file)
+    for file in cpu_profiler_files:
+        assert os.path.isfile(file)
+
+    if os.path.isdir(data_path):
+        shutil.rmtree(data_path)

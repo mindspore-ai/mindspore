@@ -15,15 +15,19 @@
  */
 
 #include "backend/kernel_compiler/cpu/l2normalize_grad_cpu_kernel.h"
-#include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kL2NormalizeGradInputsNum = 3;
+constexpr size_t kL2NormalizeGradOutputsNum = 1;
+}  // namespace
+
 template <typename T>
 void L2NormalizeGradCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckIONumber(kernel_node);
-  for (size_t i = 0; i < INPUT_SIZE; i++) {
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  for (size_t i = 0; i < kL2NormalizeGradInputsNum; i++) {
     (void)input_shape_list_.emplace_back(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
   }
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -45,6 +49,8 @@ template <typename T>
 bool L2NormalizeGradCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspace,
                                          const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2NormalizeGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2NormalizeGradOutputsNum, kernel_name_);
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
   auto y = reinterpret_cast<T *>(inputs[1]->addr);
   auto dout = reinterpret_cast<T *>(inputs[2]->addr);
@@ -75,18 +81,6 @@ void L2NormalizeGradCPUKernel<T>::CheckInputShape(const std::vector<size_t> &out
     if (std::any_of(input_x_shape.begin(), input_x_shape.end(), [](size_t i) { return i == 0; })) {
       MS_LOG(EXCEPTION) << "L2NormalizeCPUKernel input is null.";
     }
-  }
-}
-
-template <typename T>
-void L2NormalizeGradCPUKernel<T>::CheckIONumber(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != INPUT_SIZE) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but L2NormalizeGradCPUKernel needs 3 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != OUTPUT_SIZE) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but L2NormalizeGradCPUKernel needs 1 output.";
   }
 }
 

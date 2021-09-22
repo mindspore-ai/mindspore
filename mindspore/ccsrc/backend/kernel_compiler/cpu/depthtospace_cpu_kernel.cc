@@ -16,16 +16,17 @@
 
 #include "backend/kernel_compiler/cpu/depthtospace_cpu_kernel.h"
 
-#include <vector>
-
-#include "runtime/device/cpu/cpu_device_address.h"
-
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kDepthToSpaceInputsNum = 1;
+constexpr size_t kDepthToSpaceOutputsNum = 1;
+}  // namespace
+
 template <typename T>
 void DepthToSpaceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   block_size_ = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "block_size"));
@@ -35,6 +36,8 @@ template <typename T>
 bool DepthToSpaceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> & /* workspace */,
                                       const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kDepthToSpaceInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kDepthToSpaceOutputsNum, kernel_name_);
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   size_t size = inputs[0]->size / sizeof(T);
@@ -72,18 +75,6 @@ bool DepthToSpaceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
 
   CPUKernelUtils::ParallelFor(task, size);
   return true;
-}
-
-template <typename T>
-void DepthToSpaceCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but DepthToSpaceCPUKerrnel needs 1 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but DepthToSpaceCPUKernel needs 1 output.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore
