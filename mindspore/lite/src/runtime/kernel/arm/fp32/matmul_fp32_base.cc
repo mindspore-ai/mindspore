@@ -80,11 +80,18 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
   if (a_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  if (op_parameter_->is_train_session_) {
-    a_pack_ptr_ = reinterpret_cast<float *>(workspace());
+  if (!op_parameter_->is_train_session_) {
+#ifdef ENABLE_ARM64
+    if (vec_matmul_) {
+      a_pack_ptr_ = reinterpret_cast<float *>(in_tensors().at(0)->data());
+    } else {
+      a_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
+    }
+#else
+    a_pack_ptr_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_pack_size_ * sizeof(float)));
+#endif
   } else {
-    a_pack_ptr_ = reinterpret_cast<float *>(
-      ms_context_->allocator->Malloc(static_cast<size_t>(matrix_a_pack_size_) * sizeof(float)));
+    a_pack_ptr_ = reinterpret_cast<float *>(workspace());
   }
   if (a_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc a_pack_ptr_ failed";
@@ -157,11 +164,16 @@ int MatmulFp32BaseCPUKernel::InitBiasData() {
 
 int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) {
   CHECK_NULL_RETURN(src_ptr);
+#ifdef ENABLE_ARM64
+  if (vec_matmul_) {
+    return RET_OK;
+  }
+#else
   if (vec_matmul_) {
     memcpy(a_pack_ptr_, src_ptr, params_->batch * params_->deep_ * static_cast<int>(sizeof(float)));
     return RET_OK;
   }
-
+#endif
   for (int i = 0; i < params_->batch; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->row_;
     float *dst = a_pack_ptr_ + i * params_->deep_ * params_->row_align_;
@@ -222,10 +234,21 @@ void MatmulFp32BaseCPUKernel::FreeBiasBuf() {
 
 void MatmulFp32BaseCPUKernel::FreeResizeBufA() {
   if (!op_parameter_->is_train_session_) {
+#ifdef ENABLE_ARM64
+    if (vec_matmul_) {
+      a_pack_ptr_ = nullptr;
+    } else {
+      if (a_pack_ptr_ != nullptr) {
+        ms_context_->allocator->Free(a_pack_ptr_);
+        a_pack_ptr_ = nullptr;
+      }
+    }
+#else
     if (a_pack_ptr_ != nullptr) {
       ms_context_->allocator->Free(a_pack_ptr_);
       a_pack_ptr_ = nullptr;
     }
+#endif
   } else {
     a_pack_ptr_ = nullptr;
   }
