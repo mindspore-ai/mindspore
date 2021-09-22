@@ -433,9 +433,11 @@ void Debugger::PostExecuteGraphDebugger() {
   if (device_target_ != kGPUDevice) {
     return;
   }
-  // LoadParametersAndConst for all the graphs
-  for (auto graph : graph_ptr_step_vec_) {
-    debugger_->LoadParametersAndConst(graph);
+  // LoadParametersAndConst for all the graphs that have been run in the current step
+  if (debugger_) {
+    for (auto graph : graph_ptr_step_vec_) {
+      debugger_->LoadParametersAndConst(graph);
+    }
   }
   // debug used for dump
   if (debugger_ && debugger_->CheckDebuggerDumpEnabled()) {
@@ -645,7 +647,7 @@ bool Debugger::SendMetadata(bool version_check) {
   metadata.set_training_done(training_done_);
   metadata.set_ms_version(version_);
   MS_LOG(INFO) << "Is training done?" << training_done_;
-  // set graph munber to not_dataset_graph_sum_
+  // set graph number to not_dataset_graph_sum_
   metadata.set_graph_num(not_dataset_graph_sum_);
 
   MS_EXCEPTION_IF_NULL(grpc_client_);
