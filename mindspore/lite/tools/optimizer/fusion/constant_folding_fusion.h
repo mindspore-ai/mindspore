@@ -17,31 +17,32 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
 
+#include <set>
 #include <utility>
 #include <memory>
-#include "schema/inner/model_generated.h"
-#include "src/common/context_util.h"
-#include "src/tensor.h"
-#include "src/lite_kernel.h"
-#include "nnacl/op_base.h"
-#include "backend/optimizer/common/optimizer.h"
-#include "tools/converter/converter_flags.h"
+#include "backend/optimizer/common/pass.h"
+#include "include/api/context.h"
+#include "include/registry/parser_context.h"
+#include "src/inner_context.h"
 
 namespace mindspore {
 namespace opt {
-class ConstFoldPass : public PatternProcessPass {
+class ConstFoldPass : public Pass {
  public:
-  explicit ConstFoldPass(converter::FmkType fmk_type = converter::kFmkTypeMs, bool multigraph = true)
-      : PatternProcessPass("ConstFoldPass", multigraph), fmk_type_(fmk_type) {}
+  explicit ConstFoldPass(converter::FmkType fmk_type = converter::kFmkTypeMs)
+      : Pass("ConstFoldPass"), fmk_type_(fmk_type) {}
   ~ConstFoldPass() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool CheckCanFusion(const AnfNodePtr &input_node) const;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  bool PreProcess() const;
+  bool Init(const FuncGraphPtr &func_graph);
+  int Process(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *has_visited);
+  bool CheckCanFusion(const CNodePtr &cnode) const;
+  int DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
+  bool is_control_flow_{false};
   converter::FmkType fmk_type_{converter::kFmkTypeMs};
-  mutable std::shared_ptr<lite::InnerContext> context_{nullptr};
-  mutable std::shared_ptr<mindspore::Context> ms_context_{nullptr};
+  std::shared_ptr<lite::InnerContext> context_{nullptr};
+  std::shared_ptr<mindspore::Context> ms_context_{nullptr};
 };
 }  // namespace opt
 }  // namespace mindspore
