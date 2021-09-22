@@ -452,9 +452,10 @@ void TbeAdapter::CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpA
   auto dtype = type_element->ToString();
   auto dst_type_value = TypeStrToDstType(dtype);
   nlohmann::json attr_obj;
-  attr_obj["value"] = dst_type_value;
-  attr_obj["valid"] = true;
-  attr_obj["name"] = attr_name;
+  attr_obj[kJValue] = dst_type_value;
+  attr_obj[kJValid] = true;
+  attr_obj[kJDtype] = "int32";
+  attr_obj[kJName] = attr_name;
   attrs_json->push_back(attr_obj);
   op_info_attrs->clear();
 }
