@@ -843,7 +843,7 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch(add_and_remove_cv_file):
     assert data_set.get_dataset_size() == 10
     for _ in range(5):
         num_iter = 0
-        for data in data_set.create_tuple_iterator(output_numpy=True):
+        for data in data_set.create_tuple_iterator(num_epochs=1, output_numpy=True):
             logger.info("data is {}".format(data))
             num_iter += 1
         assert num_iter == 10
@@ -871,7 +871,7 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch_with_batch(add_and_remove_
     assert data_set.get_dataset_size() == 5
     for _ in range(5):
         num_iter = 0
-        for data in data_set.create_tuple_iterator(output_numpy=True):
+        for data in data_set.create_tuple_iterator(num_epochs=1, output_numpy=True):
             logger.info("data is {}".format(data))
             num_iter += 1
         assert num_iter == 5

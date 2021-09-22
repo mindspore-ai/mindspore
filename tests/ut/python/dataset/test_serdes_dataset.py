@@ -307,8 +307,9 @@ def test_serdes_zip_dataset(remove_json_files=True):
     assert filecmp.cmp('zip_dataset_pipeline.json', 'zip_dataset_pipeline_1.json')
 
     rows = 0
-    for d0, d3, d4 in zip(ds0.create_tuple_iterator(output_numpy=True), data3.create_tuple_iterator(output_numpy=True),
-                          data4.create_tuple_iterator(output_numpy=True)):
+    for d0, d3, d4 in zip(ds0.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                          data3.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                          data4.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         num_cols = len(d0)
         offset = 0
         for t1 in d0:

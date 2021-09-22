@@ -57,7 +57,7 @@ def test_func_angle_002():
     dataset = ds.NumpySlicesDataset(data, column_names=["col1", "col2"], shuffle=False)
     angle_op = a_c_trans.Angle()
     dataset = dataset.map(operations=angle_op, input_columns=["col1"])
-    for item1, item2 in zip(dataset.create_dict_iterator(output_numpy=True), expected):
+    for item1, item2 in zip(dataset.create_dict_iterator(num_epochs=1, output_numpy=True), expected):
         count_unequal_element(item2, item1['col1'], 0.0001, 0.0001)
 
 
@@ -74,7 +74,7 @@ def test_func_angle_003():
     dataset = dataset.map(operations=angle_op, input_columns=["col1"])
     num_itr = 0
     with pytest.raises(RuntimeError, match="input tensor type should be int, float or double"):
-        for _ in dataset.create_dict_iterator(output_numpy=True):
+        for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_itr += 1
 
 

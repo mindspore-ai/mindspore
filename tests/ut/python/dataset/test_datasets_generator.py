@@ -898,7 +898,7 @@ def test_func_generator_dataset_005():
     column_names = ["col1", "col2"]
     dataset = ds.GeneratorDataset(MyData(result), column_names)
     i = 0
-    for data in dataset.create_dict_iterator(output_numpy=True):
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         assert "col1" in str(data.keys())
         assert (data["col1"] == result[0]).all()
         assert (data["col2"] == result[1]).all()

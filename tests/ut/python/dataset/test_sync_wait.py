@@ -264,7 +264,7 @@ def test_simple_sync_wait_empty_condition_name():
     dataset = dataset.batch(batch_size)
 
     count = 0
-    for data in dataset.create_dict_iterator(output_numpy=True):
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         count += 1
         data = {"loss": count}
         dataset.sync_update(condition_name="", data=data)

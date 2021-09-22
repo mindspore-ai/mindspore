@@ -211,7 +211,7 @@ def test_div2k_exception():
         data = ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale)
         data = data.map(operations=exception_func, input_columns=["hr_image"], num_parallel_workers=1)
         num_rows = 0
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             num_rows += 1
         assert False
     except RuntimeError as e:
@@ -221,7 +221,7 @@ def test_div2k_exception():
         data = ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale)
         data = data.map(operations=exception_func, input_columns=["hr_image"], num_parallel_workers=1)
         num_rows = 0
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             num_rows += 1
         assert False
     except RuntimeError as e:

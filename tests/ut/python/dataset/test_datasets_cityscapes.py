@@ -222,7 +222,7 @@ def test_cityscapes_exception():
         data = ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task)
         data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
         num_rows = 0
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             num_rows += 1
         assert False
     except RuntimeError as e:
@@ -232,7 +232,7 @@ def test_cityscapes_exception():
         data = ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task)
         data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
         num_rows = 0
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             num_rows += 1
         assert False
     except RuntimeError as e:

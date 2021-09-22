@@ -67,7 +67,8 @@ def test_shuffle():
     data2 = ds.TFRecordDataset(FILES, schema=SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
 
-    for d1, d2 in zip(data1.create_tuple_iterator(output_numpy=True), data2.create_tuple_iterator(output_numpy=True)):
+    for d1, d2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                      data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         for t1, t2 in zip(d1, d2):
             np.testing.assert_array_equal(t1, t2)
 
@@ -77,7 +78,8 @@ def test_shuffle():
     data2 = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
 
-    for d1, d2 in zip(data1.create_tuple_iterator(output_numpy=True), data2.create_tuple_iterator(output_numpy=True)):
+    for d1, d2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                      data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         for t1, t2 in zip(d1, d2):
             np.testing.assert_array_equal(t1, t2)
 
@@ -87,7 +89,8 @@ def test_shuffle():
     data2 = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train', shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
 
-    for d1, d2 in zip(data1.create_tuple_iterator(output_numpy=True), data2.create_tuple_iterator(output_numpy=True)):
+    for d1, d2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                      data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         for t1, t2 in zip(d1, d2):
             np.testing.assert_array_equal(t1, t2)
 

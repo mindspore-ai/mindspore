@@ -56,7 +56,7 @@ def test_func_biquad_pipeline():
     # Filtered waveform by biquad
     dataset = dataset.map(input_columns=["audio"], operations=biquad_op, num_parallel_workers=8)
     i = 0
-    for item in dataset.create_dict_iterator(output_numpy=True):
+    for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         count_unequal_element(expect_waveform[i, :],
                               item['audio'], 0.0001, 0.0001)
         i += 1

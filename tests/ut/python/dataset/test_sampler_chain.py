@@ -269,7 +269,7 @@ def test_voc_sampler_chain():
     assert data1_size == 5
 
     # Verify number of rows
-    assert sum([1 for _ in data1.create_dict_iterator(output_numpy=True)]) == 5
+    assert sum([1 for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True)]) == 5
 
     # Verify dataset contents
     res = []

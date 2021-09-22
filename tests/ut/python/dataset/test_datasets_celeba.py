@@ -142,7 +142,7 @@ def test_celeba_dataset_exception_file_path():
     try:
         data = ds.CelebADataset(DATA_DIR, shuffle=False)
         data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError as e:
@@ -152,7 +152,7 @@ def test_celeba_dataset_exception_file_path():
         data = ds.CelebADataset(DATA_DIR, shuffle=False)
         data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
         data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError as e:
@@ -161,7 +161,7 @@ def test_celeba_dataset_exception_file_path():
     try:
         data = ds.CelebADataset(DATA_DIR, shuffle=False)
         data = data.map(operations=exception_func, input_columns=["attr"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError as e:
@@ -175,7 +175,7 @@ def test_celeba_sampler_exception():
     logger.info("Test CelebA with bad sampler input")
     try:
         data = ds.CelebADataset(DATA_DIR, sampler="")
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except TypeError as e:

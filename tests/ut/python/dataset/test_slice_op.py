@@ -28,7 +28,7 @@ def slice_compare(array, indexing, expected_array):
         data = data.map(operations=ops.Slice(*indexing))
     else:
         data = data.map(operations=ops.Slice(indexing))
-    for d in data.create_dict_iterator(output_numpy=True):
+    for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(expected_array, d['column_0'])
 
 
@@ -141,7 +141,7 @@ def test_slice_multiple_rows():
     data = ds.GeneratorDataset(gen, column_names=["col"])
     indexing = slice(1, 4)
     data = data.map(operations=ops.Slice(indexing))
-    for (d, exp_d) in zip(data.create_dict_iterator(output_numpy=True), exp_dataset):
+    for (d, exp_d) in zip(data.create_dict_iterator(num_epochs=1, output_numpy=True), exp_dataset):
         np.testing.assert_array_equal(exp_d, d['col'])
 
 
@@ -158,12 +158,12 @@ def test_slice_none_and_ellipsis():
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
     data = data.map(operations=ops.Slice(None))
-    for (d, exp_d) in zip(data.create_dict_iterator(output_numpy=True), exp_dataset):
+    for (d, exp_d) in zip(data.create_dict_iterator(num_epochs=1, output_numpy=True), exp_dataset):
         np.testing.assert_array_equal(exp_d, d['col'])
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
     data = data.map(operations=ops.Slice(Ellipsis))
-    for (d, exp_d) in zip(data.create_dict_iterator(output_numpy=True), exp_dataset):
+    for (d, exp_d) in zip(data.create_dict_iterator(num_epochs=1, output_numpy=True), exp_dataset):
         np.testing.assert_array_equal(exp_d, d['col'])
 
 
@@ -280,7 +280,7 @@ def test_out_of_bounds_slicing_str():
     data = [b"1", b"2", b"3", b"4", b"5"]
     data = ds.NumpySlicesDataset([data])
     data = data.map(operations=ops.Slice(indexing))
-    for d in data.create_dict_iterator(output_numpy=True):
+    for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(expected_array, d['column_0'])
 
 

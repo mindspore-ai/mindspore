@@ -50,7 +50,7 @@ def test_func_dc_shift_pipeline():
     dataset = ds.NumpySlicesDataset(arr, column_names=["col1"], shuffle=False)
     dcshift_op = a_c_trans.DCShift(0.8, 0.03)
     dataset = dataset.map(operations=dcshift_op, input_columns=["col1"])
-    for item1, item2 in zip(dataset.create_dict_iterator(output_numpy=True), expected):
+    for item1, item2 in zip(dataset.create_dict_iterator(num_epochs=1, output_numpy=True), expected):
         count_unequal_element(item2, item1['col1'], 0.0001, 0.0001)
 
 
@@ -66,7 +66,7 @@ def test_func_dc_shift_pipeline_error():
     with pytest.raises(ValueError, match=r"Input shift is not within the required interval of \[-2.0, 2.0\]."):
         dcshift_op = a_c_trans.DCShift(2.5, 0.03)
         dataset = dataset.map(operations=dcshift_op, input_columns=["col1"])
-        for _ in dataset.create_dict_iterator(output_numpy=True):
+        for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_itr += 1
 
 

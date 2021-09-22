@@ -378,7 +378,7 @@ def test_clue_exception_file_path():
     try:
         data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train')
         data = data.map(operations=exception_func, input_columns=["label"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError as e:
@@ -387,7 +387,7 @@ def test_clue_exception_file_path():
     try:
         data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train')
         data = data.map(operations=exception_func, input_columns=["sentence1"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError as e:
@@ -396,7 +396,7 @@ def test_clue_exception_file_path():
     try:
         data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train')
         data = data.map(operations=exception_func, input_columns=["sentence2"], num_parallel_workers=1)
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             pass
         assert False
     except RuntimeError as e:

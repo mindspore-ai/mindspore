@@ -121,7 +121,7 @@ def test_one_hot_success():
     trans = py_trans.Compose([one_hot_encode])
     dataset = dataset.map(operations=trans, input_columns=["label"])
 
-    for index, item in enumerate(dataset.create_dict_iterator(output_numpy=True)):
+    for index, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert item["label"][index] == 1.0
 
 def test_one_hot_success2():
@@ -146,7 +146,7 @@ def test_one_hot_success2():
     trans = py_trans.Compose([one_hot_encode])
     dataset = dataset.map(operations=trans, input_columns=["label"])
 
-    for index, item in enumerate(dataset.create_dict_iterator(output_numpy=True)):
+    for index, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
         logger.info(item)
         assert item["label"][0][index] == 1.0
 
@@ -175,7 +175,7 @@ def test_one_hot_success3():
     trans = py_trans.Compose([one_hot_encode])
     dataset = dataset.map(operations=trans, input_columns=["label"])
 
-    for item in dataset.create_dict_iterator(output_numpy=True):
+    for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(item)
         for i in range(10):
             assert item["label"][i][0][i] == 1.0
@@ -203,7 +203,7 @@ def test_one_hot_type_error():
     dataset = dataset.map(operations=trans, input_columns=["label"])
 
     try:
-        for index, item in enumerate(dataset.create_dict_iterator(output_numpy=True)):
+        for index, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
             assert item["label"][index] == 1.0
     except RuntimeError as e:
         assert "the input numpy type should be int" in str(e)

@@ -39,7 +39,7 @@ def test_case_0():
     data1 = data1.batch(2)
 
     expected_data = np.array([[[1], [2]], [[3], [0]]])
-    for i, data_row in enumerate(data1.create_tuple_iterator(output_numpy=True)):
+    for i, data_row in enumerate(data1.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(data_row[0], expected_data[i])
 
     # Restore configuration

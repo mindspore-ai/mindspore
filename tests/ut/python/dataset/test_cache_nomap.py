@@ -629,13 +629,13 @@ def test_cache_nomap_running_twice1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 12
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 12
@@ -672,7 +672,7 @@ def test_cache_nomap_running_twice2():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -708,7 +708,7 @@ def test_cache_nomap_extra_small_size1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -886,7 +886,7 @@ def test_cache_nomap_server_workers_1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -923,7 +923,7 @@ def test_cache_nomap_server_workers_100():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -960,7 +960,7 @@ def test_cache_nomap_num_connections_1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -997,7 +997,7 @@ def test_cache_nomap_num_connections_100():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1034,7 +1034,7 @@ def test_cache_nomap_prefetch_size_1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1071,7 +1071,7 @@ def test_cache_nomap_prefetch_size_100():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1147,7 +1147,7 @@ def test_cache_nomap_session_destroy():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "Unexpected error" in str(e.value)
 
@@ -1185,7 +1185,7 @@ def test_cache_nomap_server_stop():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "Network error. Cache server with port 50052 is unreachable. Make sure the server is running." in \
            str(e.value)
@@ -1218,7 +1218,7 @@ def test_cache_nomap_interrupt_and_rerun():
 
     # User-created sampler here
     ds1 = ds.RandomDataset(schema=schema, total_rows=10000, num_parallel_workers=4, cache=some_cache)
-    iter1 = ds1.create_dict_iterator()
+    iter1 = ds1.create_dict_iterator(num_epochs=-1)
 
     num_iter = 0
     with pytest.raises(AttributeError) as e:
@@ -1312,7 +1312,7 @@ def test_cache_nomap_epoch_ctrl2():
 
     num_epoch = 5
     # iter1 will always assume there is a next epoch and never shutdown
-    iter1 = ds1.create_dict_iterator()
+    iter1 = ds1.create_dict_iterator(num_epochs=-1)
 
     epoch_count = 0
     for _ in range(num_epoch):
@@ -1359,7 +1359,7 @@ def test_cache_nomap_epoch_ctrl3():
 
     num_epoch = 5
     # iter1 will always assume there is a next epoch and never shutdown
-    iter1 = ds1.create_dict_iterator()
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
 
     epoch_count = 0
     for _ in range(num_epoch):
@@ -2052,7 +2052,7 @@ def test_cache_nomap_failure2():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in dsz.create_dict_iterator():
+        for _ in dsz.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "ZipNode is not supported as a descendant operator under a cache" in str(e.value)
 
@@ -2091,7 +2091,7 @@ def test_cache_nomap_failure3():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "BatchNode is not supported as a descendant operator under a cache" in str(e.value)
 
@@ -2133,7 +2133,7 @@ def test_cache_nomap_failure4():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "FilterNode is not supported as a descendant operator under a cache" in str(e.value)
 
@@ -2173,7 +2173,7 @@ def test_cache_nomap_failure5():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "MapNode containing random operation is not supported as a descendant of cache" in str(e.value)
 
@@ -2217,7 +2217,7 @@ def test_cache_nomap_pyfunc_lambda():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds2.create_dict_iterator():
+        for _ in ds2.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "MapNode containing random operation is not supported as a descendant of cache" in str(e.value)
     logger.info("test_cache_nomap_pyfunc_lambda Ended.\n")
@@ -2259,7 +2259,7 @@ def test_cache_nomap_pyfunc_builtin():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds2.create_dict_iterator():
+        for _ in ds2.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "MapNode containing random operation is not supported as a descendant of cache" in str(e.value)
     logger.info("test_cache_nomap_pyfunc_builtin Ended.\n")
@@ -2308,7 +2308,7 @@ def test_cache_nomap_pyfunc_function():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds2.create_dict_iterator():
+        for _ in ds2.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "MapNode containing random operation is not supported as a descendant of cache" in str(e.value)
     logger.info("test_cache_nomap_pyfunc_function Ended.\n")
@@ -2341,7 +2341,7 @@ def test_cache_nomap_all_rows_cached():
     num_total_rows = 271
     # User-created sampler here
     ds1 = ds.RandomDataset(schema=schema, total_rows=num_total_rows, num_parallel_workers=4, cache=some_cache)
-    iter1 = ds1.create_dict_iterator()
+    iter1 = ds1.create_dict_iterator(num_epochs=1)
 
     num_iter = 0
     for _ in iter1:
@@ -2380,7 +2380,7 @@ def test_cache_nomap_dataset_size1():
     assert dataset_size == 2
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -2417,7 +2417,7 @@ def test_cache_nomap_dataset_size2():
     assert dataset_size == 2
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))

@@ -35,7 +35,7 @@ def compare(strings, dtype='S'):
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
 
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(d[0], arr.astype('S'))
 
 
@@ -79,7 +79,7 @@ def test_batching_strings():
     data = ds.GeneratorDataset(gen, column_names=["col"])
     data = data.batch(2, drop_remainder=True)
 
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(d[0], to_bytes(chinese[0:2]))
 
 
@@ -96,7 +96,7 @@ def test_map():
 
     data = data.map(operations=split, input_columns=["col"])
     expected = np.array(["ab", "cde", "121"], dtype='S')
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(d[0], expected)
 
 
@@ -112,7 +112,7 @@ def test_map2():
 
     data = data.map(operations=upper, input_columns=["col"])
     expected = np.array(["AB CDE 121"], dtype='S')
-    for d in data.create_tuple_iterator(output_numpy=True):
+    for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         np.testing.assert_array_equal(d[0], expected)
 
 

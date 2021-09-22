@@ -57,7 +57,7 @@ def test_concat_01():
     data3 = data1 + data2
 
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data3.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert i == t[0][0]
@@ -76,7 +76,7 @@ def test_concat_02():
     data3 = data1.concat(data2)
 
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data3.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert i == t[0][0]
@@ -154,7 +154,7 @@ def test_concat_06():
     dataset = data1 + data2 + data3
 
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(dataset.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(dataset.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert i == t[0][0]
@@ -175,7 +175,7 @@ def test_concat_07():
     data4 = data1 + dataset
 
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(data4.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data4.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert i == t[0][0]
@@ -195,7 +195,7 @@ def test_concat_08():
     data3 = data3.repeat(2)
 
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data3.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert i % 10 == t[0][0]
@@ -217,7 +217,7 @@ def test_concat_09():
 
     res = [0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 3, 4, 5, 6, 7, 8, 9]
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data3.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
@@ -238,7 +238,7 @@ def test_concat_10():
 
     res = [0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data3.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
@@ -261,7 +261,7 @@ def test_concat_11():
     res = [0, 10, 15, 20]
 
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data3.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
@@ -285,7 +285,7 @@ def test_concat_12():
     data3 = data3.shuffle(buffer_size=10)
 
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data3.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
@@ -313,7 +313,7 @@ def test_concat_13():
     data3 = data3.shuffle(buffer_size=int(data3.get_dataset_size()))
 
     # Here i refers to index, d refers to data element
-    for i, d in enumerate(data3.create_tuple_iterator(output_numpy=True)):
+    for i, d in enumerate(data3.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         t = d
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
@@ -341,11 +341,11 @@ def test_concat_14():
     data3 = data1 + data2
 
     expected, output = [], []
-    for d in data1.create_tuple_iterator(output_numpy=True):
+    for d in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
         expected.append(d[0])
-    for d in data2.create_tuple_iterator(output_numpy=True):
+    for d in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
         expected.append(d[0])
-    for d in data3.create_tuple_iterator(output_numpy=True):
+    for d in data3.create_tuple_iterator(num_epochs=1, output_numpy=True):
         output.append(d[0])
 
     assert len(expected) == len(output)

@@ -168,7 +168,7 @@ def test_cache_map_basic4():
     data = data.repeat(4)
 
     num_iter = 0
-    for _ in data.create_dict_iterator():
+    for _ in data.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -283,7 +283,7 @@ def test_cache_map_failure2():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in dsz.create_dict_iterator():
+        for _ in dsz.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "ZipNode is not supported as a descendant operator under a cache" in str(e.value)
 
@@ -322,7 +322,7 @@ def test_cache_map_failure3():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "BatchNode is not supported as a descendant operator under a cache" in str(e.value)
 
@@ -364,7 +364,7 @@ def test_cache_map_failure4():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "FilterNode is not supported as a descendant operator under a cache" in str(e.value)
 
@@ -405,7 +405,7 @@ def test_cache_map_failure5():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "MapNode containing random operation is not supported as a descendant of cache" in str(e.value)
 
@@ -446,7 +446,7 @@ def test_cache_map_failure7():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in data.create_dict_iterator():
+        for _ in data.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "There is currently no support for GeneratorOp under cache" in str(e.value)
 
@@ -524,7 +524,7 @@ def test_cache_map_failure9():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "TakeNode (possibly from Split) is not supported as a descendant operator under a cache" in str(e.value)
 
@@ -566,7 +566,7 @@ def test_cache_map_failure10():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "SkipNode is not supported as a descendant operator under a cache" in str(e.value)
 
@@ -597,7 +597,7 @@ def test_cache_map_failure11():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "Unexpected error. Server is not set up with spill support" in str(e.value)
 
@@ -646,13 +646,13 @@ def test_cache_map_split1():
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "TakeNode (possibly from Split) is not supported as a descendant operator under a cache" in str(e.value)
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
-        for _ in ds2.create_dict_iterator():
+        for _ in ds2.create_dict_iterator(num_epochs=1):
             num_iter += 1
     assert "TakeNode (possibly from Split) is not supported as a descendant operator under a cache" in str(e.value)
     logger.info('test_cache_split1 Ended.\n')
@@ -694,12 +694,12 @@ def test_cache_map_split2():
     ds2 = ds2.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 12
 
     num_iter = 0
-    for _ in ds2.create_dict_iterator():
+    for _ in ds2.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 24
     logger.info('test_cache_split2 Ended.\n')
@@ -805,13 +805,13 @@ def test_cache_map_running_twice1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 8
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 8
@@ -848,7 +848,7 @@ def test_cache_map_running_twice2():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -885,7 +885,7 @@ def test_cache_map_extra_small_size1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -922,7 +922,7 @@ def test_cache_map_extra_small_size2():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -960,7 +960,7 @@ def test_cache_map_no_image():
 
     with pytest.raises(RuntimeError):
         num_iter = 0
-        for _ in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
 
     assert num_iter == 0
@@ -996,7 +996,7 @@ def test_cache_map_parallel_pipeline1(shard):
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1033,7 +1033,7 @@ def test_cache_map_parallel_pipeline2(shard):
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1070,7 +1070,7 @@ def test_cache_map_parallel_workers():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1107,7 +1107,7 @@ def test_cache_map_server_workers_1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1144,7 +1144,7 @@ def test_cache_map_server_workers_100():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1181,7 +1181,7 @@ def test_cache_map_num_connections_1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1218,7 +1218,7 @@ def test_cache_map_num_connections_100():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1255,7 +1255,7 @@ def test_cache_map_prefetch_size_1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1292,7 +1292,7 @@ def test_cache_map_prefetch_size_100():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -1404,7 +1404,7 @@ def test_cache_map_epoch_ctrl2():
 
     num_epoch = 5
     # iter1 will always assume there is a next epoch and never shutdown
-    iter1 = ds1.create_dict_iterator()
+    iter1 = ds1.create_dict_iterator(num_epochs=-1)
 
     epoch_count = 0
     for _ in range(num_epoch):
@@ -1451,7 +1451,7 @@ def test_cache_map_epoch_ctrl3():
 
     num_epoch = 5
     # iter1 will always assume there is a next epoch and never shutdown
-    iter1 = ds1.create_dict_iterator()
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
 
     epoch_count = 0
     for _ in range(num_epoch):
@@ -2097,7 +2097,7 @@ def test_cache_map_python_sampler1():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 8
@@ -2133,7 +2133,7 @@ def test_cache_map_python_sampler2():
     ds1 = ds1.repeat(4)
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 8
@@ -2200,7 +2200,7 @@ def test_cache_map_interrupt_and_rerun():
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, cache=some_cache)
-    iter1 = ds1.create_dict_iterator()
+    iter1 = ds1.create_dict_iterator(num_epochs=-1)
 
     num_iter = 0
     with pytest.raises(AttributeError) as e:
@@ -2252,7 +2252,7 @@ def test_cache_map_dataset_size1():
     assert dataset_size == 2
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
@@ -2289,7 +2289,7 @@ def test_cache_map_dataset_size2():
     assert dataset_size == 2
 
     num_iter = 0
-    for _ in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator(num_epochs=1):
         num_iter += 1
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
