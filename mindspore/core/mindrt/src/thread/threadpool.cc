@@ -241,6 +241,9 @@ void ThreadPool::CalculateScales(const std::vector<Worker *> &assigned, int sum_
   // divide task according to computing power(core frequency)
   float lhs_scale = 0;
   float rhs_scale = 0;
+  if (sum_frequency == 0) {
+    return;
+  }
   for (const auto &worker : assigned) {
     THREAD_RETURN_IF_NULL(worker);
     rhs_scale += worker->frequency() * 1.0 / sum_frequency;
