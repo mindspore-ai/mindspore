@@ -38,10 +38,10 @@ std::string FunctionalizeControlOpPass::NodeClusterName(const AnfNodePtr &node) 
   std::string cluster_name{};
   // tf node name use '/' split node name
   auto cnode = utils::cast<CNodePtr>(node);
-  std::string keyword = "while/";
-  size_t pos = cnode->fullname_with_scope().rfind(keyword);
+  std::string word_in_name = "while/";
+  size_t pos = cnode->fullname_with_scope().rfind(word_in_name);
   if (pos != std::string::npos) {
-    cluster_name = cnode->fullname_with_scope().substr(0, pos + keyword.size());
+    cluster_name = cnode->fullname_with_scope().substr(0, pos + word_in_name.size());
   } else {
     cluster_name = cnode->fullname_with_scope();
   }
