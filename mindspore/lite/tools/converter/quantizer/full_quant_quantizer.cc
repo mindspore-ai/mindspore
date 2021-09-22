@@ -1235,12 +1235,12 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
   calibrator_->full_quant_param_ = flags.fullQuantParam;
   calibrator_->data_pre_process_param_ = flags.dataPreProcessParam;
-  if (flags.dataPreProcessParam.calibrate_path_vector.empty()) {
+  if (flags.dataPreProcessParam.calibrate_path.empty()) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (flags.dataPreProcessParam.calibrate_size < 0) {
-    MS_LOG(ERROR) << "calibrate size must pass and the size must > 0.";
+  if (flags.dataPreProcessParam.calibrate_size <= 0 || flags.dataPreProcessParam.calibrate_size > 65535) {
+    MS_LOG(ERROR) << "calibrate size must pass and the size should in [1, 65535].";
     return RET_INPUT_PARAM_INVALID;
   }
   if (flags.dataPreProcessParam.input_type == preprocess::INPUT_TYPE_MAX) {
