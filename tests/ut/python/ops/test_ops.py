@@ -2351,6 +2351,28 @@ test_case_nn_ops = [
         'block': P.AvgPool3D(kernel_size=3, strides=2, pad_mode="PAD", pad=1),
         'desc_inputs': [[10, 3, 28, 31, 24]],
         'desc_bprop': [[10, 3, 14, 16, 12]]}),
+    ('MaxUnpool2D', {
+        'block': P.MaxUnpool2D(ksize=(4, 4), strides=(2, 2), pads=(2, 2)),
+        'desc_inputs': [([4, 3, 6, 6], {'dtype': np.float32}),
+                        ([4, 3, 6, 6], {'dtype': np.int64})],
+        'desc_bprop': [([4, 3, 10, 10], {'dtype': np.float32})]}),
+    ('MaxUnpool2DGrad', {
+        'block': G.MaxUnpool2DGrad(ksize=(1, 1, 4, 4), strides=(1, 1, 2, 2), pads=(1, 1, 2, 2)),
+        'desc_inputs': [([4, 3, 6, 6], {'dtype': np.float32}),
+                        ([4, 3, 10, 10], {'dtype': np.float32}),
+                        ([4, 3, 6, 6], {'dtype': np.int64})],
+        'skip': ['backward']}),
+    ('MaxUnpool3D', {
+        'block': P.MaxUnpool3D(ksize=(4, 4, 4), strides=(2, 2, 2), pads=(2, 2, 2)),
+        'desc_inputs': [([4, 3, 6, 6, 5], {'dtype': np.float32}),
+                        ([4, 3, 6, 6, 5], {'dtype': np.int64})],
+        'desc_bprop': [([4, 3, 10, 10, 8], {'dtype': np.float32})]}),
+    ('MaxUnpool3DGrad', {
+        'block': G.MaxUnpool3DGrad(ksize=(1, 1, 4, 4, 4), strides=(1, 1, 2, 2, 2), pads=(1, 1, 2, 2, 2)),
+        'desc_inputs': [([4, 3, 6, 6, 5], {'dtype': np.float32}),
+                        ([4, 3, 10, 10, 8], {'dtype': np.float32}),
+                        ([4, 3, 6, 6, 5], {'dtype': np.int64})],
+        'skip': ['backward']}),
     ('MaxPoolWithArgmax', {
         'block': P.MaxPoolWithArgmax(kernel_size=2, strides=2),
         'desc_inputs': [[128, 32, 32, 64]],

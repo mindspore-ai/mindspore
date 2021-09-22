@@ -2036,6 +2036,199 @@ class MaxPool3D(PrimitiveWithInfer):
         return x_dtype
 
 
+class MaxUnpool2D(Primitive):
+    r"""
+    Computes a partial inverse of MaxUnpool2D.
+
+    MaxUnpool2D is not fully invertible, since the non-maximal values are lost.
+
+    MaxUnpool2D takes in as input the output of MaxUnpool2D including the indices of the maximal values
+    and computes a partial inverse in which all non-maximal values are set to zero. Typically the input
+    is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape :math:`(N, C, H_{out}, W_{out})`,
+    the operation is as follows.
+
+    .. math::
+        \begin{array}{ll} \\
+        H_{out} = (H{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        W_{out} = (W{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        \end{array}
+
+    Args:
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width of the kernel, or a tuple
+            of two int numbers that represent height and width respectively.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively.
+            If strides is 0 or (0, 0), then strides equal to ksize. Default: 0.
+        pads (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pads` is an integer,
+            the paddings of height and width are the same, equal to pads. If `pads` is a tuple of two
+            integers, the padding of height and width equal to pads[0] and pads[1] correspondingly.
+        output_shape (tuple[int]) : The target output size is an optional input. Default: ().
+            If output_shape == (), then the shape of output computed by kszie, strides and pads.
+            If output_shape != (), then output_shape must be :math:`(N, C, H, W)` or
+            :math:`(N, H, W, C)` and output_shape must belong to
+            :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
+            (N, C, H_{out} + strides[0], W_{out} + strides[1])]`.
+        data_format (str) : The optional value for data format.
+            Currently support 'NCHW' and 'NHWC'. Default: 'NCHW'.
+
+    Inputs:
+        - **x** (Tensor) - The input Tensor to invert.
+          Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(N, H_{in}, W_{in}, C)`.
+        - **argmax** (Tensor) - Max values' index represented by the argmax.
+          Tensor of shape must be same with input 'x'.
+          Values of argmax must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
+          Data type must be in int32 or int64.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C, H_{out}, W_{out})` or :math:`(N, H_{out}, W_{out}, C)`.
+        Has the same data type with `x`.
+
+    Raises:
+        TypeError: If data type of `x` or `argmax` is not supported.
+        TypeError: If `ksize`, `strides` or `pads` is neither int nor tuple.
+        ValueError: If numbers in `strides` (also support 0 and (0, 0)) or `ksize` is not positive.
+        ValueError: If numbers in `pads` is negative.
+        ValueError: If `ksize`, `strides` or `pads` is a tuple whose length is not equal to 2.
+        ValueError: If `data_format` is not a str or is neither `NCHW` nor `NHWC`.
+        ValueError: If `output_shape` whose length is neither 0 or 4.
+        ValueError: If `output_shape` is not close to output size
+                    computed by attr `ksize, strides, pads`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
+        >>> argmax = Tensor(np.array([[[[0, 1], [2, 3]]]]).astype(np.int64))
+        >>> maxunpool2d = P.MaxUnpool2D(ksize=1, strides=1, pads=0)
+        >>> output = maxunpool2d(x, argmax)
+        >>> print(output.asnumpy())
+        [[[[0. 1.]
+            [8. 9.]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, strides=0, pads=0, output_shape=(), data_format="NCHW"):
+        """Initialize MaxUnpool2D."""
+        self.init_prim_io_names(inputs=['x', 'argmax'], outputs=['y'])
+        self.ksize = _check_positive_int_or_tuple('ksize', ksize, self.name, ret_four=True)
+        if strides in (0, (0, 0)):
+            strides = ksize
+        self.strides = _check_positive_int_or_tuple('strides', strides, self.name, ret_four=True)
+        self.pads = _check_positive_int_or_tuple('pads', pads, self.name, ret_four=True, greater_zero=False)
+        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
+
+        if data_format == "NHWC":
+            self.ksize = (self.ksize[0], self.ksize[2], self.ksize[3], self.ksize[1])
+            self.strides = (self.strides[0], self.strides[2], self.strides[3], self.strides[1])
+            self.pads = (self.pads[0], self.pads[2], self.pads[3], self.pads[1])
+
+        self.add_prim_attr('ksize', self.ksize)
+        self.add_prim_attr('strides', self.strides)
+        self.add_prim_attr('pads', self.pads)
+
+        validator.check_value_type("output_shape", output_shape, [tuple], self.name)
+        self.output_shape = output_shape
+
+
+class MaxUnpool3D(Primitive):
+    r"""
+    Computes a partial inverse of MaxUnpool3D.
+
+    MaxUnpool3D is not fully invertible, since the non-maximal values are lost.
+
+    MaxUnpool3D takes in as input the output of MaxUnpool3D including the indices of the maximal
+    values and computes a partial inverse in which all non-maximal values are set to zero.
+    Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, the output is of
+    shape :math:`(N, C, D_{out}, H_{out}, W_{out})`, the operation is as follows.
+
+    .. math::
+        \begin{array}{ll} \\
+        D_{out} = (D{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        H_{out} = (H{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        W_{out} = (W{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
+        \end{array}
+
+    Args:
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents depth, height and width of the kernel, or a tuple
+            of three int numbers that represent depth, height and width respectively.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the depth, height and width of movement are both strides, or a tuple of three int numbers that
+            represent depth, height and width of movement respectively.
+            If strides is 0 or (0, 0, 0), then strides equal to ksize. Default: 0.
+        pads (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pads` is an integer,
+            the paddings of depth, height and width are the same, equal to pads. If `pads` is a tuple of three integers,
+            the padding of depth, height and width equal to pads[0], pads[1] and pads[2] correspondingly.
+        output_shape (tuple[int]) : The target output size is an optional input. Default: ().
+            If output_shape == (), then the shape of output computed by kszie, strides and pads.
+            If output_shape != (), then output_shape must be :math:`(N, C, D, H, W)` or
+            :math:`(N, D, H, W, C)` and output_shape must belong to
+            :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
+            (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]`.
+        data_format (str) : The optional value for data format. Currently support 'NCDHW' and 'NDHWC'. Default: 'NCDHW'.
+
+    Inputs:
+        - **x** (Tensor) - The input Tensor to invert.
+          Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(N, D_{in}, H_{in}, W_{in}, C)`.
+        - **argmax** (Tensor) - Max values' index represented by the argmax.
+          Tensor of shape must be same with input 'x'.
+          Values of argmax must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
+          Data type must be in int32 or int64.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(N, D_{out}, H_{out}, W_{out}, C)`.
+        Has the same data type with `x`.
+
+    Raises:
+        TypeError: If data type of `x` or `argmax` is not supported.
+        TypeError: If `ksize`, `strides` or `pads` is neither int nor tuple.
+        ValueError: If numbers in `strides` (also support 0 and (0, 0, 0)) or `ksize` is not positive.
+        ValueError: If numbers in `pads` is negative.
+        ValueError: If `ksize`, `strides` or `pads` is a tuple whose length is not equal to 3.
+        ValueError: If `data_format` is not a str or is neither `NCDHW` nor `NDHWC`.
+        ValueError: If `output_shape` whose length is neither 0 or 5.
+        ValueError: If `output_shape` is not close to output size
+                    computed by attr `ksize, strides, pads`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
+        >>> argmax = Tensor(np.array([[[[[0, 1], [2, 3]]]]]).astype(np.int64))
+        >>> maxunpool3d = P.MaxUnpool3D(ksize=1, strides=1, pads=0)
+        >>> output = maxunpool3d(x, argmax)
+        >>> print(output.asnumpy())
+        [[[[[0. 1.]
+            [8. 9.]]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, strides=0, pads=0, output_shape=(), data_format="NCDHW"):
+        """Initialize MaxUnpool3D."""
+        self.init_prim_io_names(inputs=['x', 'argmax'], outputs=['y'])
+        self.ksize = _check_3d_int_or_tuple('ksize', ksize, self.name, ret_five=True)
+        if strides in (0, (0, 0, 0)):
+            strides = ksize
+        self.strides = _check_3d_int_or_tuple('strides', strides, self.name, ret_five=True)
+        self.pads = _check_3d_int_or_tuple('pads', pads, self.name, ret_five=True, greater_zero=False)
+        self.data_format = validator.check_string(data_format, ['NCDHW', 'NDHWC'], 'data_format', self.name)
+        if data_format == "NDHWC":
+            self.ksize = (self.ksize[0], self.ksize[2], self.ksize[3], self.ksize[4], self.ksize[1])
+            self.strides = (self.strides[0], self.strides[2], self.strides[3], self.strides[4], self.strides[1])
+            self.pads = (self.pads[0], self.pads[2], self.pads[3], self.pads[4], self.pads[1])
+
+        self.add_prim_attr('ksize', self.ksize)
+        self.add_prim_attr('strides', self.strides)
+        self.add_prim_attr('pads', self.pads)
+
+        validator.check_value_type("output_shape", output_shape, [tuple], self.name)
+        self.output_shape = output_shape
+
+
 class AvgPool(_Pool):
     r"""
     Average pooling operation.

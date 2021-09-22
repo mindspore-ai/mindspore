@@ -131,6 +131,40 @@ def get_bprop_relu(self):
     return bprop
 
 
+@bprop_getters.register(P.MaxUnpool2D)
+def get_bprop_maxunpool2d(self):
+    """Grad definition for `MaxUnpool2D` operation."""
+    maxunpool2d_grad = G.MaxUnpool2DGrad(
+        ksize=self.ksize,
+        strides=self.strides,
+        pads=self.pads,
+        output_shape=self.output_shape,
+        data_format=self.data_format)
+
+    def bprop(x, argmax, out, dout):
+        dx = maxunpool2d_grad(x, dout, argmax)
+        dargmax = zeros_like(argmax)
+        return (dx, dargmax)
+
+    return bprop
+
+
+@bprop_getters.register(P.MaxUnpool3D)
+def get_bprop_maxunpool3d(self):
+    """Grad definition for `MaxUnpool3D` operation."""
+    maxunpool3d_grad = G.MaxUnpool3DGrad(
+        ksize=self.ksize,
+        strides=self.strides,
+        pads=self.pads,
+        output_shape=self.output_shape,
+        data_format=self.data_format)
+
+    def bprop(x, argmax, out, dout):
+        dx = maxunpool3d_grad(x, dout, argmax)
+        dargmax = zeros_like(argmax)
+        return (dx, dargmax)
+
+
 @bprop_getters.register(NthElement)
 def get_bprop_nth_element(self):
     """Grad definition for `NthElement` operation."""

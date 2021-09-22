@@ -2678,6 +2678,44 @@ class FractionalMaxPool3DGradWithFixedKsize(Primitive):
         self.data_format = validator.check_string(data_format, ['NCDHW', "NDHWC"], 'data_format', self.name)
 
 
+class MaxUnpool2DGrad(Primitive):
+    r"""
+    Gradients for MaxUnpool2D operation.
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, strides=0, pads=0, output_shape=(), data_format="NCHW"):
+        """Initialize MaxUnpool2DGrad."""
+        self.init_prim_io_names(inputs=['x', 'grads', 'argmax'], outputs=['y'])
+        validator.check_value_type("ksize", ksize, [int, tuple], self.name)
+        validator.check_value_type("strides", strides, [int, tuple], self.name)
+        validator.check_value_type("pads", pads, [int, tuple], self.name)
+        validator.check_value_type("output_shape", output_shape, [tuple], self.name)
+        validator.check_string(data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
+        validator.check_int(len(ksize), 4, Rel.EQ, "ksize rank", self.name)
+        validator.check_int(len(strides), 4, Rel.EQ, "strides rank", self.name)
+        validator.check_int(len(pads), 4, Rel.EQ, "pads rank", self.name)
+
+
+class MaxUnpool3DGrad(Primitive):
+    r"""
+    Gradients for MaxUnpool3D operation.
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, strides=0, pads=0, output_shape=(), data_format="NCDHW"):
+        """Initialize MaxUnpool3DGrad."""
+        self.init_prim_io_names(inputs=['x', 'grads', 'argmax'], outputs=['y'])
+        validator.check_value_type("ksize", ksize, [int, tuple], self.name)
+        validator.check_value_type("strides", strides, [int, tuple], self.name)
+        validator.check_value_type("pads", pads, [int, tuple], self.name)
+        validator.check_value_type("output_shape", output_shape, [tuple], self.name)
+        validator.check_string(data_format, ['NCDHW', 'NDHWC'], 'data_format', self.name)
+        validator.check_int(len(ksize), 5, Rel.EQ, "ksize rank", self.name)
+        validator.check_int(len(strides), 5, Rel.EQ, "strides rank", self.name)
+        validator.check_int(len(pads), 5, Rel.EQ, "pads rank", self.name)
+
+
 class FractionalAvgPoolGrad(Primitive):
     """Computes gradients for FractionalAvgPool operation."""
 
