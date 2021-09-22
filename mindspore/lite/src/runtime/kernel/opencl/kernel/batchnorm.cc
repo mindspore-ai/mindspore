@@ -37,15 +37,15 @@ constexpr int kNumInput4 = 4;
 namespace mindspore::kernel {
 int BatchNormOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_5 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   if (in_tensors_.at(0)->shape().size() != DIMENSION_4D) {
-    MS_LOG(ERROR) << "The dim of in_tensors->shape must be 4 but your dim is : " << in_tensors_.at(0)->shape().size();
+    MS_LOG(WARNING) << "The dim of in_tensors->shape must be 4 but your dim is : " << in_tensors_.at(0)->shape().size();
     return RET_ERROR;
   }
   if (in_tensors_.at(0)->shape()[0] > 1) {
-    MS_LOG(ERROR) << "  Unsupported batch_size >1 ";
+    MS_LOG(WARNING) << "  Unsupported batch_size >1 ";
     return RET_ERROR;
   }
   CHECK_NULL_RETURN(in_tensors_[kNumInput0]);

@@ -38,19 +38,19 @@ namespace mindspore::kernel {
 int DepthwiseConv2dOpenCLKernel::CheckSpecs() {
   if ((in_tensors_.size() != INPUT_TENSOR_SIZE_2 && in_tensors_.size() != INPUT_TENSOR_SIZE_3) ||
       out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[0]->data_type();
+    MS_LOG(WARNING) << "Unsupported data type " << in_tensors_[0]->data_type();
     return RET_ERROR;
   }
   if (!in_tensors_.at(kWeightIndex)->IsConst()) {
-    MS_LOG(ERROR) << "DepthwiseConv2d don't support non-constant weight yet.";
+    MS_LOG(WARNING) << "DepthwiseConv2d don't support non-constant weight yet.";
     return RET_ERROR;
   }
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && !in_tensors_.at(kBiasIndex)->IsConst()) {
-    MS_LOG(ERROR) << "DepthwiseConv2d don't support non-constant bias yet.";
+    MS_LOG(WARNING) << "DepthwiseConv2d don't support non-constant bias yet.";
     return RET_ERROR;
   }
   return RET_OK;

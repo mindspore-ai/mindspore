@@ -37,23 +37,23 @@ namespace mindspore::kernel {
 int FullConnectionOpenCLKernel::CheckSpecs() {
   if ((in_tensors_.size() != INPUT_TENSOR_SIZE_2 && in_tensors_.size() != INPUT_TENSOR_SIZE_3) ||
       out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   if (param->a_transpose_) {
-    MS_LOG(ERROR) << "fullconnection only support a_transpose_=false yet.";
+    MS_LOG(WARNING) << "fullconnection only support a_transpose_=false yet.";
     return RET_ERROR;
   }
   auto out_gpu_info = GpuTensorInfo(out_tensors_[0]);
   if (out_gpu_info.H != 1 || out_gpu_info.W != 1) {
-    MS_LOG(ERROR) << "fullconnection only support 2d output shape or 4d output but H=W=1";
+    MS_LOG(WARNING) << "fullconnection only support 2d output shape or 4d output but H=W=1";
     return RET_ERROR;
   }
   // for fusion: ActivationType_TANH
   if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6 &&
       static_cast<schema::ActivationType>(param->act_type_) != ActivationType_TANH) {
-    MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
+    MS_LOG(WARNING) << "Unsupported activation type " << param->act_type_;
     return RET_ERROR;
   }
   N_ = out_gpu_info.N;
@@ -61,26 +61,26 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
   auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
   int input_nhw = intensor_shape.N * intensor_shape.H * intensor_shape.W;
   if (input_nhw < N_) {
-    MS_LOG(ERROR) << "Unsupported fullconnection shape";
+    MS_LOG(WARNING) << "Unsupported fullconnection shape";
   }
   if (!in_tensors_.at(kWeightIndex)->IsConst()) {
     weight_var_ = true;
     if (!param->b_transpose_) {
-      MS_LOG(ERROR) << "If fullconnection input weight is not constant, b_transpose_ should be true.";
+      MS_LOG(WARNING) << "If fullconnection input weight is not constant, b_transpose_ should be true.";
       return RET_ERROR;
     }
     if (in_tensors_.at(kWeightIndex)->shape().size() != DIMENSION_2D) {
-      MS_LOG(ERROR) << "If fullconnection input weight is not constant, it should be 2d.";
+      MS_LOG(WARNING) << "If fullconnection input weight is not constant, it should be 2d.";
       return RET_ERROR;
     }
     if (intensor_shape.C != in_tensors_.at(kWeightIndex)->shape()[1]) {
-      MS_LOG(ERROR)
+      MS_LOG(WARNING)
         << "If fullconnection input weight is not constant, input channel should equal to weight in_channel.";
       return RET_ERROR;
     }
   }
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && !in_tensors_.at(2)->IsConst()) {
-    MS_LOG(ERROR) << "FullConnection don't support non-constant bias yet.";
+    MS_LOG(WARNING) << "FullConnection don't support non-constant bias yet.";
     return RET_ERROR;
   }
   CI_remainder_ = input_nhw / N_;

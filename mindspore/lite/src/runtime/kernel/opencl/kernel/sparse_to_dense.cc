@@ -112,12 +112,12 @@ int SparseToDenseOpenCLKernel::InitWeights() {
 
 int SparseToDenseOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() < DIMENSION_3D || out_tensors_.at(0)->shape().size() > DIMENSION_4D) {
-    MS_LOG(ERROR) << " only support out_tensors_ dim <= 4 and in_tensors_.size >= 3";
+    MS_LOG(WARNING) << " only support out_tensors_ dim <= 4 and in_tensors_.size >= 3";
     return RET_ERROR;
   }
   if (in_tensors_.at(0)->shape().size() > DIMENSION_4D || out_tensors_.at(0)->shape().size() > DIMENSION_4D) {
-    MS_LOG(ERROR) << "Unsupported inputdim: " << in_tensors_[0]->shape().size() << "outdim"
-                  << out_tensors_[0]->shape().size();
+    MS_LOG(WARNING) << "Unsupported inputdim: " << in_tensors_[0]->shape().size() << "outdim"
+                    << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   if (input_dim_ == DIMENSION_2D) {
@@ -129,7 +129,7 @@ int SparseToDenseOpenCLKernel::CheckSpecs() {
   }
   auto param = reinterpret_cast<SparseToDenseParameter *>(op_parameter_);
   if (param->validate_indices_) {
-    MS_LOG(ERROR) << "Unsupported unordered for in_tensors_indices";
+    MS_LOG(WARNING) << "Unsupported unordered for in_tensors_indices";
     return RET_ERROR;
   }
   return RET_OK;

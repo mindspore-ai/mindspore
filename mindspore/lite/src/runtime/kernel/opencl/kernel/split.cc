@@ -69,34 +69,34 @@ int SplitOpenCLKernel::CheckSpecs() {
   if ((out_tensors_.size() != OUTPUT_TENSOR_SIZE_2 ||
        (out_tensors_.size() != OUTPUT_TENSOR_SIZE_3 && param->split_dim_ == 0)) &&
       in_tensors_.size() != INPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   if (in_tensors_.at(0)->IsConst()) {
-    MS_LOG(ERROR) << "in_tensors_ must be tensor";
+    MS_LOG(WARNING) << "in_tensors_ must be tensor";
     return RET_ERROR;
   }
   for (auto &out_tensor : out_tensors_) {
     if (out_tensor->IsConst()) {
-      MS_LOG(ERROR) << "out_tensor must be tensor";
+      MS_LOG(WARNING) << "out_tensor must be tensor";
       return RET_ERROR;
     }
   }
 
   if (!(param->num_split_ == 2 || param->split_dim_ == 0)) {
-    MS_LOG(ERROR) << "num_split_ only supported = 2 or split_dim_ = 0 yet";
+    MS_LOG(WARNING) << "num_split_ only supported = 2 or split_dim_ = 0 yet";
     return RET_ERROR;
   }
   if (param->split_dim_ < 0 || param->split_dim_ > 3) {
-    MS_LOG(ERROR) << "split_dim_ must between 0~3";
+    MS_LOG(WARNING) << "split_dim_ must between 0~3";
     return RET_ERROR;
   }
   if (param->split_sizes_ == nullptr) {
-    MS_LOG(ERROR) << "split_sizes_ can not nullptr";
+    MS_LOG(WARNING) << "split_sizes_ can not nullptr";
     return RET_ERROR;
   }
   if (param->num_split_ == 1 && param->split_sizes_[0] == 0) {
-    MS_LOG(ERROR) << "param->split_sizes_[0] is zero.";
+    MS_LOG(WARNING) << "param->split_sizes_[0] is zero.";
     return RET_ERROR;
   }
   return RET_OK;

@@ -32,20 +32,20 @@ namespace mindspore::kernel {
 int ResizeOpenCLKernel::CheckSpecs() {
   if (!(in_tensors_.size() == INPUT_TENSOR_SIZE_1 || in_tensors_.size() == INPUT_TENSOR_SIZE_2) ||
       out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   auto in_shape = in_tensors_[0]->shape();
   auto out_shape = out_tensors_[0]->shape();
   if (in_shape.size() != DIMENSION_4D || out_shape.size() != DIMENSION_4D || in_shape[0] != out_shape[0] ||
       in_shape[3] != out_shape[3]) {
-    MS_LOG(ERROR) << "resize op only support 4D and axes HW";
+    MS_LOG(WARNING) << "resize op only support 4D and axes HW";
     return RET_PARAM_INVALID;
   }
   auto resize_param = reinterpret_cast<ResizeParameter *>(op_parameter_);
   CHECK_NULL_RETURN(resize_param);
   if (resize_param->method_ != schema::ResizeMethod_LINEAR && resize_param->method_ != schema::ResizeMethod_NEAREST) {
-    MS_LOG(ERROR) << "unsupported resize method:" << resize_param->method_;
+    MS_LOG(WARNING) << "unsupported resize method:" << resize_param->method_;
     return RET_PARAM_INVALID;
   }
   return RET_OK;

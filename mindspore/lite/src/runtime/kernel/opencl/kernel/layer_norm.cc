@@ -34,8 +34,8 @@ int LayerNormOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<LayerNormParameter *>(this->op_parameter_);
   CHECK_NULL_RETURN(param);
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_3 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "UnSupported in_tensors_.size: " << in_tensors_.size()
-                  << " out_tensors_.size(): " << out_tensors_.size();
+    MS_LOG(WARNING) << "UnSupported in_tensors_.size: " << in_tensors_.size()
+                    << " out_tensors_.size(): " << out_tensors_.size();
     return RET_ERROR;
   }
   auto *input = in_tensors_.at(0);
@@ -43,7 +43,7 @@ int LayerNormOpenCLKernel::CheckSpecs() {
   auto *output = out_tensors_.at(0);
   CHECK_NULL_RETURN(output);
   if (input->shape().size() != DIMENSION_4D) {
-    MS_LOG(ERROR) << "UnSupported in_tensors_.shape.size: " << input->shape().size();
+    MS_LOG(WARNING) << "UnSupported in_tensors_.shape.size: " << input->shape().size();
     return RET_ERROR;
   }
   normalized_axis_ = param->begin_params_axis_;
@@ -52,7 +52,7 @@ int LayerNormOpenCLKernel::CheckSpecs() {
     normalized_axis_ += input->shape().size();
   }
   if (normalized_axis_ != 3) {
-    MS_LOG(ERROR) << "UnSupported normalized_axis_ : " << param->normalized_dims_;
+    MS_LOG(WARNING) << "UnSupported normalized_axis_ : " << param->normalized_dims_;
     return RET_ERROR;
   }
   return RET_OK;

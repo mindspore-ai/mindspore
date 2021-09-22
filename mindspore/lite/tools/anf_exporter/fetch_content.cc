@@ -402,7 +402,7 @@ int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType f
   return RET_OK;
 }
 
-void RemoveIfDepend(const CNodePtr &cnode) {
+int RemoveIfDepend(const CNodePtr &cnode) {
   bool has_depend = false;
   std::vector<AnfNodePtr> inputs;
   inputs.clear();
@@ -418,7 +418,7 @@ void RemoveIfDepend(const CNodePtr &cnode) {
     auto value_node = depend_node->input(0)->cast<ValueNodePtr>();
     if (value_node == nullptr) {
       MS_LOG(ERROR) << "value node is invalid.";
-      return;
+      return RET_ERROR;
     }
     if (value_node->value() != nullptr && opt::CheckPrimitiveType(depend_node, prim::kPrimDepend)) {
       has_depend = true;
@@ -439,9 +439,10 @@ void RemoveIfDepend(const CNodePtr &cnode) {
   if (has_depend) {
     cnode->set_inputs(inputs);
   }
+  return RET_OK;
 }
 
-void RemoveIfMakeTuple(const CNodePtr &cnode) {
+int RemoveIfMakeTuple(const CNodePtr &cnode) {
   bool has_make_tuple = false;
   std::vector<AnfNodePtr> inputs;
   inputs.clear();
@@ -457,7 +458,7 @@ void RemoveIfMakeTuple(const CNodePtr &cnode) {
     auto value_node = make_tuple_node->input(0)->cast<ValueNodePtr>();
     if (value_node == nullptr) {
       MS_LOG(ERROR) << "value node is invalid.";
-      return;
+      return RET_ERROR;
     }
     if (value_node->value() != nullptr && (opt::CheckPrimitiveType(make_tuple_node, prim::kPrimMakeTuple) ||
                                            opt::CheckPrimitiveType(make_tuple_node, opt::kPrimMakeTupleV2))) {
@@ -472,6 +473,7 @@ void RemoveIfMakeTuple(const CNodePtr &cnode) {
   if (has_make_tuple) {
     cnode->set_inputs(inputs);
   }
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

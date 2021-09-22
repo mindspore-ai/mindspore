@@ -44,24 +44,24 @@ namespace mindspore::kernel {
 int Conv2DOpenCLKernel::CheckSpecs() {
   int inputs_num = in_tensors_.size();
   if (inputs_num != INPUT_TENSOR_SIZE_2 && inputs_num != INPUT_TENSOR_SIZE_3) {
-    MS_LOG(ERROR) << "Conv2D only supports 2 or 3 input Tensor but get " << inputs_num;
+    MS_LOG(WARNING) << "Conv2D only supports 2 or 3 input Tensor but get " << inputs_num;
     return RET_ERROR;
   }
   int outputs_num = out_tensors_.size();
   if (outputs_num != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "Conv2D only supports 1 output Tensor but get " << outputs_num;
+    MS_LOG(WARNING) << "Conv2D only supports 1 output Tensor but get " << outputs_num;
     return RET_ERROR;
   }
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
   int input_ndim = in_tensors_.at(kInputIndex)->shape().size();
   if (input_ndim != DIMENSION_4D) {
-    MS_LOG(ERROR) << "Conv2D only supports 4D input Tensor but get " << input_ndim << "D.";
+    MS_LOG(WARNING) << "Conv2D only supports 4D input Tensor but get " << input_ndim << "D.";
     return RET_ERROR;
   }
   CHECK_NULL_RETURN(out_tensors_.at(kInputIndex));
   int output_ndim = out_tensors_.at(kOutputIndex)->shape().size();
   if (output_ndim != DIMENSION_4D) {
-    MS_LOG(ERROR) << "Conv2D only supports 4D output Tensor but get " << output_ndim << "D.";
+    MS_LOG(WARNING) << "Conv2D only supports 4D output Tensor but get " << output_ndim << "D.";
     return RET_ERROR;
   }
 
@@ -69,17 +69,17 @@ int Conv2DOpenCLKernel::CheckSpecs() {
   CHECK_NULL_RETURN(filter_tensor);
   int filter_ndim = filter_tensor->shape().size();
   if (filter_ndim != DIMENSION_4D) {
-    MS_LOG(ERROR) << "Conv2D only supports 4D filter Tensor but get " << filter_ndim << "D.";
+    MS_LOG(WARNING) << "Conv2D only supports 4D filter Tensor but get " << filter_ndim << "D.";
     return RET_ERROR;
   }
   if (!filter_tensor->IsConst()) {
-    MS_LOG(ERROR) << "Conv2D don't support non-constant filter yet.";
+    MS_LOG(WARNING) << "Conv2D don't support non-constant filter yet.";
     return RET_ERROR;
   }
 
   auto *bias_tensor = in_tensors_.size() >= INPUT_TENSOR_SIZE_3 ? in_tensors_.at(kBiasIndex) : nullptr;
   if (bias_tensor != nullptr && !bias_tensor->IsConst()) {
-    MS_LOG(ERROR) << "Conv2D don't support non-constant bias yet.";
+    MS_LOG(WARNING) << "Conv2D don't support non-constant bias yet.";
     return RET_ERROR;
   }
 
@@ -92,7 +92,7 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     case ActivationType_TANH:
       break;
     default: {
-      MS_LOG(ERROR) << "Unsupported activation type " << param_->act_type_;
+      MS_LOG(WARNING) << "Unsupported activation type " << param_->act_type_;
       return RET_ERROR;
     }
   }

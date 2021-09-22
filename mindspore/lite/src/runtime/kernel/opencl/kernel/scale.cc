@@ -54,7 +54,8 @@ int ScaleOpenCLKernel::CheckSpecs() {
     bool isScaleC = (in_shape.size() == 4 && axis == 3) || (in_shape.size() == 2 && axis == 1);
     bool isScaleH = in_shape.size() == 4 && axis == 1;
     if (isScalar || !(isScaleC || isScaleH)) {
-      MS_LOG(ERROR) << "unsupported scale axis " << axis << ", in shape " << in_shape << ", scale shape" << scale_shape;
+      MS_LOG(WARNING) << "unsupported scale axis " << axis << ", in shape " << in_shape << ", scale shape"
+                      << scale_shape;
       return RET_ERROR;
     }
   }
