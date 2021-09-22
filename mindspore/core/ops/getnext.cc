@@ -56,8 +56,7 @@ bool IsDynamic(const std::vector<ShapeVector> &shape) {
   return false;
 }
 
-abstract::AbstractBasePtr GetnextInferShape(const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args) {
+abstract::AbstractBasePtr GetnextInferShape(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto types = GetValue<std::vector<TypePtr>>(primitive->GetAttr("types"));
   ValuePtr shape_attr = primitive->GetAttr("shapes");
@@ -89,7 +88,7 @@ abstract::AbstractBasePtr GetnextInferShape(const PrimitivePtr &primitive,
 
 AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
-  return GetnextInferShape(primitive, input_args);
+  return GetnextInferShape(primitive);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(GetNext, prim::kPrimGetNext, GetNextInfer, nullptr, true);
 }  // namespace ops

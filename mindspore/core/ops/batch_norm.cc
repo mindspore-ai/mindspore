@@ -44,7 +44,7 @@ void BatchNorm::set_format(const Format &format) {
 }
 
 void BatchNorm::set_momentum(const float momentun) {
-  CheckAndConvertUtils::CheckInRange<int64_t>(kMomentum, SizeToLong(momentun), kIncludeBoth, {0.0, 1.0}, this->name());
+  CheckAndConvertUtils::CheckInRange<float>(kMomentum, momentun, kIncludeBoth, {0.0, 1.0}, this->name());
   (void)this->AddAttr(kMomentum, MakeValue(momentun));
 }
 
