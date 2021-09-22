@@ -191,7 +191,7 @@ void Debugger::EnableDebugger() {
     // initialize grpc client
     grpc_client_ = std::make_unique<GrpcClient>(host, port);
     // initialize sending heartbeat
-    heartbeat_thread_ = std::make_unique<std::thread>([=]() { SendHeartbeat(heartbeat_period_second); });
+    heartbeat_thread_ = std::make_unique<std::thread>([this]() { SendHeartbeat(heartbeat_period_second); });
   }
   debug_services_ = std::make_unique<DebugServices>();
 }
@@ -920,7 +920,8 @@ void AddTensorProtoInfo(TensorProto *tensor_item, const TensorProto &tensor) {
   tensor_item->clear_dims();
 }
 
-void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat, std::list<TensorSummary> *tensor_summary_list) {
+void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat,
+                       std::list<TensorSummary> *const tensor_summary_list) {
   if (tensor_summary_list == nullptr) {
     MS_LOG(DEBUG) << "tensor_summary_list is nullptr.";
     return;
@@ -928,7 +929,7 @@ void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat, std::list<T
   TensorSummary tensor_summary_item;
   TensorBase *tensor_base = tensor_summary_item.mutable_tensor_base();
   tensor_base->set_data_type(tensor_stat.dtype);
-  tensor_base->set_data_size(tensor_stat.data_size);
+  tensor_base->set_data_size((int64_t)tensor_stat.data_size);
   for (auto elem : tensor_stat.shape) {
     tensor_base->add_shape(elem);
   }
@@ -1043,8 +1044,8 @@ std::list<TensorBase> Debugger::LoadTensorsBase(const ProtoVector<TensorProto> &
     }
     // tensor was found creating tensor base object.
     TensorBase tensor_base_item;
-    tensor_base_item.set_data_size(tensor->GetByteSize());
-    tensor_base_item.set_data_type(tensor->GetType());
+    tensor_base_item.set_data_size((int64_t)tensor->GetByteSize());
+    tensor_base_item.set_data_type((int64_t)tensor->GetType());
     for (auto elem : tensor->GetShape()) {
       tensor_base_item.add_shape(elem);
     }
