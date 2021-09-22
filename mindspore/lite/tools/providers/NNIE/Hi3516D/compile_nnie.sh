@@ -36,11 +36,8 @@ function Run_Build_x86() {
 
     cd ${open_source_ms_path}/output/ || exit 1
     # remove unused static library
-    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libcrypto.a
-    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libmindspore_core.a
-    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libmindspore_gvar.a
     rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libprotobuf.a
-    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libsecurec.a
+    rm ./mindspore-lite-${version}-linux-x64/tools/converter/lib/libflatbuffers.a
     echo "cp new nnie so to release pkg success"
     rm ${open_source_ms_path}/output/mindspore-lite-${version}-linux-x64.tar.gz
     tar -zcf ./mindspore-lite-${version}-linux-x64.tar.gz ./mindspore-lite-${version}-linux-x64/
