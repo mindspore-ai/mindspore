@@ -124,25 +124,6 @@ class TbeAdapter {
     }
     return false;
   }
-
-  // TODO(xxx): delete
-  //  FusionInputOrderPass/InputOrderPass/FusionDataOrderPass/GenTopKV2IndicesTensorInfo/GetNodeFusionType
-  static void FusionInputOrderPass(const std::shared_ptr<AnfNode> &anf_node,
-                                   const std::vector<nlohmann::json> &inputs_list,
-                                   std::vector<nlohmann::json> *inputs_json);
-  static void InputOrderPass(const std::shared_ptr<AnfNode> &anf_node,
-                             std::vector<std::vector<nlohmann::json>> const &inputs_list, nlohmann::json *inputs_json);
-  static bool DynamicInputAdjusted(const std::shared_ptr<AnfNode> &anf_node,
-                                   std::vector<std::vector<nlohmann::json>> const &inputs_list,
-                                   nlohmann::json *inputs_json);
-  static void FusionDataOrderPass(const std::string &op_name, const std::vector<AnfNodePtr> &data_layer,
-                                  std::vector<AnfNodePtr> *reorder_data_layer);
-  static void GenTopKV2IndicesTensorInfo(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index,
-                                         std::vector<nlohmann::json> *input_list, kCreaterType creater_type);
-  static std::string GetNodeFusionType(const mindspore::CNodePtr &cnode);
-
-  static bool RunAttrPass(const AnfNodePtr &anf_node, const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                          nlohmann::json *attrs_json);
   static void FusionDescJsonPass(const AnfNodePtr &node, nlohmann::json *output_desc,
                                  const std::map<const AnfNodePtr, tbe::FusionDataType> &spec_data_input);
   static std::string GetRealOpType(const std::string &origin_type);
@@ -156,18 +137,10 @@ class TbeAdapter {
   static void LayerNormAttrJsonPost(const AnfNodePtr &anf_node, nlohmann::json *attrs_json);
 
  private:
-  // TODO(xxx): delete MaxiOrMinimumGradAttrJsonPass
-  static void MaxiOrMinimumGradAttrJsonPass(const AnfNodePtr &anf_node,
-                                            const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                                            nlohmann::json *attrs_json);
-  static void CastAttrJsonPass(const AnfNodePtr &anf_node, const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                               nlohmann::json *attrs_json);
-
   static bool IsSpecialFusionComputeNode(const std::vector<mindspore::AnfNodePtr> &compute_nodes);
   static bool GetSpecInputLayers(const std::string &op_name, const std::vector<mindspore::AnfNodePtr> &reorder_layer,
                                  std::map<const AnfNodePtr, FusionDataType> *spec_data_input);
 
-  static std::map<std::string, FAttrsPass> build_json_attr_pass_map_;
   static std::unordered_set<std::string> input_order_adjusted_ops_;
 };
 }  // namespace tbe

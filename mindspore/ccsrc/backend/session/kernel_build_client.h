@@ -213,15 +213,6 @@ class AscendKernelBuildClient : public KernelBuildClient {
   // Receive the response from server
   constexpr inline static auto kFailed = "-1";
 
-  // Send building request to server
-  constexpr inline static auto kContinue = "CONTINUE";  // More transactions to be continued
-  constexpr inline static auto kTbePre = "TBE/PRE";
-  constexpr inline static auto kTbeStart = "TBE/START";
-  constexpr inline static auto kTbeWait = "TBE/WAIT";
-  constexpr inline static auto kTbeReset = "TBE/RESET";
-  constexpr inline static auto kTbeTune = "TBE/TUNE";
-  constexpr inline static auto kTbeJob = "TBE/JOB";
-
   // Send server info. query to server
   constexpr inline static auto kFormat = "FORMAT";
   constexpr inline static auto kSupport = "SUPPORT";
@@ -239,9 +230,6 @@ class AscendKernelBuildClient : public KernelBuildClient {
   }
   // Run TBE building.
   std::string TbeSendJob(const std::string &job_json_str);
-  int TbeStart(const std::string &json, const std::string &mode);
-  bool TbeWait(int *task_id, std::string *task_result, std::string *pre_build_result);
-  void TbeReset();
 
   AscendKernelBuildClient(const AscendKernelBuildClient &) = delete;
   AscendKernelBuildClient &operator=(const AscendKernelBuildClient &) = delete;
