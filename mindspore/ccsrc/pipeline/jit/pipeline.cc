@@ -1173,6 +1173,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   }
 #endif
   MS_LOG(INFO) << "Start InitDataSet Entry";
+  mindspore::parse::python_adapter::set_python_env_flag(true);
   ShapeVector int_input_indexes;
   (void)std::transform(input_indexes.begin(), input_indexes.end(), std::back_inserter(int_input_indexes),
                        [](int64_t item) { return static_cast<int64_t>(item); });
