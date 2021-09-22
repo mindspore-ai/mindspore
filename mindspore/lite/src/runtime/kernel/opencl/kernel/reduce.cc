@@ -126,20 +126,20 @@ int ReduceOpenCLKernel::SetAxes() {
 
 int ReduceOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   auto input = in_tensors_.at(0);
   CHECK_NULL_RETURN(input);
   if (input->shape()[0] > DIMENSION_1D) {
-    MS_LOG(ERROR) << "reduce op only support n = 1";
+    MS_LOG(WARNING) << "reduce op only support n = 1";
     return RET_PARAM_INVALID;
   }
   inShape = GpuTensorInfo(in_tensors_[0]);
   auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
   CHECK_NULL_RETURN(reduce_param);
   if (GetReduceTypeStr(reduce_param->mode_).empty()) {
-    MS_LOG(ERROR) << "not supported reduce type:" << reduce_param->mode_;
+    MS_LOG(WARNING) << "not supported reduce type:" << reduce_param->mode_;
     return RET_PARAM_INVALID;
   }
   auto ret = SetAxes();
@@ -150,11 +150,11 @@ int ReduceOpenCLKernel::CheckSpecs() {
   wc_reduce_ = IsWCReduce(reduce_axes_);
   c_reduce_ = IsCReduce(reduce_axes_);
   if (!hw_reduce_ && !wc_reduce_ && !c_reduce_) {
-    MS_LOG(ERROR) << "Unsupported reduce axes";
+    MS_LOG(WARNING) << "Unsupported reduce axes";
     return RET_PARAM_INVALID;
   }
   if ((c_reduce_ || wc_reduce_) && !reduce_param->keep_dims_) {
-    MS_LOG(ERROR) << "reduce axis (2,3) should keep dims";
+    MS_LOG(WARNING) << "reduce axis (2,3) should keep dims";
     return RET_PARAM_INVALID;
   }
   return RET_OK;

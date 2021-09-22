@@ -30,13 +30,13 @@ using mindspore::lite::opencl::MemType;
 namespace mindspore::kernel {
 int ToFormatOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   auto data_type = in_tensors_.front()->data_type();
   if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16 && data_type != kNumberTypeInt32 &&
       data_type != kNumberTypeInt8) {
-    MS_LOG(ERROR) << "Unsupported data type " << data_type;
+    MS_LOG(WARNING) << "Unsupported data type " << data_type;
     return RET_ERROR;
   }
   return RET_OK;

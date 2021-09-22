@@ -32,22 +32,22 @@ namespace mindspore::kernel {
 int CastOpenCLKernel::CheckSpecs() {
   // the 2nd tensor is DstType
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
 
   if (in_tensors_.front()->shape() != out_tensors_.front()->shape()) {
-    MS_LOG(ERROR) << "input shape must be equal to output shape";
+    MS_LOG(WARNING) << "input shape must be equal to output shape";
     return RET_ERROR;
   }
   auto input_dtype = in_tensors_.front()->data_type();
   if (input_dtype != kNumberTypeFloat32 && input_dtype != kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "input dtype must be float32/float16";
+    MS_LOG(WARNING) << "input dtype must be float32/float16";
     return RET_ERROR;
   }
   auto output_dtype = out_tensors_.front()->data_type();
   if (output_dtype != kNumberTypeFloat32 && output_dtype != kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "output dtype must be float32/float16";
+    MS_LOG(WARNING) << "output dtype must be float32/float16";
     return RET_ERROR;
   }
   return RET_OK;

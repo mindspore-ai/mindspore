@@ -32,21 +32,21 @@ using mindspore::schema::PrimitiveType_ArgMinFusion;
 namespace mindspore::kernel {
 int ArgMinMaxOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   if ((in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) ||
       (out_tensors_[0]->data_type() != kNumberTypeFloat32 && out_tensors_[0]->data_type() != kNumberTypeFloat16)) {
-    MS_LOG(ERROR) << "Unsupported input/output data type. input data type is " << in_tensors_[0]->data_type()
-                  << " output data type is " << out_tensors_[0]->data_type();
+    MS_LOG(WARNING) << "Unsupported input/output data type. input data type is " << in_tensors_[0]->data_type()
+                    << " output data type is " << out_tensors_[0]->data_type();
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape().size() < DIMENSION_1D || in_tensors_[0]->shape().size() > DIMENSION_4D) {
-    MS_LOG(ERROR) << "input shape size must be (1-4), actual: " << in_tensors_[0]->shape().size();
+    MS_LOG(WARNING) << "input shape size must be (1-4), actual: " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   if (out_tensors_[0]->shape().size() != DIMENSION_1D) {
-    MS_LOG(ERROR) << "output shape size must be 1, actual" << out_tensors_[0]->shape().size();
+    MS_LOG(WARNING) << "output shape size must be 1, actual" << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<ArgMinMaxParameter *>(this->op_parameter_);
@@ -55,7 +55,7 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
   CHECK_LESS_RETURN(dims_size, 1);
   auto axis = (param->axis_ + dims_size) % dims_size;
   if (axis < 0 || axis >= dims_size) {
-    MS_LOG(ERROR) << "Invalid axis " << axis;
+    MS_LOG(WARNING) << "Invalid axis " << axis;
     return RET_ERROR;
   }
   return RET_OK;

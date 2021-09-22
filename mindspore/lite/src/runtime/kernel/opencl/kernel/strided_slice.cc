@@ -33,7 +33,7 @@ namespace mindspore::kernel {
 int StridedSliceOpenCLKernel::CheckSpecs() {
   if (type() == PrimitiveType_SliceFusion) {
     if (in_tensors_.size() != INPUT_TENSOR_SIZE_3) {
-      MS_LOG(ERROR) << "Slice only supports 3 input Tensor.";
+      MS_LOG(WARNING) << "Slice only supports 3 input Tensor.";
       return RET_ERROR;
     }
     int in_ndim = in_tensors_.front()->shape().size();
@@ -45,7 +45,7 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
     }
   } else if (type() == PrimitiveType_StridedSlice) {
     if (in_tensors_.size() != INPUT_TENSOR_SIZE_4) {
-      MS_LOG(ERROR) << "StridedSlice only supports 4 input Tensor.";
+      MS_LOG(WARNING) << "StridedSlice only supports 4 input Tensor.";
       return RET_ERROR;
     }
     int in_ndim = in_tensors_.front()->shape().size();
@@ -59,26 +59,26 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
       return RET_ERROR;
     }
   } else {
-    MS_LOG(ERROR) << "type error.";
+    MS_LOG(WARNING) << "type error.";
     return RET_ERROR;
   }
   const std::string kernel_name = type() == PrimitiveType_SliceFusion ? "Slice" : "StridedSlice";
   if (out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << kernel_name + " only supports 1 output Tensor.";
+    MS_LOG(WARNING) << kernel_name + " only supports 1 output Tensor.";
     return RET_ERROR;
   }
   auto in_ndim = in_tensors_.front()->shape().size();
   if (in_ndim == 0 || in_ndim > DIMENSION_4D) {
-    MS_LOG(ERROR) << kernel_name + " only supports 1D-4D input tensor";
+    MS_LOG(WARNING) << kernel_name + " only supports 1D-4D input tensor";
     return RET_ERROR;
   }
   auto out_ndim = out_tensors_.front()->shape().size();
   if (out_ndim > DIMENSION_4D) {
-    MS_LOG(ERROR) << kernel_name + " only supports 0D-4D output tensor";
+    MS_LOG(WARNING) << kernel_name + " only supports 0D-4D output tensor";
     return RET_ERROR;
   }
   if (InitConstArgs() != RET_OK) {
-    MS_LOG(ERROR) << "call InitConstArgs() failed";
+    MS_LOG(WARNING) << "call InitConstArgs() failed";
     return RET_ERROR;
   }
   return RET_OK;

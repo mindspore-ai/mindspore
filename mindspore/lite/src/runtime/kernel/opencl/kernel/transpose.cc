@@ -30,17 +30,17 @@ using mindspore::schema::PrimitiveType_Transpose;
 namespace mindspore::kernel {
 int TransposeOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "Transpose input output size unsupported.";
+    MS_LOG(WARNING) << "Transpose input output size unsupported.";
     return RET_ERROR;
   }
   int in_ndim = in_tensors_.at(0)->shape().size();
   int out_ndim = out_tensors_.at(0)->shape().size();
   if (in_ndim != out_ndim) {
-    MS_LOG(ERROR) << "Transpose only support in_ndim equal to out_ndim.";
+    MS_LOG(WARNING) << "Transpose only support in_ndim equal to out_ndim.";
     return RET_ERROR;
   }
   if (in_ndim > DIMENSION_4D) {
-    MS_LOG(ERROR) << "Transpose don't support 5d tensor or higher.";
+    MS_LOG(WARNING) << "Transpose don't support 5d tensor or higher.";
     return RET_ERROR;
   }
   if (CheckParamLikeTensor("Transpose", "perm", in_tensors_.at(1), kNumberTypeInt32, {in_ndim}) != RET_OK) {

@@ -47,13 +47,13 @@ bool IsUseStrassenMatmul(const std::vector<lite::Tensor *> &in_tensors_) {
 int MatMulOpenCLKernel::CheckSpecs() {
   if (!(in_tensors_.size() == INPUT_TENSOR_SIZE_2 || in_tensors_.size() == INPUT_TENSOR_SIZE_3) ||
       out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   transposeA = param->a_transpose_;
   if (transposeA) {
-    MS_LOG(ERROR) << "matmul only support a_transpose_=false yet.";
+    MS_LOG(WARNING) << "matmul only support a_transpose_=false yet.";
     return RET_ERROR;
   }
   transposeB = param->b_transpose_;
@@ -61,7 +61,7 @@ int MatMulOpenCLKernel::CheckSpecs() {
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() ||
       in_tensors_[0]->shape().size() < DIMENSION_2D || in_tensors_[0]->shape().size() > DIMENSION_4D) {
-    MS_LOG(ERROR) << "matmul only support input shape size= 2, 3 or 4.";
+    MS_LOG(WARNING) << "matmul only support input shape size= 2, 3 or 4.";
     return RET_ERROR;
   }
   return RET_OK;
