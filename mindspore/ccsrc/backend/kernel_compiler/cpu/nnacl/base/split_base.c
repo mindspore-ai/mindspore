@@ -19,9 +19,9 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int DoSplit(void *in_data, void **out_data, const int *input_shape, int offset, int num_unit,
+int DoSplit(const void *in_data, void **out_data, const int *input_shape, int offset, int num_unit,
             const SplitParameter *split_param, int data_size) {
-  int8_t *int8_in = (int8_t *)in_data;
+  const int8_t *int8_in = (int8_t *)in_data;
 
   const int num_split = split_param->num_split_;
   const int *split_sizes = split_param->split_sizes_;
@@ -37,7 +37,7 @@ int DoSplit(void *in_data, void **out_data, const int *input_shape, int offset, 
 
   split_which = offset % num_split;
   split_times = offset / num_split;
-  int8_t *src = int8_in + split_times * stride_per_split * data_size;
+  const int8_t *src = int8_in + split_times * stride_per_split * data_size;
 
   for (int i = 0; i < split_which; i++) {
     src += split_sizes[i] * in_stride * data_size;
