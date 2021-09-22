@@ -498,5 +498,6 @@ if(NOT WIN32 AND MSLITE_ENABLE_TESTCASES)
 endif()
 
 if(NOT APPLE)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/file_list.cmake)
     include(${TOP_DIR}/cmake/package_lite.cmake)
 endif()
