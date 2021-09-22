@@ -13,9 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """
-MindBoost(Beta Feature)
+Boost provide auto accelerating for network, such as Less BN, Gradient Freeze, Gradient
+accumulation and so on.
 
-Provide auto accelerating for network, such as Less BN, Gradient Freeze.
+Note:
+    This feature is a beta feature, and we are still improving its functionality.
 """
 from .boost import *
 from .base import *
