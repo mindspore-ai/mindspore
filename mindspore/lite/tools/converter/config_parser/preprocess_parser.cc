@@ -191,7 +191,8 @@ int PreprocessParser::CollectCalibInputs(const std::map<std::string, std::string
     }
     closedir(root);
     if (count != limited_count) {
-      MS_LOG(ERROR) << " data path: " << image_path << " data count:" << count << " < limited_count:" << limited_count;
+      MS_LOG(ERROR) << " data path: " << image_path.second << " data count:" << count
+                    << " < limited_count:" << limited_count;
       return RET_ERROR;
     }
   }
