@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 constexpr float MagphaseOp::kPower = 1.0;
 
 Status MagphaseOp::Compute(const TensorRow &input, TensorRow *output) {
@@ -56,6 +55,5 @@ Status MagphaseOp::OutputType(const std::vector<DataType> &inputs, std::vector<D
   }
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore
