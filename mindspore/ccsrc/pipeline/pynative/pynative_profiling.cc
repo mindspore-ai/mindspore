@@ -59,8 +59,7 @@ void PynativeProfiler::SetDeviceOpNameAndLaunchCostTime(const std::pair<std::str
 }
 
 void PynativeProfiler::ExportDeviceInfoToFile() {
-  MS_LOG(ERROR) << "++caifubi++ ExportDeviceInfoToFile: op_name_launch_time_point_vec_ size: "
-                << op_name_launch_time_point_vec_.size();
+  MS_LOG(DEBUG) << "op_name_launch_time_point_vec_ size: " << op_name_launch_time_point_vec_.size();
   if (!enable_profiler_flag_ || op_name_launch_time_point_vec_.empty()) {
     return;
   }
@@ -83,8 +82,7 @@ void PynativeProfiler::ExportDeviceInfoToFile() {
 }
 
 void PynativeProfiler::ExportDeviceInfoToScreen() {
-  MS_LOG(ERROR) << "++caifubi++ ExportDeviceInfoToScreen: op_name_launch_time_point_vec_ size: "
-                << op_name_launch_time_point_vec_.size();
+  MS_LOG(DEBUG) << "op_name_launch_time_point_vec_ size: " << op_name_launch_time_point_vec_.size();
   if (!enable_profiler_flag_ || op_name_launch_time_point_vec_.empty()) {
     return;
   }
