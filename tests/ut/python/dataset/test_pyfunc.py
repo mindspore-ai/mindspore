@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
+import mindspore.dataset.engine.iterators as it
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/testPyfuncMap/data.data"]
@@ -278,6 +279,10 @@ def test_pyfunc_implicit_compose():
     """
     logger.info("Test n-m PyFunc : lambda x, y : (x , x + 1, x + y)")
 
+    # Sometimes there are some ITERATORS left in ITERATORS_LIST when run all UTs together,
+    # and cause core dump and blocking in this UT. Add cleanup() here to fix it.
+    it._cleanup()  # pylint: disable=W0212
+
     col = ["col0", "col1"]
 
     # apply dataset operations
@@ -316,6 +321,10 @@ def test_pyfunc_exception():
 
 def skip_test_pyfunc_Exception_multiprocess():
     logger.info("Test Multiprocess PyFunc Exception Throw: lambda x : raise Exception()")
+
+    # Sometimes there are some ITERATORS left in ITERATORS_LIST when run all UTs together,
+    # and cause core dump and blocking in this UT. Add cleanup() here to fix it.
+    it._cleanup()  # pylint: disable=W0212
 
     def pyfunc(x):
         raise Exception("MP Pyfunc Throw")
