@@ -18,7 +18,6 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore {
-
 size_t OptAllocator::FindFree(size_t size) {
   size_t min_size = std::numeric_limits<size_t>::max();
   size_t min_addr = std::numeric_limits<size_t>::max();
