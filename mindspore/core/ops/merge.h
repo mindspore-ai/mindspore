@@ -35,7 +35,6 @@ class MS_CORE_API Merge : public PrimitiveC {
 
 AbstractBasePtr MergeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimMergePtr = std::shared_ptr<Merge>;
 }  // namespace ops
 }  // namespace mindspore
 

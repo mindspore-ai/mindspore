@@ -42,7 +42,6 @@ class MS_CORE_API ROIPooling : public PrimitiveC {
 };
 AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args);
-using PrimROIPoolingPtr = std::shared_ptr<ROIPooling>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -43,7 +43,6 @@ class MS_CORE_API ArgMax : public PrimitiveC {
 };
 AbstractBasePtr ArgMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimArgMaxPtr = std::shared_ptr<ArgMax>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -39,7 +39,6 @@ class MS_CORE_API BatchNormGrad : public PrimitiveC {
 
 AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);
-using PrimBatchNormGradPtr = std::shared_ptr<BatchNormGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

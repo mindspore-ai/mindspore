@@ -34,7 +34,6 @@ class MS_CORE_API RaggedRange : public PrimitiveC {
   void Init() {}
 };
 
-using PrimRaggedRangePtr = std::shared_ptr<RaggedRange>;
 }  // namespace ops
 }  // namespace mindspore
 

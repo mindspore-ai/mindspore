@@ -38,7 +38,6 @@ class MS_CORE_API AddFusion : public Add {
 
 AbstractBasePtr AddFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimAddFusionPtr = std::shared_ptr<AddFusion>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -39,7 +39,6 @@ class MS_CORE_API Reduce : public PrimitiveC {
 };
 AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimReducePtr = std::shared_ptr<Reduce>;
 }  // namespace ops
 }  // namespace mindspore
 

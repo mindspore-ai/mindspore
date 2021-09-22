@@ -66,7 +66,6 @@ class MS_CORE_API GRU : public PrimitiveC {
   GateOrderMode get_gate_order() const;
 };
 
-using PrimGRUPtr = std::shared_ptr<GRU>;
 }  // namespace ops
 }  // namespace mindspore
 

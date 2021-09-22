@@ -54,7 +54,6 @@ class MS_CORE_API MaxPool : public PrimitiveC {
 
 AbstractBasePtr MaxPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimMaxPoolPtr = std::shared_ptr<MaxPool>;
 }  // namespace ops
 }  // namespace mindspore
 

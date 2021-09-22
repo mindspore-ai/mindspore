@@ -38,7 +38,6 @@ class MS_CORE_API CdistGrad : public PrimitiveC {
 
 AbstractBasePtr CdistGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimCdistGradPtr = std::shared_ptr<CdistGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

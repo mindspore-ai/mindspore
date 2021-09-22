@@ -36,7 +36,6 @@ class MS_CORE_API Fill : public PrimitiveC {
 
 AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimFillPtr = std::shared_ptr<Fill>;
 }  // namespace ops
 }  // namespace mindspore
 

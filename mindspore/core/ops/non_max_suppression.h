@@ -41,7 +41,6 @@ class MS_CORE_API NonMaxSuppression : public PrimitiveC {
   int64_t get_center_point_box() const;
 };
 AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &);
-using PrimNonMaxSuppressionPtr = std::shared_ptr<NonMaxSuppression>;
 }  // namespace ops
 }  // namespace mindspore
 

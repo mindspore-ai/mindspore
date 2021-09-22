@@ -30,7 +30,6 @@ class MS_CORE_API NonZero : public PrimitiveC {
   ~NonZero() = default;
   MS_DECLARE_PARENT(NonZero, PrimitiveC);
 };
-using PrimNonZeroPtr = std::shared_ptr<NonZero>;
 }  // namespace ops
 }  // namespace mindspore
 

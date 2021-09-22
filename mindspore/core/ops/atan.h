@@ -36,7 +36,6 @@ class MS_CORE_API Atan : public PrimitiveC {
 };
 AbstractBasePtr ATanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimAtanPtr = std::shared_ptr<Atan>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -37,7 +37,6 @@ class MS_CORE_API LpNormalization : public PrimitiveC {
   int64_t get_p() const;
 };
 
-using PrimLpNormalizationPtr = std::shared_ptr<LpNormalization>;
 }  // namespace ops
 }  // namespace mindspore
 

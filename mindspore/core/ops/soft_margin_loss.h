@@ -37,7 +37,6 @@ class MS_CORE_API SoftMarginLoss : public PrimitiveC {
 
 AbstractBasePtr SoftMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args);
-using PrimSoftMarginLossPtr = std::shared_ptr<SoftMarginLoss>;
 }  // namespace ops
 }  // namespace mindspore
 

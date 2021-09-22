@@ -40,7 +40,6 @@ class MS_CORE_API SpaceToDepth : public PrimitiveC {
 };
 AbstractBasePtr SpaceToDepthInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args);
-using PrimSpaceToDepthPtr = std::shared_ptr<SpaceToDepth>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SpaceToDepth_H_

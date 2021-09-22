@@ -34,7 +34,6 @@ class MS_CORE_API SparseToDense : public PrimitiveC {
 };
 AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);
-using PrimSparseToDensePtr = std::shared_ptr<SparseToDense>;
 }  // namespace ops
 }  // namespace mindspore
 

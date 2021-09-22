@@ -36,7 +36,6 @@ class MS_CORE_API NotEqual : public PrimitiveC {
 
 AbstractBasePtr NotEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);
-using PrimitiveNotEqualPtr = std::shared_ptr<NotEqual>;
 }  // namespace ops
 }  // namespace mindspore
 

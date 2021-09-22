@@ -39,7 +39,6 @@ class MS_CORE_API TopK : public PrimitiveC {
 };
 AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimTopKPtr = std::shared_ptr<TopK>;
 }  // namespace ops
 }  // namespace mindspore
 

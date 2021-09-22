@@ -36,7 +36,6 @@ class MS_CORE_API ReLU6 : public PrimitiveC {
 
 AbstractBasePtr ReLU6Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimReLU6Ptr = std::shared_ptr<ReLU6>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_RELU6_H_

@@ -37,7 +37,6 @@ class MS_CORE_API Mul : public PrimitiveC {
 };
 AbstractBasePtr MulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimMulPtr = std::shared_ptr<Mul>;
 }  // namespace ops
 }  // namespace mindspore
 

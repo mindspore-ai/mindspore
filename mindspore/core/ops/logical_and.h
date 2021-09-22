@@ -36,7 +36,6 @@ class MS_CORE_API LogicalAnd : public PrimitiveC {
 };
 AbstractBasePtr LogicalAndInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args);
-using PrimLogicalAndPtr = std::shared_ptr<LogicalAnd>;
 }  // namespace ops
 }  // namespace mindspore
 

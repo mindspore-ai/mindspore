@@ -41,7 +41,6 @@ class MS_CORE_API Custom : public PrimitiveC {
   std::map<std::string, std::vector<uint8_t>> get_attr() const;
 };
 
-using PrimCustomPtr = std::shared_ptr<Custom>;
 }  // namespace ops
 }  // namespace mindspore
 

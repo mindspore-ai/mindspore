@@ -37,7 +37,6 @@ class MS_CORE_API ReLUV2 : public PrimitiveC {
 };
 AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimReLUV2Ptr = std::shared_ptr<ReLUV2>;
 }  // namespace ops
 }  // namespace mindspore
 

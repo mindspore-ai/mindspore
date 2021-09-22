@@ -39,7 +39,6 @@ class MS_CORE_API RandomStandardNormal : public PrimitiveC {
   int64_t get_seed() const;
   int64_t get_seed2() const;
 };
-using PrimRandomStandardNormalPtr = std::shared_ptr<RandomStandardNormal>;
 }  // namespace ops
 }  // namespace mindspore
 

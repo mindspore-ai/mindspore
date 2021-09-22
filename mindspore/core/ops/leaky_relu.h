@@ -40,7 +40,6 @@ class MS_CORE_API LeakyRelu : public PrimitiveC {
 
 AbstractBasePtr LeakyReluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimLeakyReluPtr = std::shared_ptr<LeakyRelu>;
 }  // namespace ops
 }  // namespace mindspore
 

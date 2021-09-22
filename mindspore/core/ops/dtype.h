@@ -33,7 +33,6 @@ class MS_CORE_API DType : public PrimitiveC {
   MS_DECLARE_PARENT(DType, PrimitiveC);
   void Init() {}
 };
-using PrimDTypePtr = std::shared_ptr<DType>;
 }  // namespace ops
 }  // namespace mindspore
 

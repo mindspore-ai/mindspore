@@ -35,7 +35,6 @@ class MS_CORE_API CustomNormalize : public PrimitiveC {
 
 AbstractBasePtr CustomNormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args);
-using PrimCustomNormalizePtr = std::shared_ptr<CustomNormalize>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -38,7 +38,6 @@ class MS_CORE_API Exp : public PrimitiveC {
 
 AbstractBasePtr ExpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimExpPtr = std::shared_ptr<Exp>;
 }  // namespace ops
 }  // namespace mindspore
 

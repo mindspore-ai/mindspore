@@ -45,7 +45,6 @@ class MS_CORE_API ReduceFusion : public Reduce {
 };
 AbstractBasePtr ReduceFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args);
-using PrimReduceFusiuonPtr = std::shared_ptr<ReduceFusion>;
 }  // namespace ops
 }  // namespace mindspore
 

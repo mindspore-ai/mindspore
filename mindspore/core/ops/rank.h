@@ -36,7 +36,6 @@ class MS_CORE_API Rank : public PrimitiveC {
 };
 AbstractBasePtr RankInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimRankPtr = std::shared_ptr<Rank>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_RANK_H_

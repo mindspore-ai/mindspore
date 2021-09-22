@@ -37,7 +37,6 @@ class MS_CORE_API AvgPoolGrad : public PoolGrad {
 
 AbstractBasePtr AvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args);
-using PrimAvgPoolGradPtr = std::shared_ptr<AvgPoolGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

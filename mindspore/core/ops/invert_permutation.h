@@ -32,7 +32,6 @@ class MS_CORE_API InvertPermutation : public PrimitiveC {
   MS_DECLARE_PARENT(InvertPermutation, PrimitiveC);
 };
 
-using PrimInvertPermutationPtr = std::shared_ptr<InvertPermutation>;
 }  // namespace ops
 }  // namespace mindspore
 

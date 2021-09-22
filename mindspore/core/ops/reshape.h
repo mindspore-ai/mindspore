@@ -37,7 +37,6 @@ class MS_CORE_API Reshape : public PrimitiveC {
 
 AbstractBasePtr ReshapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimReshapePtr = std::shared_ptr<Reshape>;
 }  // namespace ops
 }  // namespace mindspore
 

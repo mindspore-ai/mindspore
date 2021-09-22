@@ -42,7 +42,6 @@ class MS_CORE_API LayerNormGrad : public PrimitiveC {
 
 AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);
-using PrimLayerNormGradPtr = std::shared_ptr<LayerNormGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

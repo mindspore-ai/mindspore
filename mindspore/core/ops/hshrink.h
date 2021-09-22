@@ -35,7 +35,6 @@ class MS_CORE_API HShrink : public PrimitiveC {
 
 AbstractBasePtr HShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimHShrinkPtr = std::shared_ptr<HShrink>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_HSHRINK_H

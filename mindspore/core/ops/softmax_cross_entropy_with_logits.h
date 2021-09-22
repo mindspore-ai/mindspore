@@ -36,7 +36,6 @@ class MS_CORE_API SoftmaxCrossEntropyWithLogits : public PrimitiveC {
 };
 AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args);
-using PrimSoftmaxCrossEntropyWithLogitsPtr = std::shared_ptr<SoftmaxCrossEntropyWithLogits>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -40,7 +40,6 @@ class MS_CORE_API Softmax : public PrimitiveC {
 
 AbstractBasePtr SoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimSoftmaxPtr = std::shared_ptr<Softmax>;
 }  // namespace ops
 }  // namespace mindspore
 

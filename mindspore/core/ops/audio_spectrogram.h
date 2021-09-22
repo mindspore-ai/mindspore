@@ -44,7 +44,6 @@ class MS_CORE_API AudioSpectrogram : public PrimitiveC {
 };
 AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args);
-using PrimAudioSpectrogramPtr = std::shared_ptr<AudioSpectrogram>;
 }  // namespace ops
 }  // namespace mindspore
 

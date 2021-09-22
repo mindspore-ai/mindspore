@@ -34,7 +34,6 @@ class MS_CORE_API Log : public PrimitiveC {
 };
 AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimLogPtr = std::shared_ptr<Log>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LOG_H_

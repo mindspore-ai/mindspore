@@ -33,7 +33,6 @@ class MS_CORE_API GeLU : public PrimitiveC {
   void Init() {}
 };
 
-using PrimGeLUPtr = std::shared_ptr<GeLU>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GELU_H_

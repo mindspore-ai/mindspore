@@ -34,7 +34,6 @@ class MS_CORE_API Gather : public PrimitiveC {
   MS_DECLARE_PARENT(Gather, PrimitiveC);
   void Init() {}
 };
-using PrimGatherPtr = std::shared_ptr<Gather>;
 }  // namespace ops
 }  // namespace mindspore
 

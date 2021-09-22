@@ -35,7 +35,6 @@ class MS_CORE_API Neg : public PrimitiveC {
 
 AbstractBasePtr NegInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimNegPtr = std::shared_ptr<Neg>;
 }  // namespace ops
 }  // namespace mindspore
 

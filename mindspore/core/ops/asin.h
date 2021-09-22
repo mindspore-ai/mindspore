@@ -35,7 +35,6 @@ class MS_CORE_API Asin : public PrimitiveC {
 };
 AbstractBasePtr ASinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimAsinPtr = std::shared_ptr<Asin>;
 }  // namespace ops
 }  // namespace mindspore
 

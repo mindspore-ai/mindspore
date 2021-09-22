@@ -35,7 +35,6 @@ class Roll : public PrimitiveC {
 
 AbstractBasePtr RollInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimRollPtr = std::shared_ptr<Roll>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_ROLL_H_

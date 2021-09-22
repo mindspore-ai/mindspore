@@ -38,7 +38,6 @@ class MS_CORE_API BinaryCrossEntropyGrad : public PrimitiveC {
 };
 AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args);
-using PrimBinaryCrossEntropyGradPtr = std::shared_ptr<BinaryCrossEntropyGrad>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_BINARY_CROSS_ENTROPY_GRAD_H_

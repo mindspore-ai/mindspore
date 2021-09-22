@@ -40,7 +40,6 @@ class MS_CORE_API Adam : public PrimitiveC {
 };
 AbstractBasePtr AdamInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimAdamPtr = std::shared_ptr<Adam>;
 }  // namespace ops
 }  // namespace mindspore
 

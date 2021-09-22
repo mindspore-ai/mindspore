@@ -37,7 +37,6 @@ class MS_CORE_API Pow : public PrimitiveC {
 };
 AbstractBasePtr PowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimPowPtr = std::shared_ptr<Pow>;
 }  // namespace ops
 }  // namespace mindspore
 

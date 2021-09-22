@@ -37,7 +37,6 @@ class MS_CORE_API Dropout : public PrimitiveC {
 };
 AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimDropoutPtr = std::shared_ptr<Dropout>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_DROPOUT_H_

@@ -43,7 +43,6 @@ class MS_CORE_API AvgPoolFusion : public AvgPool {
 
 AbstractBasePtr AvgPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);
-using PrimAvgPoolFusionPtr = std::shared_ptr<AvgPoolFusion>;
 }  // namespace ops
 }  // namespace mindspore
 

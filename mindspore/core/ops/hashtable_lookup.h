@@ -35,7 +35,6 @@ class MS_CORE_API HashtableLookup : public PrimitiveC {
 
 AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args);
-using PrimHashtableLookupPtr = std::shared_ptr<HashtableLookup>;
 }  // namespace ops
 }  // namespace mindspore
 

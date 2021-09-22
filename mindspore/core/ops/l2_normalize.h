@@ -40,7 +40,6 @@ class MS_CORE_API L2Normalize : public PrimitiveC {
 };
 AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args);
-using PrimL2NormalizePtr = std::shared_ptr<L2Normalize>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_L2_NORMALIZE_H_

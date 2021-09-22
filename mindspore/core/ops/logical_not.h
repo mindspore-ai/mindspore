@@ -35,7 +35,6 @@ class MS_CORE_API LogicalNot : public PrimitiveC {
 
 AbstractBasePtr LogicalNotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args);
-using PrimLogicalNotPtr = std::shared_ptr<LogicalNot>;
 }  // namespace ops
 }  // namespace mindspore
 

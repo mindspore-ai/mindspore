@@ -36,7 +36,6 @@ class MS_CORE_API Rfft : public PrimitiveC {
 };
 AbstractBasePtr RfftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimRfftPtr = std::shared_ptr<Rfft>;
 }  // namespace ops
 }  // namespace mindspore
 

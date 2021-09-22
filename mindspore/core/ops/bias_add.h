@@ -40,7 +40,6 @@ class MS_CORE_API BiasAdd : public PrimitiveC {
 };
 AbstractBasePtr BiasAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimBiasAddPtr = std::shared_ptr<BiasAdd>;
 }  // namespace ops
 }  // namespace mindspore
 

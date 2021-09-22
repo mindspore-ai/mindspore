@@ -34,7 +34,6 @@ class MS_CORE_API ReLU : public PrimitiveC {
   MS_DECLARE_PARENT(ReLU, PrimitiveC);
   void Init() {}
 };
-using PrimReLUPtr = std::shared_ptr<ReLU>;
 }  // namespace ops
 }  // namespace mindspore
 

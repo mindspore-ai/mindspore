@@ -37,7 +37,6 @@ class MS_CORE_API CropAndResize : public PrimitiveC {
   ResizeMethod get_method() const;
   float get_extrapolation_value() const;
 };
-using PrimCropAndResizePtr = std::shared_ptr<CropAndResize>;
 }  // namespace ops
 }  // namespace mindspore
 

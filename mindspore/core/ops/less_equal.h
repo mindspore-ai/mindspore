@@ -36,7 +36,6 @@ class MS_CORE_API LessEqual : public PrimitiveC {
 
 AbstractBasePtr LessEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimLessEqualPtr = std::shared_ptr<LessEqual>;
 }  // namespace ops
 }  // namespace mindspore
 

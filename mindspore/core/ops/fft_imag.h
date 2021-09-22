@@ -36,7 +36,6 @@ class MS_CORE_API FftImag : public PrimitiveC {
 };
 AbstractBasePtr FftImagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimFftImagPtr = std::shared_ptr<FftImag>;
 }  // namespace ops
 }  // namespace mindspore
 

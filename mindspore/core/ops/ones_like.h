@@ -33,7 +33,6 @@ class MS_CORE_API OnesLike : public PrimitiveC {
 };
 AbstractBasePtr OnesLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);
-using PrimOnesLikePtr = std::shared_ptr<OnesLike>;
 }  // namespace ops
 }  // namespace mindspore
 

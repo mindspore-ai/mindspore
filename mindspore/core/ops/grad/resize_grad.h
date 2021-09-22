@@ -39,7 +39,6 @@ class MS_CORE_API ResizeGrad : public PrimitiveC {
 
 AbstractBasePtr ResizeGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args);
-using PrimResizeGradPtr = std::shared_ptr<ResizeGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

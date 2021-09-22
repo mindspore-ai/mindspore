@@ -34,7 +34,6 @@ class MS_CORE_API DropoutGenMask : public PrimitiveC {
 };
 AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args);
-using PrimDropoutGenMaskPtr = std::shared_ptr<DropoutGenMask>;
 }  // namespace ops
 }  // namespace mindspore
 

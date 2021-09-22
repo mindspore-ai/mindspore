@@ -42,7 +42,6 @@ class MS_CORE_API Stack : public PrimitiveC {
 };
 AbstractBasePtr StackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimStackPtr = std::shared_ptr<Stack>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_STACK_H_

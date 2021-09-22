@@ -45,7 +45,6 @@ class MS_CORE_API Range : public PrimitiveC {
 
 AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimRangePtr = std::shared_ptr<Range>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -42,7 +42,6 @@ class MS_CORE_API FakeQuantWithMinMaxVarsPerChannel : public PrimitiveC {
 AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(const abstract::AnalysisEnginePtr &,
                                                        const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args);
-using PrimFakeQuantWithMinMaxVarsPerChannelPtr = std::shared_ptr<FakeQuantWithMinMaxVarsPerChannel>;
 }  // namespace ops
 }  // namespace mindspore
 

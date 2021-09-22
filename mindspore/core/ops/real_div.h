@@ -36,7 +36,6 @@ class MS_CORE_API RealDiv : public PrimitiveC {
 
 AbstractBasePtr RealDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimRealDivPtr = std::shared_ptr<RealDiv>;
 }  // namespace ops
 }  // namespace mindspore
 

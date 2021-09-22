@@ -38,7 +38,6 @@ class MS_CORE_API TensorListFromTensor : public PrimitiveC {
 };
 AbstractBasePtr TensorListFromTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args);
-using PrimTensorListFromTensorPtr = std::shared_ptr<TensorListFromTensor>;
 }  // namespace ops
 }  // namespace mindspore
 

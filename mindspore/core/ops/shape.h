@@ -33,7 +33,6 @@ class MS_CORE_API Shape : public PrimitiveC {
   MS_DECLARE_PARENT(Shape, PrimitiveC);
   void Init() {}
 };
-using PrimShapePtr = std::shared_ptr<Shape>;
 }  // namespace ops
 }  // namespace mindspore
 

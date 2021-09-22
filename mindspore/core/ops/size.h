@@ -32,7 +32,6 @@ class MS_CORE_API Size : public PrimitiveC {
   MS_DECLARE_PARENT(Size, PrimitiveC);
 };
 
-using PrimSizePtr = std::shared_ptr<Size>;
 }  // namespace ops
 }  // namespace mindspore
 

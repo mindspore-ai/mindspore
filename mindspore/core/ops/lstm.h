@@ -61,7 +61,6 @@ class MS_CORE_API LSTM : public PrimitiveC {
 };
 AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimLstmPtr = std::shared_ptr<LSTM>;
 }  // namespace ops
 }  // namespace mindspore
 

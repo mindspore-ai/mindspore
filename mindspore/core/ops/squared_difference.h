@@ -34,7 +34,6 @@ class MS_CORE_API SquaredDifference : public PrimitiveC {
 };
 AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args);
-using PrimSquaredDifferencePtr = std::shared_ptr<SquaredDifference>;
 }  // namespace ops
 }  // namespace mindspore
 

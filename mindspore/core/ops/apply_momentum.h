@@ -43,7 +43,6 @@ class MS_CORE_API ApplyMomentum : public PrimitiveC {
 };
 AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);
-using PrimApplyMomentumPtr = std::shared_ptr<ApplyMomentum>;
 }  // namespace ops
 }  // namespace mindspore
 

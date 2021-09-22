@@ -38,7 +38,6 @@ class IndexAdd : public PrimitiveC {
 AbstractBasePtr IndexAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);
 
-using PrimIndexAddPtr = std::shared_ptr<IndexAdd>;
 }  // namespace ops
 }  // namespace mindspore
 

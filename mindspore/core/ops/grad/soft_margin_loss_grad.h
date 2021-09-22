@@ -37,7 +37,6 @@ class MS_CORE_API SoftMarginLossGrad : public PrimitiveC {
 
 AbstractBasePtr SoftMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args);
-using PrimSoftMarginLossGradPtr = std::shared_ptr<SoftMarginLossGrad>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SOFT_MARGIN_LOSS_GRAD_H_

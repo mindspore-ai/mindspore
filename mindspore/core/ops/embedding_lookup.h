@@ -38,7 +38,6 @@ class MS_CORE_API EmbeddingLookup : public PrimitiveC {
 };
 AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args);
-using PrimEmbeddingLookupPtr = std::shared_ptr<EmbeddingLookup>;
 }  // namespace ops
 }  // namespace mindspore
 

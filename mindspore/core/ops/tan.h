@@ -36,7 +36,6 @@ class MS_CORE_API Tan : public PrimitiveC {
 };
 AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimTanPtr = std::shared_ptr<Tan>;
 }  // namespace ops
 }  // namespace mindspore
 

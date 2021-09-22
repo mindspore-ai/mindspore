@@ -42,7 +42,6 @@ class MS_CORE_API Unpack : public PrimitiveC {
 };
 AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimUnpackPtr = std::shared_ptr<Unpack>;
 }  // namespace ops
 }  // namespace mindspore
 

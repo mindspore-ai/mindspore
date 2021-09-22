@@ -37,7 +37,6 @@ class MS_CORE_API GetNext : public PrimitiveC {
 };
 AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimMulPtr = std::shared_ptr<GetNext>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GETNEXT_H_

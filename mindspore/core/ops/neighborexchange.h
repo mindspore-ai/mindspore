@@ -34,7 +34,6 @@ class MS_CORE_API NeighborExchange : public PrimitiveC {
 };
 AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args);
-using PrimNeighborExchangePtr = std::shared_ptr<NeighborExchange>;
 }  // namespace ops
 }  // namespace mindspore
 

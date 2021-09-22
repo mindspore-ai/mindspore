@@ -33,7 +33,6 @@ class MS_CORE_API CTCLoss : public PrimitiveC {
 };
 AbstractBasePtr CTCLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimCTCLossPtr = std::shared_ptr<CTCLoss>;
 }  // namespace ops
 }  // namespace mindspore
 

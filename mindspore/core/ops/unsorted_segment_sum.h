@@ -40,7 +40,6 @@ class MS_CORE_API UnsortedSegmentSum : public PrimitiveC {
 
 AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args);
-using PrimUnsortedSegmentSumPtr = std::shared_ptr<UnsortedSegmentSum>;
 }  // namespace ops
 }  // namespace mindspore
 
