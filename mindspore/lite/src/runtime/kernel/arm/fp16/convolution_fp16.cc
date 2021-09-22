@@ -189,5 +189,4 @@ int ConvolutionFP16CPUKernel::Run() {
   FreeTmpBuffer();
   return ret;
 }
-
 }  // namespace mindspore::kernel

@@ -195,5 +195,4 @@ void ConvolutionDepthwiseSWFp16CPUKernel::FreePackedInputOutput() {
     packed_output_ = nullptr;
   }
 }
-
 }  // namespace mindspore::kernel
