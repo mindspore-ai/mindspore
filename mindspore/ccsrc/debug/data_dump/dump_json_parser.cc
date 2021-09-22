@@ -389,8 +389,8 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
     std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
     int range_idx = temp.find("-");
     if (range_idx != -1) {
-      uint32_t low_range = std::stoul(temp.substr(0, IntToSize(range_idx)));
-      uint32_t high_range = std::stoul(temp.substr(IntToSize(range_idx + 1), -1));
+      uint32_t low_range = static_cast<uint32_t>(std::stoul(temp.substr(0, IntToSize(range_idx))));
+      uint32_t high_range = static_cast<uint32_t>(std::stoul(temp.substr(IntToSize(range_idx + 1), -1)));
       if ((low_range <= iteration) && (iteration <= high_range)) {
         return true;
       }
@@ -403,8 +403,8 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
   int range_idx = temp.find("-");
   if (range_idx != -1) {
-    uint32_t low_range = std::stoul(temp.substr(0, IntToSize(range_idx)));
-    uint32_t high_range = std::stoul(temp.substr((range_idx + 1), -1));
+    uint32_t low_range = static_cast<uint32_t>(std::stoul(temp.substr(0, IntToSize(range_idx))));
+    uint32_t high_range = static_cast<uint32_t>(std::stoul(temp.substr(IntToSize(range_idx + 1), -1)));
     if ((low_range <= iteration) && (iteration <= high_range)) {
       return true;
     }
