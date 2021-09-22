@@ -1,10 +1,6 @@
 add_definitions(-DPRIMITIVE_WRITEABLE)
 add_definitions(-DUSE_GLOG)
 
-if(MSLITE_ENABLE_ACL)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--allow-shlib-undefined")
-endif()
-
 set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/pattern_engine.cc
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
@@ -127,6 +123,10 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/find_const_subgraph_pass.cc
         ../optimizer/graph/specify_graph_input_format.cc
         )
+
+if(NOT MSLITE_ENABLE_ACL)
+    list(APPEND CONVERTER_SRC "acl/stub/stub_acl_pass.cc")
+endif()
 
 add_subdirectory(../anf_exporter anf_exporter)
 add_subdirectory(parser/caffe)

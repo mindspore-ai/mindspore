@@ -232,10 +232,10 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     return nullptr;
   }
   ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_tensor_name_);
-#ifdef ENABLE_LITE_ACL
-  MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend310.";
-  return func_graph;
-#endif
+  if (flag.device == "Ascend310") {
+    MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend310.";
+    return func_graph;
+  }
   if ((status = Mindir2AnfAdjust(func_graph, flag)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);

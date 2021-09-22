@@ -30,6 +30,7 @@
 #include "tools/converter/config_parser/config_file_parser.h"
 #include "tools/converter/config_parser/preprocess_parser.h"
 #include "tools/converter/config_parser/quant_param_parser.h"
+#include "tools/converter/config_parser/acl_option_param_parser.h"
 
 namespace mindspore {
 namespace converter {
@@ -81,6 +82,7 @@ Flags::Flags() {
           "");
   AddFlag(&Flags::graphInputFormatStr, "inputDataFormat",
           "Assign the input format of exported model. Only Valid for 4-dimensional input. NHWC | NCHW", "NHWC");
+  AddFlag(&Flags::device, "device", "Set the target device. Only valid when device is Ascend310.", "");
 }
 
 int Flags::InitInputOutputDataType() {
@@ -273,6 +275,12 @@ int Flags::InitConfigFile() {
   ret = InitExtendedIntegrationInfo(config_file_parser);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Parse extended integration info failed.";
+    return ret;
+  }
+  lite::AclOptionParamParser acl_param_parser;
+  ret = acl_param_parser.ParseAclOptionCfg(config_file_parser.GetAclOptionCfgString(), &this->aclModelOptionCfgParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse acl option param failed.";
     return ret;
   }
   (void)CheckOfflineParallelConfig(this->configFile, &parallel_split_config_);

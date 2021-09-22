@@ -26,6 +26,7 @@
 #include "schema/inner/model_generated.h"
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "tools/converter/quantizer/quant_params.h"
+#include "tools/converter/acl/common/acl_option_cfg.h"
 
 namespace mindspore {
 namespace lite {
@@ -88,12 +89,14 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string dec_key = "";
   std::string dec_mode = "AES-GCM";
   std::string graphInputFormatStr;
+  std::string device;
   mindspore::Format graphInputFormat = mindspore::NHWC;
 
   lite::quant::CommonQuantParam commonQuantParam;
   lite::quant::MixedBitWeightQuantParam mixedBitWeightQuantParam;
   lite::quant::FullQuantParam fullQuantParam;
   lite::preprocess::DataPreProcessParam dataPreProcessParam;
+  lite::acl::AclModelOptionCfg aclModelOptionCfgParam;
 };
 
 bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
