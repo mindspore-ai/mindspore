@@ -21,6 +21,13 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr auto kCommonQuantParam = "common_quant_param";
+constexpr auto kFullQuantParam = "full_quant_param";
+constexpr auto kMixedBitWeightQuantParam = "mixed_bit_weight_quant_param";
+constexpr auto kDataPreprocessParam = "data_preprocess_param";
+constexpr auto kRegistry = "registry";
+}  // namespace
 int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
   std::map<std::string, std::map<std::string, std::string>> maps;
   auto ret = mindspore::lite::ParseConfigFile(config_file_path, &maps);
@@ -48,6 +55,11 @@ int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
     MS_LOG(ERROR) << "ParseFullQuantString failed.";
     return ret;
   }
+  ret = ParseRegistryInfoString(maps);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseExtendedintegrationString failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -66,8 +78,8 @@ int ConfigFileParser::SetMapData(const std::map<std::string, std::string> &input
 }
 
 int ConfigFileParser::ParseDataPreProcessString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
-  if (maps.find(DATA_PREPROCESS_PARAM) != maps.end()) {
-    const auto &map = maps.at(DATA_PREPROCESS_PARAM);
+  if (maps.find(kDataPreprocessParam) != maps.end()) {
+    const auto &map = maps.at(kDataPreprocessParam);
     std::map<std::string, std::string &> parse_map{
       {"calibrate_path", data_pre_process_string_.calibrate_path},
       {"calibrate_size", data_pre_process_string_.calibrate_size},
@@ -81,44 +93,56 @@ int ConfigFileParser::ParseDataPreProcessString(const std::map<std::string, std:
       {"center_crop_width", data_pre_process_string_.center_crop_width},
       {"center_crop_height", data_pre_process_string_.center_crop_height},
     };
-    return SetMapData(map, parse_map, DATA_PREPROCESS_PARAM);
+    return SetMapData(map, parse_map, kDataPreprocessParam);
   }
   return RET_OK;
 }
 
 int ConfigFileParser::ParseCommonQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
-  if (maps.find(COMMON_QUANT_PARAM) != maps.end()) {
-    const auto &map = maps.at(COMMON_QUANT_PARAM);
+  if (maps.find(kCommonQuantParam) != maps.end()) {
+    const auto &map = maps.at(kCommonQuantParam);
     std::map<std::string, std::string &> parse_map{
       {"quant_type", common_quant_string_.quant_type},
       {"bit_num", common_quant_string_.bit_num},
       {"min_quant_weight_size", common_quant_string_.min_quant_weight_size},
       {"min_quant_weight_channel", common_quant_string_.min_quant_weight_channel},
     };
-    return SetMapData(map, parse_map, COMMON_QUANT_PARAM);
+    return SetMapData(map, parse_map, kCommonQuantParam);
   }
   return RET_OK;
 }
 
 int ConfigFileParser::ParseMixedBitQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
-  if (maps.find(MIXED_BIT_WEIGHT_QUANT_PARAM) != maps.end()) {
-    const auto &map = maps.at(MIXED_BIT_WEIGHT_QUANT_PARAM);
+  if (maps.find(kMixedBitWeightQuantParam) != maps.end()) {
+    const auto &map = maps.at(kMixedBitWeightQuantParam);
     std::map<std::string, std::string &> parse_map{
       {"init_scale", mixed_bit_quant_string_.init_scale},
     };
-    return SetMapData(map, parse_map, MIXED_BIT_WEIGHT_QUANT_PARAM);
+    return SetMapData(map, parse_map, kMixedBitWeightQuantParam);
   }
   return RET_OK;
 }
 
 int ConfigFileParser::ParseFullQuantString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
-  if (maps.find(FULL_QUANT_PARAM) != maps.end()) {
-    const auto &map = maps.at(FULL_QUANT_PARAM);
+  if (maps.find(kFullQuantParam) != maps.end()) {
+    const auto &map = maps.at(kFullQuantParam);
     std::map<std::string, std::string &> parse_map{
       {"activation_quant_method", full_quant_string_.activation_quant_method},
       {"bias_correction", full_quant_string_.bias_correction},
     };
-    return SetMapData(map, parse_map, FULL_QUANT_PARAM);
+    return SetMapData(map, parse_map, kFullQuantParam);
+  }
+  return RET_OK;
+}
+
+int ConfigFileParser::ParseRegistryInfoString(const std::map<std::string, std::map<std::string, std::string>> &maps) {
+  if (maps.find(kRegistry) != maps.end()) {
+    const auto &map = maps.at(kRegistry);
+    std::map<std::string, std::string &> parse_map{
+      {"plugin_path", registry_info_string_.plugin_path},
+      {"disable_fusion", registry_info_string_.disable_fusion},
+    };
+    return SetMapData(map, parse_map, kRegistry);
   }
   return RET_OK;
 }
