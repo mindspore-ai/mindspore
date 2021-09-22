@@ -71,6 +71,10 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
   }
   // compute alpha, beta;
   auto eps = batchnorm_param_->epsilon_;
+  CHECK_LESS_RETURN(input->quant_params().size(), 1);
+  CHECK_LESS_RETURN(mean->quant_params().size(), 1);
+  CHECK_LESS_RETURN(variance->quant_params().size(), 1);
+  CHECK_LESS_RETURN(output->quant_params().size(), 1);
   auto zp_in = input->quant_params().front().zeroPoint;
   auto zp_mean = mean->quant_params().front().zeroPoint;
   auto zp_var = variance->quant_params().front().zeroPoint;
@@ -124,6 +128,12 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
   }
   // compute alpha, beta;
   auto eps = batchnorm_param_->epsilon_;
+  CHECK_LESS_RETURN(input->quant_params().size(), 1);
+  CHECK_LESS_RETURN(scale->quant_params().size(), 1);
+  CHECK_LESS_RETURN(offset->quant_params().size(), 1);
+  CHECK_LESS_RETURN(mean->quant_params().size(), 1);
+  CHECK_LESS_RETURN(variance->quant_params().size(), 1);
+  CHECK_LESS_RETURN(output->quant_params().size(), 1);
   auto zp_in = input->quant_params().front().zeroPoint;
   auto zp_scale = scale->quant_params().front().zeroPoint;
   auto zp_offset = offset->quant_params().front().zeroPoint;
