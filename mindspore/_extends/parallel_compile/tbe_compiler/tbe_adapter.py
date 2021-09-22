@@ -316,7 +316,7 @@ def _pre_build_compute_op_info(compute_op, job):
     l1_size = job.content["l1_size"]
     if l1_size != -1:
         set_L1_info("op_L1_space", -1)
-    inputs, outputs, attrs = assemble_op_args(compute_op)
+    inputs, outputs, attrs = assemble_op_args(compute_op, is_single_op_build=True)
     op_module_name = get_module_name(compute_op)
     py_module_path = compute_op["py_module_path"]
     op_func_name = compute_op["func_name"]
@@ -389,7 +389,7 @@ def build_single_pre_op(job: TbeJob):
         return False
     compute_op_info = compute_op_info_list[0]
     adjust_custom_op_info(compute_op_info)
-    inputs, outputs, attrs = assemble_op_args(compute_op_info)
+    inputs, outputs, attrs = assemble_op_args(compute_op_info, is_single_op_build=True)
     op_type = compute_op_info["type"]
     l1_size = job.content["l1_size"]
     op_module_name = get_module_name(compute_op_info)
