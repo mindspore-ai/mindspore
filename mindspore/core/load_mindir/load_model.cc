@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cstring>
+#include <string>
 #include <memory>
 #include <algorithm>
 #include <fstream>
@@ -216,7 +217,6 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   }
   const char *file_path = file_name.c_str();
   char abs_path_buff[PATH_MAX];
-  char abs_path[PATH_MAX];
   vector<string> files;
 
 #ifdef _WIN32
@@ -232,24 +232,18 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
     return nullptr;
   }
   // Load parameter into graph
-  if (endsWith(abs_path_buff, "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
+  if (endsWith(std::string(abs_path_buff), "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
     if (strlen(abs_path_buff) < strlen("graph.mindir")) {
       MS_LOG(ERROR) << "The abs_path_buff length is less than 'graph.mindir'.";
       return nullptr;
     }
     int path_len = SizeToInt(strlen(abs_path_buff) - strlen("graph.mindir"));
-    int ret = memcpy_s(abs_path, sizeof(abs_path), abs_path_buff, path_len);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "Load MindIR occur memcpy_s error.";
-      return nullptr;
-    }
-    abs_path[path_len] = '\0';
-    snprintf(abs_path + path_len, sizeof(abs_path) - path_len, "variables");
-    std::ifstream ifs(abs_path);
+    string var_path = std::string(abs_path_buff).substr(0, path_len);
+    var_path += "variables";
+    std::ifstream ifs(var_path);
     if (ifs.good()) {
       MS_LOG(DEBUG) << "MindIR file has variables path, load parameter into graph.";
-      string path = abs_path;
-      get_all_files(path, &files);
+      get_all_files(var_path, &files);
     } else {
       MS_LOG(ERROR) << "Load graph's variable folder failed, please check the correctness of variable folder.";
       return nullptr;
