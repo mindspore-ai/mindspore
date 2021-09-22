@@ -35,22 +35,22 @@ namespace mindspore::kernel {
 int Conv2dTransposeOpenCLKernel::CheckSpecs() {
   if ((in_tensors_.size() != INPUT_TENSOR_SIZE_2 && in_tensors_.size() != INPUT_TENSOR_SIZE_3) ||
       out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
 
   auto *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6) {
-    MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
+    MS_LOG(WARNING) << "Unsupported activation type " << param->act_type_;
     return RET_ERROR;
   }
   if (!in_tensors_.at(1)->IsConst()) {
-    MS_LOG(ERROR) << "Conv2dTranspose doesn't support non-constant filter yet.";
+    MS_LOG(WARNING) << "Conv2dTranspose doesn't support non-constant filter yet.";
     return RET_ERROR;
   }
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3 && in_tensors_.at(C2NUM) != nullptr &&
       !in_tensors_.at(C2NUM)->IsConst()) {
-    MS_LOG(ERROR) << "Conv2dTranspose doesn't support non-constant bias yet.";
+    MS_LOG(WARNING) << "Conv2dTranspose doesn't support non-constant bias yet.";
     return RET_ERROR;
   }
   return RET_OK;

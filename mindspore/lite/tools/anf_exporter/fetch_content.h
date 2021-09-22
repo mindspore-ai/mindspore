@@ -44,9 +44,9 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
                            DataInfo *data_info);
 int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
                        DataInfo *data_info);
-void RemoveIfDepend(const CNodePtr &cnode);
+int RemoveIfDepend(const CNodePtr &cnode);
 
-void RemoveIfMakeTuple(const CNodePtr &cnode);
+int RemoveIfMakeTuple(const CNodePtr &cnode);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_ANF_EXPORTER_FETCH_CONTENT_H_

@@ -87,20 +87,20 @@ int PReluOpenCLKernel::InitWeights() {
 
 int PReluOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "PRelu Only supported in_tensors_.size=2 and out_tensors_.size()=1 but your in_tensors_.size="
-                  << in_tensors_.size() << " out_tensors_.size()=" << out_tensors_.size();
+    MS_LOG(WARNING) << "PRelu Only supported in_tensors_.size=2 and out_tensors_.size()=1 but your in_tensors_.size="
+                    << in_tensors_.size() << " out_tensors_.size()=" << out_tensors_.size();
     return RET_ERROR;
   }
   auto weight_tensor = in_tensors_.at(1);
   auto in_tensor_channel = GpuTensorInfo(in_tensors_[0]).C;
   auto weight_channel = GpuTensorInfo(in_tensors_[1]).C;
   if (weight_channel != 1 && weight_channel != in_tensor_channel) {
-    MS_LOG(ERROR) << "PRelu weight must be equal with in_teneors channel size, but your weight size is "
-                  << weight_channel << " and your input channel size is " << in_tensor_channel;
+    MS_LOG(WARNING) << "PRelu weight must be equal with in_teneors channel size, but your weight size is "
+                    << weight_channel << " and your input channel size is " << in_tensor_channel;
     return mindspore::lite::RET_ERROR;
   }
   if (weight_tensor->data_type() != kNumberTypeFloat16 && weight_tensor->data_type() != kNumberTypeFloat32) {
-    MS_LOG(ERROR) << "PRelu weight must be float32 or float16";
+    MS_LOG(WARNING) << "PRelu weight must be float32 or float16";
     return RET_ERROR;
   }
   return RET_OK;

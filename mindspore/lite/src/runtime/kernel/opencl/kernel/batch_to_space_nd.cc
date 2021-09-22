@@ -30,26 +30,26 @@ using mindspore::schema::PrimitiveType_BatchToSpaceND;
 namespace mindspore::kernel {
 int BatchToSpaceNDOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_1 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    MS_LOG(WARNING) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
   if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[0]->data_type();
+    MS_LOG(WARNING) << "Unsupported data type " << in_tensors_[0]->data_type();
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape().size() != DIMENSION_4D && out_tensors_[0]->shape().size() != DIMENSION_4D) {
-    MS_LOG(ERROR) << "input/output shape size must be 4, actual: " << in_tensors_[0]->shape().size() << ", "
-                  << out_tensors_[0]->shape().size();
+    MS_LOG(WARNING) << "input/output shape size must be 4, actual: " << in_tensors_[0]->shape().size() << ", "
+                    << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
   if (param->block_shape_[0] < 1 || param->block_shape_[1] < 1) {
-    MS_LOG(ERROR) << "block_sizes_ must > 1, actual " << param->block_shape_[0] << ", " << param->block_shape_[1];
+    MS_LOG(WARNING) << "block_sizes_ must > 1, actual " << param->block_shape_[0] << ", " << param->block_shape_[1];
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape()[kNHWC_H] * param->block_shape_[0] <= (param->crops_[0] + param->crops_[1]) ||
       in_tensors_[0]->shape()[kNHWC_W] * param->block_shape_[1] <= (param->crops_[2] + param->crops_[3])) {
-    MS_LOG(ERROR) << "crop shape error!";
+    MS_LOG(WARNING) << "crop shape error!";
     return RET_ERROR;
   }
   return RET_OK;
