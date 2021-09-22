@@ -119,8 +119,8 @@ int ConvolutionCPUKernel::RunImpl(int task_id) {
     ConvFp32OutNC4HW4(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
                       reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
 #else
-    MS_LOG(ERROR) << "ConvFp32OutNC4HW4 not implemented.";
-    return RET_ERROR;
+    ConvFp32(ori_input_data, packed_input_, reinterpret_cast<float *>(packed_weight_),
+             reinterpret_cast<float *>(bias_data_), col_major_input_, tmp_output_, task_id, conv_param_);
 #endif
   }
   return RET_OK;
