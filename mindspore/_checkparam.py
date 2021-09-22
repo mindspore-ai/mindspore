@@ -28,6 +28,7 @@ from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore._c_expression import Tensor as Tensor_
 
+
 class Rel(Enum):
 
     """Numerical relationship between variables, logical relationship enumeration definition of range."""
@@ -827,9 +828,12 @@ class Validator:
             return True
 
         type_str = ""
-        if type_int: type_str += "int, "
-        if type_tuple: type_str += "tuple, "
-        if type_list: type_str += "list, "
+        if type_int:
+            type_str += "int, "
+        if type_tuple:
+            type_str += "tuple, "
+        if type_list:
+            type_str += "list, "
         raise TypeError(f"Axis should be {type_str}but got {type(axis)}.")
 
     @staticmethod
@@ -968,6 +972,7 @@ def args_unreset_check(*unreset_args, **unreset_kwargs):
     def unreset_check(func):
         sig = inspect.signature(func)
         bound_unreset = sig.bind_partial(*unreset_args, **unreset_kwargs).arguments
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             nonlocal bound_unreset
