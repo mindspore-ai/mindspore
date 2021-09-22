@@ -103,7 +103,8 @@ enum TailType { kGradAll, kGradFirst, kNotGrad };
 
 class Tail : public MetaFuncGraph {
  public:
-  explicit Tail(const std::string &name, TailType tail_type = kNotGrad) : MetaFuncGraph(name), tail_type_(tail_type) {}
+  explicit Tail(const std::string &name, TailType tail_type = kNotGrad)
+      : MetaFuncGraph(name), tail_type_(tail_type), enable_tuple_grad_(false) {}
   ~Tail() override = default;
   MS_DECLARE_PARENT(Tail, MetaFuncGraph)
 

@@ -1009,7 +1009,7 @@ bool SetMindIRGraphAction(const ResourcePtr &res) {
       broaded_args.push_back(abs_ref);
     }
   }
-  auto result = AbstractAnalyze(res, res->func_graph(), broaded_args, true);
+  (void)AbstractAnalyze(res, res->func_graph(), broaded_args, true);
   auto it = abstract::AnalysisResultCacheMgr::GetInstance().begin();
   auto it_end = abstract::AnalysisResultCacheMgr::GetInstance().end();
   for (; it != it_end; ++it) {
