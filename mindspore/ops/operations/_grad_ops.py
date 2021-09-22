@@ -32,12 +32,6 @@ class AbsGrad(PrimitiveWithInfer):
     def __init__(self):
         """Initialize AbsGrad"""
 
-    def infer_shape(self, y, dy):
-        return y
-
-    def infer_dtype(self, y, dy):
-        return y
-
 
 class ACosGrad(PrimitiveWithInfer):
     """

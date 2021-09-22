@@ -20,6 +20,7 @@ from .abs_ds import _abs_ds_tbe
 from .inplace_add import _inplace_add_tbe
 from .inplace_sub import _inplace_sub_tbe
 from .abs_grad import _abs_grad_tbe
+from .abs_grad_ds import _abs_grad_ds_tbe
 from .acos import _acos_tbe
 from .acos_grad import _acos_grad_tbe
 from .acosh import _acosh_tbe
