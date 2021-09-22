@@ -57,7 +57,6 @@ Status AdjustGammaOperation::from_json(nlohmann::json op_params, std::shared_ptr
   return Status::OK();
 }
 #endif
-
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

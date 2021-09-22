@@ -46,7 +46,6 @@ Status BandBiquadOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore
