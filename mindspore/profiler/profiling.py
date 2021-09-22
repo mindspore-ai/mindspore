@@ -643,7 +643,7 @@ class Profiler:
             dev_id = "0"
             logger.warning("Fail to get DEVICE_ID, use 0 instead.")
 
-        if device_target and device_target not in ["Ascend", "GPU"]:
+        if device_target and device_target not in ["Ascend", "GPU", "CPU"]:
             msg = "Profiling: unsupported backend: %s" % device_target
             raise RuntimeError(msg)
 
