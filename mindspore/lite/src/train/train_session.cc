@@ -1093,7 +1093,7 @@ session::LiteSession *session::TrainSession::CreateTrainSession(const std::strin
     return nullptr;
   }
   if (context->allocator == nullptr) {
-    const_cast<lite::Context *>(context)->allocator = std::shared_ptr<Allocator>(new (std::nothrow) StaticAllocator());
+    const_cast<lite::Context *>(context)->allocator = std::make_shared<StaticAllocator>();
     if (context->allocator == nullptr) {
       MS_LOG(ERROR) << " cannot convert to static allocation";
     }
