@@ -27,7 +27,7 @@ from mindspore.nn.optim.optimizer import opt_init_args_register
 from .optimizer import Optimizer
 
 
-def _get_lr(step, RMS, learning_rate, relative_step, warmup_init, scale_parameter, eps):
+def _get_lr(step, rms, learning_rate, relative_step, warmup_init, scale_parameter, eps):
     """update optimizer learning rete"""
     rel_step_sz = learning_rate
     if relative_step:
@@ -39,8 +39,8 @@ def _get_lr(step, RMS, learning_rate, relative_step, warmup_init, scale_paramete
         rel_step_sz = P.Minimum()(min_step, 1.0 / P.Sqrt()(step * 1.0))
     param_scale = 1.0
     if scale_parameter:
-        param_scale = P.Maximum()(eps[1], RMS)
-    return rel_step_sz * param_scale * F.ones_like(RMS)
+        param_scale = P.Maximum()(eps[1], rms)
+    return rel_step_sz * param_scale * F.ones_like(rms)
 
 
 def _rms(update_tensor):
