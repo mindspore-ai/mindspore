@@ -689,7 +689,7 @@ void CalQuantAssitInfo(const PrimitivePtr &primitive, const ShapeVector &shapes,
     MS_LOG(ERROR) << " shape vector is empty.";
     return;
   }
-  if (primitive->name() == ops::kNameMatMul && static_cast<int>(shapes.size()) == 2) {
+  if (primitive->name() == ops::kNameMatMul && static_cast<int>(shapes.size()) == DIMENSION_2D) {
     auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMul>>();
     MS_ASSERT(matmul_prim != nullptr);
     *channel_at_first =

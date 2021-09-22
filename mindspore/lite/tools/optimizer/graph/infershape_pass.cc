@@ -57,7 +57,7 @@ int GetCNodeCertainInputFormat(const CNodePtr cnode, int index, mindspore::Forma
       MS_LOG(ERROR) << "get transpose perm failed.";
       return lite::RET_ERROR;
     }
-    if (perm.size() != 4) {
+    if (perm.size() != DIMENSION_4D) {
       return RET_OK;
     }
     if (perm == kNH2NC && *format == mindspore::NHWC) {

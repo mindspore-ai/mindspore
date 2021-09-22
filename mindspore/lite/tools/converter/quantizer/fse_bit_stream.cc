@@ -20,6 +20,9 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore::lite::quant {
+namespace {
+constexpr int8_t kCurrentBitCount = 64;
+}  // namespace
 int BitStream::Create(int bit_capacity) {
   chunk_count_ = (bit_capacity >> 6);
   chunks_ = static_cast<uint64_t *>(calloc(chunk_count_, sizeof(uint64_t)));
@@ -52,8 +55,8 @@ void BitStream::Empty() {
 }
 
 int64_t BitStream::Pop(uint8_t bit_count) {
-  MS_ASSERT(curr_bit_count_ <= 64);
-  int64_t right = curr_chunk_ >> (64 - curr_bit_count_);
+  MS_ASSERT(curr_bit_count_ <= kCurrentBitCount);
+  int64_t right = curr_chunk_ >> (kCurrentBitCount - curr_bit_count_);
   int64_t res = right & ((1 << bit_count) - 1);
   curr_bit_count_ -= bit_count;
   if (curr_bit_count_ > 0) {
@@ -64,7 +67,7 @@ int64_t BitStream::Pop(uint8_t bit_count) {
     // not so often...
     if (curr_chunk_index_ > -1) {
       // rare...
-      curr_bit_count_ = 64;
+      curr_bit_count_ = kCurrentBitCount;
       curr_chunk_ = chunks_[curr_chunk_index_--];
     }
     return res;
@@ -73,16 +76,16 @@ int64_t BitStream::Pop(uint8_t bit_count) {
   curr_bit_count_ += bit_count;
   curr_chunk_ = chunks_[curr_chunk_index_--];
   right |= (curr_chunk_ & ((1 << (bit_count - curr_bit_count_)) - 1)) << curr_bit_count_;
-  curr_bit_count_ = 64 - (bit_count - curr_bit_count_);
+  curr_bit_count_ = kCurrentBitCount - (bit_count - curr_bit_count_);
   return right;
 }
 
 void BitStream::Push(int64_t state, uint8_t bit_count) {
   curr_bit_count_ += bit_count;
-  if (curr_bit_count_ <= 64) {
+  if (curr_bit_count_ <= kCurrentBitCount) {
     // happy path, no split
     curr_chunk_ = (curr_chunk_ << bit_count) | (state & ((1 << bit_count) - 1));
-    if (curr_bit_count_ == 64) {
+    if (curr_bit_count_ == kCurrentBitCount) {
       // flush (rare)
       chunks_[++curr_chunk_index_] = curr_chunk_;
       curr_chunk_ = 0;
@@ -90,7 +93,7 @@ void BitStream::Push(int64_t state, uint8_t bit_count) {
     }
   } else {
     // split, rare
-    int left_bits = curr_bit_count_ - 64;
+    int left_bits = curr_bit_count_ - kCurrentBitCount;
     int right_bits = bit_count - left_bits;
     curr_chunk_ = (curr_chunk_ << right_bits) | ((state >> left_bits) & ((1 << right_bits) - 1));
     // flush left
@@ -100,5 +103,5 @@ void BitStream::Push(int64_t state, uint8_t bit_count) {
   }
 }
 
-void BitStream::Flush() { curr_chunk_ <<= 64 - curr_bit_count_; }
+void BitStream::Flush() { curr_chunk_ <<= kCurrentBitCount - curr_bit_count_; }
 }  // namespace mindspore::lite::quant

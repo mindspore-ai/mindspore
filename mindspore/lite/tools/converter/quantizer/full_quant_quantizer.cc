@@ -562,13 +562,13 @@ STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePt
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
   auto active_weight_quant_params = quant_param_holder->get_input_quant_params();
-  if (active_weight_quant_params.size() != 2) {
+  if (active_weight_quant_params.size() != DIMENSION_2D) {
     MS_LOG(ERROR) << "unexpected active_weight_quant_params size: " << active_weight_quant_params.size();
     return RET_ERROR;
   }
 
-  auto active_params = active_weight_quant_params[0];
-  auto weight_params = active_weight_quant_params[1];
+  auto active_params = active_weight_quant_params.at(FIRST_INPUT);
+  auto weight_params = active_weight_quant_params.at(SECOND_INPUT);
 
   vector<double> input_scales;
   vector<double> filter_scales;
@@ -619,7 +619,7 @@ STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePt
     MS_LOG(ERROR) << "compute bias data failed.";
     return RET_ERROR;
   }
-  quant_param_holder->set_input_quant_param(2, quant_params);
+  quant_param_holder->set_input_quant_param(THIRD_INPUT, quant_params);
   auto ret = SetTensorData(bias_param, quant_datas.data(), shape_size * sizeof(int32_t));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "set tensor data failed.";
@@ -666,7 +666,7 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
     return RET_CONTINUE;
   }
   if (CheckNodeInSet(cnode, has_bias_operator)) {
-    if (input_index == 3) {
+    if (input_index == FOURTH_INPUT) {
       ret = DoBiasQuant(input_node, primitive);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Do bias quant failed.";
@@ -994,6 +994,7 @@ STATUS FullQuantQuantizer::Int8Inference() {
     // get input tensor
     auto elem_count = input_tensor->ElementsNum();
     vector<float> dummy_data(elem_count);
+    // set the input data to 0.1
     std::fill(dummy_data.begin(), dummy_data.end(), 0.1);
     auto ret =
       memcpy_s(input_tensor->MutableData(), input_tensor->Size(), dummy_data.data(), sizeof(float) * dummy_data.size());
@@ -1084,10 +1085,10 @@ STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const 
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
   auto input_quant_params = quant_param_holder->get_input_quant_params();
-  if (input_quant_params.size() == 3) {
+  if (input_quant_params.size() == DIMENSION_3D) {
     // compensate the existed
-    auto bias_quant_params = input_quant_params[2];
-    auto bias = cnode->input(3);
+    auto bias_quant_params = input_quant_params.at(THIRD_INPUT);
+    auto bias = cnode->input(FOURTH_INPUT);
     auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
     auto bias_default_param = bias_parameter_ptr->default_param();
     auto bias_param = std::dynamic_pointer_cast<tensor::Tensor>(bias_default_param);
@@ -1124,7 +1125,7 @@ STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const 
         bias_datas[i] += diff;
       }
     }
-  } else if (input_quant_params.size() == 2) {
+  } else if (input_quant_params.size() == DIMENSION_2D) {
     MS_LOG(INFO) << op_name << " add bias input";
     // need to add bias input
     auto parameter = func_graph->add_parameter();

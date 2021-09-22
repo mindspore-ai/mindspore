@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace custom_gpu_demo {
-
 class CustomAddKernelGpu : public kernel::Kernel {
  public:
   CustomAddKernelGpu(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
@@ -251,7 +250,6 @@ std::shared_ptr<kernel::Kernel> CustomAddFP16Creator(const std::vector<MSTensor>
   std::cout << "using fp16 add." << std::endl;
   return std::make_shared<CustomAddKernelGpu>(inputs, outputs, primitive, ctx, build_options, fp16_enable);
 }
-
 }  // namespace custom_gpu_demo
 const auto kFloat32 = DataType::kNumberTypeFloat32;
 const auto kFloat16 = DataType::kNumberTypeFloat16;

@@ -43,7 +43,6 @@ using mindspore::converter::kFmkTypeOnnx;
 namespace mindspore {
 namespace lite {
 namespace {
-constexpr size_t kConvWeightIndex = 2;
 constexpr int kTensorListDatasize = 3;
 constexpr int kTypeIndex = 0;
 constexpr int kElementShapeIndex = 1;
@@ -446,7 +445,7 @@ FuncGraphPtr OnnxModelParser::BuildBodyGraph(const onnx::NodeProto &loop_node, c
   }
   auto return_node = loop_body_graph->get_return();
   MS_CHECK_TRUE_MSG(return_node != nullptr, nullptr, "return node of subgraph is nullptr");
-  MS_ASSERT(return_node->inputs().size() == 2);
+  MS_ASSERT(return_node->inputs().size() == DIMENSION_2D);
   auto return_tuple_cnode = return_node->input(1)->cast<CNodePtr>();
   auto return_new_inputs = return_tuple_cnode->inputs();
   return_new_inputs.insert(return_new_inputs.end() - act_outputs_num, gen_subgraph_inputs.begin(),

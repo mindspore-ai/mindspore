@@ -27,7 +27,7 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
                       int64_t *channel_out, int64_t *channel_in) {
   MS_ASSERT(channel_out != nullptr);
   MS_ASSERT(channel_in != nullptr);
-  const auto &onnx_conv_weight = onnx_node.input(1);
+  const auto &onnx_conv_weight = onnx_node.input(kWeightIndex);
   if (onnx_node.op_type() == "Conv") {
     auto node_iter =
       std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
@@ -43,16 +43,16 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
         weight_shape.emplace_back((*node_iter).dims(i));
       }
       // filter of conv should have at lease two dims
-      if (size < 2) {
+      if (size < DIMENSION_2D) {
         MS_LOG(ERROR) << "index out of dims range";
         return RET_ERROR;
       }
-      *channel_out = weight_shape[0];
-      if (INT_MUL_OVERFLOW_THRESHOLD(weight_shape[1], group, INT64_MAX)) {
+      *channel_out = weight_shape.at(0);
+      if (INT_MUL_OVERFLOW_THRESHOLD(weight_shape.at(1), group, INT64_MAX)) {
         MS_LOG(ERROR) << "channel in overflow";
         return RET_ERROR;
       }
-      *channel_in = weight_shape[1] * group;
+      *channel_in = weight_shape.at(1) * group;
     }
   } else {
     auto node_iter =
@@ -75,17 +75,17 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
       return RET_NO_CHANGE;
     }
     // filter of conv should have at lease four dims
-    if (dims.size() < 4) {
+    if (dims.size() < DIMENSION_4D) {
       MS_LOG(ERROR) << "index out of dims range";
       return RET_ERROR;
     }
-    *channel_out = dims.at(0);
+    *channel_out = dims.at(kNHWC_N);
     // the fourth dim of filter of conv is channel dim
-    if (INT_MUL_OVERFLOW_THRESHOLD(dims.at(3), group, INT64_MAX)) {
+    if (INT_MUL_OVERFLOW_THRESHOLD(dims.at(kNHWC_C), group, INT64_MAX)) {
       MS_LOG(ERROR) << "channel in overflow";
       return RET_ERROR;
     }
-    *channel_in = dims.at(3) * group;
+    *channel_in = dims.at(kNHWC_C) * group;
   }
   return RET_OK;
 }
