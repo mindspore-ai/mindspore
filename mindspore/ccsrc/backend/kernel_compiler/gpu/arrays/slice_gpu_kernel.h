@@ -29,8 +29,7 @@ namespace kernel {
 template <typename T>
 class SliceGpuFwdKernel : public GpuKernel {
  public:
-  SliceGpuFwdKernel()
-      : is_null_input_(false), is_1d_to_4d_input_(false), input_size_(0), output_size_(0), workspace_size_(0) {}
+  SliceGpuFwdKernel() : is_null_input_(false), input_size_(0), output_size_(0), workspace_size_(0) {}
   ~SliceGpuFwdKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -41,51 +40,78 @@ class SliceGpuFwdKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
+
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    if (is_1d_to_4d_input_) {
-      Slice4DKernel(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3], input_shape_[0],
-                    input_shape_[1], input_shape_[2], input_shape_[3], input, output,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else {
-      Slice5DKernel(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], size_[0], size_[1], size_[2], size_[3],
-                    size_[4], input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input_shape_[4],
-                    input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+    size_t input_rank = input_shape_.size();
+    switch (input_rank) {
+      case 1:
+        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
+                    size_[0], input_shape_[0]);
+        break;
+      case 2:
+        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
+                    begin_[1], size_[0], size_[1], input_shape_[0], input_shape_[1]);
+        break;
+      case 3:
+        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
+                    begin_[1], begin_[2], size_[0], size_[1], size_[2], input_shape_[0], input_shape_[1],
+                    input_shape_[2]);
+        break;
+      case 4:
+        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
+                    begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3], input_shape_[0],
+                    input_shape_[1], input_shape_[2], input_shape_[3]);
+        break;
+      case 5:
+        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
+                    begin_[1], begin_[2], begin_[3], begin_[4], size_[0], size_[1], size_[2], size_[3], size_[4],
+                    input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input_shape_[4]);
+        break;
+      case 6:
+        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
+                    begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], size_[0], size_[1], size_[2], size_[3],
+                    size_[4], size_[5], input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3],
+                    input_shape_[4], input_shape_[5]);
+        break;
+      case 7:
+        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
+                    begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], begin_[6], size_[0], size_[1], size_[2],
+                    size_[3], size_[4], size_[5], size_[6], input_shape_[0], input_shape_[1], input_shape_[2],
+                    input_shape_[3], input_shape_[4], input_shape_[5], input_shape_[6]);
+        break;
+      default:
+        MS_LOG(EXCEPTION) << "gpu Slice operator does not support inputs with rank >= " << input_rank << ".";
     }
+
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     if (!CheckParam(kernel_node)) {
       return false;
     }
-    auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
+
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_1d_to_4d_input_ = input_shape.size() <= 4;
-    if (is_1d_to_4d_input_) {
-      ShapeNdTo4d(input_shape, &input_shape_);
-    } else {
-      ShapeNdTo5d(input_shape, &input_shape_);
+
+    (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
+                         [](const int64_t &e) { return static_cast<int32_t>(e); });
+
+    input_size_ = sizeof(T);
+    for (size_t x : input_shape) {
+      input_size_ *= x;
     }
 
-    for (auto i = begin_.size(); i < input_shape_.size(); i++) {
-      (void)begin_.insert(begin_.begin(), 0);
-    }
-    for (size_t i = size_.size(); i < input_shape_.size(); i++) {
-      (void)size_.insert(size_.begin(), 1);
-    }
-
-    if (is_1d_to_4d_input_) {
-      input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T);
-    } else {
-      input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] * sizeof(T);
-    }
     auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
 
     output_size_ = sizeof(T);
     for (size_t x : out_shape) {
-      output_size_ = output_size_ * x;
+      output_size_ *= x;
     }
+
     // transpose begin and size for NHWC data
+    auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     if (data_format == "NHWC") {
       std::swap(begin_[1], begin_[3]);
       std::swap(begin_[1], begin_[2]);
@@ -99,7 +125,9 @@ class SliceGpuFwdKernel : public GpuKernel {
       std::swap(size_[1], size_[3]);
       std::swap(size_[1], size_[2]);
     }
+
     InitSizeLists();
+
     return true;
   }
 
@@ -110,18 +138,6 @@ class SliceGpuFwdKernel : public GpuKernel {
   }
 
  private:
-  // expand Nd Shape to 5d (N in [0,5])
-  void ShapeNdTo5d(const std::vector<size_t> &src, std::vector<size_t> *dst) {
-    if (src.size() > 5) {
-      MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
-    }
-    dst->push_back(src.size() < 5 ? 1 : src[src.size() - 5]);
-    dst->push_back(src.size() < 4 ? 1 : src[src.size() - 4]);
-    dst->push_back(src.size() < 3 ? 1 : src[src.size() - 3]);
-    dst->push_back(src.size() < 2 ? 1 : src[src.size() - 2]);
-    dst->push_back(src.size() == 0 ? 1 : src[src.size() - 1]);
-  }
-
   bool CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
@@ -134,35 +150,44 @@ class SliceGpuFwdKernel : public GpuKernel {
       return false;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (input_shape.size() > 5) {
-      MS_LOG(ERROR) << "Input dims is " << input_shape.size() << ", but SliceGpuFwdKernel olny support 5d or lower.";
+    if (input_shape.size() > 7) {
+      MS_LOG(ERROR) << "Input dims is " << input_shape.size() << ", but SliceGpuFwdKernel olny support 7d or lower.";
       return false;
     }
     if (input_shape.size() == 0) {
       MS_LOG(ERROR) << "Input dims is " << input_shape.size() << ", scalar is not supported.";
       return false;
     }
-    size_ = GetAttr<std::vector<int64_t>>(kernel_node, "size");
-    begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
+    auto size = GetAttr<std::vector<int64_t>>(kernel_node, "size");
+    auto begin = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
 
     for (size_t i = 0; i < input_shape.size(); i++) {
-      if (i >= size_.size() || input_shape[i] <= 0 || size_[i] <= 0) {
+      if (i >= size.size() || input_shape[i] <= 0 || size[i] <= 0) {
         MS_LOG(WARNING) << "Slice output is null.";
         is_null_input_ = true;
       }
     }
+
+    (void)std::transform(size.begin(), size.end(), std::back_inserter(size_),
+                         [](const int64_t &e) { return static_cast<int32_t>(e); });
+    (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_),
+                         [](const int64_t &e) { return static_cast<int32_t>(e); });
+
     return true;
   }
-  std::vector<int64_t> begin_;
-  std::vector<int64_t> size_;
-  std::vector<size_t> input_shape_;
+
+  // use int32_t, a smaller type than the typical size_t, so that we can add higher
+  // dimension later on. cuda kernel arguments' total size cannot exceed 256 bytes
+  std::vector<int32_t> begin_;
+  std::vector<int32_t> size_;
+  std::vector<int32_t> input_shape_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
   bool is_null_input_;
-  bool is_1d_to_4d_input_;
+
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;

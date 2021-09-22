@@ -21,14 +21,9 @@
 #include <vector>
 #include "runtime/device/gpu/cuda_common.h"
 
-template <typename T>
-void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1, const size_t l2,
-                   const size_t l3, const size_t l4, const size_t d1, const size_t d2, const size_t d3, const size_t d4,
-                   const T *input, T *output, cudaStream_t stream);
-template <typename T>
-void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5, const size_t l1,
-                   const size_t l2, const size_t l3, const size_t l4, const size_t l5, const size_t d1, const size_t d2,
-                   const size_t d3, const size_t d4, const size_t d5, const T *input, T *output, cudaStream_t stream);
+template <typename T, typename...S>
+void SliceKernel(const T *input, T *output, const size_t output_size, cudaStream_t cuda_stream, S...pack);
+
 template <typename T>
 void CalSlice4DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
                     const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
@@ -43,4 +38,5 @@ void StridedSliceGrad(const std::vector<size_t> &dy_shape, const std::vector<int
                       cudaStream_t cuda_stream);
 template <typename T>
 void FillDeviceArray(const size_t input_size, T *addr, const float value, cudaStream_t cuda_stream);
+
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_SLICE_IMPL_CUH_
