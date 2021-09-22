@@ -71,6 +71,5 @@ void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, c
     }
   }
 }
-
 }  // namespace custom_common
 }  // namespace mindspore
