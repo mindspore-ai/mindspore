@@ -237,7 +237,7 @@ const AnfNodeCounterMap &FuncGraph::value_nodes() const { return value_nodes_; }
 
 void FuncGraph::CopyValueNodes(const FuncGraphPtr &source) {
   auto &others = source->value_nodes();
-  for (auto it = others.begin(); it != others.end(); it++) {
+  for (auto it = others.begin(); it != others.end(); ++it) {
     AddValueNode(it->first, it->second);
   }
 }
@@ -270,7 +270,7 @@ const AnfNodeCounterMap &FuncGraph::free_variables() const { return free_variabl
 
 void FuncGraph::CopyFreeVariables(const FuncGraphPtr &source) {
   auto &others = source->free_variables();
-  for (auto it = others.begin(); it != others.end(); it++) {
+  for (auto it = others.begin(); it != others.end(); ++it) {
     const auto &free_var = it->first;
     MS_EXCEPTION_IF_NULL(free_var);
     if (free_var->func_graph().get() != this) {
@@ -343,7 +343,7 @@ const FuncGraphCounterMap &FuncGraph::func_graphs_used() const { return func_gra
 
 void FuncGraph::CopyFuncGraphsUsed(const FuncGraphPtr &source) {
   auto &others = source->func_graphs_used();
-  for (auto it = others.begin(); it != others.end(); it++) {
+  for (auto it = others.begin(); it != others.end(); ++it) {
     (void)AddFuncGraphUsed(it->first, it->second);
   }
   func_graphs_used_.erase(source);
@@ -388,7 +388,7 @@ const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() const { return 
 
 void FuncGraph::CopyFuncGraphCNodesIndex(const FuncGraphPtr &source) {
   auto &others = source->func_graph_cnodes_index();
-  for (auto it = others.begin(); it != others.end(); it++) {
+  for (auto it = others.begin(); it != others.end(); ++it) {
     // Ignore the user graph who may own itself.
     auto fg = it->first->first->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
@@ -743,9 +743,9 @@ bool FuncGraph::ContainMultiTarget() const {
 }
 
 void FuncGraph::set_used_forward_nodes(const std::vector<AnfNodePtr> &used_forward_nodes) {
-  std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(), [this](const AnfNodePtr &node) {
+  (void)std::for_each(used_forward_nodes.begin(), used_forward_nodes.end(), [this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
-    used_forward_nodes_.emplace(node);
+    (void)used_forward_nodes_.emplace(node);
   });
 }
 

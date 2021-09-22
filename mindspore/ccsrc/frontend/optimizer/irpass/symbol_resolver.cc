@@ -23,7 +23,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-
 // {prim::kPrimGetAttr, {prim::kPrimResolve, namespace, symbol}, attr}
 // {prim::kPrimGetAttr, namespace, attr}
 // {prim::kPrimGetAttr, bool, attr}
