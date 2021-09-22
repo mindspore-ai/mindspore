@@ -375,6 +375,9 @@ class KernelGraph : public FuncGraph {
 
   bool isDatasetGraph() const;
 
+  bool is_sink() const { return is_sink_; }
+  void set_is_sink(bool is_sink) { is_sink_ = is_sink; }
+
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
@@ -485,6 +488,9 @@ class KernelGraph : public FuncGraph {
 
   // Indicate whether the kernels in the graphs acquire Python GIL.
   bool is_need_gil_{false};
+
+  // Indicate whether the kernel graph sink to the device executing.
+  bool is_sink_{false};
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

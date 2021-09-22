@@ -125,7 +125,11 @@ class MindRTBackend : public Backend {
  private:
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
   // The result of graph compiler is stored in graph_id_to_device_context_ and control_nodes_.
-  void CompileGraph(const FuncGraphPtr &func_graph);
+  // The return value indicates whether the subgraph needs to be compiled recursively.
+  bool CompileGraph(const FuncGraphPtr &func_graph);
+
+  // Compile the kernel graph by the segment which is from the function graph partition.
+  void CompileGraph(const GraphSegmentPtr &segment, bool contain_multi_target);
 
   // Restore the outputs tuple by the origin funcGraph output node and output tensors.
   void ConstructOutputs(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
