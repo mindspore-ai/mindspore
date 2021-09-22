@@ -272,6 +272,8 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
 
 void GenNoneInputDescJson(const std::shared_ptr<OpIOInfo> &input_ptr, size_t input_i,
                           std::vector<nlohmann::json> *const input_list) {
+  MS_EXCEPTION_IF_NULL(input_ptr);
+  MS_EXCEPTION_IF_NULL(input_list);
   nlohmann::json input_desc_json;
   auto in_name = input_ptr->name();
   input_desc_json[kJName] = in_name + std::to_string(input_i);
@@ -283,6 +285,9 @@ void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> 
                                                  bool value, const std::shared_ptr<OpIOInfo> &input_ptr,
                                                  const string &op_input_name, size_t input_i,
                                                  std::vector<nlohmann::json> *const input_list) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(input_ptr);
+  MS_EXCEPTION_IF_NULL(input_list);
   auto def_format = kOpFormat_NCHW;
   auto dtype = GetDeviceInputType(anf_node, real_input_index);
   auto format = GetDeviceInputFormat(anf_node, real_input_index);
@@ -814,6 +819,7 @@ std::string TbeKernelJsonCreator::GetDeviceOutputFormat(const AnfNodePtr &anf_no
 }
 
 void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list) {
+  MS_EXCEPTION_IF_NULL(input_size_list);
   for (size_t i = 0; i < input_json.size(); i++) {
     for (size_t m = 0; m < input_json[i].size(); m++) {
       size_t size_i = 1;
@@ -841,6 +847,7 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
 }
 
 void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *output_size_list) {
+  MS_EXCEPTION_IF_NULL(output_size_list);
   for (size_t i = 0; i < output_json.size(); i++) {
     for (size_t m = 0; m < output_json[i].size(); m++) {
       size_t size_i = 1;
@@ -871,6 +878,8 @@ void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *o
 
 bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
                                std::vector<size_t> *output_size_list, const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(output_size_list);
+  MS_EXCEPTION_IF_NULL(input_size_list);
   if (input_size_list == nullptr || output_size_list == nullptr) {
     MS_LOG(ERROR) << "Input size or output size is nullptr";
     return false;
@@ -1046,6 +1055,7 @@ void TbeKernelBuild::GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode
                                                 std::string *fusion_kernel_name) {
   MS_EXCEPTION_IF_NULL(compute_op_str);
   MS_EXCEPTION_IF_NULL(fusion_kernel_name);
+  MS_EXCEPTION_IF_NULL(cnode);
   // gen others
   auto origin_type = AnfAlgo::GetCNodeName(cnode);
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(origin_type, cnode);
@@ -1163,6 +1173,7 @@ void TbeKernelBuild::GenFusionOutputDescJson(const std::shared_ptr<mindspore::An
                                              nlohmann::json *output_data_desc) {
   MS_EXCEPTION_IF_NULL(output_desc);
   MS_EXCEPTION_IF_NULL(output_data_desc);
+  MS_EXCEPTION_IF_NULL(anf_node);
   GenDescJson(anf_node, node_out_idx, desc_output_idx, output_desc);
   *output_data_desc = *output_desc;
   (*output_data_desc)[kJDtype] = (*output_desc)[kJDataType];
@@ -1186,6 +1197,7 @@ void TbeKernelBuild::GenReusedOutputDesc(const std::shared_ptr<mindspore::AnfNod
 bool TbeKernelBuild::GetSpecInputLayers(const std::string &op_name,
                                         const std::vector<mindspore::AnfNodePtr> &reorder_layer,
                                         std::map<const AnfNodePtr, FusionDataType> *spec_data_input) {
+  MS_EXCEPTION_IF_NULL(spec_data_input);
   if ((op_name == kReluGradV2OpName || op_name == kAddNOpName || op_name == kTensorAddOpName) &&
       reorder_layer.empty()) {
     MS_LOG(INFO) << "Fusion error: node(" << op_name << " )'s input is null. ";
@@ -1381,6 +1393,8 @@ bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
                                                std::vector<nlohmann::json> *input_desc_list, size_t *index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_desc_list);
+  MS_EXCEPTION_IF_NULL(layer_iter);
+  MS_EXCEPTION_IF_NULL(index);
   std::vector<nlohmann::json> input_desc_list_tmp = {};
   // 1. input json
   bool is_dynamic_input = IsDynamicInput(cnode);

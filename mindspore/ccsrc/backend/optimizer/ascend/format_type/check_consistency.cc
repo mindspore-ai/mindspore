@@ -91,6 +91,7 @@ const AnfNodePtr CheckConsistency::Process(const FuncGraphPtr &, const AnfNodePt
   }
 
   CNodePtr cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   size_t in_num = AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 0; i < in_num; ++i) {
     if (!CheckFormatForConsistency(cnode, i) || !CheckDataTypeForConsistency(cnode, i)) {

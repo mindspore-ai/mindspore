@@ -346,7 +346,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
           value_depends->emplace_back(value_depend);
         }
         dynamic_input_index++;
-        real_io_tensor_index += LongToSize(dynamic_input_size);
+        real_io_tensor_index = SizetAddWithOverflowCheck(real_io_tensor_index, LongToSize(dynamic_input_size));
       } else {
         if (ios_info.size() != 1) {
           MS_LOG(EXCEPTION) << "if output is dynamic, so output must has one output.";
@@ -357,7 +357,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
           reshape_types->emplace_back(reshape_type);
           value_depends->emplace_back(value_depend);
         }
-        real_io_tensor_index += real_io_tensor_num;
+        real_io_tensor_index = SizetAddWithOverflowCheck(real_io_tensor_index, real_io_tensor_num);
       }
     } else if (io_param_type == kParamTypeRequre || io_param_type == kParamTypeOptional) {
       // require or optional io
@@ -466,6 +466,11 @@ std::string TbeKernelSelect::OpSelectFormat() {
 void TbeKernelSelect::CreateNewOpInfo(const mindspore::kernel::OpInfo &op_info, const SupportFormat &support_format,
                                       mindspore::kernel::OpInfo *op_info_new) {
   MS_EXCEPTION_IF_NULL(op_info_new);
+  if (support_format.input_format.empty() || support_format.output_format.empty()) {
+    MS_LOG(EXCEPTION) << "Support input format and output format size can not be empty, but the input format size is: "
+                      << support_format.input_format.size()
+                      << ", output format size is: " << support_format.output_format.size();
+  }
   if (op_info.inputs_ptr().size() != support_format.input_format[0].size() ||
       op_info.outputs_ptr().size() != support_format.output_format[0].size()) {
     MS_LOG(EXCEPTION) << "BroadCast input/output size not match, op info input size:" << op_info.inputs_ptr().size()

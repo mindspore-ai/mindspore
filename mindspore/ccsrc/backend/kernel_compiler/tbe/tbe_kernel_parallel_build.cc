@@ -253,6 +253,7 @@ bool ParallelBuildManager::GenSameOpKernelMod() const {
 }
 
 bool ParallelBuildManager::GenSameFusionOpKernelMod(std::map<int64_t, KernelModPtr> *kernel_mode_ret) const {
+  MS_EXCEPTION_IF_NULL(kernel_mode_ret);
   bool ret = true;
   for (const auto &task_info : same_op_list_) {
     auto kernel_pack = TbeUtils::SearchCache(task_info.json_name);

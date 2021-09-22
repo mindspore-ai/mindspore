@@ -38,6 +38,7 @@ constexpr auto kSeed1 = "Seed1";
 constexpr auto kUint8BitSize = 8;
 constexpr int64_t kMaskAlignNum = 128;
 constexpr int64_t kMaskMultiNum = 16;
+constexpr size_t kDropoutGradInputTensorNum = 2;
 constexpr size_t kFloat16Len = 2;  // size of float16
 constexpr size_t kInt64Len = 8;    // size of int64
 
@@ -69,7 +70,9 @@ ValueNodePtr CreateKeepPorbValueNode(const FuncGraphPtr &func_graph, const AnfNo
   if (!AnfAlgo::HasNodeAttr(kKeepProb, cnode)) {
     MS_LOG(EXCEPTION) << "Dropout node does not have attr: keep_prob.";
   }
-  if (AnfAlgo::GetCNodePrimitive(cnode)->ToString() == kDropoutOpName) {
+  auto prim = AnfAlgo::GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(prim);
+  if (prim->ToString() == kDropoutOpName) {
     if (!AnfAlgo::HasNodeAttr(kSeed0, cnode) || !AnfAlgo::HasNodeAttr(kSeed1, cnode)) {
       MS_LOG(EXCEPTION) << "Dropout node does not have attr: seed0 or seed1.";
     }
@@ -279,7 +282,7 @@ const AnfNodePtr DropoutUnifyMindIR0::Process(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto tuple_cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(tuple_cnode);
+  CheckCNodeInputSize(tuple_cnode, kTupleGetItemInputTensorNum);
   if (!NeedUpdate(tuple_cnode)) {
     return nullptr;
   }
@@ -332,6 +335,7 @@ const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, co
   auto inputx_type_id = GetInputXDataType(dropout_node);
   auto keep_prob_value = CreateKeepPorbValueNode(func_graph, dropout_node, inputx_type_id);
 
+  CheckCNodeInputSize(dropout_node, kDropoutInputTensorNum);
   auto dropout_input = dropout_node->input(kIndex1);
   auto input_shape = GetDropoutInputShape(dropout_input);
   // CreateDropoutGenMask
@@ -363,7 +367,7 @@ const AnfNodePtr DropoutGradUnifyMindIR::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto dropout_grad_cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(dropout_grad_cnode);
+  CheckCNodeInputSize(dropout_grad_cnode, kDropoutGradInputTensorNum);
 
   auto grad_input_type_id = GetInputXDataType(dropout_grad_cnode);
   auto grad_input_shape = GetInputXShape(dropout_grad_cnode);

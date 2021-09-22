@@ -82,7 +82,9 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bo
 
   if (main->isa<ValueNode>() && node->isa<ValueNode>()) {
     auto main_value = GetValueNode(main);
+    MS_EXCEPTION_IF_NULL(main_value);
     auto node_value = GetValueNode(node);
+    MS_EXCEPTION_IF_NULL(node_value);
     if (main_value->isa<Primitive>() && node_value->isa<Primitive>()) {
       return false;
     } else if (main_value->isa<tensor::Tensor>() && node_value->isa<tensor::Tensor>()) {

@@ -60,10 +60,12 @@ void GetFileKernelName(NotNull<std::string *> kernel_name) {
 }
 
 void SetConstNodeId(const AnfNodePtr &node, std::map<std::string, size_t> *const_map) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<ValueNode>()) {
     return;
   }
   std::string node_name = GetKernelNodeName(node);
+  MS_EXCEPTION_IF_NULL(const_map);
   auto iter = const_map->find(node_name);
   if (iter == const_map->end()) {
     auto const_idx = const_map->size() + 1;
@@ -72,6 +74,7 @@ void SetConstNodeId(const AnfNodePtr &node, std::map<std::string, size_t> *const
 }
 
 void GetCNodeConstantId(const CNodePtr &node, std::map<std::string, size_t> *const_map) {
+  MS_EXCEPTION_IF_NULL(node);
   auto &inputs = node->inputs();
   if (inputs.empty()) {
     MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
@@ -79,6 +82,7 @@ void GetCNodeConstantId(const CNodePtr &node, std::map<std::string, size_t> *con
   AnfNodePtr op = inputs[0];
 
   // CNode/ConstGraph/Const/Parameter
+  MS_EXCEPTION_IF_NULL(op);
   if (op->isa<CNode>() || IsValueNode<FuncGraph>(op) || op->isa<Parameter>()) {
     MS_LOG(WARNING) << "Operator must be a primitive.";
   } else {
@@ -90,6 +94,7 @@ void GetCNodeConstantId(const CNodePtr &node, std::map<std::string, size_t> *con
 }
 
 void GetConstantId(const session::KernelGraph *graph, std::map<std::string, size_t> *const_map) {
+  MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> nodes = TopoSort(graph->get_return(), SuccIncoming, AlwaysInclude);
   for (const AnfNodePtr &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
@@ -97,6 +102,7 @@ void GetConstantId(const session::KernelGraph *graph, std::map<std::string, size
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
     if (cnode != graph->get_return()) {
       GetCNodeConstantId(cnode, const_map);
     } else {

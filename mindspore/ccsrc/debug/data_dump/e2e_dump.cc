@@ -197,6 +197,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     uint32_t stream_id = 0;
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
+    MS_EXCEPTION_IF_NULL(addr);
     if (IsDeviceTargetGPU()) {
       DumpGPUMemToFile(file_path, tensor_name, *addr, int_shapes, type, device_type, trans_flag, slot, debugger);
     } else {
@@ -215,6 +216,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   std::string node_name = GetKernelNodeName(anf_node);
   std::string dump_name = node_name;
   if (anf_node->isa<ValueNode>()) {
+    MS_EXCEPTION_IF_NULL(const_map);
     auto iter = const_map->find(node_name);
     if (iter == const_map->end()) {
       return;

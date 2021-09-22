@@ -31,6 +31,7 @@ const size_t strides_index = 5;
 
 bool GetStridesValues(const CNodePtr &strided_slice_grad, ValuePtrList *strides_values) {
   MS_EXCEPTION_IF_NULL(strided_slice_grad);
+  MS_EXCEPTION_IF_NULL(strides_values);
   constexpr size_t kSizeChange = 6;
   if (strided_slice_grad->size() < kSizeChange) {
     MS_LOG(DEBUG) << "Op strided_slice_grad's inputs size less than 6, graph not changed";

@@ -37,6 +37,7 @@ std::unordered_map<std::string, std::unordered_set<std::string>> MarkOp{
 bool CheckOP(const FuncGraphManagerPtr &manager, const AnfNodePtr &cnode, const std::unordered_set<std::string> &set) {
   for (const auto &node_index : manager->node_users()[cnode]) {
     auto output = node_index.first;
+    MS_EXCEPTION_IF_NULL(output);
     if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimTupleGetItem)) {
       if (CheckOP(manager, output, set)) {
         return true;

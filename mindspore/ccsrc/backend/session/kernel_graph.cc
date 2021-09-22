@@ -76,6 +76,7 @@ std::vector<AnfNodePtr> GetCallRealOutputs(const AnfNodePtr &call_node) {
   std::vector<AnfNodePtr> real_inputs;
   auto child_graphs = AnfAlgo::GetCallSwitchKernelGraph(node->cast<CNodePtr>());
   for (const auto &child_graph : child_graphs) {
+    MS_EXCEPTION_IF_NULL(child_graph);
     auto real_input = child_graph->output();
     auto child_real_inputs = GetCallRealOutputs(real_input);
     std::copy(child_real_inputs.begin(), child_real_inputs.end(), std::back_inserter(real_inputs));
@@ -138,11 +139,13 @@ std::string GetNodeGroup(const AnfNodePtr &node) {
 }  // namespace
 
 AnfNodePtr KernelGraph::MakeValueNode(const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
   auto value_node = node->cast<ValueNodePtr>();
   if (value_node == nullptr) {
     return nullptr;
   }
   ValueNodePtr new_value_node = std::make_shared<ValueNode>(value_node->value());
+  MS_EXCEPTION_IF_NULL(new_value_node);
   new_value_node->set_abstract(value_node->abstract());
   this->SetKernelInfoForNode(new_value_node);
   return new_value_node;
@@ -331,7 +334,7 @@ void KernelGraph::GetLoopNodesByDFS(const AnfNodePtr &node, uint32_t *loop_num) 
     return;
   }
   (void)visited_nodes_.insert(node);
-  for (auto input_edge : node_input_edges_[node]) {
+  for (auto &input_edge : node_input_edges_[node]) {
     size_t input_num = node_input_num_[input_edge.first];
     if (input_num == 0) {
       continue;
@@ -366,9 +369,9 @@ void KernelGraph::GetLoopNodesByDFS(const AnfNodePtr &node, uint32_t *loop_num) 
   }
 }
 
-uint32_t KernelGraph::GetLoopNum(std::map<AnfNodePtr, size_t> none_zero_nodes) {
+uint32_t KernelGraph::GetLoopNum(const std::map<AnfNodePtr, size_t> &none_zero_nodes) {
   uint32_t loop_num = 0;
-  for (auto iter : none_zero_nodes) {
+  for (auto &iter : none_zero_nodes) {
     auto node = iter.first;
     MS_EXCEPTION_IF_NULL(node);
     if (node_input_num_[node] == 0) {
@@ -477,12 +480,14 @@ void KernelGraph::ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const {
                       << cnode->DebugString();
   }
   auto input_node = AnfAlgo::GetInputNode(cnode, 0);
+  MS_EXCEPTION_IF_NULL(input_node);
   auto assign_value_node = AnfAlgo::GetInputNode(cnode, 1);
   if (AnfAlgo::IsFeatureMapOutput(input_node)) {
     return;
   }
   if (!AnfAlgo::IsFeatureMapOutput(input_node) && AnfAlgo::IsFeatureMapOutput(assign_value_node)) {
     auto kernel_info = dynamic_cast<device::KernelInfo *>(input_node->kernel_info());
+    MS_EXCEPTION_IF_NULL(kernel_info);
     kernel_info->set_feature_map_flag(true);
   }
 }
@@ -490,6 +495,7 @@ void KernelGraph::ResetAssignInputFeatureMapFlag(const CNodePtr &cnode) const {
 void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
   node->set_kernel_info(kernel_info);
   if (node->isa<CNode>()) {
     if (kOpAssignKernelNameList.find(AnfAlgo::GetCNodeName(node)) != kOpAssignKernelNameList.end()) {
@@ -520,6 +526,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     return;
   }
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
   // set the format of value_node to DEFAULT_FORMAT
   std::vector<TypeId> types;
   std::vector<std::string> formats = {kOpFormat_DEFAULT};
@@ -589,6 +596,7 @@ ValueNodePtr KernelGraph::NewValueNode(const AbstractBasePtr &abstract, const Va
   MS_EXCEPTION_IF_NULL(abstract);
   MS_EXCEPTION_IF_NULL(value);
   ValueNodePtr new_value_node = std::make_shared<ValueNode>(value);
+  MS_EXCEPTION_IF_NULL(new_value_node);
   new_value_node->set_abstract(abstract);
   SetKernelInfoForNode(new_value_node);
   AnfAlgo::SetGraphId(graph_id(), new_value_node.get());
@@ -610,7 +618,7 @@ ValueNodePtr KernelGraph::NewValueNode(const tensor::TensorPtr &input_tensor) {
   return input_value_node;
 }
 
-AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr abstract, const ValuePtr &value) {
+AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr &abstract, const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(abstract);
   MS_EXCEPTION_IF_NULL(value);
   if (!abstract->isa<abstract::AbstractTuple>()) {
@@ -632,6 +640,7 @@ AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr abstract, cons
     make_tuple_inputs.push_back(TransValueNodeTuple((*tuple_abstract)[index], (*value_tuple)[index]));
   }
   auto make_tuple = NewCNode(make_tuple_inputs);
+  MS_EXCEPTION_IF_NULL(make_tuple);
   make_tuple->set_abstract(tuple_abstract);
   return make_tuple;
 }
@@ -721,6 +730,7 @@ void KernelGraph::FrontBackendlMapAdd(const AnfNodePtr &front_anf, const AnfNode
     auto front_node = front_anf->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(front_node);
     auto attr_input = front_node->input(kAnfPrimitiveIndex);
+    MS_EXCEPTION_IF_NULL(attr_input);
     if (!attr_input->isa<CNode>()) {
       MS_LOG(EXCEPTION) << "Kernel " << backend_anf->DebugString() << "has been exist in the backend_front_anf_map_";
     }
@@ -959,6 +969,7 @@ bool KernelGraph::IsLeafGraph() const { return child_graph_order_.empty(); }
 std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const PrimitivePtr &primitive) const {
   std::vector<CNodePtr> result;
   for (const auto &anf : execution_order_) {
+    MS_EXCEPTION_IF_NULL(anf);
     if (AnfAlgo::CheckPrimitiveType(anf, primitive) && AnfAlgo::GetGraphId(anf.get()) == graph_id_) {
       result.push_back(anf->cast<CNodePtr>());
     }
@@ -969,6 +980,7 @@ std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const PrimitivePtr &primi
 std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const std::vector<PrimitivePtr> &primitive_list) const {
   std::vector<CNodePtr> result;
   for (const auto &anf : execution_order_) {
+    MS_EXCEPTION_IF_NULL(anf);
     for (const auto &primitive : primitive_list) {
       if (AnfAlgo::CheckPrimitiveType(anf, primitive) && AnfAlgo::GetGraphId(anf.get()) == graph_id_) {
         result.push_back(anf->cast<CNodePtr>());
@@ -1310,6 +1322,7 @@ void KernelGraph::UpdateChildGraphOrder() {
 }
 
 void KernelGraph::RemoveNodeFromGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
   if (backend_front_anf_map_.find(node) != backend_front_anf_map_.end()) {
     auto front_node = backend_front_anf_map_[node];
     (void)backend_front_anf_map_.erase(node);

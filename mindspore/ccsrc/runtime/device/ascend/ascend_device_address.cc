@@ -239,6 +239,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
 }
 
 std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *host_shape) const {
+  MS_EXCEPTION_IF_NULL(host_shape);
   std::vector<size_t> device_shape;
   auto node_index = GetNodeIndex();
   if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW) {
@@ -504,6 +505,7 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     std::string path = filepath + '.' + host_fmt;
     MS_LOG(INFO) << "E2E Dump path is " << path;
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
+    MS_EXCEPTION_IF_NULL(out_tensor);
     size_t host_size = out_tensor->data().nbytes();
     ret = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
     if (!ret) {
@@ -531,17 +533,21 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
                                         const ShapeVector &host_shape, TypeId host_type, size_t slot,
                                         bool keep_prev) const {
   bool ret = false;
-  if (Debugger::GetInstance()->TensorExistsInCurrent(tensor_name)) {
+  auto debugger = Debugger::GetInstance();
+  MS_EXCEPTION_IF_NULL(debugger);
+  if (debugger->TensorExistsInCurrent(tensor_name)) {
     MS_LOG(INFO) << tensor_name << " already loaded for this step so not loading it again.";
     return true;
   }
   // TensorData is freed up in AscendSession class
   auto tensor_data = std::make_shared<mindspore::TensorData>();
+  MS_EXCEPTION_IF_NULL(tensor_data);
   tensor_data->SetName(tensor_name);
   tensor_data->SetExecutionOrder(execution_order);
   tensor_data->SetSlot(slot);
 
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
+  MS_EXCEPTION_IF_NULL(out_tensor);
   size_t host_size = out_tensor->data().nbytes();
   auto ret_sync = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
   if (!ret_sync) {
@@ -554,7 +560,7 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   tensor_data->SetByteSize(LongToSize(out_tensor->data().nbytes()));
   tensor_data->SetType((unsigned int)host_type);
   tensor_data->SetShape(out_tensor->shape());
-  ret = Debugger::GetInstance()->LoadNewTensor(tensor_data, keep_prev);
+  ret = debugger->LoadNewTensor(tensor_data, keep_prev);
   return ret;
 }
 #endif

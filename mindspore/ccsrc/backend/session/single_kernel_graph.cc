@@ -27,6 +27,7 @@ std::shared_ptr<session::KernelGraph> SingleKernelGraph::ConstructKernelGraphBas
   const std::string &op_name, const std::vector<TypeId> &input_dtypes, const std::vector<ShapeVector> &input_shapes,
   const std::vector<TypeId> &output_dtypes, const std::vector<std::vector<size_t>> &output_shapes) {
   auto graph = std::make_shared<session::KernelGraph>();
+  MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> inputs;
   // set input[0]
   PrimitivePtr op_prim = std::make_shared<Primitive>(op_name);

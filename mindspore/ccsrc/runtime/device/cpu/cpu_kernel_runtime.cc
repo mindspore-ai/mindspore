@@ -380,6 +380,7 @@ void CPUKernelRuntime::BindOutputTensorAddressPtr(const VectorRef *outputs) {
 void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
                                        VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(outputs);
   BindInputTensorAddressPtr(*kernel_graph, inputs);
   BindOutputTensorAddressPtr(outputs);
 }
