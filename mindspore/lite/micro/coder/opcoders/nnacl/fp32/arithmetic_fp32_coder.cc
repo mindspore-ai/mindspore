@@ -93,7 +93,7 @@ int ArithmeticFP32Coder::ReSize(CoderContext *const context) {
   if (arithmetic_parameter_->broadcasting_) {
     outside_ = 1;
     int resize_n_index = static_cast<int>(arithmetic_parameter_->ndim_) - 1;
-    if (resize_n_index < 0 || resize_n_index >= 10) {
+    if (resize_n_index < 0 || resize_n_index >= static_cast<int>(max_dims_)) {
       return RET_ERROR;
     }
     for (auto i = resize_n_index; i >= 0; --i) {
@@ -149,7 +149,7 @@ bool ArithmeticFP32Coder::IsBatchScalarCalc() {
     return false;
   }
   size_t break_axis = 0;
-  MS_CHECK_TRUE_RET(arithmetic_parameter_->ndim_ <= 10, false);
+  MS_CHECK_TRUE_RET(arithmetic_parameter_->ndim_ <= max_dims_, false);
   for (size_t i = 0; i < arithmetic_parameter_->ndim_; i++) {
     if (arithmetic_parameter_->in_shape0_[i] != arithmetic_parameter_->in_shape1_[i]) {
       break_axis = i;
@@ -250,6 +250,7 @@ int ArithmeticFP32Coder::Prepare(CoderContext *const context) {
   MS_CHECK_RET_CODE(CheckDataType(), "ArithmeticFP32Coder check datatype fail");
   MS_CHECK_PTR(parameter_);
   arithmetic_parameter_ = reinterpret_cast<ArithmeticParameter *>(parameter_);
+  max_dims_ = sizeof(arithmetic_parameter_->in_shape0_) / sizeof(int);
   auto primitive_type = arithmetic_parameter_->op_parameter_.type_;
   if (primitive_type == schema::PrimitiveType_Eltwise) {
     switch (arithmetic_parameter_->eltwise_mode_) {

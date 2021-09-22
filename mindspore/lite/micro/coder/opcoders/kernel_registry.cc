@@ -34,5 +34,4 @@ std::string KernelRegistry::GenKernelInterface(const char *func, const char *par
   return "int " + std::string(func) + "(TensorC *inputs, int input_num, TensorC *outputs, int output_num, " +
          std::string(param) + " *param);";
 }
-
 }  // namespace mindspore::lite::micro

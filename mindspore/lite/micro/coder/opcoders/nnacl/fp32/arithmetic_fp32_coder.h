@@ -133,6 +133,8 @@ class ArithmeticFP32Coder final : public OperatorCoder {
 
   int data_type_len_{0};
 
+  size_t max_dims_{10};
+
   bool input0_broadcast_{false};
 
   bool input1_broadcast_{false};
