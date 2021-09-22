@@ -390,13 +390,17 @@ class RNN(_RNNBase):
           shape (seq_len, batch_size, `input_size`) or (batch_size, seq_len, `input_size`).
         - **hx** (Tensor) - Tensor of data type mindspore.float32 and
           shape (num_directions * `num_layers`, batch_size, `hidden_size`). Data type of `hx` must be the same as `x`.
-        - **seq_length** (Tensor) - The length of each batch.
+        - **seq_length** (Tensor) - The length of each sequence in a input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: None.
+          This input indicates the real sequence length before padding to avoid padded elements
+          have been used to compute hidden state and affect the final output. It is recommend to
+          use this input when **x** has padding elements.
 
     Outputs:
         Tuple, a tuple contains (`output`, `h_n`).
 
-        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
+        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`) or
+          (batch_size, seq_len, num_directions * `hidden_size`).
         - **hx_n** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
 
     Raises:
@@ -479,13 +483,17 @@ class GRU(_RNNBase):
           shape (seq_len, batch_size, `input_size`) or (batch_size, seq_len, `input_size`).
         - **hx** (Tensor) - Tensor of data type mindspore.float32 and
           shape (num_directions * `num_layers`, batch_size, `hidden_size`). Data type of `hx` must be the same as `x`.
-        - **seq_length** (Tensor) - The length of each batch.
+        - **seq_length** (Tensor) - The length of each sequence in a input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: None.
+          This input indicates the real sequence length before padding to avoid padded elements
+          have been used to compute hidden state and affect the final output. It is recommend to
+          use this input when **x** has padding elements.
 
     Outputs:
         Tuple, a tuple contains (`output`, `h_n`).
 
-        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
+        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`) or
+          (batch_size, seq_len, num_directions * `hidden_size`).
         - **hx_n** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
 
     Raises:
@@ -550,7 +558,7 @@ class RNNCell(_RNNCellBase):
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.
         has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
-        nonlinearity (str): The non-linearity to use. Can be either ``'tanh'`` or ``'relu'``. Default: ``'tanh'``
+        nonlinearity (str): The non-linearity to use. Can be either `tanh` or `relu`. Default: `tanh`.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape (batch_size, `input_size`).
@@ -561,7 +569,7 @@ class RNNCell(_RNNCellBase):
         - **h'** (Tensor) - Tensor of shape (batch_size, `hidden_size`).
 
     Raises:
-        TypeError: If `input_size`, `hidden_size` is not an int.
+        TypeError: If `input_size` or `hidden_size` is not an int or not great than 0.
         TypeError: If `has_bias` is not a bool.
         ValueError: If `nonlinearity` is not in ['tanh', 'relu'].
 
