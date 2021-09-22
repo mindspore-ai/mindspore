@@ -518,11 +518,12 @@ def get_bprop_erf(self):
     sqrt = P.Sqrt()
     cast = P.Cast()
     dtype = P.DType()
+    neg = P.Neg()
 
     def bprop(x, out, dout):
         half_root_pi = cast(2 / sqrt(F.scalar_to_tensor(np.pi)), dtype(x))
         x_square = square(x)
-        dx = dout * half_root_pi * exp(-x_square)
+        dx = dout * half_root_pi * exp(neg(x_square))
         return (dx,)
 
     return bprop
@@ -536,11 +537,12 @@ def get_bprop_erfc(self):
     sqrt = P.Sqrt()
     cast = P.Cast()
     dtype = P.DType()
+    neg = P.Neg()
 
     def bprop(x, out, dout):
         half_root_pi = cast(2 / sqrt(F.scalar_to_tensor(np.pi)), dtype(x))
         x_square = square(x)
-        dx = dout * (-half_root_pi * exp(-x_square))
+        dx = dout * (neg(half_root_pi) * exp(neg(x_square)))
         return (dx,)
     return bprop
 
@@ -796,6 +798,26 @@ def get_bprop_reduce_mean(self):
 @bprop_getters.register(P.IsFinite)
 def get_bprop_isfinite(self):
     """Grad definition for `IsFinite` operation."""
+
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
+
+    return bprop
+
+
+@bprop_getters.register(P.IsNan)
+def get_bprop_isnan(self):
+    """Grad definition for `IsNan` operation."""
+
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
+
+    return bprop
+
+
+@bprop_getters.register(P.IsInf)
+def get_bprop_isinf(self):
+    """Grad definition for `IsInf` operation."""
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
