@@ -193,7 +193,7 @@ void DumpJsonParser::CopyMSCfgJsonToDir(uint32_t rank_id) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     ms_info["device_target"] = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    ms_info["ms_version"] = "1.5.0";
+    ms_info["ms_version"] = MSVERSION;
     const std::string file_path = realpath.value();
     ChangeFileMode(file_path, S_IWUSR);
     std::ofstream json_create(file_path);

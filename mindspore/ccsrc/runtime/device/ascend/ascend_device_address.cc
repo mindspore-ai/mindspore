@@ -492,6 +492,7 @@ void AscendDeviceAddress::ClearDeviceMemory() {
 
 AscendDeviceAddress::~AscendDeviceAddress() { ClearDeviceMemory(); }
 
+#ifndef ENABLE_SECURITY
 bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &host_fmt,
                                         const ShapeVector &host_shape, TypeId host_type, bool trans_flag) const {
   bool ret = false;
@@ -509,9 +510,7 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
       MS_LOG(ERROR) << "Copy device mem to host failed";
       return ret;
     }
-#ifndef ENABLE_SECURITY
     ret = DumpJsonParser::DumpToFile(path, out_tensor->data_c(), host_size, host_shape, host_type);
-#endif
   } else {
     auto host_tmp = std::vector<uint8_t>(size_);
     auto ret_rt_memcpy = rtMemcpy(host_tmp.data(), size_, ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
@@ -520,13 +519,12 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     }
     std::string path = filepath + '.' + format_;
     MS_LOG(INFO) << "E2E Dump path is " << path;
-#ifndef ENABLE_SECURITY
     ret = DumpJsonParser::DumpToFile(path, host_tmp.data(), size_, host_shape, type_id_);
-#endif
   }
 
   return ret;
 }
+#endif
 
 #ifdef ENABLE_DEBUGGER
 bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &,

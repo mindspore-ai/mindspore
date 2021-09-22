@@ -1529,17 +1529,17 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
   }
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  if (is_task && is_task_sink) {
 #ifndef ENABLE_SECURITY
+  if (is_task && is_task_sink) {
     DumpSetup(kernel_graph);
-#endif
   }
+#endif
   bool ret_ok = runtime_instance->Run(*kernel_graph, is_task_sink);
-  if (is_task && is_task_sink) {
 #ifndef ENABLE_SECURITY
+  if (is_task && is_task_sink) {
     Dump(kernel_graph);
-#endif
   }
+#endif
   if (!ret_ok) {
 #ifdef ENABLE_DUMP_IR
     mindspore::RDR::TriggerAll();

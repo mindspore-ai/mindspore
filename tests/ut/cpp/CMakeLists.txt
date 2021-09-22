@@ -14,6 +14,9 @@ if(NOT ENABLE_GLIBCXX)
     add_compile_definitions(_GLIBCXX_USE_CXX11_ABI=0)
 endif()
 
+file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" MSVERSION)
+add_definitions(-DMSVERSION=\"${MSVERSION}\")
+
 #add python lib and include for all ut executables;
 message("PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 message("PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
