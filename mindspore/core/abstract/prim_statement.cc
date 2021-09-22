@@ -34,7 +34,7 @@ AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
   return abs_base;
 }
 
-AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &prim,
+AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
                                 const AbstractBasePtrList &args_spec_list) {
   // Inputs: condition, true branch, false branch
   if (args_spec_list.size() != 3) {
@@ -187,7 +187,7 @@ AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractScalar>(!IsInDict(primitive, args_spec_list));
 }
 
-AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePtr &,
                                     const AbstractBasePtrList &args_spec_list) {
   // statement: isconstant(x)
   // Inputs: x

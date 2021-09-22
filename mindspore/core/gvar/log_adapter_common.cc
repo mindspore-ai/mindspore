@@ -54,9 +54,7 @@ static const std::vector<std::string> sub_module_names = {
   "GE",                 // SM_GE
 };
 
-const std::string GetSubModuleName(SubModuleId module_id) {
-  return sub_module_names[static_cast<size_t>(module_id % NUM_SUBMODUES)];
-}
+const std::string GetSubModuleName(SubModuleId module_id) { return sub_module_names[(module_id % NUM_SUBMODUES)]; }
 
 // export GetTimeString for all sub modules
 std::string GetTimeString() {
