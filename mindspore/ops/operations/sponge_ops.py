@@ -2966,11 +2966,12 @@ class FFT3D(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Inputs:
-        - **input_tensor** (Tensor, float32) - [fftx, ffty, fftz]
+        - **input_tensor** (Tensor) - Three dimensional tensor, supported
+          data type is float32.
 
     Outputs:
-        - **output_tensor** (complex64) - The real part of the output tensor after
-          undergoing fast Fourier transform.
+        - **output_tensor** (Tensor) - The tensor after undergoing fast Fourier
+          transform, the data type is complex64.
 
     Supported Platforms:
         ``GPU``
@@ -2992,6 +2993,7 @@ class FFT3D(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('input_tensor', input_dtype, [mstype.float32], self.name)
         return mstype.complex64
 
+
 class IFFT3D(PrimitiveWithInfer):
     """
     Inverse FFT with Three-Dimensional Input.
@@ -3000,11 +3002,12 @@ class IFFT3D(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Inputs:
-        - **input_tensor** (Tensor, complex64) - [fftx, ffty, fftz]
+        - **input_tensor** (Tensor) - Three dimensional input tensor, supported data
+          type is complex64.
 
     Outputs:
-        - **output_tensor** (float32) - returns the tensor after undergoing
-          inverse Fourier transform.
+        - **output_tensor** (Tensor) - Returns the tensor after undergoing
+          inverse Fourier transform, the data type is float32.
 
     Supported Platforms:
         ``GPU``
@@ -3025,6 +3028,7 @@ class IFFT3D(PrimitiveWithInfer):
     def infer_dtype(self, input_dtype):
         validator.check_tensor_dtype_valid('input_tensor', input_dtype, [mstype.complex64], self.name)
         return mstype.float32
+
 
 class NeighborListUpdate(PrimitiveWithInfer):
     """
