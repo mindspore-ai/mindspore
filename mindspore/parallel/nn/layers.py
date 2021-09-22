@@ -147,6 +147,11 @@ class _LayerNorm(Cell):
         super(_LayerNorm, self).__init__()
         if param_init_type not in [mstype.float32, mstype.float16]:
             raise TypeError(f"param type should in [float32, float16], but found type {type(param_init_type)}")
+        if normalized_shape[0] <= 1024:
+            self.layer_norm = P.LayerNorm(begin_norm_axis=-1,
+                                          begin_params_axis=-1,
+                                          epsilon=eps)
+        self.is_self_defined = normalized_shape[0] > 1024
         self.gamma = Parameter(initializer('ones', normalized_shape, param_init_type), name="gamma",
                                parallel_optimizer=False)
         self.beta = Parameter(initializer('zeros', normalized_shape, param_init_type), name="beta",
@@ -166,12 +171,15 @@ class _LayerNorm(Cell):
         r"""
           x : batch x seq_length x hidden_size
         """
-        mean = self.mean(x, -1)
-        diff = self.sub1(x, mean)
-        variance = self.mean(self.square(diff), -1)
-        variance_eps = self.sqrt(self.add(variance, self.eps))
-        output = self.real_div(diff, variance_eps)
-        output = self.add2(self.mul(output, self.gamma), self.beta)
+        if self.is_self_defined:
+            mean = self.mean(x, -1)
+            diff = self.sub1(x, mean)
+            variance = self.mean(self.square(diff), -1)
+            variance_eps = self.sqrt(self.add(variance, self.eps))
+            output = self.real_div(diff, variance_eps)
+            output = self.add2(self.mul(output, self.gamma), self.beta)
+        else:
+            output, _, _ = self.layer_norm(x, self.gamma, self.beta)
         return output
 
     def shard(self, strategy):
@@ -188,15 +196,18 @@ class _LayerNorm(Cell):
             >>> net = mindspore.parallel.nn.transformer.LayerNorm(normalized_shape=(1024, 10))
             >>> net.shard(((10, 2, 1),))
         """
-        self.mean.shard(strategy)
-        self.square.shard(strategy)
-        self.sqrt.shard(strategy)
-        self.sub1.shard((strategy[0], strategy[0]))
-        self.sub2.shard((strategy[0], strategy[0]))
-        self.add.shard((strategy[0], ()))
-        self.mul.shard((strategy[0], (1,)))
-        self.add2.shard((strategy[0], (1,)))
-        self.real_div.shard((strategy[0], strategy[0]))
+        if self.is_self_defined:
+            self.mean.shard(strategy)
+            self.square.shard(strategy)
+            self.sqrt.shard(strategy)
+            self.sub1.shard((strategy[0], strategy[0]))
+            self.sub2.shard((strategy[0], strategy[0]))
+            self.add.shard((strategy[0], ()))
+            self.mul.shard((strategy[0], (1,)))
+            self.add2.shard((strategy[0], (1,)))
+            self.real_div.shard((strategy[0], strategy[0]))
+        else:
+            self.layer_norm.shard((strategy[0], (1,), (1,)))
 
         return self
 
