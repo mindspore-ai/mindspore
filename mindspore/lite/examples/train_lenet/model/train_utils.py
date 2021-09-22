@@ -18,6 +18,7 @@ import mindspore.nn as nn
 from mindspore.common.parameter import ParameterTuple
 from mindspore import amp
 
+
 def train_wrap(net, loss_fn=None, optimizer=None, weights=None, loss_scale_manager=None):
     """
     train_wrap
