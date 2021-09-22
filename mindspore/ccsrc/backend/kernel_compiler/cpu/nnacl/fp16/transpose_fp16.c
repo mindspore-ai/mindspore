@@ -175,6 +175,11 @@ void Fp16TransposeDim6(const float16_t *in_data, float16_t *out_data, const int 
 
 void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
                        const TransposeParameter *param, int task_id, int thread_num) {
+  NNACL_CHECK_NULL_RETURN_VOID(in_data);
+  NNACL_CHECK_NULL_RETURN_VOID(out_data);
+  NNACL_CHECK_NULL_RETURN_VOID(output_shape);
+  NNACL_CHECK_NULL_RETURN_VOID(param);
+  NNACL_CHECK_ZERO_RETURN(thread_num);
   const int *perm = param->perm_;
   const int *strides = param->strides_;
   const int *out_strides = param->out_strides_;
@@ -192,6 +197,7 @@ void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int 
     int output_idx = 0;
     int input_idx = 0;
     for (int i = 0; i < num_axes; ++i) {
+      NNACL_CHECK_ZERO_RETURN(*(out_strides + i));
       int position = pos / *(out_strides + i);
       int out_stride = i < num_axes - 1 ? out_strides[i] : 1;
       output_idx += (position * out_stride);
@@ -204,9 +210,10 @@ void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int 
 
 int DoTransposeFp16(const float16_t *in_data, float16_t *out_data, const int *output_shape,
                     const TransposeParameter *param) {
-  if (in_data == NULL || out_data == NULL) {
-    return NNACL_ERR;
-  }
+  NNACL_CHECK_NULL_RETURN_ERR(in_data);
+  NNACL_CHECK_NULL_RETURN_ERR(out_data);
+  NNACL_CHECK_NULL_RETURN_ERR(output_shape);
+  NNACL_CHECK_NULL_RETURN_ERR(param);
   const int *perm = param->perm_;
   const int *strides = param->strides_;
   const int *out_strides = param->out_strides_;

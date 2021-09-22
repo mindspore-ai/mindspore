@@ -19,11 +19,17 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kUnpackInputsNum = 1;
+constexpr size_t kUnpackOutputsMinNum = 1;
+constexpr size_t kUnpackWorkspaceMinNum = 1;
+}  // namespace
+
 template <typename T>
 void UnpackCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
-  int64_t axis_tmp = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis");
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  int64_t axis_tmp = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (axis_tmp < 0) {
     axis_tmp += SizeToLong(input_shape.size());
@@ -44,7 +50,6 @@ void UnpackCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
       unstack_param_.axis_dim_ = SizeToInt(input_shape[i]);
     }
   }
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 
 template <typename T>
@@ -57,6 +62,10 @@ template <typename T>
 bool UnpackCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> &workspace,
                                 const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnpackInputsNum, kernel_name_);
+  if (outputs.size() < kUnpackOutputsMinNum || workspace.size() < kUnpackWorkspaceMinNum) {
+    MS_LOG(EXCEPTION) << "unpack error output or workspace size.";
+  }
   LaunchKernel(inputs, workspace, outputs);
   return true;
 }
@@ -69,18 +78,9 @@ void UnpackCPUKernel<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
   void **outputs_host = reinterpret_cast<void **>(workspace[0]->addr);
   for (size_t i = 0; i < outputs.size(); i++) {
     outputs_host[i] = reinterpret_cast<T *>(outputs[i]->addr);
-    MS_EXCEPTION_IF_NULL(outputs_host[i]);
   }
   int data_size = SizeToInt(sizeof(T));
   Unstack(input, outputs_host, &unstack_param_, data_size);
-}
-
-template <typename T>
-void UnpackCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but UnpackCPUKernel needs 1 input.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

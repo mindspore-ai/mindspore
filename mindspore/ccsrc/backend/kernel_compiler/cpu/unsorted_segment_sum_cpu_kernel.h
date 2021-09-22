@@ -35,8 +35,6 @@ class UnsortedSegmentSumCPUKernel : public CPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-  template <typename S, typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
  private:
   TypeId dtype_{kTypeUnknown};
@@ -46,6 +44,7 @@ class UnsortedSegmentSumCPUKernel : public CPUKernel {
   size_t output_dim0_{1};
   size_t output_dim1_{1};
 };
+
 MS_REG_CPU_KERNEL(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),

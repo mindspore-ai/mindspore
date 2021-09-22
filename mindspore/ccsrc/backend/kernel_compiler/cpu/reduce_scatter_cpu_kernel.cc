@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/reduce_scatter_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "runtime/device/cpu/mpi/mpi_interface.h"
@@ -22,12 +23,15 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr auto kRanksGroup = "group";
+constexpr size_t kReduceScatterInputsNum = 1;
+constexpr size_t kReduceScatterOutputsNum = 1;
 }  // namespace
 
 ReduceScatterCPUKernel::ReduceScatterCPUKernel() : op_type_(kMPIOpTypeSum) {}
 
 void ReduceScatterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto primitive = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(primitive);
   auto op = primitive->GetAttr("op");
@@ -46,8 +50,10 @@ void ReduceScatterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool ReduceScatterCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReduceScatterInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReduceScatterOutputsNum, kernel_name_);
+  auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   auto output_data_num = outputs[0]->size / sizeof(float);
   return MPIReduceScatter(input_addr, output_addr, ranks_group_, output_data_num, op_type_);
 }

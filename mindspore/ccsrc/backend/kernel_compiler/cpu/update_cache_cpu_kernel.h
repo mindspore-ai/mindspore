@@ -35,18 +35,17 @@ class UpdateCacheCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
- private:
   size_t batch_size_{1};
   int64_t update_size_{1};
   size_t step_{0};
   size_t update_length_{1};
-  int64_t max_num_ = 99999999;
   TypeId input_x_dtype_{kTypeUnknown};
   TypeId indices_dtype_{kTypeUnknown};
-  size_t input_x_dtype_size_ = 4;
+  size_t input_x_dtype_size_{4};
   CNodeWeakPtr node_wpt_;
 };
 

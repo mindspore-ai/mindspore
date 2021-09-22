@@ -42,7 +42,6 @@ class FusedPushWeightKernel : public CPUKernel {
     if (inputs.size() != weight_full_names_.size()) {
       MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but FusedPushWeightKernel needs "
                         << weight_full_names_.size() << " weights as inputs.";
-      return false;
     }
 
     std::shared_ptr<fl::FBBuilder> fbb = std::make_shared<fl::FBBuilder>();
@@ -65,7 +64,6 @@ class FusedPushWeightKernel : public CPUKernel {
     MS_LOG(INFO) << "Launching pushing weight for federated learning iteration " << fl_iteration_;
     if (!BuildPushWeightReq(fbb, inputs)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPushWeight failed.";
-      return false;
     }
 
     // The server number may change after scaling in/out.
@@ -97,13 +95,11 @@ class FusedPushWeightKernel : public CPUKernel {
                         << ". Retry later.";
           if (!BuildPushWeightReq(fbb, inputs)) {
             MS_LOG(EXCEPTION) << "Building request for FusedPushWeight failed.";
-            return false;
           }
           continue;
         } else if (retcode != schema::ResponseCode_SUCCEED) {
           MS_LOG(EXCEPTION) << "FusedPushWeight failed. Server return code: " << push_weight_rsp->retcode()
                             << ", reason: " << push_weight_rsp->reason()->str();
-          return false;
         } else {
           MS_LOG(DEBUG) << "FusedPushWeight succeed.";
         }
@@ -132,7 +128,6 @@ class FusedPushWeightKernel : public CPUKernel {
       MS_LOG(EXCEPTION)
         << "Attributes of FusedPushWeightKernel are invalid: server number is 0 or weight_full_names_ is "
            "empty or indices_ is UINT32_MAX.";
-      return;
     }
 
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);

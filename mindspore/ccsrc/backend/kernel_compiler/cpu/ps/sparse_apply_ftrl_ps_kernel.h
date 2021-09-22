@@ -46,7 +46,7 @@ class SparseApplyFtrlPSKernel : public SparseApplyFtrlCPUKernel, public PServerK
 
  protected:
   void ReInit(const std::vector<AddressPtr> &) override;
-  float init_accum_;
+  float init_accum_{0.1};
 };
 }  // namespace ps
 }  // namespace kernel

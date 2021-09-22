@@ -17,6 +17,9 @@
 #include "nnacl/base/unstack_base.h"
 
 void Unstack(const void *input, void **output, const UnstackParameter *para, int data_size) {
+  NNACL_CHECK_NULL_RETURN_VOID(input);
+  NNACL_CHECK_NULL_RETURN_VOID(output);
+  NNACL_CHECK_NULL_RETURN_VOID(para);
   const int8_t *in_addr = (int8_t *)input;
   for (int j = 0; j < para->num_; j++) {
     int8_t *out_addr = (int8_t *)output[j];

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/slice_grad_cpu_kernel.h"
 #include <algorithm>
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -20,11 +21,22 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kSliceGradInputsNum = 2;
+constexpr size_t kStridedSliceGradInputsNum = 1;
+constexpr size_t kOutputsNum = 1;
+}  // namespace
+
 void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (input_shape.empty() || input_shape.size() > 4) {
+    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but SliceGradGpuKernel only support 1-4D.";
+  }
+
   std::vector<int64_t> begin_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
   (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
                        [](const int64_t &value) { return LongToInt(value); });
@@ -51,6 +63,7 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     }
     FormatArgs(false);
   }
+
   ExpandAllMemberDims();
   CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
@@ -60,10 +73,10 @@ void SliceGradCPUKernel::ExpandAllMemberDims() {
   auto output_len = output_shape_.size();
   if (output_len < 4) {
     for (size_t i = 0; i < 4 - output_len; ++i) {
-      output_shape_.insert(output_shape_.begin(), 1);
-      begin_.insert(begin_.begin(), 0);
-      strides_.insert(strides_.begin(), 1);
-      end_.insert(end_.begin(), 1);
+      (void)output_shape_.insert(output_shape_.begin(), 1);
+      (void)begin_.insert(begin_.begin(), 0);
+      (void)strides_.insert(strides_.begin(), 1);
+      (void)end_.insert(end_.begin(), 1);
     }
   }
   for (size_t i = 0; i < 4; ++i) {
@@ -79,7 +92,12 @@ void SliceGradCPUKernel::ExpandAllMemberDims() {
 
 bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
-  bool ret{true};
+  size_t expect_inputs_num =
+    kernel_name_ == prim::kPrimSliceGrad->name() ? kSliceGradInputsNum : kStridedSliceGradInputsNum;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), expect_inputs_num, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+
+  bool ret = true;
   if (dtype_ == kNumberTypeInt32) {
     ret = LaunchKernel<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -96,9 +114,9 @@ bool SliceGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 
 template <typename T>
 bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                      const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+                                      const std::vector<kernel::AddressPtr> &outputs) const {
+  auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
   auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
@@ -113,16 +131,17 @@ bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   size_t out_step_size[3] = {IntToSize(strides_[0]) * output_element_num_[0],
                              IntToSize(strides_[1]) * output_element_num_[1],
                              IntToSize(strides_[2]) * output_element_num_[2]};
-  auto in_n_offset = 0;
-  auto out_n_offset = out_start_offset[0];
+  size_t in_n_offset = 0;
+  size_t out_n_offset = out_start_offset[0];
+  size_t input_index = 0;
   for (int i = begin_[0]; stride_signs[0] * i < stride_signs[0] * end_[0];
        i += strides_[0], in_n_offset += input_element_num_[0], out_n_offset += out_step_size[0]) {
     if (can_copy_memory[0]) {
       CopyDataToOutput<T>(inputs, in_n_offset, outputs, out_n_offset, input_element_num_[0], 0);
       continue;
     }
-    auto in_c_offset = 0;
-    auto out_c_offset = out_start_offset[1];
+    size_t in_c_offset = 0;
+    size_t out_c_offset = out_start_offset[1];
     for (int j = begin_[1]; stride_signs[1] * j < stride_signs[1] * end_[1];
          j += strides_[1], in_c_offset += input_element_num_[1], out_c_offset += out_step_size[1]) {
       if (can_copy_memory[1]) {
@@ -130,8 +149,8 @@ bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
                             input_element_num_[1], 1);
         continue;
       }
-      auto in_h_offset = 0;
-      auto out_h_offset = out_start_offset[2];
+      size_t in_h_offset = 0;
+      size_t out_h_offset = out_start_offset[2];
       for (int k = begin_[2]; stride_signs[2] * k < stride_signs[2] * end_[2];
            k += strides_[2], in_h_offset += input_element_num_[2], out_h_offset += out_step_size[2]) {
         if (can_copy_memory[2]) {
@@ -140,7 +159,7 @@ bool SliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
           continue;
         }
         for (int m = begin_[3]; stride_signs[3] * m < stride_signs[3] * end_[3]; m += strides_[3]) {
-          output_addr[out_n_offset + out_c_offset + out_h_offset + IntToSize(m)] = *input_addr++;
+          output_addr[out_n_offset + out_c_offset + out_h_offset + IntToSize(m)] = input_addr[input_index++];
         }
       }
     }
@@ -221,20 +240,6 @@ void SliceGradCPUKernel::FormatArgs(bool stride) {
       (void)strides_.emplace_back(1);
       (void)end_.emplace_back(begin_[i] + size_[i]);
     }
-  }
-}
-
-void SliceGradCPUKernel::CheckParam(const CNodePtr &kernel_node) const {
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but SliceGradGpuKernel needs 1 output.";
-  }
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.size() > 4) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but SliceGradGpuKernel only support 4d or lower.";
-  }
-  if (input_shape.size() == 0) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", scalar is not supported.";
   }
 }
 }  // namespace kernel

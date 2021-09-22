@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_OPTIMIZER_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_OPTIMIZER_CPU_KERNEL_H_
 
@@ -63,6 +64,7 @@ struct MultiThreadComputeParams {
   size_t var_outer_dim_size_{0};
   bool use_nesterov_;
 };
+
 template <typename T>
 using MultiThreadComputeFunc = std::function<void(MultiThreadComputeParams<T> *param, size_t start, size_t end)>;
 
@@ -205,7 +207,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
     MS_LOG(DEBUG) << "Start";
     MS_EXCEPTION_IF_NULL(segment);
     MS_EXCEPTION_IF_NULL(segment->indices_);
-    if (param.thread_num_ < 1) {
+    if (param.thread_num_ == 0) {
       MS_EXCEPTION(ArgumentError) << "Input param thread num must > 0!";
     }
     std::vector<size_t> bucket_data_num(param.thread_num_, 0);

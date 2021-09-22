@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,10 @@ class UniqueWithPadCPUKernel : public UniqueCPUKernel {
   ~UniqueWithPadCPUKernel() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-  template <typename T>
-  void PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- protected:
-  void CheckParam(const CNodePtr &kernel_node) override;
+ private:
+  template <typename T>
+  void PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 };
 
 MS_REG_CPU_KERNEL(UniqueWithPad,

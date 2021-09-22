@@ -36,11 +36,10 @@ class ResizeNearestNeighborCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- private:
-  void CheckParam(const CNodePtr &kernel_node);
   TypeId dtype_{kTypeUnknown};
   bool align_corners_{false};
   size_t batch_size_{0};

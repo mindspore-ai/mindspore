@@ -22,14 +22,21 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kScatterNdUpdateInputsNum = 3;
+constexpr size_t kScatterNdUpdateOutputsNum = 1;
 constexpr size_t kMinIndiceRank = 2;
 
 template <typename T>
 void Compute(const ComputeParams<T> *params, const size_t start, const size_t end) {
+  MS_EXCEPTION_IF_NULL(params);
   T *x = params->x_;
   int *indices = params->indices_;
   T *updates = params->updates_;
   std::vector<int> *out_strides = params->out_strides_;
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(updates);
+  MS_EXCEPTION_IF_NULL(out_strides);
 
   for (int i = SizeToInt(start); i < SizeToInt(end); ++i) {
     int offset = 0;
@@ -51,7 +58,7 @@ void Compute(const ComputeParams<T> *params, const size_t start, const size_t en
 
 void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  Check(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto updates_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
@@ -93,6 +100,8 @@ void ScatterNdUpdateCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool ScatterNdUpdateCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterNdUpdateInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterNdUpdateOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -134,17 +143,6 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
   auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
-  }
-}
-
-void ScatterNdUpdateCPUKernel::Check(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 3) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but ScatterNdUpdate needs 3 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ScatterNdUpdate needs 1 output.";
   }
 }
 }  // namespace kernel

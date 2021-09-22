@@ -23,10 +23,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kInputNum = 4;
-constexpr size_t kOutputNum = 1;
-constexpr size_t kIndicesSizeNum = 2;
-constexpr size_t kIndices2rdDimNum = 2;
 template <typename I, typename T>
 class SparseTensorDenseMatmulCPUKernel : public CPUKernel {
  public:

@@ -21,6 +21,11 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kTopKInputsNum = 2;
+constexpr size_t kTopKOutputsNum = 2;
+}  // namespace
+
 template <typename T>
 void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
                                  const std::vector<AddressPtr> &outputs) {
@@ -87,8 +92,8 @@ void TopKCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
 void TopKCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (x_shape_.size() < 1) {
-    MS_LOG(EXCEPTION) << "Input shape size should not less than 1";
+  if (x_shape_.empty()) {
+    MS_LOG(EXCEPTION) << "Input shape is empty";
   }
   for (size_t i = 0; i < x_shape_.size() - 1; ++i) {
     outer_size_ *= x_shape_[i];
@@ -107,6 +112,8 @@ void TopKCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 bool TopKCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                            const std::vector<kernel::AddressPtr> &workspaces,
                            const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTopKInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTopKOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, workspaces, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {

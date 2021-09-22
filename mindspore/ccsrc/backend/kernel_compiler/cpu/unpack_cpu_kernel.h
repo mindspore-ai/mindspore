@@ -37,15 +37,14 @@ class UnpackCPUKernel : public CPUKernel {
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ private:
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
- protected:
-  virtual void CheckParam(const CNodePtr &kernel_node);
-  UnstackParameter unstack_param_;
+  UnstackParameter unstack_param_{};
   size_t output_num_{0};
-  TypeId dtype_{kTypeUnknown};
 };
 MS_REG_CPU_KERNEL_T(Unstack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),

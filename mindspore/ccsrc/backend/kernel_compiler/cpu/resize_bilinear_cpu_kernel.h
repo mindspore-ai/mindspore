@@ -36,11 +36,10 @@ class ResizeBilinearCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  template <typename T1, typename T2>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  template <typename T1, typename T2>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+
   TypeId dtype_{kTypeUnknown};
   bool align_corners_{false};
   float height_scale{1.0};
