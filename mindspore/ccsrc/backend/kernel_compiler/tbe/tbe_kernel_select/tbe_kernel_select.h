@@ -71,6 +71,7 @@ class TbeKernelSelect {
   CNodePtr cnode_ptr_;
   std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list_;
   std::string node_name_;
+  std::string full_name_;
 };
 }  // namespace kernel
 }  // namespace mindspore
