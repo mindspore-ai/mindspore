@@ -31,7 +31,6 @@
 using mindspore::kernel::CLErrorCode;
 
 namespace mindspore::registry::opencl {
-
 Status OpenCLRuntimeWrapper::LoadSource(const std::string &program_name, const std::string &source) {
   lite::opencl::OpenCLRuntimeInnerWrapper ocl_runtime_wrap;
   lite::opencl::OpenCLRuntime *ocl_runtime = ocl_runtime_wrap.GetInstance();
