@@ -552,7 +552,7 @@ class PReLU(Cell):
     Args:
         channel (int): The elements number of parameter.
           It could be an int, and the value is 1 or the channels number of input tensor `x`. Default: 1.
-        w (Union[float, list, Tensor): The initial value of parameter. It could be a float, a float list or
+        w (Union[float, list, Tensor]): The initial value of parameter. It could be a float, a float list or
           a tensor has the same dtype as the input tensor `x`. Default: 0.25.
 
     Inputs:

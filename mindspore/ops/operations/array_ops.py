@@ -625,7 +625,7 @@ class Squeeze(PrimitiveWithInfer):
     It `axis` is None, it will remove all the dimensions of size 1.
 
     Note:
-        The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
+        The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim)`.
 
     Args:
         axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
