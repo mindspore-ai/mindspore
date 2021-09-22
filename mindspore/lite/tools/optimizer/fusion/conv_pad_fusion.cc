@@ -227,6 +227,5 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
   ReplaceParamsAndNodes(func_graph, conv_cnode, pad_cnode, pattern_name);
   return nullptr;
 }
-
 }  // namespace opt
 }  // namespace mindspore
