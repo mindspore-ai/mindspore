@@ -221,7 +221,7 @@ int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_proc
       return RET_INPUT_PARAM_INVALID;
     }
     if (image_pre_process->resize_width <= 0 || image_pre_process->resize_width > 65535) {
-      MS_LOG(ERROR) << "resize_width must be in (0,65535].";
+      MS_LOG(ERROR) << "resize_width must be in [1, 65535].";
       return RET_INPUT_PARAM_INVALID;
     }
   }
@@ -231,13 +231,17 @@ int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_proc
       return RET_INPUT_PARAM_INVALID;
     }
     if (image_pre_process->resize_height <= 0 || image_pre_process->resize_height > 65535) {
-      MS_LOG(ERROR) << "resize_height must be in (0,65535].";
+      MS_LOG(ERROR) << "resize_height must be in [1, 65535].";
       return RET_INPUT_PARAM_INVALID;
     }
   }
 
   if (!data_pre_process_str.resize_method.empty()) {
     image_pre_process->resize_method = preprocess::ConvertResizeMethod(data_pre_process_str.resize_method);
+    if (image_pre_process->resize_method == cv::INTER_MAX) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: resize_method must be NEAREST|LINEAR|CUBIC.";
+      return RET_INPUT_PARAM_INVALID;
+    }
   }
   return RET_OK;
 }
@@ -249,7 +253,7 @@ int PreprocessParser::ParseImageCenterCrop(const DataPreProcessString &data_pre_
       return RET_INPUT_PARAM_INVALID;
     }
     if (image_pre_process->center_crop_width <= 0 || image_pre_process->center_crop_width > 65535) {
-      MS_LOG(ERROR) << "center_crop_width must be in (0,65535].";
+      MS_LOG(ERROR) << "center_crop_width must be in [1, 65535].";
       return RET_INPUT_PARAM_INVALID;
     }
   }
@@ -259,7 +263,7 @@ int PreprocessParser::ParseImageCenterCrop(const DataPreProcessString &data_pre_
       return RET_INPUT_PARAM_INVALID;
     }
     if (image_pre_process->center_crop_height <= 0 || image_pre_process->center_crop_height > 65535) {
-      MS_LOG(ERROR) << "center_crop_height must be in (0,65535].";
+      MS_LOG(ERROR) << "center_crop_height must be in [1, 65535].";
       return RET_INPUT_PARAM_INVALID;
     }
   }
