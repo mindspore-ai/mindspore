@@ -54,8 +54,18 @@ int PoolingBaseCPUKernel::SetQuantParam() {
   }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_arg = input_tensor->quant_params();
+  if (in_quant_arg.empty()) {
+    MS_LOG(ERROR) << "input tensor quant_params() return empty vector.";
+    FreeQuantParam();
+    return RET_ERROR;
+  }
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_arg = out_tensor->quant_params();
+  if (out_quant_arg.empty()) {
+    MS_LOG(ERROR) << "output tensor quant_params() return empty vector.";
+    FreeQuantParam();
+    return RET_ERROR;
+  }
   pooling_quant_arg_[0][0].scale_ = in_quant_arg.front().scale;
   pooling_quant_arg_[0][0].zp_ = in_quant_arg.front().zeroPoint;
   pooling_quant_arg_[1][0].scale_ = out_quant_arg.front().scale;
