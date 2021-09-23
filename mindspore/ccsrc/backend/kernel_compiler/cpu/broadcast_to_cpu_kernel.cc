@@ -15,13 +15,19 @@
  */
 
 #include "backend/kernel_compiler/cpu/broadcast_to_cpu_kernel.h"
-#include "nnacl/errorcode.h"
+#include "backend/kernel_compiler/cpu/nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kBroadcastToInputsNum = 1;
+constexpr size_t kBroadcastToOutputsNum = 1;
+}  // namespace
+
 template <typename T>
 void BroadcastToCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   size_t input_shape_size = input_shape_.size();
@@ -55,35 +61,26 @@ void BroadcastToCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 bool BroadcastToCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "Wrong number of inputs or outputs!";
-  }
-  if ((inputs[0] == nullptr) || (inputs[0]->size == 0)) {
-    MS_LOG(EXCEPTION) << "Input data is NULL!";
-  }
-  if ((outputs[0] == nullptr) || (outputs[0]->size == 0)) {
-    MS_LOG(EXCEPTION) << "Output data is NULL!";
-  }
-
-  const auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  int ret = static_cast<int>(NNACL_ERR);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBroadcastToInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBroadcastToOutputsNum, kernel_name_);
+  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  int status = static_cast<int>(NNACL_OK);
   if constexpr (std::is_same_v<T, bool>) {
-    ret = BroadcastTo(bool, input_addr, &shape_info_, output_addr);
+    status = BROADCAST_TO(bool, input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, int>) {
-    ret = BroadcastTo(int, input_addr, &shape_info_, output_addr);
+    status = BROADCAST_TO(int, input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, float>) {
-    ret = BroadcastTo(float, input_addr, &shape_info_, output_addr);
+    status = BROADCAST_TO(float, input_addr, &shape_info_, output_addr);
   } else {
     MS_LOG(EXCEPTION) << "Not supported data type for BroadcastTo.";
   }
 
-  if (ret == NNACL_OK) {
-    return true;
+  if (status != static_cast<int>(NNACL_OK)) {
+    MS_LOG(EXCEPTION) << "Broadcast tensor with shape " << input_shape_ << " to shape " << output_shape_
+                      << " execute failed, error code: " << status;
   }
-  MS_LOG(ERROR) << "Broadcast tensor with shape " << input_shape_ << " to shape " << output_shape_
-                << " execute failed.";
-  return false;
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

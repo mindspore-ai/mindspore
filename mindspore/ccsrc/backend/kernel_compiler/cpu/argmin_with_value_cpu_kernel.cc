@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/argmin_with_value_cpu_kernel.h"
+
+#include <string>
+
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kArgMinWithValueInputsNum = 1;
+constexpr size_t kArgMinWithValueOutputsNum = 2;
+constexpr char kKernelName[] = "ArgMaxWithValue";
+
 size_t get_element_num(const std::vector<size_t> &shape) {
   size_t size = 1;
   for (size_t i = 0; i < shape.size(); i++) {
@@ -30,10 +38,8 @@ size_t get_element_num(const std::vector<size_t> &shape) {
 template <typename T>
 bool check_validation(const std::vector<size_t> &shape, const size_t num_before_axis, const size_t num_after_axis,
                       const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 1 || outputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "Wrong number of inputs or outputs!";
-    return false;
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kArgMinWithValueInputsNum, kKernelName);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kArgMinWithValueOutputsNum, kKernelName);
   size_t data_size = sizeof(T);
   size_t input_size = get_element_num(shape) * data_size;
   size_t output_num = num_before_axis * num_after_axis;
@@ -41,7 +47,6 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
   size_t out1_size = output_num * data_size;
   if (inputs[0]->size != input_size || outputs[0]->size != out0_size || outputs[1]->size != out1_size) {
     MS_LOG(EXCEPTION) << "Invalid input or output data size!";
-    return false;
   }
   return true;
 }
@@ -50,8 +55,12 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
 template <typename T>
 void ArgMinWithValueCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t shape_len = shape_.size();
+  if (shape_len == 0) {
+    MS_LOG(EXCEPTION) << "Shape size should be greater than 0";
+  }
   int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += static_cast<int64_t>(shape_len);
   if (axis < 0) {
@@ -78,10 +87,9 @@ bool ArgMinWithValueCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &
     return false;
   }
 
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto output0 = reinterpret_cast<int32_t *>(outputs[0]->addr);
-  auto output1 = reinterpret_cast<T *>(outputs[1]->addr);
-
+  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *output0 = reinterpret_cast<int32_t *>(outputs[0]->addr);
+  auto *output1 = reinterpret_cast<T *>(outputs[1]->addr);
   std::vector<float> array_axis(dim_axis_);
   for (size_t i = 0; i < num_before_axis_; i++) {
     size_t src_index_i = i * dim_axis_ * num_after_axis_;
@@ -93,9 +101,9 @@ bool ArgMinWithValueCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &
       }
       auto min_ops = std::min_element(array_axis.begin(), array_axis.end());
       auto min_index = static_cast<int32_t>(std::distance(array_axis.begin(), min_ops));
-      auto dst_index = i * num_after_axis_ + j;
+      size_t dst_index = i * num_after_axis_ + j;
       output0[dst_index] = min_index;
-      auto src_index = IntToSize(min_index) * num_after_axis_ + src_index_j;
+      size_t src_index = IntToSize(min_index) * num_after_axis_ + src_index_j;
       output1[dst_index] = input[src_index];
     }
   }

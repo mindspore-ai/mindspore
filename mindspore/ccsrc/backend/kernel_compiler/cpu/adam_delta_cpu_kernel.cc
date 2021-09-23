@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <thread>
+
+#include "backend/kernel_compiler/cpu/adam_delta_cpu_kernel.h"
+
 #include <vector>
 #include <string>
 #include <memory>
+
 #include "backend/kernel_compiler/common_utils.h"
+#include "backend/kernel_compiler/cpu/nnacl/fp32/adam_fp32.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#include "backend/kernel_compiler/cpu/adam_delta_cpu_kernel.h"
-#include "nnacl/errorcode.h"
-#include "nnacl/fp32/adam_fp32.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kAdamDeltaInputSize = 9;
+namespace {
+constexpr size_t kAdamDeltaInputsNum = 9;
+constexpr size_t kAdamDeltaOutputsNum = 1;
+}  // namespace
+
 template <typename T>
 void AdamDeltaCPUKernel::LaunchAdamDelta(T *delta, T *m, T *v, float lr, float beta1, float beta2, float epsilon,
                                          const T *gradient, size_t size) {
@@ -55,6 +59,7 @@ void AdamDeltaCPUKernel::LaunchAdamDelta(T *delta, T *m, T *v, float lr, float b
 
 void AdamDeltaCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> delta_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   std::vector<size_t> m_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> v_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
@@ -86,14 +91,14 @@ void AdamDeltaCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 void AdamDeltaCPUKernel::CheckParams(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &outputs) const {
-  if (inputs.size() != kAdamDeltaInputSize) {
-    MS_LOG(EXCEPTION) << "Error input size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamDeltaInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamDeltaOutputsNum, kernel_name_);
+
   size_t elem_size = elem_num_ * 4;
   std::vector<size_t> expect_sizes = {elem_size, elem_size, 4, 4, 4, 4, 4, 4, elem_size};
   std::vector<std::string> input_names = {"m",     "v",     "beta1_power", "beta2_power", "lr",
                                           "beta1", "beta2", "epsilon",     "grad"};
-  for (size_t i = 0; i < kAdamDeltaInputSize; ++i) {
+  for (size_t i = 0; i < kAdamDeltaInputsNum; ++i) {
     if (inputs[i]->size != expect_sizes[i]) {
       MS_LOG(EXCEPTION) << "Error input " << input_names[i] << " size!";
     }

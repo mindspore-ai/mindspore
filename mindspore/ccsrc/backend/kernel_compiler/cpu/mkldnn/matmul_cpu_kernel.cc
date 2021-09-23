@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/matmul_cpu_kernel.h"
-
 #include <utility>
-
 #include "common/thread_pool.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "backend/kernel_compiler/cpu/nnacl/op_base.h"
@@ -26,8 +25,10 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kMatMulInputsNum = 2;
+constexpr size_t kMatMulOutputsNum = 1;
 const size_t kIndexOffset = 2;
-}
+}  // namespace
 
 void MatMulCPUKernel::InitTile() {
 #ifdef ENABLE_AVX
@@ -47,13 +48,16 @@ void MatMulCPUKernel::InitTile() {
 
 void MatMulCPUKernel::InitMatrixA(const float *src_ptr) {
   const size_t size = param_.batch * param_.row_align_ * param_.deep_;
-  a_pack_ptr_ = new float[size];
+  a_pack_ptr_ = new (std::nothrow) float[size];
+  if (a_pack_ptr_ == nullptr) {
+    MS_LOG(EXCEPTION) << "MatMul new a_pack_ptr_ failed.";
+  }
 
   if (vec_matmul_) {
     const size_t count = size * sizeof(float);
     if (memcpy_s(a_pack_ptr_, count, src_ptr, count) != EOK) {
       FreeBuffer();
-      MS_LOG(EXCEPTION) << "Memcpy a_pack_ptr_ failed.";
+      MS_LOG(EXCEPTION) << "MatMul memcpy a_pack_ptr_ failed.";
     }
     return;
   }
@@ -88,14 +92,14 @@ void MatMulCPUKernel::InitMatrixB(const float *src_ptr) {
   b_pack_ptr_ = new (std::nothrow) float[size];
   if (b_pack_ptr_ == nullptr) {
     FreeBuffer();
-    MS_LOG(EXCEPTION) << "Malloc b_pack_ptr_ failed";
+    MS_LOG(EXCEPTION) << "MatMul new b_pack_ptr_ failed";
   }
   if (vec_matmul_) {
     if (param_.b_transpose_) {
       const size_t count = size * sizeof(float);
       if (memcpy_s(b_pack_ptr_, count, src_ptr, count) != EOK) {
         FreeBuffer();
-        MS_LOG(EXCEPTION) << "Memcpy b_pack_ptr_ failed.";
+        MS_LOG(EXCEPTION) << "MatMul memcpy b_pack_ptr_ failed.";
       }
     } else {
       for (int i = 0; i < param_.batch; i++) {
@@ -169,6 +173,7 @@ void MatMulCPUKernel::InitX64Kernel(bool trans_a, bool trans_b, const std::vecto
 
 void MatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> o_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -190,7 +195,7 @@ void MatMulCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 #endif
 }
 
-int MatMulCPUKernel::FloatRun(size_t task_id) {
+int MatMulCPUKernel::FloatRun(size_t task_id) const {
   size_t current_stride_oc = thread_stride_ * col_tile_;
   if (IntToSize(param_.col_) <= task_id * current_stride_oc) {
     return common::SUCCESS;
@@ -238,7 +243,7 @@ void MatMulCPUKernel::LaunchARM(const float *input_a, const float *input_b, floa
   FreeBuffer();
 }
 
-void MatMulCPUKernel::LaunchX64(const float *input_a, const float *input_b, float *output) {
+void MatMulCPUKernel::LaunchX64(const float *input_a, const float *input_b, float *output) const {
   dnnl_dim_t lda = (trans_a_ == TRANSPOSE_YES ? dim_m_ : dim_k_);
   dnnl_dim_t ldb = (trans_b_ == TRANSPOSE_YES ? dim_k_ : dim_n_);
   dnnl_dim_t ldc = dim_n_;
@@ -252,9 +257,8 @@ void MatMulCPUKernel::LaunchX64(const float *input_a, const float *input_b, floa
 
 bool MatMulCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                              const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 2 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "matmul error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMatMulInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMatMulOutputsNum, kernel_name_);
   const auto input_a = reinterpret_cast<float *>(inputs[0]->addr);
   const auto input_b = reinterpret_cast<float *>(inputs[1]->addr);
   auto output = reinterpret_cast<float *>(outputs[0]->addr);

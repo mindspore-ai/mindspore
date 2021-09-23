@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MKL_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MKL_CPU_KERNEL_H_
 
@@ -33,21 +34,22 @@ class MKLCPUKernel : public CPUKernel {
 
  protected:
   bool BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
-                       std::vector<size_t> *dst_shape);
+                       std::vector<size_t> *dst_shape) const;
   void GetPadding(const CNodePtr &kernel_node, const std::string &pad_mode, const std::vector<size_t> &src_shape,
                   const std::vector<size_t> &kernel_size, const std::vector<int> &stride, std::vector<int> *padding_l,
-                  std::vector<int> *padding_r, const std::vector<int> &dilation);
+                  std::vector<int> *padding_r, const std::vector<int> &dilation) const;
   void AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc = false);
   void SetArgumentHandle(int arg_key, void *ptr);
   dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;
-  dnnl::memory::desc GetDefaultMemDesc(const std::vector<size_t> &shape);
+  dnnl::memory::desc GetDefaultMemDesc(const std::vector<size_t> &shape) const;
   void ExecutePrimitive();
-  std::unordered_map<int, dnnl::memory> arguments_;
-  std::shared_ptr<dnnl::primitive> primitive_{nullptr};
   inline dnnl::memory::desc formatted_md(const dnnl::memory::dims &dimensions, dnnl::memory::format_tag layout) {
     return dnnl::memory::desc{{dimensions}, dnnl::memory::data_type::f32, layout};
   }
   void Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem);
+
+  std::unordered_map<int, dnnl::memory> arguments_;
+  std::shared_ptr<dnnl::primitive> primitive_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

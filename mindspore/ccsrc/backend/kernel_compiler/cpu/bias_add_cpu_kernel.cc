@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,21 @@
  */
 
 #include "backend/kernel_compiler/cpu/bias_add_cpu_kernel.h"
-#include "nnacl/fp32/add_fp32.h"
+#include "backend/kernel_compiler/cpu/nnacl/fp32/add_fp32.h"
+#include "backend/kernel_compiler/cpu/nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
 constexpr size_t kBiasAddMinDim = 2;
 constexpr size_t kBiasAddMaxDim = 5;
-constexpr size_t kBiasAddInputNum = 2;
+constexpr size_t kBiasAddInputsNum = 2;
+constexpr size_t kBiasAddOutputsNum = 1;
+}  // namespace
 
 void BiasAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   bias_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   data_shape_ = input_shape_.size();
@@ -44,13 +49,11 @@ void BiasAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                               const std::vector<AddressPtr> &outputs) {
-  if (inputs.size() != kBiasAddInputNum || outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "Inputs outputs size not supoort";
-  }
-
-  auto src_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto bias_addr = reinterpret_cast<float *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBiasAddInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBiasAddOutputsNum, kernel_name_);
+  const auto *src_addr = reinterpret_cast<float *>(inputs[0]->addr);
+  const auto *bias_addr = reinterpret_cast<float *>(inputs[1]->addr);
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
 
   if (input_shape_.size() > 2) {
     size_t hw_size = 1;
@@ -87,11 +90,14 @@ bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     auto task = [&](size_t start, size_t end) {
       for (size_t n = start; n < end; ++n) {
         size_t n_offset = input_shape_[1] * n;
-        ElementAdd(src_addr + n_offset, bias_addr, output_addr + n_offset, input_shape_[1]);
+        if (ElementAdd(src_addr + n_offset, bias_addr, output_addr + n_offset, input_shape_[1]) != NNACL_OK) {
+          MS_LOG(EXCEPTION) << "ElementAdd failed.";
+        }
       }
     };
     ParallelLaunchAutoSearch(task, input_shape_[0], this, &parallel_search_info_);
   }
+
   return true;
 }
 }  // namespace kernel

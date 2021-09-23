@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -36,12 +37,12 @@ class DropoutGradCpuBwdKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  float keep_prob_{1.0};
-  size_t num_count_{1};
-  TypeId dtype_{kTypeUnknown};
   template <typename T>
   void DropoutBackwardKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                              const std::vector<AddressPtr> &outputs, float keep_prob);
+  float keep_prob_{1.0};
+  size_t num_count_{1};
+  TypeId dtype_{kTypeUnknown};
 };
 
 MS_REG_CPU_KERNEL(DropoutGrad, KernelAttr(), DropoutGradCpuBwdKernel);
