@@ -30,6 +30,7 @@ namespace mindspore::dataset {
 // Forward declare
 class TreeAdapter;
 class DatasetNode;
+class ProfilingManager;
 
 /// A base class for tree consumers which would fetch rows from the tree pipeline
 class TreeConsumer {
@@ -48,9 +49,23 @@ class TreeConsumer {
   /// \return Status error code
   virtual Status Terminate();
 
+#ifndef ENABLE_SECURITY
+  /// \brief Getter for profiling manager, no ownership
+  ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
+
+  /// \brief Return profiling manager pointer
+  std::shared_ptr<ProfilingManager> GetProfilingManagerPtr() { return profiling_manager_; }
+#endif
+
  protected:
   /// The class owns the tree_adapter that handles execution tree operations.
   std::unique_ptr<TreeAdapter> tree_adapter_;
+
+#ifndef ENABLE_SECURITY
+  /// Profiling Manager
+  std::shared_ptr<ProfilingManager> profiling_manager_;
+#endif
+
   /// Method to return the name of the consumer
   /// \return string
   virtual std::string Name() = 0;

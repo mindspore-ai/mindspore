@@ -29,6 +29,7 @@ namespace dataset {
 
 class Monitor;
 class ExecutionTree;
+class TreeConsumer;
 
 const char kDeviceQueueTracingName[] = "Device_Queue_Tracing";
 const char kDatasetIteratorTracingName[] = "Dataset_Iterator_Tracing";
@@ -90,11 +91,11 @@ class Tracing : public Profiling {
 // 4) Manage profiling data serialization process
 class ProfilingManager {
  public:
-  explicit ProfilingManager(ExecutionTree *tree);
+  explicit ProfilingManager(TreeConsumer *tree_consumer);
 
   ~ProfilingManager() = default;
 
-  Status Initialize();
+  Status Initialize(ExecutionTree *tree);
 
   // Save profile data to file
   // @return Status The status code returned
@@ -147,9 +148,10 @@ class ProfilingManager {
   // @return Status The status code returned
   Status RegisterSamplingNode(std::shared_ptr<Sampling> node);
 
-  ExecutionTree *tree_;    // ExecutionTree pointer
-  std::string dir_path_;   // where to create profiling file
-  std::string device_id_;  // used when create profiling file,filename_device_id.suffix
+  ExecutionTree *tree_;          // ExecutionTree pointer
+  TreeConsumer *tree_consumer_;  // TreeConsumer pointer
+  std::string dir_path_;         // where to create profiling file
+  std::string device_id_;        // used when create profiling file,filename_device_id.suffix
 };
 
 enum ProfilingType { TIME, CONNECTOR_DEPTH };

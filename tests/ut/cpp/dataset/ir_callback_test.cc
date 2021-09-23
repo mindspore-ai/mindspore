@@ -22,6 +22,8 @@
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+#include "minddata/dataset/engine/perf/monitor.h"
+#include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/engine/tree_adapter.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/transforms.h"
@@ -340,14 +342,22 @@ TEST_F(MindDataTestCallback, TestCAPICallback) {
   ds = ds->Repeat(2);
   ASSERT_NE(ds, nullptr);
 
-  TreeAdapter tree_adapter;
+  auto tree_adapter = std::make_shared<TreeAdapter>();
+
+  // Create ProfilingManager
+  auto profiling_manager = std::make_shared<ProfilingManager>(nullptr);
+  tree_adapter->SetProfilingManagerPtr(profiling_manager);
+
+  // Disable IR optimization pass
+  tree_adapter->SetOptimize(false);
+
   // using tree_adapter to set num_epoch = 1
-  ASSERT_OK(tree_adapter.Compile(ds->IRNode(), 1));
+  ASSERT_OK(tree_adapter->Compile(ds->IRNode(), 1));
 
   TensorRow row;
-  ASSERT_OK(tree_adapter.GetNext(&row));
+  ASSERT_OK(tree_adapter->GetNext(&row));
   while (!row.empty()) {
-    ASSERT_OK(tree_adapter.GetNext(&row));
+    ASSERT_OK(tree_adapter->GetNext(&row));
   }
   std::vector<std::string> callback_names = {"BGN", "EPBGN", "SPBGN", "SPEND", "SPBGN", "SPEND", "EPEND"};
   std::vector<int64_t> all_steps = {0, 0, 1, 1, 65, 65, 88};

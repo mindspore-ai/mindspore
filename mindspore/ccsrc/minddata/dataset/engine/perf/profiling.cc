@@ -69,13 +69,18 @@ Status Sampling::ReadJson(nlohmann::json *output) {
 }
 
 // Constructor
-ProfilingManager::ProfilingManager(ExecutionTree *tree) : tree_(tree), enabled_(true) {
-  perf_monitor_ = std::make_unique<Monitor>(tree_);
+ProfilingManager::ProfilingManager(TreeConsumer *tree_consumer) : tree_consumer_(tree_consumer), enabled_(true) {
+  perf_monitor_ = std::make_unique<Monitor>(tree_consumer_);
 }
 
 bool ProfilingManager::IsProfilingEnable() const { return common::GetEnv("PROFILING_MODE") == "true" && enabled_; }
 
-Status ProfilingManager::Initialize() {
+Status ProfilingManager::Initialize(ExecutionTree *tree) {
+  // Initialize execution tree pointer
+  tree_ = tree;
+  // Initialize execution tree pointer in Monitor
+  perf_monitor_->SetTree(tree);
+
   // Register nodes based on config
   std::string dir = common::GetEnv("MINDDATA_PROFILING_DIR");
   if (dir.empty()) {

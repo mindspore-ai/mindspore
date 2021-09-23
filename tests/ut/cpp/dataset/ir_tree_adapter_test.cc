@@ -19,6 +19,8 @@
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/engine/perf/monitor.h"
+#include "minddata/dataset/engine/perf/profiling.h"
 
 // IR non-leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"
@@ -30,7 +32,6 @@
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
-
 
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;
@@ -50,25 +51,32 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
   ds = ds->Batch(2);
   EXPECT_NE(ds, nullptr);
 
-  mindspore::dataset::TreeAdapter tree_adapter;
+  auto tree_adapter = std::make_shared<TreeAdapter>();
 
-  Status rc = tree_adapter.Compile(ds->IRNode(), 1);
+  // Create ProfilingManager
+  auto profiling_manager = std::make_shared<ProfilingManager>(nullptr);
+  tree_adapter->SetProfilingManagerPtr(profiling_manager);
+
+  // Disable IR optimization pass
+  tree_adapter->SetOptimize(false);
+
+  Status rc = tree_adapter->Compile(ds->IRNode(), 1);
 
   EXPECT_TRUE(rc.IsOk());
 
   const std::unordered_map<std::string, int32_t> map = {{"label", 1}, {"image", 0}};
-  EXPECT_EQ(tree_adapter.GetColumnNameMap(), map);
+  EXPECT_EQ(tree_adapter->GetColumnNameMap(), map);
 
   std::vector<size_t> row_sizes = {2, 2, 0};
 
   TensorRow row;
   for (size_t sz : row_sizes) {
-    rc = tree_adapter.GetNext(&row);
+    rc = tree_adapter->GetNext(&row);
     EXPECT_TRUE(rc.IsOk());
     EXPECT_EQ(row.size(), sz);
   }
 
-  rc = tree_adapter.GetNext(&row);
+  rc = tree_adapter->GetNext(&row);
   EXPECT_TRUE(rc.IsError());
   const std::string err_msg = rc.ToString();
   EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
@@ -85,23 +93,27 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
   ds = ds->Batch(2, false);
   EXPECT_NE(ds, nullptr);
 
-  mindspore::dataset::TreeAdapter tree_adapter;
+  auto tree_adapter = std::make_shared<TreeAdapter>();
 
-  Status rc = tree_adapter.Compile(ds->IRNode(), 2);
+  // Create ProfilingManager
+  auto profiling_manager = std::make_shared<ProfilingManager>(nullptr);
+  tree_adapter->SetProfilingManagerPtr(profiling_manager);
+
+  Status rc = tree_adapter->Compile(ds->IRNode(), 2);
   EXPECT_TRUE(rc.IsOk());
 
-  const std::unordered_map<std::string, int32_t> map = tree_adapter.GetColumnNameMap();
-  EXPECT_EQ(tree_adapter.GetColumnNameMap(), map);
+  const std::unordered_map<std::string, int32_t> map = tree_adapter->GetColumnNameMap();
+  EXPECT_EQ(tree_adapter->GetColumnNameMap(), map);
 
   std::vector<size_t> row_sizes = {2, 2, 0, 2, 2, 0};
 
   TensorRow row;
   for (size_t sz : row_sizes) {
-    rc = tree_adapter.GetNext(&row);
+    rc = tree_adapter->GetNext(&row);
     EXPECT_TRUE(rc.IsOk());
     EXPECT_EQ(row.size(), sz);
   }
-  rc = tree_adapter.GetNext(&row);
+  rc = tree_adapter->GetNext(&row);
   const std::string err_msg = rc.ToString();
   EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
 }
@@ -122,24 +134,28 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
   ds = ds->Map({one_hot}, {"label"}, {"label"}, {"label"});
   EXPECT_NE(ds, nullptr);
 
-  mindspore::dataset::TreeAdapter tree_adapter;
+  auto tree_adapter = std::make_shared<TreeAdapter>();
 
-  Status rc = tree_adapter.Compile(ds->IRNode(), 2);
+  // Create ProfilingManager
+  auto profiling_manager = std::make_shared<ProfilingManager>(nullptr);
+  tree_adapter->SetProfilingManagerPtr(profiling_manager);
+
+  Status rc = tree_adapter->Compile(ds->IRNode(), 2);
 
   EXPECT_TRUE(rc.IsOk());
 
   const std::unordered_map<std::string, int32_t> map = {{"label", 0}};
-  EXPECT_EQ(tree_adapter.GetColumnNameMap(), map);
+  EXPECT_EQ(tree_adapter->GetColumnNameMap(), map);
 
   std::vector<size_t> row_sizes = {1, 1, 0, 1, 1, 0};
   TensorRow row;
 
   for (size_t sz : row_sizes) {
-    rc = tree_adapter.GetNext(&row);
+    rc = tree_adapter->GetNext(&row);
     EXPECT_TRUE(rc.IsOk());
     EXPECT_EQ(row.size(), sz);
   }
-  rc = tree_adapter.GetNext(&row);
+  rc = tree_adapter->GetNext(&row);
   const std::string err_msg = rc.ToString();
   EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
 }

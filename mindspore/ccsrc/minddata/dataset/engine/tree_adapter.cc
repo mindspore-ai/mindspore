@@ -150,11 +150,15 @@ Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std
 
 Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
   RETURN_UNEXPECTED_IF_NULL(root_ir);
-  // This will evolve in the long run
-  tree_ = std::make_unique<ExecutionTree>();
-  // disable profiling if this is only a getter pass
+  // Create ExecutionTree. No need to create ProfilingManager since it was created earlier by TreeConsumer
+  tree_ = std::make_unique<ExecutionTree>(false);
 #ifndef ENABLE_SECURITY
-  if (usage_ == kDeGetter) tree_->GetProfilingManager()->DisableProfiling();
+  // Set profiling_manager_ in ExecutionTree
+  tree_->SetProfilingManagerPtr(profiling_manager_);
+  // disable profiling if this is only a getter pass
+  if (usage_ == kDeGetter) {
+    GetProfilingManager()->DisableProfiling();
+  }
 #endif
   // Build the Execution tree from the child of the IR root node, which represent the root of the input IR tree
   std::shared_ptr<DatasetOp> root_op;
@@ -221,7 +225,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   row->clear();  // make sure row is empty
 #ifndef ENABLE_SECURITY
-  bool is_profiling_enable = tree_->GetProfilingManager()->IsProfilingEnable();
+  bool is_profiling_enable = GetProfilingManager()->IsProfilingEnable();
 #endif
 
   // When cur_db_ is a nullptr, it means this is the first call to get_next, launch ExecutionTree
@@ -266,7 +270,7 @@ Status TreeAdapter::Launch() {
   // Profiling
   std::shared_ptr<Tracing> node;
 #ifndef ENABLE_SECURITY
-  Status s = tree_->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
+  Status s = GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
 #else
   Status s = Status::OK();
 #endif

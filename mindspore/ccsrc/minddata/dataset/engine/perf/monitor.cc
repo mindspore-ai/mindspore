@@ -16,11 +16,12 @@
 #include "minddata/dataset/engine/perf/monitor.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/engine/consumers/tree_consumer.h"
 
 namespace mindspore {
 namespace dataset {
 
-Monitor::Monitor(ExecutionTree *tree) : tree_(tree) {
+Monitor::Monitor(TreeConsumer *tree_consumer) : tree_consumer_(tree_consumer) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   sampling_interval_ = cfg->monitor_sampling_interval();
 }
@@ -42,12 +43,12 @@ Status Monitor::operator()() {
   constexpr int64_t geometric_series_ratio = 2;
   while (!this_thread::is_interrupted() && !(tree_->isFinished()) && !(cfg->stop_profiler_status())) {
     if (tree_->IsEpochEnd()) {
-      RETURN_IF_NOT_OK(tree_->GetProfilingManager()->SaveProfilingData());
+      RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->SaveProfilingData());
       tree_->SetExecuting();
     } else if (loop_cnt % save_interval == 0) {
-      RETURN_IF_NOT_OK(tree_->GetProfilingManager()->SaveProfilingData());
+      RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->SaveProfilingData());
     }
-    for (auto &node : tree_->GetProfilingManager()->GetSamplingNodes()) {
+    for (auto &node : tree_consumer_->GetProfilingManager()->GetSamplingNodes()) {
       RETURN_IF_NOT_OK(node.second->Sample());
     }
     if (loop_cnt % save_interval == 0) save_interval *= geometric_series_ratio;
@@ -56,9 +57,9 @@ Status Monitor::operator()() {
   }
 
   // Output all profiling data upon request.
-  RETURN_IF_NOT_OK(tree_->GetProfilingManager()->Analyze());
-  RETURN_IF_NOT_OK(tree_->GetProfilingManager()->SaveProfilingData());
-  RETURN_IF_NOT_OK(tree_->GetProfilingManager()->ChangeFileMode());
+  RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->Analyze());
+  RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->SaveProfilingData());
+  RETURN_IF_NOT_OK(tree_consumer_->GetProfilingManager()->ChangeFileMode());
 
   cfg->set_profiler_file_status(true);
   return Status::OK();
