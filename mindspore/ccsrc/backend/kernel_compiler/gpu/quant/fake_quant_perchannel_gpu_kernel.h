@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ class FakeQuantPerChannelGpuKernel : public GpuKernel {
   bool training_;
   bool symmetric_;
   bool narrow_range_;
+  bool is_null_input_;
   int quant_delay_;
   float quant_min_;
   float quant_max_;

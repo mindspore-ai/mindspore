@@ -122,9 +122,8 @@ class UnaryGradOpGpuKernel : public GpuKernel {
     auto iter = kUnaryGradOpTypeMap.find(kernel_name);
     if (iter == kUnaryGradOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "Unary grad operation " << kernel_name << " is not supported.";
-    } else {
-      unary_grad_op_type_ = iter->second;
     }
+    unary_grad_op_type_ = iter->second;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but unary grad op needs 2 inputs.";

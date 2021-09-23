@@ -104,7 +104,6 @@ class LayerNormGradGpuKernel : public GpuKernel {
     output_size_list_.push_back(input_row_ * input_col_ * sizeof(T));
     output_size_list_.push_back(param_dim_ * sizeof(T));
     output_size_list_.push_back(param_dim_ * sizeof(T));
-    return;
   }
 
  private:

@@ -95,7 +95,7 @@ class TileGpuKernel : public GpuKernel {
     std::vector<int64_t> multiples = GetAttr<std::vector<int64_t>>(kernel_node, "multiples");
     int64_t filling_value = static_cast<int64_t>(multiples.size()) - static_cast<int64_t>(input_shape_.size());
     // input_shape_.size() == output_shape_.size() == shape_size_
-    input_shape_.insert(input_shape_.begin(), LongToSize(filling_value), 1);
+    (void)input_shape_.insert(input_shape_.begin(), LongToSize(filling_value), 1);
     InitSizeLists();
     return true;
   }

@@ -23,36 +23,36 @@
 // Basic function
 template <typename T>
 struct GreaterFunc {
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs > rhs ? true : false; }
+  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs > rhs; }
 };
 
 template <typename T>
 struct LessFunc {
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs < rhs ? true : false; }
+  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs < rhs; }
 };
 
 template <typename T>
 struct EqualFunc {
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs == rhs ? true : false; }
+  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs == rhs; }
 };
 
 template <>
 struct EqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
-    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9 ? true : false;
+    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9;
   }
 };
 
 template <>
 struct EqualFunc<float> {
   __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
-    return std::abs(lhs - rhs) < 1e-9 ? true : false;
+    return std::abs(lhs - rhs) < 1e-9;
   }
 };
 
 template <typename T>
 struct GreaterEqualFunc {
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs >= rhs ? true : false; }
+  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs >= rhs; }
 };
 
 template <>
@@ -60,20 +60,20 @@ struct GreaterEqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
     return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9
              ? true
-             : (__half2float(lhs) > __half2float(rhs) ? true : false);
+             : (__half2float(lhs) > __half2float(rhs));
   }
 };
 
 template <>
 struct GreaterEqualFunc<float> {
   __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
-    return std::abs(lhs - rhs) < 1e-9 ? true : (lhs > rhs ? true : false);
+    return std::abs(lhs - rhs) < 1e-9 ? true : (lhs > rhs);
   }
 };
 
 template <typename T>
 struct LessEqualFunc {
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs <= rhs ? true : false; }
+  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs <= rhs; }
 };
 
 template <>
@@ -81,33 +81,33 @@ struct LessEqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
     return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9
              ? true
-             : (__half2float(lhs) < __half2float(rhs) ? true : false);
+             : (__half2float(lhs) < __half2float(rhs));
   }
 };
 
 template <>
 struct LessEqualFunc<float> {
   __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
-    return std::abs(lhs - rhs) < 1e-9 ? true : (lhs < rhs ? true : false);
+    return std::abs(lhs - rhs) < 1e-9 ? true : (lhs < rhs);
   }
 };
 
 template <typename T>
 struct NotEqualFunc {
-  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs == rhs ? false : true; }
+  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs != rhs; }
 };
 
 template <>
 struct NotEqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
-    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9 ? false : true;
+    return std::abs(__half2float(lhs) - __half2float(rhs)) >= 1e-9;
   }
 };
 
 template <>
 struct NotEqualFunc<float> {
   __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
-    return std::abs(lhs - rhs) < 1e-9 ? false : true;
+    return std::abs(lhs - rhs) >= 1e-9;
   }
 };
 

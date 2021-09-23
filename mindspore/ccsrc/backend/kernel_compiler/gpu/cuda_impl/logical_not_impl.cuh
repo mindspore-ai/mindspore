@@ -20,8 +20,6 @@
 #include <vector>
 #include "runtime/device/gpu/cuda_common.h"
 
-
-
 template <typename T>
 void LogicalNotImpl(const int &nums, const T *x, bool *y, cudaStream_t stream);
 

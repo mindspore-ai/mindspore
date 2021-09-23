@@ -89,13 +89,12 @@ class IndexAddGpuKernel : public GpuKernel {
     for (int64_t i = axis + 1; i >= 0 && i < src_rank; i++) {
       inner_size_ *= src_shape[i];
     }
-    if (axis >= 0 && axis < SizeToInt(src_shape.size()) && axis < SizeToInt(dst_shape.size())) {
-      src_axis_size_ = src_shape[axis];
-      dst_axis_size_ = dst_shape[axis];
-    } else {
+    if (axis < 0 || axis >= SizeToInt(src_shape.size()) || axis >= SizeToInt(dst_shape.size())) {
       MS_LOG(EXCEPTION) << "Init axis size failed, actual src axis size is " << src_axis_size_
                         << ", actual dst axis size is " << dst_axis_size_;
     }
+    src_axis_size_ = src_shape[axis];
+    dst_axis_size_ = dst_shape[axis];
 
     dst_size_ = sizeof(T);
     for (auto x : dst_shape) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,6 @@ __global__ void SparseApplyFtrlKernel(const T *gradient, const S *indices, const
                     : static_cast<T>(0);
     accumulation[i] = cur_accumulation;
   }
-  return;
 }
 
 template <typename T, typename S>
@@ -88,7 +87,6 @@ void CalSparseApplyFtrl(const T *gradient, const S *indices, const int num_index
                         T *linear, cudaStream_t cuda_stream) {
   SparseApplyFtrlKernel<<<GET_BLOCKS(num_index*n_stride), GET_THREADS, 0, cuda_stream>>>(gradient, indices, num_index,
     n_stride, learning_rate, l1_regularization, l2_regularization, learning_rate_power, variable, accumulation, linear);
-  return;
 }
 
 template void CalSparseApplyFtrl<float, int>(const float *gradient, const int *indices, const int num_index,

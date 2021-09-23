@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ FakeQuantPerChannelGradGpuKernel::FakeQuantPerChannelGradGpuKernel()
       quant_delay_(0),
       global_step_(0),
       narrow_range_(false),
+      is_null_input_(false),
       symmetric_(false) {}
 
 const std::vector<size_t> &FakeQuantPerChannelGradGpuKernel::GetInputSizeList() const { return input_size_list_; }
@@ -50,18 +51,20 @@ bool FakeQuantPerChannelGradGpuKernel::Init(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but FakeQuantGrad GpuKernel OP needs 1 output.";
   }
 
-  num_bits_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("num_bits")));
+  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  num_bits_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
   if (num_bits_ <= 2 || num_bits_ >= 16) {
     MS_LOG(EXCEPTION) << "Attr \'num_bits\' " << num_bits_ << " is out of range, expected between 2 and 16.";
   }
 
-  quant_delay_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("quant_delay")));
+  quant_delay_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("quant_delay")));
   if (quant_delay_ < 0) {
     MS_LOG(EXCEPTION) << "Attr \'quant_delay_\' " << quant_delay_ << " is less then 0, require larger than 0.";
   }
 
-  symmetric_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("symmetric"));
-  narrow_range_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("narrow_range"));
+  symmetric_ = GetValue<bool>(prim->GetAttr("symmetric"));
+  narrow_range_ = GetValue<bool>(prim->GetAttr("narrow_range"));
 
   // quant min and max value
   quant_min_ = 0;
@@ -71,6 +74,15 @@ bool FakeQuantPerChannelGradGpuKernel::Init(const CNodePtr &kernel_node) {
   }
 
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  is_null_input_ = CHECK_NULL_INPUT(input_shape);
+  if (is_null_input_) {
+    MS_LOG(WARNING) << "For 'FakeQuantPerchannelGradGpuKernel', input is null";
+    InitSizeLists();
+    return true;
+  }
+  if (input_shape.empty()) {
+    MS_LOG(EXCEPTION) << "For 'FakeQuantPerchannelGradGpuKernel', input_shape is empty.";
+  }
   num_channels_ = SizeToInt(input_shape[0]);
   input_size_ = sizeof(float);
   for (size_t i = 0; i < input_shape.size(); i++) {
@@ -94,6 +106,9 @@ void FakeQuantPerChannelGradGpuKernel::InitSizeLists() {
 bool FakeQuantPerChannelGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &workspace,
                                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
   (void)workspace;
   float *output = GetDeviceAddress<float>(outputs, 0);
   float *gradient = GetDeviceAddress<float>(inputs, 0);
@@ -103,19 +118,6 @@ bool FakeQuantPerChannelGradGpuKernel::Launch(const std::vector<AddressPtr> &inp
   float *scale = GetDeviceAddress<float>(workspace, 0);
   float *nudge_min = GetDeviceAddress<float>(workspace, 1);
   float *nudge_max = GetDeviceAddress<float>(workspace, 2);
-
-  if (gradient == nullptr) {
-    MS_LOG(EXCEPTION) << "FakeQuantPerChannelGradGpuKernel gradient is null";
-  }
-  if (input == nullptr) {
-    MS_LOG(EXCEPTION) << "FakeQuantPerChannelGradGpuKernel input is null";
-  }
-  if (input_min == nullptr) {
-    MS_LOG(EXCEPTION) << "FakeQuantPerChannelGradGpuKernel input min is null";
-  }
-  if (input_max == nullptr) {
-    MS_LOG(EXCEPTION) << "FakeQuantPerChannelGradGpuKernel input max is null";
-  }
 
   int total_size = input_size_ / sizeof(float);
   if (global_step_ >= quant_delay_) {

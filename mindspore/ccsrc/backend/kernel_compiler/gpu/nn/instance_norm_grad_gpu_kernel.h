@@ -57,8 +57,6 @@ class InstanceNormGradGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    VARIABLE_NOT_USED(workspace);
-    VARIABLE_NOT_USED(stream_ptr);
     if (is_null_input_) {
       return true;
     }
@@ -182,11 +180,10 @@ class InstanceNormGradGpuKernel : public GpuKernel {
 
  private:
   void SetTensorDescriptor() {
-    int batch, channel, height, width;
-    batch = 1;
-    channel = SizeToInt(input_shape_[0]) * SizeToInt(input_shape_[1]);
-    height = SizeToInt(input_shape_[2]);
-    width = SizeToInt(input_shape_[3]);
+    int batch = 1;
+    int channel = SizeToInt(input_shape_[0]) * SizeToInt(input_shape_[1]);
+    int height = SizeToInt(input_shape_[2]);
+    int width = SizeToInt(input_shape_[3]);
     cudnnTensorFormat_t cudnn_format = CUDNN_TENSOR_NCHW;
 
     CHECK_CUDNN_RET_WITH_EXCEPT(

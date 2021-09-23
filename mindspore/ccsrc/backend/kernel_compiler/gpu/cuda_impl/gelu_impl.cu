@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ __global__ void GeluKernel(size_t size, half2 *input_addr, half2 *output_addr) {
 template <typename T>
 void Gelu(size_t size, T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
   GeluKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
-  return;
 }
 
 template <>
@@ -65,7 +64,6 @@ void Gelu(size_t size, half *input_addr, half *output_addr, cudaStream_t cuda_st
   } else {
     GeluKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
   }
-  return;
 }
 
 template <typename T>
@@ -127,7 +125,6 @@ void GeluGradKernel(size_t size, half *dy_addr, half *x_addr, half *dx_addr, cud
   } else {
     GeluGradKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy_addr, x_addr, dx_addr);
   }
-  return;
 }
 
 template void Gelu(size_t size, float *input_addr, float *output_addr, cudaStream_t cuda_stream);

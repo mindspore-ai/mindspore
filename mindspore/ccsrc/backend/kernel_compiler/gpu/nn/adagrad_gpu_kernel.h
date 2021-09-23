@@ -51,11 +51,11 @@ class AdagradGpuKernel : public GpuKernel {
                  reinterpret_cast<cudaStream_t>(stream_ptr));
 
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&variable_out[0], &variable[0], variable_size_, cudaMemcpyDeviceToDevice,
+                               cudaMemcpyAsync(variable_out, variable, variable_size_, cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync output failed");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&accumulation_out[0], &accumulation[0], accumulation_size_,
+                               cudaMemcpyAsync(accumulation_out, accumulation, accumulation_size_,
                                                cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync output failed");
 

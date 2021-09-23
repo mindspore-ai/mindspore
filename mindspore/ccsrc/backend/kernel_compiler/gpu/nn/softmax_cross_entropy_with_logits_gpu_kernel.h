@@ -160,7 +160,6 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     output1_size_ = logits_size_ / logits_shape[logits_dims - 1];
     output2_size_ = logits_size_;
     softmax_output_logits_size_ = logits_size_;
-    return;
   }
   void CheckShapeValidation(const std::vector<size_t> &logits_shape, const std::vector<size_t> &labels_shape) {
     size_t logits_dim_length = logits_shape.size();
@@ -178,7 +177,6 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     if (!std::equal(labels_shape.begin(), labels_shape.end(), logits_shape.begin())) {
       MS_LOG(EXCEPTION) << "The shape of labels should be the same as the shape of logits except its last dimension.";
     }
-    return;
   }
 
   cudnnHandle_t cudnn_handle_;

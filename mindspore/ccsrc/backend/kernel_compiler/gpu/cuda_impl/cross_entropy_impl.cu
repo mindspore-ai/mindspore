@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ __global__ void CrossEntropyWithSparseKernel(const T *logits, const S *labels, c
   }
   total_loss /= batch_size;
   loss[0] = static_cast<T>(total_loss);
-  return;
 }
 
 template <typename T, typename S>
@@ -49,7 +48,6 @@ __global__ void LargeBatchCrossEntropyWithSparseKernel(const T *logits, const S 
     }
     MsAtomicAdd(loss, -logf(logit) / batch_size);
   }
-  return;
 }
 
 template <typename T, typename S>
@@ -64,7 +62,6 @@ __global__ void CrossEntropyGradWithSparseKernel(const T *logits, const S *label
       }
     }
   }
-  return;
 }
 
 template <typename T, typename S>
@@ -90,7 +87,6 @@ void CrossEntropyWithSparse(const T *logits, const S *labels, const size_t batch
     LargeBatchCrossEntropyWithSparseKernel<<<GET_BLOCKS(batch_size), GET_THREADS, 0, cuda_stream>>>(
       logits, labels, batch_size, class_num, loss);
   }
-  return;
 }
 
 template <typename T, typename S>
@@ -98,7 +94,6 @@ void CrossEntropyGradWithSparse(const T *logits, const S *labels, const size_t b
                                 T *grad, cudaStream_t cuda_stream) {
   CrossEntropyGradWithSparseKernel<<<GET_BLOCKS(batch_size), GET_THREADS, 0, cuda_stream>>>(logits, labels, batch_size,
                                                                                             class_num, grad);
-  return;
 }
 
 template <typename T, typename S>

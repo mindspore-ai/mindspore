@@ -66,22 +66,6 @@ class BatchNormFoldGpuKernel : public GpuKernel {
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memoy failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
-    if (x == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGpuKernel x is null.";
-      return false;
-    }
-    if (mean == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGpuKernel mean is null.";
-      return false;
-    }
-    if (variance == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGpuKernel variance is null.";
-      return false;
-    }
-    if (current_step == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGpuKernel current_step is null.";
-      return false;
-    }
     auto batch_mean = GetDeviceAddress<T>(outputs, 0);
     auto batch_std = GetDeviceAddress<T>(outputs, 1);
     auto running_mean = GetDeviceAddress<T>(outputs, 2);
@@ -128,11 +112,13 @@ class BatchNormFoldGpuKernel : public GpuKernel {
       return false;
     }
 
-    T momentum = GetValue<T>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("momentum"));
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    T momentum = GetValue<T>(prim->GetAttr("momentum"));
     exp_avg_factor_ = 1.0 - momentum;
-    epsilon_ = GetValue<T>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("epsilon"));
-    is_training_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("is_training"));
-    freeze_bn_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("freeze_bn")));
+    epsilon_ = GetValue<T>(prim->GetAttr("epsilon"));
+    is_training_ = GetValue<bool>(prim->GetAttr("is_training"));
+    freeze_bn_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("freeze_bn")));
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);

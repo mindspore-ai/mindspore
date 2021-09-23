@@ -95,9 +95,9 @@ class FloatStatusGpuKernel : public GpuKernel {
     auto iter = kOpTypeMap.find(kernel_name);
     if (iter == kOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "FloatStatus kernel " << kernel_name << " is not supported.";
-    } else {
-      kernel_name_ = iter->second;
     }
+    kernel_name_ = iter->second;
+
     if (kernel_name_ == OP_STATUS) {
       output_size_ = sizeof(float);
     } else {

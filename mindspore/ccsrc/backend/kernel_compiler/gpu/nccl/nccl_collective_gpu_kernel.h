@@ -122,7 +122,9 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
 
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
     MS_LOG(INFO) << AnfAlgo::GetCNodeName(kernel_node) << " for group " << group_name_;
-    auto comm_stream_attr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stream_id");
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto comm_stream_attr = prim->GetAttr("stream_id");
     if (comm_stream_attr) {
       comm_stream_ = reinterpret_cast<cudaStream_t>(GetValue<uintptr_t>(comm_stream_attr));
       MS_EXCEPTION_IF_NULL(comm_stream_);
@@ -217,7 +219,9 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
       nccl_kernel_type_ = iter->second;
     }
 
-    auto reduce_op = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrOp);
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto reduce_op = prim->GetAttr(kAttrOp);
     if (reduce_op) {
       std::string type = GetValue<std::string>(reduce_op);
       if (type == "sum") {
@@ -233,7 +237,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
       }
     }
 
-    auto root_rank = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrRootRank);
+    auto root_rank = prim->GetAttr(kAttrRootRank);
     if (root_rank) {
       root_ = static_cast<int>(GetValue<int64_t>(root_rank));
     }

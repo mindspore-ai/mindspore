@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,10 +106,9 @@ __global__ void MirrorPad(const size_t size, const T *input, const int old_batch
     output[pos] = input[(equiv_block_num * old_height + matchval_y_index - paddings[HEIGHT + TOP]) * old_width +
                         matchval_x_index - paddings[WIDTH + LEFT]];
   }
-  return;
 }
 
-// Accumlates mirrored values across batch and channels into an interim workspace array
+// Accumulates mirrored values across batch and channels into an interim workspace array
 // One thread for every output value and a sweeping add logic allows kernel to avoid using
 // slower locked based atomic adds
 template <typename T>
@@ -165,7 +164,6 @@ __global__ void MirrorPadGradBatchChannel(const size_t size, T *dy, T *interim_d
       }
     }
   }
-  return;
 }
 
 // Accumulate mirrored values across width and height from the interim dy array into output array
@@ -231,7 +229,6 @@ __global__ void MirrorPadGrad_Width_Height(const size_t size, const T *dy, T *in
       }
     }
   }
-  return;
 }
 
 template <typename T>
@@ -241,7 +238,6 @@ void CalMirrorPad(const size_t size, const T *input, const int old_batch, const 
   MirrorPad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, old_batch, old_channel, old_height,
                                                                old_width, padded_height, padded_width, padd_num,
                                                                paddings, mode, output);
-  return;
 }
 template <typename T>
 void CalMirrorPadGrad(const size_t dx_size, const size_t interim_dy_size, T *dy, T *interim_dy, const int dx_batches,
@@ -254,7 +250,6 @@ void CalMirrorPadGrad(const size_t dx_size, const size_t interim_dy_size, T *dy,
   MirrorPadGrad_Width_Height<<<GET_BLOCKS(dx_size), GET_THREADS, 0, cuda_stream>>>(
     dx_size, dy, interim_dy, dx_batches, dx_channels, dx_height, dx_width, dy_height, dy_width, padd_dim, paddings,
     mode, dx);
-  return;
 }
 
 template void CalMirrorPad<float>(const size_t size, const float *input, const int old_batch, const int old_channel,

@@ -50,8 +50,8 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
 
     const float alpha = 1;
     if (use_pad_) {
-      T *input_padded = GetPossiblyNullDeviceAddress<T>(workspace, 1);
-      T *output_padded = GetPossiblyNullDeviceAddress<T>(workspace, 2);
+      T *input_padded = GetDeviceAddress<T>(workspace, 1);
+      T *output_padded = GetDeviceAddress<T>(workspace, 2);
       CalPad3d(input_padded_size_ / sizeof(T), input_addr, input_n_, input_c_, input_old_depth_, input_old_height_,
                input_old_width_, input_old_depth_ + pad_depth_, input_old_height_ + pad_height_,
                input_old_width_ + pad_width_, input_pad_head_, input_pad_top_, input_pad_left_, pad_value_,
