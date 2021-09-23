@@ -31,7 +31,7 @@ def test_maskrcnn_export():
     new_list = ["(config=config)\\n    '''", "(net, param_dict_new)\\n    '''"]
 
     cur_path = os.getcwd()
-    model_path = "{}/../../../../model_zoo/official/cv".format(cur_path)
+    model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "maskrcnn"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)

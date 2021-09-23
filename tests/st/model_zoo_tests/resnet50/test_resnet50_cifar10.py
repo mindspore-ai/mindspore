@@ -25,7 +25,7 @@ from tests.st.model_zoo_tests import utils
 @pytest.mark.env_single
 def test_resnet50_cifar10_ascend():
     cur_path = os.path.dirname(os.path.abspath(__file__))
-    model_path = "{}/../../../../model_zoo/official/cv".format(cur_path)
+    model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "resnet"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, "resnet")
@@ -56,7 +56,7 @@ def test_resnet50_cifar10_ascend():
 @pytest.mark.env_single
 def test_resnet50_cifar10_gpu():
     cur_path = os.getcwd()
-    model_path = "{}/../../../../model_zoo/official/cv".format(cur_path)
+    model_path = "{}/../../../../tests/models/official/cv".format(cur_path)
     model_name = "resnet"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, "resnet")

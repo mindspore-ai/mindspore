@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore.common.dtype as mstype
 from mindspore import context
-from mindspore.model_zoo.Bert_NEZHA.bert_model import BertAttention, SaturateCast, \
+from mindspore.tests.models.Bert_NEZHA.bert_model import BertAttention, SaturateCast, \
     EmbeddingLookup, BertModel, \
     BertConfig, EmbeddingPostprocessor, \
     BertTransformer, BertEncoderCell, \

@@ -23,8 +23,8 @@ from mindspore import context
 from mindspore.nn.metrics import Accuracy
 from mindspore.train import Model
 from mindspore.train.callback import LossMonitor, TimeMonitor
-from model_zoo.official.cv.lenet.src.dataset import create_dataset
-from model_zoo.official.cv.lenet.src.lenet import LeNet5
+from tests.models.official.cv.lenet.src.dataset import create_dataset
+from tests.models.official.cv.lenet.src.lenet import LeNet5
 
 np.set_printoptions(threshold=np.inf)
 device_num = 2
