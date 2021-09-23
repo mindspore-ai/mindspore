@@ -476,7 +476,7 @@ class CheckpointManager:
                 mid_name = filename[len(prefix):-5]
                 flag = not (True in [char.isalpha() for char in mid_name])
                 if flag:
-                    self._ckpoint_filelist.append(directory + '/' + filename)
+                    self._ckpoint_filelist.append(os.path.join(directory, filename))
 
     def remove_ckpoint_file(self, file_name):
         """Remove the specified checkpoint file from this checkpoint manager and also from the directory."""
