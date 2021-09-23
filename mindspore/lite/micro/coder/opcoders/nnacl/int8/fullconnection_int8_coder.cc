@@ -37,7 +37,7 @@ int FullConnectionInt8Coder::Prepare(CoderContext *const context) {
   // only support one thread currently
   thread_count_ = thread_num_;
   param_ = reinterpret_cast<MatMulParameter *>(parameter_);
-  MS_CHECK_TRUE_RET(input_tensors_.size() >= 2, RET_ERROR);
+  MS_CHECK_TRUE_RET(input_tensors_.size() >= kInputSize1, RET_ERROR);
   filter_tensor_ = input_tensors_.at(kWeightIndex);
   MS_CHECK_PTR(filter_tensor_);
   if (input_tensors_.size() == kInputSize2) {
