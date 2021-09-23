@@ -21,9 +21,7 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace audio {
-
 MagphaseOperation::MagphaseOperation(float power) : power_(power) {}
 
 Status MagphaseOperation::ValidateParams() {
@@ -46,7 +44,6 @@ Status MagphaseOperation::from_json(nlohmann::json op_params, std::shared_ptr<Te
   *operation = std::make_shared<audio::MagphaseOperation>(power);
   return Status::OK();
 }
-
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore
