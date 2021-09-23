@@ -264,7 +264,7 @@ def check_support(job: TbeJob):
         job.result = "NOT_SUPPORTED"
         job.info("op module {} check support result is {}, not supported".format(op_module_name, result_str))
     if reason:
-        job.info("Unsupported reason is {}".format(reason))
+        job.warning("Unsupported reason is {}".format(reason))
     return True
 
 
