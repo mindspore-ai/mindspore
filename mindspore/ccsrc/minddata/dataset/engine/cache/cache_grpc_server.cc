@@ -97,7 +97,7 @@ Status CacheServerGreeterImpl::HandleRequest(int32_t worker_id) {
     auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
     // Set a timeout for one second. Check for interrupt if we need to do early exit.
     auto r = cq_->AsyncNext(&tag, &success, deadline);
-    if (r == grpc_impl::CompletionQueue::NextStatus::GOT_EVENT) {
+    if (r == grpc::CompletionQueue::NextStatus::GOT_EVENT) {
       auto rq = static_cast<CacheServerRequest *>(tag);
       if (success) {
         if (rq->st_ == CacheServerRequest::STATE::PROCESS) {
@@ -115,7 +115,7 @@ Status CacheServerGreeterImpl::HandleRequest(int32_t worker_id) {
       } else {
         RETURN_IF_NOT_OK(CacheServer::ReturnRequestTag(rq));
       }
-    } else if (r == grpc_impl::CompletionQueue::NextStatus::TIMEOUT) {
+    } else if (r == grpc::CompletionQueue::NextStatus::TIMEOUT) {
       // If we are interrupted, exit. Otherwise wait again.
     } else {
       // Queue is drained.

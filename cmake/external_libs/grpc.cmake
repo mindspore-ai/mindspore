@@ -27,20 +27,27 @@ else()
 endif()
 message("grpc using absl_DIR : " ${_FINDPACKAGE_ABSL_CONFIG_DIR})
 
+if(EXISTS ${re2_ROOT}/lib64)
+  set(_FINDPACKAGE_RE2_CONFIG_DIR "${re2_ROOT}/lib64/cmake/re2")
+else()
+  set(_FINDPACKAGE_RE2_CONFIG_DIR "${re2_ROOT}/lib/cmake/re2")
+endif()
+message("grpc using re2_DIR : " ${_FINDPACKAGE_RE2_CONFIG_DIR})
+
 if(EXISTS ${openssl_ROOT})
   set(_CMAKE_ARGS_OPENSSL_ROOT_DIR "-DOPENSSL_ROOT_DIR:PATH=${openssl_ROOT}")
 endif()
 
 if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/grpc/repository/archive/v1.27.3.tar.gz")
-    set(MD5 "b8b6d8defeda0355105e3b64b4201786")
+    set(REQ_URL "https://gitee.com/mirrors/grpc/repository/archive/v1.36.1.tar.gz")
+    set(MD5 "59e85aa3f583a65bf1135e119b75162d")
 else()
-    set(REQ_URL "https://github.com/grpc/grpc/archive/v1.27.3.tar.gz")
-    set(MD5 "0c6c3fc8682d4262dd0e5e6fabe1a7e2")
+    set(REQ_URL "https://github.com/grpc/grpc/archive/v1.36.1.tar.gz")
+    set(MD5 "90c93203e95e89af5f46738588217057")
 endif()
 
 mindspore_add_pkg(grpc
-        VER 1.27.3
+        VER 1.36.1
         LIBS mindspore_grpc++ mindspore_grpc mindspore_gpr mindspore_upb mindspore_address_sorting
         EXE grpc_cpp_plugin
         URL ${REQ_URL}
@@ -61,6 +68,8 @@ mindspore_add_pkg(grpc
         -Dc-ares_DIR:PATH=${c-ares_ROOT}/lib/cmake/c-ares
         -DgRPC_SSL_PROVIDER:STRING=package
         ${_CMAKE_ARGS_OPENSSL_ROOT_DIR}
+        -DgRPC_RE2_PROVIDER:STRING=package
+        -Dre2_DIR:PATH=${_FINDPACKAGE_RE2_CONFIG_DIR}
         )
 
 include_directories(${grpc_INC})
