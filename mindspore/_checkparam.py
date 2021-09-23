@@ -522,7 +522,8 @@ class Validator:
             arg2_name, arg2_type = arg2
             if arg1_type != arg2_type:
                 raise TypeError(f"For '{prim_name}', type of '{arg2_name}' should be same as '{arg1_name}',"
-                                f" but got '{arg1_name} with type {arg1_type} and '{arg2_name}' with type {arg2_type}.")
+                                f" but got '{arg1_name}' with type {arg1_type}"
+                                f" and '{arg2_name}' with type {arg2_type}.")
             return arg1
 
         elem_types = map(_check_type_valid, args.items())
