@@ -109,7 +109,7 @@ int NormalizeCPUKernel::Run() {
 
   std::vector<lite::StringPack> out_string_pack;
   normalized_strs.resize(string_num, nullptr);
-
+  CHECK_LESS_RETURN(all_string_pack.size(), static_cast<uint32_t>(string_num));
   for (int i = 0; i < string_num; ++i) {
     auto chars = all_string_pack[i];
     std::string str(chars.data, chars.len);
