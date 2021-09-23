@@ -33,6 +33,9 @@ function Run_Build_x86() {
     cp ${nnie_code_path}/mindspore/mindspore/lite/tools/providers/NNIE/Hi3516D/libnnie_mapper.so ${hi3516d_release_path}/
     cp ${nnie_code_path}/mindspore/mindspore/lite/build/tools/converter/nnie/libmslite_nnie_converter.so ${hi3516d_release_path}/ || exit 1
     cp ${nnie_code_path}/mindspore/mindspore/lite/build/tools/converter/nnie/data_process/libmslite_nnie_data_process.so ${hi3516d_release_path}/ || exit 1
+    ms_config_file=${hi3516d_release_path}/../../converter/converter.cfg
+    echo "[registry]" > ${ms_config_file}
+    echo 'plugin_path=../providers/Hi3516D/libmslite_nnie_converter.so' >> ${ms_config_file}
 
     cd ${open_source_ms_path}/output/ || exit 1
     # remove unused static library
