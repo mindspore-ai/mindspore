@@ -54,6 +54,7 @@ _name_to_level = {
     'INFO': 20,
     'WARNING': 30,
     'ERROR': 40,
+    'EXCEPTION': 50,
 }
 
 # GLog level and level name
@@ -62,7 +63,7 @@ _gloglevel_to_name = {
     '1': 'INFO',
     '2': 'WARNING',
     '3': 'ERROR',
-    '4': 'ERROR',
+    '4': 'EXCEPTION',
 }
 
 # The mapping of logger configurations to glog configurations
@@ -212,14 +213,14 @@ def error(msg, *args, **kwargs):
     _get_logger().error(msg, *args, **kwargs)
 
 
-def exception(msg, *args, **kwargs):
-    """Log a message with severity 'EXCEPTION' on the MindSpore logger."""
-    _get_logger().exception(msg, *args, **kwargs)
-
-
 def warning(msg, *args, **kwargs):
     """Log a message with severity 'WARNING' on the MindSpore logger."""
     _get_logger().warning(msg, *args, **kwargs)
+
+
+def exception(msg, *args, **kwargs):
+    """Use logging.critical to log a message with severity 'EXCEPTION' on the MindSpore logger."""
+    _get_logger().critical(msg, *args, **kwargs)
 
 
 def get_level():
@@ -510,6 +511,8 @@ def _setup_logger(kwargs):
         if _global_logger:
             return _global_logger
 
+        # Set the level name of logging.CRITICAL to EXCEPTION
+        logging.addLevelName(logging.CRITICAL, 'EXCEPTION')
         logger = logging.getLogger(name=f'{sub_module}.{log_name}')
         # Override findCaller on the logger, Support for getting log record
         logger.findCaller = _find_caller

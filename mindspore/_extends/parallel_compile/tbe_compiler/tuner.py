@@ -196,8 +196,11 @@ class TbeTuner:
         te_log_level = os.environ.get("TE_LOGLEVEL")
         glog_level = os.environ.get("GLOG_v")
         if glog_level is not None and te_log_level is None:
-            os.environ["TE_LOGLEVEL"] = TE_LOG_LEVEL[int(glog_level)]
-            global_loglevel = int(glog_level)
+            level = int(glog_level)
+            if level >= len(TE_LOG_LEVEL):
+                level = len(TE_LOG_LEVEL) - 1
+            os.environ["TE_LOGLEVEL"] = TE_LOG_LEVEL[level]
+            global_loglevel = level
         elif glog_level is None and te_log_level is None:
             os.environ["TE_LOGLEVEL"] = TE_LOG_LEVEL[2]
             global_loglevel = 3
