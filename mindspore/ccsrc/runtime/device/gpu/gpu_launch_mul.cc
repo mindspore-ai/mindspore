@@ -15,9 +15,6 @@
  */
 
 #include "runtime/device/gpu/gpu_launch_mul.h"
-
-#include <vector>
-#include <memory>
 #include "abstract/utils.h"
 #include "runtime/device/gpu/gpu_memory_allocator.h"
 #include "runtime/device/gpu/gpu_device_manager.h"

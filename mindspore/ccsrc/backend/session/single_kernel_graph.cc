@@ -15,10 +15,6 @@
  */
 
 #include "backend/session/single_kernel_graph.h"
-
-#include <memory>
-#include <string>
-#include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {

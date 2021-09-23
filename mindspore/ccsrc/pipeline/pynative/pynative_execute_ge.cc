@@ -31,12 +31,11 @@
 #include "pybind_api/ir/tensor_py.h"
 #include "transform/graph_ir/op_declare/array_ops_declare.h"
 
-const char SINGLE_OP_GRAPH[] = "single_op_graph";
-
 using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 namespace pynative {
+const char SINGLE_OP_GRAPH[] = "single_op_graph";
 using MeTensor = mindspore::tensor::Tensor;
 using MeTensorPtr = mindspore::tensor::TensorPtr;
 using GeOperator = ge::Operator;
