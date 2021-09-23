@@ -34,7 +34,7 @@ class CrossEntropyLoss(Cell):
 
     Args:
         parallel_config (OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
-                                           a instance of `OpParallelConfig` with default args.
+                                           an instance of `OpParallelConfig` with default args.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape (N, C). Data type must be float16 or float32. the output logits of
@@ -48,8 +48,9 @@ class CrossEntropyLoss(Cell):
     Outputs:
         Tensor. the corresponding cross entropy loss
 
-    Exapmes:
-        >>> loss = mindspore.parallel.nn.CrossEntropyLoss()
+    Examples:
+        >>> from mindspore.parallel.nn import CrossEntropyLoss
+        >>> loss = CrossEntropyLoss()
         >>> logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), mindspore.float32)
         >>> labels_np = np.array([1]).astype(np.int32)
         >>> input_mask = Tensor(np.ones(1).astype(np.float32))
@@ -88,9 +89,6 @@ class CrossEntropyLoss(Cell):
         self.div2 = P.RealDiv()
 
     def construct(self, logits, label, input_mask):
-        r"""
-        Compute loss using logits, label and input mask
-        """
         self._check_input(logits, label, input_mask)
 
         # the shape is [bs*seq_length, vocab_size]

@@ -376,14 +376,14 @@ class FixedSparseAttention(nn.Cell):
                              only supports 64, 128 for now
 
     Inputs:
-        - **q** - Tensor uery (:class:`mstype.fp16` [batch_size, seq_length, hidden_size]): Sequence of
+        - **q** (Tensor) - Tensor query (:class:`mstype.fp16` [batch_size, seq_length, hidden_size]): Sequence of
           queries to query the context.
-        - **k** - Tensor key (:class:`mstype.fp16` [batch_size, seq_length, hidden_size]): Sequence of
+        - **k** (Tensor) - Tensor key (:class:`mstype.fp16` [batch_size, seq_length, hidden_size]): Sequence of
           queries to query the context.
-        - **v** - Tensor value (:class:`mstype.fp16` [batch size, sequence length, Embedding Size]): Sequence of
-          queries to query the context.
-        - **attention_mask** - Tensor the mask of (:class:`mstype.fp32` [batch_size, seq_length, seq_length]):
-          Lower triangular matrix to pass masked information.
+        - **v** (Tensor) - Tensor value (:class:`mstype.fp16` [batch size, sequence length, Embedding Size]):
+          Sequence of queries to query the context.
+        - **attention_mask** (Tensor) - Float Tensor the mask of (:class:`mstype.fp32`, :class:`mstype.fp16`
+          [batch_size, seq_length, seq_length]): Lower triangular matrix to pass masked information.
 
     Outputs:
         A Tensor. The output of the attention with shape [batch_size, seq_length, hidden_size]
@@ -396,10 +396,10 @@ class FixedSparseAttention(nn.Cell):
         ...                              num_heads=8,
         ...                              size_per_head=64,
         ...                              block_size=64)
-        >>> q = Tensor(np.ones((2, 1024, 8*64)), dtype.float16)
-        >>> k = Tensor(np.ones((2, 1024, 8*64)), dtype.float16)
-        >>> v = Tensor(np.ones((2, 1024, 8*64)), dtype.float16)
-        >>> attention_mask = Tensor(np.ones((2, 1024, 1024)), dtype.float16)
+        >>> q = Tensor(np.ones((2, 1024, 8*64)), mstype.float16)
+        >>> k = Tensor(np.ones((2, 1024, 8*64)), mstype.float16)
+        >>> v = Tensor(np.ones((2, 1024, 8*64)), mstype.float16)
+        >>> attention_mask = Tensor(np.ones((2, 1024, 1024)), mstype.float32)
         >>> output = model(q, k, v, attention_mask)
         >>> print(output.shape)
         (2, 1024, 512)
@@ -550,7 +550,7 @@ class FixedSparseAttention(nn.Cell):
         _check_input_dtype(F.dtype(v), "v", [mstype.float16], self.cls_name)
         _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
                            [self.batch_size, self.seq_length, self.seq_length])
-        _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32], self.cls_name)
+        _check_input_dtype(F.dtype(attention_mask), "attention_mask", [mstype.float32, mstype.float16], self.cls_name)
 
         q, k, v = self._transpose_inputs(q, k, v)
         local_mask, global_mask = self._generate_attention_mask(attention_mask)
