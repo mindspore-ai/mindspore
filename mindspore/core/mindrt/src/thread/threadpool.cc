@@ -66,7 +66,7 @@ void Worker::Run() {
     } else {
       YieldAndDeactive();
     }
-    if (spin_count_ >= max_spin_count_) {
+    if (spin_count_ > max_spin_count_) {
       WaitUntilActive();
       spin_count_ = 0;
     }
@@ -96,7 +96,8 @@ void Worker::YieldAndDeactive() {
 
 void Worker::WaitUntilActive() {
   std::unique_lock<std::mutex> _l(mutex_);
-  cond_var_.wait(_l, [&] { return status_ == kThreadBusy || !alive_; });
+  cond_var_.wait(_l, [&] { return status_ == kThreadBusy || active_num_ > 0 || !alive_; });
+  active_num_--;
 }
 
 void Worker::set_scale(float lhs_scale, float rhs_scale) {
@@ -109,6 +110,15 @@ void Worker::Active(Task *task, int task_id) {
     std::lock_guard<std::mutex> _l(mutex_);
     task_id_.store(task_id, std::memory_order_relaxed);
     task_.store(task, std::memory_order_relaxed);
+    status_ = kThreadBusy;
+  }
+  cond_var_.notify_one();
+}
+
+void Worker::Active() {
+  {
+    std::lock_guard<std::mutex> _l(mutex_);
+    active_num_++;
     status_ = kThreadBusy;
   }
   cond_var_.notify_one();
@@ -262,6 +272,12 @@ void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, Task *task,
   }
 }
 
+void ThreadPool::ActiveWorkers() const {
+  for (auto &worker : workers_) {
+    worker->Active();
+  }
+}
+
 Worker *ThreadPool::CurrentWorker() const {
   for (const auto &worker : workers_) {
     if (worker->thread_id() == std::this_thread::get_id()) {
@@ -330,6 +346,20 @@ void ThreadPool::SetSpinCountMinValue() {
     worker->SetMaxSpinCount(min_spin_count_);
   }
   return;
+}
+
+void ThreadPool::SetMaxSpinCount(int spin_count) {
+  if (spin_count <= 0) {
+    return;
+  }
+  max_spin_count_ = spin_count;
+}
+
+void ThreadPool::SetMinSpinCount(int spin_count) {
+  if (spin_count <= 0) {
+    return;
+  }
+  min_spin_count_ = spin_count;
 }
 
 ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<int> &core_list) {
