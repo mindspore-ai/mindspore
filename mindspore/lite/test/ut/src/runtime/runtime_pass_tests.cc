@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-extern void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors);
+extern void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors, int i);
 extern void ConvNormC4PassAct(std::vector<kernel::LiteKernel *> *kernels);
 }  // namespace lite
 
@@ -210,7 +210,8 @@ TEST_F(RuntimePass, Nc4hw4Pass1) {
   ASSERT_EQ(kernels.size(), 5);
 
   /* runtime pass */
-  Nc4hw4PassAct(&kernels, &tensors);
+  int i = 0;
+  Nc4hw4PassAct(&kernels, &tensors, i);
 
   ASSERT_EQ(kernels.size(), 3);
 
