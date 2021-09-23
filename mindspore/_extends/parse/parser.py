@@ -529,7 +529,7 @@ class Parser:
         self.fn = fn
         self.parse_method = parse_method
         self.line_offset = 0
-        self.filename: str = inspect.getfile(self.fn)
+        self.filename: str = inspect.getfile(inspect.unwrap(self.fn))
 
         # Used to resolve mindspore builtin ops namespace.
         self.ms_common_ns = CellNamespace('mindspore.common')
