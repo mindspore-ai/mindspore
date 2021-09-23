@@ -180,11 +180,11 @@ uint8_t *AscendMemoryManager::MallocDynamicMem(size_t size, bool communication_m
   auto offset = dynamic_mem_offset_;
   auto new_offset = dynamic_mem_offset_ + align_size;
   if (new_offset >= device_mem_pool_offset) {
-    MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
+    MS_LOG(EXCEPTION) << "Out of Memory!!! total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
                       << "] memory pool[" << device_mem_size_ - device_mem_pool_offset << "])"
                       << " malloc [" << align_size
                       << "] failed! Please try to reduce 'batch_size' or check whether exists extra large shape. More "
-                         "details can be found in mindspore's FAQ";
+                         "details can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
   }
   total_dynamic_size_ += align_size;
   dynamic_mem_offset_ = new_offset;
