@@ -99,6 +99,8 @@ class FLWorker {
         scheduler_port_(0),
         worker_node_(nullptr),
         rank_id_(UINT32_MAX),
+        iteration_num_(0),
+        data_size_(0),
         worker_step_num_per_iteration_(1),
         server_iteration_state_(IterationState::kCompleted),
         worker_iteration_state_(IterationState::kCompleted),
