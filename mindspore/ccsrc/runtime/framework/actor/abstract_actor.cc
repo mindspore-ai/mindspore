@@ -19,7 +19,7 @@
 
 namespace mindspore {
 namespace runtime {
-bool AbstractActor::CheckRunningCondition(OpContext<DeviceTensor> *const context) const {
+bool AbstractActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
     const auto &data_iter = input_op_datas_.find(context->sequential_num_);
@@ -43,7 +43,7 @@ bool AbstractActor::CheckRunningCondition(OpContext<DeviceTensor> *const context
   return true;
 }
 
-void AbstractActor::EraseInput(OpContext<DeviceTensor> *const context) {
+void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
     auto ret = input_op_datas_.erase(context->sequential_num_);

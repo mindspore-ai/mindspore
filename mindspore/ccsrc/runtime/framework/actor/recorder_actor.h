@@ -29,7 +29,7 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 using mindspore::kernel::KernelLaunchInfo;
 
-// The recorder actor is used to record kernel info for RDR module.
+// The recorder actor is used to record kernel info.
 class RecorderActor : public ActorBase {
  public:
   RecorderActor() : ActorBase("RecorderActor") {}

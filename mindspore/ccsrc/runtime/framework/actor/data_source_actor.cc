@@ -23,9 +23,6 @@
 #include "mindrt/include/async/async.h"
 #include "common/trans.h"
 #include "utils/log_adapter.h"
-#ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#endif
 
 namespace mindspore {
 namespace runtime {
@@ -150,6 +147,7 @@ void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *cons
 
 void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(data_kernel_);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
@@ -157,7 +155,11 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 
   // Construct outputs of data kernel launching.
   auto &device_tensors = buffers_.back();
+  if (launch_info_.outputs_.size() != device_tensors.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The outputs number is not equal to the device tensors number.");
+  }
   for (size_t i = 0; i < device_tensors.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(launch_info_.outputs_[i]);
     MS_EXCEPTION_IF_NULL(device_tensors[i]);
     launch_info_.outputs_[i]->addr = device_tensors[i]->GetMutablePtr();
     launch_info_.outputs_[i]->size = device_tensors[i]->GetSize();
@@ -168,16 +170,10 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     auto ret = device_contexts_[0]->LaunchKernel(data_kernel_, launch_info_.inputs_, launch_info_.workspaces_,
                                                  launch_info_.outputs_);
     if (!ret) {
-#ifdef ENABLE_DUMP_IR
-      mindspore::RDR::TriggerAll();
-#endif
       std::string error_info = "Launch kernel failed: " + data_kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
   } catch (const std::exception &e) {
-#ifdef ENABLE_DUMP_IR
-    mindspore::RDR::TriggerAll();
-#endif
     MsException::Instance().SetException();
     std::string error_info = "Launch kernel exception: " + data_kernel_->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
@@ -216,6 +212,7 @@ void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const conte
 
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) {
   if (recorder_aid_ != nullptr) {
+    MS_EXCEPTION_IF_NULL(data_kernel_);
     Async(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(), &launch_info_,
           device_contexts_[0], context);
   }
@@ -315,6 +312,7 @@ void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const context
 }
 
 size_t HostQueueDataSourceActor::FetchNodePosition(const AnfNodePtr &data_node) const {
+  MS_EXCEPTION_IF_NULL(data_node);
   const auto &iter = data_node_position_map_.find(data_node);
   if (iter == data_node_position_map_.end()) {
     MS_LOG(EXCEPTION) << "Data node: " << data_node->fullname_with_scope() << " is not exist.";

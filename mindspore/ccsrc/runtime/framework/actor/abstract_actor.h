@@ -52,9 +52,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
   friend class GraphScheduler;
 
   // Check whether satisfy the actor running condition.
-  bool CheckRunningCondition(OpContext<DeviceTensor> *const context) const;
+  bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
   // Erase input data and input controls when finish actor running.
-  void EraseInput(OpContext<DeviceTensor> *const context);
+  void EraseInput(const OpContext<DeviceTensor> *const context);
 
   KernelTransformType type_;
 

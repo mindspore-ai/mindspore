@@ -119,12 +119,14 @@ void OutputActor::CollectOutput(const AnfNodePtr &output_node, size_t output_ind
   }
 
   auto tensor = CreateOutputTensor(output_node, output_index, output_position);
+  MS_EXCEPTION_IF_NULL(tensor);
   tensor->set_need_release_device_mem(true);
   outputs_[output_position] = tensor;
   current_outputs_num_++;
 
   // Save the output nodes to clear the device tensor in the running end.
   output_nodes_[output_position] = KernelWithIndex(output_node, output_index);
+
   // There is no loop count actor in step mode, need trigger call CollectLoopCount to replace old output device tensors.
   if (!need_loop_count_ && (current_outputs_num_ + device_tensor_store_keys_.size() == outputs_num_)) {
     CollectLoopCount(++current_count_, context);
