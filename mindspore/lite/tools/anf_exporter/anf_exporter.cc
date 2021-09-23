@@ -494,8 +494,7 @@ int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::uniqu
   return RET_OK;
 }
 
-FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph) {
-  static int i = 0;
+FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph, int i) {
   if (i > kMaxDepth) {
     MS_LOG(ERROR) << "exceed max depth 2048, i " << i;
     return nullptr;
@@ -515,10 +514,10 @@ FuncGraphPtr GetFinalGraph(const FuncGraphPtr &func_graph) {
   if (opt::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
     auto false_cnode = cnode->input(kSwitchFalseIndex)->cast<CNodePtr>();
     auto false_fg = GetValueNode<FuncGraphPtr>(false_cnode->input(kFirstDataIndex));
-    return GetFinalGraph(false_fg);
+    return GetFinalGraph(false_fg, i);
   } else {
     auto fg = GetValueNode<FuncGraphPtr>(cnode->input(kFirstDataIndex));
-    return GetFinalGraph(fg);
+    return GetFinalGraph(fg, i);
   }
 
   MS_LOG(ERROR) << "Can not find final graph.";
@@ -544,7 +543,8 @@ int AnfExporter::SetMetaGraphInput(const FuncGraphPtr &func_graph,
 
 int AnfExporter::SetMetaGraphOutput(const FuncGraphPtr &func_graph,
                                     const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  auto final_fg = GetFinalGraph(func_graph);
+  int i = 0;
+  auto final_fg = GetFinalGraph(func_graph, i);
   if (final_fg == nullptr) {
     MS_LOG(ERROR) << "GetFinalGraph failed.";
     return RET_ERROR;

@@ -51,18 +51,26 @@ ActorMgr::~ActorMgr() {
   }
 }
 
-void ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t max_thread_num) {
+int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t max_thread_num) {
   bool expected = false;
   if (!initialized_.compare_exchange_strong(expected, true)) {
     MS_LOG(DEBUG) << "Actor Manager has been initialized before";
-    return;
+    return MINDRT_OK;
   }
   // create inner thread pool only when specified use_inner_pool
   if (use_inner_pool) {
     if (max_thread_num <= actor_thread_num) {
       inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num);
+      if (inner_pool_ == nullptr) {
+        MS_LOG(ERROR) << "ActorMgr CreateThreadPool failed";
+        return MINDRT_ERROR;
+      }
     } else {
       inner_pool_ = ActorThreadPool::CreateThreadPool(actor_thread_num, max_thread_num, {});
+      if (inner_pool_ == nullptr) {
+        MS_LOG(ERROR) << "ActorMgr CreateThreadPool failed";
+        return MINDRT_ERROR;
+      }
       inner_pool_->SetActorThreadNum(actor_thread_num);
       inner_pool_->DisableOccupiedActorThread();
       inner_pool_->SetKernelThreadNum(max_thread_num - actor_thread_num);
@@ -72,6 +80,7 @@ void ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t m
       inner_pool_->SetSpinCountMaxValue();
     }
   }
+  return MINDRT_OK;
 }
 
 void ActorMgr::SetActorReady(const ActorReference &actor) const {
