@@ -41,18 +41,18 @@ class ParameterEliminator {
     MS_EXCEPTION_IF_NULL(manager);
     bool changes = false;
     while (true) {
-      auto tr = manager->Transact();
       const auto &[fg, callers] = SearchFuncGraphCallers(func_graph);
       if (fg == nullptr) {
         break;
       }
-      const auto &erase_indexes = EraseUnusedParameters(fg, &tr);
+      auto manager = fg->manager();
+      MS_EXCEPTION_IF_NULL(manager);
+      const auto &erase_indexes = EraseUnusedParameters(fg, manager);
       for (auto caller : callers) {
         // Erase the corresponding args.
-        EraseArgs(caller, erase_indexes, &tr);
+        EraseArgs(caller, erase_indexes, manager);
       }
       changes = true;
-      tr.Commit();
     }
     return changes;
   }
@@ -99,7 +99,7 @@ class ParameterEliminator {
     return {nullptr, {}};
   }
 
-  static std::unordered_set<size_t> EraseUnusedParameters(const FuncGraphPtr &fg, FuncGraphTransaction *tr) {
+  static std::unordered_set<size_t> EraseUnusedParameters(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager) {
     MS_EXCEPTION_IF_NULL(fg->manager());
     const auto &manager_node_users = fg->manager()->node_users();
     const auto &parameters = fg->parameters();
@@ -122,12 +122,12 @@ class ParameterEliminator {
         MS_LOG(DEBUG) << "Erase parameter:" << parameters[i]->DebugString() << ",index:" << i;
       }
     }
-    tr->SetParameters(fg, new_parameters);
+    manager->SetParameters(fg, new_parameters);
     return unused_parameter_indexes;
   }
 
   static void EraseArgs(const CNodePtr &caller, const std::unordered_set<size_t> &unused_parameter_indexes,
-                        FuncGraphTransaction *tr) {
+                        const FuncGraphManagerPtr &manager) {
     std::vector<AnfNodePtr> new_args = {caller->inputs()[0]};
     for (size_t i = 0; i < caller->inputs().size() - 1; i++) {
       if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
@@ -139,7 +139,7 @@ class ParameterEliminator {
     TraceGuard trace_guard(std::make_shared<TraceCopy>(caller->debug_info()));
     auto new_caller = caller->func_graph()->NewCNode(new_args);
     new_caller->set_abstract(caller->abstract());
-    tr->Replace(caller, new_caller);
+    manager->Replace(caller, new_caller);
   }
 };
 }  // namespace irpass

@@ -24,6 +24,7 @@
 #include "frontend/operator/composite/do_signature.h"
 #include "abstract/abstract_function.h"
 #include "abstract/utils.h"
+#include "utils/utils.h"
 #include "ir/graph_utils.h"
 #include "utils/log_adapter.h"
 #include "debug/trace.h"
@@ -396,8 +397,8 @@ AnfNodePtr FuncGraphSpecializer::BuildReplacedNode(const AnfNodeConfigPtr &conf)
 }
 
 namespace {
-const StringImmPtr kDeadNode = std::make_shared<StringImm>("Dead Node");
-const StringImmPtr kPolyNode = std::make_shared<StringImm>("Poly Node");
+const StringImmPtr kDeadNode = std::make_shared<StringImm>(kDeadNodeName);
+const StringImmPtr kPolyNode = std::make_shared<StringImm>(kPolyNodeName);
 
 inline bool CanSpecializeNode(const AnfNodePtr &node) {
   if (IsValueNode<FuncGraph>(node) || IsValueNode<MetaFuncGraph>(node) || IsValueNode<Primitive>(node)) {
