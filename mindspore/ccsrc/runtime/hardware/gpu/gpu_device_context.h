@@ -87,12 +87,12 @@ class GPUDeviceContext : public DeviceContext {
   void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const;
 
   bool BindDeviceToCurrentThread() const;
-
+#ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.
   bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                                  const std::vector<AddressPtr> &workspace,
                                  const std::vector<AddressPtr> &outputs) const;
-
+#endif
   // Launch a kernel by 'KernelMod' of the kernel.
   bool DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
                       const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
