@@ -306,6 +306,10 @@ def test_pyfunc_implicit_compose():
 def test_pyfunc_exception():
     logger.info("Test PyFunc Exception Throw: lambda x : raise Exception()")
 
+    # Sometimes there are some ITERATORS left in ITERATORS_LIST when run all UTs together,
+    # and cause core dump and blocking in this UT. Add cleanup() here to fix it.
+    it._cleanup()  # pylint: disable=W0212
+
     def pyfunc(x):
         raise Exception("Pyfunc Throw")
 
@@ -343,6 +347,10 @@ def test_func_with_yield_manifest_dataset_01():
     def pass_func(_):
         for i in range(10):
             yield (np.array([i]),)
+
+    # Sometimes there are some ITERATORS left in ITERATORS_LIST when run all UTs together,
+    # and cause core dump and blocking in this UT. Add cleanup() here to fix it.
+    it._cleanup()  # pylint: disable=W0212
 
     DATA_FILE = "../data/dataset/testManifestData/test.manifest"
     data = ds.ManifestDataset(DATA_FILE)
