@@ -38,6 +38,9 @@ class IOUGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *gt_boxes_addr = GetDeviceAddress<T>(inputs, 0);
     T *anchor_boxes_addr = GetDeviceAddress<T>(inputs, 1);
@@ -70,16 +73,23 @@ class IOUGpuKernel : public GpuKernel {
     iou_size_ = sizeof(T);
 
     auto gt_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto anchor_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto iou_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ =
+      CHECK_NULL_INPUT(gt_boxes_shape) || CHECK_NULL_INPUT(anchor_boxes_shape) || CHECK_NULL_INPUT(iou_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'IOUGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < gt_boxes_shape.size(); i++) {
       gt_boxes_size_ *= gt_boxes_shape[i];
     }
 
-    auto anchor_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     for (size_t i = 0; i < anchor_boxes_shape.size(); i++) {
       anchor_boxes_size_ *= anchor_boxes_shape[i];
     }
 
-    auto iou_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < iou_shape.size(); i++) {
       iou_size_ *= iou_shape[i];
     }
@@ -112,6 +122,7 @@ class IOUGpuKernel : public GpuKernel {
   size_t anchor_boxes_size_;
   size_t iou_size_;
   size_t mode_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

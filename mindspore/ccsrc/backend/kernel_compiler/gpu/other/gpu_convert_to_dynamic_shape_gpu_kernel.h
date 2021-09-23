@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *input_device_address = GetDeviceAddress<T>(inputs, 0);
     T *output_device_address = GetDeviceAddress<T>(outputs, 0);
@@ -68,6 +71,12 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
     }
 
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'GpuConvertToDynamicShapeGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     for (const size_t &e : input_shape_) {
       input_size_ *= e;
     }
@@ -93,6 +102,7 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
   void *cuda_stream_ptr_;
   std::vector<size_t> input_shape_;
   size_t input_size_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

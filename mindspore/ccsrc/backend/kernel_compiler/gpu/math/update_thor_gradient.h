@@ -50,6 +50,9 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     auto input1_addr = GetDeviceAddress<T>(inputs, 0);
     auto input2_addr = GetDeviceAddress<T>(inputs, 1);
     auto input3_addr = GetDeviceAddress<T>(inputs, 2);
@@ -187,6 +190,13 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
     auto matrix_a_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto matrix_g_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    is_null_input_ =
+      CHECK_NULL_INPUT(matrix_a_shape) || CHECK_NULL_INPUT(gradient_shape) || CHECK_NULL_INPUT(matrix_g_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'UpdateThorGradientGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
 
     split_dim = LongToSize(GetAttr<int64_t>(kernel_node, "split_dim"));
     if (split_dim == 0) {
@@ -236,6 +246,7 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
   }
 
   size_t split_dim;
+  bool is_null_input_;
   struct GradientSize gradient_size;
   cublasHandle_t handle_;
   cublasGemmAlgo_t algo_ = CUBLAS_GEMM_DEFAULT;

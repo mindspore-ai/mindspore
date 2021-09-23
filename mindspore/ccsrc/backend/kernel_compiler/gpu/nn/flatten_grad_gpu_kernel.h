@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
@@ -55,6 +58,12 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
     }
 
     auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'FlattenGradGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < shape.size(); ++i) {
       if (input_size_ == 0) {
         input_size_ = 1;
@@ -69,6 +78,7 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
 
   void ResetResource() noexcept override {
     input_size_ = 0;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -86,6 +96,7 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
 
   size_t input_size_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

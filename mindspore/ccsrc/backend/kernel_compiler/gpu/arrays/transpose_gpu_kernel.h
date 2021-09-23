@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ class TransposeGpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
     size_t *input_shape = GetDeviceAddress<size_t>(workspace, 0);
@@ -83,6 +86,12 @@ class TransposeGpuFwdKernel : public GpuKernel {
       return false;
     }
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'TransposeGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     shape_size_ = input_shape.size();
     if (shape_size_ > TRANSPOSE_MAX_DIMENSION) {
       MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but transpose supports max " << TRANSPOSE_MAX_DIMENSION
@@ -109,6 +118,7 @@ class TransposeGpuFwdKernel : public GpuKernel {
     input_size_ = 0;
     output_size_ = 0;
     workspace_size_ = 0;
+    is_null_input_ = false;
     input_shape_.clear();
     input_axis_.clear();
     input_size_list_.clear();
@@ -136,6 +146,7 @@ class TransposeGpuFwdKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

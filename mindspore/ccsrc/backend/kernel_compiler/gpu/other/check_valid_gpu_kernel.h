@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ class CheckValidGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *anchor_boxes_addr = GetDeviceAddress<T>(inputs, 0);
     T *img_metas_addr = GetDeviceAddress<T>(inputs, 1);
@@ -66,16 +69,23 @@ class CheckValidGpuKernel : public GpuKernel {
     valid_size_ = sizeof(S);
 
     auto anchor_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto img_metas_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto valid_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ =
+      CHECK_NULL_INPUT(anchor_boxes_shape) || CHECK_NULL_INPUT(img_metas_shape) || CHECK_NULL_INPUT(valid_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'CheckValidGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < anchor_boxes_shape.size(); i++) {
       anchor_boxes_size_ *= anchor_boxes_shape[i];
     }
 
-    auto img_metas_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     for (size_t i = 0; i < img_metas_shape.size(); i++) {
       img_metas_size_ *= img_metas_shape[i];
     }
 
-    auto valid_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < valid_shape.size(); i++) {
       valid_size_ *= valid_shape[i];
     }
@@ -96,6 +106,7 @@ class CheckValidGpuKernel : public GpuKernel {
   size_t anchor_boxes_size_;
   size_t img_metas_size_;
   size_t valid_size_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

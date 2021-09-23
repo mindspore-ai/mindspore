@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class PackGpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *output = GetDeviceAddress<T>(outputs, 0);
     T **inputs_array = GetDeviceAddress<T *>(workspace, 0);
     for (size_t i = 0; i < inputs.size(); i++) {
@@ -69,6 +72,12 @@ class PackGpuFwdKernel : public GpuKernel {
     for (size_t i = 0; i < input_num_; i++) {
       size_t input_size = 1;
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+      is_null_input_ = CHECK_NULL_INPUT(input_shape);
+      if (is_null_input_) {
+        MS_LOG(WARNING) << "For 'PackGpuKernel', input is null";
+        InitSizeLists();
+        return true;
+      }
       for (size_t j = 0; j < input_shape.size(); j++) {
         input_size *= input_shape[j];
         if (i == 0 && j >= IntToSize(axis_)) {
@@ -80,6 +89,12 @@ class PackGpuFwdKernel : public GpuKernel {
     workspace_size_list_.push_back(sizeof(T *) * input_num_);
 
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'PackGpuKernel', output is null";
+      InitSizeLists();
+      return true;
+    }
     output_size_ = 1;
     for (size_t i = 0; i < output_shape.size(); i++) {
       output_size_ *= output_shape[i];
@@ -102,6 +117,7 @@ class PackGpuFwdKernel : public GpuKernel {
     return true;
   }
   int axis_;
+  bool is_null_input_;
   size_t input_num_;
   size_t output_size_;
   size_t dims_behind_axis_;

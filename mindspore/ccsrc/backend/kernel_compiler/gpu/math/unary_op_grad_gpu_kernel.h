@@ -62,6 +62,9 @@ class UnaryGradOpGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *input_x_addr = GetDeviceAddress<T>(inputs, 0);
     T *input_dx_addr = GetDeviceAddress<T>(inputs, 1);
@@ -135,7 +138,7 @@ class UnaryGradOpGpuKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "UnaryGradOpGpuKernel input 0 is null";
+      MS_LOG(WARNING) << "For 'UnaryOpGradGpuKernel', input is null";
       InitSizeLists();
       return true;
     }

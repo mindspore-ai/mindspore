@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class SparseFtrlGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *variable = GetDeviceAddress<T>(inputs, 0);
     T *accumulation = GetDeviceAddress<T>(inputs, 1);
     T *linear = GetDeviceAddress<T>(inputs, 2);
@@ -76,6 +79,18 @@ class SparseFtrlGpuKernel : public GpuKernel {
     indices_size_ = sizeof(S);
 
     auto variable_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto linear_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+    is_null_input_ = CHECK_NULL_INPUT(variable_shape) || CHECK_NULL_INPUT(accumulation_shape) ||
+                     CHECK_NULL_INPUT(linear_shape) || CHECK_NULL_INPUT(gradient_shape) ||
+                     CHECK_NULL_INPUT(indices_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SparseFTRLGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < variable_shape.size(); i++) {
       variable_size_ *= variable_shape[i];
       if (i > 0) {
@@ -83,22 +98,18 @@ class SparseFtrlGpuKernel : public GpuKernel {
       }
     }
 
-    auto accumulation_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     for (size_t i = 0; i < accumulation_shape.size(); i++) {
       accumulation_size_ *= accumulation_shape[i];
     }
 
-    auto linear_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     for (size_t i = 0; i < linear_shape.size(); i++) {
       linear_size_ *= linear_shape[i];
     }
 
-    auto gradient_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
     for (size_t i = 0; i < gradient_shape.size(); i++) {
       gradient_size_ *= gradient_shape[i];
     }
 
-    auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
     for (size_t i = 0; i < indices_shape.size(); i++) {
       indices_size_ *= indices_shape[i];
     }
@@ -137,6 +148,7 @@ class SparseFtrlGpuKernel : public GpuKernel {
     l2_ = 0.0f;
     lr_power_ = 0.0f;
     use_locking_ = false;
+    is_null_input_ = false;
     num_index_ = 0;
     n_stride_ = 1;
     input_size_list_.clear();
@@ -155,6 +167,7 @@ class SparseFtrlGpuKernel : public GpuKernel {
   float l2_;
   float lr_power_;
   bool use_locking_;
+  bool is_null_input_;
   int num_index_;
   size_t n_stride_;
 

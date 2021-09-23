@@ -40,6 +40,9 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *lhs = GetDeviceAddress<T>(inputs, 0);
     T *rhs = GetDeviceAddress<T>(inputs, 1);
     T *output = GetDeviceAddress<T>(outputs, 0);
@@ -56,6 +59,12 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
     auto input_shape1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto input_shape2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape1) || CHECK_NULL_INPUT(input_shape2) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SquaredDifferenceGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     need_broadcast_ = IsBroadcast(input_shape1, input_shape2);
     if (need_broadcast_ && output_shape.size() > MAX_DIMS) {
       MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than " << MAX_DIMS;
@@ -102,6 +111,7 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
   void ResetResource() noexcept override {
     op_type_ = BROADCAST_TYPE_SQUARED_DIFFERENCE;
     need_broadcast_ = false;
+    is_null_input_ = false;
     input1_num_ = 1;
     input2_num_ = 1;
     output_num_ = 1;
@@ -137,6 +147,7 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
   BroadcastOpType op_type_;
   bool need_broadcast_;
   bool is_comp_op_;
+  bool is_null_input_;
   size_t input1_num_;
   size_t input2_num_;
   size_t output_num_;

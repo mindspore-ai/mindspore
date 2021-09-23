@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@ class FusedAddReluGradV2GpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     auto x1 = GetDeviceAddress<T>(inputs, 0);
     auto x2 = GetDeviceAddress<T>(inputs, 1);
     auto mask = GetDeviceAddress<uint32_t>(inputs, 2);
@@ -50,6 +53,12 @@ class FusedAddReluGradV2GpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
     auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'FusedAddReluGradV2GpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     element_num_ = std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
     InitSizeLists();
     return true;
@@ -57,6 +66,7 @@ class FusedAddReluGradV2GpuKernel : public GpuKernel {
 
   void ResetResource() noexcept override {
     element_num_ = 0;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -76,6 +86,7 @@ class FusedAddReluGradV2GpuKernel : public GpuKernel {
 
  private:
   size_t element_num_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

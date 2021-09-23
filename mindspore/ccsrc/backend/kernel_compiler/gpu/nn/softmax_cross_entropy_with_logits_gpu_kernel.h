@@ -131,16 +131,10 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
  private:
   void InferInputOutputSize(const CNodePtr &kernel_node) {
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(logits_shape);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "SoftmaxCrossEntropyWithLogitsGpuKernel input1 is null";
-      InitSizeLists();
-      return;
-    }
     auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(logits_shape);
+    is_null_input_ = CHECK_NULL_INPUT(logits_shape) || CHECK_NULL_INPUT(labels_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "SoftmaxCrossEntropyWithLogitsGpuKernel input2 is null";
+      MS_LOG(WARNING) << "For 'SoftmaxCrossEntropyWithLogitsGpuKernel', input is null";
       InitSizeLists();
       return;
     }

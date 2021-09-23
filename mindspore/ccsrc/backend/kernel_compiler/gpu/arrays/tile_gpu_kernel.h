@@ -36,6 +36,9 @@ class TileGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     size_t *input_shape_ptr = GetDeviceAddress<size_t>(workspace, 0);
     size_t *output_shape_ptr = GetDeviceAddress<size_t>(workspace, 1);
@@ -68,11 +71,18 @@ class TileGpuKernel : public GpuKernel {
       return false;
     }
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_) || CHECK_NULL_INPUT(output_shape_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'TileGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     input_size_ = 1;
     for (size_t i = 0; i < input_shape_.size(); i++) {
       input_size_ *= input_shape_[i];
     }
-    output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+
     output_size_ = 1;
     if (output_shape_.size() > TILE_MAX_DIMENSION) {
       MS_LOG(EXCEPTION) << "Output is " << output_shape_.size() << "-D, but Tile supports up to " << TILE_MAX_DIMENSION
@@ -94,6 +104,7 @@ class TileGpuKernel : public GpuKernel {
     input_size_ = 1;
     output_size_ = 1;
     shape_size_ = 1;
+    is_null_input_ = false;
     input_shape_.clear();
     output_shape_.clear();
     input_size_list_.clear();
@@ -113,6 +124,7 @@ class TileGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t shape_size_;
+  bool is_null_input_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
 

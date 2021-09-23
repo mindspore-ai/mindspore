@@ -44,6 +44,9 @@ class PrintGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     std::vector<void *> input_device_data;
     InitDeviceData(inputs, &input_device_data);
@@ -102,6 +105,12 @@ class PrintGpuKernel : public GpuKernel {
     input_flag_ = SetInputFlag(&string_pos_, input_tensor_num);
     for (size_t i = 0; i < input_tensor_num; i++) {
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+      is_null_input_ = CHECK_NULL_INPUT(input_shape);
+      if (is_null_input_) {
+        MS_LOG(WARNING) << "For 'PrintGpuKernel', input is null";
+        InitSizeLists();
+        return true;
+      }
       auto type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, i);
       size_t unit_size = UnitSizeInBytes(type_id);
       auto size_in_byte = std::accumulate(input_shape.begin(), input_shape.end(), unit_size, std::multiplies<size_t>());
@@ -117,6 +126,7 @@ class PrintGpuKernel : public GpuKernel {
     string_value_.clear();
     string_pos_.clear();
     input_flag_.clear();
+    is_null_input_ = false;
     value_type_.clear();
     input_info_.clear();
     input_shape_.clear();
@@ -235,6 +245,7 @@ class PrintGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

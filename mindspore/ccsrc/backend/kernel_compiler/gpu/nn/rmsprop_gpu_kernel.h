@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class RMSPropGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream) override {
+    if (is_null_input_) {
+      return true;
+    }
     if (!use_center_) {
       T *variable = GetDeviceAddress<T>(inputs, 0);
       T *mean_square = GetDeviceAddress<T>(inputs, 1);
@@ -73,6 +76,12 @@ class RMSPropGpuKernel : public GpuKernel {
       epsilon_ = GetAttr<float>(kernel_node, "epsilon");
     }
     auto input_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'RMSPropGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     for (auto &dim : input_shape) {
       size_ *= dim;
     }
@@ -107,6 +116,7 @@ class RMSPropGpuKernel : public GpuKernel {
  private:
   size_t size_;
   bool use_center_;
+  bool is_null_input_;
   float decay_;
   float momentum_;
   float epsilon_;

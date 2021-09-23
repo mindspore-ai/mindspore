@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     const T *dy = GetDeviceAddress<T>(inputs, 0);
     const T *rois = GetDeviceAddress<T>(inputs, 1);
 
@@ -65,10 +68,16 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
     // Get the input shapes
     auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto rois_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(rois_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ROIAlignGradGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
 
     auto dy_shape_size = dy_shape.size();
     if (dy_shape_size != 4) {
-      MS_LOG(ERROR) << "dy shape size is " << dy_shape_size << ", but shoud be 4.";
+      MS_LOG(ERROR) << "dy shape size is " << dy_shape_size << ", but should be 4.";
       return false;
     }
 
@@ -77,6 +86,10 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
                  static_cast<int>(dy_shape[3])};
     dy_size_ = dy_shape_[0] * dy_shape_[1] * dy_shape_[2] * dy_shape_[3] * sizeof(T);
 
+    if (rois_shape.size() < 2) {
+      MS_LOG(EXCEPTION) << "For 'ROIAlignGradGpuKernel', the rank of rois_shape should be greater than or equal to 2, "
+                        << "but got the rank of rois_shape: " << rois_shape.size();
+    }
     // Get rois rows and cols
     roi_rows_ = rois_shape[0];
     roi_cols_ = rois_shape[1];
@@ -93,6 +106,10 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
     sample_num_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "sample_num"));
     roi_end_mode_ = 1;
 
+    if (xdiff_shape_.size() < 4) {
+      MS_LOG(EXCEPTION) << "For 'ROIAlignGradGpuKernel', the rank of xdiff_shape_ should be greater than or equal to "
+                        << "4, but got the rank of xdiff_shape_: " << xdiff_shape_.size();
+    }
     // Get channels, height & width
     batch_size_ = xdiff_shape_[0];
     channels_ = xdiff_shape_[1];
@@ -128,6 +145,7 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
   int channels_;
   int height_;
   int width_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

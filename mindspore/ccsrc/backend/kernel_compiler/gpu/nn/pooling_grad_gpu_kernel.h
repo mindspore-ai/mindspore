@@ -94,11 +94,12 @@ class PoolingGradGpuKernel : public GpuKernel {
       data_format = format_attr_;
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(input_mask);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(input_mask) || CHECK_NULL_INPUT(dout_shape) ||
+                     CHECK_NULL_INPUT(output_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "PoolingGradGpuKernel input is null.";
+      MS_LOG(WARNING) << "For 'PoolingGradGpuKernel', input or output is null.";
       InitSizeLists();
-      return false;
+      return true;
     }
     CheckTensorSize({input_shape, input_mask, dout_shape, output_shape});
     if (nbDims == kDim2DShapeSize) {
@@ -228,8 +229,16 @@ class PoolingGradGpuKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (window.size() < 4) {
+      MS_LOG(EXCEPTION) << "For 'PoolingGradGpuKernel', the rank of window should be greater than or equal to 4 "
+                        << "for 2D, but got the rank of window: " << window.size();
+    }
     int window_height = window[2];
     int window_width = window[3];
+    if (stride_.size() < 4) {
+      MS_LOG(EXCEPTION) << "For 'PoolingGradGpuKernel', the rank of stride_ should be greater than or equal to 4 "
+                        << "for 2D, but got the rank of stride_: " << stride_.size();
+    }
     int stride_h = stride_[2];
     int stride_w = stride_[3];
     if (format_attr_ == kOpFormat_NHWC) {
@@ -269,9 +278,17 @@ class PoolingGradGpuKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (window.size() < 5) {
+      MS_LOG(EXCEPTION) << "For 'PoolingGradGpuKernel', the rank of window should be greater than or equal to 5 "
+                        << "for 3D, but got the rank of window: " << window.size();
+    }
     int window_depth = window[2];
     int window_height = window[3];
     int window_width = window[4];
+    if (stride_.size() < 5) {
+      MS_LOG(EXCEPTION) << "For 'PoolingGradGpuKernel', the rank of stride_ should be greater than or equal to 5 "
+                        << "for 3D, but got the rank of stride_: " << stride_.size();
+    }
     int stride_d = stride_[2];
     int stride_h = stride_[3];
     int stride_w = stride_[4];

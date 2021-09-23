@@ -847,6 +847,7 @@ void GPUKernelRuntime::LaunchKernelWithoutMock(const session::KernelGraph *graph
 #endif
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
+    MS_EXCEPTION_IF_NULL(stream_);
     if (!kernel_mod->Launch(inputs, workspaces, outputs, stream_)) {
 #ifdef ENABLE_DUMP_IR
       mindspore::RDR::TriggerAll();
@@ -891,6 +892,7 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     AddressPtrList kernel_workspaces;
     AddressPtrList kernel_outputs;
     GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+    MS_EXCEPTION_IF_NULL(stream_);
     auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed.";
@@ -914,6 +916,7 @@ void GPUKernelRuntime::LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, c
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&start), "Failed to create event.");
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateEvent(&end), "Failed to create event.");
 
+  MS_EXCEPTION_IF_NULL(stream_);
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::RecordEvent(start, stream_), "Failed to record event to stream.");
   CHECK_OP_RET_WITH_EXCEPT(kernel_mod->Launch(inputs, workspace, outputs, stream_), "Launch kernel failed.");
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::RecordEvent(end, stream_), "Failed to record event to stream.");

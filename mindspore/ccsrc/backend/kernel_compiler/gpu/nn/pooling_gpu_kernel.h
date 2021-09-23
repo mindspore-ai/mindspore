@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,8 @@ class PoolingGpuFwdKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
-    T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-    T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+    T *input_addr = GetDeviceAddress<T>(inputs, 0);
+    T *output_addr = GetDeviceAddress<T>(outputs, 0);
     const float alpha = 1;
     const float beta = 0;
 
@@ -89,9 +89,9 @@ class PoolingGpuFwdKernel : public GpuKernel {
     }
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "PoolingGpuFwdKernel input is null.";
+      MS_LOG(WARNING) << "PoolingGpuFwdKernel input or output is null.";
       InitSizeLists();
       return true;
     }
@@ -187,6 +187,10 @@ class PoolingGpuFwdKernel : public GpuKernel {
       GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("kernel_size"));
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (window.size() < 4) {
+      MS_LOG(EXCEPTION) << "For 'PoolingGpuKernel', the rank of window should be greater than or equal to 4 for 2D, "
+                        << "but got the rank of window: " << window.size();
+    }
     int window_height = window[2];
     int window_width = window[3];
     std::vector<int64_t> stride_me =
@@ -195,6 +199,10 @@ class PoolingGpuFwdKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     int windowDimA[2] = {window_height, window_width};
     int paddingA[2] = {0, 0};
+    if (stride_.size() < 4) {
+      MS_LOG(EXCEPTION) << "For 'PoolingGpuKernel', the rank of stride_ should be greater than or equal to 4 for 2D, "
+                        << "but got the rank of stride_: " << stride_.size();
+    }
     int strideA[2] = {stride_[2], stride_[3]};
     int stride_h = stride_[2];
     int stride_w = stride_[3];
@@ -222,6 +230,10 @@ class PoolingGpuFwdKernel : public GpuKernel {
       GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("kernel_size"));
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (window.size() < 5) {
+      MS_LOG(EXCEPTION) << "For 'PoolingGpuKernel', the rank of window should be greater than or equal to 5 for 3D, "
+                        << "but got the rank of window: " << window.size();
+    }
     int window_depth = window[2];
     int window_height = window[3];
     int window_width = window[4];
@@ -231,6 +243,10 @@ class PoolingGpuFwdKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     int windowDimA[3] = {window_depth, window_height, window_width};
     int paddingA[3] = {0, 0, 0};
+    if (stride_.size() < 5) {
+      MS_LOG(EXCEPTION) << "For 'PoolingGpuKernel', the rank of stride_ should be greater than or equal to 5 for 3D, "
+                        << "but got the rank of stride_: " << stride_.size();
+    }
     int strideA[3] = {stride_[2], stride_[3], stride_[4]};
     int stride_d = stride_[2];
     int stride_h = stride_[3];

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class SplitGpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T **outputs_device = GetDeviceAddress<T *>(workspace, 0);
     for (size_t i = 0; i < outputs.size(); i++) {
@@ -53,6 +56,12 @@ class SplitGpuFwdKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SplitGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     int dims = SizeToInt(input_shape.size());
     axis_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < -dims || axis_ >= dims) {
@@ -91,6 +100,12 @@ class SplitGpuFwdKernel : public GpuKernel {
     for (int i = 0; i < output_num_; i++) {
       size_t output_size = 1;
       auto output_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, i);
+      is_null_input_ = CHECK_NULL_INPUT(output_shape);
+      if (is_null_input_) {
+        MS_LOG(WARNING) << "SplitGpuKernel output is null";
+        InitSizeLists();
+        return true;
+      }
       for (size_t j = 0; j < output_shape.size(); j++) {
         output_size *= output_shape[j];
       }
@@ -109,6 +124,7 @@ class SplitGpuFwdKernel : public GpuKernel {
     axis_step_ = 1;
     all_size_before_axis_ = 1;
     all_size_axis_ = 1;
+    is_null_input_ = false;
     outputs_host_ = nullptr;
     input_size_list_.clear();
     output_size_list_.clear();
@@ -156,6 +172,7 @@ class SplitGpuFwdKernel : public GpuKernel {
   int axis_step_;
   int all_size_before_axis_;
   int all_size_axis_;
+  bool is_null_input_;
   std::unique_ptr<T *[]> outputs_host_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

@@ -91,9 +91,9 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(in_shape);
+    is_null_input_ = CHECK_NULL_INPUT(in_shape) || CHECK_NULL_INPUT(filter_shape) || CHECK_NULL_INPUT(output_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "Conv2dGpuFwdKernel input is null.";
+      MS_LOG(WARNING) << "For 'Conv2dGpuFwdKernel', input or output is null.";
       InitSizeLists();
       return true;
     }
