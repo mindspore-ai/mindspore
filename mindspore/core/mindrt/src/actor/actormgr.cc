@@ -212,7 +212,6 @@ void ActorMgr::Terminate(const AID &id) {
     std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
     MINDRT_OOM_EXIT(msg);
     (void)actor->EnqueMessage(std::move(msg));
-    actor->SetRunningStatus(true);
 
     // Wait actor's thread to finish.
     actor->Await();

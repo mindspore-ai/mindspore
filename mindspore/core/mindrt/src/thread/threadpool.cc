@@ -66,7 +66,7 @@ void Worker::Run() {
     } else {
       YieldAndDeactive();
     }
-    if (spin_count_ >= max_spin_count_) {
+    if (spin_count_ > max_spin_count_) {
       WaitUntilActive();
       spin_count_ = 0;
     }
@@ -96,7 +96,8 @@ void Worker::YieldAndDeactive() {
 
 void Worker::WaitUntilActive() {
   std::unique_lock<std::mutex> _l(mutex_);
-  cond_var_.wait(_l, [&] { return status_ == kThreadBusy || !alive_; });
+  cond_var_.wait(_l, [&] { return status_ == kThreadBusy || active_num_ > 0 || !alive_; });
+  active_num_--;
 }
 
 void Worker::set_scale(float lhs_scale, float rhs_scale) {
@@ -117,6 +118,7 @@ void Worker::Active(Task *task, int task_id) {
 void Worker::Active() {
   {
     std::lock_guard<std::mutex> _l(mutex_);
+    active_num_++;
     status_ = kThreadBusy;
   }
   cond_var_.notify_one();

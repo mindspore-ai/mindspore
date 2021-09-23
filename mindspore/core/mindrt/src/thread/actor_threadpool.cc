@@ -40,7 +40,7 @@ void ActorWorker::RunWithSpin() {
     } else {
       YieldAndDeactive();
     }
-    if (spin_count_ >= max_spin_count_) {
+    if (spin_count_ > max_spin_count_) {
       WaitUntilActive();
       spin_count_ = 0;
     }
@@ -58,11 +58,12 @@ bool ActorWorker::RunQueueActorTask() {
 }
 
 bool ActorWorker::ActorActive() {
+  if (status_ != kThreadIdle) {
+    return false;
+  }
   {
     std::lock_guard<std::mutex> _l(mutex_);
-    if (status_ != kThreadIdle) {
-      return false;
-    }
+    active_num_++;
     status_ = kThreadBusy;
   }
   cond_var_.notify_one();

@@ -95,6 +95,7 @@ class Worker {
   cpu_set_t mask_;
 #endif
   std::atomic_int status_{kThreadBusy};
+  std::atomic_int active_num_{0};
 
   std::mutex mutex_;
   std::condition_variable cond_var_;
