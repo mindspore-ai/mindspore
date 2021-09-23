@@ -194,7 +194,6 @@ EventReply GrpcClient::SendHeartbeat(const Heartbeat &heartbeat) {
   grpc::ClientContext context;
 
   grpc::Status status = stub_->SendHeartbeat(&context, heartbeat, &reply);
-
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendHeartbeat";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
@@ -217,7 +216,6 @@ EventReply GrpcClient::SendTensorBase(const std::list<TensorBase> &tensor_base_l
   }
   writer->WritesDone();
   grpc::Status status = writer->Finish();
-
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendTensorBase";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
@@ -240,7 +238,6 @@ EventReply GrpcClient::SendTensorStats(const std::list<TensorSummary> &tensor_su
   }
   writer->WritesDone();
   grpc::Status status = writer->Finish();
-
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendTensorStats";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();

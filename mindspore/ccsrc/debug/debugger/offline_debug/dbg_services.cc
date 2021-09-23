@@ -20,8 +20,8 @@
 
 DbgServices::DbgServices(bool verbose) {
   DbgLogger::verbose = verbose;
-  char *dbg_log_path = getenv("OFFLINE_DBG_LOG");
-  if (dbg_log_path != NULL) {
+  std::string dbg_log_path = common::GetEnv("OFFLINE_DBG_LOG");
+  if (!dbg_log_path.empty()) {
     DbgLogger::verbose = true;
   }
   debug_services_ = new DebugServices();

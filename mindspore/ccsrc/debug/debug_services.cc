@@ -81,7 +81,7 @@ void DebugServices::AddWatchpoint(
 
 void DebugServices::RemoveWatchpoint(unsigned int id) {
   std::lock_guard<std::mutex> lg(lock_);
-  watchpoint_table_.erase(id);
+  (void)watchpoint_table_.erase(id);
 }
 
 std::unique_ptr<ITensorSummary> GetSummaryPtr(const std::shared_ptr<TensorData> &tensor,
@@ -492,26 +492,26 @@ void DebugServices::SortWatchpointsInfo(
       std::vector<int>::iterator iter =
         std::lower_bound(exec_order->begin(), exec_order->end(), (*chunk_exec_orders)[i][j]);
       int position = iter - exec_order->begin();
-      exec_order->insert(iter, (*chunk_exec_orders)[i][j]);
+      (void)exec_order->insert(iter, (*chunk_exec_orders)[i][j]);
 #endif
 #ifdef OFFLINE_DBG_MODE
       std::vector<std::string>::iterator iter =
         std::lower_bound(time_stamps->begin(), time_stamps->end(), (*chunk_time_stamp)[i][j]);
       int position = iter - time_stamps->begin();
-      time_stamps->insert(iter, (*chunk_time_stamp)[i][j]);
+      (void)time_stamps->insert(iter, (*chunk_time_stamp)[i][j]);
 #endif
-      name->insert(name->begin() + position, (*chunk_names)[i][j]);
-      slot->insert(slot->begin() + position, (*chunk_slots)[i][j]);
-      condition->insert(condition->begin() + position, (*chunk_conditions)[i][j]);
-      watchpoint_id->insert(watchpoint_id->begin() + position, (*chunk_watchpoint_id)[i][j]);
+      (void)name->insert(name->begin() + position, (*chunk_names)[i][j]);
+      (void)slot->insert(slot->begin() + position, (*chunk_slots)[i][j]);
+      (void)condition->insert(condition->begin() + position, (*chunk_conditions)[i][j]);
+      (void)watchpoint_id->insert(watchpoint_id->begin() + position, (*chunk_watchpoint_id)[i][j]);
       if (device_id != nullptr) {
-        device_id->insert(device_id->begin() + position, (*chunk_device_id)[i][j]);
+        (void)device_id->insert(device_id->begin() + position, (*chunk_device_id)[i][j]);
       }
       if (root_graph_id != nullptr) {
-        root_graph_id->insert(root_graph_id->begin() + position, (*chunk_root_graph_id)[i][j]);
+        (void)root_graph_id->insert(root_graph_id->begin() + position, (*chunk_root_graph_id)[i][j]);
       }
-      parameters->insert(parameters->begin() + position, (*chunk_parameters)[i][j]);
-      error_codes->insert(error_codes->begin() + position, (*chunk_error_codes)[i][j]);
+      (void)parameters->insert(parameters->begin() + position, (*chunk_parameters)[i][j]);
+      (void)error_codes->insert(error_codes->begin() + position, (*chunk_error_codes)[i][j]);
     }
     // free the memory for used vectors
     std::vector<int>().swap((*chunk_exec_orders)[i]);
@@ -544,18 +544,19 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   const int substr_len = 2;
   const int header_len_offset = 8;
   const int header_offset = 9;
+  const int header_len_buffer_size = 2;
   const int type_offset = 10;
   // get header length
-  infile.seekg(0, std::ios::beg);
-  auto header_len_buffer = std::make_unique<std::vector<char>>(header_len_offset + 2);
-  if (!infile.read(header_len_buffer->data(), header_len_offset + 2)) {
+  (void)infile.seekg(0, std::ios::beg);
+  auto header_len_buffer = std::make_unique<std::vector<char>>(header_len_offset + header_len_buffer_size);
+  if (!infile.read(header_len_buffer->data(), header_len_offset + header_len_buffer_size)) {
     MS_LOG(ERROR) << "Failed to parse header length from " << file_path;
     return;
   }
   uint16_t header_len = *reinterpret_cast<uint16_t *>(header_len_buffer->data() + header_len_offset);
   header_len_buffer.reset();
   // read in header
-  infile.seekg(0, std::ios::beg);
+  (void)infile.seekg(0, std::ios::beg);
   auto header_buffer = std::make_unique<std::vector<char>>(header_len_offset + header_len);
   if (!infile.read(header_buffer->data(), header_len_offset + header_len)) {
     MS_LOG(ERROR) << "Failed to read header from " << file_path;
@@ -590,7 +591,7 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
     MS_LOG(ERROR) << "No enough memory available for loading " << tensor_name << " into host memory.";
     *no_mem_to_read = true;
   } else {
-    infile.seekg(header_len + type_offset);
+    (void)infile.seekg(header_len + type_offset);
     *data_buffer = new std::vector<char>(data_size);
     if (data_buffer == nullptr || !infile.read((*data_buffer)->data(), data_size)) {
       MS_LOG(ERROR) << "Unable to get tensor data from npy";
@@ -1321,7 +1322,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
           // form fully qualified  filename
           std::string file_path = overflow_bin_path;
           std::string file_name = dir->d_name;
-          file_path.append(file_name);
+          (void)file_path.append(file_name);
           // attempt to read the file
           std::ifstream infile;
           infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);

@@ -425,7 +425,7 @@ class DebugServices {
   std::unordered_map<std::string, std::vector<std::string>> overflow_ops_;
   std::string net_name_;
   std::string dump_dir_;
-  bool is_sync_mode_;
+  bool is_sync_mode_{false};
 
   std::shared_ptr<TensorLoader> tensor_loader_;
 };
