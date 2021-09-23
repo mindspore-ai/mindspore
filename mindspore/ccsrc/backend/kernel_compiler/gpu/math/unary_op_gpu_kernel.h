@@ -194,9 +194,8 @@ class UnaryOpGpuKernel : public GpuKernel {
     auto iter = kUnaryOpTypeMap.find(kernel_name);
     if (iter == kUnaryOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "Unary operation " << kernel_name << " is not supported.";
-    } else {
-      unary_op_type_ = iter->second;
     }
+    unary_op_type_ = iter->second;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but unary op needs 1 inputs.";

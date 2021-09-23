@@ -66,7 +66,9 @@ class MirrorPadGpuBackKernel : public GpuKernel {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but MirrorPadGrad needs 1 output.";
       return false;
     }
-    string mode = GetValue<string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("mode"));
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    string mode = GetValue<string>(prim->GetAttr("mode"));
     if (mode == "REFLECT") {
       mode_ = 0;  // reflected mirroring
     } else {
@@ -85,10 +87,10 @@ class MirrorPadGpuBackKernel : public GpuKernel {
     // shape adjustment -> from 2d/3d to 4d to standardize
     if (input_shape.size() == 3) {
       auto it = input_shape.begin();
-      input_shape.insert(it, 1);  // batch padding
+      (void)input_shape.insert(it, 1);  // batch padding
     } else if (input_shape.size() == 2) {
       auto it = input_shape.begin();
-      input_shape.insert(it, 2, 1);  // channel padding
+      (void)input_shape.insert(it, 2, 1);  // channel padding
     }
     if (input_shape.size() < 4) {
       MS_LOG(EXCEPTION) << "For 'MirrorPadGradGpuKernel', the rank of input should be greater than or equal to 4, "
@@ -109,10 +111,10 @@ class MirrorPadGpuBackKernel : public GpuKernel {
     if (output_shape.size() == 4) {
     } else if (output_shape.size() == 3) {
       auto it = output_shape.begin();
-      output_shape.insert(it, 1);  // batch padding
+      (void)output_shape.insert(it, 1);  // batch padding
     } else if (output_shape.size() == 2) {
       auto it = output_shape.begin();
-      output_shape.insert(it, 2, 1);  // channel padding
+      (void)output_shape.insert(it, 2, 1);  // channel padding
     }
     if (output_shape.size() < 2) {
       MS_LOG(EXCEPTION) << "For 'MirrorPadGradGpuKernel', the rank of output should be greater than or equal to 2, "

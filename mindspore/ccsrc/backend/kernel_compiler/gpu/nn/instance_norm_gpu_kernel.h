@@ -179,11 +179,10 @@ class InstanceNormGpuKernel : public GpuKernel {
  private:
   void SetTensorDescriptor() {
     cudnnTensorFormat_t cudnn_format;
-    int batch, channel, height, width;
-    batch = 1;
-    channel = SizeToInt(input_shape_[0]) * SizeToInt(input_shape_[1]);
-    height = SizeToInt(input_shape_[2]);
-    width = SizeToInt(input_shape_[3]);
+    int batch = 1;
+    int channel = SizeToInt(input_shape_[0]) * SizeToInt(input_shape_[1]);
+    int height = SizeToInt(input_shape_[2]);
+    int width = SizeToInt(input_shape_[3]);
     cudnn_format = CUDNN_TENSOR_NCHW;
 
     CHECK_CUDNN_RET_WITH_EXCEPT(

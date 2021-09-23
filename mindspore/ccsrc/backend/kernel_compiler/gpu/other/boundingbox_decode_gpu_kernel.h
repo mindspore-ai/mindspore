@@ -99,7 +99,9 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
     InitSizeLists();
 
     const size_t coordinate_size = 4;
-    auto means = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means");
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto means = prim->GetAttr("means");
     MS_EXCEPTION_IF_NULL(means);
     if (means->isa<ValueTuple>() || means->isa<ValueList>()) {
       means_ = GetAttr<std::vector<float>>(kernel_node, "means");
@@ -112,7 +114,7 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "Attribute means type is invalid.";
     }
 
-    auto stds = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds");
+    auto stds = prim->GetAttr("stds");
     MS_EXCEPTION_IF_NULL(stds);
     if (stds->isa<ValueTuple>() || stds->isa<ValueList>()) {
       stds_ = GetAttr<std::vector<float>>(kernel_node, "stds");

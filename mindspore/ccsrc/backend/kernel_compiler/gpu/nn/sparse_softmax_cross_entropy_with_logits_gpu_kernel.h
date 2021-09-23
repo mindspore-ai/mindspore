@@ -69,10 +69,13 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
                           softmax_output_descriptor_, softmax_output_logits),
       "cudnnSoftmaxForward failed.");
 
-    is_grad_ ? CrossEntropyGradWithSparse(softmax_output_logits, labels_addr, batch_size_, channel_size_, output_addr,
-                                          reinterpret_cast<cudaStream_t>(stream_ptr))
-             : CrossEntropyWithSparse(softmax_output_logits, labels_addr, batch_size_, channel_size_, output_addr,
-                                      reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (is_grad_) {
+      CrossEntropyGradWithSparse(softmax_output_logits, labels_addr, batch_size_, channel_size_, output_addr,
+                                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      CrossEntropyWithSparse(softmax_output_logits, labels_addr, batch_size_, channel_size_, output_addr,
+                             reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
@@ -127,7 +130,6 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     input_size_list_.push_back(labels_size_);
     output_size_list_.push_back(output_size_);
     workspace_size_list_.push_back(softmax_output_logits_size_);
-    return;
   }
 
  private:
@@ -161,7 +163,6 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
 
     output_size_ = is_grad_ ? logits_size_ : sizeof(T);
     softmax_output_logits_size_ = logits_size_;
-    return;
   }
   void CheckShapeValidation(const std::vector<size_t> &logits_shape, const std::vector<size_t> &labels_shape) {
     size_t logits_dim_length = logits_shape.size();
@@ -175,7 +176,6 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     if (!std::equal(labels_shape.begin(), labels_shape.end(), logits_shape.begin())) {
       MS_LOG(EXCEPTION) << "The shape of labels should be the same as the shape of logits except its last dimension.";
     }
-    return;
   }
 
   cudnnHandle_t cudnn_handle_;

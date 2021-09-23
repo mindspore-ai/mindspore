@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ __global__ void MomentumUpdateVariableKernel(const size_t size, T *variable, T *
       variable[i] -= learning_rate[0] * accumulation[i];
     }
   }
-  return;
 }
 template <>
 __global__ void MomentumUpdateVariableKernel(const size_t size, half *variable, half *accumulation,
@@ -47,7 +46,6 @@ __global__ void MomentumUpdateVariableKernel(const size_t size, half *variable, 
       variable[i] -= __float2half(learning_rate[0]) * accumulation[i];
     }
   }
-  return;
 }
 template <>
 __global__ void MomentumUpdateVariableKernel(const size_t size, float *variable, float *accumulation,
@@ -64,14 +62,12 @@ __global__ void MomentumUpdateVariableKernel(const size_t size, float *variable,
       variable[i] -= learning_rate[0] * accumulation[i];
     }
   }
-  return;
 }
 template <typename T, typename S, typename G>
 void MomentumUpdateVariable(const size_t size, T *variable, T *accumulation, const S *learning_rate, const G *gradient,
                             const S *momentum, bool use_nesterov, cudaStream_t cuda_stream) {
   MomentumUpdateVariableKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, variable, accumulation, learning_rate, gradient, momentum, use_nesterov);
-  return;
 }
 
 template <typename T, typename S>

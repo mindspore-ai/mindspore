@@ -118,7 +118,7 @@ class Conv3dGpuKernel : public GpuKernel {
     pad_depth_ = pad_list[0];
     pad_height_ = pad_list[2];
     pad_width_ = pad_list[4];
-    use_pad_ = !((pad_depth_ == pad_list[1]) && (pad_height_ == pad_list[3]) && (pad_width_ == pad_list[5]));
+    use_pad_ = (pad_depth_ != pad_list[1]) || (pad_height_ != pad_list[3]) || (pad_width_ != pad_list[5]);
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
     cudnnTensorDescriptor_t input_descriptor_real = nullptr;
@@ -136,14 +136,13 @@ class Conv3dGpuKernel : public GpuKernel {
       pad_left_ = pad_list[4];
       int dimA[kNumDims];
       int strideApadded[kNumDims];
-      if (data_format_ == kOpFormat_NCDHW) {
-        auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_depth_ + pad_depth_),
-                             IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_)};
-        SetDimA(padded_shape, dimA, kNumDims, data_format_);
-        SetStrideA(padded_shape, strideApadded, kNumDims, data_format_);
-      } else {
+      if (data_format_ != kOpFormat_NCDHW) {
         MS_LOG(EXCEPTION) << "Conv3d only support NCDHW format right now.";
       }
+      auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_depth_ + pad_depth_),
+                           IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_)};
+      SetDimA(padded_shape, dimA, kNumDims, data_format_);
+      SetStrideA(padded_shape, strideApadded, kNumDims, data_format_);
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_, cudnnSetTensorNdDescriptor(padded_desc_, cudnn_data_type_, kNumDims, dimA, strideApadded),
         "cudnnSetTensor4dDescriptor failed");

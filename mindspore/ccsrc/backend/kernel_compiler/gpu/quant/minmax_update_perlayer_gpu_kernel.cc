@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 MinMaxUpdatePerLayerGpuKernel::MinMaxUpdatePerLayerGpuKernel()
-    : input_size_(0), quant_num_(1), ema_(false), ema_decay_(0) {}
+    : input_size_(0), quant_num_(1), ema_(false), is_null_input_(false), ema_decay_(0) {}
 
 const std::vector<size_t> &MinMaxUpdatePerLayerGpuKernel::GetInputSizeList() const { return input_size_list_; }
 
@@ -43,11 +43,19 @@ bool MinMaxUpdatePerLayerGpuKernel::Init(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but FakeQuant GpuKernel OP needs 1 output.";
   }
 
-  ema_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ema"));
-  ema_decay_ = GetValue<float>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ema_decay"));
+  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  ema_ = GetValue<bool>(prim->GetAttr("ema"));
+  ema_decay_ = GetValue<float>(prim->GetAttr("ema_decay"));
 
   // init size
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  is_null_input_ = CHECK_NULL_INPUT(input_shape);
+  if (is_null_input_) {
+    MS_LOG(WARNING) << "For 'MinMaxUpdatePerlayerGpuKernel', input is null";
+    InitSizeLists();
+    return true;
+  }
   for (size_t i = 0; i < input_shape.size(); ++i) {
     quant_num_ *= SizeToInt(input_shape[i]);
   }
@@ -69,18 +77,14 @@ void MinMaxUpdatePerLayerGpuKernel::InitSizeLists() {
 
 bool MinMaxUpdatePerLayerGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  if (is_null_input_) {
+    return true;
+  }
   float *output_min = GetDeviceAddress<float>(outputs, 0);
   float *output_max = GetDeviceAddress<float>(outputs, 1);
   float *input = GetDeviceAddress<float>(inputs, 0);
   float *input_min = GetDeviceAddress<float>(inputs, 1);
   float *input_max = GetDeviceAddress<float>(inputs, 2);
-
-  if (input == nullptr) {
-    MS_LOG(EXCEPTION) << "MinMaxUpdatePerLayerGpuKernel input x is null.";
-  }
-  if (input_min == nullptr || input_max == nullptr) {
-    MS_LOG(EXCEPTION) << "MinMaxUpdatePerLayerGpuKernel input min or input max is null.";
-  }
 
   CalMinMaxPerLayer(input, input_min, input_max, output_min, output_max, quant_num_, ema_decay_, ema_,
                     reinterpret_cast<cudaStream_t>(stream_ptr));

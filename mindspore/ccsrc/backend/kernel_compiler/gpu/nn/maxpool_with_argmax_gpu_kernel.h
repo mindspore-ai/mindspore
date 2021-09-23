@@ -105,8 +105,9 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     output_height_ = SizeToInt(output_shape[2]);
     output_width_ = SizeToInt(output_shape[3]);
     std::vector<int> window;
-    std::vector<int64_t> window_me =
-      GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("kernel_size"));
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    std::vector<int64_t> window_me = GetValue<std::vector<int64_t>>(prim->GetAttr("kernel_size"));
     (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (window.size() < 3) {
@@ -116,8 +117,7 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     window_height_ = window[1];
     window_width_ = window[2];
     std::vector<int> stride;
-    std::vector<int64_t> stride_me =
-      GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
+    std::vector<int64_t> stride_me = GetValue<std::vector<int64_t>>(prim->GetAttr("strides"));
     (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride.size() < 3) {
@@ -126,7 +126,7 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     }
     stride_height_ = stride[1];
     stride_width_ = stride[2];
-    pad_mode_ = GetValue<std::string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("pad_mode"));
+    pad_mode_ = GetValue<std::string>(prim->GetAttr("pad_mode"));
     pad_top_ = 0;
     pad_left_ = 0;
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
@@ -148,18 +148,14 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     MS_EXCEPTION_IF_ZERO("stride height", stride_height_);
     MS_EXCEPTION_IF_ZERO("stride width", stride_width_);
 
-    pad_height_ = std::max<int>(
-      0, (((input_height_ / stride_height_) * stride_height_ == input_height_ ? (input_height_ / stride_height_)
-                                                                              : (input_height_ / stride_height_) + 1) -
-          1) *
-             stride_height_ +
-           window_height_ - input_height_);
-    pad_width_ = std::max<int>(
-      0, (((input_width_ / stride_width_) * stride_width_ == input_width_ ? (input_width_ / stride_width_)
-                                                                          : (input_width_ / stride_width_) + 1) -
-          1) *
-             stride_width_ +
-           window_width_ - input_width_);
+    int tmp_height = (input_height_ / stride_height_) * stride_height_ == input_height_
+                       ? (input_height_ / stride_height_)
+                       : (input_height_ / stride_height_) + 1;
+    pad_height_ = std::max<int>(0, (tmp_height - 1) * stride_height_ + window_height_ - input_height_);
+
+    int tmp_width = (input_width_ / stride_width_) * stride_width_ == input_width_ ? (input_width_ / stride_width_)
+                                                                                   : (input_width_ / stride_width_) + 1;
+    pad_width_ = std::max<int>(0, (tmp_width - 1) * stride_width_ + window_width_ - input_width_);
     pad_top_ = pad_height_ / 2;
     pad_left_ = pad_width_ / 2;
   }

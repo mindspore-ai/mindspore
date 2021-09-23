@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,6 @@ __device__ void bilinear_interpolate(const int height, const int width, T y, T x
   // weight is evaluated by the distance to point away.
   //   the closer to point home, the more weight, the farther to point away.
   *w1 = hy * hx, *w2 = hy * lx, *w3 = ly * hx, *w4 = ly * lx;
-  return;
 }
 
 template <typename T>
@@ -115,7 +114,6 @@ __device__ void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const 
   // grid (int) by Sample ratio if defined, otherwise by pooled H/W
   *roi_bin_grid_h = (sample_num > 0) ? sample_num : roi_cast_int(roi_height / static_cast<T>(pooled_height));
   *roi_bin_grid_w = (sample_num > 0) ? sample_num : roi_cast_int(roi_width / static_cast<T>(pooled_width));
-  return;
 }
 
 template <typename T>
@@ -182,7 +180,6 @@ void ROIAlign(const T *x, const T *roi_boxes, int roi_rows, int roi_cols, T *out
   ROIAlignKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, x, roi_boxes, roi_cols, out_data,
                                                                     spatial_scale, sample_num, roi_end_mode, channels,
                                                                     height, width, pooled_height, pooled_width);
-  return;
 }
 
 template void ROIAlign<float>(const float *x, const float *roi_boxes, int roi_rows, int roi_cols, float *out_data,
@@ -276,7 +273,6 @@ void ROIAlignGrad(const T *dy, const T *roi_boxes, int batch_size, int roi_rows,
   ROIAlignGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
     size, dy, roi_boxes, roi_cols, dx, spatial_scale, sample_num, roi_end_mode, channels, height, width, pooled_height,
     pooled_width);
-  return;
 }
 
 template void ROIAlignGrad<float>(const float *dy, const float *roi_boxes, int batch_size, int roi_rows, int roi_cols,

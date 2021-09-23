@@ -102,8 +102,9 @@ class ArrayReduceGpuKernel : public GpuKernel {
     }
     int input_dim_length = SizeToInt(AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0).size());
 
-    if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<ValueTuple>() ||
-        AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<ValueList>()) {
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    if (prim->GetAttr("axis")->isa<ValueTuple>() || prim->GetAttr("axis")->isa<ValueList>()) {
       std::vector<int> attr_axis;
       std::vector<int64_t> attr_axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
       (void)std::transform(attr_axis_me.begin(), attr_axis_me.end(), std::back_inserter(attr_axis),
@@ -116,7 +117,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
         }
         std::sort(axis_.begin(), axis_.end());
       }
-    } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<Int64Imm>()) {
+    } else if (prim->GetAttr("axis")->isa<Int64Imm>()) {
       int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
       axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
     } else {

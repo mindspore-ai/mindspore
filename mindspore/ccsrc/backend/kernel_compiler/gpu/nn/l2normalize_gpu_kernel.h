@@ -59,7 +59,7 @@ class L2NormalizeGpuKernel : public GpuKernel {
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
-    T *reduce_workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 0);
+    T *reduce_workspace_addr = GetDeviceAddress<T>(workspace, 0);
     T *workspace_addr = GetPossiblyNullDeviceAddress<T>(workspace, 1);
 
     const float alpha = 1;
@@ -94,7 +94,7 @@ class L2NormalizeGpuKernel : public GpuKernel {
     }
     int input_dim_length = SizeToInt(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0).size());
 
-    int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
+    int axis = LongToInt(GetAttr<int64_t>(kernel_node, "axis"));
     axis_ = axis < 0 ? (axis + input_dim_length) : axis;
     epsilon_ = GetAttr<float>(kernel_node, "epsilon");
 
@@ -180,8 +180,6 @@ class L2NormalizeGpuKernel : public GpuKernel {
                                      &workspace_size_),
       "cudnnGetReductionWorkspaceSize failed.");
     workspace_size_list_.push_back(workspace_size_);
-
-    return;
   }
 
  private:
@@ -212,7 +210,6 @@ class L2NormalizeGpuKernel : public GpuKernel {
       cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, CUDNN_REDUCE_TENSOR_NORM2, CUDNN_DATA_FLOAT, nan_prop_,
                                      reduce_indices_, CUDNN_32BIT_INDICES),
       "cudnnSetReduceTensorDescriptor failed");
-    return;
   }
   void InferInAndOutDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape) {
     std::vector<size_t> inputA;
@@ -246,8 +243,6 @@ class L2NormalizeGpuKernel : public GpuKernel {
         outputC.emplace_back(dim);
       }
     }
-
-    return;
   }
 
   cudnnHandle_t cudnn_handle_;

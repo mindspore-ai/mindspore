@@ -58,7 +58,6 @@ class LstmGradWeightGpuKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
-    VARIABLE_NOT_USED(stream_ptr);
     auto x_addr = GetDeviceAddress<T>(inputs, 0);
     auto hx_addr = GetDeviceAddress<T>(inputs, 1);
     auto y_addr = GetDeviceAddress<T>(inputs, 2);

@@ -100,7 +100,6 @@ class LayerNormGpuKernel : public GpuKernel {
     output_size_list_.push_back(input_row_ * input_col_ * sizeof(T));
     output_size_list_.push_back(input_row_ * sizeof(T));
     output_size_list_.push_back(input_row_ * sizeof(T));
-    return;
   }
 
  private:
