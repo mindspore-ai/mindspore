@@ -86,9 +86,11 @@ size_t AscendMemoryPool::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
   }
 
   if (device_mem_pool_offset_ - size < graph_dynamic_mem_offset_) {
-    MS_LOG(EXCEPTION) << "Failed to alloc memory pool memory, the current device_mem_pool_offset_ ["
+    MS_LOG(EXCEPTION) << "Out of Memory!!! Failed to alloc memory pool memory, the current device_mem_pool_offset_ ["
                       << device_mem_pool_offset_ << "], current graph_dynamic_mem_offset_ " << graph_dynamic_mem_offset_
-                      << "], need memory size [" << size << "]";
+                      << "], need memory size [" << size
+                      << "]. Please try to reduce 'batch_size' or check whether exists extra large shape. More details "
+                         "can be found in MindSpore's FAQ with keyword 'Out of Memory'.";
   }
   device_mem_pool_offset_ -= size;
   *addr = device_mem_pool_base_ + device_mem_pool_offset_;
