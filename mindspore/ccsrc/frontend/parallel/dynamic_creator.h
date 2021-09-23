@@ -207,6 +207,7 @@ REGISTER(GatherDInfo);
 REGISTER(ReduceAnyInfo);
 REGISTER(MatmulDDSInfo);
 REGISTER(DSDMatmulInfo);
+REGISTER(UniformRealInfo);
 }  // namespace parallel
 }  // namespace mindspore
 
