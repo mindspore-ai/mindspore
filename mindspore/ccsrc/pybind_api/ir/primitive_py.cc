@@ -71,7 +71,7 @@ PrimitivePy::PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterP
   set_hook(adapter->hook_);
   set_instance_name(adapter->instance_name_);
 }
-PrimitivePy::~PrimitivePy() { MS_LOG(DEBUG) << "Release:" << ToString(); }
+PrimitivePy::~PrimitivePy() {}
 
 void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
   signatures_ = signatures;

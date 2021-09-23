@@ -77,6 +77,7 @@ parse_expr_statement_white_list = (
 
 _builtin_function_or_method_type = type(abs)
 
+
 def create_slice_obj(start, end, step):
     """Create slice object"""
     return slice(start, end, step)
@@ -134,6 +135,7 @@ def get_bprop_method_of_class(obj, parse_method=None):
 # The fallback feature is enabled in default.
 # Not support change the flag during the process is alive.
 support_fallback_ = os.getenv('ENV_SUPPORT_FALLBACK')
+
 
 def resolve_symbol(namespace, symbol):
     """
@@ -300,8 +302,10 @@ def _convert_tuple_to_args_kwargs(params):
             args += (param,)
     return (args, kwargs)
 
+
 def is_supported_create_instance_type(cls_type):
     return issubclass(cls_type, (nn.Cell, ops.Primitive))
+
 
 def create_instance(cls_type, params=None):
     """Create python instance."""
@@ -427,6 +431,7 @@ def get_operation_namespace_symbol(var: str):
     logger.debug("get operation ops info = %r", ops_info)
     return ops_info
 
+
 def get_ast_type(node):
     """Get the ast type."""
     ast_type = AST_SUB_TYPE_UNKNOWN
@@ -493,6 +498,7 @@ def get_args(node):
     if node.args.kwarg:
         args.append(node.args.kwarg)
     return args
+
 
 def eval_script(exp_str, params):
     """Evaluate a python expression."""
@@ -597,7 +603,7 @@ class Parser:
     def is_unsupported_builtin_type(self, value_type):
         """To check if not supported builtin type"""
         logger.debug(f'value_type: {value_type}, {type([])}, {type(())}.')
-        return value_type == type([]) or value_type == type(())
+        return value_type in (list, tuple)
 
     def is_supported_namespace_module(self, value):
         """To check if the module is allowed to support."""
