@@ -23,7 +23,6 @@
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::lite::micro::nnacl {
-
 int TransposeInt8Coder::Prepare(CoderContext *const context) {
   auto in_tensor = input_tensors_.front();
   auto out_tensor = output_tensors_.front();

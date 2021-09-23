@@ -24,7 +24,7 @@
 
 namespace mindspore::lite::micro::nnacl {
 int DivInt8Coder::Prepare(CoderContext *context) {
-  MS_CHECK_TRUE_RET(input_tensors_.size() == 2, RET_ERROR);
+  MS_CHECK_TRUE_RET(input_tensors_.size() == kInputSize1, RET_ERROR);
   input0 = input_tensors_.at(0);
   input1 = input_tensors_.at(1);
   MS_ASSERT(input0);
@@ -56,7 +56,8 @@ int DivInt8Coder::DoCode(CoderContext *const context) {
   if (broadcast_) {
     ArithmeticParameter tile_para = {0};
     tile_para.ndim_ = output_tensor_->shape().size();
-    MS_CHECK_TRUE_RET(tile_para.ndim_ <= 10, RET_ERROR);
+    size_t max_dim = sizeof(tile_para.in_shape0_) / sizeof(int);
+    MS_CHECK_TRUE_RET(tile_para.ndim_ <= max_dim, RET_ERROR);
     for (size_t i = 0; i < tile_para.ndim_; i++) {
       tile_para.in_shape0_[i] = input0->DimensionSize(i);
       tile_para.in_shape1_[i] = input1->DimensionSize(i);
