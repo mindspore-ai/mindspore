@@ -22,7 +22,9 @@
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/data/dataset_utils.h"
 #include "backend/kernel_compiler/common_utils.h"
+#ifndef ENABLE_SECURITY
 #include "profiler/device/gpu/gpu_profiling.h"
+#endif
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "runtime/device/gpu/gpu_common.h"
 
