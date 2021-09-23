@@ -49,7 +49,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     MS_EXCEPTION(ValueError) << prim_name << " input_x dimension 0 " << out_shape[0]
                              << " should be divisible by block_shape_prod " << block_shape_prod;
   }
-  out_shape[0] = int64_t(floor(out_shape[0] / block_shape_prod));
+  out_shape[0] = int64_t(floor(out_shape[0] / static_cast<float>(block_shape_prod)));
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
