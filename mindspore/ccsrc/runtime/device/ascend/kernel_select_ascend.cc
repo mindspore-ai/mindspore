@@ -449,6 +449,9 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
                                         const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   KernelSelectStatus select_status = kNoMatched;
+  if (kernel_info_list.empty()) {
+    return select_status;
+  }
   bool precision_reduce = false;
   std::shared_ptr<kernel::KernelBuildInfo> selected_kernel_info = nullptr;
   // Matched kernel info
@@ -469,8 +472,9 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
       select_status = precision_reduce ? kStatusReducePrecision : kStatusRaisePrecision;
     }
   }
-  // Set kernel info to the anfnode
-  MS_LOG(INFO) << "Current node: " << kernel_node->DebugString() << " selected: " << selected_kernel_info->ToString();
+  // Set kernel build info to node
+  MS_LOG(INFO) << "Current node: " << kernel_node->fullname_with_scope()
+               << " selected: " << selected_kernel_info->ToString();
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
   // Set format and data type for input tensor.
   if (AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, kernel_node)) {
@@ -492,24 +496,24 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   }
   kernel::KernelQuery(kernel_node, &kernel_info_list, kernel_type);
   auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
-  // If aicore not find valid kernel info reloading aicpu kernel info list to find it
+  // If it can node find valid ai_core kernel info, re-find in ai_cpu kernel info
   if (select_status == kNoMatched) {
-    MS_LOG(WARNING) << "The node [" << kernel_node->DebugString()
-                    << "] cannot find valid TBE kernel info, try to get aicpu kernel info";
+    MS_LOG(WARNING) << "The node [" << kernel_node->fullname_with_scope()
+                    << "] cannot find valid TBE kernel info, try to get ai_cpu kernel info";
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
     AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);
   }
-  // The kernel info not finded both in the aicpu kernel list & aicore kernel list
+  // The kernel info can not find in ai_cpu kernel lists and ai_core kernel lists
   if (select_status == kNoMatched) {
     std::ostringstream buffer;
     PrintInputAndOutputInferType(buffer, kernel_node);
-    MS_LOG(WARNING) << ">>> Candidates supported kernel info(input and output data type) list:";
+    MS_LOG(WARNING) << ">>> The supported kernel info(input and output data type) candidates list:";
     for (size_t index = 0; index < kernel_info_list.size(); ++index) {
-      MS_LOG(WARNING) << "Kernel info [" << index << "] :" << kernel_info_list[index]->ToString();
+      MS_LOG(WARNING) << "Ai_core kernel info [" << index << "] :" << kernel_info_list[index]->ToString();
     }
     for (size_t index = 0; index < aicpu_kernel_info_list.size(); ++index) {
-      MS_LOG(WARNING) << "Kernel info [" << (kernel_info_list.size() + index)
+      MS_LOG(WARNING) << "Ai_cpu kernel info [" << (kernel_info_list.size() + index)
                       << "] :" << aicpu_kernel_info_list[index]->ToString();
     }
     if (IsPrimitiveCNode(kernel_node, prim::kPrimLabelSwitch)) {
@@ -519,11 +523,11 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
       SetTensorDeviceInfo(kernel_node);
     } else {
       MS_LOG(WARNING) << " <<<";
-      MS_EXCEPTION(TypeError)
-        << "The operator [" << AnfAlgo::GetCNodeName(kernel_node)
-        << "] cannot find valid kernel info(input and output data type), not supported the data type: " << buffer.str()
-        << ", please refer to the supported data types in candidates kernel info list."
-        << " trace: " << trace::DumpSourceLines(kernel_node) << ", Node DebugString: " << kernel_node->DebugString();
+      MS_LOG(EXCEPTION) << "Can not find any available operator info for operator ["
+                        << kernel_node->fullname_with_scope()
+                        << "]. Maybe don't supported the data type: " << buffer.str()
+                        << ", or maybe the operator can not supported on current platform.\n Node trace: "
+                        << trace::DumpSourceLines(kernel_node);
     }
   }
   return select_status;

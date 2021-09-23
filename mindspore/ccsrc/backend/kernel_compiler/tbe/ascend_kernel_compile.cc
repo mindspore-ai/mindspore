@@ -144,13 +144,24 @@ void PrintInfo(const nlohmann::json &info, const std::string &job_name, const in
 }
 
 std::string FilterExceptionMessage(const std::vector<nlohmann::json> &all_logs) {
+  std::ostringstream buffer;
   for (const auto &item : all_logs) {
     auto message = GetJsonValue<std::string>(item, kMessage);
     if (message.find("except_msg") != std::string::npos) {
-      return message;
+      buffer << message;
+      buffer << "\n";
+    }
+    if (message.find("except_tuple_msg") != std::string::npos) {
+      buffer << message;
+      buffer << "\n";
+    }
+    if (message.find("Error message") != std::string::npos) {
+      buffer << message;
+      buffer << "\n";
     }
   }
-  return "None";
+  auto res = buffer.str().empty() ? "None" : buffer.str();
+  return res;
 }
 
 bool IsDigit(const std::string &str) {
@@ -273,11 +284,9 @@ void AscendKernelCompileManager::ResetOldTask() {
 }
 
 void AscendKernelCompileManager::PrintProcessLog(const nlohmann::json &json, int adjust_log_level = EXCEPTION) {
-  auto logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
+  auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
   auto job_id = GetJsonValue<int>(json, kJobId);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
-  std::vector<nlohmann::json> all_logs;
-  (void)std::copy(logs.begin(), logs.end(), std::back_inserter(all_logs));
   std::sort(all_logs.begin(), all_logs.end(), Order);
   for (const auto &item : all_logs) {
     PrintInfo(item, json_name, job_id, adjust_log_level);
@@ -774,6 +783,9 @@ std::string AscendKernelCompileManager::OpSelectAndCheckResultProcess(const nloh
     }
   }
   auto res = GetJsonValue<std::string>(json, kResult);
+  if (job_type == kCheckSupport && res != kFullySupported) {
+    PrintProcessLog(json, WARNING);
+  }
   MS_LOG(INFO) << "Job:" << job_type << " running success, " << json_name << ", get: " << res;
   return res;
 }
@@ -798,15 +810,15 @@ std::string AscendKernelCompileManager::AscendOpSelectFormat(const AnfNodePtr &n
 
 bool AscendKernelCompileManager::AscendOpCheckSupported(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto op_name = AnfAlgo::GetCNodeName(node);
-  MS_LOG(INFO) << "Check supported for op [" << op_name << ", " << node->fullname_with_scope() << "]";
+  auto full_name = node->fullname_with_scope();
+  MS_LOG(INFO) << "Check supported for op [" << full_name << "]";
   MS_EXCEPTION_IF_NULL(build_manager_);
   auto json_creator = std::make_shared<CheckTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
   nlohmann::json kernel_info;
   nlohmann::json check_json;
   if (!json_creator->GenJson(node, &kernel_info)) {
-    MS_LOG(EXCEPTION) << "Gen check supported json failed.[" << op_name << ", " << node->fullname_with_scope()
+    MS_LOG(EXCEPTION) << "Gen check supported json failed.[" << full_name
                       << "], node trace: " << trace::DumpSourceLines(node);
   }
   JsonAssemble(kCheckSupport, kernel_info, &check_json);
