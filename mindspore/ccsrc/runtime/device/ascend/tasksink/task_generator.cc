@@ -84,6 +84,7 @@ void TaskGenerator::LaunchAddrCleanAkgKernel(const CNodePtr &anf_node_ptr, Addre
       auto device_address = AnfAlgo::GetOutputAddr(post_node, index);
       kernel::AddressPtr input = std::make_shared<kernel::Address>();
       MS_EXCEPTION_IF_NULL(input);
+      MS_EXCEPTION_IF_NULL(device_address);
       input->addr = device_address->ptr_;
       input->size = device_address->size_;
       kernel_inputs->push_back(input);
@@ -112,6 +113,7 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
         auto device_address = AnfAlgo::GetOutputAddr(pre_node, index);
         kernel::AddressPtr input = std::make_shared<kernel::Address>();
         MS_EXCEPTION_IF_NULL(input);
+        MS_EXCEPTION_IF_NULL(device_address);
         input->addr = device_address->ptr_;
         MS_EXCEPTION_IF_NULL(input->addr);
         input->size = device_address->size_;
@@ -126,6 +128,7 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
         auto device_address = AnfAlgo::GetWorkspaceAddr(pre_node, index);
         kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
         MS_EXCEPTION_IF_NULL(workspace);
+        MS_EXCEPTION_IF_NULL(device_address);
         workspace->addr = device_address->ptr_;
         MS_EXCEPTION_IF_NULL(workspace->addr);
         workspace->size = device_address->size_;
@@ -158,6 +161,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   if ((op_name == kSplitOpName || op_name == kSplitVOpName) && AnfAlgo::HasNodeAttr(kAttrNonTask, anf_node_ptr)) {
     MS_LOG(INFO) << "Skip task generation for NonTask op " << anf_node_ptr->fullname_with_scope();
     auto debug_info = std::make_shared<TaskDebugInfo>();
+    MS_EXCEPTION_IF_NULL(debug_info);
     debug_info->op_name_ = anf_node_ptr->fullname_with_scope() + "-NonTask";
     debug_info->task_num_ = 0;
     task_debug_info_list_.push_back(debug_info);
@@ -180,10 +184,12 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
       auto real_input_index = AnfAlgo::GetRealInputIndex(anf_node_ptr, i);
       auto device_address = AnfAlgo::GetPrevNodeOutputAddr(anf_node_ptr, real_input_index);
       AddressPtr input = std::make_shared<Address>();
+      MS_EXCEPTION_IF_NULL(input);
       input->addr = device_address->ptr_;
       input->size = device_address->size_;
 
       auto prenode_with_index = AnfAlgo::GetPrevNodeOutput(anf_node_ptr, i);
+      MS_EXCEPTION_IF_NULL(prenode_with_index.first);
       if (AnfAlgo::IsRealCNodeKernel(prenode_with_index.first)) {
         if ((AnfAlgo::GetCNodeName(prenode_with_index.first) == kSplitOpName ||
              AnfAlgo::GetCNodeName(prenode_with_index.first) == kSplitVOpName) &&
@@ -192,6 +198,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
           // when op A -> split(NonTask) -> op B, op B's input addr is split's input0's addr + offset
           // offset is split's output index * split's output size
           auto split_input0_device_address = AnfAlgo::GetPrevNodeOutputAddr(prenode_with_index.first, 0);
+          MS_EXCEPTION_IF_NULL(split_input0_device_address);
           input->addr =
             static_cast<uint8_t *>(split_input0_device_address->ptr_) + (prenode_with_index.second * input->size);
           MS_LOG(INFO) << "Change " << anf_node_ptr->fullname_with_scope() << "'s input " << i << " address to "
@@ -231,6 +238,11 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
     ascend_kernel_mod->GenTask(kernel_inputs, kernel_workspaces, kernel_outputs, stream_id);
   task_info_list->insert(task_info_list->end(), task_info_ptrs.begin(), task_info_ptrs.end());
   auto debug_info = std::make_shared<TaskDebugInfo>();
+  MS_EXCEPTION_IF_NULL(debug_info);
+  if (task_info_ptrs.empty()) {
+    MS_LOG(ERROR) << "Empty task_info_ptrs.";
+    return false;
+  }
   debug_info->op_name_ = anf_node_ptr->fullname_with_scope();
   debug_info->task_num_ = task_info_ptrs.size();
   debug_info->stream_id_ = task_info_ptrs[0]->stream_id();
@@ -338,6 +350,7 @@ void TaskGenerator::SaveTaskDebugInfoToFile(const std::string &real_filename,
 
   size_t index = 0;
   for (auto &task_debug_info : task_debug_info_list) {
+    MS_EXCEPTION_IF_NULL(task_debug_info);
     fout << "op_name:" << task_debug_info->op_name_ << "\n"
          << "task_index:" << index << "\t"
          << "task_num:" << task_debug_info->task_num_ << "\t"
@@ -345,25 +358,28 @@ void TaskGenerator::SaveTaskDebugInfoToFile(const std::string &real_filename,
          << "task0_type:" << task_debug_info->type_ << "\t"
          << "task0_dump_flag:" << task_debug_info->dump_flag_ << "\n";
     index++;
-    if (task_debug_info->input_addrs_.size()) {
+    if (!task_debug_info->input_addrs_.empty()) {
       fout << "input address:";
       for (auto &input : task_debug_info->input_addrs_) {
+        MS_EXCEPTION_IF_NULL(input);
         fout << input->addr << "(" << input->size << ")\t";
       }
       fout << "\n";
     }
 
-    if (task_debug_info->output_addrs_.size()) {
+    if (!task_debug_info->output_addrs_.empty()) {
       fout << "output address:";
       for (auto &output : task_debug_info->output_addrs_) {
+        MS_EXCEPTION_IF_NULL(output);
         fout << output->addr << "(" << output->size << ")\t";
       }
       fout << "\n";
     }
 
-    if (task_debug_info->workspace_addrs_.size()) {
+    if (!task_debug_info->workspace_addrs_.empty()) {
       fout << "workspace address:";
       for (auto &workspace : task_debug_info->workspace_addrs_) {
+        MS_EXCEPTION_IF_NULL(workspace);
         fout << workspace->addr << "(" << workspace->size << ")\t";
       }
       fout << "\n";

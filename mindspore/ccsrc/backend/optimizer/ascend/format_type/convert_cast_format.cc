@@ -50,14 +50,17 @@ const AnfNodePtr ConvertCastFormat::Process(const FuncGraphPtr &func_graph, cons
       continue;
     }
     auto cast_node = input_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cast_node);
     ChangeCastFormat(cast_node, func_graph);
   }
   return nullptr;
 }
 
 void ConvertCastFormat::SetCastFormat(const CNodePtr &cast_node, const string &format) const {
+  MS_EXCEPTION_IF_NULL(cast_node);
   auto info_builder =
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(cast_node));
+  MS_EXCEPTION_IF_NULL(info_builder);
   info_builder->SetInputsFormat({format});
   info_builder->SetOutputsFormat({format});
   AnfAlgo::SetSelectKernelBuildInfo(info_builder->Build(), cast_node.get());
@@ -65,6 +68,7 @@ void ConvertCastFormat::SetCastFormat(const CNodePtr &cast_node, const string &f
 
 void ConvertCastFormat::ChangeCastFormat(const CNodePtr &cast_node, const FuncGraphPtr &func_graph) const {
   MS_EXCEPTION_IF_NULL(cast_node);
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto input_node_name = AnfAlgo::GetCNodeName(cast_node);
   if (input_node_name != prim::kPrimCast->name()) {
     return;

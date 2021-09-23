@@ -141,7 +141,7 @@ class KernelBuildClient {
   std::shared_ptr<DuplexPipe> dp_;
 };
 
-static std::string GetScriptFilePath(const std::string cmd_env, const std::string &cmd_script,
+static std::string GetScriptFilePath(const std::string &cmd_env, const std::string &cmd_script,
                                      const std::string &server_script) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

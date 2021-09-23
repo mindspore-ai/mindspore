@@ -289,6 +289,7 @@ bool TagRaiseReduce(const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecisionMatchedKernelInfo(
   const CNodePtr &cnode, const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list,
   bool *precision_reduce) {
+  MS_EXCEPTION_IF_NULL(precision_reduce);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_kernel_info_list;
   const std::map<TypeId, TypeId> raise_map = {{kNumberTypeFloat16, kNumberTypeFloat32}};
   const std::map<TypeId, TypeId> reduce_map = {{kNumberTypeInt64, kNumberTypeInt32},
@@ -350,6 +351,7 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
   auto format = iter->second[next_index];
   auto info_builder =
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(kernel_node));
+  MS_EXCEPTION_IF_NULL(info_builder);
   info_builder->SetInputsFormat({format});
   info_builder->SetOutputsFormat({format});
   AnfAlgo::SetSelectKernelBuildInfo(info_builder->Build(), kernel_node.get());
@@ -372,12 +374,14 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
     output_format = {AnfAlgo::GetOutputFormat(real_input_node, 0)};
   }
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
   // we set special device info of a input tensor.
   auto op_info = kernel::tbe::TbeDynamicShapeUtil::FindOp(AnfAlgo::GetCNodeName(kernel_node), kernel_node);
   if (op_info != nullptr) {
     force_fresh = op_info->is_ref() || force_fresh;
   }
   auto selected_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  MS_EXCEPTION_IF_NULL(selected_kernel_info);
   if (IsValueNode<tensor::Tensor>(real_input_node) &&
       AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown) {
     builder->SetOutputsFormat(output_format);
@@ -403,6 +407,7 @@ bool RefreshCastAndParamWeightFormat(const AnfNodePtr &input_node, const string 
     return false;
   }
   auto cast_node = input_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cast_node);
   if (AnfAlgo::GetCNodeName(cast_node) != prim::kPrimCast->name()) {
     return true;
   }
@@ -414,6 +419,7 @@ bool RefreshCastAndParamWeightFormat(const AnfNodePtr &input_node, const string 
   }
   auto info_builder =
     std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(input_node));
+  MS_EXCEPTION_IF_NULL(info_builder);
   info_builder->SetInputsFormat({format});
   info_builder->SetOutputsFormat({format});
   AnfAlgo::SetSelectKernelBuildInfo(info_builder->Build(), cast_node.get());
@@ -433,6 +439,7 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
     auto input_with_index = AnfAlgo::VisitKernelWithReturnType(input_kernel_node, 0);
     MS_EXCEPTION_IF_NULL(input_with_index.first);
     auto real_input_node = input_with_index.first;
+    MS_EXCEPTION_IF_NULL(real_input_node);
     if (RefreshCastAndParamWeightFormat(real_input_node, selected_kernel_info->GetInputFormat(input_index))) {
       continue;
     }
@@ -534,6 +541,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
 }
 
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto kernel_build_info = kernel_info->select_kernel_build_info();
@@ -544,6 +552,7 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   }
 
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
   builder->SetOriginDataFormat(kernel_build_info->GetOriginDataFormat());
   builder->SetInputsFormat(kernel_build_info->GetAllInputFormats());
   builder->SetInputsDeviceType(kernel_build_info->GetAllInputDeviceTypes());

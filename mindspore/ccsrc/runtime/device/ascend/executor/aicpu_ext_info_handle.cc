@@ -71,8 +71,8 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
                      << " infoLen:" << aicpu_ext_info->infoLen;
         break;
     }
-    offset += sizeof(AicpuExtInfo);
-    offset += aicpu_ext_info->infoLen;
+    offset = SizetAddWithOverflowCheck(offset, sizeof(AicpuExtInfo));
+    offset = SizetAddWithOverflowCheck(offset, aicpu_ext_info->infoLen);
   }
 
   if (offset != ext_info_len_) {
@@ -84,6 +84,7 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
 }
 
 bool AicpuExtInfoHandler::ParseExtShapeType(AicpuExtInfo *aicpu_ext_info) {
+  MS_EXCEPTION_IF_NULL(aicpu_ext_info);
   if (aicpu_ext_info->infoLen != sizeof(int32_t)) {
     MS_LOG(ERROR) << "Node:" << node_name_ << " parse ext shape type failed as infoLen must be " << sizeof(int32_t)
                   << " but got:" << aicpu_ext_info->infoLen;
@@ -120,6 +121,7 @@ bool AicpuExtInfoHandler::ParseExtInputShape(AicpuExtInfo *aicpu_ext_info) {
 
 bool AicpuExtInfoHandler::ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info) {
   auto need_len = output_num_ * sizeof(AicpuShapeAndType);
+  MS_EXCEPTION_IF_NULL(aicpu_ext_info);
   if (aicpu_ext_info->infoLen != need_len) {
     MS_LOG(INFO) << "Node:" << node_name_
                  << " parse ext output shape failed, aicpu_ext_info->infoLen:" << aicpu_ext_info->infoLen
@@ -144,6 +146,10 @@ bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const No
   auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, input_index);
   std::vector<int64_t> tmp_shape;
   std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(tmp_shape), SizeToLong);
+  if (input_index >= input_shape_and_type_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid input_index: " << input_index
+                      << " the size of input_shape_and_type_ is: " << input_shape_and_type_.size();
+  }
   return UpdateShapeAndType(tmp_shape, NOT_NULL(input_shape_and_type_[input_index]));
 }
 
@@ -170,12 +176,20 @@ bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const 
 
   std::vector<int64_t> tmp_shape;
   std::transform(shape.begin(), shape.end(), std::back_inserter(tmp_shape), SizeToLong);
+  if (output_index >= output_shape_and_type_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid output_index: " << output_index
+                      << " the size of output_shape_and_type_ is: " << output_shape_and_type_.size();
+  }
   return UpdateShapeAndType(tmp_shape, NOT_NULL(output_shape_and_type_[output_index]));
 }
 
 bool AicpuExtInfoHandler::GetOutputShapeAndType(uint32_t output_index, NotNull<std::vector<int64_t> *> shape,
                                                 NotNull<TypeId *> data_type) {
   MS_LOG(INFO) << "Get " << node_name_ << " Output:" << output_index << " Shape And Type";
+  if (output_index >= output_shape_and_type_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid output_index: " << output_index
+                      << " the size of output_shape_and_type_ is: " << output_shape_and_type_.size();
+  }
   GetShapeAndType(NOT_NULL(output_shape_and_type_[output_index]), shape, data_type);
   return true;
 }
@@ -183,7 +197,7 @@ bool AicpuExtInfoHandler::GetOutputShapeAndType(uint32_t output_index, NotNull<s
 bool AicpuExtInfoHandler::UpdateShapeAndType(const std::vector<int64_t> &shape,
                                              NotNull<AicpuShapeAndType *> shape_and_type) {
   if (shape.empty() || shape.size() > kernel::kMaxShapeDims) {
-    MS_LOG(ERROR) << "Invalid shape:" << shape.size();
+    MS_LOG(ERROR) << "Invalid shape:" << shape.size() << " Only support 0-8";
     return false;
   }
 

@@ -279,7 +279,7 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (kernel_attr.GetOutputSize() != output_num) {
-      MS_LOG(DEBUG) << "Output num is not equal!";
+      MS_LOG(EXCEPTION) << "Output num is not equal!";
       continue;
     }
     int input_dtype_matched_num =
@@ -299,6 +299,7 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
 }
 
 void SetKernelInfo(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
   // Select for dynamic kernel(both the number and data type are undetermined).
   const std::string &op_name = AnfAlgo::GetCNodeName(kernel_node);
   if (IsDynamicParamKernel(op_name)) {

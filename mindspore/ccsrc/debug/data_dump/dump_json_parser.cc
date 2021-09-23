@@ -599,6 +599,7 @@ void DumpJsonParser::UpdateNeedDumpKernels(const session::KernelGraph &kernel_gr
       for (size_t i = 0; i < input_size; ++i) {
         auto input_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
         auto input = input_with_index.first;
+        MS_EXCEPTION_IF_NULL(input);
         if (input->isa<CNode>()) {
           MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << GetKernelNodeName(kernel)
                        << " Input:" << GetKernelNodeName(input);

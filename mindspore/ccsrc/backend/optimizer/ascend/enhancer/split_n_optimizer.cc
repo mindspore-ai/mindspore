@@ -95,6 +95,7 @@ bool InputCheck(const AnfNodePtr &node) {
   auto in_nums = AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < in_nums; i++) {
     auto in_node = VisitSplitKernel(AnfAlgo::GetInputNode(cnode, i), 0).first;
+    MS_EXCEPTION_IF_NULL(in_node);
     if (in_node->isa<Parameter>() || in_node->isa<ValueNode>()) {
       MS_LOG(INFO) << "Input is a Parameter or ValueNode, can not optimizer.";
       return false;
@@ -104,6 +105,7 @@ bool InputCheck(const AnfNodePtr &node) {
       MS_EXCEPTION_IF_NULL(in_cnode);
       auto in_node_name = AnfAlgo::GetCNodeName(in_cnode);
       auto trans_input = AnfAlgo::VisitKernel(in_node, 0).first;
+      MS_EXCEPTION_IF_NULL(trans_input);
       if (in_node_name == kTransDataOpName && (trans_input->isa<Parameter>() || trans_input->isa<ValueNode>())) {
         MS_LOG(INFO) << "Data->TransData->split, can not optimizer.";
         return false;

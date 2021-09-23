@@ -169,6 +169,32 @@ inline size_t SizetMulWithOverflowCheck(size_t a, size_t b) {
   return out;
 }
 
+inline uint32_t Uint32tMulWithOverflowCheck(uint32_t a, uint32_t b) {
+  uint32_t out = a * b;
+  if (a != 0) {
+    if ((out / a) != b) {
+      MS_LOG(EXCEPTION) << "Mul: a(" << a << ") * b(" << b << ") result is overflow";
+    }
+  }
+  return out;
+}
+
+inline size_t SizetAddWithOverflowCheck(size_t x, size_t y) {
+  size_t sum = x + y;
+  if (sum < x || sum < y) {
+    MS_LOG(EXCEPTION) << "Add: a(" << x << ") + b(" << y << ") result is overflow";
+  }
+  return sum;
+}
+
+inline uint32_t Uint32tAddWithOverflowCheck(uint32_t x, uint32_t y) {
+  uint32_t sum = x + y;
+  if (sum < x || sum < y) {
+    MS_LOG(EXCEPTION) << "Add: a(" << x << ") + b(" << y << ") result is overflow";
+  }
+  return sum;
+}
+
 inline uint8_t *AddressOffset(void *address, size_t offset) {
   MS_EXCEPTION_IF_NULL(address);
   return static_cast<uint8_t *>(address) + offset;

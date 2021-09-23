@@ -292,7 +292,7 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   }
   // feature map set
   std::vector<size_t> feature_map_input_indexs;
-  feature_map_input_indexs.push_back(0);
+  feature_map_input_indexs.emplace_back(0);
   AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), tile_node);
   return tile_node;
 }

@@ -68,6 +68,7 @@ bool IsRealKernelCNode(const CNodePtr &cnode) {
                                              prim::kPrimReturn,      prim::kPrimPartial,      prim::kPrimDepend,
                                              prim::kPrimUpdateState, prim::kPrimLoad};
 #endif
+  MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << cnode->DebugString();
   }
@@ -1282,6 +1283,8 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
 }
 // copy an abstract of a node to another node
 void AnfRuntimeAlgorithm::CopyAbstract(const AnfNodePtr &from_node, AnfNode *to_node) {
+  MS_EXCEPTION_IF_NULL(from_node);
+  MS_EXCEPTION_IF_NULL(to_node);
   to_node->set_abstract(from_node->abstract());
 }
 
@@ -1555,6 +1558,7 @@ bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
 }
 
 bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input_index) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Cannot input a parameter or a valuenode to charge it's input if is a feature map"
                       << " trace: " << trace::DumpSourceLines(node);
@@ -1735,6 +1739,7 @@ bool AnfRuntimeAlgorithm::IsSwitchCall(const CNodePtr &call_node) {
                       << " trace: " << trace::DumpSourceLines(call_node);
   }
   auto input1 = call_node->input(1);
+  MS_EXCEPTION_IF_NULL(input1);
   if (input1->isa<ValueNode>()) {
     return false;
   } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
@@ -1881,6 +1886,7 @@ TypeId AnfRuntimeAlgorithm::GetCNodeOutputPrecision(const AnfNodePtr &node) {
 }
 
 TypeId AnfRuntimeAlgorithm::GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << node->DebugString() << ", input node is not CNode."
                       << " trace: " << trace::DumpSourceLines(node);

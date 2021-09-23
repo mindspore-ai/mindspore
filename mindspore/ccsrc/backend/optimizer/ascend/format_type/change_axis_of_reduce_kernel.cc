@@ -38,6 +38,7 @@ const int64_t kAxisDim = 4;
 const std::map<std::string, ConvertFunction> kReduceConvertMap = {{kOpFormat_FRAC_Z, ConvertReduceAttrFraczAnd6HD},
                                                                   {kOpFormat_C1HWNCoC0, ConvertReduceAttrFraczAnd6HD}};
 void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce_axis) {
+  MS_EXCEPTION_IF_NULL(cnode);
   if (reduce_axis.empty()) {
     MS_LOG(EXCEPTION) << "The node " << cnode->DebugString() << "'s reduce axis got a empty vector";
   }
@@ -65,6 +66,7 @@ void DynamicAttrUpdate(const AnfNodePtr &node) {
 }
 
 void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
   auto axis = kernel::GetReduceAttrAxis(cnode);
   std::vector<int64_t> convert_axis;
   SafeCheckFunction(cnode, axis);

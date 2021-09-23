@@ -51,6 +51,7 @@ static void UpdateLabelSwitch(NotNull<CNodePtr> node) {
   std::vector<uint32_t> label_list;
   for (size_t i = kLabelSwitchLabelId; i < node->size(); ++i) {
     auto input = node->input(i);
+    MS_EXCEPTION_IF_NULL(input);
     if (!input->isa<CNode>() || AnfAlgo::GetCNodeName(input) != kLabelSetOpName) {
       break;
     }
@@ -74,6 +75,7 @@ static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>
   const auto &nodes = graph->execution_order();
 
   for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
     }
@@ -104,6 +106,7 @@ static void AssignLabelForGotoSwitch(NotNull<std::shared_ptr<session::KernelGrap
 
   const auto &nodes = graph->execution_order();
   for (auto &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
     }

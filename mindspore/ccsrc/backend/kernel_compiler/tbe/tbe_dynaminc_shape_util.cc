@@ -330,6 +330,7 @@ bool TbeDynamicShapeUtil::IsDynamicShapeNode(const AnfNodePtr &anf_node) {
 }
 
 void TbeDynamicShapeUtil::SetDynamicShapeAttr(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
   auto is_dyanmic_shape = IsDynamicShapeNode(cnode);
   AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(is_dyanmic_shape), cnode);
 }

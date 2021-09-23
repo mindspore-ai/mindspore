@@ -47,6 +47,8 @@ bool MemCpyAsyncKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     return false;
   }
 
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
   if (inputs[0]->addr == outputs[0]->addr) {
     MS_LOG(INFO) << "input addr is same with output addr , no need exe memcpy async";
     return true;
@@ -93,9 +95,9 @@ void MemCpyAsyncKernel::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, 0);
   size_t total_size = 1;
   for (size_t i = 0; i < shape_i.size(); i++) {
-    total_size = total_size * shape_i[i];
+    total_size = SizetMulWithOverflowCheck(total_size, shape_i[i]);
   }
-  total_size *= type_size;
+  total_size = SizetMulWithOverflowCheck(total_size, type_size);
   MS_LOG(INFO) << "MemCpyAsync size[" << total_size << "]";
   input_size_list_.emplace_back(total_size);
   output_size_list_.emplace_back(total_size);
@@ -112,6 +114,8 @@ std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr
     MS_LOG(EXCEPTION) << "MemCpyAsync op output is not one";
   }
 
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[0]);
   if (outputs[0]->size < inputs[0]->size) {
     MS_LOG(EXCEPTION) << "rtMemcpyAsync destMax < src size";
   }
@@ -127,6 +131,7 @@ std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
 }
+
 device::DynamicKernelPtr MemCpyAsyncKernel::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
   AddressPtrList kernel_inputs;
   AddressPtrList kernel_workspaces;
@@ -141,6 +146,8 @@ device::DynamicKernelPtr MemCpyAsyncKernel::GenDynamicKernel(const CNodePtr &cno
     MS_LOG(EXCEPTION) << "MemCpyAsync op output is not one, got " << kernel_outputs.size();
   }
 
+  MS_EXCEPTION_IF_NULL(kernel_outputs[0]);
+  MS_EXCEPTION_IF_NULL(kernel_inputs[0]);
   if (kernel_outputs[0]->size < kernel_inputs[0]->size) {
     MS_LOG(EXCEPTION) << "rtMemcpyAsync destMax " << kernel_outputs[0]->size << " is less than src size "
                       << kernel_inputs[0]->size;
