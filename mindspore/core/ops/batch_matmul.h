@@ -37,7 +37,6 @@ class MS_CORE_API BatchMatmul : public PrimitiveC {
 };
 AbstractBasePtr BatchMatmulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args);
-using PrimBatchMatmulPtr = std::shared_ptr<BatchMatmul>;
 }  // namespace ops
 }  // namespace mindspore
 

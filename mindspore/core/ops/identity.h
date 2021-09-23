@@ -32,7 +32,6 @@ class MS_CORE_API Identity : public PrimitiveC {
   MS_DECLARE_PARENT(Identity, PrimitiveC);
   void Init() {}
 };
-using PrimIdentityPtr = std::shared_ptr<Identity>;
 }  // namespace ops
 }  // namespace mindspore
 

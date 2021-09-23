@@ -37,7 +37,6 @@ class MS_CORE_API Minimum : public PrimitiveC {
 
 AbstractBasePtr MinimumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimMinimumPtr = std::shared_ptr<Minimum>;
 }  // namespace ops
 }  // namespace mindspore
 

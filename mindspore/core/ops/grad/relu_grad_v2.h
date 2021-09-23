@@ -34,7 +34,6 @@ class MS_CORE_API ReLUGradV2 : public PrimitiveC {
   MS_DECLARE_PARENT(ReLUGradV2, PrimitiveC);
   void Init() {}
 };
-using PrimReLUGradV2Ptr = std::shared_ptr<ReLUGradV2>;
 }  // namespace ops
 }  // namespace mindspore
 

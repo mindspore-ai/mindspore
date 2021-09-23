@@ -64,7 +64,6 @@ class MS_CORE_API DetectionPostProcess : public PrimitiveC {
 };
 AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args);
-using PrimDetectionPostProcessPtr = std::shared_ptr<DetectionPostProcess>;
 }  // namespace ops
 }  // namespace mindspore
 

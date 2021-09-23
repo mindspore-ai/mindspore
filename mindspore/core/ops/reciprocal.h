@@ -35,7 +35,6 @@ class MS_CORE_API Reciprocal : public PrimitiveC {
 
 AbstractBasePtr ReciprocalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args);
-using PrimReciprocalPtr = std::shared_ptr<Reciprocal>;
 }  // namespace ops
 }  // namespace mindspore
 

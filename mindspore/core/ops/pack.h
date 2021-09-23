@@ -42,7 +42,6 @@ class MS_CORE_API Pack : public PrimitiveC {
 };
 AbstractBasePtr PackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimPackPtr = std::shared_ptr<Pack>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_PACK_H_

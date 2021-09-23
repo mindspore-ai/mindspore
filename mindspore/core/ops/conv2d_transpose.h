@@ -68,7 +68,6 @@ class MS_CORE_API Conv2DTranspose : public PrimitiveC {
 };
 AbstractBasePtr Conv2DTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args);
-using PrimConv2DTransposePtr = std::shared_ptr<Conv2DTranspose>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_H_

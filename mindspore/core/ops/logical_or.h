@@ -34,7 +34,6 @@ class MS_CORE_API LogicalOr : public PrimitiveC {
 };
 AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimLogicalOrPtr = std::shared_ptr<LogicalOr>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -36,7 +36,6 @@ class MS_CORE_API Sin : public PrimitiveC {
 };
 AbstractBasePtr SinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimSinPtr = std::shared_ptr<Sin>;
 }  // namespace ops
 }  // namespace mindspore
 

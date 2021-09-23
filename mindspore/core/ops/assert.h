@@ -37,7 +37,6 @@ class MS_CORE_API Assert : public PrimitiveC {
 
 AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimAssertPtr = std::shared_ptr<Assert>;
 }  // namespace ops
 }  // namespace mindspore
 

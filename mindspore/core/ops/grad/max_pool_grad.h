@@ -36,7 +36,6 @@ class MS_CORE_API MaxPoolGrad : public PoolGrad {
 };
 
 AbstractBasePtr MaxPoolGradInfer(const std::vector<AbstractBasePtr> &input_args);
-using PrimMaxPoolGradPtr = std::shared_ptr<MaxPoolGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

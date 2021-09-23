@@ -35,7 +35,6 @@ class MS_CORE_API Less : public PrimitiveC {
 };
 AbstractBasePtr LessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimLessPtr = std::shared_ptr<Less>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LESS_H_

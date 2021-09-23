@@ -32,7 +32,6 @@ class MS_CORE_API Erf : public PrimitiveC {
   MS_DECLARE_PARENT(Erf, PrimitiveC);
 };
 
-using PrimErfPtr = std::shared_ptr<Erf>;
 }  // namespace ops
 }  // namespace mindspore
 

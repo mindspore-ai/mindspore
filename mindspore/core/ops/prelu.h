@@ -37,7 +37,6 @@ class MS_CORE_API PReLU : public PrimitiveC {
 
 AbstractBasePtr PReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimPReLUPtr = std::shared_ptr<PReLU>;
 }  // namespace ops
 }  // namespace mindspore
 

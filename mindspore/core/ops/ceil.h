@@ -36,7 +36,6 @@ class MS_CORE_API Ceil : public PrimitiveC {
 
 AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimCeilPtr = std::shared_ptr<Ceil>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CEIL_H_

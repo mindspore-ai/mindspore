@@ -62,7 +62,6 @@ class MS_CORE_API PriorBox : public PrimitiveC {
 
 AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);
-using PrimPriorBoxPtr = std::shared_ptr<PriorBox>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -36,7 +36,6 @@ class MS_CORE_API GLU : public PrimitiveC {
   int64_t get_axis() const;
 };
 
-using PrimGLUPtr = std::shared_ptr<GLU>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GLU_H_

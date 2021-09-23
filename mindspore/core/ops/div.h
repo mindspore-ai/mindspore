@@ -36,7 +36,6 @@ class MS_CORE_API Div : public PrimitiveC {
 };
 AbstractBasePtr DivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimDivPtr = std::shared_ptr<Div>;
 }  // namespace ops
 }  // namespace mindspore
 

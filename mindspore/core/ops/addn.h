@@ -34,7 +34,6 @@ class MS_CORE_API AddN : public PrimitiveC {
 };
 AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimAddNPtr = std::shared_ptr<AddN>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -39,7 +39,6 @@ class MS_CORE_API MatMul : public PrimitiveC {
   bool get_transpose_a() const;
   bool get_transpose_b() const;
 };
-using PrimMatMulPtr = std::shared_ptr<MatMul>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_MAT_MUL_H_

@@ -39,7 +39,6 @@ class MS_CORE_API SigmoidCrossEntropyWithLogitsGrad : public PrimitiveC {
 AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisEnginePtr &,
                                                        const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args);
-using PrimSigmoidCrossEntropyWithLogitsGradPtr = std::shared_ptr<SigmoidCrossEntropyWithLogitsGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

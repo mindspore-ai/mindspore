@@ -39,7 +39,6 @@ class MS_CORE_API LshProjection : public PrimitiveC {
 
 AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);
-using PrimLshProjectionPtr = std::shared_ptr<LshProjection>;
 }  // namespace ops
 }  // namespace mindspore
 

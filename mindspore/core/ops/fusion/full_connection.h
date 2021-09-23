@@ -44,7 +44,6 @@ class MS_CORE_API FullConnection : public PrimitiveC {
 };
 AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args);
-using PrimFullConnectionPtr = std::shared_ptr<FullConnection>;
 }  // namespace ops
 }  // namespace mindspore
 

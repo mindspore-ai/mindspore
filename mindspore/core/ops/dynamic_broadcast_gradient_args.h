@@ -32,7 +32,6 @@ class MS_CORE_API DynamicBroadcastGradientArgs : public PrimitiveC {
 };
 AbstractBasePtr DynamicBroadcastGradientArgsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args);
-using PrimDynamicBroadcastGradientArgsPtr = std::shared_ptr<DynamicBroadcastGradientArgs>;
 }  // namespace ops
 }  // namespace mindspore
 

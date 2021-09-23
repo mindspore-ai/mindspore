@@ -41,7 +41,6 @@ class MS_CORE_API SparseApplyRMSProp : public PrimitiveC {
 
 AbstractBasePtr SparseApplyRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args);
-using PrimSparseApplyRMSPropPtr = std::shared_ptr<SparseApplyRMSProp>;
 }  // namespace ops
 }  // namespace mindspore
 

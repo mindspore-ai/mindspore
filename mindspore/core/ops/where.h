@@ -36,7 +36,6 @@ class MS_CORE_API Where : public PrimitiveC {
 
 AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimWherePtr = std::shared_ptr<Where>;
 }  // namespace ops
 }  // namespace mindspore
 

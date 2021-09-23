@@ -38,7 +38,6 @@ class MS_CORE_API SliceFusion : public PrimitiveC {
 };
 AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args);
-using PrimSliceFusionPtr = std::shared_ptr<SliceFusion>;
 }  // namespace ops
 }  // namespace mindspore
 

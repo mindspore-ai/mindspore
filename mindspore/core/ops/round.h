@@ -36,7 +36,6 @@ class MS_CORE_API Round : public PrimitiveC {
 
 AbstractBasePtr RoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimRoundPtr = std::shared_ptr<Round>;
 }  // namespace ops
 }  // namespace mindspore
 

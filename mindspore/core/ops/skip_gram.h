@@ -46,7 +46,6 @@ class MS_CORE_API SkipGram : public PrimitiveC {
 };
 AbstractBasePtr SkipGramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);
-using PrimSkipGramPtr = std::shared_ptr<SkipGram>;
 }  // namespace ops
 }  // namespace mindspore
 

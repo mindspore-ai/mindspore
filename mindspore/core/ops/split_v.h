@@ -35,7 +35,6 @@ class SplitV : public PrimitiveC {
 
 AbstractBasePtr SplitVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimSplitVPtr = std::shared_ptr<SplitV>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_Split_V_H_

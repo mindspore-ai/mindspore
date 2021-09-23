@@ -34,7 +34,6 @@ class MS_CORE_API DropoutDoMask : public PrimitiveC {
 };
 AbstractBasePtr DropoutDoMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);
-using PrimDropoutDoMaskPtr = std::shared_ptr<DropoutDoMask>;
 }  // namespace ops
 }  // namespace mindspore
 

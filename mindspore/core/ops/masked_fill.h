@@ -36,7 +36,6 @@ class MaskedFill : public PrimitiveC {
 
 AbstractBasePtr MaskedFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args);
-using PrimMaskedFillPtr = std::shared_ptr<MaskedFill>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_MASKED_FILL_H_

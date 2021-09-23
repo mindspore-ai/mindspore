@@ -40,7 +40,6 @@ class MS_CORE_API BatchToSpace : public PrimitiveC {
 
 AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args);
-using PrimBatchToSpacePtr = std::shared_ptr<BatchToSpace>;
 }  // namespace ops
 }  // namespace mindspore
 

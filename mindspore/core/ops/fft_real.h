@@ -36,7 +36,6 @@ class MS_CORE_API FftReal : public PrimitiveC {
 
 AbstractBasePtr FftRealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimFftRealPtr = std::shared_ptr<FftReal>;
 }  // namespace ops
 }  // namespace mindspore
 

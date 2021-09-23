@@ -54,7 +54,6 @@ class MS_CORE_API AvgPool : public PrimitiveC {
 
 AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimAvgPoolPtr = std::shared_ptr<AvgPool>;
 }  // namespace ops
 }  // namespace mindspore
 

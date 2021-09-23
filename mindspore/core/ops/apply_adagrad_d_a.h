@@ -44,7 +44,6 @@ class ApplyAdagradDA : public PrimitiveC {
 AbstractBasePtr ApplyAdagradDAInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args);
 
-using PrimApplyAdagradDAPtr = std::shared_ptr<ApplyAdagradDA>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_APPLY_ADAGRAD_D_A_H_

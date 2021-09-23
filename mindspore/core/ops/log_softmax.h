@@ -37,7 +37,6 @@ class MS_CORE_API LogSoftmax : public PrimitiveC {
   void set_axis(const int64_t axis);
   int64_t get_axis() const;
 };
-using PrimLogSoftmaxPtr = std::shared_ptr<LogSoftmax>;
 }  // namespace ops
 }  // namespace mindspore
 

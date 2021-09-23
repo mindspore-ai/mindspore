@@ -32,7 +32,6 @@ class MS_CORE_API MulGrad : public PrimitiveC {
   void Init() {}
 };
 
-using PrimMulGradPtr = std::shared_ptr<MulGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

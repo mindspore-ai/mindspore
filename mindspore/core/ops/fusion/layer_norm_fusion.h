@@ -39,7 +39,6 @@ class MS_CORE_API LayerNormFusion : public LayerNorm {
 
 AbstractBasePtr LayerNormFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args);
-using PrimLayerNormFusionPtr = std::shared_ptr<LayerNormFusion>;
 }  // namespace ops
 }  // namespace mindspore
 

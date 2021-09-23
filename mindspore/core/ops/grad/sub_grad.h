@@ -32,7 +32,6 @@ class MS_CORE_API SubGrad : public PrimitiveC {
   void Init() {}
 };
 
-using PrimSubGradPtr = std::shared_ptr<SubGrad>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -67,7 +67,6 @@ class MS_CORE_API GroupConv2DGradInput : public PrimitiveC {
 };
 AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args);
-using PrimGroupConv2DGradInputPtr = std::shared_ptr<GroupConv2DGradInput>;
 }  // namespace ops
 }  // namespace mindspore
 

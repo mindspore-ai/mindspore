@@ -34,7 +34,6 @@ class MS_CORE_API Assign : public PrimitiveC {
   void Init() {}
 };
 
-using PrimAssignPtr = std::shared_ptr<Assign>;
 }  // namespace ops
 }  // namespace mindspore
 

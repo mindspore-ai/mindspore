@@ -43,7 +43,6 @@ class MS_CORE_API Unstack : public PrimitiveC {
 
 AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimUnstackPtr = std::shared_ptr<Unstack>;
 }  // namespace ops
 }  // namespace mindspore
 

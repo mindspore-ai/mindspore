@@ -34,7 +34,6 @@ class MS_CORE_API Maximum : public PrimitiveC {
 };
 AbstractBasePtr MaximumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimMaximumPtr = std::shared_ptr<Maximum>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_MAXIMUM_H_

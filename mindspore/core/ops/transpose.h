@@ -34,7 +34,6 @@ class MS_CORE_API Transpose : public PrimitiveC {
 };
 AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimitiveTransposePtr = std::shared_ptr<Transpose>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -43,7 +43,6 @@ class MS_CORE_API Mfcc : public PrimitiveC {
 };
 AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimMfccPtr = std::shared_ptr<Mfcc>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -39,7 +39,6 @@ class MS_CORE_API ReverseV2 : public PrimitiveC {
 
 AbstractBasePtr ReverseV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimReverseV2Ptr = std::shared_ptr<ReverseV2>;
 }  // namespace ops
 }  // namespace mindspore
 

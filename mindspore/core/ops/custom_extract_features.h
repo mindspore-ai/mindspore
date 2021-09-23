@@ -34,7 +34,6 @@ class MS_CORE_API CustomExtractFeatures : public PrimitiveC {
 };
 AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args);
-using PrimCustomExtractFeaturesPtr = std::shared_ptr<CustomExtractFeatures>;
 }  // namespace ops
 }  // namespace mindspore
 

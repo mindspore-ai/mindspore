@@ -38,7 +38,6 @@ class MS_CORE_API Concat : public PrimitiveC {
 };
 AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimConcatPtr = std::shared_ptr<Concat>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONCAT_H_

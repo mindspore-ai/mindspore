@@ -34,7 +34,6 @@ class MS_CORE_API HShrinkGrad : public PrimitiveC {
 
 AbstractBasePtr HShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args);
-using PrimHShrinkGradPtr = std::shared_ptr<HShrinkGrad>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_HSHRINK_GRAD_H_

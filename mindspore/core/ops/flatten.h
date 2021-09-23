@@ -35,7 +35,6 @@ class MS_CORE_API Flatten : public PrimitiveC {
 };
 AbstractBasePtr FlattenInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimFlattenPtr = std::shared_ptr<Flatten>;
 }  // namespace ops
 }  // namespace mindspore
 

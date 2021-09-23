@@ -62,7 +62,6 @@ class MS_CORE_API Conv2DBackpropInput : public PrimitiveC {
 };
 AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args);
-using PrimConv2DBackpropInputPtr = std::shared_ptr<Conv2DBackpropInput>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_H_

@@ -38,7 +38,6 @@ class MS_CORE_API Sub : public PrimitiveC {
 
 AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimSubPtr = std::shared_ptr<Sub>;
 }  // namespace ops
 }  // namespace mindspore
 

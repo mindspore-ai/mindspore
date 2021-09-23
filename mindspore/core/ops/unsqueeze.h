@@ -38,7 +38,6 @@ class MS_CORE_API Unsqueeze : public PrimitiveC {
 };
 AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimUnsqueezePtr = std::shared_ptr<Unsqueeze>;
 }  // namespace ops
 }  // namespace mindspore
 

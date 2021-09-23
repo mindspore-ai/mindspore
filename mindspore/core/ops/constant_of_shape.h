@@ -39,7 +39,6 @@ class MS_CORE_API ConstantOfShape : public PrimitiveC {
 
 AbstractBasePtr ConstantOfShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args);
-using PrimConstantOfShapePtr = std::shared_ptr<ConstantOfShape>;
 }  // namespace ops
 }  // namespace mindspore
 

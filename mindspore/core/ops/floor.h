@@ -36,7 +36,6 @@ class MS_CORE_API Floor : public PrimitiveC {
 };
 AbstractBasePtr FloorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimFLoorPtr = std::shared_ptr<Floor>;
 }  // namespace ops
 }  // namespace mindspore
 

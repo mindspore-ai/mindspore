@@ -34,7 +34,6 @@ class Erfinv : public PrimitiveC {
 
 AbstractBasePtr ErfinvInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimErfinvPtr = std::shared_ptr<Erfinv>;
 }  // namespace ops
 }  // namespace mindspore
 

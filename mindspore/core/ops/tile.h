@@ -38,7 +38,6 @@ class MS_CORE_API Tile : public PrimitiveC {
 };
 AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimTilePtr = std::shared_ptr<Tile>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -32,7 +32,6 @@ class MS_CORE_API Diag : public PrimitiveC {
 };
 AbstractBasePtr DiagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimDiagPtr = std::shared_ptr<Diag>;
 }  // namespace ops
 }  // namespace mindspore
 

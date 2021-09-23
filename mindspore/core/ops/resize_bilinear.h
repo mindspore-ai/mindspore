@@ -40,7 +40,6 @@ class MS_CORE_API ResizeBilinear : public PrimitiveC {
 };
 AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args);
-using PrimResizeBilinearPtr = std::shared_ptr<ResizeBilinear>;
 }  // namespace ops
 }  // namespace mindspore
 

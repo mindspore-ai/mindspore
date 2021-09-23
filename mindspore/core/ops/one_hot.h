@@ -36,7 +36,6 @@ class MS_CORE_API OneHot : public PrimitiveC {
   void set_axis(const int64_t axis);
   int64_t get_axis() const;
 };
-using PrimOneHotPtr = std::shared_ptr<OneHot>;
 }  // namespace ops
 }  // namespace mindspore
 

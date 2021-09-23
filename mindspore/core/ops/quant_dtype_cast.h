@@ -44,7 +44,6 @@ class MS_CORE_API QuantDTypeCast : public PrimitiveC {
 };
 AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args);
-using PrimQuantDTypeCastPtr = std::shared_ptr<QuantDTypeCast>;
 }  // namespace ops
 }  // namespace mindspore
 

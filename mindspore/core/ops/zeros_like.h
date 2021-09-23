@@ -34,7 +34,6 @@ class MS_CORE_API ZerosLike : public PrimitiveC {
 };
 AbstractBasePtr ZerosLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimZerosLikePtr = std::shared_ptr<ZerosLike>;
 }  // namespace ops
 }  // namespace mindspore
 

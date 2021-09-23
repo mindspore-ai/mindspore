@@ -39,7 +39,6 @@ class MS_CORE_API Pad : public PrimitiveC {
 };
 AbstractBasePtr PadInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimPadPtr = std::shared_ptr<Pad>;
 }  // namespace ops
 }  // namespace mindspore
 

@@ -58,7 +58,6 @@ class MS_CORE_API Resize : public PrimitiveC {
 
 AbstractBasePtr ResizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);
-using PrimResizePtr = std::shared_ptr<Resize>;
 }  // namespace ops
 }  // namespace mindspore
 

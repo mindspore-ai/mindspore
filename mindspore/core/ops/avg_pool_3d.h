@@ -36,7 +36,6 @@ class MS_CORE_API AvgPool3D : public PrimitiveC {
 
 AbstractBasePtr AvgPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
-using PrimAvgPool3DPtr = std::shared_ptr<AvgPool3D>;
 }  // namespace ops
 }  // namespace mindspore
 

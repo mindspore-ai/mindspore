@@ -39,7 +39,6 @@ class MS_CORE_API BroadcastTo : public PrimitiveC {
 
 AbstractBasePtr BroadcastToInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args);
-using PrimBroadcastToPtr = std::shared_ptr<BroadcastTo>;
 }  // namespace ops
 }  // namespace mindspore
 

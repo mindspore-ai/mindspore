@@ -36,7 +36,6 @@ class MS_CORE_API Equal : public PrimitiveC {
 
 AbstractBasePtr EqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimEqualPtr = std::shared_ptr<Equal>;
 }  // namespace ops
 }  // namespace mindspore
 

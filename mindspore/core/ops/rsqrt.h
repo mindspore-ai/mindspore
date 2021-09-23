@@ -36,7 +36,6 @@ class MS_CORE_API Rsqrt : public PrimitiveC {
 };
 AbstractBasePtr RsqrtInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
-using PrimRsqrtPtr = std::shared_ptr<Rsqrt>;
 }  // namespace ops
 }  // namespace mindspore
 

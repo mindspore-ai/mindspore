@@ -38,7 +38,6 @@ class MS_CORE_API ResizeNearestNeighbor : public PrimitiveC {
   bool get_align_corners() const;
 };
 
-using PrimResizeNearestNeighborPtr = std::shared_ptr<ResizeNearestNeighbor>;
 }  // namespace ops
 }  // namespace mindspore
 

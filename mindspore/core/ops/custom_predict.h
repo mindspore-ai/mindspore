@@ -39,7 +39,6 @@ class MS_CORE_API CustomPredict : public PrimitiveC {
 };
 AbstractBasePtr CustomPredictInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args);
-using PrimCustomPredictPtr = std::shared_ptr<CustomPredict>;
 }  // namespace ops
 }  // namespace mindspore
 

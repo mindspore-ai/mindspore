@@ -36,7 +36,6 @@ class MS_CORE_API SoftShrinkGrad : public PrimitiveC {
 };
 AbstractBasePtr SoftShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args);
-using PrimSoftShrinkGradPtr = std::shared_ptr<SoftShrinkGrad>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SOFTSHRINK_GRAD_H_

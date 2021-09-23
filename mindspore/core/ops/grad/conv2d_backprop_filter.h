@@ -66,7 +66,6 @@ class MS_CORE_API Conv2DBackpropFilter : public PrimitiveC {
 };
 AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args);
-using PrimConv2DBackpropFilterPtr = std::shared_ptr<Conv2DBackpropFilter>;
 }  // namespace ops
 }  // namespace mindspore
 

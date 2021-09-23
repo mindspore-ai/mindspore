@@ -36,7 +36,6 @@ class MS_CORE_API HSigmoid : public PrimitiveC {
 AbstractBasePtr HSigmoidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);
 
-using PrimHSigmoidPtr = std::shared_ptr<HSigmoid>;
 }  // namespace ops
 }  // namespace mindspore
 

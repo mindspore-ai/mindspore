@@ -57,7 +57,6 @@ class MS_CORE_API LSTMGrad : public PrimitiveC {
 };
 AbstractBasePtr LstmGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args);
-using PrimLstmGradPtr = std::shared_ptr<LSTMGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
