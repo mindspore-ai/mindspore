@@ -64,6 +64,7 @@ constexpr auto kTile = "Tile";
 constexpr auto kBiasAddGrad = "BiasAddGrad";
 constexpr auto kCos = "Cos";
 constexpr auto kAbs = "Abs";
+constexpr auto kTrunc = "Trunc";
 constexpr auto kSquare = "Square";
 
 // Arrays
@@ -123,6 +124,7 @@ inline const PrimitivePtr kPrimScalarLog = std::make_shared<Primitive>("scalar_l
 inline const PrimitivePtr kPrimScalarSin = std::make_shared<Primitive>("scalar_sin");
 inline const PrimitivePtr kPrimScalarCos = std::make_shared<Primitive>("scalar_cos");
 inline const PrimitivePtr kPrimScalarTan = std::make_shared<Primitive>("scalar_tan");
+inline const PrimitivePtr kPrimTrunc = std::make_shared<Primitive>(kTrunc);
 
 // Comparisons
 inline const PrimitivePtr kPrimScalarEq = std::make_shared<Primitive>("scalar_eq");
