@@ -145,10 +145,10 @@ public class AlBert extends TrainModel {
                 logger.severe(Common.addTag("train bert input size error"));
                 return new ArrayList<>();
             }
-            labelIdTensor = inputs.get(0);
-            tokenIdTensor = inputs.get(1);
-            inputIdTensor = inputs.get(2);
-            maskIdTensor = inputs.get(3);
+            labelIdTensor = inputs.get(3);
+            tokenIdTensor = inputs.get(0);
+            inputIdTensor = inputs.get(1);
+            maskIdTensor = inputs.get(2);
             labelIdTensor.setData(labelIdBufffer);
         } else {
             if (inputs.size() != EVAL_BERT_INPUTS) {
