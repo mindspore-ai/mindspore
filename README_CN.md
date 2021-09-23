@@ -39,7 +39,7 @@ MindSpore提供了友好的设计和高效的执行，旨在提升数据科学�
 
 同时，MindSpore作为全球AI开源社区，致力于进一步开发和丰富AI软硬件应用生态。
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
+<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture-zh.png" alt="MindSpore Architecture" width="600"/>
 
 欲了解更多详情，请查看我们的[总体架构](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/architecture.html)。
 
