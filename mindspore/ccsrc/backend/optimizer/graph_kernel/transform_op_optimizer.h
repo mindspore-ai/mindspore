@@ -22,8 +22,7 @@
 #include "ir/func_graph.h"
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 /**
  * @brief Eliminate the unnecessary transformation ops when the other operators
  *        are format flexible.
@@ -46,17 +45,16 @@ namespace opt {
  *   %1 = Add(p0, p1)
  *   return %1
  */
-class TransformOpOptimizer : public Pass {
+class TransformOpOptimizer : public opt::Pass {
  public:
   TransformOpOptimizer() : Pass("transform_op_optimizer") {}
   ~TransformOpOptimizer() = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool Process(const graphkernel::LiteGraphPtr &litegraph, const std::string &trans_op_name = "Transpose");
-  bool IsFlexibleOp(const graphkernel::NodePtr &node);
+  bool Process(const inner::LiteGraphPtr &litegraph, const std::string &trans_op_name = "Transpose");
+  bool IsFlexibleOp(const inner::NodePtr &node);
   size_t ori_trans_op_num_{0};
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_TRANSFORM_OP_OPTIMIZER_H_

@@ -32,8 +32,7 @@
 #include "pipeline/jit/parse/python_adapter.h"
 #include "utils/ms_context.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 class DimInfo {
  public:
   DimInfo() = default;
@@ -117,6 +116,5 @@ class ParellelCostModelWarehouse {
   ~ParellelCostModelWarehouse() = default;
   ParallelCostModelPtr cost_model_;
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_PARALLEL_COST_MODEL_H_

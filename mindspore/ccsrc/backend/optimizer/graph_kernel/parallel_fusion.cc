@@ -16,14 +16,17 @@
 
 #include "backend/optimizer/graph_kernel/parallel_fusion.h"
 
+#include <algorithm>
+#include <list>
+#include <queue>
+#include <utility>
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "frontend/operator/ops.h"
 #include "ir/func_graph_cloner.h"
 #include "vm/segment_runner.h"
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 bool IsOneOf(const AnfNodePtr &node, const std::vector<PrimitivePtr> &ops_prim) {
   return std::any_of(ops_prim.cbegin(), ops_prim.cend(),
@@ -714,5 +717,4 @@ bool ParallelOpFusion::Run(const FuncGraphPtr &graph) {
   (void)std::make_shared<SpreadUpdateState>()->Run(graph);
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

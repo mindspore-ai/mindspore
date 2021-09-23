@@ -22,8 +22,8 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
+using opt::PassManagerPtr;
 class GraphKernelOptimizer {
  public:
   void Run(const KernelGraphPtr &kernel_graph);
@@ -49,6 +49,5 @@ class GraphKernelOptimizer {
 };
 
 void GraphKernelOptimize(const KernelGraphPtr &kernel_graph);
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_OPTIMIZATION_H_

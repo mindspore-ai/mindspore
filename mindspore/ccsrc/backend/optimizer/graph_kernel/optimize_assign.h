@@ -20,15 +20,13 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/session/kernel_graph.h"
 
-namespace mindspore {
-namespace opt {
-class OptimizeAssign : public Pass {
+namespace mindspore::graphkernel {
+class OptimizeAssign : public opt::Pass {
  public:
   OptimizeAssign() : Pass("optimize_assign") {}
   ~OptimizeAssign() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 using OptimizeAssignPtr = std::shared_ptr<OptimizeAssign>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_OPTIMIZE_ASSIGN_H_

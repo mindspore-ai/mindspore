@@ -20,8 +20,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 bool BindValueToGraph::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto todos = TopoSort(func_graph->get_return());
@@ -48,5 +47,4 @@ bool BindValueToGraph::Run(const FuncGraphPtr &func_graph) {
 
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

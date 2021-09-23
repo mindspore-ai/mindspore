@@ -1256,7 +1256,7 @@ void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kern
   if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
-  opt::GraphKernelOptimize(kernel_graph);
+  graphkernel::GraphKernelOptimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 }
 

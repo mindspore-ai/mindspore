@@ -22,15 +22,13 @@
 #include "backend/optimizer/common/pass.h"
 #include "ir/func_graph.h"
 
-namespace mindspore {
-namespace opt {
-class CastMatmulFusion : public Pass {
+namespace mindspore::graphkernel {
+class CastMatmulFusion : public opt::Pass {
  public:
   CastMatmulFusion() : Pass("cast_matmul_fusion") {}
   ~CastMatmulFusion() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 };
 using OptimizeMatmulPtr = std::shared_ptr<CastMatmulFusion>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CAST_MATMUL_FUSION_H_

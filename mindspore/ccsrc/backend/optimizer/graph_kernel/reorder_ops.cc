@@ -25,8 +25,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/anf_ir_dump.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 bool IsTypeInsensitive(const CNodePtr &node) {
   // Nodes that will change the input data type will not seen as type insensitive nodes.
@@ -381,5 +380,4 @@ bool ReorderOps::Run(const FuncGraphPtr &func_graph) {
 
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

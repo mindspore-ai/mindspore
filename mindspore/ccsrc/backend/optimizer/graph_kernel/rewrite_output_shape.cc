@@ -21,8 +21,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 bool SaveOutputShape::Run(const FuncGraphPtr &func_graph) {
   if (!IsPrimitiveCNode(func_graph->output(), prim::kPrimMakeTuple)) {
     // the MakeTuple with kMetaTypeNone
@@ -107,5 +106,4 @@ bool RewriteOutputShape::Run(const FuncGraphPtr &func_graph) {
   }
   return true;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

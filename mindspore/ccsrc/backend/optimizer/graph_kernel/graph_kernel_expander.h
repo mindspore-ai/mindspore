@@ -22,8 +22,7 @@
 #include "backend/optimizer/common/pass.h"
 #include "ir/func_graph.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 class Expander {
  public:
   virtual AnfNodePtr Run(const AnfNodePtr &node) = 0;
@@ -49,7 +48,7 @@ class ComplexOpExpander : public DefaultExpander {
  protected:
   bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
 };
-class GraphKernelExpander : public Pass {
+class GraphKernelExpander : public opt::Pass {
  public:
   GraphKernelExpander() : Pass("graph_kernel_expander") {}
   explicit GraphKernelExpander(const std::string &name) : Pass(name) {}
@@ -77,6 +76,5 @@ class GraphKernelComplexExpander : public GraphKernelExpander {
   ExpanderPtr GetExpander(const AnfNodePtr &node) override;
   bool CanExpand(const CNodePtr &node) const override;
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_EXPANDER_H_

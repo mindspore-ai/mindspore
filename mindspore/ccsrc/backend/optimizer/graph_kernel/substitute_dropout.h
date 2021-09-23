@@ -18,8 +18,7 @@
 
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 class DropoutExpander : public DefaultExpander {
  public:
   AnfNodePtr Run(const AnfNodePtr &node) override;
@@ -28,6 +27,5 @@ class DropoutExpander : public DefaultExpander {
   AnfNodePtr PreProcess(const FuncGraphPtr &, const AnfNodePtr &);
   static int64_t seed_;
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SUBSTITUTE_DROPOUT_H_

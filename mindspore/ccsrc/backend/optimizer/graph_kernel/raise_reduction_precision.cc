@@ -15,6 +15,7 @@
  */
 #include "backend/optimizer/graph_kernel/raise_reduction_precision.h"
 
+#include <memory>
 #include "base/core_ops.h"
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
@@ -25,8 +26,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/kernel_info.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 bool RaiseReductionPrecision::IsFp16ReduceSum(const AnfNodePtr &node) const {
   return IsPrimitiveCNode(node, prim::kPrimReduceSum) && AnfAlgo::GetInputDeviceDataType(node, 0) == kNumberTypeFloat16;
 }
@@ -124,5 +124,4 @@ bool RaiseReductionPrecision::Run(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

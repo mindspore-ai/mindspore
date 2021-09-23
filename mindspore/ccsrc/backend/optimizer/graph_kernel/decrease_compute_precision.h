@@ -22,9 +22,8 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/session/kernel_graph.h"
 
-namespace mindspore {
-namespace opt {
-class DecreaseComputePrecision : public Pass {
+namespace mindspore::graphkernel {
+class DecreaseComputePrecision : public opt::Pass {
  public:
   explicit DecreaseComputePrecision(const std::vector<PrimitivePtr> &black_list = {})
       : Pass("decrease_compute_precision"), black_list_(black_list) {}
@@ -36,8 +35,5 @@ class DecreaseComputePrecision : public Pass {
   AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type, const std::string &format) const;
   std::vector<PrimitivePtr> black_list_;
 };
-
-}  // namespace opt
-}  // namespace mindspore
-
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_DECREASE_COMPUTE_PRECISION_H_

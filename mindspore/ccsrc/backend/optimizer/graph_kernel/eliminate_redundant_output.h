@@ -18,8 +18,7 @@
 
 #include "backend/optimizer/common/optimizer.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 /* Eliminate the output without external user
  *   %1 = call @graph_kernel(p1, p2)
  *   %2 = tuple_getitem(%1, 0)   // the getitem(1) does not exist.
@@ -35,7 +34,7 @@ namespace opt {
  *      %1 = TensorAdd(p1, p2)
  *      return %1                // the Sub was eliminated
  */
-class EliminateHangingOutput : public Pass {
+class EliminateHangingOutput : public opt::Pass {
  public:
   bool Run(const FuncGraphPtr &func_graph) override;
 
@@ -46,7 +45,7 @@ class EliminateHangingOutput : public Pass {
 };
 
 // Remove the output without user or with virtual user (like UpdateState)
-class EliminateRedundantOutput : public Pass {
+class EliminateRedundantOutput : public opt::Pass {
  public:
   EliminateRedundantOutput() : Pass("eliminate_redundant_output") {}
   ~EliminateRedundantOutput() override = default;
@@ -68,6 +67,5 @@ AnfNodePtrList FindGraphKernelsWithMultiOutput(const FuncGraphPtr &func_graph);
  */
 bool GetGraphKernelGetitemList(const FuncGraphManagerPtr &mng, const AnfNodePtr &node, AnfNodePtrList *getitem_list,
                                bool merge_repeated_getitem = false);
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ELIMINATE_REDUNDANT_OUTPUT_H_

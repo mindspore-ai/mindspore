@@ -32,8 +32,7 @@
 #include "backend/session/kernel_graph.h"
 #include "utils/ms_context.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 class ParallelInfo {
  public:
   ParallelInfo() = default;
@@ -82,7 +81,7 @@ struct NodeRelation {
   OrderedSet<AnfNodePtr> nexts;
 };
 
-class ParallelOpFusion : public Pass {
+class ParallelOpFusion : public opt::Pass {
  public:
   ParallelOpFusion(const std::string &target, const ParallelConfig &config)
       : Pass("parallel_fusion"), target_(target), config_(config) {}
@@ -123,6 +122,5 @@ class ParallelOpFusion : public Pass {
   std::set<AnfNodePtr> ignore_noin_nodes_;
 };
 using ParallelOpFusionPtr = std::shared_ptr<ParallelOpFusion>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_PARALLEL_FUSION_H_

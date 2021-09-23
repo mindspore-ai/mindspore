@@ -21,9 +21,7 @@
 #include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 #include "backend/optimizer/graph_kernel/expanders/utils.h"
 
-namespace mindspore {
-namespace opt {
-namespace expanders {
+namespace mindspore::graphkernel::expanders {
 class BiasAdd : public OpExpander {
  public:
   BiasAdd() {
@@ -56,6 +54,4 @@ class BiasAdd : public OpExpander {
   }
 };
 OP_EXPANDER_REGISTER("BiasAdd", BiasAdd);
-}  // namespace expanders
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::expanders

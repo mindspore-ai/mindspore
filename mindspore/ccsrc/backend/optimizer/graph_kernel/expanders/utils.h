@@ -23,17 +23,15 @@
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 #include "backend/optimizer/graph_kernel/model/node.h"
 
-namespace mindspore {
-namespace opt {
-namespace expanders {
-using graphkernel::NodePtrList;
-using BaseInfoList = std::vector<graphkernel::NodeBase>;
+namespace mindspore::graphkernel::expanders {
+using inner::NodePtrList;
+using BaseInfoList = std::vector<inner::NodeBase>;
 class Validator;
 
 class OpExpander {
  public:
-  graphkernel::LiteGraphPtr Run(const BaseInfoList &inputs, const BaseInfoList &outputs,
-                                const graphkernel::DAttrs &attrs, const std::string &processor);
+  inner::LiteGraphPtr Run(const BaseInfoList &inputs, const BaseInfoList &outputs, const inner::DAttrs &attrs,
+                          const std::string &processor);
   virtual ~OpExpander() = default;
 
  protected:
@@ -41,11 +39,11 @@ class OpExpander {
   virtual NodePtrList Expand() = 0;
   bool CheckOutputs();
 
-  graphkernel::LiteGraph::GraphBuilder gb;
+  inner::LiteGraph::GraphBuilder gb;
   std::string op_;
   BaseInfoList inputs_info_;
   BaseInfoList outputs_info_;
-  graphkernel::DAttrs attrs_;
+  inner::DAttrs attrs_;
   std::string processor_;
   std::vector<std::unique_ptr<Validator>> validators_;
 
@@ -122,7 +120,5 @@ class SupportFormat : public Validator {
 
 std::vector<int64_t> GetAxisList(const ValuePtr &value);
 ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis);
-}  // namespace expanders
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::expanders
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_UTILS_H_

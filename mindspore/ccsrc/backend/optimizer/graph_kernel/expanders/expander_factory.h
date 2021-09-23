@@ -23,9 +23,7 @@
 
 #include "backend/optimizer/graph_kernel/expanders/utils.h"
 
-namespace mindspore {
-namespace opt {
-namespace expanders {
+namespace mindspore::graphkernel::expanders {
 class OpExpanderFactory {
  public:
   static OpExpanderFactory &Instance() {
@@ -64,7 +62,5 @@ class OpExpanderRegister {
 #define OP_EXPANDER_REGISTER(name, cls)                   \
   static const OpExpanderRegister g_##cls##_expander_reg( \
     name, []() -> std::shared_ptr<OpExpander> { return std::make_shared<cls>(); })
-}  // namespace expanders
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::expanders
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_EXPANDER_FACTORY_H_

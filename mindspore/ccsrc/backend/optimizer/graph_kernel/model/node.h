@@ -35,9 +35,7 @@
 #include "utils/utils.h"
 #include "backend/kernel_compiler/common_utils.h"
 
-namespace mindspore {
-namespace opt {
-namespace graphkernel {
+namespace mindspore::graphkernel::inner {
 enum class NType {
   Base,
   Primitive,
@@ -152,7 +150,5 @@ class OutputNode : public Node {
   void Dump(std::ostringstream &os) const override { ; }
   NType NodeType() override { return NType::Output; }
 };
-}  // namespace graphkernel
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::inner
 #endif

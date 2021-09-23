@@ -16,6 +16,8 @@
 
 #include "backend/optimizer/graph_kernel/add_stitch_atomic_clean_gpu.h"
 
+#include <algorithm>
+#include <string>
 #include "base/core_ops.h"
 #include "ir/tensor.h"
 #include "utils/utils.h"
@@ -27,8 +29,7 @@
 #include "backend/session/kernel_graph.h"
 #include "debug/anf_ir_dump.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 void StitchAtomicCleanInsertter::CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) {
   // Change kernel build info.
   auto kernel_info = dynamic_cast<device::KernelInfo *>(composite_node->kernel_info());
@@ -185,5 +186,4 @@ bool StitchAtomicCleanInsertter::Run(const FuncGraphPtr &func_graph) {
 
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

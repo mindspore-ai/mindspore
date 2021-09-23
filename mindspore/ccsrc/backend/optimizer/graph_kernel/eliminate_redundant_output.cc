@@ -30,8 +30,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 inline size_t GetIndex(const AnfNodePtr &getitem_node) {
   MS_EXCEPTION_IF_NULL(getitem_node);
@@ -120,7 +119,7 @@ bool IsSideEffectNode(const AnfNodePtr &node) {
  *      %2 = Reshape(%1)
  *      return make_tuple(%2, %2)
  */
-class UnifyRepeatedOutput : public Pass {
+class UnifyRepeatedOutput : public opt::Pass {
  public:
   bool Run(const FuncGraphPtr &func_graph) override {
     auto mng = func_graph->manager();
@@ -182,7 +181,7 @@ class UnifyRepeatedOutput : public Pass {
  *   %5 = user_y(%2)
  *   %6 = user_z(%3)
  */
-class UnifyRepeatedGetitem : public Pass {
+class UnifyRepeatedGetitem : public opt::Pass {
  public:
   bool Run(const FuncGraphPtr &func_graph) override {
     auto mng = func_graph->manager();
@@ -289,5 +288,4 @@ bool EliminateHangingOutput::Run(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

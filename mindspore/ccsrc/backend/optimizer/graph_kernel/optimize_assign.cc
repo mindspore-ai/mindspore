@@ -25,8 +25,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 /**
  * If an Assign's source node was outputted with this Assign, the src-node should be removed from output list,
@@ -215,5 +214,4 @@ bool OptimizeAssign::Run(const FuncGraphPtr &func_graph) {
   }
   return RepalceAssignByInplaceAssign(func_graph);
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

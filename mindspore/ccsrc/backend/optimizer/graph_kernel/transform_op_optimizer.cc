@@ -32,8 +32,7 @@
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 #include "backend/optimizer/graph_kernel/model/op_register.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 namespace {
 enum FormatType { kFormatUnknown, kFormatA, kFormatB };
 enum TransOpType { kTransAB, kTransBA };
@@ -185,14 +184,14 @@ class MinCut {
 };
 }  // namespace
 
-using graphkernel::LiteGraph;
-using graphkernel::LiteGraphPtr;
-using graphkernel::Node;
-using graphkernel::NodePtr;
-using graphkernel::NodePtrList;
-using graphkernel::NType;
-using graphkernel::PrimOp;
-using graphkernel::PrimOpPtr;
+using inner::LiteGraph;
+using inner::LiteGraphPtr;
+using inner::Node;
+using inner::NodePtr;
+using inner::NodePtrList;
+using inner::NType;
+using inner::PrimOp;
+using inner::PrimOpPtr;
 
 class TransformOp {
  public:
@@ -231,7 +230,7 @@ class TransformOp {
     if (perm.empty()) {
       MS_LOG(EXCEPTION) << "unsupported format: " << format_a_ << " to " << format_b_;
     }
-    auto op = graphkernel::OpRegistry::Instance().NewOp("Transpose", "new_trans");
+    auto op = inner::OpRegistry::Instance().NewOp("Transpose", "new_trans");
     op->SetAttr("perm", MakeValue(perm));
     return op;
   }
@@ -452,5 +451,4 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
   }
   return changed;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

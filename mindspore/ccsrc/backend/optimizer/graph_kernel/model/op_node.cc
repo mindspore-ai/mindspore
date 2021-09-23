@@ -28,9 +28,7 @@
 
 #include "backend/optimizer/graph_kernel/model/node.h"
 
-namespace mindspore {
-namespace opt {
-namespace graphkernel {
+namespace mindspore::graphkernel::inner {
 std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
   bool is_int64 = true;
   auto get_int_value = [&is_int64](const ValuePtr &value) -> int64_t {
@@ -121,7 +119,7 @@ template <typename TM, typename TD>
 tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &op, TypeId tid) {
   std::vector<TM> inputs_tm;
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_tm), [](const NodePtr &i) {
-    return *static_cast<TM *>(std::static_pointer_cast<graphkernel::ConstTensorNode>(i)->data()->data_c());
+    return *static_cast<TM *>(std::static_pointer_cast<inner::ConstTensorNode>(i)->data()->data_c());
   });
 
   std::unordered_map<std::string, std::function<TM(const std::vector<TM> &)>> func_map = {
@@ -549,6 +547,4 @@ DShape StandardNormalOp::InferShape(const NodePtrList &inputs, const DAttrs &att
   CHECK_ATTR(attrs, "shape");
   return GetListInt(attrs.find("shape")->second);
 }
-}  // namespace graphkernel
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::inner

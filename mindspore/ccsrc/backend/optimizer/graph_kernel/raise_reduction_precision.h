@@ -19,9 +19,8 @@
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
 
-namespace mindspore {
-namespace opt {
-class RaiseReductionPrecision : public Pass {
+namespace mindspore::graphkernel {
+class RaiseReductionPrecision : public opt::Pass {
  public:
   RaiseReductionPrecision() : Pass("raise_reduction_precision") {}
   ~RaiseReductionPrecision() override = default;
@@ -34,6 +33,5 @@ class RaiseReductionPrecision : public Pass {
   AnfNodePtr CreateReduceSum(const AnfNodePtr &node, const AnfNodePtr &input) const;
   void ReplaceNode(const AnfNodePtr &src_node, const AnfNodePtr &dst_node) const;
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_RAISE_REDUCTION_PRECISION_H_

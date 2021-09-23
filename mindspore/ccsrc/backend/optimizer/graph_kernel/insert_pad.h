@@ -23,15 +23,13 @@
 #include "ir/func_graph.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 
-namespace mindspore {
-namespace opt {
-class InsertPadOps : public Pass {
+namespace mindspore::graphkernel {
+class InsertPadOps : public opt::Pass {
  public:
   InsertPadOps() : Pass("insert_pad_ops") {}
   ~InsertPadOps() override = default;
   bool Run(const FuncGraphPtr &graph) override;
 };
 using InsertPadOpsPtr = std::shared_ptr<InsertPadOps>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_INSERT_PAD_OPS_H_

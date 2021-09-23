@@ -25,8 +25,7 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/session/kernel_graph.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 struct AtomicAddInfo {
   CNodePtr atomic_add_node{nullptr};
   size_t reduce_real_output_index{0};
@@ -68,7 +67,7 @@ class AtomicAddCheckerAscend : public AtomicAddChecker {
   bool SuitableForAtomicAdd(const AnfNodePtr &node) override;
 };
 
-class AtomicCleanInsertter : public Pass {
+class AtomicCleanInsertter : public opt::Pass {
  public:
   explicit AtomicCleanInsertter(const std::string &name = "atomic_clean") : Pass(name) {}
   ~AtomicCleanInsertter() override = default;
@@ -101,7 +100,5 @@ class AtomicCleanInsertter : public Pass {
                                  const FuncGraphManagerPtr &mng);
 };
 using AtomicCleanInsertterPtr = std::shared_ptr<AtomicCleanInsertter>;
-}  // namespace opt
-}  // namespace mindspore
-
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADD_ATOMIC_CLEAN_H_

@@ -230,7 +230,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
-  opt::GraphKernelOptimize(kernel_graph);
+  graphkernel::GraphKernelOptimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 }
 

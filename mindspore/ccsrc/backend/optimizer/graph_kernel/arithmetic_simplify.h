@@ -25,22 +25,20 @@
 #include "ir/func_graph.h"
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 class PatternTree;
 using PatternTreePtr = std::shared_ptr<PatternTree>;
-class ArithmeticSimplify : public Pass {
+class ArithmeticSimplify : public opt::Pass {
  public:
   ArithmeticSimplify() : Pass("arithmetic_simplify") {}
   ~ArithmeticSimplify() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool DoArithmeticTrans(const graphkernel::LiteGraphPtr &litegraph);
-  bool DoConstantFold(const graphkernel::LiteGraphPtr &litegraph);
+  bool DoArithmeticTrans(const inner::LiteGraphPtr &litegraph);
+  bool DoConstantFold(const inner::LiteGraphPtr &litegraph);
   std::unordered_map<std::string, std::vector<PatternTreePtr>> expressions_map_;
 };
 using ArithmeticSimplifyPtr = std::shared_ptr<ArithmeticSimplify>;
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ARITHMETIC_SIMPLIFY_H_

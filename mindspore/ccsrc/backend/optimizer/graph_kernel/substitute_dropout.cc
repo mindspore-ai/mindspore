@@ -33,7 +33,10 @@ namespace mindspore {
 namespace prim {
 inline const PrimitivePtr kPrimGkDropout = std::make_shared<Primitive>("GkDropout");
 }  // namespace prim
-namespace opt {
+namespace graphkernel {
+using opt::CheckCNodeInputSize;
+using opt::kDropoutInputTensorNum;
+
 int64_t DropoutExpander::seed_ = time(nullptr);
 
 AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
@@ -83,5 +86,5 @@ AnfNodePtr DropoutExpander::Run(const AnfNodePtr &node) {
   auto gkdropout_node = PreProcess(node->func_graph(), node);
   return DefaultExpander::Run(gkdropout_node);
 }
-}  // namespace opt
+}  // namespace graphkernel
 }  // namespace mindspore

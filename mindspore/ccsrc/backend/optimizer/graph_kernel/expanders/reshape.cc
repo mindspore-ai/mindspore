@@ -18,9 +18,7 @@
 
 #include "backend/optimizer/graph_kernel/expanders/expander_factory.h"
 
-namespace mindspore {
-namespace opt {
-namespace expanders {
+namespace mindspore::graphkernel::expanders {
 class ExpandDims : public OpExpander {
  public:
   ExpandDims() {
@@ -59,6 +57,4 @@ OP_EXPANDER_REGISTER("ExpandDims", ExpandDims);
 ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis) {
   return ExpandDims::InferShape(shape, axis);
 }
-}  // namespace expanders
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::expanders

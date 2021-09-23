@@ -19,10 +19,9 @@
 #include "ir/func_graph.h"
 #include "backend/optimizer/common/optimizer.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 // change Reduce nodes' axis to non-negative value
-class AxisNormalizer : public Pass {
+class AxisNormalizer : public opt::Pass {
  public:
   AxisNormalizer() : Pass("axis_normalizer") {}
   ~AxisNormalizer() = default;
@@ -33,6 +32,5 @@ class AxisNormalizer : public Pass {
   int64_t NormAxis(int64_t x, size_t rank) const;
   bool IsReduce(const AnfNodePtr &node) const;
 };
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_AXIS_NORMALIZER_H_

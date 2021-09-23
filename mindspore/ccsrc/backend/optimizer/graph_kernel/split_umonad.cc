@@ -25,8 +25,7 @@
 #include "runtime/device/kernel_info.h"
 #include "backend/optimizer/common/helper.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::graphkernel {
 const BaseRef SplitAssign::DefinePattern() const {
   VarPtr v = std::make_shared<Var>();
   VarPtr Xs = std::make_shared<Var>();
@@ -82,5 +81,4 @@ AnfNodePtr OpUMonadExpander::Run(const AnfNodePtr &node) {
   }
   return DefaultExpander::Run(node);
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel

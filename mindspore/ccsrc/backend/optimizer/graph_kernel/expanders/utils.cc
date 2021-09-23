@@ -22,11 +22,9 @@
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 #include "backend/optimizer/graph_kernel/model/node.h"
 
-namespace mindspore {
-namespace opt {
-namespace expanders {
-graphkernel::LiteGraphPtr OpExpander::Run(const BaseInfoList &inputs, const BaseInfoList &outputs,
-                                          const graphkernel::DAttrs &attrs, const std::string &processor) {
+namespace mindspore::graphkernel::expanders {
+inner::LiteGraphPtr OpExpander::Run(const BaseInfoList &inputs, const BaseInfoList &outputs, const inner::DAttrs &attrs,
+                                    const std::string &processor) {
   this->inputs_info_ = inputs;
   this->outputs_info_ = outputs;
   this->attrs_ = attrs;
@@ -99,6 +97,4 @@ std::vector<int64_t> GetAxisList(const ValuePtr &value) {
   }
   return result;
 }
-}  // namespace expanders
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::expanders

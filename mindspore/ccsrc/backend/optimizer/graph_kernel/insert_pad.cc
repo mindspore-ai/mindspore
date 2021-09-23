@@ -22,7 +22,11 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 
 namespace mindspore {
-namespace opt {
+namespace prim {
+inline const PrimitivePtr kPrimUnPadAkg = std::make_shared<Primitive>("UnPadAkg");
+inline const PrimitivePtr kPrimPadAkg = std::make_shared<Primitive>("PadAkg");
+}  // namespace prim
+namespace graphkernel {
 namespace {
 using vec = std::vector<size_t>;
 
@@ -149,7 +153,7 @@ std::tuple<bool, bool, bool> NeedPad(const CNodePtr &matmul, vec *pad_shape_a, v
 void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng, bool left,
                const vec &pad_shape, const vec &tail_shape) {
   size_t input_index = left ? 1 : 2;
-  AnfNodePtrList pad_inp = {NewValueNode(opt::kPrimPadAkg), matmul->input(input_index)};
+  AnfNodePtrList pad_inp = {NewValueNode(prim::kPrimPadAkg), matmul->input(input_index)};
   auto pad_cnode = func_graph->NewCNode(pad_inp);
   func_graph->AddNode(pad_cnode);
 
@@ -184,7 +188,7 @@ void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const Fun
 // unpad_shape is [batch, M, N], tail_shape is [0, pad_M - M, pad_N - N]
 void InsertUnpad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
                  const vec &unpad_shape, const vec &tail_shape) {
-  AnfNodePtrList unpad_inp = {NewValueNode(opt::kPrimUnPadAkg), matmul};
+  AnfNodePtrList unpad_inp = {NewValueNode(prim::kPrimUnPadAkg), matmul};
   auto unpad_cnode = func_graph->NewCNode(unpad_inp);
   func_graph->AddNode(unpad_cnode);
   ShapeVector tail;
@@ -290,5 +294,5 @@ bool InsertPadOps::Run(const FuncGraphPtr &func_graph) {
   }
   return changed;
 }
-}  // namespace opt
+}  // namespace graphkernel
 }  // namespace mindspore
