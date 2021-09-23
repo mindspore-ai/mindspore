@@ -161,7 +161,7 @@ class FullQuantQuantizer : public Quantizer {
                             const PrimitivePtr &primitive, bool is_input, size_t index) const;
 
   STATUS DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, const PrimitivePtr &primitive,
-                       bool per_channel) const;
+                       bool per_channel, int input_index) const;
 
   STATUS DoParameterNodeQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
 
