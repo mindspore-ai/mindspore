@@ -28,8 +28,8 @@ constexpr size_t kUnsortedSegmentOutputsNum = 1;
 void UnsortedSegmentSumCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
-  segment_ids_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 1);
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  segment_ids_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto segment_ids_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);

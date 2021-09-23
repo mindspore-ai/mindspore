@@ -98,7 +98,7 @@ template <typename T>
 bool RMSPropCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &) {
   if (!use_center_) {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCenteredRMSPropInputsNum, kernel_name_);
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRMSPropInputsNum, kernel_name_);
     float *variable = reinterpret_cast<float *>(inputs[0]->addr);
     float *mean_square = reinterpret_cast<float *>(inputs[1]->addr);
     float *moment = reinterpret_cast<float *>(inputs[2]->addr);
@@ -109,7 +109,7 @@ bool RMSPropCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, 
     MS_LOG(INFO) << "RMSPropCPUKernel lens:" << lens << " size_:" << size_;
     LaunchRMSPropUnuseCenter(variable, mean_square, moment, gradients, learning_rate);
   } else {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRMSPropInputsNum, kernel_name_);
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCenteredRMSPropInputsNum, kernel_name_);
     T *variable = reinterpret_cast<float *>(inputs[0]->addr);
     T *mean_gradients = reinterpret_cast<float *>(inputs[1]->addr);
     T *mean_square = reinterpret_cast<float *>(inputs[2]->addr);
