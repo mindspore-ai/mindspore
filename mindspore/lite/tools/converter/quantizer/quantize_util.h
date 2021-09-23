@@ -75,21 +75,17 @@ struct SessionModel {
  * */
 class QuantStrategy {
  public:
-  explicit QuantStrategy(size_t weightSize, size_t covWeightQuantChannelThreshold = 16);
+  QuantStrategy(size_t min_quant_weight_size, size_t min_quant_weight_channel)
+      : min_quant_weight_size_(min_quant_weight_size), min_quant_weight_channel_(min_quant_weight_channel) {}
 
   ~QuantStrategy() = default;
 
-  bool CanConvOpQuantized(const CNodePtr &node) const;
-  bool CanMulOpQuantized(const CNodePtr &node) const;
   static bool CanOpFullQuantized(const AnfNodePtr &node);
-  bool CanTensorQuantized(const AnfNodePtr &inputNode) const;
-
-  size_t m_weight_size_;
-  size_t m_conv_weight_quant_channel_threshold_;
+  bool CanTensorQuantized(const AnfNodePtr &input_node, int preferred_dim) const;
 
  private:
-  static const std::vector<std::string> conv_types_;
-  static const std::vector<std::string> mul_types_;
+  size_t min_quant_weight_size_;
+  size_t min_quant_weight_channel_;
 };
 
 constexpr float delta = 0.1;
@@ -187,7 +183,7 @@ STATUS FixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
     ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
                                static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max,
                                quant_min, bit_num, k_means, &quant_data, channels, channel_at_first);
-    if (ret == RET_CONTINUE) {
+    if (ret == RET_QUANT_CONTINUE) {
       return ret;
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do per channel quant failed.";

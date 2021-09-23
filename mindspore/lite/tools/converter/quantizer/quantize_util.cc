@@ -43,8 +43,6 @@ using std::string;
 using std::vector;
 
 namespace mindspore::lite::quant {
-const std::vector<std::string> QuantStrategy::conv_types_ = {ops::kNameConv2DFusion, ops::kNameConv2dTransposeFusion};
-const std::vector<std::string> QuantStrategy::mul_types_ = {ops::kNameMatMul, ops::kNameFullConnection};
 constexpr int kDim2 = 2;
 constexpr int kDim4 = 4;
 
@@ -54,49 +52,6 @@ const int kLstmWeightShapeSize = 3;
 const int kSingleDirBiasTensorSize = 4;
 const int kLstmBiasShapeSize = 2;
 const int kLstmBiasIndex = 3;
-
-QuantStrategy::QuantStrategy(size_t weight_size, size_t conv_weight_quant_channel_threshold)
-    : m_weight_size_(weight_size), m_conv_weight_quant_channel_threshold_(conv_weight_quant_channel_threshold) {}
-
-bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
-  MS_CHECK_TRUE_RET(node != nullptr, false);
-  auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(node->input(0));
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "primitive_c is nullptr";
-    return false;
-  }
-  if (!IsContain(conv_types_, primitive_c->name())) {
-    return false;
-  }
-  if (node->size() < 3) {
-    return false;
-  }
-  auto inputNode = node->input(2);
-  if (!inputNode->isa<Parameter>()) {
-    return false;
-  }
-  auto paramNode = inputNode->cast<ParameterPtr>();
-  MS_ASSERT(paramNode != nullptr);
-  auto abstract_base = paramNode->abstract();
-  if (abstract_base == nullptr) {
-    return false;
-  }
-  if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
-    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << paramNode->name();
-    return false;
-  }
-  auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
-  size_t shapeSize = std::accumulate(weight_shape.begin(), weight_shape.end(), 1, std::multiplies<int>());
-  if (shapeSize < m_weight_size_) {
-    MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
-    return false;
-  }
-  if (weight_shape[0] <= static_cast<int>(m_conv_weight_quant_channel_threshold_)) {
-    MS_LOG(INFO) << "channel less m_conv_weight_quant_channel_threshold_!" << weight_shape[0];
-    return false;
-  }
-  return true;
-}
 
 bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   MS_CHECK_TRUE_RET(node != nullptr, false);
@@ -145,80 +100,30 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   return is_data_type_fp32;
 }
 
-bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
-  MS_CHECK_TRUE_RET(node != nullptr, false);
-  auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(node->input(0));
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "primitive_c is nullptr";
-    return false;
-  }
-
-  if (!IsContain(mul_types_, primitive_c->name())) {
-    return false;
-  }
-
-  if (node->size() < 3) {
-    MS_LOG(INFO) << node->fullname_with_scope() << " input size less!";
-    return false;
-  }
-
-  auto inputNode1 = node->input(1);
-  auto inputNode2 = node->input(2);
-  if (inputNode1 == nullptr || inputNode2 == nullptr) {
-    MS_LOG(INFO) << node->fullname_with_scope() << " mul input is nullptr!";
-    return false;
-  }
-
-  ParameterPtr paramNode = nullptr;
-  if (inputNode1->isa<Parameter>()) {
-    paramNode = inputNode1->cast<ParameterPtr>();
-  } else if (inputNode2->isa<Parameter>()) {
-    paramNode = inputNode2->cast<ParameterPtr>();
-  }
-  if (paramNode == nullptr) {
-    MS_LOG(INFO) << node->fullname_with_scope() << " invalid paramNode!";
-    return false;
-  }
-
-  auto abstract_base = paramNode->abstract();
-  if (abstract_base == nullptr) {
-    MS_LOG(INFO) << "abstract is nullptr";
-    return false;
-  }
-
-  if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
-    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << paramNode->name();
-    return false;
-  }
-  auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
-  size_t shapeSize = std::accumulate(weight_shape.begin(), weight_shape.end(), 1, std::multiplies<int>());
-  if (shapeSize < m_weight_size_) {
-    MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
-    return false;
-  }
-  return true;
-}
-
-bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &inputNode) const {
-  if (inputNode == nullptr) {
+bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &input_node, int preferred_dim) const {
+  if (input_node == nullptr) {
     MS_LOG(INFO) << "CanTensorQuantized input is nullptr!";
     return false;
   }
-  ParameterPtr paramNode = nullptr;
-  if (inputNode->isa<Parameter>()) {
-    paramNode = inputNode->cast<ParameterPtr>();
+  ParameterPtr param_node = nullptr;
+  if (input_node->isa<Parameter>()) {
+    param_node = input_node->cast<ParameterPtr>();
   }
-  if (paramNode == nullptr) {
-    MS_LOG(INFO) << "CanTensorQuantized invalid paramNode!";
+  if (param_node == nullptr) {
+    MS_LOG(INFO) << "CanTensorQuantized invalid param_node!";
     return false;
   }
-  auto abstract_base = paramNode->abstract();
+  if (!param_node->has_default()) {
+    MS_LOG(INFO) << "param_node don't has default.";
+    return false;
+  }
+  auto abstract_base = param_node->abstract();
   if (abstract_base == nullptr) {
     MS_LOG(INFO) << "abstract is nullptr";
     return false;
   }
   if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
-    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << paramNode->name();
+    MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << param_node->name();
     return false;
   }
   auto weight_shape = utils::cast<abstract::ShapePtr>(abstract_base->GetShapeTrack())->shape();
@@ -226,18 +131,19 @@ bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &inputNode) const {
   if (weight_shape.size() < kDim2) {  // do not quant single dim tensors
     return false;
   }
-  size_t shapeSize = std::accumulate(weight_shape.begin(), weight_shape.end(), 1, std::multiplies<int>());
-  if (shapeSize < m_weight_size_) {
-    MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
+  size_t shape_size = std::accumulate(weight_shape.begin(), weight_shape.end(), 1, std::multiplies<int>());
+
+  if (shape_size < min_quant_weight_size_) {
+    MS_LOG(INFO) << "shape_size " << shape_size << " less min_quant_weight_size_ " << shape_size;
     return false;
   }
-  if (weight_shape.size() == kDim4) {  // assume Convolution
-    if (weight_shape[0] <= static_cast<int>(m_conv_weight_quant_channel_threshold_)) {
-      MS_LOG(INFO) << "channel less m_conv_weight_quant_channel_threshold_!" << weight_shape[0];
-      return false;
-    }
-  }
 
+  // min_quant_weight_channel_ only supports convolution
+  if (weight_shape.size() > kDim2 && weight_shape[preferred_dim] <= static_cast<int>(min_quant_weight_channel_)) {
+    MS_LOG(INFO) << "preferred_dim shape" << weight_shape[preferred_dim] << " less min_quant_weight_channel_ "
+                 << min_quant_weight_channel_;
+    return false;
+  }
   return true;
 }
 

@@ -663,7 +663,7 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
       MS_LOG(ERROR) << "Set In/Out quant param failed.";
       return ret;
     }
-    return RET_CONTINUE;
+    return RET_QUANT_CONTINUE;
   }
   if (CheckNodeInSet(cnode, has_bias_operator)) {
     if (input_index == 3) {
@@ -743,7 +743,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       }
     } else if (input_node->isa<mindspore::Parameter>()) {
       ret = DoParameterNodeQuant(cnode, input_node, i);
-      if (ret == RET_CONTINUE) {
+      if (ret == RET_QUANT_CONTINUE) {
         continue;
       } else if (ret != RET_OK) {
         MS_LOG(ERROR) << "Do parameter node quant failed.";
@@ -851,7 +851,6 @@ STATUS FullQuantQuantizer::UpdateDivergInverval() {
 STATUS FullQuantQuantizer::PreProcess() {
   // 3. collect to be quantized operators
   // from user input
-  QuantStrategy strategy(kMillisecondsBase);
   auto cnodes = funcGraph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     AnfNodePtr anf = std::dynamic_pointer_cast<AnfNode>(cnode);
