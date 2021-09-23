@@ -404,6 +404,9 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
     return;
   }
   WaitLockedInputs(task);
+  for (auto &tensor_node : task->tensor_to_node_) {
+    tensor_node.first->SetNeedWait(true);
+  }
   {
     std::lock_guard<std::mutex> lock(pending_task_mutex_);
     if (!IsTaskReady(task)) {
