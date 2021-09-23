@@ -687,7 +687,7 @@ class MultiHeadAttention(Cell):
         self.prob_dropout = nn.Dropout(1 - attention_dropout_rate)
         self.prob_dropout.dropout.shard(
             ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax().to_float(softmax_compute_type)
         self.softmax.softmax.shard(((parallel_config.data_parallel, parallel_config.model_parallel, 1),))
         self.expand_dims = P.ExpandDims().shard(((parallel_config.data_parallel, 1, 1),))
 
@@ -1295,9 +1295,9 @@ class TransformerDecoderLayer(Cell):
         self.use_past = use_past
         self.hidden_size = hidden_size
 
-        self.layernorm1 = _LayerNorm((hidden_size,), parallel_config.data_parallel).to_float(layernorm_compute_type)
+        self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
         self.layernorm1.shard(((parallel_config.data_parallel, 1, 1),))
-        self.layernorm2 = _LayerNorm((hidden_size,), parallel_config.data_parallel).to_float(layernorm_compute_type)
+        self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
         self.layernorm2.shard(((parallel_config.data_parallel, 1, 1),))
 
         self.attention = MultiHeadAttention(hidden_size=hidden_size,
@@ -1323,7 +1323,7 @@ class TransformerDecoderLayer(Cell):
                                                   use_past=use_past,
                                                   param_init_type=param_init_type,
                                                   parallel_config=parallel_config)
-        self.cross_attention_layernorm = _LayerNorm((hidden_size,), parallel_config.data_parallel).to_float(
+        self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
             layernorm_compute_type)
         self.cross_attention_layernorm.shard(((parallel_config.data_parallel, 1, 1),))
         self.use_moe = (moe_config.expert_num > 1)
