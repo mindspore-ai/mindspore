@@ -17,6 +17,10 @@
 #include "src/runtime/runtime_pass.h"
 #include "nnacl/conv_parameter.h"
 
+namespace {
+const constexpr int kMaxDepth = 2048;
+}
+
 namespace mindspore::lite {
 void Nc4hw4PassReplace(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors, size_t index) {
   kernel::LiteKernel *conv_kernel = kernels->at(index);
@@ -148,7 +152,12 @@ bool RuntimePassValid(const InnerContext *context, std::vector<kernel::LiteKerne
   return true;
 }
 
-void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors) {
+void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tensor *> *tensors, int i) {
+  if (i > kMaxDepth) {
+    MS_LOG(ERROR) << "exceed max depth 2048, i " << i;
+    return;
+  }
+  i++;
   size_t kernel_size = kernels->size();
   size_t index = 0;
   for (; index + 3 < kernel_size; index++) {
@@ -157,7 +166,7 @@ void Nc4hw4PassAct(std::vector<kernel::LiteKernel *> *kernels, std::vector<Tenso
     if (kernel->subgraph_type() != kernel::kNotSubGraph) {
       kernel::SubGraphKernel *subgraph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
       std::vector<kernel::LiteKernel *> &particial_nodes = subgraph->nodes();
-      Nc4hw4PassAct(&particial_nodes, tensors);
+      Nc4hw4PassAct(&particial_nodes, tensors, i);
     }
 
     if (Nc4hw4PassMatch(kernels, index)) {
@@ -223,7 +232,8 @@ void RuntimePass(const InnerContext *context, std::vector<kernel::LiteKernel *> 
     return;
   }
 
-  Nc4hw4PassAct(kernels, tensors);
+  int i = 0;
+  Nc4hw4PassAct(kernels, tensors, i);
 
   ConvNormC4PassAct(kernels);
 }

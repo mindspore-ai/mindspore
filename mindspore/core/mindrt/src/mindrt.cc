@@ -65,9 +65,9 @@ class MindrtExit {
 int InitializeImp(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
                   const std::string &udpUrlAdv, int threadCount) {
   MS_LOG(DEBUG) << "mindrt starts.";
-  ActorMgr::GetActorMgrRef()->Initialize();
+  auto ret = ActorMgr::GetActorMgrRef()->Initialize();
   MS_LOG(DEBUG) << "mindrt has started.";
-  return MINDRT_OK;
+  return ret;
 }
 
 int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
