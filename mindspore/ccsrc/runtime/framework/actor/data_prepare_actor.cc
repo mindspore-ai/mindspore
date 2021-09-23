@@ -39,7 +39,7 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
 
   if ((device_tensor->GetPtr() == nullptr) &&
       (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize()))) {
-    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, (*context), device_context, node->fullname_with_scope(),
+    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, *context, *device_context, node->fullname_with_scope(),
                                                 device_tensor->GetSize());
   }
 
@@ -59,6 +59,10 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
 void FetchContinuousMemoryInfo(const CNodePtr &node, std::vector<DeviceTensorPtr> *const addr_list,
                                std::vector<size_t> *const size_list, size_t *const total_size, bool is_input) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(addr_list);
+  MS_EXCEPTION_IF_NULL(size_list);
+  MS_EXCEPTION_IF_NULL(total_size);
+
   const auto &kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   (*addr_list).clear();
@@ -150,7 +154,7 @@ void DataPrepareActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
         graph_compiler_info_->device_contexts_, context, &GetAID());
 }
 
-void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *context) {
+void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   if (continuous_memory_alloc_list_list_.size() > 0) {
     SendMemoryAllocReq(context);
@@ -378,7 +382,7 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const D
     MS_LOG(INFO) << "Prepare device data for value node: " << node->fullname_with_scope();
 
     if (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
-      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, (*context), device_context, node->fullname_with_scope(),
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *device_context, node->fullname_with_scope(),
                                                   device_tensor->GetSize());
     }
 
@@ -406,11 +410,11 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   }
 
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
   auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
   // Use the device address of host tensor to set device tensor.
   if (host_tensor_address != device_tensor) {
     if (host_tensor_address == nullptr) {
-      MS_EXCEPTION_IF_NULL(device_tensor);
       host_tensor_address = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
                                                                 device_tensor->format(), device_tensor->type_id());
       tensor->set_device_address(host_tensor_address);
@@ -427,6 +431,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   }
 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
+  MS_EXCEPTION_IF_NULL(host_tensor_address);
   if (host_tensor_address->GetPtr() == nullptr) {
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->fullname_with_scope()
                  << ", device type:" << host_tensor_address->DeviceType();
@@ -444,7 +449,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
     MS_EXCEPTION_IF_NULL(another_device_context);
     if ((another_device_tensor->GetPtr() == nullptr) &&
         (!another_device_context->AllocateMemory(another_device_tensor.get(), another_device_tensor->GetSize()))) {
-      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, (*context), another_device_context,
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *another_device_context,
                                                   backend_node->fullname_with_scope(),
                                                   another_device_tensor->GetSize());
     }
@@ -471,6 +476,7 @@ void DataPrepareActor::PrepareDataForControlWeightNode(
   auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
   bool need_update_device_tensor_store = (device_tensors.size() == 0) ? true : false;
   for (auto &device_tensor : device_tensors) {
+    MS_EXCEPTION_IF_NULL(device_tensor);
     if (device_tensor->GetPtr() == nullptr) {
       need_update_device_tensor_store = true;
       break;

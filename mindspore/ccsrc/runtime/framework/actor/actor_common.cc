@@ -140,12 +140,10 @@ bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
 
 bool IsGatherActor(const AnfNodePtr &front_node,
                    const std::unordered_map<std::string, OpActor<DeviceTensor> *> &actor_name_to_actor) {
+  MS_EXCEPTION_IF_NULL(front_node);
   if (front_node->isa<Parameter>() && (!AnfAlgo::IsParameterWeight(front_node->cast<ParameterPtr>())) &&
-      front_node->func_graph() != nullptr) {
-    const auto &func_graph = front_node->func_graph();
-    if (func_graph != nullptr && actor_name_to_actor.find(func_graph->ToString()) != actor_name_to_actor.end()) {
-      return true;
-    }
+      (front_node->func_graph() != nullptr) && (actor_name_to_actor.count(front_node->func_graph()->ToString()) > 0)) {
+    return true;
   }
   return false;
 }
