@@ -1110,7 +1110,8 @@ Status ShardWriter::SetBlobDataSize(const std::vector<std::vector<uint8_t>> &blo
 Status ShardWriter::SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &last_raw_page) {
   // Get last raw page
   auto last_raw_page_id = shard_header_->GetLastPageIdByType(shard_id, kPageTypeRaw);
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_raw_page_id >= 0, "Invalid data, last_raw_page_id should be positive.");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_raw_page_id >= 0, "Invalid data, last_raw_page_id: " +
+                                                          std::to_string(last_raw_page_id) + " should be positive.");
   RETURN_IF_NOT_OK(shard_header_->GetPage(shard_id, last_raw_page_id, &last_raw_page));
   return Status::OK();
 }
@@ -1118,7 +1119,8 @@ Status ShardWriter::SetLastRawPage(const int &shard_id, std::shared_ptr<Page> &l
 Status ShardWriter::SetLastBlobPage(const int &shard_id, std::shared_ptr<Page> &last_blob_page) {
   // Get last blob page
   auto last_blob_page_id = shard_header_->GetLastPageIdByType(shard_id, kPageTypeBlob);
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_blob_page_id >= 0, "Invalid data, last_blob_page_id should be positive.");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(last_blob_page_id >= 0, "Invalid data, last_blob_page_id: " +
+                                                           std::to_string(last_blob_page_id) + " should be positive.");
   RETURN_IF_NOT_OK(shard_header_->GetPage(shard_id, last_blob_page_id, &last_blob_page));
   return Status::OK();
 }
