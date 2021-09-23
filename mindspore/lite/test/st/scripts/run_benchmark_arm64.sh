@@ -196,4 +196,5 @@ fi
 
 echo "Run_arm64_fp32 and Run_arm64_fp16 is ended"
 Print_Benchmark_Result $run_benchmark_result_file
+adb -s ${device_id} shell "rm -rf /data/local/tmp/benchmark_test/*"
 exit ${isFailed}
