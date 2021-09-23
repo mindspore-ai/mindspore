@@ -15,7 +15,6 @@
  */
 
 #include <algorithm>
-#include <typeinfo>
 #include <utility>
 
 #include "minddata/dataset/kernels/ir/data/transforms_ir.h"
@@ -144,7 +143,7 @@ Status FillOperation::from_json(nlohmann::json op_params, std::shared_ptr<Tensor
 }
 
 // MaskOperation
-MaskOperation::MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, DataType dtype)
+MaskOperation::MaskOperation(RelationalOp op, const std::shared_ptr<Tensor> &constant, const DataType &dtype)
     : op_(op), constant_(constant), dtype_(dtype) {}
 
 Status MaskOperation::ValidateParams() {

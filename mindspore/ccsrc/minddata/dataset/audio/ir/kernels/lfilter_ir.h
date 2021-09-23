@@ -35,7 +35,7 @@ constexpr char kLFilterOperation[] = "LFilter";
 
 class LFilterOperation : public TensorOperation {
  public:
-  LFilterOperation(std::vector<float> a_coeffs, std::vector<float> b_coeffs, bool clamp);
+  LFilterOperation(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp);
 
   ~LFilterOperation() = default;
 

@@ -280,7 +280,7 @@ bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize =
 /// \param[in] w The width of output image.
 /// \param[in] h The height of output image.
 /// \param[in] mat Output image data.
-bool ConvertRgbToBgr(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat);
+bool ConvertRgbToBgr(const LiteMat &src, const LDataType &data_type, int w, int h, LiteMat &mat);
 
 /// \brief Convert RGB image or color image to grayscale image.
 /// \param[in] src Input image data.

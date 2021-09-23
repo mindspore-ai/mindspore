@@ -1622,7 +1622,7 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
   return true;
 }
 
-bool ConvertRgbToBgr(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat) {
+bool ConvertRgbToBgr(const LiteMat &src, const LDataType &data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
     if (src.IsEmpty()) {
       return false;

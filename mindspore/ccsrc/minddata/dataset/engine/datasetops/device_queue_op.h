@@ -164,7 +164,6 @@ class DeviceQueueOp : public PipelineOp {
   // Detect the cost time of each batch, present alarm message if cost too long
   void DetectPerBatchTime(uint64_t *start_time, uint64_t *end_time);
 #endif
-  std::atomic<bool> first_fetch_flag_;
 
   std::unique_ptr<ChildIterator> child_iterator_;
   std::string channel_name_;
@@ -173,20 +172,20 @@ class DeviceQueueOp : public PipelineOp {
   const int32_t prefetch_size_;
   const bool send_epoch_end_;
   bool stop_send_;
+  bool send_finished_;
   int32_t total_batch_;
   bool create_data_info_queue_;
   std::unique_ptr<DATA_INFO_QUEUE> data_info_queue_ptr_;
+  std::atomic<bool> first_fetch_flag_;
   std::mutex data_info_mutex_;
-  bool send_finished_;
-#ifdef ENABLE_DUMP_IR
-  std::shared_ptr<MDChannelInfo> md_channel_info_;
-#endif
+  bool first_push_flag_;  // default: false, when first push, it will be true
 
 #ifdef ENABLE_TDTQUE
   std::shared_ptr<TdtPlugin> tdtInstancePtr;
 #endif
-
-  bool first_push_flag_;  // default: false, when first push, it will be true
+#ifdef ENABLE_DUMP_IR
+  std::shared_ptr<MDChannelInfo> md_channel_info_;
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

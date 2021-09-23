@@ -155,7 +155,7 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
   if (extra_metadata_) {
     std::string img_id;
     size_t pos = image_id.find(".");
-    if (pos == image_id.npos) {
+    if (pos == std::string::npos) {
       RETURN_STATUS_UNEXPECTED("Invalid data, image : " + image_id + ", should be with suffix like \".jpg\"");
     }
     std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
@@ -188,7 +188,7 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
   if (extra_metadata_) {
     std::string img_id;
     size_t pos = image_id.find(".");
-    if (pos == image_id.npos) {
+    if (pos == std::string::npos) {
       RETURN_STATUS_UNEXPECTED("Invalid data, image : " + image_id + ", should be with suffix like \".jpg\"");
     }
     std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
@@ -239,7 +239,7 @@ Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id,
   if (extra_metadata_) {
     std::string img_id;
     size_t pos = image_id.find(".");
-    if (pos == image_id.npos) {
+    if (pos == std::string::npos) {
       RETURN_STATUS_UNEXPECTED("Invalid data, image : " + image_id + ", should be with suffix like \".jpg\"");
     }
     std::copy(image_id.begin(), image_id.begin() + pos, std::back_inserter(img_id));
