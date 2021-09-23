@@ -296,7 +296,7 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
         - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
           between the real space float coordinates and the unsigned int coordinates.
           The data type is float32 and the shape is :math:`(3,)`.
-        - **atom_a** (Tensor, int32) - The first atom index of each bond.
+        - **atom_a** (Tensor) - The first atom index of each bond.
           The data type is int32 and the shape is :math:`(m,)`.
         - **atom_b** (Tensor) - The second atom index of each bond.
           The data type is int32 and the shape is :math:`(m,)`.
@@ -388,7 +388,7 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
         - **scaler_f** (Tensor) - The 3-D scale factor (x, y, z),
           between the real space float coordinates and the unsigned int coordinates.
           The data type is float32 and the shape is :math:`(3,)`.
-        - **atom_a** (Tensor, int32) - The first atom index of each bond.
+        - **atom_a** (Tensor) - The first atom index of each bond.
           The data type is int32 and the shape is :math:`(m,)`.
         - **atom_b** (Tensor) - The second atom index of each bond.
           The data type is int32 and the shape is :math:`(m,)`.
