@@ -34,11 +34,12 @@
 namespace mindspore::lite {
 
 typedef enum { GRAPH, OP_BY_OP } MindRTMode;
-const constexpr int kSwitchMaxInputsSize = 3;
-const constexpr int kSwitchMinInputsSize = 2;
-const constexpr int kSwitchCondInputIndex = 0;
+const constexpr int kSwitchMaxInputKernelSize = 3;
+const constexpr int kSwitchMinInputKernelSize = 2;
 const constexpr int kSwitchTruePartialInputIndex = 1;
 const constexpr int kSwitchFalsePartialInputIndex = 2;
+const constexpr int kSwitchMinInputTensorSize = 3;
+const constexpr int kSwitchCondTensorIndex = 0;
 
 class LiteOpActor : public OpActor<lite::Tensor> {
  public:
@@ -142,7 +143,6 @@ class LiteSwitchOpActor : public LiteOpActor {
   std::vector<DataArrowPtr> true_branch_output_data_arrows_;
   std::vector<DataArrowPtr> false_branch_output_data_arrows_;
 
-  kernel::LiteKernel *bool_node_ = nullptr;
   kernel::LiteKernel *true_partial_node_ = nullptr;
   kernel::LiteKernel *false_partial_node_ = nullptr;
   kernel::LiteKernel *switch_node_ = nullptr;
