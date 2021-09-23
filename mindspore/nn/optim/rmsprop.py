@@ -44,7 +44,8 @@ class RMSProp(Optimizer):
     Implements Root Mean Squared Propagation (RMSProp) algorithm.
 
     Update `params` according to the RMSProp algorithm.
-
+    The 29th of the original presentation slide
+    [http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf] proposes RMSProp.
     The equation is as follows:
 
     .. math::

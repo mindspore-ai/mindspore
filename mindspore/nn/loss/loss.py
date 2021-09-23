@@ -988,7 +988,7 @@ class BCELoss(LossBase):
         L = \{l_1,\dots,l_N\}^\top, \quad
         l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
 
-    Then,
+    where N is the batch size. Then,
 
     .. math::
         \ell(x, y) = \begin{cases}
@@ -998,8 +998,10 @@ class BCELoss(LossBase):
         \end{cases}
 
     Note:
-        Note that the predicted labels should always be the output of sigmoid and the true labels should be numbers
-        between 0 and 1.
+        Note that the predicted labels should always be the output of sigmoid. Because it is a two-class
+        classification, the true labels should be numbers between 0 and 1.
+        And if input is either 0 or 1, one of the log terms would be mathematically undefined in the above loss
+        equation.
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.

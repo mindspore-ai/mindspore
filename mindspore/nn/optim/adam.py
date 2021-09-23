@@ -190,17 +190,19 @@ class Adam(Optimizer):
     r"""
     Updates gradients by the Adaptive Moment Estimation (Adam) algorithm.
 
+    The Adam optimizer can dynamically adjust the learning rate of each parameter using the first-order
+    moment estimation and the second-order moment estimation of the gradient.
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
     The updating formulas are as follows,
 
     .. math::
-        \begin{array}{ll} \\
+        \begin{gather*}
             m_{t+1} = \beta_1 * m_{t} + (1 - \beta_1) * g \\
             v_{t+1} = \beta_2 * v_{t} + (1 - \beta_2) * g * g \\
-            l = \alpha * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
+            l_{t+1} = l_{t} * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
             w_{t+1} = w_{t} - l * \frac{m_{t+1}}{\sqrt{v_{t+1}} + \epsilon}
-        \end{array}
+        \end{gather*}
 
     :math:`m` represents the 1st moment vector `moment1`, :math:`v` represents the 2nd moment vector `moment2`,
     :math:`g` represents `gradients`, :math:`l` represents scaling factor, :math:`\beta_1, \beta_2` represent

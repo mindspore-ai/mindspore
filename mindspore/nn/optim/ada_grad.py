@@ -43,6 +43,8 @@ class Adagrad(Optimizer):
     Adagrad is an online Learning and Stochastic Optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting
     <https://proceedings.neurips.cc/paper/2009/file/621bf66ddb7c962aa0d22ac97d69b793-Paper.pdf>`_.
+    Adagrad can adaptively assign different learning rates to each parameter in response to the uneven number of
+    samples for different parameters.
     The updating formulas are as follows,
 
     .. math::
@@ -51,8 +53,10 @@ class Adagrad(Optimizer):
             w_{t+1} = w_{t} - lr*\frac{1}{\sqrt{h_{t+1}}}*g
         \end{array}
 
-    :math:`h` represents the cumulative sum of gradient squared, :math:`g` represents `gradients`.
-    :math:`lr` represents `learning_rate`, :math:`w` represents `params`.
+    :math:`h` represents the cumulative sum of gradient squared,
+    :math:`g` represents `gradients`,
+    :math:`lr` represents `learning_rate`,
+    :math:`w` represents `params`.
 
     Note:
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the
