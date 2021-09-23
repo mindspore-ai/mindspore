@@ -36,12 +36,19 @@ class InstanceNormFp16CPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
   int DoInstanceNorm(int task_id);
+  void FreeTmpSrcData() {
+    if (tmp_src_data_ != nullptr) {
+      ms_context_->allocator->Free(tmp_src_data_);
+      tmp_src_data_ = nullptr;
+    }
+  }
 
  private:
   void FreeTmpBuffer();
   InstanceNormParameter *param_ = nullptr;
   float16_t *src_data_ = nullptr;
   float16_t *dst_data_ = nullptr;
+  float16_t *tmp_src_data_ = nullptr;
   float16_t *gamma_data_ = nullptr;
   float16_t *beta_data_ = nullptr;
 };
