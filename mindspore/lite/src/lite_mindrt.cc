@@ -620,17 +620,26 @@ int LiteSwitchOpActor::PrepareOutputData() {
       std::make_shared<OpData<Tensor>>(arrow->to_op_id_, (kernel_->out_tensors()).at(arrow->from_output_index_),
                                        static_cast<int>(arrow->to_input_index_));
     if (data == nullptr) {
-      MS_LOG(ERROR) << "new alse_branch_output_data failed.";
+      MS_LOG(ERROR) << "new false_branch_output_data failed.";
       return RET_NULL_PTR;
-    }
-    auto iter = std::find_if(true_branch_outputs_data_.begin(), true_branch_outputs_data_.end(),
-                             [&data](const auto &true_branch_data) { return true_branch_data->data_ == data->data_; });
-    if (iter != true_branch_outputs_data_.end() && !data->data_->IsConst()) {
-      data->data_->set_init_ref_count(data->data_->init_ref_count() - 1);
     }
     false_branch_outputs_data_.at(i) = data;
   }
   return RET_OK;
+}
+
+void LiteSwitchOpActor::DecreaseTrueBranchInputTensor() {
+  switch_node_->in_tensors()[kSwitchCondTensorIndex]->DecRefCount();
+  for (auto input : true_partial_node_->in_tensors()) {
+    input->DecRefCount();
+  }
+}
+
+void LiteSwitchOpActor::DecreaseFalseBranchInputTensor() {
+  switch_node_->in_tensors()[kSwitchCondTensorIndex]->DecRefCount();
+  for (auto input : false_partial_node_->in_tensors()) {
+    input->DecRefCount();
+  }
 }
 
 void LiteSwitchOpActor::AsyncTrueBranchOutput(OpContext<Tensor> *context) {
@@ -680,8 +689,10 @@ void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *con
     return;
   }
   if (*cond_ptr) {
+    DecreaseFalseBranchInputTensor();
     AsyncTrueBranchOutput(context);
   } else {
+    DecreaseTrueBranchInputTensor();
     AsyncFalseBranchOutput(context);
   }
 }
