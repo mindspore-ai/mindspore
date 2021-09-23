@@ -379,14 +379,16 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   // Compile root graph.
   graph_id_to_device_context_.clear();
   control_nodes_.clear();
-  CompileGraph(root_graph);
+  auto subgraph_need_compile = CompileGraph(root_graph);
 
   // Compile sub graphs.
-  MS_EXCEPTION_IF_NULL(root_graph->manager());
-  FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
-  for (auto sub_graph : sub_graphs) {
-    if (sub_graph != func_graph && sub_graph != nullptr) {
-      CompileGraph(sub_graph);
+  if (subgraph_need_compile) {
+    MS_EXCEPTION_IF_NULL(root_graph->manager());
+    FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
+    for (auto sub_graph : sub_graphs) {
+      if (sub_graph != func_graph && sub_graph != nullptr) {
+        (void)CompileGraph(sub_graph);
+      }
     }
   }
 
@@ -404,7 +406,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   return actor_info;
 }
 
-void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
+bool MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(graph_partition_);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
@@ -413,53 +415,68 @@ void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
   // Split graph to segments.
   const auto &segments = graph_partition_->Partition(func_graph, &contain_multi_target);
   MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size:" << segments.size();
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
+  const auto &device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+  const auto &new_segments = device_context->PartitionGraph(func_graph, segments);
+
+  // Compile the whole function graph if not split graph.
+  if (new_segments.size() == 0) {
+    auto graph_id = graph_compiler_->CompileGraph(func_graph, device_context);
+    graph_id_to_device_context_[graph_id] = device_context;
+    return false;
+  }
 
   // Foreach the segments to compile graph.
-  for (const auto &segment : segments) {
-    MS_EXCEPTION_IF_NULL(segment);
-    // Compile the normal nodes, which doesn't contain the cut node.
-    if (!segment->is_cut_) {
-      if (segment->nodes_.size() == 0) {
-        MS_LOG(EXCEPTION) << "The segments size is 0.";
-      }
-      MS_EXCEPTION_IF_NULL(segment->nodes_[0]);
-      MS_LOG(INFO) << "Compile normal segment, the first node: " << segment->nodes_[0]->fullname_with_scope();
+  for (const auto &segment : new_segments) {
+    CompileGraph(segment, contain_multi_target);
+  }
+  return true;
+}
 
-      // Get the device context.
-      const auto &cur_device_name = GetCNodeTarget(segment->nodes_[0]);
-      const auto &device_context =
-        device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({cur_device_name, device_id_});
-      device_context->Initialize();
-
-      // Transform nodes to inputs and outputs.
-      FuncGraphPtr fg;
-      AnfNodePtrList inputs;
-      AnfNodePtrList outputs;
-      std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
-
-      // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
-      if (contain_multi_target && ms_execution_mode_ == kPynativeMode) {
-        real_execution_mode_ = kGraphMode;
-        context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-      }
-
-      // Compile graph.
-      auto graph_id = graph_compiler_->CompileGraph(segment->nodes_, outputs, device_context);
-
-      if (ms_execution_mode_ != real_execution_mode_) {
-        context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, ms_execution_mode_);
-      }
-
-      graph_id_to_device_context_[graph_id] = device_context;
-    } else {
-      // Compile the cut node.
-      auto cut_node = segment->nodes_[0];
-      MS_EXCEPTION_IF_NULL(cut_node);
-      MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->fullname_with_scope();
-      control_nodes_.push_back(cut_node);
+void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_multi_target) {
+  MS_EXCEPTION_IF_NULL(segment);
+  // Compile the normal nodes, which doesn't contain the cut node.
+  if (!segment->is_cut_) {
+    if (segment->nodes_.size() == 0) {
+      MS_LOG(EXCEPTION) << "The segments size is 0.";
     }
+    MS_EXCEPTION_IF_NULL(segment->nodes_[0]);
+    MS_LOG(INFO) << "Compile normal segment, the first node: " << segment->nodes_[0]->fullname_with_scope();
+
+    // Get the device context.
+    const auto &cur_device_name = GetCNodeTarget(segment->nodes_[0]);
+    const auto &device_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({cur_device_name, device_id_});
+    device_context->Initialize();
+
+    // Transform nodes to inputs and outputs.
+    FuncGraphPtr fg;
+    AnfNodePtrList inputs;
+    AnfNodePtrList outputs;
+    std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
+
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
+    if (contain_multi_target && ms_execution_mode_ == kPynativeMode) {
+      real_execution_mode_ = kGraphMode;
+      context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+    }
+
+    // Compile graph.
+    auto graph_id = graph_compiler_->CompileGraph(segment->nodes_, outputs, device_context);
+
+    if (ms_execution_mode_ != real_execution_mode_) {
+      context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, ms_execution_mode_);
+    }
+
+    graph_id_to_device_context_[graph_id] = device_context;
+  } else {
+    // Compile the cut node.
+    auto cut_node = segment->nodes_[0];
+    MS_EXCEPTION_IF_NULL(cut_node);
+    MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->fullname_with_scope();
+    control_nodes_.push_back(cut_node);
   }
 }
 

@@ -313,6 +313,27 @@ GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePt
   return CompileGraphImpl(graph, device_context);
 }
 
+GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(session_);
+  // Generate kernel graph.
+  std::vector<KernelGraphPtr> all_graphs;
+  KernelGraphPtr root_graph = session_->ConstructKernelGraph(func_graph, &all_graphs);
+  MS_EXCEPTION_IF_NULL(root_graph);
+  for (const auto &graph : all_graphs) {
+    MS_EXCEPTION_IF_NULL(graph);
+    graph->set_root_graph_id(root_graph->graph_id());
+  }
+
+  // Cache the backend graph output nodes to front nodes with output index.
+  auto output = func_graph->output();
+  MS_EXCEPTION_IF_NULL(output);
+  auto backend_node = root_graph->GetBackendAnfByFrontAnf(output);
+  MS_EXCEPTION_IF_NULL(backend_node);
+  root_graph->CacheGraphOutputToFrontNodeWithIndex(backend_node, output);
+
+  return CompileGraphImpl(root_graph, device_context);
+}
+
 GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
@@ -338,6 +359,10 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   // Adjust kernel graph before run graph.
   device_context->PreprocessBeforeRunGraph(graph);
+
+  // Set the graph sink flag.
+  auto is_sink = device_context->IsGraphSink(graph);
+  graph->set_is_sink(is_sink);
 
   MS_LOG(INFO) << "Get graph outputs after optimizer, graph id: " << graph->graph_id();
   auto outputs_after_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());

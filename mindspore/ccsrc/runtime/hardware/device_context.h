@@ -55,6 +55,16 @@ class DeviceContext {
   // Destroy device context and release device resource.
   virtual void Destroy() {}
 
+  // Partition the function graph through the device capability and return the partition segments.
+  // The second parameter is the default partition segments which are provided by the framework.
+  // Device can reprocess the default partition segments to new segments, also can partition the function graph again.
+  // If Device can launch the whole graph and not expect partitioning the function graph, then return the empty
+  // segments. The default behavior is return the default partition segments.
+  virtual std::vector<GraphSegmentPtr> PartitionGraph(const FuncGraphPtr &func_graph,
+                                                      const std::vector<GraphSegmentPtr> &default_partition_segments) {
+    return default_partition_segments;
+  }
+
   // Relevant function to allocate and free device memory.
   virtual bool AllocateMemory(DeviceAddress *const &address, size_t size) const = 0;
   virtual void FreeMemory(DeviceAddress *const &address) const = 0;
@@ -97,10 +107,18 @@ class DeviceContext {
   // Infer kernel shape and update abstract info for dynamic shape kernel.
   virtual void UpdateDynamicShape(const CNodePtr &kernel) const { AnfAlgo::InferShape(kernel); }
 
+  // Whether the graph sink executing through the device capability, the default behavior is not sink and return false.
+  virtual bool IsGraphSink(const KernelGraphPtr &graph) const { return false; }
+
+  // Launch graph, device such as Ascend support the whole graph sink to the device executing.
+  virtual bool LaunchGraph(const KernelGraphPtr &graph) const { return true; }
+
   // Launch a kernel via 'KernelMod' of the kernel.
   virtual bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                             const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                            bool is_dynamic_shape = false) const = 0;
+                            bool is_dynamic_shape = false) const {
+    return true;
+  }
 
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // using 'SyncStream' to block thread and wait for completing all tasks in stream.

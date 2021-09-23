@@ -99,6 +99,10 @@ class GraphCompiler {
   // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
   GraphId CompileGraph(const AnfNodePtrList &nodes, const AnfNodePtrList &outputs, const DeviceContext *device_context);
 
+  // Construct kernel graph from function graph and compile kernel graph in Graph mode,
+  // the detailed implementation of compiling graph is in 'CompileGraphImpl'.
+  GraphId CompileGraph(const FuncGraphPtr &func_graph, const DeviceContext *device_context);
+
   // Construct single op kernel graph and compile the kernel graph in PyNative mode.
   GraphId CompileGraph(const session::OpRunInfo &op_run_info, const GraphInfo &graph_info,
                        const std::vector<int64_t> *tensors_mask, std::vector<TensorPtr> *const input_tensors,
