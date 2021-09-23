@@ -101,6 +101,7 @@ constexpr auto kDropout = "Dropout";
 constexpr auto kDropoutGrad = "DropoutGrad";
 constexpr auto kConv2DTranspose = "Conv2DTranspose";
 constexpr auto kRoll = "Roll";
+constexpr auto kTanh = "Tanh";
 
 // Here list all primitives used in backend or some special primitives used by core.
 // GetNext
@@ -275,7 +276,7 @@ inline const PrimitivePtr kPrimAtan = std::make_shared<Primitive>("Atan");
 inline const PrimitivePtr kPrimAsin = std::make_shared<Primitive>("Asin");
 inline const PrimitivePtr kPrimSinh = std::make_shared<Primitive>("Sinh");
 inline const PrimitivePtr kPrimCosh = std::make_shared<Primitive>("Cosh");
-inline const PrimitivePtr kPrimTanh = std::make_shared<Primitive>("Tanh");
+inline const PrimitivePtr kPrimTanh = std::make_shared<Primitive>(kTanh);
 inline const PrimitivePtr kPrimAsinh = std::make_shared<Primitive>("Asinh");
 inline const PrimitivePtr kPrimAcosh = std::make_shared<Primitive>("Acosh");
 inline const PrimitivePtr kPrimAtanh = std::make_shared<Primitive>("Atanh");

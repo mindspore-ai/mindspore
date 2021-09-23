@@ -842,7 +842,7 @@ class HSigmoid(Primitive):
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
-class Tanh(PrimitiveWithInfer):
+class Tanh(Primitive):
     r"""
     Tanh activation function.
 
@@ -879,13 +879,6 @@ class Tanh(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         pass
-
-    def infer_shape(self, input_x):
-        return input_x
-
-    def infer_dtype(self, input_x):
-        validator.check_tensor_dtype_valid("input_x", input_x, mstype.float_type, self.name)
-        return input_x
 
 
 class FusedBatchNorm(Primitive):
