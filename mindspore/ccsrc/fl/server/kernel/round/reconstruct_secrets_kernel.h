@@ -43,7 +43,6 @@ class ReconstructSecretsKernel : public RoundKernel {
 
  private:
   std::string name_unmask_;
-  Executor *executor_;
   size_t iteration_time_window_{0};
   armour::CipherReconStruct cipher_reconstruct_;
 };

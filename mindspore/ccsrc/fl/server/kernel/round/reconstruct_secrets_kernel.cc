@@ -28,12 +28,6 @@ void ReconstructSecretsKernel::InitKernel(size_t required_cnt) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
 
-  executor_ = &Executor::GetInstance();
-  MS_EXCEPTION_IF_NULL(executor_);
-  if (!executor_->initialized()) {
-    MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
-    return;
-  }
   auto last_cnt_handler = [&](std::shared_ptr<ps::core::MessageHandler>) {
     if (ps::PSContext::instance()->resetter_round() == ps::ResetterRound::kReconstructSeccrets) {
       MS_LOG(INFO) << "start FinishIteration";

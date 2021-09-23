@@ -892,6 +892,10 @@ void Worker::UpdateEmbeddingPartitioner(const KVMessage &send, PartitionKVMessag
   const uint64_t *lookup_ids = send.len().data();
   size_t val_size = IntToSize(send.values_size());
   size_t id_size = IntToSize(send.len_size());
+  if (id_size == 0) {
+    MS_LOG(EXCEPTION) << "The id size is 0.";
+    return;
+  }
   size_t embedding_dim = val_size / id_size;
 
   const Key &key = send.keys()[0];

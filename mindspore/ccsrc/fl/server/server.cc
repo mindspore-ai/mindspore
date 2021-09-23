@@ -552,6 +552,7 @@ void Server::HandleNewInstanceRequest(const std::shared_ptr<ps::core::MessageHan
   auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_with_server_);
   MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
 
+  MS_ERROR_IF_NULL_WO_RET_VAL(message->data());
   std::string hyper_params_str(static_cast<const char *>(message->data()), message->len());
   nlohmann::json new_instance_json;
   nlohmann::json response;
