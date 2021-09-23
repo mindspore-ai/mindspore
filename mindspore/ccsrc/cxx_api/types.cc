@@ -429,7 +429,7 @@ void MSTensor::SetShape(const std::vector<int64_t> &) { MS_LOG_EXCEPTION << "Inv
 
 void MSTensor::SetDataType(enum DataType) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
-void MSTensor::SetTensorName(const std::string &) { MS_LOG_EXCEPTION << "Invalid implement."; }
+void MSTensor::SetTensorName(const std::vector<char> &) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
 void MSTensor::SetAllocator(std::shared_ptr<Allocator>) { MS_LOG_EXCEPTION << "Invalid implement."; }
 
