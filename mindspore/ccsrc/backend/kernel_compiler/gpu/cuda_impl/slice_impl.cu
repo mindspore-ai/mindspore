@@ -20,38 +20,38 @@
 #include <algorithm>
 #include "backend/kernel_compiler/gpu/cuda_impl/slice_impl.cuh"
 
-template <typename T>
-__global__ void Slice4D(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
-                        const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                        const size_t d3, const size_t d4, const T *input, T *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (l1 * l2 * l3 * l4); pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (l2 * l3 * l4) % l1;
-    size_t j = pos / (l3 * l4) % l2;
-    size_t k = pos / l4 % l3;
-    size_t o = pos % l4;
+// for each dimension, an explicit instantiation is used to generate this function
+// during compile time, and the inner loop of all the generated functions should be
+// unrolled by the compiler
+template <typename T, typename...S>
+__global__ void Slice(const T *input, T *output, const size_t output_size, S...pack) {
+  const int unpacked[] = { pack... };
+  const int param_list_size = static_cast<int>((sizeof...(pack)) / 3);
+  const int slice_start_start = 0;
+  const int slice_size_start = param_list_size;
+  const int input_shape_start = 2 * param_list_size;
 
-    size_t offset = (i + s1) * (d2 * d3 * d4) + (j + s2) * (d3 * d4) + (k + s3) * d4 + (o + s4);
-    output[pos] = input[offset];
+  for (size_t gt_id = blockIdx.x * blockDim.x + threadIdx.x; gt_id < output_size; gt_id += blockDim.x * gridDim.x) {
+    int linear_index = gt_id;
+    int output_stride = 1;
+    int input_stride = 1;
+    int input_offset = 0;
+
+    for (int i = 0; i < param_list_size; i++) {
+      int unravel_dimension = unpacked[slice_size_start + param_list_size - 1 - i];
+      int unraveled_index = (linear_index / output_stride) % unravel_dimension;
+      input_offset += (unraveled_index + unpacked[slice_start_start + param_list_size - 1 - i]) * input_stride;
+      output_stride *= unravel_dimension;
+      input_stride *= unpacked[input_shape_start + param_list_size - 1 - i];
+    }
+
+    output[gt_id] = input[input_offset];
   }
 }
 
-template <typename T>
-__global__ void Slice5D(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
-                        const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                        const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                        const T *input, T *output) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (l1 * l2 * l3 * l4 * l5);
-       pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (l2 * l3 * l4 * l5) % l1;
-    size_t j = pos / (l3 * l4 * l5) % l2;
-    size_t k = pos / (l4 * l5) % l3;
-    size_t o = pos / l5 % l4;
-    size_t q = pos % l5;
-
-    size_t offset =
-      (i + s1) * (d2 * d3 * d4 * d5) + (j + s2) * (d3 * d4 * d5) + (k + s3) * (d4 * d5) + (o + s4) * d5 + (q + s5);
-    output[pos] = input[offset];
-  }
+template <typename T, typename...S>
+void SliceKernel(const T *input, T *output, const size_t output_size, cudaStream_t cuda_stream, S...pack) {
+  Slice<<<GET_BLOCKS(sizeof...(pack)), GET_THREADS, 0, cuda_stream>>>(input, output, output_size, pack...);
 }
 
 template <typename T>
@@ -82,20 +82,7 @@ void FillDeviceArray(const size_t input_size, T *addr, const float value, cudaSt
   FillArray<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(addr, input_size, value);
   return;
 }
-template <typename T>
-void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1, const size_t l2,
-                   const size_t l3, const size_t l4, const size_t d1, const size_t d2, const size_t d3, const size_t d4,
-                   const T *input, T *output, cudaStream_t stream) {
-  Slice4D<<<GET_BLOCKS(l1 * l2 * l3 * l4), GET_THREADS, 0, stream>>>(s1, s2, s3, s4, l1, l2, l3, l4, d1, d2, d3, d4,
-                                                                     input, output);
-}
-template <typename T>
-void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5, const size_t l1,
-                   const size_t l2, const size_t l3, const size_t l4, const size_t l5, const size_t d1, const size_t d2,
-                   const size_t d3, const size_t d4, const size_t d5, const T *input, T *output, cudaStream_t stream) {
-  Slice5D<<<GET_BLOCKS(l1 * l2 * l3 * l4 * l5), GET_THREADS, 0, stream>>>(s1, s2, s3, s4, s5, l1, l2, l3, l4, l5, d1,
-                                                                          d2, d3, d4, d5, input, output);
-}
+
 template <typename T>
 void CalSlice4DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
                    const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
@@ -180,67 +167,6 @@ void StridedSliceGrad(const std::vector<size_t> &dy_shape, const std::vector<int
     dx_shape[5], dx_shape[6], dy_shape[0], dy_shape[1], dy_shape[2], dy_shape[3], dy_shape[4], dy_shape[5], dy_shape[6],
     dy, dx);
 }
-
-template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
-                            const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                            const size_t d3, const size_t d4, const double *input, double *output, cudaStream_t stream);
-template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
-                            const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                            const size_t d3, const size_t d4, const float *input, float *output, cudaStream_t stream);
-template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
-                            const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                            const size_t d3, const size_t d4, const half *input, half *output, cudaStream_t stream);
-template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
-                            const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                            const size_t d3, const size_t d4, const int *input, int *output, cudaStream_t stream);
-template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
-                            const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                            const size_t d3, const size_t d4, const short *input, short *output,  // NOLINT
-                            cudaStream_t stream);
-template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
-                            const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                            const size_t d3, const size_t d4, const unsigned char *input, unsigned char *output,
-                            cudaStream_t stream);
-template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
-                            const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                            const size_t d3, const size_t d4, const int64_t *input, int64_t *output,
-                            cudaStream_t stream);
-template void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
-                            const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                            const size_t d3, const size_t d4, const bool *input, bool *output, cudaStream_t stream);
-
-template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
-                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const double *input, double *output, cudaStream_t stream);
-template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
-                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const float *input, float *output, cudaStream_t stream);
-template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
-                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const half *input, half *output, cudaStream_t stream);
-template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
-                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const int64_t *input, int64_t *output, cudaStream_t stream);
-template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
-                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const int *input, int *output, cudaStream_t stream);
-template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
-                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const short *input, short *output, cudaStream_t stream);  // NOLINT
-template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
-                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const unsigned char *input, unsigned char *output, cudaStream_t stream);
-template void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
-                            const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
-                            const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const bool *input, bool *output, cudaStream_t stream);
 
 template void CalSlice4DGrad<double>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                      const size_t l1, const size_t l2, const size_t l3, const size_t l4,
@@ -367,3 +293,214 @@ template void StridedSliceGrad(const std::vector<size_t> &dy_shape, const std::v
 template void StridedSliceGrad(const std::vector<size_t> &dy_shape, const std::vector<int64_t> &begin,
                                const std::vector<int64_t> &strides, const std::vector<size_t> &dx_shape,
                                const unsigned char *dy, unsigned char *dx, cudaStream_t cuda_stream);
+
+// add additional explicit instantiations here for additional dimensions
+// bool
+template void SliceKernel(const bool *input, bool *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t);
+
+template void SliceKernel(const bool *input, bool *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const bool *input, bool *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const bool *input, bool *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t);
+
+template void SliceKernel(const bool *input, bool *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const bool *input, bool *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const bool *input, bool *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+// uchar
+template void SliceKernel(const unsigned char *input, unsigned char *output, const size_t output_size,
+                          cudaStream_t stream, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const unsigned char *input, unsigned char *output, const size_t output_size,
+                          cudaStream_t stream, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const unsigned char *input, unsigned char *output, const size_t output_size,
+                          cudaStream_t stream, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t);
+
+template void SliceKernel(const unsigned char *input, unsigned char *output, const size_t output_size,
+                          cudaStream_t stream, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const unsigned char *input, unsigned char *output, const size_t output_size,
+                          cudaStream_t stream, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const unsigned char *input, unsigned char *output, const size_t output_size,
+                          cudaStream_t stream, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const unsigned char *input, unsigned char *output, const size_t output_size,
+                          cudaStream_t stream, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t);
+
+// int16_t
+template void SliceKernel(const int16_t *input, int16_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t);
+
+template void SliceKernel(const int16_t *input, int16_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int16_t *input, int16_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int16_t *input, int16_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t);
+
+template void SliceKernel(const int16_t *input, int16_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int16_t *input, int16_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int16_t *input, int16_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+// int32_t
+template void SliceKernel(const int32_t *input, int32_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t);
+
+template void SliceKernel(const int32_t *input, int32_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int32_t *input, int32_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int32_t *input, int32_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t);
+
+template void SliceKernel(const int32_t *input, int32_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int32_t *input, int32_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int32_t *input, int32_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+// int64_t
+template void SliceKernel(const int64_t *input, int64_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t);
+
+template void SliceKernel(const int64_t *input, int64_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int64_t *input, int64_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int64_t *input, int64_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t);
+
+template void SliceKernel(const int64_t *input, int64_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int64_t *input, int64_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const int64_t *input, int64_t *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+// half
+template void SliceKernel(const half *input, half *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t);
+
+template void SliceKernel(const half *input, half *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const half *input, half *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const half *input, half *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t);
+
+template void SliceKernel(const half *input, half *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const half *input, half *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const half *input, half *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+// float
+template void SliceKernel(const float *input, float *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t);
+
+template void SliceKernel(const float *input, float *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const float *input, float *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const float *input, float *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t);
+
+template void SliceKernel(const float *input, float *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const float *input, float *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const float *input, float *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+// double
+template void SliceKernel(const double *input, double *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t);
+
+template void SliceKernel(const double *input, double *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const double *input, double *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const double *input, double *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t);
+
+template void SliceKernel(const double *input, double *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const double *input, double *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+
+template void SliceKernel(const double *input, double *output, const size_t output_size, cudaStream_t stream, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                          int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
