@@ -4244,7 +4244,7 @@ class ScatterSub(_ScatterOpDynamic):
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mindspore.float32), name="x")

@@ -92,9 +92,9 @@ class DenseThor(Cell):
         """Initialize DenseThor."""
         super(DenseThor, self).__init__()
         self.thor = True
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
-        self.has_bias = Validator.check_bool(has_bias)
+        self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
+        self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
+        self.has_bias = Validator.check_bool(has_bias, "has_bias", self.cls_name)
         if isinstance(weight_init, Tensor):
             if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
                     weight_init.shape[1] != in_channels:
@@ -202,8 +202,8 @@ class _ConvThor(Cell):
                  padding, dilation, group, has_bias, weight_init, bias_init, transposed=False):
         """Initialize _ConvThor."""
         super(_ConvThor, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
+        self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
         self.kernel_size = kernel_size
         self.stride = stride
         self.pad_mode = pad_mode
@@ -220,7 +220,7 @@ class _ConvThor(Cell):
                             f"{type(padding).__name__}.")
 
         self.dilation = dilation
-        self.group = Validator.check_positive_int(group)
+        self.group = Validator.check_positive_int(group, "group", self.cls_name)
         self.has_bias = has_bias
         self.__validate_kernel_size(kernel_size)
         self.__validate_stride(stride)
@@ -237,7 +237,7 @@ class _ConvThor(Cell):
             shape = [in_channels, out_channels // group, *kernel_size]
         self.weight = Parameter(initializer(weight_init, shape), name='weight')
 
-        if Validator.check_bool(has_bias):
+        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
             self.bias = Parameter(initializer(self.bias_init, [out_channels]), name='bias')
         else:
             if self.bias_init != 'zeros':
@@ -426,8 +426,8 @@ class Conv2dThor(_ConvThor):
         """Initialize depthwise conv2d op"""
         if context.get_context("device_target") == "Ascend" and self.group > 1:
             self.dilation = self._dilation
-            Validator.check_int('group', self.group, self.in_channels, Rel.EQ)
-            Validator.check_int('group', self.group, self.out_channels, Rel.EQ)
+            Validator.check_int('group', self.group, self.in_channels, Rel.EQ, self.cls_name)
+            Validator.check_int('group', self.group, self.out_channels, Rel.EQ, self.cls_name)
             self.conv2d = P.DepthwiseConv2dNative(channel_multiplier=1,
                                                   kernel_size=self.kernel_size,
                                                   pad_mode=self.pad_mode,
@@ -722,8 +722,8 @@ class EmbeddingLookupThor(Cell):
                  max_norm=None, sparse=True, vocab_cache_size=0):
         super(EmbeddingLookupThor, self).__init__()
         Validator.check_value_type('sparse', sparse, [bool], self.cls_name)
-        self.vocab_size = Validator.check_positive_int(vocab_size, 'vocab_size')
-        self.vocab_cache_size = Validator.check_non_negative_int(vocab_cache_size, 'vocab_cache_size')
+        self.vocab_size = Validator.check_positive_int(vocab_size, 'vocab_size', self.cls_name)
+        self.vocab_cache_size = Validator.check_non_negative_int(vocab_cache_size, 'vocab_cache_size', self.cls_name)
         self.target = target
         self.sparse = sparse
         self.cache_enable = self.vocab_cache_size > 0
@@ -743,7 +743,7 @@ class EmbeddingLookupThor(Cell):
         enable_ps = _get_ps_context("enable_ps")
         if enable_ps:
             self._process_vocab_cache(slice_mode)
-        self.embedding_size = Validator.check_positive_int(embedding_size, 'embedding_size')
+        self.embedding_size = Validator.check_positive_int(embedding_size, 'embedding_size', self.cls_name)
         self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size],
                                                      mstype.float16), name='embedding_table')
         parallel_mode = _get_parallel_mode()

@@ -107,9 +107,9 @@ class TimeDistributed(Cell):
             raise TypeError(f"For '{self.cls_name}', the 'layer' should be Cell or Primitive instance, "
                             f"but got type: {type(layer).__name__}.")
         super(TimeDistributed, self).__init__()
-        Validator.check_is_int(time_axis)
+        Validator.check_is_int(time_axis, "time_axis", self.cls_name)
         if reshape_with_axis is not None:
-            Validator.check_is_int(reshape_with_axis)
+            Validator.check_is_int(reshape_with_axis, "reshape_with_axis", self.cls_name)
         self.layer = layer
         self.time_axis = time_axis
         self.reshape_with_axis = reshape_with_axis

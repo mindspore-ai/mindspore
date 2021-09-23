@@ -284,9 +284,9 @@ class Dense(Cell):
                  activation=None):
         """Initialize Dense."""
         super(Dense, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
-        self.has_bias = Validator.check_bool(has_bias)
+        self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
+        self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
+        self.has_bias = Validator.check_bool(has_bias, "has_bias", self.cls_name)
         self.reshape = P.Reshape()
         self.shape_op = P.Shape()
 
@@ -878,7 +878,7 @@ class ResizeBilinear(Cell):
         ValueError: If `size` is a list or tuple whose length is not equal to 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
