@@ -244,7 +244,7 @@ class EmbeddingLookup(Cell):
         enable_ps = _get_ps_context("enable_ps")
         if enable_ps:
             self._process_vocab_cache(slice_mode)
-        self.embedding_size = validator.check_positive_int(embedding_size, 'embedding_size')
+        self.embedding_size = validator.check_positive_int(embedding_size, 'embedding_size', self.cls_name)
         self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size]),
                                          name='embedding_table')
         parallel_mode = _get_parallel_mode()
@@ -477,7 +477,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         """Initialize MultiFieldEmbeddingLookup."""
         super(MultiFieldEmbeddingLookup, self).__init__(vocab_size, embedding_size, param_init, target,
                                                         slice_mode, feature_num_list, max_norm, sparse)
-        self.field_size = validator.check_positive_int(field_size, 'field_size')
+        self.field_size = validator.check_positive_int(field_size, 'field_size', self.cls_name)
         self.operator = operator
 
         self.mul = P.Mul()

@@ -387,7 +387,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
                                                           num_channels=num_channels)
         Validator.check_value_type("min_init", min_init, [int, float, list], type(self).__name__)
         Validator.check_value_type("max_init", max_init, [int, float, list], type(self).__name__)
-        Validator.check_non_negative_int(quant_delay, 'quant_delay')
+        Validator.check_non_negative_int(quant_delay, 'quant_delay', self.cls_name)
         self.min_init = min_init
         self.max_init = max_init
         self.quant_dtype = quant_dtype
@@ -684,8 +684,8 @@ class Conv2dBnFoldQuantOneConv(Cell):
                  quant_dtype=QuantDtype.INT8):
         """Initialize Conv2dBnFoldQuant layer"""
         super(Conv2dBnFoldQuantOneConv, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
+        self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
         self.dilation = twice(dilation)
@@ -709,11 +709,11 @@ class Conv2dBnFoldQuantOneConv(Cell):
         else:
             raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), but got "
                             f"{type(padding).__name__}!")
-        self.group = Validator.check_positive_int(group)
+        self.group = Validator.check_positive_int(group, "group", self.cls_name)
         self.eps = eps
         self.momentum = 1 - momentum
         self.has_bias = has_bias
-        self.fake = Validator.check_bool(fake)
+        self.fake = Validator.check_bool(fake, "fake", self.cls_name)
         self.quant_config = quant_config
         self.quant_dtype = quant_dtype
         data_format = 'NCHW'
@@ -740,7 +740,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
         self.bias_add = P.BiasAdd()
         self.bias = None
-        if Validator.check_bool(has_bias):
+        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
         # initialize BatchNorm Parameter
@@ -926,8 +926,8 @@ class Conv2dBnFoldQuant(Cell):
                  freeze_bn=100000):
         """Initialize Conv2dBnFoldQuant layer"""
         super(Conv2dBnFoldQuant, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
+        self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
         self.dilation = twice(dilation)
@@ -951,12 +951,12 @@ class Conv2dBnFoldQuant(Cell):
         else:
             raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), "
                             f"but got {type(padding).__name__}!")
-        self.group = Validator.check_positive_int(group)
+        self.group = Validator.check_positive_int(group, "group", self.cls_name)
         self.eps = eps
         self.momentum = momentum
         self.has_bias = has_bias
         self.freeze_bn = freeze_bn
-        self.fake = Validator.check_bool(fake)
+        self.fake = Validator.check_bool(fake, "fake", self.cls_name)
         self.quant_config = quant_config
         self.quant_dtype = quant_dtype
         self.is_gpu = context.get_context('device_target') == "GPU"
@@ -974,7 +974,7 @@ class Conv2dBnFoldQuant(Cell):
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
         self.bias_add = P.BiasAdd()
         self.bias = None
-        if Validator.check_bool(has_bias):
+        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
 
         # initialize BatchNorm Parameter
@@ -1137,8 +1137,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
                  quant_dtype=QuantDtype.INT8):
         """Initialize Conv2dBnWithoutFoldQuant."""
         super(Conv2dBnWithoutFoldQuant, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
+        self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
         self.has_bias = has_bias
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
@@ -1163,9 +1163,9 @@ class Conv2dBnWithoutFoldQuant(Cell):
         else:
             raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), "
                             f"but got {type(padding).__name__}!")
-        self.group = Validator.check_positive_int(group)
+        self.group = Validator.check_positive_int(group, "group", self.cls_name)
         self.bias_add = P.BiasAdd()
-        if Validator.check_bool(has_bias):
+        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
         else:
             self.bias = None
@@ -1281,8 +1281,8 @@ class Conv2dQuant(Cell):
                  quant_dtype=QuantDtype.INT8):
         """Initialize Conv2dQuant."""
         super(Conv2dQuant, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
+        self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
+        self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
         self.has_bias = has_bias
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
@@ -1307,13 +1307,13 @@ class Conv2dQuant(Cell):
         else:
             raise TypeError(f"For '{self.cls_name}', the type of 'padding' must be int/tuple(int), "
                             f"but got {type(padding).__name__}!")
-        self.group = Validator.check_positive_int(group)
+        self.group = Validator.check_positive_int(group, "group", self.cls_name)
 
         weight_shape = [out_channels, in_channels // group, *self.kernel_size]
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
 
         self.bias_add = P.BiasAdd()
-        if Validator.check_bool(has_bias):
+        if Validator.check_bool(has_bias, "has_bias", self.cls_name):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
         else:
             self.bias = None
@@ -1417,9 +1417,9 @@ class DenseQuant(Cell):
                  quant_dtype=QuantDtype.INT8):
         """Initialize DenseQuant."""
         super(DenseQuant, self).__init__()
-        self.in_channels = Validator.check_positive_int(in_channels)
-        self.out_channels = Validator.check_positive_int(out_channels)
-        self.has_bias = Validator.check_bool(has_bias)
+        self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
+        self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
+        self.has_bias = Validator.check_bool(has_bias, "has_bias", self.cls_name)
 
         if isinstance(weight_init, Tensor):
             if weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
@@ -1544,7 +1544,7 @@ class ActQuant(_QuantActivation):
         act_class = activation.__class__
         act_list = [nn.ReLU, nn.ReLU6]
         self.act = Validator.check_isinstance("activation", activation, Cell)
-        self.fake_before = Validator.check_bool(fake_before, "fake_before")
+        self.fake_before = Validator.check_bool(fake_before, "fake_before", self.cls_name)
         if self.fake_before:
             self.fake_quant_act_before = quant_config.activation(min_init=-6,
                                                                  max_init=6,

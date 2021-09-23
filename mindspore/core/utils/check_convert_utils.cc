@@ -546,7 +546,7 @@ TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const 
   } else {
     std::string type_str = type_->ToString();
     std::ostringstream buffer;
-    buffer << "Primitive[" << prim_name << "]'s arguments[" << type_name << "]:" << type_str
+    buffer << "Primitive[" << prim_name << "]'s arguments[" << type_name << "]'s type:" << type_str
            << " must be a subclass of [";
     for (const auto &template_type : template_types) {
       buffer << template_type->ToString() << ", ";
