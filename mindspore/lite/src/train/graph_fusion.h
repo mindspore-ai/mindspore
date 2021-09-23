@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,17 @@
  * limitations under the License.
  */
 
-#include <queue>
-
-#include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
-#include "src/common/log_adapter.h"
+#include "tools/converter/optimizer.h"
+#include "inner/model_generated.h"
 #include "include/errorcode.h"
-#include "schema/inner/model_generated.h"
-#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
-STATUS IsolatedNodeRemovePass::Run(schema::MetaGraphT *graph) {
-  CHECK_NULL_RETURN(graph);
-  bool ifChanged = false;
-  for (auto iter = graph->nodes.begin(); iter != graph->nodes.end();) {
-    if ((*iter)->inputIndex.empty() && (*iter)->outputIndex.empty()) {
-      ifChanged = true;
-      iter = graph->nodes.erase(iter);
-    } else {
-      iter++;
-    }
-  }
-  return ifChanged ? RET_OK : RET_NO_CHANGE;
-}
+class GraphFusion {
+ public:
+  GraphFusion() = default;
+  ~GraphFusion() = default;
+  STATUS Run(schema::MetaGraphT *graph);
+};
 }  // namespace lite
 }  // namespace mindspore

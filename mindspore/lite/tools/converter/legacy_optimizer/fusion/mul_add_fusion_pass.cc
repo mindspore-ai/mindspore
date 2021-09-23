@@ -21,9 +21,11 @@
 #include "tools/converter/legacy_optimizer/fusion/mul_add_fusion_pass.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/graph_util.h"
+#include "tools/common/meta_graph_utils.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 #include "nnacl/op_base.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace lite {

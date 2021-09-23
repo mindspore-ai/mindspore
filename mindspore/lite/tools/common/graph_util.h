@@ -48,34 +48,6 @@ OpDefCopyer GetSimpleOpCopyer();
 
 int SetFuncGraphOutput(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &outputs);
 
-std::vector<size_t> GetInputNodeIdx(const schema::MetaGraphT &graphT, const size_t &nodeIdx, int inputIndexIdx = -1);
-
-std::vector<size_t> GetInputNodeIdx(const schema::MetaGraphT &graphT, const schema::CNodeT &node,
-                                    int inputIndexIdx = -1);
-
-std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const size_t &nodeIdx, int outputIndexIdx = -1);
-
-std::vector<size_t> GetOutputNodeIdx(const schema::MetaGraphT &graphT, const schema::CNodeT &node,
-                                     int outputIndexIdx = -1);
-
-std::vector<size_t> GetLinkedPreIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx);
-
-std::vector<size_t> GetLinkedPostIdx(const schema::MetaGraphT &graphT, const size_t &tensorIdx);
-
-void ReplaceOutput(const uint32_t &old_index, const uint32_t &new_index, schema::MetaGraphT *graphT);
-
-STATUS IsolateNode(schema::MetaGraphT *subGraph, schema::CNodeT *node);
-
-STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool removeTensor = true);
-
-STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t subGraphIdx, size_t nodeIdx, bool removeTensor = true);
-
-STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, schema::CNodeT *node, bool removeTensor = true);
-
-STATUS UpdateNodeIndex(schema::CNodeT *node, uint32_t deleteIdx);
-
-STATUS RemoveTensor(schema::MetaGraphT *graphT, std::vector<uint32_t> toDeleteTensorIdxes, bool forceDelete = false);
-
 STATUS AddTensor2Node(schema::MetaGraphT *graphT, uint32_t nodeIdx, std::unique_ptr<schema::TensorT> tensor,
                       InsertPlace place = kBefore);
 
@@ -101,8 +73,6 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
                          const OpDefCopyer &opDefCopyery);
 
 STATUS ValidateFileStr(const std::string &modelFile, const std::string &fileType);
-
-STATUS SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT);
 
 std::string GetModelName(const std::string &modelFile);
 

@@ -190,6 +190,7 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/train/graph_fusion.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/transfer_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_loop.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_utils.cc
@@ -201,6 +202,11 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/opt_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/storage.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/optimizer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/legacy_optimizer/fusion/fusion_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/legacy_optimizer/fusion/fusion_pattern.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/meta_graph_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.cc
         )
 if(MSLITE_ENABLE_V0)
     set(TRAIN_SRC

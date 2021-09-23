@@ -18,6 +18,7 @@
 #include <queue>
 #include "src/common/log_adapter.h"
 #include "tools/common/graph_util.h"
+#include "tools/common/meta_graph_utils.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 #include "src/common/log_util.h"

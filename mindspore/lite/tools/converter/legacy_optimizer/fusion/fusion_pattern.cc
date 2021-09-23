@@ -17,7 +17,6 @@
 #include <set>
 #include <utility>
 #include "tools/converter/legacy_optimizer/fusion/fusion_pattern.h"
-#include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #include "include/errorcode.h"
 

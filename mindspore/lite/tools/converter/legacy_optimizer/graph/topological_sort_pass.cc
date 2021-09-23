@@ -23,6 +23,7 @@
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #include "src/common/log_util.h"
+#include "tools/common/meta_graph_utils.h"
 
 namespace mindspore {
 namespace lite {

@@ -22,7 +22,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "tools/common/node_util.h"
 #include "tools/converter/optimizer.h"
 #include "tools/converter/legacy_optimizer/fusion/fusion_pattern.h"
 

@@ -26,7 +26,7 @@
 #include "tools/converter/legacy_optimizer/fusion/fusion_pass.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
-#include "tools/common/graph_util.h"
+#include "tools/common/meta_graph_utils.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 #include "nnacl/op_base.h"
@@ -131,7 +131,7 @@ STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pat
   for (auto index : graph->outputIndex) {
     auto subGraphOutputNodeIdxes = GetLinkedPreIdx(*graph, index);
     for (auto subGraphOutputNodeIdx : subGraphOutputNodeIdxes) {
-      MS_ASSERT(subGraph->nodes.size() > subGraphOutputNodeIdx);
+      MS_ASSERT(graph->nodes.size() > subGraphOutputNodeIdx);
       nodeQueue.push(subGraphOutputNodeIdx);
     }
   }
@@ -141,7 +141,7 @@ STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pat
     if (IsContain(sinkIdes, nodeIdx)) {
       continue;
     }
-    MS_ASSERT(subGraph->nodes.size() > nodeIdx);
+    MS_ASSERT(graph->nodes.size() > nodeIdx);
     auto &node = graph->nodes.at(nodeIdx);
     sinkIdes.emplace_back(nodeIdx);
 
@@ -151,7 +151,7 @@ STATUS FusionPass::MatchOnePattern(schema::MetaGraphT *graph, FusionPattern *pat
     }
     auto preNodeIdxes = GetInputNodeIdx(*graph, nodeIdx);
     for (auto preNodeIdx : preNodeIdxes) {
-      MS_ASSERT((subGraph->nodes.size() > preNodeIdx));
+      MS_ASSERT(graph->nodes.size() > preNodeIdx);
       nodeQueue.push(preNodeIdx);
     }
   }
@@ -277,7 +277,7 @@ bool FusionPass::MatchTree(schema::MetaGraphT *graph, size_t nodeIdx, const std:
       if (preNodeIdxInner == preNodeIdx) {
         continue;
       }
-      MS_ASSERT(subGraph->nodes.size() > preNodeIdxInner);
+      MS_ASSERT(graph->nodes.size() > preNodeIdxInner);
       if (MatchTree(graph, preNodeIdxInner, target->right, sinkIdes, pathSinkIdes)) {
         return true;  // ignore follow match, pick the first match
       }
