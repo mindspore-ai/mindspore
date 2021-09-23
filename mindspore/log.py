@@ -15,6 +15,7 @@
 """
 log module
 """
+import warnings
 import sys
 import os
 import stat
