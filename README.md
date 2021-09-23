@@ -236,7 +236,7 @@ currently the containerized build options are supported as follows:
     ```
 
 If you want to learn more about the building process of MindSpore docker images,
-please check out [docker](https://gitee.com/mindspore/mindspore/blob/master/docker/README.md) repo for the details.
+please check out [docker](https://gitee.com/mindspore/mindspore/blob/master/scripts/docker/README.md) repo for the details.
 
 ## Quickstart
 

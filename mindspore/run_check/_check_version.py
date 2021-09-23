@@ -380,8 +380,8 @@ class AscendEnvChecker(EnvChecker):
             all_info = f.readlines()
             for line in all_info:
                 if line.startswith("Version="):
-                    full_Version = line.strip().split("=")[1]
-                    self.v = '.'.join(full_Version.split('.')[0:2])
+                    full_version = line.strip().split("=")[1]
+                    self.v = '.'.join(full_version.split('.')[0:2])
                     return self.v
         return self.v
 
