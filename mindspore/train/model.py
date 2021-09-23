@@ -1036,6 +1036,7 @@ class Model:
 
         Returns:
             Dict, Parameter layout dictionary used for load distributed checkpoint.
+            Using as one of input parameters of load_distributed_checkpoint, always.
 
         Raises:
             RuntimeError: If get_context is not GRAPH_MODE.
