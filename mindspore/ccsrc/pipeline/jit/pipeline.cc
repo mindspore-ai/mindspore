@@ -107,6 +107,7 @@ GraphExecutorPyPtr GraphExecutorPy::executor_ = nullptr;
 std::mutex GraphExecutorPy::instance_lock_;
 #ifdef ENABLE_DEBUGGER
 bool GraphExecutorPy::debugger_terminate_ = false;
+bool GraphExecutorPy::exit_success_ = false;
 #endif
 
 std::unordered_map<abstract::AbstractBasePtrList, uint64_t, abstract::AbstractBasePtrListHasher,
@@ -1004,7 +1005,11 @@ void GraphExecutorPy::TerminateDebugger() {
   if (debugger_terminate_) {
     MS_LOG(INFO) << "Terminate debugger and clear resources!";
     ClearResAtexit();
-    exit(1);
+    if (exit_success_) {
+      exit(0);
+    } else {
+      exit(1);
+    }
   }
 }
 #endif
