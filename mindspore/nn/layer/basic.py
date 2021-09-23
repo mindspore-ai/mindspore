@@ -249,7 +249,7 @@ class Dense(Cell):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
-          to :math:`in\_channels` in `Inputs`
+          to :math:`in\_channels` in `Inputs`.
 
     Outputs:
         Tensor of shape :math:`(*, out\_channels)`.
