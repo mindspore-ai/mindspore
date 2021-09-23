@@ -141,8 +141,8 @@ def get_metrics(metrics):
     if isinstance(metrics, dict):
         for name, metric in metrics.items():
             if not isinstance(name, str) or not isinstance(metric, Metric):
-                raise TypeError("Metrics format error. key in metrics should be str \
-                                  and value in metrics should be subclass of Metric")
+                raise TypeError("The argument `metrics` format error. Key in metrics should be str and value in \
+                                 metrics should be subclass of Metric")
         return metrics
     if isinstance(metrics, set):
         out_metrics = {}
@@ -150,4 +150,4 @@ def get_metrics(metrics):
             out_metrics[name] = get_metric_fn(name)
         return out_metrics
 
-    raise TypeError("Metrics should be None, dict or set, but got {}".format(metrics))
+    raise TypeError("The argument `metrics` should be None, dict or set, but got {}, ".format(type(metrics)))
