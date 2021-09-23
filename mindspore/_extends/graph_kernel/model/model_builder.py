@@ -132,7 +132,7 @@ class CompositeGraph:
                 return dict()
             attr = {}
             for a in op['attr']:
-                if a['name'] == 'axis' and op['name'] in ('ReduceSum', 'ReduceMax', 'ReduceMin'):
+                if a['name'] == 'axis' and op['name'] in ('ReduceSum', 'ReduceMax', 'ReduceMin', 'Argmax', 'Argmin'):
                     attr['reduce_axis'] = a['value']
                 else:
                     attr[a['name']] = a['value']

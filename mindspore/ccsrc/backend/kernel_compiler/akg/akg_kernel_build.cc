@@ -16,6 +16,7 @@
 
 #include "backend/kernel_compiler/akg/akg_kernel_build.h"
 
+#include <sys/shm.h>
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>

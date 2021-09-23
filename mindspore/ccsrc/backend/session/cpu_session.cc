@@ -21,14 +21,17 @@
 #include "ir/anf.h"
 #include "utils/ms_utils.h"
 #include "utils/trace_base.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime.h"
+#include "backend/kernel_compiler/akg/cpu/akg_cpu_kernel_build.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/cpu/insert_cast_cpu.h"
 #include "backend/optimizer/cpu/insert_format_transform_op.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
 #include "debug/anf_ir_dump.h"
@@ -102,6 +105,16 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   kernel_graph->SetExecOrderByDefault();
 }
 
+void CPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+#ifdef ENABLE_AKG
+  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    return;
+  }
+  graphkernel::GraphKernelOptimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+#endif
+}
+
 GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
@@ -112,6 +125,7 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   MS_LOG(INFO) << "Set kernel info end";
   Optimize(graph);
   FinalOptimize(graph);
+  GraphKernelOptimize(graph);
   MS_LOG(INFO) << "Build kernel";
   BuildKernel(graph.get());
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
@@ -352,10 +366,20 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node) {
 void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto &kernel_nodes = kernel_graph->execution_order();
+  kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
+  MS_EXCEPTION_IF_NULL(bin_map);
+  std::vector<AnfNodePtr> akg_nodes;
   for (const auto &kernel_node : kernel_nodes) {
     MS_EXCEPTION_IF_NULL(kernel_node);
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     MS_LOG(INFO) << "Cpu building operator[" << kernel_name << "].";
+    if (session::AnfRuntimeAlgorithm::GetKernelType(kernel_node) == KernelType::AKG_KERNEL) {
+      if (!bin_map->initialized()) {
+        bin_map->Initialize();
+      }
+      akg_nodes.push_back(kernel_node);
+      continue;
+    }
     std::shared_ptr<kernel::CPUKernel> cpu_kernel =
       kernel::CPUKernelFactory::GetInstance().Create(kernel_name, kernel_node);
     if (cpu_kernel == nullptr) {
@@ -369,6 +393,10 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
     AnfAlgo::SetKernelMod(cpu_kernel, kernel_node.get());
     MS_LOG(INFO) << "Cpu build success operator[" << kernel_name << "].";
   }
+#ifdef ENABLE_AKG
+  kernel::AkgCpuKernelBuilder akg_cpu_kernel_builder;
+  (void)akg_cpu_kernel_builder.AkgKernelParallelBuild(akg_nodes);
+#endif
 }
 }  // namespace session
 }  // namespace mindspore

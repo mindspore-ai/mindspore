@@ -489,8 +489,8 @@ def _check_target_specific_cfgs(device, arg_key):
     device_cfgs = {
         'enable_dump': ['Ascend'],
         'save_dump_path': ['Ascend'],
-        'enable_graph_kernel': ['Ascend', 'GPU'],
-        'graph_kernel_flags': ['Ascend', 'GPU'],
+        'enable_graph_kernel': ['Ascend', 'GPU', 'CPU'],
+        'graph_kernel_flags': ['Ascend', 'GPU', 'CPU'],
         'enable_reduce_precision': ['Ascend'],
         'enable_profiling': ['Ascend'],
         'profiling_options': ['Ascend'],

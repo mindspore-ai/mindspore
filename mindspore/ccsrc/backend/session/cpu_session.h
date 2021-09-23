@@ -42,6 +42,7 @@ class CPUSession : public SessionBasic {
                         VectorRef *const outputs) override;
   void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) override;
   ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) override;
+  void GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph);
   void Optimize(const std::shared_ptr<KernelGraph> &kernel_graph);
   KernelGraphPtr BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                              const std::vector<tensor::TensorPtr> &input_tensors,

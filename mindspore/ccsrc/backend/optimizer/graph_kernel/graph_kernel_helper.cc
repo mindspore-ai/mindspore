@@ -38,6 +38,8 @@
 #include "runtime/device/ascend/kernel_select_ascend.h"
 #elif ENABLE_GPU
 #include "runtime/device/gpu/kernel_info_setter.h"
+#elif ENABLE_CPU
+#include "runtime/device/cpu/kernel_select_cpu.h"
 #endif
 
 namespace mindspore::graphkernel {
@@ -608,6 +610,9 @@ void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
 #elif ENABLE_GPU
   cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   device::gpu::SetKernelInfo(cnode, kernel_type);
+#elif ENABLE_CPU
+  cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
+  device::cpu::SetKernelInfo(cnode);
 #endif
 }
 

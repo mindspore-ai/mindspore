@@ -1,0 +1,143 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "backend/kernel_compiler/akg/cpu/akg_cpu_kernel_mod.h"
+
+#include <dlfcn.h>
+#include <algorithm>
+#include <memory>
+#include <utility>
+#include "nlohmann/json.hpp"
+#include "backend/kernel_compiler/common_utils.h"
+#include "common/thread_pool.h"
+#include "utils/ms_utils.h"
+#include "mindspore/ccsrc/debug/common.h"
+
+namespace mindspore {
+namespace kernel {
+namespace {
+using AkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
+int AkgLaunchFunc(AkgParallelLambda flambda, void *cdata, int num_task) {
+  size_t num_workers =
+    std::min(mindspore::common::ThreadPool::GetInstance().GetSyncRunThreadNum(), static_cast<size_t>(num_task));
+  std::vector<mindspore::common::Task> tasks;
+  size_t thread_index = 0;
+  while (thread_index < num_workers) {
+    auto block = [&, thread_index]() {
+      flambda(thread_index, num_workers, cdata);
+      return mindspore::common::SUCCESS;
+    };
+    tasks.emplace_back(block);
+    thread_index++;
+  }
+  mindspore::common::ThreadPool::GetInstance().SyncRun(tasks);
+  return 0;
+}
+
+struct AkgCallBack {
+  void *parallel_launch_func;
+  void *(*malloc_func)(size_t);
+  void (*free_func)(void *);
+
+  AkgCallBack() {
+    parallel_launch_func = reinterpret_cast<void *>(&AkgLaunchFunc);
+    malloc_func = &malloc;
+    free_func = &free;
+  }
+  ~AkgCallBack() = default;
+};
+}  // namespace
+CpuKernelManagerPtr CpuKernelMod::kernelmanager_ = std::make_shared<CpuKernelManager>();
+
+CpuKernelManager::~CpuKernelManager() {
+  for (auto &cpu_func_pair : cpu_func_map_) {
+    if (cpu_func_pair.second.second != nullptr) {
+      (void)dlclose(cpu_func_pair.second.second);
+    }
+  }
+}
+
+void *CpuKernelManager::SearchFunc(const std::string &kernel_name) const {
+  auto iter = cpu_func_map_.find(kernel_name);
+  if (iter == cpu_func_map_.end()) {
+    return nullptr;
+  } else {
+    return iter->second.first;
+  }
+}
+
+void *CpuKernelManager::SearchFuncWithSharedLock(const std::string &kernel_name) const {
+  std::shared_lock lock(mutex_);
+  return SearchFunc(kernel_name);
+}
+
+void *CpuKernelManager::GetFunction(const std::string &kernel_name) {
+  if (auto func = SearchFuncWithSharedLock(kernel_name); func != nullptr) {
+    return func;
+  }
+  std::unique_lock lock(mutex_);
+  // Search cache again between setting unique lock and calling "dlopen", to make sure that
+  // only one thread can call "dlopen" and insert handle to the cache for a new kernel_name.
+  // To avoid that several nodes (with the same kernel_name) open the same "so" by dlopen,
+  // but only cache it once, then the "dlclose" will be called only once, causing resource leak.
+  if (auto func = SearchFunc(kernel_name); func != nullptr) {
+    return func;
+  }
+  std::string fn;
+  auto it = kernel_name.rfind("_kernel");
+  if (it < kernel_name.size()) {
+    fn = kernel_name.substr(0, it);
+  } else {
+    fn = kernel_name;
+  }
+  std::string fn_so = kCpuKernelMeta + fn + ".so";
+  auto handle = dlopen(fn_so.c_str(), RTLD_LAZY | RTLD_LOCAL);
+  if (handle == nullptr) {
+    MS_LOG(ERROR) << "Load " << fn_so << " failed. kernel: " << kernel_name;
+    return nullptr;
+  }
+  auto launch_func = dlsym(handle, kernel_name.c_str());
+  if (launch_func == nullptr) {
+    MS_LOG(ERROR) << "Undefined symbol " << kernel_name << " in " << fn_so;
+    return nullptr;
+  }
+  cpu_func_map_[kernel_name] = std::make_pair(launch_func, handle);
+  return launch_func;
+}
+
+bool CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  auto js = nlohmann::json::parse(kernel_pack_->GetJson()->contents,
+                                  kernel_pack_->GetJson()->contents + kernel_pack_->GetJson()->len);
+  std::string kernel_name = js["kernelName"];
+  auto launch_func = kernelmanager_->GetFunction(kernel_name);
+  if (launch_func == nullptr) {
+    MS_LOG(ERROR) << "GetFunction failed. kernel: " << kernel_name;
+    return false;
+  }
+  std::vector<void *> runtimeargs;
+  (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(runtimeargs),
+                       [](const AddressPtr &input) -> void * { return input->addr; });
+  (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(runtimeargs),
+                       [](const AddressPtr &output) -> void * { return output->addr; });
+  AkgCallBack akg_callback;
+  runtimeargs.emplace_back(reinterpret_cast<void *>(&akg_callback));
+  using AkgCpuKernelFunction = void (*)(void *);
+  reinterpret_cast<AkgCpuKernelFunction>(launch_func)(reinterpret_cast<void *>(runtimeargs.data()));
+  return true;
+}
+}  // namespace kernel
+}  // namespace mindspore

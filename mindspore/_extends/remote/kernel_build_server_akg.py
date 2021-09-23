@@ -12,22 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""kernel build server for gpu"""
+"""kernel build server for akg kernels"""
 import sys
 import warnings
 from mindspore._extends.remote.kernel_build_server import Messager, get_logger, AkgBuilder
 
 
-class GpuMessager(Messager):
+class AkgMessager(Messager):
     '''
-    GPU Messager
+    Default Messager for akg kernels.
     It works as a server, communicating with c++ client.
     '''
 
     def __init__(self, fdin, fdout):
         super().__init__(fdin, fdout)
-        get_logger().info("[TRACE] GPU Messager init...")
-        self.akg_builder = AkgBuilder("GPU")
+        get_logger().info("[TRACE] Akg Messager init...")
+        self.akg_builder = AkgBuilder("default")
 
     def handle(self):
         """
@@ -42,7 +42,7 @@ class GpuMessager(Messager):
             self.exit()
 
     def exit(self):
-        get_logger().info("[TRACE] GPU Messager Exit...")
+        get_logger().info("[TRACE] Akg Messager Exit...")
         exit()
 
 
@@ -51,5 +51,5 @@ if __name__ == '__main__':
     if len(sys.argv) != 3:
         raise Exception('Incorrect argv: {}'.format(sys.argv))
     get_logger().debug(f"[TRACE] argv: {str(sys.argv)}")
-    messager = GpuMessager(int(sys.argv[1]), int(sys.argv[2]))
+    messager = AkgMessager(int(sys.argv[1]), int(sys.argv[2]))
     messager.run()

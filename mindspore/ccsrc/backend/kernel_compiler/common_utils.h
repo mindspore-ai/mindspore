@@ -34,10 +34,12 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kCceKernelMeta = "./kernel_meta/";
+constexpr auto kCpuKernelMeta = "./kernel_meta/";
 constexpr auto kGpuKernelMeta = "./cuda_meta";
 constexpr auto kProcessorAiCore = "aicore";
 constexpr auto kProcessorAiCpu = "aicpu";
 constexpr auto kProcessorCuda = "cuda";
+constexpr auto kProcessorCpu = "cpu";
 constexpr auto kProcessorUnknown = "unknown";
 constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
