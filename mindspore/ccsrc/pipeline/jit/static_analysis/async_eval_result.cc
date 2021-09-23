@@ -54,7 +54,7 @@ void AnalysisSchedule::Yield(const AsyncInferTask *async_infer_task) {
     if (async_infer_task->Ready() == 0) {
       MS_LOG(DEBUG) << " The active thread count: " << activate_threads_.size() << " thread id: " << GetThreadID()
                     << " async_infer_task thread id:" << async_infer_task->ThreadID();
-      activate_threads_.erase(GetThreadID());
+      (void)activate_threads_.erase(GetThreadID());
     }
     MS_LOG(DEBUG) << " The active thread count: " << activate_threads_.size()
                   << " The infer_thread_count: " << infer_thread_count_
@@ -129,7 +129,7 @@ bool AnalysisSchedule::SetNextReady() {
     return item->HasResult();
   });
   if (it == scheduleList_.end()) {
-    if ((size_t)infer_thread_count_.load() >= scheduleList_.size()) {
+    if (IntToSize(infer_thread_count_.load()) >= scheduleList_.size()) {
       MS_LOG(DEBUG) << "There is some task to be added. Please wait.";
       return false;
     }
@@ -137,7 +137,7 @@ bool AnalysisSchedule::SetNextReady() {
                     << " The infer_thread_count: " << infer_thread_count_
                     << " schedule list size: " << scheduleList_.size();
     // Enter endless loop if there is not ready result.
-    activate_threads_.insert(scheduleList_.front()->ThreadID());
+    (void)activate_threads_.insert(scheduleList_.front()->ThreadID());
     // Let the first thread to trigger endless loop exception.
     MS_LOG(DEBUG) << "Enter endless loop if there is not ready result.Set the async to trigger exception:"
                   << scheduleList_.front().get() << " The active thread count: " << activate_threads_.size();
@@ -146,9 +146,9 @@ bool AnalysisSchedule::SetNextReady() {
     return true;
   }
   auto async_task = *it;
-  activate_threads_.insert(async_task->ThreadID());
+  (void)activate_threads_.insert(async_task->ThreadID());
   async_task->SetReady();
-  scheduleList_.erase(it);
+  (void)scheduleList_.erase(it);
   MS_LOG(DEBUG) << " Success to SetReady. The active thread count: " << activate_threads_.size()
                 << " The infer_thread_count: " << infer_thread_count_ << " schedule list size: " << scheduleList_.size()
                 << " async: " << async_task->ThreadID() << "  address: " << async_task.get();
