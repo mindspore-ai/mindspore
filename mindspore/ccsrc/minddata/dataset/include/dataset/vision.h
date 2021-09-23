@@ -535,6 +535,27 @@ class RandomHorizontalFlipWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Randomly invert the input image with a given probability.
+class RandomInvert final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] prob A float representing the probability of the image being inverted, which
+  ///     must be in range of [0, 1] (default=0.5).
+  explicit RandomInvert(float prob = 0.5);
+
+  /// \brief Destructor.
+  ~RandomInvert() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Reduce the number of bits for each color channel randomly.
 class RandomPosterize final : public TensorTransform {
  public:

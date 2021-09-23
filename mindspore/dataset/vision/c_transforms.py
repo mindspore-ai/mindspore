@@ -1092,6 +1092,27 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
         return cde.RandomHorizontalFlipWithBBoxOperation(self.prob)
 
 
+class RandomInvert(ImageTensorOperation):
+    """
+    Randomly invert the colors of image with a given probability.
+
+    Args:
+        prob (float, optional): Probability of the image being inverted, which must be in range of [0, 1] (default=0.5).
+
+    Examples:
+        >>> transforms_list = [c_vision.Decode(), c_vision.RandomInvert(0.5)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_prob
+    def __init__(self, prob=0.5):
+        self.prob = prob
+
+    def parse(self):
+        return cde.RandomInvertOperation(self.prob)
+
+
 class RandomPosterize(ImageTensorOperation):
     """
     Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
