@@ -19,6 +19,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/flags.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -31,6 +32,25 @@ bool HasSideEffectAttr(const AnfNodePtr &node) {
     return false;
   }
   return AnfAlgo::GetNodeAttr<bool>(cnode, GRAPH_FLAG_SIDE_EFFECT);
+}
+
+bool CheckIgnoreCase(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (AnfAlgo::GetCNodeName(node) != kTransDataOpName) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  bool need_ignore = true;
+  auto input_size = cnode->inputs().size() - 1;
+  for (size_t k = 0; k < input_size; ++k) {
+    auto input = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cnode, k), 0).first;
+    if (input != nullptr && input->isa<CNode>()) {
+      need_ignore = false;
+      break;
+    }
+  }
+  return need_ignore;
 }
 }  // namespace
 
@@ -91,6 +111,11 @@ bool BackendCSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bo
       return (AbsOf(main) == AbsOf(node)) && (*main_value == *node_value);
     }
   } else if (main->isa<CNode>() && node->isa<CNode>()) {
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) && CheckIgnoreCase(main)) {
+      return false;
+    }
     if (CheckRandomEffect(main, node)) {
       return false;
     }

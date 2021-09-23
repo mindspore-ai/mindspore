@@ -1784,15 +1784,23 @@ std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const st
       }
     }
     bool found = false;
+    bool ignore = false;
     for (size_t j = i + 1; j < nodes.size(); ++j) {
       auto &child = nodes[j];
       auto input_size = child->inputs().size() - 1;
       for (size_t k = 0; k < input_size; ++k) {
         auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0);
         if (kernel_index.first == node) {
-          found = true;
+          if (AnfAlgo::GetCNodeName(child) == kApplyMomentumOpName) {
+            ignore = true;
+          } else {
+            found = true;
+          }
           break;
         }
+      }
+      if (ignore) {
+        break;
       }
       if (found) {
         (void)invalid_position.insert(i);
@@ -1810,7 +1818,7 @@ std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const st
   for (size_t i = 0; i < nodes.size(); ++i) {
     auto iter = insert_nodes.find(i);
     if (iter != insert_nodes.end()) {
-      (void)result.insert(result.end(), iter->second.begin(), iter->second.end());
+      (void)result.insert(result.end(), iter->second.rbegin(), iter->second.rend());
     }
     if (invalid_position.find(i) != invalid_position.end()) {
       continue;
