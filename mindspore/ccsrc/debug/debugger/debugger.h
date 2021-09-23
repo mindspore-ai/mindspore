@@ -223,7 +223,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::list<TensorSummary> LoadTensorsStat(const ProtoVector<TensorProto> &tensors) const;
 
   // terminate training process
-  void Exit();
+  void Exit(bool exit_success = false);
 
   // analyze tensors and check watchpoint conditions
   // return names of tensors and what condition they hit

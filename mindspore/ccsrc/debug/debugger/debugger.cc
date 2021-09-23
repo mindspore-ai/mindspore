@@ -768,7 +768,7 @@ void Debugger::CommandLoop() {
         break;
       case DebuggerCommand::kExitCMD:
         MS_LOG(INFO) << "ExitCMD";
-        Exit();
+        Exit(true);
         // Used for debugger termination
         run = true;
         break;
@@ -1076,11 +1076,11 @@ std::list<TensorSummary> Debugger::LoadTensorsStat(const ProtoVector<TensorProto
   return tensor_summary_list;
 }
 
-void Debugger::Exit() {
+void Debugger::Exit(bool exit_success) {
   // debugger will notify main thread to exit because main thread can only exit at step boundary.
   MS_LOG(INFO) << "Exit Debugger";
   SetEnableHeartbeat(false);
-  pipeline::GraphExecutorPy::DebugTerminate(true);
+  pipeline::GraphExecutorPy::DebugTerminate(true, exit_success);
 }
 
 std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode, const CNodePtr &kernel,
