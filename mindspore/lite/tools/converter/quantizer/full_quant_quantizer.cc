@@ -502,7 +502,7 @@ STATUS FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, cons
 }
 
 STATUS FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight,
-                                         const PrimitivePtr &primitive, bool per_channel) const {
+                                         const PrimitivePtr &primitive, bool per_channel, int input_index) const {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   // perlayer
@@ -525,7 +525,7 @@ STATUS FullQuantQuantizer::DoWeightQuant(const std::string &op_name, const AnfNo
   auto quant_min_t = quant_min;
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
   auto status = FixedBitQuantFilter<int8_t>(tensor_info, primitive, QuantType_QUANT_ALL, quant_max_t, quant_min_t,
-                                            bit_num_t, weight_quant_type, kNumberTypeInt8);
+                                            bit_num_t, weight_quant_type, kNumberTypeInt8, input_index - 1);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -673,14 +673,14 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
         return ret;
       }
     } else {
-      ret = DoWeightQuant(op_name, input_node, primitive, true);
+      ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Do bias quant failed.";
         return ret;
       }
     }
   } else {
-    ret = DoWeightQuant(op_name, input_node, primitive, false);
+    ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do bias quant failed.";
       return ret;
