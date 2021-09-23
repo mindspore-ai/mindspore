@@ -262,6 +262,7 @@ typedef struct OpParameter {
   int thread_num_;
   int quant_type_;
   bool is_train_session_;
+  void (*destroy_func_)(struct OpParameter *param);
 } OpParameter;
 
 typedef struct QuantArg {

@@ -143,6 +143,9 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
     }
     RectifyFormat(cnode, inputs, fmk_type_);
     ret = KernelInferShape(inputs, outputs, parameter);
+    if (parameter->destroy_func_ != nullptr) {
+      parameter->destroy_func_(parameter);
+    }
     free(parameter);
     parameter = nullptr;
   }

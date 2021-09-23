@@ -256,6 +256,9 @@ STATUS NodeInferShpae(const schema::CNodeT &node, const std::vector<Tensor *> &i
   }
   auto ret = KernelInferShape(inputs, *outputs, parameter);
   fbb.Clear();
+  if (parameter->destroy_func_ != nullptr) {
+    parameter->destroy_func_(parameter);
+  }
   free(parameter);
   parameter = nullptr;
   return ret;
