@@ -36,6 +36,16 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/fp32_grad/*.c
 )
 
+if(MSLITE_ENABLE_SPARSE_COMPUTE)
+    file(GLOB KERNEL_SRC_SPARSE
+            ${NNACL_DIR}/fp32_sparse/*.c
+            )
+    set(KERNEL_SRC
+            ${KERNEL_SRC}
+            ${KERNEL_SRC_SPARSE}
+            )
+endif()
+
 if(MSLITE_STRING_KERNEL)
     file(GLOB KERNEL_SRC_INFER_STRING
             ${NNACL_DIR}/infer/string/*.c

@@ -39,6 +39,13 @@ if(MSLITE_ENABLE_TRAIN)
     list(APPEND TEST_UT_SRC ${TEST_TRAIN_UT_SRC})
 endif()
 
+if(MSLITE_ENABLE_SPARSE_COMPUTE)
+    file(GLOB_RECURSE SPARSE_KERNEL_UT
+            ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32-sparsity/*.cc
+            )
+    list(APPEND TEST_UT_SRC ${SPARSE_KERNEL_UT})
+endif()
+
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE TEST_GPU_UT_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/*.cc
