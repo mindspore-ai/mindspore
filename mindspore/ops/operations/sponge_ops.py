@@ -2424,7 +2424,7 @@ class LJForce(PrimitiveWithInfer):
         validator.check_int(scaler[0], 3, Rel.EQ, "scaler_shape", cls_name)
         validator.check_int(nl_numbers[0], n, Rel.EQ, "nl_numbers_shape", cls_name)
         validator.check_int(nl_serial[0], n, Rel.EQ, "nl_serial_shape[0]", cls_name)
-        validator.check_int(nl_serial[1], 800, Rel.LE, "nl_serial_shape[1]", cls_name)
+        validator.check_int(nl_serial[1], 800, Rel.EQ, "nl_serial_shape[1]", cls_name)
         validator.check_int(len(d_lj_a), 1, Rel.EQ, "d_LJ_A_dim", cls_name)
         validator.check_int(d_lj_a[0], q, Rel.EQ, "d_LJ_A_shape[0]", cls_name)
         validator.check_int(d_lj_b[0], q, Rel.EQ, "d_LJ_B_shape[0]", cls_name)
