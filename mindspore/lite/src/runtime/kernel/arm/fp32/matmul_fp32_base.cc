@@ -55,24 +55,13 @@ void MatmulFp32BaseCPUKernel::ResizeParameter() {
   init_global_variable();
   if (params_->row_ == 1) {
     vec_matmul_ = true;
-#ifdef ENABLE_AVX
-    // vector matmul col is aligned to C8NUM in avx
-    col_tile_ = C8NUM;
-#elif defined(ENABLE_ARM64)
-    col_tile_ = C8NUM;
-#endif
     row_tile_ = 1;
+#if !defined(ENABLE_AVX) && !defined(ENABLE_ARM64)
+    params_->col_align_ = vec_matmul_ ? params_->col_ : params_->col_align_;
+    matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2RowMajor : RowMajor2ColMajor;
+#endif
   }
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
-#ifdef ENABLE_AVX
-  // avx is aligned to col_tile_
-  params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
-#elif defined(ENABLE_ARM64)
-  // no matter vec_matmul_ or not, use col_tile_ to get col_align_
-  params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
-#else
-  params_->col_align_ = vec_matmul_ ? params_->col_ : UP_ROUND(params_->col_, col_tile_);
-#endif
   oc_res_ = params_->col_ % col_tile_;
 }
 
@@ -176,31 +165,6 @@ int MatmulFp32BaseCPUKernel::InitMatrixA(const float *src_ptr) {
 
 int MatmulFp32BaseCPUKernel::InitMatrixB(const float *src_ptr) {
   CHECK_NULL_RETURN(src_ptr);
-  if (vec_matmul_) {
-    for (int i = 0; i < params_->batch; i++) {
-      const float *src_data = src_ptr + i * params_->deep_ * params_->col_;
-      float *dst = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
-      if (params_->b_transpose_) {
-#ifdef ENABLE_AVX
-        RowMajor2Col32Major(src_data, dst, params_->deep_, params_->col_);
-#elif defined(ENABLE_ARM64)
-        RowMajor2Col8Major(src_data, dst, params_->col_, params_->deep_);
-#else
-        memcpy(dst, src_data, params_->col_ * params_->deep_ * static_cast<int>(sizeof(float)));
-#endif
-      } else {
-#ifdef ENABLE_AVX
-        RowMajor2Row32Major(src_data, dst, params_->col_, params_->deep_);
-#elif defined(ENABLE_ARM64)
-        RowMajor2Row8Major(src_data, dst, params_->deep_, params_->col_);
-#else
-        RowMajor2ColMajor(src_data, dst, params_->deep_, params_->col_);
-#endif
-      }
-    }
-    return RET_OK;
-  }
-
   for (int i = 0; i < params_->batch; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->col_;
     float *dst = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
@@ -246,11 +210,7 @@ int MatmulFp32BaseCPUKernel::FloatRun(int task_id) const {
   int current_start_oc = task_id * thread_stride_ * col_tile_;
   int current_rest_oc = 0;
 #if defined(ENABLE_AVX)
-  if (vec_matmul_) {
-    current_rest_oc = params_->col_align_ - current_start_oc;
-  } else {
-    current_rest_oc = params_->col_ - current_start_oc;
-  }
+  current_rest_oc = params_->col_align_ - current_start_oc;
 #else
   current_rest_oc = params_->col_ - current_start_oc;
 #endif
@@ -272,18 +232,23 @@ int MatmulFp32BaseCPUKernel::FloatRun(int task_id) const {
     MatVecMulFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
 #endif
   } else {
+#ifdef ENABLE_AVX
+    MatMulAvxFp32(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_,
+                  params_->row_);
+#else
     MatMulOpt(batch_a_ptr_, b, c, bias, params_->act_type_, params_->deep_, params_->row_, cur_oc, params_->col_,
               OutType_Nhwc);
+#endif
   }
   return RET_OK;
 }
 
 void MatmulFp32BaseCPUKernel::init_global_variable() {
 #ifdef ENABLE_AVX
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row6Major : RowMajor2Col6Major;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col16Major : RowMajor2Row16Major;
-  row_tile_ = C6NUM;
-  col_tile_ = C16NUM;
+  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
+  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col32Major : RowMajor2Row32Major;
+  row_tile_ = C1NUM;
+  col_tile_ = C8NUM;
 #elif defined(ENABLE_ARM32)
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col4Major : RowMajor2Row4Major;
@@ -294,7 +259,7 @@ void MatmulFp32BaseCPUKernel::init_global_variable() {
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8Major : RowMajor2Row8Major;
   row_tile_ = C4NUM;
   col_tile_ = C8NUM;
-#else
+#else  // ARM64
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
   matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8Major : RowMajor2Row8Major;
   row_tile_ = C12NUM;
@@ -302,6 +267,7 @@ void MatmulFp32BaseCPUKernel::init_global_variable() {
 #endif
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
   vec_matmul_ = false;
+  params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
 }
 
 int MatmulFp32BaseCPUKernel::Init() {
@@ -377,12 +343,8 @@ int MatmulFp32BaseCPUKernel::ReSize() {
     FreeBuffSrcB();
   }
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_align_, col_tile_));
-#if defined(ENABLE_AVX)
-  if (vec_matmul_) {
-    thread_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_ * C4NUM), thread_count_) * C4NUM;
-  } else {
-    thread_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_), thread_count_);
-  }
+#if defined(ENABLE_AVX)  // thread tile by col_tile * C4NUM
+  thread_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_ * C4NUM), thread_count_) * C4NUM;
 #else
   thread_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_), thread_count_);
 #endif
@@ -393,7 +355,7 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
   auto out_data = reinterpret_cast<float *>(out_tensors_.front()->data());
   MS_ASSERT(out_data != nullptr);
 #ifdef ENABLE_AVX
-  if (oc_res_ != 0 && vec_matmul_) {  // vec matmul need to malloc dst
+  if (oc_res_ != 0) {  // avx matmul need to malloc dst aligned to C8NUM
     int out_channel = params_->col_;
     int oc_block_num = UP_DIV(out_channel, col_tile_);
     MS_ASSERT(ms_context_->allocator != nullptr);
@@ -453,8 +415,12 @@ int MatmulFp32BaseCPUKernel::Run() {
     if (vec_matmul_) {
       batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_align_;
     } else {
+#ifdef ENABLE_AVX
+      batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_align_;
+#else
       // need not aligned
       batch_c_ptr_ = output_data_ + i * params_->row_ * params_->col_;
+#endif
     }
     ret = ParallelLaunch(this->ms_context_, MatmulBaseFloatRun, this, thread_count_);
     if (ret != RET_OK) {
@@ -463,7 +429,7 @@ int MatmulFp32BaseCPUKernel::Run() {
   }
 
 #ifdef ENABLE_AVX
-  if (oc_res_ != 0 && vec_matmul_) {
+  if (oc_res_ != 0) {
     auto out_data = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
     PackNHWCXToNHWCFp32(output_data_, out_data, params_->batch, params_->row_, params_->col_, col_tile_);
     ms_context_->allocator->Free(output_data_);
