@@ -5,6 +5,17 @@ file(GLOB KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/fp32/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/int8/*.cc
     )
+
+if(MSLITE_ENABLE_SPARSE_COMPUTE)
+    file(GLOB SPARSE_KERNEL_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/fp32_sparse/*.cc
+            )
+    set(KERNEL_SRC
+            ${KERNEL_SRC}
+            ${SPARSE_KERNEL_SRC}
+            )
+endif()
+
 if(MSLITE_STRING_KERNEL)
     file(GLOB KERNEL_STRING_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/string/*.cc
