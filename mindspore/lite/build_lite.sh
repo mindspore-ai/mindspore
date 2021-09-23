@@ -64,7 +64,7 @@ build_lite_x86_64_jni_and_jar() {
     rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
     cmake -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
-          -DCMAKE_BUILD_TYPE=${LITE_BUILD_TYPE} -DENABLE_VERBOSE=${ENABLE_VERBOSE} -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
+          $CMAKE_ARGS -DENABLE_VERBOSE=${ENABLE_VERBOSE} -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni x86_64 failed----------------"
@@ -163,7 +163,7 @@ build_lite() {
         echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"         \
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"     \
-              -DANDROID_STL=${MSLITE_ANDROID_STL} -DCMAKE_BUILD_TYPE=${LITE_BUILD_TYPE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+              -DANDROID_STL=${MSLITE_ANDROID_STL} $CMAKE_ARGS -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DPLATFORM_ARM64="on" -DENABLE_NEON="on" -DMSLITE_ENABLE_FP16="on" -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp           \
               -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION}   \
               -DENABLE_ASAN=${ENABLE_ASAN} -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
@@ -180,13 +180,13 @@ build_lite() {
         echo "default link libc++_static.a, export MSLITE_ANDROID_STL=c++_shared to link libc++_shared.so"
         cmake -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DTOOLCHAIN_NAME=${CMAKE_TOOLCHAIN_NAME} -DANDROID_NATIVE_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}          \
               -DANDROID_NDK=${CMAKE_ANDROID_NDK} -DANDROID_ABI=${CMAKE_ANDROID_ABI} -DANDROID_TOOLCHAIN_NAME=${CMAKE_ANDROID_TOOLCHAIN_NAME}                    \
-              -DANDROID_STL=${CMAKE_ANDROID_STL}  -DCMAKE_BUILD_TYPE=${LITE_BUILD_TYPE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+              -DANDROID_STL=${CMAKE_ANDROID_STL}  $CMAKE_ARGS -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DPLATFORM_ARM32="on" -DENABLE_NEON="on"  -DMSLITE_ENABLE_FP16=${MSLITE_ENABLE_FP16} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp           \
               -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION}    \
               -DENABLE_ASAN=${ENABLE_ASAN} -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
       fi
     else
-        cmake -DPLATFORM_X86_64=on -DCMAKE_BUILD_TYPE=${LITE_BUILD_TYPE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE}              \
+        cmake -DPLATFORM_X86_64=on $CMAKE_ARGS -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE}              \
               -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
               -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
     fi
@@ -282,7 +282,7 @@ build_lite_arm64_and_jni() {
     cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
           -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
-          -DANDROID_STL=${MSLITE_ANDROID_STL} -DCMAKE_BUILD_TYPE=${LITE_BUILD_TYPE} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
+          -DANDROID_STL=${MSLITE_ANDROID_STL} $CMAKE_ARGS -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
           -DSUPPORT_TRAIN=${is_train} -DPLATFORM_ARM64=on "${LITE_JAVA_PATH}/native/"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
@@ -326,7 +326,7 @@ build_lite_arm32_and_jni() {
     cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
           -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
-          -DANDROID_STL=${MSLITE_ANDROID_STL} -DCMAKE_BUILD_TYPE=${LITE_BUILD_TYPE} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
+          -DANDROID_STL=${MSLITE_ANDROID_STL} $CMAKE_ARGS -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
           -DSUPPORT_TRAIN=${is_train} -DPLATFORM_ARM32=on "${LITE_JAVA_PATH}/native"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
@@ -397,13 +397,19 @@ update_submodule()
 }
 
 LITE_JAVA_PATH=${BASEPATH}/mindspore/lite/java
-LITE_BUILD_TYPE="Release"
 if [[ "${MSLITE_ENABLE_ACL}" == "on" ]]; then
     update_submodule
 fi
+
 if [[ "${DEBUG_MODE}" == "on" ]]; then
-    LITE_BUILD_TYPE="Debug"
+    CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Debug "
+else
+    CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release "
 fi
+if [[ "X$ENABLE_GITEE" = "Xon" ]]; then
+    CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GITEE=ON"
+fi
+
 if [[ "X$LITE_ENABLE_AAR" = "Xon" ]]; then
     build_aar
 elif [[ "X$LITE_PLATFORM" != "X" ]]; then

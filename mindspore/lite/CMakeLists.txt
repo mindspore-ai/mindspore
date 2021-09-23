@@ -195,29 +195,6 @@ if(MSVC)
   set(MSLITE_ENABLE_CONVERTER off)
 endif()
 
-if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
-        NOT MSLITE_ENABLE_MINDRT
-        OR NOT MSLITE_STRING_KERNEL
-        OR NOT MSLITE_CONTROLFLOW_TENSORLIST
-        OR NOT MSLITE_WEIGHT_DECODE
-        OR NOT MSLITE_CUSTOM_KERNEL_REGISTRY))
-    message(FATAL_ERROR "If one of 'MSLITE_ENABLE_MINDRT MSLITE_STRING_KERNEL "
-            "MSLITE_CONTROLFLOW_TENSORLIST MSLITE_WEIGHT_DECODE MSLITE_CUSTOM_KERNEL_REGISTRY'"
-            "is configured as off, MSLITE_ENABLE_CONVERTER and MSLITE_ENABLE_TESTCASES must also be configured as off")
-endif()
-
-if(((MSLITE_GPU_BACKEND STREQUAL tensorrt) OR MSLITE_ENABLE_NPU) AND (
-        NOT MSLITE_DELEGATE_USE))
-    message(FATAL_ERROR "If MSLITE_DELEGATE_USE use is configured as off, MSLITE_ENABLE_NPU must also be configured
-    as off and MSLITE_GPU_BACKEND nor can it be configured as tensorrt.")
-endif()
-
-if(MSLITE_ENABLE_FP16 AND PLATFORM_ARM32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
-        AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-    message(FATAL_ERROR "If you want to build fp16 in arm82_a32, \
-    your Clang version:[${CMAKE_CXX_COMPILER_VERSION}] must not be less than 9.0 and please use android nkd r21e!")
-endif()
-
 message(STATUS "************MindSpore Lite Build Option:************")
 message(STATUS "\tMSLITE_GPU_BACKEND                = \t${MSLITE_GPU_BACKEND}")
 message(STATUS "\tMSLITE_ENABLE_NPU                 = \t${MSLITE_ENABLE_NPU}")
@@ -241,6 +218,29 @@ message(STATUS "\tMSLITE_DELEGATE_USE               = \t${MSLITE_DELEGATE_USE}")
 message(STATUS "\tMSLITE_ENABLE_ACL                 = \t${MSLITE_ENABLE_ACL}")
 message(STATUS "\tMSLITE_ENABLE_FP16                = \t${MSLITE_ENABLE_FP16}")
 message(STATUS "\tMSLITE_ENABLE_MODEL_ENCRYPTION    = \t${MSLITE_ENABLE_MODEL_ENCRYPTION}")
+
+if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
+        NOT MSLITE_ENABLE_MINDRT
+        OR NOT MSLITE_STRING_KERNEL
+        OR NOT MSLITE_CONTROLFLOW_TENSORLIST
+        OR NOT MSLITE_WEIGHT_DECODE
+        OR NOT MSLITE_CUSTOM_KERNEL_REGISTRY))
+    message(FATAL_ERROR "If one of 'MSLITE_ENABLE_MINDRT MSLITE_STRING_KERNEL "
+            "MSLITE_CONTROLFLOW_TENSORLIST MSLITE_WEIGHT_DECODE MSLITE_CUSTOM_KERNEL_REGISTRY'"
+            "is configured as off, MSLITE_ENABLE_CONVERTER and MSLITE_ENABLE_TESTCASES must also be configured as off")
+endif()
+
+if(((MSLITE_GPU_BACKEND STREQUAL tensorrt) OR MSLITE_ENABLE_NPU) AND (
+        NOT MSLITE_DELEGATE_USE))
+    message(FATAL_ERROR "If MSLITE_DELEGATE_USE use is configured as off, MSLITE_ENABLE_NPU must also be configured
+    as off and MSLITE_GPU_BACKEND nor can it be configured as tensorrt.")
+endif()
+
+if(MSLITE_ENABLE_FP16 AND PLATFORM_ARM32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+        AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    message(FATAL_ERROR "If you want to build fp16 in arm82_a32, \
+    your Clang version:[${CMAKE_CXX_COMPILER_VERSION}] must not be less than 9.0 and please use android nkd r21e!")
+endif()
 
 if(MSLITE_ENABLE_HIGH_PERFORMANCE)
     add_compile_definitions(ENABLE_HIGH_PERFORMANCE)
