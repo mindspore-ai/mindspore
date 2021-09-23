@@ -32,7 +32,7 @@ Status DCShiftOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<
     return DCShift<double>(input, output, shift_, limiter_gain_);
   } else {
     std::shared_ptr<Tensor> tmp;
-    TypeCast(input, &tmp, DataType(DataType::DE_FLOAT32));
+    RETURN_IF_NOT_OK(TypeCast(input, &tmp, DataType(DataType::DE_FLOAT32)));
     return DCShift<float>(tmp, output, shift_, limiter_gain_);
   }
 }
