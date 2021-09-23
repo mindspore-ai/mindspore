@@ -59,7 +59,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Reciprocal, CumSum, HistogramFixedWidth, SquaredDifference, Xdivy, Xlogy,
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod,
                        Square, Sub, TensorAdd, Add, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps, Tan,
-                       MatrixInverse, IndexAdd, Erfinv, Conj, Real, Imag)
+                       MatrixInverse, IndexAdd, Erfinv, Conj, Real, Imag, Complex)
 
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
@@ -482,7 +482,8 @@ __all__ = [
     "Erfinv",
     "Conj",
     "Real",
-    "Imag"
+    "Imag",
+    "Complex"
 ]
 
 __sponge__ = [
