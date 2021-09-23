@@ -504,34 +504,29 @@ int LiteSwitchOpActor::GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_ker
     if (!switch_node) {
       continue;
     }
+
+    if (switch_node->in_tensors().size() < kSwitchMinInputTensorSize) {
+      MS_LOG(ERROR) << "actor name: " << this->GetAID() << "'s switch node " << switch_node->name()
+                    << " input tensor size: " << switch_node->in_tensors().size() << " is less than 3.";
+      return RET_ERROR;
+    }
+
     switch_node_ = switch_node;
-    if (switch_node->in_kernels().size() == kSwitchMaxInputsSize) {
-      bool_node_ = switch_node->in_kernels().at(kSwitchCondInputIndex);
+    if (switch_node->in_kernels().size() == kSwitchMaxInputKernelSize) {
       true_partial_node_ = switch_node->in_kernels().at(kSwitchTruePartialInputIndex);
       false_partial_node_ = switch_node->in_kernels().at(kSwitchFalsePartialInputIndex);
     }
 
-    if (switch_node->in_kernels().size() == kSwitchMinInputsSize) {
-      if (!switch_node->in_tensors()[0]->IsConst()) {
-        MS_LOG(ERROR) << "actor name: " << this->GetAID() << " ;s switch node " << switch_node->name()
-                      << " input size: " << switch_node->in_kernels().size()
-                      << " but switch_node->in_tensors()[0] is not const";
-        return RET_MEMORY_FAILED;
-      }
-
+    if (switch_node->in_kernels().size() == kSwitchMinInputKernelSize) {
       true_partial_node_ = switch_node->in_kernels().at(kSwitchTruePartialInputIndex - 1);
       false_partial_node_ = switch_node->in_kernels().at(kSwitchFalsePartialInputIndex - 1);
     }
-
     break;
   }
   return RET_OK;
 }
 
 void LiteSwitchOpActor::AppendOutputTensors() {
-  if (bool_node_ != nullptr) {
-    output_tensors_.push_back(bool_node_->out_tensors().front());
-  }
   for (auto &tensor : true_partial_node_->in_tensors()) {
     if (std::find(output_tensors_.begin(), output_tensors_.end(), tensor) == output_tensors_.end()) {
       output_tensors_.push_back(tensor);
@@ -678,13 +673,13 @@ void LiteSwitchOpActor::RunOpData(OpData<Tensor> *inputs, OpContext<Tensor> *con
   }
   input_op_datas_.erase(op_uuid);
 
-  bool *cond = nullptr;
-  if (bool_node_ != nullptr) {
-    cond = reinterpret_cast<bool *>(output_tensors_[0]->data());
-  } else {
-    cond = reinterpret_cast<bool *>(switch_node_->in_tensors()[0]->data());
+  auto cond_ptr = reinterpret_cast<bool *>(switch_node_->in_tensors()[kSwitchCondTensorIndex]->data());
+  if (cond_ptr == nullptr) {
+    MS_LOG(ERROR) << "switch cond input data is nullptr.";
+    context->SetFailed(RET_NULL_PTR);
+    return;
   }
-  if (*cond) {
+  if (*cond_ptr) {
     AsyncTrueBranchOutput(context);
   } else {
     AsyncFalseBranchOutput(context);
