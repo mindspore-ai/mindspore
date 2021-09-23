@@ -137,7 +137,7 @@ int InnerContext::Init() {
       }
     }
 #else
-    thread_pool_ = ThreadPool::CreateThreadPool(thread_num_);
+    thread_pool_ = ThreadPool::CreateThreadPool(thread_num_ - 1);
     thread_pool_->SetCpuAffinity(static_cast<mindspore::BindMode>(bind_mode));
 #endif
   }
