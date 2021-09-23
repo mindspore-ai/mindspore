@@ -58,13 +58,14 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
   MS_EXCEPTION_IF_NULL(cnode_ptr_);
   MS_EXCEPTION_IF_NULL(kernel_info_list_);
   node_name_ = AnfAlgo::GetCNodeName(cnode_ptr_);
+  full_name_ = cnode_ptr_->fullname_with_scope();
 
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(node_name_, cnode_ptr_);
   if (!op_info_ptr) {
     return;
   }
   if (!TbePropertyChecker::CheckTbeProperties(cnode_ptr_)) {
-    MS_LOG(INFO) << "Warning: node(" << cnode_ptr_->fullname_with_scope() << ") not support tbe aicore.";
+    MS_LOG(INFO) << "Warning: node(" << full_name_ << ") is not supported by tbe ai_core.";
     return;
   }
 
@@ -189,7 +190,7 @@ void TbeKernelSelect::GetReducePatternKernelInfo(const OpInfo &op_info) {
 
 void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
   if (kernel_info_list_->empty()) {
-    MS_LOG(INFO) << "Warning: get kernel build info failed.";
+    MS_LOG(INFO) << "Warning: get kernel build info failed. Op name: " << full_name_;
     return;
   }
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
@@ -204,6 +205,11 @@ void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
       }
     }
     kernel_info_list.emplace_back(*iter);
+  }
+  if (kernel_info_list.empty()) {
+    MS_LOG(WARNING) << "Tbe kernel info list is empty, all valid kernel info was filtered out. "
+                       "Check the input shape, attrs or other value of node : "
+                    << full_name_;
   }
   (*kernel_info_list_) = kernel_info_list;
 }
