@@ -65,7 +65,9 @@ int PadInt8CPUKernel::SetQuantParam() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto in_quant_arg = input_tensor->quant_params();
+  MS_CHECK_TRUE_RET(!in_quant_arg.empty(), RET_ERROR);
   auto out_quant_arg = out_tensor->quant_params();
+  MS_CHECK_TRUE_RET(!out_quant_arg.empty(), RET_ERROR);
 
   pad_quant_args->in_quant_args_->zp_ = in_quant_arg.front().zeroPoint;
   pad_quant_args->in_quant_args_->scale_ = in_quant_arg.front().scale;
