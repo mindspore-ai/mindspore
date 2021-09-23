@@ -84,6 +84,8 @@ void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, co
                       << "It's always happened with complex construction of code or infinite recursion or loop.\n"
                       << "Please check the code if it's has the infinite recursion "
                       << "or call 'context.set_context(max_call_depth=value)' to adjust this value.\n"
+                      << "If max_call_depth is set larger, the system max stack depth should be set larger too "
+                      << "to avoid stack overflow.\n"
                       << "For more details, please refer to the FAQ at https://www.mindspore.cn.";
   }
   MS_LOG(DEBUG) << evaluator << "(" << evaluator->type_name() << "/" << evaluator->ToString()
