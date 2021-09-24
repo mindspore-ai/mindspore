@@ -93,9 +93,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  return input_args[0]->BuildType();
-}
+TypePtr InferType(const std::vector<AbstractBasePtr> &input_args) { return input_args[0]->BuildType(); }
 }  // namespace
 
 AbstractBasePtr MaxPoolFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -104,8 +102,7 @@ AbstractBasePtr MaxPoolFusionInfer(const abstract::AnalysisEnginePtr &, const Pr
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args));
+  return std::make_shared<abstract::AbstractTensor>(InferType(input_args), InferShape(primitive, input_args));
 }
 REGISTER_PRIMITIVE_C(kNameMaxPoolFusion, MaxPoolFusion);
 }  // namespace ops

@@ -69,7 +69,7 @@ void SpaceToBatchND::set_paddings(std::vector<std::vector<int64_t>> paddings) {
   CheckAndConvertUtils::Check(kPaddings, {h, w}, kEqual, "paddings_shape(2,2)", temp_w, this->name());
   for (size_t i = 0; i < h; i++) {
     for (size_t j = 0; j < w; j++) {
-      (void)CheckAndConvertUtils::CheckInteger(kPaddings, SizeToLong(paddings[i][j]), kGreaterEqual, 0L, this->name());
+      (void)CheckAndConvertUtils::CheckInteger(kPaddings, paddings[i][j], kGreaterEqual, 0LL, this->name());
     }
   }
   (void)this->AddAttr(kPaddings, MakeValue(paddings));
@@ -84,7 +84,7 @@ void SpaceToBatchND::set_block_shape(std::vector<int64_t> block_shape) {
   (void)CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape.size()), kEqual, block_size,
                                            this->name());
   for (size_t i = 0; i < block_shape.size(); i++) {
-    (void)CheckAndConvertUtils::CheckInteger(kBlockShape, SizeToLong(block_shape[i]), kGreaterEqual, 1L, this->name());
+    (void)CheckAndConvertUtils::CheckInteger(kBlockShape, block_shape[i], kGreaterEqual, 1LL, this->name());
   }
   (void)this->AddAttr(kBlockShape, MakeValue(block_shape));
 }
