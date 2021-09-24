@@ -66,8 +66,7 @@ Status NonMappableLeafOp::operator()() {
 
   // launch num_workers_ worker threads, responsible for pulling from the IOBlockQueue and reading
   // data from disk into TensorRows
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(
-    num_workers_, std::bind(&NonMappableLeafOp::WorkerEntry, this, std::placeholders::_1), "", id()));
+  RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
 
   // must be called after launching workers. workers can't be spawned after this post,
   // so workers have to be kept alive until the end of the program
@@ -213,7 +212,6 @@ Status NonMappableLeafOp::Reset() {
     load_io_block_queue_ = true;
   }
 
-  RETURN_IF_NOT_OK(ParallelOp::Reset());
   NotifyToFillIOBlockQueue();
 
   return Status::OK();

@@ -44,26 +44,13 @@ CelebAOp::CelebAOp(int32_t num_workers, const std::string &dir, int32_t queue_si
       attr_file_(""),
       usage_(usage) {
   attr_info_queue_ = std::make_unique<Queue<std::vector<std::string>>>(queue_size);
-  io_block_queues_.Init(num_workers_, queue_size);
 }
 
-Status CelebAOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
-  }
-
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
+Status CelebAOp::RegisterAndLaunchThreads() {
+  ParallelOp::RegisterAndLaunchThreads();
   RETURN_IF_NOT_OK(attr_info_queue_->Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-
   RETURN_IF_NOT_OK(
     tree_->AllTasks()->CreateAsyncTask("Walking attr file", std::bind(&CelebAOp::ParseAttrFile, this), nullptr, id()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&CelebAOp::WorkerEntry, this, std::placeholders::_1), Name(), id()));
-  TaskManager::FindMe()->Post();
-  RETURN_IF_NOT_OK(ParseImageAttrInfo());
-  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
-
   return Status::OK();
 }
 
@@ -175,7 +162,7 @@ bool CelebAOp::CheckDatasetTypeValid() {
   return false;
 }
 
-Status CelebAOp::ParseImageAttrInfo() {
+Status CelebAOp::PrepareData() {
   std::vector<std::string> image_infos;
   bool need_more_data = true;
   RETURN_IF_NOT_OK(attr_info_queue_->PopFront(&image_infos));

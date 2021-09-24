@@ -47,7 +47,7 @@ namespace dataset {
 template <typename T>
 class Queue;
 
-class MappableLeafOp : public ParallelOp, public RandomAccessOp {
+class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, public RandomAccessOp {
  public:
   /// Constructor
   /// \param int32_t num_wkrs - Num of workers reading images in parallel
@@ -73,9 +73,14 @@ class MappableLeafOp : public ParallelOp, public RandomAccessOp {
   /// @return Status The status code returned
   Status InitSampler();
 
-  /// Called first when function is called
-  /// \return Status The status code returned
-  virtual Status LaunchThreadsAndInitOp() = 0;
+  virtual Status InitOp() {
+    // The order of the following 2 functions must not be changed!
+    RETURN_IF_NOT_OK(this->PrepareData());  // Prepare data
+    RETURN_IF_NOT_OK(this->InitSampler());  // pass numRows to Sampler
+    return Status::OK();
+  }
+
+  virtual Status PrepareData() = 0;
 
   /// Worker thread pulls a number of IOBlock from IOBlock Queue, make a row and push it to Connector
   /// \param int32_t workerId - id of each worker
@@ -91,6 +96,7 @@ class MappableLeafOp : public ParallelOp, public RandomAccessOp {
   /// Reset function to be called after every epoch to reset the source op after
   /// \return Status The status code returned
   Status Reset() override;
+  Status WaitForWorkers() override;
 };
 }  // namespace dataset
 }  // namespace mindspore

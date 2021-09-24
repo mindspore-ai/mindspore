@@ -57,7 +57,7 @@ CacheBase::CacheBase(int32_t num_workers, int32_t op_connector_size, std::shared
     prefetch_size_ = prefetch_sz_per_thread;
     MS_LOG(DEBUG) << "Per worker prefetch size : " << prefetch_size_;
   }
-  io_block_queues_.Init(num_workers, op_connector_size);
+  worker_in_queues_.Init(num_workers, op_connector_size);
   prefetch_queues_.Init(num_prefetchers_, op_connector_size);
   // We can cause deadlock if this internal Connector size is too small.
   keys_miss_ = std::make_unique<Connector<std::vector<row_id_type>>>(num_prefetchers_, 1, connector_capacity_);
@@ -105,7 +105,7 @@ Status CacheBase::FetchSamplesToWorkers() {
           // Now we tell the WorkerEntry to wait for them to come back.
           for (auto row_id : prefetch_keys) {
             keys.push_back(row_id);
-            RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
+            RETURN_IF_NOT_OK(send_to_que(worker_in_queues_, buf_cnt++ % num_workers_, keys));
             keys.clear();
           }
           prefetch_keys.clear();
@@ -118,16 +118,16 @@ Status CacheBase::FetchSamplesToWorkers() {
       RETURN_IF_NOT_OK(send_to_que(prefetch_queues_, prefetch_cnt++ % num_prefetchers_, prefetch_keys));
       for (auto row_id : prefetch_keys) {
         keys.push_back(row_id);
-        RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
+        RETURN_IF_NOT_OK(send_to_que(worker_in_queues_, buf_cnt++ % num_workers_, keys));
         keys.clear();
       }
     }
     if (!keys.empty()) {
-      RETURN_IF_NOT_OK(send_to_que(io_block_queues_, buf_cnt++ % num_workers_, keys));
+      RETURN_IF_NOT_OK(send_to_que(worker_in_queues_, buf_cnt++ % num_workers_, keys));
     }
     // send the eoe
     RETURN_IF_NOT_OK(
-      io_block_queues_[(buf_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+      worker_in_queues_[(buf_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
     RETURN_IF_NOT_OK(prefetch_queues_[(prefetch_cnt++) % num_prefetchers_]->Add(
       std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
     // If repeat but the not last repeat, wait for reset.
@@ -148,11 +148,11 @@ Status CacheBase::FetchSamplesToWorkers() {
   } while (true);
   // Flow the eof before exit
   RETURN_IF_NOT_OK(
-    io_block_queues_[(buf_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
+    worker_in_queues_[(buf_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
   // Shutdown threads
   for (int32_t i = 0; i < num_workers_; i++) {
     RETURN_IF_NOT_OK(
-      io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
+      worker_in_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
   }
   // Dump the last epoch result (approximately) without waiting for the worker threads to come back.
   if (AllowCacheMiss()) {
@@ -165,7 +165,7 @@ Status CacheBase::FetchSamplesToWorkers() {
 Status CacheBase::FetchFromCache(int32_t worker_id) {
   std::unique_ptr<IOBlock> blk;
   do {
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&blk));
+    RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&blk));
     if (blk->wait()) {
       // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
       // The last guy who comes to this sync point should reset the counter and wake up the master thread.
@@ -205,7 +205,7 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
 Status CacheBase::RegisterResources() {
   RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(worker_in_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(prefetch_queues_.Register(tree_->AllTasks()));
   return Status::OK();
 }

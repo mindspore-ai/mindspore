@@ -83,10 +83,6 @@ class DIV2KOp : public MappableLeafOp {
   /// \return Status - The status code returned.
   Status LoadTensorRow(row_id_type index, TensorRow *trow) override;
 
-  /// \brief Called first when function is called.
-  /// \return Status - The status code returned.
-  Status LaunchThreadsAndInitOp() override;
-
   /// \brief Get the real name of high resolution images and low resolution images dir in DIV2K dataset.
   /// \param[in] hr_dir_key - the key of high resolution images dir.
   /// \param[in] lr_dir_key - the key of high resolution images dir.
@@ -95,7 +91,7 @@ class DIV2KOp : public MappableLeafOp {
 
   /// \brief Parse DIV2K data.
   /// \return Status - The status code returned.
-  Status ParseDIV2KData();
+  Status PrepareData() override;
 
   /// \brief Get DIV2K data by usage.
   /// \return Status - The status code returned.

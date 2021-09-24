@@ -36,7 +36,7 @@ namespace mindspore {
 namespace dataset {
 /// \brief Provides method to merge two streams (one from CacheLookup and one from cache miss stream) into one single
 /// stream
-class CacheMergeOp : public ParallelOp {
+class CacheMergeOp : public ParallelOp<TensorRow, TensorRow> {
  public:
   // Some handshake structures between CacheMissWorkerEntry and Cleaner
   class TensorRowCacheRequest {

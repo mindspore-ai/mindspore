@@ -72,7 +72,7 @@ class ImageFolderOp : public MappableLeafOp {
   /// Initialize ImageFOlderOp related var, calls the function to walk all files
   /// @param - std::string dir file directory to  ImageNetFolder
   /// @return Status The status code returned
-  Status PrescanMasterEntry(const std::string &dir);
+  Status PrepareData() override;
 
   // Worker thread pulls a number of IOBlock from IOBlock Queue, make a TensorRow and push it to Connector
   // @param int32_t workerId - id of each worker
@@ -127,7 +127,7 @@ class ImageFolderOp : public MappableLeafOp {
 
   // Called first when function is called
   // @return
-  Status LaunchThreadsAndInitOp() override;
+  Status RegisterAndLaunchThreads() override;
 
   /// Private function for computing the assignment of the column name map.
   /// @return - Status

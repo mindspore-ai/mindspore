@@ -57,11 +57,13 @@ Status CacheMergeOp::operator()() {
   static const int32_t queue_sz = 512;
   io_que_ = std::make_unique<Queue<row_id_type>>(queue_sz);
   RETURN_IF_NOT_OK(io_que_->Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(
-    num_workers_, std::bind(&CacheMergeOp::WorkerEntry, this, std::placeholders::_1), Name() + "::WorkerEntry", id()));
+
+  RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
+
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
                                         std::bind(&CacheMergeOp::CacheMissWorkerEntry, this, std::placeholders::_1),
                                         Name() + "::CacheMissWorkerEntry", id()));
+
   // One dedicated thread to move TensorRow from the pool to the cache server
   for (auto i = 0; i < num_cleaners_; ++i) {
     RETURN_IF_NOT_OK(
@@ -88,7 +90,8 @@ Status CacheMergeOp::WorkerEntry(int32_t worker_id) {
         // Block until the row shows up in the pool.
         RETURN_IF_NOT_OK(cache_miss_.PopFront(row_id, &new_row));
       }
-      RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row), worker_id));
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(new_row)));
+
       RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
     }
   }
@@ -223,14 +226,15 @@ Status CacheMergeOp::ComputeColMap() {
 Status CacheMergeOp::EoeReceived(int32_t worker_id) {
   // Send the eoe up.
   MS_LOG(DEBUG) << "Cache merge sending eoe";
-  return out_connector_->SendEOE(worker_id);
+  RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
+  return Status::OK();
 }
 
 // Base-class override for handling cases when an eof is received.
 Status CacheMergeOp::EofReceived(int32_t worker_id) {
   // Send the eof up.
-  MS_LOG(DEBUG) << "Cache merge sending eof";
-  return out_connector_->SendEOF(worker_id);
+  RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
+  return Status::OK();
 }
 
 Status CacheMergeOp::GetRq(row_id_type row_id, CacheMergeOp::TensorRowCacheRequest **out) {

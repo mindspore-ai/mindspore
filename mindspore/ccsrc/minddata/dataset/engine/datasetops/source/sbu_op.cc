@@ -39,9 +39,7 @@ SBUOp::SBUOp(const std::string &folder_path, bool decode, std::unique_ptr<DataSc
       url_path_(""),
       caption_path_(""),
       image_folder_(""),
-      data_schema_(std::move(data_schema)) {
-  io_block_queues_.Init(num_workers, queue_size);
-}
+      data_schema_(std::move(data_schema)) {}
 
 void SBUOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
@@ -117,28 +115,13 @@ Status SBUOp::CountTotalRows(const std::string &dir, int64_t *count) {
   auto op = std::make_shared<SBUOp>(dir, true, std::move(schema), std::move(sampler), num_workers, op_connector_size);
 
   // the logic of counting the number of samples
-  RETURN_IF_NOT_OK(op->ParseSBUData());
+  RETURN_IF_NOT_OK(op->PrepareData());
   *count = op->image_caption_pairs_.size();
 
   return Status::OK();
 }
 
-Status SBUOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
-  }
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&SBUOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
-
-  RETURN_IF_NOT_OK(this->ParseSBUData());
-  RETURN_IF_NOT_OK(this->InitSampler());  // handle shake with sampler
-  return Status::OK();
-}
-
-Status SBUOp::ParseSBUData() {
+Status SBUOp::PrepareData() {
   const Path url_file_name("SBU_captioned_photo_dataset_urls.txt");
   const Path caption_file_name("SBU_captioned_photo_dataset_captions.txt");
   const Path image_folder_name("sbu_images");

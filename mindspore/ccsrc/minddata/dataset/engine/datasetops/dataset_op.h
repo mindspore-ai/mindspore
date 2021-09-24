@@ -118,9 +118,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   Status InsertAsParent(std::shared_ptr<DatasetOp> to_add);
 
   // \brief Creates the connector within this operator
-  // \param num_producers - number of threads that write into this connector
-  // \param num_consumers - number of threads that read from this connector
-  void CreateConnector(int32_t num_producers, int32_t num_consumers);
+  void CreateConnector();
 
   // \brief A print method typically used for debugging
   // \param out - The output stream to write output to

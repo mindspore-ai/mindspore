@@ -79,10 +79,6 @@ class SBUOp : public MappableLeafOp {
   // @return Status - The status code returned.
   Status ComputeColMap() override;
 
-  // Called first when function is called.
-  // @return Status - The status code returned.
-  Status LaunchThreadsAndInitOp() override;
-
   // @param const std::string &path - path to the image file.
   // @param std::shared_ptr<Tensor> tensor - tensor to store image.
   // @return Status - The status code returned.
@@ -90,7 +86,7 @@ class SBUOp : public MappableLeafOp {
 
   // Parse SBU data file.
   // @return Status - The status code returned.
-  Status ParseSBUData();
+  Status PrepareData() override;
 
   // Get available image-caption pairs.
   // @param std::ifstream &url_file_reader - url file reader.

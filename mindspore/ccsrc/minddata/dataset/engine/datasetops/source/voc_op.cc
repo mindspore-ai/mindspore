@@ -56,9 +56,7 @@ VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std:
       folder_path_(folder_path),
       class_index_(class_index),
       data_schema_(std::move(data_schema)),
-      extra_metadata_(extra_metadata) {
-  io_block_queues_.Init(num_workers_, queue_size);
-}
+      extra_metadata_(extra_metadata) {}
 
 void VOCOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
@@ -246,24 +244,13 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
   }
   return Status::OK();
 }
-
-Status VOCOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
-  }
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&VOCOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
+Status VOCOp::PrepareData() {
   RETURN_IF_NOT_OK(this->ParseImageIds());
   if (task_type_ == TaskType::Detection) {
     RETURN_IF_NOT_OK(this->ParseAnnotationIds());
   }
-  RETURN_IF_NOT_OK(this->InitSampler());
   return Status::OK();
 }
-
 Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor) {
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(path, tensor));
   if (decode_ == true) {

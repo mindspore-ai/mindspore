@@ -31,7 +31,7 @@
 
 namespace mindspore {
 namespace dataset {
-class BuildVocabOp : public ParallelOp {
+class BuildVocabOp : public ParallelOp<TensorRow, TensorRow> {
  public:
   BuildVocabOp(std::shared_ptr<Vocab> vocab, std::vector<std::string> col_names, std::pair<int64_t, int64_t> freq_range,
                int64_t top_k, const std::vector<std::string> &tokens, bool prepend, int32_t num_workers,

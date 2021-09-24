@@ -73,13 +73,9 @@ class FlickrOp : public MappableLeafOp {
   /// \return Status - The status code returned
   Status LoadTensorRow(row_id_type index, TensorRow *trow) override;
 
-  /// \brief Called first when function is called
-  /// \return Status - The status code returned
-  Status LaunchThreadsAndInitOp() override;
-
   /// \brief Parse Flickr data
   /// \return Status - The status code returned
-  Status ParseFlickrData();
+  Status PrepareData() override;
 
   /// \brief Check if image ia valid.Only support JPEG/PNG/GIF/BMP
   /// \param[in] std::string file_name - image file name need to be checked

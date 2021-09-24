@@ -6,7 +6,6 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 
 set(DATASET_ENGINE_DATASETOPS_SRC_FILES
     dataset_op.cc
-    parallel_op.cc
     pipeline_op.cc
     batch_op.cc
     device_queue_op.cc

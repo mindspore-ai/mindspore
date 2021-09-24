@@ -27,7 +27,7 @@
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/engine/data_schema.h"
-#include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"
 #include "minddata/dataset/util/wait_post.h"
 
 namespace mindspore {
@@ -37,7 +37,7 @@ namespace dataset {
 // various dataset operator pipelines.  It is not "real" data to train with.
 // The data that is random created is just random and repeated bytes, there is no
 // "meaning" behind what these bytes are.
-class RandomDataOp : public ParallelOp {
+class RandomDataOp : public MappableLeafOp {
  public:
   // Some constants to provide limits to random generation.
   static constexpr int32_t kMaxNumColumns = 4;
@@ -57,6 +57,10 @@ class RandomDataOp : public ParallelOp {
   RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t total_rows,
                std::unique_ptr<DataSchema> data_schema);
 
+ protected:
+  Status PrepareData() override;
+
+ public:
   /**
    * Destructor
    */
@@ -81,58 +85,25 @@ class RandomDataOp : public ParallelOp {
     return out;
   }
 
-  /**
-   * Class functor operator () override.
-   * All DatasetOps operate by launching a thread (see ExecutionTree). This class functor will
-   * provide the master loop that drives the logic for performing the work.
-   * @return Status The status code returned
-   */
-  Status operator()() override;
-
-  /**
-   * Overrides base class reset method.  When an operator does a reset, it cleans up any state
-   * info from it's previous execution and then initializes itself so that it can be executed
-   * again.
-   * @return Status The status code returned
-   */
-  Status Reset() override;
-
-  /**
-   * Quick getter for total rows.
-   */
-  int64_t GetTotalRows() const { return total_rows_; }
-
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "RandomDataOp"; }
 
- private:
-  /**
-   * The entry point code for when workers are launched
-   * @param worker_id - The worker id
-   * @return Status The status code returned
-   */
-  Status WorkerEntry(int32_t worker_id) override;
+ protected:
+  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
+ private:
   /**
    * Helper function to produce a default/random schema if one didn't exist
    */
   void GenerateSchema();
 
   /**
-   * Performs a synchronization between workers at the end of an epoch
-   * @param worker_id - The worker id
-   * @return Status The status code returned
-   */
-  Status EpochSync(int32_t worker_id, bool *quitting);
-
-  /**
    * A helper function to create random data for the row
-   * @param worker_id - The worker id
    * @param new_row - The output row to produce
    * @return Status The status code returned
    */
-  Status CreateRandomRow(int32_t worker_id, TensorRow *new_row);
+  Status CreateRandomRow(TensorRow *new_row);
 
   /**
    * A quick inline for producing a random number between (and including) min/max
@@ -148,18 +119,10 @@ class RandomDataOp : public ParallelOp {
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
-
   int64_t total_rows_;
-  int64_t epoch_rows_sent_;
-  std::atomic<int32_t> guys_in_;
-  std::atomic<int32_t> guys_out_;
-  int32_t eoe_worker_id_;
   std::unique_ptr<DataSchema> data_schema_;
-  std::vector<int64_t> worker_max_rows_;
-  std::vector<int64_t> worker_rows_packed_;
   std::mt19937 rand_gen_;
-  WaitPost epoch_sync_wait_post_;
-  WaitPost all_out_;
+  std::vector<TensorRow> rows_;
 };  // class RandomDataOp
 }  // namespace dataset
 }  // namespace mindspore

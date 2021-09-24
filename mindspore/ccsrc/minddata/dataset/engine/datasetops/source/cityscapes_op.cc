@@ -42,26 +42,7 @@ CityscapesOp::CityscapesOp(int32_t num_workers, const std::string &dataset_dir, 
       quality_mode_(quality_mode),
       task_(task),
       decode_(decode),
-      data_schema_(std::move(data_schema)) {
-  io_block_queues_.Init(num_workers_, queue_size);
-}
-
-Status CityscapesOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
-  }
-
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&CityscapesOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
-  // The order of the following 3 functions must not be changed!
-  RETURN_IF_NOT_OK(ParseCityscapesData());  // Parse Cityscapes data and get num rows, blocking
-  RETURN_IF_NOT_OK(CountDatasetInfo());     // Count the total rows
-  RETURN_IF_NOT_OK(InitSampler());          // Pass numRows to Sampler
-  return Status::OK();
-}
+      data_schema_(std::move(data_schema)) {}
 
 // Load 1 TensorRow (image, task) using 1 ImageLabelPair. 1 function call produces 1 TensorTow
 Status CityscapesOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
@@ -123,7 +104,7 @@ void CityscapesOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status CityscapesOp::ParseCityscapesData() {
+Status CityscapesOp::PrepareData() {
   auto real_dataset_dir = FileUtils::GetRealPath(dataset_dir_.data());
   if (!real_dataset_dir.has_value()) {
     MS_LOG(ERROR) << "Get real path failed, path=" << dataset_dir_;
@@ -151,6 +132,7 @@ Status CityscapesOp::ParseCityscapesData() {
     std::string task_dir = (dataset_dir / real_quality_mode / usage_).ToString();
     RETURN_IF_NOT_OK(GetCityscapesDataByUsage(images_dir, task_dir, real_quality_mode));
   }
+  RETURN_IF_NOT_OK(CountDatasetInfo());  // Count the total rows
   return Status::OK();
 }
 
@@ -239,7 +221,7 @@ Status CityscapesOp::CountDatasetInfo() {
 
 Status CityscapesOp::CountTotalRows(const std::string &dir, const std::string &usage, const std::string &quality_mode,
                                     const std::string &task, int64_t *count) {
-  // the logic of counting the number of samples is copied from ParseCityscapesData()
+  // the logic of counting the number of samples is copied from PrepareData()
   RETURN_UNEXPECTED_IF_NULL(count);
   *count = 0;
   const int64_t num_samples = 0;
@@ -263,7 +245,7 @@ Status CityscapesOp::CountTotalRows(const std::string &dir, const std::string &u
   int32_t op_connect_size = cfg->op_connector_size();
   std::shared_ptr<CityscapesOp> op = std::make_shared<CityscapesOp>(
     num_workers, dir, usage, quality_mode, task, false, op_connect_size, std::move(new_schema), std::move(new_sampler));
-  RETURN_IF_NOT_OK(op->ParseCityscapesData());
+  RETURN_IF_NOT_OK(op->PrepareData());
   *count = static_cast<int64_t>(op->image_task_pairs_.size());
   return Status::OK();
 }

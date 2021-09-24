@@ -40,7 +40,8 @@ class TensorRow {
     kFlagEOF = 1,         // The row is an eof end-of-data msg
     kFlagEOE = 1u << 1,   // The row is an eoe end-of-epoch msg
     kFlagWait = 1u << 2,  // The row is an control signal for workers to suspend operations
-    kFlagQuit = 1u << 3   // The row is a control signal for workers to quit
+    kFlagQuit = 1u << 3,  // The row is a control signal for workers to quit
+    kFlagSkip = 1u << 4   // The row is a control signal for workers to skip this row
   };
 
   // Type definitions
@@ -226,6 +227,8 @@ class TensorRow {
   bool wait() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagWait)); }
 
   bool quit() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagQuit)); }
+
+  bool skip() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagSkip)); }
 
   TensorRowFlags Flags() { return tensor_row_flag_; }
 

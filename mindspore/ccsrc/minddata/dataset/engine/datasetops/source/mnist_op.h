@@ -122,15 +122,11 @@ class MnistOp : public MappableLeafOp {
 
   // Parse all mnist dataset files
   // @return Status The status code returned
-  Status ParseMnistData();
+  Status PrepareData() override;
 
   // Read all files in the directory
   // @return Status The status code returned
   virtual Status WalkAllFiles();
-
-  // Called first when function is called
-  // @return Status The status code returned
-  Status LaunchThreadsAndInitOp() override;
 
   // Private function for computing the assignment of the column name map.
   // @return - Status

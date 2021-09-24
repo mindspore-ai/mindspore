@@ -37,7 +37,26 @@ namespace dataset {
 
 using PadInfo = std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>>;
 
-class BatchOp : public ParallelOp {
+enum batchCtrl : int8_t { kNoCtrl = 0, kEOE = 1, kEOF = 2, kQuit = 3 };
+
+// Parameters associate with one batch.
+// This struct is used for both internal control and python callback.
+// This struct is bound to python with read-only access.
+struct CBatchInfo {
+  CBatchInfo(int64_t ep, int64_t bat, int64_t cur, batchCtrl ctrl)
+      : epoch_num_(ep), batch_num_(bat), total_batch_num_(cur), ctrl_(ctrl) {}
+  CBatchInfo(int64_t ep, int64_t bat, int64_t cur) : CBatchInfo(ep, bat, cur, batchCtrl::kNoCtrl) {}
+  CBatchInfo() : CBatchInfo(0, 0, 0, batchCtrl::kNoCtrl) {}
+  explicit CBatchInfo(batchCtrl ctrl) : CBatchInfo(0, 0, 0, ctrl) {}
+  int64_t epoch_num_;        // i-th epoch. i starts from 0
+  int64_t batch_num_;        // i-th batch since the start of current epoch. i starts from 0
+  int64_t total_batch_num_;  // i-th batch since the start of first epoch. i starts from 0
+  batchCtrl ctrl_;           // No control=0, EOE=1, EOF=2, Quit=3
+  const int64_t get_batch_num() const { return batch_num_; }
+  const int64_t get_epoch_num() const { return epoch_num_; }
+};
+
+class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatchInfo>, TensorRow> {
  public:
   class Builder {
    public:
@@ -129,34 +148,15 @@ class BatchOp : public ParallelOp {
 #endif
   };
 
-  enum batchCtrl : int8_t { kNoCtrl = 0, kEOE = 1, kEOF = 2, kQuit = 3 };
-
-  // Parameters associate with one batch.
-  // This struct is used for both internal control and python callback.
-  // This struct is bound to python with read-only access.
-  struct CBatchInfo {
-    CBatchInfo(int64_t ep, int64_t bat, int64_t cur, batchCtrl ctrl)
-        : epoch_num_(ep), batch_num_(bat), total_batch_num_(cur), ctrl_(ctrl) {}
-    CBatchInfo(int64_t ep, int64_t bat, int64_t cur) : CBatchInfo(ep, bat, cur, batchCtrl::kNoCtrl) {}
-    CBatchInfo() : CBatchInfo(0, 0, 0, batchCtrl::kNoCtrl) {}
-    explicit CBatchInfo(batchCtrl ctrl) : CBatchInfo(0, 0, 0, ctrl) {}
-    int64_t epoch_num_;        // i-th epoch. i starts from 0
-    int64_t batch_num_;        // i-th batch since the start of current epoch. i starts from 0
-    int64_t total_batch_num_;  // i-th batch since the start of first epoch. i starts from 0
-    batchCtrl ctrl_;           // No control=0, EOE=1, EOF=2, Quit=3
-    const int64_t get_batch_num() const { return batch_num_; }
-    const int64_t get_epoch_num() const { return epoch_num_; }
-  };
-
 #ifdef ENABLE_PYTHON
 
   BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
           const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
           py::function batch_size_func, py::function batch_map_func, PadInfo pad_map);
-#else
+#endif
+
   BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
           const std::vector<std::string> &, PadInfo pad_map);
-#endif
 
   // BatchOp destructor
   ~BatchOp() {}
@@ -209,9 +209,6 @@ class BatchOp : public ParallelOp {
 
   int64_t GetTreeBatchSize() override;
 
- protected:
-  Status ComputeColMap() override;
-
  private:
   // Worker thread for doing the memcpy of batch
   // @param int32_t param workerId
@@ -248,10 +245,6 @@ class BatchOp : public ParallelOp {
   // @return Status The status code returned
   Status GetBatchSize(int32_t *batch_size, CBatchInfo info);
 
-  // Do the initialization of all queues then start all worker threads
-  // @return Status The status code returned
-  Status LaunchThreadsAndInitOp();
-
   /// \brief Gets the next row
   /// \param row[out] - Fetched TensorRow
   /// \return Status The status code returned
@@ -266,6 +259,8 @@ class BatchOp : public ParallelOp {
   // @return Status The status code returned
   Status InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info);
 #endif
+  Status WaitForWorkers() override;
+  Status ComputeColMap() override;
 
   int32_t start_batch_size_;
   const bool drop_;                                     // bool for whether to drop remainder or not
@@ -275,7 +270,6 @@ class BatchOp : public ParallelOp {
   PadInfo pad_info_;                                    // column names to perform padding on
   std::unique_ptr<ChildIterator> child_iterator_;       // child iterator for fetching TensorRows 1 by 1
   std::unordered_map<std::string, int32_t> child_map_;  // col_name_id_map of the child node
-  QueueList<std::pair<std::unique_ptr<TensorQTable>, CBatchInfo>> worker_queues_;  // internal queue for syncing worker
   int64_t batch_num_;
   int64_t batch_cnt_;
 #ifdef ENABLE_PYTHON

@@ -39,9 +39,7 @@ MnistOp::MnistOp(std::string usage, int32_t num_workers, std::string folder_path
       usage_(std::move(usage)),
       data_schema_(std::move(data_schema)),
       image_path_({}),
-      label_path_({}) {
-  io_block_queues_.Init(num_workers, queue_size);
-}
+      label_path_({}) {}
 
 // Load 1 TensorRow (image,label) using 1 MnistLabelPair.
 Status MnistOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
@@ -192,7 +190,8 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
   return Status::OK();
 }
 
-Status MnistOp::ParseMnistData() {
+Status MnistOp::PrepareData() {
+  RETURN_IF_NOT_OK(this->WalkAllFiles());
   // MNIST contains 4 files, idx3 are image files, idx 1 are labels
   // training files contain 60K examples and testing files contain 10K examples
   // t10k-images-idx3-ubyte  t10k-labels-idx1-ubyte  train-images-idx3-ubyte  train-labels-idx1-ubyte
@@ -251,21 +250,6 @@ Status MnistOp::WalkAllFiles() {
   CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(),
                                "Invalid data, num of images does not equal to num of labels.");
 
-  return Status::OK();
-}
-
-Status MnistOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Pipeline init failed, Execution tree not set.");
-  }
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&MnistOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
-  RETURN_IF_NOT_OK(this->WalkAllFiles());
-  RETURN_IF_NOT_OK(this->ParseMnistData());
-  RETURN_IF_NOT_OK(this->InitSampler());  // handle shake with sampler
   return Status::OK();
 }
 

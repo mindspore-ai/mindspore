@@ -70,7 +70,9 @@ class CelebAOp : public MappableLeafOp {
  private:
   // Called first when function is called
   // @return
-  Status LaunchThreadsAndInitOp() override;
+  // Called first when function is called
+  // @return
+  Status RegisterAndLaunchThreads() override;
 
   /// Parse attribute file
   /// @return
@@ -78,7 +80,7 @@ class CelebAOp : public MappableLeafOp {
 
   /// Parse each image line in attribute file
   /// @return
-  Status ParseImageAttrInfo();
+  Status PrepareData() override;
 
   /// Split attribute info with space
   /// @param std::string - line - Line from att or partition file

@@ -209,12 +209,11 @@ void DatasetOp::Parent(DatasetOp **parent, int32_t parent_index) const {
 std::vector<DatasetOp *> DatasetOp::parents() const { return parent_; }
 
 // Creates the connector within this operator
-void DatasetOp::CreateConnector(int32_t num_producers, int32_t num_consumers) {
-  MS_LOG(DEBUG) << "Creating connector in tree operator: " << operator_id_ << ". Producer: " << num_producers
-                << ". Consumer: " << num_consumers << ".";
+void DatasetOp::CreateConnector() {
+  MS_LOG(DEBUG) << "Creating connector in tree operator: " << operator_id_ << ".";
   if (oc_queue_size_ > 0) {
-    out_connector_ = std::make_unique<DbConnector>(num_producers,  // The number of producers
-                                                   num_consumers,  // Only one consumer (the training App)
+    out_connector_ = std::make_unique<DbConnector>(1,  // The number of producers
+                                                   1,  // Only one consumer (the training App)
                                                    oc_queue_size_);
   } else {
     // Some op's may choose not to have an output connector
@@ -309,13 +308,7 @@ Status DatasetOp::EofReceived(int32_t worker_id) { return out_connector_->SendEO
 // During tree prepare phase, operators may have specific post-operations to perform depending on their role.
 Status DatasetOp::PrepareOperator() {
   // Creating Connector object for each op.
-  // The consumer of the root node is assumed to be one thread.
-  // If multiple threads are consuming from the root node, they will get the ordered data in round robin fashion.
-  if (parent_.empty()) {
-    this->CreateConnector(NumProducers(), 1);
-  } else {
-    this->CreateConnector(NumProducers(), parent_[0]->NumConsumers());
-  }
+  this->CreateConnector();
   if (out_connector_) {
     RETURN_IF_NOT_OK(out_connector_->Register(tree_->AllTasks()));
   }

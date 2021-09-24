@@ -87,11 +87,7 @@ class ManifestOp : public MappableLeafOp {
 
   // Parse manifest file to get image path and label and so on.
   // @return Status The status code returned
-  Status ParseManifestFile();
-
-  // Called first when function is called
-  // @return Status The status code returned
-  Status LaunchThreadsAndInitOp() override;
+  Status PrepareData() override;
 
   // Check if image ia valid.Only support JPEG/PNG/GIF/BMP
   // @return
