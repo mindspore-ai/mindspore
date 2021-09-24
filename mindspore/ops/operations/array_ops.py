@@ -6105,7 +6105,7 @@ class MaskedSelect(PrimitiveWithCheck):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
@@ -6121,9 +6121,11 @@ class MaskedSelect(PrimitiveWithCheck):
 
     def check_shape(self, x_shape, mask_shape):
         get_broadcast_shape(x_shape, mask_shape, self.name)
+        validator.check("rank of x", len(x_shape), "expected", 1, Rel.GE, self.name)
 
     def check_dtype(self, x_dtype, mask_dtype):
         validator.check_tensor_dtype_valid('mask', mask_dtype, [mstype.bool_], self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.int32, mstype.float32], self.name)
 
 
 class SearchSorted(PrimitiveWithInfer):
