@@ -90,7 +90,7 @@ class LiteKernel {
 
   virtual ~LiteKernel() = default;
 
-  virtual int Execute() { return Execute(nullptr, nullptr); }
+  virtual int Execute() { return DoExecute(); }
 
   virtual int Execute(const KernelCallBack &before, const KernelCallBack &after) {
     if (before != nullptr) {
@@ -100,17 +100,7 @@ class LiteKernel {
       }
     }
 
-    auto ret = kernel_->Execute();
-    if ((ret == lite::RET_OK) && (desc_.provider != kBuiltin)) {
-      for (auto *output : this->out_tensors()) {
-        MS_ASSERT(output != nullptr);
-        output->ResetRefCount();
-      }
-      for (auto &in_tensor : this->in_tensors()) {
-        MS_ASSERT(in_tensor != nullptr);
-        in_tensor->DecRefCount();
-      }
-    }
+    auto ret = DoExecute();
 
     if (after != nullptr) {
       if (!after(TensorVectorCast(this->in_tensors()), TensorVectorCast(this->out_tensors()),
@@ -206,6 +196,8 @@ class LiteKernel {
     }
     return false;
   }
+
+  int DoExecute();
 
   void set_is_model_output(bool is_model_output) { this->is_model_output_ = is_model_output; }
 

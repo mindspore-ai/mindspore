@@ -105,4 +105,18 @@ void LiteKernel::FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope
     }
   }
 }
+int LiteKernel::DoExecute() {
+  auto ret = kernel_->Execute();
+  if ((ret == lite::RET_OK) && (desc_.provider != kBuiltin)) {
+    for (auto *output : out_tensors()) {
+      MS_ASSERT(output != nullptr);
+      output->ResetRefCount();
+    }
+    for (auto &in_tensor : in_tensors()) {
+      MS_ASSERT(in_tensor != nullptr);
+      in_tensor->DecRefCount();
+    }
+  }
+  return ret;
+}
 }  // namespace mindspore::kernel

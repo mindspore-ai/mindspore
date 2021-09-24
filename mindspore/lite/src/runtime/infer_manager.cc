@@ -72,6 +72,40 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
 }
 #endif
 
+int CheckInfershapeResult(int result, const std::vector<lite::Tensor *> &inputs,
+                          const std::vector<lite::Tensor *> &outputs, OpParameter *parameter) {
+  if (result == NNACL_INFER_INVALID) {
+    return RET_INFER_INVALID;
+  } else if (result != NNACL_OK) {
+    if (result == NNACL_FORMAT_ERROR) {
+      MS_LOG(ERROR) << "Unexpected input format " << inputs[0]->format();
+    }
+    return RET_INFER_ERR;
+  }
+
+  for (auto output : outputs) {
+    if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
+      MS_LOG(ERROR) << "The size of output tensor is too big, output size: " << output->ElementsNum();
+      return RET_INFER_ERR;
+    }
+  }
+
+  parameter->is_zero_shape_ = true;
+  size_t zero_shape_num = 0;
+  for (auto tensor : outputs) {
+    for (size_t i = 0; i < tensor->shape().size(); i++) {
+      if (tensor->shape()[i] == 0) {
+        zero_shape_num++;
+        break;
+      }
+    }
+  }
+  if (zero_shape_num != outputs.size()) {
+    parameter->is_zero_shape_ = false;
+  }
+  return RET_OK;
+}
+
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      OpParameter *parameter) {
   MS_ASSERT(parameter != nullptr);
@@ -140,21 +174,15 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
 #endif
+
     if (ret == NNACL_INFER_INVALID) {
       outputs.at(i)->set_shape({-1});
     }
   }
   FreeAllTensorC(&in_tensors);
   FreeAllTensorC(&out_tensors);
-  if (ret == NNACL_INFER_INVALID) {
-    return RET_INFER_INVALID;
-  } else if (ret != NNACL_OK) {
-    if (ret == NNACL_FORMAT_ERROR) {
-      MS_LOG(ERROR) << "Unexpected input format " << inputs[0]->format();
-    }
-    return RET_INFER_ERR;
-  }
-  return RET_OK;
+
+  return CheckInfershapeResult(ret, inputs, outputs, parameter);
 }
 }  // namespace lite
 }  // namespace mindspore

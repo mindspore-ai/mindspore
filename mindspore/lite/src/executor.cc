@@ -35,30 +35,16 @@ int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Ten
       tensor->set_ref_count(0);
     }
   }
-  std::queue<kernel::LiteKernel *> kernel_queue;
+
   for (auto kernel : kernels) {
-    if (kernel->IsReady(kernel->in_tensors())) {
-      kernel_queue.push(kernel);
-    }
-  }
-  while (!kernel_queue.empty()) {
-    auto cur_kernel = kernel_queue.front();
-    kernel_queue.pop();
-    MS_ASSERT(cur_kernel != nullptr);
-    int ret = cur_kernel->Execute(before, after);
+    int ret = kernel->Execute(before, after);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "run kernel failed, name: " << cur_kernel->name();
+      MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
-    }
-    for (auto &out_kernel : cur_kernel->out_kernels()) {
-      if (out_kernel->IsReady(out_kernel->in_tensors())) {
-        kernel_queue.push(out_kernel);
-      }
     }
   }
 
   thread_pool->SetSpinCountMinValue();
-
   return RET_OK;
 }
 }  // namespace mindspore::lite
