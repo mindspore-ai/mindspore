@@ -297,7 +297,7 @@ class RefreshCrdVel(PrimitiveWithInfer):
         validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
         validator.check_value_type('dt', dt, float, self.name)
         validator.check_value_type('dt_inverse', dt_inverse, float, self.name)
-        validator.check_value_type('exp_gamma', dt, float, self.name)
+        validator.check_value_type('exp_gamma', exp_gamma, float, self.name)
         validator.check_value_type('half_exp_gamma_plus_half', half_exp_gamma_plus_half, float, self.name)
         self.atom_numbers = atom_numbers
         self.dt_inverse = dt_inverse
