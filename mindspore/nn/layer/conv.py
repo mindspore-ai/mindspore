@@ -670,7 +670,7 @@ class Conv3dTranspose(_Conv):
     This module can be seen as the gradient of Conv3d with respect to its input.
 
     `x` is typically of shape :math:`(N, C, D, H, W)`, where :math:`N` is batch size, :math:`C` is channel number,
-    :math:`C` is the characteristic depth, :math:`H` is the height of the characteristic layer,
+    :math:`D` is the characteristic depth, :math:`H` is the height of the characteristic layer,
     and :math:`W` is the width of the characteristic layer.
     The calculation process of transposed convolution is equivalent to the reverse calculation of convolution.
 
