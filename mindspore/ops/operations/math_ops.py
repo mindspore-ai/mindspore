@@ -1086,7 +1086,7 @@ class Cdist(Primitive):
         TypeError: If `p` is not a float.
         ValueError: If `p` is a negative float.
         ValueError: If dimension of `input_x` is not the same as `input_y`.
-        ValueError: If dimension of `input_x` or `input_y` is neither 2 or 3.
+        ValueError: If dimension of `input_x` or `input_y` is neither 2 nor 3.
 
     Supported Platforms:
         ``Ascend``

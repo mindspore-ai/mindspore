@@ -497,7 +497,7 @@ class Mish(PrimitiveWithInfer):
     Supported Platforms:
         ``Ascend``
 
-    Raise:
+    Raises:
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Examples:
@@ -551,7 +551,7 @@ class SeLU(PrimitiveWithInfer):
     Supported Platforms:
         ``Ascend``
 
-    Raise:
+    Raises:
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Examples:
@@ -971,7 +971,7 @@ class InstanceNorm(PrimitiveWithInfer):
     Supported Platforms:
         ``GPU``
 
-    Raise:
+    Raises:
         TypeError: If `epsilon` or `momentum` is not a float.
         TypeError: If dtype of `input_x` is neither float16 nor float32.
         TypeError: If dtype of `gamma`, `beta` or `mean` is not float32.

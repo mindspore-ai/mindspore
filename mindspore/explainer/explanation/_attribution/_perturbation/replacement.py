@@ -38,7 +38,7 @@ class BaseReplacement:
             'EMPTY' to mark the required args. Initializing an object will
             check the given kwargs w.r.t '_necessary_args'.
 
-    Raise:
+    Raises:
         ValueError: Raise when provided kwargs not contain necessary arg names with 'EMPTY' mark.
     """
     _necessary_args = {}
