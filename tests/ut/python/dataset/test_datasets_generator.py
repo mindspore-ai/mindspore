@@ -425,8 +425,13 @@ def test_generator_14():
     # and cause core dump and blocking in this UT. Add cleanup() here to fix it.
     it._cleanup()  # pylint: disable=W0212
 
+    # Reduce memory needed by reducing queue size
+    prefetch_original = ds.config.get_prefetch_size()
+    ds.config.set_prefetch_size(1)
+
     source = [(np.array([x]),) for x in range(256)]
-    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(), num_parallel_workers=4).repeat(2)
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(),
+                              num_parallel_workers=4, max_rowsize=1).repeat(2)
     i = 0
     for data in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         golden = np.array([i])
@@ -435,6 +440,7 @@ def test_generator_14():
         if i == 256:
             i = 0
 
+    ds.config.set_prefetch_size(prefetch_original)
 
 def test_generator_15():
     """
@@ -442,9 +448,14 @@ def test_generator_15():
     """
     logger.info("Test 1D Generator MP : 0 - 63")
 
+    ## Reduce memory needed by reducing queue size
+    prefetch_original = ds.config.get_prefetch_size()
+    ds.config.set_prefetch_size(1)
+
     sampler = [x for x in range(256)]
     source = [(np.array([x]),) for x in range(256)]
-    ds1 = ds.GeneratorDataset(source, ["data"], sampler=sampler, num_parallel_workers=4).repeat(2)
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=sampler,
+                              num_parallel_workers=4, max_rowsize=1).repeat(1)
     i = 0
     for data in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
         golden = np.array([i])
@@ -453,6 +464,7 @@ def test_generator_15():
         if i == 256:
             i = 0
 
+    ds.config.set_prefetch_size(prefetch_original)
 
 def test_generator_16():
     """
@@ -499,6 +511,10 @@ def test_generator_18():
     """
     logger.info("Test map column order when input_columns is None.")
 
+    # Reduce shm usage by disabling this optimization
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
+
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"], python_multiprocessing=True)
     data1 = data1.map(operations=(lambda x: (x * 5)), output_columns=["out0"], num_parallel_workers=2,
@@ -520,6 +536,7 @@ def test_generator_18():
         golden = np.array([i * 5])
         np.testing.assert_array_equal(item["out0"], golden)
 
+    ds.config.set_enable_shared_mem(mem_original)
 
 def test_generator_19():
     """
