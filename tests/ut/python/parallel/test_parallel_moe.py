@@ -20,7 +20,7 @@ from mindspore.context import set_auto_parallel_context, ParallelMode
 from mindspore.ops import composite as C
 from mindspore.parallel.nn import Transformer, TransformerOpParallelConfig, MoEConfig
 from mindspore.nn.optim import AdamWeightDecay
-from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell
+from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell, _VirtualDatasetCell
 from mindspore.train import Model
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -77,10 +77,42 @@ def test_transformer_model():
                       ffn_hidden_size=64,
                       moe_config=moe_config,
                       parallel_config=config)
-
+    net = _VirtualDatasetCell(net)
     encoder_input_value = Tensor(np.ones((2, 20, 64)), mstype.float32)
     encoder_input_mask = Tensor(np.ones((2, 20, 20)), mstype.float16)
     decoder_input_value = Tensor(np.ones((2, 10, 64)), mstype.float32)
+    decoder_input_mask = Tensor(np.ones((2, 10, 10)), mstype.float16)
+    memory_mask = Tensor(np.ones((2, 10, 20)), mstype.float16)
+    net = NetWithLossFiveInputs(net)
+    params = net.trainable_params()
+    optimizer = AdamWeightDecay(params)
+    dataset = Dataset(encoder_input_value, encoder_input_mask, decoder_input_value, decoder_input_mask,
+                      memory_mask)
+    net_with_grad = TrainOneStepCell(net, optimizer=optimizer)
+    model = Model(net_with_grad)
+
+    model.train(1, dataset, dataset_sink_mode=False)
+
+
+def test_transformer_model_2d():
+    set_auto_parallel_context(device_num=16, global_rank=0,
+                              full_batch=True, enable_alltoall=True,
+                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    net = Transformer(encoder_layers=1,
+                      decoder_layers=1,
+                      batch_size=2,
+                      src_seq_length=20,
+                      tgt_seq_length=10,
+                      hidden_size=64,
+                      num_heads=8,
+                      ffn_hidden_size=64,
+                      moe_config=moe_config,
+                      parallel_config=config)
+    net = _VirtualDatasetCell(net)
+
+    encoder_input_value = Tensor(np.ones((40, 64)), mstype.float32)
+    encoder_input_mask = Tensor(np.ones((2, 20, 20)), mstype.float16)
+    decoder_input_value = Tensor(np.ones((20, 64)), mstype.float32)
     decoder_input_mask = Tensor(np.ones((2, 10, 10)), mstype.float16)
     memory_mask = Tensor(np.ones((2, 10, 20)), mstype.float16)
     net = NetWithLossFiveInputs(net)

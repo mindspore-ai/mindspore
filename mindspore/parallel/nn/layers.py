@@ -26,7 +26,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore._extends import cell_attr_register
 from mindspore.nn.cell import Cell
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import functional as F
 from mindspore._checkparam import Validator
@@ -87,11 +87,65 @@ def _valid_value_checks(types, class_name):
     return validator_check_func
 
 
-@constexpr
-def _check_input_shape(input_shape, param_name, func_name, target_len):
-    if len(input_shape) != target_len:
-        raise ValueError(f"{func_name} {param_name} should be {target_len}d, but got shape {input_shape}")
-    return True
+class _LayerInputCheck:
+    """
+       A input check class for the inputs of the transformer model.
+    """
+    @staticmethod
+    def check_shape_length(input_shape, param_name, func_name, target_len):
+        """
+        Check the input shape's length is equal to the expected shape
+        :param input_shape(list): a list of the tensor shapes.
+        :param param_name(str): the name of the checked parameter.
+        :param func_name(str): the name of the function.
+        :param target_len: the expected length of the shape.
+        :return:
+        """
+        if not isinstance(target_len, list):
+            target_len = [target_len]
+        matched = False
+        for item in target_len:
+            if len(input_shape) == item:
+                matched = True
+        if not matched:
+            raise ValueError(f"{func_name} {param_name} shape length should be one of {target_len} dimension, "
+                             f"but got shape {input_shape}")
+        return True
+
+    @staticmethod
+    def check_shape_equal(input_shape, param_name, func_name, target_shape):
+        """
+        Check the input shape's is equal to the expected shape
+        :param input_shape(list): a list of the tensor shapes.
+        :param param_name(str): the name of the checked parameter.
+        :param func_name(str): the name of the function.
+        :param target_shape: the expected shape.
+        :return:
+        """
+        if not isinstance(target_shape[0], list):
+            target_shape = [target_shape]
+        if isinstance(input_shape, tuple):
+            input_shape = list(input_shape)
+        _LayerInputCheck.check_shape_length(input_shape, param_name, func_name,
+                                            [len(item) for item in target_shape])
+        matched = False
+        for item in target_shape:
+            if item == input_shape:
+                matched = True
+                break
+
+        if not matched:
+            raise ValueError(f"{func_name} {param_name} shape should be one of {target_shape},"
+                             f"but got {input_shape}")
+        return True
+
+    @staticmethod
+    def check_shape_value_on_axis(input_shape, dim, param_name, cls_name, target_value):
+        if input_shape[dim] != target_value:
+            raise ValueError(f"{cls_name} {param_name} at {dim} shape should be {target_value},"
+                             f"but got {input_shape[dim]}")
+        return True
+
 
 
 @constexpr
@@ -104,17 +158,6 @@ def _check_past_none_input_none(use_past, param_name, func_name, input_tensor, d
     return True
 
 
-@constexpr
-def _check_shape_equal(input_shape, param_name, func_name, target_shape):
-    if len(input_shape) != len(target_shape):
-        raise ValueError(f"{func_name} {param_name} shape should be {target_shape},"
-                         f"but got {input_shape}")
-    for i in range(len(input_shape)):
-        if input_shape[i] != target_shape[i]:
-            raise ValueError(f"{func_name} {param_name} shape should be {target_shape},"
-                             f"but got {input_shape}")
-    return True
-
 
 @constexpr
 def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
@@ -122,10 +165,20 @@ def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
 
 
 @constexpr
+def _check_input_shape(input_shape, param_name, func_name, target_len):
+    # check the input length
+    _LayerInputCheck.check_shape_length(input_shape, param_name, func_name, target_len)
+
+
+@constexpr
+def _check_shape_equal(input_shape, param_name, func_name, target_shape):
+    # check the input length
+    _LayerInputCheck.check_shape_equal(input_shape, param_name, func_name, target_shape)
+
+
+@constexpr
 def _check_input_shape_value(input_shape, dim, param_name, cls_name, target_value):
-    if input_shape[dim] != target_value:
-        raise ValueError(f"{cls_name} {param_name} at {dim} shape should be {target_value},"
-                         f"but got {input_shape[dim]}")
+    _LayerInputCheck.check_shape_value_on_axis(input_shape, dim, param_name, cls_name, target_value)
 
 
 class _LayerNorm(Cell):
@@ -147,6 +200,11 @@ class _LayerNorm(Cell):
         super(_LayerNorm, self).__init__()
         if param_init_type not in [mstype.float32, mstype.float16]:
             raise TypeError(f"param type should in [float32, float16], but found type {type(param_init_type)}")
+        if normalized_shape[0] <= 1024:
+            self.layer_norm = P.LayerNorm(begin_norm_axis=-1,
+                                          begin_params_axis=-1,
+                                          epsilon=eps)
+        self.is_self_defined = normalized_shape[0] > 1024
         self.gamma = Parameter(initializer('ones', normalized_shape, param_init_type), name="gamma",
                                parallel_optimizer=False)
         self.beta = Parameter(initializer('zeros', normalized_shape, param_init_type), name="beta",
@@ -166,12 +224,15 @@ class _LayerNorm(Cell):
         r"""
           x : batch x seq_length x hidden_size
         """
-        mean = self.mean(x, -1)
-        diff = self.sub1(x, mean)
-        variance = self.mean(self.square(diff), -1)
-        variance_eps = self.sqrt(self.add(variance, self.eps))
-        output = self.real_div(diff, variance_eps)
-        output = self.add2(self.mul(output, self.gamma), self.beta)
+        if self.is_self_defined:
+            mean = self.mean(x, -1)
+            diff = self.sub1(x, mean)
+            variance = self.mean(self.square(diff), -1)
+            variance_eps = self.sqrt(self.add(variance, self.eps))
+            output = self.real_div(diff, variance_eps)
+            output = self.add2(self.mul(output, self.gamma), self.beta)
+        else:
+            output, _, _ = self.layer_norm(x, self.gamma, self.beta)
         return output
 
     def shard(self, strategy):
@@ -188,15 +249,18 @@ class _LayerNorm(Cell):
             >>> net = mindspore.parallel.nn.transformer.LayerNorm(normalized_shape=(1024, 10))
             >>> net.shard(((10, 2, 1),))
         """
-        self.mean.shard(strategy)
-        self.square.shard(strategy)
-        self.sqrt.shard(strategy)
-        self.sub1.shard((strategy[0], strategy[0]))
-        self.sub2.shard((strategy[0], strategy[0]))
-        self.add.shard((strategy[0], ()))
-        self.mul.shard((strategy[0], (1,)))
-        self.add2.shard((strategy[0], (1,)))
-        self.real_div.shard((strategy[0], strategy[0]))
+        if self.is_self_defined:
+            self.mean.shard(strategy)
+            self.square.shard(strategy)
+            self.sqrt.shard(strategy)
+            self.sub1.shard((strategy[0], strategy[0]))
+            self.sub2.shard((strategy[0], strategy[0]))
+            self.add.shard((strategy[0], ()))
+            self.mul.shard((strategy[0], (1,)))
+            self.add2.shard((strategy[0], (1,)))
+            self.real_div.shard((strategy[0], strategy[0]))
+        else:
+            self.layer_norm.shard((strategy[0], (1,), (1,)))
 
         return self
 
