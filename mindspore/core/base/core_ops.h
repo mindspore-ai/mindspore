@@ -66,6 +66,7 @@ constexpr auto kCos = "Cos";
 constexpr auto kAbs = "Abs";
 constexpr auto kTrunc = "Trunc";
 constexpr auto kSquare = "Square";
+constexpr auto kReal = "Real";
 
 // Arrays
 constexpr auto kDynamicShape = "DynamicShape";
@@ -259,6 +260,7 @@ inline const PrimitivePtr kPrimMaskedSelect = std::make_shared<Primitive>("Maske
 inline const PrimitivePtr kPrimDiag = std::make_shared<Primitive>(kDiag);
 inline const PrimitivePtr kPrimDiagPart = std::make_shared<Primitive>(kDiagPart);
 inline const PrimitivePtr kPrimNonZero = std::make_shared<Primitive>("NonZero");
+inline const PrimitivePtr kPrimReal = std::make_shared<Primitive>(kReal);
 
 // NN
 inline const PrimitivePtr kPrimAdam = std::make_shared<Primitive>("Adam");

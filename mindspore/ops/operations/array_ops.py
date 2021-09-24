@@ -1264,7 +1264,8 @@ class Fill(PrimitiveWithInfer):
             validator.check_positive_int(item, f'dims[{i}]', self.name)
         valid_dtypes = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                         mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
-                        mstype.float16, mstype.float32, mstype.float64]
+                        mstype.float16, mstype.float32, mstype.float64, mstype.complex64,
+                        mstype.complex128]
         validator.check_types_same_and_valid({"value": dtype['value']}, valid_dtypes, self.name)
         x_nptype = mstype.dtype_to_nptype(dtype['value'])
         ret = np.full(dims['value'], x['value'], x_nptype)

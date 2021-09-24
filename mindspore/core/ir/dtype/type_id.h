@@ -78,6 +78,7 @@ enum TypeId : int {
   kNumberTypeFloat16,
   kNumberTypeFloat32,
   kNumberTypeFloat64,
+  kNumberTypeComplex,
   kNumberTypeComplex64,
   kNumberTypeComplex128,
   kNumberTypeInt4,

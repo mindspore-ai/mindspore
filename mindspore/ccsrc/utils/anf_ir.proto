@@ -89,8 +89,9 @@ enum DataType {
   DT_ANYTHING = 40;     // type anything
   DT_REFKEY = 41;     // type refkey
   DT_REF = 42;     // type ref
-  DT_COMPLEX64 = 43;   // type generate complex64
-  DT_COMPLEX128 = 44;   // type generate complex128
+  DT_COMPLEX64 = 43;   // list of complex64
+  DT_COMPLEX128 = 44;   // list of complex128
+  DT_BASE_COMPLEX = 45;   // type generate complex
 }
 
 // Value definition for attribute value or parameter default value

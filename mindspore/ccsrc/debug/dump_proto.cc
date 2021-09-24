@@ -231,6 +231,9 @@ void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value
     type_proto->mutable_tensor_type()->set_elem_type(GetNumberDataType(elem_type));
   } else if (val->isa<Monad>() || val->isa<MonadType>()) {
     value_proto->set_str_val(val->ToString());
+  } else if (val->isa<Complex>()) {
+    value_proto->set_dtype(irpb::DT_TYPE);
+    value_proto->mutable_type_val()->set_data_type(irpb::DT_BASE_COMPLEX);
   } else {
     MS_LOG(WARNING) << "Unsupported type " << val->type_name();
   }

@@ -268,6 +268,16 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
   outer->set_output(outer->NewCNode({NewValueNode(prim::kPrimMakeTuple), out_value, NewValueNode(cloned_bprop_fg)}));
   return BasicClone(outer);
 }
+
+// Handle bprob of op which input dtype is real number and output dtype is complex number.
+// If the dtype of a gradient(din) is complex number and the input of that is real number,
+// only the real part of the gradient make sense in back propagate. So we handle it by
+// insert a Real() ops after the gradient.
+// input: AnfNode with input of op which input dtype is real number and output dtype is complex number.
+// din: CNodePtr with gradient of input.
+// fg: Funcgraph witch input and din belong to.
+// return: New din with inserted real op if necessarily.
+AnfNodePtr HandleRealToComplex(const AnfNodePtr &input, const CNodePtr &din, FuncGraphPtr fg);
 }  // namespace ad
 }  // namespace mindspore
 

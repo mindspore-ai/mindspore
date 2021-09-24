@@ -194,6 +194,8 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
 
   if (pynative::PynativeExecutor::GetInstance()->grad_executor()->need_renormalize()) {
     (void)map.emplace_back(std::make_pair("renormalize", opt::OptPassConfig::Renormalize()));
+    opt::OptPassConfig real_op_eliminate = opt::OptPassConfig{irpass.real_op_eliminate_};
+    (void)map.emplace_back(std::make_pair("real_op_eliminate", real_op_eliminate));
     opt::OptPassConfig env_eliminate = opt::OptPassConfig({
       irpass.incorporate_call_,
       irpass.incorporate_call_switch_,
@@ -351,6 +353,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
+                         {"real_op_eliminate", opt::OptPassConfig({irpass.real_op_eliminate_})},
                          {"auto_monad_grad", opt::OptPassConfig(ReAutoMonadWrapper)},
                          {"auto_monad_eliminator", opt::OptPassConfig(opt::AutoMonadEliminator())},
                          {"cse", opt::OptPassConfig(opt::CSEPass(false))},
