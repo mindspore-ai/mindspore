@@ -38,18 +38,18 @@ class MemoryManagerActor : public ActorBase {
 
   // The process entry of memory alloc.
   void AllocateMemory(const std::vector<DeviceTensor *> *alloc_list, const DeviceContext *device_context,
-                      OpContext<DeviceTensor> *const op_context, const AID from_aid);
+                      OpContext<DeviceTensor> *const op_context, const AID &from_aid);
   // The process entry of continuous memory alloc, the size of alloc_list_list, size_list_list, total_size_list and
   // device_contexts must be equal.
   void AllocateContinuousMemory(const std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
                                 const std::vector<std::vector<size_t>> *size_list_list,
                                 const std::vector<size_t> *total_size_list,
                                 const std::vector<const DeviceContext *> *device_contexts,
-                                OpContext<DeviceTensor> *const op_context, const AID from_aid);
+                                OpContext<DeviceTensor> *const op_context, const AID &from_aid);
   // device_contexts is from different device, the size of device_contexts must be equal to the alloc_list.
   void AllocateBatchMemory(const std::vector<DeviceTensor *> *alloc_list,
                            const std::vector<const DeviceContext *> *device_contexts,
-                           OpContext<DeviceTensor> *const op_context, const AID from_aid);
+                           OpContext<DeviceTensor> *const op_context, const AID &from_aid);
 
   // The process entry of memory free.
   void FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
@@ -60,7 +60,7 @@ class MemoryManagerActor : public ActorBase {
                        OpContext<DeviceTensor> *const op_context);
 
   // Wait the MemoryManagerActor to finish running all current messages.
-  void Wait(OpContext<DeviceTensor> *const op_context, const AID from_aid);
+  void Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid);
 
  private:
   // When allocate device memory fail, print error log and set op context failed status.

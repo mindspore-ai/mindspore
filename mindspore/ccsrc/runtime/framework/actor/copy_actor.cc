@@ -21,7 +21,9 @@
 
 namespace mindspore {
 namespace runtime {
-const size_t kDeviceTensorNum = 1;
+
+const size_t kInputDeviceContextIndex = 0;
+const size_t kOutputDeviceContextIndex = 1;
 
 void CopyActor::Init() {
   // Check device contexts number.
@@ -29,6 +31,7 @@ void CopyActor::Init() {
     MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
   }
 
+  const size_t kDeviceTensorNum = 1;
   input_device_tensor_.resize(kDeviceTensorNum);
   output_device_tensor_.resize(kDeviceTensorNum);
 
@@ -66,13 +69,15 @@ void CopyActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *
 }
 
 void CopyActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_, device_contexts_[1], context,
-        GetAID());
+  Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_,
+        device_contexts_[kOutputDeviceContextIndex], context, GetAID());
 }
 
 void CopyActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensor_, device_contexts_[0], context);
-  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &output_device_tensor_, device_contexts_[1], context);
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &input_device_tensor_,
+        device_contexts_[kInputDeviceContextIndex], context);
+  Async(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &output_device_tensor_,
+        device_contexts_[kOutputDeviceContextIndex], context);
 }
 
 void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
@@ -103,26 +108,29 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
 void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  const auto &input_device_context = device_contexts_[kInputDeviceContextIndex];
+  const auto &output_device_context = device_contexts_[kOutputDeviceContextIndex];
+  MS_EXCEPTION_IF_NULL(input_device_context);
+  MS_EXCEPTION_IF_NULL(output_device_context);
 
   if (device_tensor_store_keys_.size() > 0) {
-    input_device_tensor_[0] = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_keys_[0].second.get(),
-                                                                     device_contexts_[0]->GetDeviceAddressType());
+    const auto &device_tensor_store_node = device_tensor_store_keys_[0].second;
+    MS_EXCEPTION_IF_NULL(device_tensor_store_node);
+    input_device_tensor_[0] = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_node.get(),
+                                                                     input_device_context->GetDeviceAddressType());
     if (input_device_tensor_[0] == nullptr) {
       std::string error_info =
-        GetAID().Name() +
-        " get device tensor store failed: " + device_tensor_store_keys_[0].second->fullname_with_scope() +
-        ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceAddressType()));
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_node->fullname_with_scope() +
+        ", device type:" + std::to_string(static_cast<int>(input_device_context->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
 
-    output_device_tensor_[0] = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_keys_[0].second.get(),
-                                                                      device_contexts_[1]->GetDeviceAddressType());
+    output_device_tensor_[0] = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_node.get(),
+                                                                      output_device_context->GetDeviceAddressType());
     if (output_device_tensor_[0] == nullptr) {
       std::string error_info =
-        GetAID().Name() +
-        " get device tensor store failed: " + device_tensor_store_keys_[0].second->fullname_with_scope() +
-        ", device type:" + std::to_string(static_cast<int>(device_contexts_[1]->GetDeviceAddressType()));
+        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_node->fullname_with_scope() +
+        ", device type:" + std::to_string(static_cast<int>(output_device_context->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
   } else {
