@@ -508,11 +508,27 @@ class BaseTimelineGenerator:
     _timeline_meta = []
     _format_meta_data_list = []
     _thread_processed_list = []
+
+    # AI Core Op pid is device_id
+    _AI_CPU_PID = 9000
+    _COMMUNICATION_OP_PID = 10000
+    _HOST_CPU_PID = 11000
+    _OP_OVERLAP_PID = 12000
+
+    _MERGED_COMPUTATION_TID = 7999
+    _PURE_COMMUNICATION_TID = 8000
+    _MERGED_COMMUNICATION_TID = 8001
+    _FREE_TIME_TID = 8002
+    _STEPS_TID = 100000
+    _SCOPE_NAME_TID = 100001
+    _GPU_OP_TID = 100002
+    _HOST_CPU_OP_TID = 100003
+
     _map_tid_name_to_int = {
-        "Steps": (-4, 100000),
-        "Scope Name": (-3, 100001),
-        "GpuOps": (-2, 100002),
-        "HostCpuOps": (-1, 100003)
+        "Steps": (-4, _STEPS_TID),
+        "Scope Name": (-3, _SCOPE_NAME_TID),
+        "GpuOps": (-2, _GPU_OP_TID),
+        "HostCpuOps": (-1, _HOST_CPU_OP_TID)
     }
     _timeline_summary = {
         'total_time': 0,
@@ -523,8 +539,45 @@ class BaseTimelineGenerator:
     }
     _op_name_idx, _tid_idx, _start_time_idx, _duration_idx = 0, 1, 2, 3
     _max_scope_name_num = 0
-    _host_cpu_process = 11000
     _host_cpu_op_label = 'HostCpuOps'
+
+    def get_thread_label_name(self):
+        """Get process and thread config."""
+        return [
+            {"name": "process_labels", "ph": "M", "pid": self._device_id, "args": {"labels": "AI Core Op"}},
+            {"name": "process_labels", "ph": "M", "pid": self._AI_CPU_PID, "args": {"labels": "AI CPU Op"}},
+            {"name": "process_labels", "ph": "M", "pid": self._COMMUNICATION_OP_PID,
+             "args": {"labels": "Communication Op"}},
+            {"name": "process_labels", "ph": "M", "pid": self._HOST_CPU_PID, "args": {"labels": "Host CPU Op"}},
+            {"name": "process_labels", "ph": "M", "pid": self._OP_OVERLAP_PID,
+             "args": {"labels": "Op Overlap Analyse"}},
+
+            {"name": "process_sort_index", "ph": "M", "pid": self._device_id, "args": {"sort_index": 0}},
+            {"name": "process_sort_index", "ph": "M", "pid": self._AI_CPU_PID, "args": {"sort_index": 10}},
+            {"name": "process_sort_index", "ph": "M", "pid": self._COMMUNICATION_OP_PID, "args": {"sort_index": 20}},
+            {"name": "process_sort_index", "ph": "M", "pid": self._HOST_CPU_PID, "args": {"sort_index": 30}},
+            {"name": "process_sort_index", "ph": "M", "pid": self._OP_OVERLAP_PID, "args": {"sort_index": 40}},
+
+            {"name": "thread_name", "ph": "M", "pid": self._HOST_CPU_PID, "tid": self._HOST_CPU_OP_TID,
+             "args": {"name": "Host CPU Op"}},
+            {"name": "thread_name", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._MERGED_COMPUTATION_TID,
+             "args": {"name": "Merged Computation Op"}},
+            {"name": "thread_name", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._PURE_COMMUNICATION_TID,
+             "args": {"name": "Pure Communication Op"}},
+            {"name": "thread_name", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._MERGED_COMMUNICATION_TID,
+             "args": {"name": "Merged Communication Op"}},
+            {"name": "thread_name", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._FREE_TIME_TID,
+             "args": {"name": "Free Time"}},
+
+            {"name": "thread_sort_index", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._MERGED_COMPUTATION_TID,
+             "args": {"sort_index": self._MERGED_COMPUTATION_TID}},
+            {"name": "thread_sort_index", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._PURE_COMMUNICATION_TID,
+             "args": {"sort_index": self._PURE_COMMUNICATION_TID}},
+            {"name": "thread_sort_index", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._MERGED_COMMUNICATION_TID,
+             "args": {"sort_index": self._MERGED_COMMUNICATION_TID}},
+            {"name": "thread_sort_index", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._FREE_TIME_TID,
+             "args": {"sort_index": self._FREE_TIME_TID}}
+        ]
 
     def write_timeline(self, size_limit=SIZE_LIMIT_DEFAULT):
         """Load data according to the parsed profiling files."""
@@ -541,22 +594,21 @@ class BaseTimelineGenerator:
         )
         display_file_path = validate_and_normalize_path(display_file_path)
 
-        length = len(self._timeline_meta)
         try:
             with open(display_file_path, 'w') as json_file:
                 json_file.write('[')
-                for index, item in enumerate(self._timeline_meta):
+                for _, item in enumerate(self._timeline_meta):
                     json.dump(item, json_file)
                     if "scope_level" in item.keys():
                         self._max_scope_name_num = max(
                             self._max_scope_name_num, item["scope_level"] + 1)
                     file_size = os.path.getsize(display_file_path)
+                    json_file.write(',')
                     if file_size > size_limit:
                         break
-                    if index == length - 1:
-                        break
-                    json_file.write(',')
-                json_file.write(']')
+                label_name_json = json.dumps(self.get_thread_label_name())
+                label_name_json = label_name_json.lstrip('[')
+                json_file.write(label_name_json)
                 os.chmod(display_file_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             logger.error('Error occurred when write timeline display file: %s', err)
@@ -610,11 +662,12 @@ class BaseTimelineGenerator:
             sort_index, tid = self._map_tid_name_to_int[tid_name]
         elif tid_name.startswith("Stream"):
             tid = int(tid_name.split("#")[-1])
+            sort_index = tid
         else:
             return
 
         if tid_name == self._host_cpu_op_label:
-            thread_name_meta_data['pid'] = self._host_cpu_process
+            thread_name_meta_data['pid'] = self._HOST_CPU_PID
 
         thread_name_meta_data["tid"] = tid
         thread_name_meta_data["args"]["name"] = tid_name
@@ -764,7 +817,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         factor = 1000
         op_meta = TimelineContainer(timeline)
         timeline_dict = {}
-        timeline_dict['name'] = op_meta.op_name
+        timeline_dict['name'] = op_meta.op_name.split('/')[-1]
         timeline_dict['ph'] = 'X'
         timeline_dict['tid'] = op_meta.stream_id
         timeline_dict['ts'] = (op_meta.start_time - min_cycle_counter) / factor
@@ -776,7 +829,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
             timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
         elif op_meta.stream_id == self._host_cpu_op_label:
-            timeline_dict['pid'] = self._host_cpu_process
+            timeline_dict['pid'] = self._HOST_CPU_PID
 
         if len(timeline) > 4:
             # len(timeline) > 4 refers to activity data, else op data.
@@ -1004,10 +1057,10 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         self._device_id = device_id
         self._rank_id = rank_id
         self._tid_dict = {
-            "aicore": 7999,
-            "communication_not_overlapped": 8000,
-            "communication": 8001,
-            "free_time": 8002
+            "computation_op": (self._MERGED_COMPUTATION_TID, self._OP_OVERLAP_PID),
+            "communication_not_overlapped": (self._PURE_COMMUNICATION_TID, self._OP_OVERLAP_PID),
+            "communication": (self._MERGED_COMMUNICATION_TID, self._OP_OVERLAP_PID),
+            "free_time": (self._FREE_TIME_TID, self._OP_OVERLAP_PID)
         }
         self._rank_size = rank_size
         self._display_filename = self._display_filename.format(rank_id)
@@ -1044,19 +1097,12 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         factor = 1000
         op_meta = TimelineContainer(timeline)
         timeline_dict = {}
-        timeline_dict['name'] = op_meta.op_name
+        timeline_dict['name'] = op_meta.op_name.split('/')[-1]
         timeline_dict['ph'] = 'X'
         timeline_dict['tid'] = op_meta.stream_id
         timeline_dict['ts'] = (op_meta.start_time - min_cycle_counter) * factor
         dur = op_meta.duration * factor
         timeline_dict['dur'] = dur
-        if op_meta.stream_id == "Scope Name":
-            # remove the level of scope name which has a format like "0-conv2-Conv2d".
-            timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
-            timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
-        elif op_meta.stream_id == self._host_cpu_op_label:
-            timeline_dict['pid'] = self._host_cpu_process
-
         if op_meta.pid is None:
             timeline_dict['pid'] = int(self._device_id)
             # Update total time of operator execution.
@@ -1064,6 +1110,13 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                 self._timeline_summary['total_time'] += op_meta.duration
         else:  # AllReduce and AI CPU pid
             timeline_dict['pid'] = op_meta.pid
+
+        if op_meta.stream_id == "Scope Name":
+            # remove the level of scope name which has a format like "0-conv2-Conv2d".
+            timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
+            timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
+        elif op_meta.stream_id == self._host_cpu_op_label:
+            timeline_dict['pid'] = self._HOST_CPU_PID
 
         self._update_format_meta_data(timeline_dict)
         self._timeline_meta.append(timeline_dict)
@@ -1103,7 +1156,16 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         gradient_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "Gradients")
         recompute_scope_name_time_list = self._get_scope_name_time_list(timeline_list, "recompute_Default")
 
-        timeline_list.sort(key=lambda x: (float(x[self._start_time_idx]), x[self._tid_idx]))
+        # Add AI CPU data into timeline temp list and sort by start time.
+        aicpu_data = aicpu_info.get('info')
+        if aicpu_data:
+            timeline_list.extend(aicpu_data)
+            self._timeline_summary['op_exe_times'] += aicpu_info.get('op_exe_times', 0)
+            self._timeline_summary['num_of_streams'] += aicpu_info.get('num_of_streams', 0)
+            self._timeline_summary['num_of_ops'] += aicpu_info.get('num_of_ops', 0)
+            self._timeline_summary['total_time'] += aicpu_info.get('total_time', 0)
+
+        timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
 
         # Add AllReduce info to timeline temp list and sort by start time.
         if communication_info:
@@ -1113,15 +1175,6 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             timeline_list.extend(cluster_related_timeline)
             timeline_list.extend(communication_info)
             timeline_list.sort(key=lambda x: float(x[self._start_time_idx]))
-
-        # Add AI CPU data into timeline temp list and sort by start time.
-        aicpu_data = aicpu_info.get('info')
-        if aicpu_data:
-            timeline_list.extend(aicpu_data)
-            self._timeline_summary['op_exe_times'] += aicpu_info.get('op_exe_times', 0)
-            self._timeline_summary['num_of_streams'] += aicpu_info.get('num_of_streams', 0)
-            self._timeline_summary['num_of_ops'] += aicpu_info.get('num_of_ops', 0)
-            self._timeline_summary['total_time'] += aicpu_info.get('total_time', 0)
 
         # Add step time and scope name info.
         timeline_list.extend(step_time_list)
@@ -1388,7 +1441,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         return per_step_time_list
 
-    def _get_merged_time_list(self, time_list, get_interval_time=False, display_name="aicore"):
+    def _get_merged_time_list(self, time_list, get_interval_time=False, display_name="computation_op"):
         """
         Get merged time segment list.
 
@@ -1397,7 +1450,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         the merged result is [[1,6], [7,8]].
         """
         time_merged_segment_list = []
-        tid = self._tid_dict[display_name]
+        tid = self._tid_dict[display_name][0]
+        pid = self._tid_dict[display_name][1]
         for time_item in time_list:
             time_segment = list(map(float, time_item[self._start_time_idx:self._duration_idx + 1]))
             time_segment[1] += time_segment[0]
@@ -1413,7 +1467,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         # merged_display_list data used for ui page.
         merged_display_list = [
             [display_name, tid, time_merged_segment_list[i * 2],
-             time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[i * 2]]
+             time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[i * 2], pid]
             for i in range(len(time_merged_segment_list) // 2)
         ]
 
@@ -1422,14 +1476,14 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         # merged_res_list data used to compute overlap with other time_list.
         merged_res_list = [
-            [display_name, tid, time_merged_segment_list[i * 2], time_merged_segment_list[i * 2 + 1]]
+            [display_name, tid, time_merged_segment_list[i * 2], time_merged_segment_list[i * 2 + 1], pid]
             for i in range(len(time_merged_segment_list) // 2)
         ]
 
         # interval_display_list is interval time used for ui page.
         interval_display_list = [
             [display_name, tid, time_merged_segment_list[i * 2],
-             time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[i * 2]]
+             time_merged_segment_list[i * 2 + 1] - time_merged_segment_list[i * 2], pid]
             for i in range(len(time_merged_segment_list) // 2)
         ]
 
@@ -1455,8 +1509,8 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             )
             if intersection_start < intersection_end:
                 intersection_segment_display_list.append(
-                    [display_name, self._tid_dict[display_name],
-                     intersection_start, intersection_end - intersection_start]
+                    [display_name, self._tid_dict[display_name][0],
+                     intersection_start, intersection_end - intersection_start, self._tid_dict[display_name][1]]
                 )
             if first_time_list[first_list_idx][self._duration_idx] >= \
                     second_time_list[second_list_idx][self._duration_idx]:
