@@ -42,15 +42,18 @@ int PoolTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 }
 
 int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  const schema::AvgPoolFusion *pool_primitive = this->GetPrimitive()->value_as_AvgPoolFusion();
-  if (pool_primitive == nullptr) {
-    MS_LOG(ERROR) << "convert PoolFusion failed: " << op_name_;
-    return RET_ERROR;
-  }
   if (tensorrt_in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "invalid input tensor size: " << tensorrt_in_tensors_.size();
     return RET_ERROR;
   }
+  int ret = ParseParams();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseParams failed for : " << op_name_;
+    return RET_ERROR;
+  }
+  MS_LOG(DEBUG) << "before transpose "
+                << GetTensorFormat(tensorrt_in_tensors_[0].trt_tensor_, tensorrt_in_tensors_[0].format_);
+
   nvinfer1::ITensor *pool_input = tensorrt_in_tensors_[0].trt_tensor_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NHWC) {
@@ -65,29 +68,21 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   // pooling layer
-  nvinfer1::PoolingType pooling_type = nvinfer1::PoolingType::kAVERAGE;
-  auto kernel_size = pool_primitive->kernel_size();
-  if (kernel_size == nullptr) {
-    MS_LOG(ERROR) << "get kernel size failed: " << op_name_;
-    return RET_ERROR;
-  }
-  std::vector<int64_t> kernel_size_val = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
-  nvinfer1::Dims windowSize = lite::ConvertCudaDims(kernel_size_val);
-  nvinfer1::IPoolingLayer *pooling_layer = network->addPoolingNd(*pool_input, pooling_type, windowSize);
+  nvinfer1::Dims windowSize = lite::ConvertCudaDims(kernel_size_);
+  nvinfer1::IPoolingLayer *pooling_layer = network->addPoolingNd(*pool_input, pooling_type_, windowSize);
   if (pooling_layer == nullptr) {
     MS_LOG(ERROR) << "addPoolingNd failed for TensorRT.";
     return RET_ERROR;
   }
-  AddParams(pool_primitive, pooling_layer);
+  AddParams(pooling_layer);
   pooling_layer->setName(op_name_.c_str());
 
   // add activation
   nvinfer1::ILayer *activation_layer = nullptr;
-  if (pool_primitive->activation_type() == schema::ActivationType::ActivationType_NO_ACTIVATION) {
+  if (activation_type_ == schema::ActivationType::ActivationType_NO_ACTIVATION) {
     activation_layer = pooling_layer;
   } else {
-    activation_layer =
-      ActivationTensorRT::AddActivation(network, pool_primitive->activation_type(), 0, pooling_layer->getOutput(0));
+    activation_layer = ActivationTensorRT::AddActivation(network, activation_type_, 0, pooling_layer->getOutput(0));
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for pool failed";
       return RET_ERROR;
@@ -96,27 +91,97 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   activation_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW});
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(activation_layer->getOutput(0), Format::NCHW);
   return RET_OK;
 }
 
-void PoolTensorRT::AddParams(const schema::AvgPoolFusion *primitive, nvinfer1::IPoolingLayer *pooling_layer) {
-  auto stride = primitive->strides();
-  std::vector<int64_t> stride_val = std::vector<int64_t>(stride->begin(), stride->end());
-  nvinfer1::Dims stride_dims = ConvertCudaDims(stride_val);
-  pooling_layer->setStrideNd(stride_dims);
+int PoolTensorRT::ParseParams() {
+  switch (type_) {
+    case (schema::PrimitiveType_AvgPoolFusion): {
+      const schema::AvgPoolFusion *pool_primitive = this->GetPrimitive()->value_as_AvgPoolFusion();
+      if (pool_primitive == nullptr) {
+        MS_LOG(ERROR) << "convert PoolFusion failed: " << op_name_;
+        return RET_ERROR;
+      }
+      pooling_type_ = nvinfer1::PoolingType::kAVERAGE;
 
-  schema::PadMode pad_mode = primitive->pad_mode();
-  if (pad_mode == schema::PadMode::PadMode_SAME) {
-    pooling_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
+      auto kernel_size = pool_primitive->kernel_size();
+      if (kernel_size == nullptr) {
+        MS_LOG(ERROR) << "get kernel size failed: " << op_name_;
+        return RET_ERROR;
+      }
+      kernel_size_ = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
+
+      auto stride = pool_primitive->strides();
+      if (stride == nullptr) {
+        MS_LOG(ERROR) << "get stride failed: " << op_name_;
+        return RET_ERROR;
+      }
+      stride_ = std::vector<int64_t>(stride->begin(), stride->end());
+
+      auto padding = pool_primitive->pad();
+      if (padding == nullptr) {
+        MS_LOG(ERROR) << "get padding failed: " << op_name_;
+        return RET_ERROR;
+      }
+      padding_ = std::vector<int64_t>(padding->begin(), padding->end());
+
+      pad_mode_ = pool_primitive->pad_mode();
+      activation_type_ = pool_primitive->activation_type();
+      break;
+    }
+    case (schema::PrimitiveType_MaxPoolFusion): {
+      const schema::MaxPoolFusion *pool_primitive = this->GetPrimitive()->value_as_MaxPoolFusion();
+      if (pool_primitive == nullptr) {
+        MS_LOG(ERROR) << "convert PoolFusion failed: " << op_name_;
+        return RET_ERROR;
+      }
+      pooling_type_ = nvinfer1::PoolingType::kMAX;
+
+      auto kernel_size = pool_primitive->kernel_size();
+      if (kernel_size == nullptr) {
+        MS_LOG(ERROR) << "get kernel size failed: " << op_name_;
+        return RET_ERROR;
+      }
+      kernel_size_ = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
+
+      auto stride = pool_primitive->strides();
+      if (stride == nullptr) {
+        MS_LOG(ERROR) << "get stride failed: " << op_name_;
+        return RET_ERROR;
+      }
+      stride_ = std::vector<int64_t>(stride->begin(), stride->end());
+
+      auto padding = pool_primitive->pad();
+      if (padding == nullptr) {
+        MS_LOG(ERROR) << "get padding failed: " << op_name_;
+        return RET_ERROR;
+      }
+      padding_ = std::vector<int64_t>(padding->begin(), padding->end());
+
+      pad_mode_ = pool_primitive->pad_mode();
+      activation_type_ = pool_primitive->activation_type();
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << "unsupported primitive type of " << type_ << " for node: " << op_name_;
+      return RET_ERROR;
+    }
   }
-  auto padding = primitive->pad();
-  if (padding != nullptr) {
-    auto padding_val = std::vector<int64_t>(padding->begin(), padding->end());
-    nvinfer1::Dims dims{};
-    dims.nbDims = DIMENSION_2D;
-    dims.d[0] = padding_val[1];
-    dims.d[1] = padding_val[DIMENSION_2D];
-    pooling_layer->setPaddingNd(dims);
+  return RET_OK;
+}
+
+void PoolTensorRT::AddParams(nvinfer1::IPoolingLayer *pooling_layer) {
+  nvinfer1::Dims stride_dims = ConvertCudaDims(stride_);
+  pooling_layer->setStrideNd(stride_dims);
+  pooling_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
+  if (pad_mode_ != schema::PadMode::PadMode_SAME && pad_mode_ != schema::PadMode::PadMode_PAD) {
+    MS_LOG(WARNING) << "needs check pad mode of " << EnumNamePadMode(pad_mode_) << " for node: " << op_name_;
   }
+  nvinfer1::Dims dims{};
+  dims.nbDims = DIMENSION_2D;
+  dims.d[0] = padding_[1];
+  dims.d[1] = padding_[DIMENSION_2D];
+  pooling_layer->setPaddingNd(dims);
 }
 }  // namespace mindspore::lite

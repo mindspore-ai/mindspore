@@ -38,9 +38,14 @@ int MatMulTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 }
 
 int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  auto primitive = this->GetPrimitive()->value_as_MatMul();
-  transpose_a_ = primitive->transpose_a() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
-  transpose_b_ = primitive->transpose_b() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
+  if (type_ == schema::PrimitiveType_MatMul) {
+    auto primitive = this->GetPrimitive()->value_as_MatMul();
+    transpose_a_ = primitive->transpose_a() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
+    transpose_b_ = primitive->transpose_b() ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
+  } else if (type_ == schema::PrimitiveType_FullConnection) {
+    transpose_a_ = nvinfer1::MatrixOperation::kNONE;
+    transpose_b_ = nvinfer1::MatrixOperation::kTRANSPOSE;
+  }
   auto weight = ConvertTensorWithExpandDims(network, in_tensors_[1], in_tensors_[0].Shape().size());
 
   nvinfer1::ITensor *matmul_input = tensorrt_in_tensors_[0].trt_tensor_;

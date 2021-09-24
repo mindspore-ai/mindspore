@@ -90,6 +90,12 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       return ret;
     }
   }
+  MS_LOG(DEBUG) << "before transpose "
+                << GetTensorFormat(tensorrt_in_tensors_[first_in_tensor_index_].trt_tensor_,
+                                   tensorrt_in_tensors_[first_in_tensor_index_].format_);
+  MS_LOG(DEBUG) << "before transpose "
+                << GetTensorFormat(tensorrt_in_tensors_[1 - first_in_tensor_index_].trt_tensor_,
+                                   tensorrt_in_tensors_[1 - first_in_tensor_index_].format_);
 
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ != tensorrt_in_tensors_[1].format_) {
@@ -108,6 +114,12 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "elementwise op inputs are in different format: " << op_name_;
     return RET_ERROR;
   }
+  MS_LOG(DEBUG) << "after transpose "
+                << GetTensorFormat(tensorrt_in_tensors_[first_in_tensor_index_].trt_tensor_,
+                                   tensorrt_in_tensors_[first_in_tensor_index_].format_);
+  MS_LOG(DEBUG) << "after transpose "
+                << GetTensorFormat(tensorrt_in_tensors_[1 - first_in_tensor_index_].trt_tensor_,
+                                   tensorrt_in_tensors_[1 - first_in_tensor_index_].format_);
 
   nvinfer1::IElementWiseLayer *cal_layer =
     network->addElementWise(*tensorrt_in_tensors_[first_in_tensor_index_].trt_tensor_,
@@ -143,6 +155,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   op_out_tensor->setName(out_tensors_[0].Name().c_str());
   this->AddInnerOutTensors(ITensorHelper{op_out_tensor, tensorrt_in_tensors_[1].format_});
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(op_out_tensor, tensorrt_in_tensors_[1].format_);
   return RET_OK;
 }
 

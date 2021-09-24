@@ -91,8 +91,8 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     nvinfer1::DimsHW prePadding{*(padding_data + 2), *(padding_data + 4)};
     nvinfer1::DimsHW postPadding{*(padding_data + 3), *(padding_data + 5)};
-    MS_LOG(INFO) << "prePadding: " << *(padding_data + 2) << ", " << *(padding_data + 4);
-    MS_LOG(INFO) << "postPadding: " << *(padding_data + 3) << ", " << *(padding_data + 5);
+    MS_LOG(DEBUG) << "prePadding: " << *(padding_data + 2) << ", " << *(padding_data + 4);
+    MS_LOG(DEBUG) << "postPadding: " << *(padding_data + 3) << ", " << *(padding_data + 5);
 
     padding_layer = network->addPadding(*pad_input, prePadding, postPadding);
   } else {
