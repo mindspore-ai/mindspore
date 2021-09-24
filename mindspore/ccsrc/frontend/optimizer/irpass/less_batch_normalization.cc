@@ -23,7 +23,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 namespace {
-enum RemoveNodeType { kOtherNode = 0, kOptimizerNode };
+enum class RemoveNodeType { kOtherNode = 0, kOptimizerNode };
 const char kLessBatchNormalizationPassName[] = "less_bn";
 constexpr auto kValidResidualStructureIndex = 1;
 constexpr auto kBNParametersStartIndex = 2;
