@@ -15,10 +15,6 @@
  */
 
 #include "pipeline/pynative/pynative_profiling.h"
-#include <iostream>
-#include <utility>
-#include <memory>
-#include <string>
 #include "utils/profile.h"
 #include "utils/ms_context.h"
 #include "utils/utils.h"

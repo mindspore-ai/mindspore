@@ -15,9 +15,6 @@
  */
 
 #include "runtime/device/ascend/ascend_launch_kernel.h"
-
-#include <vector>
-#include <memory>
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/ascend/ascend_memory_pool.h"
 #include "runtime/device/ascend/kernel_build_ascend.h"
