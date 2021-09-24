@@ -13,15 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "common/common_test.h"
+#include "gmock/gmock.h"
 #include "schema/inner/model_generated.h"
-#include "src/lite_session.h"
 #include "src/sub_graph_kernel.h"
 #include "ir/dtype/type_id.h"
 #include "include/version.h"
 #include "include/model.h"
+#include "include/lite_session.h"
+#include "src/lite_session.h"
 
 namespace mindspore {
+namespace lite {
+class SessionMock : public LiteSession {
+ public:
+  MOCK_METHOD0(RuntimeAllocatorValid, int());
+};
+}  // namespace lite
+
 class OptAllocator : public mindspore::CommonTest {
  public:
   OptAllocator() = default;
@@ -68,7 +78,7 @@ void CreateModel1(mindspore::schema::MetaGraphT *meta_graph) {
 
   /* tensors */
   auto tensor0 = std::make_unique<mindspore::schema::TensorT>();
-  tensor0->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor0->nodeType = mindspore::lite::NodeType_Parameter;
   tensor0->format = mindspore::schema::Format_NHWC;
   tensor0->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor0->dims = {4};
@@ -76,7 +86,7 @@ void CreateModel1(mindspore::schema::MetaGraphT *meta_graph) {
   tensor0->name = "input";
 
   auto tensor1 = std::make_unique<mindspore::schema::TensorT>();
-  tensor1->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor1->nodeType = mindspore::lite::NodeType_Parameter;
   tensor1->format = mindspore::schema::Format_NHWC;
   tensor1->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor1->dims = {4};
@@ -84,7 +94,7 @@ void CreateModel1(mindspore::schema::MetaGraphT *meta_graph) {
   tensor1->name = "cos";
 
   auto tensor2 = std::make_unique<mindspore::schema::TensorT>();
-  tensor2->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor2->nodeType = mindspore::lite::NodeType_Parameter;
   tensor2->format = mindspore::schema::Format_NHWC;
   tensor2->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor2->dims = {4};
@@ -92,7 +102,7 @@ void CreateModel1(mindspore::schema::MetaGraphT *meta_graph) {
   tensor2->name = "sin";
 
   auto tensor3 = std::make_unique<mindspore::schema::TensorT>();
-  tensor3->nodeType = mindspore::lite::NodeType_ValueNode;
+  tensor3->nodeType = mindspore::lite::NodeType_Parameter;
   tensor3->format = mindspore::schema::Format_NHWC;
   tensor3->dataType = mindspore::TypeId::kNumberTypeFloat32;
   tensor3->dims = {4};
@@ -112,7 +122,7 @@ void CreateModel1(mindspore::schema::MetaGraphT *meta_graph) {
   meta_graph->outputIndex = {3};
 }
 
-TEST_F(OptAllocator, OptAllocator1) {
+TEST_F(OptAllocator, RuntimeAllocator1) {
   auto meta_graph = std::make_shared<mindspore::schema::MetaGraphT>();
   CreateModel1(meta_graph.get());
 
@@ -122,16 +132,25 @@ TEST_F(OptAllocator, OptAllocator1) {
   mindspore::schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
+  mindspore::lite::Model *model = mindspore::lite::Model::Import(content, size);
 
-  auto context = std::make_shared<mindspore::lite::Context>();
-  auto *lite_session = mindspore::session::LiteSession::CreateSession(content, size, context.get());
+  auto context = new lite::InnerContext();
+  auto lite_session = new lite::SessionMock();
   ASSERT_NE(lite_session, nullptr);
+  ON_CALL(*lite_session, RuntimeAllocatorValid).WillByDefault(testing::Return(0));
+
+  auto ret = lite_session->Init(context);
+  ASSERT_EQ(mindspore::lite::RET_OK, ret);
+
+  ret = lite_session->CompileGraph(model);
+  ASSERT_EQ(mindspore::lite::RET_OK, ret);
+  ASSERT_NE(lite_session->get_kernels().front()->out_tensors().front()->allocator(), context->allocator);
 
   auto input = lite_session->GetInputs().front();
   std::vector<float> in_data = {1.0, 2.0, 3.0, 4.0};
   memcpy(input->MutableData(), in_data.data(), input->Size());
 
-  auto ret = lite_session->RunGraph();
+  ret = lite_session->RunGraph();
   ASSERT_EQ(mindspore::lite::RET_OK, ret);
 
   /* checkout output */
@@ -142,6 +161,12 @@ TEST_F(OptAllocator, OptAllocator1) {
   ASSERT_LE(fabs(fp32_data[1] - (-0.820386)), 0.01);
   ASSERT_LE(fabs(fp32_data[2] - (-1.826014)), 0.01);
   ASSERT_LE(fabs(fp32_data[3] - (-1.261727)), 0.01);
+
+  /* run loop */
+  for (int i = 0; i < 2; i++) {
+    ret = lite_session->RunGraph();
+    ASSERT_EQ(mindspore::lite::RET_OK, ret);
+  }
 
   delete lite_session;
 }

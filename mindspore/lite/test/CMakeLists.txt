@@ -22,7 +22,6 @@ file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
         ${TEST_DIR}/ut/src/runtime/runtime_pass_tests.cc
         ${TEST_DIR}/st/multiple_device_test.cc
-        ${TEST_DIR}/st/optimize_allocator_test.cc
         ${TEST_DIR}/st/mindrt_parallel_runtime_test.cc
         ${TEST_DIR}/st/mix_data_type_test.cc
         ${TEST_DIR}/ut/nnacl/infer/*.cc
@@ -117,6 +116,13 @@ add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src fbs_inner_src)
 
 target_link_libraries(lite-test mindspore-lite dl mindspore::gtest)
+
+## test file using gmock
+#target_link_libraries(lite-test mindspore::gmock)
+#add_library(gmock_tests OBJECT ${TEST_DIR}/st/optimize_allocator_test.cc)
+#add_dependencies(gmock_tests fbs_src fbs_inner_src)
+#target_compile_options(gmock_tests PRIVATE -fno-rtti)
+#target_link_libraries(lite-test gmock_tests)
 
 if(MSLITE_ENABLE_TRAIN)
     target_link_libraries(lite-test mindspore-lite-train minddata-lite)

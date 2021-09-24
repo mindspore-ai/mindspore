@@ -28,7 +28,7 @@
 #include "include/lite_session.h"
 #include "include/model.h"
 #include "src/inner_context.h"
-#include "src/runtime/optimize_allocator.h"
+#include "src/runtime/runtime_allocator.h"
 #include "schema/model_generated.h"
 #include "src/executor.h"
 #include "src/tensor.h"
@@ -99,8 +99,6 @@ class LiteSession : public session::LiteSession {
 
   void InitGraphInOutTensorsMap(const lite::Model *model);
 
-  int IsolateOutputTensor();
-
   void InitGraphInputTensors(const lite::Model *model);
 
   void InitGraphInputMSTensors();
@@ -134,10 +132,19 @@ class LiteSession : public session::LiteSession {
 
   int InitGPURuntime();
 
+ private:
+  int IsolateOutputTensor();
   bool IsIsolatedSubGraph(kernel::LiteKernel *kernel);
+  std::unordered_map<Tensor *, Tensor *> isolate_graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
+  std::unordered_map<Tensor *, Tensor *> isolate_input_map_;        /* <calculate-tensor,  src-subgraph-input-tensor> */
 
-  int OptimizeRuntimeAllocator();
-  int OptAllocatorSetData(OptAllocatorPtr opt_allocator);
+ private:
+  int RuntimeAllocatorInit();
+  int RuntimeAllocatorSetData();
+  void RuntimeAllocatorInitGraphOutput();
+  void RuntimeAllocatorInitSubgraph();
+  virtual int RuntimeAllocatorValid();
+  RuntimeAllocatorPtr runtime_allocator_ = nullptr;
 
  protected:
   InnerContext *context_ = nullptr;
@@ -158,10 +165,6 @@ class LiteSession : public session::LiteSession {
   std::vector<std::string> output_tensor_names_;
   // graph output tensor name -- output tensor
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
-
-  // graph isolate tensors
-  std::unordered_map<Tensor *, Tensor *> isolate_graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
-  std::unordered_map<Tensor *, Tensor *> isolate_input_map_;        /* <calculate-tensor,  src-input-tensor> */
 
   Executor *executor_ = nullptr;
   Model *model_ = nullptr;
