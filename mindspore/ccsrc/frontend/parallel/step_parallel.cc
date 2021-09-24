@@ -1252,20 +1252,6 @@ OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveA
     MS_LOG(EXCEPTION) << "Length of name is zero!";
   }
   std::string distribute_opname = GetDisOpName(name);
-  if (name == GATHERV2) {
-    distribute_opname = name + "PInfo";
-    auto data_parallel_iter = attrs.find(DATA_PARALLEL);
-    if (data_parallel_iter != attrs.end()) {
-      MS_EXCEPTION_IF_NULL(data_parallel_iter->second);
-      if (!data_parallel_iter->second->isa<BoolImm>()) {
-        MS_LOG(EXCEPTION) << ": data_parallel flag's type is not a bool.";
-      }
-      bool data_parallel = data_parallel_iter->second->cast<BoolImmPtr>()->value();
-      if (data_parallel) {
-        distribute_opname = name + "Info";
-      }
-    }
-  }
   OperatorInfoPtr operator_ =
     (OperatorInfoPtr)DynCreator::Instance().Create(distribute_opname, shape_list[0], shape_list[1], attrs, TOTAL_OPS);
   if (operator_ == nullptr) {
@@ -2632,9 +2618,9 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
   return param_names;
 }
 
-bool IsGatherPInfo(const std::string &name) {
-  std::vector<std::string> gather_p_info_names = {"GatherPInfo", "SparseGatherV2Info", "EmbeddingLookupInfo"};
-  for (std::string info_name : gather_p_info_names) {
+bool IsGatherInfo(const std::string &name) {
+  std::vector<std::string> gather_info_names = {"GatherInfo", "SparseGatherV2Info", "EmbeddingLookupInfo"};
+  for (std::string info_name : gather_info_names) {
     if (name.find(info_name) != std::string::npos) {
       return true;
     }
@@ -2669,10 +2655,10 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
       for (auto param_name_pair : param_names) {
         tensor_info_map[param_name_pair.first] = param_name_pair.second->user_data<TensorLayout>();
       }
-      if (IsGatherPInfo(operator_info->name())) {
-        auto gatherv2_info = std::dynamic_pointer_cast<GatherPInfo>(operator_info);
-        auto param_split_shapes = gatherv2_info->param_split_shapes();
-        auto index_offsets = gatherv2_info->index_offsets();
+      if (IsGatherInfo(operator_info->name())) {
+        auto gather_info = std::dynamic_pointer_cast<GatherInfo>(operator_info);
+        auto param_split_shapes = gather_info->param_split_shapes();
+        auto index_offsets = gather_info->index_offsets();
         if (param_split_shapes.size() != index_offsets.size()) {
           MS_LOG(EXCEPTION) << "In manual split, the param_split_shapes and index_offsets length should be same.";
         }
