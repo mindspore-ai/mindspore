@@ -233,7 +233,11 @@ STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::ve
     }
     parameter->quant_type_ = node->quantType;
     ret = KernelInferShape(inputs, *outputs, parameter);
+    if (parameter->destroy_func_ != nullptr) {
+      parameter->destroy_func_(parameter);
+    }
     free(parameter);
+    parameter = nullptr;
   }
 
   fbb.Clear();

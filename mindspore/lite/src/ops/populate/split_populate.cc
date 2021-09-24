@@ -20,6 +20,15 @@ using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore {
 namespace lite {
+void DestroySplitParameter(OpParameter *parameter) {
+  MS_CHECK_PTR_IF_NULL(parameter);
+  auto param = reinterpret_cast<SplitParameter *>(parameter);
+  if (param->split_sizes_ != nullptr) {
+    free(param->split_sizes_);
+    param->split_sizes_ = nullptr;
+  }
+}
+
 OpParameter *PopulateSplitParameter(const void *prim) {
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   auto primitive = static_cast<const schema::Primitive *>(prim);
@@ -55,6 +64,7 @@ OpParameter *PopulateSplitParameter(const void *prim) {
     free(param);
     return nullptr;
   }
+  param->op_parameter_.destroy_func_ = DestroySplitParameter;
   memset(param->split_sizes_, 0, static_cast<size_t>(param->num_split_) * sizeof(int));
   auto split_sizes_vector_ = value->size_splits();
   if (split_sizes_vector_ != nullptr && split_sizes_vector_->size() <= static_cast<uint32_t>(param->num_split_)) {
