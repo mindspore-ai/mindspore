@@ -201,6 +201,11 @@ def test_graphdata_generatordataset():
     Test generator dataset
     """
     logger.info('test generator dataset.\n')
+
+    #reduce memory required by disabling the shm optimization
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
+
     g = ds.GraphData(DATASET_FILE)
     batch_num = 2
     edge_num = g.graph_info()['edge_num'][0]
@@ -218,6 +223,7 @@ def test_graphdata_generatordataset():
         i += 1
     assert i == 40
 
+    ds.config.set_enable_shared_mem(mem_original)
 
 def test_graphdata_randomwalkdefault():
     """

@@ -428,7 +428,8 @@ class Dataset:
 
     @check_batch
     def batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None,
-              input_columns=None, output_columns=None, column_order=None, pad_info=None, python_multiprocessing=False):
+              input_columns=None, output_columns=None, column_order=None, pad_info=None, python_multiprocessing=False,
+              max_rowsize=16):
         """
         Combine batch_size number of consecutive rows into batches.
 
@@ -470,6 +471,8 @@ class Dataset:
                 (default=None).
             python_multiprocessing (bool, optional): Parallelize Python function per_batch_map with multi-processing.
                 This option could be beneficial if the function is computational heavy (default=False).
+            max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
+                data between processes.  This is only used if python_multiprocessing is set to True (default 16 MB).
 
         Returns:
             BatchDataset, dataset batched.
@@ -492,7 +495,7 @@ class Dataset:
             >>> dataset = dataset.batch(batch_size=8, input_columns=["image"], per_batch_map=np_resize)
         """
         return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns,
-                            output_columns, column_order, pad_info, python_multiprocessing)
+                            output_columns, column_order, pad_info, python_multiprocessing, max_rowsize)
 
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
@@ -626,7 +629,7 @@ class Dataset:
 
     @check_map
     def map(self, operations, input_columns=None, output_columns=None, column_order=None,
-            num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None):
+            num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None, max_rowsize=16):
         """
         Apply each operation in operations to this dataset.
 
@@ -666,6 +669,8 @@ class Dataset:
             cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
                 (default=None, which means no cache is used).
             callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None).
+            max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
+                data between processes.  This is only used if python_multiprocessing is set to True (default 16 MB).
 
 
         Returns:
@@ -759,7 +764,7 @@ class Dataset:
         """
 
         return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
-                          python_multiprocessing, cache, callbacks)
+                          python_multiprocessing, cache, callbacks, max_rowsize)
 
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=None):
@@ -3646,7 +3651,7 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
     when training in parallel mode.
     """
     threshold_ratio = 0.8
-    if platform.system() != "Windows" and _get_device_num() > 1:
+    if platform.system() != "Windows" and _get_device_num() >= 1:
         shm_estimate_usage = _get_device_num() * num_worker * num_queues * \
             (queue_size + 2) * max_rowsize * 1024 * 1024
         try:
