@@ -44,7 +44,7 @@ class Tensor(Tensor_):
             output tensor will be the same as the `input_data`. Default: None.
         shape (Union[tuple, list, int]): A list of integers, a tuple of integers or an integer as the shape of
             output. If `input_data` is available, `shape` doesn't need to be set. Default: None.
-        init (Initializer): the information of init data.
+        init (Initializer): The information of init data.
             'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to use
             'init' interface to initialize parameters in other conditions. If 'init' interface is used to initialize
             parameters, the `Tensor.init_data` API needs to be called to convert `Tensor` to the actual data.

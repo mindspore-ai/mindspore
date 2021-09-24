@@ -149,7 +149,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
           If dtype is int32, only one number is allowed.
         seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers,
           must be non-negative. Default: None, which will be treated as 0.
-        dtype (mindspore.dtype): type of the Uniform distribution. If it is int32, it generates numbers from discrete
+        dtype (mindspore.dtype): Type of the Uniform distribution. If it is int32, it generates numbers from discrete
           uniform distribution; if it is float32, it generates numbers from continuous uniform distribution. It only
           supports these two data types. Default: mindspore.float32.
 
@@ -161,7 +161,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     Raises:
         TypeError: If `shape` is not tuple.
         TypeError: If 'minval' or 'maxval' is neither int32 nor float32
-            and dtype of 'minval' is not the same as 'maxval'
+            and dtype of 'minval' is not the same as 'maxval'.
         TypeError: If `seed` is not an int.
         TypeError: If 'dtype' is neither int32 nor float32.
 

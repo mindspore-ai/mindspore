@@ -1178,7 +1178,7 @@ class Size(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
 
     Outputs:
-        int, a scalar representing the elements size of `input_x`, tensor is the number of elements
+        int. A scalar representing the elements size of `input_x`, tensor is the number of elements
         in a tensor, :math:`size=x_1*x_2*...x_R`. The data type is an int.
 
     Raises:
@@ -2665,14 +2665,14 @@ class Slice(PrimitiveWithInfer):
     """
     Slices a tensor in the specified shape.
 
-    Slice the tensor 'input_x` in shape of `size` and starting at the location specified by `begin`,
+    Slice the tensor `input_x` in shape of `size` and starting at the location specified by `begin`,
     The slice `begin` represents the offset in each dimension of `input_x`,
     The slice `size` represents the size of the output tensor.
 
     Note that `begin` is zero-based and `size` is one-based.
 
     If `size[i]` is -1, all remaining elements in dimension i are included in the slice.
-    This is equivalent to setting :math:`size[i] = input_x.shape(i) - begin[i]`
+    This is equivalent to setting :math:`size[i] = input_x.shape(i) - begin[i]`.
 
     Inputs:
         - **input_x** (Tensor): The target tensor.

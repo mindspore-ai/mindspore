@@ -501,7 +501,7 @@ class Searcher:
             tuple[EditStep, list[float]], the root edit step and network output of each layer after applied the
                 layer steps.
 
-        Raise:
+        Raises:
             TypeError: Be raised for any argument or data type problem.
             ValueError: Be raised for any argument or data value problem.
             NoValidResultError: Be raised if no valid result was found.
@@ -566,7 +566,7 @@ class Searcher:
             tuple[EditStep, list[float]], the root edit step and network output of each layer after applied the
                 layer steps.
 
-        Raise:
+        Raises:
             NoValidResultError: Be raised if no valid result was found.
         """
         # the leaf layer's network output may not meet the threshold,
@@ -634,7 +634,7 @@ class Searcher:
         Returns:
             numpy.ndarray, the image tensor workpiece.
 
-        Raise:
+        Raises:
             OriginalOutputError: Be raised if network output of the original image is not strictly larger than the
                 threshold.
         """
@@ -674,7 +674,7 @@ class Searcher:
         Returns:
             tuple[list[EditStep], _StopReason], result edit stop and the stop reason.
 
-        Raise:
+        Raises:
             OriginalOutputError: Be raised if network output of the original image is not strictly larger than the
                 threshold.
         """
