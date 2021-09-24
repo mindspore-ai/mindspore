@@ -37,6 +37,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_color_adjust_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_color_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_crop_decode_resize_ir.h"
@@ -286,6 +287,18 @@ PYBIND_REGISTER(
         return random_affine;
       }));
   }));
+
+PYBIND_REGISTER(RandomAutoContrastOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::RandomAutoContrastOperation, TensorOperation,
+                                   std::shared_ptr<vision::RandomAutoContrastOperation>>(*m,
+                                                                                         "RandomAutoContrastOperation")
+                    .def(py::init([](float cutoff, const std::vector<uint32_t> &ignore, float prob) {
+                      auto random_auto_contrast =
+                        std::make_shared<vision::RandomAutoContrastOperation>(cutoff, ignore, prob);
+                      THROW_IF_ERROR(random_auto_contrast->ValidateParams());
+                      return random_auto_contrast;
+                    }));
+                }));
 
 PYBIND_REGISTER(RandomColorAdjustOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomColorAdjustOperation, TensorOperation,

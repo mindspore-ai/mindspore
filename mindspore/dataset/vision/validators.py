@@ -311,6 +311,30 @@ def check_random_resize_crop(method):
     return new_method
 
 
+def check_random_auto_contrast(method):
+    """Wrapper method to check the parameters of Python RandomAutoContrast op."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [cutoff, ignore, prob], _ = parse_user_args(method, *args, **kwargs)
+        type_check(cutoff, (int, float), "cutoff")
+        check_value_cutoff(cutoff, [0, 50], "cutoff")
+        if ignore is not None:
+            type_check(ignore, (list, tuple, int), "ignore")
+        if isinstance(ignore, int):
+            check_value(ignore, [0, 255], "ignore")
+        if isinstance(ignore, (list, tuple)):
+            for item in ignore:
+                type_check(item, (int,), "item")
+                check_value(item, [0, 255], "ignore")
+        type_check(prob, (float, int,), "prob")
+        check_value(prob, [0., 1.], "prob")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_prob(method):
     """A wrapper that wraps a parameter checker (to confirm probability) around the original function."""
 

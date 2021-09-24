@@ -29,6 +29,7 @@ add_library(kernels-image OBJECT
     pad_op.cc
     posterize_op.cc
     random_affine_op.cc
+    random_auto_contrast_op.cc
     random_color_adjust_op.cc
     random_crop_decode_resize_op.cc
     random_crop_and_resize_with_bbox_op.cc
