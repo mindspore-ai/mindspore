@@ -66,14 +66,6 @@ class BuildVocabOp : public ParallelOp<TensorRow, TensorRow> {
 
   Status operator()() override;
 
-  /// Getter
-  /// @return the number of workers
-  int32_t NumProducers() const override { return 1; }
-
-  /// Getter
-  /// @return the number of threads consuming from the previous Connector
-  int32_t NumConsumers() const override { return 1; }
-
   Status Reset() override { RETURN_STATUS_UNEXPECTED("Reset shouldn't be called in BuildVocabOp"); }
 
  private:

@@ -69,14 +69,6 @@ class BuildSentencePieceVocabOp : public PipelineOp {
 
   Status operator()() override;
 
-  // Getter
-  // @return the number of workers
-  int32_t NumProducers() const override { return 1; }
-
-  // Getter
-  // @return the number of threads consuming from the previous Connector
-  int32_t NumConsumers() const override { return 1; }
-
   Status Reset() override { RETURN_STATUS_UNEXPECTED("Reset shouldn't be called in BuildSentencePieceVocabOp"); }
 
   std::string Name() const override { return kBuildSentencePieceVocabOp; }

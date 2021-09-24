@@ -45,12 +45,6 @@ MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std
   }
 }
 
-// The number of threads consuming data from previous op's output Connector.
-int32_t MapOp::NumConsumers() const {
-  // When Performance Mode is on, there is only one thread consuming from the previous Connector.
-  return 1;
-}
-
 // A print method typically used for debugging
 void MapOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {

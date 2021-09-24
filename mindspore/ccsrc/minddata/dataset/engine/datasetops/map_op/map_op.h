@@ -107,10 +107,6 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   // @return Status The status code returned
   Status operator()() override;
 
-  // Getter
-  // @return the number of threads consuming data from previous op's output Connector.
-  int32_t NumConsumers() const override;
-
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return kMapOp; }

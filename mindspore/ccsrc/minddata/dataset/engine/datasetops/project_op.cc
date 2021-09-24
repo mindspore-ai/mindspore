@@ -76,27 +76,6 @@ TensorRow ProjectOp::Project(const TensorRow &row) {
 // ensure that it is not called by mistake (it will generate an error).
 Status ProjectOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. ProjectOp is an inlined operator."); }
 
-int32_t ProjectOp::NumConsumers() const {
-  if (parent_.empty()) {
-    MS_LOG(DEBUG) << "Project operator, no parent node, assuming it's the root and returning 1.";
-    return 1;
-  } else if (parent_[0] == nullptr) {
-    MS_LOG(DEBUG) << "Project operator, pointer to the first parent is null. Returning 0.";
-    return 0;
-  } else {
-    return parent_[0]->NumConsumers();
-  }
-}
-
-int32_t ProjectOp::NumProducers() const {
-  if (child_.empty() || child_[0] == nullptr) {
-    MS_LOG(DEBUG) << "Project operator, pointer to child node is null. Returning 0.";
-    return 0;
-  } else {
-    return child_[0]->NumProducers();
-  }
-}
-
 Status ProjectOp::EoeReceived(int32_t worker_id) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();
