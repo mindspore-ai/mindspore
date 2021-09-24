@@ -20,10 +20,9 @@ import ast
 from time import time
 import numpy as np
 from mindspore import context, Tensor
-from mindspore.train.serialization import save_checkpoint, load_checkpoint
+from mindspore.train.serialization import save_checkpoint
 from src.adam import AdamWeightDecayOp as AdamWeightDecay
 from src.config import train_cfg, server_net_cfg
-from src.utils import restore_params
 from src.model import AlbertModelCLS
 from src.cell_wrapper import NetworkWithCLSLoss, NetworkTrainCell
 
@@ -67,6 +66,7 @@ def parse_args():
     parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
     parser.add_argument("--cipher_time_window", type=int, default=300000)
     parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
+    parser.add_argument("--config_file_path", type=str, default="")
     parser.add_argument("--client_password", type=str, default="")
     parser.add_argument("--server_password", type=str, default="")
     parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
@@ -77,7 +77,6 @@ def server_train(args):
     start = time()
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device_id
-    model_path = args.model_path
     output_dir = args.output_dir
 
     device_target = args.device_target
@@ -104,6 +103,7 @@ def server_train(args):
     share_secrets_ratio = args.share_secrets_ratio
     cipher_time_window = args.cipher_time_window
     reconstruct_secrets_threshold = args.reconstruct_secrets_threshold
+    config_file_path = args.config_file_path
     client_password = args.client_password
     server_password = args.server_password
     enable_ssl = args.enable_ssl
@@ -136,6 +136,7 @@ def server_train(args):
         "share_secrets_ratio": share_secrets_ratio,
         "cipher_time_window": cipher_time_window,
         "reconstruct_secrets_threshold": reconstruct_secrets_threshold,
+        "config_file_path": config_file_path,
         "client_password": client_password,
         "server_password": server_password,
         "enable_ssl": enable_ssl
@@ -160,11 +161,6 @@ def server_train(args):
     sys.stdout.flush()
     start = time()
 
-    # train prepare
-    param_dict = load_checkpoint(model_path)
-    if 'learning_rate' in param_dict:
-        del param_dict['learning_rate']
-
     # server optimizer
     server_params = [_ for _ in network_with_cls_loss.trainable_params()]
     server_decay_params = list(
@@ -182,8 +178,6 @@ def server_train(args):
                                        learning_rate=train_cfg.server_cfg.learning_rate,
                                        eps=train_cfg.optimizer_cfg.AdamWeightDecay.eps)
     server_network_train_cell = NetworkTrainCell(network_with_cls_loss, optimizer=server_optimizer)
-
-    restore_params(server_network_train_cell, param_dict)
 
     print('Optimizer construction is done! Time cost: {}'.format(time() - start))
     sys.stdout.flush()
