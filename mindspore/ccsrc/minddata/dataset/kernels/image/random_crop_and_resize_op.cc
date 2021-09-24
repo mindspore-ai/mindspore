@@ -55,7 +55,7 @@ Status RandomCropAndResizeOp::Compute(const TensorRow &input, TensorRow *output)
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
       if (input[i]->shape()[0] != input[i + 1]->shape()[0] || input[i]->shape()[1] != input[i + 1]->shape()[1]) {
-        RETURN_STATUS_UNEXPECTED("RandomCropAndResizeOp: The width and height of the image need to be the same size.");
+        RETURN_STATUS_UNEXPECTED("RandomCropAndResizeOp: Input images must have the same size.");
       }
     }
   }
