@@ -17,6 +17,11 @@
 #include "ir/anf_utils.h"
 
 namespace mindspore {
+bool AnfUtils::IsDimUnknown(const abstract::ShapePtr &shape) {
+  MS_EXCEPTION_IF_NULL(shape);
+  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < -1; });
+}
+
 bool AnfUtils::IsShapeDynamic(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
@@ -49,6 +54,33 @@ bool AnfUtils::IsNodeOutputDynamicShape(const CNodePtr &node) {
         return true;
       }
     }
+  }
+  return false;
+}
+
+bool AnfUtils::IsDimUnknown(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto base_shape = node->Shape();
+  if (base_shape == nullptr) {
+    MS_LOG(INFO) << "Invalid base shape, node: " << node->fullname_with_scope();
+    return false;
+  }
+  if (base_shape->isa<abstract::Shape>()) {
+    auto base_shape_ptr = base_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(base_shape_ptr);
+    return base_shape_ptr->IsDimUnknown();
+  } else if (base_shape->isa<abstract::TupleShape>()) {
+    auto tuple_shape_ptr = base_shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape_ptr);
+    return tuple_shape_ptr->IsDimUnknown();
+  } else if (base_shape->isa<abstract::SequeueShape>()) {
+    auto seq_shape_ptr = base_shape->cast<abstract::SequeueShapePtr>();
+    MS_EXCEPTION_IF_NULL(seq_shape_ptr);
+    return seq_shape_ptr->IsDimUnknown();
+  } else if (base_shape->isa<abstract::ListShape>()) {
+    auto list_shape_ptr = base_shape->cast<abstract::ListShapePtr>();
+    MS_EXCEPTION_IF_NULL(list_shape_ptr);
+    return list_shape_ptr->IsDimUnknown();
   }
   return false;
 }
