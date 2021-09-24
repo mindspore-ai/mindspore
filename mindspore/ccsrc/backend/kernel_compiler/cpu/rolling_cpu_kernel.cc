@@ -38,10 +38,11 @@ void RollingCpuKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "[" << method << "] not supported";
   }
   method_ = kValidMethods.at(method);
-  window_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, WINDOW);
-  if (window_ <= 0) {
-    MS_LOG(EXCEPTION) << "window size should not less than 0, but got " << window_;
+  auto window = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, WINDOW);
+  if (window <= 0) {
+    MS_LOG(EXCEPTION) << "window size should not less than 0, but got " << window;
   }
+  window_ = LongToInt(window);
   min_periods_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, MIN_PERIODS);
   if (min_periods_ <= 0) {
     MS_LOG(EXCEPTION) << "min_periods should not less than 0, but got " << min_periods_;
@@ -86,12 +87,12 @@ void RollingCpuKernel<T, S>::RollingBoundsCalculate() {
   } else if (closed_ == "neither") {
     end_offset -= 1;
   }
-  int axis_size = axisIterator_.AxisSize();
-  for (size_t i = 0; i < axisIterator_.AxisSize(); ++i) {
+  int axis_size = SizeToInt(axisIterator_.AxisSize());
+  for (int i = 0; i < axis_size; ++i) {
     int end = offset + i + end_offset;
     int start = offset + i - window_ + start_offset;
-    ends_[i] = std::max(0, std::min(end, axis_size));
-    starts_[i] = std::max(0, std::min(start, axis_size));
+    ends_[i] = IntToSize(std::max(0, std::min(end, axis_size)));
+    starts_[i] = IntToSize(std::max(0, std::min(start, axis_size)));
   }
 }
 
@@ -135,13 +136,13 @@ void RollingCpuKernel<T, S>::MethodSwitch() {
         for (size_t x = start; x < end; ++x) {
           sum += input_addr[ids[x]];
         }
-        return sum * 1.0 / (end - start);
+        return sum / SizeToFloat(end - start);
       };
       break;
     case Method::Var:
       reduceMethod_ = [](const T *input_addr, const size_t *ids, size_t start, size_t end) {
         // float for division
-        float n = end - start;
+        float n = SizeToFloat(end - start);
         T sum1 = 0;
         for (size_t x = start; x < end; ++x) {
           sum1 += input_addr[ids[x]];
@@ -159,7 +160,7 @@ void RollingCpuKernel<T, S>::MethodSwitch() {
     case Method::Std:
       reduceMethod_ = [](const T *input_addr, const size_t *ids, size_t start, size_t end) {
         // float for division
-        float n = end - start;
+        float n = SizeToFloat(end - start);
         T sum1 = 0;
         for (size_t x = start; x < end; ++x) {
           sum1 += input_addr[ids[x]];

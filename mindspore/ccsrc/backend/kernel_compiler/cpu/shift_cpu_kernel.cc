@@ -51,14 +51,14 @@ void ShiftCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
     copy_src_begin_ = 0;
     copy_dst_begin_ = periods_;
-    copy_size_ = input_shape[axis] - periods_;
+    copy_size_ = SizeToLong(input_shape[axis]) - periods_;
   } else if (periods_ < 0) {
-    fill_begin_ = input_shape[axis] + periods_;
+    fill_begin_ = SizeToLong(input_shape[axis]) + periods_;
     fill_size_ = -periods_;
 
     copy_src_begin_ = -periods_;
     copy_dst_begin_ = 0;
-    copy_size_ = input_shape[axis] + periods_;
+    copy_size_ = SizeToLong(input_shape[axis]) + periods_;
   }
 }
 
@@ -84,12 +84,12 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
     return true;
   }
 
-  const size_t outer_size = axisIterator_.OuterSize();
-  const size_t axis_size = axisIterator_.AxisSize();
-  const size_t inner_size = axisIterator_.InnerSize();
+  const int64_t outer_size = SizeToLong(axisIterator_.OuterSize());
+  const int64_t axis_size = SizeToLong(axisIterator_.AxisSize());
+  const int64_t inner_size = SizeToLong(axisIterator_.InnerSize());
 
   // periods is larger than size, all value of the tensor would be fill_value
-  if (std::abs(periods_) >= static_cast<int>(axis_size)) {
+  if (std::abs(periods_) >= axis_size) {
     (void)std::fill_n(output, outer_size * axis_size * inner_size, fill_value);
     return true;
   }
@@ -111,7 +111,7 @@ bool ShiftCpuKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std:
   // normal procedure
   std::vector<common::Task> tasks;
   tasks.reserve(outer_size);
-  for (size_t i = 0; i < outer_size; ++i) {
+  for (int i = 0; i < outer_size; ++i) {
     (void)tasks.emplace_back([this, i, fill_value, axis_size, inner_size, input, output, outputs] {
       size_t offset = i * axis_size * inner_size;
       size_t input_offset = offset + copy_src_begin_ * inner_size;

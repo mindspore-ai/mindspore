@@ -81,17 +81,17 @@ template <typename T>
 void RankCpuKernel<T>::SetFunc() {
   switch (method_) {
     case Method::Max: {
-      func_ = [](int i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
-        for (int j = i - duplicate_count + 1; j < i + 1; ++j) {
+        for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = i + 1;
         }
       };
     } break;
     case Method::Min: {
-      func_ = [](int i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
-        for (int j = i - duplicate_count + 1; j < i + 1; ++j) {
+        for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = i - duplicate_count + 2;
         }
       };
@@ -102,26 +102,26 @@ void RankCpuKernel<T>::SetFunc() {
       //     = duplicate_count * (2 * i - duplicate_count + 1) / 2
       // rank_sum = sum + duplicate_count = duplicate_count * (2 * i - duplicate_count + 3) / 2
       // avg = rank_sum / duplicate_count = (2 * i - duplicate_count + 3) / 2
-      func_ = [](int i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
         float avg = (2 * i - duplicate_count + 3) / 2.0;
-        for (int j = i - duplicate_count + 1; j < i + 1; ++j) {
+        for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = avg;
         }
       };
     } break;
     case Method::First: {
-      func_ = [](int i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
-        for (int j = i - duplicate_count + 1; j < i + 1; ++j) {
+        for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = j + 1;
         }
       };
     } break;
     case Method::Dense: {
-      func_ = [](int i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
+      func_ = [](size_t i, int duplicate_count, int culmutive_rank, const AxisIterator &axisIterator,
                  const size_t *const sort_idx, float *const output_addr) {
-        for (int j = i - duplicate_count + 1; j < i + 1; ++j) {
+        for (size_t j = i - duplicate_count + 1; j < i + 1; ++j) {
           output_addr[axisIterator.GetPos(sort_idx[j])] = culmutive_rank;
         }
       };
