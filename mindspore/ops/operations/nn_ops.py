@@ -141,6 +141,7 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
     H is the feature height, and W is the feature width.
 
     For avg adaptive pool2d:
+
     ..  math::
         \begin{align}
         h_{start} &= floor(i * H_{in} / H_{out})\\
@@ -7364,8 +7365,8 @@ class Dropout2D(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`, where N is the batch size, C is the number
-        of channels, H is the feature height, and W is the feature width. The data type should be int8, int16, int32,
-        int64, float16 or float32.
+          of channels, H is the feature height, and W is the feature width. The data type should be int8, int16, int32,
+          int64, float16 or float32.
 
     Outputs:
         - **output** (Tensor) - With the same shape and data type as `x`.
@@ -7422,8 +7423,8 @@ class Dropout3D(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`, where N is the batch size, C is the number
-        of channels, D is the feature depth, H is the feature height, and W is the feature width.
-        The data type should be int8, int16, int32, int64, float16 or float32.
+          of channels, D is the feature depth, H is the feature height, and W is the feature width.
+          The data type should be int8, int16, int32, int64, float16 or float32.
 
     Outputs:
         - **output** (Tensor) - With the same shape and data type as `x`.

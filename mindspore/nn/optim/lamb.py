@@ -182,6 +182,7 @@ class Lamb(Optimizer):
     and it supports adaptive element-by-element update and accurate layered correction.
 
     The updating of parameters follows:
+
     ..  math::
         \begin{gather*}
         m_t = \beta_1 m_{t - 1}+ (1 - \beta_1)g_t\\
