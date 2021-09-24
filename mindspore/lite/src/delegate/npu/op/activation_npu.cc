@@ -66,6 +66,21 @@ int ActivationNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_ten
   return RET_OK;
 }
 
+int ActivationNPUOp::SetNPUInputs(
+  const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &out_tensors,
+  const std::vector<ge::Operator *> &npu_inputs,
+  const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
+  if (!index2_multi_out_index.empty()) {
+    auto itr = index2_multi_out_index.begin();
+    auto in_op = itr->second.first;
+    MS_CHECK_TRUE_RET(in_op != nullptr, RET_ERROR);
+    act_->SetInput(itr->first, *in_op, itr->second.second);
+  } else {
+    act_->set_input_x(*npu_inputs[0]);
+  }
+  return RET_OK;
+}
+
 ge::Operator *ActivationNPUOp::GetNPUOp() { return act_; }
 
 ActivationNPUOp::~ActivationNPUOp() {

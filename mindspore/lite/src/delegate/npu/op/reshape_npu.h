@@ -18,6 +18,8 @@
 #define MINDSPORE_LITE_SRC_DELEGATE_NPU_OP_RESHAPE_NPU_H_
 #include <vector>
 #include <string>
+#include <utility>
+#include <unordered_map>
 #include "include/graph/op/all_ops.h"
 #include "src/delegate/npu/op/npu_op.h"
 namespace mindspore {
@@ -38,6 +40,10 @@ class ReshapeNPUOp : public NPUOp {
   int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                    const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
+
+  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors, const std::vector<ge::Operator *> &npu_inputs,
+                   const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) override;
 
   ge::Operator *GetNPUOp() override;
 

@@ -27,7 +27,7 @@ enum InsertState { InsertNone, PreInsert, PostInsert, BothInsert };
 std::set<mindspore::schema::PrimitiveType> insert_nodes = {
   schema::PrimitiveType_Concat,       schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
   schema::PrimitiveType_Activation,   schema::PrimitiveType_Split,     schema::PrimitiveType_PadFusion,
-  schema::PrimitiveType_StridedSlice, schema::PrimitiveType_MulFusion};
+  schema::PrimitiveType_StridedSlice, schema::PrimitiveType_MulFusion, schema::PrimitiveType_DivFusion};
 
 // this pass goal is to minimize subgraphs generated
 // by inserting nchw2nhwc or nhwc2nchw before or after the operator (e.g. concat, add, etc..) together with
@@ -136,7 +136,9 @@ int NPUInsertTransformPass::InsertNode(NPUOp *op, NPUOp *post_op, size_t post_in
   for (auto i = 0; i < in_tensors.size(); ++i) {
     auto in_tensor = in_tensors[i];
     auto nhwc_shape = in_tensor.Shape();
-    if (nhwc_shape.size() < 4) {
+    if (nhwc_shape.size() == 0) {
+      continue;
+    } else if (nhwc_shape.size() < 4) {
       MS_LOG(ERROR) << "nhwc_shape size < " << 4;
       return RET_ERROR;
     }
