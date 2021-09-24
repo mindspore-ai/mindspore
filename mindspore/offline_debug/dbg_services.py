@@ -118,6 +118,40 @@ class DbgServices():
         self.initialized = True
         return self.dbg_instance.Initialize(net_name, self.dump_file_path, is_sync_mode, max_mem_usage)
 
+    def transform_check_node_list(self, info_name, info_param, node_name, check_node_list):
+        """
+        Transforming check_node_list based on info_name and info_param.
+
+        Args:
+            info_name (str): Info name of check_node_list, either 'rank_id', 'root_graph_id' or 'is_output'
+            info_param (list[int]): Info parameters of check_node_list, mapped to info_name.
+            node_name (str): Node name as key of check_node_list.
+            check_node_list (dict): Dictionary of node names (str or '*' to check all nodes) as key,
+                                    mapping to rank_id (list of ints or '*' to check all devices),
+                                    root_graph_id (list of ints or '*' to check all graphs) and is_output (bool).
+
+        Returns:
+            Transformed check_node_list.
+
+        Examples:
+        >>> from mindspore.offline_debug import dbg_services
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
+        >>>                              verbose=True)
+        >>> d_init = d.initialize(is_sync_mode=True)
+        >>> d_wp = d_init.transform_check_node_list(info_name="rank_id",
+        >>>                                         info_param=[0],
+        >>>                                         node_name="conv2.bias",
+        >>>                                         check_node_list={"conv2.bias" : {"rank_id": [0],
+        >>>                                                                         root_graph_id: [0],
+        >>>                                                                         "is_output": True}})
+        """
+        if info_name in ["rank_id", "root_graph_id"]:
+            if info_param in ["*"]:
+                check_node_list[node_name][info_name] = ["*"]
+            else:
+                check_node_list[node_name][info_name] = list(map(str, info_param))
+        return check_node_list
+
     @check_initialize_done
     @check_add_watchpoint
     def add_watchpoint(self, watchpoint_id, watch_condition, check_node_list, parameter_list):
@@ -155,11 +189,7 @@ class DbgServices():
         log("in Python AddWatchpoint")
         for node_name, node_info in check_node_list.items():
             for info_name, info_param in node_info.items():
-                if info_name in ["rank_id", "root_graph_id"]:
-                    if info_param in ["*"]:
-                        check_node_list[node_name][info_name] = ["*"]
-                    else:
-                        check_node_list[node_name][info_name] = list(map(str, info_param))
+                check_node_list = self.transform_check_node_list(info_name, info_param, node_name, check_node_list)
         parameter_list_inst = []
         for elem in parameter_list:
             parameter_list_inst.append(elem.instance)

@@ -194,7 +194,8 @@ class DbgServices {
 
   ~DbgServices();
 
-  int32_t Initialize(std::string net_name, std::string dump_folder_path, bool is_sync_mode, uint64_t max_mem_usage);
+  int32_t Initialize(const std::string net_name, const std::string dump_folder_path, bool is_sync_mode,
+                     uint64_t max_mem_usage);
 
   int32_t AddWatchpoint(
     unsigned int id, unsigned int watch_condition,
@@ -207,13 +208,13 @@ class DbgServices {
 
   std::vector<std::shared_ptr<TensorData>> ReadTensorsUtil(std::vector<tensor_info_t> info);
 
-  std::vector<tensor_data_t> ReadTensors(std::vector<tensor_info_t> info);
+  std::vector<tensor_data_t> ReadTensors(const std::vector<tensor_info_t> info);
 
-  std::vector<TensorBaseData> ReadTensorsBase(std::vector<tensor_info_t> info);
+  std::vector<TensorBaseData> ReadTensorsBase(const std::vector<tensor_info_t> info);
 
-  std::vector<TensorStatData> ReadTensorsStat(std::vector<tensor_info_t> info);
+  std::vector<TensorStatData> ReadTensorsStat(const std::vector<tensor_info_t> info);
 
-  std::string GetVersion();
+  std::string GetVersion() const;
 };
 
 #endif  // DEBUG_DBG_SERVICES_H_
