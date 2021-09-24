@@ -162,6 +162,28 @@ void PackNHWCToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int 
   }
 }
 
+void PackNHWCToNC8HW8NotAlignedFp16(const float16_t *src, float16_t *dst, const int batch, const int plane,
+                                    const int channel) {
+  int tmp = DOWN_DIV(channel, C8NUM);
+  int c_res = channel - tmp * C8NUM;
+  int c8_block = tmp * plane * C8NUM;
+  for (int b = 0; b < batch; b++) {
+    int batch_oc_offset = b * plane * channel;
+    for (int k = 0; k < plane; k++) {
+      int src_kernel_offset = batch_oc_offset + k * channel;
+      int dst_kernel_offset = batch_oc_offset + k * C8NUM;
+      int c = 0;
+      for (; c <= channel - C8NUM; c += C8NUM) {
+        float16x8_t src_data = vld1q_f16(src + src_kernel_offset + c);
+        vst1q_f16(dst + dst_kernel_offset + c * plane, src_data);
+      }
+      for (; c < channel; ++c) {
+        dst[batch_oc_offset + c8_block + k * c_res + c - tmp * C8NUM] = src[src_kernel_offset + c];
+      }
+    }
+  }
+}
+
 void PackNCHWToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {

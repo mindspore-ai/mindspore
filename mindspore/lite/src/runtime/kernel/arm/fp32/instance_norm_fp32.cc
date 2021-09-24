@@ -90,6 +90,11 @@ int InstanceNormCPUKernel::Run() {
     CHECK_NULL_RETURN(tmp_src_data_);
     PackNHWCToNC4HW4Fp32(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
 #endif
+  } else if (in_tensors_[0]->format() == NHWC) {
+    tmp_src_data_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(in_tensors_[0]->Size()));
+    CHECK_NULL_RETURN(tmp_src_data_);
+    PackNHWCToNC4HW4Fp32(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
+    in_tensors_[0]->set_format(NC4HW4);
   } else {
     tmp_src_data_ = src_data_;
   }
@@ -97,10 +102,8 @@ int InstanceNormCPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InstanceNormRun error error_code[" << ret << "]";
   }
-  if (in_tensors_[0]->format() == NC4HW4) {
-#if (!defined(ENABLE_AVX) && !defined(ENABLE_ARM64))
+  if (tmp_src_data_ != src_data_) {
     FreeTmpBuffer();
-#endif
   }
   return ret;
 }
