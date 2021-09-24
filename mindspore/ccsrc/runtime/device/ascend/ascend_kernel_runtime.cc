@@ -255,7 +255,6 @@ void AscendKernelRuntime::ReportProfilingData() {
 void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_LOG(INFO) << "Ascend finalize start";
 #ifdef ENABLE_DEBUGGER
-  MS_EXCEPTION_IF_NULL(debugger_);
   if (debugger_ && debugger_->debugger_enabled()) {
     debugger_->SetTrainingDone(true);
     bool ret = debugger_->SendMetadata(false);
