@@ -2109,16 +2109,23 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
 
 
 class UnsortedSegmentMin(PrimitiveWithCheck):
-    """
+    r"""
     Computes the minimum of a tensor along segments.
 
     The following figure shows the calculation process of UnsortedSegmentMin:
 
     .. image:: api_img/UnsortedSegmentMin.png
 
+    .. math::
+
+        \text { output }_i=\text{min}_{j \ldots} \text { data }[j \ldots]
+
+    where :math:`min` over tuples :math:`j...` such that :math:`segment_ids[j...] == i`.
+
     Note:
         If the segment_id i is absent in the segment_ids, then output[i] will be filled with
         the maximum value of the input_x's type.
+        The `segment_ids` must be non-negative tensor.
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
@@ -2172,12 +2179,18 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
 
 
 class UnsortedSegmentMax(PrimitiveWithCheck):
-    """
+    r"""
     Computes the maximum along segments of a tensor.
 
     The following figure shows the calculation process of UnsortedSegmentMax:
 
     .. image:: api_img/UnsortedSegmentMax.png
+
+    .. math::
+
+        \text { output }_i=\text{max}_{j \ldots} \text { data }[j \ldots]
+
+    where :math:`max` over tuples :math:`j...` such that :math:`segment_ids[j...] == i`.
 
     Note:
         If the segment_id i is absent in the segment_ids, then output[i] will be filled with
@@ -2201,6 +2214,13 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> # case 1: Only have two num_segments, where is 0 and 1, and segment_ids=[0, 1, 1]
+        >>> # num_segments = 2 indicates that there are two types of segment_id,
+        >>> # the first number '0' in [0, 1, 1] indicates input_x[0],
+        >>> # the second number '1' in [0, 1, 1] indicates input_x[1],
+        >>> # the third number '1' in [0, 1, 1] indicates input_x[2],
+        >>> # input_x[0], which is [1, 2, 3] will not be compared to other segment_id.
+        >>> # Only the same segment_id will be compared.
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
         >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
         >>> num_segments = 2
@@ -2209,6 +2229,56 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         >>> print(output)
         [[1. 2. 3.]
          [4. 5. 6.]]
+        >>>
+        >>> # case 2: The segment_ids=[0, 0, 1, 1].
+        >>> # [1, 2, 3] will compare with [4, 2, 0],
+        >>> # and [4, 5, 6] will compare with [4, 2, 1].
+        >>> input_x = Tensor(np.array([[1, 2, 3], [4, 2, 0], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
+        >>> segment_ids = Tensor(np.array([0, 0, 1, 1]).astype(np.int32))
+        >>> num_segments = 2
+        >>> unsorted_segment_max = ops.UnsortedSegmentMax()
+        >>> output = unsorted_segment_max(input_x, segment_ids, num_segments)
+        >>> print(input_x.shape)
+            (4, 3)
+        >>> print(output)
+            [[4. 2. 3.]
+             [4. 5. 6.]]
+        >>> # case 3: If the input_x have three dimensions even more, what will happen?
+        >>> # The shape of input_x is (2, 4, 3),
+        >>> # and the length of segment_ids should be the same as the first dimension of input_x.
+        >>> # Because the segment_ids are different, input_x[0] will not be compared to input_x[1].
+        >>> input_x = Tensor(np.array([[[1, 2, 3], [4, 2, 0], [4, 5, 6], [4, 2, 1]],
+        >>>                            [[1, 2, 3], [4, 2, 0], [4, 5, 6], [4, 2, 1]]]).astype(np.float32))
+        >>> segment_ids = Tensor(np.array([0, 1]).astype(np.int32))
+        >>> num_segments = 2
+        >>> unsorted_segment_max = ops.UnsortedSegmentMax()
+        >>> output = unsorted_segment_max(input_x, segment_ids, num_segments)
+        >>> print(input_x.shape)
+            (2, 4, 3)
+        >>> print(output)
+            [[[1. 2. 3.]
+              [4. 2. 0.]
+              [4. 5. 6.]
+              [4. 2. 1.]]
+             [[1. 2. 3.]
+              [4. 2. 0.]
+              [4. 5. 6.]
+              [4. 2. 1.]]]
+        >>> # case 4: It has the same input with the 3rd case.
+        >>> # Because num_segments is equal to 2, there are two segment_ids, but currently only one 0 is used.
+        >>> # the segment_id i is absent in the segment_ids, then output[i] will be filled with
+        >>> # the smallest possible value of the input_x's type.
+        >>> segment_ids = Tensor(np.array([0, 0]).astype(np.int32))
+        >>> output = unsorted_segment_max(input_x, segment_ids, num_segments)
+        >>> print(output)
+            [[[ 1.0000000e+00  2.0000000e+00  3.0000000e+00]
+              [ 4.0000000e+00  2.0000000e+00  0.0000000e+00]
+              [ 4.0000000e+00  5.0000000e+00  6.0000000e+00]
+              [ 4.0000000e+00  2.0000000e+00  1.0000000e+00]]
+             [[-3.4028235e+38 -3.4028235e+38 -3.4028235e+38]
+              [-3.4028235e+38 -3.4028235e+38 -3.4028235e+38]
+              [-3.4028235e+38 -3.4028235e+38 -3.4028235e+38]
+              [-3.4028235e+38 -3.4028235e+38 -3.4028235e+38]]]
     """
 
     @prim_attr_register
