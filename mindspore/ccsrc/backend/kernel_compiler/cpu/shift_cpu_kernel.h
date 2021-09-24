@@ -42,12 +42,13 @@ class ShiftCpuKernel : public CPUKernel {
   // slice info
   AxisIterator axisIterator_{};
 
-  size_t copy_src_begin_{0};
-  size_t copy_dst_begin_{0};
-  size_t copy_size_{0};
+  // set type to int64_t to avoid computation signed and unsigned values
+  int64_t copy_src_begin_{0};
+  int64_t copy_dst_begin_{0};
+  int64_t copy_size_{0};
 
-  size_t fill_begin_{0};
-  size_t fill_size_{0};
+  int64_t fill_begin_{0};
+  int64_t fill_size_{0};
 };
 
 MS_REG_CPU_KERNEL_T(

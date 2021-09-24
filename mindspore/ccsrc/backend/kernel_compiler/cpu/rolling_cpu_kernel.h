@@ -50,7 +50,7 @@ class RollingCpuKernel : public CPUKernel {
   void RollingBoundsCalculate();
   void MethodSwitch();
 
-  int64_t window_{0};
+  int32_t window_{0};
   int64_t min_periods_{0};
   bool center_{false};
   std::string closed_{};
