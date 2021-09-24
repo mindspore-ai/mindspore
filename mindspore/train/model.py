@@ -907,7 +907,7 @@ class Model:
 
         Args:
             predict_data (Optional[Tensor, list[Tensor], tuple[Tensor]]): The predict data, can be a single tensor,
-            a list of tensor, or a tuple of tensor.
+                a list of tensor, or a tuple of tensor.
 
         Returns:
             Tensor, array(s) of predictions.
