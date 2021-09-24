@@ -38,33 +38,31 @@ class CustomAddKernelGpu : public kernel::Kernel {
   CustomAddKernelGpu(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
                      const schema::Primitive *primitive, const mindspore::Context *ctx,
                      const std::string &build_options, bool fp16_enable)
-      : Kernel(inputs, outputs, primitive, ctx), build_options_(build_options), fp16_enable_(fp16_enable) {
-    opencl_runtime_ = new registry::opencl::OpenCLRuntimeWrapper();
-  }
+      : Kernel(inputs, outputs, primitive, ctx), build_options_(build_options), fp16_enable_(fp16_enable) {}
   ~CustomAddKernelGpu() override { FreeWeight(); }
   // Prepare will be called during graph compilation
   int Prepare() override {
     const std::string kernel_name_ = "ElementAdd";
     const std::string program_name = "Arithmetic";
     std::string source = arithmetic_source;
-    if (opencl_runtime_->LoadSource(program_name, source) != kSuccess) {
+    if (opencl_runtime_.LoadSource(program_name, source) != kSuccess) {
       std::cerr << "Load source failed.";
       return lite::RET_ERROR;
     }
     std::vector<std::string> build_options_ext = {"-cl-mad-enable -cl-fast-relaxed-math -Werror"};
 
     build_options_ext.push_back(build_options_);
-    if (opencl_runtime_->BuildKernel(&kernel_, program_name, kernel_name_, build_options_ext) != kSuccess) {
+    if (opencl_runtime_.BuildKernel(&kernel_, program_name, kernel_name_, build_options_ext) != kSuccess) {
       std::cerr << "Build kernel failed.";
       return lite::RET_ERROR;
     }
 
-    auto out_shape = custom_common::GpuTensorInfo(&outputs_[0], opencl_runtime_);
+    auto out_shape = custom_common::GpuTensorInfo(&outputs_[0], &opencl_runtime_);
     local_range_ = cl::NullRange;
     global_range_ = cl::NDRange(out_shape.width, out_shape.height);
     for (int i = 0; i < inputs_.size(); ++i) {
       auto &in_tensor = inputs_.at(i);
-      custom_common::GpuTensorInfo in_shape = custom_common::GpuTensorInfo(&in_tensor, opencl_runtime_);
+      custom_common::GpuTensorInfo in_shape = custom_common::GpuTensorInfo(&in_tensor, &opencl_runtime_);
       if (in_tensor.IsConst()) {
         std::vector<char> weight(in_shape.Image2DSize, 0);
         bool src_is_fp16 = in_tensor.DataType() == mindspore::DataType::kNumberTypeFloat16;
@@ -72,7 +70,7 @@ class CustomAddKernelGpu : public kernel::Kernel {
                         in_tensor.DataType());
         DataType dtype =
           fp16_enable_ ? mindspore::DataType::kNumberTypeFloat16 : mindspore::DataType::kNumberTypeFloat32;
-        auto allocator = opencl_runtime_->GetAllocator();
+        auto allocator = opencl_runtime_.GetAllocator();
         if (allocator == nullptr) {
           std::cerr << "GetAllocator fail.";
           FreeWeight();
@@ -86,7 +84,7 @@ class CustomAddKernelGpu : public kernel::Kernel {
         }
         weight_ptrs_.push_back(weight_ptr);
         // Use API to write GPU memory
-        if (opencl_runtime_->WriteImage(weight_ptr, weight.data()) != kSuccess) {
+        if (opencl_runtime_.WriteImage(weight_ptr, weight.data()) != kSuccess) {
           std::cerr << "WriteImage fail.";
           FreeWeight();
           return lite::RET_ERROR;
@@ -98,7 +96,7 @@ class CustomAddKernelGpu : public kernel::Kernel {
 
     int arg_idx = 3;
     cl_int2 output_shape{static_cast<int>(global_range_[0]), static_cast<int>(global_range_[1])};
-    if (opencl_runtime_->SetKernelArg(kernel_, arg_idx, output_shape) != kSuccess) {
+    if (opencl_runtime_.SetKernelArg(kernel_, arg_idx, output_shape) != kSuccess) {
       std::cerr << "Set kernel arg" << arg_idx << "failed.";
       FreeWeight();
       return lite::RET_ERROR;
@@ -118,19 +116,19 @@ class CustomAddKernelGpu : public kernel::Kernel {
     auto input_0_ptr = weight_ptrs_[0] == nullptr ? inputs_[0].MutableData() : weight_ptrs_[0];
     auto input_1_ptr = weight_ptrs_[1] == nullptr ? inputs_[1].MutableData() : weight_ptrs_[1];
     int arg_idx = 0;
-    if (opencl_runtime_->SetKernelArg(kernel_, arg_idx++, input_0_ptr) != kSuccess) {
+    if (opencl_runtime_.SetKernelArg(kernel_, arg_idx++, input_0_ptr) != kSuccess) {
       std::cerr << "Set kernel arg" << arg_idx - 1 << "failed.";
       return lite::RET_ERROR;
     }
-    if (opencl_runtime_->SetKernelArg(kernel_, arg_idx++, input_1_ptr) != kSuccess) {
+    if (opencl_runtime_.SetKernelArg(kernel_, arg_idx++, input_1_ptr) != kSuccess) {
       std::cerr << "Set kernel arg" << arg_idx - 1 << "failed.";
       return lite::RET_ERROR;
     }
-    if (opencl_runtime_->SetKernelArg(kernel_, arg_idx++, outputs_[0].MutableData()) != kSuccess) {
+    if (opencl_runtime_.SetKernelArg(kernel_, arg_idx++, outputs_[0].MutableData()) != kSuccess) {
       std::cerr << "Set kernel arg" << arg_idx - 1 << "failed.";
       return lite::RET_ERROR;
     }
-    if (opencl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != kSuccess) {
+    if (opencl_runtime_.RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != kSuccess) {
       std::cerr << "Run kernel failed.";
       return lite::RET_ERROR;
     }
@@ -192,7 +190,7 @@ class CustomAddKernelGpu : public kernel::Kernel {
   cl::NDRange global_range_{cl::NullRange};
   cl::NDRange local_range_{cl::NullRange};
   std::vector<void *> weight_ptrs_;
-  registry::opencl::OpenCLRuntimeWrapper *opencl_runtime_;
+  registry::opencl::OpenCLRuntimeWrapper opencl_runtime_;
 
   int PreProcess() {
     int ret = 0;
@@ -202,7 +200,7 @@ class CustomAddKernelGpu : public kernel::Kernel {
     }
     for (auto i = 0; i < outputs_.size(); ++i) {
       auto *output = &outputs_.at(i);
-      auto img_info = custom_common::GpuTensorInfo(output, opencl_runtime_);
+      auto img_info = custom_common::GpuTensorInfo(output, &opencl_runtime_);
       auto allocator = output->allocator();
       if (allocator == nullptr) {
         std::cerr << "The output tensor of OpenCL kernel must have an allocator.";
@@ -219,7 +217,7 @@ class CustomAddKernelGpu : public kernel::Kernel {
   }
 
   void FreeWeight() {
-    auto allocator = opencl_runtime_->GetAllocator();
+    auto allocator = opencl_runtime_.GetAllocator();
     if (allocator == nullptr) {
       std::cerr << "GetAllocator fail.";
       return;
