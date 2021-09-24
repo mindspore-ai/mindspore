@@ -30,17 +30,38 @@
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
 
 namespace mindspore::kernel {
-enum class TypeID {
-  kIntID = 0,
-  kInt64ID,
-  kStrID,
-  kBoolID,
-  kFloatID,
-  kListIntID,
-  kListFloatID,
-  kListUInt64ID,
-  kListListIntID
+enum ATTR_DTYPE {
+  ATTR_INT8 = 0,
+  ATTR_UINT8 = 1,
+  ATTR_INT16 = 2,
+  ATTR_UINT16 = 3,
+  ATTR_INT32 = 4,
+  ATTR_UINT32 = 5,
+  ATTR_INT64 = 6,
+  ATTR_UINT64 = 7,
+  ATTR_FLOAT32 = 8,
+  ATTR_DOUBLE = 9,
+  ATTR_BOOL = 10,
+  ATTR_STR = 11,
+  ATTR_LIST_INT8 = 12,
+  ATTR_LIST_UINT8 = 13,
+  ATTR_LIST_INT16 = 14,
+  ATTR_LIST_UINT16 = 15,
+  ATTR_LIST_INT32 = 16,
+  ATTR_LIST_UINT32 = 17,
+  ATTR_LIST_INT64 = 18,
+  ATTR_LIST_UINT64 = 19,
+  ATTR_LIST_FLOAT32 = 20,
+  ATTR_LIST_DOUBLE = 21,
+  ATTR_LIST_BOOL = 22,
+  ATTR_LIST_STR = 23,
+  ATTR_LIST_LIST_INT64 = 24,
+  ATTR_LIST_LIST_FLOAT = 25,
+
+  // illegal type which can't be fused
+  ATTR_MAX,
 };
+
 class TbeJsonCreator {
  public:
   TbeJsonCreator() = default;
