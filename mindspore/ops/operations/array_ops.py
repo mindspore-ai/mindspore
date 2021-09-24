@@ -526,7 +526,7 @@ class Reshape(PrimitiveWithInfer):
             if dim_prod <= 0:
                 raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
                                  f"the value of 'input_shape' is {shape_v}. "
-                                 f"The product of shape of 'input_shape' should > 0, but got {dim_prod}.")
+                                 f"The product of 'input_shape' should > 0, but got {dim_prod}.")
             if neg_index != -1:
                 shape_v[neg_index] = int(arr_prod / dim_prod)
                 dim_prod *= shape_v[neg_index]
@@ -534,8 +534,8 @@ class Reshape(PrimitiveWithInfer):
                 raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
                                  f"the value of 'input_shape' value is {shape_v}. "
                                  f"The product of the shape of 'input_x' should be equal to product of 'input_shape', "
-                                 f"but product of the shape of 'input_x' is {arr_prod} "
-                                 f", product of 'input_shape' is {dim_prod}.")
+                                 f"but product of the shape of 'input_x' is {arr_prod}, "
+                                 f"product of 'input_shape' is {dim_prod}.")
             value = None
             if x['value'] is not None:
                 value = Tensor(x['value'].asnumpy().reshape(shape_v))
@@ -1081,9 +1081,9 @@ class Split(PrimitiveWithCheck):
             # only validate when shape fully known
             output_valid_check = x_shape[self.axis] % self.output_num
             if output_valid_check != 0:
-                raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shape}, 'axis' is {self.axis}, "
-                                 f"the shape of 'input_x' in 'axis' {self.axis} is {x_shape[self.axis]}, "
-                                 f"which must be divide exactly by 'output_num': {self.output_num}.")
+                raise ValueError(f"For '{self.name}', the specified axis of 'input_x' should be divided exactly by "
+                                 f"'output_num', but got the shape of 'input_x' in 'axis' {self.axis} is "
+                                 f"{x_shape[self.axis]}, 'output_num': {self.output_num}.")
         size_splits = [x_shape[self.axis] // self.output_num] * self.output_num
         self.add_prim_attr('size_splits', size_splits)
 
@@ -1603,7 +1603,7 @@ class InvertPermutation(PrimitiveWithInfer):
         for shp in x_shp:
             if shp:
                 x_rank = len(np.array(x_value, np.int64).shape)
-                raise ValueError(f"For \'{self.name}\', the length of 'input_x' must be 1, but got {x_rank}.")
+                raise ValueError(f"For \'{self.name}\', the dimension of 'input_x' must be 1, but got {x_rank}.")
         for i, value in enumerate(x_value):
             validator.check_value_type("input[%d]" % i, value, [int], self.name)
         z = [x_value[i] for i in range(len(x_value))]
@@ -1978,7 +1978,8 @@ class Tile(PrimitiveWithInfer):
             multiples_w = multiples_v
         elif len_sub < 0:
             raise ValueError(f"For '{self.name}', the length of 'multiples' can not be smaller than "
-                             f"the length of dimension in 'input_x'.")
+                             f"the dimension of 'input_x', but got length of 'multiples': {len(multiples_v)} "
+                             f"and dimension of 'input_x': {len(x_shp)}.")
         for i, a in enumerate(multiples_w):
             x_shp[i] *= a
         value = None
@@ -2736,7 +2737,7 @@ class Slice(PrimitiveWithInfer):
             validator.check_non_negative_int(begin_v[i], f'input begin[{i}]')
             if x_shape[i] < begin_v[i] + size_v[i]:
                 y = begin_v[i] + size_v[i]
-                raise ValueError(f"For '{self.name}', the sliced shape can not greater than origin shape, but got "
+                raise ValueError(f"For '{self.name}', the sliced shape can not be greater than origin shape, but got "
                                  f"sliced shape is {y}, and origin shape is {x_shape}.")
         return {'shape': size_v,
                 'dtype': x['dtype'],
@@ -2924,9 +2925,9 @@ class Select(Primitive):
 def _compute_slicing_length(begin, end, stride, x_shape, i):
     """Computes the length of the slicing."""
     if i >= len(x_shape):
-        raise ValueError(f"For 'StridedSlice', the index length must be less than or equal to "
-                         f"the dimension of 'input_x' when there is no new axis, but got "
-                         f"the dimension of 'input_x': {len(x_shape)} and the index length: {i}.")
+        raise ValueError(f"For 'StridedSlice', the index must be less than or equal to "
+                         f"the dimension of 'input_x', but got the dimension of 'input_x': {len(x_shape)} "
+                         f"and the index: {i}.")
     x_dim = x_shape[i]
     if stride > 0:
         # When slicing forward, convert begin and end to positive numbers.
@@ -3233,8 +3234,10 @@ class StridedSlice(PrimitiveWithInfer):
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
                     if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
                         raise IndexError(f"For '{self.name}', the 'strides' cannot be negative number and "
-                                         f"'begin' should be in [-{x_shape[i]}, {x_shape[i]}) when shrink axis, "
-                                         f"but got 'strides': {stride}, 'begin': {begin}.")
+                                         f"'begin' should be in [-{x_shape[i]}, {x_shape[i]}) "
+                                         f"when 'shrink_axis_mask' is greater than 0, "
+                                         f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, 'strides': {stride}, "
+                                         f"'begin': {begin}.")
                     j += 1
                     i += 1
                     continue
@@ -3267,8 +3270,10 @@ class StridedSlice(PrimitiveWithInfer):
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
                     if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
                         raise IndexError(f"For '{self.name}', the 'strides' cannot be negative number and "
-                                         f"'begin' should be in [-{x_shape[i]}, {x_shape[i]}) when shrink axis, "
-                                         f"but got 'strides': {stride}, 'begin': {begin}.")
+                                         f"'begin' should be in [-{x_shape[i]}, {x_shape[i]}) "
+                                         f"when 'shrink_axis_mask' is greater than 0, "
+                                         f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, 'strides': {stride}, "
+                                         f"'begin': {begin}.")
                     j += 1
                     i += 1
                     continue
@@ -3759,11 +3764,11 @@ class TensorScatterUpdate(PrimitiveWithInfer):
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
-                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
-                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
-                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
-                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to updates_shape_check, "
+                             f"where updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:] "
+                             f"but got the shape of 'update': {updates_shape}, "
+                             f"updates_shape_check: {updates_shape_check}, indices_shape: {indices_shape} and "
+                             f"input_x_shape: {input_x_shape}. Please check input_x_shape and indices_shape.")
 
         return input_x_shape
 
@@ -3844,11 +3849,11 @@ class TensorScatterAdd(PrimitiveWithInfer):
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
-                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
-                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
-                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
-                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to updates_shape_check, "
+                             f"where updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:] "
+                             f"but got the shape of 'update': {updates_shape}, "
+                             f"updates_shape_check: {updates_shape_check}, indices_shape: {indices_shape} and "
+                             f"input_x_shape: {input_x_shape}. Please check input_x_shape and indices_shape.")
 
         return input_x_shape
 
@@ -5132,11 +5137,12 @@ class SpaceToBatchND(PrimitiveWithInfer):
             padded = out_shape[i + offset] + self.paddings[i][0] + \
                      self.paddings[i][1]
             if padded % self.block_shape[i] != 0:
-                msg_ndim = "2nd" if i + 2 == 2 else "3rd"
-                raise ValueError(f"For '{self.name}', the 2nd and 3rd dimension of the output tensor should be "
-                                 f"divisible by 'block_shape', but got the {msg_ndim} dimension of output: {padded} "
-                                 f"and the {i} dimension block_shape: {self.block_shape}. Please check the "
-                                 f"official homepage for more information about the output tensor.")
+                raise ValueError(f"For '{self.name}', the padded should be divisible by 'block_shape', "
+                                 f"where padded = input_x_shape[i + 2] + paddings[i][0] + paddings[i][1], "
+                                 f"but got input_x_shape[{i + 2}]: {out_shape[i + offset]}, "
+                                 f"paddings[{i}][0]: {self.paddings[i][0]} and paddings[{i}][1]: {self.paddings[i][1]}."
+                                 f" Please check the official api documents for "
+                                 f"more information about the output tensor.")
             out_shape[i + offset] = padded // self.block_shape[i]
             block_shape_prod = block_shape_prod * self.block_shape[i]
         out_shape[0] *= block_shape_prod
@@ -5239,8 +5245,10 @@ class BatchToSpaceND(PrimitiveWithInfer):
             out_shape[i + offset] = x_block_prod - crops_sum
 
         if out_shape[0] % block_shape_prod != 0:
-            raise ValueError(f"For '{self.name}', the 0th dimension of the output tensor should be "
-                             f"divisible by block_shape_prod, but got 0th dimension of the output tensor: "
+            raise ValueError(f"For '{self.name}', the 0th dimension of the 'input_x' should be "
+                             f"divisible by block_shape_prod, where block_shape_prod = "
+                             f"'block_shape[0]' * 'block_shape[1]', "
+                             f"but got 0th dimension of the 'input_x': "
                              f"{out_shape[0]} and the block_shape_prod: {block_shape_prod}.")
         out_shape[0] = out_shape[0] // block_shape_prod
         return out_shape
@@ -6088,8 +6096,8 @@ class SearchSorted(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the 'sequence' should be 1 dimensional or "
                              f"all dimensions except the last dimension of 'sequence' "
                              f"must be the same as all dimensions except the last dimension of 'values'. "
-                             f"but got dimension of 'sequence': {sequence_shape} "
-                             f"and dimension of 'values': {values_shape}.")
+                             f"but got shape of 'sequence': {sequence_shape} "
+                             f"and shape of 'values': {values_shape}.")
         return values_shape
 
     def infer_dtype(self, sequence_dtype, values_dtype):
@@ -6166,11 +6174,11 @@ class TensorScatterMax(PrimitiveWithInfer):
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
-                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
-                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
-                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
-                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to updates_shape_check, "
+                             f"where updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:] "
+                             f"but got the shape of 'update': {updates_shape}, "
+                             f"updates_shape_check: {updates_shape_check}, indices_shape: {indices_shape} and "
+                             f"input_x_shape: {input_x_shape}. Please check input_x_shape and indices_shape.")
 
         return input_x_shape
 
@@ -6250,11 +6258,11 @@ class TensorScatterMin(PrimitiveWithInfer):
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
-                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
-                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
-                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
-                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to updates_shape_check, "
+                             f"where updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:] "
+                             f"but got the shape of 'update': {updates_shape}, "
+                             f"updates_shape_check: {updates_shape_check}, indices_shape: {indices_shape} and "
+                             f"input_x_shape: {input_x_shape}. Please check input_x_shape and indices_shape.")
 
         return input_x_shape
 
@@ -6335,11 +6343,11 @@ class TensorScatterSub(PrimitiveWithInfer):
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
         if updates_shape_check != updates_shape:
-            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to "
-                             f"the shape of updates_shape_check, but got the shape of 'update': {updates_shape},"
-                             f"and the shape of updates_shape_check: {updates_shape_check}. Please check the shape of "
-                             f"'indices' and 'input_x', they should be meeting followings formula:\n"
-                             f" updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:].")
+            raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to updates_shape_check, "
+                             f"where updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:] "
+                             f"but got the shape of 'update': {updates_shape}, "
+                             f"updates_shape_check: {updates_shape_check}, indices_shape: {indices_shape} and "
+                             f"input_x_shape: {input_x_shape}. Please check input_x_shape and indices_shape.")
 
         return input_x_shape
 

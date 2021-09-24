@@ -291,7 +291,7 @@ class Conv2d(_Conv):
 @constexpr
 def _check_input_3d(input_shape, op_name):
     if len(input_shape) != 3:
-        raise ValueError(f"For '{op_name}', the shape of input should be 3d, but got shape {input_shape}")
+        raise ValueError(f"For '{op_name}', the dimension of input should be 3d, but got {len(input_shape)}.")
 
 
 class Conv1d(_Conv):
@@ -480,7 +480,7 @@ class Conv1d(_Conv):
 @constexpr
 def _check_input_5dims(input_shape, op_name):
     if len(input_shape) != 5:
-        raise ValueError(f"For '{op_name}', the input shape should be 5 dimensions, but got shape {input_shape}.")
+        raise ValueError(f"For '{op_name}', the dimension of input should be 5d, but got {len(input_shape)}.")
 
 
 class Conv3d(_Conv):

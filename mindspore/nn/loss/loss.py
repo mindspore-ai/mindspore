@@ -1203,9 +1203,9 @@ class BCEWithLogitsLoss(LossBase):
         super(BCEWithLogitsLoss, self).__init__()
         self.bce_with_logits_loss = P.BCEWithLogitsLoss(reduction=reduction)
         if isinstance(weight, Parameter):
-            raise TypeError(f"For '{self.cls_name}', the 'weight' can not be a parameter.")
+            raise TypeError(f"For '{self.cls_name}', the 'weight' can not be a Parameter.")
         if isinstance(pos_weight, Parameter):
-            raise TypeError(f"For '{self.cls_name}', the 'pos_weight' can not be a parameter.")
+            raise TypeError(f"For '{self.cls_name}', the 'pos_weight' can not be a Parameter.")
         self.weight = weight
         self.pos_weight = pos_weight
         self.ones = P.OnesLike()
@@ -1228,7 +1228,7 @@ class BCEWithLogitsLoss(LossBase):
 
 @constexpr
 def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
-    '''Internal function, used to check whether the dimension of logits and labels meets the requirements。'''
+    '''Internal function, used to check whether the dimension of logits and labels meets the requirements.'''
     msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
     if logits_nidm < 2 or logits_nidm > 4:
         raise ValueError(f"{msg_prefix} dimensions of 'logits' should be in [2, 4], but got"
@@ -1248,8 +1248,9 @@ def _check_channel_and_shape(logits, labels, prime_name=None):
     if logits == 1:
         raise ValueError(f"{msg_prefix} single channel prediction is not supported, but got {logits}.")
     if labels not in (1, logits):
-        raise ValueError(f"{msg_prefix} 'labels' must have a channel or the same shape as 'logits'."
-                         f"If it has a channel, it should be the range [0, C-1], where C is the number of classes "
+        raise ValueError(f"{msg_prefix} channel of 'labels' must be one or the 'labels' must be the same as that of "
+                         f"the 'logits'. If there is only one channel, its value should be in the range [0, C-1], "
+                         f"where C is the number of classes "
                          f"inferred from 'logits': C={logits}, but got 'labels': {labels}.")
 
 

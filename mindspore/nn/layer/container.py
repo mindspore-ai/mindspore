@@ -155,7 +155,7 @@ class SequentialCell(Cell):
                     cell.update_parameters_name(name + ".")
                     self._is_dynamic_name.append(False)
             else:
-                raise TypeError(f"For '{self.__class__.__name__}', Cells must be list or orderedDict, "
+                raise TypeError(f"For '{self.__class__.__name__}', the 'args[0]' must be list or orderedDict, "
                                 f"but got {type(cells).__name__}")
         else:
             for index, cell in enumerate(args):
@@ -369,7 +369,7 @@ class CellList(_CellListBase, Cell):
         cls_name = self.__class__.__name__
         if not isinstance(cells, list):
             raise TypeError(f"For '{cls_name}', the new cells wanted to append "
-                            f"should be list of subcells.")
+                            f"should be instance of list.")
         prefix, _ = _get_prefix_and_index(self._cells)
         for cell in cells:
             if _valid_cell(cell, cls_name):
