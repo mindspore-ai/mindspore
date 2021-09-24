@@ -187,6 +187,7 @@ using RangeCost = CastCost;
 using SplitCost = CastCost;
 using ScatterUpdateCost = CastCost;
 using ResizeBilinearCost = CastCost;
+using UniformRealCost = CastCost;
 
 class SqrtCost : public CastCost {
  public:
