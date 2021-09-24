@@ -56,15 +56,25 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   bool keep_dims = reduce_op->keep_dims();
-
+  out_format_ = tensorrt_in_tensors_[0].format_;
+  nvinfer1::ITensor *shuffler_input = tensorrt_in_tensors_[0].trt_tensor_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
-    out_format_ = Format::NHWC;
-  } else {
-    out_format_ = tensorrt_in_tensors_[0].format_;
+      !SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
+    if (tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+      // NCHW->NHWC
+      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+      if (transpose_layer == nullptr) {
+        MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
+      }
+      transpose_layer->setName((op_name_ + "_transpose_in").c_str());
+      shuffler_input = transpose_layer->getOutput(0);
+      out_format_ = Format::NHWC;
+    } else {
+      MS_LOG(WARNING) << "input tensor format needs check: " << op_name_;
+    }
   }
 
-  nvinfer1::ITensor *reduce_input = tensorrt_in_tensors_[0].trt_tensor_;
+  nvinfer1::ITensor *reduce_input = shuffler_input;
   // 4 dims support reduce at each axis
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims != DIMENSION_4D) {
     nvinfer1::IShuffleLayer *unsqueeze_layer = network->addShuffle(*tensorrt_in_tensors_[0].trt_tensor_);
@@ -124,11 +134,9 @@ uint32_t ReduceTensorRT::GetAxis() {
     MS_LOG(WARNING) << "not int data type";
   }
   int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
-  bool need_transpose_axis =
-    (out_format_ == Format::NCHW) && (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D);
   uint32_t base = std::pow(2, in_tensors_[0].Shape().size());
   for (int i = 0; i < axis_tensor.ElementNum(); i++) {
-    int format_axis_data = need_transpose_axis ? ConvertAxisFromNHWC2NCHW(*axis_data) : *axis_data;
+    int format_axis_data = *axis_data;
     reduceAxis |= (base - (1u << format_axis_data));
     axis_data++;
   }

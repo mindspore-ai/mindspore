@@ -41,6 +41,8 @@ class ShuffleTensorRT : public TensorRTOp {
   int AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int InferReshapeDims(nvinfer1::Dims input_dims, nvinfer1::Dims *reshape_dims);
+
+  Format out_format_ = Format::NHWC;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SHUFFLE_TENSORRT_H_
