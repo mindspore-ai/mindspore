@@ -319,8 +319,13 @@ def test_deterministic_python_seed_multi_thread():
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
     seed_original = ds.config.get_seed()
+    mem_original = ds.config.get_enable_shared_mem()
     ds.config.set_num_parallel_workers(3)
     ds.config.set_seed(0)
+
+    # Disable shared memory to save shm in CI
+    ds.config.set_enable_shared_mem(False)
+
     # when we set the seed all operations within our dataset should be deterministic
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -357,6 +362,7 @@ def test_deterministic_python_seed_multi_thread():
     # Restore original configuration values
     ds.config.set_num_parallel_workers(num_parallel_workers_original)
     ds.config.set_seed(seed_original)
+    ds.config.set_enable_shared_mem(mem_original)
 
 
 def test_auto_num_workers_error():
