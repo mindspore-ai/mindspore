@@ -60,13 +60,12 @@ class RankCpuKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  size_t rank_size_;
   // shape info
   AxisIterator axisIterator_{};
   // parameters
   size_t axis_{0};
   rank::Method method_{rank::MethodNotDefined};
-  std::function<void(int, int, int, const AxisIterator &, const size_t *, float *)> func_;
+  std::function<void(int, int, int, const AxisIterator &, const size_t *const, float *const)> func_;
   rank::NaOption option_{rank::OptionNotDefined};
   bool ascending_{true};
   bool pct_{false};
