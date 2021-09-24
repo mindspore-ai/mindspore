@@ -243,7 +243,7 @@ bool Common::SaveStringToFile(const std::string filename, const std::string stri
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return false;
   }
-  auto real_path = FileUtils::GetRealPath(common::SafeCStr(filename));
+  auto real_path = CreatePrefixPath(filename);
   if (!real_path.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. path=" << filename;
     return false;
