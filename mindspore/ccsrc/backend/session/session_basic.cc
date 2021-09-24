@@ -240,7 +240,6 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
       tensor->set_sync_status(kNeedSyncDeviceToHost);
     }
   }
-  tensor->SetNeedWait(true);
   tensor->SetIsGraphOutput();
   (*tensor_to_node)[tensor] = node_output_pair;
   return tensor;
