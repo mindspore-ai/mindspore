@@ -41,9 +41,9 @@ class Scheduler {
  public:
   Scheduler(const InnerContext *ctx, const mindspore::Context *ms_ctx, Model *src_model,
             std::vector<Tensor *> *src_tensors, const std::vector<Tensor *> &input_tensors,
-            const std::vector<Tensor *> &output_tensors, bool is_train_session,
-            std::map<std::string, TypeId> *executions, std::shared_ptr<Delegate> delegate = nullptr,
-            int delegate_device_type = -1)
+            const std::vector<Tensor *> &output_tensors, bool is_train_session, int *is_infershape,
+            bool *is_control_flow, std::map<std::string, TypeId> *executions,
+            std::shared_ptr<Delegate> delegate = nullptr, int delegate_device_type = -1)
       : context_(ctx),
         ms_context_(ms_ctx),
         src_model_(src_model),
@@ -51,6 +51,8 @@ class Scheduler {
         inputs_(input_tensors),
         outputs_(output_tensors),
         is_train_session_(is_train_session),
+        is_control_flow_(is_control_flow),
+        is_infershape_(is_infershape),
         delegate_(delegate),
         delegate_device_type_(delegate_device_type),
         execution_plan_(executions) {}
@@ -102,8 +104,12 @@ class Scheduler {
   // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph
   static void FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels);
   // vector<LiteKernel/SubGraphKernel> --> vector<SubGraphKernel>
-  int ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel, std::vector<kernel::LiteKernel *> *dst_kernel,
-                         std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);
+  int ConstructNormalSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
+                               std::vector<kernel::LiteKernel *> *dst_kernel,
+                               std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);
+
+  int ConstructSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernel);
+
   // create subgraph_kernel from a vector of kernel
   std::vector<kernel::LiteKernel *> ScheduleMainSubGraphToKernels();
   kernel::LiteKernel *SchedulePartialToSubGraphKernel(const int &subgraph_index);
@@ -147,6 +153,8 @@ class Scheduler {
   std::vector<size_t> graph_output_node_indexes_;
   std::map<int, OpParameter *> op_parameters_;
   bool is_train_session_ = false;
+  bool *is_control_flow_ = nullptr;
+  int *is_infershape_ = nullptr;
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::map<kernel::Kernel *, const schema::Primitive *> primitives_;
   std::shared_ptr<Delegate> delegate_ = nullptr;

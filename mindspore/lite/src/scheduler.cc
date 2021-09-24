@@ -241,15 +241,17 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
 }
 
 int Scheduler::SchedulePreProcess() {
+  schema_version_ = reinterpret_cast<LiteModel *>(src_model_)->GetSchemaVersion();
+
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
 
-  int infershape_ret = InferSubGraphShape(kMainSubGraphIndex);
-  if (infershape_ret != RET_OK && infershape_ret != RET_INFER_INVALID) {
+  *is_infershape_ = InferSubGraphShape(kMainSubGraphIndex);
+  if (*is_infershape_ != RET_OK && *is_infershape_ != RET_INFER_INVALID) {
     MS_LOG(ERROR) << "op infer shape failed.";
-    return infershape_ret;
+    return *is_infershape_;
   }
 
-  if (context_->enable_parallel_ && infershape_ret != RET_INFER_INVALID) {
+  if (context_->enable_parallel_ && *is_infershape_ != RET_INFER_INVALID) {
 #ifndef AUTO_PARALLEL_CLIP
     auto search_sub_graph =
       SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
@@ -275,14 +277,27 @@ int Scheduler::CheckCpuValid(std::vector<kernel::LiteKernel *> *dst_kernels) {
   return RET_OK;
 }
 
+int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *dst_kernels) {
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  if (IsControlFlowParttern(*dst_kernels)) {
+    *is_control_flow_ = true;
+    return ConstructControlFlowMainGraph(dst_kernels);
+  }
+#endif
+
+  *is_control_flow_ = false;
+  auto src_kernel = *dst_kernels;
+  dst_kernels->clear();
+  std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
+  return ConstructNormalSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
+}
+
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   int check_input_ret = CheckInputParam(dst_kernels);
   if (check_input_ret != RET_OK) {
     MS_LOG(ERROR) << "CheckInputParam failed! ret: " << check_input_ret;
     return check_input_ret;
   }
-
-  schema_version_ = reinterpret_cast<LiteModel *>(src_model_)->GetSchemaVersion();
 
   int ret = SchedulePreProcess();
   if (ret != RET_OK) {
@@ -307,7 +322,6 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "Repalce delegate kernels failed.";
     return ret;
   }
-  context_->thread_pool()->SetSpinCountMinValue();
 #endif
 
   ret = CheckCpuValid(dst_kernels);
@@ -322,26 +336,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   RuntimePass(context_, dst_kernels, src_tensors_);
 #endif
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-  if (IsControlFlowParttern(*dst_kernels)) {
-    ret = ConstructControlFlowMainGraph(dst_kernels);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "ConstructControlFlowMainGraph failed.";
-      return ret;
-    }
-  } else {
-#endif
-    auto src_kernel = *dst_kernels;
-    dst_kernels->clear();
-    std::map<const kernel::LiteKernel *, bool> is_kernel_finish;
-    ret = ConstructSubGraphs(src_kernel, dst_kernels, &is_kernel_finish);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "ConstructSubGraphs failed.";
-      return ret;
-    }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
+  ret = ConstructSubGraphs(dst_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConstructSubGraphs failed.";
+    return ret;
   }
-#endif
 
   ret = InitKernels(*dst_kernels);
   if (ret != RET_OK) {
@@ -456,6 +455,9 @@ int Scheduler::InitDelegateKernels(std::vector<kernel::LiteKernel *> *dst_kernel
   if (delegate_ == nullptr) {
     return RET_OK;
   }
+
+  /* set delegate spin count */
+  context_->thread_pool()->SetSpinCountMinValue();
 
   /* external delegate */
   if (delegate_device_type_ == -1) {
@@ -1521,9 +1523,9 @@ kernel::LiteKernel *FindAllSubGraphKernels(const std::vector<kernel::LiteKernel 
 }
 }  // namespace
 
-int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
-                                  std::vector<kernel::LiteKernel *> *dst_kernel,
-                                  std::map<const kernel::LiteKernel *, bool> *is_kernel_finish) {
+int Scheduler::ConstructNormalSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
+                                        std::vector<kernel::LiteKernel *> *dst_kernel,
+                                        std::map<const kernel::LiteKernel *, bool> *is_kernel_finish) {
   if (src_kernel.empty()) {
     return RET_OK;
   }

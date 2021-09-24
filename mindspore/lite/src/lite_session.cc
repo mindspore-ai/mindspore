@@ -31,6 +31,7 @@
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
 #include "src/weight_decoder.h"
+#include "src/runtime/optimize_allocator.h"
 #ifdef ENABLE_MINDRT
 #include "src/mindrt_executor.h"
 #endif
@@ -430,7 +431,7 @@ int LiteSession::IsolateOutputTensor() {
     }
     src_tensor->set_ref_count(1);
 
-    graph_output_map_.insert(std::make_pair(new_tensor, src_tensor));
+    isolate_graph_output_map_.insert(std::make_pair(new_tensor, src_tensor));
 
     /* set new tensor for calculate */
     for (auto subgraph : kernels_) {
@@ -471,6 +472,8 @@ int LiteSession::IsolateOutputTensor() {
 }
 
 void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels) {
+  // For reducing runtime RAM
+  // free pack-op weight because pack-op will not access origin weight in runtime
   for (auto *kernel : kernels) {
     MS_ASSERT(kernel != nullptr);
     if (kernel->subgraph_type() == kernel::kNotSubGraph) {
@@ -493,29 +496,14 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
 }
 
 int LiteSession::CompileGraph(Model *model) {
-  bool expected = false;
-  if (!is_running_.compare_exchange_strong(expected, true)) {
-    MS_LOG(ERROR) << "Not support multi-threading";
-    return RET_ERROR;
-  }
-  // model.MetaGraph ==> kernels
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "The input model is nullptr.";
+  auto ret = PreCheck(model);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "schedule check failed: " << ret;
     is_running_.store(false);
-    return RET_PARAM_INVALID;
-  }
-  if (model->buf == nullptr) {
-    MS_LOG(ERROR) << "The input model buf is nullptr.";
-    is_running_.store(false);
-    return RET_PARAM_INVALID;
-  }
-  if (!reinterpret_cast<LiteModel *>(model)->ModelVerify()) {
-    MS_LOG(ERROR) << "wrong model input, please check";
-    is_running_.store(false);
-    return RET_ERROR;
+    return ret;
   }
 
-  auto ret = ConvertTensors(model);
+  ret = ConvertTensors(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvertTensors failed: " << ret;
     is_running_.store(false);
@@ -523,14 +511,10 @@ int LiteSession::CompileGraph(Model *model) {
   }
   InitGraphInputTensors(model);
   InitGraphOutputTensors(model);
-#ifndef ENABLE_FP16
-  if (context_->GetCpuInfo().enable_float16_) {
-    MS_LOG(WARNING) << unsupport_fp16_log;
-  }
-#endif
+
   // scheduler kernels
-  Scheduler scheduler(context_, ms_context_, model, &tensors_, inputs_, outputs_, is_train_session_, execution_plan_,
-                      delegate_, delegate_device_type_);
+  Scheduler scheduler(context_, ms_context_, model, &tensors_, inputs_, outputs_, is_train_session_, &is_infershape_,
+                      &is_control_flow_, execution_plan_, delegate_, delegate_device_type_);
   scheduler.SetupSchedulerCb(std::move(sched_cb_));
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
@@ -552,32 +536,21 @@ int LiteSession::CompileGraph(Model *model) {
     return RET_OK;
   }
 
-#ifdef ENABLE_MINDRT
-  ret = IsolateOutputTensor();
+  ret = InitExecutor();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Isolate output tensor failed.";
-    is_running_.store(false);
-    return ret;
-  }
-  executor_ = new (std::nothrow) MindrtExecutor(&graph_output_map_);
-#else
-  executor_ = new (std::nothrow) Executor();
-#endif
-  if (executor_ == nullptr) {
-    MS_LOG(ERROR) << "New Executor failed";
-    is_running_.store(false);
-    return RET_ERROR;
-  }
-
-  ret = executor_->Prepare(this->kernels_, this->inputs_, this->outputs_, context_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare executor failed: " << ret;
+    MS_LOG(ERROR) << "InitExecutor failed: " << ret;
     is_running_.store(false);
     return ret;
   }
 
-  // For reducing runtime RAM, free packop weight because packop will pack weight and will not access to origin weight
   FreePackOpWeight(kernels_);
+
+  ret = OptimizeRuntimeAllocator();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "OptimizeRuntimeAllocator failed.";
+    is_running_.store(false);
+    return ret;
+  }
 
   is_running_.store(false);
   return RET_OK;
@@ -824,11 +797,17 @@ LiteSession::~LiteSession() {
     tensor = nullptr;
   }
 
-  for (auto item : graph_output_map_) {
+  for (auto item : isolate_graph_output_map_) {
     auto isolate_output_tensor = item.first;
     isolate_output_tensor->set_data(nullptr);
     delete isolate_output_tensor;
     isolate_output_tensor = nullptr;
+  }
+
+  for (auto map : isolate_input_map_) {
+    auto isolate_input_tensor = map.first;
+    isolate_input_tensor->set_data(nullptr);
+    delete isolate_input_tensor;
   }
 
   // Tensor * in input_map output_map are freed in tensors
@@ -836,7 +815,7 @@ LiteSession::~LiteSession() {
   output_node_map_.clear();
   output_tensor_map_.clear();
   input_vec_.clear();
-  graph_output_map_.clear();
+  isolate_graph_output_map_.clear();
 
   delete this->executor_;
   this->executor_ = nullptr;
@@ -983,6 +962,157 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     return ret;
   }
   is_running_.store(false);
+  return RET_OK;
+}
+
+int LiteSession::PreCheck(Model *model) {
+  bool expected = false;
+  if (!is_running_.compare_exchange_strong(expected, true)) {
+    MS_LOG(ERROR) << "Not support multi-threading";
+    return RET_ERROR;
+  }
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "The input model is nullptr.";
+    return RET_PARAM_INVALID;
+  }
+  if (model->buf == nullptr) {
+    MS_LOG(ERROR) << "The input model buf is nullptr.";
+    return RET_PARAM_INVALID;
+  }
+  if (!reinterpret_cast<LiteModel *>(model)->ModelVerify()) {
+    MS_LOG(ERROR) << "wrong model input, please check";
+    return RET_ERROR;
+  }
+
+#ifndef ENABLE_FP16
+  if (context_->GetCpuInfo().enable_float16_) {
+    MS_LOG(WARNING) << unsupport_fp16_log;
+  }
+#endif
+  return RET_OK;
+}
+
+int LiteSession::InitExecutor() {
+  int ret = RET_OK;
+#ifdef ENABLE_MINDRT
+  ret = IsolateOutputTensor();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Isolate output tensor failed.";
+    return ret;
+  }
+  executor_ = new (std::nothrow) MindrtExecutor(&isolate_graph_output_map_, &isolate_input_map_);
+#else
+  executor_ = new (std::nothrow) Executor();
+#endif
+  if (executor_ == nullptr) {
+    MS_LOG(ERROR) << "New Executor failed";
+    return RET_ERROR;
+  }
+
+  ret = executor_->Prepare(kernels_, inputs_, outputs_, context_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare executor failed: " << ret;
+    return ret;
+  }
+  return RET_OK;
+}
+
+int LiteSession::OptimizeRuntimeAllocator() {
+  return RET_OK;
+
+  if (is_infershape_ != RET_OK) {
+    MS_LOG(ERROR) << "Not support opt allocator in runtime-infershape.";
+    return RET_OK;
+  }
+  if (is_control_flow_ == true) {
+    MS_LOG(ERROR) << "Not support opt allocator in control flow model.";
+    return RET_OK;
+  }
+
+  AllocatorPtr default_allocator = context_->allocator;
+  OptAllocatorPtr optimize_allocator = std::make_shared<OptimizeAllocator>();
+  std::unordered_map<lite::Tensor *, int> ref_count;
+
+  for (auto subgraph : kernels_) {
+    if (subgraph->desc().arch != kernel::KERNEL_ARCH::kCPU) {
+      continue;
+    }
+
+    for (auto in_tensor : subgraph->in_tensors()) {
+      auto iter = isolate_input_map_.find(in_tensor);
+      if (isolate_input_map_.end() == iter) break;
+      auto src_t = iter->second;
+
+      if (src_t->data_type() == in_tensor->data_type()) {
+        in_tensor->set_allocator(src_t->allocator());
+        ref_count[src_t] += in_tensor->init_ref_count();
+        continue;
+      }
+
+      if (src_t->allocator() == default_allocator) {
+        src_t->set_allocator(optimize_allocator);
+        ref_count[src_t] = src_t->init_ref_count();
+        optimize_allocator->MallocTensorData(src_t);
+      }
+      if (ref_count[in_tensor]-- <= 0) {
+        optimize_allocator->FreeTensorData(in_tensor);
+      }
+    }
+
+    auto kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
+    for (auto kernel : kernel_list) {
+      /* malloc for output */
+      for (auto tensor : kernel->out_tensors()) {
+        if (tensor->IsGraphOutput() == true) {
+          continue;
+        }
+        if (tensor->allocator() != default_allocator) {
+          continue;
+        }
+        tensor->set_allocator(optimize_allocator);
+        ref_count[tensor] = tensor->init_ref_count();
+        optimize_allocator->MallocTensorData(tensor);
+      }
+
+      /* free input after run */
+      for (auto tensor : kernel->in_tensors()) {
+        if (tensor->allocator() != optimize_allocator) {
+          continue;
+        }
+        if (ref_count[tensor]-- <= 0) {
+          optimize_allocator->FreeTensorData(tensor);
+        }
+      }
+    }
+  }
+
+  auto ret = OptAllocatorSetData(optimize_allocator);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "using optimize allocator failed.";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int LiteSession::OptAllocatorSetData(OptAllocatorPtr opt_allocator) {
+  void *data = opt_allocator->MallocOptData();
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "malloc optimize data failed.";
+    return RET_ERROR;
+  }
+  int8_t *int8_data = reinterpret_cast<int8_t *>(data);
+  auto offset_map = opt_allocator->GetOffsetMap();
+
+  for (auto tensor : tensors_) {
+    if (tensor->allocator() != opt_allocator) {
+      continue;
+    }
+    auto offset_iter = offset_map.find(tensor);
+    if (offset_iter == offset_map.end()) {
+      return RET_ERROR;
+    }
+    tensor->set_data(int8_data + offset_iter->second);
+  }
   return RET_OK;
 }
 

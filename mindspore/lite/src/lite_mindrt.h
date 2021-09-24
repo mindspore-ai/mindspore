@@ -51,11 +51,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 #endif
   }
   ~LiteOpActor() override {
-    for (auto map : isolate_input_map_) {
-      auto isolate_input_tensor = map.first;
-      isolate_input_tensor->set_data(nullptr);
-      delete isolate_input_tensor;
-    }
     delete call_node_;
     delete partial_node_;
   }
@@ -69,7 +64,8 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     }
     return ret;
   }
-  int LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors);
+  int LiteActorInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
+                    std::unordered_map<Tensor *, Tensor *> *input_map);
   int ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                        const std::vector<std::vector<int>> &dims);
 
@@ -93,7 +89,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   std::unordered_map<kernel::LiteKernel *, AID> subgraph_to_actor_{};
   std::vector<OpDataPtr<Tensor>> outputs_data_{};
   std::vector<Tensor *> inputs_data_{};
-  std::unordered_map<Tensor *, Tensor *> isolate_input_map_{}; /* <calculate-tensor,  src-input-tensor> */
+  std::unordered_map<Tensor *, Tensor *> *isolate_input_map_ = nullptr; /* real obj in session */
 
  private:
   void ReplaceNodeInTensor(kernel::LiteKernel *kernel, Tensor *old_tensor, Tensor *new_tensor);

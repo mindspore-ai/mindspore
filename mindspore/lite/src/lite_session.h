@@ -28,6 +28,7 @@
 #include "include/lite_session.h"
 #include "include/model.h"
 #include "src/inner_context.h"
+#include "src/runtime/optimize_allocator.h"
 #include "schema/model_generated.h"
 #include "src/executor.h"
 #include "src/tensor.h"
@@ -125,11 +126,18 @@ class LiteSession : public session::LiteSession {
   static void FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels);
 
  private:
+  int PreCheck(Model *model);
+
+  int InitExecutor();
+
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);
 
   int InitGPURuntime();
 
   bool IsIsolatedSubGraph(kernel::LiteKernel *kernel);
+
+  int OptimizeRuntimeAllocator();
+  int OptAllocatorSetData(OptAllocatorPtr opt_allocator);
 
  protected:
   InnerContext *context_ = nullptr;
@@ -150,7 +158,11 @@ class LiteSession : public session::LiteSession {
   std::vector<std::string> output_tensor_names_;
   // graph output tensor name -- output tensor
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
-  std::unordered_map<Tensor *, Tensor *> graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
+
+  // graph isolate tensors
+  std::unordered_map<Tensor *, Tensor *> isolate_graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
+  std::unordered_map<Tensor *, Tensor *> isolate_input_map_;        /* <calculate-tensor,  src-input-tensor> */
+
   Executor *executor_ = nullptr;
   Model *model_ = nullptr;
   std::atomic<bool> is_running_ = {false};
@@ -159,6 +171,8 @@ class LiteSession : public session::LiteSession {
 #if GPU_OPENCL
   opencl::OpenCLRuntimeInnerWrapper *opencl_runtime_wrapper_{nullptr};
 #endif
+  int is_infershape_{RET_ERROR};
+  bool is_control_flow_ = false;
   std::unique_ptr<SchedulerCb> sched_cb_;
   std::shared_ptr<Delegate> delegate_ = nullptr;
   int delegate_device_type_ = -1;  // -1: not specified; 0: CPU; 1: GPU; 2: NPU
