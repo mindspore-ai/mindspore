@@ -654,13 +654,13 @@ class Model:
         When setting pynative mode or CPU, the training process will be performed with dataset not sink.
 
         Note:
-            If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
+            If dataset_sink_mode is True, data will be sent to device. If the device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
-            When dataset_sink_mode is True, step_end method of the Callback class will be executed when
+            When dataset_sink_mode is True, the step_end method of the Callback class will be executed when
             the epoch_end method is called.
-            If sink_size > 0, each epoch the dataset can be traversed unlimited times until you get sink_size
-            elements of the dataset. Next epoch continues to traverse from the end position of the previous traversal.
-            The interface builds the computational graphs and then executes the computational graphs.
+            If sink_size > 0, each epoch of the dataset can be traversed unlimited times until you get sink_size
+            elements of the dataset. The next epoch continues to traverse from the end position of the previous
+            traversal. The interface builds the computational graphs and then executes the computational graphs.
             However, when the 'model.build' is executed first, it only performs the graphs execution.
 
         Args:
@@ -832,9 +832,9 @@ class Model:
         Configure to pynative mode or CPU, the evaluating process will be performed with dataset non-sink mode.
 
         Note:
-            If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
+            If dataset_sink_mode is True, data will be sent to device. If the device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
-            When dataset_sink_mode is True, step_end method of the Callback class will be executed when
+            When dataset_sink_mode is True, the step_end method of the Callback class will be executed when
             the epoch_end method is called.
 
         Args:
