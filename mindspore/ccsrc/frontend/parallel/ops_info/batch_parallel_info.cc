@@ -183,13 +183,7 @@ void BatchParallelInfo::ReplaceNodeInputOrAttrs() {
 
   auto cnode = cnode_;
   MS_EXCEPTION_IF_NULL(cnode);
-  size_t input_num = cnode->size();
-  for (auto input : cnode->inputs()) {
-    if (HasAbstractMonad(input)) {
-      --input_num;
-    }
-  }
-  if (input_num != 2) {
+  if (cnode->size() != 2) {
     MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 2";
   }
 
