@@ -72,7 +72,7 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
   // Must be the execution order: send result --> send data --> send control, avoid the illegal timing problem.
   // 1.Send graph output result.
-  SendResult(context);
+  SendOutputResult(context);
 
   // 2.Send output data.
   const auto &output_device_tensors = buffers_.front();
@@ -89,12 +89,7 @@ void DataSourceActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
 
   // 3.Send output control.
-  if (output_control_arrows_.size() > 0) {
-    auto source_aid = const_cast<AID *>(&GetAID());
-    for (auto &output_control : output_control_arrows_) {
-      Async(output_control, &OpActor::RunOpControl, source_aid, context);
-    }
-  }
+  SendOutputControl(context);
 
   // 4.Send recorder info.
   if (recorder_aid_ != nullptr) {
@@ -202,14 +197,6 @@ void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *const co
   SendOutput(context);
 }
 
-void DeviceQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const context) {
-  for (const auto &result_arrow : output_result_arrows_) {
-    MS_EXCEPTION_IF_NULL(result_arrow);
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, data_kernel_, result_arrow->from_output_index_,
-          result_arrow->to_input_index_, context);
-  }
-}
-
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) {
   if (recorder_aid_ != nullptr) {
     MS_EXCEPTION_IF_NULL(data_kernel_);
@@ -298,17 +285,6 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
   // the other is to ensure the execution order and avoid the illegal memory timing problem.
   SendMemoryFreeReq(context);
   SendOutput(context);
-}
-
-void HostQueueDataSourceActor::SendResult(OpContext<DeviceTensor> *const context) {
-  for (const auto &result_arrow : output_result_arrows_) {
-    MS_EXCEPTION_IF_NULL(result_arrow);
-    if (IntToSize(result_arrow->from_output_index_) >= data_nodes_.size()) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
-    }
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, data_nodes_[result_arrow->from_output_index_], 0,
-          result_arrow->to_input_index_, context);
-  }
 }
 
 size_t HostQueueDataSourceActor::FetchNodePosition(const AnfNodePtr &data_node) const {

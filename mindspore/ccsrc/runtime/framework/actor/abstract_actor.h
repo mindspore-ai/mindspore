@@ -55,6 +55,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
   // Erase input data and input controls when finish actor running.
   void EraseInput(const OpContext<DeviceTensor> *const context);
+  // Send the output result by output_result_arrows_.
+  void SendOutputResult(OpContext<DeviceTensor> *const context) const;
+  // Send the output control by output_control_arrows_.
+  void SendOutputControl(OpContext<DeviceTensor> *const context) const;
 
   KernelTransformType type_;
 
@@ -64,7 +68,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // The id of recorder actor. Send message to it for recording info.
   const AID *recorder_aid_;
 
-  // The output result arrows of graph output.
+  // The output nodes and output result arrows of graph output.
+  std::vector<AnfNodePtr> output_nodes_;
   std::vector<DataArrowPtr> output_result_arrows_;
 
   // The dependent device tensor stores,  the dependent expression is pair<index, AnfNode>.

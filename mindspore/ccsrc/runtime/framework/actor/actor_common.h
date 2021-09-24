@@ -51,6 +51,8 @@ enum class KernelTransformType {
   kDeviceDataSourceActor,
   kHostDataSourceActor,
   kKernelActor,
+  // Super kernel actor represents the sink executing of graph which is the combination of kernels.
+  kSuperKernelActor,
   kCopyActor,
   kLoopCountActor,
   kOutputActor,

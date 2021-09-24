@@ -422,11 +422,7 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *const context) const {
 
   // Must be the execution order: send result --> send data --> send control, avoid the illegal timing problem.
   // 1.Send graph output result.
-  for (const auto &result_arrow : output_result_arrows_) {
-    MS_EXCEPTION_IF_NULL(result_arrow);
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, kernel_, result_arrow->from_output_index_,
-          result_arrow->to_input_index_, context);
-  }
+  SendOutputResult(context);
 
   // 2.Send output data.
   for (auto &output_data : output_data_) {
@@ -435,12 +431,7 @@ void KernelActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   }
 
   // 3.Send output control.
-  if (output_control_arrows_.size() > 0) {
-    auto source_aid = const_cast<AID *>(&GetAID());
-    for (auto &output_control : output_control_arrows_) {
-      Async(output_control, &OpActor::RunOpControl, source_aid, context);
-    }
-  }
+  SendOutputControl(context);
 
   // 4.Send recorder info.
   if (recorder_aid_ != nullptr) {
