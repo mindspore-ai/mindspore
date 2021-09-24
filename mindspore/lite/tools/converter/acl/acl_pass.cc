@@ -16,6 +16,7 @@
 
 #include "tools/converter/acl/acl_pass.h"
 #include <set>
+#include <map>
 #include "tools/converter/ops/ops_def.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/tensor_util.h"
@@ -42,6 +43,7 @@ constexpr auto kCustomNodeName = "custom_0";
 constexpr auto kNCHWFormat = "NCHW";
 constexpr auto kToNHWCFormatPass = "ToNHWCFormat";
 constexpr auto kToNCHWFormatPass = "ToNCHWFormat";
+constexpr auto kInferShapePass = "InferShapePass";
 constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
@@ -150,7 +152,7 @@ STATUS AclPass::PreProcGraph(const FuncGraphPtr &func_graph) {
     return lite::RET_OK;
   }
   // The format of nodes (cnode, parameter, val) must be nchw due to interface of convert om
-  if (!lite::RunOptimizerPass(func_graph, {kToNCHWFormatPass, kDelRedundantTranspose})) {
+  if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
     MS_LOG(ERROR) << "To nchw format success.";
     return lite::RET_ERROR;
   }
@@ -399,7 +401,6 @@ STATUS AclPass::SetCustomOutputs(const FuncGraphPtr &func_graph, const CNodePtr 
     return lite::RET_ERROR;
   }
   custom_node->AddAttr(kOutputNames, MakeValue(graph_output_names_));
-
   TypeId type = lite::acl::GetTypeFromNode(graph_outputs_[0]);
   if (graph_outputs_.size() == 1) {
     auto abstract_tensor = lite::CreateTensorAbstract(graph_output_dims_[0], type);
@@ -417,15 +418,29 @@ STATUS AclPass::SetCustomOutputs(const FuncGraphPtr &func_graph, const CNodePtr 
   return lite::RET_OK;
 }
 
+void AclPass::SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim) {
+  // add output_shape attr
+  std::string output_dim_str;
+  for (const auto &item : graph_output_dims_) {
+    output_dim_str += std::to_string(item.size()) + ",";
+    for (const auto &val : item) {
+      output_dim_str += std::to_string(val) + ",";
+    }
+  }
+  std::vector<uint8_t> output_dim_char(output_dim_str.begin(), output_dim_str.end());
+  std::map<std::string, std::vector<uint8_t>> attrs = {{lite::acl::kOutputShapes, output_dim_char}};
+  prim->set_attr(attrs);
+}
+
 CNodePtr AclPass::CreateCustomNode(const FuncGraphPtr &func_graph) {
-  auto prim = std::make_unique<mindspore::ops::Custom>();
+  auto prim = std::make_shared<mindspore::ops::Custom>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "New custom op failed.";
     return nullptr;
   }
   prim->set_type(kCustomPrimTypeACL);
   auto graph_input = func_graph->get_inputs();
-  CNodePtr custom_node = func_graph->NewCNode(std::shared_ptr<ops::PrimitiveC>(prim.release()), graph_input);
+  CNodePtr custom_node = func_graph->NewCNode(prim, graph_input);
   if (custom_node == nullptr) {
     MS_LOG(ERROR) << "Custom cnode failed.";
     return nullptr;
@@ -437,6 +452,7 @@ CNodePtr AclPass::CreateCustomNode(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Set custom outputs failed.";
     return nullptr;
   }
+  SetCustomAttrs(prim);
   return custom_node;
 }
 

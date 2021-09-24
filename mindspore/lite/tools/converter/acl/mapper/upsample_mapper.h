@@ -13,27 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ACL_CUSTOM_INFER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_ACL_CUSTOM_INFER_H_
 
-#include <vector>
-#include <string>
-#include "include/kernel_interface.h"
+#ifndef ACL_MAPPER_PRIMITIVE_UPSAMPLE_MAPPER_H
+#define ACL_MAPPER_PRIMITIVE_UPSAMPLE_MAPPER_H
+
+#include "tools/converter/acl/mapper/primitive_mapper.h"
+#include "tools/converter/acl/mapper/tbe_op_def.h"
+#include "ops/resize.h"
 
 namespace mindspore {
 namespace lite {
-class CustomInterface : public mindspore::kernel::KernelInterface {
+using mindspore::ops::kNameResize;
+
+class UpsampleMapper : public PrimitiveMapper {
  public:
-  CustomInterface() {}
+  UpsampleMapper() : PrimitiveMapper(acl::kNameUpsample) {}
 
-  ~CustomInterface() = default;
+  ~UpsampleMapper() override = default;
 
-  Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-               const mindspore::schema::Primitive *primitive) override;
+  STATUS Mapper(const CNodePtr &cnode) override;
 
  private:
-  Status GetCustomAttr(char *buf, uint32_t buf_size, const mindspore::schema::Custom *op, const std::string &attr_name);
+  STATUS AttrAdjust(const PrimitivePtr &src_prim, const ValueNodePtr &val_node);
+  STATUS RemoveConstInput(const CNodePtr &cnode);
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
+#endif  // ACL_MAPPER_PRIMITIVE_TRANSPOSE_MAPPER_H

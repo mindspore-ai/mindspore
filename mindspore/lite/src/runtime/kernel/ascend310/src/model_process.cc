@@ -545,7 +545,8 @@ STATUS ModelProcess::ConstructTensor(std::vector<mindspore::MSTensor> *outputs) 
   for (size_t i = 0; i < output_infos_.size(); ++i) {
     std::string lite_output_name = (*outputs)[i].Name();
     if (lite_output_name != names[i]) {
-      MS_LOG(INFO) << "Lite output name: " << lite_output_name << "; Om output name: " << names[i];
+      MS_LOG(DEBUG) << "Lite output name: " << lite_output_name << "; model output name: " << names[i]
+                    << "shape: " << VectorToString(shapes[i]);
     }
     (*outputs)[i].SetFormat(Format::NCHW);
     (*outputs)[i].SetDataType(data_types[i]);
@@ -571,6 +572,18 @@ STATUS ModelProcess::ConstructTensor(std::vector<mindspore::MSTensor> *outputs) 
     }
   }
   return lite::RET_OK;
+}
+
+std::string ModelProcess::VectorToString(const std::vector<int64_t> &val) {
+  std::string str;
+  auto size = val.size();
+  for (size_t i = 0; i < size; i++) {
+    str += std::to_string(val[i]);
+    if (i != size - 1) {
+      str += ",";
+    }
+  }
+  return str;
 }
 }  // namespace acl
 }  // namespace mindspore::kernel

@@ -38,6 +38,8 @@ struct AclModelOptionCfg {
   std::string buffer_optimize;
   std::string insert_op_config_file_path;
 };
+
+constexpr auto kOutputShapes = "outputs_shape";
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

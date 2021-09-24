@@ -34,6 +34,7 @@ class ConcatMapper : public PrimitiveMapper {
 
  private:
   STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode);
+  STATUS RenameNode(const CNodePtr &cnode);
 };
 }  // namespace lite
 }  // namespace mindspore

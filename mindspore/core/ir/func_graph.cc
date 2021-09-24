@@ -218,11 +218,11 @@ void FuncGraph::ClearNodes() { nodes_.clear(); }
 void FuncGraph::AddNode(const AnfNodePtr &node) { nodes_.add(node); }
 
 void FuncGraph::DropNode(const AnfNodePtr &node) {
-  nodes_.erase(node);
   if (node == nullptr) {
     MS_LOG(ERROR) << "Node is nullptr";
     return;
   }
+  nodes_.erase(node);
   auto graph = node->func_graph();
   if (node->isa<Parameter>()) {
     (void)parameters_.erase(std::remove(parameters_.begin(), parameters_.end(), node), parameters_.end());

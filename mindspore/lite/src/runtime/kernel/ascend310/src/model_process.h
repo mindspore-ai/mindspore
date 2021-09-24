@@ -74,6 +74,7 @@ class ModelProcess {
   STATUS ResetOutputSize();
   size_t GetDynamicDims(const std::vector<AclTensorInfo> &);
   STATUS ProcDynamicShape(const std::vector<mindspore::MSTensor> &inputs, size_t dynamic_nums);
+  std::string VectorToString(const std::vector<int64_t> &);
 
   void DestroyInputsDataset();
   void DestroyInputsDataMem();

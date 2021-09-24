@@ -15,7 +15,9 @@
  */
 
 #include "tools/converter/acl/mapper/concat_mapper.h"
+#include <string>
 #include "tools/converter/acl/mapper/primitive_mapper_register.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -24,6 +26,11 @@ constexpr auto kNameInputNums = "inputNums";
 }
 
 STATUS ConcatMapper::Mapper(const CNodePtr &cnode) {
+  CHECK_NULL_RETURN(cnode);
+  if (RenameNode(cnode) != RET_OK) {
+    MS_LOG(ERROR) << "Concat rename failed.";
+    return RET_ERROR;
+  }
   if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
     MS_LOG(ERROR) << "Concat mapper failed.";
     return RET_ERROR;
@@ -32,7 +39,6 @@ STATUS ConcatMapper::Mapper(const CNodePtr &cnode) {
 }
 
 STATUS ConcatMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(value_node);
@@ -45,6 +51,17 @@ STATUS ConcatMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode) {
   if (num > 1) {
     prim->AddAttr(kNameInputNums, MakeValue(num - 1));
   }
+  return lite::RET_OK;
+}
+
+STATUS ConcatMapper::RenameNode(const CNodePtr &cnode) {
+  const std::string kNamePercent = "%";
+  std::string name = cnode->fullname_with_scope();
+  std::string::size_type pos = 0;
+  while ((pos = name.find(kNamePercent)) != name.npos) {
+    name = name.replace(pos, kNamePercent.size(), "");
+  }
+  cnode->set_fullname_with_scope(name);
   return lite::RET_OK;
 }
 
