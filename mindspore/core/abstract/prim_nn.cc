@@ -343,38 +343,6 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   return std::make_shared<AbstractTensor>(x_type, output_shape_ptr);
 }
 
-AbstractBasePtr InferImplBiasAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  constexpr size_t args_size = 2;
-  CheckArgsSize(op_name, args_spec_list, args_size);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto bias = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  ShapeVector x_shape = x->shape()->shape();
-  MS_EXCEPTION_IF_NULL(bias);
-  MS_EXCEPTION_IF_NULL(bias->shape());
-  ShapeVector bias_shape = bias->shape()->shape();
-  ShapeVector x_min_shape = x->shape()->min_shape();
-  ShapeVector x_max_shape = x->shape()->max_shape();
-  auto data_format_ptr = primitive->GetAttr("format");
-  int64_t data_format = Format::NCHW;
-  if (data_format_ptr != nullptr) {
-    data_format = GetAndCheckFormat(data_format_ptr);
-  }
-  auto x_channel = data_format == Format::NHWC ? x_shape[x_shape.size() - 1] : x_shape[1];
-  // Additional check for dynamic shape
-  // Last infer will be real shape values
-  bool x_not_dyn = std::all_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value != Shape::SHP_ANY; });
-  if (x_not_dyn && bias_shape[0] != x_channel) {
-    MS_LOG(EXCEPTION) << "BiasAdd shape error, data format is " << data_format
-                      << ", got bias_shape[0]: " << bias_shape[0] << ", x_channel: " << x_channel << ".";
-  }
-  CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
-  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x_shape, x_min_shape, x_max_shape));
-}
-
 AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_spec_list) {
   // Inputs: at least one tensor(y_backprop)
