@@ -15,9 +15,6 @@
  */
 
 #include "runtime/device/launch_mul.h"
-
-#include <vector>
-#include <memory>
 #include "abstract/utils.h"
 #include "backend/session/single_kernel_graph.h"
 #include "frontend/parallel/context.h"

@@ -15,8 +15,6 @@
  */
 
 #include "runtime/device/ascend/ascend_launch_mul.h"
-
-#include <memory>
 #include "abstract/utils.h"
 #include "runtime/mem.h"
 #include "backend/session/single_kernel_graph.h"

@@ -16,9 +16,6 @@
 
 #include "runtime/device/launch_kernel.h"
 
-#include <vector>
-#include <memory>
-
 namespace mindspore::device {
 std::vector<kernel::AddressPtr> LaunchKernel::ObtainKernelAddress(const std::vector<size_t> &list,
                                                                   std::vector<uint8_t *> *addr) {

@@ -15,9 +15,6 @@
  */
 
 #include "runtime/device/ascend/ascend_launch_atomic_clean.h"
-
-#include <memory>
-#include <vector>
 #include "abstract/utils.h"
 #include "backend/session/single_kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
