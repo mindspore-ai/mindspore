@@ -272,7 +272,9 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
     return lite::RET_ERROR;
   }
   auto input_quant_params = quant_param_holder->get_input_quant_params();
-  for (size_t m = 0; m < input_quant_params.size(); m++) {
+  // unmod node may make input size diff input quant params size
+  auto input_size = inputs.size() > input_quant_params.size() ? input_quant_params.size() : inputs.size();
+  for (size_t m = 0; m < input_size; m++) {
     for (auto inputQuantParam : input_quant_params[m]) {
       lite::LiteQuantParam quant_arg{};
       quant_arg.scale = inputQuantParam.scale;

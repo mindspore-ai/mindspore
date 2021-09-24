@@ -107,8 +107,19 @@ int ReduceBaseCPUKernel::Init() {
       MS_LOG(ERROR) << "input axes invalid.";
       return RET_ERROR;
     }
-    CHECK_NULL_RETURN(axes_tensor->data());
-    memcpy(axes_, axes_tensor->data(), axes_tensor->Size());
+    if (axes_tensor->data() == nullptr) {
+      if (reduce_param->keep_dims_) {
+        num_axes_ = in_tensors_.at(0)->shape().size();
+        for (auto i = 0; i < num_axes_; i++) {
+          axes_[i] = i;
+        }
+      } else {
+        MS_LOG(ERROR) << "while axes data is nullptr,keep_dims need true.";
+        return RET_ERROR;
+      }
+    } else {
+      memcpy(axes_, axes_tensor->data(), axes_tensor->Size());
+    }
   } else {
     num_axes_ = reduce_param->num_axes_;
     memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
