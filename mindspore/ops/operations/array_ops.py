@@ -33,6 +33,7 @@ from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_
 from .. import signature as sig
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
+from ..._checkparam import _check_3d_int_or_tuple
 from ...common import dtype as mstype
 from ...common._decorator import deprecated
 from ...common.parameter import Parameter
@@ -6569,3 +6570,82 @@ class ScatterElements(Primitive):
         """Initialize ScatterElements"""
         validator.check_value_type("axis", axis, [int], self.name)
         self.init_prim_io_names(inputs=['data', 'indices', 'updates'], outputs=['y'])
+
+
+class ExtractVolumePatches(Primitive):
+    """
+    Extract patches from input and put them in the "depth" output dimension. 3D extension of extract_image_patches.
+
+    Args:
+        kernel_size (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
+            The size of the sliding window for each dimension of input. Must be: [1, 1, k_d, k_h, k_w] or
+            [k_d, k_h, k_w]. If k_d = k_h = k_w, you can enter an integer.
+        strides (Union[int, tuple[int], list[int]]): A list of ints which's length is 3 or 5.
+            How far the centers of two consecutive patches are in input. Must be: [1, 1, s_d, s_h, s_w] or
+            [s_d, s_h, s_w]. If s_d = s_h = s_w, you can enter an integer.
+        padding (str): A string from: "SAME", "VALID". The type of padding algorithm to use.
+
+    Inputs:
+        - **input_x** (Tensor) - A Tensor. Must be one of the following types: float16, float32.
+          5-D Tensor with shape :math:`(x_n, x_c, x_d, x_h, x_w)`.
+
+    Outputs:
+        Tensor, has the same type as input.
+        If padding is VALID, the shape is :math:`(x_n, k_d * k_h * k_w * x_c, 1 + (x_d - k_d) / s_d,
+        1 + (x_h - k_h) / s_h, 1 + (x_w - k_w) / s_w)`; if padding is SAME, the shape is :math:`(
+        x_n, k_d * k_h * k_w * x_c, (x_d + s_d - 1) / s_d, (x_h + s_h - 1) / s_h, (x_w + s_w - 1) / s_w)`.
+
+    Raises:
+        TypeError: If dtype of input_x is neither float16 nor float32.
+        TypeError: If kernel_size or strides is not a list, a tuple or a int.
+        TypeError: If input_x is not a tensor.
+        TypeError: If padding is not str.
+        ValueError: If the length of kernel_size is neither 3 nor 5 and kernel_size is not an integer.
+        ValueError: If the length of strides is neither 3 nor 5 and strides is not an integer.
+        ValueError: If padding is neither "VALID" nor "SAME".
+        ValueError: If elements of kernel_size or strides are not positive integer.
+        ValueError: If input_x is not a tensor in dimension 5.
+        ValueError: If input_x's shape has zero.
+        ValueError: If one of kernel_size or strides' first two numbers is not 1.
+        ValueError: If padding = "VALID" and input - kernel_size is less than 0 in d, h or w dimension.
+        ValueError: If padding = "SAME" and :math:`padding_needed = ((input_x + strides - 1) / strides - 1) *
+                    strides + kernelz_size - input` is less than 0 in d, h or w dimension.
+        ValueError: If x_h is not 1 or x_w is not 1 and x_w + padding_needed - k_w - s_w is less than 0.
+        ValueError: If x_d * x_h * x_w is greater than 2048.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Example:
+        >>> kernel_size = (1, 1, 2, 2, 2)
+        >>> strides = (1, 1, 1, 1, 1)
+        >>> padding = "VALID"
+        >>> input_x = P.Reshape()(Tensor(np.arange(1, 28), mstype.float16), (1, 1, 3, 3, 3))
+        >>> output_y = P.ExtractVolumePatches(kernel_size, strides, padding)(input_x)
+        >>> print(output_y.shape)
+        (1, 8, 2, 2, 2)
+    """
+
+    @prim_attr_register
+    def __init__(self, kernel_size, strides, padding):
+        validator.check_value_type("kernel_size", kernel_size, (int, list, tuple), self.name)
+        validator.check_value_type("strides", strides, (int, list, tuple), self.name)
+        if isinstance(kernel_size, (list, tuple)):
+            kernel_size = tuple(kernel_size)
+            if len(kernel_size) == 5:
+                validator.check_int(kernel_size[0], 1, Rel.EQ, "kernel_size[0]", self.name)
+                validator.check_int(kernel_size[1], 1, Rel.EQ, "kernel_size[1]", self.name)
+        if isinstance(strides, (list, tuple)):
+            strides = tuple(strides)
+            if len(strides) == 5:
+                validator.check_int(strides[0], 1, Rel.EQ, "strides[0]", self.name)
+                validator.check_int(strides[1], 1, Rel.EQ, "strides[1]", self.name)
+        self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name,
+                                                  allow_five=True, ret_five=True, greater_zero=True)
+        self.strides = _check_3d_int_or_tuple("strides", strides, self.name,
+                                              allow_five=True, ret_five=True, greater_zero=True)
+        self.add_prim_attr("kernel_size", self.kernel_size)
+        self.add_prim_attr("strides", self.strides)
+        validator.check_value_type("padding_dtype", padding, (str), self.name)
+        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
+        self.add_prim_attr("padding", self.padding)
