@@ -62,5 +62,6 @@
 #include "frontend/parallel/ops_info/matmul_dds_info.h"
 #include "frontend/parallel/ops_info/dsd_matmul_info.h"
 #include "frontend/parallel/ops_info/uniform_real_info.h"
+#include "frontend/parallel/ops_info/resizebilinear_info.h"
 
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_HEAD_FILES_H_
