@@ -55,7 +55,7 @@ class CompileGraph {
 
   virtual ~CompileGraph() = default;
 
-  InstSet Run(const FuncGraphPtr &func_graph, bool push_weight = true);
+  InstSet Run(const FuncGraphPtr &func_graph);
   bool IsCut(const AnfNodePtr &node);
   void Push(const AnfNodePtr &node);
   void Tie(const AnfNodePtr &n1, const AnfNodePtr &n2) { slots_[n2] = slots_[n1]; }
@@ -77,22 +77,21 @@ class CompileGraph {
   }
 
  protected:
-  void PushParameters(const FuncGraphPtr &func_graph);
-  void PushInputs(const FuncGraphPtr &graph);
+  virtual void PushParameters(const FuncGraphPtr &func_graph);
   bool Compile(const FuncGraphPtr &func_graph);
   int64_t LinConvert(const FuncGraphPtr &func_graph, const GraphSegmentPtr &segment, const std::string &target = "");
   int64_t InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);
-  int64_t AddCall(const FuncGraphPtr &graph, const CNodePtr &node);
+  virtual int64_t AddCall(const FuncGraphPtr &graph, const CNodePtr &node);
   void AddPadStack(int64_t param_height);
   void AddTailCall(const AnfNodePtr &fn, size_t size);
-  void AddPartial(const CNodePtr &node);
+  virtual void AddPartial(const CNodePtr &node);
   void AddMakeTuple(const CNodePtr &node);
   void AddSwitch(const CNodePtr &node);
   void AddSwitchLayer(const CNodePtr &node);
   void AddReturn(const CNodePtr &node);
   void AddPrimitive(const CNodePtr &node, const PrimitivePtr &prim);
-  void AddInput(const AnfNodePtr &node);
-  void AddExternal(const LinConvertResult &result);
+  virtual void AddInput(const AnfNodePtr &node);
+  virtual void AddExternal(const LinConvertResult &result);
   void AddInst(const Instruction &inst, const int64_t &arg);
   void AddInst(const Instruction &inst, const ValuePtr &arg);
   void AddInst(const Instruction &inst, const VectorRef &args);
@@ -122,7 +121,7 @@ class CompileGraphs {
     mapping_.clear();
   }
 
-  virtual void Compile(const FuncGraphPtr &func_graph);
+  void Compile(const FuncGraphPtr &func_graph);
   FinalVMPtr Link();
   FinalVMPtr CompileAndLink(const FuncGraphPtr &func_graph);
 
