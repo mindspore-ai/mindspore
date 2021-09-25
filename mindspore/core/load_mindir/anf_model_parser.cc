@@ -77,7 +77,7 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const std::unordered_map<s
   std::stack<std::string> rules;
   std::stack<P> value;
   int count = 0;
-  for (size_t i = 0; i < str.length(); i++) {
+  for (int i = 0; i < static_cast<int>(str.length()); i++) {
     if (str[i] == '[') {
       rules.push("[");
     } else if (str[i] == ']') {
@@ -283,7 +283,8 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   std::string initial_data = parameter_proto.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_buf);
-  auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
+  auto ret = memcpy_s(tensor_data_buf, static_cast<size_t>(tensor_info->data().nbytes()), initial_data.data(),
+                      initial_data.size());
   if (ret != 0) {
     MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
     return false;
@@ -536,7 +537,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
         ValuePtr res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
         const std::string &op_type = prim->name();
         if (!IsLite()) {
-          (void)CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &res);
+          CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &res);
         }
         prim->AddAttr(attr_name, res);
         break;
@@ -576,7 +577,8 @@ bool MSANFModelParser::ObtainValueNodeInTensorForm(const std::string &value_node
   MS_EXCEPTION_IF_NULL(tensor_info);
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+  auto ret =
+    memcpy_s(tensor_data_buf, static_cast<size_t>(tensor_info->data().nbytes()), tensor_buf.data(), tensor_buf.size());
   if (ret != 0) {
     MS_LOG(ERROR) << "Obtain ValueNode in TensorForm occur memcpy_s error.";
     return false;
@@ -604,7 +606,12 @@ bool MSANFModelParser::ObtainValueNodeInTupleTensorForm(const std::string &value
     tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
     const std::string &tensor_buf = attr_tensor.raw_data();
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-    memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+    auto ret = memcpy_s(tensor_data_buf, static_cast<size_t>(tensor_info->data().nbytes()), tensor_buf.data(),
+                        tensor_buf.size());
+    if (ret != 0) {
+      MS_LOG(ERROR) << "Obtain ValueNode in TupleTensorForm occur memcpy_s error.";
+      return false;
+    }
     tensor_vec.push_back(tensor_info);
   }
   auto new_value_node = NewValueNode(MakeValue(tensor_vec));
@@ -703,7 +710,10 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
       }
       if ((value_pos = ref_attr_name.find("Tuple[value")) != std::string::npos && attr_proto.tensors_size() > 1) {
         MS_LOG(INFO) << "Build TupleTensor ValueNode for primitive.";
-        ObtainValueNodeInTupleTensorForm(value_node_name, attr_proto);
+        if (!ObtainValueNodeInTupleTensorForm(value_node_name, attr_proto)) {
+          MS_LOG(ERROR) << "Obtain valuenode in tuple tensor Form failed. ";
+          return false;
+        }
         break;
       }
       ObtainCNodeAttrInScalarForm(attr_proto, &multi_value_map);
@@ -945,10 +955,6 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
 bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph,
                                                const mind_ir::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  if (importProto.output_size() < 0 || importProto.output_size() > INT_MAX) {
-    MS_LOG(ERROR) << "importProto.output_size is : " << importProto.output_size();
-    return false;
-  }
   std::vector<AnfNodePtr> inputs;
   if (importProto.output_size() > 1) {
     inputs.clear();
@@ -998,11 +1004,6 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
 bool MSANFModelParser::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
                                            const mind_ir::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  if (importProto.node_size() < 0 || importProto.node_size() > INT_MAX) {
-    MS_LOG(ERROR) << "importProto.node_size is : " << importProto.node_size();
-    return false;
-  }
-  MS_LOG(DEBUG) << "The node size : " << importProto.node_size();
   CNodePtr cnode_ptr = nullptr;
   for (int i = 0; i < importProto.node_size(); ++i) {
     const mind_ir::NodeProto &node_proto = importProto.node(i);
