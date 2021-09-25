@@ -900,7 +900,10 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
           return *this;
         }
         UpdateDataOpDesc(it, op);
-
+        if (HasAbstractMonad(it)) {
+          MS_LOG(INFO) << it->DebugString() << " is a monad parameter, skip.";
+          continue;
+        }
         MS_LOG(INFO) << "add input " << it->ToString() << ", index " << index;
         (void)std::static_pointer_cast<Data>(op)->set_attr_index(index++);
         inputs.push_back(*op);
@@ -945,13 +948,17 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
     MS_LOG(ERROR) << "Update data op descriptor failed! Invalid node.";
     return;
   }
-  auto normal_shape_ptr = dyn_cast<abstract::Shape>(node->Shape());
+
   std::vector<int64_t> shape;
-  if (normal_shape_ptr == nullptr) {
+  if (auto normal_shape_ptr = dyn_cast<abstract::Shape>(node->Shape()); normal_shape_ptr != nullptr) {
+    shape = normal_shape_ptr->shape();
+  } else if (auto no_shape_ptr = dyn_cast<abstract::NoShape>(node->Shape()); no_shape_ptr != nullptr) {
+    shape = {};
+  } else {
     MS_LOG(INFO) << "Invalid shape to update data op descriptor.";
     return;
   }
-  shape = normal_shape_ptr->shape();
+
   if (node->Type() == nullptr) {
     MS_LOG(INFO) << "Invalid type to update data op descriptor.";
     return;
@@ -1887,7 +1894,6 @@ OperatorPtr DfGraphConvertor::ConvertValueNode(const ValueNodePtr node) {
   auto ge_tensor = const_op->get_attr_value();
   auto ge_desc = ge_tensor.GetTensorDesc();
   (void)const_op->update_output_desc_y(ge_desc);
-
   op_cache_[node.get()] = op;
   return op_cache_[node.get()];
 }
