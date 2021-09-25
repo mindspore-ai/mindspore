@@ -91,7 +91,7 @@ DEFAULT_BACKEND = Backend("hccl")
 
 class GlobalComm:
     """
-    World communication information. The GlobalComm is a global class. The members contains: BACKEND, WORLD_COMM_GROUP.
+    World communication information. The GlobalComm is a global class. The members contain: BACKEND, WORLD_COMM_GROUP.
     """
     BACKEND = DEFAULT_BACKEND
     WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP

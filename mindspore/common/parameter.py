@@ -58,17 +58,17 @@ def init_to_value(init):
 
 class Parameter(Tensor_):
     """
-    A object holding weights of cells, after initialized `Parameter` is a subtype of `Tensor`.
+    An object holding weights of cells, after initialized `Parameter` is a subtype of `Tensor`.
 
     Note:
         In auto_parallel mode of  "semi_auto_parallel" and "auto_parallel", if init `Parameter` by
-        an `Tensor`, the type of Parameter will be `Tensor`. `Tensor`
+        a `Tensor`, the type of Parameter will be `Tensor`. `Tensor`
         will save the shape and type info of a tensor with no memory usage. The shape can be changed while
         compiling for auto-parallel. Call `init_data` will return a Tensor Parameter with initialized data.
         If there is an operator in the network that requires part of the inputs to be Parameter,
         then the Parameters as this part of the inputs are not allowed to be cast.
         It is recommended to use the default value of `name` when initialize a parameter as one attribute of a cell,
-        otherwise, the parameter name may be different than expected.
+        otherwise, the parameter name may be different from expected.
 
     Args:
         default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data,
@@ -255,7 +255,7 @@ class Parameter(Tensor_):
         """
         Get the new parameter after call the init_data.
 
-        Default is a None, If `self` is a Parameter with out data, after call the
+        Default is a None, If `self` is a Parameter without data, after call the
         `init_data` the initialized Parameter with data will be recorded here.
         """
         return self._inited_param
