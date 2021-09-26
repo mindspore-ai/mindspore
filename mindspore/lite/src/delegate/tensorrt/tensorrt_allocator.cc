@@ -63,6 +63,14 @@ void TensorRTAllocator::MarkMemValid(const std::string &name, bool isValid) {
   return;
 }
 
+bool TensorRTAllocator::GetMemIsValid(const std::string &name) {
+  if (cuda_tensor_map_.find(name) == cuda_tensor_map_.end()) {
+    MS_LOG(INFO) << "tensor :" << name << " not in cuda Allocator pool.";
+    return false;
+  }
+  return cuda_tensor_map_[name].is_valid_mem;
+}
+
 void *TensorRTAllocator::GetDevicePtr(const std::string &tensor_name) {
   if (tensor_name.empty()) {
     return nullptr;

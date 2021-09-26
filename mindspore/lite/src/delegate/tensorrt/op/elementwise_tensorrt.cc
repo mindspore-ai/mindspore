@@ -198,7 +198,8 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
 int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
   // create ITensor from MS constant tensor of index 1 - first_in_tensor_index_
   nvinfer1::ITensor *constant_input = nullptr;
-  if (this->in_tensors_[1 - first_in_tensor_index_].Shape().size() == 0) {
+  if (this->in_tensors_[1 - first_in_tensor_index_].Shape().size() == 0 ||
+      this->in_tensors_[1 - first_in_tensor_index_].ElementNum() == 1) {
     constant_input = lite::ConvertScalarToITensor(network, this->in_tensors_[first_in_tensor_index_].Shape().size(),
                                                   in_tensors_[1 - first_in_tensor_index_].Data().get(),
                                                   in_tensors_[1 - first_in_tensor_index_].DataType());

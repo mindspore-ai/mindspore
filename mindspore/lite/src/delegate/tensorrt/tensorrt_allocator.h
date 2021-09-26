@@ -51,6 +51,8 @@ class TensorRTAllocator {
 
   void MarkMemValid(const std::string &name, bool isValid);
 
+  bool GetMemIsValid(const std::string &name);
+
  private:
   std::map<std::string, CudaTensorParam> cuda_tensor_map_;
 };

@@ -122,6 +122,10 @@ std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<T *> &ops, De
       if (find(out_tensors.begin(), out_tensors.end(), out_tensor) == out_tensors.end()) {
         all_out_tensors.push_back(out_tensor);
       }
+      if (find(model->outputs().begin(), model->outputs().end(), out_tensor) != model->outputs().end() &&
+          find(out_tensors.begin(), out_tensors.end(), out_tensor) == out_tensors.end()) {
+        out_tensors.push_back(out_tensor);
+      }
     }
   }
 
