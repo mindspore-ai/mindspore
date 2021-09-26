@@ -235,6 +235,7 @@ void GPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &grap
 }
 
 void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   // Graph optimization relevant to device data format
@@ -267,6 +268,7 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
 }
 
 void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::MatMulBiasAddFusion>());
@@ -291,6 +293,7 @@ void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
 
 void GPUDeviceContext::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const {
   for (const auto &cnode : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::IsNodeDynamicShape(cnode)) {
       AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cnode);
       MS_LOG(INFO) << "Set Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
@@ -312,6 +315,7 @@ void RunOpOptimize(const KernelGraphPtr &kernel_graph) {
 }
 
 void RunOpHardwareOptimize(const KernelGraphPtr &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
@@ -501,6 +505,11 @@ uint32_t GPUDeviceContext::GetRankID() const {
 std::shared_ptr<Bucket> GPUDeviceContext::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
   auto bucket = std::make_shared<GPUBucket>(bucket_id, bucket_size);
   MS_EXCEPTION_IF_NULL(bucket);
+  // One computation stream, one communication stream.
+  const size_t min_num_of_stream = 2;
+  if (min_num_of_stream > streams_.size()) {
+    MS_LOG(EXCEPTION) << "The total stream num: " << streams_.size() << " is less than: " << min_num_of_stream;
+  }
 
   bucket->Init({streams_[0]}, {streams_[1]});
   return bucket;
