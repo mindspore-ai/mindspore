@@ -311,4 +311,10 @@ bool FusionBuildTbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_no
   // tbe::TbeAdapter::CastAttrJsonPost(anf_node, attrs_json);
   return true;
 }
+
+void FusionBuildTbeJsonCreator::GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(compute_json);
+  (*compute_json)[kJUnknowShape] = tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node);
+}
 }  // namespace mindspore::kernel
