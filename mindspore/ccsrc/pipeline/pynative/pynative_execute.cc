@@ -124,8 +124,8 @@ void PynativeExecutorTry(const std::function<void(T *ret, const Args &...)> &met
     inst->ClearRes();
     auto exception_type = abi::__cxa_current_exception_type();
     MS_EXCEPTION_IF_NULL(exception_type);
-    std::string exName(exception_type->name());
-    MS_LOG(EXCEPTION) << "Error occurred when compile graph. Exception name: " << exName;
+    std::string ex_name(exception_type->name());
+    MS_LOG(EXCEPTION) << "Error occurred when compile graph. Exception name: " << ex_name;
   }
 }
 
@@ -626,7 +626,7 @@ void RunReplace(const CNodePtr &added_make_tuple, const std::vector<tensor::Tens
   MS_EXCEPTION_IF_NULL(added_make_tuple);
   size_t index = 0;
   for (size_t i = 1; i < added_make_tuple->size(); ++i) {
-    auto input_i = added_make_tuple->input(i);
+    const auto &input_i = added_make_tuple->input(i);
     MS_EXCEPTION_IF_NULL(input_i);
     auto cnode = input_i->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
@@ -837,7 +837,7 @@ void TopCellInfo::ClearDeviceMemory() {
   MS_EXCEPTION_IF_NULL(bprop_graph);
   const auto &value_node_list = bprop_graph->value_nodes();
   for (const auto &elem : value_node_list) {
-    auto node = elem.first;
+    auto &node = elem.first;
     MS_EXCEPTION_IF_NULL(node);
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
@@ -2044,7 +2044,7 @@ std::string GradExecutor::GetCellId(const py::object &cell, const py::args &args
     const auto &arg_id = GetId(args[i]);
     auto it = forward()->node_abs_map().find(arg_id);
     if (it != forward()->node_abs_map().end()) {
-      auto abs = it->second;
+      auto &abs = it->second;
       MS_EXCEPTION_IF_NULL(abs);
       auto shape = abs->BuildShape();
       MS_EXCEPTION_IF_NULL(shape);

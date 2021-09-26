@@ -256,19 +256,19 @@ class GradExecutor {
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
                                   bool is_param = false);
   void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param) const {
-    auto graph_info = top_cell()->graph_info_map()[g];
+    auto &graph_info = top_cell()->graph_info_map()[g];
     MS_EXCEPTION_IF_NULL(graph_info);
     graph_info->params[id] = param;
   }
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
                                 int64_t index = -1) const {
-    auto graph_info = top_cell()->graph_info_map()[g];
+    auto &graph_info = top_cell()->graph_info_map()[g];
     MS_EXCEPTION_IF_NULL(graph_info);
     graph_info->node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
   }
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
                                 const std::vector<int64_t> &index) const {
-    auto graph_info = top_cell()->graph_info_map()[g];
+    auto &graph_info = top_cell()->graph_info_map()[g];
     MS_EXCEPTION_IF_NULL(graph_info);
     graph_info->node_map[id] = std::make_pair(node, index);
   }
