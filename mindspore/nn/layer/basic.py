@@ -851,21 +851,23 @@ class ResizeBilinear(Cell):
     Samples the input tensor to the given size or scale_factor by using bilinear interpolate.
 
     Inputs:
-        - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape:
-          math:`(batch, channels, height, width)`, with data type of float16 or float32.
-        - **size** (Union[tuple[int], list[int]]): A tuple or list of 2 int elements '(new_height, new_width)',
-          the new size of the tensor. One and only one of size and scale_factor can be set to None. Default: None.
+        - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape
+          :math:`(batch, channels, height, width)`, with data type of float16 or float32.
+        - **size** (Union[tuple[int], list[int]]): A tuple or list of 2 int elements
+          :math:`(new_{height}, new_{width})`,the new size of the tensor.
+          One and only one of size and scale_factor can be set to None. Default: None.
         - **scale_factor** (int): The scale factor of new size of the tensor. The value should be positive integer.
           One and only one of size and scale_factor can be set to None. Default: None.
-        - **align_corners** (bool): If true, rescale input by '(new_height - 1) / (height - 1)', which exactly aligns
-          the 4 corners of images and resized images. If false, rescale by 'new_height / height'. Default: False.
+        - **align_corners** (bool): If true, rescale input by :math:`(new_{height} - 1) / (height - 1)`, which exactly
+          aligns the 4 corners of images and resized images. If false, rescale by :math:`new_{height} / height`.
+          Default: False.
 
     Outputs:
         Resized tensor.
-        If size is set, the result is 4-D tensor with shape:math:`(batch, channels, new_height, new_width)`
-        in float32.
-        If scale is set, the result is 4-D tensor with shape:math:`(batch, channels, scale_factor * height,
-        scale_factor * width)` in float32
+        If size is set, the result is 4-D tensor with shape :math:`(batch, channels, new_{height}, new_{width})`,
+        and the data type is the same as `x`.
+        If scale is set, the result is 4-D tensor with shape
+        :math:`(batch, channels, scale_{factor} * height, scale_{factor} * width)` and the data type is the same as `x`.
 
     Raises:
         TypeError: If `size` is not one of tuple, list, None.
