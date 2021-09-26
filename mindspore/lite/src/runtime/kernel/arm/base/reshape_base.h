@@ -30,7 +30,7 @@ class ReshapeBaseCPUKernel : public InnerKernel {
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~ReshapeBaseCPUKernel() override = default;
-  int Init() override { return lite::RET_OK; };
+  int Prepare() override { return lite::RET_OK; };
   int ReSize() override { return lite::RET_OK; };
   int Run() override;
 };

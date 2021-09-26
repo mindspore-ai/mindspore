@@ -160,7 +160,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), &context, desc);
   ASSERT_NE(kernel_obj, nullptr);
 
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -232,7 +232,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), &context, desc);
   ASSERT_NE(kernel_obj, nullptr);
 
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -303,7 +303,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), &context, pool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -369,7 +369,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
   auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), &context, pool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -502,7 +502,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
     maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context, maxpool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -579,7 +579,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
     maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context, maxpool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -656,7 +656,7 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
     maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context, maxpool_desc);
   ASSERT_NE(kernel, nullptr);
 
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);

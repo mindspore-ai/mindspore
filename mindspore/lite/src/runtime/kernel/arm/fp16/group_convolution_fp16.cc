@@ -82,7 +82,7 @@ int GroupConvolutionFP16CPUKernel::PostConcat(int group_id) {
   return RET_OK;
 }
 
-int GroupConvolutionFP16CPUKernel::Init() {
+int GroupConvolutionFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (group_conv_creator_ == nullptr) {
@@ -101,6 +101,6 @@ int GroupConvolutionFP16CPUKernel::Init() {
     group_convs_.emplace_back(new (std::nothrow) ConvolutionDelegateFP16CPUKernel(
       reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx_));
   }
-  return GroupConvolutionBaseCPUKernel::Init();
+  return GroupConvolutionBaseCPUKernel::Prepare();
 }
 }  // namespace mindspore::kernel

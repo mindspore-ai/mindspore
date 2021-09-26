@@ -46,7 +46,7 @@ class OptimizerKernel : public InnerKernel {
 
   WeightUpdateMode get_optimizer_mode() { return weight_update_mod_; }
 
-  int Init() override {
+  int Prepare() override {
     default_lr_ = reinterpret_cast<float *>(in_tensors_.at(lr_idx_)->MutableData())[0];
     lr_ = default_lr_;
     return RET_OK;

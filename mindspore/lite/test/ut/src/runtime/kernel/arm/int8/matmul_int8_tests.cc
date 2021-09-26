@@ -128,7 +128,7 @@ TEST_F(TestMatmulInt8, mmtest1) {
   kernel::MatmulInt8CPUKernel *mm =
     new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs, outputs, ctx);
 
-  mm->Init();
+  mm->Prepare();
   mm->Run();
   float out_scale;
   int out_zp;
@@ -246,7 +246,7 @@ TEST_F(TestMatmulInt8, mmtest2) {
   kernel::MatmulInt8CPUKernel *mm =
     new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs, outputs, ctx);
 
-  mm->Init();
+  mm->Prepare();
   mm->Run();
   float out_scale;
   int out_zp;

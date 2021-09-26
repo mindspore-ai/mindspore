@@ -30,7 +30,7 @@ class SelectCPUKernel : public CarryDataKernel {
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : CarryDataKernel(parameter, inputs, outputs, ctx) {}
   ~SelectCPUKernel() override = default;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 };

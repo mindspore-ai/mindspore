@@ -29,7 +29,7 @@ class ScatterNdUpdateCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~ScatterNdUpdateCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int ScatterNdUpdate(int task_id);

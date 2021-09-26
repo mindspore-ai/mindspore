@@ -36,7 +36,7 @@ class SparseToDenseCPUKernel : public InnerKernel {
   }
   ~SparseToDenseCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoExcute(int task_id);

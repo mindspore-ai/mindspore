@@ -31,7 +31,7 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseCPUKernel {
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias) {}
   ~ConvolutionFP16CPUKernel() override {}
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);

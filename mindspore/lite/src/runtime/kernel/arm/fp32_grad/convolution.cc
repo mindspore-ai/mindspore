@@ -74,7 +74,7 @@ int ConvolutionTrainCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ConvolutionTrainCPUKernel::Init() { return ReSize(); }
+int ConvolutionTrainCPUKernel::Prepare() { return ReSize(); }
 
 int ConvolutionTrainCPUKernel::Execute(int task_id) {
   auto conv_param_ = reinterpret_cast<ConvParameter *>(op_parameter_);

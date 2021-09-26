@@ -30,7 +30,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DropoutGrad;
 
 namespace mindspore::kernel {
-int DropoutGradCPUKernelFp16::Init() {
+int DropoutGradCPUKernelFp16::Prepare() {
   CHECK_NULL_RETURN(op_parameter_);
   auto param = reinterpret_cast<DropoutParameter *>(op_parameter_);
   if (param == nullptr) {

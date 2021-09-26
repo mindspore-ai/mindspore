@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_HashtableLookup;
 
 namespace mindspore::kernel {
-int HashtableLookupCPUKernel::Init() {
+int HashtableLookupCPUKernel::Prepare() {
   if (!InferShapeDone()) {
     return RET_OK;
   }

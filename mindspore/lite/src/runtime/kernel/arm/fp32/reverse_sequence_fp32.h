@@ -28,7 +28,7 @@ class ReverseSequenceCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~ReverseSequenceCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

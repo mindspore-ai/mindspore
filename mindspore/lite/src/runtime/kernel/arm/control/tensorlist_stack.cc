@@ -50,7 +50,7 @@ int TensorListStackCPUKernel::CheckParam() {
   return RET_OK;
 }
 
-int TensorListStackCPUKernel::Init() {
+int TensorListStackCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_2D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   MS_CHECK_TRUE_RET(in_tensors_.at(0) != nullptr, RET_NULL_PTR);

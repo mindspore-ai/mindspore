@@ -211,7 +211,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGradFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -255,7 +255,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad2Fp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -301,7 +301,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad3Fp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -348,7 +348,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGradFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -395,7 +395,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGrad2Fp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -440,7 +440,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGradFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
 
   int loop_count = 1000;
@@ -494,7 +494,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad2Fp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -540,7 +540,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad3Fp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -586,7 +586,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad4Fp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -632,7 +632,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGradFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -678,7 +678,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad2Fp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -725,7 +725,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad3Fp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -771,7 +771,7 @@ TEST_F(TestArithmeticGradFp32, Test3DDivGrad2Fp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);
@@ -856,7 +856,7 @@ TEST_F(TestArithmeticGradFp32, TestMaximumGradBroadcastFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel_obj->Run();
   EXPECT_EQ(0, ret);

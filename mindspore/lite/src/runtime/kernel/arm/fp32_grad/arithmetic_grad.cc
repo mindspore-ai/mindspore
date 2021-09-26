@@ -28,7 +28,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ArithmeticGradCPUKernel::Init() {
+int ArithmeticGradCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), FOURTH_INPUT);
   CHECK_NULL_RETURN(in_tensors_.at(FIRST_INPUT));
   CHECK_NULL_RETURN(in_tensors_.at(SECOND_INPUT));

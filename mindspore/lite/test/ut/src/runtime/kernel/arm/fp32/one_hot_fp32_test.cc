@@ -75,7 +75,7 @@ void TestOneHotFp32::Prepare(const std::vector<int> &indices_shape, int *indices
   ctx_.Init();
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(param_), &ctx_, desc);
-  auto ret = kernel_->Init();
+  auto ret = kernel_->Prepare();
   EXPECT_EQ(0, ret);
 }
 

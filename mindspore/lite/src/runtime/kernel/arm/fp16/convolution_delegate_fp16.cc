@@ -65,7 +65,7 @@ void *ConvolutionDelegateFP16CPUKernel::CopyData(const lite::Tensor *tensor) {
   return copied_data;
 }
 
-int ConvolutionDelegateFP16CPUKernel::Init() {
+int ConvolutionDelegateFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
@@ -179,7 +179,7 @@ kernel::InnerKernel *ConvolutionDelegateFP16CPUKernel::CpuConvFp16KernelSelect(
   kernel->set_name(this->name());
 
   // Once kernel is selected, init func will invoke InitWeightAndBias
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "kernel init failed.";
     delete kernel;

@@ -30,7 +30,7 @@ class ReduceBaseCPUKernel : public InnerKernel {
       : InnerKernel(param, inputs, outputs, ctx) {}
   virtual ~ReduceBaseCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
 
  protected:

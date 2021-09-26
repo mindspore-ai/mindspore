@@ -75,7 +75,7 @@ TEST_F(TestPowerFp32, Simple) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *op = new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx);
-  op->Init();
+  op->Prepare();
   op->Run();
   float correct[] = {1, 64, 2187, 65536};
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
@@ -100,7 +100,7 @@ TEST_F(TestPowerFp32, Broadcast) {
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *op = new kernel::PowerCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx);
-  op->Init();
+  op->Prepare();
   op->Run();
   float correct[] = {1, 4, 9, 16};
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));

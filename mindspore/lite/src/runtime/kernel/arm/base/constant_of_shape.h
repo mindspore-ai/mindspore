@@ -34,7 +34,7 @@ class ConstantOfShapeCPUKernel : public InnerKernel {
   }
   ~ConstantOfShapeCPUKernel() override = default;
 
-  int Init() override { return lite::RET_OK; }
+  int Prepare() override { return lite::RET_OK; }
   int ReSize() override { return lite::RET_OK; }
   int Run() override;
   int DoExecute(int task_id);

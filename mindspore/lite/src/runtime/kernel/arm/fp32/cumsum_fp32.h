@@ -31,7 +31,7 @@ class CumSumCPUKernel : public InnerKernel {
   }
   ~CumSumCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoCumsum(int task_id);

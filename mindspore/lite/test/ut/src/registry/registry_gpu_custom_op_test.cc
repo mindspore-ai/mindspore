@@ -221,7 +221,7 @@ class CustomAddKernel : public kernel::Kernel {
       return lite::RET_ERROR;
     }
 
-    std::cout << kernel_name_ << " Init Done!" << std::endl;
+    std::cout << kernel_name_ << " Prepare Done!" << std::endl;
     return lite::RET_OK;
   }
 

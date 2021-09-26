@@ -33,7 +33,7 @@ class SplitWithOverlapBaseCPUKernel : public InnerKernel {
     param_ = reinterpret_cast<SplitWithOverlapParameter *>(op_parameter_);
   }
   ~SplitWithOverlapBaseCPUKernel() override = default;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Split(int task_id);

@@ -30,7 +30,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Dropout;
 
 namespace mindspore::kernel {
-int DropoutCPUKernel::Init() {
+int DropoutCPUKernel::Prepare() {
   auto param = reinterpret_cast<DropoutParameter *>(op_parameter_);
   if (param == nullptr) {
     MS_LOG(ERROR) << "Dropout op_parameter_ nullptr";

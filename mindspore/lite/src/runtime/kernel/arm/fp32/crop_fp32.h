@@ -31,7 +31,7 @@ class CropCPUKernel : public CropBaseCPUKernel {
                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : CropBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~CropCPUKernel() = default;
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int CropParallelRun(int thread_id);
 };

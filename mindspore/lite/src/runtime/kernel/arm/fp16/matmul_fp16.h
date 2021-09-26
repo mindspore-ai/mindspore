@@ -27,7 +27,7 @@ class MatmulFP16CPUKernel : public MatmulBaseFP16CPUKernel {
                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : MatmulBaseFP16CPUKernel(parameter, inputs, outputs, ctx) {}
   ~MatmulFP16CPUKernel() override = default;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Eval() override;

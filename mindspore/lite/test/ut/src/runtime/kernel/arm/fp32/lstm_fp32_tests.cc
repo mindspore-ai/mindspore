@@ -156,7 +156,7 @@ TEST_F(LstmFp32, LstmForwardFp32Accuracy) {
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(lstm_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   // op run
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -308,7 +308,7 @@ TEST_F(LstmFp32, LstmBackwardFp32Accuracy) {
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(lstm_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   // op run
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);

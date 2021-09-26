@@ -30,7 +30,7 @@ class FullconnectionCPUKernel : public MatmulFp32BaseCPUKernel {
                           const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
       : MatmulFp32BaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~FullconnectionCPUKernel() = default;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
 };
 }  // namespace mindspore::kernel

@@ -63,7 +63,7 @@ TEST_F(TestROIPoolingFp32, Simple) {
   ctx->thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *op = new kernel::ROIPoolingCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx);
-  op->Init();
+  op->Prepare();
   op->Run();
   float correct[] = {25, 31, 34, 35, 25, 31, 34, 35};
   float *output = reinterpret_cast<float *>(outputs_[0]->MutableData());

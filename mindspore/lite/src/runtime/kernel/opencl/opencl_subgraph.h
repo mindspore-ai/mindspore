@@ -48,8 +48,8 @@ class OpenCLSubGraph : public SubGraphKernel {
   }
   ~OpenCLSubGraph() override;
 
+  int RunPass();
   int Prepare() override;
-  int Init() override;
   int ReSize() override;
   int ReSize(bool interrupt);
   int Execute() override;

@@ -90,7 +90,7 @@ int SmoothL1LossGradCPUKernel::Run() {
   return RET_OK;
 }
 
-int SmoothL1LossGradCPUKernel::Init() { return RET_OK; }
+int SmoothL1LossGradCPUKernel::Prepare() { return RET_OK; }
 
 kernel::InnerKernel *CpuSmoothL1LossGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                           const std::vector<lite::Tensor *> &outputs,

@@ -31,7 +31,7 @@ class CastFp16CPUKernel : public InnerKernel {
 
   ~CastFp16CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoCast(int thread_id);

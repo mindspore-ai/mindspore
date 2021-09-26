@@ -32,7 +32,7 @@ class LayerNormFp16CPUKernel : public InnerKernel {
   }
   ~LayerNormFp16CPUKernel() override{};
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoLayerNormFp16(int thread_id);

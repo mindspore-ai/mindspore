@@ -33,7 +33,7 @@ class MatmulBaseFP16CPUKernel : public InnerKernel {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~MatmulBaseFP16CPUKernel() override;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

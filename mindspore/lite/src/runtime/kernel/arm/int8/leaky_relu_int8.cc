@@ -41,7 +41,7 @@ int LeakyReluInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale)
 }
 }  // namespace
 
-int LeakyReluInt8CPUKernel::Init() {
+int LeakyReluInt8CPUKernel::Prepare() {
   quant_prelu_parm_.op_parameter_ = *op_parameter_;
   quant_prelu_parm_.slope_ = reinterpret_cast<ActivationParameter *>(op_parameter_)->alpha_;
 

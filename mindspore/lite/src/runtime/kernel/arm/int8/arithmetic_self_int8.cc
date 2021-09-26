@@ -26,7 +26,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ArithmeticSelfInt8CPUKernel::Init() {
+int ArithmeticSelfInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kInputIndex + 1);
   CHECK_LESS_RETURN(out_tensors_.size(), kOutputIndex + 1);
   auto *input_tensor = in_tensors_.at(kInputIndex);

@@ -51,7 +51,7 @@ int ConvolutionDepthwiseSWCPUKernel::InitPackedInputOutput() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseSWCPUKernel::Init() {
+int ConvolutionDepthwiseSWCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   sliding_ = new (std::nothrow) SlidingWindowParam;
@@ -77,9 +77,9 @@ int ConvolutionDepthwiseSWCPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseSWCPUKernel::ReSize() {
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Init() return is:" << ret;
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Prepare() return is:" << ret;
     return ret;
   }
   InitSlidingParamConvDw(sliding_, conv_param_, C4NUM);

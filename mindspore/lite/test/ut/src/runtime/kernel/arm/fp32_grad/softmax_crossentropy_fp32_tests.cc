@@ -76,7 +76,7 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(sce_param), &context, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   kernel_obj->AllocWorkspace();
   ret = kernel_obj->Run();

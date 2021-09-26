@@ -31,8 +31,8 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
-int SoftmaxFp16CPUKernel::Init() {
-  auto ret = SoftmaxBaseCPUKernel::Init();
+int SoftmaxFp16CPUKernel::Prepare() {
+  auto ret = SoftmaxBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

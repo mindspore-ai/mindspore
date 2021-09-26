@@ -69,7 +69,7 @@ int SliceCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int SliceCPUKernel::Init() {
+int SliceCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_[kNumInput0]);

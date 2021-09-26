@@ -92,7 +92,7 @@ void PoolingBaseCPUKernel::FreeQuantParam() {
   }
 }
 
-int PoolingBaseCPUKernel::Init() {
+int PoolingBaseCPUKernel::Prepare() {
   MS_CHECK_TRUE_RET(in_tensors_.size() == 1, RET_ERROR);
   MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
   CHECK_NULL_RETURN(in_tensors_[0]);

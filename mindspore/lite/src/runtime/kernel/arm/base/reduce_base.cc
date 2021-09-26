@@ -90,7 +90,7 @@ int ReduceBaseCPUKernel::CheckParameters() {
   return RET_OK;
 }
 
-int ReduceBaseCPUKernel::Init() {
+int ReduceBaseCPUKernel::Prepare() {
   auto ret = CheckInputsOutputs();
   if (ret != RET_OK) {
     return ret;

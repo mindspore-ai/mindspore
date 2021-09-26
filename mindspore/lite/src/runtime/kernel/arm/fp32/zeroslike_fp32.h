@@ -28,7 +28,7 @@ class ZerosLikeCPUKernel : public InnerKernel {
 
   ~ZerosLikeCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override { return 0; }
   int Run() override;
 };

@@ -32,7 +32,7 @@ class TensorListReserveCPUKernel : public InnerKernel {
         element_dtype_(static_cast<TypeId>(reinterpret_cast<TensorListParameter *>(parameter)->element_dtype_)) {}
   ~TensorListReserveCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

@@ -61,7 +61,7 @@ TEST_F(TestBatchnormFp32, BNTest) {
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -120,7 +120,7 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -174,7 +174,7 @@ TEST_F(TestBatchnormFp32, easyTest) {
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);

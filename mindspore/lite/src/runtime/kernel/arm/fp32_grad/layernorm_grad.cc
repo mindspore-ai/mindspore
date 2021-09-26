@@ -33,7 +33,7 @@ using mindspore::schema::PrimitiveType_LayerNormGrad;
 namespace mindspore::kernel {
 int LayerNormGradCPUKernel::ReSize() { return RET_OK; }
 
-int LayerNormGradCPUKernel::Init() {
+int LayerNormGradCPUKernel::Prepare() {
   auto lngrad_param = reinterpret_cast<LayerNormGradParameter *>(op_parameter_);
   CHECK_NULL_RETURN(lngrad_param);
   CHECK_LESS_RETURN(in_tensors_.size(), 5);

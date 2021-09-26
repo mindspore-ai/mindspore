@@ -32,7 +32,7 @@ class DeConvWinogradFp16CPUKernel : public ConvolutionBaseCPUKernel {
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data(),
                                  inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data() : nullptr) {}
   ~DeConvWinogradFp16CPUKernel() override;
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int ReSize() override;
 

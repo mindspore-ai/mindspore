@@ -140,7 +140,7 @@ TEST_F(TestFcInt8, fctest1) {
   kernel::FullconnectionInt8CPUKernel *fc =
     new kernel::FullconnectionInt8CPUKernel(reinterpret_cast<OpParameter *>(fc_param), inputs, outputs, ctx);
 
-  fc->Init();
+  fc->Prepare();
   fc->Run();
   float out_scale;
   int out_zp;

@@ -35,7 +35,7 @@ class PoolingBaseCPUKernel : public InnerKernel {
   }
   ~PoolingBaseCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override { return RET_OK; }
   int SetQuantParam();

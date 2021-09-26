@@ -38,7 +38,7 @@ class PadCPUKernel : public InnerKernel {
 
   ~PadCPUKernel() {}
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   virtual int RunImpl(int task_id);

@@ -42,7 +42,7 @@ SliceFp16CPUKernel::~SliceFp16CPUKernel() {
   }
 }
 
-int SliceFp16CPUKernel::Init() {
+int SliceFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_[0]);
@@ -54,7 +54,7 @@ int SliceFp16CPUKernel::Init() {
     CHECK_NULL_RETURN(input_data_);
     Float32ToFloat16(reinterpret_cast<float *>(input_tensor->data()), input_data_, input_tensor->ElementsNum());
   }
-  return SliceCPUKernel::Init();
+  return SliceCPUKernel::Prepare();
 }
 
 int SliceFp16CPUKernel::SliceFp16ParallelRun(int thread_id) {

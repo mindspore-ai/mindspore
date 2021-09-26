@@ -34,7 +34,7 @@ class DetectionPostProcessBaseCPUKernel : public InnerKernel {
   }
   virtual ~DetectionPostProcessBaseCPUKernel();
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   virtual void FreeAllocatedBuffer();

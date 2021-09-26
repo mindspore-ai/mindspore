@@ -30,7 +30,7 @@ class PoolingFp16CPUKernel : public PoolingBaseCPUKernel {
       : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~PoolingFp16CPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);

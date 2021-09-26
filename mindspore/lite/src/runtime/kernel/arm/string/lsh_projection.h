@@ -32,7 +32,7 @@ class LshProjectionCPUKernel : public InnerKernel {
   }
   ~LshProjectionCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoExecute(int task_id);

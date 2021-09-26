@@ -29,7 +29,7 @@ class LocalResponseNormCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
   ~LocalResponseNormCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoLocalResponseNorm(int task_id);

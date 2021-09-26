@@ -38,7 +38,7 @@ ArgMinMaxInt8CPUKernel::~ArgMinMaxInt8CPUKernel() {
   }
 }
 
-int ArgMinMaxInt8CPUKernel::Init() {
+int ArgMinMaxInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);

@@ -31,7 +31,7 @@ class AdderCPUKernel : public ConvolutionCPUKernel {
   ~AdderCPUKernel() override = default;
 
   int InitWeightBias();
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id) override;

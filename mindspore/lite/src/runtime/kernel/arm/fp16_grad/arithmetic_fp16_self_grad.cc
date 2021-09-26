@@ -26,7 +26,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LogGrad;
 
 namespace mindspore::kernel {
-int ArithmeticSelfGradFp16CPUKernel::Init() {
+int ArithmeticSelfGradFp16CPUKernel::Prepare() {
   if (in_tensors_.size() != 2) {
     MS_LOG(ERROR) << "ActivationGrad should have 2 input tensors";
     return RET_ERROR;

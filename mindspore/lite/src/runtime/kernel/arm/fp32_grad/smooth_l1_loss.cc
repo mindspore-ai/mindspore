@@ -82,7 +82,7 @@ int SmoothL1LossCPUKernel::Run() {
   return RET_OK;
 }
 
-int SmoothL1LossCPUKernel::Init() {
+int SmoothL1LossCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), THIRD_INPUT);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));

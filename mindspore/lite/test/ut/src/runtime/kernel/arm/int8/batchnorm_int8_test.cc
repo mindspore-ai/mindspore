@@ -108,7 +108,7 @@ TEST_F(TestBatchnormInt8, FusedTest) {
   ASSERT_NE(kernel, nullptr);
 
   auto output_tensor_shape = output0_tensor.shape();
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -192,7 +192,7 @@ TEST_F(TestBatchnormInt8, BNTest) {
   ASSERT_NE(kernel, nullptr);
 
   auto output_tensor_shape = output0_tensor.shape();
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);

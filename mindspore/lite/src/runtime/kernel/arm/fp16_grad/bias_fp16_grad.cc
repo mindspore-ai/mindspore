@@ -46,7 +46,7 @@ int BiasGradCPUKernelFp16::ReSize() {
   return RET_OK;
 }
 
-int BiasGradCPUKernelFp16::Init() {
+int BiasGradCPUKernelFp16::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(bias_param);

@@ -39,7 +39,7 @@ int DeConvolutionCPUKernel::ReSize() {
   CHECK_NULL_RETURN(conv_param_);
   CHECK_NULL_RETURN(matmul_param_);
 
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBaseCPUKernel init error!";
     return ret;
@@ -161,7 +161,7 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
   return RET_OK;
 }
 
-int DeConvolutionCPUKernel::Init() {
+int DeConvolutionCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(conv_param_);

@@ -27,7 +27,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int SoftmaxGradCPUKernel::Init() {
+int SoftmaxGradCPUKernel::Prepare() {
   param = reinterpret_cast<SoftmaxParameter *>(op_parameter_);
   auto in_shape = in_tensors_.at(0)->shape();
   auto in_dims = in_shape.size();

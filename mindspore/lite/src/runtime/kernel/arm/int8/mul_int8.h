@@ -34,7 +34,7 @@ class MulInt8CPUKernel : public InnerKernel {
   }
   ~MulInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   void CheckSameShapeSize(std::vector<int> in_tensor0_shape, std::vector<int> in_tensor1_shape);
   void CheckIfFastImpl();

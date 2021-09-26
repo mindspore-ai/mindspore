@@ -161,7 +161,7 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
   return RET_OK;
 }
 
-int BatchnormInt8CPUKernel::Init() {
+int BatchnormInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_[kNumInput0]);

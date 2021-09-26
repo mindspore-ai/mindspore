@@ -29,7 +29,7 @@ using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_QuantDTypeCast;
 
 namespace mindspore::kernel {
-int QuantDTypeCastFp16CPUKernel::Init() {
+int QuantDTypeCastFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto in_tensor = in_tensors_.front();

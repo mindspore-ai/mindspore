@@ -36,8 +36,8 @@ SoftmaxInt8CPUKernel::~SoftmaxInt8CPUKernel() {
   }
 }
 
-int SoftmaxInt8CPUKernel::Init() {
-  auto ret = SoftmaxBaseCPUKernel::Init();
+int SoftmaxInt8CPUKernel::Prepare() {
+  auto ret = SoftmaxBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

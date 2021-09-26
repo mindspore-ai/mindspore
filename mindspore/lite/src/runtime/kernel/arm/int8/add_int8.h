@@ -33,7 +33,7 @@ class QuantizedAddCPUKernel : public InnerKernel {
   }
   ~QuantizedAddCPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoExecute(int tId);

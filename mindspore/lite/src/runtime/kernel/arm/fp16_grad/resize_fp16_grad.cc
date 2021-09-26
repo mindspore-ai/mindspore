@@ -50,7 +50,7 @@ int ResizeGradCPUKernelFp16::ReSize() {
   return RET_OK;
 }
 
-int ResizeGradCPUKernelFp16::Init() {
+int ResizeGradCPUKernelFp16::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));
   CHECK_LESS_RETURN(out_tensors_.size(), 1);

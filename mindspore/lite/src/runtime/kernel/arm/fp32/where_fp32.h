@@ -35,7 +35,7 @@ class WhereCPUKernel : public InnerKernel {
   }
   ~WhereCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int PreProcess() override;
   int ReSize() override { return 0; }
   int Run() override;

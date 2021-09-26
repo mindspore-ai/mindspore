@@ -28,7 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DeConv2DGradFilter;
 
 namespace mindspore::kernel {
-int DeConvolutionGradFilterCPUKernel::Init() {
+int DeConvolutionGradFilterCPUKernel::Prepare() {
   // dy is in input 0
   // x is in input 1
   // dw is output 0

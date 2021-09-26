@@ -293,7 +293,7 @@ void MatmulFp32BaseCPUKernel::init_global_variable() {
   params_->col_align_ = UP_ROUND(params_->col_, col_tile_);
 }
 
-int MatmulFp32BaseCPUKernel::Init() {
+int MatmulFp32BaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   init_global_variable();

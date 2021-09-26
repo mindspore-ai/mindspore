@@ -37,7 +37,7 @@ int AddNLaunch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 }  // namespace
 
-int AddNCPUKernel::Init() {
+int AddNCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   return RET_OK;

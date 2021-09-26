@@ -213,7 +213,7 @@ int LstmCPUKernel::InitParam() {
   return RET_OK;
 }
 
-int LstmCPUKernel::Init() {
+int LstmCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_6D);
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     CHECK_NULL_RETURN(in_tensors_.at(i));

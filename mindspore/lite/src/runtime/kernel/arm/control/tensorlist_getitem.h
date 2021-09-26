@@ -32,7 +32,7 @@ class TensorListGetItemCPUKernel : public InnerKernel {
         dtype_(reinterpret_cast<TensorListParameter *>(parameter)->element_dtype_) {}
   ~TensorListGetItemCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

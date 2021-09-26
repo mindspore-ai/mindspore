@@ -28,7 +28,7 @@ class L2NormInt8CPUKernel : public L2NormCPUKernel {
       : L2NormCPUKernel(parameter, inputs, outputs, ctx) {}
   ~L2NormInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int DoExecute(int tId);
 

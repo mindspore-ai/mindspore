@@ -27,7 +27,7 @@ class StackFp16CPUKernel : public StackBaseCPUKernel {
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : StackBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~StackFp16CPUKernel() override = default;
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int Execute(int task_id);
 

@@ -98,7 +98,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   kernel->AllocWorkspace();
 
@@ -206,7 +206,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   kernel->AllocWorkspace();
 
@@ -311,7 +311,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   kernel->AllocWorkspace();
 
@@ -415,7 +415,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   kernel->AllocWorkspace();
 
@@ -522,7 +522,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   kernel->AllocWorkspace();
 
@@ -632,7 +632,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   kernel->AllocWorkspace();
 

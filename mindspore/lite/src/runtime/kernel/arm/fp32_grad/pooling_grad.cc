@@ -71,7 +71,7 @@ int PoolingGradCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int PoolingGradCPUKernel::Init() { return ReSize(); }
+int PoolingGradCPUKernel::Prepare() { return ReSize(); }
 
 int PoolingGradCPUKernel::Execute(int task_id) {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);

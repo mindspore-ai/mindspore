@@ -47,7 +47,7 @@ class ArithmeticSelfCPUKernel : public InnerKernel {
   }
   ~ArithmeticSelfCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   virtual int DoExecute(int task_id);

@@ -31,7 +31,7 @@ SubInt8CPUKernel::~SubInt8CPUKernel() {
   }
 }
 
-int SubInt8CPUKernel::Init() {
+int SubInt8CPUKernel::Prepare() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
   lite::Tensor *output = out_tensors_.at(0);

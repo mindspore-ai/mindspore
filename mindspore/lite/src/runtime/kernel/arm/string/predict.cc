@@ -30,7 +30,7 @@ constexpr int KEY_INDEX = 1;
 constexpr int LABEL_INDEX = 2;
 constexpr int WEIGHT_INDEX = 3;
 }  // namespace
-int PredictCPUKernel::Init() {
+int PredictCPUKernel::Prepare() {
   if (!InferShapeDone()) {
     return RET_OK;
   }

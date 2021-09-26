@@ -63,7 +63,7 @@ int ConvolutionDepthwise3x3Fp16CPUKernel::MallocWeightBiasData() {
   return RET_OK;
 }
 
-int ConvolutionDepthwise3x3Fp16CPUKernel::Init() {
+int ConvolutionDepthwise3x3Fp16CPUKernel::Prepare() {
   UpdateOriginWeightAndBias();
   if (op_parameter_->is_train_session_) {
     auto weight_tensor = in_tensors_.at(kWeightIndex);
@@ -85,9 +85,9 @@ int ConvolutionDepthwise3x3Fp16CPUKernel::Init() {
 }
 
 int ConvolutionDepthwise3x3Fp16CPUKernel::ReSize() {
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Init() failed!";
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Prepare() failed!";
     return ret;
   }
   conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);

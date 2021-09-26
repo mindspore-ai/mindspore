@@ -31,7 +31,7 @@ class TopKInt8CPUKernel : public InnerKernel {
   }
   ~TopKInt8CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 };

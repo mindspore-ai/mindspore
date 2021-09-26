@@ -30,7 +30,7 @@ class SliceCPUKernel : public InnerKernel {
   }
   ~SliceCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

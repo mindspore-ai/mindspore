@@ -27,7 +27,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
-int LayerNormFp16CPUKernel::Init() {
+int LayerNormFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(param_);

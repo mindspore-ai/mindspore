@@ -27,7 +27,7 @@ using mindspore::schema::PrimitiveType_ArgMaxFusion;
 using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore::kernel {
-int ArgMinMaxCPUKernel::Init() {
+int ArgMinMaxCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   arg_param_->data_type_ = kNumberTypeFloat32;

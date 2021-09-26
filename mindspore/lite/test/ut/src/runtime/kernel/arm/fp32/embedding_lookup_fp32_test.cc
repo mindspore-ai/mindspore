@@ -68,7 +68,7 @@ TEST_F(TestEmbeddingLookupFp32, ElTest) {
   kernel::EmbeddingLookupCPUKernel *el = new kernel::EmbeddingLookupCPUKernel(
     reinterpret_cast<OpParameter *>(embedding_lookup_param_), inputs_, outputs_, ctx);
 
-  el->Init();
+  el->Prepare();
   el->Run();
 
   std::cout << "output shape:" << std::endl;

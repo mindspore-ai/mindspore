@@ -32,7 +32,7 @@ class ArgMinMaxInt8CPUKernel : public InnerKernel {
 
   ~ArgMinMaxInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

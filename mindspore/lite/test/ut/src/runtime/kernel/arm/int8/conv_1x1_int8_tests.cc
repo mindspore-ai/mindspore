@@ -127,7 +127,7 @@ TEST_F(TestConv1x1Int8, Conv1x1TestPerChannel) {
   kernel::Convolution1x1Int8CPUKernel *conv1x1 =
     new kernel::Convolution1x1Int8CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx);
 
-  conv1x1->Init();
+  conv1x1->Prepare();
   conv1x1->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 70));
 
@@ -196,7 +196,7 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test1) {
   kernel::Convolution1x1Int8CPUKernel *conv1x1 =
     new kernel::Convolution1x1Int8CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx);
 
-  conv1x1->Init();
+  conv1x1->Prepare();
   conv1x1->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2));
 
@@ -273,7 +273,7 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test2) {
   auto *conv1x1 =
     new kernel::Convolution1x1Int8CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx);
 
-  conv1x1->Init();
+  conv1x1->Prepare();
   conv1x1->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2));
 

@@ -35,7 +35,7 @@ class AdamCPUKernel : public OptimizerKernel {
       grad_sum_ = nullptr;
     }
   }
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Execute(int task_id);

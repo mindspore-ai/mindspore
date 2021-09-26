@@ -104,7 +104,7 @@ void ConvolutionBaseCPUKernel::FreeQuantParam() {
   }
 }
 
-int ConvolutionBaseCPUKernel::Init() {
+int ConvolutionBaseCPUKernel::Prepare() {
   auto input = this->in_tensors_.front();
   auto output = this->out_tensors_.front();
   CHECK_NULL_RETURN(input);

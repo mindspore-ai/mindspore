@@ -49,7 +49,7 @@ int BatchToSpaceCPUKernel::Processinput() {
   return RET_OK;
 }
 
-int BatchToSpaceCPUKernel::Init() {
+int BatchToSpaceCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   MS_ASSERT(in_tensors_[0]->format() == mindspore::NHWC);

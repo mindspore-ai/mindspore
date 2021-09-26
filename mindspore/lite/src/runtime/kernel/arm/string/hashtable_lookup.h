@@ -28,7 +28,7 @@ class HashtableLookupCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~HashtableLookupCPUKernel() {}
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 };

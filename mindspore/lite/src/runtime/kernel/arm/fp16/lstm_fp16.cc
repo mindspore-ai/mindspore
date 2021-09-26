@@ -199,7 +199,7 @@ int LstmFp16CPUKernel::InitStateWeightBias() {
   return RET_OK;
 }
 
-int LstmFp16CPUKernel::Init() {
+int LstmFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 6);
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     CHECK_NULL_RETURN(in_tensors_.at(i));

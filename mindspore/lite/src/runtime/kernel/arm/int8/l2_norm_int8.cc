@@ -30,7 +30,7 @@ L2NormInt8CPUKernel::~L2NormInt8CPUKernel() {
   }
 }
 
-int L2NormInt8CPUKernel::Init() {
+int L2NormInt8CPUKernel::Prepare() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);

@@ -31,7 +31,7 @@ class TensorListSetItemCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~TensorListSetItemCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int IncrementOutputSize(int origin_size);

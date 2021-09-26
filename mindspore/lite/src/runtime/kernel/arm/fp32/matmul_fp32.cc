@@ -49,7 +49,7 @@ void MatmulCPUKernel::InitShapeB() {
   params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
 }
 
-int MatmulCPUKernel::Init() {
+int MatmulCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   MatmulFp32BaseCPUKernel::InitParameter();
@@ -62,7 +62,7 @@ int MatmulCPUKernel::Init() {
     InitShapeB();
   }
 
-  auto ret = MatmulFp32BaseCPUKernel::Init();
+  auto ret = MatmulFp32BaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

@@ -28,7 +28,7 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ConvolutionSWCPUKernel::Init() {
+int ConvolutionSWCPUKernel::Prepare() {
   oc_tile_ = C8NUM;
   oc_res_ = conv_param_->output_channel_ % oc_tile_;
   if (conv_param_->kernel_h_ == 1 && conv_param_->kernel_w_ == 1) {
@@ -75,9 +75,9 @@ int ConvolutionSWCPUKernel::ReSize() {
     slidingWindow_param_ = nullptr;
   }
 
-  ret = ConvolutionBaseCPUKernel::Init();
+  ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
+    MS_LOG(ERROR) << "ConvolutionBase prepare failed.";
     return RET_ERROR;
   }
   // init sliding window param
@@ -153,11 +153,6 @@ int ConvolutionSWCPUKernel::InitTmpBuffer() {
 }
 
 int ConvolutionSWCPUKernel::Run() {
-  auto prepare_ret = Prepare();
-  if (prepare_ret != RET_OK) {
-    MS_LOG(ERROR) << "Prepare fail!ret: " << prepare_ret;
-    return prepare_ret;
-  }
   auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitTmpBuffer error!";

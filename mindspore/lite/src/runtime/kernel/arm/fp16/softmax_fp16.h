@@ -34,7 +34,7 @@ class SoftmaxFp16CPUKernel : public SoftmaxBaseCPUKernel {
     }
   }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int MallocTmpBuffer();

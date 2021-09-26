@@ -30,7 +30,7 @@ class ExpCPUKernel : public InnerKernel {
   }
   ~ExpCPUKernel() override{};
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   virtual int DoExcute(int task_id);

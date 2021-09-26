@@ -32,7 +32,7 @@ class LayerNormInt8CPUKernel : public InnerKernel {
   }
   ~LayerNormInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

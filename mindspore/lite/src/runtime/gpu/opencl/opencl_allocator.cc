@@ -336,7 +336,7 @@ int OpenCLAllocator::IncRefCount(void *buf, int ref_count) {
     auto membuf = iter->second;
     auto ref = std::atomic_fetch_add(&membuf->ref_count_, ref_count);
     UnLock();
-    return (ref - ref_count);
+    return (ref + ref_count);
   }
   UnLock();
   return -1;

@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
-int ConcatCPUKernel::Init() {
+int ConcatCPUKernel::Prepare() {
   MS_CHECK_TRUE_RET(in_tensors_.size() >= 1, RET_ERROR);
   CHECK_NULL_RETURN(in_tensors_.front());
   MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);

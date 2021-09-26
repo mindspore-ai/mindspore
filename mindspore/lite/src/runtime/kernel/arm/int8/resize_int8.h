@@ -33,7 +33,7 @@ class ResizeInt8CPUKernel : public ResizeBaseCPUKernel {
 
   ~ResizeInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int InitResizeBiLinear();
   int InitFloatResizeBiLinear();

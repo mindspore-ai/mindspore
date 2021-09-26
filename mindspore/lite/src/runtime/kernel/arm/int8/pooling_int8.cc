@@ -29,8 +29,8 @@ using mindspore::schema::PrimitiveType_AvgPoolFusion;
 using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore::kernel {
-int PoolingInt8CPUKernel::Init() {
-  auto ret = PoolingBaseCPUKernel::Init();
+int PoolingInt8CPUKernel::Prepare() {
+  auto ret = PoolingBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PoolingBase Init failed.";
     return RET_ERROR;

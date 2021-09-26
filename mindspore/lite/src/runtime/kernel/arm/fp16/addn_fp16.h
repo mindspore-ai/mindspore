@@ -29,7 +29,7 @@ class AddNFp16CPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~AddNFp16CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int AddNParallelRun(int thread_id, float lhs_scale, float rhs_scale);

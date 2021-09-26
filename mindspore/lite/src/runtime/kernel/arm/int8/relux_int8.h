@@ -32,7 +32,7 @@ class ReluXInt8CPUKernel : public InnerKernel {
   }
   ~ReluXInt8CPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoActivation(int task_id);
@@ -51,8 +51,8 @@ class ReluInt8CPUKernel : public ReluXInt8CPUKernel {
 
   ~ReluInt8CPUKernel() override = default;
 
-  int Init() override {
-    auto ret = ReluXInt8CPUKernel::Init();
+  int Prepare() override {
+    auto ret = ReluXInt8CPUKernel::Prepare();
     quant_arg_.quantized_output_min = quant_arg_.output_arg.zp_;
     quant_arg_.quantized_output_max = CHAR_MAX;
     return ret;
@@ -67,8 +67,8 @@ class Relu6Int8CPUKernel : public ReluXInt8CPUKernel {
 
   ~Relu6Int8CPUKernel() override = default;
 
-  int Init() override {
-    auto ret = ReluXInt8CPUKernel::Init();
+  int Prepare() override {
+    auto ret = ReluXInt8CPUKernel::Prepare();
     quant_arg_.quantized_output_min = QuantizeToInt8(0, quant_arg_.output_arg.scale_, quant_arg_.output_arg.zp_);
     quant_arg_.quantized_output_max = QuantizeToInt8(6, quant_arg_.output_arg.scale_, quant_arg_.output_arg.zp_);
     return ret;

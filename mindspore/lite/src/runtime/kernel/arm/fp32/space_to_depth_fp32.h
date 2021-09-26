@@ -28,7 +28,7 @@ class SpaceToDepthCPUKernel : public InnerKernel {
   ~SpaceToDepthCPUKernel() = default;
 
   int SpaceToDepth(int task_id);
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

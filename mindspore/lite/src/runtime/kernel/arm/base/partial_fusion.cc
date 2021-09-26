@@ -29,7 +29,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PartialFusion;
 
 namespace mindspore::kernel {
-int PartialFusionKernel::Init() { return RET_OK; }
+int PartialFusionKernel::Prepare() { return RET_OK; }
 int PartialFusionKernel::ReSize() { return RET_OK; }
 int PartialFusionKernel::Run() { return RET_OK; }
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_PartialFusion, LiteKernelCreator<PartialFusionKernel>)

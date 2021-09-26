@@ -41,7 +41,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx), ctx_(ctx) {}
   ~ReduceInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Fast4DReduceMeanHWImpl();

@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
-int SplitBaseCPUKernel::Init() {
+int SplitBaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   output_ptr_.resize(param->num_split_);

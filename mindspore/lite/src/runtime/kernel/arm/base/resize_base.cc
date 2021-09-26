@@ -97,7 +97,7 @@ int ResizeBaseCPUKernel::CheckInputsOuputs() {
   return RET_OK;
 }
 
-int ResizeBaseCPUKernel::Init() {
+int ResizeBaseCPUKernel::Prepare() {
   auto ret = CheckParameters();
   if (ret != RET_OK) {
     return ret;

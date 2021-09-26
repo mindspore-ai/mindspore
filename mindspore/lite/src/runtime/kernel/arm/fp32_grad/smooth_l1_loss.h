@@ -30,7 +30,7 @@ class SmoothL1LossCPUKernel : public InnerKernel {
     smooth_l1_param_ = reinterpret_cast<SmoothL1LossParameter *>(parameter);
   }
   ~SmoothL1LossCPUKernel() override {}
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Execute(int task_id);

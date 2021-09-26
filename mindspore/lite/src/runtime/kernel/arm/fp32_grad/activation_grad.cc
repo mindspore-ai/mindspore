@@ -33,7 +33,7 @@ using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::PrimitiveType_ActivationGrad;
 
 namespace mindspore::kernel {
-int ActivationGradCPUKernel::Init() {
+int ActivationGradCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));

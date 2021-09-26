@@ -37,7 +37,7 @@ BatchToSpaceInt8CPUKernel::~BatchToSpaceInt8CPUKernel() {
   }
 }
 
-int BatchToSpaceInt8CPUKernel::Init() {
+int BatchToSpaceInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_1D);
   CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
   MS_ASSERT(in_tensors_.front()->format() == mindspore::NHWC);

@@ -26,7 +26,7 @@ namespace mindspore::kernel {
 namespace {
 constexpr size_t kMaxShapeSize = 20;
 }  // namespace
-int TransposeInt8CPUKernel::Init() {
+int TransposeInt8CPUKernel::Prepare() {
   if (!InferShapeDone()) {
     return RET_OK;
   }

@@ -37,7 +37,7 @@ int CastFp16Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 }  // namespace
 
-int CastFp16CPUKernel::Init() {
+int CastFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {

@@ -34,7 +34,7 @@ class PriorBoxCPUKernel : public InnerKernel {
   }
   ~PriorBoxCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int PriorBoxImpl(int task_id);

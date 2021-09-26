@@ -29,7 +29,7 @@ using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_QuantDTypeCast;
 
 namespace mindspore::kernel {
-int QuantDTypeCastCPUKernel::Init() {
+int QuantDTypeCastCPUKernel::Prepare() {
   if (in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "inputs number should be 1, but " << in_tensors_.size() << " is given.";
     return RET_PARAM_INVALID;

@@ -28,7 +28,7 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int SoftmaxBaseCPUKernel::Init() {
+int SoftmaxBaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (softmax_param_ == nullptr) {

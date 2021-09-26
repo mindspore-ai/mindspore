@@ -30,7 +30,7 @@ class TopKCPUKernel : public InnerKernel {
   }
   ~TopKCPUKernel() override {}
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

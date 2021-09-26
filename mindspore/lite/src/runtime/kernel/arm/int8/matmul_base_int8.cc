@@ -279,7 +279,7 @@ int MatmulBaseInt8CPUKernel::InitBias() {
   return RET_OK;
 }
 
-int MatmulBaseInt8CPUKernel::Init() {
+int MatmulBaseInt8CPUKernel::Prepare() {
   auto ret = MallocQuantParam();
   if (ret != RET_OK) {
     FreeQuantParam();

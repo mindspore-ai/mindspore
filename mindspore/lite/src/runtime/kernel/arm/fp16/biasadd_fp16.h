@@ -30,7 +30,7 @@ class BiasAddCPUFp16Kernel : public InnerKernel {
   }
   ~BiasAddCPUFp16Kernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Eval() override;

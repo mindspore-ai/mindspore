@@ -113,7 +113,7 @@ int PadInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int PadInt8CPUKernel::Init() {
+int PadInt8CPUKernel::Prepare() {
   MS_CHECK_TRUE_RET(in_tensors_.size() == kInputSize1 || in_tensors_.size() == kInputSize2, RET_ERROR);
   MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
   CHECK_NULL_RETURN(in_tensors_[0]);

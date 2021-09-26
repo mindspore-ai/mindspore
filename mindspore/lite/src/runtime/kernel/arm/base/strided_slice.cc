@@ -31,7 +31,7 @@ constexpr int kNumInputSize = 2;
 constexpr int kNumOutputSize = 1;
 }  // namespace
 namespace mindspore::kernel {
-int StridedSliceCPUKernel::Init() {
+int StridedSliceCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), kNumOutputSize);
   CHECK_NULL_RETURN(in_tensors_[0]);

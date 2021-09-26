@@ -81,8 +81,8 @@ ResizeInt8CPUKernel::~ResizeInt8CPUKernel() {
   multiplier_ = nullptr;
 }
 
-int ResizeInt8CPUKernel::Init() {
-  auto ret = ResizeBaseCPUKernel::Init();
+int ResizeInt8CPUKernel::Prepare() {
+  auto ret = ResizeBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

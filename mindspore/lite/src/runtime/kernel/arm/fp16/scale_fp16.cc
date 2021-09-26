@@ -43,7 +43,7 @@ int ScaleFp16CPUKernel::InitScaleOffset() {
   return RET_OK;
 }
 
-int ScaleFp16CPUKernel::Init() {
+int ScaleFp16CPUKernel::Prepare() {
   if (in_tensors_.size() < 2 || in_tensors_.size() > 3) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << in_tensors_.size() << " is given.";
     return RET_ERROR;

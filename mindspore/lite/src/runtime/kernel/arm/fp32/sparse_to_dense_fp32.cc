@@ -29,7 +29,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SparseToDense;
 
 namespace mindspore::kernel {
-int SparseToDenseCPUKernel::Init() {
+int SparseToDenseCPUKernel::Prepare() {
   MS_CHECK_TRUE_RET(in_tensors_.size() == kInputSize2, RET_ERROR);
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(in_tensors_[1]);

@@ -32,7 +32,7 @@ namespace {
 constexpr size_t kBoxIndex = 1;
 constexpr size_t kBoxIdIndex = 2;
 }  // namespace
-int CropAndResizeCPUKernel::Init() {
+int CropAndResizeCPUKernel::Prepare() {
   if (!InferShapeDone()) {
     return RET_OK;
   }

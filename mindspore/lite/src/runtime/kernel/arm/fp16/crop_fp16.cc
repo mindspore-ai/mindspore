@@ -23,7 +23,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore::kernel {
-int CropFp16CPUKernel::Init() {
+int CropFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {

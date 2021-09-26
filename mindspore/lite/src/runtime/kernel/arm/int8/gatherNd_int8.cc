@@ -37,7 +37,7 @@ GatherNdInt8CPUKernel::~GatherNdInt8CPUKernel() {
   }
 }
 
-int GatherNdInt8CPUKernel::Init() {
+int GatherNdInt8CPUKernel::Prepare() {
   if (!InferShapeDone()) {
     return RET_OK;
   }

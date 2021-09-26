@@ -86,7 +86,7 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bn_param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
   kernel_obj->AllocWorkspace();
   ret = kernel_obj->Run();
@@ -190,7 +190,7 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   float *curr_mean = reinterpret_cast<float *>(mean_tensor.MutableData());
   float *curr_var = reinterpret_cast<float *>(var_tensor.MutableData());
 
-  auto ret = kernel_obj->Init();
+  auto ret = kernel_obj->Prepare();
   EXPECT_EQ(0, ret);
 
   kernel_obj->Train();

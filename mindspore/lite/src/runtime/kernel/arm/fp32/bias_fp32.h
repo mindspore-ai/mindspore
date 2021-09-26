@@ -30,7 +30,7 @@ class BiasCPUKernel : public InnerKernel {
   }
   ~BiasCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

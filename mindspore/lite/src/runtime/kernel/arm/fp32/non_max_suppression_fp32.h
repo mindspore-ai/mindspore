@@ -34,7 +34,7 @@ class NonMaxSuppressionCPUKernel : public InnerKernel {
 
   ~NonMaxSuppressionCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override { return RET_OK; };
   int PreProcess() override;
   int Run() override;

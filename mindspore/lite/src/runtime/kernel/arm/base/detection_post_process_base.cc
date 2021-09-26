@@ -38,7 +38,7 @@ void PartialArgSort(const float *scores, int *indexes, int num_to_sort, int num_
   });
 }
 
-int DetectionPostProcessBaseCPUKernel::Init() {
+int DetectionPostProcessBaseCPUKernel::Prepare() {
   params_->decoded_boxes_ = nullptr;
   params_->nms_candidate_ = nullptr;
   params_->indexes_ = nullptr;

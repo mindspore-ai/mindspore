@@ -32,7 +32,7 @@ class SplitInt8CPUKernel : public SplitBaseCPUKernel {
       : SplitBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~SplitInt8CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Split(int task_id);

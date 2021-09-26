@@ -40,7 +40,7 @@ int ArithmeticSelfGradRun(void *cdata, int thread_id, float lhs_scale, float rhs
 }
 }  // namespace
 
-int ArithmeticSelfGradCPUKernel::Init() {
+int ArithmeticSelfGradCPUKernel::Prepare() {
   auto type = this->type();
   switch (type) {
     case PrimitiveType_LogGrad:

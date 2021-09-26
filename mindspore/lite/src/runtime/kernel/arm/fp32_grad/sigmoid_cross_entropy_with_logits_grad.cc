@@ -82,7 +82,7 @@ int SigmoidCrossEntropyWithLogitsGradCPUKernel::Run() {
   return RET_OK;
 }
 
-int SigmoidCrossEntropyWithLogitsGradCPUKernel::Init() { return RET_OK; }
+int SigmoidCrossEntropyWithLogitsGradCPUKernel::Prepare() { return RET_OK; }
 
 kernel::InnerKernel *CpuSigmoidCrossEntropyWithLogitsGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                                            const std::vector<lite::Tensor *> &outputs,

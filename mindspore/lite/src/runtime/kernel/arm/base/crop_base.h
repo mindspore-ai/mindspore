@@ -32,7 +32,7 @@ class CropBaseCPUKernel : public InnerKernel {
   }
   ~CropBaseCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override { return 0; }
 

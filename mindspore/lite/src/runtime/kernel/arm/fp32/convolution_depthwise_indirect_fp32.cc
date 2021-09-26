@@ -33,7 +33,7 @@ ConvolutionDepthwiseIndirectCPUKernel::~ConvolutionDepthwiseIndirectCPUKernel() 
   }
 }
 
-int ConvolutionDepthwiseIndirectCPUKernel::Init() {
+int ConvolutionDepthwiseIndirectCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (op_parameter_->is_train_session_) {
@@ -78,9 +78,9 @@ int ConvolutionDepthwiseIndirectCPUKernel::ReSize() {
     free(indirect_buffer_);
     indirect_buffer_ = nullptr;
   }
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Init() return is:" << ret;
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Prepare() return is:" << ret;
     return ret;
   }
   ret = MallocIndirectBuffer();

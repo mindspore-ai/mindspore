@@ -35,7 +35,7 @@ class ReduceFp16CPUKernel : public ReduceBaseCPUKernel {
       : ReduceBaseCPUKernel(param, inputs, outputs, ctx) {}
   ~ReduceFp16CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int CallReduceUnit(int task_id);
 

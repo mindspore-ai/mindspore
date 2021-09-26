@@ -27,7 +27,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore::kernel {
-int CropBaseCPUKernel::Init() { return RET_OK; }
+int CropBaseCPUKernel::Prepare() { return RET_OK; }
 
 int CropBaseCPUKernel::ReSize() {
   auto *input_tensor = in_tensors_.at(kInputIndex);

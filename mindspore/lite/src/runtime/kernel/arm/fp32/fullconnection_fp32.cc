@@ -24,7 +24,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
-int FullconnectionCPUKernel::Init() {
+int FullconnectionCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 
@@ -48,7 +48,7 @@ int FullconnectionCPUKernel::Init() {
   params_->a_transpose_ = false;
   params_->b_transpose_ = true;
 
-  auto ret = MatmulFp32BaseCPUKernel::Init();
+  auto ret = MatmulFp32BaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

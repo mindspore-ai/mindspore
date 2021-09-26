@@ -36,7 +36,7 @@ class ConvolutionDelegateCPUKernel : public InnerKernel {
       conv_kernel_ = nullptr;
     }
   };
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override {
     conv_kernel_->set_name(name_);

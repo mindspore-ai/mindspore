@@ -32,7 +32,7 @@ class ScaleCPUKernel : public InnerKernel {
   }
   ~ScaleCPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int CalculateParameter();

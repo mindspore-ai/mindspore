@@ -241,7 +241,7 @@ void MatmulBaseFP16CPUKernel::InitMatrixB(const void *src_ptr, TypeId src_data_t
   return;
 }
 
-int MatmulBaseFP16CPUKernel::Init() {
+int MatmulBaseFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   ResizeParameter();

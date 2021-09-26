@@ -32,7 +32,7 @@ class CastCPUKernel : public InnerKernel {
 
   ~CastCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoCast(int thread_id);

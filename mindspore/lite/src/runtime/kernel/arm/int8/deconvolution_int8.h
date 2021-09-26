@@ -37,7 +37,7 @@ class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {
   ~DeConvInt8CPUKernel() override;
 
   int ReSize() override;
-  int Init() override;
+  int Prepare() override;
   int Run() override;
 
  public:

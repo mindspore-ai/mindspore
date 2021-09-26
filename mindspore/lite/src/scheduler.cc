@@ -230,12 +230,16 @@ int Scheduler::InitKernels(std::vector<kernel::LiteKernel *> dst_kernels) {
       if (ret != RET_OK) {
         return ret;
       }
-      ret = node->Init();
+    }
+#if GPU_OPENCL
+    if (kernel->desc().arch == kernel::kGPU) {
+      auto ret = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel)->RunPass();
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Kernel " << node->name() << " Init failed.";
+        MS_LOG(ERROR) << "OpenCLSubGraph RunPass failed.";
         return ret;
       }
     }
+#endif
   }
   return RET_OK;
 }
@@ -896,7 +900,7 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     MS_LOG(DEBUG) << "Get TypeId(expect = " << kernel_data_type << ", real = " << cpu_desc.data_type
                   << ") op success: " << PrimitiveCurVersionTypeName(op_type);
     if (is_train_session_) {
-      (*kernel)->Init();
+      (*kernel)->Prepare();
       RestoreTensorData(&restored_origin_tensors);
     }
   }
@@ -1558,7 +1562,13 @@ int Scheduler::ConstructNormalSubGraphs(std::vector<kernel::LiteKernel *> src_ke
 #ifndef DELEGATE_CLIP
     if (subgraph->desc().arch != kernel::kDelegate) {
 #endif
-      auto ret = subgraph->Init();
+      auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(subgraph);
+      if (subgraph_kernel == nullptr) {
+        MS_LOG(ERROR) << "kernel: " << subgraph->name() << " not is subgraph kernel.";
+        return RET_ERROR;
+      }
+      // this is for train session cpu fp16, should be removed in the future.
+      auto ret = subgraph_kernel->SetFp16Attr();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
         return ret;

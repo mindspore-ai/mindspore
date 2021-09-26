@@ -119,7 +119,7 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Accuracy) {
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   // op run
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -172,7 +172,7 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Performance) {
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
 
   /* running warm up */

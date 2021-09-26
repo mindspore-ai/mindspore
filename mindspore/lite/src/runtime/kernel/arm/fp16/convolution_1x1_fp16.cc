@@ -131,7 +131,7 @@ void Convolution1x1FP16CPUKernel::PackWeight() {
 #endif
 }
 
-int Convolution1x1FP16CPUKernel::Init() {
+int Convolution1x1FP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   UpdateOriginWeightAndBias();
@@ -178,7 +178,7 @@ void Convolution1x1FP16CPUKernel::FreeTmpBuffer() {
 
 int Convolution1x1FP16CPUKernel::ReSize() {
   FreeTmpBuffer();
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return ret;

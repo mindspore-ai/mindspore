@@ -26,7 +26,7 @@ using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
-int TransposeCPUKernel::Init() {
+int TransposeCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {

@@ -71,7 +71,7 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
     delete param;
     return;
   }
-  fill_kernel->Init();
+  fill_kernel->Prepare();
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{fill_kernel};
   auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, {&in_tensor1}, outputs, nullptr);
@@ -91,7 +91,7 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
   }
   // to allocate memory for inputs
   in_tensor1.MallocData(allocator);
-  sub_graph->Init();
+  sub_graph->Prepare();
   MS_LOG(INFO) << " initialize input data ";
   memcpy(inputs[0]->data(), input_data1, sizeof(input_data1));
 
@@ -141,7 +141,7 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
     delete param;
     return;
   }
-  fill_kernel->Init();
+  fill_kernel->Prepare();
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{fill_kernel};
   auto sub_inner_kernel = new (std::nothrow) kernel::InnerKernel(nullptr, {&in_tensor1}, outputs, nullptr);
@@ -161,7 +161,7 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
   }
   // to allocate memory for inputs
   in_tensor1.MallocData(allocator);
-  sub_graph->Init();
+  sub_graph->Prepare();
   MS_LOG(INFO) << " initialize input data ";
   memcpy(inputs[0]->data(), input_data1, sizeof(input_data1));
 

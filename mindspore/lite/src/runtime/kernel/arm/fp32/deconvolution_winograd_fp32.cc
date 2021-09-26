@@ -332,7 +332,7 @@ int DeConvolutionWinogradCPUKernel::ReSize() {
   CHECK_NULL_RETURN(deconv_param_);
 
   FreeResizeBuf();
-  ConvolutionBaseCPUKernel::Init();
+  ConvolutionBaseCPUKernel::Prepare();
   if (!valid_weight_shape_) {
     if (InitComputeParam() != RET_OK) {
       MS_LOG(ERROR) << "InitComputeParam error!";
@@ -354,7 +354,7 @@ int DeConvolutionWinogradCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int DeConvolutionWinogradCPUKernel::Init() {
+int DeConvolutionWinogradCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));

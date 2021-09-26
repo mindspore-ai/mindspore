@@ -40,7 +40,7 @@ class L2NormCPUKernel : public InnerKernel {
   int DivSqrtSum(int task_id);
   int CalcL2NormTrailingAxis(int task_id);
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

@@ -36,7 +36,7 @@ class MatmulBaseInt8CPUKernel : public InnerKernel {
     param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~MatmulBaseInt8CPUKernel() override;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

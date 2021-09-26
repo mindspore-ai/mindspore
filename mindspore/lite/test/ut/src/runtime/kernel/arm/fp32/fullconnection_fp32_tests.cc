@@ -85,7 +85,7 @@ TEST_F(TestFcFp32, FcTest1) {
   matmul_param->op_parameter_.thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
-  fc->Init();
+  fc->Prepare();
 #ifdef SUPPORT_TRAIN
   fc->AllocWorkspace();
 #endif
@@ -155,7 +155,7 @@ TEST_F(TestFcFp32, FcTest2) {
   matmul_param->op_parameter_.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
-  fc->Init();
+  fc->Prepare();
 #ifdef SUPPORT_TRAIN
   fc->AllocWorkspace();
 #endif
@@ -215,7 +215,7 @@ TEST_F(TestFcFp32, FcTest3) {
   matmul_param->op_parameter_.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
-  fc->Init();
+  fc->Prepare();
 #ifdef SUPPORT_TRAIN
   fc->AllocWorkspace();
 #endif

@@ -166,7 +166,7 @@ int GruCPUKernel::InitStateWeightBias() {
   return RET_OK;
 }
 
-int GruCPUKernel::Init() {
+int GruCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {

@@ -117,9 +117,9 @@ int AdamCPUKernel::Run() {
   return RET_OK;
 }
 
-int AdamCPUKernel::Init() {
+int AdamCPUKernel::Prepare() {
   CHECK_NULL_RETURN(adam_param_);
-  auto ret = OptimizerKernel::Init();
+  auto ret = OptimizerKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Failed to initialize Adam Kernel";
     return RET_ERROR;

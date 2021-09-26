@@ -29,7 +29,7 @@ using mindspore::schema::ActivationType_SIGMOID;
 using mindspore::schema::PrimitiveType_ActivationGrad;
 
 namespace mindspore::kernel {
-int ActivationGradCPUKernelFp16::Init() {
+int ActivationGradCPUKernelFp16::Prepare() {
   if (in_tensors_.size() != 2) {
     MS_LOG(ERROR) << "ActivationGrad should have 2 input tensors";
     return RET_ERROR;

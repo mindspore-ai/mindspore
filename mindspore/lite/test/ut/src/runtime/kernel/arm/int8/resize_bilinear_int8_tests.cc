@@ -81,7 +81,7 @@ void TestResizeBilinearInt8::Prepare(const std::vector<int> &in_shape, const std
   ctx_.thread_num_ = thread_num;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
   kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
-  auto ret = kernel_->Init();
+  auto ret = kernel_->Prepare();
   EXPECT_EQ(0, ret);
 }
 

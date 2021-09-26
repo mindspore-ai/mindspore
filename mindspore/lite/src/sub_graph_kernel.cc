@@ -34,21 +34,6 @@ using mindspore::lite::RET_INFER_ERR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
 
-int SubGraphKernel::Prepare() {
-  for (auto node : this->nodes_) {
-    if (node == nullptr) {
-      MS_LOG(ERROR) << "node in Subgraph is nullptr";
-      return mindspore::lite::RET_NULL_PTR;
-    }
-    auto ret = node->Prepare();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "prepare node " << node->name() << " failed";
-      return ret;
-    }
-  }
-  return RET_OK;
-}
-
 std::string SubGraphKernel::ToString() const {
   std::ostringstream oss;
   oss << "===============================================" << std::endl << "Subgraph type : " << this->subgraph_type_;

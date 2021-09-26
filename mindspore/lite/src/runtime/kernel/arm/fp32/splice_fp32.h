@@ -29,7 +29,7 @@ class SpliceCPUKernel final : public InnerKernel {
   }
   ~SpliceCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

@@ -33,7 +33,7 @@ class While : public PrimitiveC {
   While() : PrimitiveC(kNameWhile) {}
   ~While() = default;
   MS_DECLARE_PARENT(While, PrimitiveC);
-  void Init(const int64_t cond_subgraph_index, const int64_t body_subgraph_index);
+  void Prepare(const int64_t cond_subgraph_index, const int64_t body_subgraph_index);
   void set_cond_subgraph_index(const int64_t cond_subgraph_index);
   void set_body_subgraph_index(const int64_t body_subgraph_index);
   int64_t get_cond_subgraph_index() const;
