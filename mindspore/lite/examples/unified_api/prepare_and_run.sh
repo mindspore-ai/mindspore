@@ -2,7 +2,7 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-o] [-b virtual_batch] [-m mindir] [-e epochs_to_train]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-o] [-b virtual_batch] [-m mindir] [-e epochs_to_train] [-i device_id]\n"
 }
 
 checkopts()
@@ -14,7 +14,8 @@ checkopts()
   VIRTUAL_BATCH=-1
   MINDIR_FILE=""
   EPOCHS="-e 5"
-  while getopts 'D:d:e:m:r:t:ob:' opt
+  DEVICE_ID=""
+  while getopts 'D:d:e:m:r:t:i:ob:' opt
   do
     case "${opt}" in
       D)
@@ -46,7 +47,10 @@ checkopts()
         ;; 
       b)
         VIRTUAL_BATCH=$OPTARG
-        ;;    
+        ;;
+      i)
+        DEVICE_ID=$OPTARG
+        ;;
       *)
         echo "Unknown option ${opt}!"
         display_usage
@@ -136,20 +140,37 @@ mv bin ${PACKAGE}/ || exit 1
 if [ "${TARGET}" == "arm64" ]; then
   cp ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ${PACKAGE}/lib/ || exit 1
 
-  echo "=======Pushing to device======="
-  adb push ${PACKAGE} /data/local/tmp/
+  if [ "${DEVICE_ID}" == "" ]; then
+    echo "=======Pushing to device======="
+    adb push ${PACKAGE} /data/local/tmp/
 
-  echo "========Training on Device====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${ENABLEFP16} -b ${VIRTUAL_BATCH}"
-  echo
+    echo "========Training on Device====="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${ENABLEFP16} -b ${VIRTUAL_BATCH}"
+    echo
 
-  echo "===Evaluating trained Model====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${ENABLEFP16}"
-  echo
+    echo "===Evaluating trained Model====="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${ENABLEFP16}"
+    echo
 
-  echo "====Running Inference Model====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh infer.sh"
-  echo
+    echo "====Running Inference Model====="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh infer.sh"
+    echo
+  else
+    echo "=======Pushing to device======="
+    adb -s ${DEVICE_ID} push ${PACKAGE} /data/local/tmp/
+
+    echo "========Training on Device====="
+    adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${ENABLEFP16} -b ${VIRTUAL_BATCH}"
+    echo
+
+    echo "===Evaluating trained Model====="
+    adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${ENABLEFP16}"
+    echo
+
+    echo "====Running Inference Model====="
+    adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh infer.sh"
+    echo
+  fi
 else
   cd ${PACKAGE} || exit 1
   echo "======Training Locally========="

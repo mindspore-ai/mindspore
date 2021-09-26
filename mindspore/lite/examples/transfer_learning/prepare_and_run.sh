@@ -2,7 +2,7 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-o]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-i device_id] [-o]\n"
 }
 
 checkopts()
@@ -11,7 +11,8 @@ checkopts()
   DOCKER=""
   PLACES_DATA_PATH=""
   ENABLEFP16=""
-  while getopts 'D:d:r:t:o' opt
+  DEVICE_ID=""
+  while getopts 'D:d:r:t:i:o' opt
   do
     case "${opt}" in
       D)
@@ -34,7 +35,10 @@ checkopts()
         ;;
       o)
         ENABLEFP16="-o"
-        ;;  
+        ;;
+      i)
+        DEVICE_ID=$OPTARG
+        ;;
       *)
         echo "Unknown option ${opt}!"
         display_usage
@@ -107,17 +111,31 @@ mv bin ${PACKAGE}/ || exit 1
 if [ "${TARGET}" == "arm64" ]; then
   cp ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ${PACKAGE}/lib/ || exit 1
 
-  echo "=======Pushing to device======="
-  adb push ${PACKAGE} /data/local/tmp/
+  if [ "${DEVICE_ID}" == "" ]; then
+    echo "=======Pushing to device======="
+    adb push ${PACKAGE} /data/local/tmp/
 
-  echo "==Evaluating Untrained Model==="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval_untrained.sh $ENABLEFP16"
+    echo "==Evaluating Untrained Model==="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval_untrained.sh $ENABLEFP16"
 
-  echo "========Training on Device====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh $ENABLEFP16"
+    echo "========Training on Device====="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh $ENABLEFP16"
 
-  echo "===Evaluating trained Model====="
-  adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh $ENABLEFP16"
+    echo "===Evaluating trained Model====="
+    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh $ENABLEFP16"
+  else
+    echo "=======Pushing to device======="
+    adb -s ${DEVICE_ID} push ${PACKAGE} /data/local/tmp/
+
+    echo "==Evaluating Untrained Model==="
+    adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval_untrained.sh $ENABLEFP16"
+
+    echo "========Training on Device====="
+    adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh $ENABLEFP16"
+
+    echo "===Evaluating trained Model====="
+    adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh $ENABLEFP16"
+  fi
 else
   cd ${PACKAGE} || exit 1
   echo "==Evaluating Untrained Model==="
