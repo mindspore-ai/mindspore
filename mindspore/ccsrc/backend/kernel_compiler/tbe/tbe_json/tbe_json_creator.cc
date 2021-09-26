@@ -216,7 +216,6 @@ bool ParseAttrDefaultValue(const std::string &type, const std::string &value, nl
   }
   return true;
 }
-
 }  // namespace
 
 bool TbeJsonCreator::GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
@@ -534,7 +533,7 @@ bool TbeJsonCreator::AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vec
   tbe::TbeAdapter::CastAttrJsonPrePass(anf_node, attrs_ptr, attrs_json);
   return true;
 }
-bool TbeJsonCreator::GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
+void TbeJsonCreator::GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
   auto op_desc = AnfAlgo::GetOutputDataDesc(anf_node);
@@ -552,7 +551,6 @@ bool TbeJsonCreator::GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann:
     }
     (*compute_json)[kJOutputDataDesc] = outputs_data_desc;
   }
-  return true;
 }
 
 bool TbeJsonCreator::AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,

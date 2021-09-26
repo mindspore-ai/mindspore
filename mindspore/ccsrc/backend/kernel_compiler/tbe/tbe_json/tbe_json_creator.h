@@ -75,7 +75,7 @@ class TbeJsonCreator {
   bool GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
   virtual bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
   virtual bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
-  bool GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
+  void GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
   void GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
   virtual void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {}
   void GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);

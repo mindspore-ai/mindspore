@@ -15,8 +15,6 @@
  */
 
 #include "backend/kernel_compiler/tbe/tbe_json/fusion_tbe_json_creator.h"
-#include <memory>
-#include <list>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -87,9 +85,7 @@ bool FusionBuildTbeJsonCreator::GenOpListJson(const FusionScopeInfo &fusion_scop
   if (!TbeAdapter::GetSpecDataInput(fusion_scope_info, &spec_data_input)) {
     return false;
   }
-  if (!GenDataJson(compute_nodes, compute_list, fusion_json, spec_data_input)) {
-    MS_LOG(WARNING) << "Fusion Error: gen fusion data json failed. fusion scope name: " << fusion_scope_info.full_name;
-  }
+  GenDataJson(compute_nodes, compute_list, fusion_json, spec_data_input);
   (*fusion_json).insert((*fusion_json).end(), compute_list.begin(), compute_list.end());
   MS_LOG(DEBUG) << "End";
   return true;
@@ -124,7 +120,7 @@ bool FusionBuildTbeJsonCreator::CheckInput(const FusionScopeInfo &fusion_scope_i
   return true;
 }
 
-bool FusionBuildTbeJsonCreator::GenDataJson(const std::vector<AnfNodePtr> &compute_nodes,
+void FusionBuildTbeJsonCreator::GenDataJson(const std::vector<AnfNodePtr> &compute_nodes,
                                             const std::vector<nlohmann::json> &compute_json,
                                             std::vector<nlohmann::json> *op_list_json,
                                             const ANodeFusionDataTypeMap &spec_data_input) {
@@ -155,7 +151,6 @@ bool FusionBuildTbeJsonCreator::GenDataJson(const std::vector<AnfNodePtr> &compu
     }
   }
   MS_LOG(DEBUG) << "End.";
-  return true;
 }
 AnfNodePtr FusionBuildTbeJsonCreator::GetInputCNode(const AnfNodePtr &node, const nlohmann::json &input_desc) {
   auto input_name = GetJsonValue<std::string>(input_desc, kJName);
