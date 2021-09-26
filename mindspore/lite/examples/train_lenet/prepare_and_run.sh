@@ -2,7 +2,7 @@
 
 display_usage()
 {
-  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q] [-o] [-M] [-b virtual_batch] [-m mindir] [-e epochs_to_train]\n"
+  echo -e "\nUsage: prepare_and_run.sh -D dataset_path [-d mindspore_docker] [-r release.tar.gz] [-t arm64|x86] [-q] [-o] [-M] [-b virtual_batch] [-m mindir] [-e epochs_to_train] [-i device_id]\n"
 }
 
 checkopts()
@@ -16,7 +16,8 @@ checkopts()
   VIRTUAL_BATCH=-1
   EPOCHS="-e 5"
   MIX_FLAG=""
-  while getopts 'D:b:d:e:m:oqr:t:M:' opt
+  DEVICE_ID=""
+  while getopts 'D:b:d:e:i:m:oqr:t:M:' opt
   do
     case "${opt}" in
       b)
@@ -56,6 +57,9 @@ checkopts()
           display_usage
           exit 1
         fi
+        ;;
+      i)
+        DEVICE_ID=$OPTARG
         ;;
       *)
         echo "Unknown option ${opt}!"
@@ -145,27 +149,50 @@ mv bin ${PACKAGE}/ || exit 1
 
 if [ "${TARGET}" == "arm64" ]; then
   cp ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ${PACKAGE}/lib/ || exit 1
-
+  if [ "${DEVICE_ID}" == "" ]; then
     echo "=======Pushing to device======="
     adb push ${PACKAGE} /data/local/tmp/
-  if [ "${MIX_FLAG}" == "" ];then
+    if [ "${MIX_FLAG}" == "" ];then
 
-    # origin model is fp32 model
-    echo "========Training on Device origin model is fp32====="
-    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH}"
+      # origin model is fp32 model
+      echo "========Training on Device origin model is fp32====="
+      adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH}"
 
-    echo
-    echo "===Evaluating trained Model origin model is fp32====="
-    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG}"
-    echo
+      echo
+      echo "===Evaluating trained Model origin model is fp32====="
+      adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG}"
+      echo
+    else
+      echo "========Training on Device origin model is fp16 ====="
+      adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH} ${MIX_FLAG}"
+
+      echo
+      echo "===Evaluating trained Model origin model is fp16====="
+      adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG} ${MIX_FLAG}"
+      echo
+    fi
   else
-    echo "========Training on Device origin model is fp16 ====="
-    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH} ${MIX_FLAG}"
+    echo "=======Pushing to device======="
+    adb -s ${DEVICE_ID} push ${PACKAGE} /data/local/tmp/
+    if [ "${MIX_FLAG}" == "" ];then
 
-    echo
-    echo "===Evaluating trained Model origin model is fp16====="
-    adb shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG} ${MIX_FLAG}"
-    echo
+      # origin model is fp32 model
+      echo "========Training on Device origin model is fp32====="
+      adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH}"
+
+      echo
+      echo "===Evaluating trained Model origin model is fp32====="
+      adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG}"
+      echo
+    else
+      echo "========Training on Device origin model is fp16 ====="
+      adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh train.sh ${EPOCHS} ${FP16_FLAG} -b ${VIRTUAL_BATCH} ${MIX_FLAG}"
+
+      echo
+      echo "===Evaluating trained Model origin model is fp16====="
+      adb -s ${DEVICE_ID} shell "cd /data/local/tmp/package-arm64 && /system/bin/sh eval.sh ${FP16_FLAG} ${MIX_FLAG}"
+      echo
+    fi
   fi
 
 else
