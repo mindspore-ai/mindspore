@@ -261,6 +261,7 @@ void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
 }
 
 void SetSummaryNodesRefCount(const KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   if (!graph->summary_node_exist()) {
     return;
   }
@@ -482,6 +483,7 @@ TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
 void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const std::vector<TensorPtr> &input_tensors,
                                                    OpRunInfo *const run_info, GraphInfo *const graph_info) {
   MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(graph_info);
   session_->GetSingleOpRunInfo(kernel, run_info);
   *graph_info = session_->GetSingleOpGraphInfo(kernel, input_tensors);
 }

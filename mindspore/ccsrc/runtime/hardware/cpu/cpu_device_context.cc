@@ -114,6 +114,7 @@ void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
 }
 
 void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
@@ -190,6 +191,7 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 
 namespace {
 void ProcessCast(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast_cpu"));
@@ -202,6 +204,7 @@ void ProcessCast(const KernelGraphPtr &graph) {
 }  // namespace
 
 void CPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
   ProcessCast(graph);
 
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
