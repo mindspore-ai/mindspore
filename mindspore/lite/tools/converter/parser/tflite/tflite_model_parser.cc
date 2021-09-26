@@ -422,7 +422,6 @@ STATUS TfliteModelParser::ConvertGraphInputs(const std::unique_ptr<tflite::SubGr
     parameter->set_abstract(abstract_tensor);
     if (tflite_subgraph == tflite_model_->subgraphs.front()) {
       parameter->set_name(tensor->name);
-      ConverterContext::GetInstance()->AddGraphInputTensorNames(tensor->name);
     } else {
       parameter->set_name(tflite_subgraph->name + "_input_" + std::to_string(i) + "_parameter");
     }
