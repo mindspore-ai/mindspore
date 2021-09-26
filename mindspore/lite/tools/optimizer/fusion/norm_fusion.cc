@@ -391,7 +391,7 @@ std::map<string, int> NormFusion::ShapeSizeInfer(const FuncGraphPtr &func_graph)
       if (utils::isa<CNodePtr>(cnode->input(i))) {
         in_shape_size = node_shape_size[cnode->input(i)->fullname_with_scope()];
         // second input of reshape is shape
-        if (prim_type == schema::PrimitiveType_Reshape && i == 2 &&
+        if (prim_type == schema::PrimitiveType_Reshape && i == THIRD_INPUT &&
             node_shape.find(cnode->input(i)->fullname_with_scope()) != node_shape.end()) {
           in_shape_size = node_shape[cnode->input(i)->fullname_with_scope()].at(0);
         }
@@ -401,7 +401,7 @@ std::map<string, int> NormFusion::ShapeSizeInfer(const FuncGraphPtr &func_graph)
         if (ret == RET_OK) {
           in_shape_size = tensor_info->shape().size();
           // second input of reshape is shape
-          if (prim_type == schema::PrimitiveType_Reshape && i == 2) {
+          if (prim_type == schema::PrimitiveType_Reshape && i == THIRD_INPUT) {
             in_shape_size = tensor_info->shape().at(0);
           }
         }

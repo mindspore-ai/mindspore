@@ -24,7 +24,7 @@ namespace mindspore {
 namespace lite {
 STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index) {
   MSLITE_CHECK_PTR(axis_index);
-  if (axis < -4 || axis >= 4) {
+  if (axis < -4 || axis >= DIMENSION_4D) {
     MS_LOG(ERROR) << "Scale axis value(" << axis << ") is not correct";
     return RET_ERROR;
   }
@@ -33,7 +33,7 @@ STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index)
     MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
   }
 
-  *axis_index = (axis + 4) % 4;
+  *axis_index = (axis + DIMENSION_4D) % DIMENSION_4D;
   return RET_OK;
 }
 

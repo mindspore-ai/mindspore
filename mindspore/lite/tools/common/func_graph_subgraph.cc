@@ -138,7 +138,7 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
   }
   while (!q.empty()) {
     auto cur_node = q.front();
-    MS_CHECK_TRUE_MSG(cur_node != nullptr, , "cur_node is nullptr");
+    MS_CHECK_PTR_IF_NULL(cur_node);
     q.pop();
     this->nodes_.insert(cur_node);
     // check output-cnode of cur-node only depend on cur-node
@@ -157,7 +157,7 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
       if (opt::CheckPrimitiveType(post_cnode, prim::kPrimReturn)) {
         continue;
       }
-      MS_CHECK_TRUE_MSG(post_cnode != nullptr, , "post_cnode is nullptr");
+      MS_CHECK_PTR_IF_NULL(post_cnode);
       bool non_depend = true;
       // check all inputs of output-cnode
       for (const auto &input : post_cnode->inputs()) {

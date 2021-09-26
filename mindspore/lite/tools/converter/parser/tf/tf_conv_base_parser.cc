@@ -22,7 +22,6 @@
 #include "schema/inner/model_generated.h"
 namespace mindspore {
 namespace lite {
-
 namespace {
 constexpr size_t kPadDims = 4;
 constexpr size_t kExplicitPaddingsDims = 8;
