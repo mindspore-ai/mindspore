@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/softmax_cross_entropy_with_logits_cpu_kernel.h"
 #include <numeric>
+#include <limits>
 #include <functional>
 #include <cmath>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
@@ -23,6 +25,12 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kSoftmaxCrossEntropyWithLogitsInputsNum = 2;
+constexpr size_t kSoftmaxCrossEntropyWithLogitsOutputsNum = 2;
+constexpr size_t kSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
+}  // namespace
+
 void SoftmaxCrossEntropyWithLogitsCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -34,9 +42,10 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::InitInputOutputSize(const CNodePtr 
 
 void SoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   dnnl::memory::dims mem_dims;
-  mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());
+  (void)mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());
   if (mem_dims.size() != 2) {
     MS_LOG(EXCEPTION) << "SoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
   }
@@ -73,9 +82,10 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *log
 bool SoftmaxCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                                     const std::vector<kernel::AddressPtr> &workspace,
                                                     const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.empty() || workspace.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSoftmaxCrossEntropyWithLogitsInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSoftmaxCrossEntropyWithLogitsOutputsNum, kernel_name_);
+  CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSoftmaxCrossEntropyWithLogitsWorkspaceSize, kernel_name_);
+
   size_t batch_float_size = batch_size_ * sizeof(float);
   size_t batch_class_float_size = class_num_ * batch_float_size;
   if (inputs[0]->size != workspace[0]->size || inputs[0]->size != batch_class_float_size ||
@@ -88,10 +98,10 @@ bool SoftmaxCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kernel::Ad
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, workspace[0]->addr);
   ExecutePrimitive();
-  auto labels = reinterpret_cast<float *>(inputs[1]->addr);
-  auto logits = reinterpret_cast<float *>(workspace[0]->addr);
-  auto output1 = reinterpret_cast<float *>(outputs[0]->addr);
-  auto output2 = reinterpret_cast<float *>(outputs[1]->addr);
+  const auto *labels = reinterpret_cast<float *>(inputs[1]->addr);
+  const auto *logits = reinterpret_cast<float *>(workspace[0]->addr);
+  auto *output1 = reinterpret_cast<float *>(outputs[0]->addr);
+  auto *output2 = reinterpret_cast<float *>(outputs[1]->addr);
   ForwardPostExecute(logits, labels, output1, output2);
   return true;
 }

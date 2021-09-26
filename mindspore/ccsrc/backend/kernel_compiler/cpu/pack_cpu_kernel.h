@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_PACK_CPU_KERNEL_H
-#define MINDSPORE_PACK_CPU_KERNEL_H
+
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PACK_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PACK_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -26,7 +27,7 @@ namespace kernel {
 template <typename T>
 class PackCpuFwdKernel : public CPUKernel {
  public:
-  PackCpuFwdKernel();
+  PackCpuFwdKernel() = default;
   ~PackCpuFwdKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -34,14 +35,13 @@ class PackCpuFwdKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  bool CheckParam(const std::vector<AddressPtr> &outputs) const;
-  void PackTensor(T *output, size_t start, size_t end);
+  void PackTensor(T *output, size_t start, size_t end) const;
 
-  int axis_;
-  size_t input_num_;
-  size_t output_size_;
-  size_t dims_behind_axis_;
-  std::unique_ptr<T *[]> inputs_host_;
+  int axis_{0};
+  size_t input_num_{1};
+  size_t output_size_{0};
+  size_t dims_behind_axis_{1};
+  std::unique_ptr<T *[]> inputs_host_ { nullptr };
 };
 
 MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, int8_t)
@@ -57,4 +57,4 @@ MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, float)
 MS_REG_CPU_KERNEL_T(Stack, KernelAttr(), PackCpuFwdKernel, bool)
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_PACK_CPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PACK_CPU_KERNEL_H_

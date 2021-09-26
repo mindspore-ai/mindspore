@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/pooling_max_grad_cpu_kernel.h"
 #include <string>
 #include <utility>
@@ -117,13 +118,13 @@ bool MaxPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
                                      const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolingGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolingGradOutputsNum, kernel_name_);
-
   auto input = reinterpret_cast<float *>(inputs[0]->addr);
   auto diff = reinterpret_cast<float *>(inputs[2]->addr);
   auto output = reinterpret_cast<float *>(outputs[0]->addr);
   auto ret = memset_s(output, outputs[0]->size, 0, outputs[0]->size);
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "Pooling grad memset error!";
+    MS_LOG(EXCEPTION) << "Pooling grad memset error, ret value:" << ret << ", output address: " << output
+                      << ", memset size: " << outputs[0]->size;
   }
   size_t src_wh = src_shape_[2] * src_shape_[3];
   size_t dst_wh = dst_shape_[2] * dst_shape_[3];

@@ -33,9 +33,13 @@ constexpr int TOP = 0;
 constexpr int BOTTOM = 1;
 constexpr int LEFT = 0;
 constexpr int RIGHT = 1;
+constexpr size_t kMirrorPadInputsNum = 2;
+constexpr size_t kMirrorPadOutputsNum = 1;
 }  // namespace
+
 void MirrorPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::string mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (mode == "REFLECT") {
@@ -50,12 +54,10 @@ void MirrorPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   shape_size_ = input_shape.size();
   if (shape_size_ == 4) {  // shape adjustment from 2d/3d to 4d
   } else if (shape_size_ == 3) {
-    auto it = input_shape.begin();
-    input_shape.insert(it, 1);  // batch padding
+    (void)input_shape.insert(input_shape.begin(), 1);  // batch padding
     shape_size_ = 4;
   } else if (shape_size_ == 2) {
-    auto it = input_shape.begin();
-    input_shape.insert(it, 2, 1);  // channel padding
+    (void)input_shape.insert(input_shape.begin(), 2, 1);  // channel padding
     shape_size_ = 4;
   }
 
@@ -63,6 +65,7 @@ void MirrorPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     tensor_size_ *= input_shape[i];
     input_shape_.push_back(SizeToLong(input_shape[i]));
   }
+
   std::vector<size_t> padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   num_paddings_ = SizeToLong(padding_shape[0]);
 
@@ -74,6 +77,7 @@ void MirrorPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
   int64_t max_width = input_shape_[3];
   int64_t max_height = input_shape_[2];
+
   if (mode_ == 1) {  // symmetric
     max_width = max_width + (2 * max_width);
     max_height = max_height + (2 * max_height);
@@ -97,6 +101,8 @@ void extract_paddings(const int64_t *paddings_arg, int64_t padd_dim, int64_t *ex
 
 bool MirrorPadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMirrorPadInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMirrorPadOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -112,7 +118,8 @@ bool MirrorPadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, c
 }
 
 template <typename T>
-void MirrorPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void MirrorPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                      const std::vector<AddressPtr> &outputs) const {
   auto inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
   int64_t *paddings_arg = reinterpret_cast<int64_t *>(inputs[1]->addr);
   auto outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
@@ -126,6 +133,7 @@ void MirrorPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   const int64_t padded_height = output_shape_[dim_offset];
   const int64_t padded_width = output_shape_[dim_offset + 1];
   const int64_t padd_dim = num_paddings_;
+
   const int64_t mode = mode_;
 
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
@@ -188,17 +196,6 @@ void MirrorPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     auto pos_index = (equiv_block_num * old_height + matchval_y_index - paddings[HEIGHT]) * old_width +
                      matchval_x_index - paddings[WIDTH];
     outputs_addr[pos] = inputs_addr[pos_index];
-  }
-}
-
-void MirrorPadCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MirrorPadCPUKernel needs 2 inputs.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MirrorPadCPUKernel needs 1 output.";
   }
 }
 }  // namespace kernel

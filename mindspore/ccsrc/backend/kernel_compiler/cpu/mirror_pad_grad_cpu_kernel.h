@@ -16,13 +16,13 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MIRROR_PAD_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MIRROR_PAD_GRAD_CPU_KERNEL_H_
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include <string>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
-
 namespace mindspore {
 namespace kernel {
 class MirrorPadGradCPUKernel : public CPUKernel {
@@ -36,34 +36,33 @@ class MirrorPadGradCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ private:
   template <typename T>
   void InitWorkspaceSize();
 
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
+                    const std::vector<AddressPtr> &outputs) const;
 
   template <typename T>
   void MirrorPadGrad_Width_Height(const size_t size, const T *interim_dy, const int64_t dx_height,
                                   const int64_t dx_width, const int64_t dy_height, const int64_t dy_width,
-                                  const int64_t padd_dim, const int64_t *paddings_arg, int64_t mode, T *dx);
+                                  const int64_t padd_dim, const int64_t *paddings_arg, int64_t mode, T *dx) const;
 
   template <typename T>
   void MirrorPadGradBatchChannel(const size_t size, T *dy, T *interim_dy, const int64_t dx_batches,
                                  const int64_t dx_channels, const int64_t dy_height, const int64_t dy_width,
-                                 const int64_t padd_dim, const int64_t *paddings_arg, int64_t mode);
+                                 const int64_t padd_dim, const int64_t *paddings_arg, int64_t mode) const;
 
- private:
-  void CheckParam(const CNodePtr &kernel_node);
   TypeId dtype_{kTypeUnknown};
-  size_t tensor_size_ = 1;
-  size_t shape_size_;
-  size_t output_size_ = 1;
-  size_t workspace_size_ = 1;
+  size_t tensor_size_{1};
+  size_t shape_size_{1};
+  size_t output_size_{1};
+  size_t workspace_size_{1};
+  int mode_{0};
+  int64_t num_paddings_{0};
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;
-  int64_t mode_;
-  int64_t num_paddings_;
 };
 
 MS_REG_CPU_KERNEL(

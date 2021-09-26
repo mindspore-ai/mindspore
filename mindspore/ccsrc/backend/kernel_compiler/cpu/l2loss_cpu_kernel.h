@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2_LOSS_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_L2_LOSS_CPU_KERNEL_H_
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -36,8 +37,8 @@ class L2LossCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
-  size_t tensor_size_{1};
+  TypeId dtype_{kTypeUnknown};
+  size_t tensor_size_ = 1;
 };
 
 MS_REG_CPU_KERNEL_T(L2Loss, KernelAttr(), L2LossCPUKernel, float16);

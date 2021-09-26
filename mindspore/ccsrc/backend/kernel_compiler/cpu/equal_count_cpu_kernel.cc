@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/equal_count_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
-void EqualCountCPUKernel::InitKernel(const CNodePtr &) {}
+namespace {
+constexpr size_t kEqualCountInputsNum = 2;
+constexpr size_t kEqualCountOutputsNum = 1;
+}  // namespace
+
+void EqualCountCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+}
 
 bool EqualCountCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 2 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Input or output empty!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEqualCountInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEqualCountOutputsNum, kernel_name_);
   if (inputs[0]->size != inputs[1]->size) {
     MS_LOG(EXCEPTION) << "Input or output size!";
   }

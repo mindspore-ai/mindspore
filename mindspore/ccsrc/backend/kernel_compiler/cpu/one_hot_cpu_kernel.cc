@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/one_hot_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kOneHotInputsNum = 3;
+constexpr size_t kOneHotOutputsNum = 1;
+}  // namespace
+
 void OneHotCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (output_shape.size() < 2) {
     MS_LOG(EXCEPTION) << "Invalid output shape size: " << output_shape.size();
@@ -28,6 +35,7 @@ void OneHotCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
     MS_LOG(EXCEPTION) << "Invalid axis: " << axis;
   }
+
   if (axis == -1) {
     axis_ = output_shape.size() - 1;
   } else {
@@ -42,13 +50,12 @@ void OneHotCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool OneHotCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                              const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < 3 || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Input or output invalid!";
-  }
-  auto indices = reinterpret_cast<int *>(inputs[0]->addr);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kOneHotInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOneHotOutputsNum, kernel_name_);
+  const auto *indices = reinterpret_cast<int *>(inputs[0]->addr);
   auto on_value = reinterpret_cast<float *>(inputs[1]->addr)[0];
   auto off_value = reinterpret_cast<float *>(inputs[2]->addr)[0];
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  auto *output = reinterpret_cast<float *>(outputs[0]->addr);
   size_t elem_num = inputs[0]->size / sizeof(int);
 
   auto task = [this, &indices, &on_value, &off_value, &output](size_t start, size_t end) {

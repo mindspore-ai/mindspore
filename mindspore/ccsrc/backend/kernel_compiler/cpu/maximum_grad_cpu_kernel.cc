@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kMaximumGradInputsNum = 3;
+constexpr size_t kMaximumGradOutputsNum = 2;
+
 void CheckShape(std::vector<size_t> *shape) {
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->empty()) {
@@ -30,7 +33,8 @@ void CheckShape(std::vector<size_t> *shape) {
 }  // namespace
 
 void MaximumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   y_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   dout_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
@@ -45,6 +49,8 @@ void MaximumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool MaximumGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaximumGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaximumGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeUInt32) {
@@ -57,6 +63,8 @@ bool MaximumGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     LaunchKernel<uint64_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
     LaunchKernel<double>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat16) {
+    LaunchKernel<float16>(inputs, outputs);
   }
   return true;
 }
@@ -144,17 +152,6 @@ void MaximumGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, c
 
   MaximumGradRecTask<T>(x_addr, y_addr, dout_addr, dx_addr, dy_addr, 0, 0, 0, 0, x_cargo, y_cargo, dout_cargo, x_shape,
                         y_shape, dout_shape);
-}
-
-void MaximumGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 3) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MaximumGradCPUKernel needs 3 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 2) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MaximumGradCPUKernel needs 2 output.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore
