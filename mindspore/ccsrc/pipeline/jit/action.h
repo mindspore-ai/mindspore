@@ -46,6 +46,7 @@ bool StartPSSchedulerAction(const ResourcePtr &res);
 // This action is only for federated learning only. In later version, parameter server mode and federated learning will
 // use the same action.
 bool StartServerAction(const ResourcePtr &res);
+bool DistributedSplitAction(const ResourcePtr &res);
 
 std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline();
