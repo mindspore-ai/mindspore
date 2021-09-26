@@ -135,12 +135,14 @@ bool Nc4hw4PassMatch(std::vector<kernel::LiteKernel *> *kernels, size_t index) {
   return true;
 }
 
-bool RuntimePassValid(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels) {
-  if (context->IsGpuEnabled() || context->IsNpuEnabled()) {
+bool RuntimePassValid(kernel::SubGraphKernel *subgraph) {
+  if (subgraph->desc().arch != kernel::KERNEL_ARCH::kCPU) {
     return false;
   }
 
-  for (auto kernel : *kernels) {
+  auto kernels = subgraph->nodes();
+
+  for (auto kernel : kernels) {
     if (kernel->op_parameter() != nullptr) {
       if (kernel->op_parameter()->quant_type_ == schema::QuantType_AwareTraining ||
           kernel->op_parameter()->quant_type_ == schema::QuantType_PostTraining) {
@@ -148,7 +150,6 @@ bool RuntimePassValid(const InnerContext *context, std::vector<kernel::LiteKerne
       }
     }
   }
-
   return true;
 }
 
@@ -226,15 +227,17 @@ void ConvNormC4PassAct(std::vector<kernel::LiteKernel *> *kernels) {
   return;
 }
 
-void RuntimePass(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels,
-                 std::vector<Tensor *> *tensors) {
-  if (!RuntimePassValid(context, kernels)) {
-    return;
+void RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Tensor *> *tensors) {
+  for (auto subgraph : *subgraphs) {
+    auto sub = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
+    if (RuntimePassValid(sub) == false) {
+      continue;
+    }
+
+    int i = 0;
+    auto &kernels = sub->nodes();
+    Nc4hw4PassAct(&kernels, tensors, i);
+    ConvNormC4PassAct(&kernels);
   }
-
-  int i = 0;
-  Nc4hw4PassAct(kernels, tensors, i);
-
-  ConvNormC4PassAct(kernels);
 }
 }  // namespace mindspore::lite

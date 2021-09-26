@@ -332,15 +332,15 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
 
   FindAllInoutKernels(*dst_kernels);
 
-#ifndef RUNTIME_PASS_CLIP
-  RuntimePass(context_, dst_kernels, src_tensors_);
-#endif
-
   ret = ConstructSubGraphs(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstructSubGraphs failed.";
     return ret;
   }
+
+#ifndef RUNTIME_PASS_CLIP
+  RuntimePass(dst_kernels, src_tensors_);
+#endif
 
   ret = InitKernels(*dst_kernels);
   if (ret != RET_OK) {
