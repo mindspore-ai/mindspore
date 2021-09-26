@@ -47,9 +47,16 @@ TypeId NormalizeTypeId(const TypeId type_id);
 bool IsSameObjectType(const Type &lhs, const Type &rhs);
 size_t GetTypeByte(const TypePtr &type_ptr);
 
+enum class BitsNum : int {
+  eBits8 = 8,
+  eBits16 = 16,
+  eBits32 = 32,
+  eBits64 = 64,
+  eBits128 = 128,
+};
+
 // Base class for all types
 // forward declaration.
-
 class MS_CORE_API Type : public Value {
  public:
   Type() : meta_type_(kMetaTypeType), is_generic_(true) {}
