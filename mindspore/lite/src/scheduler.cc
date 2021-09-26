@@ -1469,7 +1469,7 @@ bool KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const ke
       if (kernel.desc().arch != kernel::KERNEL_ARCH::kGPU) {
         return false;
       }
-      return (kernel.desc().data_type == kNumberTypeFloat16);
+      return (kernel.desc().data_type != kNumberTypeFloat32);
     case kernel::SubGraphType::kGpuFp32SubGraph:
       if (kernel.desc().arch != kernel::KERNEL_ARCH::kGPU) {
         return false;
