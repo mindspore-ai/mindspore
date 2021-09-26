@@ -309,7 +309,6 @@ STATUS ConvertGraphInputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr
     }
     parameter->set_abstract(abstract_tensor);
     parameter->set_name(input_value.name());
-    ConverterContext::GetInstance()->AddGraphInputTensorNames(input_value.name());
     anf_nodes_map->emplace(input_value.name(), parameter);
   }
   return RET_OK;

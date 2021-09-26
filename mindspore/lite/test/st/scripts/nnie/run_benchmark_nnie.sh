@@ -12,7 +12,7 @@ function Run_Hi3516() {
         fi
         nnie_line_info=${line}
         model_info=`echo ${nnie_line_info}|awk -F ' ' '{print $2}'`
-        input_num=`echo ${nnie_line_info}|awk -F ' ' '{print $3}'`
+        input_info=`echo ${nnie_line_info}|awk -F ' ' '{print $3}'`
         env_time_step=`echo ${nnie_line_info}|awk -F ' ' '{print $4}'`
         env_max_roi_num=`echo ${nnie_line_info}|awk -F ' ' '{print $5}'`
         accuracy_limit=`echo ${nnie_line_info}|awk -F ' ' '{print $6}'`
@@ -20,11 +20,22 @@ function Run_Hi3516() {
         length=`expr ${#model_name} + 1`
         input_shapes=${model_info:${length}}
         input_files=''
-        if [[ $input_num != 1 ]]; then
-          for i in $(seq 1 $input_num)
-          do
-            input_files=$input_files${basepath}'/../input_output/input/'${model_name}'.ms.bin_'$i','
-          done
+        if [[ $input_info != 1 ]]; then
+          input_num=`echo ${input_info} | awk -F ':' '{print $1}'`
+          input_seq=`echo ${input_info} | awk -F ':' '{print $2}'`
+          if [[ "${input_seq}" == "" ]]; then
+            for i in $(seq 1 $input_num)
+            do
+              input_files=${input_files}${basepath}'/../input_output/input/'${model_name}'.ms.bin_'$i','
+            done
+          else
+            for i in $(seq 1 $input_num)
+            do
+              cur_input_num=${input_seq%%,*}
+              input_seq=${input_seq#*,}
+              input_files=${input_files}${basepath}'/../input_output/input/'${model_name}'.ms.bin_'$cur_input_num','
+            done
+          fi
         else
           input_files=${basepath}/../input_output/input/${model_name}.ms.bin
         fi
