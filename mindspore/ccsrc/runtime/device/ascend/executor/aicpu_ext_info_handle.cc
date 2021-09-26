@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,7 @@ bool AicpuExtInfoHandler::ParseExtInputShape(AicpuExtInfo *aicpu_ext_info) {
     MS_LOG(ERROR) << "Node:" << node_name_
                   << " parse ext input shape failed as aicpu_ext_info->infoLen:" << aicpu_ext_info->infoLen
                   << " and need_len:" << need_len;
+    return false;
   }
   auto input = reinterpret_cast<AicpuShapeAndType *>(aicpu_ext_info->infoMsg);
 

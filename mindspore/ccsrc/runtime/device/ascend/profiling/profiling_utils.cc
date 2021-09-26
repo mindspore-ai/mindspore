@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,8 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-constexpr uint32_t kMaxProfilingNodeNum = 100;
-constexpr char kCustomNode[] = "PROFILING_CUSTOM_";
 constexpr char kFpStartNode[] = "fp_point";
 constexpr char kBpEndNode[] = "bp_point";
-constexpr char kIterEndNode[] = "PROFILING_ITER_END";
-// PROFILING_CUSTOM_LOGID_START 3
 constexpr uint64_t kProfilingFpStartLogId = 2;
 constexpr uint64_t kProfilingBpEndLogId = 3;
 constexpr uint64_t kProfilingIterEndLogId = 4;
@@ -58,7 +54,6 @@ nlohmann::json GetContextProfilingOption() {
 
 ProfilingTraceInfo ProfilingUtils::GenerateProfilingTrace(const session::KernelGraph &kernel_graph) {
   MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id() << " Start to get trace";
-  custom_node_index_ = 5000;
   auto &cnode_exec_order = kernel_graph.execution_order();
   auto profiling_option = GetContextProfilingOption();
 
@@ -69,7 +64,6 @@ ProfilingTraceInfo ProfilingUtils::GenerateProfilingTrace(const session::KernelG
   GetTraceBegin(kernel_graph, profiling_option, &profiling_trace);
   GetTraceIterEnd(kernel_graph, &profiling_trace);
   GetTraceBpEnd(kernel_graph, profiling_option, &profiling_trace);
-  GetTraceCustomNode(&profiling_trace);
   GetTraceHccl(kernel_graph, NOT_NULL(&profiling_trace));
 
   auto set_string_converter = [](const std::set<std::string> &str_set) {
@@ -84,19 +78,6 @@ ProfilingTraceInfo ProfilingUtils::GenerateProfilingTrace(const session::KernelG
                << " trace_bp_end:" << set_string_converter(profiling_trace.trace_bp_end)
                << " trace_iter_end:" << set_string_converter(profiling_trace.trace_iter_end);
   return profiling_trace;
-}
-
-void ProfilingUtils::GetTraceCustomNode(ProfilingTraceInfo *trace_info) {
-  MS_EXCEPTION_IF_NULL(trace_info);
-  for (uint32_t i = 1; i <= kMaxProfilingNodeNum; ++i) {
-    std::string env_str = std::string(kCustomNode) + std::to_string(i);
-    auto node_full_name = common::GetEnv(env_str);
-    if (node_full_name.empty()) {
-      break;
-    }
-    MS_LOG(INFO) << "Get custom profiling node:" << node_full_name;
-    trace_info->trace_custom_node.emplace(node_full_name);
-  }
 }
 
 void ProfilingUtils::GetTraceHccl(const session::KernelGraph &kernel_graph,
@@ -324,29 +305,6 @@ CNodePtr ProfilingUtils::CreateProfilingCNodeWithStream(const mindspore::AnfNode
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(anf_node.get()), profiling_node.get());
   AnfAlgo::SetStreamId(AnfAlgo::GetStreamId(anf_node), profiling_node.get());
   return profiling_node;
-}
-
-void ProfilingUtils::InsertProfilingCustomOp(const AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
-                                             NotNull<session::KernelGraph *> graph_ptr,
-                                             NotNull<std::vector<CNodePtr> *> kernel_list) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  auto iter = profiling_trace_info.trace_custom_node.find(anf_node->fullname_with_scope());
-  if (iter == profiling_trace_info.trace_custom_node.end()) {
-    return;
-  }
-  MS_LOG(INFO) << "Profiling graph:" << graph_ptr->graph_id() << " Match CustomOp:" << anf_node->fullname_with_scope();
-  // custom op profiling job start from 10000.
-  auto custom_point_id = kDouble * custom_node_index_;
-  ProfilingContent front_profiling_content = {false, custom_point_id, 0};
-  CNodePtr front_node = CreateProfilingCNodeWithStream(anf_node, front_profiling_content, graph_ptr);
-  kernel_list->insert(kernel_list->end() - 1, front_node);
-  SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), custom_point_id);
-
-  ProfilingContent back_profiling_content = {false, custom_point_id + 1, 0};
-  CNodePtr back_node = CreateProfilingCNodeWithStream(anf_node, back_profiling_content, graph_ptr);
-  kernel_list->insert(kernel_list->end(), back_node);
-  SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), custom_point_id + 1);
-  ++custom_node_index_;
 }
 
 void ProfilingUtils::InsertProfilingTraceBpEnd(const AnfNodePtr &anf_node,

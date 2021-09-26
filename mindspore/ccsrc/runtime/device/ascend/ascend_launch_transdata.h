@@ -42,8 +42,8 @@ class AscendLaunchTransData : public AscendLaunchKernel {
   void FreeDeviceMem(void *addr) override;
   size_t AlignSizeForLaunchKernel(size_t size) override;
   uint8_t *AllocDeviceMem(size_t size) override;
-  void KernelSelect(std::shared_ptr<session::KernelGraph> kernel_graph) override;
-  void KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) override;
+  void KernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) override;
+  void KernelBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) override;
 
   void LaunchOpKernel() override;
   void FreeLaunchDeviceMem() override;

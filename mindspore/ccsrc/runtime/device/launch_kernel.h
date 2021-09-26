@@ -34,8 +34,8 @@ class LaunchKernel {
   virtual void FreeDeviceMem(void *addr) = 0;
   virtual size_t AlignSizeForLaunchKernel(size_t size) = 0;
   virtual uint8_t *AllocDeviceMem(size_t size) = 0;
-  virtual void KernelSelect(std::shared_ptr<session::KernelGraph> kernel_graph) = 0;
-  virtual void KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) = 0;
+  virtual void KernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) = 0;
+  virtual void KernelBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) = 0;
 
   virtual void SetInputAddr(uint8_t *input_addr) = 0;
   virtual void LaunchOpKernel() = 0;

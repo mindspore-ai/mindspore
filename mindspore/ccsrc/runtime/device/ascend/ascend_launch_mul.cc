@@ -29,11 +29,11 @@ size_t AscendLaunchMul::AlignSizeForLaunchKernel(size_t size) {
 
 uint8_t *AscendLaunchMul::AllocDeviceMem(size_t size) { return AscendLaunchKernel::AllocDeviceMem(size); }
 
-void AscendLaunchMul::KernelSelect(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void AscendLaunchMul::KernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   AscendLaunchKernel::KernelSelect(kernel_graph);
 }
 
-void AscendLaunchMul::KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void AscendLaunchMul::KernelBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   AscendLaunchKernel::KernelBuild(kernel_graph);
 }
 
