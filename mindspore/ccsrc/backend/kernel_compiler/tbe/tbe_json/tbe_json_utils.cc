@@ -15,9 +15,6 @@
  */
 
 #include "backend/kernel_compiler/tbe/tbe_json/tbe_json_utils.h"
-#include <memory>
-#include <string>
-#include <vector>
 #include "base/core_ops.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"

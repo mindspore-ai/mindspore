@@ -36,7 +36,6 @@ namespace mindspore {
 namespace kernel {
 namespace tbe {
 namespace {
-
 constexpr int kInvalid = -1;
 constexpr int kFloat = 0;
 constexpr int kFloat16 = 1;

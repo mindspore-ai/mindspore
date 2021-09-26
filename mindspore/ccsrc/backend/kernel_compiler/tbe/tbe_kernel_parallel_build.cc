@@ -69,7 +69,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     // get size
     std::vector<size_t> input_size_list;
     std::vector<size_t> output_size_list;
-    (void)TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list, anf_node);
+    (void)TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list);
     // search cache
     const std::string &json_name = creator.json_name();
     if (build_manger->SearchInCache(json_name, input_size_list, output_size_list, anf_node.get()) &&

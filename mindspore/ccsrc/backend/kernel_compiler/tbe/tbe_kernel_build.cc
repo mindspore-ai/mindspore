@@ -877,7 +877,7 @@ void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *o
 }
 
 bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
-                               std::vector<size_t> *output_size_list, const AnfNodePtr &anf_node) {
+                               std::vector<size_t> *output_size_list) {
   MS_EXCEPTION_IF_NULL(output_size_list);
   MS_EXCEPTION_IF_NULL(input_size_list);
   if (input_size_list == nullptr || output_size_list == nullptr) {
@@ -891,8 +891,7 @@ bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<si
   return true;
 }
 
-void GetRealInputSize(const nlohmann::json &input_json, const AnfNodePtr &anf_node, size_t i,
-                      std::vector<size_t> *input_size_list, size_t *size_i) {
+void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *input_size_list, size_t *size_i) {
   for (size_t j = 0; j < input_json[kJShape].size(); ++j) {
     if (input_json[kJShape][j] == -1) {
       auto input_max_shape = input_json[kJRange];
@@ -918,24 +917,22 @@ void GetInputSizeList2(const nlohmann::json &input_json, std::vector<size_t> *in
       for (size_t m = 0; m < input_json[i].size(); m++) {
         size_t size_i = 1;
         if (input_json[i][m][kJValid] == false) {
-          std::string input_name = input_json[i][m][kJName];
           continue;
         }
-        GetRealInputSize(input_json[i][m], anf_node, i, input_size_list, &size_i);
+        GetRealInputSize(input_json[i][m], input_size_list, &size_i);
       }
     } else {
       size_t size_i = 1;
       if (input_json[i][kJValid] == false) {
-        std::string input_name = input_json[i][kJName];
         continue;
       }
-      GetRealInputSize(input_json[i], anf_node, i, input_size_list, &size_i);
+      GetRealInputSize(input_json[i], input_size_list, &size_i);
     }
   }
 }
 
-void GetRealOutputSize(const nlohmann::json &output_json, const AnfNodePtr &anf_node, size_t i,
-                       std::vector<size_t> *output_size_list, size_t *size_i) {
+void GetRealOutputSize(const nlohmann::json &output_json, size_t i, std::vector<size_t> *output_size_list,
+                       size_t *size_i) {
   for (size_t j = 0; j < output_json[kJShape].size(); ++j) {
     if (output_json[kJShape][j] == -1) {
       auto output_max_shape = output_json[kJRange];
@@ -965,7 +962,7 @@ void GetOutputSizeList2(const nlohmann::json &output_json, std::vector<size_t> *
           MS_LOG(INFO) << "Output name:" << output_name << " is optional, valid is false.";
           continue;
         }
-        GetRealOutputSize(output_json[i][m], anf_node, i, output_size_list, &size_i);
+        GetRealOutputSize(output_json[i][m], i, output_size_list, &size_i);
       }
     } else {
       size_t size_i = 1;
@@ -974,7 +971,7 @@ void GetOutputSizeList2(const nlohmann::json &output_json, std::vector<size_t> *
         MS_LOG(INFO) << "Output name:" << output_name << " is optional, valid is false.";
         continue;
       }
-      GetRealOutputSize(output_json[i], anf_node, i, output_size_list, &size_i);
+      GetRealOutputSize(output_json[i], i, output_size_list, &size_i);
     }
   }
 }
