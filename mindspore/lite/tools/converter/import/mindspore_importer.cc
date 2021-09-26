@@ -219,9 +219,6 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     MS_LOG(ERROR) << "RemoveUnusedGraphInput failed.";
     return nullptr;
   }
-  for (auto input : func_graph->get_inputs()) {
-    ConverterContext::GetInstance()->AddGraphInputTensorNames(input->fullname_with_scope());
-  }
   status = GetFuncGraphOutputName(func_graph->get_return());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "GetFuncGraphOutputName failed.";

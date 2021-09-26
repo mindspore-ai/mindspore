@@ -283,7 +283,6 @@ STATUS CaffeModelParser::ConvertGraphInputsOfLayer() {
       }
       parameter->set_abstract(abstract);
       parameter->set_name(layer.name());
-      ConverterContext::GetInstance()->AddGraphInputTensorNames(layer.name());
       nodes_.insert(std::pair(layer.top(0), parameter));
     }
   }
@@ -317,7 +316,6 @@ STATUS CaffeModelParser::ConvertGraphInputsOfShape() {
     }
     parameter->set_abstract(abstract);
     parameter->set_name(caffe_model_.input(i));
-    ConverterContext::GetInstance()->AddGraphInputTensorNames(caffe_model_.input(i));
     nodes_.insert(std::pair(caffe_model_.input(i), parameter));
   }
   return RET_OK;
@@ -350,7 +348,6 @@ STATUS CaffeModelParser::ConvertGraphInputsOfDim() {
     }
     parameter->set_abstract(abstract);
     parameter->set_name(caffe_model_.input(i));
-    ConverterContext::GetInstance()->AddGraphInputTensorNames(caffe_model_.input(i));
     nodes_.insert(std::pair(caffe_model_.input(i), parameter));
   }
   return RET_OK;
