@@ -19,9 +19,15 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kL2LossInputsNum = 1;
+constexpr size_t kL2LossOutputsNum = 1;
+}  // namespace
+
 template <typename T>
 void L2LossCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (const size_t &d : x_shape) {
     tensor_size_ *= d;
@@ -31,26 +37,16 @@ void L2LossCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 template <typename T>
 bool L2LossCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                 const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kL2LossInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kL2LossOutputsNum, kernel_name_);
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto result_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  *result_addr = (T)0;
+  *result_addr = static_cast<T>(0);
   for (size_t i = 0; i < tensor_size_; i++) {
     *result_addr += input_addr[i] * input_addr[i];
   }
   *result_addr = *result_addr / 2;
   return true;
-}
-
-template <typename T>
-void L2LossCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but L2LossCPUKernel needs 1 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but L2LossCPUKernel needs 1 output.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

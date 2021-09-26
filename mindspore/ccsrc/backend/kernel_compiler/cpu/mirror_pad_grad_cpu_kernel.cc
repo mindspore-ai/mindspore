@@ -33,8 +33,28 @@ constexpr int TOP = 0;
 constexpr int BOTTOM = 1;
 constexpr int LEFT = 0;
 constexpr int RIGHT = 1;
+constexpr size_t kMirrorPadGradInputsNum = 2;
+constexpr size_t kMirrorPadGradOutputsNum = 1;
+
+void extract_paddings(const int64_t *paddings_arg, int64_t padd_dim, int64_t *extracted_paddings) {
+  const int64_t paddings_offset = MAX_PADDINGS - padd_dim;
+  for (int64_t i = 0; i < padd_dim; i++) {
+    extracted_paddings[(paddings_offset + i) * PADDING_SIZE] = paddings_arg[i * PADDING_SIZE];
+    extracted_paddings[(paddings_offset + i) * PADDING_SIZE + 1] = paddings_arg[i * PADDING_SIZE + 1];
+  }
+}
+
+bool range_check(int64_t x, int64_t y, int64_t padded_width, int64_t padded_height) {
+  if (((x >= 0) && (x <= padded_width - 1)) && ((y >= 0) && (y <= padded_height - 1))) {
+    return true;
+  }
+  return false;
+}
 }  // namespace
+
 void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::string mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (mode == "REFLECT") {
@@ -49,12 +69,10 @@ void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   shape_size_ = input_shape.size();
   if (shape_size_ == 4) {  // shape adjustment from 2d/3d to 4d
   } else if (shape_size_ == 3) {
-    auto it = input_shape.begin();
-    input_shape.insert(it, 1);  // batch padding
+    (void)input_shape.insert(input_shape.begin(), 1);  // batch padding
     shape_size_ = 4;
   } else if (shape_size_ == 2) {
-    auto it = input_shape.begin();
-    input_shape.insert(it, 2, 1);  // channel padding
+    (void)input_shape.insert(input_shape.begin(), 2, 1);  // channel padding
     shape_size_ = 4;
   }
 
@@ -70,11 +88,9 @@ void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
   if (output_shape.size() == 4) {
   } else if (output_shape.size() == 3) {
-    auto it = output_shape.begin();
-    output_shape.insert(it, 1);  // batch padding
+    (void)output_shape.insert(output_shape.begin(), 1);  // batch padding
   } else if (output_shape.size() == 2) {
-    auto it = output_shape.begin();
-    output_shape.insert(it, 2, 1);  // channel padding
+    (void)output_shape.insert(output_shape.begin(), 2, 1);  // channel padding
   }
   for (auto x : output_shape) {
     output_size_ *= x;
@@ -103,24 +119,11 @@ void MirrorPadGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
-void extract_paddings_(const int64_t *paddings_arg, int64_t padd_dim, int64_t *extracted_paddings) {
-  const int64_t paddings_offset = MAX_PADDINGS - padd_dim;
-  for (int64_t i = 0; i < padd_dim; i++) {
-    extracted_paddings[(paddings_offset + i) * PADDING_SIZE] = paddings_arg[i * PADDING_SIZE];
-    extracted_paddings[(paddings_offset + i) * PADDING_SIZE + 1] = paddings_arg[i * PADDING_SIZE + 1];
-  }
-}
-
-bool range_check(int64_t x, int64_t y, int64_t padded_width, int64_t padded_height) {
-  if (((x >= 0) && (x <= padded_width - 1)) && ((y >= 0) && (y <= padded_height - 1))) {
-    return true;
-  }
-  return false;
-}
-
 bool MirrorPadGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &workspace,
                                     const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMirrorPadGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMirrorPadGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -158,12 +161,12 @@ template <typename T>
 void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const T *interim_dy, const int64_t dx_height,
                                                         const int64_t dx_width, const int64_t dy_height,
                                                         const int64_t dy_width, const int64_t padd_dim,
-                                                        const int64_t *paddings_arg, int64_t mode, T *dx) {
+                                                        const int64_t *paddings_arg, int64_t mode, T *dx) const {
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
   for (int i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
     paddings[i] = 0;  // init all to 0
   }
-  extract_paddings_(paddings_arg, padd_dim, paddings);
+  extract_paddings(paddings_arg, padd_dim, paddings);
   // Create required anchor points for non-mirrored data inside new tensor
   int64_t ap1_x = paddings[WIDTH];
   int64_t ap2_x = paddings[WIDTH] + dx_width - 1;
@@ -216,7 +219,6 @@ void MirrorPadGradCPUKernel::MirrorPadGrad_Width_Height(const size_t size, const
       }
     }
   }
-  return;
 }
 
 template <typename T>
@@ -224,12 +226,12 @@ void MirrorPadGradCPUKernel::MirrorPadGradBatchChannel(const size_t size, T *dy,
                                                        const int64_t dx_batches, const int64_t dx_channels,
                                                        const int64_t dy_height, const int64_t dy_width,
                                                        const int64_t padd_dim, const int64_t *paddings_arg,
-                                                       int64_t mode) {
+                                                       int64_t mode) const {
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers
   for (int i = 0; i < MAX_PADDINGS * PADDING_SIZE; i++) {
     paddings[i] = 0;  // init all to 0
   }
-  extract_paddings_(paddings_arg, padd_dim, paddings);
+  extract_paddings(paddings_arg, padd_dim, paddings);
   // Create anchor points for non mirrored data inside new tensor
   int64_t ap1_channel = paddings[CHANNEL];
   int64_t ap2_channel = paddings[CHANNEL] + dx_channels - 1;
@@ -273,34 +275,22 @@ void MirrorPadGradCPUKernel::MirrorPadGradBatchChannel(const size_t size, T *dy,
       }
     }
   }
-  return;
 }
 
 template <typename T>
 void MirrorPadGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs) {
-  auto inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  int64_t *paddings = reinterpret_cast<int64_t *>(inputs[1]->addr);
-  auto interim = reinterpret_cast<T *>(workspace[0]->addr);
-  auto outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
+                                          const std::vector<AddressPtr> &outputs) const {
+  auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *paddings = reinterpret_cast<int64_t *>(inputs[1]->addr);
+  auto *interim = reinterpret_cast<T *>(workspace[0]->addr);
+  auto *outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
   MirrorPadGradBatchChannel(workspace_size_, inputs_addr, interim, output_shape_[0], output_shape_[1], input_shape_[2],
                             input_shape_[3], num_paddings_, paddings, mode_);
 
   MirrorPadGrad_Width_Height(output_size_, interim, output_shape_[2], output_shape_[3], input_shape_[2],
                              input_shape_[3], num_paddings_, paddings, mode_, outputs_addr);
-}
-
-void MirrorPadGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MirrorPadGradCPUKernel needs 2 inputs.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MirrorPadGradCPUKernel needs 1 output.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

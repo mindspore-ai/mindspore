@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/softmax_cpu_kernel.h"
 #include <algorithm>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
@@ -21,8 +22,14 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kSoftmaxInputsNum = 1;
+constexpr size_t kSoftmaxOutputsNum = 1;
+}  // namespace
+
 void SoftmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<int> axis_list;
   std::vector<int64_t> axis_list_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
@@ -48,9 +55,8 @@ void SoftmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool SoftmaxCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Softmax error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSoftmaxInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSoftmaxOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
   ExecutePrimitive();

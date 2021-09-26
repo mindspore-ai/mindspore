@@ -144,6 +144,30 @@ std::vector<int64_t> CalDimOffset(const std::vector<int64_t> &input_shape);
 size_t GetCopySize(const std::vector<int64_t> &dim_offset, const std::vector<int64_t> &start,
                    const std::vector<int64_t> &stop);
 size_t UnitSizeInBytes(const mindspore::TypeId &t);
+
+#define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
+  do {                                                                                                 \
+    if ((actual_inputs_num) != (expect_inputs_num)) {                                                  \
+      MS_LOG(EXCEPTION) << (kernel_name) << " requires " << (expect_inputs_num) << " inputs, but got " \
+                        << (actual_inputs_num) << ".";                                                 \
+    }                                                                                                  \
+  } while (0)
+
+#define CHECK_KERNEL_OUTPUTS_NUM(actual_outputs_num, expect_outputs_num, kernel_name)                       \
+  do {                                                                                                      \
+    if ((actual_outputs_num) != (expect_outputs_num)) {                                                     \
+      MS_LOG(EXCEPTION) << (kernel_name) << " should have " << (expect_outputs_num) << " outputs, but got " \
+                        << (actual_outputs_num) << ".";                                                     \
+    }                                                                                                       \
+  } while (0)
+
+#define CHECK_KERNEL_WORKSPACE_SIZE(actual_size, expect_size, kernel_name)                                           \
+  do {                                                                                                               \
+    if ((actual_size) != (expect_size)) {                                                                            \
+      MS_LOG(EXCEPTION) << (kernel_name) << " requires " << (expect_size) << " workspace, but got " << (actual_size) \
+                        << ".";                                                                                      \
+    }                                                                                                                \
+  } while (0)
 }  // namespace kernel
 }  // namespace mindspore
 

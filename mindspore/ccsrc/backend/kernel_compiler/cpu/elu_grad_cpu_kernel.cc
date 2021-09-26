@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "backend/kernel_compiler/cpu/elu_grad_cpu_kernel.h"
 #include <cmath>
 #include <string>
 #include <thread>
-#include "backend/kernel_compiler/cpu/elu_grad_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kEleGradInputsNum = 2;
+constexpr size_t kEleGradOutputsNum = 1;
+}  // namespace
+
 void EluGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (dtype_ != AnfAlgo::GetInputDeviceDataType(kernel_node, 1)) {
     MS_LOG(EXCEPTION) << "Input0 and input1 must has the same data type";
@@ -31,6 +38,8 @@ void EluGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool EluGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEleGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEleGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
@@ -44,9 +53,9 @@ bool EluGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, con
 template <typename T>
 void EluGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                     const std::vector<AddressPtr> &outputs) const {
-  T *input0 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input1 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  const auto *input0 = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *input1 = reinterpret_cast<T *>(inputs[1]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
 
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
   auto task = [input0, input1, output](const size_t start, const size_t end) {

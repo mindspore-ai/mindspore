@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kMinimumGradInputsNum = 3;
+constexpr size_t kMinimumGradOutputsNum = 2;
+
 void GetCargo(std::vector<size_t> *cargo, const std::vector<size_t> &shape, const std::vector<size_t> &dout_shape) {
   int i = dout_shape.size() - 1;
   int j = shape.size() - 1;
@@ -58,7 +61,8 @@ void CheckShape(std::vector<size_t> *shape) {
 }  // namespace
 
 void MinimumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   y_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   dout_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
@@ -73,6 +77,8 @@ void MinimumGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool MinimumGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMinimumGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMinimumGradOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeUInt32) {
@@ -115,11 +121,11 @@ void MinimumGradRecTask(const T *x, const T *y, const T *dout, T *dx, T *dy, con
 
 template <typename T>
 void MinimumGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto y_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto dout_addr = reinterpret_cast<T *>(inputs[2]->addr);
-  auto dx_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto dy_addr = reinterpret_cast<T *>(outputs[1]->addr);
+  auto *x_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *y_addr = reinterpret_cast<T *>(inputs[1]->addr);
+  auto *dout_addr = reinterpret_cast<T *>(inputs[2]->addr);
+  auto *dx_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *dy_addr = reinterpret_cast<T *>(outputs[1]->addr);
 
   size_t x_tensor_len = GetTensorLen(x_shape_);
   size_t y_tensor_len = GetTensorLen(y_shape_);
@@ -145,17 +151,6 @@ void MinimumGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, c
 
   MinimumGradRecTask<T>(x_addr, y_addr, dout_addr, dx_addr, dy_addr, 0, 0, 0, 0, x_cargo, y_cargo, dout_cargo, x_shape,
                         y_shape, dout_shape);
-}
-
-void MinimumGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 3) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MinimumGradCPUKernel needs 3 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 2) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MinimumGradCPUKernel needs 2 output.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

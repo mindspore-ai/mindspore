@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHERDGRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHERDGRAD_CPU_KERNEL_H_
+
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHER_D_GRAD_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHER_D_GRAD_CPU_KERNEL_H_
+
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
@@ -37,7 +39,7 @@ class GatherDGradCPUKernel : public CPUKernel {
   std::vector<size_t> input_shape_;
   std::vector<size_t> index_shape_;
   std::vector<size_t> output_shape_;
-  int32_t axis_;
+  int32_t axis_{1};
 };
 
 MS_REG_CPU_KERNEL_T_S(GatherDGrad, KernelAttr(), GatherDGradCPUKernel, int32_t, int32_t);

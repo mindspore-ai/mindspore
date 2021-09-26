@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kGatherDInputsNum = 3;
+constexpr size_t kGatherDOutputsNum = 1;
+
 size_t get_element_num(const std::vector<size_t> &shape) {
   size_t size = 1;
   for (size_t i = 0; i < shape.size(); i++) {
@@ -63,6 +66,8 @@ void CopyTask(size_t cur, std::vector<size_t> *pos, T *input, const I *index, co
 
 template <typename T, typename I>
 void GatherDCPUKernel<T, I>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   index_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
   if (input_shape_.size() != index_shape_.size()) {
@@ -76,6 +81,8 @@ template <typename T, typename I>
 bool GatherDCPUKernel<T, I>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGatherDInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherDOutputsNum, kernel_name_);
   size_t input_size = get_element_num(input_shape_) * sizeof(T);
   size_t index_size = get_element_num(index_shape_) * sizeof(I);
   size_t dim_size = sizeof(int);
@@ -83,17 +90,15 @@ bool GatherDCPUKernel<T, I>::Launch(const std::vector<kernel::AddressPtr> &input
   if (inputs[0]->size != input_size || inputs[1]->size != dim_size || inputs[2]->size != index_size ||
       outputs[0]->size != output_size) {
     MS_LOG(EXCEPTION) << "invalid input or output data size!";
-    return false;
   }
-  auto input = reinterpret_cast<T *>(inputs[0]->addr);
-  auto dim = reinterpret_cast<int32_t *>(inputs[1]->addr);
-  auto index = reinterpret_cast<I *>(inputs[2]->addr);
+  auto *input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *dim = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  auto *index = reinterpret_cast<I *>(inputs[2]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   int32_t input_rank = SizeToInt(input_shape_.size());
   if (dim[0] >= input_rank || dim[0] < -input_rank) {
     MS_LOG(EXCEPTION) << "The value of 'dim' should be in [" << -input_rank << ", " << input_rank
                       << "], but got: " << dim[0];
-    return false;
   }
   if (dim[0] < 0) {
     dim[0] = static_cast<int>(dim[0] + input_rank);
@@ -105,7 +110,6 @@ bool GatherDCPUKernel<T, I>::Launch(const std::vector<kernel::AddressPtr> &input
     if (index[i] >= max_index || index[i] < -max_index) {
       MS_LOG(EXCEPTION) << "The value of index should be in [" << -max_index << ", " << max_index
                         << "], but got: " << index[i];
-      return false;
     }
     if (index[i] < 0) {
       index[i] = max_index + index[i];

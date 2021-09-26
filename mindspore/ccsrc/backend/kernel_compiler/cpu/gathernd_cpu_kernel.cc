@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/gathernd_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#define MAX_INT (((unsigned int)(-1)) >> 1)
 
 namespace mindspore {
 namespace kernel {
+namespace {
+#define MAX_INT (((unsigned int)(-1)) >> 1)
+
+constexpr size_t kGatherNdInputsNum = 2;
+constexpr size_t kGatherNdOutputsNum = 1;
+}  // namespace
+
 template <typename T>
 void GatherNdCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -35,6 +44,9 @@ void GatherNdCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
 
   size_t dim_after_indices = 1;
   size_t dim_indices_last = indices_shapes_[indices_shapes_.size() - IntToSize(1)];
+  if (dim_indices_last == 0) {
+    MS_LOG(EXCEPTION) << "Value of indices_shapes_[" << indices_shapes_.size() << " - 1] should not be 0";
+  }
   for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
     dim_after_indices *= input_shapes_[i];
   }
@@ -61,8 +73,10 @@ template <typename T>
 bool GatherNdCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto indices_addr = reinterpret_cast<int *>(inputs[1]->addr);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGatherNdInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherNdOutputsNum, kernel_name_);
+  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *indices_addr = reinterpret_cast<int *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
   size_t output_dim0 = dims_[0];

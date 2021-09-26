@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MIRROR_PAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MIRROR_PAD_CPU_KERNEL_H_
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -35,19 +36,18 @@ class MirrorPadCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  template <typename T>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+
   TypeId dtype_{kTypeUnknown};
-  size_t tensor_size_ = 1;
-  size_t shape_size_;
-  size_t output_size_ = 1;
+  size_t tensor_size_{1};
+  size_t shape_size_{0};
+  size_t output_size_{1};
+  int64_t mode_{0};
+  int64_t num_paddings_{0};
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;
-  int64_t mode_;
-  int64_t num_paddings_;
 };
 
 MS_REG_CPU_KERNEL(
