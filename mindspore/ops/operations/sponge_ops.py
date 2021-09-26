@@ -306,8 +306,10 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [n, 3], same as operator BondForce().
-        - **atom_e** (Tensor, float32) - [n,], same as atom_ene in operator BondAtomEnergy().
+        - **frc_f** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **atom_e** (Tensor) - The accumulated potential energy for each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1470,14 +1472,15 @@ class Dihedral14LJForceWithDirectCF(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(m,)`.
         - **cf_scale_factor** (Tensor) - The scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
-          The data type is float and the shape is :math:`(m,)`.
+          The data type is float32 and the shape is :math:`(m,)`.
         - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
         - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **frc_f** (Tensor, float) - [n, 3], the force felt by each atom.
+        - **frc_f** (Tensor) - The force felt by each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`
 
     Supported Platforms:
         ``GPU``
@@ -1572,14 +1575,14 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(3,)`.
         - **a_14** (Tensor) - The first atom index of each dihedral 1,4 term.
           The data type is int32 and the shape is :math:`(m,)`.
-        - **b_14** (Tensor, int32) - [m,], the second atom index of each dihedral 1,4 term.
+        - **b_14** (Tensor) - The second atom index of each dihedral 1,4 term.
           The data type is int32 and the shape is :math:`(m,)`.
         - **lj_scale_factor** (Tensor) - The scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
           The data type is float32 and the shape is :math:`(m,)`.
         - **cf_scale_factor** (Tensor) - The scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
-          The data type is float and the shape is :math:`(m,)`.
+          The data type is float32 and the shape is :math:`(m,)`.
         - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
         - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
@@ -1686,15 +1689,17 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
         - **lj_scale_factor** (Tensor) - The scale factor for the
           Lennard-Jones part of force correction of each dihedral 1,4 term.
           The data type is float32 and the shape is :math:`(m,)`.
-        - **cf_scale_factor** (Tensor, float) - [m,], the scale factor for the
+        - **cf_scale_factor** (Tensor) - The scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
-        - **LJ_type_A** (Tensor, float32) - [q,], the A parameter in Lennard-Jones scheme of each atom pair type.
-          q is the number of atom pair.
-        - **LJ_type_B** (Tensor, float32) - [q,], the B parameter in Lennard-Jones scheme of each atom pair type.
-          q is the number of atom pair.
+          The data type is float32 and the shape is :math:`(m,)`.
+        - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
-        - **ene** (Tensor, float32) - [n,], the accumulated potential energy of each atom.
+        - **ene** (Tensor) - The accumulated potential energy of each atom.
+          The data type is float32 and the shape is :math:`(n,)`.
 
     Supported Platforms:
         ``GPU``
@@ -1792,7 +1797,7 @@ class Dihedral14CFEnergy(PrimitiveWithInfer):
           The data type is int32 and the shape is :math:`(m,)`.
         - **cf_scale_factor** (Tensor) - The scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
-          The data type is float and the shape is :math:`(m,)`.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
         - **ene** (Tensor) - The accumulated potential energy of each atom.
@@ -1883,7 +1888,7 @@ class Dihedral14CFAtomEnergy(PrimitiveWithInfer):
           The data type is int32 and the shape is :math:`(m,)`.
         - **cf_scale_factor** (Tensor) - The scale factor for the
           Coulomb part of force correction for each dihedral 1,4 terms.
-          The data type is float and the shape is :math:`(m,)`.
+          The data type is float32 and the shape is :math:`(m,)`.
 
     Outputs:
         - **ene** (Tensor) - The accumulated potential energy of each atom.
@@ -1970,9 +1975,9 @@ class PMEReciprocalForce(PrimitiveWithInfer):
         box_length_2(float32): the value of boxlength idx 2
 
     Inputs:
-        - **uint_crd** (Tensor) - [n, 3], the unsigned int coordinates value of each atom.
+        - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
           The data type is uint32 and the shape is :math:`(n, 3)`
-        - **charge** (Tensor) - [n,], the charge carried by each atom.
+        - **charge** (Tensor) - The charge carried by each atom.
           The data type is float32 and the shape is :math:`(n,)`
 
     Outputs:
@@ -2273,7 +2278,7 @@ class LJEnergy(PrimitiveWithInfer):
         cutoff_square(float32): the square value of cutoff.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - The unsigned int coordinate value of each atom.
+        - **uint_crd** (Tensor) - The unsigned int coordinate value of each atom.
             The data type is uint32 and the shape is :math:`(n, 3)`
         - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
            The data type is int32 and the shape is :math:`(n,)`
@@ -2372,17 +2377,22 @@ class LJForce(PrimitiveWithInfer):
         cutoff_square(float32): the square value of cutoff.
 
     Inputs:
-        - **uint_crd** (Tensor, uint32) - [n, 3], the unsigned int coordinate value of each atom.
-        - **LJtype** (Tensor, int32) - [n,], the Lennard-Jones type of each atom.
-        - **charge** (Tensor, float32) - [n,], the charge carried by each atom.
-        - **scaler** (Tensor, float32) - [3,], the scale factor between real
-          space coordinate and its unsigned int value.
-        - **nl_numbers** - (Tensor, int32) - [n,], the each atom.
-        - **nl_serial** - (Tensor, int32) - [n, 800], the neighbor list of each atom, the max number is 800.
-        - **d_LJ_A** (Tensor, float32) - [q,], the Lennard-Jones A coefficient of each kind of atom pair.
-          q is the number of atom pair.
-        - **d_LJ_B** (Tensor, float32) - [q,], the Lennard-Jones B coefficient of each kind of atom pair.
-          q is the number of atom pair.
+        - **uint_crd** (Tensor) - The unsigned int coordinates value of each atom.
+          The data type is uint32 and the shape is :math:`(n, 3)`
+        - **LJtype** (Tensor) - The Lennard-Jones type of each atom.
+           The data type is int32 and the shape is :math:`(n,)`
+        - **charge** (Tensor) - The charge carried by each atom.
+           The data type is float32 and the shape is :math:`(n,)`
+        - **scaler** (Tensor) - The scale factor between real space
+          coordinates and its unsigned int value. The data type is float32 and the shape is :math:`(3,)`
+        - **nl_numbers** - (Tensor) - The each atom.
+          The data type is int32 and the shape is :math:`(n,)`
+        - **nl_serial** - (Tensor) - The neighbor list of each atom, the max number is 800.
+          The data type is int32 and the shape is :math:`(n, 800)`.
+        - **d_LJ_A** (Tensor) - The Lennard-Jones A coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
+        - **d_LJ_B** (Tensor) - The Lennard-Jones B coefficient of each kind of atom pair.
+          q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     outputs:
         - **frc** (Tensor) - The force felt by each atom.
@@ -2602,6 +2612,7 @@ class MDTemperature(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('atom_mass', atom_mass_dtype, [mstype.float32], self.name)
         return atom_mass_dtype
 
+
 class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
     """
     One step of classical leap frog algorithm to solve the finite difference
@@ -2753,12 +2764,13 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
         - **acc** (Tensor) - The acceleration of each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
         - **rand_state** (Tensor) - Random state to generate
-          random force. The data type is float32 and the shape is :math:`(math.ceil(atom_numbers * 3.0 / 4.0) * 16, )`.
+          random force. The data type is float32 and the shape is :math:`(math.ceil(n * 3.0 / 4.0) * 16, )`.
         - **rand_frc** (Tensor) - The random forces.
           The data type is float32 and the shape is :math:`(n, 3)`.
 
     Outputs:
-        - **output** (Scalar) - The data type is float32.
+        - **output** (Tensor) - The output coordinates.
+          The data type is float32, and the shape is :math:`(n, 3)`.
 
     Supported Platforms:
         ``GPU``
@@ -2786,6 +2798,23 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
         validator.check_int(len(sqrt_mass_inverse), 1, Rel.EQ, "sqrt_mass_inverse", self.name)
         validator.check_int(inverse_mass[0], n, Rel.EQ, "inverse_mass", self.name)
         validator.check_int(sqrt_mass_inverse[0], n, Rel.EQ, "sqrt_mass_inverse", self.name)
+        validator.check_int(len(rand_state), 1, Rel.EQ, "rand_state_dim", self.name)
+        validator.check_int(len(rand_frc), 2, Rel.EQ, "rand_frc_dim", self.name)
+        validator.check_int(len(vel), 2, Rel.EQ, "vel_dim", self.name)
+        validator.check_int(len(crd), 2, Rel.EQ, "crd_dim", self.name)
+        validator.check_int(len(frc), 2, Rel.EQ, "frc_dim", self.name)
+        validator.check_int(len(acc), 2, Rel.EQ, "acc_dim", self.name)
+        validator.check_int(vel[0], n, Rel.EQ, "vel_shape[0]", self.name)
+        validator.check_int(vel[1], 3, Rel.EQ, "vel_shape[1]", self.name)
+        validator.check_int(crd[0], n, Rel.EQ, "crd_shape[0]", self.name)
+        validator.check_int(crd[1], 3, Rel.EQ, "crd_shape[1]", self.name)
+        validator.check_int(frc[0], n, Rel.EQ, "frc_shape[0]", self.name)
+        validator.check_int(frc[1], 3, Rel.EQ, "frc_shape[1]", self.name)
+        validator.check_int(acc[0], n, Rel.EQ, "acc_shape[0]", self.name)
+        validator.check_int(acc[1], 3, Rel.EQ, "acc_shape[1]", self.name)
+        validator.check_int(rand_frc[0], n, Rel.EQ, "rand_frc_shape[0]", self.name)
+        validator.check_int(rand_frc[1], 3, Rel.EQ, "rand_frc_shape[1]", self.name)
+        validator.check_int(rand_state[0], math.ceil(self.atom_numbers * 3 / 4.0) * 16, Rel.EQ, "rand_state", self.name)
         return [self.atom_numbers, 3]
 
     def infer_dtype(self, inverse_mass, sqrt_mass_inverse, vel, crd, frc, acc, rand_state, rand_frc):
@@ -2796,6 +2825,7 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('frc', frc, [mstype.float32], self.name)
         validator.check_tensor_dtype_valid('acc', acc, [mstype.float32], self.name)
         validator.check_tensor_dtype_valid('rand_frc', rand_frc, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('rand_state', rand_state, [mstype.float32], self.name)
         return mstype.float32
 
 
@@ -3035,7 +3065,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
     Update (or construct if first time) the Verlet neighbor list for the
     calculation of short-ranged force. Assume the number of atoms is N,
     the number of grids divided is G, the maximum number of atoms in one
-    grid is M, the maximum number of atoms in single atom's neighbor list
+    grid is m, the maximum number of atoms in single atom's neighbor list
     is L, and the number of total atom in excluded list is E.
 
     Args:
@@ -3057,31 +3087,48 @@ class NeighborListUpdate(PrimitiveWithInfer):
         max_atom_in_grid_numbers(int32): the maximum number of atoms in one grid.
 
     Inputs:
-        - **atom_numbers_in_grid_bucket** (Tensor, int32) - [G,], the number of atoms in each grid bucket.
-        - **bucket** (Tensor, int32) - (Tensor,int32) - [G, M], the atom indices in each grid bucket.
-        - **crd** (Tensor, float32) - [N,], the coordinates of each atom.
-        - **box_length** (Tensor, float32) - [3,], the length of 3 dimensions of the simulation box.
-        - **grid_N** (Tensor, int32) - [3,], the number of grids divided of 3 dimensions of the simulation box.
-        - **grid_length_inverse** (float32) - The inverse value of grid length.
-        - **atom_in_grid_serial** (Tensor, int32) - [N,], the grid index for each atom.
-        - **old_crd** (Tensor, float32) - [N, 3], the coordinates before update of each atom.
-        - **crd_to_uint_crd_cof** (Tensor, float32) - [3,], the scale factor
-          between the unsigned int value and the real space coordinates.
-        - **uint_crd** (Tensor, uint32) - [N, 3], the unsigned int coordinates value fo each atom.
-        - **gpointer** (Tensor, int32) - [G, 125], the 125 nearest neighbor grids (including self) of each grid.
-          G is the number of nearest neighbor grids.
-        - **nl_atom_numbers** (Tensor, int32) - [N,], the number of atoms in neighbor list of each atom.
-        - **nl_atom_serial** (Tensor, int32) - [N, L], the indices of atoms in neighbor list of each atom.
-        - **uint_dr_to_dr_cof** (Tensor, float32) - [3,], the scale factor between
-          the real space coordinates and the unsigned int value.
-        - **excluded_list_start** (Tensor, int32) - [N,], the start excluded index in excluded list for each atom.
-        - **excluded_numbers** (Tensor, int32) - [N,], the number of atom excluded in excluded list for each atom.
-        - **excluded_list** (Tensor, int32) - [E,], the contiguous join of excluded list of each atom.
-        - **need_refresh_flag** (Tensor, int32) - [N,], whether the neighbor list of each atom need update or not.
-        - **refresh_count** (Tensor, int32) - [1,], count how many iteration steps have passed since last update.
+        - **atom_numbers_in_grid_bucket** (Tensor) - The number of atoms in each grid bucket.
+          The data type is int32 and the shape is :math:`(G,)`.
+        - **bucket** (Tensor) - (Tensor) - The atom indices in each grid bucket.
+          The data type is int32 and the shape is :math:`(G, m)`.
+        - **crd** (Tensor) - The coordinates of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **box_length** (Tensor) - The box length of the simulation box.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **grid_N** (Tensor) - The number of grids divided of 3 dimensions of the simulation box.
+          The data type is int32 and the shape is :math:`(3,)`.
+        - **grid_length_inverse** (Tensor) - The inverse value of grid length.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **atom_in_grid_serial** (Tensor) - The grid index for each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **old_crd** (Tensor) - The coordinates before update of each atom.
+          The data type is float32 and the shape is :math:`(n, 3)`.
+        - **crd_to_uint_crd_cof** (Tensor) - The scale factor between the unsigned int coordinate and the real one.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **uint_crd** (Tensor) - The unsigned int coordinates value fo each atom.
+          The data type is unsigned int32 and the shape is :math:`(n, 3)`.
+        - **gpointer** (Tensor) - The nearest neighbor grids (including self) of each grid.
+          The data type is int32 and the shape is :math:`(G, 125)`.
+        - **nl_atom_numbers** (Tensor) - The number of atoms in neighbor list of each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **nl_atom_serial** (Tensor) - The indices of atoms in neighbor list of each atom.
+          The data type is int32 and the shape is :math:`(n, m)`.
+        - **uint_dr_to_dr_cof** (Tensor) - The scale factor.
+          The data type is float32 and the shape is :math:`(3,)`.
+        - **excluded_list_start** (Tensor) - The start excluded index in excluded list for each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **excluded_list** (Tensor) - The contiguous join of excluded list of each atom.
+          The data type is int32 and the shape is :math:`(E,)`.
+        - **excluded_numbers** (Tensor) - The number of atom excluded in excluded list for each atom.
+          The data type is int32 and the shape is :math:`(n,)`.
+        - **need_refresh_flag** (Tensor) - Whether the neighbor list of each atom need update or not.
+          The data type is int32 and the shape is :math:`(1,)`.
+        - **refresh_count** (Tensor) - Count how many iteration steps have passed since last update.
+          The data type is int32 and the shape is :math:`(1,)`.
 
     Outputs:
-        - **res** (float32)
+        - **res** (Tensor) - The return value after updating successfully.
+          The data type is float32 and the shape is :math:`(1,)`.
 
     Supported Platforms:
         ``GPU``
@@ -3106,6 +3153,20 @@ class NeighborListUpdate(PrimitiveWithInfer):
         self.half_cutoff_with_skin = half_cutoff_with_skin
         self.cutoff_with_skin_square = cutoff_with_skin_square
         self.max_neighbor_numbers = max_neighbor_numbers
+        validator.check_value_type('grid_numbers', grid_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('refresh_interval', refresh_interval, int, self.name)
+        validator.check_value_type('not_first_time', not_first_time, int, self.name)
+        validator.check_value_type('cutoff', cutoff, float, self.name)
+        validator.check_value_type('skin', skin, float, self.name)
+        validator.check_value_type('max_atom_in_grid_numbers', max_atom_in_grid_numbers, int, self.name)
+        validator.check_value_type('excluded_atom_numbers', excluded_atom_numbers, int, self.name)
+        validator.check_value_type('cutoff_square', cutoff_square, float, self.name)
+        validator.check_value_type('half_skin_square', half_skin_square, float, self.name)
+        validator.check_value_type('cutoff_with_skin', cutoff_with_skin, float, self.name)
+        validator.check_value_type('half_cutoff_with_skin', half_cutoff_with_skin, float, self.name)
+        validator.check_value_type('cutoff_with_skin_square', cutoff_with_skin_square, float, self.name)
+        validator.check_value_type('max_neighbor_numbers', max_neighbor_numbers, int, self.name)
         self.init_prim_io_names(
             inputs=['atom_numbers_in_grid_bucket', 'bucket', 'crd', 'box_length', 'grid_N', 'grid_length_inverse',
                     'atom_in_grid_serial', 'old_crd', 'crd_to_uint_crd_cof', 'uint_crd', 'gpointer', 'nl_atom_numbers',
@@ -3127,30 +3188,31 @@ class NeighborListUpdate(PrimitiveWithInfer):
         self.add_prim_attr('half_cutoff_with_skin', self.half_cutoff_with_skin)
         self.add_prim_attr('cutoff_with_skin_square', self.cutoff_with_skin_square)
 
-    def infer_shape(self, atom_numbers_in_grid_bucket_shape, bucket_shape, crd_shape, box_length_shape, grid_N_shape,
+    def infer_shape(self, atom_numbers_in_grid_bucket_shape, bucket_shape, crd_shape, box_length_shape, grid_n_shape,
                     grid_length_inverse_shape, atom_in_grid_serial_shape, old_crd_shape, crd_to_uint_crd_cof_shape,
                     uint_crd_shape, gpointer_shape, nl_atom_numbers_shape, nl_atom_serial_shape,
                     uint_dr_to_dr_cof_shape, excluded_list_start_shape, excluded_list_shape, excluded_numbers_shape,
                     need_refresh_flag_shape, refresh_count_shape):
-        assert len(atom_numbers_in_grid_bucket_shape) == 1
-        assert len(bucket_shape) == 2
-        assert len(crd_shape) == 2
-        assert len(box_length_shape) == 1
-        assert len(grid_N_shape) == 1
-        assert len(grid_length_inverse_shape) == 1
-        assert len(atom_in_grid_serial_shape) == 1
-        assert len(old_crd_shape) == 2
-        assert len(crd_to_uint_crd_cof_shape) == 1
-        assert len(uint_crd_shape) == 2
-        assert len(gpointer_shape) == 2
-        assert len(nl_atom_numbers_shape) == 1
-        assert len(nl_atom_serial_shape) == 2
-        assert len(uint_dr_to_dr_cof_shape) == 1
-        assert len(excluded_list_start_shape) == 1
-        assert len(excluded_list_shape) == 1
-        assert len(excluded_numbers_shape) == 1
-        assert len(need_refresh_flag_shape) == 1
-
+        validator.check_int(len(atom_numbers_in_grid_bucket_shape), 1, Rel.EQ,
+                            "atom_numbers_in_grid_bucket_dim", self.name)
+        validator.check_int(len(bucket_shape), 2, Rel.EQ, "bucket_dim", self.name)
+        validator.check_int(len(crd_shape), 2, Rel.EQ, "crd_dim", self.name)
+        validator.check_int(len(box_length_shape), 1, Rel.EQ, "box_length_dim", self.name)
+        validator.check_int(len(grid_n_shape), 1, Rel.EQ, "grid_n_dim", self.name)
+        validator.check_int(len(grid_length_inverse_shape), 1, Rel.EQ, "grid_length_inverse_dim", self.name)
+        validator.check_int(len(atom_in_grid_serial_shape), 1, Rel.EQ, "atom_in_grid_serial_dim", self.name)
+        validator.check_int(len(old_crd_shape), 2, Rel.EQ, "old_crd_dim", self.name)
+        validator.check_int(len(crd_to_uint_crd_cof_shape), 1, Rel.EQ, "crd_to_uint_crd_cof_dim", self.name)
+        validator.check_int(len(uint_crd_shape), 2, Rel.EQ, "uint_crd_dim", self.name)
+        validator.check_int(len(gpointer_shape), 2, Rel.EQ, "gpointer_dim", self.name)
+        validator.check_int(len(nl_atom_numbers_shape), 1, Rel.EQ, "nl_atom_numbers_dim", self.name)
+        validator.check_int(len(nl_atom_serial_shape), 2, Rel.EQ, "nl_atom_serial_dim", self.name)
+        validator.check_int(len(uint_dr_to_dr_cof_shape), 1, Rel.EQ, "uint_dr_to_dr_cof_dim", self.name)
+        validator.check_int(len(excluded_list_start_shape), 1, Rel.EQ, "excluded_list_start_dim", self.name)
+        validator.check_int(len(excluded_list_shape), 1, Rel.EQ, "excluded_list_dim", self.name)
+        validator.check_int(len(excluded_numbers_shape), 1, Rel.EQ, "excluded_numbers_dim", self.name)
+        validator.check_int(len(need_refresh_flag_shape), 1, Rel.EQ, "need_refresh_flag_dim", self.name)
+        validator.check_int(len(refresh_count_shape), 1, Rel.LE, "refresh_count_dim", self.name)
         validator.check_int(atom_numbers_in_grid_bucket_shape[0], self.grid_numbers, Rel.EQ,
                             "atom_numbers_in_grid_bucket", self.name)
         validator.check_int(bucket_shape[0], self.grid_numbers, Rel.EQ, "bucket", self.name)
@@ -3158,7 +3220,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
         validator.check_int(crd_shape[0], self.atom_numbers, Rel.EQ, "crd", self.name)
         validator.check_int(crd_shape[1], 3, Rel.EQ, "crd", self.name)
         validator.check_int(box_length_shape[0], 3, Rel.EQ, "box_length", self.name)
-        validator.check_int(grid_N_shape[0], 3, Rel.EQ, "grid_N", self.name)
+        validator.check_int(grid_n_shape[0], 3, Rel.EQ, "grid_N", self.name)
         validator.check_int(grid_length_inverse_shape[0], 3, Rel.EQ, "grid_length_inverse", self.name)
         validator.check_int(atom_in_grid_serial_shape[0], self.atom_numbers, Rel.EQ, "atom_in_grid_serial",
                             self.name)
@@ -3180,10 +3242,11 @@ class NeighborListUpdate(PrimitiveWithInfer):
                             self.name)
         validator.check_int(excluded_numbers_shape[0], self.atom_numbers, Rel.EQ, "excluded_numbers", self.name)
         validator.check_int(need_refresh_flag_shape[0], 1, Rel.EQ, "need_refresh_flag", self.name)
-
+        if refresh_count_shape:
+            validator.check_int(refresh_count_shape[0], 1, Rel.EQ, "refresh_count_shape", self.name)
         return [1,]
 
-    def infer_dtype(self, atom_numbers_in_grid_bucket_dtype, bucket_dtype, crd_dtype, box_length_dtype, grid_N_dtype,
+    def infer_dtype(self, atom_numbers_in_grid_bucket_dtype, bucket_dtype, crd_dtype, box_length_dtype, grid_n_dtype,
                     grid_length_inverse_dtype, atom_in_grid_serial_dtype, old_crd_dtype, crd_to_uint_crd_cof_dtype,
                     uint_crd_dtype, gpointer_dtype, nl_atom_numbers_dtype, nl_atom_serial_dtype,
                     uint_dr_to_dr_cof_dtype, excluded_list_start_dtype, excluded_list_dtype, excluded_numbers_dtype,
@@ -3193,7 +3256,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('bucket', bucket_dtype, [mstype.int32], self.name)
         validator.check_tensor_dtype_valid('crd', crd_dtype, [mstype.float32], self.name)
         validator.check_tensor_dtype_valid('box_length', box_length_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('grid_N', grid_N_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('grid_N', grid_n_dtype, [mstype.int32], self.name)
         validator.check_tensor_dtype_valid('grid_length_inverse', grid_length_inverse_dtype, [mstype.float32],
                                            self.name)
         validator.check_tensor_dtype_valid('atom_in_grid_serial', atom_in_grid_serial_dtype, [mstype.int32],
@@ -3213,5 +3276,6 @@ class NeighborListUpdate(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('excluded_numbers', excluded_numbers_dtype, [mstype.int32], self.name)
         validator.check_tensor_dtype_valid('need_refresh_flag', need_refresh_flag_dtype, [mstype.int32],
                                            self.name)
-
+        validator.check_tensor_dtype_valid('refresh_count', refresh_count_dtype, [mstype.int32],
+                                           self.name)
         return mstype.float32
