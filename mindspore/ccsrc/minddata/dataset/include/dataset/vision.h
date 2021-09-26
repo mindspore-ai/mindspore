@@ -399,6 +399,7 @@ class RandomCrop final : public TensorTransform {
   ///   - BorderType::kEdge, Fill the border with the last value on the edge.
   ///   - BorderType::kReflect, Reflect the values on the edge omitting the last value of edge.
   ///   - BorderType::kSymmetric, Reflect the values on the edge repeating the last value of edge.
+  /// \note If the input image is more than one, then make sure that the image size is the same.
   explicit RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
                       bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
                       BorderType padding_mode = BorderType::kConstant);
@@ -620,6 +621,7 @@ class RandomResizedCrop final : public TensorTransform {
   ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
   /// \param[in] max_attempts The maximum number of attempts to propose a valid.
   ///     crop_area (default=10). If exceeded, fall back to use center_crop instead.
+  /// \note If the input image is more than one, then make sure that the image size is the same.
   explicit RandomResizedCrop(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
                              std::vector<float> ratio = {3. / 4., 4. / 3.},
                              InterpolationMode interpolation = InterpolationMode::kLinear, int32_t max_attempts = 10);
