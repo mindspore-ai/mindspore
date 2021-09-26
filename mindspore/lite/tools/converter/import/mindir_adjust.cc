@@ -107,7 +107,7 @@ int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t
   return lite::RET_OK;
 }
 
-int GetNarrowRange(const PrimitivePtr &prim, const std::string &narrow_range_str, bool *narrow_range_param) {
+int GetNarrowRange(const PrimitivePtr &prim, const std::string &narrow_range_str, bool *const narrow_range_param) {
   auto narrow_range = prim->GetAttr(narrow_range_str);
   if (narrow_range != nullptr) {
     if (utils::isa<tensor::TensorPtr>(narrow_range)) {
@@ -124,7 +124,7 @@ int GetNarrowRange(const PrimitivePtr &prim, const std::string &narrow_range_str
   return lite::RET_OK;
 }
 
-int GetNumBits(const PrimitivePtr &prim, const std::string &num_bits_str, int *num_bits_param) {
+int GetNumBits(const PrimitivePtr &prim, const std::string &num_bits_str, int *const num_bits_param) {
   auto num_bits = prim->GetAttr(num_bits_str);
   if (num_bits != nullptr) {
     if (utils::isa<tensor::TensorPtr>(num_bits)) {

@@ -302,8 +302,8 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
     return RET_OK;
   }
 
-  const int8_t quantMax = (1 << (unsigned int)(numBits - 1)) - 1;
-  const int8_t quantMin = -1 * (1 << (unsigned int)(numBits - 1)) + (narrowRange ? 1 : 0);
+  const int8_t quantMax = (1 << (static_cast<unsigned int>(numBits - 1))) - 1;
+  const int8_t quantMin = -1 * (1 << (static_cast<unsigned int>(numBits - 1))) + (narrowRange ? 1 : 0);
   auto quantMinFloat = static_cast<double>(quantMin);
   auto quantMaxFloat = static_cast<double>(quantMax);
   if (fabs(quantMaxFloat - quantMinFloat) <= 0.0f) {
