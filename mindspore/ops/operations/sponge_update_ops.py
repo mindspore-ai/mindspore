@@ -841,19 +841,19 @@ class NeighborListRefresh(PrimitiveWithInfer):
         - **bucket** (Tensor) - (Tensor) - The atom indices in each grid bucket.
           The data type is int32 and the shape is :math:`(G, m)`.
         - **crd** (Tensor) - The coordinates of each atom.
-          The data type is float32 and the shape is :math:`(n,)`.
+          The data type is float32 and the shape is :math:`(n, 3)`.
         - **box_length** (Tensor) - The box length of the simulation box.
           The data type is float32 and the shape is :math:`(3,)`.
         - **grid_n** (Tensor) - The number of grids divided of 3 dimensions of the simulation box.
           The data type is int32 and the shape is :math:`(3,)`.
         - **grid_length_inverse** (Tensor) - The inverse value of grid length.
-          The data type is int32 and the shape is :math:`(3,)`.
+          The data type is float32 and the shape is :math:`(3,)`.
         - **atom_in_grid_serial** (Tensor) - The grid index for each atom.
           The data type is int32 and the shape is :math:`(n,)`.
         - **old_crd** (Tensor) - The coordinates before update of each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
         - **crd_to_uint_crd_cof** (Tensor) - The scale factor between the unsigned int coordinate and the real one.
-          The data type is float32 and the shape is :math:`(n, 3)`.
+          The data type is float32 and the shape is :math:`(3,)`.
         - **uint_crd** (Tensor) - The unsigned int coordinates value fo each atom.
           The data type is unsigned int32 and the shape is :math:`(n, 3)`.
         - **gpointer** (Tensor) - The nearest neighbor grids (including self) of each grid.
@@ -888,7 +888,7 @@ class NeighborListRefresh(PrimitiveWithInfer):
                  cutoff_square, half_skin_square, cutoff_with_skin, half_cutoff_with_skin, cutoff_with_skin_square,
                  refresh_interval=20, cutoff=10.0, skin=2.0, max_atom_in_grid_numbers=64, max_neighbor_numbers=800,
                  forced_update=0, forced_check=0):
-        """Initialize NeighborListUpdate"""
+        """Initialize NeighborListRefresh"""
         self.grid_numbers = grid_numbers
         self.atom_numbers = atom_numbers
         self.refresh_interval = refresh_interval
@@ -906,6 +906,22 @@ class NeighborListRefresh(PrimitiveWithInfer):
         self.max_neighbor_numbers = max_neighbor_numbers
         self.forced_update = forced_update
         self.forced_check = forced_check
+        validator.check_value_type('grid_numbers', grid_numbers, int, self.name)
+        validator.check_value_type('atom_numbers', atom_numbers, int, self.name)
+        validator.check_value_type('refresh_interval', refresh_interval, int, self.name)
+        validator.check_value_type('not_first_time', not_first_time, int, self.name)
+        validator.check_value_type('cutoff', cutoff, float, self.name)
+        validator.check_value_type('skin', skin, float, self.name)
+        validator.check_value_type('max_atom_in_grid_numbers', max_atom_in_grid_numbers, int, self.name)
+        validator.check_value_type('excluded_atom_numbers', excluded_atom_numbers, int, self.name)
+        validator.check_value_type('cutoff_square', cutoff_square, float, self.name)
+        validator.check_value_type('half_skin_square', half_skin_square, float, self.name)
+        validator.check_value_type('cutoff_with_skin', cutoff_with_skin, float, self.name)
+        validator.check_value_type('half_cutoff_with_skin', half_cutoff_with_skin, float, self.name)
+        validator.check_value_type('cutoff_with_skin_square', cutoff_with_skin_square, float, self.name)
+        validator.check_value_type('max_neighbor_numbers', max_neighbor_numbers, int, self.name)
+        validator.check_value_type('forced_update', forced_update, int, self.name)
+        validator.check_value_type('forced_check', forced_check, int, self.name)
         self.init_prim_io_names(
             inputs=['atom_numbers_in_grid_bucket', 'bucket', 'crd', 'box_length', 'grid_n', 'grid_length_inverse',
                     'atom_in_grid_serial', 'old_crd', 'crd_to_uint_crd_cof', 'uint_crd', 'gpointer', 'nl_atom_numbers',
@@ -953,7 +969,7 @@ class NeighborListRefresh(PrimitiveWithInfer):
         validator.check_int(len(excluded_list_shape), 1, Rel.EQ, "excluded_list_dim", self.name)
         validator.check_int(len(excluded_numbers_shape), 1, Rel.EQ, "excluded_numbers_dim", self.name)
         validator.check_int(len(need_refresh_flag_shape), 1, Rel.EQ, "need_refresh_flag_dim", self.name)
-        validator.check_int(len(refresh_count_shape), 1, Rel.LE, "need_refresh_flag_dim", self.name)
+        validator.check_int(len(refresh_count_shape), 1, Rel.LE, "refresh_count_dim", self.name)
         validator.check_int(atom_numbers_in_grid_bucket_shape[0], self.grid_numbers, Rel.EQ,
                             "atom_numbers_in_grid_bucket", self.name)
         validator.check_int(bucket_shape[0], self.grid_numbers, Rel.EQ, "bucket", self.name)
