@@ -308,13 +308,12 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
   CHECK_NULL_RETURN(optimizer);
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
   CHECK_NULL_RETURN(convert_pm);
+  convert_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel));
   auto infershape_pass = std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel);
   CHECK_NULL_RETURN(infershape_pass);
   convert_pm->AddPass(infershape_pass);
   auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
   convert_pm->AddPass(update_conv2d_param_pass);
-  convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
-  convert_pm->AddPass(std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel));
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run graph convert pass failed.";
@@ -329,10 +328,12 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
   CHECK_NULL_RETURN(optimizer);
   CHECK_NULL_RETURN(const_fold_pm);
-  const_fold_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel));
   if (!config->trainModel) {
     const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
   }
+  const_fold_pm->AddPass(std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel));
+  const_fold_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
+  const_fold_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   optimizer->AddPassManager(const_fold_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run const fold failed.";
@@ -414,13 +415,8 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     MS_LOG(ERROR) << "config should be specified";
     return nullptr;
   }
-  int status = RunConstFoldPass(old_graph, config);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Run const fold pass failed.";
-    return nullptr;
-  }
 
-  status = RunConvertPass(old_graph, config);
+  auto status = RunConvertPass(old_graph, config);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run convert pass failed.";
     return nullptr;
@@ -428,6 +424,12 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
 
   if (!RunExternalPass(old_graph, registry::POSITION_BEGIN)) {
     MS_LOG(ERROR) << "Run external pass failed, place is BEGIN";
+    return nullptr;
+  }
+
+  status = RunConstFoldPass(old_graph, config);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Run const fold pass failed.";
     return nullptr;
   }
 
