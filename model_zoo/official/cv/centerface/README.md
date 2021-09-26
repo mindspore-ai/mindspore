@@ -121,8 +121,8 @@ step3 (ASCEND ONLY): prepare user rank_table
 ```python
 # user can use your own rank table file
 # or use the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) to generate rank table file
-# e.g., python hccl_tools.py --device_num "[0,8)"
-python hccl_tools.py --device_num "[0,8)"
+# e.g., python hccl_tools.py --device_num "[0,8]"
+python hccl_tools.py --device_num "[0,8]"
 ```
 
 step4: train
