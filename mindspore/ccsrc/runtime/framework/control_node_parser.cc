@@ -15,8 +15,8 @@
  */
 
 #include "runtime/framework/control_node_parser.h"
-#include "runtime/framework/actor/switch_actor.h"
-#include "runtime/framework/actor/gather_actor.h"
+#include "runtime/framework/actor/control_flow/switch_actor.h"
+#include "runtime/framework/actor/control_flow/gather_actor.h"
 #include "abstract/utils.h"
 #include "ir/tensor.h"
 

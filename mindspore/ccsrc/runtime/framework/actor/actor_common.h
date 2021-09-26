@@ -56,7 +56,13 @@ enum class KernelTransformType {
   kOutputActor,
   kDeviceTensorStore,
   // Internal parameter is the output of previous kernel graph which is related to the input of next kernel graph.
-  kInternalParameter
+  kInternalParameter,
+  // Control flow actor type.
+  kSwitchActor,
+  kGatherActor,
+  kEntranceActor,
+  kExitActor,
+  kStackActor
 };
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \

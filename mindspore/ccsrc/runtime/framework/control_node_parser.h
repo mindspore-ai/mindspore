@@ -37,6 +37,17 @@ using mindspore::session::KernelWithIndex;
 constexpr int kInvalidBranchID = -1;
 constexpr int kMainBranchID = 0;
 constexpr int kSubBranchStartID = 1;
+constexpr size_t kSwitchInputNum = 4;
+constexpr size_t kSwitchPartialNum = 2;
+constexpr size_t kSwitchLayerCondPos = 1;
+constexpr size_t kSwitchLayerBranchPos = 2;
+constexpr size_t kSwitchLayerInputNum = 3;
+constexpr size_t kSwitchTrueBranchPos = 2;
+constexpr size_t kSwitchFalseBranchPos = 3;
+constexpr size_t kPartialFuncGraphPos = 1;
+constexpr size_t kPartialInputStartPos = 2;
+constexpr size_t kCallInputStartPos = 1;
+constexpr size_t kMakeTupleInputStartPos = 1;
 
 using FrontToBackendNodeWithContext = std::unordered_map<AnfNodePtr, std::pair<AnfNodePtr, DeviceContext *>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
