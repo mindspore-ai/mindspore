@@ -90,7 +90,7 @@ int8_t GetInt8Output(float real_out, float output_inverse_scale, int32_t output_
 }
 
 void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+                       const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -116,7 +116,7 @@ void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output, const int *in_shape,
 }
 
 void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+                       const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -147,7 +147,7 @@ void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output, const int *in_shape,
 }
 
 void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+                       const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;
@@ -182,7 +182,7 @@ void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output, const int *in_shape,
 }
 
 void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output, const int *in_shape, ArgMinMaxParameter *param,
-                       QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
+                       const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
   float bias = -in_quant_arg->zp_ * in_quant_arg->scale_;

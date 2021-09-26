@@ -17,7 +17,7 @@
 #include "nnacl/int8/slice_int8.h"
 #include "nnacl/errorcode.h"
 
-int SliceInt8(const int8_t *input, int8_t *output, SliceParameter *param, int thread_id) {
+int SliceInt8(const int8_t *input, int8_t *output, const SliceParameter *param, int thread_id) {
   double input_scale = param->quant_arg_.in_args_.scale_;
   int input_zp = param->quant_arg_.in_args_.zp_;
   double output_scale = param->quant_arg_.out_args_.scale_;

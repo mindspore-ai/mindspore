@@ -23,7 +23,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoLeakReluInt8(const int8_t *inputs, int8_t *output_ptr, LeakyReluQuantArg *quant_Prelu_parm, int task_id);
+int DoLeakReluInt8(const int8_t *inputs, int8_t *output_ptr, const LeakyReluQuantArg *quant_Prelu_parm, int task_id);
 #ifdef __cplusplus
 }
 #endif
