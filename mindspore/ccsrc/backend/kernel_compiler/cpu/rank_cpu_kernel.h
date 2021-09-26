@@ -65,7 +65,7 @@ class RankCpuKernel : public CPUKernel {
   // parameters
   size_t axis_{0};
   rank::Method method_{rank::MethodNotDefined};
-  std::function<void(int, int, int, const AxisIterator &, const size_t *const, float *const)> func_;
+  std::function<void(size_t, int, int, const AxisIterator &, const size_t *const, float *const)> func_;
   rank::NaOption option_{rank::OptionNotDefined};
   bool ascending_{true};
   bool pct_{false};
