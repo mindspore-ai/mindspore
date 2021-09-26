@@ -37,7 +37,10 @@ namespace {
 class DeepFirstSearcher : public AnfIrVisitor {
  public:
   explicit DeepFirstSearcher(const IncludeFunc &include, const FilterFunc &filter = nullptr)
-      : include_(include), filter_(filter) {}
+      : include_(include), filter_(filter) {
+    constexpr size_t kVecReserve = 64;
+    res_.reserve(kVecReserve);
+  }
   ~DeepFirstSearcher() override = default;
 
   std::vector<AnfNodePtr> Search(const AnfNodePtr &root) {
@@ -50,13 +53,10 @@ class DeepFirstSearcher : public AnfIrVisitor {
   }
 
   void Visit(const AnfNodePtr &node) override {
-    MS_EXCEPTION_IF_NULL(node);
-    if (node->seen_ == seen_) {
+    if (node == nullptr || node->seen_ == seen_) {
       return;
     }
-
     node->seen_ = seen_;
-
     auto incl = include_(node);
     if (incl == EXCLUDE) {
       return;
@@ -82,14 +82,12 @@ class DeepScopedGraphSearcher : public DeepFirstSearcher {
   ~DeepScopedGraphSearcher() override = default;
 
   void Visit(const CNodePtr &cnode) override {
-    if (cnode->func_graph() == nullptr) {
+    auto fg = cnode->func_graph();
+    if (fg == nullptr) {
       return;
     }
-
-    AnfNodePtr ret = cnode->func_graph()->get_return();
-    if (ret != nullptr) {
-      DeepFirstSearcher::Visit(ret);
-    }
+    AnfNodePtr ret = fg->return_node();
+    DeepFirstSearcher::Visit(ret);
 
     auto &inputs = cnode->inputs();
     for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
@@ -101,48 +99,18 @@ class DeepScopedGraphSearcher : public DeepFirstSearcher {
     if (!IsValueNode<FuncGraph>(vnode)) {
       return;
     }
-
-    auto graph = GetValueNode<FuncGraphPtr>(vnode);
-    AnfNodePtr ret = graph->get_return();
-    if (ret != nullptr) {
-      DeepFirstSearcher::Visit(ret);
-    }
+    auto fg = GetValueNode<FuncGraphPtr>(vnode);
+    AnfNodePtr ret = fg->return_node();
+    DeepFirstSearcher::Visit(ret);
   }
 
   void Visit(const ParameterPtr &param) override {
-    if (param->func_graph() == nullptr) {
+    auto fg = param->func_graph();
+    if (fg == nullptr) {
       return;
     }
-
-    AnfNodePtr ret = param->func_graph()->get_return();
-    if (ret != nullptr) {
-      DeepFirstSearcher::Visit(ret);
-    }
-  }
-};
-
-class DeepUsedGraphSearcher : public DeepFirstSearcher {
- public:
-  explicit DeepUsedGraphSearcher(const IncludeFunc &include) : DeepFirstSearcher(include) {}
-  ~DeepUsedGraphSearcher() override = default;
-
-  void Visit(const CNodePtr &cnode) override {
-    auto &inputs = cnode->inputs();
-    for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
-      DeepFirstSearcher::Visit(*iter);
-    }
-  }
-
-  void Visit(const ValueNodePtr &vnode) override {
-    if (!IsValueNode<FuncGraph>(vnode)) {
-      return;
-    }
-
-    auto graph = GetValueNode<FuncGraphPtr>(vnode);
-    AnfNodePtr ret = graph->get_return();
-    if (ret != nullptr) {
-      DeepFirstSearcher::Visit(ret);
-    }
+    AnfNodePtr ret = fg->return_node();
+    DeepFirstSearcher::Visit(ret);
   }
 };
 
@@ -160,24 +128,6 @@ class DeepLinkedGraphSearcher : public DeepFirstSearcher {
 
   void Visit(const ValueNodePtr &) override {}
 };
-
-class DeepUsersSearcher : public DeepFirstSearcher {
- public:
-  explicit DeepUsersSearcher(const IncludeFunc &include, const FuncGraphManagerPtr &mng)
-      : DeepFirstSearcher(include), mng_(mng) {}
-  ~DeepUsersSearcher() override = default;
-
-  void Visit(const CNodePtr &cnode) override {
-    auto &users = mng_->node_users()[cnode];
-    for (auto iter = users.begin(); iter != users.end(); ++iter) {
-      DeepFirstSearcher::Visit(iter->first);
-    }
-  }
-  void Visit(const ValueNodePtr &) override {}
-
- private:
-  FuncGraphManagerPtr mng_;
-};
 }  // namespace
 
 // include for if expand the node the search, filter for if put the node to results.
@@ -190,16 +140,7 @@ std::vector<AnfNodePtr> DeepScopedGraphSearchWithFilter(const AnfNodePtr &root, 
   return DeepFirstSearcher(include, filter).Search(root);
 }
 
-std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
-  return DeepUsedGraphSearcher(include).Search(root);
-}
-
 std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
   return DeepLinkedGraphSearcher(include).Search(root);
-}
-
-std::vector<AnfNodePtr> DeepUsersSearch(const AnfNodePtr &root, const IncludeFunc &include,
-                                        const FuncGraphManagerPtr &mng) {
-  return DeepUsersSearcher(include, mng).Search(root);
 }
 }  // namespace mindspore
