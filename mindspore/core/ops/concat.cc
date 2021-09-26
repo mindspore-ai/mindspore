@@ -40,7 +40,8 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto input_tuple = input_args[0]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(input_tuple);
   auto elements = input_tuple->elements();
-  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, 1,
+  const int64_t kOneNum = 1;
+  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
                                            prim_name);
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(element0);
@@ -48,7 +49,8 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto element0_rank = element0_shape.size();
   auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
   CheckAndConvertUtils::CheckInRange<int64_t>("Concat axis", axis_temp, kIncludeBoth,
-                                              {-element0_rank - 1, element0_rank}, prim_name);
+                                              {-SizeToLong(element0_rank) - kOneNum, SizeToLong(element0_rank)},
+                                              prim_name);
   auto axis = axis_temp < 0 ? LongToSize(axis_temp) + element0_rank : LongToSize(axis_temp);
 
   std::map<std::string, TypePtr> types;
