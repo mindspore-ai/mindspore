@@ -248,6 +248,8 @@ void PipelineTransformer::BroadCastColoring() {
         auto user_node = user_pair.first->cast<CNodePtr>();
         auto user_stage_info = user_node->user_data<NodeStageInfo>();
         if (user_stage_info == nullptr) {
+          user_node->set_user_data<NodeStageInfo>(std::make_shared<NodeStageInfo>(stage));
+          need_coloring = true;
           continue;
         }
         auto user_node_stage = user_stage_info->stage();
