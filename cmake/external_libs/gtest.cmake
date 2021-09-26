@@ -51,9 +51,17 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
             ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
     file(COPY ${gtest_DIRPATH}/bin/libgtest_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
             ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+    file(COPY ${gtest_DIRPATH}/bin/libgmock_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+    file(COPY ${gtest_DIRPATH}/bin/libgmock${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
 else()
     file(COPY ${gtest_LIBPATH}/libgtest${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
             ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
     file(COPY ${gtest_LIBPATH}/libgtest_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+    file(COPY ${gtest_LIBPATH}/libgmock${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+    file(COPY ${gtest_LIBPATH}/libgmock_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
             ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
 endif()
