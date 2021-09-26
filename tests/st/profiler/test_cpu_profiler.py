@@ -25,6 +25,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.profiler import Profiler
+from tests.security_utils import security_off_wrap
 
 
 class Net(nn.Cell):
@@ -39,7 +40,7 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.security_off
+@security_off_wrap
 def test_cpu_profiling():
     if sys.platform != 'linux':
         return

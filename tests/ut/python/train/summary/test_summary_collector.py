@@ -92,12 +92,11 @@ class TestSummaryCollector:
         if isinstance(summary_dir, str):
             with pytest.raises(ValueError) as exc:
                 SummaryCollector(summary_dir=summary_dir)
-            assert str(exc.value) == 'For `summary_dir` the value should be a valid string of path, ' \
-                                     'but got empty string.'
+            assert str(exc.value) == "The summary_dir is invalid, it should be non-blank."
         else:
             with pytest.raises(TypeError) as exc:
                 SummaryCollector(summary_dir=summary_dir)
-            assert 'For `summary_dir` the type should be a valid type' in str(exc.value)
+            assert "The summary_dir is invalid, the type should be string." in str(exc.value)
 
     @security_off_wrap
     def test_params_with_summary_dir_not_dir(self):
