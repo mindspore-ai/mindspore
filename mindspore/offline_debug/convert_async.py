@@ -199,6 +199,28 @@ class AsyncDumpConverter:
             _ = setattr(convert_obj.multi_process, '_progress', progress)
         else:
             _ = setattr(convert_obj, 'progress', progress)
+        multi_process_file_list, big_file_list = self._get_file_list(files, convert_obj)
+        if multi_process_file_list:
+            ret_mp = self.convert_tool.compare_none_error
+            if hasattr(convert_obj, 'multi_process'):
+                ret_mp = getattr(convert_obj.multi_process, '_do_multi_process')(multi_process_file_list)
+            else:
+                ret_mp = getattr(convert_obj, '_do_multi_process')(multi_process_file_list)
+            if ret_mp != self.convert_tool.compare_none_error:
+                return_code = ret_mp
+        if big_file_list:
+            ret_bf = self._process_big_file(big_file_list, convert_obj)
+            if ret_bf != self.convert_tool.compare_none_error:
+                return_code = ret_bf
+        if return_code != self.convert_tool.compare_none_error:
+            if os.path.exists(self.failed_file_path):
+                self.convert_tool.log.print_info_log(
+                    'The list of file that failed to convert has been written to "'
+                    + self.failed_file_path + '".')
+        return return_code
+
+    def _get_file_list(self, files, convert_obj):
+        """Process to get file lists in multi_process."""
         multi_process_file_list = []
         big_file_list = []
         max_file_size = 0
@@ -213,14 +235,11 @@ class AsyncDumpConverter:
                     big_file_list.append(cur_path)
                 else:
                     multi_process_file_list.append(cur_path)
-        if multi_process_file_list:
-            ret_mp = self.convert_tool.compare_none_error
-            if hasattr(convert_obj, 'multi_process'):
-                ret_mp = getattr(convert_obj.multi_process, '_do_multi_process')(multi_process_file_list)
-            else:
-                ret_mp = getattr(convert_obj, '_do_multi_process')(multi_process_file_list)
-            if ret_mp != self.convert_tool.compare_none_error:
-                return_code = ret_mp
+        return multi_process_file_list, big_file_list
+
+    def _process_big_file(self, big_file_list, convert_obj):
+        """Process big file in multi_process."""
+        return_code = self.convert_tool.compare_none_error
         for big_file in big_file_list:
             ret_bf = self.convert_tool.compare_none_error
             if hasattr(convert_obj, '_convert_format_for_one_file'):
@@ -233,11 +252,6 @@ class AsyncDumpConverter:
                 getattr(convert_obj, '_handle_result_callback')([ret_bf, big_file])
             if ret_bf != self.convert_tool.compare_none_error:
                 return_code = ret_bf
-        if return_code != self.convert_tool.compare_none_error:
-            if os.path.exists(self.failed_file_path):
-                self.convert_tool.log.print_info_log(
-                    'The list of file that failed to convert has been written to "'
-                    + self.failed_file_path + '".')
         return return_code
 
     def _save_tensor_to_npy_file(self, file_path, tensor_type, idx, tensor_format, dump_data_array):

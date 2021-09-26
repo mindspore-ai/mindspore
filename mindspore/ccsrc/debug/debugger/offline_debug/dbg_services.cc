@@ -41,7 +41,7 @@ DbgServices &DbgServices::operator=(const DbgServices &other) {
   return *this;
 }
 
-DbgServices::~DbgServices() {
+DbgServices::~DbgServices() noexcept {
   MS_LOG(INFO) << "cpp DbgServices object is deleted";
   delete debug_services_;
 }
