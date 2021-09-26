@@ -60,15 +60,23 @@ std::shared_ptr<GraphMemory> MemoryProfiling::GetGraphMemoryNode(uint32_t graph_
   return nullptr;
 }
 
-void MemoryProfiling::MemoryToPB() {
+bool MemoryProfiling::MemoryToPB() {
   memory_proto_.set_total_mem(device_mem_size_);
   for (const auto &graph : graph_memory_) {
     GraphMemProto *graph_proto = memory_proto_.add_graph_mem();
+    if (graph_proto == nullptr) {
+      MS_LOG(ERROR) << "Add graph memory proto failed.";
+      return false;
+    }
     graph_proto->set_graph_id(graph.second->GetGraphId());
     graph_proto->set_static_mem(graph.second->GetStaticMemSize());
     // node memory to PB
     for (const auto &node : graph.second->GetNodeMemory()) {
       NodeMemProto *node_mem = graph_proto->add_node_mems();
+      if (node_mem == nullptr) {
+        MS_LOG(ERROR) << "Add node memory proto failed.";
+        return false;
+      }
       node_mem->set_node_name(node.GetNodeName());
       node_mem->set_node_id(node.GetNodeId());
       for (const auto &id : node.GetInputTensorId()) {
@@ -84,6 +92,10 @@ void MemoryProfiling::MemoryToPB() {
     // tensor memory to PB
     for (const auto &node : graph.second->GetTensorMemory()) {
       TensorMemProto *tensor_mem = graph_proto->add_tensor_mems();
+      if (tensor_mem == nullptr) {
+        MS_LOG(ERROR) << "Add node memory proto failed.";
+        return false;
+      }
       tensor_mem->set_tensor_id(node.GetTensorId());
       tensor_mem->set_size(node.GetAlignedSize());
       std::string type = node.GetType();
@@ -94,8 +106,8 @@ void MemoryProfiling::MemoryToPB() {
       tensor_mem->set_life_long(life_long);
     }
   }
-  MS_LOG(INFO) << "Memory profiling data to PB end";
-  return;
+  MS_LOG(INFO) << "Memory profiling data to PB end.";
+  return true;
 }
 
 std::string MemoryProfiling::GetOutputPath() const {
