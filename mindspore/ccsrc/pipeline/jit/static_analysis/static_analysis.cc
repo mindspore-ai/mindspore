@@ -847,7 +847,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     MS_LOG(DEBUG) << GetInferThread() << "async : " << evaluator->ToString();
     auto thread =
       std::thread(ExecEvaluator, evaluator, shared_from_this(), args_conf_list, out_conf, threadId, branchAsyncResult,
-                  asyncResult_main, asyncTask, trace::GetCurrenGraphEvalStack(), trace::GetCNodeDebugStack());
+                  asyncResult_main, asyncTask, trace::GetCurrentGraphEvalStack(), trace::GetCNodeDebugStack());
     thread.detach();
     // Push to list of running loop
     asyncRunOrder->SetResult(std::make_shared<AbstractScalar>(1));
