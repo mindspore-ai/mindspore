@@ -261,6 +261,7 @@ inline const PrimitivePtr kPrimDiag = std::make_shared<Primitive>(kDiag);
 inline const PrimitivePtr kPrimDiagPart = std::make_shared<Primitive>(kDiagPart);
 inline const PrimitivePtr kPrimNonZero = std::make_shared<Primitive>("NonZero");
 inline const PrimitivePtr kPrimReal = std::make_shared<Primitive>(kReal);
+inline const PrimitivePtr kPrimExtractVolumePatches = std::make_shared<Primitive>("ExtractVolumePatches");
 
 // NN
 inline const PrimitivePtr kPrimAdam = std::make_shared<Primitive>("Adam");

@@ -2615,6 +2615,11 @@ test_case_array_ops = [
         'desc_bprop': [(Tensor([[1], [4], [7]]),
                         Tensor([[2, 3], [5, 6], [8, 9]]))],
     }),
+    ('ExtractVolumePatches', {
+        'block': P.ExtractVolumePatches(kernel_size=[1, 1, 2, 2, 2], strides=[1, 1, 1, 1, 1], padding="VALID"),
+        'desc_inputs': [Tensor(np.random.rand(1, 1, 3, 3, 3), mstype.float16)],
+        'desc_bprop': [Tensor(np.random.rand(1, 8, 2, 2, 2), mstype.float16)],
+    }),
 ]
 
 test_case_other_ops = [
