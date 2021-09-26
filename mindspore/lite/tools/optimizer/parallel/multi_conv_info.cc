@@ -259,7 +259,7 @@ AnfNodePtr MultiConvSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNode
 
 AnfNodePtr MultiConvSplitN::SplitMultiConv(const AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);
-  if (conv_nodes_.size() == 2 && split_info_.axis == CuttingStragedy::CUT_N) {
+  if (conv_nodes_.size() == DIMENSION_2D && split_info_.axis == CuttingStragedy::CUT_N) {
     return node;
   }
   return MultiConvNHSplit(node);

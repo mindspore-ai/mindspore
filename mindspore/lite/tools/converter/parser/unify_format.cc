@@ -376,6 +376,5 @@ bool UnifyFormatToNHWC::Run(const FuncGraphPtr &func_graph) {
   }
   return true;
 }
-
 }  // namespace lite
 }  // namespace mindspore
