@@ -261,6 +261,7 @@ void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
 }
 
 void SetSummaryNodesRefCount(const KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
   if (!graph->summary_node_exist()) {
     return;
   }
@@ -315,6 +316,7 @@ GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePt
 
 GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(func_graph);
   // Generate kernel graph.
   std::vector<KernelGraphPtr> all_graphs;
   KernelGraphPtr root_graph = session_->ConstructKernelGraph(func_graph, &all_graphs);
@@ -507,6 +509,7 @@ TensorPtr GraphCompiler::GetSingleOpInputTensorByIndex(const CNodePtr &kernel,
 void GraphCompiler::GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const std::vector<TensorPtr> &input_tensors,
                                                    OpRunInfo *const run_info, GraphInfo *const graph_info) {
   MS_EXCEPTION_IF_NULL(session_);
+  MS_EXCEPTION_IF_NULL(graph_info);
   session_->GetSingleOpRunInfo(kernel, run_info);
   *graph_info = session_->GetSingleOpGraphInfo(kernel, input_tensors);
 }
