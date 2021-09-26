@@ -672,7 +672,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
   while (IsPrimitiveCNode(func, prim::kPrimPartial)) {
     std::vector<AnfNodePtr> inputs = func->cast<CNodePtr>()->inputs();
     // First element is partial, second is func so arg is start from 2
-    (void)args.insert(args.begin(), inputs.begin() + IntToSize(arg_start_index), inputs.end());
+    (void)args.insert(args.begin(), inputs.begin() + SizeToInt(arg_start_index), inputs.end());
     func = inputs[1];
   }
   new_inputs = args;

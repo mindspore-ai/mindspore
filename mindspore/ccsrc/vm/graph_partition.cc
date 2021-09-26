@@ -452,7 +452,7 @@ void AddSegmentDependency(const FuncGraphPtr &graph, const std::map<AnfNodePtr, 
   }
 }
 
-void RemoveUselessDependency(std::vector<GraphSegmentPtr> *segments) {
+void RemoveUselessDependency(const std::vector<GraphSegmentPtr> *segments) {
   MS_EXCEPTION_IF_NULL(segments);
   for (auto &segment : *segments) {
     MS_EXCEPTION_IF_NULL(segment);
