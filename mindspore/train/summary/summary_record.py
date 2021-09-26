@@ -162,7 +162,7 @@ class SummaryRecord:
         Validator.check_str_by_regular(file_prefix)
         Validator.check_str_by_regular(file_suffix)
 
-        log_path = _make_directory(log_dir)
+        log_path = _make_directory(log_dir, "log_dir")
 
         if not isinstance(max_file_size, (int, type(None))):
             raise TypeError("The 'max_file_size' should be int type.")

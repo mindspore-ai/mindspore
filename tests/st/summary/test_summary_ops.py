@@ -28,6 +28,7 @@ from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.train.summary.summary_record import _get_summary_tensor_data
 from tests.st.summary.dataset import create_mnist_dataset
+from tests.security_utils import security_off_wrap
 
 
 class LeNet5(nn.Cell):
@@ -93,7 +94,7 @@ class TestSummaryOps:
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training
     @pytest.mark.env_onecard
-    @pytest.mark.security_off
+    @security_off_wrap
     def test_summary_ops(self):
         """Test summary operators."""
         ds_train = create_mnist_dataset('train', num_samples=1, batch_size=1)
