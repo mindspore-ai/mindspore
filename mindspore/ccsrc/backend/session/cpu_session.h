@@ -56,7 +56,6 @@ class CPUSession : public SessionBasic {
 
  private:
   void Reorder(std::vector<CNodePtr> *node_list);
-  void ProcessCast(const std::shared_ptr<KernelGraph> &kernel_graph);
   void SetKernelInfo(const KernelGraph *kernel_graph);
   void BuildKernel(const KernelGraph *kernel_graph);
   void SetOutputFlags(const VectorRef &base_ref);

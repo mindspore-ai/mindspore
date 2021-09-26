@@ -51,7 +51,6 @@ class CPUDeviceContext : public DeviceContext {
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
   void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const override;
-  void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const override;
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
