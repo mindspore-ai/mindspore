@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <string.h>
-#include <vector>
 #include "src/runtime/kernel/arm/fp16/log_softmax_fp16.h"
+#include <cstring>
+#include <vector>
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
 #include "nnacl/fp16/log_softmax_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
