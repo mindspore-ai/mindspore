@@ -34,8 +34,8 @@ namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
 bool NeedInsertTransData(const std::vector<size_t> &origin_shape, const std::string &format) {
-  return kCommonFormatSet.find(format) == kCommonFormatSet.end() &&
-         (origin_shape.size() > 1 || format == kOpFormat_ND_RNN_BIAS);
+  bool shape_check = origin_shape.size() > 1 || (origin_shape.size() == 1 && origin_shape[0] % kCubeSize != 0);
+  return kCommonFormatSet.find(format) == kCommonFormatSet.end() && (shape_check || format == kOpFormat_ND_RNN_BIAS);
 }
 
 AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
