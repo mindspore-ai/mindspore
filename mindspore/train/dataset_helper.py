@@ -211,9 +211,13 @@ class DatasetHelper:
         >>>
         >>> train_dataset = create_custom_dataset()
         >>> set_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
+        >>>
+        >>> net = Net()
         >>> # Object of DatasetHelper is iterable
         >>> for next_element in set_helper:
-        ...     next_element
+        ...     # `next_element` includes data and label, using data to run the net
+        ...     data = next_element[0]
+        ...     net(data)
     """
 
     def __init__(self, dataset, dataset_sink_mode=True, sink_size=-1, epoch_num=1):
