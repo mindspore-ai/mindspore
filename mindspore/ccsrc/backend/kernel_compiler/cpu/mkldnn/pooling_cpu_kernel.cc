@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ namespace kernel {
 constexpr size_t kPoolingMinDim = 4;
 constexpr size_t kPoolingMaxDim = 5;
 constexpr size_t kPoolingOffsetDim = 2;
-
+constexpr size_t kPoolingInputsNum = 1;
+constexpr size_t kPoolingOutputsNum = 1;
 void PoolingCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back(workspace_size_);
@@ -33,6 +34,7 @@ void PoolingCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
 
 void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
@@ -78,8 +80,7 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::pooling_forward::desc desc =
     dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_max, src_desc, dst_desc,
                                 strides_dims, kernels_dims, padding_l, padding_r);
-  std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == prim::kPrimAvgPool->name() || kernel_name == prim::kPrimAvgPool3D->name()) {
+  if (kernel_name_ == prim::kPrimAvgPool->name()) {
     desc = dnnl::pooling_forward::desc(dnnl::prop_kind::forward_training, dnnl::algorithm::pooling_avg, src_desc,
                                        dst_desc, strides_dims, kernels_dims, padding_l, padding_r);
   }
@@ -94,9 +95,8 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool PoolingCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                               const std::vector<kernel::AddressPtr> &workspace,
                               const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPoolingInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPoolingOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_WORKSPACE, workspace[0]->addr);

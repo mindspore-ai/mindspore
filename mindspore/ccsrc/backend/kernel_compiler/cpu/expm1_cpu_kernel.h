@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EXPM1_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EXPM1_CPU_KERNEL_H_
 
@@ -45,8 +46,6 @@ MS_REG_CPU_KERNEL(Expm1, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutput
 
 MS_REG_CPU_KERNEL(Expm1, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   Expm1CPUKernel);
-
-MS_REG_CPU_KERNEL(Expm1, KernelAttr().AddInputAttr(kNumberTypeFloat).AddOutputAttr(kNumberTypeFloat32), Expm1CPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

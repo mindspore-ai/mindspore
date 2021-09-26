@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSWISH_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSWISH_CPU_KERNEL_H_
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -36,7 +37,6 @@ class HSwishCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
   std::vector<size_t> x_shape_;
   uint64_t tensor_size_ = 1;
 };
@@ -48,4 +48,4 @@ MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, int64_t);
 MS_REG_CPU_KERNEL_T(HSwish, KernelAttr(), HSwishCPUKernel, float);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TILE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSWISH_CPU_KERNEL_H_

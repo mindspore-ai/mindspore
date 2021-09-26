@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ELU_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ELU_GRAD_CPU_KERNEL_H_
+
 #include <memory>
 #include <vector>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"

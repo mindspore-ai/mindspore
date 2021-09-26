@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PAD_CPU_KERNEL_H_
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -34,16 +35,15 @@ class PadCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
  private:
-  void CheckParam(const CNodePtr &kernel_node);
-  std::vector<std::vector<int64_t>> paddings_;
+  template <typename T>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+
   TypeId dtype_{kTypeUnknown};
-  uint64_t tensor_size_ = 1;
-  size_t shape_size_ = 1;
-  uint64_t output_size_ = 1;
+  uint64_t tensor_size_{1};
+  size_t shape_size_{1};
+  uint64_t output_size_{1};
+  std::vector<std::vector<int64_t>> paddings_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
 };

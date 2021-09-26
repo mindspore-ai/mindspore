@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHER_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHER_CPU_KERNEL_H_
+
 #include <vector>
 #include <memory>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
@@ -35,12 +37,10 @@ class GatherV2CPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
-  void ParallelRun(int8_t *input_addr, int8_t *output_addr, int thread_num);
+  void ParallelRun(const int8_t *input_addr, const int *indices_data, int8_t *output_addr, int thread_num);
   std::vector<size_t> input_shape_;
   std::vector<size_t> indices_shape_;
   std::vector<size_t> output_shape_;
-  int *indices_data_ = nullptr;
   int64_t axis_{0};
   bool is_dynamic_shape_{false};
 };

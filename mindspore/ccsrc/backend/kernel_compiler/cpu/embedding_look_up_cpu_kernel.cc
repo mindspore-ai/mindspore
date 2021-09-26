@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "backend/kernel_compiler/cpu/embedding_look_up_cpu_kernel.h"
 #include <thread>
 #include <string>
-#include "backend/kernel_compiler/cpu/embedding_look_up_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "ir/primitive.h"
 #include "common/thread_pool.h"
@@ -23,6 +24,11 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kBlockSize = 10000;
+constexpr size_t kEmbeddingLookupInputsNum = 2;
+constexpr size_t kEmbeddingLookupOutputsNum = 1;
+constexpr size_t kEmbeddingLookupInputParamsMaxDim = 2;
+
 template <typename T>
 void LookUpTableTask(const float *input_addr, const T *indices_addr, float *output_addr, size_t indices_lens,
                      size_t outer_dim_size, T offset, size_t first_dim_size) {
@@ -48,11 +54,13 @@ void LookUpTableTask(const float *input_addr, const T *indices_addr, float *outp
 }  // namespace
 
 void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
-  std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "Param must be at least 1D";
+  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (input_shape.empty() || input_shape.size() > kEmbeddingLookupInputParamsMaxDim) {
+    MS_LOG(EXCEPTION) << "EmbeddingLookUpCPUKernel support 1-" << kEmbeddingLookupInputParamsMaxDim
+                      << "D input tensor, but got " << input_shape.size() << "D.";
   }
   first_dim_size_ = input_shape[0];
   outer_dim_size_ = 1;
@@ -74,11 +82,11 @@ template <typename T>
 void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &outputs) {
   if (!node_wpt_.expired()) {
-    auto node_ = node_wpt_.lock();
-    if (!node_) {
+    auto node = node_wpt_.lock();
+    if (!node) {
       MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
     }
-    std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
+    std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
     if (input_shape.empty()) {
       MS_LOG(EXCEPTION) << "Param must be at least 1D";
     }
@@ -89,15 +97,15 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
     }
 
     indices_lens_ = 1;
-    std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 1);
+    std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
     for (const auto &shape : indices_shape) {
       indices_lens_ *= shape;
     }
   }
-  auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto indices_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  size_t thread_num = indices_lens_ / 10000 + 1;
+  const auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
+  const auto *indices_addr = reinterpret_cast<T *>(inputs[1]->addr);
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  size_t thread_num = indices_lens_ / kBlockSize + 1;
   auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   thread_num = thread_num > max_thread_num ? max_thread_num : thread_num;
   std::vector<common::Task> tasks;
@@ -127,25 +135,14 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
 bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kEmbeddingLookupInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEmbeddingLookupOutputsNum, kernel_name_);
   if (indices_data_type_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
   } else {
     LaunchKernel<int64_t>(inputs, outputs);
   }
   return true;
-}
-
-void EmbeddingLookUpCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.size() > 4) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size()
-                      << ", but EmbeddingLookUpCPUKernel only support 4d or lower.";
-  }
-
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 2) {
-    MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but EmbeddingLookUpCPUKernel needs 2.";
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

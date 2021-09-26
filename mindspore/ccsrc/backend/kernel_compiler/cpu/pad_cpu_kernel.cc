@@ -19,7 +19,14 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kPadInputsNum = 1;
+constexpr size_t kPadOutputsNum = 1;
+}  // namespace
+
 void PadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   paddings_ = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -27,12 +34,10 @@ void PadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   shape_size_ = input_shape.size();
   if (shape_size_ == 4) {  // shape adjustment from 2d/3d to 4d
   } else if (shape_size_ == 3) {
-    auto it = input_shape.begin();
-    input_shape.insert(it, 1);  // batch padding
+    (void)input_shape.insert(input_shape.begin(), 1);  // batch padding
     shape_size_ = 4;
   } else if (shape_size_ == 2) {
-    auto it = input_shape.begin();
-    input_shape.insert(it, 2, 1);  // channel padding
+    (void)input_shape.insert(input_shape.begin(), 2, 1);  // channel padding
     shape_size_ = 4;
   }
 
@@ -43,11 +48,9 @@ void PadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
   if (paddings_.size() == 4) {  // shape adjustment from 2d/3d to 4d
   } else if (paddings_.size() == 3) {
-    auto it = paddings_.begin();
-    paddings_.insert(it, 1, {0, 0});  // batch padding
+    (void)paddings_.insert(paddings_.begin(), 1, {0, 0});  // batch padding
   } else if (paddings_.size() == 2) {
-    auto it = paddings_.begin();
-    paddings_.insert(it, 2, {0, 0});  // channel padding
+    (void)paddings_.insert(paddings_.begin(), 2, {0, 0});  // channel padding
   }
 
   for (size_t i = 0; i < shape_size_; i++) {
@@ -59,6 +62,8 @@ void PadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool PadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                           const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -74,9 +79,9 @@ bool PadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const s
 }
 
 template <typename T>
-void PadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
+void PadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const {
+  const auto *inputs_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *outputs_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
   const int pad_left = paddings_[3][0];
   const int pad_top = paddings_[2][0];
@@ -110,17 +115,6 @@ void PadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std
       outputs_addr[pos] =
         inputs_addr[(equiv_block_num * old_height + padded_h - pad_top) * old_width + padded_w - pad_left];
     }
-  }
-}
-
-void PadCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but PadCPUKernel needs 1 input.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but PadCPUKernel needs 1 output.";
   }
 }
 }  // namespace kernel
