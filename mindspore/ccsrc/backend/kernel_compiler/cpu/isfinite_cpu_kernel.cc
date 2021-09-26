@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,15 @@
 
 namespace mindspore {
 namespace kernel {
-void IsFiniteCPUKernel::InitKernel(const CNodePtr &kernelNode) {
-  MS_EXCEPTION_IF_NULL(kernelNode);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernelNode);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but IsFiniteCPUKernel needs 1 inputs.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernelNode);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but IsFiniteCPUKernel needs 1 output.";
-  }
+namespace {
+constexpr size_t kIsFiniteInputsNum = 1;
+constexpr size_t kIsFiniteOutputsNum = 1;
+}  // namespace
 
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernelNode, 0);
+void IsFiniteCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
     MS_LOG(EXCEPTION) << "Unsupported input type found.";
   }
@@ -40,24 +37,24 @@ void IsFiniteCPUKernel::InitKernel(const CNodePtr &kernelNode) {
 
 bool IsFiniteCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsFiniteInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsFiniteOutputsNum, kernel_name_);
   if (input_dtype_ == kNumberTypeFloat16) {
     LaunchKernelFloat16(inputs, outputs);
-  } else if (input_dtype_ == kNumberTypeFloat32 || input_dtype_ == kNumberTypeFloat) {
+  } else if (input_dtype_ == kNumberTypeFloat32) {
     LaunchKernelFloat<float>(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat64) {
     LaunchKernelFloat<double>(inputs, outputs);
-  } else if (dtype_map_.find(input_dtype_) != dtype_map_.end()) {
-    LaunchKernelOther(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Only support bool, int, uint, float, but actual data type is " << TypeIdLabel(input_dtype_);
+    LaunchKernelOther(inputs, outputs);
   }
   return true;
 }
 
 void IsFiniteCPUKernel::LaunchKernelFloat16(const std::vector<AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &outputs) const {
-  float16 *input = reinterpret_cast<float16 *>(inputs[0]->addr);
-  bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
+  const auto *input = reinterpret_cast<float16 *>(inputs[0]->addr);
+  auto *output = reinterpret_cast<bool *>(outputs[0]->addr);
 
   size_t elem_num = inputs[0]->size / sizeof(float16);
 

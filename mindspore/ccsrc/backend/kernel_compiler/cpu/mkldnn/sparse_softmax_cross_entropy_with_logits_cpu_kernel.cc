@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/sparse_softmax_cross_entropy_with_logits_cpu_kernel.h"
 #include <numeric>
+#include <limits>
 #include <functional>
 #include <cmath>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
@@ -23,6 +25,12 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsInputsNum = 2;
+constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsOutputsNum = 1;
+constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
+}  // namespace
+
 void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -34,13 +42,14 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitInputOutputSize(const CNo
 
 void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> label_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (label_shape.size() > 1) {
     MS_LOG(EXCEPTION) << "Labels shape length should be equal to Logits shape length minus 1";
   }
   dnnl::memory::dims mem_dims;
-  mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());
+  (void)mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());
   if (mem_dims.size() != 2) {
     MS_LOG(EXCEPTION) << "SparseSoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
   }
@@ -66,7 +75,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int 
   float epsilon = std::numeric_limits<float>::min();
   for (size_t i = 0; i < batch_size_; ++i) {
     if (labels[i] < 0) {
-      MS_LOG(EXCEPTION) << "Label value must >= 0!";
+      MS_LOG(EXCEPTION) << "Label value must >= 0";
     }
     size_t label = IntToSize(labels[i]);
     if (label > class_num_) {
@@ -82,7 +91,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *la
   size_t row_start = 0;
   for (size_t i = 0; i < batch_size_; ++i) {
     if (labels[i] < 0) {
-      MS_LOG(EXCEPTION) << "Label value must >= 0!";
+      MS_LOG(EXCEPTION) << "Label value must >= 0";
     }
     size_t label = IntToSize(labels[i]);
     if (label > class_num_) {
@@ -103,9 +112,9 @@ void SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *la
 bool SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                                           const std::vector<kernel::AddressPtr> &workspace,
                                                           const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.empty() || workspace.empty() || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseSoftmaxCrossEntropyWithLogitsInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseSoftmaxCrossEntropyWithLogitsOutputsNum, kernel_name_);
+  CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseSoftmaxCrossEntropyWithLogitsWorkspaceSize, kernel_name_);
   size_t batch_float_size = batch_size_ * sizeof(float);
   size_t batch_class_float_size = class_num_ * batch_float_size;
   if (inputs[0]->size != workspace[0]->size || inputs[0]->size != batch_class_float_size ||
@@ -120,9 +129,9 @@ bool SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Launch(const std::vector<kern
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DST, workspace[0]->addr);
   ExecutePrimitive();
-  auto labels = reinterpret_cast<int *>(inputs[1]->addr);
-  auto losses = reinterpret_cast<float *>(workspace[0]->addr);
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
+  const auto *labels = reinterpret_cast<int *>(inputs[1]->addr);
+  const auto *losses = reinterpret_cast<float *>(workspace[0]->addr);
+  auto *output = reinterpret_cast<float *>(outputs[0]->addr);
   if (is_grad_) {
     GradPostExecute(labels, losses, output);
   } else {

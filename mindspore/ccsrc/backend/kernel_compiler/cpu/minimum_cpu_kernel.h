@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MINIMUM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MINIMUM_CPU_KERNEL_H_
 
@@ -34,11 +35,9 @@ class MinimumCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node);
+  bool IsBroadcast() const;
 
-  bool IsBroadcast();
-
-  size_t Index(const size_t &index, const size_t &dim);
+  size_t Index(const size_t &index, const size_t &dim) const;
 
   void InitTensorBroadcastShape();
 
@@ -51,15 +50,15 @@ class MinimumCPUKernel : public CPUKernel {
                             const size_t l5, const size_t l6, const size_t r0, const size_t r1, const size_t r2,
                             const size_t r3, const size_t r4, const size_t r5, const size_t r6, const size_t d0,
                             const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                            const size_t d6, const T *input_x, const T *input_y, T *output);
+                            const size_t d6, const T *input_x, const T *input_y, T *output) const;
 
-  T MinimumFunc(const T &lhs, const T &rhs) { return lhs < rhs ? lhs : rhs; }
+  T MinimumFunc(const T &lhs, const T &rhs) const { return lhs < rhs ? lhs : rhs; }
 
-  void BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output);
+  void BroadcastArithOneScalarOneTensor(const T *input_x, const T *input_y, T *output) const;
 
-  void BroadcastArithTensors(const T *input_x, const T *input_y, T *output);
+  void BroadcastArithTensors(const T *input_x, const T *input_y, T *output) const;
 
-  void BroadcastArith(const T *input_x, const T *input_y, T *output);
+  void BroadcastArith(const T *input_x, const T *input_y, T *output) const;
 
  private:
   bool need_broadcast_{false};
@@ -72,7 +71,7 @@ class MinimumCPUKernel : public CPUKernel {
   std::vector<size_t> broadcast_input_x_shape_;
   std::vector<size_t> broadcast_input_y_shape_;
   std::vector<size_t> broadcast_output_shape_;
-  const size_t max_dims{7};
+  const size_t max_dims_{7};
 };
 
 MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, int32_t);
@@ -84,4 +83,4 @@ MS_REG_CPU_KERNEL_T(Minimum, KernelAttr(), MinimumCPUKernel, double);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_UPDATE_CACHE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MINIMUM_CPU_KERNEL_H_

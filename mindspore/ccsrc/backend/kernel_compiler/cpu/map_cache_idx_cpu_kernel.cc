@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,17 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kMapCacheIdxInputsNum = 5;
+constexpr size_t kMapCacheIdxOutputsNum = 4;
+}  // namespace
+
 template <typename T>
 int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
-  T i = (entry + 1) % length;
-  int64_t off = 1;
+  T i = (entry + 1) % static_cast<T>(length);
+  T off = 1;
   int compress_count = 0;
-  for (; !entry_p[i].IsEmpty(); i = (i + 1) % length, off++) {
+  for (; !entry_p[i].IsEmpty(); i = (i + 1) % static_cast<T>(length), off++) {
     if (entry_p[i].tag_ > off) {
       entry_p[entry].key_ = entry_p[i].key_;
       entry_p[entry].value_ = entry_p[i].value_;
@@ -43,28 +48,29 @@ int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
   return compress_count;
 }
 
-void UpdateShape(size_t miss_count, const CNodePtr &node_) {
+void UpdateShape(size_t miss_count, const CNodePtr &node) {
   std::vector<size_t> out_shape;
   (void)out_shape.emplace_back(miss_count);
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
   std::vector<TypeId> dtypes(output_num);
   for (size_t i = 0; i < output_num; i++) {
-    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
+    dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node, i);
   }
-  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetOutputInferShape(node_, 0), out_shape, out_shape, out_shape},
-                                      node_.get());
+  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetOutputInferShape(node, 0), out_shape, out_shape, out_shape},
+                                      node.get());
 }
 
 void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   auto hashmap_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (hashmap_shape.size() != 2) {
     MS_LOG(EXCEPTION) << "Dimension of HashMap must be 2, (n, 4)";
   }
   hashmap_length_ = hashmap_shape[0];
-  if (hashmap_length_ <= 0) {
-    MS_LOG(INFO) << "Value of hashmap_length_ must > 0!";
+  if (hashmap_length_ == 0) {
+    MS_LOG(EXCEPTION) << "Value of hashmap_length_ must > 0!";
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
@@ -72,13 +78,14 @@ void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool MapCacheIdxCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMapCacheIdxInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMapCacheIdxOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(ERROR) << "Only support int32, int64";
-    return false;
+    MS_LOG(EXCEPTION) << "Only support int32, int64";
   }
   return true;
 }
@@ -86,8 +93,8 @@ bool MapCacheIdxCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 template <typename T>
 void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto node_ = node_wpt_.lock();
-  auto emb_idx_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 1);
+  auto node = node_wpt_.lock();
+  auto emb_idx_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
   batch_size_ = 1;
   for (size_t i = 0; i < emb_idx_shape.size(); ++i) {
     batch_size_ *= emb_idx_shape[i];
@@ -157,8 +164,8 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
       tag_count++;
     }
     hashmap[entry].key_ = emb_idx;
-    hashmap[entry].step_ = SizeToLong(step_[0]);
-    hashmap[entry].tag_ = SizeToLong(tag_count);
+    hashmap[entry].step_ = step_[0];
+    hashmap[entry].tag_ = static_cast<T>(tag_count);
     T tmp_entry = (entry + 1) % static_cast<T>(hashmap_length_);
     size_t delete_count = 1;
     while (hashmap[tmp_entry].IsEmpty() || hashmap[tmp_entry].IsUsing(step_[0])) {
@@ -184,7 +191,7 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   for (size_t i = 0; i < miss_count; ++i) {
     output_cache_idx[miss_idx[i]] = output_swap_cache_idx[i];
   }
-  UpdateShape(miss_count, node_);
+  UpdateShape(miss_count, node);
 }
 }  // namespace kernel
 }  // namespace mindspore
