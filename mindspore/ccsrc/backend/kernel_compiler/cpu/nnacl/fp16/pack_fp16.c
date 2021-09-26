@@ -164,6 +164,10 @@ void PackNHWCToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int 
 
 void PackNHWCToNC8HW8NotAlignedFp16(const float16_t *src, float16_t *dst, const int batch, const int plane,
                                     const int channel) {
+  if (channel <= C8NUM) {
+    memcpy(dst, src, batch * plane * channel * sizeof(float16_t));
+    return;
+  }
   int tmp = DOWN_DIV(channel, C8NUM);
   int c_res = channel - tmp * C8NUM;
   int c8_block = tmp * plane * C8NUM;

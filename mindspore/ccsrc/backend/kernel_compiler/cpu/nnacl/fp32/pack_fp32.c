@@ -29,6 +29,68 @@ void PackHWCToWHC(const float *src, float *dst, int height, int width, int chann
   }
 }
 
+void PackNHWCToNC4HW4NotAlignedFp32(const float *src, float *dst, const int batch, const int plane, const int channel) {
+  if (channel <= C4NUM) {
+    memcpy(dst, src, batch * plane * channel * sizeof(float));
+    return;
+  }
+  int tmp = DOWN_DIV(channel, C4NUM);
+  int c_res = channel - tmp * C4NUM;
+  int c4_block = tmp * plane * C4NUM;
+  for (int b = 0; b < batch; b++) {
+    int batch_oc_offset = b * plane * channel;
+    for (int k = 0; k < plane; k++) {
+      int src_kernel_offset = batch_oc_offset + k * channel;
+      int dst_kernel_offset = batch_oc_offset + k * C4NUM;
+      int c = 0;
+      for (; c <= channel - C4NUM; c += C4NUM) {
+#if defined(ENABLE_SSE) || defined(ENABLE_ARM)
+        MS_FLOAT32X4 src_data = MS_LDQ_F32(src + src_kernel_offset + c);
+        MS_STQ_F32(dst + dst_kernel_offset + c * plane, src_data);
+#else
+        for (int k1 = 0; k1 < C4NUM; ++k1) {
+          (dst + dst_kernel_offset + c * plane)[k1] = (src + src_kernel_offset + c)[k1];
+        }
+#endif
+      }
+      for (; c < channel; ++c) {
+        dst[batch_oc_offset + c4_block + k * c_res + c - tmp * C4NUM] = src[src_kernel_offset + c];
+      }
+    }
+  }
+}
+
+void PackNHWCToNC8HW8NotAlignedFp32(const float *src, float *dst, const int batch, const int plane, const int channel) {
+  if (channel <= C8NUM) {
+    memcpy(dst, src, batch * plane * channel * sizeof(float));
+    return;
+  }
+  int tmp = DOWN_DIV(channel, C8NUM);
+  int c_res = channel - tmp * C8NUM;
+  int c8_block = tmp * plane * C8NUM;
+  for (int b = 0; b < batch; b++) {
+    int batch_oc_offset = b * plane * channel;
+    for (int k = 0; k < plane; k++) {
+      int src_kernel_offset = batch_oc_offset + k * channel;
+      int dst_kernel_offset = batch_oc_offset + k * C8NUM;
+      int c = 0;
+      for (; c <= channel - C8NUM; c += C8NUM) {
+#ifdef ENABLE_AVX
+        MS_FLOAT32X8 src_data = MS_LD256_F32(src + src_kernel_offset + c);
+        MS_ST256_F32(dst + dst_kernel_offset + c * plane, src_data);
+#else
+        for (int k1 = 0; k1 < C8NUM; ++k1) {
+          (dst + dst_kernel_offset + c * plane)[k1] = (src + src_kernel_offset + c)[k1];
+        }
+#endif
+      }
+      for (; c < channel; ++c) {
+        dst[batch_oc_offset + c8_block + k * c_res + c - tmp * C8NUM] = src[src_kernel_offset + c];
+      }
+    }
+  }
+}
+
 void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param, float *packed_input, int real_cal_num,
                         int block_index) {
   // input format : nhwc

@@ -79,8 +79,9 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
   const TensorC *weight_tensor = inputs[1];
   TensorC *out_tensor = outputs[0];
-
-  out_tensor->format_ = input_tensor->format_;
+  if (out_tensor->format_ != Format_NC4HW4) {
+    out_tensor->format_ = input_tensor->format_;
+  }
   out_tensor->data_type_ = input_tensor->data_type_;
   ConvParameter *param = (ConvParameter *)parameter;
   if (param->group_ == 0) {
