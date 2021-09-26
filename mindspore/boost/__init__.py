@@ -19,13 +19,13 @@ accumulation and so on.
 Note:
     This feature is a beta feature, and we are still improving its functionality.
 """
-from .boost import *
-from .base import *
-from .boost_cell_wrapper import *
-from .less_batch_normalization import *
-from .grad_freeze import *
-from .grad_accumulation import *
-from .adasum import *
+from .boost import AutoBoost
+from .base import OptimizerProcess, ParameterProcess
+from .boost_cell_wrapper import BoostTrainOneStepCell, BoostTrainOneStepWithLossScaleCell
+from .less_batch_normalization import LessBN
+from .grad_freeze import GradientFreeze, FreezeOpt, freeze_cell
+from .grad_accumulation import GradientAccumulation
+from .adasum import AdaSum
 
 
 __all__ = ['AutoBoost',
