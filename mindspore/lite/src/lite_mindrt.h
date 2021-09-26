@@ -134,6 +134,8 @@ class LiteSwitchOpActor : public LiteOpActor {
  private:
   void AsyncTrueBranchOutput(OpContext<Tensor> *context);
   void AsyncFalseBranchOutput(OpContext<Tensor> *context);
+  void DecreaseTrueBranchInputTensor();
+  void DecreaseFalseBranchInputTensor();
   int GetSwitchAndCallNode(kernel::SubGraphKernel *subgraph_kernel);
   void AppendOutputTensors();
   int CompileTrueBranchArrow();
