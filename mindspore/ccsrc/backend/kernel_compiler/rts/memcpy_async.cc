@@ -133,11 +133,11 @@ std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr
 }
 
 device::DynamicKernelPtr MemCpyAsyncKernel::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  AddressPtrList kernel_inputs;
-  AddressPtrList kernel_workspaces;
-  AddressPtrList kernel_outputs;
-  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  KernelLaunchInfo kernel_launch_info;
+  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
 
+  const auto &kernel_inputs = kernel_launch_info.inputs_;
+  const auto &kernel_outputs = kernel_launch_info.outputs_;
   if (kernel_inputs.size() != 1) {
     MS_LOG(EXCEPTION) << "MemCpyAsync op inputs is not one, got " << kernel_inputs.size();
   }

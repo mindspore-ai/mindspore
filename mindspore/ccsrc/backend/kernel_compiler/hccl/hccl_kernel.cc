@@ -273,23 +273,21 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
 }
 
 device::DynamicKernelPtr HcclKernel::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  AddressPtrList inputs;
-  AddressPtrList workspaces;
-  AddressPtrList outputs;
-  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &inputs, &workspaces, &outputs);
+  KernelLaunchInfo kernel_launch_info;
+  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
 
   std::string hccl_type = MsOpNameToHcomOpType(AnfAlgo::GetCNodeName(anf_node_.lock()));
 
-  if (inputs.empty()) {
+  if (kernel_launch_info.inputs_.empty()) {
     MS_LOG(EXCEPTION) << "Hccl kernel input is empty";
   }
   if (hccl_data_type_list_.empty()) {
     MS_LOG(EXCEPTION) << "Hccl data type list is empty";
   }
-  MS_EXCEPTION_IF_NULL(inputs.at(0));
-  auto input_data_addr = inputs.at(0)->addr;
-  MS_EXCEPTION_IF_NULL(outputs.at(0));
-  auto output_data_addr = outputs.at(0)->addr;
+  MS_EXCEPTION_IF_NULL(kernel_launch_info.inputs_.at(0));
+  auto input_data_addr = kernel_launch_info.inputs_.at(0)->addr;
+  MS_EXCEPTION_IF_NULL(kernel_launch_info.outputs_.at(0));
+  auto output_data_addr = kernel_launch_info.outputs_.at(0)->addr;
   HcclDataType data_type = hccl_data_type_list_[0];
 
   auto executor = std::make_shared<device::ascend::HcclDynamicKernel>(

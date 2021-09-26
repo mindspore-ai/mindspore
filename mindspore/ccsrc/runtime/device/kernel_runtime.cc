@@ -1104,16 +1104,13 @@ void KernelRuntime::AssignWorkSpaceMem(MemType type, const AnfNodePtr &node) {
 }
 
 void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod, const mindspore::AnfNodePtr &kernel,
-                                  AddressPtrList *kernel_inputs, AddressPtrList *const kernel_workspaces,
-                                  AddressPtrList *kernel_outputs) {
+                                  KernelLaunchInfo *kernel_launch_info) {
   MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_inputs);
-  MS_EXCEPTION_IF_NULL(kernel_workspaces);
-  MS_EXCEPTION_IF_NULL(kernel_outputs);
+  MS_EXCEPTION_IF_NULL(kernel_launch_info);
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::GetCNodeName(cnode) == kAtomicAddrCleanOpName) {
-    return GenAddrCleanLaunchArgs(cnode, kernel_inputs);
+    return GenAddrCleanLaunchArgs(cnode, &(kernel_launch_info->inputs_));
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -1140,7 +1137,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
     input->addr = device_address->ptr_;
     MS_EXCEPTION_IF_NULL(input->addr);
     input->size = device_address->size_;
-    kernel_inputs->emplace_back(input);
+    kernel_launch_info->inputs_.emplace_back(input);
   }
 
   for (size_t i = 0; i < kernel_mod.GetOutputSizeList().size(); ++i) {
@@ -1150,7 +1147,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
     output->addr = device_address->ptr_;
     MS_EXCEPTION_IF_NULL(output->addr);
     output->size = device_address->size_;
-    kernel_outputs->emplace_back(output);
+    kernel_launch_info->outputs_.emplace_back(output);
   }
 
   for (size_t i = 0; i < kernel_mod.GetWorkspaceSizeList().size(); ++i) {
@@ -1160,7 +1157,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
     workspace->addr = device_address->ptr_;
     MS_EXCEPTION_IF_NULL(workspace->addr);
     workspace->size = device_address->size_;
-    kernel_workspaces->emplace_back(workspace);
+    kernel_launch_info->workspaces_.emplace_back(workspace);
   }
 }
 
@@ -1230,9 +1227,7 @@ void KernelRuntime::LaunchKernelEvent(const std::vector<std::vector<std::functio
 }
 
 bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_mod, const std::string &op_name,
-                                                      const std::vector<AddressPtr> &inputs,
-                                                      const std::vector<AddressPtr> &workspace,
-                                                      const std::vector<AddressPtr> &outputs, void *stream) {
+                                                      const KernelLaunchInfo &kernel_launch_info, void *stream) {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   MS_EXCEPTION_IF_NULL(stream);
   float cost_time = 0;
@@ -1243,7 +1238,7 @@ bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_
   start->set_record_stream(stream);
   end->set_record_stream(stream);
   start->RecordEvent();
-  bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
+  bool ret = kernel_mod->Launch(kernel_launch_info, stream);
   end->RecordEvent();
   start->SyncEvent();
   end->SyncEvent();
@@ -1283,16 +1278,13 @@ void KernelRuntime::GetOrMallocAddress(const std::shared_ptr<MemScheduler> &mem_
 }
 
 void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem_scheduler, const AnfNodePtr &kernel,
-                                        AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
-                                        AddressPtrList *kernel_outputs) {
+                                        KernelLaunchInfo *kernel_launch_info) {
   MS_EXCEPTION_IF_NULL(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_inputs);
-  MS_EXCEPTION_IF_NULL(kernel_workspaces);
-  MS_EXCEPTION_IF_NULL(kernel_outputs);
+  MS_EXCEPTION_IF_NULL(kernel_launch_info);
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::GetCNodeName(cnode) == kAtomicAddrCleanOpName) {
-    return GenAddrCleanLaunchArgs(cnode, kernel_inputs, mem_scheduler);
+    return GenAddrCleanLaunchArgs(cnode, &(kernel_launch_info->inputs_), mem_scheduler);
   }
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -1307,7 +1299,7 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
     kernel::AddressPtr input = std::make_shared<kernel::Address>();
     GetOrMallocAddress(mem_scheduler, device_address, input);
     input->size = device_address->size_;
-    kernel_inputs->emplace_back(input);
+    kernel_launch_info->inputs_.emplace_back(input);
   }
 
   for (size_t j = 0; j < kernel_mod->GetOutputSizeList().size(); ++j) {
@@ -1315,7 +1307,7 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
     kernel::AddressPtr output = std::make_shared<kernel::Address>();
     GetOrMallocAddress(mem_scheduler, device_address, output);
     output->size = device_address->size_;
-    kernel_outputs->emplace_back(output);
+    kernel_launch_info->outputs_.emplace_back(output);
   }
 
   for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
@@ -1323,7 +1315,7 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
     kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
     GetOrMallocAddress(mem_scheduler, device_address, workspace);
     workspace->size = device_address->size_;
-    kernel_workspaces->emplace_back(workspace);
+    kernel_launch_info->workspaces_.emplace_back(workspace);
   }
 }
 
@@ -1400,9 +1392,7 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
   MS_EXCEPTION_IF_NULL(kernel);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  AddressPtrList kernel_inputs;
-  AddressPtrList kernel_workspaces;
-  AddressPtrList kernel_outputs;
+  KernelLaunchInfo kernel_launch_info;
   auto stream = kernel_mod->GetStream();
   if (stream == nullptr) {
     if (AnfAlgo::IsCommunicationOp(kernel)) {
@@ -1417,20 +1407,19 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
     if (!ret) {
       return ret;
     }
-    AssignKernelAddress(mem_scheduler, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+    AssignKernelAddress(mem_scheduler, kernel, &kernel_launch_info);
   } else if (!kernel_mod->GetInputsAddr().empty() || !kernel_mod->GetOutputsAddr().empty()) {
-    kernel_inputs = kernel_mod->GetInputsAddr();
-    kernel_outputs = kernel_mod->GetOutputsAddr();
-    kernel_workspaces = kernel_mod->GetWorkSpacesAddr();
+    kernel_launch_info.inputs_ = kernel_mod->GetInputsAddr();
+    kernel_launch_info.outputs_ = kernel_mod->GetOutputsAddr();
+    kernel_launch_info.workspaces_ = kernel_mod->GetWorkSpacesAddr();
   } else {
-    GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+    GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
   }
   if (!mock) {
     if (pynative_mode_profiling_flag_) {
-      ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_inputs,
-                                              kernel_workspaces, kernel_outputs, stream);
+      ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_launch_info, stream);
     } else {
-      ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream);
+      ret = kernel_mod->Launch(kernel_launch_info, stream);
     }
   }
   if (mem_scheduler != nullptr) {

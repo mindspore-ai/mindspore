@@ -112,10 +112,8 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
 }
 
 device::DynamicKernelPtr TbeKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  AddressPtrList kernel_inputs;
-  AddressPtrList kernel_workspaces;
-  AddressPtrList kernel_outputs;
-  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  KernelLaunchInfo kernel_launch_info;
+  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
   auto dynamic_flag = AnfAlgo::IsDynamicShape(cnode_ptr);
 
   // Get para_size from json
@@ -124,10 +122,13 @@ device::DynamicKernelPtr TbeKernelMod::GenDynamicKernel(const CNodePtr &cnode_pt
 
   // Generate args
   std::vector<void *> runtime_args;
+  const auto &kernel_inputs = kernel_launch_info.inputs_;
   (void)std::transform(std::begin(kernel_inputs), std::end(kernel_inputs), std::back_inserter(runtime_args),
                        [](const AddressPtr &input) -> void * { return input->addr; });
+  const auto &kernel_outputs = kernel_launch_info.outputs_;
   (void)std::transform(std::begin(kernel_outputs), std::end(kernel_outputs), std::back_inserter(runtime_args),
                        [](const AddressPtr &output) -> void * { return output->addr; });
+  const auto &kernel_workspaces = kernel_launch_info.workspaces_;
   if (!kernel_workspaces.empty()) {
     (void)std::transform(std::begin(kernel_workspaces), std::end(kernel_workspaces), std::back_inserter(runtime_args),
                          [](const AddressPtr &addr) -> void * { return addr->addr; });

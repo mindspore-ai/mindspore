@@ -41,7 +41,8 @@ using mindspore::tensor::Tensor;
 using std::vector;
 using TensorPtr = std::shared_ptr<Tensor>;
 using mindspore::kernel::AddressPtr;
-using AddressPtrList = std::vector<mindspore::kernel::AddressPtr>;
+using mindspore::kernel::AddressPtrList;
+using mindspore::kernel::KernelLaunchInfo;
 
 namespace mindspore {
 #ifndef ENABLE_DEBUGGER
@@ -87,8 +88,7 @@ class KernelRuntime {
     return mem_manager_->MallocCommunicationMemFromMemPool(size);
   }
   static void GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod, const AnfNodePtr &kernel,
-                            AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
-                            AddressPtrList *kernel_outputs);
+                            KernelLaunchInfo *kernel_launch_info);
 
   // for GPU and D to impl
   virtual void ReleaseDeviceRes() {}
@@ -135,9 +135,7 @@ class KernelRuntime {
   void AssignCommunicationNodeInputMem(MemType type, const AnfNodePtr &node);
   void AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node);
   bool LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_mod, const std::string &op_name,
-                                         const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
-                                         const std::vector<AddressPtr> &outputs, void *stream);
+                                         const KernelLaunchInfo &kernel_launch_address, void *stream);
 
   virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
 
@@ -147,8 +145,7 @@ class KernelRuntime {
                     const std::shared_ptr<MemScheduler> &mem_scheduler, bool mock = false);
   void ResetNodeAddress(const session::KernelGraph &graph);
   void AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem_scheduler, const AnfNodePtr &kernel,
-                           AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
-                           AddressPtrList *kernel_outputs);
+                           KernelLaunchInfo *kernel_launch_address);
   static void GetOrMallocAddress(const std::shared_ptr<MemScheduler> &mem_scheduler,
                                  const DeviceAddress *device_address, const kernel::AddressPtr &kernel_addr);
   void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph);
