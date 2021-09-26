@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,7 @@ ProfilingManager &ProfilingManager::GetInstance() {
 
 ProfilingManager::ProfilingManager() : device_id_(0), prof_cb_({0}), hccl_enabled_bef_profiling_enabled_(false) {}
 
-uint64_t ProfilingManager::GetJobId() const {
-  constexpr int kDecimal = 10;
-  const char *job_id = std::getenv("JOB_ID");
-  return ((job_id != nullptr) ? std::strtoul(job_id, nullptr, kDecimal) : 0);
-}
+uint64_t ProfilingManager::GetJobId() const { return 0; }
 
 bool ProfilingManager::ReportProfilingData(const map<uint32_t, string> &op_taskId_map) const {
   if (!IsProfiling()) {

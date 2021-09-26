@@ -291,7 +291,9 @@ void PynativeInfer(const PrimitivePyPtr &prim, OpExecInfo *const op_exec_info,
   prim->BeginRecordAddAttr();
   AbstractBasePtr infer_res = EvalOnePrim(prim, args_spec_list)->abstract();
   prim->EndRecordAddAttr();
+  MS_EXCEPTION_IF_NULL(op_exec_info);
   op_exec_info->abstract = infer_res;
+  MS_EXCEPTION_IF_NULL(op_exec_info->abstract);
   MS_LOG(DEBUG) << "Prim " << prim->name() << " infer result " << op_exec_info->abstract->ToString();
 }
 

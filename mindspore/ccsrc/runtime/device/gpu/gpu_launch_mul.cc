@@ -28,11 +28,11 @@ size_t GPULaunchMul::AlignSizeForLaunchKernel(size_t size) { return GPULaunchker
 
 uint8_t *GPULaunchMul::AllocDeviceMem(size_t size) { return GPULaunchkernel::AllocDeviceMem(size); }
 
-void GPULaunchMul::KernelSelect(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void GPULaunchMul::KernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   GPULaunchkernel::KernelSelect(kernel_graph);
 }
 
-void GPULaunchMul::KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void GPULaunchMul::KernelBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   GPULaunchkernel::KernelBuild(kernel_graph);
 }
 
