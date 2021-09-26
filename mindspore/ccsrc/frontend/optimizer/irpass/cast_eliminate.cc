@@ -68,6 +68,10 @@ AnfNodePtr CastSameTypeEliminater::operator()(const OptimizerPtr &, const AnfNod
         node->func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), src_, node->cast<CNodePtr>()->input(2)});
       return new_depend;
     }
+    // Temporary patch for the output dtype mismatch, ResizeBilinear on Ascend always return Float32 tensor.
+    if (IsPrimitiveCNode(node->cast<CNodePtr>()->input(1), prim::kPrimResizeBilinear)) {
+      return nullptr;
+    }
     return src_;
   }
 
