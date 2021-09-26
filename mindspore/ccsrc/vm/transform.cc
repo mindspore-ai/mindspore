@@ -145,22 +145,6 @@ void CompileGraph::PushParameters(const FuncGraphPtr &graph) {
   }
 }
 
-void CompileGraph::PushInputs(const FuncGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  std::vector<AnfNodePtr> parameters = graph->parameters();
-  for (size_t i = parameters.size(); i != 0; i--) {
-    MS_EXCEPTION_IF_NULL(parameters[i - 1]);
-    auto param = parameters[i - 1]->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(param);
-    if (param->has_default()) {
-      MS_LOG(DEBUG) << "Parameter " << (i - 1) << ": " << param->DebugString() << " has default value, skip.";
-      continue;
-    }
-    Push(param);
-    MS_LOG(DEBUG) << "Push parameter " << (i - 1) << ": " << param->DebugString(true);
-  }
-}
-
 int64_t CompileGraph::LinConvert(const FuncGraphPtr &graph, const GraphSegmentPtr &segment, const std::string &target) {
   MS_EXCEPTION_IF_NULL(segment);
   MS_LOG(DEBUG) << "LinConvert start";
@@ -273,15 +257,11 @@ bool CompileGraph::Compile(const FuncGraphPtr &graph) {
   return true;
 }
 
-InstSet CompileGraph::Run(const FuncGraphPtr &graph, bool push_weight) {
+InstSet CompileGraph::Run(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
 
   Reset();
-  if (push_weight) {
-    PushParameters(graph);
-  } else {
-    PushInputs(graph);
-  }
+  PushParameters(graph);
 
   int64_t param_height = height_;
   MS_EXCEPTION_IF_NULL(graph->get_return());
