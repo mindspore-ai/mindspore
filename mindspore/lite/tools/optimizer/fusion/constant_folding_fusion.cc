@@ -19,14 +19,15 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include "backend/optimizer/common/helper.h"
 #include "tools/anf_exporter/fetch_content.h"
 #include "tools/converter/quant_param_holder.h"
-#include "tools/converter/converter_context.h"
-#include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/common/format_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
-#include "src/common/common.h"
+#include "src/common/context_util.h"
 #include "src/ops/populate/populate_register.h"
+#include "src/lite_kernel.h"
 #include "src/kernel_registry.h"
 #include "src/inner_context.h"
 #include "src/tensor.h"
@@ -59,35 +60,12 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, converter::Fmk
   for (size_t i = 1; i < cnode->size(); ++i) {
     int status = 0;
     lite::DataInfo data_info;
-    if (lite::ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 &&
-        CheckPrimitiveType(cnode, prim::kPrimShape)) {
-      if (utils::isa<abstract::AbstractTensorPtr>(cnode->input(i)->abstract())) {
-        auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->input(i)->abstract());
-        if (abstract_tensor == nullptr) {
-          MS_LOG(ERROR) << "abstract tensor is nullptr.";
-          return {};
-        }
-        auto shape = utils::cast<abstract::ShapePtr>(abstract_tensor->GetShapeTrack())->shape();
-        bool is_dynamic_shape = false;
-        for (size_t j = 0; j < shape.size(); j++) {
-          auto dim = shape[j];
-          if (dim == -1) {
-            is_dynamic_shape = true;
-            break;
-          }
-        }
-        if (!is_dynamic_shape) {
-          status = lite::FetchDataFromParameterNode(cnode, i, fmk_type, false, &data_info);
-        }
-      }
-    } else if (utils::isa<ParameterPtr>(cnode->input(i))) {
-      if (!cnode->input(i)->cast<ParameterPtr>()->has_default()) {
-        FreeTensors(&tensors, nullptr);
-        return {};
-      }
+    if (utils::isa<ParameterPtr>(cnode->input(i))) {
       status = lite::FetchDataFromParameterNode(cnode, i, fmk_type, false, &data_info);
     } else if (utils::isa<ValueNodePtr>(cnode->input(i))) {
       status = lite::FetchDataFromValueNode(cnode, i, fmk_type, false, &data_info);
+    } else if (utils::isa<CNode>(cnode->input(i))) {
+      status = lite::FetchDataFromCNode(cnode, i, fmk_type, false, &data_info);
     } else {
       MS_LOG(ERROR) << "input node is not const node.";
       FreeTensors(&tensors, nullptr);
@@ -215,14 +193,13 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
   return lite_kernel;
 }
 
-lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_node, const AnfNodePtr &input_node,
-                          std::vector<Tensor *> output_tensors) {
+lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<Tensor *> output_tensors) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
   if (output_tensors.size() != 1) {
     for (size_t k = 0; k < output_tensors.size(); k++) {
-      auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, input_node, k);
+      auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, cnode, k);
       if (used_node_list->empty()) {
         MS_LOG(DEBUG) << "this output don't be used by other node.";
         continue;
@@ -235,24 +212,24 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
       if (CheckPrimitiveType(tuple_node, prim::kPrimTupleGetItem)) {
         auto new_parameter = CreateNewParamter(func_graph, output_tensors.at(k));
         if (new_parameter == nullptr) {
-          MS_LOG(ERROR) << "CreateNewParamter failed, name: " << input_node->fullname_with_scope();
+          MS_LOG(ERROR) << "CreateNewParamter failed, name: " << cnode->fullname_with_scope();
           return lite::RET_ERROR;
         }
-        new_parameter->set_name(input_node->fullname_with_scope() + "_const_" + std::to_string(k));
+        new_parameter->set_name(cnode->fullname_with_scope() + "_const_" + std::to_string(k));
         (void)manager->Replace(tuple_node, new_parameter);
       } else {
-        MS_LOG(ERROR) << " multi out tensor must connect tuple-getitem: " << input_node->fullname_with_scope();
+        MS_LOG(ERROR) << " multi out tensor must connect tuple-getitem: " << cnode->fullname_with_scope();
         return lite::RET_ERROR;
       }
     }
   } else {
     auto new_parameter = CreateNewParamter(func_graph, output_tensors.front());
     if (new_parameter == nullptr) {
-      MS_LOG(ERROR) << "CreateNewParamter failed, name: " << input_node->fullname_with_scope();
+      MS_LOG(ERROR) << "CreateNewParamter failed, name: " << cnode->fullname_with_scope();
       return lite::RET_ERROR;
     }
-    new_parameter->set_name("constfold_" + input_node->fullname_with_scope());
-    (void)manager->Replace(input_node, new_parameter);
+    new_parameter->set_name("constfold_" + cnode->fullname_with_scope());
+    (void)manager->Replace(cnode, new_parameter);
   }
   return lite::RET_OK;
 }
@@ -299,11 +276,26 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
 }
 }  //  namespace
 
-bool ConstFoldPass::PreProcess() const {
+bool ConstFoldPass::Run(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_RET(func_graph != nullptr, false);
+  if (!Init(func_graph)) {
+    MS_LOG(ERROR) << "initial constant fold pass failed.";
+    return false;
+  }
+  std::set<FuncGraphPtr> has_visited;
+  if (Process(func_graph, &has_visited) != lite::RET_OK) {
+    MS_LOG(ERROR) << "do constant fold pass failed,";
+    return false;
+  }
+  return true;
+}
+
+bool ConstFoldPass::Init(const FuncGraphPtr &func_graph) {
   if (context_ == nullptr) {
     context_ = std::make_shared<lite::InnerContext>();
     MS_CHECK_TRUE_RET(context_ != nullptr, false);
     if (context_->Init() != RET_OK) {
+      MS_LOG(ERROR) << "init context failed.";
       return false;
     }
   }
@@ -314,93 +306,123 @@ bool ConstFoldPass::PreProcess() const {
   return true;
 }
 
-bool ConstFoldPass::CheckCanFusion(const AnfNodePtr &input_node) const {
-  if (!input_node->isa<CNode>() || !CheckIsAllInputsParam(input_node)) {
-    return false;
+int ConstFoldPass::Process(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *has_visited) {
+  MS_ASSERT(func_graph != nullptr);
+  if (has_visited->find(func_graph) != has_visited->end()) {
+    return lite::RET_OK;
   }
-  if (CheckPrimitiveType(input_node, prim::kPrimTupleGetItem) || CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
-    return false;
+  has_visited->insert(func_graph);
+  auto manager = Manage(func_graph);
+  MS_CHECK_TRUE_RET(manager != nullptr, lite::RET_ERROR);
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNode>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    for (size_t i = 0; i < cnode->size(); ++i) {
+      if (IsValueNode<FuncGraph>(cnode->input(i))) {
+        is_control_flow_ = true;
+        auto sub_graph = GetValueNode<FuncGraphPtr>(cnode->input(i));
+        MS_ASSERT(sub_graph != nullptr);
+        if (Process(sub_graph, has_visited) != lite::RET_OK) {
+          MS_LOG(ERROR) << "do subgraph const-fold failed.";
+          return lite::RET_ERROR;
+        }
+      }
+    }
+    if (!CheckCanFusion(cnode)) {
+      continue;
+    }
+    if (DoConstantFold(func_graph, cnode) != lite::RET_OK) {
+      MS_LOG(ERROR) << "do constant fold failed.";
+      return lite::RET_ERROR;
+    }
   }
-  auto input_cnode = input_node->cast<CNodePtr>();
-  if (IsMarkedTrainOp(input_cnode)) {
-    return false;
-  }
-  return true;
+  return lite::RET_OK;
 }
 
-const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                        const EquivPtr &) const {
-  if (!PreProcess()) {
-    MS_LOG(ERROR) << "run pre-process failed.";
-    return nullptr;
+bool ConstFoldPass::CheckCanFusion(const CNodePtr &cnode) const {
+  MS_CHECK_TRUE_RET(cnode != nullptr, false);
+  if (IsSpecialType(cnode)) {
+    return false;
   }
-  MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
-  MS_CHECK_TRUE_RET(node != nullptr, nullptr);
-  auto any_node = node->cast<CNodePtr>();
-  if (any_node == nullptr) {
-    return nullptr;
+  if (IsMarkedTrainOp(cnode) || CheckPrimitiveType(cnode, prim::kPrimCustom)) {
+    return false;
   }
-  bool changed = false;
-  for (size_t i = 1; i < any_node->inputs().size(); i++) {
-    auto input_node = any_node->input(i);
-    if (!CheckCanFusion(input_node)) {
-      continue;
+  auto inputs = cnode->inputs();
+  bool is_all_const = std::all_of(inputs.begin(), inputs.end(), [](const AnfNodePtr &node) {
+    return (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) ||
+           (node->isa<Parameter>() && node->cast<ParameterPtr>()->has_default());
+  });
+  if (is_all_const) {
+    return true;
+  }
+  if (CheckPrimitiveType(cnode, prim::kPrimShape)) {
+    if (is_control_flow_ || lite::ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() == 0) {
+      return false;
     }
-    auto input_cnode = input_node->cast<CNodePtr>();
-    auto input_tensors = GetCNodeInputTensors(input_cnode, fmk_type_);
-    if (input_tensors.empty()) {
-      continue;
-    }
-    changed = true;
-    auto output_nums = GetOutputTensorNum(input_cnode);
-    std::vector<Tensor *> output_tensors;
-    for (size_t j = 0; j < output_nums; j++) {
-      auto out_tensor = new (std::nothrow) Tensor();
-      if (out_tensor == nullptr) {
-        MS_LOG(ERROR) << "new a tensor failed.";
-        FreeTensors(&input_tensors, &output_tensors);
-        return nullptr;
-      }
-      output_tensors.push_back(out_tensor);
-    }
-    if (CopyQuantParams(input_cnode, input_tensors, output_tensors) != lite::RET_OK) {
-      MS_LOG(ERROR) << "copy quant params failed.";
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    return prim->GetAttr(kInferDone) != nullptr && GetValue<bool>(prim->GetAttr(kInferDone));
+  }
+  return false;
+}
+
+int ConstFoldPass::DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  auto input_tensors = GetCNodeInputTensors(cnode, fmk_type_);
+  if (input_tensors.empty()) {
+    MS_LOG(ERROR) << "current node don't have inputs, please check, " << cnode->fullname_with_scope();
+    return lite::RET_ERROR;
+  }
+  auto output_nums = GetOutputTensorNum(cnode);
+  std::vector<Tensor *> output_tensors;
+  for (size_t j = 0; j < output_nums; j++) {
+    auto out_tensor = new (std::nothrow) Tensor();
+    if (out_tensor == nullptr) {
+      MS_LOG(ERROR) << "new a tensor failed.";
       FreeTensors(&input_tensors, &output_tensors);
-      return nullptr;
+      return lite::RET_ERROR;
     }
-    auto lite_kernel = GetLiteKernel(input_tensors, &output_tensors, input_cnode, context_.get(), ms_context_.get());
-    if (lite_kernel == nullptr) {
-      FreeTensors(&input_tensors, &output_tensors);
-      MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
-      return nullptr;
-    }
-    for (auto output_tensor : output_tensors) {
-      auto status = output_tensor->MallocData();
-      if (status != lite::RET_OK) {
-        MS_LOG(ERROR) << "MallocData failed";
-        FreeTensors(&input_tensors, &output_tensors);
-        delete (lite_kernel);
-        return nullptr;
-      }
-    }
-    auto status = static_cast<mindspore::kernel::InnerKernel *>(lite_kernel->kernel())->Run();
+    output_tensors.push_back(out_tensor);
+  }
+  if (CopyQuantParams(cnode, input_tensors, output_tensors) != lite::RET_OK) {
+    MS_LOG(ERROR) << "copy quant params failed.";
+    FreeTensors(&input_tensors, &output_tensors);
+    return lite::RET_ERROR;
+  }
+  auto lite_kernel = GetLiteKernel(input_tensors, &output_tensors, cnode, context_.get(), ms_context_.get());
+  if (lite_kernel == nullptr) {
+    FreeTensors(&input_tensors, &output_tensors);
+    MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
+    return lite::RET_ERROR;
+  }
+  for (auto output_tensor : output_tensors) {
+    auto status = output_tensor->MallocData();
     if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "MallocData failed";
       FreeTensors(&input_tensors, &output_tensors);
       delete (lite_kernel);
-      MS_LOG(ERROR) << "run kernel failed, name: " << lite_kernel->name();
-      return nullptr;
+      return lite::RET_ERROR;
     }
-    // replace cnode by new param
-    if (ReplaceCNode(func_graph, any_node, input_node, output_tensors) != lite::RET_OK) {
-      FreeTensors(&input_tensors, &output_tensors);
-      delete (lite_kernel);
-      MS_LOG(ERROR) << "constant_folding replace cnode failed";
-      return nullptr;
-    }
-    MS_LOG(DEBUG) << "fold node:" << input_node->fullname_with_scope() << " success ";
+  }
+  auto status = static_cast<mindspore::kernel::InnerKernel *>(lite_kernel->kernel())->Run();
+  if (status != lite::RET_OK) {
     FreeTensors(&input_tensors, &output_tensors);
     delete (lite_kernel);
+    MS_LOG(ERROR) << "run kernel failed, name: " << lite_kernel->name();
+    return lite::RET_ERROR;
   }
-  return changed ? any_node : nullptr;
+  // replace cnode by new param
+  if (ReplaceCNode(func_graph, cnode, output_tensors) != lite::RET_OK) {
+    FreeTensors(&input_tensors, &output_tensors);
+    delete (lite_kernel);
+    MS_LOG(ERROR) << "constant_folding replace cnode failed";
+    return lite::RET_ERROR;
+  }
+  MS_LOG(DEBUG) << "fold node:" << cnode->fullname_with_scope() << " success ";
+  FreeTensors(&input_tensors, &output_tensors);
+  delete (lite_kernel);
+  return lite::RET_OK;
 }
 }  // namespace mindspore::opt
