@@ -42,7 +42,7 @@ processor, and software hardware co-optimization. At the meantime MindSpore as
 a global AI open source community, aims to further advance the development and
 enrichment of the AI software/hardware application ecosystem.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
+<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture.png" alt="MindSpore Architecture"/>
 
 For more details please check out our [Architecture Guide](https://www.mindspore.cn/docs/programming_guide/en/master/architecture.html).
 
