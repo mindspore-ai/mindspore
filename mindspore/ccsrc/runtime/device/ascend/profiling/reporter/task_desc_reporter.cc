@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "runtime/device/ascend/profiling/reporter/task_desc_reporter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/ascend_kernel_mod.h"

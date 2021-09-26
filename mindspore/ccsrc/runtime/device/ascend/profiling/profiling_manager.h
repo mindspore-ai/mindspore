@@ -27,7 +27,6 @@
 #include "toolchain/prof_acl_api.h"
 #include "toolchain/slog.h"
 #include "runtime/base.h"
-#include "runtime/device/ascend/profiling/profiling_callback_register.h"
 #include "profiler/device/profiling.h"
 
 using std::map;
@@ -42,11 +41,19 @@ struct MsprofCallback {
   MsprofReporterCallback msprofReporterCallback;
 };
 
+enum ProfCommandHandleType {
+  kProfCommandhandleInit = 0,
+  kProfCommandhandleStart,
+  kProfCommandhandleStop,
+  kProfCommandhandleFinalize,
+  kProfCommandhandleModelSubscribe,
+  kProfCommandhandleModelUnsubscribe
+};
+
 class ProfilingManager {
  public:
   static ProfilingManager &GetInstance();
   uint64_t GetJobId() const;
-  bool ReportProfilingData(const map<uint32_t, string> &op_taskId_map) const;
   bool ProfRegisterCtrlCallback() const;
   bool StartupProfiling(uint32_t device_id);
   bool StopProfiling() const;
@@ -77,11 +84,8 @@ class ProfilingManager {
   bool hccl_enabled_bef_profiling_enabled_;
 };
 
-Status RegProfCtrlCallback(MsprofCtrlCallback func);
-Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func);
-Status RegProfReporterCallback(MsprofReporterCallback func);
 Status ProfCommandHandle(ProfCommandHandleType type);
-rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t len);
+rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /*len*/);
 Status ProfCtrlSwitchHandle(void *data);
 }  // namespace ascend
 }  // namespace device

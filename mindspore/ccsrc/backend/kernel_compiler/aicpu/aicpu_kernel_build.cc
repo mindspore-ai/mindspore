@@ -359,15 +359,15 @@ uint64_t SetExtInfoOutputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
   return ext_info_offset;
 }
 
-bool CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<AicpuOpKernelMod> &kernel_mod_ptr) {
+void CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<AicpuOpKernelMod> &kernel_mod_ptr) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   if (!anf_node->isa<CNode>()) {
-    return true;
+    return;
   }
 
   if (!AnfAlgo::IsDynamicShape(anf_node)) {
-    return true;
+    return;
   }
 
   uint64_t ext_info_head_len = kExtInfoHeadSize;
@@ -401,7 +401,6 @@ bool CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
   MS_LOG(INFO) << "Check ext_info_len:" << ext_info_len << " ext_info_offset:" << ext_info_offset;
   // set ext info
   kernel_mod_ptr->SetExtInfo(ext_info);
-  return true;
 }
 
 KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
