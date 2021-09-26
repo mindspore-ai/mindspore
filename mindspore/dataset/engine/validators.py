@@ -597,8 +597,9 @@ def check_batch(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns, output_columns,
-         column_order, pad_info, python_multiprocessing], param_dict = parse_user_args(method, *args, **kwargs)
+        [batch_size, drop_remainder, num_parallel_workers, per_batch_map,
+         input_columns, output_columns, column_order, pad_info,
+         python_multiprocessing, max_rowsize], param_dict = parse_user_args(method, *args, **kwargs)
 
         if not (isinstance(batch_size, int) or (callable(batch_size))):
             raise TypeError("batch_size should either be an int or a callable.")
@@ -613,6 +614,7 @@ def check_batch(method):
         if num_parallel_workers is not None:
             check_num_parallel_workers(num_parallel_workers)
         type_check(drop_remainder, (bool,), "drop_remainder")
+        type_check(max_rowsize, (int,), "max_rowsize")
 
         if (pad_info is not None) and (per_batch_map is not None):
             raise ValueError("pad_info and per_batch_map can't both be set.")
@@ -683,7 +685,7 @@ def check_map(method):
     def new_method(self, *args, **kwargs):
         from mindspore.dataset.callback import DSCallback
         [_, input_columns, output_columns, column_order, num_parallel_workers, python_multiprocessing, cache,
-         callbacks], _ = \
+         callbacks, max_rowsize], _ = \
             parse_user_args(method, *args, **kwargs)
 
         nreq_param_columns = ['input_columns', 'output_columns', 'column_order']
@@ -694,6 +696,7 @@ def check_map(method):
             check_num_parallel_workers(num_parallel_workers)
         type_check(python_multiprocessing, (bool,), "python_multiprocessing")
         check_cache_option(cache)
+        type_check(max_rowsize, (int,), "max_rowsize")
 
         if callbacks is not None:
             if isinstance(callbacks, (list, tuple)):

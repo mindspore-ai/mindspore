@@ -189,6 +189,9 @@ def test_case_7():
     """
     logger.info("Test 1-1 PyFunc Multiprocess: lambda x : x + x")
 
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
+
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
@@ -202,12 +205,16 @@ def test_case_7():
         np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
+    ds.config.set_enable_shared_mem(mem_original)
 
 def test_case_8():
     """
     Test PyFunc
     """
     logger.info("Test Multiprocess n-m PyFunc : lambda x, y : (x , x + 1, x + y)")
+
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
 
     col = ["col0", "col1"]
 
@@ -230,12 +237,16 @@ def test_case_8():
         np.testing.assert_array_equal(item["out2"], golden)
         i = i + 4
 
+    ds.config.set_enable_shared_mem(mem_original)
 
 def test_case_9():
     """
     Test PyFunc
     """
     logger.info("Test multiple 1-1 PyFunc Multiprocess: lambda x : x + x")
+
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -250,12 +261,16 @@ def test_case_9():
         np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
+    ds.config.set_enable_shared_mem(mem_original)
 
 def test_case_10():
     """
     Test PyFunc
     """
     logger.info("Test multiple map with multiprocess: lambda x : x + x")
+
+    mem_original = ds.config.get_enable_shared_mem()
+    ds.config.set_enable_shared_mem(False)
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -272,6 +287,7 @@ def test_case_10():
         np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
+    ds.config.set_enable_shared_mem(mem_original)
 
 def test_pyfunc_implicit_compose():
     """
@@ -354,7 +370,8 @@ def test_func_with_yield_manifest_dataset_01():
 
     DATA_FILE = "../data/dataset/testManifestData/test.manifest"
     data = ds.ManifestDataset(DATA_FILE)
-    data = data.map(operations=pass_func, input_columns=["image"], num_parallel_workers=1, python_multiprocessing=True)
+    data = data.map(operations=pass_func, input_columns=["image"], num_parallel_workers=1, python_multiprocessing=True,
+                    max_rowsize=1)
     num_iter = 0
     try:
         for _ in data.create_dict_iterator(output_numpy=True):
