@@ -57,6 +57,12 @@
 
 #### GraphKernel Fusion
 
+#### Boost
+
+* [BETA] Add LessBN algorithm, achieves 1.14x faster training throughput while maintaining negligible or no impact on the accuracy in our benchmark.
+* [BETA] Add gradient frozen algorithm, achieves 1.1x faster training throughput while maintaining negligible on the accuracy in our benchmark.
+* [BETA] Add "boost_level" input parameter in the Model interface to control boost level, where you can choose O1/O2 for 1.15x/1.2x faster.
+
 ### API Change
 
 #### Backwards Incompatible Change
