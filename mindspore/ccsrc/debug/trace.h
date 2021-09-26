@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ void TraceEvalCNodeStackPrepare(const TraceCNodeEvalStack &cnodeEvals);
 void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg);
 void TraceEvalCNodeLeave();
 TraceCNodeEvalStack &GetCNodeDebugStack();
-TraceGraphEvalStack &GetCurrenGraphEvalStack();
+TraceGraphEvalStack &GetCurrentGraphEvalStack();
 void GetTraceStackInfo(std::ostringstream &oss);
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs);
 void ClearTraceStack();

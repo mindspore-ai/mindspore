@@ -86,7 +86,7 @@ std::string GetGraphParamString(const FuncGraphPtr &graph, const abstract::Abstr
 }
 
 void DumpInferStack(std::ostringstream &oss) {
-  auto &graph_stack = GetCurrenGraphEvalStack();
+  auto &graph_stack = GetCurrentGraphEvalStack();
   if (graph_stack.empty()) {
     return;
   }
@@ -116,7 +116,7 @@ void DumpInferStack(std::ostringstream &oss) {
 }
 
 void TraceGraphEval() {
-  auto &graph_stack = GetCurrenGraphEvalStack();
+  auto &graph_stack = GetCurrentGraphEvalStack();
   if (graph_stack.empty()) {
     MS_LOG(INFO) << "Length of analysis graph stack is empty.";
     return;
@@ -145,7 +145,6 @@ class AnalyzeFailExporter : public AnfExporter {
   AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
   AnfNodeConfigPtr GetForwardConfig(const AnfNodeConfigPtr &cfg);
   void ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
-  void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node) override;
   std::unordered_map<FuncGraphPtr, TaggedNodeMap> CreateTaggedNodeMap(
     const std::vector<abstract::AnfNodeConfigPtr> &node_config_stack);
 
@@ -232,7 +231,7 @@ AnfNodeConfigPtr AnalyzeFailExporter::GetForwardConfig(const AnfNodeConfigPtr &c
   while (iter != engine_->anfnode_config_map().end()) {
     auto node = cur_cfg->node();
     cur_cfg = iter->second;
-    MS_LOG(DEBUG) << "Get forword node: " << node << "[" << node->DebugString() << "] --> " << cur_cfg->node() << "["
+    MS_LOG(DEBUG) << "Get forward node: " << node << "[" << node->DebugString() << "] --> " << cur_cfg->node() << "["
                   << cur_cfg->node()->DebugString() << "]";
     iter = engine_->anfnode_config_map().find(cur_cfg);
   }
@@ -249,6 +248,7 @@ void AnalyzeFailExporter::ProcessFuncGraphCall(const CNodePtr &node, std::string
     FuncGraphPtr dummy_call_func_graph = nullptr;
     auto cfg = engine_->MakeConfig(node, current_context_, dummy_call_func_graph);
     cfg = GetForwardConfig(cfg);
+    MS_EXCEPTION_IF_NULL(cfg);
     cnode = dyn_cast<CNode>(cfg->node());
   } catch (const std::exception &e) {
     MS_LOG(INFO) << "Exception: " << e.what();
@@ -288,48 +288,6 @@ void AnalyzeFailExporter::ProcessFuncGraphCall(const CNodePtr &node, std::string
       }
     }
   }
-}
-
-void AnalyzeFailExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &node) {
-  if (node == nullptr) {
-    return;
-  }
-
-  // Output type of each input argument
-  auto &inputs = node->inputs();
-  if (inputs.size() > 1) {
-    ofs << "    #(";
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      if (i != 1) {
-        ofs << ", ";
-      }
-      AnfNodePtr arg = inputs[i];
-      ofs << GetNodeType(arg);
-    }
-    ofs << ")";
-  }
-  // Output other comment, map the graph name to original representation(containing unicode character)
-  std::ostringstream comment;
-  comment << "    #";
-  bool has_comment = false;
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    AnfNodePtr arg = inputs[i];
-    if (!IsValueNode<FuncGraph>(arg)) {
-      continue;
-    }
-    if (!has_comment) {
-      has_comment = true;
-    } else {
-      comment << ",";
-    }
-    FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(arg);
-    std::string func_graph_id = fg->debug_info()->get_id();
-    comment << " fg_" << func_graph_id << "=" << fg->ToString();
-  }
-  if (has_comment) {
-    ofs << comment.str();
-  }
-  ofs << " #scope: " << node->scope()->name();
 }
 
 void AnalyzeFailExporter::OutputCNode(std::ofstream &ofs, const CNodePtr &cnode, const FuncGraphPtr &func_graph,
@@ -372,6 +330,7 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
   std::unordered_set<FuncGraphPtr> printed_func_graphs;  // Check if func graph has been printed.
   // Output graph on the analysis stack
   for (const auto &node_config : node_config_stack) {
+    MS_EXCEPTION_IF_NULL(node_config);
     auto fg = node_config->func_graph();
     MS_LOG(INFO) << "Node: " << node_config->node()->DebugString()
                  << ", FV: " << (node_config->func_graph() != node_config->context()->func_graph())
@@ -501,7 +460,7 @@ void TraceEvalCNodeLeave() { cnode_debug_stack.pop_back(); }
 
 TraceCNodeEvalStack &GetCNodeDebugStack() { return cnode_debug_stack; }
 
-TraceGraphEvalStack &GetCurrenGraphEvalStack() { return graph_infer_stack; }
+TraceGraphEvalStack &GetCurrentGraphEvalStack() { return graph_infer_stack; }
 
 void ClearTraceStack() {
   while (!graph_infer_stack.empty()) {
@@ -528,7 +487,7 @@ void GetTraceStackInfo(std::ostringstream &oss) {
 struct TraceProviderRegister {
   TraceProviderRegister() { LogWriter::set_trace_provider(GetTraceStackInfo); }
   ~TraceProviderRegister() = default;
-} trace_provider_regsiter;
+} trace_provider_register;
 
 // Register trace cnode provider to AbstractBase.
 struct TraceNodeProviderRegister {
@@ -542,6 +501,6 @@ struct TraceNodeProviderRegister {
     });
   }
   ~TraceNodeProviderRegister() = default;
-} trace_node_provider_regsiter;
+} trace_node_provider_register;
 }  // namespace trace
 }  // namespace mindspore
