@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class SelectGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     bool *input_cond = GetDeviceAddress<bool>(inputs, 0);
     T *input_x = GetDeviceAddress<T>(inputs, 1);
     T *input_y = GetDeviceAddress<T>(inputs, 2);
@@ -49,6 +52,12 @@ class SelectGpuKernel : public GpuKernel {
       return false;
     }
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SelectGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     input_size_ = sizeof(bool);
     output_size_ = sizeof(T);
     for (size_t x : shape) {
@@ -88,6 +97,7 @@ class SelectGpuKernel : public GpuKernel {
 
   size_t input_size_;
   size_t output_size_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

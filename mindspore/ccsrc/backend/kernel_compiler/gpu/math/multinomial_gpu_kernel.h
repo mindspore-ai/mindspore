@@ -47,6 +47,9 @@ class MultinomialGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     void *workspace_addr = GetDeviceAddress<void *>(workspace, 1);
     T *cum_sum_input = GetDeviceAddress<T>(workspace, 0);
     curandState *devStates = reinterpret_cast<curandState *>(workspace_addr);
@@ -80,6 +83,13 @@ class MultinomialGpuKernel : public GpuKernel {
       return false;
     }
     auto input_shape_0 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_0) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'MultinomialGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     if (input_shape_0.size() == 1) {
       distributions_ = 1;
     } else {
@@ -89,7 +99,7 @@ class MultinomialGpuKernel : public GpuKernel {
     for (size_t i = 0; i < input_shape_0.size(); i++) {
       input_size_0_ *= input_shape_0[i];
     }
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+
     output_size_ = sizeof(int);
     workspace_size_ = sizeof(int);
     for (size_t i = 0; i < output_shape.size(); i++) {
@@ -119,6 +129,7 @@ class MultinomialGpuKernel : public GpuKernel {
   size_t workspace_size_;
   int seed_;
   int seed2_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

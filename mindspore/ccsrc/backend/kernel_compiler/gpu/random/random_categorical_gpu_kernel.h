@@ -38,6 +38,9 @@ class RandomCategoricalGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *logits_addr = GetDeviceAddress<T>(inputs, 0);
     S *output_addr = GetDeviceAddress<S>(outputs, 0);
 
@@ -102,6 +105,12 @@ class RandomCategoricalGpuKernel : public GpuKernel {
       return false;
     }
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(logits_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'RandomCategoricalGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     if (logits_shape.size() != 2) {
       MS_LOG(ERROR) << "logits's dims is " << logits_shape.size() << ", but it should be only 2-D.";
       return false;
@@ -137,6 +146,7 @@ class RandomCategoricalGpuKernel : public GpuKernel {
   }
 
  private:
+  bool is_null_input_;
   size_t batch_size_;
   size_t num_classes_;
   size_t num_samples_;

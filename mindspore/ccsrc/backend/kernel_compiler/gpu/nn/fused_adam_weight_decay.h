@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,12 @@ class FusedAdamWeightDecayGpuKernel : public GpuKernel {
     }
 
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
+    is_null_input_ = CHECK_NULL_INPUT(shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'FusedAdamWeightDecayGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     element_nums_ = 1;
     for (auto i : shape) {
       element_nums_ *= i;
@@ -53,6 +59,9 @@ class FusedAdamWeightDecayGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     float *beta1 = GetDeviceAddress<float>(inputs, 0);
     float *one_sub_beta1 = GetDeviceAddress<float>(inputs, 1);
     float *beta2 = GetDeviceAddress<float>(inputs, 2);
@@ -96,6 +105,7 @@ class FusedAdamWeightDecayGpuKernel : public GpuKernel {
 
   int element_nums_;
   bool weight_decay_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

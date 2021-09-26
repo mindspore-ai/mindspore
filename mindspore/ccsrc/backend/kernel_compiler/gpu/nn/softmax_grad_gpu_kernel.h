@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,6 +138,10 @@ class SoftmaxGradGpuKernel : public GpuKernel {
       std::vector<int64_t> axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
       (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
                            [](const int64_t &value) { return static_cast<int>(value); });
+      if (axis.size() < 1) {
+        MS_LOG(EXCEPTION) << "For 'SoftmaxGradGpuKernel', the rank of axis should be greater than or equal to 1, "
+                          << "but got the rank of axis: " << axis.size();
+      }
       InitSizeByAxis(input_shape, axis[0]);
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(

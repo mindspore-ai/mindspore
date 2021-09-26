@@ -38,6 +38,9 @@ class GatherV2GpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
@@ -75,6 +78,13 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     input_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     indices_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     output_shapes_ = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ =
+      CHECK_NULL_INPUT(input_shapes_) || CHECK_NULL_INPUT(indices_shapes_) || CHECK_NULL_INPUT(output_shapes_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'GatherV2GpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     if (!is_dynamic_shape_) {
       int dims = SizeToInt(input_shapes_.size());
       axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
@@ -94,6 +104,7 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     output_shapes_.clear();
     std::fill(dims_, dims_ + 3, 0);
     axis_ = 0;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -141,6 +152,7 @@ class GatherV2GpuFwdKernel : public GpuKernel {
   size_t dims_[3] = {};
   int64_t axis_;
   bool is_dynamic_shape_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

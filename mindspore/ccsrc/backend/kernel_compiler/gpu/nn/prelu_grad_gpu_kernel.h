@@ -38,6 +38,9 @@ class PReLUGradGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     auto *dy = GetDeviceAddress<T>(inputs, 0);
     auto *x = GetDeviceAddress<T>(inputs, 1);
     auto *w = GetDeviceAddress<T>(inputs, 2);
@@ -64,6 +67,13 @@ class PReLUGradGpuKernel : public GpuKernel {
     }
 
     auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+    auto weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+    is_null_input_ = CHECK_NULL_INPUT(x_shape) || CHECK_NULL_INPUT(weight_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'PReLUGradGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     input_length_ = std::accumulate(x_shape.begin(), x_shape.end(), size_t(1), std::multiplies<>());
     size_t x_rank = x_shape.size();
     size_t channel_num;
@@ -78,8 +88,7 @@ class PReLUGradGpuKernel : public GpuKernel {
       per_channel_length_ = std::accumulate(x_shape.begin() + 2, x_shape.end(), size_t(1), std::multiplies<>());
     }
 
-    auto weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
-    if (weight_shape.size() != 1 && weight_shape[0] != 1 && weight_shape[0] != channel_num) {
+    if (weight_shape.size() != 1 || (weight_shape[0] != 1 && weight_shape[0] != channel_num)) {
       MS_LOG(EXCEPTION) << "PReLUGrad requires the rank of weight should be 1, and the elements number should be "
                            "1 or channels number "
                         << channel_num << ", but got weight shape " << weight_shape;
@@ -94,6 +103,7 @@ class PReLUGradGpuKernel : public GpuKernel {
     input_length_ = 0;
     weight_length_ = 0;
     per_channel_length_ = 0;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -111,6 +121,7 @@ class PReLUGradGpuKernel : public GpuKernel {
   }
 
  private:
+  bool is_null_input_;
   size_t input_length_{0};
   size_t weight_length_{0};
   size_t per_channel_length_{0};

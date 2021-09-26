@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,16 +87,27 @@ class Im2ColGpuFwdKernel : public GpuKernel {
       return false;
     }
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(in_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'Im2ColGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
+    if (in_shape.size() != 4) {
+      MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the dimension of input must be 4, but got " << in_shape.size();
+    }
     std::vector<int> filter_shape;
     std::vector<int64_t> filter_shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "kernel_size");
     (void)std::transform(filter_shape_me.begin(), filter_shape_me.end(), std::back_inserter(filter_shape),
                          [](const int64_t &value) { return static_cast<int>(value); });
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(in_shape);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "cudnnIm2ColForward input is null.";
-      InitSizeLists();
-      return true;
+    if (filter_shape.size() < 2) {
+      MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the dimension of filter must be greater than or equal to 2, "
+                        << "but got " << filter_shape.size();
+    }
+    if (output_shape.size() < 6) {
+      MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the dimension of output must be greater than or equal to 6, "
+                        << "but got " << filter_shape.size();
     }
     CheckTensorSize({in_shape, output_shape});
     Set4DDesc(in_shape, filter_shape, output_shape);
@@ -201,6 +212,10 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     c_ = SizeToInt(in_shape[1]);
     old_height_ = SizeToInt(in_shape[2]);
     old_width_ = SizeToInt(in_shape[3]);
+
+    if (pad_list.size() != 4) {
+      MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the length of pad_list must be 4, but got " << pad_list.size();
+    }
     pad_height_ = pad_list[0] + pad_list[1];
     pad_width_n = pad_list[2] + pad_list[3];
     pad_top_ = pad_list[0];

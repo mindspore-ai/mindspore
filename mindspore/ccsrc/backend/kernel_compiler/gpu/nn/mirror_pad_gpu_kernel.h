@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,9 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     int64_t *paddings = GetDeviceAddress<int64_t>(inputs, 1);
     T *output = GetDeviceAddress<T>(outputs, 0);
@@ -71,7 +74,15 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
     }
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    // shape adjustement -> from 2d/3d to 4d to standardize
+    auto padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(padding_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'MirrorPadGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
+    // shape adjustment -> from 2d/3d to 4d to standardize
     if (input_shape.size() == 4) {
     } else if (input_shape.size() == 3) {
       auto it = input_shape.begin();
@@ -80,6 +91,10 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
       auto it = input_shape.begin();
       input_shape.insert(it, 2, 1);  // channel padding
     }
+    if (input_shape.size() < 4) {
+      MS_LOG(EXCEPTION) << "For 'MirrorPadGpuKernel', the rank of input should be greater than or equal to 4, "
+                        << "but got the rank of input: " << input_shape.size();
+    }
 
     for (auto in_shape : input_shape) {
       input_size_ *= in_shape;
@@ -87,12 +102,16 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
     }
     num_input_ = input_size_;
     input_size_ *= sizeof(T);
-    auto padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+
     num_paddings_ = padding_shape[0];
     input_size_ += 2 * num_paddings_ * sizeof(int64_t);
 
     output_size_ = sizeof(T);
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+
+    if (output_shape.size() < 2) {
+      MS_LOG(EXCEPTION) << "For 'MirrorPadGpuKernel', the rank of output should be greater than or equal to 2, "
+                        << "but got the rank of output: " << output_shape.size();
+    }
     for (auto x : output_shape) {
       output_size_ *= x;
       output_shape_.push_back(x);
@@ -128,6 +147,7 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
   size_t num_input_;
   int num_paddings_;
   int mode_;
+  bool is_null_input_;
   std::vector<int> input_shape_;   // dims of the input data
   std::vector<int> output_shape_;  // dims of the output data
   // default

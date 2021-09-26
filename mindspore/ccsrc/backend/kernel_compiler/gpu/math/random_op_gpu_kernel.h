@@ -62,6 +62,9 @@ class RandomOpGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
     curandState *devStates = reinterpret_cast<curandState *>(workspace_addr);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -136,6 +139,13 @@ class RandomOpGpuKernel : public GpuKernel {
       return false;
     }
     auto input_shape_0 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_0) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'RandomOpGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < input_shape_0.size(); i++) {
       input_size_0_ *= input_shape_0[i];
     }
@@ -144,7 +154,7 @@ class RandomOpGpuKernel : public GpuKernel {
       input_size_1_ *= 1;
       input_size_2_ *= 1;
     }
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+
     for (size_t i = 0; i < output_shape.size(); i++) {
       output_size_ *= output_shape[i];
       workspace_size_ *= output_shape[i];
@@ -181,6 +191,7 @@ class RandomOpGpuKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
   curandGenerator_t mask_generator_;
   bool states_init_{false};
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

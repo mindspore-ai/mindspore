@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,12 @@ class L2NormalizeGpuKernel : public GpuKernel {
 
     auto inputA_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(inputA_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'L2NormalizeGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     output_size_ = sizeof(T);
     for (auto dim : output_shape) {
       output_size_ *= dim;
@@ -116,6 +122,10 @@ class L2NormalizeGpuKernel : public GpuKernel {
     }
 
     std::vector<size_t> outputC_shape = output_shape;
+    if ((size_t)axis_ >= output_shape.size()) {
+      MS_LOG(EXCEPTION) << "For 'L2NormalizeGpuKernel', axis_ should be less than the rank of output "
+                        << "but got axis_: " << axis_ << ", rank of output: " << output_shape.size();
+    }
     outputC_shape[axis_] = 1;
 
     if (inputA_shape.size() != output_shape.size() || inputA_shape.size() != outputC_shape.size()) {

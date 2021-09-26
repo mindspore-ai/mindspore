@@ -36,6 +36,9 @@ class GatherGpuFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     S *index_addr = GetDeviceAddress<S>(inputs, 1);
@@ -54,6 +57,13 @@ class GatherGpuFwdKernel : public GpuKernel {
     input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     index_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ =
+      CHECK_NULL_INPUT(input_shapes_) || CHECK_NULL_INPUT(index_shapes_) || CHECK_NULL_INPUT(output_shapes_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'GatherGpuKernel', input or output is null";
+      InitSizeLists();
+      return true;
+    }
     if (input_shapes_.size() != index_shapes_.size() || input_shapes_.size() != output_shapes_.size()) {
       MS_LOG(ERROR) << "The shape of input, index and output should be same.";
       return false;
@@ -118,6 +128,7 @@ class GatherGpuFwdKernel : public GpuKernel {
 
   size_t dims_[4] = {};
   int axis_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

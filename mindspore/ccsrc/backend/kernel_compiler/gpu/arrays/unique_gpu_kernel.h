@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class UniqueGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     S *input_index = GetDeviceAddress<S>(workspace, 0);
     S *sorted_index = GetDeviceAddress<S>(workspace, 1);
@@ -49,6 +52,12 @@ class UniqueGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     std::vector<size_t> shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'UniqueGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     for (auto x : shape) {
       num_elements_ *= x;
     }
@@ -83,6 +92,7 @@ class UniqueGpuKernel : public GpuKernel {
     workspace_size_ = 0;
     num_elements_ = 1;
     post_output_size_ = 0;
+    is_null_input_ = false;
     stream_ptr_ = nullptr;
     input_size_list_.clear();
     output_size_list_.clear();
@@ -105,6 +115,7 @@ class UniqueGpuKernel : public GpuKernel {
   size_t workspace_size_;
   int num_elements_;
   int post_output_size_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

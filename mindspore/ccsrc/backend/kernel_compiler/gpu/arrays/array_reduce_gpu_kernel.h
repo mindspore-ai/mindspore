@@ -126,9 +126,9 @@ class ArrayReduceGpuKernel : public GpuKernel {
 
     auto inputA_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     auto outputC_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(inputA_shape);
+    is_null_input_ = CHECK_NULL_INPUT(inputA_shape) || CHECK_NULL_INPUT(outputC_shape);
     if (is_null_input_) {
-      MS_LOG(WARNING) << "ArrayReduceGpuKernel input is null";
+      MS_LOG(WARNING) << "For 'ArrayReduceGpuKernel', input or output is null";
       InitSizeLists();
       return true;
     }

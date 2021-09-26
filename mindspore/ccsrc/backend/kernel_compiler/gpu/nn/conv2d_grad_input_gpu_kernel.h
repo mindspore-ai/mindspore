@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +101,17 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     }
     return true;
   }
+
+  bool CheckNull(const std::vector<size_t> dy_shape, const std::vector<size_t> filter_shape) {
+    is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(filter_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'Conv2dGradInputGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
+    return false;
+  }
+
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     InitResource();
@@ -115,10 +126,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     }
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(dy_shape);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "ConvGradInputGpuBkwKernel input is null.";
-      InitSizeLists();
+    if (CheckNull(dy_shape, filter_shape)) {
       return true;
     }
 
@@ -142,6 +150,9 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    if (pad_list.size() != 4) {
+      MS_LOG(EXCEPTION) << "For 'Conv2dGradInputGpuKernel', the length of pad_list must be 4.";
+    }
     pad_height_ = pad_list[0];
     pad_width_ = pad_list[2];
     use_pad_ = !((pad_height_ == pad_list[1]) && (pad_width_ == pad_list[3]));

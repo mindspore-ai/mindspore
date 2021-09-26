@@ -59,6 +59,7 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
       if (!gpu_kernel_ptr) {
         MS_LOG(EXCEPTION) << "Build gpu kernel op[" << kernel->fullname_with_scope() << "] failed";
       }
+      MS_EXCEPTION_IF_NULL(kernel);
       if (!gpu_kernel_ptr->Init(kernel)) {
         MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
       }

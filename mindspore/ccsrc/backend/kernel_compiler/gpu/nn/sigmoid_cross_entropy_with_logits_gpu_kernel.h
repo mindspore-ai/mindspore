@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@ class SigmoidCrossEntropyWithLogitsGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *logits_addr = GetDeviceAddress<T>(inputs, 0);
     S *labels_addr = GetDeviceAddress<S>(inputs, 1);
     T *outputs_addr = GetDeviceAddress<T>(outputs, 0);
@@ -59,16 +62,22 @@ class SigmoidCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     outputs_size_ = sizeof(T);
 
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(logits_shape) || CHECK_NULL_INPUT(labels_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SigmoidCrossEntropyWithLogitsGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < logits_shape.size(); i++) {
       logits_size_ *= logits_shape[i];
     }
 
-    auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     for (size_t i = 0; i < labels_shape.size(); i++) {
       labels_size_ *= labels_shape[i];
     }
 
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     for (size_t i = 0; i < output_shape.size(); i++) {
       outputs_size_ *= output_shape[i];
     }
@@ -88,6 +97,7 @@ class SigmoidCrossEntropyWithLogitsGpuKernel : public GpuKernel {
   size_t logits_size_;
   size_t labels_size_;
   size_t outputs_size_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

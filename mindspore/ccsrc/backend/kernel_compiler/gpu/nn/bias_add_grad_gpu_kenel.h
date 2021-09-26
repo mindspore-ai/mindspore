@@ -49,6 +49,9 @@ class BiasAddGradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *dy_addr = GetDeviceAddress<T>(inputs, 0);
     T *db_addr = GetDeviceAddress<T>(outputs, 0);
     if (same_dims_) {
@@ -81,6 +84,12 @@ class BiasAddGradGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(dy_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'BiasAddGradGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto input_device_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     cudnn_compute_format_ = (input_device_format == kOpFormat_NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
@@ -204,6 +213,7 @@ class BiasAddGradGpuKernel : public GpuKernel {
 
  private:
   bool same_dims_;
+  bool is_null_input_;
   bool use_cudnn_;
   size_t dy_num_;  // for own implementation
   size_t db_num_;

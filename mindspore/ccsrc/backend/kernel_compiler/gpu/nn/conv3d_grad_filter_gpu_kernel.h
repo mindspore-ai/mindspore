@@ -84,6 +84,23 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     return true;
   }
 
+  bool CheckNull(const std::vector<size_t> dy_shape, const std::vector<size_t> in_shape) {
+    is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(in_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'Conv3dGradInputGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
+    return false;
+  }
+
+  void CheckSize(const size_t value, const size_t expect_value, const string arg_name) {
+    if (value != expect_value) {
+      MS_LOG(EXCEPTION) << "For 'Conv3dGradFilterGpuKernel', the length of " << arg_name << " must be " << expect_value
+                        << ", but got " << value;
+    }
+  }
+
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     InitResource();
@@ -93,10 +110,7 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(in_shape);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "Conv3dGradFilterGpuKernel input is null.";
-      InitSizeLists();
+    if (CheckNull(dy_shape, in_shape)) {
       return true;
     }
     CheckTensorSize({in_shape});
@@ -110,6 +124,7 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     }
 
     compute_format_ = CUDNN_TENSOR_NCHW;
+    (void)CheckSize(in_shape.size(), 5, "in_shape");
     n_ = SizeToInt(in_shape[0]);
     c_ = SizeToInt(in_shape[1]);
     old_depth_ = SizeToInt(in_shape[2]);
@@ -123,6 +138,7 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
+    (void)CheckSize(pad_list.size(), 6, "pad_list");
     pad_depth_ = pad_list[0];
     pad_height_ = pad_list[2];
     pad_width_ = pad_list[4];

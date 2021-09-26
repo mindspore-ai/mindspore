@@ -37,6 +37,9 @@ class ArgMaxAndMinWithValueGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 1);
     S *index = GetDeviceAddress<S>(outputs, 0);
@@ -50,6 +53,12 @@ class ArgMaxAndMinWithValueGpuKernel : public GpuKernel {
     small_ = (kernel_name == "ArgMinWithValue") ? true : false;
     std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
+    is_null_input_ = CHECK_NULL_INPUT(shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ArgmaxwithvalueGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     int64_t dims = SizeToLong(shape.size());
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     if (axis < -dims || axis >= dims) {
@@ -89,6 +98,7 @@ class ArgMaxAndMinWithValueGpuKernel : public GpuKernel {
     bound_ = 0;
     outerSize_ = 0;
     innerSize_ = 0;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -111,6 +121,7 @@ class ArgMaxAndMinWithValueGpuKernel : public GpuKernel {
   S bound_;
   size_t outerSize_;
   size_t innerSize_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore
