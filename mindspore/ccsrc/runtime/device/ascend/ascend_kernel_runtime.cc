@@ -59,7 +59,6 @@
 #include "utils/config_manager.h"
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
 #include "runtime/hccl_adapter/hccl_adapter.h"
-#include "runtime/device/ascend/profiling/profiling_callback_register.h"
 #ifdef ENABLE_TDTQUE
 #include "minddata/dataset/engine/tdt/tdt_handle.h"
 using mindspore::dataset::TdtHandle;
@@ -370,7 +369,7 @@ bool AscendKernelRuntime::Init() {
   return true;
 }
 
-bool AscendKernelRuntime::LoadData(const session::KernelGraph &graph) {
+bool AscendKernelRuntime::LoadData(const session::KernelGraph & /*graph*/) {
 #ifdef ENABLE_DEBUGGER
   MS_LOG(INFO) << "Start load step";
   for (const auto &graph_ptr : debugger_->GetGraphPtrList()) {
@@ -1074,11 +1073,9 @@ bool AscendKernelRuntime::HcclInit() {
   auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   if (!is_task_sink && mode == kGraphMode) {
     (void)hccl::HcclAdapter::GetInstance().InitHccl();
-    std::vector<unsigned int> ranks;
     auto rank_size = HcclCollectiveGroup::instance().GetRankSize();
-    for (size_t i = 0; i < IntToSize(rank_size); ++i) {
-      ranks.push_back(i);
-    }
+    std::vector<unsigned int> ranks(rank_size);
+    std::iota(std::begin(ranks), std::end(ranks), 0);
     HcclCollectiveGroup::instance().CreateCommGroup(kHcclWorldGroup, ranks);
     return true;
   }

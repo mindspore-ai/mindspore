@@ -16,8 +16,6 @@
 
 #include "runtime/device/ascend/ascend_bucket.h"
 
-#include <vector>
-#include <memory>
 #include "runtime/mem.h"
 #include "external/hccl/hccl.h"
 #include "runtime/device/ascend/ascend_memory_pool.h"

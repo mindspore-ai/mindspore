@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <memory>
 #include "runtime/device/ascend/profiling/reporter/graph_desc_reporter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
