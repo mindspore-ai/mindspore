@@ -151,9 +151,6 @@ function Run_Benchmark() {
       echo "Benchmarking ${model_name} $6 $7 ......"
       # adjust benchmark mode
       benchmark_mode="calib"
-      if [[ $6 == "arm64" && $7 == "CPU" && ! ${cfg_file_name} =~ "fp16" ]]; then
-        benchmark_mode="calib+loop"
-      fi
       # adjust precision mode
       mode="fp32"
       if [[ ${cfg_file_name} =~ "fp16" ]]; then
@@ -164,7 +161,6 @@ function Run_Benchmark() {
       if [[ ${cfg_file_name} =~ "weightquant" ]]; then
         infix="_${cfg_file##*_}"
         infix=${infix%.*}
-        benchmark_mode="calib"
       elif [[ ${cfg_file_name} =~ "_train" ]]; then
         infix="_train"
       elif [[ ${cfg_file_name} =~ "_posttraining" ]]; then
@@ -207,8 +203,8 @@ function Run_Benchmark() {
       if [[ ${mode} == "fp16" ]]; then
         enableFp16="true"
       fi
-      if [[ ${extra_info} =~ "calib_only" ]]; then
-        benchmark_mode="calib"
+      if [[ $6 == "arm64" && ${extra_info} =~ "need_loop" ]]; then
+        benchmark_mode="calib+loop"
       fi
       # start running benchmark
       echo "---------------------------------------------------------" >> "$4"
@@ -267,14 +263,14 @@ function Run_Benchmark() {
 # Print start msg before run testcase
 function MS_PRINT_TESTCASE_START_MSG() {
     echo ""
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
-    echo -e "env                    Testcase                                                                                           Result   "
-    echo -e "---                    --------                                                                                           ------   "
+    echo -e "----------------------------------------------------------------------------------------------------------------------------------------"
+    echo -e "env                    Testcase                                                                                                Result   "
+    echo -e "---                    --------                                                                                                ------   "
 }
 
 # Print start msg after run testcase
 function MS_PRINT_TESTCASE_END_MSG() {
-    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
+    echo -e "----------------------------------------------------------------------------------------------------------------------------------------"
 }
 
 function Print_Converter_Result() {
@@ -290,7 +286,7 @@ function Print_Benchmark_Result() {
     MS_PRINT_TESTCASE_START_MSG
     while read line; do
         arr=("${line}")
-        printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+        printf "%-25s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
     done < $1
     MS_PRINT_TESTCASE_END_MSG
 }

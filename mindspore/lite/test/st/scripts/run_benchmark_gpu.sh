@@ -231,4 +231,5 @@ fi
 
 echo "Run_gpu and Run_cropper and mindrt_parallel is ended"
 Print_Benchmark_Result $run_benchmark_result_file
+adb -s ${device_id} shell "rm -rf /data/local/tmp/benchmark_test/*"
 exit ${isFailed}
