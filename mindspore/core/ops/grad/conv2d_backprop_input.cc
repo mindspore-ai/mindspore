@@ -105,10 +105,10 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION_IF_NULL(abstract_tensor);
       auto shape_max_value = abstract_tensor->get_max_value();
       auto shape_min_value = abstract_tensor->get_min_value();
-
-      if (shape_max_value == nullptr && shape_min_value == nullptr) {
+      if (shape_max_value == nullptr || shape_min_value == nullptr) {
         MS_LOG(EXCEPTION) << "Max_value or min value of x size can not be empty when its value is dynamic.";
       }
+
       auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
       auto shape_min = GetValue<std::vector<int64_t>>(shape_min_value);
 
