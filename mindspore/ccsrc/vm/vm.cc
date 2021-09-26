@@ -89,7 +89,7 @@ void FinalVM::Pop(int64_t n) {
 
 void FinalVM::MoveStack(int64_t nitems, int64_t height) {
   if (nitems > height || height > sp_) {
-    MS_LOG(EXCEPTION) << "MoveStack arg error: nitems=" << nitems << " height=" << height;
+    MS_LOG(EXCEPTION) << "MoveStack arg error: nitems=" << nitems << " height=" << height << " sp=" << sp_;
   }
   int64_t n = height - nitems;
   int64_t src = sp_ - height;
