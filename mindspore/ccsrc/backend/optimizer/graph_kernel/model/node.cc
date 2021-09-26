@@ -15,15 +15,6 @@
  */
 #include "backend/optimizer/graph_kernel/model/node.h"
 
-#include <memory>
-#include <algorithm>
-#include <functional>
-#include <sstream>
-#include <vector>
-#include <unordered_map>
-#include <iostream>
-#include <string>
-
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "mindspore/core/ir/value.h"
 #include "mindspore/core/ir/tensor.h"

@@ -16,10 +16,10 @@
 
 #include "backend/kernel_compiler/akg/akg_kernel_build.h"
 
-#include <stdio.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <cstdio>
+#include <cerrno>
 
 #include <algorithm>
 #include <map>

@@ -33,7 +33,7 @@ class LiteGraph {
  public:
   class GraphBuilder;
   explicit LiteGraph(const std::string &name = "") : name_(name), output_(new OutputNode()) {}
-
+  ~LiteGraph() = default;
   NodePtr &Add(PrimOpPtr op) {
     ops_.emplace_back(op);
     return ops_.back();
@@ -62,7 +62,7 @@ using LiteGraphPtr = std::shared_ptr<LiteGraph>;
 class LiteGraph::GraphBuilder {
  public:
   explicit GraphBuilder(const std::string &name = "") { graph_ = std::make_shared<LiteGraph>(name); }
-
+  ~GraphBuilder() = default;
   NodePtr Parameter(const NodeBase &baseinfo, std::string name = "") {
     if (name.empty()) name = NewName();
     auto para = std::make_shared<ParamNode>(name, baseinfo);

@@ -29,6 +29,8 @@ class StandardNormal : public OpExpander {
     validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~StandardNormal() {}
+
+ protected:
   NodePtrList Expand() override {
     const auto &inputs = gb.Get()->inputs();
     const auto &input_x = inputs[0];

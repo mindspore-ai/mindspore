@@ -15,8 +15,6 @@
  */
 #include "backend/optimizer/graph_kernel/rewrite_output_shape.h"
 
-#include <vector>
-#include <memory>
 #include "ir/scalar.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/session/anf_runtime_algorithm.h"

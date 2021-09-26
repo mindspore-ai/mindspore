@@ -15,17 +15,6 @@
  */
 #include "backend/optimizer/graph_kernel/model/op_node.h"
 
-#include <math.h>
-#include <sstream>
-#include <memory>
-#include <set>
-#include <string>
-#include <vector>
-#include <functional>
-#include <unordered_map>
-#include <unordered_set>
-#include <numeric>
-
 #include "backend/optimizer/graph_kernel/model/node.h"
 
 namespace mindspore {
@@ -137,7 +126,6 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
     {"Sqrt", [](const std::vector<TM> &n) { return sqrt(n[0]); }},
     {"Rsqrt", [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); }},
   };
-
   if (func_map.find(op) == func_map.end()) return nullptr;
   return std::make_shared<tensor::Tensor>(static_cast<TD>(func_map[op](inputs_tm)), TypeIdToType(tid));
 }

@@ -15,15 +15,8 @@
  */
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 
-#include <memory>
-#include <algorithm>
-#include <functional>
-#include <map>
-#include <unordered_map>
 #include <set>
 #include <utility>
-#include <string>
-#include <iostream>
 
 #include "backend/optimizer/graph_kernel/model/node.h"
 #include "backend/optimizer/graph_kernel/model/op_node.h"
