@@ -732,6 +732,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       if (input_primitive_quant_holder->IsOutputQuantParamsInited()) {
         auto quant_param = input_primitive_quant_holder->get_output_quant_params().front();
         primitive_quant_holder->set_input_quant_param(i - 1, quant_param);
+        activation_input_index++;
       } else {
         // do input quant
         auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
