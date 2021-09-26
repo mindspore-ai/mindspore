@@ -28,6 +28,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from ... import context
 
+
 class LossBase(Cell):
     """
     Base class for other losses.
@@ -123,6 +124,7 @@ def _check_is_tensor(param_name, input_data, cls_name):
     if input_data is not None and not isinstance(F.typeof(input_data), mstype.tensor_type):
         raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.tensor_type}', "
                         f"but got '{F.typeof(input_data)}'")
+
 
 class L1Loss(LossBase):
     r"""
@@ -579,6 +581,7 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
             labels = self.one_hot(labels, F.shape(logits)[-1], self.on_value, self.off_value)
         x = self.softmax_cross_entropy(logits, labels)[0]
         return self.get_loss(x)
+
 
 @constexpr
 def _check_label_dtype(labels_dtype, cls_name):

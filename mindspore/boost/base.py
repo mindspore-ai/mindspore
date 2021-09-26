@@ -135,6 +135,7 @@ class OptimizerProcess:
 
         return opt
 
+
 class ParameterProcess:
     """
     Process parameter for Boost. Currently, this class supports creating group parameters
