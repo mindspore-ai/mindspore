@@ -100,6 +100,7 @@ int ReduceBaseCPUKernel::Init() {
   if (reduce_param == nullptr) {
     return RET_NULL_PTR;
   }
+  MS_CHECK_FALSE_MSG(op_parameter_->thread_num_ == 0, RET_ERROR, "thread_num_ should not be 0");
   if (in_tensors_.size() > 1) {
     auto axes_tensor = in_tensors_.at(1);
     num_axes_ = axes_tensor->ElementsNum();

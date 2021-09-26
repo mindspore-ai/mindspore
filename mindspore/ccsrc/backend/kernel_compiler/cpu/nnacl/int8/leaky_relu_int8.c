@@ -17,7 +17,7 @@
 #include "nnacl/int8/leaky_relu_int8.h"
 #include "nnacl/errorcode.h"
 
-int DoLeakReluInt8(const int8_t *inputs, int8_t *output_ptr, LeakyReluQuantArg *quant_prelu_parm, int task_id) {
+int DoLeakReluInt8(const int8_t *inputs, int8_t *output_ptr, const LeakyReluQuantArg *quant_prelu_parm, int task_id) {
   if (quant_prelu_parm == NULL) {
     return NNACL_NULL_PTR;
   }

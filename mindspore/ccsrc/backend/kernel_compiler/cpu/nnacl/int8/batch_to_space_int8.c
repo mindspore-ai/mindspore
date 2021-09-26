@@ -17,7 +17,7 @@
 #include "nnacl/int8/batch_to_space_int8.h"
 
 void BatchToSpaceNoCropForNHWCInt8(const int8_t *input, int8_t *output, const int *in_shape, int out_n,
-                                   const int *block, QuantArg *in_quant_arg, QuantArg *out_quant_arg) {
+                                   const int *block, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   int block_h = block[0];
   int block_w = block[1];
   int in_h = in_shape[1];

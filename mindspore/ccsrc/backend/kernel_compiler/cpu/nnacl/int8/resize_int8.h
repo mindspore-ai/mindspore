@@ -39,7 +39,7 @@ int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_dat
 
 int ResizeNearestNeighborInt8(const int8_t *input_data, int8_t *output_data, const int *input_shape,
                               const int *output_shape, const bool align_corners, const QuantMulArg *multiplier,
-                              QuantArg *quant_in, QuantArg *quant_out, int tid, int thread_num);
+                              const QuantArg *quant_in, const QuantArg *quant_out, int tid, int thread_num);
 
 void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32_t new_size, const bool align_corners,
                                int32_t *nearest);

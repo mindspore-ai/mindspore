@@ -83,7 +83,6 @@ int SliceInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 int SliceInt8CPUKernel::Run() {
   // param_ shape info has already been extended to 8d
   auto ret = ParallelLaunch(this->ms_context_, SliceInt8Run, this, op_parameter_->thread_num_);
-
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SliceInt8Run error, error_code[" << ret << "]";
   }
