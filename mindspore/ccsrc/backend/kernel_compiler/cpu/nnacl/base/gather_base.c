@@ -30,11 +30,14 @@ int Gather(const void *input, int outer_size, int inner_size, int limit, const i
 
     for (int i = 0; i < indices_element_size; ++i) {
       int index = indices[i];
-      if (index < -limit || indices[i] >= limit) {
-        return NNACL_ERR;
+      if (index < -limit) {
+        index = -limit;
       }
-      if (indices[i] < 0) {
-        index = limit + indices[i];
+      if (index >= limit) {
+        index = limit - 1;
+      }
+      if (index < 0) {
+        index += limit;
       }
       memcpy(int8_out_m + i * inner_size * data_size, int8_in_m + index * inner_size * data_size,
              data_size * inner_size);

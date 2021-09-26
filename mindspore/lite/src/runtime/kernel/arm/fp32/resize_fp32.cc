@@ -131,17 +131,16 @@ int ResizeCPUKernel::MallocTmpBuffer() {
 
   // malloc memory for weights of x, y axes
   {
-    x_weights_ = reinterpret_cast<float *>(malloc(static_cast<int>(sizeof(float)) * x_weight_len));
+    x_weights_ = malloc(x_weight_len * DataTypeLen());
     CHECK_MALLOC_RES(x_weights_, RET_NULL_PTR);
-    y_weights_ = reinterpret_cast<float *>(malloc(static_cast<int>(sizeof(float)) * y_weight_len));
+    y_weights_ = malloc(y_weight_len * DataTypeLen());
     CHECK_MALLOC_RES(y_weights_, RET_NULL_PTR);
   }
 
   {
     MS_CHECK_TRUE_RET(in_tensors_.at(0)->Channel() > 0, RET_ERROR);
     line_buffer_ =
-      reinterpret_cast<float *>(malloc(static_cast<int>(sizeof(float)) * x_len * in_tensors_.at(0)->Channel() *
-                                       kResizeSizeDouble * op_parameter_->thread_num_));
+      malloc(DataTypeLen() * x_len * in_tensors_.at(0)->Channel() * kResizeSizeDouble * op_parameter_->thread_num_);
     CHECK_MALLOC_RES(line_buffer_, RET_NULL_PTR);
   }
   return RET_OK;
@@ -188,21 +187,22 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   int c = input_shape.at(3);
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
-      float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
+      float *line0 = static_cast<float *>(line_buffer_) + new_width_ * c * 2 * task_id;
       float *line1 = line0 + new_width_ * c;
       return ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(),
                             coordinate_.y_bottoms_, coordinate_.y_tops_, coordinate_.x_lefts_, coordinate_.x_rights_,
-                            y_weights_, x_weights_, line0, line1, h_begin, h_end);
+                            static_cast<float *>(y_weights_), static_cast<float *>(x_weights_), line0, line1, h_begin,
+                            h_end);
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST): {
       return ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
                                    calculate_, coordinate_transform_mode_, task_id, op_parameter_->thread_num_);
     }
     case static_cast<int>(schema::ResizeMethod_CUBIC): {
-      float *line_buffer = line_buffer_ + new_width_ * c * 4 * task_id;
+      float *line_buffer = static_cast<float *>(line_buffer_) + new_width_ * c * 4 * task_id;
       return ResizeBicubic(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(),
-                           coordinate_.y_tops_, coordinate_.x_lefts_, y_weights_, x_weights_, line_buffer, h_begin,
-                           h_end);
+                           coordinate_.y_tops_, coordinate_.x_lefts_, static_cast<float *>(y_weights_),
+                           static_cast<float *>(x_weights_), line_buffer, h_begin, h_end);
     }
     default: {
       MS_LOG(ERROR) << "Resize unknown method " << method_;
@@ -222,16 +222,20 @@ int ResizeCPUKernel::Run() {
 }
 
 int ResizeCPUKernel::ResizePrepare() {
-  auto input_shape = in_tensors_.at(0)->shape();
+  CHECK_NULL_RETURN(in_tensors_.front());
+  CHECK_NULL_RETURN(out_tensors_.front());
+  const auto &input_shape = in_tensors_.front()->shape();
+  const auto &output_shape = out_tensors_.front()->shape();
   if (method_ == static_cast<int>(schema::ResizeMethod_LINEAR)) {
-    return PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), calculate_,
-                                 coordinate_.y_bottoms_, coordinate_.y_tops_, coordinate_.x_lefts_,
-                                 coordinate_.x_rights_, y_weights_, x_weights_);
+    return PrepareResizeBilinear(input_shape.data(), output_shape.data(), calculate_, coordinate_.y_bottoms_,
+                                 coordinate_.y_tops_, coordinate_.x_lefts_, coordinate_.x_rights_,
+                                 static_cast<float *>(y_weights_), static_cast<float *>(x_weights_));
   }
   if (method_ == static_cast<int>(schema::ResizeMethod_CUBIC)) {
     auto cubic_coeff = reinterpret_cast<ResizeParameter *>(op_parameter_)->cubic_coeff_;
-    return PrepareResizeBicubic(input_shape.data(), out_tensors_.at(0)->shape().data(), calculate_, coordinate_.y_tops_,
-                                coordinate_.x_lefts_, y_weights_, x_weights_, cubic_coeff);
+    return PrepareResizeBicubic(input_shape.data(), output_shape.data(), calculate_, coordinate_.y_tops_,
+                                coordinate_.x_lefts_, static_cast<float *>(y_weights_),
+                                static_cast<float *>(x_weights_), cubic_coeff);
   }
   return RET_OK;
 }
@@ -242,9 +246,9 @@ int ResizeCPUKernel::SelectCalculatorFunc() {
     std::make_pair(CoordinateTransformMode_ALIGN_CORNERS, CalculateAlignCorners),
     std::make_pair(CoordinateTransformMode_HALF_PIXEL, CalculateHalfPixel)};
 
-  auto fun_pair = cal_fuc_list.find(coordinate_transform_mode_);
-  if (fun_pair != cal_fuc_list.end()) {
-    calculate_ = fun_pair->second;
+  auto iter = cal_fuc_list.find(coordinate_transform_mode_);
+  if (iter != cal_fuc_list.end()) {
+    calculate_ = iter->second;
   } else {
     MS_LOG(ERROR) << "Do not support coordinate transform mode. Mode is"
                   << schema::EnumNameCoordinateTransformMode(
