@@ -164,6 +164,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::MakeDependency(const CNodePtr &get
 }
 CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefForMultipleOutput(
   const FuncGraphPtr &func_graph, const CNodePtr &orig_cnode, const std::shared_ptr<kernel::OpInfo> &op_info) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   auto cnode = orig_cnode;
@@ -172,6 +173,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefForMultipleOutput(
     auto kernel_graph = func_graph->cast<KernelGraphPtr>();
     MS_EXCEPTION_IF_NULL(kernel_graph);
     cnode = kernel_graph->NewCNode(orig_cnode);
+    MS_EXCEPTION_IF_NULL(cnode);
     cnode->set_inputs(orig_cnode->inputs());
     for (auto &update_state : update_states) {
       manager->SetEdge(update_state.first, update_state.second, cnode);
@@ -181,7 +183,7 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::DealRefForMultipleOutput(
   auto ref_infos = op_info->ref_infos();
   std::vector<AnfNodePtr> make_tuple_inputs;
   AbstractBasePtrList abstract_list;
-  make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+  make_tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     CNodePtr final_node = CreatTupleGetItemNode(func_graph, cnode, output_index);
@@ -284,13 +286,16 @@ CNodePtr DealRefAndSpiltUnSupportedTransdata::SplitTransdataIfNotSupported(const
   // When input and output format are all special format
   // the node should be splited to two transdata connected by default format
   auto builder_info_to_default = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(kernel_info);
+  MS_EXCEPTION_IF_NULL(builder_info_to_default);
   auto builder_info_to_special_foramt = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(kernel_info);
+  MS_EXCEPTION_IF_NULL(builder_info_to_special_foramt);
   builder_info_to_default->SetOutputsFormat({kOpFormat_DEFAULT});
   builder_info_to_special_foramt->SetInputsFormat({kOpFormat_DEFAULT});
   std::vector<AnfNodePtr> next_trans_node_inputs = {
     NewValueNode(std::make_shared<Primitive>(prim::kPrimTransData->name())), cnode};
   MS_EXCEPTION_IF_NULL(func_graph);
   auto next_trans_node = func_graph->NewCNode(next_trans_node_inputs);
+  MS_EXCEPTION_IF_NULL(next_trans_node);
   next_trans_node->set_abstract(cnode->abstract());
   AnfAlgo::SetSelectKernelBuildInfo(builder_info_to_default->Build(), cnode.get());
   AnfAlgo::SetSelectKernelBuildInfo(builder_info_to_special_foramt->Build(), next_trans_node.get());

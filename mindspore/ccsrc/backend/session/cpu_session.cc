@@ -102,6 +102,7 @@ void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
 void CPUSession::ProcessCast(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
+  MS_EXCEPTION_IF_NULL(pm);
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast_cpu"));
   MS_LOG(INFO) << "Insert cast pass";
   pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
@@ -263,6 +264,7 @@ void CPUSession::UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, Kern
       const auto &shape = AnfAlgo::GetOutputInferShape(kernel, output_index);
       std::vector<int64_t> refresh_shape;
       (void)std::copy(shape.begin(), shape.end(), std::back_inserter(refresh_shape));
+      MS_EXCEPTION_IF_NULL(tensor_node.first);
       tensor_node.first->set_shape(refresh_shape);
     }
   }

@@ -43,9 +43,10 @@ bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
 }
 
 void UpdatePrevNotCNodeFormatDtype(const KernelAttr &kernel_attr, const std::vector<size_t> &input_not_cnode_indexes,
-                                   const CNodePtr kernel_node) {
+                                   const CNodePtr &kernel_node) {
   for (auto &input_index : input_not_cnode_indexes) {
     auto input_node = AnfAlgo::VisitKernel(kernel_node->input(input_index + 1), 0).first;
+    MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() && AnfAlgo::IsParameterWeight(input_node->cast<ParameterPtr>())) {
       MS_EXCEPTION_IF_NULL(input_node);
       std::vector<TypeId> output_types;

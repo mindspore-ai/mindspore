@@ -34,6 +34,7 @@ void DynamicShapeKernel::Execute() {
   auto output_type = TypeId::kNumberTypeInt64;
 
   auto output_tensor_for_sync = std::make_shared<tensor::Tensor>(output_type, output_shape);
+  MS_EXCEPTION_IF_NULL(output_tensor_for_sync);
   auto data_ptr = static_cast<int64_t *>(output_tensor_for_sync->data_c());
   for (size_t i = 0; i < prev_output_shape.size(); ++i) {
     MS_LOG(INFO) << "DEBUG prev_output_shape[" << i << "]:" << prev_output_shape[i];

@@ -48,6 +48,7 @@ bool IsNodeOutPutUsedByOtherRealKernel(const AnfNodeIndexSet &node_users) {
   }
   for (const auto &node_pair : node_users) {
     auto node = node_pair.first;
+    MS_EXCEPTION_IF_NULL(node);
     if (AnfAlgo::IsRealKernel(node) && !AnfAlgo::IsCommunicationOp(node)) {
       MS_LOG(INFO) << "This node only used other real kernel: " << node->fullname_with_scope();
       return true;

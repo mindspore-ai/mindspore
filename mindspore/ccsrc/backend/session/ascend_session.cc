@@ -317,6 +317,7 @@ bool NeedMemcpyInDevice(const device::DeviceAddressPtr &src_device_addr,
 
 bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfNodePtr &parameter,
                     const tensor::TensorPtr &tensor, uint32_t *memcpy_nums) {
+  MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->NeedSyncHostToDevice()) {
     return true;
   }

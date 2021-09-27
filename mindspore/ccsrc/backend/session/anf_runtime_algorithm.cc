@@ -181,8 +181,11 @@ AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
 //          ...
 //          out = Depend(out, latter)
 void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &former, const AnfNodePtr &latter) {
+  MS_EXCEPTION_IF_NULL(kg);
+  MS_EXCEPTION_IF_NULL(latter);
   if (latter->isa<CNode>()) {
     auto latter_cnode = latter->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(latter_cnode);
     constexpr size_t inputsize = 2;
     constexpr size_t kFirstDataInputIndex = 1;
     if (latter_cnode->inputs().size() < inputsize) {
@@ -190,6 +193,7 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
     }
     auto latter_input = latter_cnode->input(kFirstDataInputIndex);
     auto depend1 = kg->NewCNode({NewValueNode(prim::kPrimDepend), latter_input, former});
+    MS_EXCEPTION_IF_NULL(depend1);
     depend1->set_abstract(latter_input->abstract());
     latter_cnode->set_input(kFirstDataInputIndex, depend1);
 
@@ -197,6 +201,7 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
     MS_EXCEPTION_IF_NULL(return_node);
     auto depend2 = kg->NewCNode(
       {NewValueNode(prim::kPrimDepend), return_node->cast<CNodePtr>()->input(kFirstDataInputIndex), latter});
+    MS_EXCEPTION_IF_NULL(depend2);
     depend2->set_abstract(return_node->cast<CNodePtr>()->input(kFirstDataInputIndex)->abstract());
     kg->set_output(depend2);
     MS_LOG(DEBUG) << "former: " << former->DebugString() << ", latter: " << latter->DebugString()
@@ -394,6 +399,7 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
     // Ignore the output of front call node.
     if (output_with_index.first->isa<CNode>()) {
       auto cnode = output_with_index.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();
       if (inputs[0]->isa<CNode>()) {
         MS_LOG(INFO) << "The output is call node: " << output_with_index.first->DebugString();
@@ -1158,6 +1164,7 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableWorkspaceAddr(const AnfNodePtr &
 abstract::BaseShapePtr AnfRuntimeAlgorithm::GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   auto base_shape = node->Shape();
+  MS_EXCEPTION_IF_NULL(base_shape);
   if (base_shape->isa<abstract::Shape>()) {
     if (output_idx == 0) {
       return base_shape;
