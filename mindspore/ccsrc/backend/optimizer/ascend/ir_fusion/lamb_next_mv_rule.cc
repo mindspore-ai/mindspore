@@ -16,7 +16,6 @@
 
 #include "backend/optimizer/ascend/ir_fusion/lamb_next_mv_rule.h"
 #include <memory>
-#include <utility>
 #include <algorithm>
 #include "utils/utils.h"
 #include "backend/optimizer/common/helper.h"
