@@ -33,9 +33,9 @@ from mindspore.train.model import Model
 from mindspore.train.train_thor import ConvertModelUtils
 import mindspore.dataset.transforms.c_transforms as C
 
-from model_zoo.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepCell
-from model_zoo.official.nlp.bert.src.utils import get_bert_thor_lr, get_bert_thor_damping
-from model_zoo.official.nlp.bert.src.bert_model import BertConfig
+from tests.models.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepCell
+from tests.models.official.nlp.bert.src.utils import get_bert_thor_lr, get_bert_thor_damping
+from tests.models.official.nlp.bert.src.bert_model import BertConfig
 
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_table_8p.json"
 DATASET_PATH = "/home/workspace/mindspore_dataset/bert/thor/en-wiki-512_test_first1wan"

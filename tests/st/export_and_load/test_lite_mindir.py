@@ -23,7 +23,7 @@ import pytest
 from mindspore import Tensor
 from mindspore.train.serialization import export, load_checkpoint
 from mindspore import context
-from model_zoo.official.cv.mobilenetv2.src.mobilenetV2 import MobileNetV2Backbone, MobileNetV2Head, mobilenet_v2
+from tests.models.official.cv.mobilenetv2.src.mobilenetV2 import MobileNetV2Backbone, MobileNetV2Head, mobilenet_v2
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")

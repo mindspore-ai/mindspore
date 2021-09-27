@@ -22,7 +22,7 @@ from mindspore import Tensor
 from mindspore.nn import Dense
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
-from model_zoo.official.nlp.pangu_alpha.src.adam import AdamWeightDecayOp
+from tests.models.official.nlp.pangu_alpha.src.adam import AdamWeightDecayOp
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 

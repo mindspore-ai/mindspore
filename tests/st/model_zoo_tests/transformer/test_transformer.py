@@ -28,9 +28,9 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as deC
 from mindspore import context
 from easydict import EasyDict as edict
-from model_zoo.official.nlp.transformer.src.transformer_model import TransformerConfig
-from model_zoo.official.nlp.transformer.src.transformer_for_train import TransformerNetworkWithLoss, TransformerTrainOneStepWithLossScaleCell
-from model_zoo.official.nlp.transformer.src.lr_schedule import create_dynamic_lr
+from tests.models.official.nlp.transformer.src.transformer_model import TransformerConfig
+from tests.models.official.nlp.transformer.src.transformer_for_train import TransformerNetworkWithLoss, TransformerTrainOneStepWithLossScaleCell
+from tests.models.official.nlp.transformer.src.lr_schedule import create_dynamic_lr
 from tests.st.model_zoo_tests import utils
 
 
@@ -223,7 +223,7 @@ def test_transformer():
 @pytest.mark.env_onecard
 def test_transformer_export_mindir():
     cur_path = os.path.dirname(os.path.abspath(__file__))
-    model_path = "{}/../../../../model_zoo/official/nlp".format(cur_path)
+    model_path = "{}/../../../../tests/models/official/nlp".format(cur_path)
     model_name = "transformer"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)

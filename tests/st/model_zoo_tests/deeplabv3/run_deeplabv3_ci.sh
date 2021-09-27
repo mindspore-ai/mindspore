@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "for example: bash run_deeplabv3_ci.sh DEVICE_ID DATA_PATH PRETRAINED_CKPT_PATH"
 echo "=============================================================================================================="
 DEVICE_ID=$1
@@ -23,10 +23,10 @@ PATH_CHECKPOINT=$3
 BASE_PATH=$(cd "$(dirname $0)"; pwd)
 unset SLOG_PRINT_TO_STDOUT
 CODE_DIR="./"
-if [ -d ${BASE_PATH}/../../../../model_zoo/deeplabv3 ]; then
-    CODE_DIR=${BASE_PATH}/../../../../model_zoo/deeplabv3
-elif [ -d ${BASE_PATH}/../../model_zoo/deeplabv3 ]; then
-    CODE_DIR=${BASE_PATH}/../../model_zoo/deeplabv3
+if [ -d ${BASE_PATH}/../../../../tests/models/deeplabv3 ]; then
+    CODE_DIR=${BASE_PATH}/../../../../tests/models/deeplabv3
+elif [ -d ${BASE_PATH}/../../tests/models/deeplabv3 ]; then
+    CODE_DIR=${BASE_PATH}/../../tests/models/deeplabv3
 else
      echo "[ERROR] code dir is not found"
 fi

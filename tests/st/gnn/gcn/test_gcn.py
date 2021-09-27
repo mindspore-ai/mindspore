@@ -18,10 +18,10 @@ import pytest
 import numpy as np
 from mindspore import context
 from mindspore import Tensor
-from model_zoo.official.gnn.gcn.src.gcn import GCN
-from model_zoo.official.gnn.gcn.src.metrics import LossAccuracyWrapper, TrainNetWrapper
-from model_zoo.official.gnn.gcn.src.config import ConfigGCN
-from model_zoo.official.gnn.gcn.src.dataset import get_adj_features_labels, get_mask
+from tests.models.official.gnn.gcn.src.gcn import GCN
+from tests.models.official.gnn.gcn.src.metrics import LossAccuracyWrapper, TrainNetWrapper
+from tests.models.official.gnn.gcn.src.config import ConfigGCN
+from tests.models.official.gnn.gcn.src.dataset import get_adj_features_labels, get_mask
 
 
 DATA_DIR = '/home/workspace/mindspore_dataset/cora/cora_mr/cora_mr'
