@@ -47,7 +47,6 @@ __global__ void CopyMemKernel(const size_t thread_num, const size_t N, const siz
         ws_var[cur_local_index] = runnig_variance_addr[local_index];
     }
   }
-  return;
 }
 
 void CopyMemDevice2Device(const size_t N, const size_t C, float *gamma_addr, float *beta_addr,
@@ -78,7 +77,6 @@ __global__ void ComputeMeanKernel(const size_t thread_num, const size_t N, const
       dbeta[cur_local_index] = tmp;
     }
   }
-  return;
 }
 
 void ComputeMean(const size_t N, const size_t C,

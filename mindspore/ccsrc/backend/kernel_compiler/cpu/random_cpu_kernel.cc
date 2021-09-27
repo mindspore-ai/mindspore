@@ -118,8 +118,10 @@ void RandomCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     random_op_type_ = iter->second;
   }
 
-  seed_ = LongToInt(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed")));
-  seed2_ = LongToInt(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2")));
+  auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  seed_ = LongToInt(GetValue<int64_t>(prim->GetAttr("seed")));
+  seed2_ = LongToInt(GetValue<int64_t>(prim->GetAttr("seed2")));
 }
 
 bool RandomCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,

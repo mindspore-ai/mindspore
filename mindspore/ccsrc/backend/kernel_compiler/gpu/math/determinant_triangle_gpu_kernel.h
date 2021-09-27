@@ -96,8 +96,9 @@ class DetTriangleGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "The matrix should be in shape of square.";
       return false;
     }
-    MS_EXCEPTION_IF_NULL(AnfAlgo::GetCNodePrimitive(kernel_node));
-    fill_mode_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("fill_mode")));
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    fill_mode_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("fill_mode")));
     InitSizeLists();
     return true;
   }

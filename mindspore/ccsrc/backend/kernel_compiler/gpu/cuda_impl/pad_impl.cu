@@ -35,7 +35,6 @@ __global__ void Pad(const size_t size, const T* input, const int num, const int 
       output[pos] = input[(block_num * old_height + padded_h - pad_top) * old_width + padded_w - pad_left];
     }
   }
-  return;
 }
 
 // For internal OP use, not user facing
@@ -56,7 +55,6 @@ __global__ void PadNHWC(const size_t size, const T* input, const int num, const 
                             *channels + pos % channels];
     }
   }
-  return;
 }
 
 template <typename T>
@@ -74,8 +72,6 @@ __global__ void PadGeneral(const T *input, T *output, const size_t *input_shape,
     }
     output[padded_linear_index] = input[gt_id];
   }
-
-  return;
 }
 
 template <typename T>
@@ -88,7 +84,6 @@ __global__ void PadGradNHWC(const size_t size, const T* dy, const int num, const
     const int padded_h = pos / channels / old_width % old_height + pad_top;
     dx[pos] = dy[((block_num * padded_height + padded_h) * padded_width + padded_w)*channels+pos%channels];
   }
-  return;
 }
 
 template <typename T>
@@ -101,7 +96,6 @@ __global__ void PadGrad(const size_t size, const T* dy, const int num, const int
     const int padded_h = pos / old_width % old_height + pad_top;
     dx[pos] = dy[(block_num * padded_height + padded_h) * padded_width + padded_w];
   }
-  return;
 }
 
 // For internal OP use, not user facing
@@ -126,7 +120,6 @@ __global__ void Pad3d(const size_t size, const T* input, const int num, const in
       output[pos] = input[index];
     }
   }
-  return;
 }
 
 template <typename T>
@@ -143,7 +136,6 @@ __global__ void PadGrad3d(const size_t size, const T* dy, const int num, const i
     const int index = block_num * padded_dhw + pos_d * padded_hw + pos_h * padded_width + pos_w;
     dx[pos] = dy[index];
   }
-  return;
 }
 
 // For internal OP use, not user facing
@@ -169,7 +161,6 @@ __global__ void PadNDHWC(const size_t size, const T *input, const int num, const
               pos % channels];
     }
   }
-  return;
 }
 
 template <typename T>
@@ -185,7 +176,6 @@ __global__ void PadGradNDHWC(const size_t size, const T *dy, const int num, cons
       dy[(((block_num * padded_depth + padded_d) * padded_height + padded_h) * padded_width + padded_w) * channels +
          pos % channels];
   }
-  return;
 }
 
 template <typename T>
@@ -195,7 +185,6 @@ void CalPad(const size_t size, const T* input, const int num, const int channels
   Pad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, num, channels, old_height, old_width,
                                                          padded_height, padded_width, pad_top, pad_left, pad_value,
                                                          output);
-  return;
 }
 
 template <typename T>
@@ -204,7 +193,6 @@ void CalPadNHWC(const size_t size, const T* input, const int num, const int old_
                 const int pad_left, const float pad_value, T* output, cudaStream_t cuda_stream) {
   PadNHWC<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, num, old_height, old_width, channels,
       padded_height, padded_width, pad_top, pad_left, pad_value, output);
-  return;
 }
 
 template <typename T>
@@ -212,7 +200,6 @@ void CalPadGeneral(const T *input, T *output, const size_t *input_shape, const s
                    const int *paddings, const int input_size, const size_t input_rank, cudaStream_t cuda_stream) {
   PadGeneral<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(input, output, input_shape, strides, paddings,
                                                                       input_size, input_rank);
-  return;
 }
 
 template <typename T>
@@ -221,7 +208,6 @@ void CalPadGradNHWC(const size_t size, const T* dy, const int num, const int old
                 const int pad_left, T* dx, cudaStream_t cuda_stream) {
   PadGradNHWC<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy, num, old_height, old_width, channels,
       padded_height, padded_width, pad_top, pad_left, dx);
-  return;
 }
 
 template <typename T>
@@ -230,7 +216,6 @@ void CalPadGrad(const size_t size, const T* dy, const int num, const int channel
                 const int pad_left, T* dx, cudaStream_t cuda_stream) {
   PadGrad<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy, num, channels, old_height, old_width,
                                                              padded_height, padded_width, pad_top, pad_left, dx);
-  return;
 }
 
 template <typename T>
@@ -246,7 +231,6 @@ void CalPad3d(const size_t size, const T* input, const int num, const int channe
                                                            old_width, old_dhw, old_hw, padded_depth, padded_height,
                                                            padded_width, padded_dhw, padded_hw, pad_head, pad_top,
                                                            pad_left, pad_value, output);
-  return;
 }
 
 template <typename T>
@@ -262,7 +246,6 @@ void CalPadGrad3d(const size_t size, const T* dy, const int num, const int chann
                                                                old_width, old_dhw, old_hw, padded_depth, padded_height,
                                                                padded_width, padded_dhw, padded_hw, pad_head, pad_top,
                                                                pad_left, dx);
-  return;
 }
 
 template <typename T>
@@ -273,7 +256,6 @@ void CalPadNDHWC(const size_t size, const T *input, const int num, const int old
   PadNDHWC<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, num, old_depth, old_height, old_width,
                                                               channels, padded_depth, padded_height, padded_width,
                                                               pad_head, pad_top, pad_left, pad_value, output);
-  return;
 }
 
 template <typename T>
@@ -284,7 +266,6 @@ void CalPadGradNDHWC(const size_t size, const T *dy, const int num, const int ol
   PadGradNDHWC<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy, num, old_depth, old_height, old_width,
                                                                   channels, padded_depth, padded_height, padded_width,
                                                                   pad_head, pad_top, pad_left, dx);
-  return;
 }
 
 template void CalPad<float>(const size_t size, const float* input, const int num, const int channels,

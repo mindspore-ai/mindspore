@@ -130,7 +130,6 @@ class LayerNormGradGradGpuKernel : public GpuKernel {
 
     workspace_size_list_.push_back(input_size_);
     workspace_size_list_.push_back(input_size_);
-    return;
   }
 
  private:

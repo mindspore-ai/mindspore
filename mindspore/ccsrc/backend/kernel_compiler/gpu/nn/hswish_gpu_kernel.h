@@ -54,7 +54,7 @@ class HSwishKernel : public GpuKernel {
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but HSwish has 1 output.";
+      MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but HSwish needs 1 output.";
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);

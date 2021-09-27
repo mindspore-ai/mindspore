@@ -119,7 +119,9 @@ class BatchNormFold2GradGpuKernel : public GpuKernel {
     channel_ = input_shape[1];
     height_ = input_shape[2];
     width_ = input_shape[3];
-    freeze_bn_ = GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("freeze_bn"));
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    freeze_bn_ = GetValue<int64_t>(prim->GetAttr("freeze_bn"));
 
     InitSizeLists();
     return true;

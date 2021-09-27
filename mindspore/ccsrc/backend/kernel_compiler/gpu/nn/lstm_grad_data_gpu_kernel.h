@@ -65,7 +65,6 @@ class LstmGradDataGpuKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
-    VARIABLE_NOT_USED(stream_ptr);
     auto y_addr = GetDeviceAddress<T>(inputs, 0);
     auto dy_addr = GetDeviceAddress<T>(inputs, 1);
     auto dhy_addr = GetDeviceAddress<T>(inputs, 2);

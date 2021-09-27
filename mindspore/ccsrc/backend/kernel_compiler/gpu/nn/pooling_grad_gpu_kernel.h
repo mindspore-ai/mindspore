@@ -207,7 +207,6 @@ class PoolingGradGpuKernel : public GpuKernel {
                                   "cudnnGetTensorSizeInBytes failed");
     }
     input_size_list_.push_back(input_size_);
-    return;
   }
 
  private:

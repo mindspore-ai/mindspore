@@ -51,14 +51,12 @@ __global__ void Transpose(const size_t size, const T *input, const size_t *input
 
     output[newpos] = input[pos];
   }
-  return;
 }
 template <typename T>
 void CalTranspose(const size_t size, const T *input, const size_t *input_shape, const size_t *input_axis,
                   const size_t shape_size, T *output, cudaStream_t cuda_stream) {
   Transpose<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, input_shape, input_axis, shape_size,
                                                                output);
-  return;
 }
 
 template void CalTranspose<double>(const size_t size, const double *input, const size_t *input_shape,

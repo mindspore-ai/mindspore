@@ -159,9 +159,10 @@ class RandomOpGpuKernel : public GpuKernel {
       output_size_ *= output_shape[i];
       workspace_size_ *= output_shape[i];
     }
-    MS_EXCEPTION_IF_NULL(AnfAlgo::GetCNodePrimitive(kernel_node));
-    seed_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed")));
-    seed2_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2")));
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    seed_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed")));
+    seed2_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed2")));
     InitSizeLists();
     return true;
   }

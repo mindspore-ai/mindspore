@@ -28,7 +28,6 @@ __global__ void CalReLUKernel(int size, T *input_addr, T *output_addr) {
 template <typename T>
 void CalReLU(int size, T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
   CalReLUKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
-  return;
 }
 
 template void CalReLU(int size, double *input_addr, double *output_addr, cudaStream_t cuda_stream);

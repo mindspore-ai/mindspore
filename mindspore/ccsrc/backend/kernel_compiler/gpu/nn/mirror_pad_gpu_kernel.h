@@ -66,7 +66,9 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but Pad needs 1 output.";
       return false;
     }
-    string mode = GetValue<string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("mode"));
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    string mode = GetValue<string>(prim->GetAttr("mode"));
     if (mode == "REFLECT") {
       mode_ = 0;  // reflected mirroring
     } else {
@@ -86,10 +88,10 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
     if (input_shape.size() == 4) {
     } else if (input_shape.size() == 3) {
       auto it = input_shape.begin();
-      input_shape.insert(it, 1);  // batch padding
+      (void)input_shape.insert(it, 1);  // batch padding
     } else if (input_shape.size() == 2) {
       auto it = input_shape.begin();
-      input_shape.insert(it, 2, 1);  // channel padding
+      (void)input_shape.insert(it, 2, 1);  // channel padding
     }
     if (input_shape.size() < 4) {
       MS_LOG(EXCEPTION) << "For 'MirrorPadGpuKernel', the rank of input should be greater than or equal to 4, "

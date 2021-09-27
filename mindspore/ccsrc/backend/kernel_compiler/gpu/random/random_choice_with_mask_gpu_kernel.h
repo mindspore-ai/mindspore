@@ -104,7 +104,7 @@ class RandomChoiceWithMaskGpuKernel : public GpuKernel {
     }
     // convert shape to 5D
     while (input_shape_5D_.size() != MAX_DIMENSION) {
-      input_shape_5D_.insert(input_shape_5D_.begin(), 1);
+      (void)input_shape_5D_.insert(input_shape_5D_.begin(), 1);
     }
     // init seedc
     seed_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "seed"));

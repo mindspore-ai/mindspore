@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,11 @@ __global__ void L2LossKernel(const size_t input_size, const T *input , T *output
       ret /= static_cast<T>(2);
       MsAtomicAdd(output, ret);
   }
-  return;
 }
 
 template <typename T>
 __global__ void ClearOutputMem(T *output) {
     output[0] = static_cast<T>(0);
-    return;
 }
 
 template <typename T>

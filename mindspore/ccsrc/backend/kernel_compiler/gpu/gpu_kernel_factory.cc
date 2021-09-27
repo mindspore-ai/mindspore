@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ GpuKernelFactory &GpuKernelFactory::GetInstance() {
 }
 
 void GpuKernelFactory::Register(const std::string &kernel_name, const KernelAttr &kernel_attr,
-                                GpuKernelCreater &&creater) {
-  map_kernel_name_to_creater_[kernel_name].emplace_back(kernel_attr, creater);
+                                GpuKernelCreater &&creator) {
+  map_kernel_name_to_creater_[kernel_name].emplace_back(kernel_attr, creator);
 }
 
 bool GpuKernelFactory::CheckIOParam(const std::string &kernel_name, const KernelBuildInfo *kernel_info,
@@ -77,7 +77,9 @@ std::string GpuKernelFactory::SupportedTypeList(const std::string &kernel_name) 
 
 bool GpuKernelFactory::ReducePrecision(
   const std::string &kernel_name, std::shared_ptr<mindspore::kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder) {
+  MS_EXCEPTION_IF_NULL(builder);
   auto kernel_info = builder->Build();
+  MS_EXCEPTION_IF_NULL(kernel_info);
   auto iter = map_kernel_name_to_creater_.find(kernel_name);
   if (map_kernel_name_to_creater_.end() == iter) {
     MS_LOG(INFO) << "Not registered GPU kernel: op[" << kernel_name << "]!";
@@ -160,7 +162,7 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
       }
     }
     // finish data type matching check and return a pair maintain the whether matching is success,
-    // if first is true, second is index of matching KernelAttr and creater pair in vector;
+    // if first is true, second is index of matching KernelAttr and creator pair in vector;
     if (flag) {
       size_t match_index = attr_index;
       return std::make_pair(true, match_index);
