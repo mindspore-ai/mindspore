@@ -306,7 +306,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));
-  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 4464178465553346953U);
+  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 4295704009218326208U);
 }
 
 TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
@@ -365,7 +365,7 @@ TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));
-  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 2100526894749019474U);
+  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 3224628976775251376U);
 }
 
 }  // namespace mindspore::kernel
