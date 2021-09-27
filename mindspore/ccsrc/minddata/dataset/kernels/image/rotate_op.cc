@@ -31,11 +31,20 @@ const uint8_t RotateOp::kDefFillR = 0;
 const uint8_t RotateOp::kDefFillG = 0;
 const uint8_t RotateOp::kDefFillB = 0;
 
-RotateOp::RotateOp(int angle_id) : angle_id_(angle_id) {}
+RotateOp::RotateOp(int angle_id)
+    : angle_id_(angle_id),
+      degrees_(0),
+      center_({}),
+      interpolation_(InterpolationMode::kLinear),
+      expand_(false),
+      fill_r_(0),
+      fill_g_(0),
+      fill_b_(0) {}
 
 RotateOp::RotateOp(float degrees, InterpolationMode resample, bool expand, std::vector<float> center, uint8_t fill_r,
                    uint8_t fill_g, uint8_t fill_b)
-    : degrees_(degrees),
+    : angle_id_(0),
+      degrees_(degrees),
       center_(center),
       interpolation_(resample),
       expand_(expand),

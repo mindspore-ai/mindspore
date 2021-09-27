@@ -50,6 +50,7 @@ VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std:
              std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, bool extra_metadata)
     : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
       decode_(decode),
+      row_cnt_(0),
       task_type_(task_type),
       usage_(task_mode),
       folder_path_(folder_path),

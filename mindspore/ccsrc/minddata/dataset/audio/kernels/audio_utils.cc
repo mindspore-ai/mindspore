@@ -480,6 +480,7 @@ Status Decoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
   while (itr != end) {
     auto x_mu = *itr;
+    CHECK_FAIL_RETURN_SYNTAX_ERROR(mu != 0, "mu can not be zero.");
     x_mu = ((x_mu) / mu) * 2 - 1.0;
     x_mu = sgn(x_mu) * expm1(fabs(x_mu) * log1p(mu)) / mu;
     *itr_out = x_mu;
