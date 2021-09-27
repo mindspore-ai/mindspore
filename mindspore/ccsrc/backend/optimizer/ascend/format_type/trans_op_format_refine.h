@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_TRANS_OP_FORMAT_REFINE_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_TRANS_OP_FORMAT_REFINE_H_
 
-#include <string>
 #include "backend/optimizer/common/optimizer.h"
 namespace mindspore {
 namespace opt {

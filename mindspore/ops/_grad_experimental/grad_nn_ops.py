@@ -20,6 +20,7 @@ from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 
+
 @bprop_getters.register(P.CTCLossV2)
 def get_bprop_ctc_loss_v2(self):
     """Grad definition for `CTCLossV2` operation"""
