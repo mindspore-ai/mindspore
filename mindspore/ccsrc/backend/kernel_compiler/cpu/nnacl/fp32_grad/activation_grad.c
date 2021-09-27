@@ -25,7 +25,7 @@ int ReluGrad(const float *src0, const float *src1, size_t length, float *dst) {
   int i = 0;
 #ifdef ENABLE_ARM
   float32x4_t zero_4 = vdupq_n_f32(0.0f);
-  for (; i < length - 4; i += 4) {
+  for (; i < (int)length - 4; i += 4) {
     float32x4_t src1_4 = vld1q_f32(src1 + i);
     float32x4_t src0_4 = vld1q_f32(src0 + i);
     uint32x4_t mask_4 = vcgtq_f32(src1_4, zero_4);
@@ -44,7 +44,7 @@ int Relu6Grad(const float *src0, const float *src1, size_t length, float *dst) {
 #ifdef ENABLE_ARM
   float32x4_t zero_4 = vdupq_n_f32(0.0f);
   float32x4_t six_4 = vdupq_n_f32(6.0f);
-  for (; i < length - 4; i += 4) {
+  for (; i < (int)length - 4; i += 4) {
     float32x4_t src1_4 = vld1q_f32(src1 + i);
     float32x4_t src0_4 = vld1q_f32(src0 + i);
     float32x4_t max_4 = vmaxq_f32(src1_4, zero_4);
