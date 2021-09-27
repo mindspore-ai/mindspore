@@ -49,8 +49,7 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
       (segment_ids_shape.end() != find(segment_ids_shape.begin(), segment_ids_shape.end(), -1))) {
     size_t size = segment_ids_shape.size();
     for (size_t i = 0; i < size; ++i) {
-      CheckAndConvertUtils::Check("segment_ids_shp", SizeToLong(segment_ids_shape[i]), kEqual, "x_shape",
-                                  SizeToLong(x_shape[i]), prim_name);
+      CheckAndConvertUtils::Check("segment_ids_shp", segment_ids_shape[i], kEqual, "x_shape", x_shape[i], prim_name);
     }
   }
 

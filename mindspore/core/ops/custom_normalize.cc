@@ -37,7 +37,7 @@ abstract::ShapePtr CustomNormalizeInferShape(const std::vector<AbstractBasePtr> 
   return std::make_shared<abstract::Shape>(infer_shape);
 }
 
-TypePtr CustomNormalizeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr CustomNormalizeInferType(const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = input_args[0]->BuildType();
   auto tensor_type = infer_type->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
@@ -52,7 +52,7 @@ AbstractBasePtr CustomNormalizeInfer(const abstract::AnalysisEnginePtr &, const 
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(CustomNormalizeInferType(primitive, input_args),
+  return std::make_shared<abstract::AbstractTensor>(CustomNormalizeInferType(input_args),
                                                     CustomNormalizeInferShape(input_args));
 }
 REGISTER_PRIMITIVE_C(kNameCustomNormalize, CustomNormalize);
