@@ -29,11 +29,11 @@ size_t AscendLaunchAtomicClean::AlignSizeForLaunchKernel(size_t size) {
 
 uint8_t *AscendLaunchAtomicClean::AllocDeviceMem(size_t size) { return AscendLaunchKernel::AllocDeviceMem(size); }
 
-void AscendLaunchAtomicClean::KernelSelect(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void AscendLaunchAtomicClean::KernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   AscendLaunchKernel::KernelSelect(kernel_graph);
 }
 
-void AscendLaunchAtomicClean::KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void AscendLaunchAtomicClean::KernelBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   AscendLaunchKernel::KernelBuild(kernel_graph);
 }
 
@@ -100,10 +100,11 @@ void AscendLaunchAtomicClean::ConstructKernelGraphAndSetAttr() {
     auto clean_node = atomic_clean_graph_->execution_order()[0];
     // set abstract
     AbstractBasePtr abstract = std::make_shared<abstract::AbstractNone>();
-    MS_EXCEPTION_IF_NULL(abstract);
+    MS_EXCEPTION_IF_NULL(clean_node);
     clean_node->set_abstract(abstract);
     // set build info
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    MS_EXCEPTION_IF_NULL(builder);
     builder->SetKernelType(KernelType::TBE_KERNEL);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), clean_node.get());
     // set attr

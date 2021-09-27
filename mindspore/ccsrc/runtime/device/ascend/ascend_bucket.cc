@@ -44,6 +44,7 @@ void AscendBucket::AllocateAllReduceAddr() {
     MS_EXCEPTION_IF_NULL(tensor);
     tensor_type_list_.emplace_back(tensor->data_type());
     DeviceAddressPtr device_address = std::dynamic_pointer_cast<DeviceAddress>(tensor->device_address());
+    MS_EXCEPTION_IF_NULL(device_address);
     auto origin_size = device_address->GetSize();
     auto align_size = MemoryManager::GetCommonAlignSize(origin_size);
     origin_size_list.emplace_back(origin_size);
