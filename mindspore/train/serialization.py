@@ -647,6 +647,8 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
     else:
         logger.info("need to create allgather net for %s", param_name)
         if integrated_save:
+            if context.get_auto_parallel_context("pipeline_stages") > 1:
+                raise RuntimeError("Pipeline Parallel don't support Integrated save checkpoint now.")
             if uniform_split == 0:
                 raise RuntimeError("Integrated save checkpoint only support uniform split tensor now.")
             # while any dim is not equal to -1, means param is split and needs to be merged
@@ -1169,7 +1171,9 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
 
 def build_searched_strategy(strategy_filename):
     """
-    Build strategy of every parameter in network.
+    Build strategy of every parameter in network. Used in the case of distributed inference.
+    For details of merge_sliced_parameter, please check:
+    `Enabling Graph-Accounting Convergence <https://www.mindspore.cn/docs/programming_guide/en/master/save_load_model_hybrid_parallel.html>`_.
 
     Args:
         strategy_filename (str): Name of strategy file.
@@ -1180,6 +1184,9 @@ def build_searched_strategy(strategy_filename):
     Raises:
         ValueError: Strategy file is incorrect.
         TypeError: strategy_filename is not str.
+
+    Examples:
+        >>> strategy = build_searched_strategy("./strategy_train.ckpt")
     """
     if not isinstance(strategy_filename, str):
         raise TypeError(f"The strategy_filename should be str, but got {type(strategy_filename)}.")
@@ -1211,7 +1218,9 @@ def build_searched_strategy(strategy_filename):
 
 def merge_sliced_parameter(sliced_parameters, strategy=None):
     """
-    Merge parameter slices to one whole parameter.
+    Merge parameter slices into one parameter. Used in the case of distributed inference.
+    For details of merge_sliced_parameter, please check:
+    `Enabling Graph-Accounting Convergence <https://www.mindspore.cn/docs/programming_guide/en/master/save_load_model_hybrid_parallel.html>`_.
 
     Args:
         sliced_parameters (list[Parameter]): Parameter slices in order of rank_id.
@@ -1296,7 +1305,9 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=None,
                                 train_strategy_filename=None, strict_load=False, dec_key=None, dec_mode='AES-GCM'):
     """
-    Load checkpoint into net for distributed predication.
+    Load checkpoint into net for distributed predication. Used in the case of distributed inference.
+    For details of distributed inference, please check:
+    `Enabling Graph-Accounting Convergence <https://www.mindspore.cn/docs/programming_guide/en/master/distributed_inference.html>`_.
 
     Args:
         network (Cell): Network for distributed predication.
