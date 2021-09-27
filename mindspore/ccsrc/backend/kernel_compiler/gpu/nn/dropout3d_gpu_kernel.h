@@ -101,6 +101,7 @@ class Dropout3DGpuFwdKernel : public GpuKernel {
     }
 
     num_chan_ = n_ * c_;
+    MS_EXCEPTION_IF_ZERO("num channel", num_chan_);
     num_per_chan_ = num_count_ / num_chan_;  // number of elements per channel
 
     keep_prob_ = GetAttr<float>(kernel_node, "keep_prob");

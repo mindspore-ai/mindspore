@@ -77,7 +77,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
     const float beta = 0;
 
     if (use_pad_) {
-      T *padded = GetPossiblyNullDeviceAddress<T>(workspace, 1);
+      T *padded = GetDeviceAddress<T>(workspace, 1);
       if (data_format_ == kOpFormat_NHWC) {
         CalPadNHWC(padded_size_ / sizeof(T), x, n_, old_height_, old_width_, c_, old_height_ + pad_height_,
                    old_width_ + pad_width_, pad_top_, pad_left_, pad_value_, padded,

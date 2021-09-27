@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2021 Huawei Technologies Co., Ltd
  *
@@ -37,6 +36,9 @@ class DepthToSpaceFwdKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     // get device buffer ptr
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
@@ -71,6 +73,12 @@ class DepthToSpaceFwdKernel : public GpuKernel {
     }
     // check input_shape
     auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'DepthToSpaceGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     shape_size_ = input_shape.size();
     if (shape_size_ != DEPTHTOSPACE_BUFFER_DIMENSION) {
       MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but DepthToSpace supports 4-D tensor.";
@@ -111,6 +119,7 @@ class DepthToSpaceFwdKernel : public GpuKernel {
     oc_ = 0;
     oh_ = 0;
     ow_ = 0;
+    is_null_input_ = false;
 
     input_size_list_.clear();
     output_size_list_.clear();
@@ -140,6 +149,7 @@ class DepthToSpaceFwdKernel : public GpuKernel {
   size_t oc_;
   size_t oh_;
   size_t ow_;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

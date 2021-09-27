@@ -61,7 +61,7 @@ class Conv3dGradFilterGpuKernel : public GpuKernel {
     const float alpha = 1;
     const float beta = 0;
     if (use_pad_) {
-      T *padded = GetPossiblyNullDeviceAddress<T>(workspace, 1);
+      T *padded = GetDeviceAddress<T>(workspace, 1);
       CalPad3d(padded_size_ / sizeof(T), x, n_, c_, old_depth_, old_height_, old_width_, old_depth_ + pad_depth_,
                old_height_ + pad_height_, old_width_ + pad_width_, pad_head_, pad_top_, pad_left_, pad_value_, padded,
                reinterpret_cast<cudaStream_t>(stream_ptr));

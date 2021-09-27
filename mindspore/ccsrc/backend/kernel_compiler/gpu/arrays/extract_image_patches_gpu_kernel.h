@@ -40,6 +40,9 @@ class ExtractImagePatchesKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
     T *t_input = GetDeviceAddress<T>(workspace, 0);
@@ -92,15 +95,27 @@ class ExtractImagePatchesKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ExtractImagePatches has 1 output.";
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ExtractImagePatchesGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     input_size_ = 1;
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
       input_shape_.push_back(input_shape[i]);
     }
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+
     output_size_ = 1;
     for (size_t i = 0; i < output_shape.size(); i++) {
       output_size_ *= output_shape[i];
+    }
+    if (input_shape.size() != 4 || output_shape.size() != 4) {
+      MS_LOG(EXCEPTION) << "For 'ExtractImagePatchesGpuKernel', the rank of input and output should be 4, "
+                        << "but got the rank of input: " << input_shape.size()
+                        << ", the rank of output: " << output_shape.size();
     }
     // transposed NHWC shape
     t_output_shape_ = {output_shape[0], output_shape[2], output_shape[3], output_shape[1]};
@@ -109,6 +124,11 @@ class ExtractImagePatchesKernel : public GpuKernel {
     auto ksizes = GetAttr<std::vector<int64_t>>(kernel_node, "ksizes");
     auto strides = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
     auto rates = GetAttr<std::vector<int64_t>>(kernel_node, "rates");
+    if (ksizes.size() != 4 || strides.size() != 4 || rates.size() != 4) {
+      MS_LOG(EXCEPTION) << "For 'ExtractImagePatchesGpuKernel', the rank of ksizes, strides and rates should be 4, "
+                        << "but got the rank of ksizes: " << ksizes.size()
+                        << ", the rank of strides: " << strides.size() << ", the rank of rates: " << rates.size();
+    }
 
     ksize_row_ = ksizes[2];
     ksize_col_ = ksizes[3];
@@ -126,6 +146,9 @@ class ExtractImagePatchesKernel : public GpuKernel {
 
     int64_t patch_rows_eff = ksize_row_ + (ksize_row_ - 1) * (rate_row_ - 1);
     int64_t patch_cols_eff = ksize_col_ + (ksize_col_ - 1) * (rate_col_ - 1);
+
+    MS_EXCEPTION_IF_ZERO("stride row", stride_row_);
+    MS_EXCEPTION_IF_ZERO("stride col", stride_col_);
 
     if (padding == "VALID") {
       output_rows_ = std::ceil((input_row_size_ - patch_rows_eff + 1.f) / static_cast<float>(stride_row_));
@@ -148,6 +171,7 @@ class ExtractImagePatchesKernel : public GpuKernel {
     row_input_stride_ = input_depth * input_col_size_;
     patch_input_stride_ = input_depth * input_col_size_ * input_row_size_;
     output_depth_ = input_depth;
+    MS_EXCEPTION_IF_ZERO("other stride", other_stride_);
     need_batch_ = (output_size_ - 1) / other_stride_;
 
     InitSizeLists();
@@ -177,6 +201,7 @@ class ExtractImagePatchesKernel : public GpuKernel {
     row_input_stride_ = 1;
     patch_input_stride_ = 1;
     output_depth_ = 1;
+    is_null_input_ = false;
     input_shape_.clear();
     t_output_shape_.clear();
     input_size_list_.clear();
@@ -208,6 +233,7 @@ class ExtractImagePatchesKernel : public GpuKernel {
   int64_t output_rows_;
   int64_t output_cols_;
   bool need_batch_;
+  bool is_null_input_;
   int64_t row_stride_;
   int64_t patch_stride_;
   int64_t other_stride_;

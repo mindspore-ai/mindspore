@@ -36,6 +36,9 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *dy = GetDeviceAddress<T>(inputs, 0);
     float *interim = GetDeviceAddress<float>(workspace, 0);
     T *dx = GetDeviceAddress<T>(outputs, 0);
@@ -67,12 +70,22 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
     std::vector<size_t> dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     std::vector<size_t> dx_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(dy_shape) || CHECK_NULL_INPUT(x_shape) || CHECK_NULL_INPUT(dx_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ResizeBilinearGradGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     if (dy_shape.size() != 4) {
       MS_LOG(ERROR) << "Input is " << dy_shape.size() << "-D, but ResizeBilinearGrad supports only 4-D inputs.";
       return false;
     }
     if (x_shape.size() != 4) {
       MS_LOG(ERROR) << "Input is " << x_shape.size() << "-D, but ResizeBilinearGrad supports only 4-D inputs.";
+      return false;
+    }
+    if (dx_shape.size() != 4) {
+      MS_LOG(ERROR) << "For 'ResizeBilinearGradGpuKernel', the rank of output must be 4, but got " << dx_shape.size();
       return false;
     }
     n_ = SizeToInt(dy_shape[0]);
@@ -97,6 +110,7 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
 
   void ResetResource() noexcept override {
     align_corners_ = false;
+    is_null_input_ = false;
     n_ = 0;
     c_ = 0;
     dy_h_ = 0;
@@ -125,6 +139,7 @@ class ResizeBilinearGradGpuKernel : public GpuKernel {
   }
 
   bool align_corners_;
+  bool is_null_input_;
   int n_;
   int c_;
   int dy_h_;

@@ -140,6 +140,9 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
     }
     bool flag = true;
     auto attr_size = (&(iter->second))->at(attr_index).first.GetInputSize();
+    if (kernel_info->GetInputNum() > 0) {
+      MS_EXCEPTION_IF_ZERO("attr size", attr_size);
+    }
     // data type matching check of all input parameters of kernel
     for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
       GpuKernelFactory::CheckSM(kernel_info, input_index);
@@ -153,6 +156,9 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
       continue;
     }
     attr_size = (&(iter->second))->at(attr_index).first.GetOutputSize();
+    if (kernel_info->GetOutputNum() > 0) {
+      MS_EXCEPTION_IF_ZERO("attr size", attr_size);
+    }
     // data type matching check of all output parameters of kernel
     for (size_t output_index = 0; output_index < kernel_info->GetOutputNum(); output_index++) {
       if (kernel_info->GetOutputDeviceType(output_index) !=
