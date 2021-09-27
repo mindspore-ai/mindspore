@@ -1530,7 +1530,7 @@ class AdjustGamma(py_transforms.PyTensorOperation):
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
-        ...                            py_vision.AdjustGamma(),
+        ...                            py_vision.AdjustGamma(gamma=10.0),
         ...                            py_vision.ToTensor()])
         >>> # apply the transform to dataset through map function
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
