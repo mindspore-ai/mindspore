@@ -25,6 +25,13 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kSizeFloat32 = sizeof(float);
+constexpr size_t kScalarIndex = 0;
+constexpr size_t kAdamWeightDecayInputsNum = 9;
+constexpr size_t kAdamWeightDecayOutputsNum = 3;
+}  // namespace
+
 template <typename T>
 void AdamWeightDecayCPUKernel::LaunchAdamWeightDecay(const std::vector<AddressPtr> &inputs,
                                                      const std::vector<AddressPtr> &) {
@@ -83,26 +90,15 @@ void AdamWeightDecayCPUKernel::LaunchAdamWeightDecayNnacl(const std::vector<Addr
 
 void AdamWeightDecayCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (input_num != kAdamWeightDecayInputNum) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but AdamWeightDecay needs 9 inputs.";
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != kAdamWeightDecayOutputNum) {
-    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but AdamWeightDecay needs 3 outputs.";
-  }
 }
 
 bool AdamWeightDecayCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                       const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != kAdamWeightDecayInputNum) {
-    MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but AdamWeightDecay needs 9 inputs.";
-  }
-  if (outputs.size() != kAdamWeightDecayOutputNum) {
-    MS_LOG(EXCEPTION) << "Output number is " << outputs.size() << ", but AdamWeightDecay needs 3 outputs.";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAdamWeightDecayInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
   if (inputs[VAR]->size != inputs[M]->size || inputs[VAR]->size != inputs[V]->size ||
       inputs[VAR]->size != inputs[GRAD]->size) {
     MS_LOG(EXCEPTION) << "Var, m, v, grad input data size must be same!";

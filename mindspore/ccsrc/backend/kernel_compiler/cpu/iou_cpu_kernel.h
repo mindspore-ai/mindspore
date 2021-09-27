@@ -17,16 +17,12 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_IOU_CPU_KERNEL_H_
 
 #include <vector>
-#include <memory>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUMS = 2;
-constexpr size_t OUTPUT_NUMS = 1;
-constexpr size_t BOX_COORDINATE_LEN = 4;
-
 template <typename T>
 class IOUCPUKernel : public CPUKernel {
  public:

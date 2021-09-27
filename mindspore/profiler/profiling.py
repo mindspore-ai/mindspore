@@ -122,7 +122,10 @@ class Profiler:
 
     def __init__(self, **kwargs):
         if c_expression.security.enable_security():
-            raise Runtime("Profiler is not supported if compiled with \'-s on\'")
+            raise RuntimeError("Profiler is not supported if compiled with \'-s on\'")
+
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Profiler is not supported in PyNative mode")
 
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
@@ -643,7 +646,7 @@ class Profiler:
             dev_id = "0"
             logger.warning("Fail to get DEVICE_ID, use 0 instead.")
 
-        if device_target and device_target not in ["Ascend", "GPU"]:
+        if device_target and device_target not in ["Ascend", "GPU", "CPU"]:
             msg = "Profiling: unsupported backend: %s" % device_target
             raise RuntimeError(msg)
 

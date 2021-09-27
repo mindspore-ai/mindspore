@@ -25,11 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kSizeFloat32 = sizeof(float);
-constexpr size_t kScalarIndex = 0;
-constexpr size_t kAdamWeightDecayInputNum = 9;
-constexpr size_t kAdamWeightDecayOutputNum = 3;
-
 class AdamWeightDecayCPUKernel : public CPUKernel {
  public:
   AdamWeightDecayCPUKernel() = default;

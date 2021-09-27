@@ -15,6 +15,8 @@
 import os
 import shutil
 
+import sys
+
 from tests.security_utils import security_off_wrap
 import pytest
 
@@ -53,6 +55,7 @@ def weight_variable():
 
 class LeNet5(nn.Cell):
     """Define LeNet5 network."""
+
     def __init__(self, num_class=10, channel=1):
         super(LeNet5, self).__init__()
         self.num_class = num_class
@@ -86,7 +89,7 @@ class LeNet5(nn.Cell):
 def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers=1):
     """create dataset for train"""
     # define dataset
-    mnist_ds = ds.MnistDataset(data_path, num_samples=batch_size*100)
+    mnist_ds = ds.MnistDataset(data_path, num_samples=batch_size * 100)
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0
@@ -131,9 +134,25 @@ class TestProfiler:
     rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
     mnist_path = '/home/workspace/mindspore_dataset/mnist'
 
-    def teardown(self):
-        """ Run after each use case."""
+    @classmethod
+    def setup_class(cls):
+        """Run begin all test case start."""
         cleanup()
+
+    @staticmethod
+    def teardown():
+        """Run after each test case end."""
+        cleanup()
+
+    @pytest.mark.level2
+    @pytest.mark.platform_x86_cpu
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_cpu_profiler(self):
+        if sys.platform != 'linux':
+            return
+        self._train_with_profiler(device_target="CPU")
+        self._check_cpu_profiling_file()
 
     @pytest.mark.level1
     @pytest.mark.platform_x86_gpu_training
@@ -177,12 +196,10 @@ class TestProfiler:
         getnext_file = self.profiler_path + f'minddata_getnext_profiling_{self.device_id}.txt'
         pipeline_file = self.profiler_path + f'minddata_pipeline_raw_{self.device_id}.csv'
 
-        assert os.path.exists(op_detail_file)
-        assert os.path.exists(op_type_file)
-        assert os.path.exists(activity_file)
-        assert os.path.exists(timeline_file)
-        assert os.path.exists(getnext_file)
-        assert os.path.exists(pipeline_file)
+        gpu_profiler_files = (op_detail_file, op_type_file, activity_file,
+                              timeline_file, getnext_file, pipeline_file)
+        for file in gpu_profiler_files:
+            assert os.path.isfile(file)
 
     def _check_d_profiling_file(self):
         aicore_file = self.profiler_path + f'aicore_intermediate_{self.rank_id}_detail.csv'
@@ -193,10 +210,16 @@ class TestProfiler:
         queue_profiling_file = self.profiler_path + f'device_queue_profiling_{self.rank_id}.txt'
         memory_file = self.profiler_path + f'memory_usage_{self.rank_id}.pb'
 
-        assert os.path.exists(aicore_file)
-        assert os.path.exists(step_trace_file)
-        assert os.path.exists(timeline_file)
-        assert os.path.exists(queue_profiling_file)
-        assert os.path.exists(minddata_pipeline_file)
-        assert os.path.exists(aicpu_file)
-        assert os.path.exists(memory_file)
+        d_profiler_files = (aicore_file, step_trace_file, timeline_file, aicpu_file,
+                            minddata_pipeline_file, queue_profiling_file, memory_file)
+        for file in d_profiler_files:
+            assert os.path.isfile(file)
+
+    def _check_cpu_profiling_file(self):
+        op_detail_file = self.profiler_path + f'cpu_op_detail_info_{self.device_id}.csv'
+        op_type_file = self.profiler_path + f'cpu_op_type_info_{self.device_id}.csv'
+        timeline_file = self.profiler_path + f'cpu_op_execute_timestamp_{self.device_id}.txt'
+
+        cpu_profiler_files = (op_detail_file, op_type_file, timeline_file)
+        for file in cpu_profiler_files:
+            assert os.path.isfile(file)
