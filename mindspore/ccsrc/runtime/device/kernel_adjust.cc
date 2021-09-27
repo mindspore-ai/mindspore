@@ -31,7 +31,7 @@
 #include "utils/utils.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "runtime/base.h"
-#include "runtime/device/ascend/ascend_stream_assign.h"
+#include "runtime/device/ascend/ascend_stream_manager.h"
 #include "utils/shape_utils.h"
 
 namespace {
@@ -138,7 +138,7 @@ void KernelAdjust::InsertIndepentParallel(const std::shared_ptr<session::KernelG
                                           std::vector<CNodePtr> *exec_order) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
-  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   CNodePtr independent_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kIndependentStreamSwitch);
   MS_EXCEPTION_IF_NULL(independent_switch_app);
   uint32_t independent_switch_stream_id = resource_manager.ApplyNewStream();
@@ -157,7 +157,7 @@ void KernelAdjust::InsertFpBpLoopStreamSwitch(const std::shared_ptr<session::Ker
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(fpbp_stream_id);
   MS_EXCEPTION_IF_NULL(fpbp_switch_stream_id);
-  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   *fpbp_switch_stream_id = resource_manager.ApplyNewStream();
   *fpbp_stream_id = resource_manager.ApplyNewStream();
   CNodePtr fpbp_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kFpBpStreamSwitch);
@@ -295,7 +295,7 @@ void KernelAdjust::InsertGetNextLoopStreamSwitch(
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(getnext_switch_stream_id);
   MS_EXCEPTION_IF_NULL(getnext_stream_id);
-  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   *getnext_switch_stream_id = resource_manager.ApplyNewStream();
   *getnext_stream_id = resource_manager.ApplyNewStream();
   CNodePtr getnext_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kGetNextStreamSwitch);
@@ -330,7 +330,7 @@ void KernelAdjust::InsertGetNextLoopFpBpStartSend(const std::shared_ptr<session:
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(fpbp_start_event_id);
-  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   *fpbp_start_event_id = resource_manager.ApplyNewEvent();
   CNodePtr fpbp_start_send = CreateSendApplyKernel(kernel_graph_ptr, *fpbp_start_event_id);
   AnfAlgo::SetStreamId(getnext_stream_id, fpbp_start_send.get());
@@ -344,7 +344,7 @@ void KernelAdjust::InsertGetNextLoopEosStartSend(const std::shared_ptr<session::
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(eos_start_event_id);
-  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   *eos_start_event_id = resource_manager.ApplyNewEvent();
   CNodePtr eos_start_send = CreateSendApplyKernel(kernel_graph_ptr, *eos_start_event_id);
   AnfAlgo::SetStreamId(getnext_stream_id, eos_start_send.get());
@@ -360,7 +360,7 @@ void KernelAdjust::InsertEosStreamSwitch(const std::shared_ptr<session::KernelGr
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(eos_switch_stream_id);
   MS_EXCEPTION_IF_NULL(eos_stream_id);
-  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   *eos_switch_stream_id = resource_manager.ApplyNewStream();
   *eos_stream_id = resource_manager.ApplyNewStream();
   CNodePtr eos_switch_app = CreateStreamSwitchOp(kernel_graph_ptr, switch_loop_input, kEosStreamSwitch);
@@ -404,7 +404,7 @@ void KernelAdjust::InsertEosDoneSend(const std::shared_ptr<session::KernelGraph>
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(exec_order);
   MS_EXCEPTION_IF_NULL(eos_done_event_id);
-  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   *eos_done_event_id = resource_manager.ApplyNewEvent();
   CNodePtr eos_done_send = CreateSendApplyKernel(kernel_graph_ptr, *eos_done_event_id);
   AnfAlgo::SetStreamId(eos_stream_id, eos_done_send.get());
@@ -414,7 +414,7 @@ void KernelAdjust::InsertEosDoneSend(const std::shared_ptr<session::KernelGraph>
 
 void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  device::ascend::AscendResourceMng &resource_manager = device::ascend::AscendResourceMng::GetInstance();
+  device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   resource_manager.ResetResource();
   if (!NeedInsertSwitch()) {
     return;

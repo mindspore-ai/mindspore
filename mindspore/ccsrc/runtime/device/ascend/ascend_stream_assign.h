@@ -45,59 +45,6 @@ using std::vector;
 using CNodeKey = void *;
 const uint32_t kInvalidStreamId = UINT32_MAX;
 const uint32_t kInvalidEventId = UINT32_MAX;
-class AscendResourceMng {
- public:
-  static AscendResourceMng &GetInstance() {
-    static AscendResourceMng instance;
-    return instance;
-  }
-
-  void ResetResource() {
-    cur_stream_num_ = 0;
-    cur_event_num_ = 0;
-  }
-  uint32_t ApplyNewStream() {
-    if (!cur_stream_num_) {
-      uint32_t cur_stream_id = cur_stream_num_;
-      cur_stream_num_++;
-      return cur_stream_id;
-    }
-    uint32_t cur_stream_id = cur_stream_num_;
-    cur_stream_num_++;
-    return cur_stream_id;
-  }
-  uint32_t ApplyNewEvent() {
-    if (!cur_event_num_) {
-      uint32_t cur_event_id = cur_event_num_;
-      cur_event_num_++;
-      return cur_event_id;
-    }
-    uint32_t cur_event_id = cur_event_num_;
-    cur_event_num_++;
-    return cur_event_id;
-  }
-
-  void DeleteEvent() {
-    if (!cur_event_num_) {
-      MS_LOG(WARNING) << "total event num is 0, no event to delete";
-    } else {
-      --cur_event_num_;
-    }
-  }
-  uint32_t get_cur_stream_num() { return cur_stream_num_; }
-  uint32_t GetCurAllocStreamId() {
-    if (!cur_stream_num_) {
-      MS_LOG(EXCEPTION) << "stream nums is 0, no stream id should be get";
-    }
-    return cur_stream_num_ - 1;
-  }
-  uint32_t get_cur_event_num() { return cur_event_num_; }
-
- private:
-  uint32_t cur_stream_num_{0};
-  uint32_t cur_event_num_{0};
-};
-
 enum StreamActiveKind { kInvalid = 0, kHead, kMiddle, kTail };
 class AscendStreamAssign {
  public:

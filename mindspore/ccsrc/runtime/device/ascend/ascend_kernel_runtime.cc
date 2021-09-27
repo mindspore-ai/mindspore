@@ -28,6 +28,7 @@
 #include "utils/mpi/mpi_config.h"
 #include "common/trans.h"
 #include "runtime/rt.h"
+#include "runtime/device/ascend/ascend_stream_manager.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "runtime/device/ascend/ge_runtime/model_runner.h"
 #include "runtime/device/ascend/tasksink/task_generator.h"
@@ -488,20 +489,19 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph &graph) {
     return true;
   }
   AscendStreamAssign &assign_instance = AscendStreamAssign::GetInstance();
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   // the streams' flag not HEAD_STREAM
   std::vector<uint32_t> wait_active_stream_list;
   assign_instance.GetWaitStreams(&wait_active_stream_list);
   std::vector<uint32_t> force_copy_stream_list;
   assign_instance.GetHcomStreams(&force_copy_stream_list);
-  MS_LOG(INFO) << "Call DavinciModel total stream num:" << resource_manager.get_cur_stream_num()
-               << ", total event num:" << resource_manager.get_cur_event_num()
-               << ", total label num:" << graph.label_num()
+  MS_LOG(INFO) << "Call DavinciModel total stream num:" << resource_manager.cur_stream_num()
+               << ", total event num:" << resource_manager.cur_event_num() << ", total label num:" << graph.label_num()
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
   auto model = std::make_shared<ge::model_runner::DavinciModel>(
     task_info_list, wait_active_stream_list, force_copy_stream_list, 0, 0, 0, 0, 0, 0,
-    resource_manager.get_cur_stream_num(), graph.label_num(), resource_manager.get_cur_event_num(), 0);
+    resource_manager.cur_stream_num(), graph.label_num(), resource_manager.cur_event_num(), 0);
   auto ret = graph_model_map_.insert(std::make_pair(graph.graph_id(), model));
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
