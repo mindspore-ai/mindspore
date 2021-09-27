@@ -833,6 +833,7 @@ void AscendSession::BindAddressToTensor(
 void AscendSession::LaunchFunc(const KernelGraphPtr &graph,
                                const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
                                bool is_dynamic_shape, const std::vector<tensor::TensorPtr> &input_tensors) {
+  MS_EXCEPTION_IF_NULL(graph);
   // Wait for AllReduce
   for (auto &tensor : input_tensors) {
     if (tensor->NeedWaitDevice()) {
@@ -841,7 +842,7 @@ void AscendSession::LaunchFunc(const KernelGraphPtr &graph,
   }
 
   RunOpRemoveNopNode(graph);
-  RunOpMemoryAllocNew(input_tensors, tensor_to_node, graph.get());
+  RunOpMemoryAllocNew(input_tensors, tensor_to_node, *graph);
   AnfAlgo::CacheAddrForGraph(graph);
   // Bind Device Ptr to DeviceAddress of Tensor
   BindAddressToTensor(tensor_to_node);
@@ -1485,11 +1486,10 @@ void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input
 
 void AscendSession::RunOpMemoryAllocNew(const std::vector<tensor::TensorPtr> &input_tensors,
                                         const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node,
-                                        KernelGraph *kernel_graph) const {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
+                                        const KernelGraph &kernel_graph) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, *kernel_graph, tensor_to_node);
+  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph, tensor_to_node);
 }
 
 void AscendSession::RunOpGenKernelEvent(const KernelGraph *graph) const {

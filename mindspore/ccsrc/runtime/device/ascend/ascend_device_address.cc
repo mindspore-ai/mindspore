@@ -95,7 +95,7 @@ void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) 
   }
 }
 
-bool DataSync(void *dst, uint64_t dst_size, const void *src, uint64_t src_size) {
+bool DataSync(void *dst, const void *src, uint64_t src_size) {
   if (dst == src) {
     MS_LOG(INFO) << "dst addr is same with src addr, no need memcpy data.";
     return true;
@@ -415,7 +415,7 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const ShapeVector &, size_t size, T
   }
   bool sync_ok = false;
   if (format_ == format && type_id_ == type) {
-    if (!DataSync(ptr_, size_, src_ptr, size)) {
+    if (!DataSync(ptr_, src_ptr, size)) {
       MS_LOG(ERROR) << "DataSync failed!";
       return false;
     }
@@ -491,7 +491,13 @@ void AscendDeviceAddress::ClearDeviceMemory() {
   }
 }
 
-AscendDeviceAddress::~AscendDeviceAddress() { ClearDeviceMemory(); }
+AscendDeviceAddress::~AscendDeviceAddress() {
+  try {
+    ClearDeviceMemory();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "AscendDeviceAddress destructor failed: " << e.what();
+  }
+}
 
 bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::string &host_fmt,
                                         const ShapeVector &host_shape, TypeId host_type, bool trans_flag) const {

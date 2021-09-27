@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iostream>
+
+#include "runtime/device/ascend/profiling/reporter/profiling_desc.h"
 #include <iterator>
 #include <sstream>
-#include <algorithm>
-#include "runtime/device/ascend/profiling/reporter/profiling_desc.h"
 
 namespace mindspore {
 namespace device {
