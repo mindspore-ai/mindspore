@@ -1370,6 +1370,7 @@ void KernelGraph::SetOptimizerFlag() {
     for (auto &input : cnode->inputs()) {
       MS_EXCEPTION_IF_NULL(input);
       auto real_node = AnfAlgo::VisitKernel(input, 0).first;
+      MS_EXCEPTION_IF_NULL(real_node);
       if (!real_node->isa<Parameter>()) {
         continue;
       }

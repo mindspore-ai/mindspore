@@ -57,19 +57,19 @@ std::vector<std::vector<int64_t>> GetGradientIndices(const std::vector<std::vect
     // All dimensions are 1.
     if (!output_dim_set) {
       for (int i = 0; i < kInputNum; ++i) {
-        grad_reduce_idx[i].push_back(largest_rank - 1 - j);
+        (void)grad_reduce_idx[i].emplace_back(largest_rank - 1 - j);
       }
       continue;
     } else if (std::equal(current_is_one, current_is_one + kInputNum, prev_is_one) && set_one) {
       for (int i = 0; i < kInputNum; ++i) {
         if (current_is_one[i] && !none_is_one) {
-          grad_reduce_idx[i].push_back(largest_rank - 1 - j);
+          (void)grad_reduce_idx[i].emplace_back(largest_rank - 1 - j);
         }
       }
     } else {
       for (int i = 0; i < kInputNum; ++i) {
         if (current_is_one[i] && !none_is_one) {
-          grad_reduce_idx[i].push_back(largest_rank - 1 - j);
+          (void)grad_reduce_idx[i].emplace_back(largest_rank - 1 - j);
         }
       }
     }
@@ -131,6 +131,7 @@ std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
   auto x_shape_value = std::make_shared<tensor::Tensor>(type_x, x);
   // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
   // address size will be wrong in the dynamic shape scenario.
+  MS_EXCEPTION_IF_NULL(x_shape_value);
   x_shape_value->set_device_address(address_x, false);
   x_shape_value->data_sync();
 
@@ -163,6 +164,7 @@ size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64
   std::vector<int64_t> out_shape{SizeToLong(out_size)};
   auto output_type = TypeId::kNumberTypeInt64;
   auto tensor_for_sync = std::make_shared<tensor::Tensor>(output_type, out_shape);
+  MS_EXCEPTION_IF_NULL(tensor_for_sync);
 
   auto data_ptr = static_cast<int64_t *>(tensor_for_sync->data_c());
   for (size_t i = 0; i < out_size; ++i) {

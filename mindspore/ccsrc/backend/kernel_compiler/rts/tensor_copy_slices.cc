@@ -45,6 +45,9 @@ bool TensorCopySlices::Launch(const std::vector<AddressPtr> &inputs, const std::
     MS_LOG(ERROR) << "outputs size is not 1";
     return false;
   }
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
   if (outputs[0]->size != inputs[0]->size) {
     MS_LOG(ERROR) << "TensorCopySlices destMax > src size";
     return false;
@@ -137,6 +140,9 @@ std::vector<TaskInfoPtr> TensorCopySlices::GenTask(const std::vector<AddressPtr>
   if (outputs.size() != 1) {
     MS_LOG(EXCEPTION) << "outputs size is not 1.";
   }
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
   if (outputs[0]->size != inputs[0]->size) {
     MS_LOG(EXCEPTION) << "TensorCopySlices input size " << inputs[0]->size << " is not equal to output size "
                       << outputs[0]->size;

@@ -878,8 +878,6 @@ void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *o
 
 bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
                                std::vector<size_t> *output_size_list) {
-  MS_EXCEPTION_IF_NULL(output_size_list);
-  MS_EXCEPTION_IF_NULL(input_size_list);
   if (input_size_list == nullptr || output_size_list == nullptr) {
     MS_LOG(ERROR) << "Input size or output size is nullptr";
     return false;

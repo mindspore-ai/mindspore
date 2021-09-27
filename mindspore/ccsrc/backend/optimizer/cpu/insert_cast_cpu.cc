@@ -76,6 +76,7 @@ void InsertCast(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
       origin_type = AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
     }
     auto cur_input = AnfAlgo::GetInputNode(cnode, input_index);
+    MS_EXCEPTION_IF_NULL(cur_input);
     if (cur_input->isa<Parameter>() && AnfAlgo::IsParameterWeight(cur_input->cast<ParameterPtr>())) {
       continue;
     }

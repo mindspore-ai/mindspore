@@ -132,6 +132,7 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, assist_shape);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   auto value_node = kernel_graph->NewValueNode(x_abstract, assist_tensor);
+  MS_EXCEPTION_IF_NULL(value_node);
   kernel_graph->AddValueNodeToGraph(value_node);
   AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {infer_shape}, value_node.get());
   return value_node;
@@ -147,6 +148,7 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const std::vector
   (void)std::transform(ori_shape.begin(), ori_shape.end(), std::back_inserter(grad_shape), SizeToLong);
   std::vector<int64_t> assist_shape = grad_shape;  // NCDHW
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
+  MS_EXCEPTION_IF_NULL(tensor);
   auto tensor_data = reinterpret_cast<float16 *>(tensor->data_c());
   auto pad_d = pad_list[kDim0] + pad_list[kDim1];
   auto pad_h = pad_list[kDim2] + pad_list[kDim3];
@@ -162,23 +164,26 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const std::vector
         for (int64_t hi = 0; hi < grad_shape[kDim3]; hi++) {
           int64_t start_w = 0;
           for (int64_t wi = 0; wi < grad_shape[kDim4]; wi++) {
-            int64_t vaild_d = 0;
-            int64_t vaild_h = 0;
-            int64_t vaild_w = 0;
+            int64_t valid_d = 0;
+            int64_t valid_h = 0;
+            int64_t valid_w = 0;
             if (count_include_pad) {
-              vaild_d = start_d + kernel_size[kDim0] <= len_d ? kernel_size[kDim0] : len_d - start_d;
-              vaild_h = start_h + kernel_size[kDim1] <= len_h ? kernel_size[kDim1] : len_h - start_h;
-              vaild_w = start_w + kernel_size[kDim2] <= len_w ? kernel_size[kDim2] : len_w - start_w;
+              valid_d = start_d + kernel_size[kDim0] <= len_d ? kernel_size[kDim0] : len_d - start_d;
+              valid_h = start_h + kernel_size[kDim1] <= len_h ? kernel_size[kDim1] : len_h - start_h;
+              valid_w = start_w + kernel_size[kDim2] <= len_w ? kernel_size[kDim2] : len_w - start_w;
             } else {
-              vaild_d = std::min(start_d + kernel_size[kDim0], pad_list[kDim0] + ori_input_shape[kDim2]) -
+              valid_d = std::min(start_d + kernel_size[kDim0], pad_list[kDim0] + ori_input_shape[kDim2]) -
                         std::max(pad_list[kDim0], start_d);
-              vaild_h = std::min(start_h + kernel_size[kDim1], pad_list[kDim2] + ori_input_shape[kDim3]) -
+              valid_h = std::min(start_h + kernel_size[kDim1], pad_list[kDim2] + ori_input_shape[kDim3]) -
                         std::max(pad_list[kDim2], start_h);
-              vaild_w = std::min(start_w + kernel_size[kDim2], pad_list[kDim4] + ori_input_shape[kDim4]) -
+              valid_w = std::min(start_w + kernel_size[kDim2], pad_list[kDim4] + ori_input_shape[kDim4]) -
                         std::max(pad_list[kDim4], start_w);
             }
-            auto vaild_data = vaild_d * vaild_h * vaild_w;
-            float val = 1.0 / vaild_data;
+            auto valid_data = valid_d * valid_h * valid_w;
+            if (valid_data == 0) {
+              MS_LOG(EXCEPTION) << "Divisor 'valid_data' should not be 0.";
+            }
+            float val = 1.0 / valid_data;
             *tensor_data = float16(val);
             ++tensor_data;
             start_w += strides[kDim2];
