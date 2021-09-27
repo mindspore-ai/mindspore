@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 #include "backend/optimizer/ascend/ir_fusion/adam_apply_one_with_decay_rule.h"
-
-#include <memory>
-#include <vector>
-
 #include "backend/session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "backend/optimizer/common/helper.h"

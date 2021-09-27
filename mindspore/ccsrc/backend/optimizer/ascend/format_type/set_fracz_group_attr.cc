@@ -120,7 +120,7 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
   if (node_name == kUpdateStateName || node_name == kTransDataOpName) {
     return ret;
   } else if (kInOutOperatorSet.find(node_name) != kInOutOperatorSet.end()) {
-    ret.emplace_back(cnode->input(index + 1), index);
+    (void)ret.emplace_back(cnode->input(index + 1), index);
     auto output = GetOutputItem(manager, cnode, groups, index);
     if (output != nullptr) {
       std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
@@ -147,9 +147,9 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
             AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), input);
             input = input->cast<CNodePtr>()->input(1);
           }
-          ret.emplace_back(input, item_index);
+          (void)ret.emplace_back(input, item_index);
         } else {
-          ret.emplace_back(input, 0);
+          (void)ret.emplace_back(input, 0);
         }
       }
     }

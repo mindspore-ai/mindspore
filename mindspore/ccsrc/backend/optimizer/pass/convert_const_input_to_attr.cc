@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 #include "backend/optimizer/pass/convert_const_input_to_attr.h"
-
-#include <string>
-#include <memory>
-
 #include "backend/optimizer/common/const_input_to_attr_registry.h"
 #include "backend/optimizer/common/helper.h"
 #include "utils/utils.h"

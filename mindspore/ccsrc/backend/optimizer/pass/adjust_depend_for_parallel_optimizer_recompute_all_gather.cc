@@ -15,9 +15,6 @@
  */
 
 #include "backend/optimizer/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
-#include <memory>
-#include <unordered_map>
-#include <algorithm>
 #include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 

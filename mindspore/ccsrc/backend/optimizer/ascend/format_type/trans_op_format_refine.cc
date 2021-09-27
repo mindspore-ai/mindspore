@@ -15,9 +15,6 @@
  */
 
 #include "backend/optimizer/ascend/format_type/trans_op_format_refine.h"
-#include <memory>
-#include <string>
-#include <unordered_map>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
 
