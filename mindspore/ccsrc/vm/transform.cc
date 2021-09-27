@@ -376,6 +376,9 @@ int64_t CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto inputs = node->inputs();
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "The node->inputs() is empty.";
+  }
   AnfNodePtr fn = inputs[0];
   (void)Ref(fn);
   size_t size = inputs.size();
