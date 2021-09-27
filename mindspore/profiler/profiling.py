@@ -47,6 +47,14 @@ from mindspore.nn.cell import Cell
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
 
+def _environment_check():
+    if c_expression.security.enable_security():
+        raise Runtime("Profiler is not supported if compiled with \'-s on\'")
+    if context.get_context("mode") == context.PYNATIVE_MODE:
+        raise Runtime("Profiler is not supported in pynative mode currently, "
+                      "and it is only supported in graph mode.")
+
+
 class ProfileOption(Enum):
     """
     Profile Option Enum which be used in Profiler.profile.
@@ -121,12 +129,7 @@ class Profiler:
     _aicpu_op_output_filename_target = "output_data_preprocess_aicpu_"
 
     def __init__(self, **kwargs):
-        if c_expression.security.enable_security():
-            raise RuntimeError("Profiler is not supported if compiled with \'-s on\'")
-
-        if context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Profiler is not supported in PyNative mode")
-
+        _environment_check()
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
         self._get_output_path(kwargs)
@@ -234,8 +237,7 @@ class Profiler:
         """
         Collect and analyse performance data, called after training or during training. The example shows above.
         """
-        if c_expression.security.enable_security():
-            raise Runtime("Profiler is not supported if compiled with \'-s on\'")
+        _environment_check()
         self._cpu_profiler.stop()
         _stop_dataset_profiler()
         if self._device_target and self._device_target == "GPU":
