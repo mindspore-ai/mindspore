@@ -142,7 +142,7 @@ class Gamma(PrimitiveWithInfer):
     Produces random positive floating-point values x, distributed according to probability density function:
 
     .. math::
-        \text{P}(x|α,β) = \frac{\exp(-x/β)}{{β^α}\cdot{\Gamma(α)}}\cdot{x^{α-1}},
+        \text{P}(x|α,β) = \frac{\exp(-x/β)}{{β^α}\cdot{\Gamma(α)}}\cdot{x^{α-1}}
 
     Args:
         seed (int): Random seed, must be non-negative. Default: 0.
