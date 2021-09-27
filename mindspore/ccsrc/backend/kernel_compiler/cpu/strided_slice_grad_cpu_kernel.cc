@@ -121,13 +121,18 @@ bool StridedSliceGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPt
   (void)std::transform(output_shape_.begin(), output_shape_.end(), std::back_inserter(output_),
                        [](const size_t &value) { return static_cast<int>(value); });
   auto ret = DoStridedSliceGrad(dy, dx, output_.data(), param_);
-  free(param_);
-  param_ = NULL;
   if (ret != EOK) {
     MS_LOG(ERROR) << "StridedSliceGrad error error_code[" << ret << "]";
     return false;
   }
   return true;
+}
+
+StridedSliceGradCPUKernel::~StridedSliceGradCPUKernel() {
+  if (param_ != nullptr) {
+    free(param_);
+    param_ = nullptr;
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore
