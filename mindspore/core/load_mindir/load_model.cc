@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cstring>
+#include <string>
 #include <memory>
 #include <algorithm>
 #include <fstream>
@@ -120,7 +121,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
   return true;
 }
 
-int endsWith(string s, string sub) { return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0; }
+int endsWith(const string s, const string sub) { return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0; }
 
 bool ParseModelProto(mind_ir::ModelProto *model, const std::string &path, const unsigned char *dec_key,
                      const size_t key_len, const std::string &dec_mode) {
@@ -174,13 +175,12 @@ std::string LoadPreprocess(const std::string &file_name) {
     MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
     return nullptr;
   }
-  const char *file_path = file_name.c_str();
   char abs_path_buff[PATH_MAX];
 
 #ifdef _WIN32
-  _fullpath(abs_path_buff, file_path, PATH_MAX);
+  _fullpath(abs_path_buff, file_name.c_str(), PATH_MAX);
 #else
-  if (!realpath(file_path, abs_path_buff)) {
+  if (!realpath(file_name.c_str(), abs_path_buff)) {
     MS_LOG(ERROR) << "Load MindIR get absolute path failed";
   }
 #endif
@@ -200,7 +200,6 @@ std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(std::vector<std::string> fil
                                                     const unsigned char *dec_key, const size_t key_len,
                                                     const std::string &dec_mode, bool inc_load) {
   std::vector<std::shared_ptr<FuncGraph>> funcgraph_vec;
-  MS_LOG(DEBUG) << "Load multiple MindIR files.";
   for (const auto &file_name : file_names) {
     MS_LOG(DEBUG) << "Load " << file_name;
     funcgraph_vec.push_back(LoadMindIR(file_name, is_lite, dec_key, key_len, dec_mode, inc_load));
@@ -214,15 +213,13 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
     MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
     return nullptr;
   }
-  const char *file_path = file_name.c_str();
   char abs_path_buff[PATH_MAX];
-  char abs_path[PATH_MAX];
   vector<string> files;
 
 #ifdef _WIN32
-  _fullpath(abs_path_buff, file_path, PATH_MAX);
+  _fullpath(abs_path_buff, file_name.c_str(), PATH_MAX);
 #else
-  if (!realpath(file_path, abs_path_buff)) {
+  if (!realpath(file_name.c_str(), abs_path_buff)) {
     MS_LOG(ERROR) << "Load MindIR get absolute path failed";
   }
 #endif
@@ -232,24 +229,17 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
     return nullptr;
   }
   // Load parameter into graph
-  if (endsWith(abs_path_buff, "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
+  if (endsWith(std::string(abs_path_buff), "_graph.mindir") && origin_model.graph().parameter_size() == 0) {
     if (strlen(abs_path_buff) < strlen("graph.mindir")) {
       MS_LOG(ERROR) << "The abs_path_buff length is less than 'graph.mindir'.";
       return nullptr;
     }
     int path_len = SizeToInt(strlen(abs_path_buff) - strlen("graph.mindir"));
-    int ret = memcpy_s(abs_path, sizeof(abs_path), abs_path_buff, path_len);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "Load MindIR occur memcpy_s error.";
-      return nullptr;
-    }
-    abs_path[path_len] = '\0';
-    snprintf(abs_path + path_len, sizeof(abs_path) - path_len, "variables");
-    std::ifstream ifs(abs_path);
+    string var_path = std::string(abs_path_buff).substr(0, path_len);
+    var_path += "variables";
+    std::ifstream ifs(var_path);
     if (ifs.good()) {
-      MS_LOG(DEBUG) << "MindIR file has variables path, load parameter into graph.";
-      string path = abs_path;
-      get_all_files(path, &files);
+      get_all_files(var_path, &files);
     } else {
       MS_LOG(ERROR) << "Load graph's variable folder failed, please check the correctness of variable folder.";
       return nullptr;
@@ -260,11 +250,6 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
     for (size_t file_index = 0; file_index < file_size; file_index++) {
       mind_ir::GraphProto param_graph;
       if (!ParseGraphProto(&param_graph, files[file_index], dec_key, key_len, dec_mode)) {
-        return nullptr;
-      }
-
-      if (param_graph.parameter_size() < 0 || param_graph.parameter_size() > INT_MAX) {
-        MS_LOG(ERROR) << "param_graph.parameter_size() is : " << param_graph.parameter_size();
         return nullptr;
       }
       for (int param_index = 0; param_index < param_graph.parameter_size(); param_index++) {
@@ -292,7 +277,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
 
 std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite) {
   MS_EXCEPTION_IF_NULL(buf);
-  std::string str((const char *)buf, buf_size);
+  std::string str(buf, buf_size);
   mind_ir::ModelProto model_;
   if (!model_.ParseFromString(str)) {
     MS_LOG(ERROR) << "Parse model from buffer fail!";
