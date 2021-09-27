@@ -484,6 +484,27 @@ class MuLawDecoding final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply RIAA vinyl playback equalization.
+class RiaaBiquad final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz),
+  ///     can only be one of 44100, 48000, 88200, 96000.
+  explicit RiaaBiquad(int32_t sample_rate);
+
+  /// \brief Destructor.
+  ~RiaaBiquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief TimeMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the time domain.
 class TimeMasking final : public TensorTransform {

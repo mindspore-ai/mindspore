@@ -34,6 +34,27 @@ Status ValidateIntScalarNonNegative(const std::string &op_name, const std::strin
 // Helper function to non-nan float scalar
 Status ValidateFloatScalarNotNan(const std::string &op_name, const std::string &scalar_name, float scalar);
 
+// Helper function to validate scalar value
+template <typename T>
+Status ValidateScalarValue(const std::string &op_name, const std::string &scalar_name, T scalar,
+                           const std::vector<T> &values) {
+  if (std::find(values.begin(), values.end(), scalar) == values.end()) {
+    std::string init;
+    std::string mode = std::accumulate(values.begin(), values.end(), init, [](const std::string &str, T val) {
+      if (str.empty()) {
+        return std::to_string(val);
+      } else {
+        return str + ", " + std::to_string(val);
+      }
+    });
+    std::string err_msg =
+      op_name + ": " + scalar_name + " must be one of [" + mode + "], but got: " + std::to_string(scalar);
+    MS_LOG(ERROR) << err_msg;
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+  }
+  return Status::OK();
+}
+
 // Helper function to check scalar is not equal to zero
 template <typename T>
 Status ValidateScalarNotZero(const std::string &op_name, const std::string &scalar_name, const T scalar) {

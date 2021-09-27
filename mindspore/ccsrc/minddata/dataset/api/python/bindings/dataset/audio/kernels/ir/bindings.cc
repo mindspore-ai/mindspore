@@ -40,6 +40,7 @@
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
+#include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/audio/ir/kernels/vol_ir.h"
@@ -279,6 +280,17 @@ PYBIND_REGISTER(
         auto mu_law_decoding = std::make_shared<audio::MuLawDecodingOperation>(quantization_channels);
         THROW_IF_ERROR(mu_law_decoding->ValidateParams());
         return mu_law_decoding;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  RiaaBiquadOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::RiaaBiquadOperation, TensorOperation, std::shared_ptr<audio::RiaaBiquadOperation>>(
+      *m, "RiaaBiquadOperation")
+      .def(py::init([](int32_t sample_rate) {
+        auto riaa_biquad = std::make_shared<audio::RiaaBiquadOperation>(sample_rate);
+        THROW_IF_ERROR(riaa_biquad->ValidateParams());
+        return riaa_biquad;
       }));
   }));
 

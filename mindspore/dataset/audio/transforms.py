@@ -27,7 +27,8 @@ from .utils import FadeShape, GainType, ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
     check_deemph_biquad, check_equalizer_biquad, check_fade, check_highpass_biquad, check_lfilter, \
-    check_lowpass_biquad, check_magphase, check_masking, check_mu_law_decoding, check_time_stretch, check_vol
+    check_lowpass_biquad, check_magphase, check_masking, check_mu_law_decoding, check_riaa_biquad, \
+    check_time_stretch, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -624,6 +625,31 @@ class MuLawDecoding(AudioTensorOperation):
 
     def parse(self):
         return cde.MuLawDecodingOperation(self.quantization_channels)
+
+
+class RiaaBiquad(AudioTensorOperation):
+    """
+    Apply RIAA vinyl playback equalization. Similar to SoX implementation.
+
+    Args:
+        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
+            can only be one of 44100, 48000, 88200, 96000.
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.RiaaBiquad(44100)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_riaa_biquad
+    def __init__(self, sample_rate):
+        self.sample_rate = sample_rate
+
+    def parse(self):
+        return cde.RiaaBiquadOperation(self.sample_rate)
 
 
 class TimeMasking(AudioTensorOperation):
