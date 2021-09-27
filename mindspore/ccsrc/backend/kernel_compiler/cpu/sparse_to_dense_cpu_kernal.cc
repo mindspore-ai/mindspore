@@ -22,12 +22,14 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kIndicesShapeSize = 2;
+constexpr size_t kSparseToDenseInputsNum = 3;
+constexpr size_t kSparseToDenseOutputsNum = 1;
 }  // namespace
 
 template <typename I, typename T>
 void SparseToDenseCPUKernel<I, T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  CheckParam(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (indices_shape.size() != kIndicesShapeSize) {
     MS_LOG(EXCEPTION) << "SparseToDense requires 'indices' should be a " << kIndicesShapeSize << "-D Tensor, but got "
@@ -48,11 +50,8 @@ template <typename I, typename T>
 bool SparseToDenseCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> & /*workspace*/,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 3 || outputs.size() != 1) {
-    MS_LOG(ERROR) << "SparseToDense requires 3 inputs and 1 output, but got " << inputs.size() << " inputs and "
-                  << outputs.size() << " output.";
-    return false;
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
     MS_LOG(WARNING) << "SparseToDense output memory size should be greater than 0, but got 0.";
     return true;
@@ -91,18 +90,6 @@ bool SparseToDenseCPUKernel<I, T>::Launch(const std::vector<kernel::AddressPtr> 
     output_addr[out_index] = values_addr[i];
   }
   return true;
-}
-
-template <typename I, typename T>
-void SparseToDenseCPUKernel<I, T>::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num != 3) {
-    MS_LOG(EXCEPTION) << "SparseToDense needs 3 inputs, but got " << input_num;
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "SparseToDense should have 2 outputs, but got " << output_num;
-  }
 }
 }  // namespace kernel
 }  // namespace mindspore

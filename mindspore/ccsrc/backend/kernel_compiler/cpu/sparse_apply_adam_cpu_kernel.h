@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_ADAM_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPARSE_APPLY_ADAM_CPU_KERNEL_H_
 
@@ -27,17 +28,21 @@ class SparseApplyAdamCPUKernel : public SparseOptimizerCPUKernel {
   ~SparseApplyAdamCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-  template <typename T>
-  void InitWorkspaceSize();
-  template <typename T>
-  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                    const std::vector<kernel::AddressPtr> &workspace) const;
 
  protected:
   bool use_nesterov_{false};
+
+ private:
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+
+  template <typename T>
+  void InitWorkspaceSize();
+
+  template <typename T>
+  void LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                    const std::vector<kernel::AddressPtr> &workspace) const;
 };
 
 MS_REG_CPU_KERNEL(FusedSparseAdam,

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <memory>
-
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "nnacl/base/slice_base.h"
@@ -39,7 +38,6 @@ class SliceCPUKernel : public CPUKernel {
  private:
   void InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
                       const std::vector<int64_t> &size);
-
   size_t origin_dim_size_{0};
   int data_size_{4};
   SliceParameter slice_param_;

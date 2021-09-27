@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/mkldnn/conv_cpu_kernel.h"
 #include <string>
 #include <algorithm>
@@ -22,13 +23,17 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kConvInputTensorNum = 2;
+namespace {
+constexpr size_t kConvInputsNum = 2;
+constexpr size_t kConvOutputsNum = 1;
 constexpr size_t kShapeSize4D = 4;
 constexpr size_t kShapeSize5D = 5;
 constexpr size_t kKernelStartAxis = 2;
+}  // namespace
 
 void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<size_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -59,9 +64,9 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   auto stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, stride_attr);
   auto dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, dilation_attr);
   (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_ori),
-                       [](const int64_t &value) { return static_cast<int>(value); });
+                       [](const int64_t &value) { return LongToInt(value); });
   (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_ori),
-                       [](const int64_t &value) { return static_cast<int>(value); });
+                       [](const int64_t &value) { return LongToInt(value); });
   if (stride_ori.size() != src_dim) {
     MS_LOG(EXCEPTION) << "Conv stride size must be " << src_dim << "D!";
   }
@@ -111,9 +116,8 @@ void ConvCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool ConvCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                            const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() < kConvInputTensorNum || outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Error input output size!";
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConvInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConvOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_WEIGHTS, inputs[1]->addr);
   SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);

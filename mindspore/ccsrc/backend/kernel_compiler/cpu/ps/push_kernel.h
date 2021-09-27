@@ -49,7 +49,6 @@ class PushKernel : public CPUKernel {
     auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, &key_, sizeof(size_t));
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
-      return false;
     }
     return true;
   }

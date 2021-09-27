@@ -37,27 +37,25 @@ class ScatterArithmeticCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckParam(const CNodePtr &kernel_node) const;
+  void InitComputeFunc();
+  void ScatterAdd(T *input, const int *indices, const T *updates) const;
+  void ScatterSub(T *input, const int *indices, const T *updates) const;
+  void ScatterMul(T *input, const int *indices, const T *updates) const;
+  void ScatterDiv(T *input, const int *indices, const T *updates) const;
+  void ScatterMax(T *input, const int *indices, const T *updates) const;
+  void ScatterMin(T *input, const int *indices, const T *updates) const;
+  void ScatterUpdate(T *input, const int *indices, const T *updates) const;
 
-  void ScatterAdd(T *input, const int *indices, const T *updates);
+  using TypeComputeFunc = std::function<void(ScatterArithmeticCPUKernel *, T *, const int *, const T *)>;
 
-  void ScatterSub(T *input, const int *indices, const T *updates);
-
-  void ScatterMul(T *input, const int *indices, const T *updates);
-
-  void ScatterDiv(T *input, const int *indices, const T *updates);
-
-  void ScatterMax(T *input, const int *indices, const T *updates);
-
-  void ScatterMin(T *input, const int *indices, const T *updates);
-
-  void ScatterUpdate(T *input, const int *indices, const T *updates);
-
-  size_t input_size_{1};
-  size_t inner_size_{1};
-  size_t indices_size_{1};
-  std::string kernel_name_;
-  enum input_list_ { INPUT, INDICES, UPDATES };
+  TypeComputeFunc compute_func_;
+  size_t input_size_{0};
+  size_t inner_size_{0};
+  size_t indices_size_{0};
+  const size_t INPUT_INDEX_{0};
+  const size_t INDICES_INDEX_{1};
+  const size_t UPDATES_INDEX_{2};
+  const size_t OUTPUT_INDEX_{0};
 };
 
 MS_REG_CPU_KERNEL_T(ScatterAdd,

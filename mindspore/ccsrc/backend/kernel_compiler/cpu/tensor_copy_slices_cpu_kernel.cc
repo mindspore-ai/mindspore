@@ -23,8 +23,14 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kTensorCopySlicesInputsNum = 2;
+constexpr size_t kTensorCopySlicesOutputsNum = 1;
+}  // namespace
+
 void TensorCopySlicesCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -48,11 +54,8 @@ void TensorCopySlicesCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool TensorCopySlicesCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> & /* workspace */,
                                        const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 2 || outputs.size() != 1) {
-    MS_LOG(ERROR) << "TensorCopySlices requires 1 input and 1 output, but got " << inputs.size() << " input and "
-                  << outputs.size() << " output.";
-    return false;
-  }
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTensorCopySlicesInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTensorCopySlicesOutputsNum, kernel_name_);
 
   auto input_addr = reinterpret_cast<uint8_t *>(inputs[0]->addr);
   auto update_addr = reinterpret_cast<uint8_t *>(inputs[1]->addr);

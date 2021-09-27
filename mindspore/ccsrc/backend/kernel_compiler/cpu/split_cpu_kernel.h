@@ -37,25 +37,19 @@ class SplitCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ private:
+  void CheckParam(const CNodePtr &kernel_node);
+
+  void LaunchSplit(T *input, T **output, size_t size);
+
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
 
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
- private:
-  void CheckParam(const CNodePtr &kernel_node);
-  void LaunchSplit(T *input, T **output, size_t size);
-  int64_t axis_{1};
-  int64_t output_num_{1};
-  int64_t axis_step_{1};
-
-  size_t input_size_{1};
-  size_t dims_after_axis_{1};
-  size_t dims_current_after_axis_{1};
-
-  std::vector<std::vector<size_t>> output_shape_list_;
+  int64_t axis_{0};
+  size_t output_num_{1};
   std::vector<int> input_shape_;
-  TypeId dtype_{kTypeUnknown};
 };
 
 MS_REG_CPU_KERNEL_T(Split, KernelAttr(), SplitCPUKernel, float);

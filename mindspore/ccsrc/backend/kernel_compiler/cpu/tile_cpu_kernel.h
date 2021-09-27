@@ -36,6 +36,7 @@ class TileCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
@@ -43,8 +44,6 @@ class TileCPUKernel : public CPUKernel {
 
   void TileMultipleCompute(void);
 
- private:
-  void CheckParam(const CNodePtr &kernel_node);
   std::vector<size_t> x_shape_;
   std::vector<size_t> y_shape_;
   std::vector<int> multiples_;
@@ -54,8 +53,8 @@ class TileCPUKernel : public CPUKernel {
   std::unordered_map<TypeId, TypeKernel> launch_map_;
   TypeKernel launch_func_;
   TileParameter tile_parameter_;
-  bool one_dim_tile_;
-  size_t input_size_;
+  bool one_dim_tile_{false};
+  size_t input_size_{0};
 };
 
 MS_REG_CPU_KERNEL(Tile, KernelAttr(), TileCPUKernel);

@@ -15,42 +15,29 @@
  */
 
 #include "backend/kernel_compiler/cpu/sgd_cpu_kernel.h"
-
 #include <thread>
 #include <vector>
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kInputSize = 6;
-constexpr size_t kOutputSize = 1;
+constexpr size_t kSGDInputsNum = 6;
+constexpr size_t kSGDOutputsNum = 1;
 }  // namespace
 template <typename T>
 void SGDCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   dampening_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "dampening");
   weight_decay_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "weight_decay");
   nesterov_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "nesterov");
 }
 
 template <typename T>
-void SGDCPUKernel<T>::CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  // inputs: param, grad, lr, accum, momentum, stat
-  if (inputs.size() != kInputSize) {
-    MS_LOG(EXCEPTION) << "Input number is " << inputs.size() << ", but SGD needs 6 inputs.";
-  }
-
-  // output: output_param
-  if (outputs.size() != kOutputSize) {
-    MS_LOG(EXCEPTION) << "Output number is " << outputs.size() << ", but SGD needs 1 outputs.";
-  }
-}
-
-template <typename T>
 bool SGDCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                              const std::vector<AddressPtr> &outputs) {
-  CheckParam(inputs, outputs);
-
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSGDInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSGDOutputsNum, kernel_name_);
   auto param = reinterpret_cast<T *>(inputs[PARAM]->addr);
   auto grad = reinterpret_cast<T *>(inputs[GRAD]->addr);
   auto lr = reinterpret_cast<T *>(inputs[LR]->addr);

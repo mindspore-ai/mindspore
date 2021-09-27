@@ -27,6 +27,7 @@ constexpr size_t kSparseApplyAdamPSInputsShapeSize = 11;
 
 void SparseApplyAdamPSKernel::InitKernel(
   const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
+  MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(shapes);
   const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
   if (shape_vec.size() < kSparseApplyAdamPSInputsShapeSize) {
@@ -68,7 +69,7 @@ void SparseApplyAdamPSKernel::InitKernel(
     MS_LOG(ERROR) << "The first dimension of grad shape must be equal to indices";
   }
   if (AnfAlgo::HasNodeAttr(USE_NESTEROV, cnode)) {
-    use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(cnode, "use_nesterov");
+    use_nesterov_ = AnfAlgo::GetNodeAttr<bool>(cnode, USE_NESTEROV);
   }
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
@@ -79,7 +80,7 @@ void SparseApplyAdamPSKernel::InitKernel(
 
 void SparseApplyAdamPSKernel::ReInit(const std::vector<std::vector<size_t>> &shapes) {
   if (shapes.empty() || shapes[0].empty()) {
-    MS_LOG(EXCEPTION) << "Shape should not empty";
+    MS_LOG(EXCEPTION) << "Shape is empty";
   }
   const std::vector<size_t> &indices_shape = shapes[0];
   indices_size_ = indices_shape[0];

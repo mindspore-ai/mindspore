@@ -54,6 +54,7 @@ class TransposeCPUFwdKernel : public CPUKernel {
   std::unordered_map<TypeId, TypeKernel> launch_map_;
   TypeKernel launch_func_;
 };
+
 MS_REG_CPU_KERNEL(Transpose, KernelAttr(), TransposeCPUFwdKernel);
 }  // namespace kernel
 }  // namespace mindspore
