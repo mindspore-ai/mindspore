@@ -69,7 +69,7 @@ void GpuDataSaver::ParseEvent(const std::vector<Event> &events) {
     // device_infos: <device_id, DeviceActivityInfos>
     for (auto &activity_info : device_infos.second) {
       if (activity_info.second.count_ == 0) {
-        MS_LOG(ERROR) << "The num of operations can not be 0.";
+        MS_LOG(ERROR) << "The number of activity operations can not be 0.";
         return;
       }
       // activity_info: <kernel_name, Activity>
@@ -92,6 +92,10 @@ void GpuDataSaver::AddKernelEvent(const Event &event) {
 }
 
 void GpuDataSaver::AddKernelEventToDevice(const Event &event, DeviceActivityInfos *device_activity_infos) {
+  if (device_activity_infos == nullptr) {
+    MS_LOG(ERROR) << "Device activity information is invalid.";
+    return;
+  }
   // Combine kernel activity with same kernel name
   auto event_ptr = std::make_shared<Event>(event);
   if (event_ptr == nullptr) {
