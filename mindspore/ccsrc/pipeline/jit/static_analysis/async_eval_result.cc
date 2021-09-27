@@ -120,7 +120,6 @@ void AnalysisSchedule::Add2Schedule(const AsyncInferTaskPtr &async_infer_task_pt
 }
 bool AnalysisSchedule::SetNextReady() {
   if (scheduleList_.empty()) {
-    MS_LOG(DEBUG) << "The schedule list is empty. ";
     return false;
   }
   // Check if enter endless loop
