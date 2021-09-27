@@ -2832,7 +2832,7 @@ class TruncateMod(_MathBinaryOp):
 
     .. warning::
         - The input data does not support 0.
-        - When NUM exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
+        - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
@@ -2878,7 +2878,7 @@ class Mod(_MathBinaryOp):
 
     .. warning::
         - The input data does not support 0.
-        - When NUM exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
+        - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
@@ -2978,7 +2978,7 @@ class FloorMod(_MathBinaryOp):
 
     .. warning::
         - The input data does not support 0.
-        - When NUM exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
+        - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
@@ -3807,9 +3807,6 @@ class LogicalNot(PrimitiveWithInfer):
 
         out_{i} = \\neg x_{i}
 
-    .. warning::
-        The input and output values are "1" or "0", corresponding to bool values "true" and "false".
-
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is bool.
           :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
@@ -4442,7 +4439,7 @@ class NMSWithMask(PrimitiveWithInfer):
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
 
     .. warning::
-        Only supports 2864 input boxes at one time.
+        Only supports up to 2864 input boxes at one time.
 
     Args:
         iou_threshold (float): Specifies the threshold of overlap boxes with respect to
