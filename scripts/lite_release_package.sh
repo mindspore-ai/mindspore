@@ -57,6 +57,12 @@ function windows_release_package()
     cp ${input_path}/windows_x32/sse/*.zip* ${output_path}/release/windows/
 }
 
+function openharmony_release_package()
+{
+    mkdir -p ${output_path}/release/openharmony/
+    cp ${input_path}/ohos_aarch32/*.tar.gz* ${output_path}/release/openharmony/
+}
+
 echo "============================== begin =============================="
 echo "Usage: bash lite_release_package.sh input_path output_path"
 
@@ -72,6 +78,7 @@ android_release_package aarch64 gpu
 ios_release_package
 linux_release_package
 windows_release_package
+openharmony_release_package
 
 echo "Create release package success!"
 echo "=============================== end ==============================="
