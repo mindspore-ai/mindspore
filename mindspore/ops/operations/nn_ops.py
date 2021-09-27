@@ -7010,34 +7010,6 @@ class LARSUpdate(PrimitiveWithInfer):
         validator.check_value_type("hyperpara", hyperpara, [float], self.name)
         validator.check_value_type("use_clip", use_clip, [bool], self.name)
 
-    def infer_shape(self, weight_shape, gradient_shape, norm_weight_shape, norm_gradient_shape, weight_decay_shape,
-                    learning_rate_shape):
-        validator.check("weight shape", weight_shape, "gradient shape", gradient_shape, Rel.EQ, self.name)
-        validator.check("norm weight shape", norm_weight_shape, "norm gradient shape", norm_gradient_shape, Rel.EQ,
-                        self.name)
-        shp_len = len(weight_decay_shape)
-        validator.check_int(shp_len, 1, Rel.LE, "weight decay's rank", self.name)
-        if shp_len == 1:
-            validator.check_int(weight_decay_shape[0], 1, Rel.EQ, "weight_decay_shape[0]", self.name)
-        shp_len = len(learning_rate_shape)
-        validator.check_int(shp_len, 1, Rel.LE, "learning rate's rank", self.name)
-        if shp_len == 1:
-            validator.check_int(learning_rate_shape[0], 1, Rel.EQ, "learning_rate_shape[0]", self.name)
-        return weight_shape
-
-    def infer_dtype(self, weight_dtype, gradient_dtype, norm_weight_dtype, norm_gradient_dtype,
-                    weight_decay_dtype, learning_rate_dtype):
-        args = {"Weight dtype": weight_dtype, "gradient dtype": gradient_dtype, "norm weight dtype": norm_weight_dtype,
-                "norm gradient dtype": norm_gradient_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args,
-                                                      [mstype.float16, mstype.float32, mstype.int16, mstype.int32],
-                                                      self.name)
-        validator.check_scalar_or_tensor_types_same({"weight_decay": weight_decay_dtype},
-                                                    [mstype.float16, mstype.float32, mstype.float64], self.name)
-        validator.check_scalar_or_tensor_types_same({"learning_rate": learning_rate_dtype},
-                                                    [mstype.float16, mstype.float32, mstype.float64], self.name)
-        return weight_dtype
-
 
 class ApplyFtrl(PrimitiveWithInfer):
     """
@@ -8767,7 +8739,7 @@ class CTCLossV2Grad(Primitive):
     Args:
         blank (int): The blank label. Default: 0.
         reduction (string): Apply specific reduction method to the output. Currently only support 'none'.
-          Default: "none".
+        Default(None): "none".
         zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
 
     Inputs:
@@ -9050,7 +9022,7 @@ class SoftShrink(Primitive):
         \end{cases}
 
     Args:
-        lambd: the :math:`\lambda` must be no less than zero value for the Softshrink formulation. Default: 0.5.
+        lambd(Float): the :math:`\lambda` must be no less than zero value for the Softshrink formulation. Default: 0.5.
 
     Inputs:
         - **input_x** (Tensor) - The input of SoftShrink with data type of float16 or float32.
