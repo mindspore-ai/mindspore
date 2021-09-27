@@ -17,10 +17,6 @@
  */
 
 #include "backend/optimizer/common/pattern_engine.h"
-
-#include <exception>
-#include <iostream>
-#include <functional>
 #include "frontend/optimizer/opt.h"
 #include "ir/anf.h"
 #include "utils/convert_utils_base.h"

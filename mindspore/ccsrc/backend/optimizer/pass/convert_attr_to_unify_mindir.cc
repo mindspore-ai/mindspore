@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "backend/optimizer/pass/convert_attr_to_unify_mindir.h"
-
-#include <string>
-
 #include "utils/check_convert_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
