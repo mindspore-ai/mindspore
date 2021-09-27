@@ -88,7 +88,7 @@ void ArithmeticOpenCLKernel::SetGlobalLocal() {
 int ArithmeticOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto fp16_enable = ocl_runtime_->GetFp16Enable();
-  for (int i = 0; i < in_tensors_.size(); ++i) {
+  for (size_t i = 0; i < in_tensors_.size(); ++i) {
     const auto &in_tensor = in_tensors_.at(i);
     GpuTensorInfo in_shape = GpuTensorInfo(in_tensor);
     if (in_tensor->IsConst()) {

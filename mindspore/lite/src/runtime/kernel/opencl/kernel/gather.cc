@@ -193,6 +193,7 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
   return RET_OK;
 }
 
+#ifdef ENABLE_FP16
 int GatherOpenCLKernel::InitWeights() {
   auto indices_tensor = in_tensors_.at(1);
   auto indices_num = indices_tensor->ElementsNum();
@@ -226,6 +227,37 @@ int GatherOpenCLKernel::InitWeights() {
   }
   return RET_OK;
 }
+#else
+int GatherOpenCLKernel::InitWeights() {
+  auto indices_tensor = in_tensors_.at(1);
+  auto indices_num = indices_tensor->ElementsNum();
+  auto allocator = ocl_runtime_->GetAllocator();
+  indices_data_ =
+    reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num, lite::opencl::MemType::BUF));
+  if (indices_data_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    return RET_ERROR;
+  }
+
+  auto data_type = indices_tensor->data_type();
+  auto data = indices_tensor->data();
+  MS_ASSERT(data);
+  if (data_type == kNumberTypeInt32) {
+    for (int i = 0; i < indices_num; i++) {
+      indices_data_[i] = reinterpret_cast<int32_t *>(data)[i];
+    }
+  } else if (data_type == kNumberTypeInt64) {
+    for (int i = 0; i < indices_num; i++) {
+      indices_data_[i] = reinterpret_cast<int64_t *>(data)[i];
+    }
+  } else if (data_type == kNumberTypeFloat32) {
+    for (int i = 0; i < indices_num; i++) {
+      indices_data_[i] = reinterpret_cast<float *>(data)[i];
+    }
+  }
+  return RET_OK;
+}
+#endif
 
 int GatherOpenCLKernel::PreProcess() {
   if (!InferShapeDone()) {

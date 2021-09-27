@@ -53,6 +53,7 @@ int SparseToDenseOpenCLKernel::InitOutputToDefault() {
   return RET_OK;
 }
 
+#ifdef ENABLE_FP16
 int SparseToDenseOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   MS_CHECK_GE(in_tensors_.size(), DIMENSION_3D, RET_ERROR);
@@ -109,6 +110,40 @@ int SparseToDenseOpenCLKernel::InitWeights() {
   }
   return RET_OK;
 }
+#else
+int SparseToDenseOpenCLKernel::InitWeights() {
+  auto allocator = ocl_runtime_->GetAllocator();
+  MS_CHECK_GE(in_tensors_.size(), DIMENSION_3D, RET_ERROR);
+  auto weight_tensor = in_tensors_[2];
+  size_t size = 1;
+  for (size_t i = 0; i < weight_tensor->shape().size(); ++i) {
+    size *= weight_tensor->shape()[i];
+  }
+  MS_ASSERT(weight_tensor->data());
+  if (weight_scalar_) {
+    weight_scalar_ = *reinterpret_cast<float *>(weight_tensor->data());
+  } else {
+    auto sizeof_FLT = sizeof(float);
+    size_t weight_size = UP_ROUND(size, C4NUM) * sizeof_FLT;
+    weight_vector_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+    if (weight_vector_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
+    if (allocator->MapBuffer(weight_vector_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+      MS_LOG(ERROR) << "Map Buffer failed.";
+      return RET_ERROR;
+    }
+    memset(weight_vector_, 0x00, weight_size);
+    memcpy(weight_vector_, weight_tensor->data(), size * sizeof_FLT);
+    if (allocator->UnmapBuffer(weight_vector_) != RET_OK) {
+      MS_LOG(ERROR) << "UnmapBuffer failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+#endif
 
 int SparseToDenseOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() < DIMENSION_3D || out_tensors_.at(0)->shape().size() > DIMENSION_4D) {
@@ -200,11 +235,15 @@ int SparseToDenseOpenCLKernel::Prepare() {
 
   if (in_tensors_.size() > INPUT_TENSOR_SIZE_3) {
     auto input_tensor3 = in_tensors_[3];
+#ifdef ENABLE_FP16
     if (input_tensor3->data_type() == kNumberTypeFloat16) {
       default_ = static_cast<float>(*reinterpret_cast<float16_t *>(input_tensor3->data()));
     } else {
       default_ = *reinterpret_cast<float *>(input_tensor3->data());
     }
+#else
+    default_ = *reinterpret_cast<float *>(input_tensor3->data());
+#endif
     MS_ASSERT(default_);
   }
   ret = InitWeights();

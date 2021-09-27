@@ -79,6 +79,7 @@ int PowerOpenCLKernel::SetConstArgs() {
       return RET_ERROR;
     }
   }
+#ifdef ENABLE_FP16
   if (use_fp16_enable_) {
     auto x = static_cast<float16_t>(power_);
     auto y = static_cast<float16_t>(shift_);
@@ -97,12 +98,19 @@ int PowerOpenCLKernel::SetConstArgs() {
       return RET_ERROR;
     }
   }
+#else
+  cl_float4 parameter = {power_, shift_, scale_, unalign_w};
+  if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter) != CL_SUCCESS) {
+    MS_LOG(ERROR) << "SetKernelArg failed.";
+    return RET_ERROR;
+  }
+#endif
   return RET_OK;
 }
 
 void PowerOpenCLKernel::SetGlobalLocal() {
   cl_int4 output_shape = {};
-  for (int i = 0; i < out_tensors_.at(0)->shape().size(); ++i) {
+  for (size_t i = 0; i < out_tensors_.at(0)->shape().size(); ++i) {
     output_shape.s[i] = out_tensors_.at(0)->shape()[i];
   }
   Broadcast2GpuShape(out_shape_.s, output_shape.s, out_tensors_.at(0)->shape().size(), 1);

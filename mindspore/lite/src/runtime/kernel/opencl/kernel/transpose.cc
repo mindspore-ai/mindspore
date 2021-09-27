@@ -58,7 +58,7 @@ int TransposeOpenCLKernel::Prepare() {
     perm_4d_[1] = 1;
     perm_4d_[2] = 2;
     perm_4d_[3] = tensor_size_.AlignAxis(perm[1]);
-    if (num_axes != tensor_size_.NDim) {
+    if (num_axes != static_cast<int>(tensor_size_.NDim)) {
       perm_4d_[0] = 0;
       perm_4d_[1] = 1;
       perm_4d_[2] = 2;
@@ -93,8 +93,9 @@ int TransposeOpenCLKernel::Prepare() {
     kernel_name += "_general";
   }
 
-  if (in_tensors_[0]->shape().size() == DIMENSION_4D &&
-      in_tensors_[0]->shape()[2] * UP_DIV(in_tensors_[0]->shape()[3], C4NUM) > ocl_runtime_->GetMaxImage2DWidth()) {
+  if (in_tensors_[0]->shape().size() == static_cast<int>(DIMENSION_4D) &&
+      in_tensors_[0]->shape()[2] * UP_DIV(in_tensors_[0]->shape()[3], C4NUM) >
+        static_cast<int>(ocl_runtime_->GetMaxImage2DWidth())) {
     // just for input
     kernel_name += "_oversize";
   }

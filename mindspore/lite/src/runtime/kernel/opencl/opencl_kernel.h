@@ -21,6 +21,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <cfloat>
 #include "src/inner_kernel.h"
 #include "include/errorcode.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"

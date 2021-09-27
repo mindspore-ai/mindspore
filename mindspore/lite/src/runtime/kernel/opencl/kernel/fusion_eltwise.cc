@@ -145,9 +145,9 @@ bool IsEltwiseAndOperatorSupported(LiteKernel *node) {
     MS_ASSERT(in_tensor);
     auto shape = in_tensor->shape();
     bool is_scalar = shape.empty() || (shape.size() == DIMENSION_1D && shape.front() == 1);
-    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == output_info.C;
-    bool _111C =
-      shape.size() == DIMENSION_4D && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 && shape[3] == output_info.C;
+    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == static_cast<int>(output_info.C);
+    bool _111C = shape.size() == DIMENSION_4D && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 &&
+                 shape[3] == static_cast<int>(output_info.C);
     bool same_with_out = shape == output_shape;
     if (!(is_scalar || is_vector || _111C || same_with_out)) {
       return false;
@@ -209,6 +209,7 @@ void CopyNumber(void *dst, void *src, size_t n) {
   }
 }
 
+#ifdef ENABLE_FP16
 int FusionEltwiseOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   bool use_fp16 = ocl_runtime_->GetFp16Enable();
@@ -256,6 +257,41 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
   }
   return RET_OK;
 }
+#else
+int FusionEltwiseOpenCLKernel::InitWeights() {
+  auto allocator = ocl_runtime_->GetAllocator();
+  for (auto *tensor : in_tensors_) {
+    MS_ASSERT(tensor);
+    if (tensor->IsConst()) {
+      if (IsScalar(tensor->shape())) {
+        float value = *reinterpret_cast<float *>(tensor->data());
+        scalar_weights_.push_back(value);
+      } else {
+        auto tensor_info = GpuTensorInfo(tensor);
+        size_t num = tensor_info.ElementsNum;
+        size_t size = tensor_info.Image2DSize;
+        void *buffer = allocator->Malloc(size, lite::opencl::MemType::BUF);
+        if (buffer == nullptr) {
+          MS_LOG(ERROR) << "Malloc failed.";
+          return RET_ERROR;
+        }
+        if (allocator->MapBuffer(buffer, CL_MAP_WRITE, nullptr, true) == nullptr) {
+          MS_LOG(ERROR) << "Map Buffer failed.";
+          return RET_ERROR;
+        }
+        memset(buffer, 0x00, size);
+        CopyNumber<float, float>(buffer, tensor->data(), num);
+        if (allocator->UnmapBuffer(buffer) != RET_OK) {
+          MS_LOG(ERROR) << "UnmapBuffer failed.";
+          return RET_ERROR;
+        }
+        buffer_weights_.push_back(buffer);
+      }
+    }
+  }
+  return RET_OK;
+}
+#endif
 
 void FusionEltwiseOpenCLKernel::SetGlobalLocal() {
   auto output = GpuTensorInfo(out_tensors_.front());
@@ -275,6 +311,7 @@ int FusionEltwiseOpenCLKernel::SetConstArgs() {
     MS_ASSERT(in_tensor);
     if (in_tensor->IsConst()) {
       if (IsScalar(in_tensor->shape())) {
+#ifdef ENABLE_FP16
         if (ocl_runtime_->GetFp16Enable()) {
           auto value = static_cast<float16_t>(scalar_weights_[scalar_idx++]);
           if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, *(reinterpret_cast<cl_half *>(&value))) != CL_SUCCESS) {
@@ -287,6 +324,12 @@ int FusionEltwiseOpenCLKernel::SetConstArgs() {
             return RET_ERROR;
           }
         }
+#else
+        if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, scalar_weights_[scalar_idx++]) != CL_SUCCESS) {
+          MS_LOG(ERROR) << "SetKernelArg failed.";
+          return RET_ERROR;
+        }
+#endif
       } else {
         if (ocl_runtime_->SetKernelArg(kernel_, arg_idx, buffer_weights_[buffer_idx++], true) != CL_SUCCESS) {
           MS_LOG(ERROR) << "SetKernelArg failed.";
@@ -333,7 +376,7 @@ std::string FusionEltwiseOpenCLKernel::Codegen() {
           "__constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;\n"
           "__kernel void FusionEltwise(";
 
-  for (int i = 0; i < in_tensors_.size(); ++i) {
+  for (size_t i = 0; i < in_tensors_.size(); ++i) {
     MS_ASSERT(in_tensors_[i]);
     if (in_tensors_[i]->IsConst()) {
       if (IsScalar(in_tensors_[i]->shape())) {
@@ -359,14 +402,14 @@ std::string FusionEltwiseOpenCLKernel::Codegen() {
           "  }\n";
 
   auto output = GpuTensorInfo(out_tensors_.front());
-  for (int i = 0; i < in_tensors_.size(); ++i) {
+  for (size_t i = 0; i < in_tensors_.size(); ++i) {
     auto *tensor = in_tensors_[i];
     MS_ASSERT(tensor);
     auto shape = in_tensors_[i]->shape();
     bool is_scalar = IsScalar(shape);
-    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == output.C;
-    bool _111C =
-      shape.size() == DIMENSION_4D && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 && shape[3] == output.C;
+    bool is_vector = shape.size() == DIMENSION_1D && shape.front() == static_cast<int>(output.C);
+    bool _111C = shape.size() == DIMENSION_4D && shape[0] == 1 && shape[1] == 1 && shape[2] == 1 &&
+                 shape[3] == static_cast<int>(output.C);
     if (tensor->IsConst()) {
       if (!is_scalar) {
         code << "  FLT4 in" << i << " = input" << i << "[";

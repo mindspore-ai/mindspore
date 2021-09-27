@@ -61,11 +61,11 @@ int PadOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   // Compatibility code
-  if (param->padding_length == DIMENSION_2D * in_ndim) {
+  if (param->padding_length == static_cast<int>(DIMENSION_2D * in_ndim)) {
     return RET_OK;
   }
   auto pad_shape = in_tensors_.at(1)->shape();
-  if (pad_shape.size() != DIMENSION_2D || pad_shape[0] != in_ndim || pad_shape[1] != DIMENSION_2D) {
+  if (pad_shape.size() != DIMENSION_2D || pad_shape[0] != static_cast<int>(in_ndim) || pad_shape[1] != DIMENSION_2D) {
     MS_LOG(WARNING) << "pad tensor shape invalid.";
     return RET_ERROR;
   }
@@ -105,7 +105,7 @@ int PadOpenCLKernel::SetConstArgs() {
   std::vector<int> pad_before_ori;
   pad_before_ori.reserve(ndim);
   auto paddings = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data());
-  for (size_t i = 0; i < ndim; i++) {
+  for (auto i = 0; i < ndim; i++) {
     pad_before_ori.push_back(paddings[2 * i]);
   }
   cl_int4 pad_before;

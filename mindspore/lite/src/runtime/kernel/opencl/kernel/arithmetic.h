@@ -20,6 +20,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <cfloat>
 #include "src/runtime/kernel/arm/fp32/arithmetic_fp32.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 

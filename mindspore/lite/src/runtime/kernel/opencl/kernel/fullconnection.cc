@@ -73,9 +73,8 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
       MS_LOG(WARNING) << "If fullconnection input weight is not constant, it should be 2d.";
       return RET_ERROR;
     }
-    if (intensor_shape.C != in_tensors_.at(kWeightIndex)->shape()[1]) {
-      MS_LOG(WARNING)
-        << "If fullconnection input weight is not constant, input channel should equal to weight in_channel.";
+    if (static_cast<int>(intensor_shape.C) != in_tensors_.at(kWeightIndex)->shape()[1]) {
+      MS_LOG(WARNING) << "input weight is not constant, input channel should equal to weight in_channel.";
       return RET_ERROR;
     }
   }
@@ -132,6 +131,7 @@ int FullConnectionOpenCLKernel::InitWeights() {
   return InitBias();
 }  // namespace mindspore::kernel
 
+#ifdef ENABLE_FP16
 int FullConnectionOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
@@ -249,6 +249,97 @@ int FullConnectionOpenCLKernel::InitBias() {
   FreeStoredData(stored_bias_);
   return RET_OK;
 }
+#else
+int FullConnectionOpenCLKernel::InitFilter() {
+  auto allocator = ocl_runtime_->GetAllocator();
+  auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
+  int co4 = UP_DIV(CO_, C4NUM);
+  int nhw_remainder = intensor_shape.N * intensor_shape.H * intensor_shape.W / N_;
+  size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
+  padWeight_ = allocator->Malloc(nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size,
+                                 lite::opencl::MemType::BUF);
+  if (padWeight_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
+  if (padWeight_ == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
+  auto padWeight = reinterpret_cast<float *>(padWeight_);
+  memset(padWeight_, 0x00, nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size);
+  void *src_data = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data() : stored_weight_;
+  MS_ASSERT(src_data);
+  auto originWeight = reinterpret_cast<float *>(src_data);
+
+  // pad weight
+  // HWCICO -> (HWCI4)(CO4)(4 from CO)(4 from CI)
+  // if tranposeB, COHWCI -> (HWCI4)(CO4)(4 from CO)(4 from CI)
+  int index = 0;
+  for (int nhw = 0; nhw < nhw_remainder; nhw++) {
+    for (size_t i = 0; i < intensor_shape.Slice; ++i) {
+      for (int j = 0; j < co4; ++j) {
+        for (int k = 0; k < C4NUM; ++k) {
+          for (int l = 0; l < C4NUM; ++l) {
+            size_t src_ci = i * C4NUM + l;
+            size_t src_co = j * C4NUM + k;
+            if (src_ci < intensor_shape.C && static_cast<int>(src_co) < CO_) {
+              int originId = (nhw * intensor_shape.C + src_ci) * CO_ + src_co;
+              if (transposeB) {
+                originId = src_co * intensor_shape.C * nhw_remainder + nhw * intensor_shape.C + src_ci;
+              }
+              padWeight[index++] = originWeight[originId];
+            } else {
+              index++;
+            }
+          }
+        }
+      }
+    }
+  }
+  if (allocator->UnmapBuffer(padWeight_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
+  FreeStoredData(stored_weight_);
+  return RET_OK;
+}
+
+int FullConnectionOpenCLKernel::InitBias() {
+  // pad FC Bias
+  auto allocator = ocl_runtime_->GetAllocator();
+  int co4 = UP_DIV(CO_, C4NUM);
+  size_t dtype_size = sizeof(float);
+  size_t im_dst_x, im_dst_y;
+  im_dst_x = co4;
+  im_dst_y = 1;
+  size_t img_dtype = CL_FLOAT;
+  ImageSize img_size{im_dst_x, im_dst_y, img_dtype};
+  bias_ = allocator->Malloc(img_size);
+  if (bias_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
+  if (bias_ == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
+  memset(bias_, 0x00, co4 * C4NUM * dtype_size);
+  if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
+    void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data() : stored_bias_;
+    MS_ASSERT(src_data);
+    memcpy(bias_, src_data, CO_ * dtype_size);
+  }
+  if (allocator->UnmapBuffer(bias_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
+  FreeStoredData(stored_bias_);
+  return RET_OK;
+}
+#endif
 
 void FullConnectionOpenCLKernel::SetGlobalLocal() {
   local_size_ = {32, 4, 1};

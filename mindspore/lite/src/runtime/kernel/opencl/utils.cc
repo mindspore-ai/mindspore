@@ -203,6 +203,7 @@ int GetBroadcastGpuAxis(int ndim, int ori_axis) {
   return axis;
 }
 
+#ifdef ENABLE_FP16
 void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, const GpuTensorInfo &tensor,
                      int data_type) {
   MS_ASSERT(src);
@@ -238,6 +239,35 @@ void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, c
     }
   }
 }
+#else
+void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, const GpuTensorInfo &tensor,
+                     int data_type) {
+  MS_ASSERT(src);
+  MS_ASSERT(dst);
+  auto src_fp32 = reinterpret_cast<float *>(src);
+  auto src_int32 = reinterpret_cast<int32_t *>(src);
+  auto dst_fp32 = reinterpret_cast<float *>(dst);
+  auto dst_int32 = reinterpret_cast<int32_t *>(dst);
+  for (size_t n = 0, src_idx = 0; n < tensor.N; n++) {
+    for (size_t h = 0; h < tensor.H; ++h) {
+      for (size_t w = 0; w < tensor.W; ++w) {
+        for (size_t c = 0; c < tensor.C; ++c, ++src_idx) {
+          int dst_idx = ((n * tensor.H + h) * tensor.W + w) * tensor.Slice * C4NUM + c;
+          if (data_type == kNumberTypeInt32) {
+            dst_int32[dst_idx] = src_int32[src_idx];
+          } else {
+            dst_fp32[dst_idx] = src_fp32[src_idx];
+          }
+        }
+      }
+    }
+  }
+  // scalar
+  if (tensor.ElementsNum == 1) {
+    dst_fp32[3] = dst_fp32[2] = dst_fp32[1] = dst_fp32[0];
+  }
+}
+#endif
 
 int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tensor_name, lite::Tensor *tensor,
                          TypeId expect_data_type, const std::vector<int> &expect_shape) {

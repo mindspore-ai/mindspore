@@ -115,6 +115,7 @@ int StrassenOpenCLKernel::AllocatorMemoryForStrassen(int NumA, int NumB) {
   return RET_OK;
 }
 
+#ifdef ENABLE_FP16
 int StrassenOpenCLKernel::InitWeights() {
   // ABMCI @ ABCICO = ABMCO
   auto allocator = ocl_runtime_->GetAllocator();
@@ -167,6 +168,41 @@ int StrassenOpenCLKernel::InitWeights() {
   }
   return RET_OK;
 }
+#else
+int StrassenOpenCLKernel::InitWeights() {
+  // ABMCI @ ABCICO = ABMCO
+  auto allocator = ocl_runtime_->GetAllocator();
+  int NumA = in_tensors_[0]->shape()[0];
+  int NumB = in_tensors_[1]->shape()[0];
+  size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
+  padWeight_ = allocator->Malloc(NumA * NumB * dtype_size, lite::opencl::MemType::BUF);
+  if (padWeight_ == nullptr) {
+    MS_LOG(ERROR) << "Malloc failed.";
+    return RET_ERROR;
+  }
+  padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
+  if (padWeight_ == nullptr) {
+    MS_LOG(ERROR) << "Map Buffer failed.";
+    return RET_ERROR;
+  }
+  auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
+  memset(padWeight_, 0x00, NumA * NumB * dtype_size);
+  auto weight_tensor_data = in_tensors_.at(kWeightIndex)->data();
+  MS_ASSERT(weight_tensor_data);
+  auto originWeightFp32 = reinterpret_cast<float *>(weight_tensor_data);
+  if (AllocatorMemoryForStrassen(NumA / 2, NumB / 2) != RET_OK) {
+    MS_LOG(ERROR) << "AllocatorMemoryForStrassen failed.";
+    return RET_ERROR;
+  }
+  size_t size = NumA * NumB * dtype_size;
+  memcpy(padWeightFp32, originWeightFp32, size);
+  if (allocator->UnmapBuffer(padWeight_) != RET_OK) {
+    MS_LOG(ERROR) << "UnmapBuffer failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+#endif
 
 void AlignStrassenGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local,
                               cl::NDRange *global_range, cl::NDRange *local_range) {
