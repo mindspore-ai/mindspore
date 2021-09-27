@@ -35,6 +35,11 @@ class ConvertToolLoader:
         self.common = None
         self.dump_data_parser = None
         self.format_conversion = None
+        self.progress = None
+        self.log = None
+        self.compare_none_error = None
+        self.compare_exception = None
+        self.toolkit_path = self.find_toolkit_path()
         self.load_convert_tool()
 
     @staticmethod
@@ -57,9 +62,9 @@ class ConvertToolLoader:
 
     def load_convert_tool(self):
         """load CANN conversion tool from the toolkit path."""
-        toolkit_path = self.find_toolkit_path()
-        if str(toolkit_path) not in sys.path:
-            sys.path.append(str(toolkit_path))
+        # add toolkit path to system searching module path
+        if str(self.toolkit_path) not in sys.path:
+            sys.path.insert(0, str(self.toolkit_path))
         try:
             self.utils = import_module('utils')
             self.common = import_module('common')
@@ -68,9 +73,33 @@ class ConvertToolLoader:
             self.format_conversion = import_module(
                 'shape_conversion').FormatConversionMain
         except ModuleNotFoundError:
+            self.reset_system_path()
             raise ModuleNotFoundError(
-                "Failed to load CANN conversion tools under " + toolkit_path + ". Please make sure Ascend " +
-                "toolkit has been installed properly.")
+                "Failed to load CANN conversion tools under {}. Please make sure Ascend " \
+                "toolkit has been installed properly.".format(self.toolkit_path))
+
+        try:
+            self.progress = import_module("progress").Progress
+        except (ModuleNotFoundError, AttributeError):
+            self.progress = self.utils.Progress
+        try:
+            self.log = import_module("log")
+            if not hasattr(self.log, "print_error_log"):
+                raise ModuleNotFoundError
+        except ModuleNotFoundError:
+            self.log = self.utils
+        try:
+            compare_error = import_module("compare_error")
+            self.compare_none_error = compare_error.CompareError.MSACCUCMP_NONE_ERROR
+            self.compare_exception = compare_error.CompareError
+        except ModuleNotFoundError:
+            self.compare_none_error = self.utils.VECTOR_COMPARISON_NONE_ERROR
+            self.compare_exception = self.utils.CompareError
+
+    def reset_system_path(self):
+        # restore system searching module path
+        if str(self.toolkit_path) in sys.path:
+            sys.path.remove(str(self.toolkit_path))
 
 
 def parse_args(file_list, output_path):
@@ -114,18 +143,25 @@ class AsyncDumpConverter:
 
     def convert_files(self):
         """Main entry of the converter to convert async dump files into npy format."""
-        self.convert_tool.utils.print_info_log('Start to convert async dump files.')
-        ret_code = self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR
-        if self.args.format is not None:
-            convert = self.convert_tool.format_conversion(self.args)
-        else:
-            convert = self.convert_tool.dump_data_parser(self.args)
-        ret_code = self.handle_multi_process(convert, self.files_to_convert)
-        self._rename_generated_npy_files()
-        if ret_code != self.convert_tool.utils.VECTOR_COMPARISON_NONE_ERROR:
-            if os.path.exists(self.failed_file_path):
-                self.convert_failed_tensors()
-        self.convert_tool.utils.print_info_log('Finish to convert async dump files.')
+        self.convert_tool.log.print_info_log('Start to convert async dump files.')
+        try:
+            ret_code = self.convert_tool.compare_none_error
+            if self.args.format is not None:
+                convert = self.convert_tool.format_conversion(self.args)
+            else:
+                convert = self.convert_tool.dump_data_parser(self.args)
+            # 1. check if arguments are valid
+            convert.check_arguments_valid()
+            # 2. convert format for dump data
+            ret_code = self.handle_multi_process(convert, self.files_to_convert)
+            self._rename_generated_npy_files()
+            if ret_code != self.convert_tool.compare_none_error:
+                if os.path.exists(self.failed_file_path):
+                    self.convert_failed_tensors()
+        finally:
+            # clean up sys.path no matter conversion is successful or not to avoid pollution
+            self.convert_tool.reset_system_path()
+        self.convert_tool.log.print_info_log('Finish to convert async dump files.')
 
     def convert_failed_tensors(self):
         """Convert the failed tensor recorded in the failed txt file."""

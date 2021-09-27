@@ -359,7 +359,7 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   const std::string dash = "-";
   int start = 0;
   unsigned int end = (unsigned int)(iteration_.find(vertical_bar));
-  while (iteration_.find(vertical_bar) != std::string::npos) {
+  while (iteration_.find(vertical_bar, IntToSize(start)) != std::string::npos) {
     std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
     unsigned int range_idx = (unsigned int)(temp.find(dash));
     if (temp.find(dash) != std::string::npos) {
