@@ -19,7 +19,6 @@
 #include "actor/actorpolicy.h"
 
 namespace mindspore {
-
 void ActorPolicy::SetRunningStatus(bool startRun) {
   std::lock_guard<std::mutex> lock(mailboxLock);
   this->start = startRun;
@@ -44,12 +43,10 @@ int SingleThread::EnqueMessage(std::unique_ptr<MessageBase> &&msg) {
     enqueMailbox->push_back(std::move(msg));
     result = ++msgCount;
   }
-
   // Notify when the count of message  is from  empty to one.
   if (start && result == 1) {
     conditionVar.notify_one();
   }
-
   return result;
 }
 void SingleThread::Notify() {
@@ -66,7 +63,6 @@ std::list<std::unique_ptr<MessageBase>> *SingleThread::GetMsgs() {
 
   // REF_PRIVATE_MEMBER
   result = dequeMailbox;
-
   return result;
 }
 
@@ -119,10 +115,7 @@ std::list<std::unique_ptr<MessageBase>> *ShardedThread::GetMsgs() {
     SwapMailbox();
     result = dequeMailbox;
   }
-
   mailboxLock.unlock();
-
   return result;
 }
-
 };  // end of namespace mindspore

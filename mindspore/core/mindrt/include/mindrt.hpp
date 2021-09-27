@@ -22,7 +22,6 @@
 
 // brief provide an asynchronous programming framework as Actor model
 namespace mindspore {
-
 struct MindrtAddress {
   std::string scheme;
   std::string ip;
@@ -71,6 +70,5 @@ int GetHttpKmsgFlag();
 
 // brief set flag of http message format
 void SetHttpKmsgFlag(int flag);
-
 }  // namespace mindspore
 #endif

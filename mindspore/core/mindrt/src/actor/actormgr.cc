@@ -24,7 +24,6 @@
 #include "actor/iomgr.h"
 
 namespace mindspore {
-
 ActorMgr ActorMgr::actorMgr;
 std::map<std::string, std::shared_ptr<IOMgr>> ActorMgr::ioMgrs;
 
@@ -232,9 +231,7 @@ AID ActorMgr::Spawn(const ActorReference &actor, bool shareThread, bool start) {
     MS_LOG(ERROR) << "The actor's name conflicts,name:" << actor->GetAID().Name().c_str();
     MINDRT_EXIT("Actor name conflicts.");
   }
-
   MS_LOG(DEBUG) << "ACTOR was spawned,a=" << actor->GetAID().Name().c_str();
-
   std::unique_ptr<ActorPolicy> threadPolicy;
 
   if (shareThread) {
@@ -285,5 +282,4 @@ void ActorMgr::Wait(const AID &id) {
     actor->Await();
   }
 }
-
 };  // end of namespace mindspore
