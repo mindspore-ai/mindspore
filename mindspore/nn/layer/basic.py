@@ -249,7 +249,7 @@ class Dense(Cell):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
-          to :math:`in\_channels` in `Inputs`
+          to :math:`in\_channels` in `Inputs`.
 
     Outputs:
         Tensor of shape :math:`(*, out\_channels)`.
@@ -475,7 +475,7 @@ class Norm(Cell):
         otherwise a Tensor with dimensions in 'axis' removed is returned. The data type is the same with `x`
 
     Raises:
-        TypeError: If `axis` is neither an int nor tuple.
+        TypeError: If `axis` is neither an int nor a tuple.
         TypeError: If `keep_dims` is not a bool.
 
     Supported Platforms:
@@ -669,17 +669,18 @@ class Pad(Cell):
             paddings are int type. For `D` th dimension of the `x`, paddings[D, 0] indicates how many sizes to be
             extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how many sizes to
             be extended behind of the `D` th dimension of the input tensor. The padded size of each dimension D of the
-            output is: :math:`paddings[D, 0] + input\_x.dim\_size(D) + paddings[D, 1]`
-            eg:
+            output is: :math:`paddings[D, 0] + input\_x.dim\_size(D) + paddings[D, 1]`,
+            e.g.:
 
-            - mode = "CONSTANT".
-            - paddings = [[1,1], [2,2]].
-            - x = [[1,2,3], [4,5,6], [7,8,9]].
-            - The above can be seen: 1st dimension of `x` is 3, 2nd dimension of `x` is 3.
-            - Substitute into the formula to get:
-            - 1st dimension of output is paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 4.
-            - 2nd dimension of output is paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7.
-            - so output.shape is (4, 7)
+            .. code-block::
+                mode = "CONSTANT".
+                paddings = [[1,1], [2,2]].
+                x = [[1,2,3], [4,5,6], [7,8,9]].
+                # The above can be seen: 1st dimension of `x` is 3, 2nd dimension of `x` is 3.
+                # Substitute into the formula to get:
+                # 1st dimension of output is paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 4.
+                # 2nd dimension of output is paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7.
+                # So the shape of output is (4, 7).
 
         mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
             Default: "CONSTANT".

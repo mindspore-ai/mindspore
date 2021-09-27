@@ -112,7 +112,7 @@ class Momentum(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
     Outputs:
-        tuple[bool], all elements are True.
+        tuple[bool]. All elements are True.
 
     Raises:
         TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.

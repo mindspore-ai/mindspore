@@ -919,6 +919,9 @@ class Moments(Cell):
     """
     Calculates the mean and variance of `x`.
 
+    The mean and variance are calculated by aggregating the contents of `input_x` across axes.
+    If `input_x` is 1-D and axes = [0] this is just the mean and variance of a vector.
+
     Args:
         axis (Union[int, tuple(int)]): Calculates the mean and variance along the specified axis. Default: None.
         keep_dims (bool): If true, The dimension of mean and variance are identical with input's.
