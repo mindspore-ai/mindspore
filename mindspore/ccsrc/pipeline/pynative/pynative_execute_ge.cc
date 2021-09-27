@@ -223,22 +223,30 @@ PynativeStatusCode ConvertAttributes(const OpExecInfoPtr &op_exec_info, const st
 std::vector<MeTensorPtr> ConvertOutputTensors(const OpExecInfoPtr &op_exec_info,
                                               const std::vector<GeTensorPtr> &ge_tensors) {
   std::vector<MeTensorPtr> outputs;
+  MS_EXCEPTION_IF_NULL(op_exec_info);
   AbstractBasePtr abs_base = op_exec_info->abstract;
   std::vector<std::vector<int64_t>> shapes;
   if (abs_base != nullptr && abs_base->isa<abstract::AbstractTensor>()) {
     auto arg_tensor = dyn_cast<abstract::AbstractTensor>(abs_base);
-    shapes.emplace_back(arg_tensor->shape()->shape());
+    MS_EXCEPTION_IF_NULL(arg_tensor);
+    auto shape = arg_tensor->shape();
+    MS_EXCEPTION_IF_NULL(shape);
+    shapes.emplace_back(shape->shape());
     outputs = transform::TransformUtil::ConvertGeTensors(ge_tensors, shapes);
     return outputs;
   }
   if (abs_base != nullptr && abs_base->isa<abstract::AbstractTuple>()) {
     auto arg_tuple = dyn_cast<abstract::AbstractTuple>(abs_base);
+    MS_EXCEPTION_IF_NULL(arg_tuple);
     size_t len = arg_tuple->size();
 
     for (size_t i = 0; i < len; i++) {
       if (arg_tuple->elements()[i]->isa<abstract::AbstractTensor>()) {
         auto tensor = dyn_cast<abstract::AbstractTensor>(arg_tuple->elements()[i]);
-        shapes.emplace_back(tensor->shape()->shape());
+        MS_EXCEPTION_IF_NULL(tensor);
+        auto shape = tensor->shape();
+        MS_EXCEPTION_IF_NULL(shape);
+        shapes.emplace_back(shape->shape());
       }
     }
     outputs = transform::TransformUtil::ConvertGeTensors(ge_tensors, shapes);

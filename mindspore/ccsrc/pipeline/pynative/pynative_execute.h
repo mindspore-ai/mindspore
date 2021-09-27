@@ -30,15 +30,14 @@
 
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
-
 #include "pybind_api/ir/base_ref_py.h"
-#include "pipeline/pynative/base.h"
-#include "utils/ms_context.h"
 #include "ir/anf.h"
-#include "pipeline/jit/resource.h"
 #include "frontend/optimizer/ad/kpynative.h"
 #include "frontend/operator/composite/composite.h"
+#include "pipeline/jit/resource.h"
+#include "pipeline/pynative/base.h"
 #include "pipeline/pynative/pynative_cache.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::pynative {
 namespace py = pybind11;
@@ -86,17 +85,17 @@ class TopCellInfo {
   void set_need_compile_graph(bool need_compile_graph) { need_compile_graph_ = need_compile_graph; }
   bool forward_already_run() const { return forward_already_run_; }
   void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
-  pipeline::ResourcePtr resource() { return resource_; }
-  FuncGraphPtr df_builder() { return df_builder_; }
+  pipeline::ResourcePtr resource() const { return resource_; }
+  FuncGraphPtr df_builder() const { return df_builder_; }
   size_t op_num() const { return op_num_; }
   void set_op_num(size_t op_num) { op_num_ = op_num; }
-  std::string &cell_id() { return cell_id_; }
-  std::string &already_run_cell_id() { return alread_run_cell_id_; }
-  std::string &input_args_id() { return input_args_id_; }
-  std::string &all_op_info() { return all_op_info_; }
-  void set_grad_operation(const std::string &grad_operation) { grad_operation_ = grad_operation; }
-  std::string &grad_operation() { return grad_operation_; }
+  const std::string &cell_id() const { return cell_id_; }
+  const std::string &already_run_cell_id() const { return alread_run_cell_id_; }
+  const std::string &input_args_id() const { return input_args_id_; }
   void set_input_args_id(const std::string &input_args_id) { input_args_id_ = input_args_id; }
+  std::string &all_op_info() { return all_op_info_; }
+  const std::string &grad_operation() const { return grad_operation_; }
+  void set_grad_operation(const std::string &grad_operation) { grad_operation_ = grad_operation; }
   std::unordered_set<std::string> &sub_cell_list() { return sub_cell_list_; }
   bool IsSubCell(const std::string &cell_id) const;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
@@ -257,15 +256,21 @@ class GradExecutor {
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
                                   bool is_param = false);
   void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param) const {
-    top_cell()->graph_info_map()[g]->params[id] = param;
+    auto &graph_info = top_cell()->graph_info_map()[g];
+    MS_EXCEPTION_IF_NULL(graph_info);
+    graph_info->params[id] = param;
   }
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
                                 int64_t index = -1) const {
-    top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
+    auto &graph_info = top_cell()->graph_info_map()[g];
+    MS_EXCEPTION_IF_NULL(graph_info);
+    graph_info->node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
   }
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
                                 const std::vector<int64_t> &index) const {
-    top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, index);
+    auto &graph_info = top_cell()->graph_info_map()[g];
+    MS_EXCEPTION_IF_NULL(graph_info);
+    graph_info->node_map[id] = std::make_pair(node, index);
   }
   void CreateMakeTupleNodeForMultiOut(const FuncGraphPtr &curr_g, const py::object &out, const std::string &out_id);
 
