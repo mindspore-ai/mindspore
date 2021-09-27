@@ -19,6 +19,7 @@ mindspore.run_check
 The goal is to provide a convenient API to check if the installation is successful or failed.
 """
 
+
 def _check_mul():
     """
     Define the mul method.
