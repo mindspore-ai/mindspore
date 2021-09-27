@@ -35,11 +35,12 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   std::vector<int64_t> output_shape(input_shape.size());
   auto block_shape_vector = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockSize));
   auto paddings = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kPaddings));
-  for (size_t i = 0; i < 2; i++) {
-    auto padded = output_shape[i + 2] + paddings[i][0] + paddings[i][1];
+  const size_t kDimsOffset = 2;
+  for (size_t i = 0; i < kDimsOffset; i++) {
+    auto padded = output_shape[i + kDimsOffset] + paddings[i][0] + paddings[i][1];
     (void)CheckAndConvertUtils::CheckInteger("padded shape", SizeToLong(padded % block_shape_vector.size()), kEqual, 0,
                                              prim_name);
-    output_shape[i + 2] = SizeToLong(padded / block_shape_vector.size());
+    output_shape[i + kDimsOffset] = SizeToLong(padded / block_shape_vector.size());
   }
   output_shape[0] *= SizeToLong(block_shape_vector.size() * block_shape_vector.size());
   return std::make_shared<abstract::Shape>(output_shape);

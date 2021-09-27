@@ -207,6 +207,12 @@ class Lamb(Optimizer):
 
         To improve parameter groups performance, the customized order of parameters can be supported.
 
+        There is usually no connection between a optimizer and mixed precision. But when `FixedLossScaleManager` is used
+        and `drop_overflow_update` in `FixedLossScaleManager` is set to False, optimizer needs to set the 'loss_scale'.
+        As this optimizer has no argument of `loss_scale`, so `loss_scale` needs to be processed by other means, refer
+        document `LossScale <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/lossscale.html>`_ to process
+        `loss_scale` correctly.
+
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
             the element in `params` must be class `Parameter`. When the `params` is a list of `dict`, the "params",
