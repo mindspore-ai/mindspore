@@ -581,7 +581,7 @@ def to_type(img, output_type):
 
     try:
         return img.astype(output_type)
-    except:
+    except Exception:
         raise RuntimeError("output_type: " + str(output_type) + " is not a valid datatype.")
 
 

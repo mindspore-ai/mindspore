@@ -37,6 +37,7 @@ LiteMat::LiteMat() {
   data_type_ = LDataType::UINT8;
   ref_count_ = nullptr;
   setSteps(0, 0, 0);
+  release_flag = false;
 }
 
 LiteMat::LiteMat(int width, LDataType data_type) {
@@ -51,6 +52,7 @@ LiteMat::LiteMat(int width, LDataType data_type) {
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
+  release_flag = false;
   Init(width, data_type);
 }
 
@@ -66,6 +68,7 @@ LiteMat::LiteMat(int width, int height, LDataType data_type) {
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
+  release_flag = false;
   Init(width, height, data_type);
 }
 
@@ -81,6 +84,7 @@ LiteMat::LiteMat(int width, int height, void *p_data, LDataType data_type) {
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
+  release_flag = false;
   Init(width, height, p_data, data_type);
 }
 
@@ -96,6 +100,7 @@ LiteMat::LiteMat(int width, int height, int channel, LDataType data_type) {
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
+  release_flag = false;
   Init(width, height, channel, data_type);
 }
 
@@ -111,6 +116,7 @@ LiteMat::LiteMat(int width, int height, int channel, void *p_data, LDataType dat
   ref_count_ = nullptr;
   size_ = 0;
   setSteps(0, 0, 0);
+  release_flag = false;
   Init(width, height, channel, p_data, data_type);
 }
 
@@ -133,6 +139,7 @@ LiteMat::LiteMat(const LiteMat &m) {
   data_type_ = m.data_type_;
   ref_count_ = m.ref_count_;
   size_ = m.size_;
+  release_flag = m.release_flag;
   setSteps(m.steps_[0], m.steps_[1], m.steps_[2]);
   if (ref_count_) {
     addRef(ref_count_, 1);

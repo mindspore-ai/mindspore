@@ -89,6 +89,13 @@ Status MindDataNode::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
+  if (shuffle_mode_ != ShuffleMode::kFalse && shuffle_mode_ != ShuffleMode::kFiles &&
+      shuffle_mode_ != ShuffleMode::kGlobal && shuffle_mode_ != ShuffleMode::kInfile) {
+    std::string err_msg = "TFRecordNode: Invalid ShuffleMode, check input value of enum.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
   std::vector<std::string> dataset_file_vec =
     search_for_pattern_ ? std::vector<std::string>{dataset_file_} : dataset_files_;
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("MindDataNode", dataset_file_vec));

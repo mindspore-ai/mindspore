@@ -45,8 +45,8 @@ Status PluginOp::TensorRowToPlugin(const TensorRow &in_row, std::vector<plugin::
         int ret_code = memcpy_s(tensor.buffer_.data(), tensor.buffer_.size(), in_row[ind]->GetBuffer(), buffer_size);
         CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into plugin tensor.");
       } else {
-        auto ret_code = std::memcpy(tensor.buffer_.data(), in_row[ind]->GetBuffer(), buffer_size);
-        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == tensor.buffer_.data(), "Failed to copy data into plugin tensor.");
+        int ret_code = memcpy_s(tensor.buffer_.data(), buffer_size, in_row[ind]->GetBuffer(), buffer_size);
+        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into plugin tensor.");
       }
     } else {  // string tensor, for now, only tensor with 1 string is supported!
       CHECK_FAIL_RETURN_UNEXPECTED(in_row[ind]->shape().NumOfElements() == 1,
