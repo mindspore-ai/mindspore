@@ -26,8 +26,7 @@
 
 namespace mindspore::lite {
 
-void RuntimePass(const InnerContext *context, std::vector<kernel::LiteKernel *> *kernels,
-                 std::vector<Tensor *> *tensors);
+void RuntimePass(std::vector<kernel::LiteKernel *> *subgraphs, std::vector<Tensor *> *tensors);
 
 /* Nc4hw4 PASS
  * before  : --(nhwc)-- CONV --(nhwc)-- TRANSPOSE --(nchw)-- IN --(nchw)-- TRANSPOSE --(nhwc)--

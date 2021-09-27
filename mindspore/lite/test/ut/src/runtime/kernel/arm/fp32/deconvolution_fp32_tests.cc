@@ -478,6 +478,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   auto *deconv_param = new ConvParameter();
   auto *ctx = new lite::InnerContext;
   deconv_param->op_parameter_.thread_num_ = 1;
+  deconv_param->op_parameter_.is_zero_shape_ = false;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   float *correct;
   int total_size = DeConvTestInit1(&inputs_, &outputs_, deconv_param, &correct);
@@ -548,6 +549,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
   int total_size = DeConvTestInit2(&inputs_, &outputs_, deconv_param, &correct);
   auto *ctx = new lite::InnerContext;
   deconv_param->op_parameter_.thread_num_ = 1;
+  deconv_param->op_parameter_.is_zero_shape_ = false;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
@@ -627,6 +629,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   int total_size = DeConvTestInit3(&inputs_, &outputs_, deconv_param, &correct);
   auto *ctx = new lite::InnerContext;
   deconv_param->op_parameter_.thread_num_ = 2;
+  deconv_param->op_parameter_.is_zero_shape_ = false;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
