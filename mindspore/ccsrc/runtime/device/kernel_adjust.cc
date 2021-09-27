@@ -39,6 +39,7 @@ constexpr auto kProfilingGraphId = "PROFILING_GRAPH_ID";
 constexpr auto kGradients = "Gradients";
 constexpr auto kSpecifyParameter = "accu_status";
 size_t kNPUShape = 8;
+size_t kLastHandleDiff = 2;
 }  // namespace
 namespace mindspore {
 namespace device {
@@ -1105,7 +1106,7 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
       new_execution_order.push_back(npu_get_cnode);
       new_execution_order.push_back(assign_add_cnode);
     }
-    if (i == execution_order.size() - 2) {
+    if (i == execution_order.size() - kLastHandleDiff) {
       new_execution_order.push_back(execution_order[i + 1]);
       if (next_full_name.find(kGradients) != std::string::npos) {
         auto npu_get_cnode = CreateNPUGetFloatStatus(kernel_graph_ptr, npu_alloc_cnode);
