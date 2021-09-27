@@ -17,7 +17,6 @@
 #define MINDSPORE_NNACL_FP32_PRELU_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/prelu_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {

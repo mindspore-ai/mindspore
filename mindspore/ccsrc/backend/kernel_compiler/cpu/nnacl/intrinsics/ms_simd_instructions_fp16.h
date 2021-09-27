@@ -95,12 +95,12 @@ static inline float16x4_t ms_vcvt_f16_f32(float32x4_t in) {
 #define MS_FLOAT16X8 float16x8_t
 #define MS_FLOAT16X4 float16x4_t
 #define MS_MOVQ_F16 vmovq_n_f16
-#define MS_STQ_F16 vst1q_f16
+#define MS_STQ_F16(ptr, val) vst1q_f16(ptr, val)
 #define MS_ST_F16 vst1_f16
 #define MS_MINQ_F16 vminq_f16
 #define MS_MAXQ_F16 vmaxq_f16
-#define MS_LDQ_F16 vld1q_f16
-#define MS_LD_F16 vld1_f16
+#define MS_LDQ_F16(ptr) vld1q_f16(ptr)
+#define MS_LD_F16(ptr) vld1_f16(ptr)
 #define MS_ADDQ_F16 vaddq_f16
 #define MS_SUBQ_F16 vsubq_f16
 #define MS_MULQ_F16 vmulq_f16

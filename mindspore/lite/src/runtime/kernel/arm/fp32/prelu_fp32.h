@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/inner_kernel.h"
 #include "include/context.h"
-#include "nnacl/fp32/prelu_fp32.h"
+#include "nnacl/prelu_parameter.h"
 
 namespace mindspore::kernel {
 class PReluCPUKernel : public InnerKernel {
@@ -27,19 +27,20 @@ class PReluCPUKernel : public InnerKernel {
   PReluCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : InnerKernel(parameter, inputs, outputs, ctx) {
-    prelu_param_ = reinterpret_cast<PReluParameter *>(op_parameter_);
+    param_ = reinterpret_cast<PReluParameter *>(op_parameter_);
   }
   ~PReluCPUKernel() = default;
 
   int Prepare() override;
   int ReSize() override;
   int Run() override;
-  int DoExcute(int task_id);
+  virtual int DoExcute(int task_id);
 
- private:
-  PReluParameter *prelu_param_;
-  float *input_data_ = nullptr;
-  float *output_data_ = nullptr;
+ protected:
+  PReluParameter *param_;
+  void *input_data_ = nullptr;
+  void *slope_data_ = nullptr;
+  void *output_data_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_PRELU_H_

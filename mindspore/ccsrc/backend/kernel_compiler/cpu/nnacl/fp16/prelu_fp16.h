@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_NNACL_PRELU_PARAMETER_H_
-#define MINDSPORE_NNACL_PRELU_PARAMETER_H_
+#ifndef MINDSPORE_NNACL_FP16_PRELU_FP16_H_
+#define MINDSPORE_NNACL_FP16_PRELU_FP16_H_
 
 #include "nnacl/op_base.h"
-typedef struct PReluParameter {
-  // Primitive parameter
-  OpParameter op_parameter_;
-  // other parameter
-  bool channelShared;
-  int channel_num_;
-  int input_num_;
-} PReluParameter;
 
-#endif  // MINDSPORE_NNACL_PRELU_PARAMETER_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
+void PReluFp16(const float16_t *input, float16_t *output, const float16_t *slope, int start, int end, int channel);
+
+void PReluShareChannelFp16(const float16_t *input, float16_t *output, float16_t slope, int start, int end);
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MINDSPORE_NNACL_FP16_PRELU_FP16_H_
