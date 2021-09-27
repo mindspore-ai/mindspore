@@ -77,7 +77,7 @@ int64_t Log2Ceil(int64_t length) {
   }
   int64_t floor = 0;
   for (int64_t i = 4; i >= 0; --i) {
-    const int64_t shift = (int64_t)(1 << i);
+    const int64_t shift = static_cast<int64_t>(1UL << static_cast<unsigned>(i));
     int64_t tmp = SizeToLong(length >> shift);
     if (tmp != 0) {
       length = tmp;
@@ -89,7 +89,7 @@ int64_t Log2Ceil(int64_t length) {
 
 int64_t GetFftLength(int64_t length) {
   int64_t shift = Log2Ceil(length);
-  return SizeToLong(1 << (unsigned int)shift);
+  return SizeToLong(1UL << LongToSize(shift));
 }
 
 void AudioSpectrogram::set_mag_square(const bool mag_square) { (void)this->AddAttr(kMagSquare, MakeValue(mag_square)); }
