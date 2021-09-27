@@ -343,11 +343,6 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
-    std::shared_ptr<Tensor> output_tensor;
-    RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_FLOAT32), &output_tensor));
-
-    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-
     if (input->type() == DataType::DE_UINT8) {
       LiteMat lite_mat_float;
       // change input to float
@@ -358,6 +353,10 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
       ret = SubStractMeanNormalize(lite_mat_rgb, lite_mat_norm, vec_mean, vec_std);
     }
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Normalize: normalize failed.");
+
+    std::shared_ptr<Tensor> output_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(input->shape(), DataType(DataType::DE_FLOAT32),
+                                              static_cast<uchar *>(lite_mat_norm.data_ptr_), &output_tensor));
 
     *output = output_tensor;
   } catch (std::runtime_error &e) {
