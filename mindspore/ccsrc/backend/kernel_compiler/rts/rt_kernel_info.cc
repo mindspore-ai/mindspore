@@ -68,6 +68,7 @@ void GetRtKelInfo(const CNodePtr &kernel_node,
     auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     // set input infos
     auto input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
     kernel_build_info_builder->SetInputsFormat(std::vector<std::string>(input_num, kOpFormat_DEFAULT));
     std::vector<TypeId> input_types = {};
     for (size_t i = 0; i < input_num; i++) {

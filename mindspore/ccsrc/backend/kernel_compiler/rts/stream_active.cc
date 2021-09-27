@@ -52,8 +52,13 @@ bool StreamActiveKernel::Launch(const std::vector<AddressPtr> &, const std::vect
 
   rtStream_t act_stream;
   rtError_t status;
+  MS_EXCEPTION_IF_NULL(kernel::TaskStream::GetInstance());
+  auto stream_list = kernel::TaskStream::GetInstance()->gen_stream_list();
   for (auto index : active_streams_index_) {
-    act_stream = kernel::TaskStream::GetInstance()->gen_stream_list()[index];
+    if (index >= stream_list.size()) {
+      MS_LOG(EXCEPTION) << "Invalid index: " << index << " stream_list size: " << stream_list.size();
+    }
+    act_stream = stream_list[index];
     status = rtStreamActive(act_stream, stream_ptr);
     if (status != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "Stream active failed!";

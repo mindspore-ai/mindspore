@@ -226,6 +226,7 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
   } else {
     tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
   }
+  MS_EXCEPTION_IF_NULL(tensor);
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
   if (is_internal_output) {
     tensor->set_sync_status(kNoNeedSync);
@@ -436,6 +437,7 @@ BaseRef CreateNodeOutputPlaceholder(const AnfNodePtr &anf, const KernelGraphPtr 
 }
 
 void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size_t input_index) {
+  MS_EXCEPTION_IF_NULL(tensor);
   const auto &tensor_shape = tensor->shape();
   const auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel, input_index);
   if (tensor_shape.size() != input_shape.size()) {

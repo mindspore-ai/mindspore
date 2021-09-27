@@ -55,6 +55,7 @@ void DescReporter::ReportByLine(const std::string &data, const std::string &file
 
 void DescReporter::ReportAllLine() {
   for (const auto &desc : prof_desc_list_) {
+    MS_EXCEPTION_IF_NULL(desc);
     auto data = desc->ToString();
     ReportByLine(data, file_name_);
   }

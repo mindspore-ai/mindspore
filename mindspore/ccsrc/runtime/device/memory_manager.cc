@@ -144,6 +144,7 @@ bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr address, size_t 
   if (!device_ptr) {
     return false;
   }
+  MS_EXCEPTION_IF_NULL(address);
   address->ptr_ = device_ptr;
   address->size_ = size;
   address->from_mem_pool_ = true;

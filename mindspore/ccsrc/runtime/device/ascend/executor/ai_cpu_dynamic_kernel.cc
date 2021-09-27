@@ -81,6 +81,7 @@ void AiCpuDynamicKernel::Initialize() {
   if (is_dynamic_shape_) {
     ext_info_handler_ =
       std::make_shared<AicpuExtInfoHandler>(cnode->fullname_with_scope(), input_num_, output_num_, shape_type);
+    MS_EXCEPTION_IF_NULL(ext_info_handler_);
     ext_info_handler_->Parse(ext_info_data_);
   }
 
@@ -103,6 +104,7 @@ void AiCpuDynamicKernel::Initialize() {
   }
 
   auto aicpu_param_head = reinterpret_cast<kernel::AicpuParamHead *>(args_.data());
+  MS_EXCEPTION_IF_NULL(aicpu_param_head);
   aicpu_param_head->extInfoLength = SizeToUint(ext_info_size_);
   aicpu_param_head->extInfoAddr = reinterpret_cast<uint64_t>(ext_info_addr_dev_);
 }
@@ -114,11 +116,13 @@ bool AiCpuDynamicKernel::UpdateInputOutputAddr() {
   MS_EXCEPTION_IF_NULL(cnode);
   for (size_t i = 0; i < input_num_; ++i) {
     auto input_addr = AnfAlgo::GetPrevNodeOutputAddr(cnode, i);
+    MS_EXCEPTION_IF_NULL(input_addr);
     io_addrs.emplace_back(reinterpret_cast<uintptr_t>(input_addr->GetMutablePtr()));
   }
 
   for (size_t i = 0; i < output_num_; ++i) {
     auto output_addr = AnfAlgo::GetOutputAddr(cnode, i);
+    MS_EXCEPTION_IF_NULL(output_addr);
     io_addrs.emplace_back(reinterpret_cast<uintptr_t>(output_addr->GetMutablePtr()));
   }
 
@@ -128,6 +132,10 @@ bool AiCpuDynamicKernel::UpdateInputOutputAddr() {
   }
 
   auto io_ptr = args_.data() + sizeof(kernel::AicpuParamHead);
+  if (io_addrs.empty()) {
+    MS_LOG(ERROR) << "The io_addrs is empty";
+    return false;
+  }
   auto ret =
     memcpy_s(io_ptr, args_.size() - sizeof(kernel::AicpuParamHead), &io_addrs[0], sizeof(uint64_t) * io_addrs.size());
   if (ret != 0) {
@@ -146,6 +154,7 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
     return true;
   }
 
+  MS_EXCEPTION_IF_NULL(ext_info_handler_);
   for (size_t i = 0; i < input_num_; ++i) {
     ext_info_handler_->UpdateInputShapeAndType(i, NOT_NULL(cnode));
   }
@@ -171,6 +180,7 @@ bool AiCpuDynamicKernel::UpdateOutputShapeFromExtInfo() {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
   MS_LOG(INFO) << "UpdateOutputShapeFromExtInfo start. Op name " << cnode->fullname_with_scope();
+  MS_EXCEPTION_IF_NULL(ext_info_handler_);
   auto ret = rtMemcpy(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
                       ext_info_size_, RT_MEMCPY_DEVICE_TO_HOST);
   if (ret != RT_ERROR_NONE) {

@@ -65,9 +65,17 @@ bool StreamSwitchKernel::Launch(const std::vector<AddressPtr> &inputs, const std
     MS_LOG(EXCEPTION) << "Stream switch inputs size is " << inputs.size() << ", only support 2";
   }
 
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
   void *loop_cnt = inputs[0]->addr;
   void *ites_per_loop = inputs[1]->addr;
-  rtStream_t true_stream_ = kernel::TaskStream::GetInstance()->gen_stream_list()[true_stream_index_];
+  MS_EXCEPTION_IF_NULL(kernel::TaskStream::GetInstance());
+  auto stream_list = kernel::TaskStream::GetInstance()->gen_stream_list();
+  if (true_stream_index_ >= stream_list.size()) {
+    MS_LOG(EXCEPTION) << "Invalid true_stream_index_: " << true_stream_index_
+                      << " total stream size: " << stream_list.size();
+  }
+  rtStream_t true_stream_ = stream_list[true_stream_index_];
   rtError_t status = rtStreamSwitchEx(loop_cnt, cond_, ites_per_loop, true_stream_, stream_ptr, data_type_);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Stream switch failed!";

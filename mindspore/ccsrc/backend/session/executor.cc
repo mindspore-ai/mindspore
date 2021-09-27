@@ -422,6 +422,9 @@ void Executor::RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const Gr
                      std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                      const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(session);
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(op_run_info);
   auto ms_context = MsContext::GetInstance();
   auto target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (target == kGPUDevice) {

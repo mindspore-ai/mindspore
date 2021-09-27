@@ -51,6 +51,9 @@ int64_t GetInterSection(int64_t start_1, int64_t end_1, int64_t start_2, int64_t
 
 bool GetKernelSize(const AnfNodePtr &node, int64_t *kd, int64_t *kh, int64_t *kw) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(kd);
+  MS_EXCEPTION_IF_NULL(kh);
+  MS_EXCEPTION_IF_NULL(kw);
   if (AnfAlgo::HasNodeAttr("kernel_size", node->cast<CNodePtr>())) {
     auto kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "kernel_size");
     if (kernel_size.size() == 1) {
@@ -76,6 +79,9 @@ bool GetKernelSize(const AnfNodePtr &node, int64_t *kd, int64_t *kh, int64_t *kw
 
 bool GetStrideSize(const AnfNodePtr &node, int64_t *sd, int64_t *sh, int64_t *sw) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(sd);
+  MS_EXCEPTION_IF_NULL(sh);
+  MS_EXCEPTION_IF_NULL(sw);
   if (AnfAlgo::HasNodeAttr("strides", node->cast<CNodePtr>())) {
     auto kernel_size = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "strides");
     if (kernel_size.size() == 1) {
@@ -164,6 +170,7 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
 
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, assist_shape);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   auto value_node = kernel_graph->NewValueNode(x_abstract, assist_tensor);
   kernel_graph->AddValueNodeToGraph(value_node);
   AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {infer_shape}, value_node.get());
@@ -179,6 +186,7 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64
   std::vector<int64_t> assist_shape = {fn, fc, dd, dh, dw};  // NCDHW
   auto infer_shape = {LongToSize(fn), LongToSize(fc), LongToSize(dd), LongToSize(dh), LongToSize(dw)};
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
+  MS_EXCEPTION_IF_NULL(tensor);
   auto tensor_data = reinterpret_cast<float16 *>(tensor->data_c());
   auto pad_d = pad_list[kDim0] + pad_list[kDim1];
   auto pad_h = pad_list[kDim2] + pad_list[kDim3];

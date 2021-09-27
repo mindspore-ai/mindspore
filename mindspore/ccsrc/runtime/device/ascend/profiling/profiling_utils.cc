@@ -134,6 +134,7 @@ void ProfilingUtils::GetTraceBegin(const session::KernelGraph &kernel_graph, con
     fp_start_str = first_node->fullname_with_scope();
   } else {
     for (auto &cnode : execution_orders) {
+      MS_EXCEPTION_IF_NULL(cnode);
       if (getnext_outputs.count(cnode->fullname_with_scope()) != 0) {
         fp_start_str = cnode->fullname_with_scope();
         break;
@@ -149,6 +150,7 @@ void ProfilingUtils::GetCNodeOutputRealNode(const std::string &node_name, const 
     MS_EXCEPTION_IF_NULL(cnode);
     for (const auto &input : cnode->inputs()) {
       auto prev_cnode = AnfAlgo::VisitKernel(input, 0);
+      MS_EXCEPTION_IF_NULL(prev_cnode.first);
       if (!prev_cnode.first->isa<CNode>()) {
         continue;
       }
@@ -190,12 +192,14 @@ void ProfilingUtils::GetTraceBpEnd(const session::KernelGraph &kernel_graph, con
       for (size_t i = 0; i < input_num; ++i) {
         auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(*iter, i);
         auto input_node = input_node_with_index.first;
+        MS_EXCEPTION_IF_NULL(input_node);
         ar_input_node_names.insert(input_node->fullname_with_scope());
       }
       // start from previous node
       ++iter;
       // find input names in previous node
       while (iter != execution_orders.rend()) {
+        MS_EXCEPTION_IF_NULL(*iter);
         if (ar_input_node_names.find((*iter)->fullname_with_scope()) != ar_input_node_names.end()) {
           bp_end_str = (*iter)->fullname_with_scope();
           break;
@@ -219,6 +223,7 @@ std::string ProfilingUtils::GetGraphLastKernelName(const session::KernelGraph &k
   auto &execution_order = kernel_graph.execution_order();
   // find last tbe_kernel
   for (auto iter = execution_order.rbegin(); iter != execution_order.rend(); ++iter) {
+    MS_EXCEPTION_IF_NULL(*iter);
     if (AnfAlgo::GetKernelType(*iter) == TBE_KERNEL || AnfAlgo::GetKernelType(*iter) == AKG_KERNEL ||
         AnfAlgo::IsCommunicationOp(*iter)) {
       last_tbe_kernel_name = (*iter)->fullname_with_scope();
@@ -297,6 +302,7 @@ void ProfilingUtils::InsertProfilingTraceFp(const mindspore::AnfNodePtr &anf_nod
                                             const ProfilingTraceInfo &profiling_trace_info,
                                             NotNull<session::KernelGraph *> graph_ptr,
                                             NotNull<std::vector<mindspore::CNodePtr> *> kernel_list) {
+  MS_EXCEPTION_IF_NULL(anf_node);
   if (profiling_trace_info.trace_begin == anf_node->fullname_with_scope()) {
     MS_LOG(INFO) << "Profiling graph:" << graph_ptr->graph_id()
                  << " Match FpStart:" << profiling_trace_info.trace_begin;

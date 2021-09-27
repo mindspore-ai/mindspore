@@ -65,7 +65,7 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
   MS_LOG(DEBUG) << "Start Create FusionOp Kernel";
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::string fusion_op_name = "FusionOp";
-  for (auto node : anf_nodes) {
+  for (auto &node : anf_nodes) {
     fusion_op_name += '_' + AnfAlgo::GetCNodeName(node);
   }
   auto fusion_op = std::make_shared<Primitive>(fusion_op_name);
@@ -84,7 +84,8 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
   ValuePtr output_names_v = MakeValue(output_names);
   fusion_op->set_attr("input_names", input_names_v);
   fusion_op->set_attr("output_names", output_names_v);
-  for (auto node : anf_nodes) {
+  for (auto &node : anf_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     if (AnfAlgo::HasNodeAttr(kAttrFracZGroup, cnode)) {
       auto fracz_group = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFracZGroup);

@@ -22,6 +22,7 @@
 #include <limits>
 #include "utility"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/convert_utils_base.h"
 #include "runtime/mem.h"
 #include "runtime/kernel.h"
 #include "runtime/rt_model.h"
@@ -71,22 +72,31 @@ DataDumper::~DataDumper() {
 
 #ifndef ENABLE_SECURITY
 void DataDumper::GetNeedDumpKernelList(NotNull<std::map<std::string, CNodePtr> *> kernel_map) const {
+  MS_EXCEPTION_IF_NULL(kernel_graph_);
   for (const auto &kernel : kernel_graph_->execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
     if (AnfAlgo::GetKernelType(kernel) == HCCL_KERNEL &&
         DumpJsonParser::GetInstance().NeedDump(kernel->fullname_with_scope())) {
       auto input_size = AnfAlgo::GetInputTensorNum(kernel);
       for (size_t i = 0; i < input_size; ++i) {
         auto input_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
         auto input = input_with_index.first;
+        MS_EXCEPTION_IF_NULL(input);
         if (input->isa<CNode>()) {
           MS_LOG(INFO) << "[AsyncDump] Match Hccl Node:" << kernel->fullname_with_scope()
                        << " Input:" << input->fullname_with_scope();
-          kernel_map->try_emplace(input->fullname_with_scope(), input->cast<CNodePtr>());
+          auto it = kernel_map->try_emplace(input->fullname_with_scope(), input->cast<CNodePtr>());
+          if (!it.second) {
+            MS_LOG(INFO) << "Node name already exist: " << input->fullname_with_scope();
+          }
         }
       }
     } else if (KernelNeedDump(kernel)) {
       MS_LOG(INFO) << "[AsyncDump] Match Node:" << kernel->fullname_with_scope();
-      kernel_map->try_emplace(kernel->fullname_with_scope(), kernel);
+      auto it = kernel_map->try_emplace(kernel->fullname_with_scope(), kernel);
+      if (!it.second) {
+        MS_LOG(INFO) << "Node name already exist: " << kernel->fullname_with_scope();
+      }
     }
   }
 }
@@ -276,6 +286,7 @@ void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo 
   task.set_end_graph(false);
   task.set_task_id(debug_task_id_);
   task.set_stream_id(debug_stream_id_);
+  MS_EXCEPTION_IF_NULL(task.mutable_op());
   task.mutable_op()->set_op_name(kNodeNameOpDebug);
   task.mutable_op()->set_op_type(kOpTypeOpDebug);
 
@@ -283,6 +294,7 @@ void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo 
   output.set_data_type(ge::proto::DataType::DT_UINT8);
   output.set_format(ge::Format::FORMAT_ND);
 
+  MS_EXCEPTION_IF_NULL(output.mutable_shape());
   output.mutable_shape()->add_dim(kOpDebugShape);
 
   output.set_original_name(kNodeNameOpDebug);
@@ -293,7 +305,9 @@ void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo 
   output.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(op_debug_dump_args_)));
   output.set_size(kOpDebugHostMemSize);
 
+  MS_EXCEPTION_IF_NULL(task.mutable_output());
   task.mutable_output()->Add(std::move(output));
+  MS_EXCEPTION_IF_NULL(dump_info->mutable_task());
   dump_info->mutable_task()->Add(std::move(task));
 }
 
@@ -419,7 +433,7 @@ void DataDumper::DumpKernelOutput(const CNodePtr &kernel, void *args, NotNull<ai
     MS_LOG(INFO) << "[DataDump] output " << i << " address size:" << output.size();
     MS_EXCEPTION_IF_NULL(task->mutable_output());
     task->mutable_output()->Add(std::move(output));
-    offset += sizeof(void *);
+    offset = SizetAddWithOverflowCheck(offset, sizeof(void *));
   }
 }
 
@@ -428,6 +442,7 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     MS_LOG(INFO) << "Skip dump input";
     return;
   }
+  MS_EXCEPTION_IF_NULL(kernel);
   if (AnfAlgo::IsNodeInputContainMonad(kernel)) {
     MS_LOG(WARNING) << "Skip Monad node:" << kernel->fullname_with_scope();
     return;
@@ -462,7 +477,7 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
     MS_LOG(INFO) << "[DataDump] input " << i << " address size:" << input.size();
     MS_EXCEPTION_IF_NULL(task->mutable_input());
     task->mutable_input()->Add(std::move(input));
-    offset += sizeof(void *);
+    offset = SizetAddWithOverflowCheck(offset, sizeof(void *));
   }
 }
 #endif

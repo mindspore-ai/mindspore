@@ -389,14 +389,14 @@ class KernelGraph : public FuncGraph {
   // add node depend edge by data edge
   void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
   std::vector<AnfNodePtr> GetOutputNodes(const AnfNodePtr &node);
-  AnfNodePtr TransValueNodeTuple(const AbstractBasePtr abstract, const ValuePtr &value);
+  AnfNodePtr TransValueNodeTuple(const AbstractBasePtr &abstract, const ValuePtr &value);
   AnfNodePtr TransParameterTuple(const AbstractBasePtr &abstract);
   AnfNodePtr TransCNodeTuple(const CNodePtr &node);
   AnfNodePtr CreatTupleGetItemNode(const AnfNodePtr &node, size_t output_idx);
   std::vector<CNodePtr> SortStartLabelAndEndGoto();
   // checkout whether loop exist in graph
   void CheckLoop();
-  uint32_t GetLoopNum(std::map<AnfNodePtr, size_t> none_zero_nodes);
+  uint32_t GetLoopNum(const std::map<AnfNodePtr, size_t> &none_zero_nodes);
   void GetLoopNodesByDFS(const AnfNodePtr &node, uint32_t *loop_num);
 
   // members

@@ -33,6 +33,7 @@ bool ProfilingKernelMod::Init(const AnfNodePtr &anf_node) {
   MS_LOG(INFO) << "[profiling] init profiling kernel mod";
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
 
+  MS_EXCEPTION_IF_NULL(primitive);
   ValuePtr notify_ptr = primitive->GetAttr(ProfilingUtils::kNotify);
   MS_EXCEPTION_IF_NULL(notify_ptr);
 

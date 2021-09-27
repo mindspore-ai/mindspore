@@ -52,6 +52,9 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &co
       rank_size = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrRankSize);
     }
     size_t rank_size_t = LongToSize(rank_size);
+    if (rank_size_t == 0) {
+      MS_LOG(EXCEPTION) << "Rank size should not be zero.";
+    }
     MS_EXCEPTION_IF_NULL(cnode);
     size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
@@ -336,6 +339,9 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
     rank_size = AnfAlgo::GetNodeAttr<int64_t>(final_node, kAttrRankSize);
   }
   size_t rank_size_t = LongToSize(rank_size);
+  if (rank_size_t == 0) {
+    MS_LOG(EXCEPTION) << "Rank size should not be zero.";
+  }
   size_t output_num = node_num * rank_size_t;
   std::vector<TypeId> dtypes(output_num, AnfAlgo::GetOutputInferDataType(final_node, 0));
   std::vector<std::vector<size_t>> shapes;

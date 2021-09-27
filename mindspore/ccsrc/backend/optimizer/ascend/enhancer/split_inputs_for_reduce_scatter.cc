@@ -42,7 +42,6 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
       size_splits.push_back(output_node_shape[0]);
     }
     AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
-
     AnfAlgo::SetNodeAttr("split_dim", MakeValue(0L), split);
     AnfAlgo::SetNodeAttr("num_split", MakeValue(rank_size), split);
     AnfAlgo::SetNodeAttr("size_splits", MakeValue(size_splits), split);
@@ -73,7 +72,6 @@ AnfNodePtr SplitInputsForReduceScatter::RearrangeInputsForReduceScatter(const Fu
   auto reduce_scatter = func_graph->NewCNode(reduce_scatter_inputs);
   MS_EXCEPTION_IF_NULL(reduce_scatter);
   reduce_scatter->set_abstract(node->abstract());
-
   AnfAlgo::CopyNodeAttrs(node, reduce_scatter);
   AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(1L), reduce_scatter);
   kernel_select_->SelectKernel(reduce_scatter);

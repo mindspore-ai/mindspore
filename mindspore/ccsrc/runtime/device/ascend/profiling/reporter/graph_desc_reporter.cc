@@ -24,13 +24,13 @@ namespace device {
 namespace ascend {
 void GraphDescReporter::ReportData() {
   for (const auto &node : cnode_list_) {
+    MS_EXCEPTION_IF_NULL(node);
     if (AnfAlgo::GetKernelType(node) != TBE_KERNEL && AnfAlgo::GetKernelType(node) != AKG_KERNEL) {
       MS_LOG(INFO) << "Skip non tbe kernel:" << node->fullname_with_scope();
       continue;
     }
     std::vector<DataElement> input_data_list;
     std::vector<DataElement> output_data_list;
-    MS_EXCEPTION_IF_NULL(node);
     auto op_name = node->fullname_with_scope();
     auto op_type = AnfAlgo::GetCNodeName(node);
     auto input_size = AnfAlgo::GetInputTensorNum(node);

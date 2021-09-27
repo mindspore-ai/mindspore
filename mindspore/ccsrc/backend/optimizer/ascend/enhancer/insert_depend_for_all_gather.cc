@@ -44,6 +44,7 @@ bool InsertDependForAllGather::Run(const FuncGraphPtr &graph) {
   for (int64_t i = 0; i < SizeToInt(all_gather_node.size()) - 1; ++i) {
     auto current_node = iter->second;
     auto next_node = (++iter)->second;
+    MS_EXCEPTION_IF_NULL(next_node);
     auto next_cnode = next_node->cast<CNodePtr>();
     std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
                                       AnfAlgo::GetInputNode(next_cnode, 0), current_node};

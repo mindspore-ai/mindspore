@@ -63,6 +63,10 @@ void AscendBucket::AllocateAllReduceAddr() {
 
   // generate memecpy output addr
   uint8_t *memcpy_output = ar_input_addr_;
+  if (origin_size_list.size() < bucket_size_ || align_size_list_.size() < bucket_size_) {
+    MS_LOG(EXCEPTION) << "Invalid bucket_size_:" << bucket_size_ << " origin_size_list.size:" << origin_size_list.size()
+                      << " align_size_list.size:" << align_size_list_.size();
+  }
   for (size_t i = 0; i < bucket_size_; ++i) {
     memcpy_output_addrs_.emplace_back(std::make_shared<kernel::Address>(memcpy_output, origin_size_list[i]));
     memcpy_output += align_size_list_[i];
@@ -95,6 +99,11 @@ void AscendBucket::FreeAllDeviceMem() {
 void AscendBucket::CopyTensorToContiguousMemory() {
   // clear allreduce input addr
   CleanAllReduceInputAddr();
+  if (memcpy_input_addrs_.size() < bucket_size_ || memcpy_output_addrs_.size() < bucket_size_) {
+    MS_LOG(EXCEPTION) << "Invalid bucket_size_:" << bucket_size_
+                      << " memcpy_input_addr_.size:" << memcpy_input_addrs_.size()
+                      << " memcpy_output_addr_.size:" << memcpy_output_addrs_.size();
+  }
   for (size_t i = 0; i < bucket_size_; ++i) {
     MS_EXCEPTION_IF_NULL(memcpy_input_addrs_[i]);
     MS_EXCEPTION_IF_NULL(memcpy_output_addrs_[i]);
