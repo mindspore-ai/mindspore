@@ -15,7 +15,6 @@
 import mindspore.context as context
 from mindspore import Tensor, ms_function
 from mindspore.common import dtype as mstype
-import pytest
 
 ZERO = Tensor([0], mstype.int32)
 ONE = Tensor([1], mstype.int32)
@@ -80,7 +79,7 @@ def test_recrusive_endless():
     try:
         f_recrusive_endless(x)
     except RuntimeError as e:
-        assert 'endless loop' in str(e)
+        assert 'loop' in str(e)
 
 
 def test_endless():
@@ -89,7 +88,7 @@ def test_endless():
     try:
         f(x)
     except RuntimeError as e:
-        assert 'endless loop' in str(e)
+        assert 'loop' in str(e)
 
 
 @ms_function
@@ -99,7 +98,6 @@ def f_ok(x):
     return ONE
 
 
-@pytest.mark.skip(reason="backend is not supported yet")
 def test_f_ok():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([3], mstype.int32)
@@ -108,7 +106,6 @@ def test_f_ok():
     assert ret == expect
 
 
-@pytest.mark.skip(reason="backend is not supported yet")
 def test_recrusive_fun():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor([5], mstype.int32)

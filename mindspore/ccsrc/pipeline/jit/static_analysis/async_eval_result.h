@@ -326,7 +326,7 @@ class AsyncInferTask {
     if (ready_ & 4) {
       ready_ = ready_ & 3;  // Set the third bit = 0 , Only trigger once.
       MS_LOG(EXCEPTION) << "There isn't any branch that can be evaluated. \n"
-                        << "Please check the code if it's has the infinite recursion or loop.\n"
+                        << "Please check the code if it has the infinite recursion or loop.\n"
                         << "For more details, please refer to the FAQ at https://www.mindspore.cn.";
     }
   }
