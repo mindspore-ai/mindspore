@@ -114,12 +114,12 @@ AbstractBasePtr BatchNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto input_x_type =
     CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[kInputIndex0]->BuildType(), valid_types, prim_name);
   std::map<std::string, TypePtr> args;
-  args.emplace("scale", input_args[kInputIndex1]->BuildType());
-  args.emplace("bias", input_args[kInputIndex2]->BuildType());
+  (void)args.emplace("scale", input_args[kInputIndex1]->BuildType());
+  (void)args.emplace("bias", input_args[kInputIndex2]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   std::map<std::string, TypePtr> args_moving;
-  args_moving.emplace("scale", input_args[kInputIndex2]->BuildType());
-  args_moving.emplace("bias", input_args[kInputIndex3]->BuildType());
+  (void)args_moving.emplace("scale", input_args[kInputIndex2]->BuildType());
+  (void)args_moving.emplace("bias", input_args[kInputIndex3]->BuildType());
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args_moving, valid_types, prim_name);
 
   auto output0 = std::make_shared<abstract::AbstractTensor>(input_x_type, input_x);
