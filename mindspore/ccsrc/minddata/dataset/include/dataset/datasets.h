@@ -2273,6 +2273,90 @@ inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const
   return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+/// \class QMnistDataset
+/// \brief A source dataset that reads and parses QMNIST dataset.
+class QMnistDataset : public Dataset {
+ public:
+  /// \brief Constructor of QMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Usage of QMNIST, can be "train", "test", "test10k", "test50k", "nist" or "all".
+  /// \param[in] compat Whether the label for each example is class number (compat=true)
+  ///     or the full QMNIST information (compat=false).
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit QMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool compat,
+                         const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of QMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Usage of QMNIST, can be "train", "test", "test10k", "test50k", "nist" or "all".
+  /// \param[in] compat Whether the label for each example is class number (compat=true)
+  ///     or the full QMNIST information (compat=false).
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit QMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool compat,
+                         const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of QMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Usage of QMNIST, can be "train", "test", "test10k", "test50k", "nist" or "all".
+  /// \param[in] compat Whether the label for each example is class number (compat=true)
+  ///     or the full QMNIST information (compat=false).
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit QMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, bool compat,
+                         const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// Destructor of QMnistDataset.
+  ~QMnistDataset() = default;
+};
+
+/// \brief Function to create a QMnistDataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of QMNIST, can be "train", "test", "test10k", "test50k", "nist" or "all" (default = "all").
+/// \param[in] compat Whether the label for each example is class number or the full QMNIST information
+///     (default = true).
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the QMnistDataset.
+inline std::shared_ptr<QMnistDataset> QMnist(
+  const std::string &dataset_dir, const std::string &usage = "all", bool compat = true,
+  const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<QMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), compat, sampler, cache);
+}
+
+/// \brief Function to create a QMnistDataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of QMNIST, can be "train", "test", "test10k", "test50k", "nist" or "all".
+/// \param[in] compat Whether the label for each example is class number or the full QMNIST information.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the QMnistDataset.
+inline std::shared_ptr<QMnistDataset> QMnist(const std::string &dataset_dir, const std::string &usage, bool compat,
+                                             const Sampler *sampler,
+                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<QMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), compat, sampler, cache);
+}
+
+/// \brief Function to create a QMnistDataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Usage of QMNIST, can be "train", "test", "test10k", "test50k", "nist" or "all".
+/// \param[in] compat Whether the label for each example is class number or the full QMNIST information.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+/// \return Shared pointer to the QMnistDataset.
+inline std::shared_ptr<QMnistDataset> QMnist(const std::string &dataset_dir, const std::string &usage, bool compat,
+                                             const std::reference_wrapper<Sampler> sampler,
+                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<QMnistDataset>(StringToChar(dataset_dir), StringToChar(usage), compat, sampler, cache);
+}
+
 /// \brief Function to create a ConcatDataset.
 /// \note Reload "+" operator to concat two datasets.
 /// \param[in] datasets1 Shared pointer to the first dataset to be concatenated.
@@ -2565,15 +2649,14 @@ class USPSDataset : public Dataset {
  public:
   /// \brief Constructor of USPSDataset.
   /// \param[in] dataset_dir Path to the root directory that contains the dataset.
-  /// \param[in] usage Usage of USPS, can be "train", "test" or "all" (Default = "all").
-  /// \param[in] num_samples The number of samples to be included in the dataset
-  ///     (Default = 0 means all samples).
-  /// \param[in] shuffle The mode for shuffling data every epoch (Default=ShuffleMode.kGlobal).
+  /// \param[in] usage Usage of USPS, can be "train", "test" or "all".
+  /// \param[in] num_samples The number of samples to be included in the dataset.
+  /// \param[in] shuffle The mode for shuffling data every epoch.
   ///     Can be any of:
   ///     ShuffleMode.kFalse - No shuffling is performed.
   ///     ShuffleMode.kFiles - Shuffle files only.
   ///     ShuffleMode.kGlobal - Shuffle both the files and samples.
-  /// \param[in] num_shards Number of shards that the dataset should be divided into (Default = 1).
+  /// \param[in] num_shards Number of shards that the dataset should be divided into.
   /// \param[in] shard_id The shard ID within num_shards. This argument should be
   ///     specified only when num_shards is also specified (Default = 0).
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).

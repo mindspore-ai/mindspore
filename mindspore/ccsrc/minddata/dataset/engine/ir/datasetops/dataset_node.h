@@ -89,6 +89,7 @@ constexpr char kImageFolderNode[] = "ImageFolderDataset";
 constexpr char kManifestNode[] = "ManifestDataset";
 constexpr char kMindDataNode[] = "MindDataDataset";
 constexpr char kMnistNode[] = "MnistDataset";
+constexpr char kQMnistNode[] = "QMnistDataset";
 constexpr char kRandomNode[] = "RandomDataset";
 constexpr char kSBUNode[] = "SBUDataset";
 constexpr char kTextFileNode[] = "TextFileDataset";

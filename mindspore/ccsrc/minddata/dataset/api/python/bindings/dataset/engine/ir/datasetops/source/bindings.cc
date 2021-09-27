@@ -44,6 +44,7 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/qmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/sbu_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/usps_node.h"
@@ -245,6 +246,17 @@ PYBIND_REGISTER(MnistNode, 2, ([](const py::module *m) {
                       auto mnist = std::make_shared<MnistNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(mnist->ValidateParams());
                       return mnist;
+                    }));
+                }));
+
+PYBIND_REGISTER(QMnistNode, 2, ([](const py::module *m) {
+                  (void)py::class_<QMnistNode, DatasetNode, std::shared_ptr<QMnistNode>>(*m, "QMnistNode",
+                                                                                         "to create an QMnistNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, bool compat, py::handle sampler) {
+                      auto qmnist =
+                        std::make_shared<QMnistNode>(dataset_dir, usage, compat, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(qmnist->ValidateParams());
+                      return qmnist;
                     }));
                 }));
 

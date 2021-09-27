@@ -1,0 +1,283 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "minddata/dataset/engine/datasetops/source/qmnist_op.h"
+
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <set>
+#include <utility>
+
+#include "debug/common.h"
+#include "minddata/dataset/core/config_manager.h"
+#include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
+#include "minddata/dataset/engine/db_connector.h"
+#include "minddata/dataset/engine/execution_tree.h"
+#include "utils/file_utils.h"
+#include "utils/ms_utils.h"
+
+namespace mindspore {
+namespace dataset {
+const int32_t kQMnistLabelFileMagicNumber = 3074;
+const int32_t kQMnistImageRows = 28;
+const int32_t kQMnistImageCols = 28;
+const int32_t kQMnistLabelLength = 8;
+
+QMnistOp::QMnistOp(const std::string &folder_path, const std::string &usage, bool compat,
+                   std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, int32_t num_workers,
+                   int32_t queue_size)
+    : MnistOp(usage, num_workers, folder_path, queue_size, std::move(data_schema), std::move(sampler)),
+      compat_(compat) {}
+
+void QMnistOp::Print(std::ostream &out, bool show_all) const {
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nNumber of rows: " << num_rows_ << "\n"
+        << DatasetName(true) << " directory: " << folder_path_ << "\nUsage: " << usage_
+        << "\nCompat: " << (compat_ ? "yes" : "no") << "\n\n";
+  }
+}
+
+// Load 1 TensorRow (image, label) using 1 MnistLabelPair or QMnistImageInfoPair.
+Status QMnistOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  RETURN_UNEXPECTED_IF_NULL(trow);
+  std::shared_ptr<Tensor> image, label;
+  if (compat_) {
+    MnistLabelPair qmnist_pair = image_label_pairs_[row_id];
+    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(qmnist_pair.first, &image));
+    RETURN_IF_NOT_OK(Tensor::CreateScalar(qmnist_pair.second, &label));
+  } else {
+    QMnistImageInfoPair qmnist_pair = image_info_pairs_[row_id];
+    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(qmnist_pair.first, &image));
+    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(qmnist_pair.second, &label));
+  }
+  (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
+  trow->setPath({image_path_[row_id], label_path_[row_id]});
+  return Status::OK();
+}
+
+Status QMnistOp::CountTotalRows(const std::string &dir, const std::string &usage, int64_t *count) {
+  RETURN_UNEXPECTED_IF_NULL(count);
+  *count = 0;
+
+  auto schema = std::make_unique<DataSchema>();
+  RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
+  TensorShape scalar = TensorShape::CreateScalar();
+  RETURN_IF_NOT_OK(
+    schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
+
+  const int64_t num_samples = 0;
+  const int64_t start_index = 0;
+  auto sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
+
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  int32_t num_workers = cfg->num_parallel_workers();
+  int32_t op_connector_size = cfg->op_connector_size();
+
+  // compat does not affect the count result, so set it to true default.
+  auto op =
+    std::make_shared<QMnistOp>(dir, usage, true, std::move(schema), std::move(sampler), num_workers, op_connector_size);
+
+  // the logic of counting the number of samples
+  RETURN_IF_NOT_OK(op->WalkAllFiles());
+  for (size_t i = 0; i < op->image_names_.size(); ++i) {
+    std::ifstream image_reader;
+    image_reader.open(op->image_names_[i], std::ios::binary);
+    std::ifstream label_reader;
+    label_reader.open(op->label_names_[i], std::ios::binary);
+
+    uint32_t num_images;
+    RETURN_IF_NOT_OK(op->CheckImage(op->image_names_[i], &image_reader, &num_images));
+    uint32_t num_labels;
+    RETURN_IF_NOT_OK(op->CheckLabel(op->label_names_[i], &label_reader, &num_labels));
+    CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
+                                 "Invalid data, num of images is not equal to num of labels.");
+
+    if (usage == "test10k") {
+      // only use the first 10k samples and drop the last 50k samples
+      num_images = 10000;
+      num_labels = 10000;
+    } else if (usage == "test50k") {
+      // only use the last 50k samples and drop the first 10k samples
+      num_images = 50000;
+      num_labels = 50000;
+    }
+
+    *count = *count + num_images;
+
+    // Close the readers
+    image_reader.close();
+    label_reader.close();
+  }
+
+  return Status::OK();
+}
+
+Status QMnistOp::WalkAllFiles() {
+  const std::string image_ext = "images-idx3-ubyte";
+  const std::string label_ext = "labels-idx2-int";
+  const std::string train_prefix = "qmnist-train";
+  const std::string test_prefix = "qmnist-test";
+  const std::string nist_prefix = "xnist";
+
+  auto real_folder_path = FileUtils::GetRealPath(folder_path_.data());
+  CHECK_FAIL_RETURN_UNEXPECTED(real_folder_path.has_value(), "Get real path failed: " + folder_path_);
+  Path root_dir(real_folder_path.value());
+
+  if (usage_ == "train") {
+    image_names_.push_back((root_dir / Path(train_prefix + "-" + image_ext)).ToString());
+    label_names_.push_back((root_dir / Path(train_prefix + "-" + label_ext)).ToString());
+  } else if (usage_ == "test" || usage_ == "test10k" || usage_ == "test50k") {
+    image_names_.push_back((root_dir / Path(test_prefix + "-" + image_ext)).ToString());
+    label_names_.push_back((root_dir / Path(test_prefix + "-" + label_ext)).ToString());
+  } else if (usage_ == "nist") {
+    image_names_.push_back((root_dir / Path(nist_prefix + "-" + image_ext)).ToString());
+    label_names_.push_back((root_dir / Path(nist_prefix + "-" + label_ext)).ToString());
+  } else if (usage_ == "all") {
+    image_names_.push_back((root_dir / Path(train_prefix + "-" + image_ext)).ToString());
+    label_names_.push_back((root_dir / Path(train_prefix + "-" + label_ext)).ToString());
+    image_names_.push_back((root_dir / Path(test_prefix + "-" + image_ext)).ToString());
+    label_names_.push_back((root_dir / Path(test_prefix + "-" + label_ext)).ToString());
+    image_names_.push_back((root_dir / Path(nist_prefix + "-" + image_ext)).ToString());
+    label_names_.push_back((root_dir / Path(nist_prefix + "-" + label_ext)).ToString());
+  }
+
+  CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(),
+                               "Invalid data, num of images does not equal to num of labels.");
+
+  for (size_t i = 0; i < image_names_.size(); i++) {
+    Path file_path(image_names_[i]);
+    CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
+                                 "Failed to find " + DatasetName() + " image file: " + file_path.ToString());
+    MS_LOG(INFO) << DatasetName(true) << " operator found image file at " << file_path.ToString() << ".";
+  }
+
+  for (size_t i = 0; i < label_names_.size(); i++) {
+    Path file_path(label_names_[i]);
+    CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
+                                 "Failed to find " + DatasetName() + " label file: " + file_path.ToString());
+    MS_LOG(INFO) << DatasetName(true) << " operator found label file at " << file_path.ToString() << ".";
+  }
+
+  return Status::OK();
+}
+
+Status QMnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *label_reader, size_t index) {
+  RETURN_UNEXPECTED_IF_NULL(image_reader);
+  RETURN_UNEXPECTED_IF_NULL(label_reader);
+  uint32_t num_images, num_labels;
+  RETURN_IF_NOT_OK(CheckImage(image_names_[index], image_reader, &num_images));
+  RETURN_IF_NOT_OK(CheckLabel(label_names_[index], label_reader, &num_labels));
+  CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels),
+                               "Invalid data, num_images is not equal to num_labels. Ensure data file is not damaged.");
+
+  // The image size of the QMNIST dataset is fixed at [28,28]
+  int64_t image_size = kQMnistImageRows * kQMnistImageCols;
+  int64_t label_length = kQMnistLabelLength;
+
+  if (usage_ == "test10k") {
+    // only use the first 10k samples and drop the last 50k samples
+    num_images = 10000;
+    num_labels = 10000;
+  } else if (usage_ == "test50k") {
+    num_images = 50000;
+    num_labels = 50000;
+    // skip the first 10k samples for ifstream reader
+    (void)image_reader->ignore(image_size * 10000);
+    (void)label_reader->ignore(label_length * 10000 * 4);
+  }
+
+  auto images_buf = std::make_unique<char[]>(image_size * num_images);
+  auto labels_buf = std::make_unique<uint32_t[]>(label_length * num_labels);
+  if (images_buf == nullptr || labels_buf == nullptr) {
+    std::string err_msg = "[Internal ERROR] Failed to allocate memory for " + DatasetName() + " buffer.";
+    MS_LOG(ERROR) << err_msg.c_str();
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  (void)image_reader->read(images_buf.get(), image_size * num_images);
+  if (image_reader->fail()) {
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + DatasetName() + " image: " + image_names_[index] +
+                             ", size:" + std::to_string(image_size * num_images) +
+                             ". Ensure data file is not damaged.");
+  }
+  // uint32_t use 4 bytes in memory
+  (void)label_reader->read(reinterpret_cast<char *>(labels_buf.get()), label_length * num_labels * 4);
+  if (label_reader->fail()) {
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to read " + DatasetName() + " label:" + label_names_[index] +
+                             ", size: " + std::to_string(label_length * num_labels) +
+                             ". Ensure data file is not damaged.");
+  }
+  TensorShape image_tensor_shape = TensorShape({kQMnistImageRows, kQMnistImageCols, 1});
+  TensorShape label_tensor_shape = TensorShape({kQMnistLabelLength});
+  for (int64_t data_index = 0; data_index != num_images; data_index++) {
+    auto image = &images_buf[data_index * image_size];
+    for (int64_t image_index = 0; image_index < image_size; image_index++) {
+      image[image_index] = (image[image_index] == 0) ? 0 : 255;
+    }
+    std::shared_ptr<Tensor> image_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(image_tensor_shape, data_schema_->Column(0).Type(),
+                                              reinterpret_cast<unsigned char *>(image), &image_tensor));
+
+    auto label = &labels_buf[data_index * label_length];
+    for (int64_t label_index = 0; label_index < label_length; label_index++) {
+      label[label_index] = SwapEndian(label[label_index]);
+    }
+    std::shared_ptr<Tensor> label_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(label_tensor_shape, data_schema_->Column(1).Type(),
+                                              reinterpret_cast<unsigned char *>(label), &label_tensor));
+
+    image_info_pairs_.emplace_back(std::make_pair(image_tensor, label_tensor));
+    image_label_pairs_.emplace_back(std::make_pair(image_tensor, label[0]));
+    image_path_.push_back(image_names_[index]);
+    label_path_.push_back(label_names_[index]);
+  }
+  return Status::OK();
+}
+
+Status QMnistOp::CheckLabel(const std::string &file_name, std::ifstream *label_reader, uint32_t *num_labels) {
+  RETURN_UNEXPECTED_IF_NULL(label_reader);
+  RETURN_UNEXPECTED_IF_NULL(num_labels);
+  CHECK_FAIL_RETURN_UNEXPECTED(label_reader->is_open(),
+                               "Invalid file, failed to open " + DatasetName() + " label file: " + file_name);
+  int64_t label_len = label_reader->seekg(0, std::ios::end).tellg();
+  (void)label_reader->seekg(0, std::ios::beg);
+  // The first 12 bytes of the label file are type, number and length
+  CHECK_FAIL_RETURN_UNEXPECTED(label_len >= 12, "Invalid file, " + DatasetName() + " file is corrupted: " + file_name);
+  uint32_t magic_number;
+  RETURN_IF_NOT_OK(ReadFromReader(label_reader, &magic_number));
+  CHECK_FAIL_RETURN_UNEXPECTED(magic_number == kQMnistLabelFileMagicNumber,
+                               "Invalid file, this is not the " + DatasetName() + " label file: " + file_name);
+  uint32_t num_items;
+  RETURN_IF_NOT_OK(ReadFromReader(label_reader, &num_items));
+  uint32_t length;
+  RETURN_IF_NOT_OK(ReadFromReader(label_reader, &length));
+  CHECK_FAIL_RETURN_UNEXPECTED(length == kQMnistLabelLength, "Invalid data, length of labels is not equal to 8.");
+
+  CHECK_FAIL_RETURN_UNEXPECTED((label_len - 12) == num_items * kQMnistLabelLength * 4,
+                               "Invalid data, number of labels is wrong.");
+  *num_labels = num_items;
+  return Status::OK();
+}
+}  // namespace dataset
+}  // namespace mindspore

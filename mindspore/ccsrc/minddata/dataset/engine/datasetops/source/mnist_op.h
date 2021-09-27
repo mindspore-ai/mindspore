@@ -81,7 +81,7 @@ class MnistOp : public MappableLeafOp {
   // \return DatasetName of the current Op
   virtual std::string DatasetName(bool upper = false) const { return upper ? "Mnist" : "mnist"; }
 
- private:
+ protected:
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
   // @param ImageLabelPair pair - <imagefile,label>
@@ -94,14 +94,14 @@ class MnistOp : public MappableLeafOp {
   // @param std::ifstream *image_reader - image file stream
   // @param uint32_t num_images - returns the number of images
   // @return Status The status code returned
-  Status CheckImage(const std::string &file_name, std::ifstream *image_reader, uint32_t *num_images);
+  virtual Status CheckImage(const std::string &file_name, std::ifstream *image_reader, uint32_t *num_images);
 
   // Check label stream.
   // @param const std::string &file_name - label file name
   // @param std::ifstream *label_reader - label file stream
   // @param uint32_t num_labels - returns the number of labels
   // @return Status The status code returned
-  Status CheckLabel(const std::string &file_name, std::ifstream *label_reader, uint32_t *num_labels);
+  virtual Status CheckLabel(const std::string &file_name, std::ifstream *label_reader, uint32_t *num_labels);
 
   // Read 4 bytes of data from a file stream.
   // @param std::ifstream *reader - file stream to read
@@ -118,7 +118,7 @@ class MnistOp : public MappableLeafOp {
   // @param std::ifstream *label_reader - label file stream
   // @param int64_t read_num - number of image to read
   // @return Status The status code returned
-  Status ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *label_reader, size_t index);
+  virtual Status ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *label_reader, size_t index);
 
   // Parse all mnist dataset files
   // @return Status The status code returned
@@ -126,7 +126,7 @@ class MnistOp : public MappableLeafOp {
 
   // Read all files in the directory
   // @return Status The status code returned
-  Status WalkAllFiles();
+  virtual Status WalkAllFiles();
 
   // Called first when function is called
   // @return Status The status code returned

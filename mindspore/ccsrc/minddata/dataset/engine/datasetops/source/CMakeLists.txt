@@ -21,6 +21,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     cityscapes_op.cc
     div2k_op.cc
     flickr_op.cc
+    qmnist_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES

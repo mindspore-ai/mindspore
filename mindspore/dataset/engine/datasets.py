@@ -66,7 +66,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
-    check_sbu_dataset
+    check_sbu_dataset, check_qmnist_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -3439,6 +3439,131 @@ class MnistDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.MnistNode(self.dataset_dir, self.usage, self.sampler)
+
+
+class QMnistDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing the QMNIST dataset.
+
+    The generated dataset has two columns :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar when `compat` is True else a tensor both of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train`, `test`, `test10k`, `test50k`, `nist`
+            or `all` (default=None, will read all samples).
+        compat (bool, optional): Whether the label for each example is class number (compat=True) or the full QMNIST
+            information (compat=False) (default=True).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the maximum sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> qmnist_dataset_dir = "/path/to/qmnist_dataset_directory"
+        >>>
+        >>> # Read 3 samples from QMNIST train dataset
+        >>> dataset = ds.QMnistDataset(dataset_dir=qmnist_dataset_dir, num_samples=3)
+        >>>
+        >>> # Note: In QMNIST dataset, each dictionary has keys "image" and "label"
+
+    About QMNIST dataset:
+
+    The QMNIST dataset was generated from the original data found in the NIST Special Database 19 with the goal to
+    match the MNIST preprocessing as closely as possible.
+    Through an iterative process, researchers tried to generate an additional 50k images of MNIST-like data.
+    They started with a reconstruction process given in the paper and used the Hungarian algorithm to find the best
+    matches between the original MNIST samples and their reconstructed samples.
+
+    Here is the original QMNIST dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── qmnist_dataset_dir
+             ├── qmnist-train-images-idx3-ubyte
+             ├── qmnist-train-labels-idx2-int
+             ├── qmnist-test-images-idx3-ubyte
+             ├── qmnist-test-labels-idx2-int
+             ├── xnist-images-idx3-ubyte
+             └── xnist-labels-idx2-int
+
+    Citation:
+
+    .. code-block::
+
+        @incollection{qmnist-2019,
+           title = "Cold Case: The Lost MNIST Digits",
+           author = "Chhavi Yadav and L\'{e}on Bottou",\
+           booktitle = {Advances in Neural Information Processing Systems 32},
+           year = {2019},
+           publisher = {Curran Associates, Inc.},
+        }
+    """
+
+    @check_qmnist_dataset
+    def __init__(self, dataset_dir, usage=None, compat=True, num_samples=None, num_parallel_workers=None,
+                 shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.usage = replace_none(usage, "all")
+        self.compat = compat
+
+    def parse(self, children=None):
+        return cde.QMnistNode(self.dataset_dir, self.usage, self.compat, self.sampler)
 
 
 class MindDataset(MappableDataset):
