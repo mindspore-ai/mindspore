@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_REMOVE_RESHAPE_PAIR_H_
 
 #include <utility>
-#include <memory>
 #include "ir/anf.h"
 #include "backend/optimizer/common/pattern_engine.h"
 #include "backend/optimizer/common/helper.h"

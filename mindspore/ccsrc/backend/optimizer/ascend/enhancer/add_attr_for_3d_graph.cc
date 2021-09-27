@@ -15,10 +15,6 @@
  */
 
 #include "backend/optimizer/ascend/enhancer/add_attr_for_3d_graph.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
-#include "base/core_ops.h"
-#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {

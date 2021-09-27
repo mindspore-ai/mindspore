@@ -16,10 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DYNAMIC_RNN_GRAD_REFORMAT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DYNAMIC_RNN_GRAD_REFORMAT_H_
-#include <vector>
-#include <string>
 #include <utility>
-#include <memory>
 #include "ir/anf.h"
 #include "backend/optimizer/common/pattern_engine.h"
 #include "backend/optimizer/common/helper.h"

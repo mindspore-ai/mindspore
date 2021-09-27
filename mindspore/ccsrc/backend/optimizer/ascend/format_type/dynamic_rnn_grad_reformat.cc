@@ -16,9 +16,6 @@
 #include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
 #include <memory>
 #include "backend/optimizer/ascend/ascend_helper.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
-#include "base/core_ops.h"
 
 namespace mindspore {
 namespace opt {
