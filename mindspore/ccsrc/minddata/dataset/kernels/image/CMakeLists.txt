@@ -36,6 +36,7 @@ add_library(kernels-image OBJECT
     random_crop_and_resize_op.cc
     random_crop_op.cc
     random_crop_with_bbox_op.cc
+    random_equalize_op.cc
     random_horizontal_flip_op.cc
     random_horizontal_flip_with_bbox_op.cc
     random_invert_op.cc

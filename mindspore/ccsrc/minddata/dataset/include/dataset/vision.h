@@ -520,6 +520,27 @@ class RandomCropWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Randomly apply histogram equalization on the input image with a given probability.
+class RandomEqualize final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] prob A float representing the probability of equalization, which
+  ///     must be in range of [0, 1] (default=0.5).
+  explicit RandomEqualize(float prob = 0.5);
+
+  /// \brief Destructor.
+  ~RandomEqualize() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Randomly flip the input image horizontally with a given probability.
 class RandomHorizontalFlip final : public TensorTransform {
  public:

@@ -1126,3 +1126,17 @@ TEST_F(MindDataTestExecute, TestRandomAutoContrastEager) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+TEST_F(MindDataTestExecute, TestRandomEqualizeEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomEqualizeEager.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto random_equalize_op = vision::RandomEqualize(0.6);
+
+  auto transform = Execute({decode, random_equalize_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}

@@ -28,6 +28,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         random_crop_decode_resize_ir.cc
         random_crop_ir.cc
         random_crop_with_bbox_ir.cc
+        random_equalize_ir.cc
         random_horizontal_flip_ir.cc
         random_horizontal_flip_with_bbox_ir.cc
         random_invert_ir.cc

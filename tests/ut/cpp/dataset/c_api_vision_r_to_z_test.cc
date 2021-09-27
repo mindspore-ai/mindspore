@@ -350,3 +350,49 @@ TEST_F(MindDataTestPipeline, TestRGB2BGR) {
   iter1->Stop();
   iter2->Stop();
 }
+
+TEST_F(MindDataTestPipeline, TestRandomEqualize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomEqualize.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto random_equalize_op = vision::RandomEqualize(0.5);
+
+  ds = ds->Map({random_equalize_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomEqualizeInvalidProb) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomEqualizeInvalidProb.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto random_equalize_op = vision::RandomEqualize(1.5);
+
+  ds = ds->Map({random_equalize_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
