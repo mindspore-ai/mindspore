@@ -152,7 +152,7 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   MS_EXCEPTION_IF_NULL(data_format_ptr);
   int64_t data_format = GetAndCheckFormat(data_format_ptr);
 
-  int64_t c_axis = 1;
+  size_t c_axis = 1;
   if (data_format == Format::NHWC) {
     c_axis = 3;
   }
