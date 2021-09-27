@@ -256,7 +256,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   void HasCacheAbove() { descendant_of_cache_ = true; }
 
   /// \brief Getter of the number of workers
-  int32_t num_workers() { return num_workers_; }
+  int32_t NumWorkers() { return num_workers_; }
 
   /// \brief Getter of dataset cache
   std::shared_ptr<DatasetCache> GetDatasetCache() { return cache_; }

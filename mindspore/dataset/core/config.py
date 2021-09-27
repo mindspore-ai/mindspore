@@ -66,9 +66,11 @@ def _init_device_info():
         rank_size = 0
         rank_id = 0
         if env_rank_size and env_rank_id:
-            # Ascend only support multi-process scenario
-            rank_size = int(env_rank_size.strip())
-            rank_id = int(env_rank_id.strip())
+            try:
+                rank_size = int(env_rank_size.strip())
+                rank_id = int(env_rank_id.strip())
+            except ValueError:
+                raise ValueError("rank_size or rank_id is not int.")
         if rank_size > 1:
             if numa_enable:
                 _config.set_numa_enable(True)

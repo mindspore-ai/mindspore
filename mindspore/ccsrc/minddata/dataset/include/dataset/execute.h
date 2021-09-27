@@ -123,6 +123,9 @@ class Execute {
   /// \brief The function to validate target device setting is valid or not.
   Status ValidateDevice();
 
+  /// \brief Initialize 310 resource
+  Status InitResource(MapTargetDevice device_type, uint32_t device_id);
+
   std::vector<std::shared_ptr<TensorTransform>> transforms_;
   std::vector<std::shared_ptr<TensorOperation>> ops_;
   MapTargetDevice device_type_;

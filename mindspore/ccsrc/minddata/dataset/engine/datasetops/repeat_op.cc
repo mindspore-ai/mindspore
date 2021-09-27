@@ -115,7 +115,7 @@ Status RepeatOp::EofReceived(int32_t worker_id) {
   return Status::OK();
 }
 
-int32_t RepeatOp::num_consumers() const {
+int32_t RepeatOp::NumConsumers() const {
   if (parent_.empty()) {
     MS_LOG(DEBUG) << "Repeat operator, no parent node, assuming it's root and returning 1.";
     return 1;
@@ -123,7 +123,7 @@ int32_t RepeatOp::num_consumers() const {
     MS_LOG(DEBUG) << "Repeat operator, pointer to the first parent is null. Returning 0.";
     return 0;
   } else {
-    return parent_[0]->num_consumers();
+    return parent_[0]->NumConsumers();
   }
 }
 
@@ -140,12 +140,12 @@ Status RepeatOp::Reset() {
   return Status::OK();
 }
 
-int32_t RepeatOp::num_producers() const {
+int32_t RepeatOp::NumProducers() const {
   if (child_.empty() || child_[0] == nullptr) {
     MS_LOG(DEBUG) << "Repeat operator, pointer to child node is null. Returning 0.";
     return 0;
   } else {
-    return child_[0]->num_producers();
+    return child_[0]->NumProducers();
   }
 }
 

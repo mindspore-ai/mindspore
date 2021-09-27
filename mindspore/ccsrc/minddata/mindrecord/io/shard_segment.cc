@@ -310,11 +310,10 @@ Status ShardSegment::ReadAllAtPageByName(std::string category_name, int64_t page
 
 std::pair<ShardType, std::vector<std::string>> ShardSegment::GetBlobFields() {
   std::vector<std::string> blob_fields;
-  for (auto &p : GetShardHeader()->GetSchemas()) {
-    // assume one schema
-    const auto &fields = p->GetBlobFields();
+  auto schema_list = GetShardHeader()->GetSchemas();
+  if (!schema_list.empty()) {
+    const auto &fields = schema_list[0]->GetBlobFields();
     blob_fields.assign(fields.begin(), fields.end());
-    break;
   }
   return std::make_pair(kCV, blob_fields);
 }

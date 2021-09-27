@@ -69,8 +69,8 @@ Status SBUNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
 
   auto op = std::make_shared<SBUOp>(dataset_dir_, decode_, std::move(schema), std::move(sampler_rt), num_workers_,
                                     connector_que_size_);
-  op->set_total_repeats(GetTotalRepeats());
-  op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  op->SetTotalRepeats(GetTotalRepeats());
+  op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);
 
   return Status::OK();

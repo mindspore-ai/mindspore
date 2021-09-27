@@ -15,7 +15,7 @@
 """Process imagenet validate dataset.
 """
 import os
-
+import stat
 from mindspore import log as logger
 
 
@@ -29,13 +29,12 @@ def preprocess_imagenet_validation_dataset(train_dataset_path, validation_datase
         image_label_mapping_file (str): imagenet_validate_dataset_2012_image_dir_map.txt file path
     """
     train_dataset_path = os.path.realpath(train_dataset_path)
-    sub_dir = [dir.name for dir in os.scandir(train_dataset_path) if dir.is_dir()]
+    sub_dir = [dir_.name for dir_ in os.scandir(train_dataset_path) if dir_.is_dir()]
     for sub_dir_name in sub_dir:
         validate_sub_dir = os.path.join(validation_dataset_path, sub_dir_name)
         validate_sub_dir = os.path.realpath(validate_sub_dir)
         if not os.path.exists(validate_sub_dir):
-            os.makedirs(validate_sub_dir, mode=0o750)
-
+            os.makedirs(validate_sub_dir, mode=stat.S_IRWXU)
     real_file_path = os.path.realpath(image_label_mapping_file)
     mappings = [mapping.strip() for mapping in open(real_file_path).readlines()]
     for mapping in mappings:

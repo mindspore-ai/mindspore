@@ -70,8 +70,8 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchema) {
   std::vector<std::string> column_names = {"image", "label", "id"};
   auto op1 = AlbumSchema(16, 32, folder_path, schema_file, column_names, false);
   std::shared_ptr<RepeatOp> op2 = Repeat(2);
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   std::shared_ptr<ExecutionTree> tree = Build({op1, op2});
   ASSERT_OK(tree->Prepare());
   ASSERT_OK(tree->Launch());
@@ -96,8 +96,8 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchemaNoOrder) {
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
   auto op1 = AlbumSchema(16, 32, folder_path, schema_file);
   std::shared_ptr<RepeatOp> op2 = Repeat(2);
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   std::shared_ptr<ExecutionTree> tree = Build({op1, op2});
   ASSERT_OK(tree->Prepare());
   ASSERT_OK(tree->Launch());
@@ -123,8 +123,8 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchemaFloat) {
   std::string schema_file = datasets_root_path_ + "/testAlbum/floatSchema.json";
   auto op1 = AlbumSchema(16, 32, folder_path, schema_file);
   std::shared_ptr<RepeatOp> op2 = Repeat(2);
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   std::shared_ptr<ExecutionTree> tree = Build({op1, op2});
   tree->Prepare();
   ASSERT_OK(tree->Launch());
@@ -152,8 +152,8 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithFullSchema) {
   std::string schema_file = datasets_root_path_ + "/testAlbum/fullSchema.json";
   auto op1 = AlbumSchema(16, 32, folder_path, schema_file);
   std::shared_ptr<RepeatOp> op2 = Repeat(2);
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   std::shared_ptr<ExecutionTree> tree = Build({op1, op2});
   ASSERT_OK(tree->Prepare());
   ASSERT_OK(tree->Launch());

@@ -264,7 +264,7 @@ Status OperatorCpu::Collect(const ExecutionTree *tree) {
     for (auto iter = tree->begin(); iter != tree->end(); ++iter) {
       id_count_++;
       op_name_[iter->id()] = iter->NameWithID();
-      op_parallel_workers_[iter->id()] = iter->num_workers();
+      op_parallel_workers_[iter->id()] = iter->NumWorkers();
     }
 #if defined(USING_LINUX)
     cpu_processor_num_ = get_nprocs_conf();
