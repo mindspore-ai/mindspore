@@ -15,10 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/cache_merge_op.h"
 
-#include <chrono>
-#include <functional>
-#include <iomanip>
-#include <utility>
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/global_context.h"

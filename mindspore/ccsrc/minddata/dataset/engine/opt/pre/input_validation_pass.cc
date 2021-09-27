@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <string>
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/engine/opt/pre/input_validation_pass.h"
 

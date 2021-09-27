@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include <random>
-#include <utility>
-
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/kernels/image/bounding_box.h"
 #include "minddata/dataset/kernels/image/image_utils.h"

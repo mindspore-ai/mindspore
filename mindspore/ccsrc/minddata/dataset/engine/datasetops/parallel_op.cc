@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 
-#include <algorithm>
 #include <iostream>
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/execution_tree.h"

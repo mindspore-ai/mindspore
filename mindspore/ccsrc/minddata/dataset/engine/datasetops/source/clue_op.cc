@@ -15,7 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/source/clue_op.h"
 
-#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>

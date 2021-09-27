@@ -16,11 +16,6 @@
 
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <algorithm>
-
 #include "minddata/dataset/engine/datasetops/zip_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"

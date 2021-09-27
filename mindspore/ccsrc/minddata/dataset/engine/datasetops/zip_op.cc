@@ -15,8 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/zip_op.h"
 
-#include <algorithm>
-
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/include/dataset/constants.h"

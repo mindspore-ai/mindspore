@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "minddata/dataset/engine/opt/pre/cache_validation_pass.h"
 
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"

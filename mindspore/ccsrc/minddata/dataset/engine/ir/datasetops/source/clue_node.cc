@@ -16,13 +16,6 @@
 
 #include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/source/clue_op.h"
 
 #include "minddata/dataset/util/status.h"

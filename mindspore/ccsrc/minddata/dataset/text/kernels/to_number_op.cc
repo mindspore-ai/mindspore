@@ -16,13 +16,6 @@
 
 #include "minddata/dataset/text/kernels/to_number_op.h"
 
-#include <algorithm>
-#include <limits>
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <vector>
-
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"

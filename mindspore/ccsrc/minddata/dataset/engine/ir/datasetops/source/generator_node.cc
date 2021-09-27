@@ -16,11 +16,6 @@
 
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/datasetops/source/generator_op.h"
 #include "minddata/dataset/engine/opt/pass.h"

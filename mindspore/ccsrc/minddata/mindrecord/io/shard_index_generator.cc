@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <thread>
-
 #include "minddata/mindrecord/include/shard_index_generator.h"
 
 #include "utils/file_utils.h"

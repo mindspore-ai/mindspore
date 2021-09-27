@@ -15,8 +15,6 @@
  */
 #include "minddata/dataset/kernels/image/random_select_subpolicy_op.h"
 
-#include <vector>
-
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"

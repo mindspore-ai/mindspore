@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include <cmath>
-#include <algorithm>
-
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"

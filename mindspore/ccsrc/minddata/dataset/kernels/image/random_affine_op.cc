@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include <cmath>
-#include <random>
-#include <vector>
 
 #include "minddata/dataset/kernels/image/random_affine_op.h"
 
