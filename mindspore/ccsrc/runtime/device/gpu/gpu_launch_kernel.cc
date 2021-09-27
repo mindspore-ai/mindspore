@@ -45,14 +45,14 @@ uint8_t *GPULaunchkernel::AllocDeviceMem(size_t size) {
   return static_cast<uint8_t *>(device_memory);
 }
 
-void GPULaunchkernel::KernelSelect(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void GPULaunchkernel::KernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto node_list = kernel_graph->execution_order();
   for (size_t i = 0; i < node_list.size(); ++i) {
     device::gpu::SetKernelInfo(node_list[i]);
   }
 }
 
-void GPULaunchkernel::KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void GPULaunchkernel::KernelBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto kernels = kernel_graph->execution_order();
   device::gpu::CreateGPUKernel(kernels);
 }

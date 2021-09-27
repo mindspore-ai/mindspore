@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,12 +73,6 @@ class ProfilingUtils {
   // Generate profiling trace
   static ProfilingTraceInfo GenerateProfilingTrace(const session::KernelGraph &kernel_graph);
 
-  // Insert two profiling trace points, one in front and one behind
-  static void InsertProfilingCustomOp(const mindspore::AnfNodePtr &anf_node,
-                                      const ProfilingTraceInfo &profiling_trace_info,
-                                      NotNull<session::KernelGraph *> graph_ptr,
-                                      NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
-
   static std::map<uint32_t, std::vector<std::string>> graph_kernel_name() { return graph_kernel_name_; }
 
   inline static constexpr char kProfiling[] = "Profiling";
@@ -97,7 +91,6 @@ class ProfilingUtils {
                             ProfilingTraceInfo *trace_info);
   static void GetTraceIterEnd(const session::KernelGraph &kernel_graph, ProfilingTraceInfo *trace_info);
   static std::string GetGraphLastKernelName(const session::KernelGraph &kernel_graph);
-  static void GetTraceCustomNode(ProfilingTraceInfo *trace_info);
   static void GetTraceHccl(const session::KernelGraph &kernel_graph, NotNull<ProfilingTraceInfo *> profiling_trace);
   static void GetCNodeOutputRealNode(const std::string &node_name, const session::KernelGraph &kernel_graph,
                                      NotNull<std::set<std::string> *> getnext_outputs);
@@ -109,7 +102,6 @@ class ProfilingUtils {
   inline static std::map<uint32_t, std::vector<CNodePtr>> graph_profiling_cnode_;
   inline static std::map<uint32_t, std::vector<std::string>> graph_kernel_name_;
   inline static std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> graph_point_;
-  inline static uint32_t custom_node_index_;
 };
 }  // namespace ascend
 }  // namespace device

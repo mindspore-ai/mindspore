@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@
 #include "utils/shape_utils.h"
 
 namespace {
-constexpr auto kProfilingGraphId = "PROFILING_GRAPH_ID";
 constexpr auto kGradients = "Gradients";
 constexpr auto kSpecifyParameter = "accu_status";
 size_t kNPUShape = 8;
@@ -853,15 +852,6 @@ void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) {
     MS_LOG(INFO) << "No need to profiling";
     return;
   }
-  auto graph_id_env = std::getenv(kProfilingGraphId);
-  if (graph_id_env != nullptr) {
-    auto graph_id = std::stoul(graph_id_env);
-    if (graph_id != kernel_graph_ptr->graph_id()) {
-      MS_LOG(WARNING) << "Get PROFILING_GRAPH_ID " << graph_id
-                      << " Not Match Current Graph Id:" << kernel_graph_ptr->graph_id();
-      return;
-    }
-  }
   ProfilingTraceInfo profiling_trace_info = ProfilingUtils::GenerateProfilingTrace(*kernel_graph_ptr);
   if (!profiling_trace_info.IsValid()) {
     MS_LOG(INFO) << "[profiling] no profiling node found!";
@@ -887,8 +877,6 @@ void KernelAdjust::InsertProfilingKernel(const ProfilingTraceInfo &profiling_tra
     ProfilingUtils::InsertProfilingTraceFp(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
                                            NOT_NULL(&new_cnode_list));
     new_cnode_list.emplace_back(cnode_ptr);
-    ProfilingUtils::InsertProfilingCustomOp(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
-                                            NOT_NULL(&new_cnode_list));
     ProfilingUtils::InsertProfilingTraceBpEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
                                               NOT_NULL(&new_cnode_list));
     ProfilingUtils::InsertProfilingTraceIterEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr,

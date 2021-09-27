@@ -15,6 +15,8 @@
  */
 
 #include "runtime/device/ascend/ascend_launch_transdata.h"
+
+#include <algorithm>
 #include "abstract/utils.h"
 #include "backend/session/single_kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -28,11 +30,11 @@ size_t AscendLaunchTransData::AlignSizeForLaunchKernel(size_t size) {
 
 uint8_t *AscendLaunchTransData::AllocDeviceMem(size_t size) { return AscendLaunchKernel::AllocDeviceMem(size); }
 
-void AscendLaunchTransData::KernelSelect(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void AscendLaunchTransData::KernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   AscendLaunchKernel::KernelSelect(kernel_graph);
 }
 
-void AscendLaunchTransData::KernelBuild(std::shared_ptr<session::KernelGraph> kernel_graph) {
+void AscendLaunchTransData::KernelBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   AscendLaunchKernel::KernelBuild(kernel_graph);
 }
 
