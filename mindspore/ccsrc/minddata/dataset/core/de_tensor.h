@@ -36,7 +36,7 @@ class DETensor : public mindspore::MSTensor::Impl {
   ~DETensor() = default;
   explicit DETensor(std::shared_ptr<dataset::Tensor> tensor_impl);
 #ifndef ENABLE_ANDROID
-  explicit DETensor(std::shared_ptr<dataset::DeviceTensor> device_tensor_impl, bool is_device);
+  DETensor(std::shared_ptr<dataset::DeviceTensor> device_tensor_impl, bool is_device);
 #endif
   const std::string &Name() const override;
 
