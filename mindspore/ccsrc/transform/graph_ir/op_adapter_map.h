@@ -331,6 +331,7 @@ constexpr const char kNameGlobalAvgPool[] = "GlobalAveragePool";
 constexpr const char kNameStridedSliceV2[] = "StridedSliceV2";
 constexpr const char kNameBNInference[] = "BNInference";
 constexpr const char kNameDeconvolution[] = "Deconvolution";
+constexpr const char kNameUpsample[] = "Upsample";
 
 class OpAdapterMap {
  public:

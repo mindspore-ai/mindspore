@@ -163,4 +163,12 @@ INPUT_MAP(GlobalAveragePool) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(GlobalAveragePool) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GlobalAveragePool) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GlobalAveragePool, kNameGlobalAvgPool, ADPT_DESC(GlobalAveragePool))
+
+// Upsample
+INPUT_MAP(Upsample) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Upsample) = {{"scale", ATTR_DESC(scale, AnyTraits<float>())},
+                      {"h", ATTR_DESC(stride_h, AnyTraits<int64_t>())},
+                      {"w", ATTR_DESC(stride_w, AnyTraits<int64_t>())}};
+OUTPUT_MAP(Upsample) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Upsample, kNameUpsample, ADPT_DESC(Upsample))
 }  // namespace mindspore::transform

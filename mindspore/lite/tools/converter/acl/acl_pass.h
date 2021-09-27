@@ -26,7 +26,8 @@
 #include "include/api/types.h"
 #include "include/registry/parser_context.h"
 #include "cxx_api/model/acl/acl_model_options.h"
-#include "tools/converter/acl/common/acl_option_cfg.h"
+#include "tools/converter/acl/common/acl_types.h"
+#include "ops/custom.h"
 
 namespace mindspore {
 namespace opt {
@@ -53,6 +54,7 @@ class AclPass : public Pass {
   STATUS ConvertGraphToOm(const FuncGraphPtr &func_graph, Buffer *om_data);
   ParameterPtr CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om);
   CNodePtr CreateCustomNode(const FuncGraphPtr &func_graph);
+  void SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim);
   STATUS SetCustomOutputs(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
   STATUS SetMultiOutputs(const CNodePtr &new_cnode, TypeId data_type);
   STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,

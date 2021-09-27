@@ -9,7 +9,7 @@ set(CCSRC_SRC
 
 include_directories(${TOP_DIR}/mindspore/ccsrc/backend/kernel_compiler/cpu)
 
-if(NOT WIN32)
+if(NOT WIN32 AND NOT MSLITE_ENABLE_ACL)
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -rdynamic -fvisibility=hidden")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -rdynamic -fvisibility=hidden")
 endif()

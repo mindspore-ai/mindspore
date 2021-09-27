@@ -17,15 +17,16 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FORMAT_DELETE_REDUNDANT_TRANSPOSE_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FORMAT_DELETE_REDUNDANT_TRANSPOSE_H_
 
+#include "backend/optimizer/common/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {
 namespace opt {
-class DeleteRedundantTranspose {
+class DeleteRedundantTranspose : public Pass {
  public:
-  DeleteRedundantTranspose() = default;
+  DeleteRedundantTranspose() : Pass("DeleteRedundantTranspose") {}
   ~DeleteRedundantTranspose() = default;
-  bool Run(const FuncGraphPtr &func_graph);
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
   STATUS DeleteNot4DTranspose(const FuncGraphPtr &func_graph);

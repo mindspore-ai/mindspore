@@ -517,6 +517,7 @@ bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
     {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train)},
     {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train)},
     {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train)},
+    {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>()},
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train)},
     {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(config->graphInputFormat)}};
   bool succeed_store = true;
