@@ -675,7 +675,7 @@ class Model:
             callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object,
                                                             which should be executed while training.
                                                             Default: None.
-            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
+            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink. Default: True.
             sink_size (int): Control the amount of data in each sink.
