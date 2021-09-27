@@ -44,15 +44,13 @@ void HcclDynamicKernel::UpdateArgs() {
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   // Update input, output, count
-  AddressPtrList kernel_inputs;
-  AddressPtrList kernel_workspaces;
-  AddressPtrList kernel_outputs;
-  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
-  if (kernel_inputs.empty() || kernel_outputs.empty()) {
+  KernelLaunchInfo kernel_launch_info;
+  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_launch_info);
+  if (kernel_launch_info.inputs_.empty() || kernel_launch_info.outputs_.empty()) {
     MS_LOG(EXCEPTION) << "Inputs or outputs is empty. Node info: " << cnode->DebugString();
   }
-  auto input0 = kernel_inputs.at(0);
-  auto output0 = kernel_outputs.at(0);
+  auto input0 = kernel_launch_info.inputs_.at(0);
+  auto output0 = kernel_launch_info.outputs_.at(0);
   MS_EXCEPTION_IF_NULL(input0);
   MS_EXCEPTION_IF_NULL(output0);
 
@@ -82,11 +80,9 @@ void HcclDynamicKernel::StaticShapeExecute() {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  AddressPtrList kernel_inputs;
-  AddressPtrList kernel_workspaces;
-  AddressPtrList kernel_outputs;
-  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
-  kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+  KernelLaunchInfo kernel_launch_info;
+  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_launch_info);
+  kernel_mod->Launch(kernel_launch_info, stream_);
 }
 
 void HcclDynamicKernel::Execute() {

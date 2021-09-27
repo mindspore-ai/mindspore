@@ -108,15 +108,15 @@ void AiCoreDynamicKernel::UpdateArgs() {
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
-  AddressPtrList kernel_inputs;
-  AddressPtrList kernel_workspaces;
-  AddressPtrList kernel_outputs;
-  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+  KernelLaunchInfo kernel_launch_info;
+  KernelRuntime::GenLaunchArgs(*kernel_mod, cnode, &kernel_launch_info);
 
   runtime_args_.clear();
 
+  const auto &kernel_inputs = kernel_launch_info.inputs_;
   (void)std::transform(std::begin(kernel_inputs), std::end(kernel_inputs), std::back_inserter(runtime_args_),
                        [](const AddressPtr &input) { return input->addr; });
+  const auto &kernel_outputs = kernel_launch_info.outputs_;
   (void)std::transform(std::begin(kernel_outputs), std::end(kernel_outputs), std::back_inserter(runtime_args_),
                        [](const AddressPtr &output) { return output->addr; });
   // Update workspace

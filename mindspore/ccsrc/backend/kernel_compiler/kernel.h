@@ -166,12 +166,13 @@ struct Address {
   size_t size;
 };
 using AddressPtr = std::shared_ptr<Address>;
+using AddressPtrList = std::vector<AddressPtr>;
 
 // The memory info of kernel launch.
 struct KernelLaunchInfo {
-  std::vector<AddressPtr> inputs_;
-  std::vector<AddressPtr> outputs_;
-  std::vector<AddressPtr> workspaces_;
+  AddressPtrList inputs_;
+  AddressPtrList outputs_;
+  AddressPtrList workspaces_;
 };
 
 class KernelMod {
@@ -179,6 +180,10 @@ class KernelMod {
   virtual const std::vector<size_t> &GetInputSizeList() const = 0;
   virtual const std::vector<size_t> &GetOutputSizeList() const = 0;
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const = 0;
+  bool Launch(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
+    return Launch(kernel_launch_address.inputs_, kernel_launch_address.workspaces_, kernel_launch_address.outputs_,
+                  stream_ptr);
+  }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
   virtual device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) { return nullptr; }
