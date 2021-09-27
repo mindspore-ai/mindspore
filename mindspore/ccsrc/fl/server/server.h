@@ -82,6 +82,7 @@ class Server {
         cipher_initial_client_cnt_(0),
         cipher_exchange_keys_cnt_(0),
         cipher_share_secrets_cnt_(0),
+        cipher_get_secrets_cnt_(0),
         cipher_get_clientlist_cnt_(0),
         cipher_reconstruct_secrets_up_cnt_(0),
         cipher_reconstruct_secrets_down_cnt_(0),
