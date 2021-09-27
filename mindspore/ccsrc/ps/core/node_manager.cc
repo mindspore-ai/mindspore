@@ -63,7 +63,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
         rank_id = meta->rank_id();
         MS_LOG(INFO) << "Use the old rank id:" << rank_id;
       } else {
-        rank_id = ++next_server_rank_id_;
+        rank_id = IntToSize(++next_server_rank_id_);
       }
     } else {
       registered_nodes_info_.erase((*rank_it).first);
@@ -102,7 +102,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
         rank_id = meta->rank_id();
         MS_LOG(INFO) << "Use the old rank id:" << rank_id;
       } else {
-        rank_id = ++next_worker_rank_id_;
+        rank_id = IntToSize(++next_worker_rank_id_);
       }
     } else {
       registered_nodes_info_.erase((*worker_rank_it).first);
@@ -267,7 +267,7 @@ void NodeManager::ResetMetadata(const std::vector<std::string> &scale_in_nodes) 
       }
     }
     auto min_rank_id = std::min_element(server_rank_ids.begin(), server_rank_ids.end());
-    next_server_rank_id_ = *min_rank_id - 1;
+    next_server_rank_id_ = UintToInt(*min_rank_id - 1);
     MS_LOG(INFO) << "The next server rank id:" << next_server_rank_id_;
   }
   registered_nodes_info_.clear();
