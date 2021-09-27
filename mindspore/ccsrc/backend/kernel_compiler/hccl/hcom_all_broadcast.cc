@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/hccl/hcom_all_broadcast.h"
-#include <memory>
 #include "utils/ms_context.h"
 #include "runtime/hccl_adapter/hccl_adapter.h"
 
