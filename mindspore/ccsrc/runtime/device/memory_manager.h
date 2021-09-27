@@ -27,8 +27,9 @@
 namespace mindspore {
 namespace device {
 enum MemType { kStaticMem, kDynamicMem, kSomasReuseDynamicMem };
-const int kGetAllOuts = -1;
-const uint64_t kMemAlignSize = 512;
+constexpr int kGetAllOuts = -1;
+constexpr uint64_t kMemAlignSize = 512;
+constexpr uint64_t kTwiceMemAlignSize = kMemAlignSize << 1;
 using SomasPtr = mindspore::somas::SomasPtr;
 
 class MemoryManager : public MemHandler {
@@ -95,8 +96,12 @@ class MemoryManager : public MemHandler {
     auto mem_size = iter->second->size();
     cached_host_mem_[mem_size].emplace(iter->first);
   }
-  void SwapIn(void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override {}
-  void SwapOut(void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override {}
+  void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override {
+    MS_LOG(INFO) << "Call default swap in " << host_ptr << "," << device_ptr << "," << mem_size << "," << stream;
+  }
+  void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override {
+    MS_LOG(INFO) << "Call default swap out " << host_ptr << "," << device_ptr << "," << mem_size << "," << stream;
+  }
   size_t GetAvailableMemSize() override {
     MS_LOG(ERROR) << "Return default 0 mem size!";
     return 0;

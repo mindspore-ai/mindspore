@@ -32,7 +32,7 @@ size_t MemoryManager::GetCommonAlignSize(size_t input_size) {
 }
 
 size_t MemoryManager::GetCommunicationAlignSize(size_t input_size) {
-  return (input_size + kMemAlignSize - 1) / kMemAlignSize * kMemAlignSize + 2 * kMemAlignSize;
+  return (input_size + kMemAlignSize - 1) / kMemAlignSize * kMemAlignSize + kTwiceMemAlignSize;
 }
 
 void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph &graph) {
@@ -136,7 +136,10 @@ uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddress
   return ptr;
 }
 
-uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) { return nullptr; }
+uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) {
+  MS_LOG(INFO) << "Call default dynamic malloc " << size << " v " << communication_mem;
+  return nullptr;
+}
 
 bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr address, size_t size) {
   MS_EXCEPTION_IF_NULL(address);

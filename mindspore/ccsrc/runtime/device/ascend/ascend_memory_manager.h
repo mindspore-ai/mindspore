@@ -41,8 +41,8 @@ class AscendMemoryManager : public MemoryManager {
     return AscendMemoryPool::GetInstance().AllocContinuousTensorMem(total_size, size_list);
   }
 
-  void SwapIn(void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override;
-  void SwapOut(void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override;
+  void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override;
+  void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override;
   size_t GetAvailableMemSize() override;
 
  protected:
