@@ -120,6 +120,8 @@ bool CheckIndexOutput(const CNodePtr &node, const std::shared_ptr<kernel::Kernel
 }
 
 void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size_t cast_index) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(cast);
   using Shape = std::vector<size_t>;
   auto cast_dtype = AnfAlgo::GetOutputInferDataType(cast, 0);
   auto cast_shape = AnfAlgo::GetOutputInferShape(cast, 0);
@@ -172,6 +174,7 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
     return nullptr;
   }
   auto ori_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(next_node);
+  MS_EXCEPTION_IF_NULL(ori_kernel_info);
   MS_LOG(INFO) << "Found alternative kernel info for current anf kernel " << next_cnode->DebugString()
                << "ori kernel info" << ori_kernel_info->ToString() << "alternative kernel info"
                << (*alternative_kernel_info)->ToString();
@@ -244,6 +247,7 @@ AnfNodePtr MergeCastToPriorOp(const FuncGraphPtr &graph, const CNodePtr &cur_nod
     return nullptr;
   }
   auto ori_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(prior_op);
+  MS_EXCEPTION_IF_NULL(ori_kernel_info);
   MS_LOG(INFO) << "Found alternative kernel info for current anf kernel " << prior_op->DebugString()
                << "ori kernel info" << ori_kernel_info->ToString() << "alternative kernel info"
                << (*kernel_info_it)->ToString();

@@ -26,6 +26,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr size_t kMaxPoolGradWithArgmaxInputTensorNum = 3;
 constexpr size_t kMaxPoolGradWithArgmaxInputNum = 4;
 constexpr size_t kMaxPoolWithArgmaxShape = 4;
 constexpr size_t kAlignBytes = 16;
@@ -40,10 +41,7 @@ bool IsC(const BaseRef &n) {
 }
 
 CNodePtr GetMaxPoolWithArgmax(const CNodePtr &maxpool_grad_with_argmax) {
-  MS_EXCEPTION_IF_NULL(maxpool_grad_with_argmax);
-  if (maxpool_grad_with_argmax->inputs().size() != kMaxPoolGradWithArgmaxInputNum) {
-    MS_LOG(EXCEPTION) << "MaxPoolGradWithArgmax has wrong input size.";
-  }
+  CheckCNodeInputSize(maxpool_grad_with_argmax, kMaxPoolGradWithArgmaxInputTensorNum);
   auto tuple_getitem0_anf = maxpool_grad_with_argmax->input(kIndex3);
   MS_EXCEPTION_IF_NULL(tuple_getitem0_anf);
   return tuple_getitem0_anf->cast<CNodePtr>();

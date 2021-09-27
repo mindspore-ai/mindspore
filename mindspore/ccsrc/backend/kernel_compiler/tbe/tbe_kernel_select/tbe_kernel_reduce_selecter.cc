@@ -87,10 +87,12 @@ bool TbeKernelReduceSelecter::IsReduceSupportNDC1HWC0(SupportFormat *support_for
 }
 
 bool TbeKernelReduceSelecter::IsReduceSupportFracZ(SupportFormat *support_format) const {
+  MS_EXCEPTION_IF_NULL(support_format);
   return IsFracZAndC1HWNCoC0Common(kOpFormat_FRAC_Z, support_format);
 }
 
 bool TbeKernelReduceSelecter::IsReduceSupportC1HWNCoC0(SupportFormat *support_format) const {
+  MS_EXCEPTION_IF_NULL(support_format);
   return IsFracZAndC1HWNCoC0Common(kOpFormat_C1HWNCoC0, support_format);
 }
 
@@ -132,7 +134,7 @@ bool TbeKernelReduceSelecter::IsFracZAndC1HWNCoC0Common(const std::string &forma
 
 void TbeKernelReduceSelecter::GetReduceAttrKeepDim() {
   if (!AnfAlgo::HasNodeAttr(kAttrKeepDims, cnode_ptr_)) {
-    MS_LOG(INFO) << "This node does't have keep_attr.";
+    MS_LOG(INFO) << "This node doesn't have keep_attr.";
     keep_dims_ = false;
     return;
   }

@@ -201,6 +201,7 @@ void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph &grap
   MemoryManager::MallocSomasDynamicMem(graph);
 #ifndef ENABLE_SECURITY
   if (MemoryProfiling::GetInstance().IsMemoryProfilingEnable()) {
+    MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
     somas_reuse_util_ptr_->ConvertToProfilingNode(graph.graph_id());
   }
 #endif

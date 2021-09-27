@@ -68,6 +68,7 @@ bool IsRealKernelCNode(const CNodePtr &cnode) {
                                              prim::kPrimReturn,      prim::kPrimPartial,      prim::kPrimDepend,
                                              prim::kPrimUpdateState, prim::kPrimLoad};
 #endif
+  MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << cnode->DebugString();
   }
@@ -180,8 +181,11 @@ AnfNodePtr AnfRuntimeAlgorithm::MakeMonadValueNode(const KernelGraphPtr &kg) {
 //          ...
 //          out = Depend(out, latter)
 void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &former, const AnfNodePtr &latter) {
+  MS_EXCEPTION_IF_NULL(kg);
+  MS_EXCEPTION_IF_NULL(latter);
   if (latter->isa<CNode>()) {
     auto latter_cnode = latter->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(latter_cnode);
     constexpr size_t inputsize = 2;
     constexpr size_t kFirstDataInputIndex = 1;
     if (latter_cnode->inputs().size() < inputsize) {
@@ -189,6 +193,7 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
     }
     auto latter_input = latter_cnode->input(kFirstDataInputIndex);
     auto depend1 = kg->NewCNode({NewValueNode(prim::kPrimDepend), latter_input, former});
+    MS_EXCEPTION_IF_NULL(depend1);
     depend1->set_abstract(latter_input->abstract());
     latter_cnode->set_input(kFirstDataInputIndex, depend1);
 
@@ -196,6 +201,7 @@ void AnfRuntimeAlgorithm::KeepOrder(const KernelGraphPtr &kg, const AnfNodePtr &
     MS_EXCEPTION_IF_NULL(return_node);
     auto depend2 = kg->NewCNode(
       {NewValueNode(prim::kPrimDepend), return_node->cast<CNodePtr>()->input(kFirstDataInputIndex), latter});
+    MS_EXCEPTION_IF_NULL(depend2);
     depend2->set_abstract(return_node->cast<CNodePtr>()->input(kFirstDataInputIndex)->abstract());
     kg->set_output(depend2);
     MS_LOG(DEBUG) << "former: " << former->DebugString() << ", latter: " << latter->DebugString()
@@ -393,6 +399,7 @@ std::vector<KernelWithIndex> AnfRuntimeAlgorithm::GetAllOutputWithIndex(const An
     // Ignore the output of front call node.
     if (output_with_index.first->isa<CNode>()) {
       auto cnode = output_with_index.first->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();
       if (inputs[0]->isa<CNode>()) {
         MS_LOG(INFO) << "The output is call node: " << output_with_index.first->DebugString();
@@ -1157,6 +1164,7 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableWorkspaceAddr(const AnfNodePtr &
 abstract::BaseShapePtr AnfRuntimeAlgorithm::GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   auto base_shape = node->Shape();
+  MS_EXCEPTION_IF_NULL(base_shape);
   if (base_shape->isa<abstract::Shape>()) {
     if (output_idx == 0) {
       return base_shape;
@@ -1282,6 +1290,8 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
 }
 // copy an abstract of a node to another node
 void AnfRuntimeAlgorithm::CopyAbstract(const AnfNodePtr &from_node, AnfNode *to_node) {
+  MS_EXCEPTION_IF_NULL(from_node);
+  MS_EXCEPTION_IF_NULL(to_node);
   to_node->set_abstract(from_node->abstract());
 }
 
@@ -1555,6 +1565,7 @@ bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
 }
 
 bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input_index) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Cannot input a parameter or a valuenode to charge it's input if is a feature map"
                       << " trace: " << trace::DumpSourceLines(node);
@@ -1735,6 +1746,7 @@ bool AnfRuntimeAlgorithm::IsSwitchCall(const CNodePtr &call_node) {
                       << " trace: " << trace::DumpSourceLines(call_node);
   }
   auto input1 = call_node->input(1);
+  MS_EXCEPTION_IF_NULL(input1);
   if (input1->isa<ValueNode>()) {
     return false;
   } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
@@ -1881,6 +1893,7 @@ TypeId AnfRuntimeAlgorithm::GetCNodeOutputPrecision(const AnfNodePtr &node) {
 }
 
 TypeId AnfRuntimeAlgorithm::GetPrevNodeOutputPrecision(const AnfNodePtr &node, size_t input_idx) {
+  MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << node->DebugString() << ", input node is not CNode."
                       << " trace: " << trace::DumpSourceLines(node);

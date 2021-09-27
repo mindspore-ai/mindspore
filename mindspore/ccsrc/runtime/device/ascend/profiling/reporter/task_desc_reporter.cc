@@ -31,6 +31,7 @@ void TaskDescReporter::ReportData() {
 
   size_t task_index = 0;
   for (const auto &node : cnode_list_) {
+    MS_EXCEPTION_IF_NULL(node);
     if (AnfAlgo::GetKernelType(node) != TBE_KERNEL && AnfAlgo::GetKernelType(node) != AKG_KERNEL) {
       MS_LOG(INFO) << "Skip non tbe kernel:" << node->fullname_with_scope();
       ++task_index;
@@ -38,7 +39,6 @@ void TaskDescReporter::ReportData() {
     }
     auto kernel_mod = AnfAlgo::GetKernelMod(node);
     auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
-    MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(ascend_kernel_mod);
     // Check task_id and stream_id valid
     CheckStreamTaskValid(task_index, task_index);

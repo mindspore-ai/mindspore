@@ -118,6 +118,7 @@ void RectifyDoMaskKernelInfo::RectifyDropOutDoMaskKernelInfo(const std::vector<C
     if (AnfAlgo::GetInputFormat(do_mask, 0) != format) {
       auto builder =
         std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(do_mask));
+      MS_EXCEPTION_IF_NULL(builder);
       builder->SetInputFormat(format, 0);
       builder->SetOutputFormat(format, 0);
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), do_mask.get());
@@ -139,6 +140,7 @@ AnfNodePtr RectifyDoMaskKernelInfo::RectifyKernelInfoInPynativeProcess(const Anf
   if (do_mask_input_format != kOpFormat_DEFAULT) {
     auto builder =
       std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+    MS_EXCEPTION_IF_NULL(builder);
     builder->SetInputFormat(kOpFormat_DEFAULT, 0);
     builder->SetOutputFormat(kOpFormat_DEFAULT, 0);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());

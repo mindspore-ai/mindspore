@@ -45,6 +45,7 @@ AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &i
   trans_inputs.emplace_back(NewValueNode(prim));
   trans_inputs.emplace_back(input_node);
   auto reshape = func_graph->NewCNode(trans_inputs);
+  MS_EXCEPTION_IF_NULL(reshape);
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input_node, 0)}, {dst_shape}, reshape.get());
   AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), reshape);
   AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(dst_shape), reshape);
@@ -72,6 +73,7 @@ void SetTransNodeAttr(const CNodePtr &trans_node) {
 
 void ReFreshInferShape(const AnfNodePtr &trans_node, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(trans_node);
+  MS_EXCEPTION_IF_NULL(node);
   auto real_input_node = AnfAlgo::VisitKernelWithReturnType(node, 0).first;
   if (!real_input_node->isa<CNode>()) {
     return;
@@ -106,6 +108,7 @@ void SetGroupAttr(const ParameterPtr &param, const AnfNodePtr &out_trans, const 
 AnfNodePtr GetTransInputNodePtr(const FuncGraphPtr &func_graph, const CNodePtr &node, size_t index,
                                 const KernelSelectPtr &kernel_select) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto input_node = AnfAlgo::GetInputNode(node, index);
   if (HasAbstractMonad(input_node)) {
     // No transfer for monad inputs.
@@ -136,6 +139,7 @@ AnfNodePtr GetTransInputNodePtr(const FuncGraphPtr &func_graph, const CNodePtr &
 AnfNodePtr InsertTransOpForSingleOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const KernelSelectPtr &kernel_select) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(func_graph);
   std::string output_format = AnfAlgo::GetOutputFormat(node, 0);
   std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, 0);
   if (output_format == kOpFormat_NC1KHKWHWC0) {
@@ -242,6 +246,7 @@ void RefreshKernelBuildInfo(const std::string &input_format, const std::string &
   auto ori_build_info = AnfAlgo::GetSelectKernelBuildInfo(trans_data);
   MS_EXCEPTION_IF_NULL(ori_build_info);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(ori_build_info);
+  MS_EXCEPTION_IF_NULL(builder);
   builder->SetInputsFormat({input_format});
   builder->SetInputsReshapeType({reshape_type});
   builder->SetOutputsReshapeType({reshape_type});
@@ -322,6 +327,7 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
                               const abstract::BaseShapePtr &origin_shape, const TypeId &origin_type,
                               const std::string &reshape_type) {
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(origin_shape);
   std::string input_format = format;
   std::string output_format = format;
   CNodePtr cast = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), input});
@@ -406,10 +412,12 @@ AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePt
 
 CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
   size_t in_num = AnfAlgo::GetInputNum(cnode);  // include monads.
   for (size_t input_index = 0; input_index < in_num; ++input_index) {
     auto cur_input = AnfAlgo::GetInputNode(cnode, input_index);
+    MS_EXCEPTION_IF_NULL(cur_input);
     if (HasAbstractMonad(cur_input)) {
       // No cast for monad inputs.
       new_inputs.push_back(cur_input);
@@ -421,6 +429,7 @@ CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnod
 
     auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(cur_input, 0);
     auto real_input_node = kernel_with_index.first;
+    MS_EXCEPTION_IF_NULL(real_input_node);
     if (kernel::IsWeightBoundary(real_input_node)) {
       // weight
       origin_type = AnfAlgo::GetPrevNodeOutputPrecision(cnode, input_index);

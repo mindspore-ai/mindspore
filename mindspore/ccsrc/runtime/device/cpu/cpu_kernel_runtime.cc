@@ -186,6 +186,7 @@ DeviceAddressPtr CPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t 
 tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
   session::KernelGraph *kernel_graph, const CNodePtr &node, size_t index,
   std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(tensor_to_node);
   size_t output_size = AnfAlgo::GetOutputTensorNum(node);
@@ -380,6 +381,7 @@ void CPUKernelRuntime::BindOutputTensorAddressPtr(const VectorRef *outputs) {
 void CPUKernelRuntime::BindInputOutput(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
                                        VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(outputs);
   BindInputTensorAddressPtr(*kernel_graph, inputs);
   BindOutputTensorAddressPtr(outputs);
 }

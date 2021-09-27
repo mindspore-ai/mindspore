@@ -31,6 +31,7 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
                          std::vector<AnfNodePtr> *plant_inputs) {
   if (!AnfAlgo::IsTupleOutput(tuple_input)) {
     auto abs = tuple_input->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
     MS_LOG(WARNING) << "The Function only split the output type is tuple type but got" << abs->ToString();
     return -1;
   }

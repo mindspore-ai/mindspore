@@ -34,6 +34,8 @@ bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return false;
   }
 
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
   if (inputs[0]->addr == inputs[1]->addr) {
     MS_LOG(INFO) << "first addr is same with second addr , no need assign";
     return true;
@@ -54,6 +56,8 @@ std::vector<TaskInfoPtr> AssignKernel::GenTask(const std::vector<AddressPtr> &in
   }
   stream_id_ = stream_id;
 
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(inputs[1]);
   std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr =
     std::make_shared<MemcpyAsyncTaskInfo>(unique_name_, stream_id, inputs[0]->addr, inputs[0]->size, inputs[1]->addr,
                                           inputs[1]->size, RT_MEMCPY_DEVICE_TO_DEVICE, false);

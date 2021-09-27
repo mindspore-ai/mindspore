@@ -1168,7 +1168,8 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
                                            const std::shared_ptr<MemScheduler> &mem_scheduler) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
-  if (cnode->inputs().size() != 2) {
+  const size_t kNodeInputSize = 2;
+  if (cnode->inputs().size() != kNodeInputSize) {
     MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
   }
   MS_EXCEPTION_IF_NULL(cnode->inputs()[1]);

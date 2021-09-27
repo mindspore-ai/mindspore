@@ -64,6 +64,7 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
       break;
     }
     default: {
+      MS_EXCEPTION_IF_NULL(anf_node);
       MS_LOG(EXCEPTION) << "node [" << anf_node->DebugString() << "] Unsupported kernel_type:" << kernel_type;
     }
   }
@@ -100,6 +101,7 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   bool tbe_ret = true;
   bool akg_ret = true;
   auto bin_map = kernel::tbe::KernelMeta::GetInstance();
+  MS_EXCEPTION_IF_NULL(bin_map);
   if (!tbe_nodes.empty()) {
     std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
     if (!old_build.empty()) {
@@ -171,6 +173,7 @@ static void AddTbeClearZeroNode(mindspore::session::KernelGraph *const kernel_gr
   MS_EXCEPTION_IF_NULL(abstract);
   clear_zero->set_abstract(abstract);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
   builder->SetKernelType(KernelType::TBE_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), clear_zero.get());
   auto clean_size = CalCleanZerosSize(pre_node);
@@ -197,6 +200,7 @@ static void AddFusionTbeClearZeroNode(mindspore::session::KernelGraph *const ker
   MS_EXCEPTION_IF_NULL(abstract);
   clear_zero->set_abstract(abstract);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(builder);
   builder->SetKernelType(KernelType::TBE_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), clear_zero.get());
   AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size_list), clear_zero);
@@ -286,17 +290,21 @@ bool KernelBuild(const std::vector<CNodePtr> &kernels) {
 
 std::map<AnfNodePtr, std::vector<size_t>> GetCommunicationOpInputInfo(
   const mindspore::session::KernelGraph *kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   std::map<AnfNodePtr, std::vector<size_t>> comm_input_info_map;
   for (auto &kernel : kernel_graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
     auto input_num = AnfAlgo::GetInputTensorNum(kernel);
     if (mindspore::session::AnfRuntimeAlgorithm::IsCommunicationOp(kernel)) {
       for (size_t i = 0; i < input_num; i++) {
         auto input_node = kernel->input(i + 1);
         auto kernel_input = AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+        MS_EXCEPTION_IF_NULL(kernel_input.first);
         if (!kernel_input.first->isa<CNode>()) {
           continue;
         }
         auto cnode = kernel_input.first->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode);
         if (AnfAlgo::IsCommunicationOp(cnode) || AnfAlgo::IsIndependentNode(cnode) ||
             AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
           // no need to add atomic for communication/independent/getnext op 's output

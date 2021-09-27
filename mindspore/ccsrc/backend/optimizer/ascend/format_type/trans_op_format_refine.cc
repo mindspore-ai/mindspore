@@ -40,6 +40,7 @@ const AnfNodePtr TransOpFormatRefine::Process(const FuncGraphPtr &func_graph, co
     auto out_format = AnfAlgo::GetOutputFormat(node, 0);
     auto builder =
       std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
+    MS_EXCEPTION_IF_NULL(builder);
     if (in_format == kOpFormat_DEFAULT && k3DFormatSet.find(out_format) != k3DFormatSet.end()) {
       builder->SetInputsFormat({kOpFormat_NCDHW});
       builder->SetOutputsFormat({out_format});

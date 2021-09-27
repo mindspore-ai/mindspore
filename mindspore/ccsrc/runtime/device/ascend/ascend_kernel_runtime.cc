@@ -373,6 +373,7 @@ bool AscendKernelRuntime::Init() {
 bool AscendKernelRuntime::LoadData(const session::KernelGraph &graph) {
 #ifdef ENABLE_DEBUGGER
   MS_LOG(INFO) << "Start load step";
+  MS_EXCEPTION_IF_NULL(debugger_);
   for (const auto &graph_ptr : debugger_->GetGraphPtrList()) {
     debugger_->SetGraphPtr(graph_ptr);
     // load output
@@ -594,6 +595,7 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
 
 void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
   MS_EXCEPTION_IF_NULL(task_fail_info);
+  MS_EXCEPTION_IF_NULL(current_graph_);
   static std::mutex exception_mutex;
   constexpr uint32_t kOverflowThreshold = 5;
   std::lock_guard<std::mutex> lock(exception_mutex);
@@ -628,12 +630,15 @@ CNodePtr AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taski
   }
   auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(current_graph_->graph_id());
   for (const auto &iter : runtime_info_map) {
+    MS_EXCEPTION_IF_NULL(iter.second);
     auto task_id = std::get<kTupleTaskId>(*iter.second);
     auto stream_id = std::get<kTupleStreamId>(*iter.second);
     if (task_id == taskid && stream_id == streamid) {
       auto &execute_node = current_graph_->execution_order();
-      auto node = std::find_if(execute_node.begin(), execute_node.end(),
-                               [&iter](const auto &node) { return node->UniqueName() == iter.first; });
+      auto node = std::find_if(execute_node.begin(), execute_node.end(), [&iter](const auto &node) {
+        MS_EXCEPTION_IF_NULL(node);
+        return node->UniqueName() == iter.first;
+      });
       if (node != execute_node.end()) {
         return *node;
       }
@@ -1214,6 +1219,7 @@ int AscendKernelRuntime::DeleteDumpFile(std::string path) {
       if (path[path.size() - 1] != '/') {
         path = path + "/";
       }
+      MS_EXCEPTION_IF_NULL(dirinfo);
       filepath = path + dirinfo->d_name;
       if (strcmp(dirinfo->d_name, ".") == 0 || strcmp(dirinfo->d_name, "..") == 0) continue;
       result = DeleteDumpFile(filepath);

@@ -109,6 +109,9 @@ const AnfNodePtr ProcessMatchedNodes(const FuncGraphPtr &func_graph, const CNode
     (void)manager->Replace(prev_cnode, prev_cnode->input(1));
     return cnode->input(1);
   } else {  // rebuild the pass nodes
+    if (pass_size < kOffset) {
+      MS_LOG(ERROR) << "pass_size should >= 2";
+    }
     for (size_t idx = pass_size - kOffset; idx > 0; --idx) {
       auto new_node = func_graph->NewCNode((*pass_vector)[idx].first->inputs());
       if (idx == pass_size - kOffset) {
