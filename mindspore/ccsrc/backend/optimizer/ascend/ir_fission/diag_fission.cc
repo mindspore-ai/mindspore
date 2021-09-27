@@ -24,6 +24,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kDiagInputNum = 1;
+constexpr size_t kDiagInputMaxDim = 4;
 
 template <typename T>
 void SetAssistTensorData(void *data, T value, size_t dims_size) {
@@ -53,13 +54,16 @@ ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const
   AbstractBasePtr x_abstract;
   if (type == kNumberTypeInt32) {
     SetAssistTensorData<int32_t>(tensor->data_c(), 1, dims);
-    x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, assist_shape);
+    x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, assist_shape);
   } else if (type == kNumberTypeFloat16) {
     SetAssistTensorData<float16>(tensor->data_c(), float16(static_cast<float>(1)), dims);
-    x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, assist_shape);
-  } else {
+    x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, assist_shape);
+  } else if (type == kNumberTypeFloat32) {
     SetAssistTensorData<float>(tensor->data_c(), static_cast<float>(1), dims);
     x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat, assist_shape);
+  } else {
+    MS_EXCEPTION(TypeError) << "The type of node [" << node->DebugString()
+                            << "] should be int32, float16 or float32, but got" << node->Type()->ToString();
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -86,6 +90,9 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
     return nullptr;
   }
   auto input_shape = AnfAlgo::GetOutputInferShape(diag_cnode->inputs()[kIndex1], 0);
+  if (input_shape.size() > kDiagInputMaxDim) {
+    MS_EXCEPTION(ValueError) << "For Diag, rank of input should be less than 5, but got: " << input_shape.size();
+  }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDiag->name()))};
   auto assist_const = CreateAssistNode(graph, diag_cnode, input_shape);
   new_inputs.insert(new_inputs.end(), diag_cnode->inputs().begin() + 1, diag_cnode->inputs().end());
