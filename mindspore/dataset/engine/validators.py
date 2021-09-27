@@ -257,6 +257,7 @@ def check_vocdataset(method):
 
         usage = param_dict.get('usage')
         type_check(usage, (str,), "usage")
+        dataset_dir = os.path.realpath(dataset_dir)
 
         if task == "Segmentation":
             imagesets_file = os.path.join(dataset_dir, "ImageSets", "Segmentation", usage + ".txt")

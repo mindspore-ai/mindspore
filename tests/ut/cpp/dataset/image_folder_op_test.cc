@@ -80,8 +80,8 @@ TEST_F(MindDataTestImageFolderSampler, TestSequentialImageFolderWithRepeat) {
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   auto op1 = ImageFolder(16, 2, 32, folder_path, false);
   auto op2 = Repeat(2);
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   auto tree = Build({op1, op2});
   tree->Prepare();
   int32_t res[] = {0, 1, 2, 3};
@@ -169,8 +169,8 @@ TEST_F(MindDataTestImageFolderSampler, TestSequentialImageFolderWithRepeatBatch)
   auto op1 = ImageFolder(16, 2, 32, folder_path, false);
   auto op2 = Repeat(2);
   auto op3 = Batch(11);
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   auto tree = Build({op1, op2, op3});
   tree->Prepare();
   int32_t res[4][11] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -304,8 +304,8 @@ TEST_F(MindDataTestImageFolderSampler, TestDistributedSampler) {
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   auto op1 = ImageFolder(16, 2, 32, folder_path, false, std::move(sampler));
   auto op2 = Repeat(4);
-  op1->set_total_repeats(4);
-  op1->set_num_repeats_per_epoch(4);
+  op1->SetTotalRepeats(4);
+  op1->SetNumRepeatsPerEpoch(4);
   auto tree = Build({op1, op2});
   tree->Prepare();
   Status rc = tree->Launch();

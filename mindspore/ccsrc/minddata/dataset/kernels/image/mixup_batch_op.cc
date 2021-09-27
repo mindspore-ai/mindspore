@@ -42,7 +42,9 @@ Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tenso
   CHECK_FAIL_RETURN_UNEXPECTED(
     images_size <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
     "The \'images_size\' must not be more than \'INT64_MAX\', but got: " + std::to_string(images_size));
-  for (int64_t i = 0; i < static_cast<int64_t>(images_size); i++) rand_indx->push_back(i);
+  for (int64_t i = 0; i < static_cast<int64_t>(images_size); i++) {
+    rand_indx->push_back(i);
+  }
   std::shuffle(rand_indx->begin(), rand_indx->end(), rnd_);
 
   RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), out_labels, DataType(DataType::DE_FLOAT32)));

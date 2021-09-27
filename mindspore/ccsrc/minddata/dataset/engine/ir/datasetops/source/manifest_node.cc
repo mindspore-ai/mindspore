@@ -104,8 +104,8 @@ Status ManifestNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
 
   manifest_op = std::make_shared<ManifestOp>(num_workers_, dataset_file_, connector_que_size_, decode_, class_index_,
                                              std::move(schema), std::move(sampler_rt), usage_);
-  manifest_op->set_total_repeats(GetTotalRepeats());
-  manifest_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  manifest_op->SetTotalRepeats(GetTotalRepeats());
+  manifest_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(manifest_op);
 
   return Status::OK();

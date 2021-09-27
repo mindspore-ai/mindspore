@@ -356,8 +356,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordRepeat) {
   rc = my_tree->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
-  my_mindrecord_op->set_total_repeats(num_repeats);
-  my_mindrecord_op->set_num_repeats_per_epoch(num_repeats);
+  my_mindrecord_op->SetTotalRepeats(num_repeats);
+  my_mindrecord_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = my_repeat_op->AddChild(my_mindrecord_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -429,8 +429,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
   rc = my_tree->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
-  my_mindrecord_op->set_total_repeats(num_repeats);
-  my_mindrecord_op->set_num_repeats_per_epoch(num_repeats);
+  my_mindrecord_op->SetTotalRepeats(num_repeats);
+  my_mindrecord_op->SetNumRepeatsPerEpoch(num_repeats);
   rc = my_repeat_op->AddChild(my_mindrecord_op);
   EXPECT_TRUE(rc.IsOk());
 

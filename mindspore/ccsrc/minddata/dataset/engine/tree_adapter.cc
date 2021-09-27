@@ -221,7 +221,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(row);
   row->clear();  // make sure row is empty
 #ifndef ENABLE_SECURITY
-  bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
+  bool is_profiling_enable = tree_->GetProfilingManager()->IsProfilingEnable();
 #endif
 
   // When cur_db_ is a nullptr, it means this is the first call to get_next, launch ExecutionTree
@@ -233,7 +233,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   if (row->eoe()) {                                  // return empty tensor if 1st buf is a ctrl buf (no rows)
     MS_LOG(INFO) << "End of data iteration.";
 #ifndef ENABLE_SECURITY
-    if (isProfilingEnable) {
+    if (is_profiling_enable) {
       tree_->SetEpochEnd();
     }
 #endif

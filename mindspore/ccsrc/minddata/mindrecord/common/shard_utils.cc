@@ -43,11 +43,11 @@ std::vector<std::string> StringSplit(const std::string &field, char separator) {
 }
 
 bool ValidateFieldName(const std::string &str) {
-  std::string::const_iterator it = str.begin();
-  if (it == str.end()) {
+  auto it = str.cbegin();
+  if (it == str.cend()) {
     return false;
   }
-  for (; it != str.end(); ++it) {
+  for (; it != str.cend(); ++it) {
     if (*it == '_' || ((*it >= '0') && (*it <= '9')) || ((*it >= 'A') && (*it <= 'Z')) ||
         ((*it >= 'a') && (*it <= 'z'))) {
       continue;
@@ -156,7 +156,7 @@ bool CheckIsValidUtf8(const std::string &str) {
 bool IsLegalFile(const std::string &path) {
   struct stat s;
   if (stat(common::SafeCStr(path), &s) == 0) {
-    if (s.st_mode & S_IFDIR) {
+    if (S_ISDIR(s.st_mode)) {
       return false;
     }
     return true;

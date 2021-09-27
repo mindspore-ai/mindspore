@@ -54,8 +54,8 @@ Status BuildVocabNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node
   std::shared_ptr<BuildVocabOp> build_vocab_op;
   build_vocab_op = std::make_shared<BuildVocabOp>(vocab_, columns_, freq_range_, top_k_, special_tokens_,
                                                   special_first_, num_workers_, connector_que_size_);
-  build_vocab_op->set_total_repeats(GetTotalRepeats());
-  build_vocab_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  build_vocab_op->SetTotalRepeats(GetTotalRepeats());
+  build_vocab_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(build_vocab_op);
   return Status::OK();
 }

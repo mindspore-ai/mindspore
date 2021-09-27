@@ -251,6 +251,14 @@ static bool Conv2DImplement(const LiteMat &src, const LiteMat &kernel, T2 *dst, 
   int border_y = static_cast<int>(kernel.height_ / 2);
 
   LiteMat pad_mat;
+
+  if ((border_x > INT_MAX / 2) || (src.width_ > INT_MAX - 2 * border_x)) {
+    return false;
+  }
+  if ((border_y > INT_MAX / 2) || (src.height_ > INT_MAX - 2 * border_y)) {
+    return false;
+  }
+
   pad_mat.Init(src.width_ + 2 * border_x, src.height_ + 2 * border_y, src.channel_, src.data_type_);
 
   if (!Pad(src, pad_mat, border_y, border_y, border_x, border_x, pad_type)) {

@@ -46,8 +46,8 @@ Status SyncWaitNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   // The reason for this is because having it otherwise can lead to blocking issues
   // See barrier_op.h for more details
   auto op = std::make_shared<BarrierOp>(connector_que_size_, condition_name_, callback_);
-  op->set_total_repeats(GetTotalRepeats());
-  op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  op->SetTotalRepeats(GetTotalRepeats());
+  op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);
   return Status::OK();
 }

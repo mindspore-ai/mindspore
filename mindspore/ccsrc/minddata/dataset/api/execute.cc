@@ -54,20 +54,27 @@ struct Execute::ExtraInfo {
 #endif
 };
 
-Execute::Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice device_type, uint32_t device_id) {
-  ops_.emplace_back(std::move(op));
-  device_type_ = device_type;
-  info_ = std::make_shared<ExtraInfo>();
+Status Execute::InitResource(MapTargetDevice device_type, uint32_t device_id) {
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource(device_id);
     if (!rc.IsOk()) {
       device_resource_ = nullptr;
-      MS_LOG(ERROR) << "Initialize Ascend310 resource fail.";
+      std::string err_msg = "Initialize Ascend310 resource fail";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
 #endif
+  return Status::OK();
+}
+
+Execute::Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice device_type, uint32_t device_id) {
+  ops_.emplace_back(std::move(op));
+  device_type_ = device_type;
+  info_ = std::make_shared<ExtraInfo>();
+  (void)InitResource(device_type, device_id);
 }
 
 Execute::Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice device_type, uint32_t device_id) {
@@ -76,16 +83,7 @@ Execute::Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice device_typ
 
   info_ = std::make_shared<ExtraInfo>();
   device_type_ = device_type;
-#ifdef ENABLE_ACL
-  if (device_type_ == MapTargetDevice::kAscend310) {
-    device_resource_ = std::make_shared<AscendResource>();
-    Status rc = device_resource_->InitResource(device_id);
-    if (!rc.IsOk()) {
-      device_resource_ = nullptr;
-      MS_LOG(ERROR) << "Initialize Ascend310 resource fail.";
-    }
-  }
-#endif
+  (void)InitResource(device_type, device_id);
 }
 
 Execute::Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice device_type, uint32_t device_id) {
@@ -96,16 +94,7 @@ Execute::Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice dev
   info_ = std::make_shared<ExtraInfo>();
   info_->init_with_shared_ptr_ = false;
   device_type_ = device_type;
-#ifdef ENABLE_ACL
-  if (device_type_ == MapTargetDevice::kAscend310) {
-    device_resource_ = std::make_shared<AscendResource>();
-    Status rc = device_resource_->InitResource(device_id);
-    if (!rc.IsOk()) {
-      device_resource_ = nullptr;
-      MS_LOG(ERROR) << "Initialize Ascend310 resource fail.";
-    }
-  }
-#endif
+  (void)InitResource(device_type, device_id);
 }
 
 // Execute function for the example case: auto decode(new vision::Decode());
@@ -116,31 +105,13 @@ Execute::Execute(TensorTransform *op, MapTargetDevice device_type, uint32_t devi
 
   info_ = std::make_shared<ExtraInfo>();
   device_type_ = device_type;
-#ifdef ENABLE_ACL
-  if (device_type_ == MapTargetDevice::kAscend310) {
-    device_resource_ = std::make_shared<AscendResource>();
-    Status rc = device_resource_->InitResource(device_id);
-    if (!rc.IsOk()) {
-      device_resource_ = nullptr;
-      MS_LOG(ERROR) << "Initialize Ascend310 resource fail.";
-    }
-  }
-#endif
+  (void)InitResource(device_type, device_id);
 }
 
 Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, MapTargetDevice device_type, uint32_t device_id)
     : ops_(std::move(ops)), device_type_(device_type) {
   info_ = std::make_shared<ExtraInfo>();
-#ifdef ENABLE_ACL
-  if (device_type_ == MapTargetDevice::kAscend310) {
-    device_resource_ = std::make_shared<AscendResource>();
-    Status rc = device_resource_->InitResource(device_id);
-    if (!rc.IsOk()) {
-      device_resource_ = nullptr;
-      MS_LOG(ERROR) << "Initialize Ascend310 resource fail.";
-    }
-  }
-#endif
+  (void)InitResource(device_type, device_id);
 }
 
 Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, MapTargetDevice device_type, uint32_t device_id) {
@@ -149,16 +120,7 @@ Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, MapTargetDev
 
   info_ = std::make_shared<ExtraInfo>();
   device_type_ = device_type;
-#ifdef ENABLE_ACL
-  if (device_type_ == MapTargetDevice::kAscend310) {
-    device_resource_ = std::make_shared<AscendResource>();
-    Status rc = device_resource_->InitResource(device_id);
-    if (!rc.IsOk()) {
-      device_resource_ = nullptr;
-      MS_LOG(ERROR) << "Initialize Ascend310 resource fail.";
-    }
-  }
-#endif
+  (void)InitResource(device_type, device_id);
 }
 
 Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops, MapTargetDevice device_type,
@@ -177,16 +139,7 @@ Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
   info_ = std::make_shared<ExtraInfo>();
   info_->init_with_shared_ptr_ = false;
   device_type_ = device_type;
-#ifdef ENABLE_ACL
-  if (device_type_ == MapTargetDevice::kAscend310) {
-    device_resource_ = std::make_shared<AscendResource>();
-    Status rc = device_resource_->InitResource(device_id);
-    if (!rc.IsOk()) {
-      device_resource_ = nullptr;
-      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
-    }
-  }
-#endif
+  (void)InitResource(device_type, device_id);
 }
 
 // Execute function for the example vector case: auto decode(new vision::Decode());
@@ -199,16 +152,7 @@ Execute::Execute(const std::vector<TensorTransform *> &ops, MapTargetDevice devi
 
   info_ = std::make_shared<ExtraInfo>();
   device_type_ = device_type;
-#ifdef ENABLE_ACL
-  if (device_type_ == MapTargetDevice::kAscend310) {
-    device_resource_ = std::make_shared<AscendResource>();
-    Status rc = device_resource_->InitResource(device_id);
-    if (!rc.IsOk()) {
-      device_resource_ = nullptr;
-      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
-    }
-  }
-#endif
+  (void)InitResource(device_type, device_id);
 }
 
 Execute::~Execute() {
@@ -228,6 +172,7 @@ Execute::~Execute() {
 
 Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output) {
   // Validate input tensor
+  RETURN_UNEXPECTED_IF_NULL(output);
   CHECK_FAIL_RETURN_UNEXPECTED(input.DataSize() > 0, "Input Tensor has no data.");
   CHECK_FAIL_RETURN_UNEXPECTED(output != nullptr, "Output Tensor can not be nullptr.");
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
@@ -290,7 +235,8 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
       RETURN_STATUS_UNEXPECTED(ss.str());
     }
     *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
-  } else {  // Ascend310 case, where we must set Ascend resource on each operators
+  } else if (device_type_ ==
+             MapTargetDevice::kAscend310) {  // Ascend310 case, where we must set Ascend resource on each operators
 #ifdef ENABLE_ACL
     CHECK_FAIL_RETURN_UNEXPECTED(device_resource_, "Device resource is nullptr which is illegal under case Ascend310.");
     // Sink data from host into device
@@ -311,12 +257,17 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
 
     *output = mindspore::MSTensor(std::make_shared<DETensor>(device_input, true));
 #endif
+  } else {
+    std::string err_msg = "Your input device is not supported. (Option: CPU or Ascend310)";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();
 }
 
 Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::vector<MSTensor> *output_tensor_list) {
   // Validate input tensor
+  RETURN_UNEXPECTED_IF_NULL(output_tensor_list);
   CHECK_FAIL_RETURN_UNEXPECTED(!input_tensor_list.empty(), "Input Tensor is not valid.");
   CHECK_FAIL_RETURN_UNEXPECTED(output_tensor_list != nullptr, "Output Tensor can not be nullptr.");
   output_tensor_list->clear();
@@ -380,7 +331,8 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
       ++idx;
     }
     CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor is not valid.");
-  } else {  // Case Ascend310
+  } else if (device_type_ ==
+             MapTargetDevice::kAscend310) {  // Ascend310 case, where we must set Ascend resource on each operators
 #ifdef ENABLE_ACL
     CHECK_FAIL_RETURN_UNEXPECTED(device_resource_, "Device resource is nullptr which is illegal under case Ascend310.");
     for (auto &input_tensor : input_tensor_list) {
@@ -410,6 +362,10 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
     }
     CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor vector is empty.");
 #endif
+  } else {
+    std::string err_msg = "Your input device is not supported. (Option: CPU or Ascend310)";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();
 }
@@ -526,6 +482,10 @@ Status AippInfoCollection(std::map<std::string, std::string> *aipp_options, cons
 
 std::string Execute::AippCfgGenerator() {
   std::string config_location = "./aipp.cfg";
+  if (info_ == nullptr) {
+    MS_LOG(ERROR) << "info_ is null";
+    return "";
+  }
 #ifdef ENABLE_ACL
   if (info_->init_with_shared_ptr_) {
     auto rc = ParseTransforms();
@@ -565,8 +525,7 @@ std::string Execute::AippCfgGenerator() {
   if (!outfile.is_open()) {
     MS_LOG(ERROR) << "Fail to open Aipp config file, please verify your system config(including authority)."
                   << "We will return empty string which represent the location of Aipp config file in this case.";
-    std::string except = "";
-    return except;
+    return "";
   }
 
   if (device_type_ == MapTargetDevice::kAscend310) {
@@ -650,10 +609,14 @@ Status Execute::ParseTransforms() {
                          [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> {
                            return operation->Parse();
                          });
-  } else {
+  } else if (device_type_ == MapTargetDevice::kAscend310) {
     for (auto &transform_ : transforms_) {
       ops_.emplace_back(transform_->Parse(device_type_));
     }
+  } else {
+    std::string err_msg = "Your input device is not supported. (Option: CPU or Ascend310)";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
   return Status::OK();

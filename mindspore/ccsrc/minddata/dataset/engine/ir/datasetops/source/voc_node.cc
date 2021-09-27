@@ -125,8 +125,8 @@ Status VOCNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   std::shared_ptr<VOCOp> voc_op;
   voc_op = std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, connector_que_size_,
                                    decode_, std::move(schema), std::move(sampler_rt), extra_metadata_);
-  voc_op->set_total_repeats(GetTotalRepeats());
-  voc_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  voc_op->SetTotalRepeats(GetTotalRepeats());
+  voc_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(voc_op);
   return Status::OK();
 }
