@@ -225,8 +225,8 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic4) {
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 
-  myRandomDataOp->set_total_repeats(numRepeats);
-  myRandomDataOp->set_num_repeats_per_epoch(numRepeats);
+  myRandomDataOp->SetTotalRepeats(numRepeats);
+  myRandomDataOp->SetNumRepeatsPerEpoch(numRepeats);
   rc = myRepeatOp->AddChild(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
@@ -297,8 +297,8 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic5) {
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 
-  myRandomDataOp->set_total_repeats(numRepeats);
-  myRandomDataOp->set_num_repeats_per_epoch(numRepeats);
+  myRandomDataOp->SetTotalRepeats(numRepeats);
+  myRandomDataOp->SetNumRepeatsPerEpoch(numRepeats);
   rc = myRepeatOp->AddChild(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
@@ -374,13 +374,13 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpTree1) {
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 
-  myShuffleOp->set_total_repeats(numRepeats);
-  myShuffleOp->set_num_repeats_per_epoch(numRepeats);
+  myShuffleOp->SetTotalRepeats(numRepeats);
+  myShuffleOp->SetNumRepeatsPerEpoch(numRepeats);
   rc = myRepeatOp->AddChild(myShuffleOp);
   EXPECT_TRUE(rc.IsOk());
 
-  myRandomDataOp->set_total_repeats(numRepeats);
-  myRandomDataOp->set_num_repeats_per_epoch(numRepeats);
+  myRandomDataOp->SetTotalRepeats(numRepeats);
+  myRandomDataOp->SetNumRepeatsPerEpoch(numRepeats);
   rc = myShuffleOp->AddChild(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 

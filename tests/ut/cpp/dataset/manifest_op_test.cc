@@ -60,8 +60,8 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   auto op1 = Manifest(16, 2, 32, file);
   auto op2 = Repeat(2);
-  op1->set_total_repeats(2);
-  op1->set_num_repeats_per_epoch(2);
+  op1->SetTotalRepeats(2);
+  op1->SetNumRepeatsPerEpoch(2);
   auto tree = Build({op1, op2});
   tree->Prepare();
   uint32_t res[] = {0, 1, 0, 1};
@@ -154,8 +154,8 @@ TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
   auto seq_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   auto op1 = Manifest(16, 2, 32, file, "train", std::move(seq_sampler), {});
   auto op2 = Repeat(4);
-  op1->set_total_repeats(4);
-  op1->set_num_repeats_per_epoch(4);
+  op1->SetTotalRepeats(4);
+  op1->SetNumRepeatsPerEpoch(4);
   auto tree = Build({op1, op2});
   tree->Prepare();
   Status rc = tree->Launch();

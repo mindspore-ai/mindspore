@@ -85,7 +85,7 @@ Status ExecutionTree::AssociateNode(const std::shared_ptr<DatasetOp> &op) {
   tree_state_ = kDeTStateBuilding;
 
   // Assign an id to the operator
-  op->set_id(id_count_);
+  op->SetId(id_count_);
   id_count_++;
 
   // Assign our tree into the op so that each op has a link back to the tree

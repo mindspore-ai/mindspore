@@ -39,9 +39,9 @@ class Path {
    private:
     explicit DirIterator(Path *f);
 
-    Path *dir_;
-    DIR *dp_;
-    struct dirent *entry_;
+    Path *dir_ = nullptr;
+    DIR *dp_ = nullptr;
+    struct dirent *entry_ = nullptr;
   };
 
   explicit Path(const std::string &);

@@ -65,8 +65,8 @@ class ZipOp : public PipelineOp {
   std::string Name() const override { return kZipOp; }
 
   Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
-  int32_t num_consumers() const override;
-  int32_t num_producers() const override;
+  int32_t NumConsumers() const override;
+  int32_t NumProducers() const override;
 
  private:
   // Special handle case where an empty row has been received from child iterator

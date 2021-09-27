@@ -242,7 +242,7 @@ class BatchOp : public ParallelOp {
 
   // the number of thread pulling from the mOutConnector of the Op below
   // @return int32_t, 1
-  int32_t num_consumers() const override { return 1; }
+  int32_t NumConsumers() const override { return 1; }
 
   // get the batch size for next batch
   // @return Status The status code returned

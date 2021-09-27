@@ -101,7 +101,7 @@ class MapOp : public ParallelOp {
 
   // Getter
   // @return the number of threads consuming data from previous op's output Connector.
-  int32_t num_consumers() const override;
+  int32_t NumConsumers() const override;
 
   // Op name getter
   // @return Name of the current Op

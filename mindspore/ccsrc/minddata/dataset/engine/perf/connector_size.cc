@@ -42,7 +42,7 @@ json ConnectorSize::ParseOpInfo(const DatasetOp &node, const std::vector<int32_t
   json json_node;
   json_node["op_id"] = node.id();
   json_node["op_type"] = node.Name();
-  json_node["num_workers"] = node.num_workers();
+  json_node["num_workers"] = node.NumWorkers();
   json metrics;
   // DeviceQueueOp is a special op,it is not inlined but its output queue is invalid.
   // So we should not output its queue size.

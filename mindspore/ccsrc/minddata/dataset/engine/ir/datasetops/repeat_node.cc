@@ -40,8 +40,8 @@ void RepeatNode::Print(std::ostream &out) const { out << (Name() + "(count:" + s
 
 Status RepeatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   auto new_op = std::make_shared<RepeatOp>(repeat_count_);
-  new_op->set_total_repeats(GetTotalRepeats());
-  new_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  new_op->SetTotalRepeats(GetTotalRepeats());
+  new_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(new_op);
   op_ = new_op;
 

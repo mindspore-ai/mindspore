@@ -83,8 +83,8 @@ TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceFromDatasetFuntions) {
   rc = spv_op->AddChild(file_op);
   ASSERT_TRUE(rc.IsOk());
 
-  file_op->set_total_repeats(1);
-  file_op->set_num_repeats_per_epoch(1);
+  file_op->SetTotalRepeats(1);
+  file_op->SetNumRepeatsPerEpoch(1);
   rc = tree->AssignRoot(spv_op);
   ASSERT_TRUE(rc.IsOk());
   rc = tree->Prepare();
@@ -141,8 +141,8 @@ TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceTokenizerFuntions) {
   rc = spv_op->AddChild(file_op);
   ASSERT_TRUE(rc.IsOk());
 
-  file_op->set_total_repeats(1);
-  file_op->set_num_repeats_per_epoch(1);
+  file_op->SetTotalRepeats(1);
+  file_op->SetNumRepeatsPerEpoch(1);
   rc = tree->AssignRoot(spv_op);
   ASSERT_TRUE(rc.IsOk());
   rc = tree->Prepare();

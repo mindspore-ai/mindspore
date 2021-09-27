@@ -68,15 +68,15 @@ void RandomDataOp::Print(std::ostream &out, bool show_all) const {
 
 // Helper function to produce a default/random schema if one didn't exist
 void RandomDataOp::GenerateSchema() {
-  const int32_t kTypeOffset = 2;
+  const int32_t type_offset = 2;
   // To randomly create a schema, we need to choose:
   // a) how many columns
   // b) the type of each column
   // c) the shape of each column (number of dimensions i.e. rank)
   // d) the shape of each column (dimension values)
   data_schema_ = std::make_unique<DataSchema>();
-  std::unique_ptr<TensorShape> newShape;
-  std::unique_ptr<ColDescriptor> newCol;
+  std::unique_ptr<TensorShape> new_shape;
+  std::unique_ptr<ColDescriptor> new_col;
 
   // Loop over the number of chosen columns
   int32_t numColumns = GenRandomInt(1, kMaxNumColumns);
@@ -84,23 +84,26 @@ void RandomDataOp::GenerateSchema() {
     // For each column:
     // - choose a datatype
     // - generate a shape that randomly chooses the number of dimensions and the dimension values.
-    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(1, DataType::NUM_OF_TYPES - kTypeOffset));
+    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(1, DataType::NUM_OF_TYPES - type_offset));
     int32_t rank = GenRandomInt(1, kMaxRank);
     std::vector<dsize_t> dims;
     for (int32_t d = 0; d < rank; d++) {
       // 0 is not a valid dimension value.  however, we can support "*" or unknown, so map the random
       // 0 value to the unknown attribute if 0 is chosen
       dsize_t dim_value = static_cast<dsize_t>(GenRandomInt(0, kMaxDimValue));
-      if (dim_value == 0) dim_value = TensorShape::kDimUnknown;
+      if (dim_value == 0) {
+        dim_value = TensorShape::kDimUnknown;
+      }
       dims.push_back(dim_value);
     }
-    newShape = std::make_unique<TensorShape>(dims);
+    new_shape = std::make_unique<TensorShape>(dims);
 
     // Create the column descriptor
-    std::string colName = "c" + std::to_string(i);
-    newCol = std::make_unique<ColDescriptor>(colName, DataType(newType), TensorImpl::kFlexible, rank, newShape.get());
+    std::string col_name = "c" + std::to_string(i);
+    new_col =
+      std::make_unique<ColDescriptor>(col_name, DataType(newType), TensorImpl::kFlexible, rank, new_shape.get());
 
-    Status rc = data_schema_->AddColumn(*newCol);
+    Status rc = data_schema_->AddColumn(*new_col);
     if (rc.IsError()) MS_LOG(ERROR) << "Failed to generate a schema. Message:" << rc;
   }
 }
@@ -125,6 +128,9 @@ Status RandomDataOp::operator()() {
     DatasetOp::CreateConnector(num_producers_, num_workers_);
   }
 
+  if (num_workers_ == 0) {
+    RETURN_STATUS_UNEXPECTED("Invalid data, num_workers_ is zero.");
+  }
   // Assign the number of rows to each worker in a round robin fashion.
   worker_max_rows_.reserve(num_workers_);
   worker_rows_packed_.reserve(num_workers_);

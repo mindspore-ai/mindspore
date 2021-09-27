@@ -177,9 +177,9 @@ bool CelebAOp::CheckDatasetTypeValid() {
 
 Status CelebAOp::ParseImageAttrInfo() {
   std::vector<std::string> image_infos;
-  bool needMoreData = true;
+  bool need_more_data = true;
   RETURN_IF_NOT_OK(attr_info_queue_->PopFront(&image_infos));
-  while (!image_infos.empty() && needMoreData) {
+  while (!image_infos.empty() && need_more_data) {
     for (uint32_t index = 0; index < image_infos.size(); index++) {
       std::string image_info = image_infos[index];
       std::vector<std::string> split = Split(image_info);
