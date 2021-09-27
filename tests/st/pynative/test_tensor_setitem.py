@@ -373,23 +373,23 @@ def test_itemset_by_tuple_with_number():
     input_3d_np.itemset(index_np_3, value_np_2)
     assert onp.all(output_3d_ms_2.asnumpy() == input_3d_np)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net(input_1d_ms, index_np_2, value_np_1)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net(input_1d_ms, index_np_2, value_np_2)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net(input_3d_ms, index_np_1, value_np_1)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net(input_3d_ms, index_np_1, value_np_2)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net(input_3d_ms, index_np_2, value_np_1)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net(input_3d_ms, index_np_2, value_np_2)
     with pytest.raises(IndexError):
         net(input_3d_ms, index_np_4, value_np_1)
     with pytest.raises(IndexError):
         net(input_3d_ms, index_np_4, value_np_2)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net(input_3d_ms, index_np_5, value_np_1)
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         net(input_3d_ms, index_np_5, value_np_2)
