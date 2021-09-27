@@ -1,4 +1,0 @@
-easydict
-six
-numpy
-paddlepaddle

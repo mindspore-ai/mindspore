@@ -1,5 +1,0 @@
-<resources>
-    <string name="app_name">ImageSegmentation</string>
-    <string name="no_pic_neededSave">Null Image needed to save</string>
-    <string name="save_success">Save success</string>
-</resources>

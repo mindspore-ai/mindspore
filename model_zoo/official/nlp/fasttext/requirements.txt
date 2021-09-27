@@ -1,4 +1,0 @@
-spacy==2.3.1
-sklearn
-en_core_web_lg==2.3.1
-numpy

@@ -1,4 +1,0 @@
-numpy
-mmcv
-pillow
-pyyaml

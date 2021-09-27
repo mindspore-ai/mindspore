@@ -1,5 +1,0 @@
-numpy
-opencv-python
-mmcv
-pycocotools
-pyyaml

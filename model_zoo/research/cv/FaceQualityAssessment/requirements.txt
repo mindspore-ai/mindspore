@@ -1,5 +1,0 @@
-numpy
-pillow
-opencv-python
-tqdm
-pyyaml

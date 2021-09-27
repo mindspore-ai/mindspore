@@ -1,6 +1,0 @@
-jieba
-numpy
-sentencepiece
-torch
-easydict
-tqdm
