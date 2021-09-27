@@ -52,6 +52,7 @@ from .validators import check_prob, check_crop, check_center_crop, check_resize_
     check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
     check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, \
     check_uniform_augment_cpp, check_convert_color, check_random_resize_crop, check_random_auto_contrast, \
+    check_random_adjust_sharpness, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
     check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
@@ -669,6 +670,32 @@ class Pad(ImageTensorOperation):
 
     def parse(self):
         return cde.PadOperation(self.padding, self.fill_value, DE_C_BORDER_TYPE[self.padding_mode])
+
+
+class RandomAdjustSharpness(ImageTensorOperation):
+    """
+    Randomly adjust the sharpness of the input image with a given probability.
+
+    Args:
+        degree (float): Sharpness adjustment degree, which must be non negative.
+            Degree of 0.0 gives a blurred image, degree of 1.0 gives the original image,
+            and degree of 2.0 increases the sharpness by a factor of 2.
+        prob (float, optional): Probability of the image being sharpness adjusted, which
+            must be in range of [0, 1] (default=0.5).
+
+    Examples:
+        >>> transforms_list = [c_vision.Decode(), c_vision.RandomAdjustSharpness(2.0, 0.5)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_random_adjust_sharpness
+    def __init__(self, degree, prob=0.5):
+        self.prob = prob
+        self.degree = degree
+
+    def parse(self):
+        return cde.RandomAdjustSharpnessOperation(self.degree, self.prob)
 
 
 class RandomAffine(ImageTensorOperation):

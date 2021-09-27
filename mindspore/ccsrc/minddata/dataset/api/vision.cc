@@ -40,6 +40,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_color_adjust_ir.h"
@@ -449,6 +450,19 @@ Pad::Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderTy
 
 std::shared_ptr<TensorOperation> Pad::Parse() {
   return std::make_shared<PadOperation>(data_->padding_, data_->fill_value_, data_->padding_mode_);
+}
+
+// RandomAdjustSharpness Transform Operation.
+struct RandomAdjustSharpness::Data {
+  Data(float degree, float prob) : degree_(degree), probability_(prob) {}
+  float degree_;
+  float probability_;
+};
+
+RandomAdjustSharpness::RandomAdjustSharpness(float degree, float prob) : data_(std::make_shared<Data>(degree, prob)) {}
+
+std::shared_ptr<TensorOperation> RandomAdjustSharpness::Parse() {
+  return std::make_shared<RandomAdjustSharpnessOperation>(data_->degree_, data_->probability_);
 }
 #endif  // not ENABLE_ANDROID
 

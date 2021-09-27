@@ -93,13 +93,13 @@ def test_random_auto_contrast_comp(plot=False):
     auto_contrast_op = c_vision.AutoContrast()
 
     dataset1 = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
-    for item in dataset1.create_dict_iterator(output_numpy=True):
+    for item in dataset1.create_dict_iterator(num_epochs=1, output_numpy=True):
         image = item['image']
     dataset1.map(operations=random_auto_contrast_op, input_columns=['image'])
     dataset2 = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
     dataset2.map(operations=auto_contrast_op, input_columns=['image'])
-    for item1, item2 in zip(dataset1.create_dict_iterator(output_numpy=True),
-                            dataset2.create_dict_iterator(output_numpy=True)):
+    for item1, item2 in zip(dataset1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            dataset2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         image_random_auto_contrast = item1['image']
         image_auto_contrast = item2['image']
 

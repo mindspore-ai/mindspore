@@ -296,6 +296,22 @@ def check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
         check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
 
 
+def check_random_adjust_sharpness(method):
+    """Wrapper method to check the parameters of RandomAdjustSharpness."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [degree, prob], _ = parse_user_args(method, *args, **kwargs)
+        type_check(degree, (float, int), "degree")
+        check_non_negative_float32(degree, "degree")
+        type_check(prob, (float, int), "prob")
+        check_value(prob, [0., 1.], "prob")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_random_resize_crop(method):
     """A wrapper that wraps a parameter checker around the original function(random resize crop operation)."""
 

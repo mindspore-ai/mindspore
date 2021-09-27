@@ -36,6 +36,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_color_adjust_ir.h"
@@ -272,6 +273,18 @@ PYBIND_REGISTER(PadOperation, 1, ([](const py::module *m) {
                       auto pad = std::make_shared<vision::PadOperation>(padding, fill_value, padding_mode);
                       THROW_IF_ERROR(pad->ValidateParams());
                       return pad;
+                    }));
+                }));
+
+PYBIND_REGISTER(RandomAdjustSharpnessOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::RandomAdjustSharpnessOperation, TensorOperation,
+                                   std::shared_ptr<vision::RandomAdjustSharpnessOperation>>(
+                    *m, "RandomAdjustSharpnessOperation")
+                    .def(py::init([](float degree, float prob) {
+                      auto random_adjust_sharpness =
+                        std::make_shared<vision::RandomAdjustSharpnessOperation>(degree, prob);
+                      THROW_IF_ERROR(random_adjust_sharpness->ValidateParams());
+                      return random_adjust_sharpness;
                     }));
                 }));
 
