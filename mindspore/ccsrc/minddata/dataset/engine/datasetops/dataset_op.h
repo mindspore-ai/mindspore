@@ -209,33 +209,33 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   // \brief Getter function
   // \return The number of workers in this op
-  virtual int32_t num_workers() const = 0;
+  virtual int32_t NumWorkers() const = 0;
 
   // \brief Getter function
   // \return The number of threads consuming from previous op.
-  virtual int32_t num_consumers() const = 0;
+  virtual int32_t NumConsumers() const = 0;
 
   // \brief Getter function
   // \return The number of threads producing to the output connector.
-  virtual int32_t num_producers() const = 0;
+  virtual int32_t NumProducers() const = 0;
 
   // \brief Getter function
   // \return T/F if this is an inlined operator
   bool inlined() const { return (oc_queue_size_ == 0); }
 
   // \brief Setter function, set the number of total repeats for the operator
-  void set_total_repeats(int32_t total_repeats) { op_total_repeats_ = total_repeats; }
+  void SetTotalRepeats(int32_t total_repeats) { op_total_repeats_ = total_repeats; }
 
   // \brief Setter function, set the number of repeats per epoch for the operator
-  void set_num_repeats_per_epoch(int32_t num_repeats_per_epoch) { op_num_repeats_per_epoch_ = num_repeats_per_epoch; }
+  void SetNumRepeatsPerEpoch(int32_t num_repeats_per_epoch) { op_num_repeats_per_epoch_ = num_repeats_per_epoch; }
 
   // \brief Getter function
   // \return The number of required repeats for the operator
-  int32_t op_total_repeats() { return op_total_repeats_; }
+  int32_t GetOpTotalRepeats() { return op_total_repeats_; }
 
   // \brief Getter function
   // \return The number of repeats per epoch for the operator
-  int32_t op_num_repeats_per_epoch() const { return op_num_repeats_per_epoch_; }
+  int32_t GetOpNumRepeatsPerEpoch() const { return op_num_repeats_per_epoch_; }
 
   // \brief Register the internal worker connectors. No op unless it is a parallel op
   // \return Status
@@ -393,7 +393,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // \notes No public interface.  Only the class itself, or it's friend the execution tree can set
   // this
   // \param op_id - the Id value to set into the operator
-  void set_id(int32_t op_id) { operator_id_ = op_id; }
+  void SetId(int32_t op_id) { operator_id_ = op_id; }
 
   // Sets the tree into the op so that the operator has a back pointer to the tree.
   // \param tree - the tree to assign to the op.

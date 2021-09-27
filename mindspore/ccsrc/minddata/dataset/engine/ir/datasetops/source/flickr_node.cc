@@ -100,8 +100,8 @@ Status FlickrNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
 
   auto flickr_op = std::make_shared<FlickrOp>(num_workers_, dataset_dir_, annotation_file_, decode_,
                                               connector_que_size_, std::move(schema), std::move(sampler_rt));
-  flickr_op->set_total_repeats(GetTotalRepeats());
-  flickr_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  flickr_op->SetTotalRepeats(GetTotalRepeats());
+  flickr_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(flickr_op);
   return Status::OK();
 }

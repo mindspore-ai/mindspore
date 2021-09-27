@@ -215,7 +215,7 @@ Status GeneratorOp::operator()() {
         // Waiting for repeatOp to start new epoch
         // If Reset() is called first by repeat op, this wait() will return right away.
         // If Reset() is not called yet, this wait() will block until reset.
-        if (this->op_total_repeats() < 0) {
+        if (this->GetOpTotalRepeats() < 0) {
           RETURN_IF_NOT_OK(wp_.Wait());
           // Clear the status of the wait post
           wp_.Clear();
@@ -235,7 +235,7 @@ Status GeneratorOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   // Create new generator object
   RETURN_IF_NOT_OK(CreateGeneratorObject());
-  if (this->op_total_repeats() < 0) {
+  if (this->GetOpTotalRepeats() < 0) {
     // Wake up master thread
     wp_.Set();
   }

@@ -201,13 +201,13 @@ Status CifarOp::ReadCifar100BlockData() {
 }
 
 Status CifarOp::GetCifarFiles() {
-  const std::string kExtension = ".bin";
+  const std::string extension = ".bin";
   Path dir_path(folder_path_);
   auto dirIt = Path::DirIterator::OpenDirectory(&dir_path);
   if (dirIt) {
     while (dirIt->HasNext()) {
       Path file = dirIt->Next();
-      if (file.Extension() == kExtension) {
+      if (file.Extension() == extension) {
         cifar_files_.push_back(file.ToString());
       }
     }

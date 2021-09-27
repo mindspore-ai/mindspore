@@ -88,8 +88,8 @@ Status CityscapesNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node
 
   auto cityscapes_op = std::make_shared<CityscapesOp>(num_workers_, dataset_dir_, usage_, quality_mode_, task_, decode_,
                                                       connector_que_size_, std::move(schema), std::move(sampler_rt));
-  cityscapes_op->set_total_repeats(GetTotalRepeats());
-  cityscapes_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  cityscapes_op->SetTotalRepeats(GetTotalRepeats());
+  cityscapes_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(cityscapes_op);
   return Status::OK();
 }

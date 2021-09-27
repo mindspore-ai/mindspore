@@ -34,7 +34,7 @@ bool set_seed(int32_t seed) {
     MS_LOG(ERROR) << "Seed given is not within the required range: " << seed;
     return false;
   }
-  _config->set_seed((uint32_t)seed);
+  _config->set_seed(static_cast<uint32_t>(seed));
   return true;
 }
 
@@ -73,7 +73,7 @@ bool set_monitor_sampling_interval(int32_t interval) {
     MS_LOG(ERROR) << "Interval given is not within the required range: " << interval;
     return false;
   }
-  _config->set_monitor_sampling_interval((uint32_t)interval);
+  _config->set_monitor_sampling_interval(static_cast<uint32_t>(interval));
   return true;
 }
 
@@ -86,7 +86,7 @@ bool set_callback_timeback(int32_t timeout) {
     MS_LOG(ERROR) << "Timeout given is not within the required range: " << timeout;
     return false;
   }
-  _config->set_callback_timeout((uint32_t)timeout);
+  _config->set_callback_timeout(static_cast<uint32_t>(timeout));
   return true;
 }
 

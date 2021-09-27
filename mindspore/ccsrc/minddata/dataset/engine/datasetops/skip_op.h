@@ -49,8 +49,8 @@ class SkipOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return kSkipOp; }
   Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
-  int32_t num_consumers() const override;
-  int32_t num_producers() const override;
+  int32_t NumConsumers() const override;
+  int32_t NumProducers() const override;
 
  private:
   int32_t max_skips_;   // The number of skips that the user requested

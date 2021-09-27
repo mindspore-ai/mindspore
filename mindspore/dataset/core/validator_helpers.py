@@ -507,11 +507,7 @@ def check_filename(path):
     """
     if not isinstance(path, str):
         raise TypeError("path: {} is not string".format(path))
-    filename = os.path.basename(path)
-
-    # '#', ':', '|', ' ', '}', '"', '+', '!', ']', '[', '\\', '`',
-    # '&', '.', '/', '@', "'", '^', ',', '_', '<', ';', '~', '>',
-    # '*', '(', '%', ')', '-', '=', '{', '?', '$'
+    filename = os.path.basename(os.path.realpath(path))
     forbidden_symbols = set(r'\/:*?"<>|`&\';')
 
     if set(filename) & forbidden_symbols:
@@ -524,7 +520,7 @@ def check_filename(path):
 def check_dir(dataset_dir):
     """
     Validates if the argument is a directory.
-.
+
     :param dataset_dir: string containing directory path
     :return: Exception: when the validation fails, nothing otherwise.
     """
@@ -550,11 +546,12 @@ def check_list_same_size(list1, list2, list1_name="", list2_name=""):
 def check_file(dataset_file):
     """
     Validates if the argument is a valid file name.
-.
+
     :param dataset_file: string containing file path
     :return: Exception: when the validation fails, nothing otherwise.
     """
     check_filename(dataset_file)
+    dataset_file = os.path.realpath(dataset_file)
     if not os.path.isfile(dataset_file) or not os.access(dataset_file, os.R_OK):
         raise ValueError("The file {} does not exist or permission denied!".format(dataset_file))
 

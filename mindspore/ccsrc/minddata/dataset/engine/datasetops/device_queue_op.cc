@@ -187,8 +187,8 @@ Status DeviceQueueOp::SendDataToAscend() {
 
 #ifndef ENABLE_SECURITY
   std::shared_ptr<DeviceQueueTracing> profiling_node;
-  bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
-  if (isProfilingEnable) {
+  bool is_profiling_enable = tree_->GetProfilingManager()->IsProfilingEnable();
+  if (is_profiling_enable) {
     std::shared_ptr<Tracing> node;
     RETURN_IF_NOT_OK(tree_->GetProfilingManager()->GetTracingNode(kDeviceQueueTracingName, &node));
     profiling_node = std::dynamic_pointer_cast<DeviceQueueTracing>(node);
@@ -196,7 +196,7 @@ Status DeviceQueueOp::SendDataToAscend() {
     connector_capacity = ChildOpConnectorCapacity();
   }
 #else
-  bool isProfilingEnable = false;
+  bool is_profiling_enable = false;
 #endif
 #ifdef ENABLE_DUMP_IR
   md_channel_info_->RecordBatchQueue(ChildOpConnectorSize());
@@ -218,14 +218,14 @@ Status DeviceQueueOp::SendDataToAscend() {
       md_channel_info_->RecordPreprocessBatch(send_batch);
       md_channel_info_->RecordPushStartTime();
 #endif
-      RETURN_IF_NOT_OK(SendRowToTdt(curr_row, isProfilingEnable, &tdt_cost));
+      RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
       if (first_push_flag_ != true) {
         MS_LOG(INFO) << "Loading dataset and push first batch into device successful.";
         first_push_flag_ = true;
       }
 #ifndef ENABLE_SECURITY
       DetectPerBatchTime(&batch_record_start, &batch_record_end);
-      ProfilingRecorder(isProfilingEnable, profiling_node, send_batch, tdt_cost, &batch_start_time, &end_time,
+      ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, tdt_cost, &batch_start_time, &end_time,
                         connector_capacity, connector_size);
 #endif
       send_batch++;
@@ -244,7 +244,7 @@ Status DeviceQueueOp::SendDataToAscend() {
       LimitSendingBatches(send_batch, &sending_num, cfg);
 
 #ifndef ENABLE_SECURITY
-      if (isProfilingEnable) {
+      if (is_profiling_enable) {
         connector_size = ChildOpConnectorSize();
         connector_capacity = ChildOpConnectorCapacity();
       }
@@ -252,8 +252,8 @@ Status DeviceQueueOp::SendDataToAscend() {
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
     }
     if (curr_row.eoe() && send_epoch_end_) {
-      TensorRow currRow;
-      auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost,
+      TensorRow dummy_row;
+      auto status = tdtInstancePtr->hostPush(dummy_row, true, channel_name_, is_profiling_enable, tdt_cost,
                                              ACL_TENSOR_DATA_END_OF_SEQUENCE);
       if (status != Status::OK()) {
         if (stop_send_) {
@@ -273,7 +273,7 @@ Status DeviceQueueOp::SendDataToAscend() {
       stop_send_ = true;
     }
 #ifndef ENABLE_SECURITY
-    if (isProfilingEnable) {
+    if (is_profiling_enable) {
       connector_size = ChildOpConnectorSize();
       connector_capacity = ChildOpConnectorCapacity();
       tree_->SetEpochEnd();
@@ -311,8 +311,8 @@ void DeviceQueueOp::LimitSendingBatches(int64_t send_batch, int64_t *sending_num
   }
 }
 
-Status DeviceQueueOp::SendRowToTdt(TensorRow currRow, bool isProfilingEnable, int32_t *tdt_cost) {
-  auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, *tdt_cost);
+Status DeviceQueueOp::SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, int32_t *tdt_cost) {
+  auto status = tdtInstancePtr->hostPush(curr_row, true, channel_name_, is_profiling_enable, *tdt_cost);
   if (status != Status::OK()) {
     if (stop_send_) {
       MS_LOG(INFO) << "stop_send received";
@@ -328,7 +328,7 @@ Status DeviceQueueOp::SendRowToTdt(TensorRow currRow, bool isProfilingEnable, in
   }
   if (create_data_info_queue_) {
     DATA_INFO data_info;
-    (void)std::transform(currRow.begin(), currRow.end(), std::back_inserter(data_info),
+    (void)std::transform(curr_row.begin(), curr_row.end(), std::back_inserter(data_info),
                          [](const std::shared_ptr<Tensor> &ts) { return std::make_pair(ts->type(), ts->shape()); });
     RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(data_info));
   }
@@ -376,6 +376,7 @@ Status DeviceQueueOp::SetThreadDevice() {
 }
 
 Status DeviceQueueOp::LaunchParallelCopyThread() {
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   // Every thread use cuda api should SetThreadDevice
   RETURN_IF_NOT_OK(SetThreadDevice());
   // CircularPool may not safe under multi-threads scenario, so one worker with one pool
@@ -396,6 +397,7 @@ Status DeviceQueueOp::LaunchParallelCopyThread() {
 }
 
 Status DeviceQueueOp::PushDataToGPU() {
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   // Every thread use cuda api should SetThreadDevice
   RETURN_IF_NOT_OK(SetThreadDevice());
   TaskManager::FindMe()->Post();
@@ -405,8 +407,8 @@ Status DeviceQueueOp::PushDataToGPU() {
   int32_t connector_size = 0;
   int32_t connector_capacity = 0;
   std::shared_ptr<DeviceQueueTracing> profiling_node;
-  bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
-  if (isProfilingEnable) {
+  bool is_profiling_enable = tree_->GetProfilingManager()->IsProfilingEnable();
+  if (is_profiling_enable) {
     std::shared_ptr<Tracing> node;
     RETURN_IF_NOT_OK(tree_->GetProfilingManager()->GetTracingNode(kDeviceQueueTracingName, &node));
     profiling_node = std::dynamic_pointer_cast<DeviceQueueTracing>(node);
@@ -452,7 +454,7 @@ Status DeviceQueueOp::PushDataToGPU() {
     RETURN_IF_NOT_OK(RetryPushData(handle, items));
     send_batch++;
 #ifndef ENABLE_SECURITY
-    if (isProfilingEnable) {
+    if (is_profiling_enable) {
       uint64_t end_time = ProfilingTime::GetCurMilliSecond();
       // record push data time
       profiling_node->Record(TIME, TDT_PUSH_TIME, send_batch, push_cost, end_time);
@@ -502,7 +504,7 @@ Status DeviceQueueOp::PushDataToGPU() {
 }
 
 Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataItemGpu> &items) {
-  bool flagLog = false;
+  bool flag_log = false;
   while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
     BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (ret) {
@@ -511,9 +513,9 @@ Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataI
                       "Invalid data, check the output of dataset with creating iterator and print data item.");
       } else {
         if (!stop_send_) {
-          if (!flagLog) {
+          if (!flag_log) {
             MS_LOG(DEBUG) << "Retry pushing data...";
-            flagLog = true;
+            flag_log = true;
           }
           continue;
         }
@@ -669,11 +671,11 @@ void DeviceQueueOp::Print(std::ostream &out, bool show_all) const {
 }
 
 #ifndef ENABLE_SECURITY
-void DeviceQueueOp::ProfilingRecorder(bool isProfilingEnable, std::shared_ptr<DeviceQueueTracing> profiling_node,
+void DeviceQueueOp::ProfilingRecorder(bool is_profiling_enable, std::shared_ptr<DeviceQueueTracing> profiling_node,
                                       int64_t send_batch, int32_t tdt_cost, uint64_t *batch_start_time,
                                       uint64_t *end_time, int32_t connector_capacity, int32_t connector_size) {
   // Record the pipeline profiling info
-  if (isProfilingEnable) {
+  if (is_profiling_enable) {
     *end_time = ProfilingTime::GetCurMilliSecond();
     // record push tdt time
     profiling_node->Record(TIME, TDT_PUSH_TIME, send_batch + 1, tdt_cost, *end_time);

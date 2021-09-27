@@ -69,6 +69,7 @@ Status CacheBase::FetchSamplesToWorkers() {
   int64_t wait_cnt = 0;
   int64_t prefetch_cnt = 0;
   // Kick off several threads which will prefetch prefetch_size_ rows in advance.
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_IF_NOT_OK(
     tree_->LaunchWorkers(num_prefetchers_, std::bind(&CacheBase::Prefetcher, this, std::placeholders::_1), Name()));
   auto send_to_que = [](QueueList<std::unique_ptr<IOBlock>> &qList, int32_t worker_id,
@@ -80,7 +81,7 @@ Status CacheBase::FetchSamplesToWorkers() {
   // Instead of sending sampler id to WorkerEntry, we send them to the Prefetcher which will redirect them
   // to the WorkerEntry.
   do {
-    if (AllowCacheMiss() && wait_cnt > 0 && wait_cnt % op_num_repeats_per_epoch() == 0) {
+    if (AllowCacheMiss() && wait_cnt > 0 && wait_cnt % GetOpNumRepeatsPerEpoch() == 0) {
       MS_LOG(INFO) << "Epoch: " << op_current_epochs_ << " Cache Miss : " << num_cache_miss_
                    << " Total number of rows : " << row_cnt_;
     }
@@ -155,7 +156,7 @@ Status CacheBase::FetchSamplesToWorkers() {
   }
   // Dump the last epoch result (approximately) without waiting for the worker threads to come back.
   if (AllowCacheMiss()) {
-    MS_LOG(INFO) << "Epoch: " << wait_cnt / op_num_repeats_per_epoch() << " Cache Miss : " << num_cache_miss_
+    MS_LOG(INFO) << "Epoch: " << wait_cnt / GetOpNumRepeatsPerEpoch() << " Cache Miss : " << num_cache_miss_
                  << " Total number of rows : " << row_cnt_;
   }
   return Status::OK();
@@ -202,6 +203,7 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
 }
 
 Status CacheBase::RegisterResources() {
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(prefetch_queues_.Register(tree_->AllTasks()));

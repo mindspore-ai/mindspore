@@ -100,8 +100,8 @@ Status DIV2KNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
 
   auto div2k_op = std::make_shared<DIV2KOp>(num_workers_, dataset_dir_, usage_, downgrade_, scale_, decode_,
                                             connector_que_size_, std::move(schema), std::move(sampler_rt));
-  div2k_op->set_total_repeats(GetTotalRepeats());
-  div2k_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  div2k_op->SetTotalRepeats(GetTotalRepeats());
+  div2k_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(div2k_op);
   return Status::OK();
 }

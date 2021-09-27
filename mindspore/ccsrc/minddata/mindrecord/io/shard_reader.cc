@@ -752,6 +752,11 @@ Status ShardReader::GetLabelsFromBinaryFile(int shard_id, const std::vector<std:
 
   for (unsigned int i = 0; i < label_offsets.size(); ++i) {
     const auto &labelOffset = label_offsets[i];
+    if (labelOffset.size() < 3) {
+      fs->close();
+      RETURN_STATUS_UNEXPECTED("Invalid data, labelOffset size: " + std::to_string(labelOffset.size()) +
+                               " is invalid.");
+    }
     uint64_t label_start = std::stoull(labelOffset[1]) + kInt64Len;
     uint64_t label_end = std::stoull(labelOffset[2]);
     int raw_page_id = std::stoi(labelOffset[0]);

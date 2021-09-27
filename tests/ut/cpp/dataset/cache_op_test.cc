@@ -285,13 +285,13 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   ASSERT_TRUE(rc.IsOk());
 
   // Assign tree relations and root
-  myCacheOp->set_total_repeats(num_repeats);
-  myCacheOp->set_num_repeats_per_epoch(num_repeats);
+  myCacheOp->SetTotalRepeats(num_repeats);
+  myCacheOp->SetNumRepeatsPerEpoch(num_repeats);
   rc = myRepeatOp->AddChild(myCacheOp);
   ASSERT_TRUE(rc.IsOk());
   // Always set to 1 under a CacheOp because we read from it only once. The CacheOp is the one that repeats.
-  myRandomDataOp->set_total_repeats(1);
-  myRandomDataOp->set_num_repeats_per_epoch(1);
+  myRandomDataOp->SetTotalRepeats(1);
+  myRandomDataOp->SetNumRepeatsPerEpoch(1);
   rc = myCacheOp->AddChild(myRandomDataOp);
   ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssignRoot(myRepeatOp);
@@ -398,13 +398,13 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   ASSERT_TRUE(rc.IsOk());
 
   // Assign tree relations and root
-  myCacheOp->set_total_repeats(num_repeats);
-  myCacheOp->set_num_repeats_per_epoch(num_repeats);
+  myCacheOp->SetTotalRepeats(num_repeats);
+  myCacheOp->SetNumRepeatsPerEpoch(num_repeats);
   rc = myRepeatOp->AddChild(myCacheOp);
   ASSERT_TRUE(rc.IsOk());
   // Always set to 1 under a CacheOp because we read from it only once. The CacheOp is the one that repeats.
-  myRandomDataOp->set_total_repeats(1);
-  myRandomDataOp->set_num_repeats_per_epoch(1);
+  myRandomDataOp->SetTotalRepeats(1);
+  myRandomDataOp->SetNumRepeatsPerEpoch(1);
   rc = myCacheOp->AddChild(myRandomDataOp);
   ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssignRoot(myRepeatOp);
@@ -498,16 +498,16 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = myTree->AssignRoot(myRepeatOp);
   ASSERT_TRUE(rc.IsOk());
 
-  myMergeOp->set_total_repeats(num_repeats);
-  myMergeOp->set_num_repeats_per_epoch(num_repeats);
+  myMergeOp->SetTotalRepeats(num_repeats);
+  myMergeOp->SetNumRepeatsPerEpoch(num_repeats);
   rc = myRepeatOp->AddChild(myMergeOp);
   ASSERT_TRUE(rc.IsOk());
-  myLookupOp->set_total_repeats(num_repeats);
-  myLookupOp->set_num_repeats_per_epoch(num_repeats);
+  myLookupOp->SetTotalRepeats(num_repeats);
+  myLookupOp->SetNumRepeatsPerEpoch(num_repeats);
   rc = myMergeOp->AddChild(myLookupOp);
   ASSERT_TRUE(rc.IsOk());
-  so->set_total_repeats(num_repeats);
-  so->set_num_repeats_per_epoch(num_repeats);
+  so->SetTotalRepeats(num_repeats);
+  so->SetNumRepeatsPerEpoch(num_repeats);
   rc = myMergeOp->AddChild(so);
   ASSERT_TRUE(rc.IsOk());
 

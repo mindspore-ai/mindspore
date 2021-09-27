@@ -45,7 +45,7 @@ Status ShardIndexGenerator::Build() {
   ShardHeader header = ShardHeader();
   RETURN_IF_NOT_OK(header.BuildDataset(*ds));
   shard_header_ = header;
-  MS_LOG(INFO) << "Init header from mindrecord file for index successfully.";
+  MS_LOG(INFO) << "Initialize header from mindrecord file for index successfully.";
   return Status::OK();
 }
 
@@ -83,7 +83,7 @@ Status ShardIndexGenerator::GetValueByField(const string &field, json input, std
 
 std::string ShardIndexGenerator::TakeFieldType(const string &field_path, json schema) {
   std::vector<std::string> field_name = StringSplit(field_path, kPoint);
-  for (uint64_t i = 0; i < field_name.size(); i++) {
+  for (uint64_t i = 0; i < field_name.size(); ++i) {
     try {
       if (i != field_name.size() - 1) {
         // Get type information from json schema

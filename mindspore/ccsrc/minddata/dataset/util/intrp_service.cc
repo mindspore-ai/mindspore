@@ -20,7 +20,10 @@
 
 namespace mindspore {
 namespace dataset {
-IntrpService::IntrpService() : high_water_mark_(0) { (void)ServiceStart(); }
+IntrpService::IntrpService() try : high_water_mark_(0) { (void)ServiceStart(); } catch (const std::exception &e) {
+  MS_LOG(ERROR) << "Interrupt service failed: " << e.what() << ".";
+  std::terminate();
+}
 
 IntrpService::~IntrpService() noexcept {
   MS_LOG(INFO) << "Number of registered resources is " << high_water_mark_ << ".";

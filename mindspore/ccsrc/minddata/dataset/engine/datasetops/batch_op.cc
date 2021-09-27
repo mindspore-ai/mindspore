@@ -248,9 +248,13 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
 Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
 #ifdef ENABLE_PYTHON
-  if (!in_col_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc
+  if (!in_col_names_.empty()) {
+    RETURN_IF_NOT_OK(MapColumns(&table_pair));
+  }  // pass it through pyfun
 #endif
-  if (pad_) RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));  // do padding if needed
+  if (pad_) {
+    RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));
+  }  // do padding if needed
   RETURN_IF_NOT_OK(BatchRows(&table_pair.first, new_row, table_pair.first->size()));
   return Status::OK();
 }

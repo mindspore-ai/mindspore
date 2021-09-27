@@ -212,8 +212,8 @@ Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   }
 
   RETURN_IF_NOT_OK(mindrecord_op->Init());
-  mindrecord_op->set_total_repeats(GetTotalRepeats());
-  mindrecord_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  mindrecord_op->SetTotalRepeats(GetTotalRepeats());
+  mindrecord_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(mindrecord_op);
 
   return Status::OK();

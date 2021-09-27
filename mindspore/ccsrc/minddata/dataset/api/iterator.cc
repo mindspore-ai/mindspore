@@ -38,7 +38,7 @@ Status Iterator::GetNextRowCharIF(MSTensorMapChar *row) {
     row->clear();
     return rc;
   }
-  for (auto de_tensor : md_map) {
+  for (auto &de_tensor : md_map) {
     std::vector<char> col_name(de_tensor.first.begin(), de_tensor.first.end());
     row->insert(std::make_pair(col_name, mindspore::MSTensor(std::make_shared<DETensor>(de_tensor.second))));
   }
@@ -48,8 +48,8 @@ Status Iterator::GetNextRowCharIF(MSTensorMapChar *row) {
 
 // Get the next row from the data pipeline.
 Status Iterator::GetNextRow(MSTensorVec *row) {
-  // Clean data row
   RETURN_UNEXPECTED_IF_NULL(row);
+  // Clean data row
   row->clear();
   // create a dataset tensor row and fetch. Then we convert the output to MSTensor
   std::vector<std::shared_ptr<dataset::Tensor>> md_row;
@@ -76,6 +76,7 @@ void Iterator::Stop() {
 
 // Function to build and launch the execution tree.
 Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epochs) {
+  RETURN_UNEXPECTED_IF_NULL(ds);
   runtime_context_ = std::make_unique<NativeRuntimeContext>();
   CHECK_FAIL_RETURN_UNEXPECTED(runtime_context_ != nullptr, "Create runtime_context_ failed.");
   RETURN_IF_NOT_OK(runtime_context_->Init());

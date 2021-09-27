@@ -97,8 +97,8 @@ Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_
   if (reset_ancestor_ != nullptr) {
     reset_ancestor_->op_->AddToEoeList(op);
   }
-  op->set_total_repeats(GetTotalRepeats());
-  op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  op->SetTotalRepeats(GetTotalRepeats());
+  op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);
   return Status::OK();
 }

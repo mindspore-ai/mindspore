@@ -75,7 +75,7 @@ class CacheBase : public ParallelOp {
 
   /// \brief Getter for the cache client
   /// \return shared ptr to the cache client
-  std::shared_ptr<CacheClient> cache_client() { return cache_client_; }
+  std::shared_ptr<CacheClient> GetCacheClient() { return cache_client_; }
   /// \brief Setter for the cache client
   void SetCacheClient(std::shared_ptr<CacheClient> cache_client) { cache_client_ = std::move(cache_client); }
   /// \brief Derived class must implement this method if a cache miss is treated as error

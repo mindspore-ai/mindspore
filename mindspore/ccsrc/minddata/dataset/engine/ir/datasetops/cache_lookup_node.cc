@@ -51,8 +51,8 @@ Status CacheLookupNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops)
                                "Internal error. Attempt to create a cache lookup node without cache client.");
   RETURN_IF_NOT_OK(cache_->Build());
   RETURN_IF_NOT_OK(cache_->CreateCacheLookupOp(num_workers_, connector_que_size_, sampler_, &lookup_op_));
-  lookup_op_->set_total_repeats(GetTotalRepeats());
-  lookup_op_->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  lookup_op_->SetTotalRepeats(GetTotalRepeats());
+  lookup_op_->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(lookup_op_);
   return Status::OK();
 }

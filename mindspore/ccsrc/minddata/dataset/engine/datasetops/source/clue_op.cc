@@ -120,20 +120,20 @@ Status ClueOp::LoadFile(const std::string &file, int64_t start_offset, int64_t e
       RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse JSON file: " + file);
     }
     int cols_count = cols_to_keyword_.size();
-    TensorRow tRow(cols_count, nullptr);
+    TensorRow t_row(cols_count, nullptr);
     // Add file path info
     std::vector<std::string> file_path(cols_count, file);
-    tRow.setPath(file_path);
+    t_row.setPath(file_path);
     int cout = 0;
     for (auto &p : cols_to_keyword_) {
       std::shared_ptr<Tensor> tensor;
       RETURN_IF_NOT_OK(GetValue(js, p.second, &tensor));
-      tRow[cout] = std::move(tensor);
+      t_row[cout] = std::move(tensor);
       cout++;
     }
 
     rows_total++;
-    RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(tRow)));
+    RETURN_IF_NOT_OK(jagged_rows_connector_->Add(worker_id, std::move(t_row)));
   }
 
   return Status::OK();
