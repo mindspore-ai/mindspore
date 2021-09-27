@@ -437,10 +437,8 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/tools/converter/ops/ops_def.h
                 DESTINATION ${CONVERTER_ROOT_DIR}/include COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/proto/ DESTINATION ${CONVERTER_ROOT_DIR}/include/proto
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/schema/ DESTINATION ${CONVERTER_ROOT_DIR}/include/schema
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "schema_generated.h" EXCLUDE)
         install(DIRECTORY ${flatbuffers_INC}/ DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/glog
@@ -448,12 +446,6 @@ else()
         install(DIRECTORY ${TOP_DIR}/third_party/securec/include/
                 DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party/securec
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        install(DIRECTORY ${protobuf_INC}/google DESTINATION ${CONVERTER_ROOT_DIR}/include/third_party
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${protobuf_LIBPATH}/libprotobuf.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${flatbuffers_LIBPATH}/libflatbuffers.a DESTINATION ${CONVERTER_ROOT_DIR}/lib
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
