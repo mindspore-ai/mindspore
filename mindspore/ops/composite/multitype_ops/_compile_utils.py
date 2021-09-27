@@ -207,7 +207,7 @@ def tensor_itemset_by_tuple_with_number(data, tuple_index, nubmer_value):
     if len(tuple_index) != data.ndim:
         exp_msg = const_utils.gen_exception_msg(
             "Tuple index len({}) is not same to tensor dimension({})", len(tuple_index), data.ndim)
-        const_utils.raise_value_error(exp_msg)
+        const_utils.raise_index_error(exp_msg)
     return tensor_setitem_by_tuple_with_number(data, tuple_index, nubmer_value)
 
 
