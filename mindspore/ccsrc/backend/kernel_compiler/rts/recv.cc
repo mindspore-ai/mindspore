@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/rts/recv.h"
-#include <memory>
 #include "runtime/stream.h"
 #include "utils/ms_context.h"
 #include "runtime/device/ascend/ge_runtime/task_info.h"
