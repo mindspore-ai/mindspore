@@ -633,7 +633,7 @@ Status ShardHeader::Initialize(const std::shared_ptr<ShardHeader> *header_ptr, c
                                uint64_t &schema_id) {
   RETURN_UNEXPECTED_IF_NULL(header_ptr);
   auto schema_ptr = Schema::Build("mindrecord", schema);
-  RETURN_UNEXPECTED_IF_NULL(schema_ptr);
+  CHECK_FAIL_RETURN_UNEXPECTED(schema_ptr != nullptr, "Failed to build schema: " + schema.dump() + ".");
   schema_id = (*header_ptr)->AddSchema(schema_ptr);
   // create index
   std::vector<std::pair<uint64_t, std::string>> id_index_fields;
