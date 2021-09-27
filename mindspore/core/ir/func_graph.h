@@ -167,7 +167,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   // get function graph inputs, but parameters
   const std::vector<AnfNodePtr> get_inputs() const final;
   // Return the graph's output, or nullptr if not yet deduced.
-  AnfNodePtr output() const;
+  AnfNodePtr output() const final;
   void set_output(const AnfNodePtr &value, bool force_new_ret = false);
 
   const std::vector<AnfNodePtr> &parameters() const final { return parameters_; }
@@ -252,6 +252,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
 
   CNodePtr get_return() const final { return return_; }
   void set_return(const CNodePtr &cnode) final { return_ = cnode; }
+  const CNodePtr &return_node() const { return return_; }
 
   FuncGraphManagerPtr manager() const { return manager_.lock(); }
   void set_manager(const FuncGraphManagerPtr &m) { manager_ = std::weak_ptr<FuncGraphManager>(m); }

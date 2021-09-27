@@ -279,10 +279,8 @@ void FuncGraphSpecializer::FirstPass() {
 
 // Specialize CNode in func graphs
 void FuncGraphSpecializer::SecondPass() {
-  for (auto &node : BroadFirstSearchGraphCNodes({specialized_func_graph_->get_return()})) {
-    if (node->isa<CNode>()) {
-      ProcessCNode(node->cast<CNodePtr>());
-    }
+  for (auto &cnode : BroadFirstSearchGraphCNodes(specialized_func_graph_->return_node())) {
+    ProcessCNode(cnode);
   }
 }
 

@@ -639,11 +639,11 @@ std::list<CNodePtr> FuncGraph::GetOrderedCnodes() {
   auto SuccDepends = std::bind(SuccIncludeFV, this_ptr, std::placeholders::_1);
 
   std::list<CNodePtr> cnodes;
-  auto nodes = mindspore::TopoSort(get_return(), SuccDepends, BelongSameGraph);
+  auto nodes = mindspore::TopoSort(return_node(), SuccDepends, BelongSameGraph);
   for (const auto &node : nodes) {
     auto cnode = dyn_cast<CNode>(node);
-    if (cnode) {
-      cnodes.push_back(cnode);
+    if (cnode != nullptr) {
+      cnodes.emplace_back(std::move(cnode));
     }
   }
   return cnodes;

@@ -27,6 +27,86 @@
 #include "base/core_ops.h"
 
 namespace mindspore {
+class FuncGraphIndex {
+ public:
+  explicit FuncGraphIndex(const FuncGraphPtr &fg, const SearchFunc &search = DeepScopedGraphSearch,
+                          const IncludeFunc &include = AlwaysInclude);
+  FuncGraphIndex(const FuncGraphIndex &) = delete;
+  FuncGraphIndex &operator=(const FuncGraphIndex &) = delete;
+
+  virtual ~FuncGraphIndex() {}
+
+  std::set<FuncGraphPtr> GetFuncGraphs(const std::string &key);
+  std::set<AnfNodePtr> GetNodes(const std::string &key);
+  FuncGraphPtr GetFirstFuncGraph(const std::string &key);
+  AnfNodePtr GetFirstNode(const std::string &key);
+
+ private:
+  void Acquire(const FuncGraphPtr &key);
+  void Acquire(const AnfNodePtr &key);
+
+  std::map<std::string, std::set<FuncGraphPtr>> index_func_graph_;
+  std::map<std::string, std::set<AnfNodePtr>> index_node_;
+};
+
+FuncGraphIndex::FuncGraphIndex(const FuncGraphPtr &fg, const SearchFunc &search, const IncludeFunc &include) {
+  MS_EXCEPTION_IF_NULL(fg);
+  Acquire(fg);
+  auto vec = search(fg->get_return(), include);
+  for (auto &node : vec) {
+    MS_EXCEPTION_IF_NULL(node);
+    Acquire(node);
+    if (node->func_graph() != nullptr) {
+      Acquire(node->func_graph());
+    }
+  }
+}
+
+std::set<FuncGraphPtr> FuncGraphIndex::GetFuncGraphs(const std::string &key) {
+  std::set<FuncGraphPtr> func_graphs;
+  if (index_func_graph_.find(key) != index_func_graph_.end()) {
+    func_graphs = index_func_graph_[key];
+  }
+  return func_graphs;
+}
+
+std::set<AnfNodePtr> FuncGraphIndex::GetNodes(const std::string &key) {
+  if (index_node_.find(key) != index_node_.end()) {
+    return index_node_[key];
+  }
+  return std::set<AnfNodePtr>();
+}
+
+FuncGraphPtr FuncGraphIndex::GetFirstFuncGraph(const std::string &key) {
+  if (GetFuncGraphs(key).empty()) {
+    return nullptr;
+  }
+  auto fg = *GetFuncGraphs(key).begin();
+  return fg;
+}
+
+AnfNodePtr FuncGraphIndex::GetFirstNode(const std::string &key) {
+  if (GetNodes(key).empty()) {
+    return nullptr;
+  }
+  auto node = *GetNodes(key).begin();
+  return node;
+}
+
+void FuncGraphIndex::Acquire(const FuncGraphPtr &key) {
+  std::string name = label_manage::Label(key->debug_info());
+  if (!name.empty()) {
+    (void)index_func_graph_[name].insert(key);
+  }
+}
+
+void FuncGraphIndex::Acquire(const AnfNodePtr &key) {
+  std::string name = label_manage::Label(key->debug_info());
+  if (!name.empty()) {
+    (void)index_node_[name].insert(key);
+  }
+}
+
 class TestCloner : public UT::Common {
  public:
   TestCloner() : getPyFun("gtest_input.ir.clone_test", true) {
@@ -36,7 +116,7 @@ class TestCloner : public UT::Common {
   }
 
   FuncGraphPtr GraphForInline() { return nullptr; }
-  void SuccessfulInlining(const std::shared_ptr<Cloner> cl, FuncGraphPtr orig, const std::vector<AnfNodePtr>& params,
+  void SuccessfulInlining(const std::shared_ptr<Cloner> cl, FuncGraphPtr orig, const std::vector<AnfNodePtr> &params,
                           FuncGraphPtr target);
 
  public:
@@ -48,7 +128,7 @@ class TestCloner : public UT::Common {
 };
 
 void TestCloner::SuccessfulInlining(const std::shared_ptr<Cloner> cl, FuncGraphPtr orig,
-                                    const std::vector<AnfNodePtr>& params, FuncGraphPtr target) {
+                                    const std::vector<AnfNodePtr> &params, FuncGraphPtr target) {
   auto g = (*cl)[orig];
   ASSERT_TRUE(g != target);
   ASSERT_TRUE(g == orig);
@@ -59,11 +139,11 @@ void TestCloner::SuccessfulInlining(const std::shared_ptr<Cloner> cl, FuncGraphP
   AnfNodeSet orig_nodes = AnfNodeSet(DeepLinkedGraphSearch(orig->output()));
   AnfNodeSet new_nodes = AnfNodeSet(DeepLinkedGraphSearch(new_root));
 
-  for (auto& p : params) {
+  for (auto &p : params) {
     ASSERT_TRUE(new_nodes.contains(p));
   }
 
-  for (auto& node : orig_nodes) {
+  for (auto &node : orig_nodes) {
     if (node->func_graph() == orig) {
       ASSERT_TRUE((*cl)[node]);
     }
@@ -93,7 +173,7 @@ TEST_F(TestCloner, test_clone_simple) {
   std::vector<Primitive> results = {Primitive(prim::kScalarAdd), Primitive(prim::kScalarMul), Primitive("Return")};
   AnfNodeSet d3 = AnfNodeSet(DeepScopedGraphSearch(g3->get_return()));
   common = d1 & d3;
-  for (auto& x : common) {
+  for (auto &x : common) {
     ASSERT_TRUE(x->isa<ValueNode>());
     ASSERT_TRUE(find(results.begin(), results.end(), *x->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>()) !=
                 results.end());

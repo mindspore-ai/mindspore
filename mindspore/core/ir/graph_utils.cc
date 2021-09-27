@@ -50,47 +50,49 @@ static size_t DumpSortingCircleList(const std::deque<AnfNodePtr> &todo, const An
 }
 
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
+  constexpr size_t kVecReserve = 64;
   std::vector<AnfNodePtr> res;
   if (root == nullptr) {
     return res;
   }
+  res.reserve(kVecReserve);
   size_t seen = NewSeenGeneration();
   std::deque<AnfNodePtr> todo;
-  todo.push_back(root);
-
+  todo.emplace_back(root);
   while (!todo.empty()) {
-    AnfNodePtr node = todo.back();
+    AnfNodePtr &node = todo.back();
     if (node->extra_seen_ == seen) {  // We use extra_seen_ as finish flag
       todo.pop_back();
       continue;
     }
     auto incl = include(node);
     if (node->seen_ == seen) {  // We use seen_ as checking flag
-      todo.pop_back();
-      if (incl != EXCLUDE) {
-        res.push_back(node);
-      }
       node->extra_seen_ = seen;
+      if (incl != EXCLUDE) {
+        res.emplace_back(std::move(node));
+      }
+      todo.pop_back();
       continue;
     }
     node->seen_ = seen;
     if (incl == FOLLOW) {
-      auto succs = succ(node);
-      (void)std::copy_if(succs.begin(), succs.end(), std::back_inserter(todo), [seen, &todo](const AnfNodePtr &next) {
+      for (auto &next : succ(node)) {
         if (next == nullptr || next->extra_seen_ == seen) {
-          return false;
+          continue;
         }
         if (next->seen_ != seen) {
-          return true;
+          todo.emplace_back(std::move(next));
+          continue;
         }
-        if (next->func_graph() != nullptr && next->func_graph()->get_return() == next) {
-          return false;
+        auto fg = next->func_graph();
+        if (fg != nullptr && fg->return_node() == next) {
+          continue;
         }
         // To dump all nodes in a circle.
         MS_LOG(ERROR) << "Graph cycle exists. Circle is: ";
         auto circle_len = DumpSortingCircleList(todo, next, seen);
         MS_LOG(EXCEPTION) << "Graph cycle exists, size: " << circle_len << ", strike node: " << next->DebugString(2);
-      });
+      }
     } else if (incl > EXCLUDE) {  // Not NOFOLLOW or EXCLUDE
       MS_LOG(EXCEPTION) << "The result of include(node) must be one of: \"follow\", \"nofollow\", \"exclude\"";
     }
@@ -98,28 +100,25 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
   return res;
 }
 
-// search the cnodes inside this graph only
-std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &starts) {
-  std::vector<CNodePtr> todo;
-  todo.insert(todo.end(), starts.begin(), starts.end());
+// Search the cnodes inside this graph only.
+std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &start) {
+  constexpr size_t kVecReserve = 64;
+  std::vector<CNodePtr> vec;
+  vec.reserve(kVecReserve);
+  vec.emplace_back(start);
   auto seen = NewSeenGeneration();
-  size_t top_idx = 0;
-  while (top_idx < todo.size()) {
-    CNodePtr top = todo[top_idx];
-    top_idx++;
-    auto inputs = top->inputs();
-    for (auto &item : inputs) {
-      if (item->seen_ == seen) {
-        continue;
+  for (size_t i = 0; i < vec.size(); ++i) {
+    CNodePtr &node = vec[i];
+    node->seen_ = seen;
+    auto &inputs = node->inputs();
+    for (auto &input : inputs) {
+      auto input_cnode = input->cast<CNodePtr>();
+      if (input_cnode != nullptr && input_cnode->seen_ != seen) {
+        vec.emplace_back(std::move(input_cnode));
       }
-
-      if (item->isa<CNode>()) {
-        todo.push_back(item->cast<CNodePtr>());
-      }
-      item->seen_ = seen;
     }
   }
-  return todo;
+  return vec;
 }
 
 // search the cnode match the predicate inside this graph only
@@ -192,7 +191,7 @@ std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
 
   if (IsValueNode<FuncGraph>(node)) {
     auto graph = GetValueNode<FuncGraphPtr>(node);
-    auto ret = graph->get_return();
+    auto &ret = graph->return_node();
     if (ret != nullptr) {
       vecs.push_back(ret);
     }
@@ -215,7 +214,7 @@ std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node) {
 
   if (IsValueNode<FuncGraph>(node)) {
     auto graph = GetValueNode<FuncGraphPtr>(node);
-    auto ret = graph->get_return();
+    auto &ret = graph->return_node();
     if (ret != nullptr) {
       vecs.push_back(ret);
     }
@@ -270,75 +269,11 @@ const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node) {
   return empty_inputs;
 }
 
-IncludeType AlwaysInclude(const AnfNodePtr &) { return FOLLOW; }
-
 IncludeType IncludeBelongGraph(const FuncGraphPtr &fg, const AnfNodePtr &node) {
   if (node->func_graph() == fg) {
     return FOLLOW;
   } else {
     return EXCLUDE;
-  }
-}
-
-FuncGraphIndex::FuncGraphIndex(const FuncGraphPtr &fg, const SearchFunc &search, const IncludeFunc &include) {
-  MS_EXCEPTION_IF_NULL(fg);
-  Acquire(fg);
-
-  auto vec = search(fg->get_return(), include);
-  for (auto &node : vec) {
-    MS_EXCEPTION_IF_NULL(node);
-    Acquire(node);
-    if (node->func_graph() != nullptr) {
-      Acquire(node->func_graph());
-    }
-  }
-}
-
-std::set<FuncGraphPtr> FuncGraphIndex::GetFuncGraphs(const std::string &key) {
-  std::set<FuncGraphPtr> func_graphs;
-  if (index_func_graph_.find(key) != index_func_graph_.end()) {
-    func_graphs = index_func_graph_[key];
-  }
-  return func_graphs;
-}
-
-std::set<AnfNodePtr> FuncGraphIndex::GetNodes(const std::string &key) {
-  if (index_node_.find(key) != index_node_.end()) {
-    return index_node_[key];
-  }
-
-  return std::set<AnfNodePtr>();
-}
-
-FuncGraphPtr FuncGraphIndex::GetFirstFuncGraph(const std::string &key) {
-  if (GetFuncGraphs(key).empty()) {
-    return nullptr;
-  }
-
-  auto fg = *GetFuncGraphs(key).begin();
-  return fg;
-}
-
-AnfNodePtr FuncGraphIndex::GetFirstNode(const std::string &key) {
-  if (GetNodes(key).empty()) {
-    return nullptr;
-  }
-
-  auto node = *GetNodes(key).begin();
-  return node;
-}
-
-void FuncGraphIndex::Acquire(const FuncGraphPtr &key) {
-  std::string name = label_manage::Label(key->debug_info());
-  if (!name.empty()) {
-    (void)index_func_graph_[name].insert(key);
-  }
-}
-
-void FuncGraphIndex::Acquire(const AnfNodePtr &key) {
-  std::string name = label_manage::Label(key->debug_info());
-  if (!name.empty()) {
-    (void)index_node_[name].insert(key);
   }
 }
 }  // namespace mindspore
