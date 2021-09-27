@@ -36,7 +36,14 @@ bool MemoryProfiling::IsMemoryProfilingEnable() const {
   }
 
   const std::string prof_options_str = ascend_profiler->GetProfilingOptions();
-  nlohmann::json options = nlohmann::json::parse(prof_options_str);
+  nlohmann::json options;
+  try {
+    options = nlohmann::json::parse(prof_options_str);
+  } catch (nlohmann::json::exception &e) {
+    MS_LOG(ERROR) << "Failed to parse profiling options.";
+    return false;
+  }
+
   if (options["profile_memory"] == "off") {
     return false;
   }
