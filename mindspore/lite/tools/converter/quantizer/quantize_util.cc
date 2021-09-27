@@ -61,18 +61,17 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   const auto cnode = std::dynamic_pointer_cast<mindspore::CNode>(node);
   MS_ASSERT(cnode != nullptr);
   auto type = NodePrimitiveType(cnode);
-  static const std::set<PrimitivePtr> support_int8_ops = {prim::kPrimAddFusion,      prim::kPrimActivation,
-                                                          prim::kPrimAvgPoolFusion,  prim::kPrimConcat,
-                                                          prim::kPrimConv2DFusion,   prim::kPrimConv2dTransposeFusion,
-                                                          prim::kPrimCrop,           prim::kPrimFullConnection,
-                                                          prim::kPrimGather,         prim::kPrimLayerNormFusion,
-                                                          prim::kPrimMatMul,         prim::kPrimMaxPoolFusion,
-                                                          prim::kPrimMulFusion,      prim::kPrimReshape,
-                                                          prim::kPrimSplit,          prim::kPrimTranspose,
-                                                          prim::kPrimReduceFusion,   prim::kPrimDivFusion,
-                                                          prim::kPrimSqrt,           prim::kPrimPowFusion,
-                                                          prim::kPrimSubFusion,      prim::kPrimUnsqueeze,
-                                                          prim::kPrimLayerNormFusion};
+  static const std::set<PrimitivePtr> support_int8_ops = {prim::kPrimAddFusion,     prim::kPrimActivation,
+                                                          prim::kPrimAvgPoolFusion, prim::kPrimConcat,
+                                                          prim::kPrimConv2DFusion,  prim::kPrimConv2dTransposeFusion,
+                                                          prim::kPrimCrop,          prim::kPrimFullConnection,
+                                                          prim::kPrimGather,        prim::kPrimLayerNormFusion,
+                                                          prim::kPrimMatMul,        prim::kPrimMaxPoolFusion,
+                                                          prim::kPrimMulFusion,     prim::kPrimReshape,
+                                                          prim::kPrimSplit,         prim::kPrimTranspose,
+                                                          prim::kPrimReduceFusion,  prim::kPrimDivFusion,
+                                                          prim::kPrimSqrt,          prim::kPrimPowFusion,
+                                                          prim::kPrimUnsqueeze,     prim::kPrimLayerNormFusion};
   // The return node does not need to be quantified.
   if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn) || opt::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
     return false;

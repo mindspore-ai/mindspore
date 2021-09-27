@@ -155,6 +155,57 @@ const BaseRef BatchMatMulFusion::DefinePattern() const {
   return VectorRef({is_stack, is_fullconnect1, is_fullconnect2, is_seq_var});
 }
 
+namespace {
+constexpr float kFpPrecision = 1e-6;
+bool IsTensorZero(const tensor::TensorPtr &tensor) {
+  MS_ASSERT(tensor != nullptr);
+  if (tensor->data_type() != TypeId::kNumberTypeFloat32) {
+    return false;
+  }
+  auto data = reinterpret_cast<float *>(tensor->data_c());
+  for (int i = 0; i < tensor->DataSize(); i++) {
+    if (data[i] > kFpPrecision) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool IsFCNonBias(const CNodePtr &fc) {
+  MS_ASSERT(fc != nullptr);
+  if (fc->inputs().size() == kInputSizeThree) {
+    return true;
+  }
+  auto bias_input = fc->inputs().at(kInputSizeThree);
+  if (utils::isa<CNodePtr>(bias_input)) {
+    return false;
+  } else if (utils::isa<ParameterPtr>(bias_input)) {
+    auto bias_param = utils::cast<ParameterPtr>(bias_input);
+    if (!bias_param->has_default()) {
+      return false;
+    }
+    auto bias_default_param = bias_param->default_param();
+    if (!utils::isa<tensor::TensorPtr>(bias_default_param)) {
+      return false;
+    }
+    auto bias_tensor = utils::cast<tensor::TensorPtr>(bias_default_param);
+    if (!IsTensorZero(bias_tensor)) {
+      return false;
+    }
+  } else if (utils::isa<ValuePtr>(bias_input)) {
+    auto bias_value = utils::cast<ValuePtr>(bias_input);
+    if (!utils::isa<tensor::TensorPtr>(bias_value)) {
+      return false;
+    }
+    auto bias_tensor = utils::cast<tensor::TensorPtr>(bias_value);
+    if (!IsTensorZero(bias_tensor)) {
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 // slice +fullconnect ->batchmatmul
 const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                             const EquivPtr &) const {
@@ -178,7 +229,9 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   if (IsMarkedTrainOp(fullconnect_cnode)) {
     return nullptr;
   }
-  MS_CHECK_TRUE_RET(fullconnect_cnode->inputs().size() == kInputSizeThree, nullptr);
+  if (!IsFCNonBias(fullconnect_cnode)) {
+    return nullptr;
+  }
   auto left_slice_node = fullconnect_cnode->input(1);
   auto left_slice_cnode = left_slice_node->cast<CNodePtr>();
   if (IsMarkedTrainOp(left_slice_cnode)) {
