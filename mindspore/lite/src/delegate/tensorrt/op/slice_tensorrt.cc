@@ -79,7 +79,7 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "output tensor create failed";
     return RET_ERROR;
   }
-  out_tensor->setName(out_tensors_[0].Name().c_str());
+  out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format});
   return RET_OK;
 }

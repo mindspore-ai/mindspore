@@ -268,7 +268,8 @@ int TensorRTSubGraph::MarkOutputs() {
         if (out_op->outputs()[index] == out_tensor) {
           nvinfer1::ITensor *out_trt_tensor = out_op->GetInnerOutTensor()[index].trt_tensor_;
           if (out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-              out_op->GetInnerOutTensor()[index].format_ == Format::NCHW) {
+              out_op->GetInnerOutTensor()[index].format_ == Format::NCHW &&
+              !SameDims(out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions(), out_tensor.Shape())) {
             // transpose subgraph output from nchw to nhwc
             nvinfer1::IShuffleLayer *transpose_layer_out =
               NCHW2NHWC(network_, *out_op->GetInnerOutTensor()[index].trt_tensor_);
@@ -277,6 +278,7 @@ int TensorRTSubGraph::MarkOutputs() {
               return RET_ERROR;
             }
             transpose_layer_out->setName((out_tensor.Name() + "_transpose2NHWC").c_str());
+            out_trt_tensor = transpose_layer_out->getOutput(0);
           }
 
           out_trt_tensor->setName(out_tensor.Name().c_str());

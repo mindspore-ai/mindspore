@@ -98,6 +98,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Reshape, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_Transpose, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_Flatten, GetTensorRTOp<ShuffleTensorRT>},
+    {schema::PrimitiveType_Softmax, GetTensorRTOp<SoftMaxTensorRT>},
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
   };
   unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape};

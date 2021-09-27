@@ -116,8 +116,7 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
-
-  activation_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW});
   return RET_OK;
 }
@@ -150,14 +149,27 @@ void DeconvolutionTensorRT::SetAttributes(const schema::Conv2dTransposeFusion *m
     decon_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
   } else {
     auto padding = ms_op->pad_list();
-    if (padding != nullptr) {
-      auto padding_val = std::vector<int64_t>(padding->begin(), padding->end());
-      nvinfer1::Dims dims{};
-      dims.nbDims = 2;
-      dims.d[0] = padding_val[0];
-      dims.d[1] = padding_val[2];
-      decon_layer->setPaddingNd(dims);
+    auto out_pad = ms_op->output_paddings();
+    if (padding == nullptr || out_pad == nullptr) {
+      MS_LOG(WARNING) << "on pad value of " << op_name_;
+      return;
     }
+    auto padding_val = std::vector<int64_t>(padding->begin(), padding->end());
+    auto out_pad_val = std::vector<int64_t>(out_pad->begin(), out_pad->end());  // h, w
+    if (out_pad_val.size() != DIMENSION_2D || padding_val.size() != DIMENSION_4D) {
+      MS_LOG(ERROR) << "invalid size of pad " << op_name_;
+      return;
+    }
+    nvinfer1::Dims dims_pre{};
+    dims_pre.nbDims = 2;
+    dims_pre.d[0] = padding_val[0];  // up
+    dims_pre.d[1] = padding_val[2];  // left
+    decon_layer->setPrePadding(dims_pre);
+    nvinfer1::Dims dims_post{};
+    dims_post.nbDims = 2;
+    dims_post.d[0] = padding_val[1] - out_pad_val[0];  // down
+    dims_post.d[1] = padding_val[3] - out_pad_val[1];  // right
+    decon_layer->setPostPadding(dims_post);
   }
 }
 

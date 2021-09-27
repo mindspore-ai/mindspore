@@ -145,7 +145,7 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "output tensor create failed";
     return RET_ERROR;
   }
-  out_tensor->setName(out_tensors_[0].Name().c_str());
+  out_tensor->setName((op_name_ + "_output").c_str());
   MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor, out_format_);
   this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_});
   return RET_OK;
@@ -232,9 +232,9 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   }
   shuffle_layer->setFirstTranspose(perm);
   if (perm_ternsor.ElementNum() == DIMENSION_4D) {
-    if (out_format_ == Format::NHWC && perm.order[1] == 3 && perm.order[2] == 1 && perm.order[3] == 2) {
+    if (perm.order[1] == 3 && perm.order[2] == 1 && perm.order[3] == 2) {
       out_format_ = Format::NCHW;
-    } else if (out_format_ == Format::NCHW && perm.order[1] == 2 && perm.order[2] == 3 && perm.order[3] == 1) {
+    } else if (perm.order[1] == 2 && perm.order[2] == 3 && perm.order[3] == 1) {
       out_format_ = Format::NHWC;
     } else {
       MS_LOG(WARNING) << "input format and perm order is invalid: " << op_name_;

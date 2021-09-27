@@ -105,7 +105,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   padding_layer->setName(op_name_.c_str());
-  padding_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  padding_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{padding_layer->getOutput(0), Format::NCHW});
   return RET_OK;
 }
