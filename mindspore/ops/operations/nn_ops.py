@@ -1808,6 +1808,8 @@ class MaxPoolWithArgmax(_Pool):
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
+        data_format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -2652,8 +2654,7 @@ class ApplyMomentum(PrimitiveWithInfer):
     Inputs of `variable`, `accumulation` and `gradient` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    Data type conversion of Parameter is not supported. RuntimeError exception will be thrown.
+    relatively the highest priority data type.
 
     Refer to :class:`mindspore.nn.Momentum` for more details about the formula and usage.
 
@@ -2689,6 +2690,7 @@ class ApplyMomentum(PrimitiveWithInfer):
 
     Raises:
         TypeError: If the `use_locking` or `use_nesterov` is not a bool or `gradient_scale` is not a float.
+        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3226,8 +3228,8 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     Note:
         The difference between `ApplyCenteredRMSProp` and `ApplyRMSProp` is that the fromer
         uses the centered RMSProp algorithm, and the centered RRMSProp algorithm uses an estimate of the centered second
-        moment(i.e., the variance) for normalization, as opposed to regular RMSProp, which uses the (uncentered)
-        second moment. This often helps with training, but is slightly more exapnsive interms of computation and memory.
+        moment(i.e., the variance) for normalization, as opposed to regular RMSProp, which uses the (uncertained)
+        second moment. This often helps with training, but is slightly more expensive interms of computation and memory.
 
     .. warning::
         In dense implementation of this algorithm, mean_gradient, mean_square, and moment will update
@@ -3235,7 +3237,7 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         will not update in iterations during which the grad is zero.
 
     Args:
-        use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
+        use_locking (bool): Whether to enable a lock to protect the variable and accumulation tensors
                             from being updated. Default: False.
 
     Inputs:
@@ -4738,6 +4740,8 @@ class AdamWeightDecay(PrimitiveWithInfer):
         >>> gradient = Tensor(np.ones([2, 2]).astype(np.float32))
         >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient)
         >>> print(net.var.asnumpy())
+        [[0.999 0.999]
+         [0.999 0.999]]
     """
 
     @prim_attr_register
@@ -4899,8 +4903,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
@@ -4943,6 +4946,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
         TypeError: If neither `use_locking` nor `use_neserov` is a bool.
         TypeError: If dtype of `var`, `m`, `v`, `beta1_power`, `beta2_power`, `lr`, `beta1`, `beta2`, `epsilon`,
                    `gradient` or `indices` is not float32.
+       RuntimeError: If the data type of all inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -5049,8 +5053,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
@@ -5094,6 +5097,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         TypeError: If dtype of `var`, `m`, `v`, `beta1_power`, `beta2_power`, `lr`, `beta1`, `beta2`, `epsilon` or
                    gradient is not float32.
         TypeError: If dtype of `indices` is not int32.
+        RuntimeError: If the data type of all inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -5182,7 +5186,6 @@ class FusedSparseFtrl(PrimitiveWithInfer):
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
     relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         lr (float): The learning rate value, must be positive.
@@ -5216,6 +5219,7 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         TypeError: If dtype of `indices` is not int32.
         TypeError: If shape of `accum`, `linear` or `grad` is not same as `var`.
         TypeError: If shape of `indices` is not same as shape of first dimension of `grad`.
+        RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -5298,8 +5302,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         use_locking (bool): If true, the variable and accumulation tensors will be protected from being updated.
@@ -5327,6 +5330,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         TypeError: If `use_locking` is not a bool.
         TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2` or `grad` is not float32.
         TypeError: If dtype of `indices` is not int32.
+        RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -5586,8 +5590,7 @@ class ApplyAdaMax(PrimitiveWithInfer):
     Inputs of `var`, `m`, `v` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
@@ -5621,6 +5624,7 @@ class ApplyAdaMax(PrimitiveWithInfer):
                    float16 nor float32.
         TypeError: If `beta_power`, `lr`, `beta1`, `beta2` or `epsilon` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
+        RuntimeError: If the data type of `var`, `m`, `v` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -5732,8 +5736,7 @@ class ApplyAdadelta(PrimitiveWithInfer):
     Inputs of `var`, `accum`, `accum_update` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively to the highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Weights to be updated. With float32 or float16 data type.
@@ -5757,6 +5760,8 @@ class ApplyAdadelta(PrimitiveWithInfer):
         TypeError: If dtype of `var`, `accum`, `accum_update`, `lr`, `rho`, `epsilon` or `grad` is neither float16 nor
                    float32.
         TypeError: If `accum_update`, `lr`, `rho` or `epsilon` is neither a Number nor a Tensor.
+        RuntimeError: If the data type of `var`, `accum`, `accum_update` and `grad` conversion of Parameter
+                      is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -5854,8 +5859,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
@@ -5876,6 +5880,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
     Raises:
         TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float16 nor float32.
         TypeError: If `lr` is neither a Number nor a Tensor.
+        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -5950,8 +5955,7 @@ class ApplyAdagradV2(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Note:
         The difference is that `ApplyAdagradV2` has one more small constant value than `ApplyAdagrad`.
@@ -5977,6 +5981,7 @@ class ApplyAdagradV2(PrimitiveWithInfer):
     Raises:
         TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float16 nor float32.
         TypeError: If `lr` is neither a Number nor a Tensor.
+        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -6049,8 +6054,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         lr (float): Learning rate.
@@ -6078,6 +6082,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         TypeError: If neither `update_slots` nor `use_locking` is a bool.
         TypeError: If dtype of `var`, `accum` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is not int32.
+        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
 
     Supported Platforms:
@@ -6150,8 +6155,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         lr (float): Learning rate.
@@ -6180,6 +6184,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         TypeError: If neither `update_slots` nor `use_locking` is a bool.
         TypeError: If dtype of `var`, `accum` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is not int32.
+        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -6252,8 +6257,7 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
@@ -6282,6 +6286,7 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
         TypeError: If dtype of `var`, `lr`, `l1` or `l2` is neither float16 nor float32.
         TypeError: If `lr`, `l1` or `l2` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
+        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -6372,8 +6377,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         use_locking (bool): If true, the `var` and `accum` tensors will be protected from being updated.
@@ -6405,6 +6409,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         TypeError: If `use_locking` is not a bool.
         TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2`, `scalar` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is neither int32 nor int64.
+        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -6487,8 +6492,7 @@ class ApplyAddSign(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -6512,6 +6516,7 @@ class ApplyAddSign(PrimitiveWithInfer):
         TypeError: If dtype of `var`, `lr`, `alpha`, `sign_decay` or `beta` is neither float16 nor float32.
         TypeError: If `lr`, `alpha` or `sign_decay` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
+        RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -6612,8 +6617,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
     If `lr`, `logbase`, `sign_decay` or `beta` is a number, the number is automatically converted to Tensor,
     and the data type is consistent with the Tensor data type involved in the operation.
     If inputs are tensors and have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -6638,6 +6642,8 @@ class ApplyPowerSign(PrimitiveWithInfer):
         TypeError: If dtype of `var`, `lr`, `logbase`, `sign_decay`, `beta` or `grad` is neither float16 nor float32.
         TypeError: If `lr`, `logbase`, `sign_decay` or `beta` is neither a Number nor a Tensor.
         TypeError: If `grad` is not a Tensor.
+        RuntimeError: If the data type of `lr`, `logbase`, `sign_decay` and `grad` conversion of Parameter
+                      is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -6731,8 +6737,7 @@ class ApplyGradientDescent(PrimitiveWithInfer):
 
     Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -6747,6 +6752,7 @@ class ApplyGradientDescent(PrimitiveWithInfer):
         TypeError: If dtype of `var` or `alpha` is neither float16 nor float32.
         TypeError: If `delta` is not a Tensor.
         TypeError: If `alpha` is neither a Number nor a Tensor.
+        RuntimeError: If the data type of `var` and `delta` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``  ``GPU``
@@ -6811,8 +6817,7 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
     Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -6831,6 +6836,7 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
         TypeError: If dtype of `var`, `alpha`, `l1` or `l2` is neither float16 nor float32.
         TypeError: If `alpha`, `l1` or `l2` is neither a Number nor a Tensor.
         TypeError: If `delta` is not a Tensor.
+        RuntimeError: If the data type of `var`, and `delta` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -7088,8 +7094,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         lr (float): The learning rate value, must be positive.
@@ -7119,6 +7124,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         TypeError: If `use_locking` is not a bool.
         TypeError: If dtype of `var`, `accum`, `linear` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is neither int32 nor int64.
+        RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -7193,8 +7199,8 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
+
 
     Args:
         lr (float): The learning rate value, must be positive.
@@ -7227,6 +7233,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         TypeError: If `use_locking` is not a bool.
         TypeError: If dtype of `var`, `accum`, `linear` or `grad` is neither float16 nor float32.
         TypeError: If dtype of `indices` is not int32.
+        RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -9094,8 +9101,7 @@ class ApplyAdagradDA(Primitive):
     Inputs of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
     comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         use_locking (bool): If `True`, updating of the `var` and `accum` tensors will be protected by a lock.
@@ -9132,6 +9138,8 @@ class ApplyAdagradDA(Primitive):
                      is not same as `var`.
         TypeError: If dtype of `global_step` is not int32 or int64.
         ValueError: If the shape size of `lr`, `l1`, `l2` and `global_step` is not 0.
+        RuntimeError: If the data type of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
+                      conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -9204,8 +9212,7 @@ class SparseApplyRMSProp(Primitive):
     Inputs of `var`, `ms`, `mom` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    relatively the highest priority data type.
 
     Args:
         rho (float): Decay rate. The value should between 0 and 1, otherwise the behavior is undefined.
@@ -9248,6 +9255,7 @@ class SparseApplyRMSProp(Primitive):
         ValueError: If `momentum` is less than 0.
         ValueError: If `rho` is less than 0 or greater than 1.
         ValueError: If dimension of `var` is less than 1.
+        RuntimeError: If the data type of `var`, `ms`, `mom` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
