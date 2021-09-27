@@ -55,7 +55,7 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
       MS_LOG(WARNING) << "TOM: num_elements_ " << num_elements_;
       std::vector<size_t> to_nhwc_axis = {0, 2, 3, 1};
       std::vector<size_t> to_nchw_axis = {0, 3, 1, 2};
-      size_t shape_size = 4 * sizeof(size_t);
+      const size_t shape_size = 4 * sizeof(size_t);
       size_t *ws_input_shape = GetDeviceAddress<size_t>(workspace, 0);
       size_t *ws_transpose_shape = GetDeviceAddress<size_t>(workspace, 1);
       size_t *ws_to_nhwc_axis = GetDeviceAddress<size_t>(workspace, 2);
@@ -117,7 +117,7 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
     beta_ = GetAttr<float>(kernel_node, "beta");
 
     use_native_ = false;
-    unsigned int lrnN = 2 * depth_radius_ + 1;
+    const unsigned int lrnN = 2 * depth_radius_ + 1;
     double lrnAlpha = lrnN * alpha_;
     if (lrnN < CUDNN_LRN_MIN_N || lrnN > CUDNN_LRN_MAX_N || bias_ < CUDNN_LRN_MIN_K || beta_ < CUDNN_LRN_MIN_BETA) {
       use_native_ = true;
@@ -207,7 +207,7 @@ class LocalResponseNormGradGpuKernel : public GpuKernel {
       if (use_native_) {
         input_size_ = num_elements_ * sizeof(T);
         output_size_ = num_elements_ * sizeof(T);
-        size_t shape_size = 4 * sizeof(size_t);
+        const size_t shape_size = 4 * sizeof(size_t);
         workspace_size_list_.push_back(shape_size);
         workspace_size_list_.push_back(shape_size);
         workspace_size_list_.push_back(shape_size);
