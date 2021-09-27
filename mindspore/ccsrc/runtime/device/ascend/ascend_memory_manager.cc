@@ -123,9 +123,16 @@ void AscendMemoryManager::ResetDynamicMemory() {
 
 void AscendMemoryManager::ClearGlobalIdleMem() { AscendMemoryPool::GetInstance().ResetIdleMemBuf(); }
 
-void *AscendMemoryManager::MallocMemFromMemPool(size_t size) {
+void *AscendMemoryManager::MallocDevice(size_t size) {
   auto align_size = GetCommonAlignSize(size);
   return AscendMemoryPool::GetInstance().AllocTensorMem(align_size);
+}
+
+void *AscendMemoryManager::MallocMemFromMemPool(size_t size) {
+  auto align_size = GetCommonAlignSize(size);
+  const auto device_addr = AscendMemoryPool::GetInstance().AllocTensorMem(align_size);
+  MS_EXCEPTION_IF_NULL(device_addr);
+  return device_addr;
 }
 
 void AscendMemoryManager::FreeMemFromMemPool(void *device_ptr) {
@@ -159,9 +166,12 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
   if (communication_mem) {
     // create protect area [kMemAlignSize -- data -- kMemAlignSize]
     uint8_t *alloc_address = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
+    MS_EXCEPTION_IF_NULL(alloc_address);
     return alloc_address + kMemAlignSize;
   } else {
-    return reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
+    uint8_t *alloc_address = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
+    MS_EXCEPTION_IF_NULL(alloc_address);
+    return alloc_address;
   }
 }
 
@@ -211,6 +221,7 @@ void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph &grap
 uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
   auto align_size = GetCommunicationAlignSize(size);
   uint8_t *base_ptr = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
+  MS_EXCEPTION_IF_NULL(base_ptr);
   return base_ptr + kMemAlignSize;
 }
 
