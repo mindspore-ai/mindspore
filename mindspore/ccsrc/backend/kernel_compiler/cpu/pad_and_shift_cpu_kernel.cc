@@ -15,13 +15,17 @@
  */
 
 #include "backend/kernel_compiler/cpu/pad_and_shift_cpu_kernel.h"
-#include <string>
-#include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kPadAndShiftInputsNum = 3;
+constexpr size_t kPadAndShiftOutputsNum = 1;
+}  // namespace
+
 void PadAndShiftCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   type_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
@@ -41,13 +45,14 @@ void PadAndShiftCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 bool PadAndShiftCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kPadAndShiftInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPadAndShiftOutputsNum, kernel_name_);
   if (input_x_dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
   } else if (input_x_dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(ERROR) << "Dtype of input_x only support int32, int64";
-    return false;
+    MS_LOG(EXCEPTION) << "Dtype of input_x only support int32, int64";
   }
   return true;
 }

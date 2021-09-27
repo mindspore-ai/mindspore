@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LSTM_GRAD_CPU_KERNEL_H_
 
@@ -47,17 +48,19 @@ class LSTMGradCPUKernel : public MKLCPUKernel {
                            const dnnl::memory &diff_bias_memory);
   void ResetMemory(const dnnl::memory &mem, const string name) const;
   void CheckParam(const CNodePtr &kernel_node);
-  int64_t weight_size_ = 0;
-  int64_t weight_h_size_ = 0;
-  int64_t input_size_;
-  int64_t hidden_size_;
-  int64_t num_layers_;
-  int64_t batch_size_;
-  int64_t seq_len_;
-  int num_directions_;
-  bool bidirectional_;
-  bool has_bias_;
-  size_t reserve_size_;
+
+  int num_directions_{0};
+  bool bidirectional_{false};
+  bool has_bias_{false};
+  int64_t weight_size_{0};
+  int64_t weight_h_size_{0};
+  int64_t input_size_{0};
+  int64_t hidden_size_{0};
+  int64_t num_layers_{0};
+  int64_t batch_size_{0};
+  int64_t seq_len_{0};
+  size_t reserve_size_{0};
+
   dnnl::memory::dims weights_dims_;
   dnnl::memory::dims weights_h_dims_;
   dnnl::memory::dims bias_dims_;

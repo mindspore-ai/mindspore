@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
 const std::set<std::string> same_op_name = {"Concat", "Pack", "Stack", "Split", "Transpose", "Unpack", "AddN"};
+}  // namespace
+
 CPUKernelFactory &CPUKernelFactory::GetInstance() {
   static CPUKernelFactory instance;
   return instance;
@@ -40,6 +43,7 @@ void CPUKernelFactory::Register(const std::string &kernel_name, const KernelAttr
 }
 
 std::shared_ptr<CPUKernel> CPUKernelFactory::Create(const std::string &kernel_name, const CNodePtr &apply_kernel) {
+  MS_EXCEPTION_IF_NULL(apply_kernel);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const KernelBuildInfo *kernel_build_Info = kernel_info->select_kernel_build_info();
@@ -53,6 +57,8 @@ std::shared_ptr<CPUKernel> CPUKernelFactory::Create(const std::string &kernel_na
 
 void CPUKernelFactory::SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_info,
                                       std::vector<KernelAttr> *kernel_attrs) {
+  MS_EXCEPTION_IF_NULL(kernel_attrs);
+  MS_EXCEPTION_IF_NULL(op_info);
   auto inputs_ptr = op_info->inputs_ptr();
   auto outputs_ptr = op_info->outputs_ptr();
   if (inputs_ptr.empty()) {

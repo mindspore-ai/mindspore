@@ -59,17 +59,17 @@ int BroadcastToCPUKernel::Run() {
 
   switch (data_type_) {
     case kNumberTypeFloat32:
-      return BroadcastTo(float, reinterpret_cast<const float *>(input_data), &shape_info_,
-                         reinterpret_cast<float *>(output_data));
+      return BROADCAST_TO(float, reinterpret_cast<const float *>(input_data), &shape_info_,
+                          reinterpret_cast<float *>(output_data));
 #ifdef ENABLE_FP16
     case kNumberTypeFloat16:
-      return BroadcastTo(float16_t, reinterpret_cast<const float16_t *>(input_data), &shape_info_,
-                         reinterpret_cast<float16_t *>(output_data));
+      return BROADCAST_TO(float16_t, reinterpret_cast<const float16_t *>(input_data), &shape_info_,
+                          reinterpret_cast<float16_t *>(output_data));
 #endif
     case kNumberTypeInt32:
     case kNumberTypeInt:
-      return BroadcastTo(int, reinterpret_cast<const int *>(input_data), &shape_info_,
-                         reinterpret_cast<int *>(output_data));
+      return BROADCAST_TO(int, reinterpret_cast<const int *>(input_data), &shape_info_,
+                          reinterpret_cast<int *>(output_data));
     default:
       MS_LOG(ERROR) << "UnSupported data type: " << data_type_;
       return RET_ERROR;

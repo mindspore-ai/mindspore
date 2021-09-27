@@ -136,15 +136,15 @@ class TestProfiler:
 
     @classmethod
     def setup_class(cls):
-        """ Run begin all test case start."""
+        """Run begin all test case start."""
         cleanup()
 
     @staticmethod
     def teardown():
-        """ Run after each test case end."""
+        """Run after each test case end."""
         cleanup()
 
-    @pytest.mark.level1
+    @pytest.mark.level2
     @pytest.mark.platform_x86_cpu
     @pytest.mark.env_onecard
     @security_off_wrap

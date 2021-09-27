@@ -16,11 +16,13 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CTCLOSS_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CTCLOSS_CPU_KERNEL_H_
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
 #include <limits>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -36,36 +38,35 @@ class CTCLossCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  void GenLableWithBlank(const uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
-                         std::vector<std::vector<uint32_t>> *label_with_blank);
+ private:
+  void GenLabelWithBlank(const uint32_t *seq_len, const std::vector<std::vector<uint32_t>> &batch_label,
+                         std::vector<std::vector<uint32_t>> *label_with_blank) const;
 
   template <typename T>
   void CalculateFwdVar(const std::vector<uint32_t> &label_with_blank, const std::vector<std::vector<T>> &y,
-                       std::vector<std::vector<T>> *log_alpha_b);
+                       std::vector<std::vector<T>> *log_alpha_b) const;
   template <typename T>
   void CalculateBwdVar(const std::vector<uint32_t> &label_with_blank, const std::vector<std::vector<T>> &y,
-                       std::vector<std::vector<T>> *log_beta_b);
+                       std::vector<std::vector<T>> *log_beta_b) const;
   template <typename T>
   void CalculateGrad(const std::vector<uint32_t> &label_with_blank, const std::vector<std::vector<T>> &y,
                      const std::vector<std::vector<T>> &log_alpha_b, const std::vector<std::vector<T>> &log_beta_b,
-                     const T log_pzx, std::vector<std::vector<T>> *dy);
+                     const T log_pzx, std::vector<std::vector<T>> *dy) const;
 
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
- private:
-  void CheckParam(const CNodePtr &kernel_node);
   std::vector<size_t> probs_shape_;
-  std::vector<size_t> indice_dims_;
+  std::vector<size_t> indices_dims_;
   std::vector<size_t> labels_dims_;
-  size_t num_class_;
-  size_t max_time_;
-  size_t batch_size_;
-  uint32_t blank_index_;
+  size_t num_class_{0};
+  size_t max_time_{0};
+  size_t batch_size_{0};
+  uint32_t blank_index_{0};
   TypeId dtype_{kTypeUnknown};
-  bool preprocess_collapse_repeated_;
-  bool ctc_merge_repeated_;
-  bool ignore_longer_outputs_than_inputs_;
+  bool preprocess_collapse_repeated_{false};
+  bool ctc_merge_repeated_{false};
+  bool ignore_longer_outputs_than_inputs_{false};
 };
 
 MS_REG_CPU_KERNEL(CTCLoss,

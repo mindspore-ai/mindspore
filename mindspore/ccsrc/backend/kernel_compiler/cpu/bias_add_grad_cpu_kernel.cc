@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,19 @@
  */
 
 #include "backend/kernel_compiler/cpu/bias_add_grad_cpu_kernel.h"
-#include "nnacl/fp32/reduce_fp32.h"
+#include "backend/kernel_compiler/cpu/nnacl/fp32/reduce_fp32.h"
+#include "backend/kernel_compiler/cpu/nnacl/errorcode.h"
+
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kBiasAddGradInputsNum = 1;
+constexpr size_t kBiasAddGradOutputsNum = 1;
+}  // namespace
+
 void BiasAddGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (input_shape_.size() < 2) {
     MS_LOG(EXCEPTION) << "Input tensor's rank must be at least 2 for 'BiasAddGrad' Op, but input tensor's rank is "
@@ -29,11 +37,10 @@ void BiasAddGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                   const std::vector<AddressPtr> &outputs) {
-  if (inputs.size() != 1 || outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "input output size not support";
-  }
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBiasAddGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBiasAddGradOutputsNum, kernel_name_);
+  const auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
+  auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
 
   if (input_shape_.size() > 2) {
     size_t hw_size = 1;
@@ -53,7 +60,11 @@ bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const s
     }
   } else if (input_shape_.size() == 2) {
     auto task = [this, input_addr, output_addr](size_t start, size_t end) {
-      (void)ReduceSumDim2Axis0(end - start, input_shape_[1], input_shape_[0], input_addr + start, output_addr + start);
+      int ret =
+        ReduceSumDim2Axis0(end - start, input_shape_[1], input_shape_[0], input_addr + start, output_addr + start);
+      if (ret != NNACL_OK) {
+        MS_LOG(EXCEPTION) << "ReduceSumDim2Axis0 failed.";
+      }
     };
     ParallelLaunchAutoSearch(task, input_shape_[1], this, &parallel_search_info_);
   }

@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_LOGIC_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_LOGIC_CPU_KERNEL_H_
+
 #include <memory>
 #include <vector>
 #include <limits>
+
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
-
-#define MAX_LESS_SERIAL_SIZE 15000
 
 namespace mindspore {
 namespace kernel {
@@ -37,25 +38,27 @@ class ArithmeticLogicCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void GenIndex(size_t num, std::vector<size_t> *idx);
-  void Less(const T *input1, const T *input2, bool *out);
-  void Equal(const T *input1, const T *input2, bool *out);
-  void NotEqual(const T *input1, const T *input2, bool *out);
-  void Greater(const T *input1, const T *input2, bool *out);
-  void GreaterEqual(const T *input1, const T *input2, bool *out);
-  void LessEqual(const T *input1, const T *input2, bool *out);
-  void LogicalAnd(const T *input1, const T *input2, bool *out);
-  void LogicalOr(const T *input1, const T *input2, bool *out);
+  void InitComputeFunc();
+  void Less(const T *input1, const T *input2, bool *out) const;
+  void Equal(const T *input1, const T *input2, bool *out) const;
+  void NotEqual(const T *input1, const T *input2, bool *out) const;
+  void Greater(const T *input1, const T *input2, bool *out) const;
+  void GreaterEqual(const T *input1, const T *input2, bool *out) const;
+  void LessEqual(const T *input1, const T *input2, bool *out) const;
+  void LogicalAnd(const T *input1, const T *input2, bool *out) const;
+  void LogicalOr(const T *input1, const T *input2, bool *out) const;
+
+  using TypeComputeFunc = std::function<void(ArithmeticLogicCPUKernel *, const T *, const T *, bool *)>;
+  TypeComputeFunc compute_func_{nullptr};
+  size_t output_size_{1};
+  TypeId dtype_{kTypeUnknown};
+
   std::vector<size_t> input_shape1_;
   std::vector<size_t> input_shape2_;
   std::vector<size_t> input_element_num1_;
   std::vector<size_t> input_element_num2_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> output_element_num_;
-  size_t output_size_{1};
-  OperateType operate_type_{ADD};
-  TypeId dtype_{kTypeUnknown};
-  TypeId target_dtype_{kTypeUnknown};
 };
 
 MS_REG_CPU_KERNEL_T(

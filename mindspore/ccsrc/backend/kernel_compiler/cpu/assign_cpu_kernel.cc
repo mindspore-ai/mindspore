@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,34 @@
  */
 
 #include "backend/kernel_compiler/cpu/assign_cpu_kernel.h"
+
 #include <string>
 #include <map>
+
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
-static std::map<TypeId, size_t> input_x_dtype_size_map = {
-  {kNumberTypeBool, sizeof(bool)}, {kNumberTypeInt8, 1},    {kNumberTypeInt16, 2},   {kNumberTypeInt32, 4},
-  {kNumberTypeInt64, 8},           {kNumberTypeUInt8, 1},   {kNumberTypeUInt16, 2},  {kNumberTypeUInt32, 4},
-  {kNumberTypeUInt64, 8},          {kNumberTypeFloat16, 2}, {kNumberTypeFloat32, 4}, {kNumberTypeFloat64, 8}};
+namespace {
+constexpr size_t kAssignInputsNum = 2;
+constexpr size_t kAssignOutputsNum = 1;
+
+const std::map<TypeId, size_t> input_x_dtype_size_map = {
+  {kNumberTypeBool, sizeof(bool)},       {kNumberTypeInt8, sizeof(int8_t)},     {kNumberTypeInt16, sizeof(int16_t)},
+  {kNumberTypeInt32, sizeof(int32_t)},   {kNumberTypeInt64, sizeof(int64_t)},   {kNumberTypeUInt8, sizeof(uint8_t)},
+  {kNumberTypeUInt16, sizeof(uint16_t)}, {kNumberTypeUInt32, sizeof(uint32_t)}, {kNumberTypeUInt64, sizeof(uint64_t)},
+  {kNumberTypeFloat16, sizeof(float16)}, {kNumberTypeFloat32, sizeof(float)},   {kNumberTypeFloat64, sizeof(double)}};
+}  // namespace
 
 void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto input_y_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (input_x_shape.size() != input_y_shape.size()) MS_LOG(EXCEPTION) << "X and y must be same shape!";
+  if (input_x_shape.size() != input_y_shape.size()) {
+    MS_LOG(EXCEPTION) << "X and y must be same shape!";
+  }
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
       MS_LOG(EXCEPTION) << "X and y must be same shape!";
@@ -39,14 +50,17 @@ void AssignCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     batch_size_ *= input_x_shape[i];
   }
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (input_x_dtype_size_map.find(input_x_dtype_) == input_x_dtype_size_map.end()) {
+  auto type_len = input_x_dtype_size_map.find(input_x_dtype_);
+  if (type_len == input_x_dtype_size_map.end()) {
     MS_LOG(EXCEPTION) << "Unsupported input_x dtype!";
   }
-  input_x_dtype_size_ = input_x_dtype_size_map[input_x_dtype_];
+  input_x_dtype_size_ = type_len->second;
 }
 
 bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                              const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kAssignInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAssignOutputsNum, kernel_name_);
   auto max_size = inputs[0]->size;
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {

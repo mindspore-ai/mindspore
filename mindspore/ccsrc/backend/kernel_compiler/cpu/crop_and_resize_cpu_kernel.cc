@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "backend/kernel_compiler/cpu/crop_and_resize_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
