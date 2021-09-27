@@ -22,6 +22,7 @@ namespace opt {
 void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 void CommonUnifyMindIROptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 }  // namespace opt
 }  // namespace mindspore
 

@@ -60,9 +60,6 @@ class CPUDeviceContext : public DeviceContext {
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
 
-  // Update Graph Dynamic Shape Attr.
-  void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const;
-
   void OptimizeGraphImpl(const KernelGraphPtr &graph) const;
 #ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.

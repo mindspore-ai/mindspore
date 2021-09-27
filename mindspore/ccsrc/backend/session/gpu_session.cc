@@ -439,9 +439,7 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
     DumpIRProto(graph, "before_removeNop_" + std::to_string(graph->graph_id()));
   }
 #endif
-  // Update Graph Dynamic Shape Attr.
-  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
-  graph->UpdateGraphDynamicAttr();
+  opt::AddDynamicShapeAttrPass(graph);
   const bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
   // Hide NopOp from execution graph in graph mode
   if (!pynative_mode) {

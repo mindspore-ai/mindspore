@@ -32,6 +32,7 @@
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
 #include "debug/anf_ir_dump.h"
+#include "backend/optimizer/common/common_backend_optimization.h"
 #include "debug/dump_proto.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -115,8 +116,7 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   MS_EXCEPTION_IF_NULL(graph);
-  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
-  graph->UpdateGraphDynamicAttr();
+  opt::AddDynamicShapeAttrPass(graph);
   MS_LOG(INFO) << "Set kernel info";
   SetKernelInfo(graph.get());
   MS_LOG(INFO) << "Set kernel info end";

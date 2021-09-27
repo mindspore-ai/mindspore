@@ -83,9 +83,6 @@ class GPUDeviceContext : public DeviceContext {
   // Operator fusion optimization.
   void FuseOperators(const KernelGraphPtr &graph) const;
 
-  // Update Graph Dynamic Shape Attr.
-  void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const;
-
   bool BindDeviceToCurrentThread() const;
 #ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.

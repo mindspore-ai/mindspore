@@ -298,8 +298,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph);
   void InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter);
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list);
-  void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &root_graph);
-  void UpdateAllGraphDynamicShapeAttr(const std::vector<KernelGraphPtr> &all_graphs);
   virtual std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) { return nullptr; }
   void InitAllBucket(const KernelGraphPtr &graph, const device::DeviceContext *device_context = nullptr);
   void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);
