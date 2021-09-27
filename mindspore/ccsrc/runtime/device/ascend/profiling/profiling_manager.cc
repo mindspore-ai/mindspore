@@ -24,12 +24,9 @@
 #include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "runtime/base.h"
-#include "runtime/device/ascend/profiling/profiling_callback_register.h"
 #include <nlohmann/json.hpp>
 
 namespace {
-constexpr int32_t kProfilingDeviceNum = 1;
-constexpr auto kRtSetDeviceRegName = "profiling";
 constexpr Status PROF_SUCCESS = 0;
 constexpr Status PROF_FAILED = 0xFFFFFFFF;
 }  // namespace
@@ -45,38 +42,6 @@ ProfilingManager &ProfilingManager::GetInstance() {
 ProfilingManager::ProfilingManager() : device_id_(0), prof_cb_({0}), hccl_enabled_bef_profiling_enabled_(false) {}
 
 uint64_t ProfilingManager::GetJobId() const { return 0; }
-
-bool ProfilingManager::ReportProfilingData(const map<uint32_t, string> &op_taskId_map) const {
-  if (!IsProfiling()) {
-    MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
-    return false;
-  }
-  if (op_taskId_map.empty()) {
-    MS_LOG(WARNING) << "op_taskId_map is empty.";
-    return false;
-  }
-
-  MS_LOG(INFO) << "DistributeTask: op tasId map size = " << op_taskId_map.size();
-
-  ReporterData reporter_data = {};
-  for (const auto &iter : op_taskId_map) {
-    auto data = iter.second + ' ' + std::to_string(iter.first) + ';';
-    reporter_data.deviceId = UintToInt(device_id_);
-    reporter_data.data = (unsigned char *)(const_cast<char *>(data.c_str()));
-    reporter_data.dataLen = data.size();
-    auto ret = memcpy_s(reporter_data.tag, MSPROF_ENGINE_MAX_TAG_LEN + 1, "framework", sizeof("framework"));
-    if (ret != 0) {
-      MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
-      return false;
-    }
-    int32_t cb_ret = CallMsprofReport(NOT_NULL(&reporter_data));
-    if (cb_ret != 0) {
-      MS_LOG(ERROR) << "reporter data fail, errorno(" << cb_ret << ")";
-      return false;
-    }
-  }
-  return true;
-}
 
 uint64_t GetProfilingModule() {
   return PROF_MODEL_EXECUTE_MASK | PROF_RUNTIME_API_MASK | PROF_RUNTIME_TRACE_MASK | PROF_SCHEDULE_TIMELINE_MASK |
@@ -173,12 +138,6 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   return true;
 }
 
-uint32_t GetCurrentDeviceId() {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  return context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-}
-
 bool ProfilingManager::ProfStartUp(const NotNull<MsprofGeOptions *> prof_conf) const {
   MS_LOG(INFO) << "Prof start up. ";
 
@@ -209,7 +168,7 @@ bool ProfilingManager::ProfRegisterCtrlCallback() const {
   return true;
 }
 
-rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t len) {
+rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /*len*/) {
   if (rt_type == RT_PROF_CTRL_REPORTER) {
     ProfilingManager::GetInstance().SetMsprofReporterCallback(reinterpret_cast<MsprofReporterCallback>(data));
     MS_LOG(INFO) << "Set MsprofReporterCallback success.";
@@ -250,36 +209,6 @@ Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter
   return prof_cb_.msprofReporterCallback(IntToUint(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
                                          IntToUint(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
                                          static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
-}
-
-Status RegProfCtrlCallback(MsprofCtrlCallback func) {
-  if (func == nullptr) {
-    MS_LOG(ERROR) << "Msprof ctrl callback is nullptr.";
-    return PROF_FAILED;
-  }
-  if (ProfilingManager::GetInstance().GetMsprofCallback().msprofCtrlCallback != nullptr) {
-    MS_LOG(WARNING) << "Msprof ctrl callback is exist, just ignore it.";
-  } else {
-    MS_LOG(INFO) << "GE register Msprof ctrl callback.";
-    ProfilingManager::GetInstance().SetMsprofCtrlCallback(func);
-  }
-  return PROF_SUCCESS;
-}
-
-Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func) {
-  if (func == nullptr) {
-    MS_LOG(ERROR) << "MsprofSetDeviceCallback callback is nullptr.";
-    return PROF_FAILED;
-  }
-  ProfilingManager::GetInstance().SetMsprofSetDeviceCallback(func);
-  // Pass MsprofSetDeviceCallback to runtime
-  MS_LOG(INFO) << "GE pass setdevice callback to runtime.";
-  rtError_t rt_ret = rtRegDeviceStateCallback(kRtSetDeviceRegName, static_cast<rtDeviceStateCallback>(func));
-  if (rt_ret != UintToInt(PROF_SUCCESS)) {
-    MS_LOG(WARNING) << "Pass MsprofSetDeviceCallback to runtime failed.";
-    return IntToUint(rt_ret);
-  }
-  return PROF_SUCCESS;
 }
 
 Status ProfCtrlSwitchHandle(void *data) {

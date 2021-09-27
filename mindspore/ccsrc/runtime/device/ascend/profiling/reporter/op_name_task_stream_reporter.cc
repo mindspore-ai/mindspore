@@ -15,11 +15,6 @@
  */
 
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
-#include <map>
-#include <string>
-#include <vector>
-#include <memory>
-#include "runtime/device/ascend/profiling/reporter/task_desc_reporter.h"
 
 namespace mindspore {
 namespace device {

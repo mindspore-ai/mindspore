@@ -15,8 +15,7 @@
  */
 
 #include "runtime/device/ascend/executor/ai_core_dynamic_kernel.h"
-#include <algorithm>
-#include <memory>
+
 #include "framework/common/debug/log.h"
 #include "utils/log_adapter.h"
 #include "register/op_tiling.h"

@@ -16,10 +16,6 @@
 
 #include "backend/kernel_compiler/host/host_kernel_mod.h"
 
-#include <memory>
-#include <vector>
-#include <string>
-#include <utility>
 #include "runtime/mem.h"
 #include "utils/ms_context.h"
 #include "backend/kernel_compiler/common_utils.h"
