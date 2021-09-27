@@ -430,7 +430,7 @@ void AddSegmentDependency(const FuncGraphPtr &graph, const std::map<AnfNodePtr, 
       node_segment = node_iter->second;
     }
     for (auto &input : node_inputs) {
-      if (node_segment != nullptr && !node_segment->is_cut_ && input->isa<CNode>()) {
+      if (node_segment != nullptr && !node_segment->is_cut_ && input != nullptr && input->isa<CNode>()) {
         GraphSegmentPtr input_segment{nullptr};
         auto input_iter = node_to_segment.find(input);
         if (input_iter != node_to_segment.end()) {

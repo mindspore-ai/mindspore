@@ -325,7 +325,10 @@ void MsBackend::CreateOtherSession(const std::string &target) {
   other_device_ = target;
 }
 
-GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_->CompileGraph(fg); }
+GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) {
+  MS_EXCEPTION_IF_NULL(target_sess_);
+  return target_sess_->CompileGraph(fg);
+}
 
 VectorRef MsBackend::RunGraph(GraphId graph_id, const VectorRef &args) { return MsRunGraph(graph_id, args); }
 
@@ -420,10 +423,10 @@ void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
   for (const auto &segment : segments) {
     MS_EXCEPTION_IF_NULL(segment);
     // Compile the normal nodes, which doesn't contain the cut node.
+    if (segment->nodes_.size() == 0) {
+      MS_LOG(EXCEPTION) << "The segments size is 0.";
+    }
     if (!segment->is_cut_) {
-      if (segment->nodes_.size() == 0) {
-        MS_LOG(EXCEPTION) << "The segments size is 0.";
-      }
       MS_EXCEPTION_IF_NULL(segment->nodes_[0]);
       MS_LOG(INFO) << "Compile normal segment, the first node: " << segment->nodes_[0]->fullname_with_scope();
 
