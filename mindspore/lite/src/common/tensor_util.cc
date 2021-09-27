@@ -31,7 +31,7 @@ int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector
       return RET_ERROR;
     }
     tensor_c->data_type_ = kNumberTypeFloat32;
-    tensor_c->format_ = mindspore::NCHW;
+    tensor_c->format_ = tensors[i]->format();
     tensor_c->data_ = nullptr;
     tensor_c->shape_size_ = 0;
     tensors_c->push_back(tensor_c);

@@ -88,12 +88,16 @@ int InstanceNormCPUKernel::Run() {
 #else  // other platform is not support nc4hw4 and must be pack to nc4hw4
     tmp_src_data_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(in_tensors_[0]->Size()));
     CHECK_NULL_RETURN(tmp_src_data_);
-    PackNHWCToNC4HW4Fp32(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
+    PackNHWCToNC4HW4NotAlignedFp32(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
 #endif
   } else if (in_tensors_[0]->format() == NHWC) {
     tmp_src_data_ = reinterpret_cast<float *>(ms_context_->allocator->Malloc(in_tensors_[0]->Size()));
     CHECK_NULL_RETURN(tmp_src_data_);
-    PackNHWCToNC4HW4Fp32(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
+#ifdef ENABLE_AVX
+    PackNHWCToNC8HW8NotAlignedFp32(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
+#else
+    PackNHWCToNC4HW4NotAlignedFp32(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
+#endif
     in_tensors_[0]->set_format(NC4HW4);
   } else {
     tmp_src_data_ = src_data_;

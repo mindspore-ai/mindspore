@@ -41,6 +41,8 @@ void PackNC8HW8ToNHWCFp32(const void *src, void *dst, int batch, int plane, int 
 void PackNC8HW8AlignedToNC8HW8NotAlignedFp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToCXHWNXFp32(const float *src, float *dst, int batch, int plane, int channel);
+void PackNHWCToNC4HW4NotAlignedFp32(const float *src, float *dst, const int batch, const int plane, const int channel);
+void PackNHWCToNC8HW8NotAlignedFp32(const float *src, float *dst, const int batch, const int plane, const int channel);
 
 void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel);
 void PackDepthwiseIndirectWeightC4Fp32(const void *src, void *dst, int height, int width, int channel);
