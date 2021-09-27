@@ -59,7 +59,7 @@ void PynativeProfiler::SetDeviceOpNameAndLaunchCostTime(const std::pair<std::str
 }
 
 void PynativeProfiler::ExportDeviceInfoToFile() {
-  MS_LOG(DEBUG) << "op_name_launch_time_point_vec_ size: " << op_name_launch_time_point_vec_.size();
+  MS_LOG(DEBUG) << "Op name launch time point vec size: " << op_name_launch_time_point_vec_.size();
   if (!enable_profiler_flag_ || op_name_launch_time_point_vec_.empty()) {
     return;
   }
@@ -68,7 +68,7 @@ void PynativeProfiler::ExportDeviceInfoToFile() {
   of_device << "DeviceIndex" << ',' << "op_name" << ',' << "LaunchStartTime(s)" << ',' << "LaunchEndTime(s)" << ','
             << "LaunchCostTime(ms)" << std::endl;
   if (op_name_launch_time_point_vec_.size() != op_name_launch_time_vec_.size()) {
-    MS_LOG(EXCEPTION) << "the size of the two vector is not equal, the two vector size is "
+    MS_LOG(EXCEPTION) << "The size of the two vector is not equal, the two vector size is "
                       << op_name_launch_time_point_vec_.size() << " and " << op_name_launch_time_vec_.size();
   }
   for (size_t i = 1; i <= op_name_launch_time_point_vec_.size(); ++i) {
@@ -82,12 +82,12 @@ void PynativeProfiler::ExportDeviceInfoToFile() {
 }
 
 void PynativeProfiler::ExportDeviceInfoToScreen() {
-  MS_LOG(DEBUG) << "op_name_launch_time_point_vec_ size: " << op_name_launch_time_point_vec_.size();
+  MS_LOG(DEBUG) << "Op name launch time point vec size: " << op_name_launch_time_point_vec_.size();
   if (!enable_profiler_flag_ || op_name_launch_time_point_vec_.empty()) {
     return;
   }
   if (op_name_launch_time_point_vec_.size() != op_name_launch_time_vec_.size()) {
-    MS_LOG(EXCEPTION) << "the size of the two vector is not equal, the two vector size is "
+    MS_LOG(EXCEPTION) << "The size of the two vector is not equal, the two vector size is "
                       << op_name_launch_time_point_vec_.size() << " and " << op_name_launch_time_vec_.size();
   }
   std::cout << "====================================DeviceInfo===================================" << std::endl;
