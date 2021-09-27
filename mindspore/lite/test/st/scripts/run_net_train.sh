@@ -407,7 +407,7 @@ function Run_CodeExamples() {
     export PATH=${x86_path}/mindspore-lite-${version}-linux-x64/tools/converter/converter/:$PATH
     export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${x86_path}/mindspore-lite-${version}-linux-x64/tools/converter/lib/:${x86_path}/mindspore-lite-${version}-linux-x64/tools/converter/third_party/glog/lib
 
-    if [[ "$should_run" == "1" && ($backend == "all" || $backend == "x86-all" || $backend == "x86_train" || $backend == "x86-java") ]]; then
+    if [[ "$should_run" == "1" && ($backend == "all" || $backend == "codegen_and_train"  || $backend == "x86-all" || $backend == "x86_train" || $backend == "x86-java") ]]; then
       cd ${basepath}/../../examples/train_lenet_java || exit 1
       chmod 777 ./prepare_and_run.sh
       ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -m ${models_path}/code_example.mindir >> ${run_code_examples_log_file}
