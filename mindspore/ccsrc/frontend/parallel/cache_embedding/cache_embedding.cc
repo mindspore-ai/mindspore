@@ -190,10 +190,12 @@ void BindAndInitCacheTensor(const ParamMap &param_pair_list, const ParameterPtr 
     auto cache_data_max_size = static_cast<size_t>(cache_tensor->Size());
     if (hashmap_data_type == TypeId::kNumberTypeInt32) {
       MemCopyFromHostToCache<int32_t>(hashmap_tensor->data_c(), host_tensor->data_c(), cache_tensor->data_c(),
-                                      host_data_max_size, cache_data_max_size, hashmap_size, host_shape[1]);
+                                      host_data_max_size, cache_data_max_size, LongToSize(hashmap_size),
+                                      LongToSize(host_shape[1]));
     } else if (hashmap_data_type == TypeId::kNumberTypeInt64) {
       MemCopyFromHostToCache<int32_t>(hashmap_tensor->data_c(), host_tensor->data_c(), cache_tensor->data_c(),
-                                      host_data_max_size, cache_data_max_size, hashmap_size, host_shape[1]);
+                                      host_data_max_size, cache_data_max_size, LongToSize(hashmap_size),
+                                      LongToSize(host_shape[1]));
     } else {
       MS_LOG(ERROR) << "Hashmap dtype only suppotr int32, in64.";
     }
@@ -230,9 +232,9 @@ void InitHashMapData(void *data, const int64_t host_size, const int64_t cache_si
     if (hashmap_data[entry].IsEmpty()) {
       hashmap_count++;
       hashmap_data[entry].key_ = random_key;
-      hashmap_data[entry].value_ = SizeToLong(i);
+      hashmap_data[entry].value_ = static_cast<T>(i);
       hashmap_data[entry].step_ = kInitStep;
-      hashmap_data[entry].tag_ = SizeToLong(count);
+      hashmap_data[entry].tag_ = static_cast<T>(count);
     }
   }
   MS_LOG(INFO) << "Hashmap init success, with " << hashmap_count << " / " << hashmap_size;
