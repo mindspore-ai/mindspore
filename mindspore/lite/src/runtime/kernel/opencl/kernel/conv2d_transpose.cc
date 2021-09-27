@@ -188,7 +188,6 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
   }
   memset(padWeight_, 0x00, div_ci * div_co * C4NUM * C4NUM * kh * kw * data_size);
   auto origin_weight = stored_weight_ == nullptr ? in_tensors_.at(kWeightIndex)->data() : stored_weight_;
-  auto weight_dtype = in_tensors_.at(kWeightIndex)->data_type();
   int index = 0;
   for (int co_i = 0; co_i < div_co; co_i++) {
     for (int kh_i = 0; kh_i < kh; kh_i++) {
@@ -200,6 +199,8 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
               int ci_offset = ci_i * C4NUM + ci4_i;
               if (co_offset < co && ci_offset < ci) {
                 int ori_index = ((ci_offset * kh + kh_i) * kw + kw_i) * co + co_offset;
+#ifdef ENABLE_FP16
+                auto weight_dtype = in_tensors_.at(kWeightIndex)->data_type();
                 if (enable_fp16_) {
                   if (weight_dtype == kNumberTypeFloat32) {
                     reinterpret_cast<float16_t *>(padWeight_)[index++] =
@@ -217,6 +218,9 @@ int Conv2dTransposeOpenCLKernel::InitFilter() {
                       reinterpret_cast<float16_t *>(origin_weight)[ori_index];
                   }
                 }
+#else
+                reinterpret_cast<float *>(padWeight_)[index++] = reinterpret_cast<float *>(origin_weight)[ori_index];
+#endif
               } else {
                 index++;
               }
@@ -262,6 +266,7 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
   if (in_tensors_.size() == INPUT_TENSOR_SIZE_3) {
     void *src_data = stored_bias_ == nullptr ? in_tensors_.at(kBiasIndex)->data() : stored_bias_;
     MS_ASSERT(src_data);
+#ifdef ENABLE_FP16
     auto bias_dtype = in_tensors_[2]->data_type();
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < co; i++) {
@@ -274,6 +279,9 @@ int Conv2dTransposeOpenCLKernel::InitBias() {
     } else {
       memcpy(bias_, src_data, co * data_size);
     }
+#else
+    memcpy(bias_, src_data, co * data_size);
+#endif
   }
   if (allocator->UnmapBuffer(bias_) != RET_OK) {
     MS_LOG(ERROR) << "UnmapBuffer failed.";

@@ -20,7 +20,7 @@ endif()
 
 #Options that can be configured through environment variables or manually
 set(MSLITE_GPU_BACKEND "" CACHE STRING "enable gpu backend, \
-    only arm64 support opencl, only x86_64 support tensorrt, opencl/cuda/tensorrt/off")
+    opencl only support arm64 and x86_64 , tensorrt only support x86_64, opencl/cuda/tensorrt/off")
 option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" off)
 option(MSLITE_ENABLE_TRAIN "enable train" on)
 option(MSLITE_ENABLE_SSE "enable SSE instruction set, only x86_64 support" off)
@@ -155,7 +155,8 @@ else()
     if(MSLITE_GPU_BACKEND STREQUAL "")
         set(MSLITE_GPU_BACKEND "off")
     endif()
-    if((NOT MSLITE_GPU_BACKEND STREQUAL "tensorrt") AND (NOT MSLITE_GPU_BACKEND STREQUAL "off"))
+    if((NOT MSLITE_GPU_BACKEND STREQUAL "tensorrt") AND (NOT MSLITE_GPU_BACKEND STREQUAL "off") AND
+    (NOT MSLITE_GPU_BACKEND STREQUAL "opencl"))
         message("invalid MSLITE_GPU_BACKEND value ${MSLITE_GPU_BACKEND} for x86_64, MSLITE_GPU_BACKEND is set to off.")
         set(MSLITE_GPU_BACKEND "off")
     endif()

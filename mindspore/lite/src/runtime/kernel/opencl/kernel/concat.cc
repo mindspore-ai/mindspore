@@ -37,7 +37,7 @@ int ConcatOpenCLKernel::RunAxis0() {
   MS_ASSERT(dst_data);
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   auto *out_image = allocator_->GetImage(dst_data);
-  for (int i = 0; i < in_tensors_.size(); i++) {
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
     auto src_data = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data() : weight_ptrs_.at(i);
     if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
       MS_LOG(ERROR) << "GetImageSize failed.";
@@ -125,7 +125,7 @@ int ConcatOpenCLKernel::SetConstArgs() {
   size_t dtype = ocl_runtime_->GetFp16Enable() ? sizeof(cl_half) : sizeof(cl_float);
   stride_w = img_info.RowPitch() / dtype;
   cl_int4 output_shape_ = {};
-  for (int i = 0; i < out_tensors_[0]->shape().size(); ++i) {
+  for (size_t i = 0; i < out_tensors_[0]->shape().size(); ++i) {
     output_shape_.s[i] = out_tensors_[0]->shape()[i];
   }
   Broadcast2GpuShape(out_shape_.s, output_shape_.s, out_tensors_[0]->shape().size(), 1);
@@ -133,7 +133,7 @@ int ConcatOpenCLKernel::SetConstArgs() {
   if (axis_ == 3 && !Align_) {
     for (auto &in_tensor : in_tensors_) {
       cl_int4 temp = {};
-      for (int j = 0; j < in_tensor->shape().size(); ++j) {
+      for (size_t j = 0; j < in_tensor->shape().size(); ++j) {
         temp.s[j] = in_tensor->shape()[j];
       }
       Broadcast2GpuShape(in_shape_.s, temp.s, in_tensor->shape().size(), 1);
@@ -149,7 +149,7 @@ int ConcatOpenCLKernel::SetConstArgs() {
   } else {
     for (auto &in_tensor : in_tensors_) {
       cl_int4 temp = {};
-      for (int j = 0; j < in_tensor->shape().size(); ++j) {
+      for (size_t j = 0; j < in_tensor->shape().size(); ++j) {
         temp.s[j] = in_tensor->shape()[j];
       }
       Broadcast2GpuShape(in_shape_.s, temp.s, in_tensor->shape().size(), 1);
@@ -282,7 +282,7 @@ int ConcatOpenCLKernel::Run() {
     return RunAxis0();
   }
   int arg_cn = 0;
-  for (int i = 0; i < in_tensors_.size(); ++i) {
+  for (size_t i = 0; i < in_tensors_.size(); ++i) {
     auto input_ptr = weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data() : weight_ptrs_.at(i);
     if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_ptr) != CL_SUCCESS) {
       MS_LOG(ERROR) << "SetKernelArg failed.";

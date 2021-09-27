@@ -41,6 +41,7 @@ constexpr float G[] = {1.0000000000, 0.0000000000,  0.0000000000, 1.0000000000, 
                        1.0000000000, -0.7071067691, 0.4999999702, 1.0000000000, 1.4142135382, 1.9999998808,
                        1.0000000000, -1.4142135382, 1.9999998808, 0.0000000000, 0.0000000000, 1.0000000000};
 std::vector<float> GenerateWinogradFilter(void *src, TypeId dtype, size_t CO, size_t CI) {
+#ifdef ENABLE_FP16
   auto src_fp32 = reinterpret_cast<float *>(src);
   auto src_fp16 = reinterpret_cast<float16_t *>(src);
   std::function<float(int)> access_func;
@@ -49,13 +50,18 @@ std::vector<float> GenerateWinogradFilter(void *src, TypeId dtype, size_t CO, si
   } else {
     access_func = [=](int idx) { return static_cast<float>(src_fp16[idx]); };
   }
+#else
+  auto src_fp32 = reinterpret_cast<float *>(src);
+  std::function<float(int)> access_func;
+  access_func = [=](int idx) { return src_fp32[idx]; };
+#endif
   // OHWI -> O66I
   std::vector<float> dst(CO * 6 * 6 * CI);
   if (src == nullptr) {
     return dst;
   }
-  for (int co = 0; co < CO; ++co) {
-    for (int ci = 0; ci < CI; ++ci) {
+  for (size_t co = 0; co < CO; ++co) {
+    for (size_t ci = 0; ci < CI; ++ci) {
       float in_vals[9];
       for (int kh = 0; kh < 3; ++kh) {
         for (int kw = 0; kw < 3; ++kw) {

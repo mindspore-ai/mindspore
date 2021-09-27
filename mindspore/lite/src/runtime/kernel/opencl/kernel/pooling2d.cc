@@ -61,8 +61,8 @@ int PoolingOpenCLKernel::BuildKernel() {
     kernel_name = "AvgPooling2d";
   }
 
-  if (parameter_->global_ &&
-      (parameter_->window_h_ >= LOCAL_CACHE_THREAD || parameter_->window_w_ >= LOCAL_CACHE_THREAD)) {
+  if (parameter_->global_ && (parameter_->window_h_ >= static_cast<int>(LOCAL_CACHE_THREAD) ||
+                              parameter_->window_w_ >= static_cast<int>(LOCAL_CACHE_THREAD))) {
     kernel_name += "_global";
     is_use_local_ = true;
   }

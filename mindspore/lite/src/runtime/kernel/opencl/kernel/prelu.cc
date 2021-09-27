@@ -32,6 +32,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PReLUFusion;
 
 namespace mindspore::kernel {
+#ifdef ENABLE_FP16
 int PReluOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto weight_tensor = in_tensors_.at(1);
@@ -84,6 +85,36 @@ int PReluOpenCLKernel::InitWeights() {
   }
   return RET_OK;
 }
+#else
+int PReluOpenCLKernel::InitWeights() {
+  auto allocator = ocl_runtime_->GetAllocator();
+  auto weight_tensor = in_tensors_.at(1);
+  if (weight_is_scalar) {
+    weight_scalar_ = *reinterpret_cast<float *>(weight_tensor->data());
+    MS_ASSERT(weight_scalar_);
+  } else {
+    int C_ = weight_tensor->ElementsNum();
+    auto sizeof_FLT = sizeof(float);
+    size_t weight_size = UP_ROUND(C_, C4NUM) * sizeof_FLT;
+    weight_vector_ = allocator->Malloc(weight_size, lite::opencl::MemType::BUF);
+    if (weight_vector_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed.";
+      return RET_ERROR;
+    }
+    if (allocator->MapBuffer(weight_vector_, CL_MAP_WRITE, nullptr, true) == nullptr) {
+      MS_LOG(ERROR) << "Map Buffer failed.";
+      return RET_ERROR;
+    }
+    memset(weight_vector_, 0x00, weight_size);
+    memcpy(weight_vector_, weight_tensor->data(), C_ * sizeof_FLT);
+    if (allocator->UnmapBuffer(weight_vector_) != RET_OK) {
+      MS_LOG(ERROR) << "UnmapBuffer failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+#endif
 
 int PReluOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != INPUT_TENSOR_SIZE_2 || out_tensors_.size() != OUTPUT_TENSOR_SIZE_1) {
@@ -132,10 +163,10 @@ void PReluOpenCLKernel::SetGlobalLocal() {
 int PReluOpenCLKernel::Prepare() {
   cl_int4 output_shape = {};
   cl_int4 weight_shape = {};
-  for (int i = 0; i < out_tensors_.at(0)->shape().size(); ++i) {
+  for (size_t i = 0; i < out_tensors_.at(0)->shape().size(); ++i) {
     output_shape.s[i] = out_tensors_.at(0)->shape()[i];
   }
-  for (int i = 0; i < in_tensors_.at(1)->shape().size(); ++i) {
+  for (size_t i = 0; i < in_tensors_.at(1)->shape().size(); ++i) {
     weight_shape.s[i] = in_tensors_.at(1)->shape()[i];
   }
   Broadcast2GpuShape(out_shape_.s, output_shape.s, out_tensors_.at(0)->shape().size(), 1);

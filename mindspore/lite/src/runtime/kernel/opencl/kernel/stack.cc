@@ -35,7 +35,7 @@ int StackOpenCLKernel::RunAxis0() {
   MS_ASSERT(dst_data);
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   cl::Image2D *out_image = allocator_->GetImage(dst_data);
-  for (int i = 0; i < in_tensors_.size(); i++) {
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
     auto src_data = in_tensors_[i]->data();
     MS_ASSERT(src_data);
     if (allocator_->GetImageSize(src_data, &img_size) != RET_OK) {
@@ -96,7 +96,7 @@ int StackOpenCLKernel::CheckSpecs() {
     MS_LOG(WARNING) << " only support  axis <= 3 ";
     return RET_ERROR;
   }
-  if (axis_ > in_tensors_[0]->shape().size()) {
+  if (axis_ > static_cast<int>(in_tensors_[0]->shape().size())) {
     MS_LOG(WARNING) << " stack  axis must been <= in_tensors_[0]->shape().size() ";
     return RET_ERROR;
   }
@@ -106,11 +106,11 @@ int StackOpenCLKernel::CheckSpecs() {
 int StackOpenCLKernel::SetConstArgs() {
   int arg_cn = in_tensors_.size() + 1;
   cl_int4 inshape_tmp = {}, outshape_tmp = {};
-  for (int i = 0; i < in_tensors_[0]->shape().size(); ++i) {
+  for (size_t i = 0; i < in_tensors_[0]->shape().size(); ++i) {
     inshape_tmp.s[i] = in_tensors_[0]->shape()[i];
   }
   Broadcast2GpuShape(in_shape_.s, inshape_tmp.s, in_tensors_[0]->shape().size(), 1);
-  for (int i = 0; i < out_tensors_[0]->shape().size(); ++i) {
+  for (size_t i = 0; i < out_tensors_[0]->shape().size(); ++i) {
     outshape_tmp.s[i] = out_tensors_[0]->shape()[i];
   }
   Broadcast2GpuShape(out_shape_.s, outshape_tmp.s, out_tensors_[0]->shape().size(), 1);
@@ -167,7 +167,7 @@ int StackOpenCLKernel::Prepare() {
   }
   if (in_tensors_[0]->shape().size() == DIMENSION_1D && axis_ == 1) {
     axis_ += 2;
-  } else if (in_tensors_[0]->shape().size() == axis_) {
+  } else if (static_cast<int>(in_tensors_[0]->shape().size()) == axis_) {
     buffer_button_ = true;  // boundary stack judge
   }
   std::string kernel_name = "stack_";
@@ -208,7 +208,7 @@ int StackOpenCLKernel::Run() {
   }
   int arg_cn = 0;
   if (buffer_button_) {
-    for (int i = 0; i < in_tensors_.size(); ++i) {
+    for (size_t i = 0; i < in_tensors_.size(); ++i) {
       if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data(), true) != CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
         return RET_ERROR;
@@ -219,7 +219,7 @@ int StackOpenCLKernel::Run() {
       return RET_ERROR;
     }
   } else {
-    for (int i = 0; i < in_tensors_.size(); ++i) {
+    for (size_t i = 0; i < in_tensors_.size(); ++i) {
       if (ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data()) != CL_SUCCESS) {
         MS_LOG(ERROR) << "SetKernelArg failed.";
         return RET_ERROR;

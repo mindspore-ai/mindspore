@@ -125,7 +125,7 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
 
   printf("shape=(");
   auto shape = tensor->shape();
-  for (int i = 0; i < shape.size(); ++i) {
+  for (size_t i = 0; i < shape.size(); ++i) {
     printf("%4d", shape[i]);
     if (i + 1 < shape.size()) {
       printf(",");
@@ -134,7 +134,8 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
   printf(") ");
 
   auto total_num = mem_type == lite::opencl::MemType::BUF ? img_info.ElementsNum : img_info.ElementsC4Num;
-  for (int i = 0; i < print_num && i < total_num; ++i) {
+  for (int i = 0; i < print_num && i < static_cast<int>(total_num); ++i) {
+#ifdef ENABLE_FP16
     if (tensor->data_type() == kNumberTypeInt32) {
       printf("%d %7d | ", i, reinterpret_cast<int32_t *>(data.data())[i]);
     } else if (tensor->data_type() == kNumberTypeFloat16) {
@@ -144,6 +145,9 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
     } else if (tensor->data_type() == kNumberTypeInt8) {
       printf("%d %7d | ", i, static_cast<int>(reinterpret_cast<int8_t *>(data.data())[i]));
     }
+#else
+    printf("%d %7.3f | ", i, reinterpret_cast<float *>(data.data())[i]);
+#endif
   }
   printf("\n");
 
@@ -158,7 +162,7 @@ int OpenCLKernel::PreProcess() {
   if (ret != RET_OK) {
     return ret;
   }
-  for (auto i = 0; i < out_tensors_.size(); ++i) {
+  for (size_t i = 0; i < out_tensors_.size(); ++i) {
     auto *output = out_tensors_.at(i);
     CHECK_NULL_RETURN(output);
     CHECK_NULL_RETURN(output->allocator());
@@ -293,7 +297,7 @@ int OpenCLKernel::Tune() {
   }
   int index = -1;
   double min_time = MAX_PROFILING_TIME_MILLI_SECOND;
-  for (int i = 0; i < tuning_params.size(); i++) {
+  for (size_t i = 0; i < tuning_params.size(); i++) {
     AssignTuningParam(tuning_params[i]);
     auto ret = Run();
     if (ret != RET_OK) {
@@ -332,7 +336,7 @@ double OpenCLKernel::GetProfilingTimeMs() {
 std::set<size_t> OpenCLKernel::GenerateLocalByGlobal(size_t global_i) {
   std::set<size_t> local_ = {};
   int index = 1;
-  while (index <= global_i) {
+  while (index <= static_cast<int>(global_i)) {
     local_.insert(index);
     index *= 2;
   }

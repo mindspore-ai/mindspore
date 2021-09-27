@@ -173,7 +173,7 @@ int OpenCLRuntime::InitGPUDevice(std::vector<cl::Platform> *platforms) {
 
 int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
   MS_ASSERT(platforms);
-  cl_int ret;
+  cl_int ret = 0;
 #if defined(SHARING_MEM_WITH_OPENGL) && defined(CL_HPP_TARGET_OPENCL_VERSION) && (CL_HPP_TARGET_OPENCL_VERSION >= 120)
   // create context from glcontext
   MS_LOG(INFO) << "Create special opencl context to share with OpenGL";
@@ -719,7 +719,7 @@ void OpenCLRuntime::LoadCache() {
     MS_LOG(ERROR) << "Load opencl cache fail: bins == nullptr";
     return;
   }
-  for (auto i = 0; i < bins->size(); ++i) {
+  for (size_t i = 0; i < bins->size(); ++i) {
     auto *bin = bins->template GetAs<schema::ProgramBinary>(i);
     if (bin == nullptr) {
       MS_LOG(ERROR) << "kernel_bin[" << i << "] null";

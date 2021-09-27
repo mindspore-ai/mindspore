@@ -183,6 +183,15 @@ set(LITE_SRC
         ${SRC_DIR}/ops/ops_def.cc
         ${SRC_DIR}/train/train_populate_parameter.cc
         )
+if(MSLITE_GPU_BACKEND STREQUAL opencl)
+    file(GLOB_RECURSE OPENCL_RUNTIME_SRC
+            ${SRC_DIR}/runtime/gpu/opencl/*.cc
+            )
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${OPENCL_RUNTIME_SRC}
+            )
+endif()
 
 file(GLOB PROTO_FILE ""
         ${TOP_DIR}/third_party/proto/caffe/caffe.proto
@@ -216,6 +225,11 @@ add_executable(converter_lite
         )
 add_dependencies(converter_lite fbs_src fbs_inner_src)
 
+
+if(MSLITE_GPU_BACKEND STREQUAL opencl)
+    include_directories(${SRC_DIR}/runtime/kernel/opencl)
+    target_link_libraries(converter_lite PRIVATE opencl_kernel_mid)
+endif()
 target_link_libraries(converter_lite PRIVATE
         ccsrc_src_mid
         converter_src_mid

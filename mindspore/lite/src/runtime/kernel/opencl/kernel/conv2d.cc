@@ -122,8 +122,12 @@ int Conv2DOpenCLKernel::Prepare() {
 
 int Conv2DOpenCLKernel::InitAttrs() {
   CHECK_NULL_RETURN(ocl_runtime_);
+#ifdef ENABLE_FP16
   use_fp16_ = ocl_runtime_->GetFp16Enable();
   sizeof_FLT_ = use_fp16_ ? sizeof(float16_t) : sizeof(float);
+#else
+  sizeof_FLT_ = sizeof(float);
+#endif
   CHECK_NULL_RETURN(in_tensors_.front());
   CHECK_NULL_RETURN(out_tensors_.front());
   auto input_shape = in_tensors_.front()->shape();
@@ -171,7 +175,7 @@ int Conv2DOpenCLKernel::BuildKernel() {
   auto build_options_ext = CreateBuildOptionsExtByDType(this->registry_data_type_);
 
   std::string exceed_max_image_width_option =
-    (OW_ * CO_SLICES_ <= ocl_runtime_->GetMaxImage2DWidth()) ? "" : " -DEXCEDD_MAX_IMAGE2D_WIDTH";
+    (OW_ * CO_SLICES_ <= static_cast<int>(ocl_runtime_->GetMaxImage2DWidth())) ? "" : " -DEXCEDD_MAX_IMAGE2D_WIDTH";
   build_options_ext.push_back(exceed_max_image_width_option);
   auto ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str(), build_options_ext);
   if (ret != RET_OK) {
@@ -193,11 +197,15 @@ void Conv2DOpenCLKernel::SetBlockSize() {
     KW_ == 1 && param_->stride_w_ == 1 && param_->dilation_w_ == 1 && param_->pad_l_ == 0 && param_->pad_r_ == 0;
   bool h_kernel_is_1 =
     KH_ == 1 && param_->stride_h_ == 1 && param_->dilation_h_ == 1 && param_->pad_u_ == 0 && param_->pad_d_ == 0;
+#ifdef ENABLE_FP16
   if (use_fp16_) {
     SetMaliFp16BlockSize(task_size_per_cu, w_kernel_is_1, h_kernel_is_1);
   } else {
     SetMaliFp32BlockSize(task_size_per_cu, w_kernel_is_1, h_kernel_is_1);
   }
+#else
+  SetMaliFp32BlockSize(task_size_per_cu, w_kernel_is_1, h_kernel_is_1);
+#endif
 }
 
 void Conv2DOpenCLKernel::SetMaliFp32BlockSize(int task_size_per_cu, bool w_kernel_is_1, bool h_kernel_is_1) {
@@ -269,6 +277,7 @@ int Conv2DOpenCLKernel::InitWeights() {
   return RET_OK;
 }
 
+#ifdef ENABLE_FP16
 void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, FilterFormat src_format,
                    FilterFormat dst_format, size_t CO, size_t KH, size_t KW, size_t CI, size_t OGroup) {
   MS_ASSERT(src);
@@ -316,6 +325,45 @@ void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, Fil
     }
   }
 }
+#else
+void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, FilterFormat src_format,
+                   FilterFormat dst_format, size_t CO, size_t KH, size_t KW, size_t CI, size_t OGroup) {
+  MS_ASSERT(src);
+  MS_ASSERT(dst);
+  MS_ASSERT(src_format == OHWI);
+  MS_ASSERT(dst_format == HWII4OO4 || dst_format == OHWIOgroupI4O4);
+  auto src_fp32 = reinterpret_cast<float *>(src);
+  auto dst_fp32 = reinterpret_cast<float *>(dst);
+  auto CI_SLICES = UP_DIV(CI, CI_TILE);
+  auto CO_SLICES = UP_DIV(CO, CO_TILE);
+  for (size_t co = 0, src_idx = 0; co < CO; ++co) {
+    for (size_t kh = 0; kh < KH; ++kh) {
+      for (size_t kw = 0; kw < KW; ++kw) {
+        for (size_t ci = 0; ci < CI; ++ci, ++src_idx) {
+          size_t dst_idx = 0;
+          size_t co_inner = co % CO_TILE;
+          size_t ci_slice = ci / CI_TILE;
+          size_t ci_inner = ci % CI_TILE;
+          if (dst_format == OHWIOgroupI4O4) {
+            size_t co_slice = co / (CO_TILE * OGroup);
+            size_t group_idx = co % (CO_TILE * OGroup) / CO_TILE;
+            dst_idx =
+              (((((co_slice * KH + kh) * KW + kw) * CI_SLICES + ci_slice) * OGroup + group_idx) * CI_TILE + ci_inner) *
+                CO_TILE +
+              co_inner;
+          } else {  // if(dst_format==HWII4OO4)
+            size_t co_slice = co / CO_TILE;
+            dst_idx =
+              ((((kh * KW + kw) * CI_SLICES + ci_slice) * CI_TILE + ci_inner) * CO_SLICES + co_slice) * CO_TILE +
+              co_inner;
+          }
+          dst_fp32[dst_idx] = src_fp32[src_idx];
+        }
+      }
+    }
+  }
+}
+#endif
 
 int Conv2DOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
@@ -395,6 +443,7 @@ int Conv2DOpenCLKernel::InitBias() {
     void *src_data = stored_bias_ == nullptr ? bias_tensor->data() : stored_bias_;
     MS_ASSERT(src_data);
 
+#ifdef ENABLE_FP16
     if (bias_tensor->data_type() == kNumberTypeFloat16) {
       if (use_fp16_) {
         memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
@@ -418,6 +467,9 @@ int Conv2DOpenCLKernel::InitBias() {
         memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
       }
     }
+#else
+    memcpy(packed_bias_, src_data, CO_ * sizeof_FLT_);
+#endif
   }
   if (allocator->UnmapBuffer(packed_bias_) != RET_OK) {
     MS_LOG(ERROR) << "UnmapBuffer failed.";

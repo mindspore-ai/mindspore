@@ -61,7 +61,7 @@ int FillOpenCLKernel::RunShape() {
   auto tensor_shape = in_tensors_[0]->shape();
   void *tensor_shape_data = tensor_shape.data();
   CHECK_NULL_RETURN(tensor_shape_data);
-  for (int i = 0; i < tensor_shape.size(); ++i) {
+  for (size_t i = 0; i < tensor_shape.size(); ++i) {
     fill_value.s[i] = reinterpret_cast<int *>(tensor_shape_data)[i];
   }
   auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
