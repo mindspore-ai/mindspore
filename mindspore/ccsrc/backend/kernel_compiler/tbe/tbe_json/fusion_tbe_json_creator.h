@@ -38,6 +38,7 @@ class FusionBuildTbeJsonCreator : public TbeJsonCreator {
                    std::vector<nlohmann::json> *op_list_json, const ANodeFusionDataTypeMap &spec_data_input);
   bool AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
                                nlohmann::json *attrs_json) override;
+  void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 
  private:
   AnfNodePtr GetInputCNode(const AnfNodePtr &node, const nlohmann::json &input_desc);
