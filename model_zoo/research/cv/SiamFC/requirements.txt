@@ -1,5 +1,0 @@
-lmdb==1.1.1
-tqdm @ file:///tmp/build/80754af9/tqdm_1615925068909/work
-opencv-python==3.4.5
-got10k==0.1.3
-numpy==1.19.5

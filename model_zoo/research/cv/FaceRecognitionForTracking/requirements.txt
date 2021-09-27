@@ -1,4 +1,0 @@
-numpy
-pillow
-tqdm
-pyyaml

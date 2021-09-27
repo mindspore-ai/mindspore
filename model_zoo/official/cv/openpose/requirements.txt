@@ -1,6 +1,0 @@
-opencv-python
-tdqm
-numpy
-pycocotools
-pyyaml
-

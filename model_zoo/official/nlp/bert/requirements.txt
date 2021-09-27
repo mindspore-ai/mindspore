@@ -1,4 +1,0 @@
-numpy
-easydict
-wheel
-lxml

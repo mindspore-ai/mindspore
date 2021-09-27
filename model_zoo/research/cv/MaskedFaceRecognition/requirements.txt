@@ -1,6 +1,0 @@
-dataset
-easydict
-numpy
-sklearn
-pillow
-opencv-python

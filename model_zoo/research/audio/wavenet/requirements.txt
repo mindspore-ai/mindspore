@@ -1,6 +1,0 @@
-numpy
-audio
-nnmnkwii
-scipy
-hparams
-librosa

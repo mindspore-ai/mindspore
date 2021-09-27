@@ -1,6 +1,0 @@
-torch
-numpy
-Cython
-opencv-python
-pycocotools
-scipy
