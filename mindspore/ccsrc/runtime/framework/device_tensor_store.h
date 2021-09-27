@@ -82,6 +82,7 @@ class DeviceTensorStore {
     const auto &iter = device_tensors_.find(key);
     if (iter != device_tensors_.end()) {
       for (const auto &device_tensor : iter->second) {
+        MS_EXCEPTION_IF_NULL(device_tensor);
         if (device_tensor->DeviceType() == value_type) {
           return device_tensor.get();
         }

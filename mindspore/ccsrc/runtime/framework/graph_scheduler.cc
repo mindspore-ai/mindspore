@@ -154,16 +154,20 @@ void IntHandler(int, siginfo_t *, void *) {
 #endif
 }  // namespace
 
-void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs) {
+void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs) noexcept {
   // Terminate the actors of actor info.
   if (actors_.count(actor_info) > 0) {
-    auto actorMgr = ActorMgr::GetActorMgrRef();
-    MS_EXCEPTION_IF_NULL(actorMgr);
+    auto actor_manager = ActorMgr::GetActorMgrRef();
+    if (actor_manager == nullptr) {
+      MS_LOG(ERROR) << "Actor manager is not exist.";
+      return;
+    }
     auto actor_set = actors_[actor_info];
     auto base_actors = CollectActors(actor_set.get());
     for (auto &base_actor : base_actors) {
+      MS_EXCEPTION_IF_NULL(base_actor);
       (void)actor_name_to_actor_.erase(base_actor->GetAID().Name());
-      actorMgr->Terminate(base_actor->GetAID());
+      actor_manager->Terminate(base_actor->GetAID());
     }
   }
 
@@ -178,9 +182,9 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
 
 void GraphScheduler::Clear() {
   // Terminate all actors.
-  auto actorMgr = ActorMgr::GetActorMgrRef();
-  MS_EXCEPTION_IF_NULL(actorMgr);
-  actorMgr->Finalize();
+  auto actor_manager = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actor_manager);
+  actor_manager->Finalize();
 
   // Clear the member of DeviceTensorStore.
   DeviceTensorStore::GetInstance().Clear();
@@ -229,8 +233,8 @@ void GraphScheduler::Initialize() {
 }
 
 void GraphScheduler::BuildAndScheduleGlobalActor() {
-  auto actorMgr = ActorMgr::GetActorMgrRef();
-  MS_EXCEPTION_IF_NULL(actorMgr);
+  auto actor_manager = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actor_manager);
 
   // Create and schedule memory manager actor.
   auto memory_manager_actor = std::make_shared<MemoryManagerActor>();
@@ -238,14 +242,14 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   memory_manager_aid_ = memory_manager_actor->GetAID();
   auto base_actor = static_cast<ActorReference>(memory_manager_actor);
   // Bind single thread to response to memory alloc and free quickly.
-  (void)actorMgr->Spawn(base_actor, false);
+  (void)actor_manager->Spawn(base_actor, false);
 
   // Create and schedule recorder actor.
   auto recorder_actor = std::make_shared<RecorderActor>();
   MS_EXCEPTION_IF_NULL(recorder_actor);
   recorder_aid_ = &(recorder_actor->GetAID());
   auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
-  (void)actorMgr->Spawn(base_recorder_actor, true);
+  (void)actor_manager->Spawn(base_recorder_actor, true);
 
   // Create and schedule debug actor.
 #ifndef ENABLE_SECURITY
@@ -262,7 +266,7 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
     MS_EXCEPTION_IF_NULL(debug_actor);
     debug_aid_ = &(debug_actor->GetAID());
     auto base_debug_actor = static_cast<ActorReference>(debug_actor);
-    (void)actorMgr->Spawn(base_debug_actor, true);
+    (void)actor_manager->Spawn(base_debug_actor, true);
   }
 #endif
 }
@@ -278,6 +282,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
 
   PersistDeviceTensor(graph_compiler_info);
   const auto &actor_set = Build(graph_compiler_info);
+  MS_EXCEPTION_IF_NULL(actor_set);
   CacheGraphOutputToActor(graph_compiler_info);
   Link(actor_set.get(), graph_compiler_info);
   // The copy actors are built in the link, so need push into the actor set after link.
@@ -303,10 +308,10 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
   auto actors = CollectActors(actor_set);
   // Schedule actors.
-  auto actorMgr = ActorMgr::GetActorMgrRef();
-  MS_EXCEPTION_IF_NULL(actorMgr);
+  auto actor_manager = ActorMgr::GetActorMgrRef();
+  MS_EXCEPTION_IF_NULL(actor_manager);
   for (auto actor : actors) {
-    (void)actorMgr->Spawn(actor);
+    (void)actor_manager->Spawn(actor);
   }
 }
 
@@ -435,6 +440,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
     MS_EXCEPTION_IF_NULL(graph);
     auto execution_order = graph->execution_order();
     for (auto &kernel : execution_order) {
+      MS_EXCEPTION_IF_NULL(kernel);
       if (AnfAlgo::IsCommunicationOp(kernel)) {
         (void)communication_nodes.emplace_back(kernel);
       }
@@ -538,12 +544,13 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     }
   }
 
+  MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
   const auto &front_to_backend_parameter = graph_compiler_info.control_node_parser_->front_to_backend_parameters_;
 
   // Initialize the parameter in the control node, first get all the front parameters in the control node, then find
   // the corresponding backend parameter from the map, and insert it into the host data source actor
-  std::vector<AnfNodePtr> control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
-  for (const auto parameter : control_node_parameters) {
+  const auto &control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
+  for (const auto &parameter : control_node_parameters) {
     if (IsPersistentDeviceTensor(parameter)) {
       continue;
     }
@@ -593,6 +600,7 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     }
 
     for (auto &kernel : execution_order) {
+      MS_EXCEPTION_IF_NULL(kernel);
       if (IsKernelActor(kernel, graph_compiler_info.strategy_) && (!IsSkippedKernelActor(kernel))) {
         auto kernel_actor = std::make_shared<KernelActor>(kernel->fullname_with_scope(), kernel, device_context,
                                                           memory_manager_aid_, debug_aid_, recorder_aid_, strategy);
@@ -707,9 +715,11 @@ std::vector<KernelActorPtr> GraphScheduler::BuildNoInputKernelActor(const ActorS
       // In general, all no input nodes belong to the root funcgraph, and the corresponding gather actor should be
       // empty. In control flow, the control arrow of the no input node in the sub funcgraph should be sent by the
       // gather actor and should not be placed in the no input list.
+      MS_EXCEPTION_IF_NULL(kernel_actor->kernel_);
       const auto &graph = kernel_actor->kernel_->func_graph();
       if (graph != nullptr) {
         const auto &kernel_graph = dynamic_cast<KernelGraph *>(graph.get());
+        MS_EXCEPTION_IF_NULL(kernel_graph);
         const auto func_graph = kernel_graph->GetFuncGraph();
         if (func_graph != nullptr && FetchActor(func_graph->ToString()) != nullptr) {
           continue;
@@ -878,6 +888,8 @@ void GraphScheduler::LinkDataArrow(KernelActor *const to_actor, const GraphCompi
   MS_EXCEPTION_IF_NULL(graph);
 
   auto from_kernel = from_kernel_with_output_idx.first;
+  MS_EXCEPTION_IF_NULL(from_kernel);
+  MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
   if (from_kernel->isa<Parameter>() && graph_compiler_info.control_node_parser_->IsCallInputKernelGraph(graph)) {
     const auto &kernel_with_index = GetFrontNodeByKernelGraph(from_kernel, graph);
     const auto &real_front_node_with_index =
@@ -1048,10 +1060,10 @@ void GraphScheduler::LinkDataArrowForHostDSActor(AbstractActor *const from_actor
   if (from_kernel_with_output_idx.first != nullptr) {
     // Get the position of from kernel in the data source actor.
     auto position = host_ds_actor->FetchNodePosition(from_kernel_with_output_idx.first);
-    real_from_kernel_with_output_idx.first = host_ds_actor->data_nodes_[position];
+    real_from_kernel_with_output_idx.first = host_ds_actor->FetchNode(position);
     real_from_kernel_with_output_idx.second = from_kernel_with_output_idx.second;
   } else {
-    real_from_kernel_with_output_idx.first = host_ds_actor->data_nodes_[from_kernel_with_output_idx.second];
+    real_from_kernel_with_output_idx.first = host_ds_actor->FetchNode(from_kernel_with_output_idx.second);
     real_from_kernel_with_output_idx.second = 0;
   }
 
@@ -1072,13 +1084,14 @@ void GraphScheduler::LinkDataArrowForKernelActor(AbstractActor *const from_actor
     real_from_kernel_with_output_idx.first = kernel_actor->kernel_;
   }
 
+  // Update the from kernel info by the real node info.
   MS_EXCEPTION_IF_NULL(from_kernel);
   if (IsSkippedKernelActor(from_kernel)) {
     real_from_kernel_with_output_idx = AnfAlgo::GetPrevNodeOutput(from_kernel, 0);
     MS_EXCEPTION_IF_NULL(real_from_kernel_with_output_idx.first);
     LinkControlArrowBySkippedNode(to_actor, from_kernel);
 
-    // Update the from kernel info by the real node info.
+    MS_EXCEPTION_IF_NULL(to_kernel_with_input_idx.first);
     MS_LOG(INFO) << "Link data arrow for inplace node, aggregate node: "
                  << to_kernel_with_input_idx.first->fullname_with_scope()
                  << ", aggregate input index: " << to_kernel_with_input_idx.second
@@ -1162,6 +1175,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(KernelActor *to_actor, const An
                                                  const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(from_node);
+  MS_EXCEPTION_IF_NULL(graph);
   // Find the real input node, include the monad node and make tuple node.
   const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad,
                                                   prim::kPrimMakeTuple};
@@ -1258,12 +1272,18 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
   MS_EXCEPTION_IF_NULL(graph);
   for (auto &from_iter : graph->allreduce_from_send_recv_pairs()) {
     auto to_allreduce_node = from_iter.first;
-    MS_LOG(INFO) << "Link control arrow for to_allreduce_node: " << to_allreduce_node->fullname_with_scope();
     auto from_send_node = from_iter.second.first;
     auto from_recv_node = from_iter.second.second;
+    MS_EXCEPTION_IF_NULL(to_allreduce_node);
+    MS_EXCEPTION_IF_NULL(from_send_node);
+    MS_EXCEPTION_IF_NULL(from_recv_node);
+    MS_LOG(INFO) << "Link control arrow for to_allreduce_node: " << to_allreduce_node->fullname_with_scope();
     auto to_allreduce_actor = dynamic_cast<KernelActor *>(FetchActor(to_allreduce_node->fullname_with_scope()));
     auto from_send_actor = dynamic_cast<KernelActor *>(FetchActor(from_send_node->fullname_with_scope()));
     auto from_recv_actor = dynamic_cast<KernelActor *>(FetchActor(from_recv_node->fullname_with_scope()));
+    MS_EXCEPTION_IF_NULL(to_allreduce_actor);
+    MS_EXCEPTION_IF_NULL(from_send_actor);
+    MS_EXCEPTION_IF_NULL(from_recv_actor);
 
     // inputs of to_allreduce_actor  --> from_send_actor
     for (auto &input_aid : to_allreduce_actor->input_data_arrow_aids_) {
@@ -1285,12 +1305,18 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
 
   for (auto &to_iter : graph->allreduce_to_send_recv_pairs()) {
     auto from_allreduce_node = to_iter.first;
-    MS_LOG(INFO) << "Link control arrow for from_allreduce_node: " << from_allreduce_node->fullname_with_scope();
     auto to_send_node = to_iter.second.first;
     auto to_recv_node = to_iter.second.second;
+    MS_EXCEPTION_IF_NULL(from_allreduce_node);
+    MS_EXCEPTION_IF_NULL(to_send_node);
+    MS_EXCEPTION_IF_NULL(to_recv_node);
+    MS_LOG(INFO) << "Link control arrow for from_allreduce_node: " << from_allreduce_node->fullname_with_scope();
     auto from_allreduce_actor = dynamic_cast<KernelActor *>(FetchActor(from_allreduce_node->fullname_with_scope()));
     auto to_send_actor = dynamic_cast<KernelActor *>(FetchActor(to_send_node->fullname_with_scope()));
     auto to_recv_actor = dynamic_cast<KernelActor *>(FetchActor(to_recv_node->fullname_with_scope()));
+    MS_EXCEPTION_IF_NULL(from_allreduce_actor);
+    MS_EXCEPTION_IF_NULL(to_send_actor);
+    MS_EXCEPTION_IF_NULL(to_recv_actor);
 
     // from_allreduce_actor  --> to_send_actor
     (void)from_allreduce_actor->output_control_arrows_.emplace_back(to_send_actor->GetAID());
@@ -1363,6 +1389,7 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
   // Ensure all actors execute orderly to optimize the execution performance in the multi device scenario currently.
   // Using the multi stream to optimize the performance in the future.
   for (auto &graph : graph_compiler_info.graphs_) {
+    MS_EXCEPTION_IF_NULL(graph);
     auto &execution_order = graph->execution_order();
     for (size_t i = 1; i < execution_order.size(); ++i) {
       auto from_actor = dynamic_cast<KernelActor *>(FetchActor(execution_order[i - 1]->fullname_with_scope()));
@@ -1403,6 +1430,7 @@ void GraphScheduler::LinkControlArrowForDataPrepareActor(DataPrepareActor *data_
 void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_count_actor, const ActorSet *actor_set,
                                                        const ControlNodeParserPtr &parser) {
   MS_EXCEPTION_IF_NULL(actor_set);
+  MS_EXCEPTION_IF_NULL(parser);
   // There is no loop count actor in step mode.
   if (loop_count_actor == nullptr) {
     return;
@@ -1453,10 +1481,9 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
 
   MS_EXCEPTION_IF_NULL(to_actor);
 
-  size_t number = 0;
-  for (const auto &graph : graph_compiler_info.graphs_) {
+  for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
+    const auto &graph = graph_compiler_info.graphs_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    ++number;
     auto outputs = AnfAlgo::GetAllOutputWithIndex(graph->output());
     std::set<std::vector<size_t>> unique_output_positions;
     std::set<KernelWithIndex> unique_outputs;
@@ -1481,7 +1508,10 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
       }
       (void)unique_output_positions.insert(iter->second);
       for (auto &output_position : iter->second) {
-        to_actor->device_contexts_[output_position] = graph_compiler_info.device_contexts_[number - 1];
+        if (output_position >= to_actor->device_contexts_.size()) {
+          MS_LOG(EXCEPTION) << "The output position is out of range.";
+        }
+        to_actor->device_contexts_[output_position] = graph_compiler_info.device_contexts_[i];
         // The device tensor of graph out need be taken over by host tensor, so set the max reference count.
         UpdateRefCount(output_with_index.first, output_with_index.second, true);
 
@@ -2255,12 +2285,12 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       }
 
       // The sub front nodes share the device tensor store with the root front node.
-      auto front_node = sub_front_node;
-      if (graph_compiler_info.control_node_parser_ != nullptr) {
-        front_node = graph_compiler_info.control_node_parser_->FetchRootGraphFrontNodeBySubFrontNode(sub_front_node);
-      }
+      MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
+      auto front_node = graph_compiler_info.control_node_parser_->FetchRootGraphFrontNodeBySubFrontNode(sub_front_node);
+      MS_EXCEPTION_IF_NULL(front_node);
       MS_LOG(DEBUG) << "Graph id:" << graph->graph_id() << ", sub front node:" << sub_front_node->DebugString()
                     << ", root front node:" << front_node->DebugString();
+
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
       if (IsPersistentDeviceTensor(input_node)) {
@@ -2500,6 +2530,8 @@ void GraphScheduler::DumpDataPrepareActor(const DataPrepareActor *actor, std::of
 
   ofs << "\t\tcontinuous_memory_nodes:" << actor->continuous_memory_nodes_.size() << "\n ";
   for (const auto &iter : actor->continuous_memory_nodes_) {
+    MS_EXCEPTION_IF_NULL(iter.first.first);
+    MS_EXCEPTION_IF_NULL(iter.first.second);
     ofs << "\t\t\tnode_name:" << iter.first.first->fullname_with_scope()
         << "\tdevice_context:" << iter.first.second->device_context_key().ToString()
         << "\tis_input_need:" << iter.second.first << "\tis_output_need:" << iter.second.second << "\n";
@@ -2514,6 +2546,7 @@ void GraphScheduler::DumpDSActor(const DataSourceActor *actor, std::ofstream &of
   if (actor->type_ == KernelTransformType::kDeviceDataSourceActor) {
     // Dump the member info of device queue data source actor.
     const auto &device_queue_ds_actor = dynamic_cast<const DeviceQueueDataSourceActor *>(actor);
+    MS_EXCEPTION_IF_NULL(device_queue_ds_actor);
     const auto &data_kernel = device_queue_ds_actor->data_kernel_;
     MS_EXCEPTION_IF_NULL(data_kernel);
     ofs << "\t\tdata_kernel_name:" << data_kernel->fullname_with_scope()
@@ -2528,6 +2561,7 @@ void GraphScheduler::DumpDSActor(const DataSourceActor *actor, std::ofstream &of
   } else if (actor->type_ == KernelTransformType::kHostDataSourceActor) {
     // Dump the member info of host queue data source actor.
     const auto &host_queue_ds_actor = dynamic_cast<const HostQueueDataSourceActor *>(actor);
+    MS_EXCEPTION_IF_NULL(host_queue_ds_actor);
     ofs << "\t\tdata_nodes:" << host_queue_ds_actor->data_nodes_.size() << "\n";
     for (size_t i = 0; i < host_queue_ds_actor->data_nodes_.size(); ++i) {
       const auto &data_node = host_queue_ds_actor->data_nodes_[i];

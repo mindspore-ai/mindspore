@@ -81,6 +81,8 @@ void KernelActor::Init() {
 
 void KernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+
   auto &sequential_num = context->sequential_num_;
   (void)input_op_datas_[sequential_num].emplace_back(input_data);
   if (input_data->data_ == nullptr) {
@@ -107,6 +109,8 @@ void KernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
 
 void KernelActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+
   auto &sequential_num = context->sequential_num_;
   (void)input_op_controls_[sequential_num].emplace_back(input_control);
   // When all the inputs are collected, then allocate memory and callback launch.
@@ -145,8 +149,10 @@ void KernelActor::RunOpControlWithInputTensor(AID *const input_control, OpContex
 }
 
 namespace {
-void AllocateMemory(const std::vector<DeviceTensor *> &alloc_list, const DeviceContext *device_context) {
+void AllocateMemory(const std::vector<DeviceTensor *> &alloc_list, const DeviceContext *device_context,
+                    OpContext<DeviceTensor> *const context, const std::string &actor_name) {
   MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(context);
 
   for (auto &device_tensor : alloc_list) {
     MS_EXCEPTION_IF_NULL(device_tensor);
@@ -155,10 +161,8 @@ void AllocateMemory(const std::vector<DeviceTensor *> &alloc_list, const DeviceC
     }
     // Allocate memory through the device context.
     if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
-      std::string error_info =
-        "Device(id:" + std::to_string(device_context->device_context_key().device_id_) +
-        ") memory isn't enough and alloc failed, alloc size: " + std::to_string(device_tensor->GetSize());
-      MS_LOG(EXCEPTION) << error_info;
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kStep, *context, *device_context, actor_name,
+                                                  device_tensor->GetSize());
     }
   }
 }
@@ -189,7 +193,7 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
     Async(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_, device_contexts_[0], context,
           GetAID());
   } else {
-    AllocateMemory(memory_alloc_list_, device_contexts_[0]);
+    AllocateMemory(memory_alloc_list_, device_contexts_[0], context, GetAID().Name());
   }
 }
 
@@ -248,8 +252,9 @@ void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tens
   }
 
   for (size_t input_index = 0; input_index < input_tensors->size(); input_index++) {
-    const auto &device_tensor =
-      std::dynamic_pointer_cast<DeviceTensor>((*input_tensors)[input_index]->device_address());
+    const auto &input_tensor = (*input_tensors)[input_index];
+    MS_EXCEPTION_IF_NULL(input_tensor);
+    const auto &device_tensor = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
     if (device_tensor != nullptr) {
       input_device_tensors_[input_index] = device_tensor.get();
       memory_free_list_[input_index] = device_tensor.get();
@@ -260,6 +265,8 @@ void KernelActor::PushInputDeviceTensor(const std::vector<TensorPtr> *input_tens
 void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
                                         OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_data);
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   if ((input_data->data_ == nullptr) ||
       (input_data->data_->DeviceType() == device_contexts_[0]->GetDeviceAddressType())) {
     return;
@@ -277,7 +284,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   if (copy_input_device_tensors_[input_data->index_]->GetPtr() == nullptr) {
     if (!device_contexts_[0]->AllocateMemory(copy_input_device_tensors_[input_data->index_].get(),
                                              copy_input_device_tensors_[input_data->index_]->GetSize())) {
-      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*context), device_contexts_[0],
+      SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *(device_contexts_[0]),
                                                   GetAID().Name(),
                                                   copy_input_device_tensors_[input_data->index_]->GetSize());
     }
@@ -301,6 +308,10 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
   if (data_iter != input_op_datas_.end()) {
     for (auto &input_data : data_iter->second) {
       MS_EXCEPTION_IF_NULL(input_data);
+      if (IntToSize(input_data->index_) >= input_device_tensors_.size()) {
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), "The input index is out of range.");
+      }
+
       if (input_device_tensors_[input_data->index_] != input_data->data_) {
         input_device_tensors_[input_data->index_] = input_data->data_;
         memory_free_list_[input_data->index_] = input_data->data_;
@@ -318,6 +329,10 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
         ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceAddressType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
+
+    if (device_tensor_store_key.first >= input_device_tensors_.size()) {
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), "The input index is out of range.");
+    }
     if (input_device_tensors_[device_tensor_store_key.first] != device_tensor) {
       input_device_tensors_[device_tensor_store_key.first] = device_tensor;
       memory_free_list_[device_tensor_store_key.first] = device_tensor;
@@ -332,8 +347,13 @@ void KernelActor::FetchOutputDeviceTensor() {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   const auto &output_size_list = kernel_mod->GetOutputSizeList();
 
+  if (output_addresses.size() != output_size_list.size()) {
+    MS_LOG(EXCEPTION) << "The outputs number is not equal.";
+  }
+
   for (size_t i = 0; i < output_addresses.size(); ++i) {
     auto output_address = output_addresses[i].get();
+    MS_EXCEPTION_IF_NULL(output_address);
     if (output_size_list[i] != output_address->GetSize()) {
       // The size of output address may be changed in dynamic shape scenario.
       output_address->SetSize(output_size_list[i]);
@@ -347,6 +367,7 @@ void KernelActor::FetchOutputDeviceTensor() {
 
       // Update output data.
       for (auto &output_data : output_data_by_output_index_[i]) {
+        MS_EXCEPTION_IF_NULL(output_data);
         output_data->data_ = output_address;
       }
     }
@@ -356,18 +377,21 @@ void KernelActor::FetchOutputDeviceTensor() {
 void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(input_device_tensors_[i]);
+    MS_EXCEPTION_IF_NULL(launch_info_.inputs_[i]);
     launch_info_.inputs_[i]->addr = input_device_tensors_[i]->GetMutablePtr();
     launch_info_.inputs_[i]->size = input_device_tensors_[i]->GetSize();
   }
 
   for (size_t i = 0; i < output_device_tensors_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(output_device_tensors_[i]);
+    MS_EXCEPTION_IF_NULL(launch_info_.outputs_[i]);
     launch_info_.outputs_[i]->addr = output_device_tensors_[i]->GetMutablePtr();
     launch_info_.outputs_[i]->size = output_device_tensors_[i]->GetSize();
   }
 
   for (size_t i = 0; i < workspace_device_tensors_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(workspace_device_tensors_[i]);
+    MS_EXCEPTION_IF_NULL(launch_info_.workspaces_[i]);
     launch_info_.workspaces_[i]->addr = workspace_device_tensors_[i]->GetMutablePtr();
     launch_info_.workspaces_[i]->size = workspace_device_tensors_[i]->GetSize();
   }
@@ -391,6 +415,7 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(kernel_);
   if (strategy_ == GraphExecutionStrategy::kStep) {
     return;
   }

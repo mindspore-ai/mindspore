@@ -24,7 +24,7 @@ namespace mindspore {
 namespace runtime {
 void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc_list,
                                         const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
-                                        const AID from_aid) {
+                                        const AID &from_aid) {
   MS_EXCEPTION_IF_NULL(alloc_list);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
@@ -49,7 +49,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
                                                   const std::vector<std::vector<size_t>> *size_list_list,
                                                   const std::vector<size_t> *total_size_list,
                                                   const std::vector<const DeviceContext *> *device_contexts,
-                                                  OpContext<DeviceTensor> *const op_context, const AID from_aid) {
+                                                  OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
   MS_EXCEPTION_IF_NULL(alloc_list_list);
   MS_EXCEPTION_IF_NULL(size_list_list);
   MS_EXCEPTION_IF_NULL(total_size_list);
@@ -67,6 +67,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
     auto &size_list = (*size_list_list)[i];
     auto &total_size = (*total_size_list)[i];
     auto &device_context = (*device_contexts)[i];
+    MS_EXCEPTION_IF_NULL(device_context);
     // Allocate memory through the device context.
     if (!device_context->AllocateContinuousMemory(alloc_list, total_size, size_list)) {
       SetOpContextMemoryAllocFail(from_aid.Name(), device_context, total_size, op_context);
@@ -80,7 +81,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
 
 void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *alloc_list,
                                              const std::vector<const DeviceContext *> *device_contexts,
-                                             OpContext<DeviceTensor> *const op_context, const AID from_aid) {
+                                             OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
   MS_EXCEPTION_IF_NULL(alloc_list);
   MS_EXCEPTION_IF_NULL(device_contexts);
   MS_EXCEPTION_IF_NULL(op_context);
@@ -161,7 +162,7 @@ void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free
   }
 }
 
-void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const AID from_aid) {
+void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
   // Call back to the from actor to process.
   Async(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
 }
@@ -178,7 +179,7 @@ void MemoryManagerActor::SetOpContextMemoryAllocFail(const std::string &kernel_n
   if (mem_alloc_failed_step_ids_.find(step_id) == mem_alloc_failed_step_ids_.end()) {
     mem_alloc_failed_step_ids_.clear();
     (void)mem_alloc_failed_step_ids_.insert(step_id);
-    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, (*op_context), device_context,
+    SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *op_context, *device_context,
                                                 kernel_name, alloc_size);
   }
 }

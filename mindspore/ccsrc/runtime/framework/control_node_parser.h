@@ -90,10 +90,10 @@ class ControlNodeParser {
   void Parse(const std::vector<AnfNodePtr> &control_nodes, const std::vector<KernelGraphPtr> &graphs,
              const std::vector<DeviceContext *> &device_contexts, const FuncGraphPtr &root_graph);
 
-  std::vector<AnfNodePtr> &control_node_parameters() { return control_node_parameters_; }
-  FrontToBackendNodeWithContext &front_to_backend_parameters() { return front_to_backend_parameters_; }
-  HostParameterToWeight &host_parameter_to_weights() { return host_parameter_to_weights_; }
-  NodeWithDeviceContext &front_value_nodes() { return front_value_nodes_; }
+  const std::vector<AnfNodePtr> &control_node_parameters() const { return control_node_parameters_; }
+  const FrontToBackendNodeWithContext &front_to_backend_parameters() const { return front_to_backend_parameters_; }
+  const HostParameterToWeight &host_parameter_to_weights() const { return host_parameter_to_weights_; }
+  const NodeWithDeviceContext &front_value_nodes() const { return front_value_nodes_; }
 
   // Get the output of funcgraph, usually there is only one output node, In the control flow, there are
   // multiple branch outputs, there will be multiple output nodes.

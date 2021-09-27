@@ -913,12 +913,18 @@ void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,
   if (output_abstract->isa<abstract::AbstractTuple>()) {
     VectorRef output_tuple;
     for (size_t i = 0; i < outputs_num; ++i) {
+      if (*output_position >= output_tensors.size()) {
+        MS_LOG(EXCEPTION) << "The output position is out of range: " << *output_position;
+      }
       output_tuple.emplace_back(std::move(output_tensors[*output_position]));
       ++(*output_position);
     }
     outputs->emplace_back(std::move(output_tuple));
   } else {
     for (size_t i = 0; i < outputs_num; ++i) {
+      if (*output_position >= output_tensors.size()) {
+        MS_LOG(EXCEPTION) << "The output position is out of range: " << *output_position;
+      }
       outputs->emplace_back(std::move(output_tensors[*output_position]));
       ++(*output_position);
     }

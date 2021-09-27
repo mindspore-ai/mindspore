@@ -80,7 +80,7 @@ using ActorSetPtr = std::shared_ptr<ActorSet>;
 
 class GraphScheduler {
  public:
-  static GraphScheduler &GetInstance() {
+  static GraphScheduler &GetInstance() noexcept {
     static GraphScheduler instance;
     return instance;
   }
@@ -91,7 +91,7 @@ class GraphScheduler {
 
   // Clear the members.
   void Clear();
-  void Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs);
+  void Clear(const ActorInfo &actor_info, const std::vector<KernelGraphPtr> &graphs) noexcept;
 
   // Transform graph to actor DAG, contains build and link.
   ActorSet *Transform(const GraphCompilerInfo &graph_compiler_info);
