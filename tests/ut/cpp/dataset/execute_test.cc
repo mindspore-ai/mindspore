@@ -914,6 +914,48 @@ TEST_F(MindDataTestExecute, TestRiaaBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+TEST_F(MindDataTestExecute, TestTrebleBiquadWithEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTrebleBiquadWithEager.";
+  // Original waveform
+  std::vector<float> labels = {
+    3.156, 5.690, 1.362, 1.093,
+    5.782, 6.381, 5.982, 3.098,
+    1.222, 6.027, 3.909, 7.993,
+    4.324, 1.092, 5.093, 0.991,
+    1.099, 4.092, 8.111, 6.666};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> treble_biquad_01 = std::make_shared<audio::TrebleBiquad>(44100, 200);
+  mindspore::dataset::Execute Transform01({treble_biquad_01});
+  // Filtered waveform by treblebiquad
+  EXPECT_OK(Transform01(input_01, &input_01));
+}
+
+TEST_F(MindDataTestExecute, TestTrebleBiquadWithWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTrebleBiquadWithWrongArg.";
+  std::vector<double> labels = {
+    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
+    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
+    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
+    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
+    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
+  auto input01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  auto input02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  // Check sample_rate
+  MS_LOG(INFO) << "sample_rate is zero.";
+  std::shared_ptr<TensorTransform> treble_biquad_op01 = std::make_shared<audio::TrebleBiquad>(0.0, 200.0);
+  mindspore::dataset::Execute Transform01({treble_biquad_op01});
+  EXPECT_ERROR(Transform01(input01, &input01));
+  //Check Q
+  MS_LOG(INFO) << "Q is zero.";
+  std::shared_ptr<TensorTransform> treble_biquad_op02 = std::make_shared<audio::TrebleBiquad>(44100, 200.0, 3000.0, 0.0);
+  mindspore::dataset::Execute Transform02({treble_biquad_op02});
+  EXPECT_ERROR(Transform02(input02, &input02));
+}
+
 TEST_F(MindDataTestExecute, TestLFilterWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestLFilterWithEager.";
   // Original waveform

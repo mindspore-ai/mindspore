@@ -43,6 +43,7 @@
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
+#include "minddata/dataset/audio/ir/kernels/treble_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/vol_ir.h"
 
 namespace mindspore {
@@ -314,6 +315,17 @@ PYBIND_REGISTER(
         auto timestretch = std::make_shared<audio::TimeStretchOperation>(hop_length, n_freq, fixed_rate);
         THROW_IF_ERROR(timestretch->ValidateParams());
         return timestretch;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  TrebleBiquadOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::TrebleBiquadOperation, TensorOperation, std::shared_ptr<audio::TrebleBiquadOperation>>(
+      *m, "TrebleBiquadOperation")
+      .def(py::init([](int32_t sample_rate, float gain, float central_freq, float Q) {
+        auto treble_biquad = std::make_shared<audio::TrebleBiquadOperation>(sample_rate, gain, central_freq, Q);
+        THROW_IF_ERROR(treble_biquad->ValidateParams());
+        return treble_biquad;
       }));
   }));
 

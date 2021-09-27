@@ -331,6 +331,74 @@ TEST_F(MindDataTestPipeline, TestTimeStretchPipelineWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestTrebleBiquadBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTrebleBiquadBasic.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto TrebleBiquadOp = audio::TrebleBiquad(44100, 200.0, 2000, 0.604);
+
+  ds = ds->Map({TrebleBiquadOp});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by treblebiquad
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+  auto col = row["waveform"];
+  ASSERT_EQ(col.Shape(), expected);
+  ASSERT_EQ(col.Shape().size(), 2);
+  ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+  ASSERT_OK(iter->GetNextRow(&row));
+  i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestTrebleBiquadWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTrebleBiquadWrongArg.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  std::shared_ptr<Dataset> ds01;
+  std::shared_ptr<Dataset> ds02;
+  EXPECT_NE(ds, nullptr);
+
+  // Check sample_rate
+  MS_LOG(INFO) << "sample_rate is zero.";
+  auto treble_biquad_op_01 = audio::TrebleBiquad(0, 200);
+  ds01 = ds->Map({treble_biquad_op_01});
+  EXPECT_NE(ds01, nullptr);
+
+  std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
+  EXPECT_EQ(iter01, nullptr);
+
+  // Check Q_
+  MS_LOG(INFO) << "Q_ is zero.";
+  auto treble_biquad_op_02 = audio::TrebleBiquad(44100, 200.0, 3000.0, 0);
+  ds02 = ds->Map({treble_biquad_op_02});
+  EXPECT_NE(ds02, nullptr);
+
+  std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
+  EXPECT_EQ(iter02, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestVolPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVolPipeline.";
   // Original waveform

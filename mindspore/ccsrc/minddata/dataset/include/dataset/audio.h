@@ -556,6 +556,29 @@ class TimeStretch final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Design a treble tone-control effect.
+class TrebleBiquad final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+  /// \param[in] gain Desired gain at the boost (or attenuation) in dB.
+  /// \param[in] central_freq Central frequency (in Hz) (Default: 3000).
+  /// \param[in] Q Quality factor, https://en.wikipedia.org/wiki/Q_factor, range: (0, 1] (Default: 0.707).
+  TrebleBiquad(int32_t sample_rate, float gain, float central_freq = 3000, float Q = 0.707);
+
+  /// \brief Destructor.
+  ~TrebleBiquad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Vol TensorTransform.
 /// \notes Add a volume to an waveform.
 class Vol final : public TensorTransform {

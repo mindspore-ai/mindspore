@@ -39,6 +39,7 @@
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
+#include "minddata/dataset/audio/ir/kernels/treble_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/vol_ir.h"
 
 namespace mindspore {
@@ -383,6 +384,23 @@ TimeStretch::TimeStretch(float hop_length, int32_t n_freq, float fixed_rate)
 
 std::shared_ptr<TensorOperation> TimeStretch::Parse() {
   return std::make_shared<TimeStretchOperation>(data_->hop_length_, data_->n_freq_, data_->fixed_rate_);
+}
+
+// TrebleBiquad Transform Operation.
+struct TrebleBiquad::Data {
+  Data(int32_t sample_rate, float gain, float central_freq, float Q)
+      : sample_rate_(sample_rate), gain_(gain), central_freq_(central_freq), Q_(Q) {}
+  int32_t sample_rate_;
+  float gain_;
+  float central_freq_;
+  float Q_;
+};
+
+TrebleBiquad::TrebleBiquad(int32_t sample_rate, float gain, float central_freq, float Q)
+    : data_(std::make_shared<Data>(sample_rate, gain, central_freq, Q)) {}
+
+std::shared_ptr<TensorOperation> TrebleBiquad::Parse() {
+  return std::make_shared<TrebleBiquadOperation>(data_->sample_rate_, data_->gain_, data_->central_freq_, data_->Q_);
 }
 
 // Vol Transform Operation.
