@@ -133,11 +133,6 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
   }
 
   /* [1, 1, 2] + [1, 2, 1] -> [1, 2, 2], need broadcast both input */
-  if (param_->in_elements_num0_ != param_->out_elements_num_ &&
-      param_->in_elements_num1_ != param_->out_elements_num_) {
-    return RET_OK;
-  }
-
   FreeConstTileBuff();
   if (in_tensors_[0]->IsConst() && param_->in_elements_num0_ != param_->out_elements_num_) {
     input0_ptr_ = malloc(param_->out_elements_num_ * data_type_len_);
@@ -148,7 +143,11 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
                     param_->out_strides_, param_->multiples0_);
     input0_broadcast_ = true;
     param_->in_elements_num0_ = param_->out_elements_num_;
-    param_->broadcasting_ = false;
+    // shape must be equal to out
+    for (size_t i = 0; i < param_->ndim_; ++i) {
+      param_->in_shape0_[i] = param_->out_shape_[i];
+      param_->in_strides0_[i] = param_->out_strides_[i];
+    }
   }
   if (in_tensors_[1]->IsConst() && param_->in_elements_num1_ != param_->out_elements_num_) {
     input1_ptr_ = malloc(param_->out_elements_num_ * data_type_len_);
@@ -160,6 +159,23 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
                     param_->out_strides_, param_->multiples1_);
     input1_broadcast_ = true;
     param_->in_elements_num1_ = param_->out_elements_num_;
+    // shape must be equal to out
+    for (size_t i = 0; i < param_->ndim_; ++i) {
+      param_->in_shape1_[i] = param_->out_shape_[i];
+      param_->in_strides1_[i] = param_->out_strides_[i];
+    }
+  }
+  // broadcast input and get new break_pos_
+  outside_ = 1;
+  for (int i = static_cast<int>(param_->ndim_) - 1; i >= 0; --i) {
+    if (param_->in_shape0_[i] != param_->in_shape1_[i]) {
+      break_pos_ = i;
+      break;
+    }
+    outside_ *= param_->out_shape_[i];
+  }
+  if (param_->in_elements_num0_ == param_->out_elements_num_ &&
+      param_->in_elements_num1_ == param_->out_elements_num_) {
     param_->broadcasting_ = false;
   }
   return RET_OK;
