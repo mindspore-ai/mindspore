@@ -249,13 +249,6 @@ echo 'run x86 codegen logs: ' > ${run_x86_codegen_log_file}
 run_x86_codegen_parallel_log_file=${basepath}/run_x86_codegen_parallel_log.txt
 echo 'run x86 codegen parallel logs: ' > ${run_x86_codegen_parallel_log_file}
 
-# Copy the MindSpore models:
-echo "Push files to the arm and run benchmark"
-benchmark_test_path=${basepath}/benchmark_test
-rm -rf ${benchmark_test_path}
-mkdir -p ${benchmark_test_path}
-cp -a ${ms_models_path}/*.ms ${benchmark_test_path} || exit 1
-
 echo "input backend is ${backend}"
 backend=${backend:-"all"}
 isFailed=0

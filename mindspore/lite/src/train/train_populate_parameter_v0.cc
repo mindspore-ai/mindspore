@@ -46,6 +46,7 @@ OpParameter *DefaultPopulateParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc Param for primitive failed.";
     return nullptr;
   }
+  memset(param, 0, sizeof(OpParameter));
   auto type = prim->value_type();
   switch (prim->value_type()) {
     case schema::v0::PrimitiveType_Depend:
@@ -101,6 +102,7 @@ OpParameter *PopulateSmoothL1LossParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc SmoothL1LossParameter failed.";
     return nullptr;
   }
+  memset(p, 0, sizeof(SmoothL1LossParameter));
   p->op_parameter_.type_ = schema::PrimitiveType_SmoothL1Loss;
 
   auto smoothL1Loss_prim = prim->value_as_SmoothL1Loss();
@@ -120,6 +122,7 @@ OpParameter *PopulateSmoothL1LossGradParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc SmoothL1LossParameter failed.";
     return nullptr;
   }
+  memset(p, 0, sizeof(SmoothL1LossParameter));
   p->op_parameter_.type_ = schema::PrimitiveType_SmoothL1LossGrad;
 
   auto smoothL1LossGrad_prim = prim->value_as_SmoothL1LossGrad();
@@ -139,6 +142,7 @@ OpParameter *PopulateApplyMomentumParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc ApplyMomentumParameter failed.";
     return nullptr;
   }
+  memset(p, 0, sizeof(ApplyMomentumParameter));
   p->op_parameter_.type_ = schema::PrimitiveType_ApplyMomentum;
 
   auto applyMomentum_prim = prim->value_as_ApplyMomentum();
@@ -186,6 +190,7 @@ OpParameter *PopulateAdamParameter(const void *primitive) {
     MS_LOG(ERROR) << "new AdamParameter failed.";
     return nullptr;
   }
+  memset(p, 0, sizeof(AdamParameter));
   p->op_parameter_.type_ = schema::PrimitiveType_Adam;
 
   auto adam_prim = prim->value_as_Adam();
@@ -205,6 +210,7 @@ OpParameter *PopulateSgdParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc SgdParameter failed.";
     return nullptr;
   }
+  memset(p, 0, sizeof(SgdParameter));
   p->op_parameter_.type_ = schema::PrimitiveType_SGD;
 
   auto sgd_prim = prim->value_as_Sgd();
@@ -228,6 +234,7 @@ OpParameter *PopulateSparseSoftmaxCrossEntropyParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
     return nullptr;
   }
+  memset(sce_param, 0, sizeof(SoftmaxCrossEntropyParameter));
   auto sparseSoftmaxCrossEntropy_prim = prim->value_as_SparseSoftmaxCrossEntropy();
   MS_ASSERT(sparseSoftmaxCrossEntropy_prim != nullptr);
   sce_param->is_grad_ = sparseSoftmaxCrossEntropy_prim->isGrad();
@@ -247,6 +254,7 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
     return nullptr;
   }
+  memset(sce_param, 0, sizeof(SoftmaxCrossEntropyParameter));
   sce_param->is_grad_ = 0;
   sce_param->op_parameter_.type_ = schema::PrimitiveType_SoftmaxCrossEntropyWithLogits;
   return reinterpret_cast<OpParameter *>(sce_param);
@@ -263,6 +271,7 @@ OpParameter *PopulatePoolingGradParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;
   }
+  memset(pooling_param, 0, sizeof(PoolingParameter));
 
   auto poolingGrad_prim = prim->value_as_PoolingGrad();
   MS_ASSERT(poolingGrad_prim != nullptr);
@@ -320,6 +329,7 @@ OpParameter *PopulateActivationGradParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc ActivationParameter failed.";
     return nullptr;
   }
+  memset(act_param, 0, sizeof(ActivationParameter));
   act_param->op_parameter_.type_ = schema::PrimitiveType_ActivationGrad;
   auto activationGrad_prim = prim->value_as_ActivationGrad();
   MS_ASSERT(activationGrad_prim != nullptr);
@@ -340,6 +350,7 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
     return nullptr;
   }
+  memset(param, 0, sizeof(ConvParameter));
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropFilterFusion;
 
   auto convolutionGradFilter_prim = prim->value_as_Conv2DGradFilter();
@@ -390,6 +401,7 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
     return nullptr;
   }
+  memset(param, 0, sizeof(ConvParameter));
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropInputFusion;
 
   auto convolutionGradInput_prim = prim->value_as_Conv2DGradInput();
@@ -440,6 +452,7 @@ OpParameter *PopulateGroupConvolutionGradInputParameter(const void *primitive) {
     MS_LOG(ERROR) << "new Param for conv grad filter failed.";
     return nullptr;
   }
+  memset(param, 0, sizeof(ConvParameter));
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropInputFusion;
 
   auto groupConvolutionGradInput_prim = prim->value_as_GroupConv2DGradInput();
@@ -490,6 +503,7 @@ OpParameter *PopulatePowerGradParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc PowerParameter failed.";
     return nullptr;
   }
+  memset(power_param, 0, sizeof(PowerParameter));
   power_param->op_parameter_.type_ = schema::PrimitiveType_PowerGrad;
   auto powerGrad_prim = prim->value_as_PowerGrad();
   MS_ASSERT(powerGrad_prim != nullptr);
@@ -510,6 +524,7 @@ OpParameter *PopulateBiasGradParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
+  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
   arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_BiasAddGrad;
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
@@ -526,6 +541,7 @@ OpParameter *PopulateBNGradParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc BNGradParameter failed.";
     return nullptr;
   }
+  memset(bnGrad_param, 0, sizeof(BNGradParameter));
   bnGrad_param->op_parameter_.type_ = schema::PrimitiveType_BatchNormGrad;
   auto bNGrad_prim = prim->value_as_BNGrad();
   MS_ASSERT(bNGrad_prim != nullptr);
