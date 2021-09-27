@@ -72,7 +72,7 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
       }
     } else {
       if (greater_stride_) {
-        T *stride_padded = GetPossiblyNullDeviceAddress<T>(workspace, 1);
+        T *stride_padded = GetDeviceAddress<T>(workspace, 1);
         CHECK_CUDNN_RET_WITH_EXCEPT(
           kernel_node_,
           cudnnConvolutionBackwardData(cudnn_handle_, &alpha, filter_desc_, filter_addr, input_desc_, input_addr,
@@ -93,6 +93,23 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     return true;
   }
 
+  bool CheckNull(const std::vector<size_t> filter_shape, const std::vector<size_t> input_shape) {
+    is_null_input_ = CHECK_NULL_INPUT(filter_shape) || CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'Conv3dTransposeGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
+    return false;
+  }
+
+  void CheckSize(const size_t value, const size_t expect_value, const string arg_name) {
+    if (value != expect_value) {
+      MS_LOG(EXCEPTION) << "For 'Conv3dTransposeGpuKernel', the length of " << arg_name << " must be " << expect_value
+                        << ", but got " << value;
+    }
+  }
+
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     InitResource();
@@ -105,10 +122,7 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     }
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    is_null_input_ = CHECK_NULL_INPUT(input_shape);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "Conv3dTransposeGpuBkwKernel input is null.";
-      InitSizeLists();
+    if (CheckNull(filter_shape, input_shape)) {
       return true;
     }
     std::vector<size_t> output_shape;
@@ -133,6 +147,8 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
     std::vector<int> stride_pad_list(6, 0);
+    (void)CheckSize(filter_shape.size(), 5, "filter_shape");
+    (void)CheckSize(pad_list.size(), 6, "pad_list");
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {  // pad_mode_ = same
       UpdatePaddingAndDilation(input_shape, filter_shape, pad_list.data(), stride_pad_list.data());
     }

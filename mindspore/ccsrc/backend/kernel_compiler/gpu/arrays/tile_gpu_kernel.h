@@ -63,12 +63,10 @@ class TileGpuKernel : public GpuKernel {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but Tile needs 1 input.";
-      return false;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but Tile has 1 output.";
-      return false;
     }
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -77,6 +75,10 @@ class TileGpuKernel : public GpuKernel {
       MS_LOG(WARNING) << "For 'TileGpuKernel', input or output is null";
       InitSizeLists();
       return true;
+    }
+    if (output_shape_.size() < 1) {
+      MS_LOG(EXCEPTION) << "For 'TileGpuKernel', the rank of output cannot be less than 1, but got "
+                        << output_shape_.size();
     }
     input_size_ = 1;
     for (size_t i = 0; i < input_shape_.size(); i++) {

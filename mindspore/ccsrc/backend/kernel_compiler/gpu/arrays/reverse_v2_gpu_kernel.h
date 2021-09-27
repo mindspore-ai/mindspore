@@ -38,6 +38,9 @@ class ReverseV2GpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_device = GetDeviceAddress<T>(inputs, 0);
     T *output_device = GetDeviceAddress<T>(outputs, 0);
     size_t *input_shape_device = GetDeviceAddress<size_t>(workspace, 0);
@@ -79,7 +82,16 @@ class ReverseV2GpuKernel : public GpuKernel {
     }
 
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ReverseV2GpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     input_rank_ = input_shape_.size();
+    if (input_rank_ < 1) {
+      MS_LOG(EXCEPTION) << "For 'ReverseV2GpuKernel', the rank of input cannot be less than 1, bot got " << input_rank_;
+    }
     input_size_ = 1;
     for (size_t i = 0; i < input_rank_; i++) {
       input_size_ *= input_shape_[i];
@@ -92,6 +104,9 @@ class ReverseV2GpuKernel : public GpuKernel {
     }
 
     axis_ = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
+    if (axis_.size() < 1) {
+      MS_LOG(EXCEPTION) << "For 'ReverseV2GpuKernel', the rank of axis cannot be less than 1, bot got " << axis_.size();
+    }
     for (int64_t &dimension : axis_) {
       if (dimension < 0) {
         dimension += input_rank_;
@@ -106,6 +121,7 @@ class ReverseV2GpuKernel : public GpuKernel {
   void ResetResource() noexcept override {
     input_size_ = 0;
     input_rank_ = 0;
+    is_null_input_ = false;
     input_shape_.clear();
     strides_.clear();
     axis_.clear();
@@ -131,6 +147,7 @@ class ReverseV2GpuKernel : public GpuKernel {
   std::vector<size_t> input_shape_;
   std::vector<int64_t> strides_;
   std::vector<int64_t> axis_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
