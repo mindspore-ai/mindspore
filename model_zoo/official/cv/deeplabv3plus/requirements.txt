@@ -1,4 +1,0 @@
-mindspore
-numpy
-Pillow
-python-opencv

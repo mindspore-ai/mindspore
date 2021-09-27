@@ -1,4 +1,0 @@
-nltk
-jieba
-numpy
-rouge

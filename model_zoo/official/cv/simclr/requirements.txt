@@ -1,3 +1,0 @@
-numpy
-scipy
-opencv-python

@@ -1,4 +1,0 @@
-pillow
-opencv-python
-pycocotools
-pyyaml
