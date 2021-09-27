@@ -2791,6 +2791,7 @@ class MDIterationLeapFrogLiujian(PrimitiveWithInfer):
         self.init_prim_io_names(
             inputs=['inverse_mass', 'sqrt_mass_inverse', 'vel', 'crd', 'frc', 'acc', 'rand_state', 'rand_frc'],
             outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, inverse_mass, sqrt_mass_inverse, vel, crd, frc, acc, rand_state, rand_frc):
         n = self.atom_numbers
