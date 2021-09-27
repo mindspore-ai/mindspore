@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/hccl/hcom_all_gather.h"
-#include <memory>
 #include "runtime/hccl_adapter/hccl_adapter.h"
 
 namespace mindspore {
