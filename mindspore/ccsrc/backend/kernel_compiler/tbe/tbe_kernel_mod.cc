@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
-#include <algorithm>
 #include "runtime/rt.h"
 #include "utils/ms_context.h"
 #include "runtime/device/ascend/ge_runtime/task_info.h"

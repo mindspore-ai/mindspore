@@ -15,10 +15,6 @@
  */
 
 #include "backend/kernel_compiler/tbe/tbe_json/single_tbe_json_creator.h"
-#include <memory>
-#include <list>
-#include <string>
-#include <algorithm>
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/tbe/tbe_adapter.h"
