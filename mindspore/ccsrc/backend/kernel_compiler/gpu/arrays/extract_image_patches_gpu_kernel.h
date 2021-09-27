@@ -49,7 +49,7 @@ class ExtractImagePatchesKernel : public GpuKernel {
     size_t *t_output_shape = GetDeviceAddress<size_t>(workspace, 4);
     size_t *t_output_to_nchw_axis = GetDeviceAddress<size_t>(workspace, 5);
 
-    size_t shape_size = 4 * sizeof(size_t);
+    const size_t shape_size = 4 * sizeof(size_t);
     std::vector<size_t> to_nhwc_axis = {0, 2, 3, 1};
     std::vector<size_t> to_nchw_axis = {0, 3, 1, 2};
 
