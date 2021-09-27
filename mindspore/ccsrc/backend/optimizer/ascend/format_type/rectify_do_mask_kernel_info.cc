@@ -16,15 +16,9 @@
 
 #include "backend/optimizer/ascend/format_type/rectify_do_mask_kernel_info.h"
 
-#include <vector>
-#include <map>
-#include <string>
-#include <memory>
-
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "utils/utils.h"
-#include "backend/kernel_compiler/common_utils.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/helper.h"
 

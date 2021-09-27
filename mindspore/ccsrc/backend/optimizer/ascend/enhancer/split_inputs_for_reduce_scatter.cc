@@ -15,7 +15,6 @@
  */
 
 #include "backend/optimizer/ascend/enhancer/split_inputs_for_reduce_scatter.h"
-#include <string>
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {

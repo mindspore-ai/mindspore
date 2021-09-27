@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/rts/assign.h"
-#include <memory>
 #include "runtime/mem.h"
 
 using mindspore::ge::model_runner::MemcpyAsyncTaskInfo;

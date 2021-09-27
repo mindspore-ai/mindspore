@@ -15,11 +15,9 @@
  */
 
 #include "backend/optimizer/ascend/enhancer/add_attr_for_3d_graph.h"
-#include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "base/core_ops.h"
-#include "runtime/device/kernel_info.h"
 #include "backend/optimizer/common/helper.h"
 
 namespace mindspore {

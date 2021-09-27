@@ -15,8 +15,6 @@
  */
 
 #include "backend/kernel_compiler/rts/label_switch.h"
-#include <memory>
-#include <string>
 #include "runtime/stream.h"
 #include "runtime/device/ascend/ge_runtime/task_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
