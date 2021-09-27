@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace uuids {
-
 constexpr int DASH_POS0 = 4;
 constexpr int DASH_POS1 = 6;
 constexpr int DASH_POS2 = 8;
@@ -45,7 +44,6 @@ Option<uuid> uuid::FromBytes(const std::string &s) {
   }
   uuid u;
   memcpy(&u.uuidData, s.data(), s.size());
-
   return Option<uuid>(u);
 }
 
@@ -116,7 +114,6 @@ bool uuid::IsNilUUID() const {
       return false;
     }
   }
-
   return true;
 }
 
@@ -142,7 +139,6 @@ uuid RandomBasedGenerator::GenerateRandomUuid() {
   // We use uniform distribution
   std::uniform_int_distribution<uint64_t> distribution((std::numeric_limits<uint64_t>::min)(),
                                                        (std::numeric_limits<uint64_t>::max)());
-
   uint64_t randomValue = distribution(gen);
 
   unsigned int i = 0;
@@ -151,7 +147,6 @@ uuid RandomBasedGenerator::GenerateRandomUuid() {
       randomValue = distribution(gen);
       i = 0;
     }
-
     *it = static_cast<uint8_t>((randomValue >> (i * RIGHT_SHIFT_BITS)) & 0xFF);
   }
 
@@ -171,6 +166,5 @@ uuid RandomBasedGenerator::GenerateRandomUuid() {
 
   return tmpUUID;
 }
-
 }  // namespace uuids
 }  // namespace mindspore

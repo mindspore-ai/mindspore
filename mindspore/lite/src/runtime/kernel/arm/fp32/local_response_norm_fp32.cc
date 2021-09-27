@@ -42,7 +42,7 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   auto output_ptr = reinterpret_cast<float *>(out_tensor->MutableData());
 
   auto in_shape = input_tensor->shape();
-  MS_CHECK_TRUE_RET(in_shape.size() == 4, RET_ERROR);
+  MS_CHECK_TRUE_RET(in_shape.size() == C4NUM, RET_ERROR);
 
   int batch = in_shape.at(0);
   int height = in_shape.at(1);
