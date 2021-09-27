@@ -399,17 +399,21 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
 
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
+  bool ret = true;
+#ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
-  bool ret = true;
+
   if (!profiler_inst->GetEnableFlag()) {
+#endif
     std::lock_guard<std::mutex> locker(launch_mutex_);
     ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+#ifndef ENABLE_SECURITY
   } else {
     std::lock_guard<std::mutex> locker(launch_mutex_);
     ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
   }
-
+#endif
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
     return false;
@@ -431,7 +435,7 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   }
   return ret;
 }
-
+#ifndef ENABLE_SECURITY
 bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) const {
@@ -467,7 +471,7 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   }
   return ret;
 }
-
+#endif
 bool GPUDeviceContext::DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
                                       const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) const {

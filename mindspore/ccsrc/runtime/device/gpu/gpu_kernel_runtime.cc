@@ -35,8 +35,10 @@
 #include "runtime/device/gpu/gpu_memory_copy_manager.h"
 #include "common/trans.h"
 #include "ir/dtype.h"
+#ifndef ENABLE_SECURITY
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "profiler/device/gpu/gpu_profiling_utils.h"
+#endif
 #include "utils/shape_utils.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
