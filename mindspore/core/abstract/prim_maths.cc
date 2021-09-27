@@ -445,7 +445,7 @@ AbstractBasePtr InferImplReal(const AnalysisEnginePtr &, const PrimitivePtr &pri
   AbstractBasePtr input_abs = args_spec_list[0];
   auto input = dyn_cast<AbstractTensor>(input_abs);
   if (input == nullptr) {
-    return input_abs->Clone()->Broaden();
+    return input_abs->Clone();
   }
   TypePtr input_type = input->element()->GetTypeTrack();
   TypePtr output_type = nullptr;
@@ -454,7 +454,7 @@ AbstractBasePtr InferImplReal(const AnalysisEnginePtr &, const PrimitivePtr &pri
   } else if (input_type->type_id() == TypeId::kNumberTypeComplex128) {
     output_type = kFloat64;
   } else {
-    return input_abs->Clone()->Broaden();
+    return input_abs->Clone();
   }
 
   return std::make_shared<AbstractTensor>(output_type, input->shape());
