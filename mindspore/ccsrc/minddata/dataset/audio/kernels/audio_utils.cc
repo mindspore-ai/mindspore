@@ -213,10 +213,11 @@ Status Phase(const std::shared_ptr<Tensor> &angle_0, const std::shared_ptr<Tenso
   int64_t ind = 0;
   auto itr_p0 = phase_time0->begin<T>();
   (void)phase.insert(phase.begin(), (*itr_p0));
+  itr_p0++;
   while (itr_p0 != phase_time0->end<T>()) {
-    itr_p0++;
     ind += phase_shape[2];
     phase[ind] = (*itr_p0);
+    itr_p0++;
   }
   (void)phase.erase(phase.begin() + static_cast<int>(angle_0->Size()), phase.end());
 

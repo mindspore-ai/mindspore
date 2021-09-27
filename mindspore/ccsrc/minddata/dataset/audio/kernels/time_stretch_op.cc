@@ -39,8 +39,8 @@ Status TimeStretchOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
   }
 
   std::shared_ptr<Tensor> input_tensor;
-  // std::shared_ptr<Tensor> phase_advance;
   float hop_length = std::isnan(hop_length_) ? (n_freq_ - 1) : hop_length_;
+  float fixed_rate = std::isnan(fixed_rate_) ? 1 : fixed_rate_;
   // typecast
   CHECK_FAIL_RETURN_UNEXPECTED(input->type() != DataType::DE_STRING,
                                "TimeStretch: input tensor type should be int, float or double, but got: string.");
@@ -50,7 +50,7 @@ Status TimeStretchOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
     input_tensor = input;
   }
 
-  return TimeStretch(input_tensor, output, fixed_rate_, hop_length, n_freq_);
+  return TimeStretch(input_tensor, output, fixed_rate, hop_length, n_freq_);
 }
 
 Status TimeStretchOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
