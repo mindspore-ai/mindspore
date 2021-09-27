@@ -551,7 +551,13 @@ class Parser:
         """Parse the function or method."""
         logger.debug("fn = %r", self.fn)
         if isinstance(self.fn, (types.FunctionType, types.MethodType)):
-            lines, self.line_offset = inspect.getsourcelines(self.fn)
+            try:
+                lines, self.line_offset = inspect.getsourcelines(self.fn)
+            except OSError as e:
+                if e.__str__() == "could not get source code":
+                    raise OSError(f"Mindspore can not compile temporary source code in terminal. "
+                                  f"Please write source code to a python file and run the file.")
+                raise e
             original_src = ''.join(lines)
             hexstr = hashlib.sha256(original_src.encode()).hexdigest()
             ast_tokens = Parser.ast_cache.get(hexstr)
