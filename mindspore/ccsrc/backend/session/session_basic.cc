@@ -1164,8 +1164,6 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
 #endif
 
   UnifyMindIR(graph);
-  // Update Graph Dynamic Shape Attr
-  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
   UpdateGraphAquireGilAttr(NOT_NULL(graph));
   if (common_opt) {
     opt::BackendCommonOptimization(graph);
@@ -2326,28 +2324,6 @@ void SessionBasic::EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask
     }
   }
   *input_tensors = new_input_tensors;
-}
-
-void SessionBasic::UpdateAllGraphDynamicShapeAttr(const std::vector<KernelGraphPtr> &all_graphs) {
-  bool is_dynamic = false;
-  for (const auto &graph : all_graphs) {
-    UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
-    is_dynamic = graph->is_dynamic_shape() || is_dynamic;
-  }
-  if (is_dynamic && all_graphs.size() > 1) {
-    MS_LOG(EXCEPTION)
-      << "Dynamic shape is not supported with control flow(loop control statements and condition control statements).";
-  }
-}
-
-void SessionBasic::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &root_graph) {
-  for (const auto &cnode : root_graph->execution_order()) {
-    if (AnfAlgo::IsNodeDynamicShape(cnode)) {
-      AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cnode);
-      MS_LOG(INFO) << "Set Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
-    }
-  }
-  root_graph->UpdateGraphDynamicAttr();
 }
 
 bool SessionBasic::IsGetNextGraph(const std::shared_ptr<KernelGraph> &kernel_graph, std::string *channel_name) {

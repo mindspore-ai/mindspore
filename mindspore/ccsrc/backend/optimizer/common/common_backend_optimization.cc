@@ -28,6 +28,7 @@
 #include "backend/optimizer/pass/optimize_updatestate.h"
 #include "backend/optimizer/pass/conv_transpose_to_conv_bp.h"
 #include "backend/optimizer/pass/reduce_sum_optimizer.h"
+#include "backend/optimizer/pass/add_dynamic_shape_attr.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
@@ -47,6 +48,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("common_pm");
+  common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
@@ -114,5 +116,15 @@ void CommonUnifyMindIROptimization(const std::shared_ptr<session::KernelGraph> &
   }
 #endif
 }
+
+void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  auto opt = std::make_shared<GraphOptimizer>();
+  auto pm = std::make_shared<PassManager>("add_dynamic_shape_attr");
+  pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
+  opt->AddPassManager(pm);
+  (void)opt->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
+
 }  // namespace opt
 }  // namespace mindspore

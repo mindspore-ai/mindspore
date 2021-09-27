@@ -540,8 +540,6 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
     graph->set_root_graph_id(root_graph->graph_id());
   }
   UnifyMindIR(root_graph);
-  // Update Graph Dynamic Shape Attr
-  UpdateAllGraphDynamicShapeAttr(all_graphs);
   opt::BackendCommonOptimization(root_graph);
   // empty graph dont entry to backend
   if (root_graph->execution_order().empty()) {

@@ -98,7 +98,7 @@ DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *const device_ptr, s
 
 void CPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   // Update Graph Dynamic Shape Attr.
-  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+  opt::AddDynamicShapeAttrPass(graph);
 
   SetOperatorInfo(graph->execution_order());
   OptimizeGraphImpl(graph);
@@ -121,16 +121,6 @@ void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   graph->SetExecOrderByDefault();
-}
-
-void CPUDeviceContext::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &graph) const {
-  for (const auto &cnode : graph->execution_order()) {
-    if (AnfAlgo::IsNodeDynamicShape(cnode)) {
-      AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), cnode);
-      MS_LOG(INFO) << "Set Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
-    }
-  }
-  graph->UpdateGraphDynamicAttr();
 }
 
 namespace {
