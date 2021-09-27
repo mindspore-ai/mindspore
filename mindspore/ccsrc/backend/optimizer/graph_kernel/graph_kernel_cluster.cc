@@ -15,16 +15,6 @@
  */
 #include "backend/optimizer/graph_kernel/graph_kernel_cluster.h"
 
-#include <algorithm>
-#include <map>
-#include <unordered_map>
-#include <set>
-#include <vector>
-#include <tuple>
-#include <memory>
-#include <utility>
-#include <fstream>
-
 #include "base/core_ops.h"
 #include "ir/graph_utils.h"
 #include "utils/file_utils.h"
