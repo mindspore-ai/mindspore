@@ -15,7 +15,7 @@
    ResNet--layer2-SequentialCell--0-ResidualBlock--conv2-Conv2d--Cast-op954_input_0_shape_128_128_3_3_kNumberTypeFloat32_DefaultFormat.bin`.  
    可观察到Cast-op954，说明该算子的op_num为op954, 如下图所示。
    ![image](./images/op_image.png)  
-   脚本名： **[map_file_to_code.py](https://gitee.com/mindspore/mindspore/blob/master/scripts/map_dump_file_to_code/map_file_to_code.py)**; &nbsp; 执行方式:  
+   脚本名： **[map_file_to_code.py](https://gitee.com/mindspore/mindspore/blob/r1.5/scripts/map_dump_file_to_code/map_file_to_code.py)**; &nbsp; 执行方式:  
 
      ```ruby
      python3 map_file_to_code.py

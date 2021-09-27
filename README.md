@@ -42,9 +42,9 @@ processor, and software hardware co-optimization. At the meantime MindSpore as
 a global AI open source community, aims to further advance the development and
 enrichment of the AI software/hardware application ecosystem.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
+<img src="https://gitee.com/mindspore/mindspore/raw/r1.5/docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
 
-For more details please check out our [Architecture Guide](https://www.mindspore.cn/docs/programming_guide/en/master/architecture.html).
+For more details please check out our [Architecture Guide](https://www.mindspore.cn/docs/programming_guide/en/r1.5/architecture.html).
 
 ### Automatic Differentiation
 
@@ -58,7 +58,7 @@ TensorFlow adopted static calculation diagrams in the early days, whereas PyTorc
 
 But MindSpore finds another way, automatic differentiation based on source code conversion. On the one hand, it supports automatic differentiation of automatic control flow, so it is quite convenient to build models like PyTorch. On the other hand, MindSpore can perform static compilation optimization on neural networks to achieve great performance.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
+<img src="https://gitee.com/mindspore/mindspore/raw/r1.5/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
 
 The implementation of MindSpore automatic differentiation can be understood as the symbolic differentiation of the program itself. Because MindSpore IR is a functional intermediate expression, it has an intuitive correspondence with the composite function in basic algebra. The derivation formula of the composite function composed of arbitrary basic functions can be derived. Each primitive operation in MindSpore IR can correspond to the basic functions in basic algebra, which can build more complex flow control.
 
@@ -66,7 +66,7 @@ The implementation of MindSpore automatic differentiation can be understood as t
 
 The goal of MindSpore automatic parallel is to build a training method that combines data parallelism, model parallelism, and hybrid parallelism. It can automatically select a least cost model splitting strategy to achieve automatic distributed parallel training.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
+<img src="https://gitee.com/mindspore/mindspore/raw/r1.5/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
 
 At present, MindSpore uses a fine-grained parallel strategy of splitting operators, that is, each operator in the figure is split into a cluster to complete parallel operations. The splitting strategy during this period may be very complicated, but as a developer advocating Pythonic, you don't need to care about the underlying implementation, as long as the top-level API compute is efficient.
 
@@ -240,7 +240,7 @@ please check out [docker](https://gitee.com/mindspore/mindspore/blob/master/dock
 
 ## Quickstart
 
-See the [Quick Start](https://www.mindspore.cn/tutorials/en/master/quick_start.html)
+See the [Quick Start](https://www.mindspore.cn/tutorials/en/r1.5/quick_start.html)
 to implement the image classification.
 
 ## Docs

@@ -10,44 +10,44 @@
 - [BETA] Add CV models on Ascend: midas_V2, attgan, FairMOT, CenterNet_resnet101, SEResNext, YOLOV3-tiny, RetinaFace
 - [STABLE] Add CV models on GPU: ssd_mobilenetv1_fpn, shufflenetv1, tinyDarkNet, CNN-CTC, unet++, DeepText, SqueezeNet
 - [STABLE] Add NLP models on GPU: GRU, GNMT2, Bert-Squad
-- [STABLE] Add recommand models on GPU: NCF
+- [STABLE] Add recommend models on GPU: NCF
 - [BETA] Add CV models on GPU: FaceAttribute, FaceDetection, FaceRecongnition SENet,
 - [BETA] Add Audio models on GPU: DeepSpeech2
-- [STABLE]`model_zoo` has been seperated to an individual repository`models`
+- [STABLE]`model_zoo` has been separated to an individual repository`models`
 
 #### FrontEnd
 
-* [STABLE] Support`while` and`break`,`continue` statements of training network in`GRAPH_MODE`.
-* [BETA] Support export MindIR file after model training in cloud side and evaluate in edge side by import the MindIR file.
-* [STABLE] Support forward mode auto-diff interface Jvp(Jacobian-Vector-Product).
-* [STABLE] Support backward mode auto-diff interface Vjp(Vector-Jacobian-Product).
+- [STABLE] Support`while` and`break`,`continue` statements of training network in`GRAPH_MODE`.
+- [BETA] Support export MindIR file after model training in cloud side and evaluate in edge side by import the MindIR file.
+- [STABLE] Support forward mode auto-diff interface Jvp(Jacobian-Vector-Product).
+- [STABLE] Support backward mode auto-diff interface Vjp(Vector-Jacobian-Product).
 
 #### Auto Parallel
 
-* [STABLE] Support distributed pipeline inference.
-* [STABLE] Add implementation of the sparse attention and its distributed operator.
-* [STABLE] Add implementations of distributed operator of Conv2d/Conv2dTranspose/Conv2dBackpropInput/Maxpool/Avgpool/Batchnorm/Gatherd.
-* [STABLE] Support configuring the dataset strategy on distributed training and inference mode.
-* [STABLE] Add high level API of the Transformer module.
+- [STABLE] Support distributed pipeline inference.
+- [STABLE] Add implementation of the sparse attention and its distributed operator.
+- [STABLE] Add implementations of distributed operator of Conv2d/Conv2dTranspose/Conv2dBackpropInput/Maxpool/Avgpool/Batchnorm/Gatherd.
+- [STABLE] Support configuring the dataset strategy on distributed training and inference mode.
+- [STABLE] Add high level API of the Transformer module.
 
 #### Executor
 
-* [STABLE] Support AlltoAll operator.
-* [STABLE] CPU operator (Adam) performance optimization increased by 50%.
-* [BETA] Support Adam offload feature, reduce the static memory usage of Pangu large model by 50%.
-* [STABLE] MindSpore Ascend backend supports configuration operator generation and loading cache path.
-* [STABLE] MindSpore Ascend backend supports lazy build in PyNaitve mode and compilation performance improved by 10 times.
-* [STABLE] The function or Cell decorated by ms_function supports gradient calculation in PyNative mode.
-* [STABLE] The outermost network supports parameters of non tensor type in PyNative mode.
+- [STABLE] Support AlltoAll operator.
+- [STABLE] CPU operator (Adam) performance optimization increased by 50%.
+- [BETA] Support Adam offload feature, reduce the static memory usage of Pangu large model by 50%.
+- [STABLE] MindSpore Ascend backend supports configuration operator generation and loading cache path.
+- [STABLE] MindSpore Ascend backend supports lazy build in PyNaitve mode and compilation performance improved by 10 times.
+- [STABLE] The function or Cell decorated by ms_function supports gradient calculation in PyNative mode.
+- [STABLE] The outermost network supports parameters of non tensor type in PyNative mode.
 
 #### DataSet
 
-* [BETA] Add a new method for class Model to support auto data preprocessing in scenario of Ascend 310 inference.
-* [STABLE] Add a new drawing tool to visualize detection/segmentation datasets.
-* [STABLE] Support a new tensor operaiton named ConvertColor to support color space transform of images.
-* [STABLE] Enhance the following tensor operations to handle multiple columns simultaneously: RandomCrop, RandomHorizontalFlip, RandomResize, RandomResizedCrop, RandomVerticalFlip.
-* [STABLE] Support electromagnetic simulation dataset loading and data augmentation.
-* [STABLE] Optimze the error logs of Dataset to make them more friendly to users.
+- [BETA] Add a new method for class Model to support auto data preprocessing in scenario of Ascend 310 inference.
+- [STABLE] Add a new drawing tool to visualize detection/segmentation datasets.
+- [STABLE] Support a new tensor operation named ConvertColor to support color space transform of images.
+- [STABLE] Enhance the following tensor operations to handle multiple columns simultaneously: RandomCrop, RandomHorizontalFlip, RandomResize, RandomResizedCrop, RandomVerticalFlip.
+- [STABLE] Support electromagnetic simulation dataset loading and data augmentation.
+- [STABLE] Optimize the error logs of Dataset to make them more friendly to users.
 
 #### Federated Learning
 
@@ -68,7 +68,6 @@
 Configuring the recomputation of the communication operations generated by the model parallel and optimizer parallel to save the memory on the
 devices. Users can pass `mp_comm_recompute` and `parallel_optimizer_comm_recompute` to enable the recomputation of the communication operations.
 
-
 ### Bug fixes
 
 #### FrontEnd
@@ -77,9 +76,9 @@ devices. Users can pass `mp_comm_recompute` and `parallel_optimizer_comm_recompu
 
 #### Executor
 
-* RunTask failed when parameter_broadcast is enabled in PyNative mode. ([!23255](https://gitee.com/mindspore/mindspore/pulls/23255))
-* An illegal memory access was encountered in the dynamic shape net on GPU.
-* Fix tune failed for DynamicRnn. ([!21081](https://gitee.com/mindspore/mindspore/pulls/21081))
+- RunTask failed when parameter_broadcast is enabled in PyNative mode. ([!23255](https://gitee.com/mindspore/mindspore/pulls/23255))
+- An illegal memory access was encountered in the dynamic shape net on GPU.
+- Fix tune failed for DynamicRnn. ([!21081](https://gitee.com/mindspore/mindspore/pulls/21081))
 
 #### Dataset
 
@@ -97,7 +96,7 @@ devices. Users can pass `mp_comm_recompute` and `parallel_optimizer_comm_recompu
 2. Support dynamic filter Convolution.
 3. Support serializing float32 weight into float16 weight for reducing size of model file.
 4. Provide unified runtime API for developer reusing their code between cloud side and end side.
-5. Now developer can configure build-in pass as custom passes.
+5. Now developer can configure built-in pass as custom passes.
 6. Now user can specify format and shape of model inputs while converting model.
 7. Support multiple devices inference, includeing CPU, NPU, GPU. User can set devices in mindspore::Context.
 8. Support mixed precision inference. User can set inference precision by LoadConfig API.
@@ -278,7 +277,7 @@ thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, ba
 
 ##### Dump Config
 
-Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/docs/programming_guide/en/master/dump_in_graph_mode.html#dump).
+Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/docs/programming_guide/en/r1.5/dump_in_graph_mode.html#dump).
 
 | 1.2.1                                                  | 1.3.0                                                                                       |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
@@ -662,7 +661,7 @@ However, currently MindSpore Parser cannot parse numpy.ndarray in JIT-graph. To 
 
 ###### mindspore.numpy interfaces remove support for keyword arguments `out` and `where`([!12726](https://gitee.com/mindspore/mindspore/pulls/12726))
 
-Previously, we have incomplete support for keyword arguments `out` and `where` in mindspore.numpy interfaces, however, the `out` argument is only functional when `where` argument is also provided, and `out` cannot be used to pass reference to numpy functions. Therefore, we have removed these two arguments to avoid any confusion users may have. Their original functionality can be found in [np.where](https://www.mindspore.cn/docs/api/en/master/api_python/numpy/mindspore.numpy.where.html#mindspore.numpy.where)
+Previously, we have incomplete support for keyword arguments `out` and `where` in mindspore.numpy interfaces, however, the `out` argument is only functional when `where` argument is also provided, and `out` cannot be used to pass reference to numpy functions. Therefore, we have removed these two arguments to avoid any confusion users may have. Their original functionality can be found in [np.where](https://www.mindspore.cn/docs/api/en/r1.5/api_python/numpy/mindspore.numpy.where.html#mindspore.numpy.where)
 
 <table>
 <tr>
@@ -961,7 +960,7 @@ MSTensor::DestroyTensorPtr(tensor);
 
 ###### `nn.MatMul` is now deprecated in favor of `ops.matmul` ([!12817](https://gitee.com/mindspore/mindspore/pulls/12817))
 
-[ops.matmul](https://www.mindspore.cn/docs/api/en/master/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) follows the API of [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html) as closely as possible. As a function interface, [ops.matmul](https://www.mindspore.cn/docs/api/en/master/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) is applied without instantiation, as opposed to `nn.MatMul`, which should only be used as a class instance.
+[ops.matmul](https://www.mindspore.cn/docs/api/en/r1.5/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) follows the API of [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html) as closely as possible. As a function interface, [ops.matmul](https://www.mindspore.cn/docs/api/en/r1.5/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) is applied without instantiation, as opposed to `nn.MatMul`, which should only be used as a class instance.
 
 <table>
 <tr>
