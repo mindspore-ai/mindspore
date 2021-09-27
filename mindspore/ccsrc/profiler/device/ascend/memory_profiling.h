@@ -108,7 +108,6 @@ class MemoryProfiling {
   }
 
   bool IsMemoryProfilingEnable() const;
-  MemoryProto &GetMemProto() { return memory_proto_; }
   std::shared_ptr<GraphMemory> AddGraphMemoryNode(uint32_t graph_id);
   std::shared_ptr<GraphMemory> GetGraphMemoryNode(uint32_t graph_id) const;
   void SetDeviceMemSize(uint64_t size) { device_mem_size_ = size; }

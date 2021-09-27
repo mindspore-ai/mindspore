@@ -64,8 +64,6 @@ using AllActivityInfos = std::unordered_map<uint32_t, DeviceActivityInfos>;  // 
 
 class GpuDataSaver : public DataSaver {
  public:
-  GpuDataSaver() = delete;
-
   GpuDataSaver(ProfilingTraceInfo step_trace_op_name, const std::vector<OneStepStartEndInfo> &all_step_start_end_info)
       : step_trace_op_name_(step_trace_op_name), all_step_start_end_info_(all_step_start_end_info) {
     step_trace_op_name_from_graph_ = step_trace_op_name;
