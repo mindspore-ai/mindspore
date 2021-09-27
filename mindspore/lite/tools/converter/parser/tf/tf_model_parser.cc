@@ -429,8 +429,8 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
 
   std::vector<int64_t> shape;
   if (TensorFlowUtils::FindAttrValue(node, "shape", &attr_value)) {
-    shape = ConverterContext::GetInstance()->GetGraphInputTensorShape(node.name());
-    if (ConverterContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
+    shape = ConverterInnerContext::GetInstance()->GetGraphInputTensorShape(node.name());
+    if (ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() > 0 && shape.empty()) {
       MS_LOG(WARNING) << "Can not find name in map. name is " << node.name();
     }
     if (shape.empty()) {
@@ -1100,7 +1100,7 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
     return status;
   }
   // save original output tensor names.
-  ConverterContext::GetInstance()->SetGraphOutputTensorNames(graph_output_names_);
+  ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(graph_output_names_);
   return RET_OK;
 }
 STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_nodes, const FuncGraphPtr &anf_graph) {

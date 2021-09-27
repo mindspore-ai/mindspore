@@ -72,10 +72,10 @@ class NotSupportOp {
   std::string fmk_type_;
 };
 
-class ConverterContext {
+class ConverterInnerContext {
  public:
-  static ConverterContext *GetInstance() {
-    static ConverterContext converter_context;
+  static ConverterInnerContext *GetInstance() {
+    static ConverterInnerContext converter_context;
     return &converter_context;
   }
 
@@ -113,8 +113,8 @@ class ConverterContext {
   const std::vector<std::string> GetGraphOutputTensorNames() const { return graph_output_tensor_names_; }
 
  private:
-  ConverterContext() {}
-  virtual ~ConverterContext() = default;
+  ConverterInnerContext() {}
+  virtual ~ConverterInnerContext() = default;
   std::map<int32_t, int32_t> graph_input_data_type_map_;
   std::map<int32_t, int32_t> graph_output_data_type_map_;
   std::map<std::string, std::vector<int64_t>> graph_input_tensor_shape_map_;

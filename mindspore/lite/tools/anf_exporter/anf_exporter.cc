@@ -552,7 +552,7 @@ int AnfExporter::SetMetaGraphOutput(const FuncGraphPtr &func_graph,
 
   for (auto &output_index : meta_graphT->outputIndex) {
     auto &tensor = meta_graphT->allTensors.at(output_index);
-    ConverterContext::GetInstance()->UpdateGraphOutputDType(meta_graphT->outputIndex.size(), tensor->dataType);
+    ConverterInnerContext::GetInstance()->UpdateGraphOutputDType(meta_graphT->outputIndex.size(), tensor->dataType);
   }
 
   return RET_OK;

@@ -198,7 +198,7 @@ int Flags::InitInTensorShape() {
         shape.push_back(std::stoi(dim));
       }
     }
-    lite::ConverterContext::GetInstance()->UpdateGraphInputTensorShape(name, shape);
+    lite::ConverterInnerContext::GetInstance()->UpdateGraphInputTensorShape(name, shape);
   }
   return RET_OK;
 }

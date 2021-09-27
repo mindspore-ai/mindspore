@@ -228,7 +228,7 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
     MS_LOG(ERROR) << "Can not find output name.";
     return nullptr;
   }
-  ConverterContext::GetInstance()->SetGraphOutputTensorNames(output_tensor_name_);
+  ConverterInnerContext::GetInstance()->SetGraphOutputTensorNames(output_tensor_name_);
   if (flag.device == "Ascend310") {
     MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend310.";
     return func_graph;
