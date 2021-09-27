@@ -39,9 +39,9 @@ MindSpore提供了友好的设计和高效的执行，旨在提升数据科学�
 
 同时，MindSpore作为全球AI开源社区，致力于进一步开发和丰富AI软硬件应用生态。
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
+<img src="https://gitee.com/mindspore/mindspore/raw/r1.5/docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
 
-欲了解更多详情，请查看我们的[总体架构](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/architecture.html)。
+欲了解更多详情，请查看我们的[总体架构](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.5/architecture.html)。
 
 ### 自动微分
 
@@ -55,7 +55,7 @@ TensorFlow早期采用的是静态计算图，PyTorch采用的是动态计算图
 
 MindSpore找到了另一种方法，即基于源代码转换的自动微分。一方面，它支持自动控制流的自动微分，因此像PyTorch这样的模型构建非常方便。另一方面，MindSpore可以对神经网络进行静态编译优化，以获得更好的性能。
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
+<img src="https://gitee.com/mindspore/mindspore/raw/r1.5/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
 
 MindSpore自动微分的实现可以理解为程序本身的符号微分。MindSpore IR是一个函数中间表达式，它与基础代数中的复合函数具有直观的对应关系。复合函数的公式由任意可推导的基础函数组成。MindSpore IR中的每个原语操作都可以对应基础代数中的基本功能，从而可以建立更复杂的流控制。
 
@@ -63,7 +63,7 @@ MindSpore自动微分的实现可以理解为程序本身的符号微分。MindS
 
 MindSpore自动并行的目的是构建数据并行、模型并行和混合并行相结合的训练方法。该方法能够自动选择开销最小的模型切分策略，实现自动分布并行训练。
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
+<img src="https://gitee.com/mindspore/mindspore/raw/r1.5/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
 
 目前MindSpore采用的是算子切分的细粒度并行策略，即图中的每个算子被切分为一个集群，完成并行操作。在此期间的切分策略可能非常复杂，但是作为一名Python开发者，您无需关注底层实现，只要顶层API计算是有效的即可。
 
@@ -236,7 +236,7 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 
 ## 快速入门
 
-参考[快速入门](https://www.mindspore.cn/tutorials/zh-CN/master/quick_start.html)实现图片分类。
+参考[快速入门](https://www.mindspore.cn/tutorials/zh-CN/r1.5/quick_start.html)实现图片分类。
 
 ## 文档
 
