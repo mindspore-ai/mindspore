@@ -348,7 +348,7 @@ STATUS Calibrator::RecordMaxMinValue(const vector<float> &data, const std::uniqu
     MS_LOG(ERROR) << "Record max min value failed.";
     return ret;
   }
-  diverg_info->RecordMaxMinValueArray(data);
+  ret = diverg_info->RecordMaxMinValueArray(data);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Record max min value array failed.";
     return ret;
@@ -564,10 +564,6 @@ STATUS FullQuantQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePt
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
   auto active_weight_quant_params = quant_param_holder->get_input_quant_params();
-  if (active_weight_quant_params.size() != DIMENSION_2D) {
-    MS_LOG(ERROR) << "unexpected active_weight_quant_params size: " << active_weight_quant_params.size();
-    return RET_ERROR;
-  }
 
   auto active_params = active_weight_quant_params.at(FIRST_INPUT);
   auto weight_params = active_weight_quant_params.at(SECOND_INPUT);
@@ -675,7 +671,11 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
         return ret;
       }
     } else {
-      ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
+      if (opt::CheckPrimitiveType(cnode, prim::kPrimMatMul)) {
+        ret = DoWeightQuant(op_name, input_node, primitive, false, input_index);
+      } else {
+        ret = DoWeightQuant(op_name, input_node, primitive, true, input_index);
+      }
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Do bias quant failed.";
         return ret;

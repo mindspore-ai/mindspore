@@ -27,7 +27,8 @@
 #include "tools/converter/quantizer/quant_helper/only_need_inputs_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/quant_dtype_cast_quant_param_propogator.h"
 #include "tools/converter/quantizer/quant_helper/matmul_quant_type_determiner.h"
-#include "nnacl/op_base.h"
+#include "src/lite_kernel.h"
+#include "src/kernel_registry.h"
 
 namespace mindspore::lite {
 void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const schema::CNodeT &node) {
@@ -66,6 +67,10 @@ void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const 
 
 bool QuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
   MS_ASSERT(node != nullptr);
+  kernel::KernelKey desc{kernel::kCPU, kNumberTypeInt8, node->primitive->value.type, ""};
+  if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
+    return false;
+  }
   if (node->quantType != schema::QuantType_QUANT_NONE) {
     return node->quantType == schema::QuantType_QUANT_ALL;
   }

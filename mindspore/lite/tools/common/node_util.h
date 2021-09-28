@@ -81,7 +81,6 @@ std::unordered_map<schema::PrimitiveType, std::vector<int>> GetExtNhwcIndexes();
 std::vector<schema::PrimitiveType> Getfp32FullOpList();
 
 std::vector<schema::PrimitiveType> GetUint8NhwcOpList();
-std::vector<schema::PrimitiveType> GetInt8OpList();
 
 const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb);
 

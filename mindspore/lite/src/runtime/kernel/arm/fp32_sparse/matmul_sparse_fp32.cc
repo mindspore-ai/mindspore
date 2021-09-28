@@ -74,13 +74,18 @@ void MatmulSparseCPUKernel::InitParameter() {
   trans_param_.out_strides_[0] = area;
 }
 
+namespace {
+constexpr float kFpPrecision = 1e-6;
+constexpr size_t kBlockSize = 8;
+}  // namespace
+
 int kernel::MatmulSparseCPUKernel::PrepareWeight() {
   auto weight_data = reinterpret_cast<float *>(in_tensors_.at(1)->data());
   MS_ASSERT(weight_data != nullptr);
   sparsity_weight_ = new SparsityWeight;
   size_t non_zeros = 0;
   for (int i = 0; i < in_tensors_.at(1)->ElementsNum(); i++) {
-    if (weight_data[i] > 1e-6) {
+    if (weight_data[i] > kFpPrecision) {
       non_zeros++;
     }
   }
@@ -97,7 +102,7 @@ int kernel::MatmulSparseCPUKernel::PrepareWeight() {
   for (int j = 0; j < params_->col_; j++) {
     for (int i = 0; i < params_->deep_; i++) {
       auto cur_data = weight_data[i * params_->col_ + j];
-      if (cur_data > 1e-6) {
+      if (cur_data > kFpPrecision) {
         sparsity_weight_->data[weight_data_index++] = cur_data;
         sparsity_weight_->act_stride[act_stride_index++] = i * 8 * sizeof(float);
         (*(sparsity_weight_->non_zero_num + j))++;
@@ -142,11 +147,11 @@ int MatmulSparseCPUKernel::Init() {
     MS_LOG(ERROR) << "Only support batch == 1 now";
     return lite::RET_NOT_SUPPORT;
   }
-  if (params_->row_ % 8 != 0) {
+  if (params_->row_ % kBlockSize != 0) {
     MS_LOG(ERROR) << "Only support 8n rows now";
     return lite::RET_NOT_SUPPORT;
   }
-  if (params_->col_ % 8 != 0) {
+  if (params_->col_ % kBlockSize != 0) {
     MS_LOG(ERROR) << "Only support 8n cols now";
     return lite::RET_NOT_SUPPORT;
   }
@@ -176,12 +181,12 @@ int MatmulSparseCPUKernel::PackInput() {
   }
 
   // not support multi-thread now
-  auto task_num = params_->row_align_ / 8;
+  auto task_num = params_->row_align_ / kBlockSize;
   auto stride = matrix_a_pack_size_ / task_num;
 
   auto *src = reinterpret_cast<const float *>(in_tensors_[0]->data());
   for (int i = 0; i < task_num; i++) {
-    PackNHWCToNCHWFp32(src + i * stride, a_pack_ + i * stride, params_->batch, 8, params_->deep_, 0, 0);
+    PackNHWCToNCHWFp32(src + i * stride, a_pack_ + i * stride, params_->batch, kBlockSize, params_->deep_, 0, 0);
   }
   return RET_OK;
 }
@@ -234,16 +239,6 @@ int MatmulSparseCPUKernel::RunInstrinsics() {
     printf("\r\n");
   }
   {
-    printf("=========================================packed input:\r\n");
-    for (size_t i = 0; i < 20; i++) {
-      for (size_t j = 0; j < 8; j++) {
-        printf(" %2.2f", a_pack_[i * 8 + j]);
-      }
-      printf("\r\n");
-    }
-    printf("\r\n");
-  }
-  {
     printf("=========================================weight:\r\n");
     for (uint32_t i = 0; i < sparsity_weight_->nnz; i++) {
       printf(" %2.2f", sparsity_weight_->data[i]);
@@ -267,9 +262,9 @@ int MatmulSparseCPUKernel::RunInstrinsics() {
 #endif
   auto bias = reinterpret_cast<float *>(in_tensors_.at(2)->data());
   auto output = reinterpret_cast<float *>(out_tensors_.front()->data());
-  for (int i = 0; i < params_->row_align_ / 8; i++) {
-    MatMulSparse8x8(a_pack_ + i * 40, sparsity_weight_->data, sparsity_weight_->non_zero_num,
-                    sparsity_weight_->act_stride, output + i * 64, bias, ActType_No, 8);
+  for (int i = 0; i < params_->row_align_ / kBlockSize; i++) {
+    MatMulSparse8x8(a_pack_ + i * kBlockSize * params_->deep_, sparsity_weight_->data, sparsity_weight_->non_zero_num,
+                    sparsity_weight_->act_stride, output + i * kBlockSize * kBlockSize, bias, ActType_No, kBlockSize);
   }
 
 #ifdef Debug
@@ -302,10 +297,10 @@ int MatmulSparseCPUKernel::Run() {
   CHECK_NULL_RETURN(sparsity_weight_);
   auto bias = reinterpret_cast<float *>(in_tensors_.at(2)->data());
   auto output = reinterpret_cast<float *>(out_tensors_.front()->data());
-  for (int i = 0; i < params_->row_align_ / 8; i++) {
-    SPMM8x8Fp32(a_pack_ + i * params_->deep_ * 8, sparsity_weight_->data, sparsity_weight_->non_zero_num,
-                sparsity_weight_->act_stride, output + i * params_->col_align_ * 8, bias, ActType_No,
-                8 * sizeof(float));
+  for (int i = 0; i < params_->row_align_ / kBlockSize; i++) {
+    SPMM8x8Fp32(a_pack_ + i * params_->deep_ * kBlockSize, sparsity_weight_->data, sparsity_weight_->non_zero_num,
+                sparsity_weight_->act_stride, output + i * params_->col_align_ * kBlockSize, bias, ActType_No,
+                kBlockSize * sizeof(float));
   }
   ms_context_->allocator->Free(a_pack_);
   return RET_OK;
