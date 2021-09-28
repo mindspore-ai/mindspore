@@ -13,6 +13,7 @@ mkdir -pv ${CUR_DIR}/do_test
 cd ${CUR_DIR}/do_test
 cp ${BUILD_DIR}/test/lite-test ./
 cp ${BUILD_DIR}/googletest/googlemock/gtest/libgtest.so ./
+cp ${BUILD_DIR}/googletest/googlemock/gtest/libgmock.so ./
 ls -l *.so*
 export LD_LIBRARY_PATH=./:${TENSORRT_PATH}/lib:${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 

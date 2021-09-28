@@ -119,12 +119,12 @@ add_dependencies(lite-test fbs_src fbs_inner_src)
 
 target_link_libraries(lite-test mindspore-lite dl mindspore::gtest)
 
-## test file using gmock
-#target_link_libraries(lite-test mindspore::gmock)
-#add_library(gmock_tests OBJECT ${TEST_DIR}/st/optimize_allocator_test.cc)
-#add_dependencies(gmock_tests fbs_src fbs_inner_src)
-#target_compile_options(gmock_tests PRIVATE -fno-rtti)
-#target_link_libraries(lite-test gmock_tests)
+# test file using gmock
+target_link_libraries(lite-test mindspore::gmock)
+add_library(gmock_tests OBJECT ${TEST_DIR}/st/optimize_allocator_test.cc)
+add_dependencies(gmock_tests fbs_src fbs_inner_src)
+target_compile_options(gmock_tests PRIVATE -fno-rtti)
+target_link_libraries(lite-test gmock_tests)
 
 if(MSLITE_ENABLE_TRAIN)
     target_link_libraries(lite-test mindspore-lite-train minddata-lite)
