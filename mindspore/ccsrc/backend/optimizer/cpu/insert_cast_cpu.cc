@@ -28,10 +28,12 @@
 #include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "backend/kernel_compiler/common_utils.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr unsigned int kLstmReserveIndex = 3;
 AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                                 const TypeId &input_type, const TypeId &output_type,
                                 const std::vector<size_t> &origin_shape, const TypeId &origin_type) {
@@ -52,17 +54,8 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   }
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
   AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, cast.get());
+  AnfAlgo::SetNodeAttr("dst_type", TypeIdToType(output_type), cast);
   AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cast);
-  std::shared_ptr<kernel::CPUKernel> cpu_kernel = kernel::CPUKernelFactory::GetInstance().Create(kCastOpName, cast);
-  if (cpu_kernel == nullptr) {
-    MS_LOG(EXCEPTION) << "Operator[Cast] " << cast->kernel_info() << " is not support.";
-  }
-  try {
-    cpu_kernel->Init(cast);
-  } catch (std::exception &e) {
-    MS_LOG(EXCEPTION) << e.what() << "\nTrace: " << trace::DumpSourceLines(cast);
-  }
-  AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
   return cast;
 }
 
@@ -100,6 +93,11 @@ void InsertCastForGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &cn
     auto infer_type = AnfAlgo::GetOutputInferDataType(cnode, i);
     auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, i);
     const std::string dev_fmt = AnfAlgo::GetOutputFormat(cnode, i);
+    // The shape of LSTM's reserved output will be changed in InitKernel, and this output is only used
+    // by its gradient operator, so we don't handle it in this pass.
+    if (IsPrimitiveCNode(cnode, prim::kPrimLstm) && i == kLstmReserveIndex) {
+      continue;
+    }
     if (infer_type != device_type) {
       auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, cnode, i);
       for (size_t j = 0; j < used_node_list->size(); j++) {
