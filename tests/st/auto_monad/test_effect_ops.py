@@ -24,6 +24,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.train.summary.summary_record import SummaryRecord
 from tests.summary_utils import SummaryReader
+from tests.security_utils import security_off_wrap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -384,7 +385,7 @@ def train_summary_record(test_writer, steps):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.security_off
+@security_off_wrap
 def test_summary():
     with tempfile.TemporaryDirectory() as tmp_dir:
         steps = 2

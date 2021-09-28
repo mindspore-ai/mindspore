@@ -22,6 +22,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.profiler import Profiler
+from tests.security_utils import security_off_wrap
 
 
 class Net(nn.Cell):
@@ -41,7 +42,7 @@ y = np.random.randn(1, 3, 3, 4).astype(np.float32)
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.security_off
+@security_off_wrap
 def test_ascend_profiling():
     if os.path.isdir("./data_ascend_profiler"):
         shutil.rmtree("./data_ascend_profiler")
