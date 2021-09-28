@@ -27,7 +27,7 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint16_t *symbol_frequency, int
   MS_ASSERT(new_state != nullptr);
   MS_ASSERT(bit_count != nullptr);
   MS_ASSERT(symbol_table != nullptr);
-  int table_size = 1 << table_log;
+  const int table_size = 1 << table_log;
   int table_mask = table_size - 1;
   int step = ((table_size >> 1) + (table_size >> 3) + 3);
   int pos = 0;
