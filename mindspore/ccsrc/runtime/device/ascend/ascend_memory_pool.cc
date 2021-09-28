@@ -50,10 +50,9 @@ void AscendMemoryPool::Init(uint8_t *device_mem_base, uint64_t device_mem_size, 
 size_t AscendMemoryPool::CalMemBlockAllocSize(size_t size) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size) {
-    MS_LOG(EXCEPTION) << "Memory not enough: current free memory size[" << device_free_mem_size
-                      << "] is smaller than required size[" << size << "], dynamic offset ["
-                      << graph_dynamic_mem_offset_ << "] memory pool offset["
-                      << device_mem_size_ - device_mem_pool_offset_ << "])";
+    MS_LOG(WARNING) << "Memory not enough: current free memory size[" << device_free_mem_size
+                    << "] is smaller than required size[" << size << "], dynamic offset [" << graph_dynamic_mem_offset_
+                    << "] memory pool offset[" << device_mem_size_ - device_mem_pool_offset_ << "])";
     return 0;
   }
   auto alloc_mem_size = ASCEND_DYNAMIC_MEM_ALLOC_UNIT_SIZE;

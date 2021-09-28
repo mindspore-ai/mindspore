@@ -129,7 +129,9 @@ bool AscendPsCache::InitDevice(uint32_t device_id, const void *context) {
 }
 
 void *AscendPsCache::MallocMemory(size_t size) {
-  return device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(size);
+  const auto device_addr = device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(size);
+  MS_EXCEPTION_IF_NULL(device_addr);
+  return device_addr;
 }
 
 bool AscendPsCache::MallocConstantMemory(size_t cache_vocab_size) {

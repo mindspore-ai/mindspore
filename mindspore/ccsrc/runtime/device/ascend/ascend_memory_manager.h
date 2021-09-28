@@ -33,6 +33,7 @@ class AscendMemoryManager : public MemoryManager {
   void ResetDynamicMemory() override;
   void ClearGlobalIdleMem() override;
   void *MallocMemFromMemPool(size_t size) override;
+  void *MallocDevice(size_t size) override;
   void FreeMemFromMemPool(void *device_ptr) override;
   uint64_t GetDeviceMemSize();
   void MallocSomasDynamicMem(const session::KernelGraph &graph) override;
