@@ -273,6 +273,11 @@ class Dataset:
             child.close_pool()
 
     def notify_watchdog(self):
+        """
+        Close watchdog thread in dataset. Now GeneratorDataset/map/batch will use a thread named watch_dog tp monitor
+        multiprocess, for get_dataset_size/output_shapes/output_types/get_col_name/num_classes, we need notify_watchdog
+        to close watch_dog thread manually.
+        """
         if hasattr(self, 'sample_fn') and self.sample_fn is not None:
             if self.sample_fn.multi_process:
                 self.sample_fn._abort_watchdog()  # pylint: disable=W0212
@@ -1666,6 +1671,23 @@ class Dataset:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
         return self.saved_min_shapes, self.saved_max_shapes
 
+    @staticmethod
+    def __check_dynamic_column_name(dynamic_columns, dataset_columns):
+        for column in dynamic_columns:
+            if column not in dataset_columns:
+                raise RuntimeError("dynamic column [" + column + "] does not match any column in dataset: " +
+                                   str(dataset_columns))
+
+    @staticmethod
+    def __check_dynamic_column_shape(data, col, dynamic_columns):
+        shape_mismatch = "dynamic column [" + col + "] with shape " + str(dynamic_columns[col]) + \
+                         " does not match dataset column [" + col + "] with shape " + str(list(data[col].shape))
+        if data[col].ndim != len(dynamic_columns[col]):
+            raise RuntimeError(shape_mismatch)
+        for dim in range(len(dynamic_columns[col])):
+            if dynamic_columns[col][dim] is not None and dynamic_columns[col][dim] != data[col].shape[dim]:
+                raise RuntimeError(shape_mismatch)
+
     def _dynamic_output_shapes(self):
         """
         Get dynamic information of source data.
@@ -1686,10 +1708,7 @@ class Dataset:
         dynamic_columns = self.dynamic_setting[1]
         # ["data1", "data2"]
         dataset_columns = self.get_col_names()
-        for column in dynamic_columns:
-            if column not in dataset_columns:
-                raise RuntimeError("dynamic column [" + column + "] does not match any column in dataset: " +
-                                   str(dataset_columns))
+        Dataset.__check_dynamic_column_name(dynamic_columns, dataset_columns)
 
         # Shape[1] of data1 is variable
         # {"data1": {(batch_size, 100, feat_len), (16, 200, 83)}, "data2": {(batch_size, feat_len)}}
@@ -1699,13 +1718,7 @@ class Dataset:
             dataset_size_counter += 1
             for col in data.keys():
                 if col in dynamic_columns:
-                    shape_mismatch = "dynamic column [" + col + "] with shape " + str(dynamic_columns[col]) + \
-                    " does not match dataset column [" + col + "] with shape " + str(list(data[col].shape))
-                    if data[col].ndim != len(dynamic_columns[col]):
-                        raise RuntimeError(shape_mismatch)
-                    for dim in range(len(dynamic_columns[col])):
-                        if dynamic_columns[col][dim] is not None and dynamic_columns[col][dim] != data[col].shape[dim]:
-                            raise RuntimeError(shape_mismatch)
+                    Dataset.__check_dynamic_column_shape(data, col, dynamic_columns)
                 column_shape_set[col].add(tuple(data[col].shape))
 
         # we get dataset_size after dryrun
@@ -2297,18 +2310,24 @@ class BatchDataset(Dataset):
             # Wrap per_batch_map into _PythonCallable
             self.per_batch_map = _PythonCallable(self.per_batch_map, idx, self.process_pool, arg_q_list, res_q_list)
             self.hook = _ExceptHookHandler()
+
+            # batch will launch a watch dog thread to monitoring sub processes
+            self._launch_watch_dog()
+
             atexit.register(_mp_pool_exit_preprocess)
             # If Python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
             if sys.version_info >= (3, 8):
                 atexit.register(self.process_pool.close)
-            if platform.system().lower() != 'windows':
-                self.eot = threading.Event()
-                self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
-                self.watch_dog.daemon = True
-                self.watch_dog.start()
         else:
             if self.per_batch_map is not None:
                 self.per_batch_map = FuncWrapper(self.per_batch_map)
+
+    def _launch_watch_dog(self):
+        if platform.system().lower() != 'windows':
+            self.eot = threading.Event()
+            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
+            self.watch_dog.daemon = True
+            self.watch_dog.start()
 
     def _abort_watchdog(self):
         if not self.eot.is_set():
@@ -2506,6 +2525,9 @@ class ShuffleDataset(Dataset):
 
 # This wait function is for cleaning zombie subprocesses
 def wait_pid():
+    """
+    This function is used by the main process to release subprocess resources.
+    """
     try:
         while True:
             child_pid, _ = os.waitpid(-1, os.WNOHANG)
@@ -2520,7 +2542,7 @@ def wait_pid():
 # and thread can't be a member function otherwise python won't collect and release resources.
 def _watch_dog(eot, pids):
     """
-    This thread is for monitoring subprocesses forked by GeneratorDataset/MapDataset/BatchDataset
+    This thread is for monitoring subprocesses forked by GeneratorDataset/map/batch
     """
     while not eot.is_set():
         subprocess_exit_num = 0
@@ -2626,43 +2648,14 @@ class _PythonCallable:
 
     def __call__(self, *args):
         if self._pool_is_running() and check_iterator_cleanup() is False:
-            # arg_q will have 0 size if we are not using shared memory
-            # if using multi-processing shared queue instead of multiprocess arg passing
-            if self.arg_q != []:
-                tid = threading.get_ident()
-                # Need to register each thread to use a different queue to send data to pool
-                if not tid in self.queuemap:
-                    qid = self.next_queue
-                    self.next_queue = self.next_queue + 1
-                    self.queuemap[tid] = qid
-                else:
-                    qid = self.queuemap[tid]
-                self.arg_q[qid].put(args)
-
-                # This call will send the tensors along with Python callable index to the process pool.
-                # Block, yield GIL. Current thread will reacquire GIL once result is returned.
-                if self._pool_is_running() and check_iterator_cleanup() is False:
-                    result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, qid, []])
-                else:
-                    return self.py_callable(*args)
-            else:
-                result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, -1, *args])
+            result, qid, ret = self._send(*args)
+            if ret:
+                return result
 
             # todo this check might be wrong
             while check_iterator_cleanup() is False:
                 try:
-                    if self.arg_q != []:
-                        r = result.get(30)
-                        if isinstance(r, ExceptionHandler):
-                            r.reraise()
-                        if r[0] != qid:
-                            raise Exception("In PyCallable, got results from wrong thread")
-                        r = self.res_q[qid].get()
-                        return r
-                    r = result.get(30)
-                    if isinstance(r, ExceptionHandler):
-                        r.reraise()
-                    return r
+                    return self._receive(result, qid)
                 except multiprocessing.TimeoutError:
                     continue
                 except KeyboardInterrupt:
@@ -2676,6 +2669,55 @@ class _PythonCallable:
 
     def to_json(self):
         return self.py_callable.to_json()
+
+    def _send(self, *args):
+        """
+        The map/batch operator will use multiprocessing-pool apply_async interface to execute python function
+        in a sub process, apply_async will release GIL temporarily. For better performance, we use shared memory
+        feature and pass shared queue instead of multiprocess args.
+        """
+        ret = False
+        qid = None
+        if self.arg_q != []:
+            tid = threading.get_ident()
+            # Need to register each thread to use a different queue to send data to pool
+            if not tid in self.queuemap:
+                qid = self.next_queue
+                self.next_queue = self.next_queue + 1
+                self.queuemap[tid] = qid
+            else:
+                qid = self.queuemap[tid]
+            self.arg_q[qid].put(args)
+
+            # This call will send the tensors along with Python callable index to the process pool.
+            # Block, yield GIL. Current thread will reacquire GIL once result is returned.
+            if self._pool_is_running() and check_iterator_cleanup() is False:
+                result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, qid, []])
+            else:
+                ret = True
+                result = self.py_callable(*args)
+        else:
+            result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, -1, *args])
+        return result, qid, ret
+
+    def _receive(self, result, qid):
+        """
+        The map/batch operator will use multiprocessing-pool get interface to sync output data from a sub process,
+        get interface will reacquire GIL. For better performance, we use shared memory feature and get data from
+        shared queue directly.
+        """
+        if self.arg_q != []:
+            r = result.get(30)
+            if isinstance(r, ExceptionHandler):
+                r.reraise()
+            if r[0] != qid:
+                raise Exception("In PyCallable, got results from wrong thread")
+            r = self.res_q[qid].get()
+            return r
+        r = result.get(30)
+        if isinstance(r, ExceptionHandler):
+            r.reraise()
+        return r
 
     def _pool_is_running(self):
         # note here: the RUN state of python3.7 and python3.8 is different:
@@ -2794,10 +2836,9 @@ class MapDataset(Dataset):
             res_q_list = []
 
             # If user didn't specify num_parallel_workers, set it to default
+            num_parallel = get_num_parallel_workers()
             if self.num_parallel_workers is not None:
                 num_parallel = self.num_parallel_workers
-            else:
-                num_parallel = get_num_parallel_workers()
 
             if get_enable_shared_mem():
                 _check_shm_usage(num_parallel, 1, self.max_rowsize, 2)
@@ -2808,7 +2849,7 @@ class MapDataset(Dataset):
             # Pass #1, look for Python callables and build list
             for op in self.operations:
                 # our c transforms is now callable and should not be run in Python multithreading
-                if callable(op) and str(op).find("c_transform") < 0:
+                if MapDataset.__operation_valid_for_multiprocessing(op):
                     callable_list.append(op)
 
             if callable_list:
@@ -2831,7 +2872,7 @@ class MapDataset(Dataset):
                     _OP_PROCESS.update(process_id)
                 for op in self.operations:
                     # our c transforms is now callable and should not be run in Python multithreading
-                    if callable(op) and str(op).find("c_transform") < 0:
+                    if MapDataset.__operation_valid_for_multiprocessing(op):
                         # Wrap Python callable into _PythonCallable
                         iter_specific_operations.append(_PythonCallable(op, idx, self.process_pool,
                                                                         arg_q_list, res_q_list))
@@ -2841,15 +2882,27 @@ class MapDataset(Dataset):
                         iter_specific_operations.append(op)
                 self.operations = iter_specific_operations
                 self.hook = _ExceptHookHandler()
+
+                # Map multiprocessing will launch a watch dog thread for monitoring sub processes
+                self._launch_watch_dog()
+
                 atexit.register(_mp_pool_exit_preprocess)
                 # If Python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
                 if sys.version_info >= (3, 8):
                     atexit.register(self.process_pool.close)
-                if platform.system().lower() != 'windows':
-                    self.eot = threading.Event()
-                    self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
-                    self.watch_dog.daemon = True
-                    self.watch_dog.start()
+
+    @staticmethod
+    def __operation_valid_for_multiprocessing(op):
+        if callable(op) and str(op).find("c_transform") < 0:
+            return True
+        return False
+
+    def _launch_watch_dog(self):
+        if platform.system().lower() != 'windows':
+            self.eot = threading.Event()
+            self.watch_dog = threading.Thread(target=_watch_dog, args=(self.eot, self.pids))
+            self.watch_dog.daemon = True
+            self.watch_dog.start()
 
     def _abort_watchdog(self):
         if not self.eot.is_set():
