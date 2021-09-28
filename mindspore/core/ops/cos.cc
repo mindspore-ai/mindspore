@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr CosInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr CosInferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
@@ -39,7 +39,7 @@ AbstractBasePtr CosInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
 
-  return abstract::MakeAbstract(CosInferShape(primitive, input_args), CosInferType(primitive, input_args));
+  return abstract::MakeAbstract(CosInferShape(input_args), CosInferType(primitive, input_args));
 }
 }  // namespace
 REGISTER_PRIMITIVE_EVAL_IMPL(Cos, prim::kPrimCos, CosInfer, nullptr, true);

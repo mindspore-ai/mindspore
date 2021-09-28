@@ -20,6 +20,7 @@
 "mindspore/mindspore/ccsrc/frontend/parallel/auto_parallel/rec_core/rec_generate_strategy.cc"         "containerOutOfBounds"
 "mindspore/mindspore/ccsrc/backend/kernel_compiler/cpu/embedding_look_up_cpu_kernel.cc"               "containerOutOfBounds"
 "mindspore/mindspore/core/ops/strided_slice.cc"                                                       "zerodivcond"
+"mindspore/mindspore/core/ops/avg_pool_3d.cc"                                                         "zerodivcond"
 "mindspore/mindspore/ccsrc/runtime/hccl_adapter/hccl_adapter.cc"                                      "useStlAlgorithm"
 "mindspore/ccsrc/backend/kernel_compiler/gpu/arrays/cast_gpu_kernel.cc"                               "unknownMacro"
 

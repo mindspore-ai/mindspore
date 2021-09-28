@@ -27,14 +27,12 @@ void ImpleSquare(void *origin, void *target, size_t size) {
   MS_EXCEPTION_IF_NULL(target);
   auto origin_data = reinterpret_cast<T *>(origin);
   auto target_data = reinterpret_cast<T *>(target);
-  MS_EXCEPTION_IF_NULL(origin_data);
-  MS_EXCEPTION_IF_NULL(target_data);
   for (size_t i = 0; i < size; ++i) {
     target_data[i] = origin_data[i] * origin_data[i];
   }
 }
 
-abstract::ShapePtr SquareInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr SquareInferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
@@ -54,7 +52,7 @@ AbstractBasePtr SquareInfer(const abstract::AnalysisEnginePtr &, const Primitive
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
 
-  return abstract::MakeAbstract(SquareInferShape(primitive, input_args), SquareInferType(primitive, input_args));
+  return abstract::MakeAbstract(SquareInferShape(input_args), SquareInferType(primitive, input_args));
 }
 
 ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -74,53 +72,53 @@ ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
 
   auto data_size = x_tensor->DataSize();
   auto dtype = x_tensor->data_type();
-  auto shape = SquareInferShape(prim, input_args)->shape();
+  auto shape = SquareInferShape(input_args)->shape();
   auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape);  // same shape and dtype
   auto x_datac = x_tensor->data_c();
   auto result_datac = result_tensor->data_c();
   switch (dtype) {
     case kNumberTypeInt8: {
-      ImpleSquare<int8_t>(x_datac, result_datac, data_size);
+      ImpleSquare<int8_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeInt16: {
-      ImpleSquare<int16_t>(x_datac, result_datac, data_size);
+      ImpleSquare<int16_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeInt32: {
-      ImpleSquare<int32_t>(x_datac, result_datac, data_size);
+      ImpleSquare<int32_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeInt64: {
-      ImpleSquare<int64_t>(x_datac, result_datac, data_size);
+      ImpleSquare<int64_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt8: {
-      ImpleSquare<uint8_t>(x_datac, result_datac, data_size);
+      ImpleSquare<uint8_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt16: {
-      ImpleSquare<uint16_t>(x_datac, result_datac, data_size);
+      ImpleSquare<uint16_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt32: {
-      ImpleSquare<uint32_t>(x_datac, result_datac, data_size);
+      ImpleSquare<uint32_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt64: {
-      ImpleSquare<uint64_t>(x_datac, result_datac, data_size);
+      ImpleSquare<uint64_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeFloat16: {
-      ImpleSquare<float16>(x_datac, result_datac, data_size);
+      ImpleSquare<float16>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeFloat32: {
-      ImpleSquare<float>(x_datac, result_datac, data_size);
+      ImpleSquare<float>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeFloat64: {
-      ImpleSquare<double>(x_datac, result_datac, data_size);
+      ImpleSquare<double>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     default: {

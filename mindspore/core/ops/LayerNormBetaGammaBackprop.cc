@@ -25,8 +25,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr LayerNormBetaGammaBackpropInferShape(const PrimitivePtr &primitive,
-                                                             const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr LayerNormBetaGammaBackpropInferShape(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
   ValuePtr gamma_value_ptr = primitive->GetAttr("shape_gamma");
   MS_EXCEPTION_IF_NULL(gamma_value_ptr);
@@ -56,7 +55,7 @@ AbstractBasePtr LayerNormBetaGammaBackpropInfer(const abstract::AnalysisEnginePt
   const int64_t input_num = 4;
   (void)CheckAndConvertUtils::CheckInteger("LayerNormBetaGammaBackprop infer", SizeToLong(input_args.size()),
                                            kGreaterEqual, input_num, primitive->name());
-  return abstract::MakeAbstract(LayerNormBetaGammaBackpropInferShape(primitive, input_args),
+  return abstract::MakeAbstract(LayerNormBetaGammaBackpropInferShape(primitive),
                                 LayerNormBetaGammaBackpropInferType(primitive, input_args));
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LayerNormBetaGammaBackprop, prim::kPrimLayerNormBetaGammaBackprop,
