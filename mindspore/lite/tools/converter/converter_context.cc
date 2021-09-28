@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "include/registry/parser_context.h"
+#include "tools/converter/converter_context.h"
 #include <string>
 #include <vector>
-#include "tools/converter/converter_context.h"
+#include "include/registry/parser_context.h"
 
 namespace mindspore {
 namespace converter {
