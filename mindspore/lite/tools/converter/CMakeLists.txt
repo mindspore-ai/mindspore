@@ -122,6 +122,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/split_one_pass.cc
         ../optimizer/graph/find_const_subgraph_pass.cc
         ../optimizer/graph/specify_graph_input_format.cc
+        ../optimizer/graph/special_node_postprocess.cc
         )
 
 if(NOT MSLITE_ENABLE_ACL)

@@ -115,8 +115,8 @@ int InstanceNormNC8HW8Fp16(const float16_t *src_data, float16_t *dst_data, const
         float16x8_t srcv1 = vld1q_f16(src1 + index * C8NUM);
 
         float32x4_t srcv01 = vcvt_f32_f16(vget_low_f16(srcv));
-        float32x4_t srcv02 = vcvt_f32_f16(vget_high_f16(srcv1));
-        float32x4_t srcv11 = vcvt_f32_f16(vget_low_f16(srcv));
+        float32x4_t srcv02 = vcvt_f32_f16(vget_high_f16(srcv));
+        float32x4_t srcv11 = vcvt_f32_f16(vget_low_f16(srcv1));
         float32x4_t srcv12 = vcvt_f32_f16(vget_high_f16(srcv1));
         mean1 = vaddq_f32(mean1, srcv01);
         mean2 = vaddq_f32(mean2, srcv02);
@@ -148,7 +148,7 @@ int InstanceNormNC8HW8Fp16(const float16_t *src_data, float16_t *dst_data, const
         float16x8_t srcv = vld1q_f16(src + index * C8NUM);
         float16x8_t srcv1 = vld1q_f16(src1 + index * C8NUM);
         float16x8_t outv = vsubq_f16(srcv, mean);
-        float16x8_t outv1 = vsubq_f16(srcv1, mean1);
+        float16x8_t outv1 = vsubq_f16(srcv1, mean_1);
         outv = vmulq_f16(outv, gammav);
         outv1 = vmulq_f16(outv1, gammav1);
         outv = vaddq_f16(outv, betav);

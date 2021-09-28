@@ -86,6 +86,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
   {ops::kNameConv2dTransposeFusion, {1}},
   {ops::kNameDepthToSpace, {1}},
   {ops::kNameFusedBatchNorm, {1}},
+  {ops::kNameInstanceNorm, {1}},
   {ops::kNameLRN, {1}},
   {ops::kNameMaxPoolFusion, {1}},
   {ops::kNameMaxPoolGrad, {}},
@@ -99,7 +100,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
   {ops::kNameSpaceToDepth, {1}},
   {ops::kNameTopKFusion, {1}}};
 
-static const std::unordered_map<std::string, std::vector<size_t>> NCHWOpMap = {{ops::kNameInstanceNorm, {1}}};
+static const std::unordered_map<std::string, std::vector<size_t>> NCHWOpMap = {};
 
 // a certain op whose input's format is not fixed, bool value determines whether the op has axis attribute or not.
 static const std::unordered_map<std::string, bool> DynamicFormatOpList = {
