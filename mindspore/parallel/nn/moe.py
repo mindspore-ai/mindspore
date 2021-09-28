@@ -125,7 +125,7 @@ class MoE(Cell):
 
 
     def construct(self, input_tensor):
-        bs = self.shape(input_tensor)[0]
+        input_shape = F.shape(input_tensor)
         input_tensor = self.reshape(input_tensor, (-1, self.hidden_size))
         bs_and_dmodel = self.shape(input_tensor)
         tokens_per_device = bs_and_dmodel[0] / self.expert_parallel
@@ -148,7 +148,7 @@ class MoE(Cell):
                                                    expert_capacity))
         # expert_input's shape: (self.expert_dim, self.expert_parallel, expert_capacity, self.hidden_size)
         expert_input = self.transpose2(expert_input, (2, 0, 3, 1))
-        expert_input = self.reshape(expert_input, (self.expert_dim, self.expert_parallel * expert_capacity,
+        expert_input = self.reshape(expert_input, (self.expert_dim * self.expert_parallel * expert_capacity,
                                                    self.hidden_size))
 
         # expert_output's shape: (self.expert_dim, self.expert_parallel*expert_capacity, self.hidden_size)
@@ -170,7 +170,7 @@ class MoE(Cell):
         # combined_output's shape: (self.expert_parallel, tokens_per_device, self.hidden_size)
         combined_output = self.transpose5(combined_output, (0, 2, 1))
         combined_output = self.reshape(combined_output, (bs_and_dmodel[0], bs_and_dmodel[1]))
-        combined_output = self.reshape(combined_output, (bs, -1, self.hidden_size))
+        combined_output = self.reshape(combined_output, input_shape)
 
         aux_loss = self.mul(self.aux_loss_factor, aux_loss)
         return combined_output, aux_loss
