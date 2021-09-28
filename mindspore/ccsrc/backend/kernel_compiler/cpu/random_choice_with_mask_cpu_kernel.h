@@ -26,6 +26,7 @@ namespace kernel {
 constexpr int MAX_INPUT_DIMS = 5;
 constexpr size_t INPUT_NUM = 1;
 constexpr size_t OUTPUT_NUM = 2;
+constexpr size_t MAX_DIMENSION = 5;
 
 class RandomChoiceWithMaskCPUKernel : public CPUKernel {
  public:

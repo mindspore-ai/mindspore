@@ -56,18 +56,13 @@ void NMSWithMaskCPUKernel<T>::NmsBitonicSortByKeyKernel(const int inner, const s
       auto task2 = [&](size_t start, size_t end) {
         for (size_t tid = start; tid < end; tid++) {
           size_t tid_comp = tid ^ j;
-          if (tid_comp > tid) {
-            if ((tid & i) == 0) {
-              if (data_buff[tid] > data_buff[tid_comp]) {
-                Swap(&data_buff[tid], &data_buff[tid_comp]);
-                Swap(&index_buff[tid], &index_buff[tid_comp]);
-              }
-            } else {
-              if (data_buff[tid] < data_buff[tid_comp]) {
-                Swap(&data_buff[tid], &data_buff[tid_comp]);
-                Swap(&index_buff[tid], &index_buff[tid_comp]);
-              }
-            }
+          if ((tid_comp > tid) && ((tid & i) == 0) && (data_buff[tid] > data_buff[tid_comp])) {
+            Swap(&data_buff[tid], &data_buff[tid_comp]);
+            Swap(&index_buff[tid], &index_buff[tid_comp]);
+          }
+          if ((tid_comp > tid) && ((tid & i) != 0) && (data_buff[tid] < data_buff[tid_comp])) {
+            Swap(&data_buff[tid], &data_buff[tid_comp]);
+            Swap(&index_buff[tid], &index_buff[tid_comp]);
           }
         }
       };

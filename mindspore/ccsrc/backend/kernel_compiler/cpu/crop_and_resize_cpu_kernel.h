@@ -154,12 +154,12 @@ MS_REG_CPU_KERNEL_T(CropAndResize,
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()
-                      .AddInputAttr(kNumberTypeInt8)
+                      .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeFloat32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddInputAttr(kNumberTypeInt32)
                       .AddOutputAttr(kNumberTypeFloat32),
-                    CropAndResizeCPUKernel, int8_t);
+                    CropAndResizeCPUKernel, int32_t);
 
 MS_REG_CPU_KERNEL_T(CropAndResize,
                     KernelAttr()

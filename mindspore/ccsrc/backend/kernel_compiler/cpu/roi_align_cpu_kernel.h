@@ -21,11 +21,6 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int ROIS_COLS = 5;
-constexpr size_t X_DIMS = 4;
-constexpr int CHANNEL = 1;
-constexpr int HEIGHT = 2;
-constexpr int WIDTH = 3;
 template <typename T>
 class ROIAlignCPUKernel : public CPUKernel {
  public:
@@ -39,14 +34,6 @@ class ROIAlignCPUKernel : public CPUKernel {
 
  private:
   void CheckParam(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-
-  void bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low, int *x_high,
-                            int *y_high, T *w1, T *w2, T *w3, T *w4);
-
-  void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale, const int sample_num,
-               int roi_end_mode, const int channels, const int height, const int width, const int pooled_height,
-               const int pooled_width, int *offset, int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h,
-               int *roi_bin_grid_w, T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w);
 
   int pooled_height_{0};
   int pooled_width_{0};
@@ -73,5 +60,4 @@ MS_REG_CPU_KERNEL_T(
 
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ROI_ALIGN_CPU_KERNEL_H_
