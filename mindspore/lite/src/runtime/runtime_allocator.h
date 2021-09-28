@@ -39,6 +39,7 @@ class RuntimeAllocator : public Allocator {
   int DecRefCount(void *ptr, int ref_count) override { return 0; }
 
  public:
+  void SetDataOffset(lite::Tensor *tensor, size_t offset);
   void MallocTensorData(lite::Tensor *tensor);
   void FreeTensorData(lite::Tensor *tensor);
   void *MallocOptData();

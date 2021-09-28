@@ -83,8 +83,8 @@ TEST_F(BenchmarkTest, mindrtParallelOffline1) {
                                    "--modelFile=./mindrtParallel/mindrt_parallel_model_split.ms",
                                    "--inDataFile=./mindrtParallel/mindrt_parallel_model.bin",
                                    "--benchmarkDataFile=./mindrtParallel/mindrt_parallel_model.out"};
-  int converter_ret = mindspore::lite::RunBenchmark(6, benchmark_argv1);
-  ASSERT_EQ(converter_ret, lite::RET_OK);
+  int status = mindspore::lite::RunBenchmark(6, benchmark_argv1);
+  ASSERT_EQ(status, lite::RET_OK);
 }
 
 TEST_F(BenchmarkTest, mindrtParallelOffline2) {
@@ -94,8 +94,8 @@ TEST_F(BenchmarkTest, mindrtParallelOffline2) {
                                    "--modelFile=./mindrtParallel/mindrt_parallel_model_split.ms",
                                    "--inDataFile=./mindrtParallel/mindrt_parallel_model.bin",
                                    "--benchmarkDataFile=./mindrtParallel/mindrt_parallel_model.out"};
-  int converter_ret = mindspore::lite::RunBenchmark(6, benchmark_argv2);
-  ASSERT_EQ(converter_ret, lite::RET_OK);
+  int status = mindspore::lite::RunBenchmark(6, benchmark_argv2);
+  ASSERT_EQ(status, lite::RET_OK);
 }
 
 TEST_F(BenchmarkTest, mindrtParallelOffline3) {
@@ -105,8 +105,8 @@ TEST_F(BenchmarkTest, mindrtParallelOffline3) {
                                    "--modelFile=./mindrtParallel/mindrt_parallel_model_split.ms",
                                    "--inDataFile=./mindrtParallel/mindrt_parallel_model.bin",
                                    "--benchmarkDataFile=./mindrtParallel/mindrt_parallel_model.out"};
-  int converter_ret = mindspore::lite::RunBenchmark(6, benchmark_argv3);
-  ASSERT_EQ(converter_ret, lite::RET_OK);
+  int status = mindspore::lite::RunBenchmark(6, benchmark_argv3);
+  ASSERT_EQ(status, lite::RET_OK);
 }
 }  // namespace lite
 }  // namespace mindspore

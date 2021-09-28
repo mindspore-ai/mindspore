@@ -357,9 +357,10 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     }
     std::vector<kernel ::LiteKernel *> kernel_list = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
     for (auto kernel : kernel_list) {
-      MS_LOG(DEBUG) << "kernel: [" << kernel->name() << "] get TypeId(" << kernel->desc().data_type
-                    << ") op success. op_type: " << PrimitiveCurVersionTypeName(kernel->desc().type)
-                    << ", arch: " << kernel->desc().arch;
+      MS_LOG(DEBUG) << "kernel: [" << kernel->name() << "] "
+                    << "TypeId(" << kernel->desc().data_type << "); "
+                    << "OpType(" << PrimitiveCurVersionTypeName(kernel->desc().type) << "); "
+                    << "arch(" << kernel->desc().arch << ")";
     }
   }
   return RET_OK;

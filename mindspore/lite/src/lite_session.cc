@@ -1018,14 +1018,40 @@ int LiteSession::InitExecutor() {
 }
 
 int LiteSession::RuntimeAllocatorValid() {
+#ifdef ENABLE_ARM32
+  MS_LOG(DEBUG) << "Not support runtime allocator in arm32.";
+  return RET_ERROR;
+#endif
+
+#ifndef ENABLE_MINDRT
+  MS_LOG(DEBUG) << "Not support runtime allocator in converter.";
+  return RET_ERROR;
+#endif
+
+  if (context_->enable_parallel_ == true) {
+    MS_LOG(DEBUG) << "Not support runtime allocator in subgraph parallel.";
+    return RET_ERROR;
+  }
+  if (is_train_session_ == true) {
+    MS_LOG(DEBUG) << "Not support runtime allocator in train session.";
+    return RET_ERROR;
+  }
   if (is_infershape_ != RET_OK) {
-    MS_LOG(ERROR) << "Not support opt allocator in runtime-infershape.";
+    MS_LOG(DEBUG) << "Not support runtime allocator in runtime-infershape.";
     return RET_ERROR;
   }
   if (is_control_flow_ == true) {
-    MS_LOG(ERROR) << "Not support opt allocator in control flow model.";
+    MS_LOG(DEBUG) << "Not support runtime allocator in control flow model.";
     return RET_ERROR;
   }
+  if (kernels_.size() != 1) {
+    MS_LOG(DEBUG) << "Not support runtime allocator in random subgraph sort";
+    return RET_ERROR;
+  }
+#ifdef ENABLE_ARM64
+  MS_LOG(DEBUG) << "support runtime allocator.";
+  return RET_OK;
+#endif
   return RET_ERROR;
 }
 
@@ -1047,7 +1073,8 @@ void LiteSession::RuntimeAllocatorInitGraphOutput() {
 
 void LiteSession::RuntimeAllocatorInitSubgraph() {
   AllocatorPtr default_allocator = context_->allocator;
-  std::unordered_map<lite::Tensor *, int> ref_count;
+  std::unordered_map<lite::Tensor *, int> tensor_ref_count;
+  std::unordered_map<size_t, int> data_ref_count;
 
   for (auto subgraph : kernels_) {
     if (subgraph->desc().arch != kernel::KERNEL_ARCH::kCPU) {
@@ -1061,19 +1088,31 @@ void LiteSession::RuntimeAllocatorInitSubgraph() {
 
       if (src_t->data_type() == in_tensor->data_type()) {
         in_tensor->set_allocator(src_t->allocator());
-        ref_count[src_t] += in_tensor->init_ref_count();
+        if (src_t->allocator() == runtime_allocator_) {
+          tensor_ref_count[in_tensor] = in_tensor->init_ref_count();
+          data_ref_count[runtime_allocator_->GetOffsetMap().at(src_t)] += in_tensor->init_ref_count();
+          runtime_allocator_->SetDataOffset(in_tensor, runtime_allocator_->GetOffsetMap().at(src_t));
+        }
       } else {
         if (in_tensor->allocator() == default_allocator) {
-          src_t->set_allocator(runtime_allocator_);
-          ref_count[src_t] = src_t->init_ref_count();
-          runtime_allocator_->MallocTensorData(src_t);
+          in_tensor->set_allocator(runtime_allocator_);
+          runtime_allocator_->MallocTensorData(in_tensor);
+          tensor_ref_count[in_tensor] = in_tensor->init_ref_count();
+          data_ref_count[runtime_allocator_->GetOffsetMap().at(in_tensor)] = in_tensor->init_ref_count();
         }
       }
 
-      ref_count[src_t]--;
+      if (src_t->allocator() != runtime_allocator_) {
+        continue;
+      }
 
-      if (ref_count[src_t] <= 0 && src_t->allocator() == runtime_allocator_) {
-        runtime_allocator_->FreeTensorData(src_t);
+      tensor_ref_count[src_t]--;
+      data_ref_count[runtime_allocator_->GetOffsetMap().at(src_t)]--;
+
+      if (tensor_ref_count[src_t] <= 0) {
+        if (data_ref_count[runtime_allocator_->GetOffsetMap().at(src_t)] <= 0) {
+          runtime_allocator_->FreeTensorData(src_t);
+        }
       }
     }
 
@@ -1085,8 +1124,9 @@ void LiteSession::RuntimeAllocatorInitSubgraph() {
           continue;
         }
         tensor->set_allocator(runtime_allocator_);
-        ref_count[tensor] = tensor->init_ref_count();
         runtime_allocator_->MallocTensorData(tensor);
+        tensor_ref_count[tensor] = tensor->init_ref_count();
+        data_ref_count[runtime_allocator_->GetOffsetMap().at(tensor)] = tensor->init_ref_count();
       }
 
       /* free input after run */
@@ -1094,8 +1134,13 @@ void LiteSession::RuntimeAllocatorInitSubgraph() {
         if (tensor->allocator() != runtime_allocator_) {
           continue;
         }
-        if (--ref_count[tensor] <= 0) {
-          runtime_allocator_->FreeTensorData(tensor);
+        tensor_ref_count[tensor]--;
+        data_ref_count[runtime_allocator_->GetOffsetMap().at(tensor)]--;
+
+        if (tensor_ref_count[tensor] <= 0 && tensor->allocator() == runtime_allocator_) {
+          if (data_ref_count[runtime_allocator_->GetOffsetMap().at(tensor)] <= 0) {
+            runtime_allocator_->FreeTensorData(tensor);
+          }
         }
       }
     }
