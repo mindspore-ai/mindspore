@@ -67,6 +67,7 @@ constexpr auto kAbs = "Abs";
 constexpr auto kTrunc = "Trunc";
 constexpr auto kSquare = "Square";
 constexpr auto kReal = "Real";
+constexpr auto kGer = "Ger";
 
 // Arrays
 constexpr auto kDynamicShape = "DynamicShape";
@@ -467,6 +468,7 @@ inline const PrimitivePtr kPrimTensorListStack = std::make_shared<Primitive>("Te
 inline const PrimitivePtr kPrimTensorListSetItem = std::make_shared<Primitive>("TensorListSetItem");
 
 // Maths
+inline const PrimitivePtr kPrimGer = std::make_shared<Primitive>("Ger");
 inline const PrimitivePtr kPrimCeil = std::make_shared<Primitive>("Ceil");
 inline const PrimitivePtr kPrimTensorAdd = std::make_shared<Primitive>("TensorAdd");
 inline const PrimitivePtr kPrimAdd = std::make_shared<Primitive>(kAdd);

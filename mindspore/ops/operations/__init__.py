@@ -47,7 +47,7 @@ from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerA
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay)
 
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
-                       BitwiseAnd, BitwiseOr,
+                       BitwiseAnd, BitwiseOr, Ger,
                        BitwiseXor, Inv, Invert, ApproximateEqual, InplaceAdd, InplaceSub,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd, Cdist, ReduceAny,
                        Cos, Div, DivNoNan, Equal, EqualCount, Exp, Expm1, Erf, Erfc, Floor, FloorDiv, FloorMod, Ceil,
@@ -123,6 +123,7 @@ from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from ._inner_ops import (MatmulDDS, DSDMatmul, NonZero)
 
 __all__ = [
+    'Ger',
     'Unique',
     'ReverseSequence',
     'Sort',

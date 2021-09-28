@@ -65,6 +65,7 @@ from .dropout_do_mask import _dropout_do_mask_tbe
 from .dropout_do_mask_ds import _dropout_do_mask_ds_tbe
 from .gelu import _gelu_tbe
 from .gelu_grad import _gelu_grad_tbe
+from .ger import _ger_tbe
 from .fast_gelu import _fast_gelu_tbe
 from .fast_gelu_grad import _fast_gelu_grad_tbe
 from .max_pool import _max_pool_tbe
