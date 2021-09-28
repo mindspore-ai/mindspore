@@ -36,15 +36,7 @@
 
 namespace mindspore::lite::quant {
 class Calibrator;
-
-struct MaxMin {
- public:
-  float min;
-  float max;
-};
-
 constexpr int kDefaultBinNumber = 2048;
-
 struct DivergInfo {
   std::vector<float> histogram;
   CNodePtr cnode;
@@ -108,13 +100,9 @@ class FullQuantQuantizer : public Quantizer {
   int quant_min{INT8_MIN};
 
  private:
-  std::map<std::string, int> opname_bit_;
-
   bool per_channel_{true};
-
   TypeId target_type_{kNumberTypeInt8};
-
-  std::unique_ptr<Calibrator> calibrator_;
+  std::unique_ptr<Calibrator> calibrator_{nullptr};
 
   session::LiteSession *fp32_session_{nullptr};
   Model *fp32_model_{nullptr};
@@ -138,7 +126,6 @@ class FullQuantQuantizer : public Quantizer {
   const std::string kTypeConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion);
   const std::string kTypeDepthwiseConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion);
   const std::string kTypeConcat = schema::EnumNamePrimitiveType(schema::PrimitiveType_Concat);
-  const std::string kTypeAdd = schema::EnumNamePrimitiveType(schema::PrimitiveType_AddFusion);
 
   STATUS PreProcess();
 
