@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,28 @@
 
 namespace mindspore {
 namespace ops {
-REGISTER_PRIMITIVE_C(kNameTanh, Tanh);
+namespace {
+abstract::ShapePtr TanhInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+
+  return std::make_shared<abstract::Shape>(in_shape);
+}
+
+TypePtr TanhInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto x_dtype = input_args[kInputIndex0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, {kFloat16, kFloat32}, prim->name());
+  return x_dtype;
+}
+
+AbstractBasePtr TanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+
+  return abstract::MakeAbstract(TanhInferShape(primitive, input_args), TanhInferType(primitive, input_args));
+}
+}  // namespace
+REGISTER_PRIMITIVE_EVAL_IMPL(Tanh, prim::kPrimTanh, TanhInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
