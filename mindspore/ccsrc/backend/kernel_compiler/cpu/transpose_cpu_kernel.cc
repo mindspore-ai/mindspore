@@ -15,13 +15,11 @@
  */
 
 #include "backend/kernel_compiler/cpu/transpose_cpu_kernel.h"
-#include <algorithm>
 #include <vector>
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "common/thread_pool.h"
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/int8/transpose_int8.h"
-#include "nnacl/errorcode.h"
 
 namespace mindspore {
 namespace kernel {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/rank_cpu_kernel.h"
+#include <math.h>
 #include <type_traits>
 #include <functional>
 #include <limits>
