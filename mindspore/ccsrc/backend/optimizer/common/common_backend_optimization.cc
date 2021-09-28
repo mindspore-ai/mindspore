@@ -90,7 +90,7 @@ void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel
 #endif
 }
 
-void CommonUnifyMindIROptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_LOG(INFO) << "start common unify mindir opt graph:" << kernel_graph->graph_id();
 #ifdef ENABLE_DUMP_IR
