@@ -117,7 +117,7 @@ class StridedSliceGpuCommon {
   std::vector<bool> Dec2Bin(const int64_t &mask) {
     auto mask_str = std::bitset<MAX_DIMS>(mask).to_string();
     int64_t dim_idx = 0;
-    std::vector<bool> result = {false, false, false, false};
+    std::vector<bool> result(MAX_DIMS, false);
     for (int64_t i = mask_str.size() - 1; i >= 0; i--) {
       if (mask_str[i] == '1') {
         result[dim_idx] = true;

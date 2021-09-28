@@ -78,7 +78,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
 
     const float alpha = 1;
     if (use_pad_) {
-      T *padded = GetPossiblyNullDeviceAddress<T>(workspace, 1);
+      T *padded = GetDeviceAddress<T>(workspace, 1);
 
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_,
@@ -321,7 +321,9 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     }
   }
   void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
-    auto shp_tuple_x = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("input_sizes")->cast<ValueTuplePtr>()->value();
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto shp_tuple_x = prim->GetAttr("input_sizes")->cast<ValueTuplePtr>()->value();
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
                          [](const ValuePtr &e) -> size_t { return static_cast<int>(e->cast<Int64ImmPtr>()->value()); });
   }

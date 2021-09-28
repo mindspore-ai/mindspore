@@ -124,14 +124,14 @@ class SoftmaxGpuKernel : public GpuKernel {
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "LogSoftmax") {
       algo_ = CUDNN_SOFTMAX_LOG;
-      auto axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
+      auto axis = LongToInt(GetAttr<int64_t>(kernel_node, "axis"));
       InitSizeByAxis(input_shape, axis);
     } else {
       algo_ = CUDNN_SOFTMAX_ACCURATE;
       std::vector<int> axis;
       std::vector<int64_t> axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
       (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
-                           [](const int64_t &value) { return static_cast<int>(value); });
+                           [](const int64_t &value) { return LongToInt(value); });
       if (axis.size() < 1) {
         MS_LOG(EXCEPTION) << "For 'SoftmaxGpuKernel', the rank of axis should be greater than or equal to 1, "
                           << "but got the rank of axis: " << axis.size();

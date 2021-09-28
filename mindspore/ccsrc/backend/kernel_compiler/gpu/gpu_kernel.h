@@ -101,7 +101,9 @@ class GpuKernel : public KernelMod {
     }
 
     if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {
-      MS_LOG(EXCEPTION) << "The device address is empty, address index: " << index;
+      auto kernel_node = kernel_node_.lock();
+      const std::string &prim_name = AnfAlgo::GetCNodeName(kernel_node);
+      MS_LOG(EXCEPTION) << "The device address is empty, address index: " << index << ", op name is: " << prim_name;
     }
 
     return reinterpret_cast<T *>(addr_list[index]->addr);

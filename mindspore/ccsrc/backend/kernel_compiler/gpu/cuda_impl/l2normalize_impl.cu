@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,11 @@ __global__ void AssignEps(const size_t size, const float eps, T* value) {
     float max = v > eps ? v : eps;
     value[pos] = static_cast<T>(max);
   }
-  return;
 }
 
 template <typename T>
 void GetMaxWithEpsAndValue(const size_t size, const float eps, T* value, cudaStream_t cuda_stream) {
   AssignEps<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, eps, value);
-
-  return;
 }
 
 template void GetMaxWithEpsAndValue<float>(const size_t size, const float eps, float* value, cudaStream_t cuda_stream);

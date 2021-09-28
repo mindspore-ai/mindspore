@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-#define NBDIMS 4
+constexpr int NBDIMS = 4;
 template <typename T>
 class ConvGradFilterGpuBkwKernel : public GpuKernel {
  public:
@@ -306,7 +306,9 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
     }
   }
   void GetFilterShape(const CNodePtr &kernel_node, std::vector<size_t> *filter_shape) {
-    auto shp_tuple_x = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("filter_sizes")->cast<ValueTuplePtr>()->value();
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto shp_tuple_x = prim->GetAttr("filter_sizes")->cast<ValueTuplePtr>()->value();
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*filter_shape),
                          [](const ValuePtr &e) -> size_t { return static_cast<int>(e->cast<Int64ImmPtr>()->value()); });
   }

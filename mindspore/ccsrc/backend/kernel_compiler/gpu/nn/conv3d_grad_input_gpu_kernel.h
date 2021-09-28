@@ -137,14 +137,13 @@ class Conv3dGradInputGpuKernel : public GpuKernel {
       pad_left_ = pad_list[4];
       int dimA[kNumDims];
       int strideApadded[kNumDims];
-      if (data_format_ == kOpFormat_NCDHW) {
-        auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_depth_ + pad_depth_),
-                             IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_)};
-        SetDimA(padded_shape, dimA, kNumDims, data_format_);
-        SetStrideA(padded_shape, strideApadded, kNumDims, data_format_);
-      } else {
+      if (data_format_ != kOpFormat_NCDHW) {
         MS_LOG(EXCEPTION) << "Conv3dGradInputGpuKernel only support NCDHW format right now.";
       }
+      auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_depth_ + pad_depth_),
+                           IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_)};
+      SetDimA(padded_shape, dimA, kNumDims, data_format_);
+      SetStrideA(padded_shape, strideApadded, kNumDims, data_format_);
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_, cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, kNumDims, dimA, strideApadded),
         "cudnnSetTensorNdDescriptor failed");
@@ -310,7 +309,9 @@ class Conv3dGradInputGpuKernel : public GpuKernel {
   }
 
   void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
-    auto shp_tuple_x = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("input_size")->cast<ValueTuplePtr>()->value();
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto shp_tuple_x = prim->GetAttr("input_size")->cast<ValueTuplePtr>()->value();
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
                          [](const ValuePtr &e) -> size_t { return static_cast<int>(e->cast<Int64ImmPtr>()->value()); });
   }

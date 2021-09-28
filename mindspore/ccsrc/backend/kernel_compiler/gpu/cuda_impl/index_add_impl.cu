@@ -31,7 +31,6 @@ __global__ void IndexAddAtomic(T *dst, const int *index, const T *src, const siz
       MsAtomicAdd(&dst[dst_idx], src[pos]);
     }
   }
-  return;
 }
 
 template <typename T>
@@ -47,7 +46,6 @@ __global__ void IndexAdd(T *dst, const int *index, const T *src, const size_t sr
       dst[dst_idx] += src[pos];
     }
   }
-  return;
 }
 
 template <typename T>
@@ -61,7 +59,6 @@ void CalIndexAdd(T *dst, const int *index, const T *src, const size_t outer_size
     IndexAdd<<<GET_BLOCKS(src_size), GET_THREADS, 0, cuda_stream>>>(dst, index, src, src_size, outer_size,
       src_axis_size, dst_axis_size, inner_size);
   }
-  return;
 }
 
 template void CalIndexAdd<double>(double *dst, const int *index, const double *src, const size_t outer_size,

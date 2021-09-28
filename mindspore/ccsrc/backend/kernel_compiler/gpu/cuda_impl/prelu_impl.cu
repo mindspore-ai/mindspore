@@ -30,7 +30,6 @@ void CalPReLU(size_t size, size_t weight_size, size_t per_channel_size,
               const T *input, const T *weight, T *output, cudaStream_t cuda_stream) {
   CalPReLUKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, weight_size, per_channel_size,
                                                                     input, weight, output);
-  return;
 }
 
 template void CalPReLU(size_t, size_t, size_t, const float *, const float *, float *, cudaStream_t);

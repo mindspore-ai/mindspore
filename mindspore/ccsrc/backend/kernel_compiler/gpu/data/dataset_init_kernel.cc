@@ -43,9 +43,6 @@ bool DatasetInitKernel::Init(const CNodePtr &kernel_node) {
   for (auto item : types) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  if (types.size() < shapes.size()) {
-    MS_LOG(EXCEPTION) << "types size is less than shapes size.";
-  }
   for (size_t i = 0; i < shapes.size(); i++) {
     int unit = UnitSizeInBytes(types[i]->type_id());
     int nums = ElementNums(shapes[i]);

@@ -236,11 +236,11 @@ class CholeskyGpuKernel : public GpuKernel {
     size_t output_size = batch_ * m_ * lda_ * unit_size;
     output_size_list_.push_back(output_size);
     workspace_size = batch_ * sizeof(T *);
-    workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size);
+    (void)workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size);
     workspace_size = batch_ * sizeof(T *);
-    workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size);
+    (void)workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size);
     workspace_size = batch_ * sizeof(int);
-    workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size);
+    (void)workspace_size_list_.insert(workspace_size_list_.begin(), workspace_size);
   }
 
  private:

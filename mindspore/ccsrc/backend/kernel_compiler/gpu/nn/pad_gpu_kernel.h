@@ -89,9 +89,9 @@ class PadGpuFwdKernel : public GpuKernel {
     }
     input_rank_ = input_shape_.size();
 
-    std::vector<std::vector<int64_t>> paddings =
-      GetValue<std::vector<std::vector<int64_t>>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("paddings"));
-
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    std::vector<std::vector<int64_t>> paddings = GetValue<std::vector<std::vector<int64_t>>>(prim->GetAttr("paddings"));
     if (paddings.size() != input_rank_) {
       MS_LOG(EXCEPTION) << "PadGpuFwdKernel: paddings' size must be equal to the rank of the input.";
     }

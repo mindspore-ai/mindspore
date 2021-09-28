@@ -65,30 +65,6 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memoy failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
-    if (d_batch_mean == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGradGpuKernel d_batch_mean is null.";
-      return false;
-    }
-    if (d_batch_std == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGradGpuKernel d_batch_std is null.";
-      return false;
-    }
-    if (x == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGradGpuKernel x is null.";
-      return false;
-    }
-    if (batch_mean == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGradGpuKernel batch_mean is null.";
-      return false;
-    }
-    if (batch_std == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGradGpuKernel batch_std is null.";
-      return false;
-    }
-    if (current_step == nullptr) {
-      MS_LOG(ERROR) << "BatchNormFoldGradGpuKernel current_step is null.";
-      return false;
-    }
     T *dx = GetDeviceAddress<T>(outputs, 0);
 
     if (!is_training_ || current_step_host[0] >= freeze_bn_) {
@@ -115,9 +91,11 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
       return false;
     }
 
-    epsilon_ = GetValue<T>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("epsilon"));
-    is_training_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("is_training"));
-    freeze_bn_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("freeze_bn")));
+    auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    epsilon_ = GetValue<T>(prim->GetAttr("epsilon"));
+    is_training_ = GetValue<bool>(prim->GetAttr("is_training"));
+    freeze_bn_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("freeze_bn")));
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);

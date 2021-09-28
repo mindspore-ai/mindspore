@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,6 @@ __global__ void MaxPoolWithArgmax(const T* input,
     output[pos] = maxData;
     index[pos] = maxIdx;
   }
-  return;
 }
 
 template <typename T, typename S>
@@ -111,7 +110,6 @@ void CalMaxPoolWithArgmax(const T* input,
                         outputHW,
                         output,
                         index);
-  return;
 }
 
 template void CalMaxPoolWithArgmax<float, int>(const float* input,

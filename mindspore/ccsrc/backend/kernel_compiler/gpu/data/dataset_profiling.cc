@@ -49,6 +49,7 @@ void GetNextProfiling::SaveProfilingData() {
   }
   for (uint32_t index = 0; index < queue_size_.size(); index++) {
     if (index > time_stamp_.size() - 1) {
+      handle.close();
       MS_LOG(EXCEPTION) << "index exceeds time_stamp_ size.";
     }
     handle << Name() << " " << time_stamp_[index].first << " " << time_stamp_[index].second << " " << queue_size_[index]
