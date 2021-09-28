@@ -2380,7 +2380,7 @@ class Concat(PrimitiveWithInfer):
         (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
 
     .. warning::
-        "axis" is in the range [-len(x.shape), len(x.shape)].
+        The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
 
     Args:
         axis (int): The specified axis. Default: 0.
@@ -2393,8 +2393,8 @@ class Concat(PrimitiveWithInfer):
           where the :math:`R` indicates the last axis.
 
     Outputs:
-        Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-        The data type is the same with `input_x`.
+        - Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
+          The data type is the same with `input_x`.
 
     Raises:
         TypeError: If `axis` is not an int.
@@ -2819,7 +2819,7 @@ class ReverseV2(PrimitiveWithInfer):
     Reverses specific dimensions of a tensor.
 
     .. warning::
-        "axis" must be within the rank of "input_x".
+        The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
 
     Args:
         axis (Union[tuple(int), list(int)): The indices of the dimensions to reverse.
