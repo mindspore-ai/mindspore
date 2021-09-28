@@ -18,7 +18,6 @@
 #include <iostream>
 
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -46,10 +45,10 @@ void SkipOp::Print(std::ostream &out, bool show_all) const {
 
 Status SkipOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
 
-Status SkipOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+Status SkipOp::GetNextRow(TensorRow *row) {
   bool eoe_received = false;
   while (skip_count_ < max_skips_) {
-    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
     if (row->eoe()) {
       eoe_received = true;
       break;
@@ -57,7 +56,7 @@ Status SkipOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) 
     skip_count_++;
   }
   if (!eoe_received) {
-    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
   }
   if (row->eoe()) {
     UpdateRepeatAndEpochCounter();

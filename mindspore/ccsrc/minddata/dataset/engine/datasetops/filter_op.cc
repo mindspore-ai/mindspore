@@ -118,8 +118,7 @@ Status FilterOp::WorkerEntry(int32_t worker_id) {
       if (result) {
         RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(new_row));
       } else {
-        TensorRow empty_row;
-        RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(empty_row));
+        RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagSkip)));
       }
     }
     RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&new_row));

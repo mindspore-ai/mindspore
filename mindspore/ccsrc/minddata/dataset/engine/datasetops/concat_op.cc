@@ -20,7 +20,6 @@
 
 #include "minddata/dataset/core/config_manager.h"
 
-#include "minddata/dataset/engine/db_connector.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -147,20 +146,20 @@ bool ConcatOp::IgnoreSample() {
   return ret;
 }
 
-Status ConcatOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+Status ConcatOp::GetNextRow(TensorRow *row) {
   bool is_not_mappable_or_second_ne_zero = true;
 
   if (!children_flag_and_nums_.empty()) {
     bool is_not_mappable = static_cast<bool>(children_flag_and_nums_[cur_child_].first);
     is_not_mappable_or_second_ne_zero = is_not_mappable || (!children_flag_and_nums_[cur_child_].second);
   }
-  RETURN_IF_NOT_OK(child_[cur_child_]->GetNextRow(row, worker_id, retry_if_eoe));
+  RETURN_IF_NOT_OK(child_[cur_child_]->GetNextRow(row));
 
   if (!row->eoe() && !row->eof()) {
     if (!verified_) RETURN_IF_NOT_OK(Verify(cur_child_, *row));
 
     if (IgnoreSample()) {
-      RETURN_IF_NOT_OK(GetNextRow(row, worker_id, retry_if_eoe));
+      RETURN_IF_NOT_OK(GetNextRow(row));
     }
 
     return Status::OK();
@@ -179,13 +178,13 @@ Status ConcatOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe
     }
     cur_child_++;
     verified_ = false;
-    RETURN_IF_NOT_OK(GetNextRow(row, worker_id, retry_if_eoe));
+    RETURN_IF_NOT_OK(GetNextRow(row));
     return Status::OK();
   }
   if (row->eof()) {
     CHECK_FAIL_RETURN_UNEXPECTED(cur_child_ == 0, "Received an unexpected EOF.");
     for (int32_t i = cur_child_ + 1; i < child_.size(); i++) {
-      RETURN_IF_NOT_OK(child_[i]->GetNextRow(row, worker_id, retry_if_eoe));
+      RETURN_IF_NOT_OK(child_[i]->GetNextRow(row));
       CHECK_FAIL_RETURN_UNEXPECTED(row->eof(), "Row must be an EOF.");
     }
     return Status::OK();

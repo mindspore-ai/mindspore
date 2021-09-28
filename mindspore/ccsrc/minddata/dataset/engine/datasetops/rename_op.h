@@ -62,7 +62,7 @@ class RenameOp : public PipelineOp {
   // Gets a row from the child node and projects that row. The caller is typically our parent node.
   // @param row - output pointer to the projected row.
   // @param worker_id - The worker id
-  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
+  Status GetNextRow(TensorRow *row) override;
 
  protected:
   // Rename core functionality

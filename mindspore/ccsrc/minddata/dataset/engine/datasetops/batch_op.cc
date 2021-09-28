@@ -22,7 +22,6 @@
 #include "minddata/dataset/core/pybind_support.h"
 #endif
 
-#include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/util/status.h"
 

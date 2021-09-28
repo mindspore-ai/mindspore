@@ -48,8 +48,8 @@ void ProjectOp::Print(std::ostream &out, bool show_all) const {
 }
 
 // Gets a row from the child operator and projects the buffer.
-Status ProjectOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
-  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+Status ProjectOp::GetNextRow(TensorRow *row) {
+  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
   if (!row->eoe() && !row->eof()) {
     *row = Project(*row);
   }

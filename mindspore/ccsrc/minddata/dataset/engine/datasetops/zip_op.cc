@@ -18,7 +18,6 @@
 #include <algorithm>
 
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/util/log_adapter.h"
 
@@ -31,13 +30,12 @@ ZipOp::ZipOp() : PipelineOp(0) {}
 ZipOp::~ZipOp() {}
 
 // fetches next zipped (merged) row
-Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child, int32_t worker_id,
-                               bool retry_if_eoe) {
+Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child) {
   *new_zip_row = {};
   // iterate over all iterators and generate a row
   for (int32_t i = 0; i < child_.size(); ++i) {
     TensorRow new_row;
-    RETURN_IF_NOT_OK(child_[i]->GetNextRow(&new_row, worker_id, retry_if_eoe));
+    RETURN_IF_NOT_OK(child_[i]->GetNextRow(&new_row));
     if (new_row.eoe() || new_row.eof()) {
       *new_zip_row = new_row;
       *skip_child = i;
@@ -51,13 +49,13 @@ Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child
 }
 
 // drain end of epoch messages from iterator for this epoch
-Status ZipOp::drainPipeline(int32_t skip_child, int32_t worker_id, bool retry_if_eoe) {
+Status ZipOp::drainPipeline(int32_t skip_child) {
   for (int32_t con = 0; con < child_.size(); ++con) {
     if (con == skip_child) continue;
     MS_LOG(DEBUG) << "Zip operator draining child at " << con << ".";
     TensorRow row;
     while (!row.eoe()) {
-      RETURN_IF_NOT_OK(child_[con]->GetNextRow(&row, worker_id, retry_if_eoe));
+      RETURN_IF_NOT_OK(child_[con]->GetNextRow(&row));
     }
   }
   // at this point all connectors don't contain end of epoch messages. next iteration should be clean
@@ -121,13 +119,13 @@ Status ZipOp::ComputeColMap() {
 
 Status ZipOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
 
-Status ZipOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+Status ZipOp::GetNextRow(TensorRow *row) {
   int32_t skip_child = -1;
-  RETURN_IF_NOT_OK(getNextZippedRow(row, &skip_child, worker_id, retry_if_eoe));
+  RETURN_IF_NOT_OK(getNextZippedRow(row, &skip_child));
   if (row->eoe()) {
     UpdateRepeatAndEpochCounter();
     MS_LOG(DEBUG) << "Zip operator is now draining child inputs.";
-    RETURN_IF_NOT_OK(drainPipeline(skip_child, worker_id, retry_if_eoe));
+    RETURN_IF_NOT_OK(drainPipeline(skip_child));
   }
   return Status::OK();
 }

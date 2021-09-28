@@ -26,7 +26,7 @@
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 
-#include "minddata/dataset/engine/db_connector.h"
+#include "minddata/dataset/engine/operator_connector.h"
 #ifndef ENABLE_ANDROID
 #include "utils/system/crc32c.h"
 #include "utils/log_adapter.h"
@@ -212,9 +212,7 @@ std::vector<DatasetOp *> DatasetOp::parents() const { return parent_; }
 void DatasetOp::CreateConnector() {
   MS_LOG(DEBUG) << "Creating connector in tree operator: " << operator_id_ << ".";
   if (oc_queue_size_ > 0) {
-    out_connector_ = std::make_unique<DbConnector>(1,  // The number of producers
-                                                   1,  // Only one consumer (the training App)
-                                                   oc_queue_size_);
+    out_connector_ = std::make_unique<OperatorConnector>(oc_queue_size_);
   } else {
     // Some op's may choose not to have an output connector
     MS_LOG(DEBUG) << "Bypassed connector creation for tree operator: " << operator_id_ << ".";
@@ -258,9 +256,9 @@ Status DatasetOp::GetNextRowPullMode(TensorRow *const row) {
 }
 
 // Gets the next row from the given child
-Status DatasetOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+Status DatasetOp::GetNextRow(TensorRow *row) {
   // pop is a blocked call and will throw an interruption if the whole group shuts down.
-  RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), row, retry_if_eoe));
+  RETURN_IF_NOT_OK(out_connector_->PopFront(row));
   return Status::OK();
 }
 
@@ -298,12 +296,12 @@ Status DatasetOp::GetClassIndexing(std::vector<std::pair<std::string, std::vecto
 // Performs handling for when an eoe message is received.
 // The base class implementation simply flows the eoe message to output. Derived classes
 // may override if they need to perform special eoe handling.
-Status DatasetOp::EoeReceived(int32_t worker_id) { return out_connector_->SendEOE(worker_id); }
+Status DatasetOp::EoeReceived(int32_t worker_id) { return out_connector_->SendEOE(); }
 
 // Performs handling for when an eof message is received.
 // The base class implementation simply flows the eof message to output. Derived classes
 // may override if they need to perform special eof handling.
-Status DatasetOp::EofReceived(int32_t worker_id) { return out_connector_->SendEOF(worker_id); }
+Status DatasetOp::EofReceived(int32_t worker_id) { return out_connector_->SendEOF(); }
 
 // During tree prepare phase, operators may have specific post-operations to perform depending on their role.
 Status DatasetOp::PrepareOperator() {

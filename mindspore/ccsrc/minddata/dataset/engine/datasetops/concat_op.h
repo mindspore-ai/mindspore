@@ -72,7 +72,7 @@ class ConcatOp : public PipelineOp {
   /// \return Status - The status code return
   Status GetNumClasses(int64_t *num_classes) override;
 
-  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
+  Status GetNextRow(TensorRow *row) override;
 
   /// Check if the current sample will be taken or dropped
   /// \return bool

@@ -25,7 +25,7 @@
 
 #include "minddata/dataset/callback/callback_manager.h"
 #include "minddata/dataset/include/dataset/constants.h"
-#include "minddata/dataset/engine/db_connector.h"
+#include "minddata/dataset/engine/operator_connector.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -149,16 +149,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   /// \brief Gets the next row from the given child
   /// \param row[out] - Fetched TensorRow
-  /// \param worker_id[in] - The worker id, default to 0.
   /// \return Status The status code returned
-  virtual Status GetNextRow(TensorRow *row, int32_t worker_id = 0) { return GetNextRow(row, worker_id, false); }
-
-  /// \brief Gets the next row from the given child
-  /// \param row[out] - Fetched TensorRow
-  /// \param worker_id[in] - The worker id, default to 0.
-  /// \param retry_if_eoe Set this flag to true to allow calling pop() again after the first pop() returns EOE.
-  /// \return Status The status code returned
-  virtual Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe);
+  virtual Status GetNextRow(TensorRow *row);
 
   // \brief Gets the batch size
   // \return Status - The status code return
@@ -371,7 +363,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   int32_t op_num_repeats_per_epoch_;                             // Total number of repeats per epoch for the operator
   int32_t op_current_repeats_;                                   // Current number of repeats the operator has handled
   int32_t op_current_epochs_;                                    // Current number of epochs the operator has handled
-  std::unique_ptr<DbConnector> out_connector_;                   // Output Connector
+  std::unique_ptr<OperatorConnector> out_connector_;             // Output Connector
   std::unordered_map<std::string, int32_t> column_name_id_map_;  // Mapping between col index and col name
   std::mutex column_name_map_mutex_;                             // For protecting shared access to the column map
   CallbackManager callback_manager_;                             // Manages callbacks associated with a DatasetOp

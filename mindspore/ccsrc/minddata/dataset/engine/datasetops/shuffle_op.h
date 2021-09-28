@@ -32,10 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Forward declare
-class ExecutionTree;
-
-class DbConnector;
 
 class ShuffleOp : public PipelineOp {
   // Shuffle buffer state flags

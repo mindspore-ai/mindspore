@@ -24,7 +24,6 @@
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/mind_record_sampler.h"
 #include "minddata/mindrecord/include/shard_column.h"
-#include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/util/log_adapter.h"
