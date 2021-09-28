@@ -15,8 +15,6 @@
  */
 #include "backend/optimizer/common/const_input_to_attr_registry.h"
 
-#include <utility>
-
 #include "utils/utils.h"
 #include "utils/log_adapter.h"
 #include "base/core_ops.h"
