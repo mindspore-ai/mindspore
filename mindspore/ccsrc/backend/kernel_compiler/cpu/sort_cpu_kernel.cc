@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/sort_cpu_kernel.h"
-#include <vector>
 #include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void SortCpuKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
