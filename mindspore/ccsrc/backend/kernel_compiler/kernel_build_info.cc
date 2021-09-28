@@ -15,7 +15,6 @@
  */
 
 #include "backend/kernel_compiler/kernel_build_info.h"
-#include <algorithm>
 #include "utils/log_adapter.h"
 #include "debug/anf_ir_dump.h"
 namespace mindspore {
