@@ -60,6 +60,8 @@ Status CacheMergeOp::operator()() {
 
   RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
 
+  RETURN_IF_NOT_OK(
+    tree_->LaunchWorkers(1, std::bind(&CacheMergeOp::CacheMissMaster, this), Name() + "::CacheMissMaster", id()));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
                                         std::bind(&CacheMergeOp::CacheMissWorkerEntry, this, std::placeholders::_1),
                                         Name() + "::CacheMissWorkerEntry", id()));
@@ -70,6 +72,14 @@ Status CacheMergeOp::operator()() {
       tree_->AllTasks()->CreateAsyncTask("Cleaner", std::bind(&CacheMergeOp::Cleaner, this), nullptr, id()));
   }
   TaskManager::FindMe()->Post();
+  TensorRow new_row;
+  auto child_iterator = std::make_unique<ChildIterator>(this, 0, kCacheHitChildIdx);
+  int64_t ctr = 0;
+  do {
+    RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+    RETURN_IF_NOT_OK(worker_in_queues_[ctr++ % num_workers_]->EmplaceBack(std::move(new_row)));
+  } while (!new_row.eof());
+
   return Status::OK();
 }
 
@@ -78,12 +88,11 @@ Status CacheMergeOp::operator()() {
 Status CacheMergeOp::WorkerEntry(int32_t worker_id) {
   TaskManager::FindMe()->Post();
   TensorRow new_row;
-  auto child_iterator = std::make_unique<ChildIterator>(this, worker_id, kCacheHitChildIdx);
-  RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&new_row));
   while (!new_row.eof()) {
     if (new_row.eoe()) {
       RETURN_IF_NOT_OK(EoeReceived(worker_id));
-      RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+      RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&new_row));
     } else {
       if (new_row.empty()) {
         auto row_id = new_row.getId();
@@ -92,10 +101,25 @@ Status CacheMergeOp::WorkerEntry(int32_t worker_id) {
       }
       RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(new_row)));
 
-      RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+      RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&new_row));
     }
   }
   RETURN_IF_NOT_OK(EofReceived(worker_id));
+  return Status::OK();
+}
+
+Status CacheMergeOp::CacheMissMaster() {
+  missWorkers_in_queues_.Init(num_workers_, oc_queue_size_);
+  RETURN_IF_NOT_OK(missWorkers_in_queues_.Register(tree_->AllTasks()));
+  TaskManager::FindMe()->Post();
+  RETURN_IF_NOT_OK(cache_client_->CacheSchema(column_name_id_map()));
+  TensorRow new_row;
+  auto child_iterator = std::make_unique<ChildIterator>(this, 0, kCacheMissChildIdx);
+  int64_t ctr = 0;
+  do {
+    RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+    RETURN_IF_NOT_OK(missWorkers_in_queues_[ctr++ % num_workers_]->EmplaceBack(std::move(new_row)));
+  } while (!new_row.eof());
   return Status::OK();
 }
 
@@ -106,12 +130,9 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
   // If we see an eoe, ignore it. For eof, we exit.
   // Before we start, cache the schema at the server. Pick one of the workers
   // do it. The schema should have been done at prepare time.
-  if (workerId == 0) {
-    RETURN_IF_NOT_OK(cache_client_->CacheSchema(column_name_id_map()));
-  }
+
   TensorRow new_row;
-  auto child_iterator = std::make_unique<ChildIterator>(this, workerId, kCacheMissChildIdx);
-  RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+  RETURN_IF_NOT_OK(missWorkers_in_queues_[workerId]->PopFront(&new_row));
   while (!new_row.eof()) {
     if (new_row.eoe()) {
       // Ignore it.
@@ -152,7 +173,7 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
       }
       RETURN_IF_NOT_OK(cache_miss_.Add(row_id, std::move(new_row)));
     }
-    RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
+    RETURN_IF_NOT_OK(missWorkers_in_queues_[workerId]->PopFront(&new_row));
   }
   return Status::OK();
 }
@@ -233,6 +254,7 @@ Status CacheMergeOp::EoeReceived(int32_t worker_id) {
 // Base-class override for handling cases when an eof is received.
 Status CacheMergeOp::EofReceived(int32_t worker_id) {
   // Send the eof up.
+  MS_LOG(DEBUG) << "Cache merge sending eof";
   RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
   return Status::OK();
 }

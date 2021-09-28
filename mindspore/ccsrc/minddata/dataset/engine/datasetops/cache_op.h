@@ -80,9 +80,14 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   WaitPost rows_cache_done_;
   std::atomic<int64_t> num_guys_in_;
   Phase phase_;
+
+  QueueList<TensorRow> cache_workers_in_queue_;
   /// \brief The main thread will wait until all the rows are cached and will start the handshake with the sampler.
   /// \return Status object
   Status WaitForCachingAllRows();
+
+  Status CacheAllRowsMaster();
+
   /// \brief For non-mappable dataset, there is a build phase where we cache all the rows.
   /// \return Status object
   Status CacheAllRows(int32_t worker_id);

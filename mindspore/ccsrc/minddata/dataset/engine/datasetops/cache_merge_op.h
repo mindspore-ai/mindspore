@@ -101,6 +101,10 @@ class CacheMergeOp : public ParallelOp<TensorRow, TensorRow> {
   /// \return Status The status code returned
   Status PrepareOperator() override;
 
+  /// \brief Main thread to fetch rows from the miss child and assign it to workers
+  /// \return Status The status code returned
+  Status CacheMissMaster();
+
   /// \brief Entry function for worker thread that fetch rows from the cache miss stream
   /// \param workerId
   /// \return Status object
@@ -127,6 +131,8 @@ class CacheMergeOp : public ParallelOp<TensorRow, TensorRow> {
   int32_t num_cleaners_;
   std::shared_ptr<CacheClient> cache_client_;
   std::atomic<bool> cache_missing_rows_;
+
+  QueueList<TensorRow> missWorkers_in_queues_;
 
   /// \brief Locate the cache request from the io_request_ map
   /// \param row_id
