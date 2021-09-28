@@ -218,6 +218,8 @@ OP_TYPE(TensorArrayRead)
 OP_TYPE(TensorArrayWrite)
 // kaldi affine op
 OP_TYPE(Affine)
+OP_TYPE(AllGather)
+OP_TYPE(ReduceScatter)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1201,3 +1203,12 @@ OP_SCHEMA_DEF_END(Affine)
 
 OP_SCHEMA_DEF(ScatterNdUpdate)
 OP_SCHEMA_DEF_END(ScatterNdUpdate)
+
+OP_SCHEMA_DEF(AllGather)
+OP_ATTR(group, string)
+OP_SCHEMA_DEF_END(AllGather)
+
+OP_SCHEMA_DEF(ReduceScatter)
+OP_ATTR(group, string)
+OP_ATTR_ENUM(mode, ReduceMode)
+OP_SCHEMA_DEF_END(ReduceScatter)

@@ -218,6 +218,8 @@ union PrimitiveType {
     TensorArrayRead,
     TensorArrayWrite,
     Affine,
+    AllGather,
+    ReduceScatter,
 }
 
 table Abs {
@@ -1200,4 +1202,13 @@ table Affine {
 }
 
 table ScatterNdUpdate {
+}
+
+table AllGather {
+    group: string;
+}
+
+table ReduceScatter {
+    group: string;
+    mode: ReduceMode;
 }
