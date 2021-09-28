@@ -15,100 +15,23 @@
 """kernel build server for ascend"""
 import sys
 import warnings
+import json
 
 from mindspore._extends.parallel_compile.tbe_compiler.tbe_job_manager import TbeJobManager
-from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import check_supported
-from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import create_tbe_parallel_process, op_select_format
 from mindspore._extends.remote.kernel_build_server import Messager, get_logger, AkgBuilder
 
 
-class TbeBuilder:
-    """Tbe building wrapper"""
-
-    def __init__(self):
-        self.tbe_builder = create_tbe_parallel_process()
-        self.tbe_job_manager = TbeJobManager()
-
-    def init_auto_tune_env(self, mode):
-        return self.tbe_builder.init_auto_tune_env(mode)
-
-    def create(self):
-        return self.tbe_builder.init_process_num()
-
-    def start(self, json):
-        return self.tbe_builder.start_compile_op(json)
-
-    def wait(self):
-        return self.tbe_builder.wait_one()
-
-    def reset(self):
-        self.tbe_builder.reset_task_info()
-
-    def exit(self):
-        self.tbe_builder.exit()
-        self.tbe_job_manager.reset()
-
-    def job_process(self, json):
-        return self.tbe_job_manager.job_handler(json)
-
-
 class AscendMessager(Messager):
-
-    '''
+    """
     Ascend Messager
     It works as a server, communicating with c++ client.
-    '''
+    """
 
     def __init__(self, fdin, fdout):
         super().__init__(fdin, fdout)
         get_logger().info("[TRACE] Ascend Messager init...")
-        self.tbe_builder = TbeBuilder()
+        self.tbe_builder = TbeJobManager()
         self.akg_builder = AkgBuilder("ASCEND")
-
-    def tbe_handle(self, arg):
-        """
-        Handle arg start with TBE
-        """
-        if arg == 'TBE/PRE':
-            ans = self.tbe_builder.create()
-            self.send_res(ans)
-        elif arg == "TBE/TUNE":
-            self.send_ack()
-            tune_mode = self.get_message()
-            ans = self.tbe_builder.init_auto_tune_env(tune_mode)
-            self.send_res(ans)
-        elif arg == 'TBE/START':
-            self.send_ack()
-            json = self.get_message()
-            res = self.tbe_builder.start(json)
-            self.send_res(res)
-        elif arg == 'TBE/JOB':
-            self.send_ack()
-            json = self.get_message()
-            res = self.tbe_builder.job_process(json)
-            self.send_res(res)
-        elif arg == 'TBE/WAIT':
-            self.send_ack()
-            task_id, res, pre = self.tbe_builder.wait()
-            get_logger().debug(f"[TRACE] {str(task_id)} / {str(res)} / {str(pre)}")
-            if self.get_message() != 'CONTINUE':
-                self.send_ack(False)
-                self.exit()
-            self.send_res(task_id)
-            if self.get_message() != 'CONTINUE':
-                self.send_ack(False)
-                self.exit()
-            self.send_res(res)
-            if self.get_message() != 'CONTINUE':
-                self.send_ack(False)
-                self.exit()
-            self.send_res(pre)
-        elif arg == 'TBE/RESET':
-            self.tbe_builder.reset()
-            self.send_ack()
-        else:
-            self.send_ack(False)
-            self.exit()
 
     def handle(self):
         """
@@ -116,33 +39,29 @@ class AscendMessager(Messager):
         Reference protocol between them at PR#3821 and PR#3935
         """
         arg = self.get_message()
-        if arg.startswith('TBE'):
-            self.tbe_handle(arg)
-        elif arg.startswith('AKG'):
+        if arg.startswith('AKG'):
             self.akg_builder.handle(self, arg)
-        elif arg == 'FORMAT':
-            self.send_ack()
-            json = self.get_message()
-            self.send_res(op_select_format(json))
-        elif arg == 'SUPPORT':
-            self.send_ack()
-            json = self.get_message()
-            get_logger().debug(f"[SUPPORT] {json}")
+        else:
+            job_json = dict()
             try:
-                res = check_supported(json)
+                job_json = json.loads(arg)
             except json.decoder.JSONDecodeError:
+                get_logger().error("[TRACE] Request is not a json message: {}".format(arg))
                 self.send_ack(False)
                 self.exit()
             finally:
                 pass
-            self.send_res(res)
-        else:
-            self.send_ack(False)
-            self.exit()
+
+            if "job_type" in job_json:
+                res = self.tbe_builder.job_handler(arg)
+                self.send_res(res)
+            else:
+                get_logger().error("[TRACE] Request is not a TBE Job message: {}".format(arg))
+                self.send_ack(False)
+                self.exit()
 
     def exit(self):
         self.tbe_builder.reset()
-        self.tbe_builder.exit()
         get_logger().info("[TRACE] Ascend Messager Exit...")
         exit()
 

@@ -239,7 +239,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
   bool CheckSupported(const std::string &json);
 
   // Run TBE building.
-  std::string TbeSendJob(const std::string &json);
+  std::string TbeSendJob(const std::string &job_json_str);
   int TbeStart(const std::string &json, const std::string &mode);
   bool TbeWait(int *task_id, std::string *task_result, std::string *pre_build_result);
   void TbeReset();

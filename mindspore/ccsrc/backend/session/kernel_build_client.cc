@@ -128,14 +128,8 @@ int AscendKernelBuildClient::TbeStart(const std::string &json, const std::string
   return std::stoi(res);
 }
 
-std::string AscendKernelBuildClient::TbeSendJob(const std::string &json) {
-  auto res = SendRequest(kTbeJob);
-  if (res != kAck) {
-    MS_LOG(ERROR) << "Send TBE job failed, res: " << res;
-    return "";
-  }
-  // Send the json data.
-  res = SendRequest(json);
+std::string AscendKernelBuildClient::TbeSendJob(const std::string &job_json_str) {
+  auto res = SendRequest(job_json_str);
   if (res == kFailed) {
     MS_LOG(ERROR) << "Send TBE job json failed, res: " << res;
     return "";
