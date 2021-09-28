@@ -576,6 +576,11 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
         const auto &node = iter->second.first;
         const auto &output_index = iter->second.second;
         MS_EXCEPTION_IF_NULL(node);
+        // When the parameter does not have a user in the graph and is used as an output, the device address is null,
+        // and there is no need to set the device address for tensor.
+        if (!AnfAlgo::OutputAddrExist(node, output_index, false)) {
+          continue;
+        }
         auto address = AnfAlgo::GetMutableOutputAddr(node, output_index);
         // The outputs may have the same tensor, so need skip when the tensor has been set to device address.
         if ((address == nullptr) || (address->GetPtr() == nullptr)) {
