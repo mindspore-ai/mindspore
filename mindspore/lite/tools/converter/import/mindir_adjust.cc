@@ -287,6 +287,7 @@ int MindirAdjust::ResetFuncGraph(const FuncGraphPtr &fg, std::set<FuncGraphPtr> 
 }
 
 bool MindirAdjust::Run(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
   if (this->fmk_type_ != converter::kFmkTypeMs) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return lite::RET_OK;

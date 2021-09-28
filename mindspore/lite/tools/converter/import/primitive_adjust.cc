@@ -325,9 +325,13 @@ int MoveAttrMapConv2D(const CNodePtr &cnode) {
     group = GetValue<int64_t>(dst_prim->GetAttr(ops::kGroup));
   }
   if (group > 1) {
-    dst_prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    auto make_bool_ptr = MakeValue<bool>(true);
+    MS_CHECK_TRUE_MSG(make_bool_ptr != nullptr, RET_NULL_PTR, "make_bool_ptr is nullptr.");
+    dst_prim->AddAttr(ops::kIsDepthWise, make_bool_ptr);
   }
-  dst_prim->AddAttr(ops::kGroup, MakeValue(group));
+  auto make_value_ptr = MakeValue(group);
+  MS_CHECK_TRUE_MSG(make_value_ptr != nullptr, RET_NULL_PTR, "make_value_ptr is nullptr.");
+  dst_prim->AddAttr(ops::kGroup, make_value_ptr);
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
@@ -467,6 +471,7 @@ int MoveAttrMapResize(const CNodePtr &cnode) {
   auto dst_prim = std::make_shared<ops::Resize>();
   MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
   auto size = GetValue<std::vector<int64_t>>(src_prim->GetAttr(ops::kSize));
+  MS_CHECK_TRUE_MSG(size.size() > 1, RET_ERROR, "out of range.");
   dst_prim->set_new_height(size[0]);
   dst_prim->set_new_width(size[1]);
   if (src_prim->GetAttr(ops::kAlignCorners) != nullptr && GetValue<bool>(src_prim->GetAttr(ops::kAlignCorners))) {
@@ -533,6 +538,7 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
 }  // namespace
 
 bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
+  MS_ASSERT(func_graphs != nullptr);
   if (this->fmk_type_ != converter::kFmkTypeMs) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return lite::RET_OK;
@@ -544,11 +550,17 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
   int i = 0;
   for (auto func_graph : all_func_graphs) {
     func_graph->set_manager(root_func_manager);
-    func_graph->set_attr("fmk", MakeValue(static_cast<int>(FmkType::kFmkTypeMs)));
+    auto make_int_ptr = MakeValue(static_cast<int>(FmkType::kFmkTypeMs));
+    MS_CHECK_TRUE_MSG(make_int_ptr != nullptr, false, "make_int_ptr is nullptr.");
+    func_graph->set_attr("fmk", make_int_ptr);
     if (i == 0) {
-      func_graph->set_attr("graph_name", MakeValue("main_graph"));
+      auto make_value_ptr = MakeValue("main_graph");
+      MS_CHECK_TRUE_MSG(make_value_ptr != nullptr, false, "make_value_ptr is nullptr.");
+      func_graph->set_attr("graph_name", make_value_ptr);
     } else {
-      func_graph->set_attr("graph_name", MakeValue("subgraph" + std::to_string(i)));
+      auto make_value_ptr = MakeValue("subgraph" + std::to_string(i));
+      MS_CHECK_TRUE_MSG(make_value_ptr != nullptr, false, "make_value_ptr is nullptr.");
+      func_graph->set_attr("graph_name", make_value_ptr);
     }
     i++;
     auto node_list = TopoSort(func_graph->get_return());
