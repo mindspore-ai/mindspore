@@ -3,8 +3,10 @@ execute_process(
         COMMAND "${PYTHON_EXECUTABLE}" -c "import distutils.sysconfig as sysconfig; import os; \
                   print(os.path.join(sysconfig.get_config_var('LIBDIR'), sysconfig.get_config_var('PY3LIBRARY')))"
         RESULT_VARIABLE result
-        OUTPUT_VARIABLE PY3_LIB)
-string(STRIP "${PY3_LIB}" PY3_LIB)
+        OUTPUT_VARIABLE PY3_LIBG)
+string(STRIP "${PY3_LIBG}" PY3_LIBG)
+message("Python3 general library = " ${PY3_LIBG})
+string(STRIP "${PYTHON_LIBRARIES}" PY3_LIB)
 message("Python3 library = " ${PY3_LIB})
 # build mindspore_shared_lib
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
