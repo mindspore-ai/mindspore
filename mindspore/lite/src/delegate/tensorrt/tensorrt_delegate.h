@@ -49,11 +49,15 @@ class TensorRTDelegate : public Delegate {
 
   std::map<schema::PrimitiveType, TensorRTGetOp> op_func_lists_;
 
+  std::vector<schema::PrimitiveType> unsupport_hw_op_lists_;
+
   mindspore::Context *context_;
 
   std::shared_ptr<GPUDeviceInfo> device_info_{nullptr};
 
   TensorRTRuntime *runtime_{nullptr};
+
+  bool support_hw_resize_{true};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_

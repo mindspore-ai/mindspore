@@ -72,18 +72,35 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "network is invalid";
     return RET_ERROR;
   }
-
   nvinfer1::ITensor *shuffler_input = tensorrt_in_tensors_[0].trt_tensor_;
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(shuffler_input, tensorrt_in_tensors_[0].format_);
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      tensorrt_in_tensors_[0].format_ == Format::NCHW && !tensorrt_in_tensors_[0].trt_tensor_->isNetworkInput()) {
-    // network input tensor format can be NCHW
-    nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
-    if (transpose_layer == nullptr) {
-      MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
+      !SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
+    // only valid for nchw or nhwc
+    if (tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+      if (transpose_layer == nullptr) {
+        MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
+      }
+      transpose_layer->setName((op_name_ + "_transpose_in").c_str());
+      shuffler_input = transpose_layer->getOutput(0);
+      out_format_ = Format::NHWC;
+    } else if (tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+      nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+      if (transpose_layer == nullptr) {
+        MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
+      }
+      transpose_layer->setName((op_name_ + "_transpose_in").c_str());
+      shuffler_input = transpose_layer->getOutput(0);
+      out_format_ = Format::NCHW;
+    } else {
+      MS_LOG(ERROR) << "invalid input format for " << op_name_;
+      return RET_ERROR;
     }
-    transpose_layer->setName((op_name_ + "_transpose_in").c_str());
-    shuffler_input = transpose_layer->getOutput(0);
+  } else {
+    out_format_ = tensorrt_in_tensors_[0].format_;
   }
+  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(shuffler_input, out_format_);
 
   nvinfer1::IShuffleLayer *shuffle_layer = network->addShuffle(*shuffler_input);
   if (shuffle_layer == nullptr) {
@@ -129,7 +146,8 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   out_tensor->setName(out_tensors_[0].Name().c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, Format::NHWC});
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor, out_format_);
+  this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_});
   return RET_OK;
 }
 
@@ -158,7 +176,7 @@ int ShuffleTensorRT::AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   }
 
   nvinfer1::Dims squeeze_dims = lite::ConvertCudaDims(squeeze_shape);
-  MS_LOG(INFO) << "AddSqueezeOp: " << op_name_ << " squeeze_dims.nbDims: " << squeeze_dims.nbDims;
+  MS_LOG(DEBUG) << "AddSqueezeOp: " << op_name_ << " squeeze_dims.nbDims: " << squeeze_dims.nbDims;
 
   shuffle_layer->setReshapeDimensions(squeeze_dims);
   return shuffle_layer->getOutput(0) == nullptr ? RET_ERROR : RET_OK;
@@ -213,6 +231,15 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     perm_data++;
   }
   shuffle_layer->setFirstTranspose(perm);
+  if (perm_ternsor.ElementNum() == DIMENSION_4D) {
+    if (out_format_ == Format::NHWC && perm.order[1] == 3 && perm.order[2] == 1 && perm.order[3] == 2) {
+      out_format_ = Format::NCHW;
+    } else if (out_format_ == Format::NCHW && perm.order[1] == 2 && perm.order[2] == 3 && perm.order[3] == 1) {
+      out_format_ = Format::NHWC;
+    } else {
+      MS_LOG(WARNING) << "input format and perm order is invalid: " << op_name_;
+    }
+  }
   return RET_OK;
 }
 
@@ -249,7 +276,7 @@ int ShuffleTensorRT::InferReshapeDims(nvinfer1::Dims input_dims, nvinfer1::Dims 
   for (int i = 0; i < reshape_dims->nbDims; i++) {
     if (reshape_dims->d[i] == 0) {
       reshape_dims->d[i] = input_dims.d[i];
-      known_cnt *= input_dims.d[i];
+      known_cnt *= (input_dims.d[i] == -1 ? 1 : input_dims.d[i]);
     } else if (reshape_dims->d[i] == -1) {
       if (infer_index != -1) {
         MS_LOG(ERROR) << "invalid dims (more than one infer dim) for reshape " << op_name_;
@@ -263,14 +290,15 @@ int ShuffleTensorRT::InferReshapeDims(nvinfer1::Dims input_dims, nvinfer1::Dims 
   if (infer_index != -1) {
     size_t tot_cnt = 1;
     for (int i = 0; i < input_dims.nbDims; i++) {
-      tot_cnt *= input_dims.d[i];
+      tot_cnt *= (input_dims.d[i] == -1 ? 1 : input_dims.d[i]);
     }
     if (known_cnt == 0) {
       MS_LOG(ERROR) << "invalid known cnt for " << op_name_;
       return RET_ERROR;
     }
     reshape_dims->d[infer_index] = tot_cnt / known_cnt;
-    MS_LOG(INFO) << "reshape infer_index: " << infer_index << ", reshape infer value: " << reshape_dims->d[infer_index];
+    MS_LOG(DEBUG) << "reshape infer_index: " << infer_index
+                  << ", reshape infer value: " << reshape_dims->d[infer_index];
   }
   return RET_OK;
 }

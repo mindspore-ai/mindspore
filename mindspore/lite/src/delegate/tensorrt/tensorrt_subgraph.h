@@ -32,18 +32,21 @@ class TensorRTSubGraph : public kernel::Kernel {
  public:
   TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<mindspore::MSTensor> &inputs,
                    const std::vector<mindspore::MSTensor> &outputs, const mindspore::Context *ctx,
-                   std::shared_ptr<GPUDeviceInfo> device_info, TensorRTRuntime *runtime)
+                   std::shared_ptr<GPUDeviceInfo> device_info, TensorRTRuntime *runtime, bool support_hw_resize)
       : kernel::Kernel(inputs, outputs, nullptr, ctx),
         all_ops_(std::move(ops)),
         device_info_(device_info),
         runtime_(runtime) {
     trt_specific_weight_nodes_ = {
-      schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_ReduceFusion, schema::PrimitiveType_Transpose,
-      schema::PrimitiveType_Gather,       schema::PrimitiveType_Reshape,      schema::PrimitiveType_PowFusion,
-      schema::PrimitiveType_AddFusion,    schema::PrimitiveType_DivFusion,    schema::PrimitiveType_SubFusion,
-      schema::PrimitiveType_MatMul,       schema::PrimitiveType_PowFusion,    schema::PrimitiveType_Eltwise,
-      schema::PrimitiveType_ScaleFusion,  schema::PrimitiveType_MulFusion,    schema::PrimitiveType_StridedSlice,
-      schema::PrimitiveType_PadFusion};
+      schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_ReduceFusion,  schema::PrimitiveType_Transpose,
+      schema::PrimitiveType_Gather,       schema::PrimitiveType_Reshape,       schema::PrimitiveType_PowFusion,
+      schema::PrimitiveType_AddFusion,    schema::PrimitiveType_DivFusion,     schema::PrimitiveType_SubFusion,
+      schema::PrimitiveType_MatMul,       schema::PrimitiveType_PowFusion,     schema::PrimitiveType_Eltwise,
+      schema::PrimitiveType_ScaleFusion,  schema::PrimitiveType_MulFusion,     schema::PrimitiveType_StridedSlice,
+      schema::PrimitiveType_PadFusion,    schema::PrimitiveType_FullConnection};
+    if (!support_hw_resize) {
+      input_hw_index_ = -1;
+    }
   }
 
   ~TensorRTSubGraph() override;

@@ -58,6 +58,22 @@ nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size) {
   return dims;
 }
 
+bool SameDims(nvinfer1::Dims dims, const std::vector<int64_t> &shape) {
+  if (dims.nbDims != static_cast<int>(shape.size())) {
+    return false;
+  }
+  // dynamic dim, only channel dim know
+  for (int i = 0; i < dims.nbDims; i++) {
+    if (dims.d[i] == -1) {
+      continue;
+    }
+    if (dims.d[i] != shape[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims) {
   std::vector<int64_t> shape;
   for (int i = 0; i < dims.nbDims; i++) {
@@ -283,7 +299,7 @@ void SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_) {
   if (cudaGetDevice(&device) != cudaSuccess) {
     MS_LOG(WARNING) << "cudaGetDevice failed, device is untrustable.";
   }
-  MS_LOG(INFO) << "cuda is running on device: " << device;
+  MS_LOG(DEBUG) << "cuda is running on device: " << device;
 }
 Format GetOutputFormat(Format input_format, nvinfer1::Permutation perm) {
   if (input_format == Format::NHWC) {
@@ -368,5 +384,20 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batches, size_t plane
       }
     }
   }
+}
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format) {
+  nvinfer1::Dims dims = trt_tensor->getDimensions();
+  std::string out_string = "tensor " + std::string(trt_tensor->getName()) + ": format (NHWC:1, NCHW:0) is " +
+                           std::to_string(static_cast<int>(format)) + ", dims is ";
+  std::string dim_string = "[";
+  for (int i = 0; i < dims.nbDims; i++) {
+    dim_string += std::to_string(dims.d[i]);
+    if (i != dims.nbDims - 1) {
+      dim_string += ", ";
+    }
+  }
+  dim_string += "]";
+  out_string += dim_string;
+  return out_string;
 }
 }  // namespace mindspore::lite

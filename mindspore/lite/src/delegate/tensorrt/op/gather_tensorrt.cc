@@ -57,7 +57,7 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *gather_input = this->tensorrt_in_tensors_[0].trt_tensor_;
   if (in_tensors_[0].IsConst()) {
     gather_input = lite::ConvertConstantTensor(network, this->in_tensors_[0]);
-    MS_LOG(INFO) << "gather input is const tensor " << op_name_;
+    MS_LOG(DEBUG) << "gather input is const tensor " << op_name_;
   }
   if (gather_input == nullptr) {
     MS_LOG(ERROR) << "get gather input failed for: " << op_name_;
@@ -67,7 +67,7 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *indices_tensor = this->tensorrt_in_tensors_[tensorrt_in_tensors_.size() - 1].trt_tensor_;
   if (in_tensors_[1].IsConst()) {
     indices_tensor = lite::ConvertConstantTensor(network, this->in_tensors_[1]);
-    MS_LOG(INFO) << "gather indices is const tensor " << op_name_;
+    MS_LOG(DEBUG) << "gather indices is const tensor " << op_name_;
   }
   if (indices_tensor == nullptr) {
     MS_LOG(ERROR) << "get gather indices failed for: " << op_name_;

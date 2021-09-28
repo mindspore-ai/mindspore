@@ -102,7 +102,6 @@ int TensorRTSubGraph::SetDeviceConfig() {
   if (device_info_->GetEnableFP16() && runtime_->GetBuilder()->platformHasFastFp16()) {
     MS_LOG(INFO) << "set fp16 flag successfully for tensorrt.";
     config_->setFlag(nvinfer1::BuilderFlag::kFP16);
-    MS_LOG(INFO) << "hw resize is unsupported in fp16 mode for tensorrt.";
     input_hw_index_ = -1;
   }
 
@@ -380,7 +379,7 @@ int TensorRTSubGraph::ReSize() {
         }
       }
     }
-    MS_LOG(INFO) << "input_batch_index " << input_batchsize_index_ << ", update batch size to "
+    MS_LOG(INFO) << "resize at input_batch_index " << input_batchsize_index_ << ", update batch size to "
                  << inputs_[i].Shape()[input_batchsize_index_];
     runtime_->SetBatchSize(inputs_[i].Shape()[input_batchsize_index_]);
 

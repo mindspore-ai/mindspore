@@ -34,7 +34,21 @@ class PoolTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  void AddParams(const schema::AvgPoolFusion *primitive, nvinfer1::IPoolingLayer *pooling_layer);
+  int ParseParams();
+
+  void AddParams(nvinfer1::IPoolingLayer *pooling_layer);
+
+  std::vector<int64_t> kernel_size_;
+
+  std::vector<int64_t> stride_;
+
+  std::vector<int64_t> padding_;
+
+  nvinfer1::PoolingType pooling_type_;
+
+  schema::PadMode pad_mode_;
+
+  schema::ActivationType activation_type_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_POOL_TENSORRT_H_

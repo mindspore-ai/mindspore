@@ -18,6 +18,7 @@
 #include <vector>
 #include <NvInfer.h>
 #include <memory>
+#include <string>
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "schema/ops_generated.h"
@@ -42,6 +43,8 @@ nvinfer1::Dims ConvertCudaDims(const std::vector<int64_t> &shape);
 nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size);
 
 nvinfer1::Dims ConvertCudaDims(int data, size_t size);
+
+bool SameDims(nvinfer1::Dims dims, const std::vector<int64_t> &shape);
 
 std::vector<int64_t> ConvertMSShape(const nvinfer1::Dims dims);
 
@@ -75,5 +78,7 @@ int ConvertAxisFromNHWC2NCHW(int nhwc_axis);
 
 void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, size_t channel, size_t task_id,
                         size_t thread_count);
+
+std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_
