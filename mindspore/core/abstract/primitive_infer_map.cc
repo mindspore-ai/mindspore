@@ -242,7 +242,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimUnsortedSegmentSum, {InferImplUnsortedSegmentSum, nullptr, true}},
     {prim::kPrimDiv, {InferImplDiv, nullptr, true}},
     {prim::kPrimRealDiv, {ops::RealDivInfer, nullptr, false}},
-    {prim::kPrimShape, {InferImplShape, nullptr, false}},
     {prim::kPrimTranspose, {InferImplTranspose, nullptr, true}},
     {prim::kPrimStridedSlice, {ops::StridedSliceInfer, nullptr, true}},
     {prim::kPrimReshape, {InferImplReshape, nullptr, true}},
