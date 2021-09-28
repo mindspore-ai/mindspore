@@ -240,8 +240,9 @@ AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const Abstrac
       dict_key_nodes.emplace_back(NewValueNode(item.first));
       dict_value_nodes.emplace_back(node);
     }
-    target_node = func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), func_graph->NewCNode(dict_key_nodes),
-                                        func_graph->NewCNode(dict_value_nodes)});
+    target_node =
+      func_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), func_graph->NewCNode(std::move(dict_key_nodes)),
+                            func_graph->NewCNode(std::move(dict_value_nodes))});
   } else if (node_type->isa<AbstractKeywordArg>()) {
     auto x = node_type->cast<AbstractKeywordArgPtr>();
     std::string kwarg_key = x->get_key();
@@ -1417,7 +1418,7 @@ class PartialEvaluator : public Evaluator {
     ScopePtr scope = out_conf->node()->scope();
     ScopeGuard scope_guard(scope);
     MS_EXCEPTION_IF_NULL(func_graph);
-    CNodePtr new_cnode = func_graph->NewCNode(new_nodes_inputs);
+    CNodePtr new_cnode = func_graph->NewCNode(std::move(new_nodes_inputs));
     AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
     return engine->ForwardConfig(out_conf, fn_conf);
   }

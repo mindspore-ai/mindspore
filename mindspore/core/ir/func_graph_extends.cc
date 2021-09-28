@@ -60,7 +60,7 @@ void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
   if (force_new_ret || return_ == nullptr) {
     std::vector<AnfNodePtr> params({NewValueNode(prim::kPrimReturn), value});
     FuncGraphPtr this_graph = shared_from_base<FuncGraph>();
-    return_ = this_graph->NewCNodeInOrder(params);
+    return_ = this_graph->NewCNodeInOrder(std::move(params));
   } else {
     if (manager_.lock()) {
       manager_.lock()->SetEdge(return_, 1, value);
@@ -109,7 +109,7 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph, int var
       MS_EXCEPTION_IF_NULL(specialized_parameter_list);
       specialized_parameter_list->push_back(p);
     }
-    auto var_tuple_param = specialized_graph->NewCNode(var_param_tuple_nodes);
+    auto var_tuple_param = specialized_graph->NewCNode(std::move(var_param_tuple_nodes));
     (void)repl_nodes->emplace(specialized_graph->GetVariableArgParameter(), var_tuple_param);
   } else if (variable_args_count > 0) {
     MS_LOG(EXCEPTION) << "Function:" << this->ToString() << " takes " << this->GetPositionalArgsCount()

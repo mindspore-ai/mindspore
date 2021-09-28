@@ -413,8 +413,19 @@ void KernelGraph::CheckLoop() {
   }
 }
 
+CNodePtr KernelGraph::NewCNode(std::vector<AnfNodePtr> &&inputs) {
+  auto cnode = FuncGraph::NewCNode(std::move(inputs));
+  PostNewCNode(cnode);
+  return cnode;
+}
+
 CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   auto cnode = FuncGraph::NewCNode(inputs);
+  PostNewCNode(cnode);
+  return cnode;
+}
+
+void KernelGraph::PostNewCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   cnode->set_abstract(std::make_shared<abstract::AbstractNone>());
   if (AnfAlgo::IsGraphKernel(cnode)) {
@@ -425,7 +436,6 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   }
   SetKernelInfoForNode(cnode);
   AnfAlgo::SetGraphId(graph_id_, cnode.get());
-  return cnode;
 }
 
 CNodePtr KernelGraph::NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, const CNodePtr &ori_cnode) {
@@ -639,7 +649,7 @@ AnfNodePtr KernelGraph::TransValueNodeTuple(const AbstractBasePtr &abstract, con
   for (size_t index = 0; index < tuple_abstract->size(); ++index) {
     make_tuple_inputs.push_back(TransValueNodeTuple((*tuple_abstract)[index], (*value_tuple)[index]));
   }
-  auto make_tuple = NewCNode(make_tuple_inputs);
+  auto make_tuple = NewCNode(std::move(make_tuple_inputs));
   MS_EXCEPTION_IF_NULL(make_tuple);
   make_tuple->set_abstract(tuple_abstract);
   return make_tuple;
@@ -657,7 +667,7 @@ AnfNodePtr KernelGraph::TransParameterTuple(const AbstractBasePtr &abstract) {
   for (size_t index = 0; index < tuple_abstract->size(); ++index) {
     make_tuple_inputs.push_back(TransParameterTuple((*tuple_abstract)[index]));
   }
-  auto make_tuple = NewCNode(make_tuple_inputs);
+  auto make_tuple = NewCNode(std::move(make_tuple_inputs));
   make_tuple->set_abstract(tuple_abstract);
   return make_tuple;
 }
@@ -688,7 +698,7 @@ AnfNodePtr KernelGraph::TransCNodeTuple(const CNodePtr &node) {
     types.push_back(AnfAlgo::GetOutputInferDataType(node, tuple_out_index));
     shapes.emplace_back(AnfAlgo::GetOutputInferShape(node, tuple_out_index));
   }
-  auto make_tuple = NewCNode(make_tuple_inputs_list);
+  auto make_tuple = NewCNode(std::move(make_tuple_inputs_list));
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, make_tuple.get());
   return make_tuple;
 }

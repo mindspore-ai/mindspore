@@ -562,7 +562,7 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedParameterNode(const CNodePtr &n
       }
     }
     MS_EXCEPTION_IF_NULL(new_node->func_graph());
-    wrapped_node = new_node->func_graph()->NewCNode(partial_node_list);
+    wrapped_node = new_node->func_graph()->NewCNode(std::move(partial_node_list));
     wrapped_node->set_abstract(partial_closure);
   }
   return wrapped_node;

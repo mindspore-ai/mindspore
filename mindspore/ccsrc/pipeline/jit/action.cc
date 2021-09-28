@@ -166,7 +166,7 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
     added_output_node = NewValueNode(MakeValue<int32_t>(1));
     added_output_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(1));
   } else {
-    added_output_node = func_graph->NewCNode(added_node_list);
+    added_output_node = func_graph->NewCNode(std::move(added_node_list));
     added_output_abs = std::make_shared<abstract::AbstractTuple>(added_abs_list);
   }
   added_output_node->set_abstract(added_output_abs);
@@ -174,7 +174,7 @@ void ModifyOutputNode(const FuncGraphPtr &func_graph) {
 
   // Merge original output node and used forward nodes to return node.
   std::vector<AnfNodePtr> new_output_nodes{NewValueNode(prim::kPrimMakeTuple), original_output_node, added_output_node};
-  auto merge_node = func_graph->NewCNode(new_output_nodes);
+  auto merge_node = func_graph->NewCNode(std::move(new_output_nodes));
   abstract::AbstractBasePtrList new_output_abs{original_output_abs, added_output_abs};
   merge_node->set_abstract(std::make_shared<abstract::AbstractTuple>(new_output_abs));
   MS_LOG(DEBUG) << "Merge node info: " << merge_node->DebugString();

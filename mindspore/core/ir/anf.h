@@ -236,6 +236,7 @@ class MS_CORE_API AnfNode : public Base {
 // Using set_stop_gradient() to set this flag.
 class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
  public:
+  CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph);
   CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph);
   CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var)
       : AnfNode(nullptr),

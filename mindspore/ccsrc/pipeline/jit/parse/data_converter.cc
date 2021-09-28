@@ -142,7 +142,7 @@ FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
   outputs.push_back(p1);
   outputs.push_back(p2);
 
-  bprop_graph->set_output(bprop_graph->NewCNode(outputs));
+  bprop_graph->set_output(bprop_graph->NewCNode(std::move(outputs)));
   data_converter::SetObjGraphValue(obj_key, bprop_graph);
   return bprop_graph;
 }

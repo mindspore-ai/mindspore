@@ -440,7 +440,7 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const std::vector
   input_nodes.emplace_back(NewValueNode(target_block->func_graph()));
   (void)std::copy(args.begin(), args.end(), std::back_inserter(input_nodes));
 
-  CNodePtr jump = func_graph_->NewCNodeInOrder(input_nodes);
+  CNodePtr jump = func_graph_->NewCNodeInOrder(std::move(input_nodes));
   jumps_[target_block.get()] = jump;
   target_block->AddPrevBlock(shared_from_this());
   func_graph_->set_output(jump);
@@ -545,7 +545,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
     // do not need to MakeTuple, just use the node.
     state = states[1];
   } else {
-    state = func_graph_->NewCNode(states);
+    state = func_graph_->NewCNode(std::move(states));
   }
 
   AnfNodePtr old_output = nullptr;
