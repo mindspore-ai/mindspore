@@ -23,9 +23,17 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite::quant {
+namespace {
+constexpr int kInt32Mask = 31;
+constexpr int kInt16 = 16;
+constexpr int kFseTableExtendSize = 3;
+constexpr int kFrenqTableExtendSize = 2;
+constexpr int kAlignSize = 8;
+constexpr float kUpRoundOffSet = 0.5;
+}  // namespace
 // The function gives the index of most import `1` in the binary representation.
 // e.g. for the number 00100 it gives 2.
-int fse_count_bits(int32_t x) { return __builtin_clz(x) ^ 31; }
+int fse_count_bits(int32_t x) { return __builtin_clz(x) ^ kInt32Mask; }
 
 int FSEEncoder::FSECreateStatesForEncoding(uint16_t *frequency, int frequency_count, int table_log,
                                            uint32_t *delta_bit_count, int16_t *delta_state, uint16_t *coding_table,
@@ -37,7 +45,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint16_t *frequency, int frequency_co
   MS_ASSERT(coding_table != nullptr);
   int tablesize = 1 << table_log;
   int tablemask = tablesize - 1;
-  int step = ((tablesize >> 1) + (tablesize >> 3) + 3);
+  int step = ((tablesize >> 1) + (tablesize >> kFseTableExtendSize) + kFseTableExtendSize);
   int pos = 0;
   // Separate the same symbols, coding will be better if the same characters are distributed evenly across the table.
   for (int sym = 0; sym < frequency_count; sym++) {
@@ -49,7 +57,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint16_t *frequency, int frequency_co
   }
   if (pos != 0) return 1;
 
-  std::vector<uint16_t> cfreqs(frequency_count + 2);
+  std::vector<uint16_t> cfreqs(frequency_count + kFrenqTableExtendSize);
   cfreqs[0] = 0;
   for (int i = 1; i < frequency_count + 1; i++) {
     cfreqs[i] = cfreqs[i - 1] + frequency[i - 1];
@@ -63,15 +71,15 @@ int FSEEncoder::FSECreateStatesForEncoding(uint16_t *frequency, int frequency_co
 
   int total = 0;
   for (int sym = 0; sym < frequency_count; sym++) {
-    if (frequency[sym] >= 2) {
+    if (frequency[sym] >= kFrenqTableExtendSize) {
       int max_bits_out = table_log - fse_count_bits(frequency[sym] - 1);
       int min_state_plus = frequency[sym] << max_bits_out;
-      delta_bit_count[sym] = (max_bits_out << 16) - min_state_plus;
+      delta_bit_count[sym] = (max_bits_out << kInt16) - min_state_plus;
       delta_state[sym] = total - frequency[sym];
       total += frequency[sym];
     } else {
       // we assume minimum `frequency` is 1
-      delta_bit_count[sym] = (table_log << 16) - (1 << table_log);
+      delta_bit_count[sym] = (table_log << kInt16) - (1 << table_log);
       delta_state[sym] = total - 1;
       total++;
     }
@@ -138,8 +146,7 @@ int FSEEncoder::Compress(schema::TensorT *tensor_input) {
   ConvertTensor2Quant(tensor_input, &fse_quant);
   NormalizeFrequency(&fse_quant, &table_log);
   BitStream bs;
-  int ret;
-  ret = bs.Create(16 * fse_quant.symbol_table_count);
+  auto ret = bs.Create(kInt16 * fse_quant.symbol_table_count);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BitStream Create failed.";
     return ret;
@@ -171,7 +178,7 @@ uint16_t FSEEncoder::FSEEncodeSymbolGetNewState(BitStream *bs, uint16_t sym, uin
   MS_ASSERT(coding_table != nullptr);
   // It is to determine the number of bits to flush.
   // This is basically one of 2 values, n or n+1, depending on state crossing a threshold.
-  uint8_t bits_out = (state + delta_bit_count[sym]) >> 16;
+  uint8_t bits_out = (state + delta_bit_count[sym]) >> kInt16;
   bs->Push(state, bits_out);
   // subrangeID = state >> nbBitsOut
   return coding_table[(state >> bits_out) + delta_state[sym]];
@@ -194,18 +201,19 @@ void FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   MS_ASSERT(q != nullptr);
   // The higher the number, the more accurate we'll be to the shannon entropy,
   // but also the larger the table, so `+3` is a good compromise.
-  *table_log = std::min(MAX_TABLE_LOG, fse_count_bits((uint32_t)q->size) + 3);
+  *table_log = std::min(MAX_TABLE_LOG, (fse_count_bits((uint32_t)q->size) + kFseTableExtendSize));
   int new_table_size = 1 << (*table_log);
   int curr_table_size = 0;
   for (int i = 0; i < q->size; i++) {
     curr_table_size += q->frequency[i];
   }
 
+  MS_ASSERT(curr_table_size != 0);
   // normalize
   int updated_table_size = 0;
   float rat = (static_cast<float>(new_table_size)) / curr_table_size;
   for (int i = 0; i < q->size; i++) {
-    q->frequency[i] = std::max(1, static_cast<int>(floorf(0.5 + rat * q->frequency[i])));
+    q->frequency[i] = std::max(1, static_cast<int>(floorf(kUpRoundOffSet + rat * q->frequency[i])));
     updated_table_size += q->frequency[i];
   }
 
@@ -271,7 +279,8 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
                                  int table_log) {
   MS_ASSERT(tensor_input != nullptr);
   MS_ASSERT(bs != nullptr);
-  auto max_size = tensor_input->data.size() * 2;
+  const int extend_size = 2;
+  auto max_size = tensor_input->data.size() * extend_size;
   auto *out8 = static_cast<uint8_t *>(malloc(max_size));
   if (out8 == nullptr) {
     MS_LOG(ERROR) << "malloc memory failed.";
@@ -286,7 +295,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
   }
   *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)table_log;
   offset += sizeof(uint16_t);
-  int chunksc = bs->GetCurrChunkIndex() + 2;
+  int chunksc = bs->GetCurrChunkIndex() + sizeof(uint16_t);
   if (offset + sizeof(uint32_t) > max_size) {
     MS_LOG(ERROR) << "offset over max size"
                   << " offset:" << offset << " max_size:" << max_size;
@@ -301,7 +310,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
     *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)fse_quant.frequency[j];
     offset += sizeof(uint16_t);
   }
-  while (offset % 8 != 0) {
+  while (offset % kAlignSize != 0) {
     if (offset + sizeof(uint16_t) > max_size) {
       MS_LOG(ERROR) << "offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
@@ -317,7 +326,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
     *(reinterpret_cast<float *>(&out8[offset])) = static_cast<float>(fse_quant.centroids[j]);
     offset += sizeof(float);
   }
-  while (offset % 8 != 0) {
+  while (offset % kAlignSize != 0) {
     if (offset + sizeof(uint16_t) > max_size) {
       MS_LOG(ERROR) << "offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
