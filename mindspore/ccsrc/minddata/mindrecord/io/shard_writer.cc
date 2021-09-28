@@ -400,9 +400,9 @@ Status ShardWriter::ValidateRawData(std::map<uint64_t, std::vector<json>> &raw_d
 
   // Determine whether the number of samples corresponding to each schema is the same
   for (rawdata_iter = raw_data.begin(); rawdata_iter != raw_data.end(); ++rawdata_iter) {
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      row_count_ == rawdata_iter->second.size(),
-      "Invalid data, number of samples: " + std::to_string(rawdata_iter->second.size()) + " for schemais not matched.");
+    CHECK_FAIL_RETURN_UNEXPECTED(row_count_ == rawdata_iter->second.size(),
+                                 "Invalid data, number of samples: " + std::to_string(rawdata_iter->second.size()) +
+                                   " for schema is not matched.");
     (void)schema_ids.insert(rawdata_iter->first);
   }
   const std::vector<std::shared_ptr<Schema>> &schemas = shard_header_->GetSchemas();
@@ -595,7 +595,7 @@ Status ShardWriter::WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data
 
   // Serialize raw data
   RETURN_IF_NOT_OK(WriteRawDataPreCheck(raw_data, blob_data, sign, &schema_count, &row_count));
-  CHECK_FAIL_RETURN_UNEXPECTED(row_count >= kInt0, "Invalid data, waw data size should be positive.");
+  CHECK_FAIL_RETURN_UNEXPECTED(row_count >= kInt0, "Invalid data, raw data size should be positive.");
   if (row_count == kInt0) {
     return Status::OK();
   }
