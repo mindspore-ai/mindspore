@@ -214,11 +214,11 @@ int LstmCPUKernel::InitParam() {
 }
 
 int LstmCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 6);
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_6D);
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     CHECK_NULL_RETURN(in_tensors_.at(i));
   }
-  CHECK_LESS_RETURN(out_tensors_.size(), 3);
+  CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_3D);
   for (size_t i = 0; i < out_tensors_.size(); i++) {
     CHECK_NULL_RETURN(out_tensors_.at(i));
   }
@@ -254,7 +254,7 @@ int LstmCPUKernel::ReSize() {
 }
 
 int LstmCPUKernel::MallocRunBuffer() {
-  for (int i = 0; i < 7; i++) {
+  for (int i = 0; i < DIMENSION_7D; i++) {
     buffer_[i] = nullptr;
   }
   buffer_[packed_input_index] = reinterpret_cast<float *>(
