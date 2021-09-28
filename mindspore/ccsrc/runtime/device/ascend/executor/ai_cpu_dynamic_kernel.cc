@@ -15,7 +15,6 @@
  */
 
 #include "runtime/device/ascend/executor/ai_cpu_dynamic_kernel.h"
-
 #include "runtime/mem.h"
 #include "runtime/kernel.h"
 #include "utils/utils.h"

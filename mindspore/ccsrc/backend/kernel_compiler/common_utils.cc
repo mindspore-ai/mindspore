@@ -922,7 +922,7 @@ bool GetShapeSize(const std::vector<size_t> &shape, const TypePtr &type_ptr, int
 
 void CastShapeSizeToLong(const std::vector<size_t> &shape, std::vector<int64_t> *long_shape) {
   MS_EXCEPTION_IF_NULL(long_shape);
-  std::transform(shape.begin(), shape.end(), std::back_inserter(*long_shape), SizeToLong);
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(*long_shape), SizeToLong);
 }
 
 void CheckSliceValid(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,

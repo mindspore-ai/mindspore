@@ -112,7 +112,7 @@ void ReportToErrorManager(const string &message) {
   }
   const auto &error_code = GetJsonValue<std::string>(exception_message, kErrorCode);
   std::map<std::string, std::string> arg_map;
-  for (auto it = exception_message.begin(); it != exception_message.end(); it++) {
+  for (auto it = exception_message.begin(); it != exception_message.end(); (void)it++) {
     const std::string arg_key = it.key();
     if (it.key() == kErrorCode) {
       continue;
@@ -419,7 +419,7 @@ void AscendKernelCompileManager::QueryFinishJob(const std::string &job_type) {
     if (!job_list_.empty()) {
       if (query_cnt % KSleepInterval == 0) {
         MS_LOG(INFO) << "Querying Parallel Compilation Job. Current Query Count: " << query_cnt;
-        sleep(KSleepSeconds);
+        (void)sleep(KSleepSeconds);
       }
     }
   }
@@ -470,7 +470,7 @@ void AscendKernelCompileManager::QueryFusionFinishJob(KernelModMap *kernel_mode_
     if (!job_list_.empty()) {
       if (query_cnt % KSleepInterval == 0) {
         MS_LOG(INFO) << "Querying Parallel Compilation Job. Current Query Count: " << query_cnt;
-        sleep(KSleepSeconds);
+        (void)sleep(KSleepSeconds);
       }
     }
   }
@@ -528,7 +528,7 @@ void AscendKernelCompileManager::GetAllAscendNodes(const std::shared_ptr<session
     KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
     if (kernel_type == TBE_KERNEL) {
       if (AnfAlgo::GetKernelMod(anf_node) == nullptr) {
-        (void)tbe_nodes->push_back(anf_node);
+        tbe_nodes->push_back(anf_node);
       }
     }
   }
@@ -625,7 +625,7 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
     // save pair<task_id, node> for exception print and get node trace
     auto task_id = GetJsonValue<int>(build_json, kJobId);
     std::pair<int, AnfNodePtr> id_node(task_id, node);
-    job_id_to_node_.insert(id_node);
+    (void)job_id_to_node_.insert(id_node);
     // start compile
     auto build_result = build_manager_->ProcessTbeJob(build_json);
     auto json_obj = TurnStrToJson(build_result);
@@ -636,7 +636,7 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
       // job is running, save into job_list.
       MS_LOG(DEBUG) << "Target job is running, keep it into job_list, json name: " << json_name;
       std::pair<int, nlohmann::json> pair(task_id, build_json);
-      job_list_.insert(pair);
+      (void)job_list_.insert(pair);
     } else if (json_obj.at(kStatus) == kSuccess) {
       // job running success, save build result.
       MS_LOG(DEBUG) << "Target job compile success, save build result, json name: " << json_name;
@@ -711,7 +711,7 @@ KernelModMap AscendKernelCompileManager::AscendFusionOpCompile(const std::vector
     if (json_obj.at(kStatus) == kRunning) {
       // job is running, save it into job_list.
       std::pair<int, nlohmann::json> pair(task_id, build_json);
-      job_list_.insert(pair);
+      (void)job_list_.insert(pair);
     } else if (json_obj.at(kStatus) == kSuccess) {
       // job running success, save build result.
       std::string build_res = GetJsonValue<std::string>(json_obj, kResult);
