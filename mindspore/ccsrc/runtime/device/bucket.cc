@@ -16,7 +16,6 @@
 
 #include "runtime/device/bucket.h"
 
-#include <memory>
 #include "runtime/device/kernel_runtime_manager.h"
 #include "frontend/parallel/context.h"
 #include "utils/profile.h"
