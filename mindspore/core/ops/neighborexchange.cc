@@ -99,8 +99,9 @@ void Check(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &in
   }
   // check empty input
   auto send_rank_ids = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSendRankIds));
+  const int64_t input_num = 0;
   if (send_rank_ids.empty()) {
-    (void)CheckAndConvertUtils::CheckInteger("input_numbers", input_args.size(), kEqual, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_numbers", input_args.size(), kEqual, input_num, prim_name);
     return;
   }
   // check input shape & attr send shape

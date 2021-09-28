@@ -55,7 +55,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   auto op_name = prim->name();
   const int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     std::map<std::string, TypePtr> types;
     (void)types.emplace("input", input_args[kInputIndex0]->BuildType());

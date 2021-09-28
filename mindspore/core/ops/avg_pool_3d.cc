@@ -32,8 +32,7 @@ constexpr size_t kStridesDims = 3;
 constexpr size_t kPadDims = 6;
 
 void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, std::vector<int64_t> *strides,
-              int64_t *pad_mode, std::vector<int64_t> *pad_list, bool *ceil_mode, bool *count_include_pad,
-              int64_t *divisor_override) {
+              int64_t *pad_mode, std::vector<int64_t> *pad_list, bool *ceil_mode, bool *count_include_pad) {
   MS_EXCEPTION_IF_NULL(primitive);
   // attr kernel size
   *kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
@@ -56,8 +55,6 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, 
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), pad_mode, true);
   // attr ceil mode
   *ceil_mode = GetValue<bool>(primitive->GetAttr(kCeilMode));
-  // attr divisor override
-  *divisor_override = GetValue<int64_t>(primitive->GetAttr(kDivisorOverride));
 }
 
 std::vector<int64_t> GetOutputShape(const std::vector<int64_t> &in_shape, int64_t kernel_d, int64_t kernel_h,
@@ -70,9 +67,12 @@ std::vector<int64_t> GetOutputShape(const std::vector<int64_t> &in_shape, int64_
   int64_t out_h = 0;
   int64_t out_w = 0;
   if (ceil_mode) {
-    out_d = std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d + stride_d - 1) / stride_d + 1);
-    out_h = std::floor((in_h + pad_list[2] + pad_list[3] - kernel_h + stride_h - 1) / stride_h + 1);
-    out_w = std::floor((in_w + pad_list[4] + pad_list[5] - kernel_w + stride_w - 1) / stride_w + 1);
+    out_d =
+      static_cast<int64_t>(std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d + stride_d - 1) / stride_d + 1));
+    out_h =
+      static_cast<int64_t>(std::floor((in_h + pad_list[2] + pad_list[3] - kernel_h + stride_h - 1) / stride_h + 1));
+    out_w =
+      static_cast<int64_t>(std::floor((in_w + pad_list[4] + pad_list[5] - kernel_w + stride_w - 1) / stride_w + 1));
     if ((out_d - 1) * stride_d >= in_d + pad_list[0]) {
       out_d--;
     }
@@ -83,9 +83,9 @@ std::vector<int64_t> GetOutputShape(const std::vector<int64_t> &in_shape, int64_
       out_w--;
     }
   } else {
-    out_d = std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d) / stride_d + 1);
-    out_h = std::floor((in_h + pad_list[2] + pad_list[3] - kernel_h) / stride_h + 1);
-    out_w = std::floor((in_w + pad_list[4] + pad_list[5] - kernel_w) / stride_w + 1);
+    out_d = static_cast<int64_t>(std::floor((in_d + pad_list[0] + pad_list[1] - kernel_d) / stride_d + 1));
+    out_h = static_cast<int64_t>(std::floor((in_h + pad_list[2] + pad_list[3] - kernel_h) / stride_h + 1));
+    out_w = static_cast<int64_t>(std::floor((in_w + pad_list[4] + pad_list[5] - kernel_w) / stride_w + 1));
   }
   std::vector<int64_t> output_shape = {in_shape[0], in_shape[1], out_d, out_h, out_w};
   return output_shape;
@@ -97,6 +97,9 @@ void GetPadsByPadding(int64_t in_d, int64_t in_h, int64_t in_w, int64_t kernel_d
   if (pad_mode == PadMode::VALID) {
     (void)pad_list->insert(pad_list->begin(), kPadDims, 0);
   } else if (pad_mode == PadMode::SAME) {
+    if (stride_d == 0 || stride_h == 0 || stride_w == 0) {
+      MS_LOG(EXCEPTION) << "stride_d or stride_h or stride_w must be non-zero";
+    }
     int64_t tail_d = in_d % stride_d;
     int64_t tail_h = in_h % stride_h;
     int64_t tail_w = in_w % stride_w;
@@ -130,8 +133,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   int64_t pad_mode = 0;
   bool ceil_mode = false;
   bool count_include_pad = true;
-  int64_t divisor_override = 0;
-  GetAttrs(primitive, &kernel_size, &strides, &pad_mode, &pad_list, &ceil_mode, &count_include_pad, &divisor_override);
+  GetAttrs(primitive, &kernel_size, &strides, &pad_mode, &pad_list, &ceil_mode, &count_include_pad);
   auto in_d = in_shape[2];
   auto in_h = in_shape[3];
   auto in_w = in_shape[4];

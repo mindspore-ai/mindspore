@@ -27,7 +27,8 @@ namespace {
 abstract::ShapePtr ErfinvInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input_x numbers", input_args.size(), kEqual, 1, prim_name);
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input_x numbers", input_args.size(), kEqual, input_num, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -39,13 +40,14 @@ abstract::ShapePtr ErfinvInferShape(const PrimitivePtr &primitive, const std::ve
 TypePtr ErfinvInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto op_name = prim->name();
-  CheckAndConvertUtils::CheckInteger("input_x number", input_args.size(), kEqual, 1, op_name);
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input_x number", input_args.size(), kEqual, input_num, op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   auto infer_type = input_args[0]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("input_x", infer_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", infer_type, valid_types, prim->name());
   return infer_type;
 }
 }  // namespace

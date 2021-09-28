@@ -32,15 +32,13 @@ void ImpleAbs(void *origin, void *target, size_t size) {
   MS_EXCEPTION_IF_NULL(target);
   auto origin_data = reinterpret_cast<T *>(origin);
   auto target_data = reinterpret_cast<T *>(target);
-  MS_EXCEPTION_IF_NULL(origin_data);
-  MS_EXCEPTION_IF_NULL(target_data);
   auto zero_val = static_cast<T>(0);
   for (size_t i = 0; i < size; ++i) {
     target_data[i] = origin_data[i] >= zero_val ? origin_data[i] : -origin_data[i];
   }
 }
 
-abstract::ShapePtr AbsInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr AbsInferShape(const std::vector<AbstractBasePtr> &input_args) {
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
@@ -57,7 +55,7 @@ AbstractBasePtr AbsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
 
-  return abstract::MakeAbstract(AbsInferShape(primitive, input_args), AbsInferType(primitive, input_args));
+  return abstract::MakeAbstract(AbsInferShape(input_args), AbsInferType(primitive, input_args));
 }
 
 ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -77,53 +75,53 @@ ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 
   auto data_size = x_tensor->DataSize();
   auto dtype = x_tensor->data_type();
-  auto shape = AbsInferShape(prim, input_args);
+  auto shape = AbsInferShape(input_args);
   auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape->shape());
   auto x_datac = x_tensor->data_c();
   auto result_datac = result_tensor->data_c();
   switch (dtype) {
     case kNumberTypeInt8: {
-      ImpleAbs<int8_t>(x_datac, result_datac, data_size);
+      ImpleAbs<int8_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeInt16: {
-      ImpleAbs<int16_t>(x_datac, result_datac, data_size);
+      ImpleAbs<int16_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeInt32: {
-      ImpleAbs<int32_t>(x_datac, result_datac, data_size);
+      ImpleAbs<int32_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeInt64: {
-      ImpleAbs<int64_t>(x_datac, result_datac, data_size);
+      ImpleAbs<int64_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt8: {
-      ImpleAbs<uint8_t>(x_datac, result_datac, data_size);
+      ImpleAbs<uint8_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt16: {
-      ImpleAbs<uint16_t>(x_datac, result_datac, data_size);
+      ImpleAbs<uint16_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt32: {
-      ImpleAbs<uint32_t>(x_datac, result_datac, data_size);
+      ImpleAbs<uint32_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt64: {
-      ImpleAbs<uint64_t>(x_datac, result_datac, data_size);
+      ImpleAbs<uint64_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeFloat16: {
-      ImpleAbs<float16>(x_datac, result_datac, data_size);
+      ImpleAbs<float16>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeFloat32: {
-      ImpleAbs<float>(x_datac, result_datac, data_size);
+      ImpleAbs<float>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeFloat64: {
-      ImpleAbs<double>(x_datac, result_datac, data_size);
+      ImpleAbs<double>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     default: {
