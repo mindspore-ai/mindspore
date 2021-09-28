@@ -43,6 +43,7 @@ function Run_arm64_ut() {
     echo 'cd  /data/local/tmp/ut_test' > adb_cmd.txt
     echo 'cp  /data/local/tmp/libc++_shared.so ./' >> adb_cmd.txt
     echo 'cp  /data/local/tmp/libgtest.so ./' >> adb_cmd.txt
+    echo 'cp  /data/local/tmp/libgmock.so ./' >> adb_cmd.txt
     echo 'chmod 777 lite-test' >> adb_cmd.txt
 
     adb -s ${device_id} shell < adb_cmd.txt
