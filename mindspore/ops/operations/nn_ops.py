@@ -2020,7 +2020,7 @@ class AvgPool(_Pool):
         - Only single input and single output are supported.
         - Global pooling is supported.
         - The height of "kernel_size" and the weight of "kernel_size" are positive integers within the range [1, 255].
-          ksize_H * ksize_W < 256.
+          ksize_h * ksize_w < 256.
         - Due to instruction restrictions, the values of "strides_h" and "strides_w" are
           positive integers within the range [1, 63].
 
@@ -3223,9 +3223,9 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         second moment. This often helps with training, but is slightly more exapnsive interms of computation and memory.
 
     .. warning::
-        In dense implementation of this algorithm, mean_gradient, mean_square, and moment will update
-        even if the grad is zero. But in this sparse implementation, mean_gradient, mean_square, and moment
-        will not update in iterations during which the grad is zero.
+        In dense implementation of this algorithm, `mean_gradient`, `mean_square`, and `moment` will update
+        even if the `grad` is zero. But in this sparse implementation, `mean_gradient`, `mean_square`, and `moment`
+        will not update in iterations during which the `grad` is zero.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
