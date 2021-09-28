@@ -132,7 +132,6 @@ bool QuantStrategy::CanTensorQuantized(const AnfNodePtr &input_node, int preferr
     return false;
   }
   size_t shape_size = std::accumulate(weight_shape.begin(), weight_shape.end(), 1, std::multiplies<int>());
-
   if (shape_size < min_quant_weight_size_) {
     MS_LOG(INFO) << "shape_size " << shape_size << " less min_quant_weight_size_ " << shape_size;
     return false;

@@ -23,6 +23,8 @@ namespace lite {
 namespace {
 constexpr int kQuantBitNumInt16 = 16;
 constexpr int kQuantBitNumInt8 = 8;
+constexpr int kMinSize = 0;
+constexpr int kMaxSize = 65535;
 }  // namespace
 int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_string,
                                        quant::CommonQuantParam *common_quant) {
@@ -59,12 +61,12 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
     MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_channel should be a valid number.";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (common_quant->min_quant_weight_size < 0 || common_quant->min_quant_weight_size > 65535) {
+  if (common_quant->min_quant_weight_size < kMinSize || common_quant->min_quant_weight_size > kMaxSize) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_size should in [0,65535]." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (common_quant->min_quant_weight_channel < 0 || common_quant->min_quant_weight_channel > 65535) {
+  if (common_quant->min_quant_weight_channel < kMinSize || common_quant->min_quant_weight_channel > kMaxSize) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: min_quant_weight_channel should in [0,65535]." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }

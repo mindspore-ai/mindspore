@@ -22,9 +22,10 @@
 namespace mindspore::lite::quant {
 namespace {
 constexpr int8_t kCurrentBitCount = 64;
+constexpr int8_t kTableSize = 6;
 }  // namespace
 int BitStream::Create(int bit_capacity) {
-  chunk_count_ = (bit_capacity >> 6);
+  chunk_count_ = (bit_capacity >> kTableSize);
   chunks_ = static_cast<uint64_t *>(calloc(chunk_count_, sizeof(uint64_t)));
   if (chunks_ == nullptr) {
     MS_LOG(ERROR) << "malloc memory failed.";

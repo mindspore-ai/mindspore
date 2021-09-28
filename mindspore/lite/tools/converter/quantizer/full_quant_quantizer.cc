@@ -52,7 +52,9 @@ namespace {
 static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion,
                                                          prim::kPrimMatMul, prim::kPrimFullConnection,
                                                          prim::kPrimLayerNormFusion};
-}
+constexpr int kMinSize = 0;
+constexpr int kMaxSize = 65535;
+}  // namespace
 namespace {
 STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const std::vector<double> &input_scales,
                                     const float *raw_datas, const QuantParamHolderPtr &quant_param_holder,
@@ -732,6 +734,7 @@ STATUS FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       if (input_primitive_quant_holder->IsOutputQuantParamsInited()) {
         auto quant_param = input_primitive_quant_holder->get_output_quant_params().front();
         primitive_quant_holder->set_input_quant_param(i - 1, quant_param);
+        activation_input_index++;
       } else {
         // do input quant
         auto &info = (*inputs_diverg_info)[op_name][activation_input_index++];
@@ -1239,7 +1242,7 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (flags.dataPreProcessParam.calibrate_size <= 0 || flags.dataPreProcessParam.calibrate_size > 65535) {
+  if (flags.dataPreProcessParam.calibrate_size <= kMinSize || flags.dataPreProcessParam.calibrate_size > kMaxSize) {
     MS_LOG(ERROR) << "calibrate size must pass and the size should in [1, 65535].";
     return RET_INPUT_PARAM_INVALID;
   }
@@ -1247,8 +1250,7 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "input_type must pass IMAGE | BIN.";
     return RET_INPUT_PARAM_INVALID;
   }
-  STATUS status;
-  status = PreProcess();
+  STATUS status = PreProcess();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "do pre process failed!";
     return status;
