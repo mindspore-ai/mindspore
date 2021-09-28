@@ -328,9 +328,8 @@ bool GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vecto
 
   // Construct OpContext.
   OpContext<DeviceTensor> op_context;
-  uuids::uuid sequential_num;
   std::vector<Promise<int>> result(1);
-  op_context.sequential_num_ = &sequential_num;
+  op_context.sequential_num_ = RandInt::Instance().Get();
   op_context.results_ = &result;
 
   if ((strategy == GraphExecutionStrategy::kStep) && IsSingleOpActorSet(actor_set)) {

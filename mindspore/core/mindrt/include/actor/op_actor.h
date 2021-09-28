@@ -48,6 +48,18 @@ struct OpData {
   int index_;
 };
 
+class RandInt {
+ public:
+  int Get() { return rand(); }
+  static RandInt &Instance() {
+    static RandInt instance;
+    return instance;
+  }
+
+ private:
+  RandInt() { srand(time(NULL)); }
+};
+
 template <typename T>
 using OpDataPtr = std::shared_ptr<OpData<T>>;
 
@@ -57,7 +69,7 @@ using OpDataUniquePtr = std::unique_ptr<OpData<T>>;
 // The context of opActor running.
 template <typename T>
 struct OpContext {
-  uuids::uuid *sequential_num_;
+  int sequential_num_;
   std::vector<OpDataPtr<T>> *output_data_;
   std::vector<Promise<int>> *results_;
   const void *kernel_call_back_before_;
@@ -98,11 +110,11 @@ class OpActor : public ActorBase {
 
  protected:
   // The op data.
-  std::unordered_map<uuids::uuid *, std::vector<OpData<T> *>> input_op_datas_;
+  std::unordered_map<int, std::vector<OpData<T> *>> input_op_datas_;
   std::vector<DataArrowPtr> output_data_arrows_;
 
   // The op controls.
-  std::unordered_map<uuids::uuid *, std::vector<AID *>> input_op_controls_;
+  std::unordered_map<int, std::vector<AID *>> input_op_controls_;
   std::vector<AID> output_control_arrows_;
 };
 
@@ -126,8 +138,7 @@ int MindrtRun(const std::vector<OpDataPtr<T>> &input_data, std::vector<OpDataPtr
               const void *kernel_call_back_before, const void *kernel_call_back_after) {
   OpContext<T> context;
   std::vector<Promise<int>> promises(output_data->size());
-  uuids::uuid uid;
-  context.sequential_num_ = &uid;
+  context.sequential_num_ = RandInt::Instance().Get();
   context.results_ = &promises;
   context.output_data_ = output_data;
   context.kernel_call_back_before_ = kernel_call_back_before;

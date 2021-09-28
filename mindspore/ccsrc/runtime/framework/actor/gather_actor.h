@@ -88,13 +88,13 @@ class GatherActor : public OpActor<DeviceTensor> {
   int input_branch_id_{kInvalidBranchID};
 
   // Input data.
-  std::unordered_map<uuids::uuid *, std::unordered_map<size_t, std::stack<DeviceTensor *>>> input_data_;
+  std::unordered_map<int, std::unordered_map<size_t, std::stack<DeviceTensor *>>> input_data_;
   // Input branch ids is used to record the id corresponding receive from gather actor.
   // In control flow, sub funcgraph may be called in multiple places, and the output must be return to different
   // places. Therefore, the output of each subgraph will be connected to a switch actor, and the caller will send
   // its branch id to the gather actor of the subgraph. Then branch id will be sent by the gather actor to the
   // switch actor connected to the output.
-  std::unordered_map<uuids::uuid *, int> input_branch_ids_;
+  std::unordered_map<int, int> input_branch_ids_;
 
   // Output data.
   // Cache unique output data by output index to modify the output data effectively.
