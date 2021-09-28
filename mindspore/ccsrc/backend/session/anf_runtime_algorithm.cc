@@ -1773,6 +1773,37 @@ bool AnfRuntimeAlgorithm::IsScalarOutput(const CNodePtr &cnode, size_t index) {
 }
 
 namespace {
+void FindDelayExecPosition(const std::vector<CNodePtr> &nodes, size_t current_index, std::set<size_t> *invalid_position,
+                           std::map<size_t, std::vector<CNodePtr>> *insert_nodes) {
+  MS_EXCEPTION_IF_NULL(invalid_position);
+  MS_EXCEPTION_IF_NULL(insert_nodes);
+  if (current_index >= nodes.size()) {
+    return;
+  }
+  auto &node = nodes[current_index];
+  for (size_t j = current_index + 1; j < nodes.size(); ++j) {
+    auto &child = nodes[j];
+    auto input_size = child->inputs().size() - 1;
+    for (size_t k = 0; k < input_size; ++k) {
+      auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0, true);
+      if (kernel_index.first != node) {
+        continue;
+      }
+      if (AnfAlgo::GetCNodeName(child) == kApplyMomentumOpName) {
+        return;
+      }
+      (void)invalid_position->insert(current_index);
+      auto iter = insert_nodes->find(j);
+      if (iter != insert_nodes->end()) {
+        iter->second.emplace_back(node);
+      } else {
+        (*insert_nodes)[j] = {node};
+      }
+      return;
+    }
+  }
+}
+
 std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const std::string &node_name, bool only_seed) {
   std::map<size_t, std::vector<CNodePtr>> insert_nodes;
   std::set<size_t> invalid_position;
@@ -1785,7 +1816,7 @@ std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const st
       bool is_seed = true;
       auto input_size = node->inputs().size() - 1;
       for (size_t k = 0; k < input_size; ++k) {
-        auto input = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, k), 0).first;
+        auto input = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, k), 0, true).first;
         if (input != nullptr && input->isa<CNode>()) {
           is_seed = false;
           break;
@@ -1795,36 +1826,7 @@ std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const st
         continue;
       }
     }
-    bool found = false;
-    bool ignore = false;
-    for (size_t j = i + 1; j < nodes.size(); ++j) {
-      auto &child = nodes[j];
-      auto input_size = child->inputs().size() - 1;
-      for (size_t k = 0; k < input_size; ++k) {
-        auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0);
-        if (kernel_index.first == node) {
-          if (AnfAlgo::GetCNodeName(child) == kApplyMomentumOpName) {
-            ignore = true;
-          } else {
-            found = true;
-          }
-          break;
-        }
-      }
-      if (ignore) {
-        break;
-      }
-      if (found) {
-        (void)invalid_position.insert(i);
-        auto iter = insert_nodes.find(j);
-        if (iter != insert_nodes.end()) {
-          iter->second.emplace_back(node);
-        } else {
-          insert_nodes[j] = {node};
-        }
-        break;
-      }
-    }
+    FindDelayExecPosition(nodes, i, &invalid_position, &insert_nodes);
   }
   std::vector<CNodePtr> result;
   for (size_t i = 0; i < nodes.size(); ++i) {
