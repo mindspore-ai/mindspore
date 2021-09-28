@@ -107,9 +107,9 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
         return false;
       }
       if (S_ISDIR(st.st_mode)) {
-        ret = get_all_files(name, files);
-        if (!ret) {
-          MS_LOG(ERROR) << "Get files failed, ret is : " << ret;
+        bool result = get_all_files(name, files);
+        if (!result) {
+          MS_LOG(ERROR) << "Get files failed.";
           return false;
         }
       } else if (S_ISREG(st.st_mode)) {
@@ -239,7 +239,11 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
     var_path += "variables";
     std::ifstream ifs(var_path);
     if (ifs.good()) {
-      get_all_files(var_path, &files);
+      bool result = get_all_files(var_path, &files);
+      if (!result) {
+        MS_LOG(ERROR) << "Get files failed.";
+        return nullptr;
+      }
     } else {
       MS_LOG(ERROR) << "Load graph's variable folder failed, please check the correctness of variable folder.";
       return nullptr;
