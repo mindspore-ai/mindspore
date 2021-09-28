@@ -106,7 +106,7 @@ bool SingleTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohmann::j
   std::vector<OpIOInfoPtr> inputs_ptr = op_info_ptr->inputs_ptr();
   std::vector<nlohmann::json> inputs_json;
   if (inputs_ptr.empty()) {
-    MS_LOG(WARNING) << op_name << " registration info has no input info.";
+    MS_LOG(DEBUG) << op_name << " registration info has no input info.";
     (*compute_json)[kJInputDesc] = inputs_json;
     return true;
   }
