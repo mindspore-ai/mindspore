@@ -117,67 +117,70 @@ int NPUInsertTransformPass::InsertNode(NPUOp *op, NPUOp *post_op, size_t post_in
                                        std::vector<NPUOp *> *trans_ops) {
   // Op and post_op can't be nullptr at the same time.
   std::string op_name;
-  mindspore::MSTensor in_tensor;
-
+  std::vector<mindspore::MSTensor> in_tensors;
   std::vector<NPUOp *> out_ops;
   // If post_op equals nullptr, op is the output of whole graph.
   if (post_op != nullptr) {
     out_ops.push_back(post_op);
     op_name = post_op->name() + "_pre";
-    in_tensor = post_op->inputs().at(post_input_index);
+    in_tensors.push_back(post_op->inputs().at(post_input_index));
   }
   std::vector<NPUOp *> in_ops;
   // If op equals nullptr, post_op is the input of whole graph.
   if (op != nullptr && !op->outputs().empty()) {
     in_ops.push_back(op);
     op_name = op->name() + "_post";
-    in_tensor = op->outputs()[0];
+    in_tensors.resize(op->outputs().size());
+    std::copy(op->outputs().begin(), op->outputs().end(), in_tensors.begin());
   }
-  auto nhwc_shape = in_tensor.Shape();
-  if (nhwc_shape.size() < 4) {
-    MS_LOG(ERROR) << "nhwc_shape size < " << 4;
-    return RET_ERROR;
-  }
-  std::vector<int64_t> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
+  for (auto i = 0; i < in_tensors.size(); ++i) {
+    auto in_tensor = in_tensors[i];
+    auto nhwc_shape = in_tensor.Shape();
+    if (nhwc_shape.size() < 4) {
+      MS_LOG(ERROR) << "nhwc_shape size < " << 4;
+      return RET_ERROR;
+    }
+    std::vector<int64_t> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
 
-  auto nh2nc_name = op_name + "_nh2nc_" + std::to_string(total++);
-  auto nh2nc_tensor =
-    mindspore::MSTensor::CreateTensor(nh2nc_name + "/output0", in_tensor.DataType(), nchw_shape, nullptr, 0);
-  if (nh2nc_tensor == nullptr) {
-    MS_LOG(ERROR) << "New nchw tensor failed when inserting nchw2nhwc op.";
-    return RET_ERROR;
-  }
-  nh2nc_tensor->SetTensorName(nh2nc_name + "/output0");
-  std::vector<mindspore::MSTensor> nh2nc_tensors = {*nh2nc_tensor};
-  all_tensors_->push_back(nh2nc_tensor);
+    auto nh2nc_name = op_name + "_nh2nc_" + std::to_string(total++);
+    auto nh2nc_tensor =
+      mindspore::MSTensor::CreateTensor(nh2nc_name + "/output0", in_tensor.DataType(), nchw_shape, nullptr, 0);
+    if (nh2nc_tensor == nullptr) {
+      MS_LOG(ERROR) << "New nchw tensor failed when inserting nchw2nhwc op.";
+      return RET_ERROR;
+    }
+    nh2nc_tensor->SetTensorName(nh2nc_name + "/output0");
+    std::vector<mindspore::MSTensor> nh2nc_tensors = {*nh2nc_tensor};
+    all_tensors_->push_back(nh2nc_tensor);
 
-  auto nc2nh_name = op_name + "_nc2nh_" + std::to_string(total++);
-  auto nc2nh_tensor =
-    mindspore::MSTensor::CreateTensor(nc2nh_name + "/output0", in_tensor.DataType(), nhwc_shape, nullptr, 0);
-  if (nc2nh_tensor == nullptr) {
-    MS_LOG(ERROR) << "New nhwc tensor failed when inserting nhwc2nchw op.";
-    return RET_ERROR;
-  }
-  std::vector<mindspore::MSTensor> nc2nh_tensors = {*nc2nh_tensor};
-  all_tensors_->push_back(nc2nh_tensor);
+    auto nc2nh_name = op_name + "_nc2nh_" + std::to_string(total++);
+    auto nc2nh_tensor =
+      mindspore::MSTensor::CreateTensor(nc2nh_name + "/output0", in_tensor.DataType(), nhwc_shape, nullptr, 0);
+    if (nc2nh_tensor == nullptr) {
+      MS_LOG(ERROR) << "New nhwc tensor failed when inserting nhwc2nchw op.";
+      return RET_ERROR;
+    }
+    std::vector<mindspore::MSTensor> nc2nh_tensors = {*nc2nh_tensor};
+    all_tensors_->push_back(nc2nh_tensor);
 
-  auto *nh2nc_op = NPUPassUtils::CreateNhwc2NchwOp({in_tensor}, nh2nc_tensors, nh2nc_name);
-  trans_ops->push_back(nh2nc_op);
+    auto *nh2nc_op = NPUPassUtils::CreateNhwc2NchwOp({in_tensor}, nh2nc_tensors, nh2nc_name);
+    trans_ops->push_back(nh2nc_op);
 
-  auto *nc2nh_op = NPUPassUtils::CreateNchw2NhwcOp(nh2nc_tensors, nc2nh_tensors, nc2nh_name);
-  trans_ops->push_back(nc2nh_op);
+    auto *nc2nh_op = NPUPassUtils::CreateNchw2NhwcOp(nh2nc_tensors, nc2nh_tensors, nc2nh_name);
+    trans_ops->push_back(nc2nh_op);
 
-  NPUPassUtils::UpdateOp(nh2nc_op, in_ops, {nc2nh_op}, {in_tensor}, nh2nc_tensors);
-  NPUPassUtils::UpdateOp(nc2nh_op, {nh2nc_op}, out_ops, {nh2nc_tensors[0]}, nc2nh_tensors);
-  if (op != nullptr) {
-    NPUPassUtils::UpdateNH2NCTransNodePreOp(op, nh2nc_op, post_op);
-  }
-  if (post_op != nullptr) {
-    NPUPassUtils::UpdateNC2NHTransNodePostOp(op, nc2nh_op, post_op);
-  } else {
-    // post_op nullptr mean output, we remain graph output tensor name unchanged
-    auto graph_output_name = in_tensor.Name();
-    nc2nh_tensor->SetTensorName(graph_output_name + "_after_" + name_);
+    NPUPassUtils::UpdateOp(nh2nc_op, in_ops, {nc2nh_op}, {in_tensor}, nh2nc_tensors);
+    NPUPassUtils::UpdateOp(nc2nh_op, {nh2nc_op}, out_ops, {nh2nc_tensors[0]}, nc2nh_tensors);
+    if (op != nullptr) {
+      NPUPassUtils::UpdateNH2NCTransNodePreOp(op, nh2nc_op, post_op);
+    }
+    if (post_op != nullptr) {
+      NPUPassUtils::UpdateNC2NHTransNodePostOp(op, nc2nh_op, post_op);
+    } else {
+      // post_op nullptr mean output, we remain graph output tensor name unchanged
+      auto graph_output_name = in_tensor.Name();
+      nc2nh_tensor->SetTensorName(graph_output_name + "_after_" + name_);
+    }
   }
   return RET_OK;
 }
