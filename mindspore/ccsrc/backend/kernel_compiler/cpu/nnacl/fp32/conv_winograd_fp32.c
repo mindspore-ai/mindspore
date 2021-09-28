@@ -35,8 +35,10 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
   int output_tile_count = UP_DIV(output_count, tile_num);
 #ifdef ENABLE_AVX
   const int col_tile = C16NUM;
+  const int tmp_data_tile = C8NUM;
 #else
   const int col_tile = C8NUM;
+  const int tmp_data_tile = C4NUM;
 #endif
   int oc_tile = UP_DIV(conv_param->output_channel_, col_tile);
   int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
@@ -51,7 +53,7 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
   float *col_buffer = buffer_list[3];
   int trans_input_offset = tile_num * input_unit_square * in_channel;
   int gemm_out_offset = tile_num * input_unit_square * oc8 * C8NUM;
-  int tmp_data_offset = input_unit_square * C4NUM;
+  int tmp_data_offset = input_unit_square * tmp_data_tile;
   int col_buffer_offset = tile_num * in_channel;
   // step 1 : filter transform (pre-processed offline)
   // step 2 : input transform (online)

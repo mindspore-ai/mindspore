@@ -56,7 +56,7 @@ int ConvolutionWinogradCPUKernel::InitTmpBuffer() {
   }
 
   tmp_data_ = reinterpret_cast<float *>(
-    ctx_->allocator->Malloc(thread_count_ * C4NUM * input_unit_ * input_unit_ * sizeof(float)));
+    ctx_->allocator->Malloc(thread_count_ * tmp_data_tile_ * input_unit_ * input_unit_ * sizeof(float)));
   if (tmp_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc tmp_data_ failed.";
     return RET_MEMORY_FAILED;
@@ -96,8 +96,10 @@ int ConvolutionWinogradCPUKernel::Init() {
   tile_num_ = C12NUM;
 #ifdef ENABLE_AVX
   oc_block_ = C16NUM;
+  tmp_data_tile_ = C8NUM;
 #else
   oc_block_ = C8NUM;
+  tmp_data_tile_ = C4NUM;
 #endif
   kernel_unit_ = conv_param_->kernel_h_;
   input_unit_ = output_unit_ + kernel_unit_ - 1;

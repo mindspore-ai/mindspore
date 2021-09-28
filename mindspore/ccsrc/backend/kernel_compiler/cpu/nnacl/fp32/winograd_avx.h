@@ -210,6 +210,12 @@ typedef void (*OutputTransFunc)(const float *src_data, float *dst_data, const fl
   MS_ST256_F32(dst_data + 4 * dst_step * out_c + 3 * out_c, m[23]); \
   MS_ST256_F32(dst_data + 4 * dst_step * out_c + 4 * out_c, m[24]);
 
+void InputTransform4x4AvxUnit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
+
+void InputTransform6x6AvxUnit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
+
+void InputTransform8x8AvxUnit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c);
+
 void OutputTransform4x2AvxUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                int dst_step, int out_c, int r_w, int r_h, int r_c);
 void OutputTransform4x2ReluAvxUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
