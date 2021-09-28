@@ -16,28 +16,24 @@
 
 #include "actor/actor.h"
 #include "actor/actormgr.h"
-#include "actor/actorpolicyinterface.h"
 #include "actor/iomgr.h"
 
 namespace mindspore {
-ActorBase::ActorBase() : actorPolicy(nullptr), id("", ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}
+ActorBase::ActorBase() : mailbox(nullptr), id("", ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}
 
 ActorBase::ActorBase(const std::string &name)
-    : actorPolicy(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}
+    : mailbox(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions() {}
 
 ActorBase::ActorBase(const std::string &name, ActorThreadPool *pool)
-    : actorPolicy(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions(), pool_(pool) {}
+    : mailbox(nullptr), id(name, ActorMgr::GetActorMgrRef()->GetUrl()), actionFunctions(), pool_(pool) {}
 
 ActorBase::~ActorBase() {}
 
-void ActorBase::Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<ActorPolicy> thread) {
-  // lock here or await(). and unlock at Quit() or at aweit.
+void ActorBase::Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<MailBox> mailboxPtr) {
+  // lock here or await(). and unlock at Quit() or at await.
   waiterLock.lock();
-
-  actorPolicy = std::move(thread);
-  MINDRT_OOM_EXIT(actorPolicy);
+  this->mailbox = std::move(mailboxPtr);
 }
-void ActorBase::SetRunningStatus(bool start) { actorPolicy->SetRunningStatus(start); }
 
 void ActorBase::Await() {
   std::string actorName = id.Name();
@@ -46,12 +42,19 @@ void ActorBase::Await() {
 
   waiterLock.lock();
   waiterLock.unlock();
+
+  // mailbox's hook may hold the actor reference, we need explicitly free the mailbox to avoid the memory leak. the
+  // details can refer to the comments in ActorMgr::Spawn
+  delete mailbox.release();
   MS_LOG(DEBUG) << "ACTOR succeeded in waiting. a=" << actorName.c_str();
 }
 void ActorBase::Terminate() {
-  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
-  MINDRT_OOM_EXIT(msg);
-  (void)EnqueMessage(std::move(msg));
+  bool flag = false;
+  if (terminating_.compare_exchange_strong(flag, true)) {
+    std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
+    MINDRT_OOM_EXIT(msg);
+    (void)EnqueMessage(std::move(msg));
+  }
 }
 
 void ActorBase::HandlekMsg(const std::unique_ptr<MessageBase> &msg) {
@@ -64,61 +67,76 @@ void ActorBase::HandlekMsg(const std::unique_ptr<MessageBase> &msg) {
                     << ",m=" << msg->Name().c_str();
   }
 }
-int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> &&msg) { return actorPolicy->EnqueMessage(std::move(msg)); }
+int ActorBase::EnqueMessage(std::unique_ptr<MessageBase> msg) {
+  int ret = mailbox->EnqueueMessage(std::move(msg));
+  return ret;
+}
 
 void ActorBase::Quit() {
   Finalize();
   // lock at spawn(), unlock here.
   waiterLock.unlock();
-
-  actorPolicy->Terminate(this);
 }
 
 void ActorBase::Run() {
-  for (;;) {
-    auto msgs = actorPolicy->GetMsgs();
-    if (msgs == nullptr) {
-      return;
-    }
-    for (auto it = msgs->begin(); it != msgs->end(); ++it) {
-      std::unique_ptr<MessageBase> &msg = *it;
-      if (msg == nullptr) {
-        continue;
+  auto msgHandler = [this](const std::unique_ptr<MessageBase> &msg) {
+    AddMsgRecord(msg->Name());
+    switch (msg->GetType()) {
+      case MessageBase::Type::KMSG:
+      case MessageBase::Type::KUDP: {
+        if (Filter(msg)) {
+          return ERRORCODE_SUCCESS;
+        }
+        this->HandlekMsg(msg);
+        return ERRORCODE_SUCCESS;
       }
-      AddMsgRecord(msg->Name());
-      switch (msg->GetType()) {
-        case MessageBase::Type::KMSG:
-        case MessageBase::Type::KUDP: {
-          if (Filter(msg)) {
-            continue;
-          }
-          this->HandlekMsg(msg);
-          break;
+      case MessageBase::Type::KHTTP: {
+        this->HandleHttp(msg);
+        return ERRORCODE_SUCCESS;
+      }
+      case MessageBase::Type::KASYNC: {
+        msg->Run(this);
+        return ERRORCODE_SUCCESS;
+      }
+      case MessageBase::Type::KLOCAL: {
+        this->HandleLocalMsg(msg);
+        return ERRORCODE_SUCCESS;
+      }
+      case MessageBase::Type::KTERMINATE: {
+        this->Quit();
+        return ACTOR_TERMINATED;
+      }
+      case MessageBase::Type::KEXIT: {
+        this->Exited(msg->From());
+        return ERRORCODE_SUCCESS;
+      }
+    }
+    return ERRORCODE_SUCCESS;
+  };
+
+  if (this->mailbox->TakeAllMsgsEachTime()) {
+    while (auto msgs = mailbox->GetMsgs()) {
+      for (auto it = msgs->begin(); it != msgs->end(); ++it) {
+        std::unique_ptr<MessageBase> &msg = *it;
+        if (msg == nullptr) {
+          continue;
         }
-        case MessageBase::Type::KHTTP: {
-          this->HandleHttp(std::move(msg));
-          break;
-        }
-        case MessageBase::Type::KASYNC: {
-          msg->Run(this);
-          break;
-        }
-        case MessageBase::Type::KLOCAL: {
-          this->HandleLocalMsg(std::move(msg));
-          break;
-        }
-        case MessageBase::Type::KTERMINATE: {
-          this->Quit();
+        MS_LOG_DEBUG << "dequeue message]actor=" << id.Name() << ",msg=" << msg->Name();
+        if (msgHandler(msg) == ACTOR_TERMINATED) {
           return;
         }
-        case MessageBase::Type::KEXIT: {
-          this->Exited(msg->From());
-          break;
-        }
+      }
+      msgs->clear();
+    }
+
+  } else {
+    while (auto msg = mailbox->GetMsg()) {
+      if (msgHandler(msg) == ACTOR_TERMINATED) {
+        return;
       }
     }
-    msgs->clear();
   }
+  return;
 }
 
 int ActorBase::Send(const AID &to, std::unique_ptr<MessageBase> msg) {

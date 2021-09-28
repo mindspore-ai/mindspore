@@ -60,7 +60,7 @@ class SwitchActor : public AbstractActor {
   std::vector<KernelWithIndex> formal_parameters_;
 
   // Input data.
-  std::unordered_map<uuids::uuid *, std::unordered_map<size_t, std::vector<KernelWithIndex>>> input_nodes_;
+  std::unordered_map<int, std::unordered_map<size_t, std::vector<KernelWithIndex>>> input_nodes_;
   // The store node records the value node input of the switch actor.
   std::vector<std::pair<size_t, AnfNodePtr>> store_nodes_;
 

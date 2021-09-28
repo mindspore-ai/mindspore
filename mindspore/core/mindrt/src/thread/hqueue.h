@@ -18,8 +18,6 @@
 #define MINDSPORE_CORE_MINDRT_RUNTIME_HQUEUE_H_
 #include <atomic>
 #include <vector>
-#include "actor/log.h"
-#include "thread/threadlog.h"
 
 namespace mindspore {
 // implement a lock-free queue
@@ -50,10 +48,13 @@ class HQueue {
   HQueue() {}
   virtual ~HQueue() {}
 
-  int Init(int32_t sz) {
+  bool Init(int32_t sz) {
     for (int32_t i = 0; i < sz; i++) {
       auto node = new HQNode<T>();
-      THREAD_ERROR_IF_NULL(node);
+      if (node == nullptr) {
+        Clean();
+        return false;
+      }
       node->value = nullptr;
       node->free = true;
       node->next = {-1, 0};
@@ -64,7 +65,7 @@ class HQueue {
     qhead = {0, 0};
     qtail = {0, 0};
     nodes[0]->free = false;
-    return THREAD_OK;
+    return true;
   }
 
   void Clean() {
@@ -163,6 +164,7 @@ class HQueue {
     return false;
   }
 
+ private:
   std::atomic<Pointer> qhead;
   std::atomic<Pointer> qtail;
   std::vector<HQNode<T> *> nodes;

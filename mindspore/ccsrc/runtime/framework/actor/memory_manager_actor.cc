@@ -173,8 +173,7 @@ void MemoryManagerActor::SetOpContextMemoryAllocFail(const std::string &kernel_n
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
 
-  MS_EXCEPTION_IF_NULL(op_context->sequential_num_);
-  auto step_id = uuids::uuid::ToBytes(*(op_context->sequential_num_));
+  int step_id = op_context->sequential_num_;
   // First occur allocating memory failed.
   if (mem_alloc_failed_step_ids_.find(step_id) == mem_alloc_failed_step_ids_.end()) {
     mem_alloc_failed_step_ids_.clear();
