@@ -85,10 +85,10 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   int axis = RET_INVALID_OP_ATTR;
   axis = concate_op->axis();
-  if (out_format == Format::NCHW) {
+  if (trt_input_tensors[0]->getDimensions().nbDims == DIMENSION_4D && out_format == Format::NCHW) {
     // when inputs all NCHW, change axis
     axis = ConvertAxisFromNHWC2NCHW(axis);
-    MS_LOG(INFO) << "concate axis change to " << axis << " when using NCHW format.";
+    MS_LOG(DEBUG) << "concate axis change to " << axis << " when using NCHW format.";
   }
 
   nvinfer1::IConcatenationLayer *concate_layer =

@@ -40,7 +40,13 @@ class ScaleTensorRT : public TensorRTOp {
 
   nvinfer1::ITensor *AddSqueezeOp(nvinfer1::ITensor *in_tensor, nvinfer1::INetworkDefinition *network);
 
-  nvinfer1::ScaleMode GetScaleMode(size_t axis);
+  nvinfer1::ScaleMode GetScaleMode(int64_t axis);
+
+  nvinfer1::ITensor *PreProcessInputTensor(nvinfer1::INetworkDefinition *network);
+
+  Format out_format_;
+
+  nvinfer1::ScaleMode mode_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SCALE_TENSORRT_H_

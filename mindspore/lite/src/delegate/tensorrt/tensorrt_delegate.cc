@@ -85,7 +85,9 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Eltwise, GetTensorRTOp<ElementWiseTensorRT>},
     {schema::PrimitiveType_Gather, GetTensorRTOp<GatherTensorRT>},
     {schema::PrimitiveType_MatMul, GetTensorRTOp<MatMulTensorRT>},
+    {schema::PrimitiveType_FullConnection, GetTensorRTOp<MatMulTensorRT>},
     {schema::PrimitiveType_AvgPoolFusion, GetTensorRTOp<PoolTensorRT>},
+    {schema::PrimitiveType_MaxPoolFusion, GetTensorRTOp<PoolTensorRT>},
     {schema::PrimitiveType_PadFusion, GetTensorRTOp<PadTensorRT>},
     {schema::PrimitiveType_ReduceFusion, GetTensorRTOp<ReduceTensorRT>},
     {schema::PrimitiveType_ScaleFusion, GetTensorRTOp<ScaleTensorRT>},
@@ -98,6 +100,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Flatten, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
   };
+  unsupport_hw_op_lists_ = {schema::PrimitiveType_Reshape};
   lite::SetCudaDevice(device_info_);
   if (runtime_ == nullptr) {
     runtime_ = new (std::nothrow) TensorRTRuntime();
@@ -115,6 +118,15 @@ Status TensorRTDelegate::Build(DelegateModel *model) {
   std::vector<TensorRTOp *> tensorrt_ops;
   for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
     kernel::Kernel *kernel = *iter;
+    if (support_hw_resize_) {
+      for (auto no_type : unsupport_hw_op_lists_) {
+        if (model->GetPrimitive(kernel)->value_type() == no_type) {
+          support_hw_resize_ = false;
+          MS_LOG(INFO) << "network has op don't support hw resize.";
+          continue;
+        }
+      }
+    }
     auto tensorrt_op = FindTensorRTOp(kernel, model->GetPrimitive(kernel));
     if (tensorrt_op != nullptr) {
       // If tensorrt_ops does not equal nullptr, this kernel can be supported by delegate
@@ -165,8 +177,8 @@ TensorRTSubGraph *TensorRTDelegate::CreateTensorRTGraph(const std::vector<Tensor
                                                         KernelIter from, KernelIter end) {
   auto in_tensors = GraphInTensors<TensorRTOp>(ops, model, from, end);
   auto out_tensors = GraphOutTensors<TensorRTOp>(ops, model, from, end);
-  auto *tensorrt_graph =
-    new (std::nothrow) TensorRTSubGraph(ops, in_tensors, out_tensors, context_, device_info_, runtime_);
+  auto *tensorrt_graph = new (std::nothrow)
+    TensorRTSubGraph(ops, in_tensors, out_tensors, context_, device_info_, runtime_, support_hw_resize_);
   if (tensorrt_graph == nullptr) {
     MS_LOG(ERROR) << "new tensorrt_graph failed.";
     return nullptr;

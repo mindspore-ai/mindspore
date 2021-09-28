@@ -53,14 +53,27 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "network is invalid";
     return RET_ERROR;
   }
-  // convert constant MSTensor to ITensor
-  nvinfer1::ITensor *add_tensor = lite::ConvertConstantTensor(network, this->in_tensors_[1]);
-  if (add_tensor == nullptr) {
-    MS_LOG(ERROR) << "add a new tensor failed for TensorRT GatherTensorRTOp.";
+
+  nvinfer1::ITensor *gather_input = this->tensorrt_in_tensors_[0].trt_tensor_;
+  if (in_tensors_[0].IsConst()) {
+    gather_input = lite::ConvertConstantTensor(network, this->in_tensors_[0]);
+    MS_LOG(DEBUG) << "gather input is const tensor " << op_name_;
+  }
+  if (gather_input == nullptr) {
+    MS_LOG(ERROR) << "get gather input failed for: " << op_name_;
     return RET_ERROR;
   }
 
-  nvinfer1::ITensor *gather_input = tensorrt_in_tensors_[0].trt_tensor_;
+  nvinfer1::ITensor *indices_tensor = this->tensorrt_in_tensors_[tensorrt_in_tensors_.size() - 1].trt_tensor_;
+  if (in_tensors_[1].IsConst()) {
+    indices_tensor = lite::ConvertConstantTensor(network, this->in_tensors_[1]);
+    MS_LOG(DEBUG) << "gather indices is const tensor " << op_name_;
+  }
+  if (indices_tensor == nullptr) {
+    MS_LOG(ERROR) << "get gather indices failed for: " << op_name_;
+    return RET_ERROR;
+  }
+
   Format out_format = tensorrt_in_tensors_[0].format_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NCHW) {
@@ -75,7 +88,8 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     out_format = Format::NHWC;
   }
 
-  nvinfer1::IGatherLayer *gather_layer = network->addGather(*gather_input, *add_tensor /* indices */, axis_ /* axis */);
+  nvinfer1::IGatherLayer *gather_layer =
+    network->addGather(*gather_input, *indices_tensor /* indices */, axis_ /* axis */);
   if (gather_layer == nullptr) {
     MS_LOG(ERROR) << "addGather failed for TensorRT.";
     return RET_ERROR;
