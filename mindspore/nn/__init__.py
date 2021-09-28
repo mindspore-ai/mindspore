@@ -26,7 +26,7 @@ from .loss import *
 from .optim import *
 from .metrics import *
 from .wrap import *
-from .grad import *
+from .grad import Jvp, Vjp
 from .sparse import *
 
 
