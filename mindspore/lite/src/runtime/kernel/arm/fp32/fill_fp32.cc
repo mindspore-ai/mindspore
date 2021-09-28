@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_Fill;
 
 namespace mindspore::kernel {
 int FillCPUKernel::Init() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 2);
+  CHECK_LESS_RETURN(in_tensors_.size(), kInputSize1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
