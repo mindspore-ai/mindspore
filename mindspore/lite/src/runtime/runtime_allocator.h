@@ -25,18 +25,18 @@
 #include "src/tensor.h"
 
 namespace mindspore {
-class OptimizeAllocator : public Allocator {
+class RuntimeAllocator : public Allocator {
  public:
-  explicit OptimizeAllocator(size_t aligned_size = 32);
-  ~OptimizeAllocator() override;
+  explicit RuntimeAllocator(size_t aligned_size = 32);
+  ~RuntimeAllocator() override;
 
  public:
   void *Malloc(size_t size) override { return nullptr; }
   void Free(void *ptr) override { return; }
-  int RefCount(void *ptr) override { return lite::RET_OK; }
-  int SetRefCount(void *ptr, int ref_count) override { return lite::RET_OK; }
-  int IncRefCount(void *ptr, int ref_count) override { return lite::RET_OK; }
-  int DecRefCount(void *ptr, int ref_count) override { return lite::RET_OK; }
+  int RefCount(void *ptr) override { return (ptr == nullptr) ? RUNTIME_REFCOUNT : 0; }
+  int SetRefCount(void *ptr, int ref_count) override { return 0; }
+  int IncRefCount(void *ptr, int ref_count) override { return 0; }
+  int DecRefCount(void *ptr, int ref_count) override { return 0; }
 
  public:
   void MallocTensorData(lite::Tensor *tensor);
@@ -49,13 +49,13 @@ class OptimizeAllocator : public Allocator {
 
  private:
   void *data_ = nullptr;
-  size_t total_size_;
+  size_t total_size_ = 0;
   std::unordered_map<lite::Tensor *, size_t> offset_map_;
   std::map<size_t, size_t> free_list_; /* offset, size */
   std::map<size_t, size_t> used_list_; /* offset, size */
 };
 
-using OptAllocatorPtr = std::shared_ptr<OptimizeAllocator>;
+using RuntimeAllocatorPtr = std::shared_ptr<RuntimeAllocator>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_OPTIMIZE_ALLOCATOR_H_

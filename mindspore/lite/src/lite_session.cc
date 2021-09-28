@@ -31,7 +31,7 @@
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
 #include "src/weight_decoder.h"
-#include "src/runtime/optimize_allocator.h"
+#include "src/runtime/runtime_allocator.h"
 #ifdef ENABLE_MINDRT
 #include "src/mindrt_executor.h"
 #endif
@@ -545,9 +545,9 @@ int LiteSession::CompileGraph(Model *model) {
 
   FreePackOpWeight(kernels_);
 
-  ret = OptimizeRuntimeAllocator();
+  ret = RuntimeAllocatorInit();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "OptimizeRuntimeAllocator failed.";
+    MS_LOG(ERROR) << "Runtime allocator init failed.";
     is_running_.store(false);
     return ret;
   }
@@ -1017,20 +1017,36 @@ int LiteSession::InitExecutor() {
   return RET_OK;
 }
 
-int LiteSession::OptimizeRuntimeAllocator() {
-  return RET_OK;
-
+int LiteSession::RuntimeAllocatorValid() {
   if (is_infershape_ != RET_OK) {
     MS_LOG(ERROR) << "Not support opt allocator in runtime-infershape.";
-    return RET_OK;
+    return RET_ERROR;
   }
   if (is_control_flow_ == true) {
     MS_LOG(ERROR) << "Not support opt allocator in control flow model.";
-    return RET_OK;
+    return RET_ERROR;
   }
+  return RET_ERROR;
+}
 
+void LiteSession::RuntimeAllocatorInitGraphOutput() {
   AllocatorPtr default_allocator = context_->allocator;
-  OptAllocatorPtr optimize_allocator = std::make_shared<OptimizeAllocator>();
+  for (auto graph_out : isolate_graph_output_map_) {
+    auto cal_t = graph_out.first;
+    auto out_t = graph_out.second;
+    if (cal_t->allocator() != runtime_allocator_ || out_t->allocator() != default_allocator) {
+      continue;
+    }
+    out_t->set_allocator(runtime_allocator_);
+    if (cal_t->data_type() != out_t->data_type()) {
+      runtime_allocator_->MallocTensorData(out_t);
+    }
+  }
+  return;
+}
+
+void LiteSession::RuntimeAllocatorInitSubgraph() {
+  AllocatorPtr default_allocator = context_->allocator;
   std::unordered_map<lite::Tensor *, int> ref_count;
 
   for (auto subgraph : kernels_) {
@@ -1046,16 +1062,18 @@ int LiteSession::OptimizeRuntimeAllocator() {
       if (src_t->data_type() == in_tensor->data_type()) {
         in_tensor->set_allocator(src_t->allocator());
         ref_count[src_t] += in_tensor->init_ref_count();
-        continue;
+      } else {
+        if (in_tensor->allocator() == default_allocator) {
+          src_t->set_allocator(runtime_allocator_);
+          ref_count[src_t] = src_t->init_ref_count();
+          runtime_allocator_->MallocTensorData(src_t);
+        }
       }
 
-      if (src_t->allocator() == default_allocator) {
-        src_t->set_allocator(optimize_allocator);
-        ref_count[src_t] = src_t->init_ref_count();
-        optimize_allocator->MallocTensorData(src_t);
-      }
-      if (ref_count[in_tensor]-- <= 0) {
-        optimize_allocator->FreeTensorData(in_tensor);
+      ref_count[src_t]--;
+
+      if (ref_count[src_t] <= 0 && src_t->allocator() == runtime_allocator_) {
+        runtime_allocator_->FreeTensorData(src_t);
       }
     }
 
@@ -1063,30 +1081,44 @@ int LiteSession::OptimizeRuntimeAllocator() {
     for (auto kernel : kernel_list) {
       /* malloc for output */
       for (auto tensor : kernel->out_tensors()) {
-        if (tensor->IsGraphOutput() == true) {
-          continue;
-        }
         if (tensor->allocator() != default_allocator) {
           continue;
         }
-        tensor->set_allocator(optimize_allocator);
+        tensor->set_allocator(runtime_allocator_);
         ref_count[tensor] = tensor->init_ref_count();
-        optimize_allocator->MallocTensorData(tensor);
+        runtime_allocator_->MallocTensorData(tensor);
       }
 
       /* free input after run */
       for (auto tensor : kernel->in_tensors()) {
-        if (tensor->allocator() != optimize_allocator) {
+        if (tensor->allocator() != runtime_allocator_) {
           continue;
         }
-        if (ref_count[tensor]-- <= 0) {
-          optimize_allocator->FreeTensorData(tensor);
+        if (--ref_count[tensor] <= 0) {
+          runtime_allocator_->FreeTensorData(tensor);
         }
       }
     }
   }
+  return;
+}
 
-  auto ret = OptAllocatorSetData(optimize_allocator);
+int LiteSession::RuntimeAllocatorInit() {
+  if (RuntimeAllocatorValid() != RET_OK) {
+    return RET_OK;
+  }
+
+  runtime_allocator_ = std::shared_ptr<RuntimeAllocator>(new (std::nothrow) RuntimeAllocator());
+  if (runtime_allocator_ == nullptr) {
+    MS_LOG(ERROR) << "RuntimeAllocator is null.";
+    return RET_ERROR;
+  }
+
+  RuntimeAllocatorInitSubgraph();
+
+  RuntimeAllocatorInitGraphOutput();
+
+  auto ret = RuntimeAllocatorSetData();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "using optimize allocator failed.";
     return ret;
@@ -1094,24 +1126,21 @@ int LiteSession::OptimizeRuntimeAllocator() {
   return RET_OK;
 }
 
-int LiteSession::OptAllocatorSetData(OptAllocatorPtr opt_allocator) {
-  void *data = opt_allocator->MallocOptData();
+int LiteSession::RuntimeAllocatorSetData() {
+  void *data = runtime_allocator_->MallocOptData();
   if (data == nullptr) {
     MS_LOG(ERROR) << "malloc optimize data failed.";
     return RET_ERROR;
   }
   int8_t *int8_data = reinterpret_cast<int8_t *>(data);
-  auto offset_map = opt_allocator->GetOffsetMap();
+  auto offset_map = runtime_allocator_->GetOffsetMap();
 
-  for (auto tensor : tensors_) {
-    if (tensor->allocator() != opt_allocator) {
-      continue;
-    }
-    auto offset_iter = offset_map.find(tensor);
-    if (offset_iter == offset_map.end()) {
+  for (auto &iter : offset_map) {
+    auto tensor = iter.first;
+    if (tensor->allocator() != runtime_allocator_) {
       return RET_ERROR;
     }
-    tensor->set_data(int8_data + offset_iter->second);
+    tensor->set_data(int8_data + iter.second);
   }
   return RET_OK;
 }

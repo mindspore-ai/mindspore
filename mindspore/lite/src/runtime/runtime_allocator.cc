@@ -14,31 +14,31 @@
  * limitations under the License.
  */
 
-#include "src/runtime/optimize_allocator.h"
+#include "src/runtime/runtime_allocator.h"
 
 namespace mindspore {
-OptimizeAllocator::OptimizeAllocator(size_t aligned_size) {
+RuntimeAllocator::RuntimeAllocator(size_t aligned_size) {
   aligned_size_ = aligned_size;
   return;
 }
 
-OptimizeAllocator::~OptimizeAllocator() {
-  if (data_ == nullptr) {
+RuntimeAllocator::~RuntimeAllocator() {
+  if (data_ != nullptr) {
     free(data_);
     data_ = nullptr;
   }
 }
 
-void *OptimizeAllocator::MallocOptData() {
+void *RuntimeAllocator::MallocOptData() {
   if (data_ == nullptr) {
     data_ = malloc(total_size_);
   }
   return data_;
 }
 
-size_t OptimizeAllocator::FindMinFree(size_t size) {
-  size_t min_size = total_size_;
-  size_t min_addr = total_size_;
+size_t RuntimeAllocator::FindMinFree(size_t size) {
+  size_t min_size = total_size_ + 1;
+  size_t min_addr = total_size_ + 1;
   for (auto const &itr : free_list_) {
     if (itr.second >= size && min_size > itr.second) {
       min_size = itr.second;
@@ -48,7 +48,7 @@ size_t OptimizeAllocator::FindMinFree(size_t size) {
   return min_addr;
 }
 
-void OptimizeAllocator::FreeTensorData(lite::Tensor *tensor) {
+void RuntimeAllocator::FreeTensorData(lite::Tensor *tensor) {
   size_t offset = offset_map_[tensor];
   free_list_[offset] = used_list_[offset];
   used_list_.erase(offset);
@@ -74,7 +74,7 @@ void OptimizeAllocator::FreeTensorData(lite::Tensor *tensor) {
   }
 }
 
-void OptimizeAllocator::MallocTensorData(lite::Tensor *tensor) {
+void RuntimeAllocator::MallocTensorData(lite::Tensor *tensor) {
   size_t size = tensor->Size();
   size_t offset = FindMinFree(size);
 
@@ -89,6 +89,7 @@ void OptimizeAllocator::MallocTensorData(lite::Tensor *tensor) {
         free_list_.erase(offset);
       }
     }
+    total_size_ = offset + size;
   } else {
     if (free_list_[offset] > size) {
       free_list_[offset + size] = free_list_[offset] - size;

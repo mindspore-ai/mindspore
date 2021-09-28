@@ -298,6 +298,9 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
 }
 
 void Tensor::FreeData() {
+  if (IS_RUNTIME_ALLOCATOR(allocator_)) {
+    return;
+  }
   if (this->data_ != nullptr && this->own_data_) {
     if (this->allocator_ != nullptr) {
       this->allocator_->Free(this->data_);
