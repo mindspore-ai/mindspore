@@ -45,6 +45,7 @@ namespace device {
 constexpr float kMaxMemReuseFactor = 0.8;
 constexpr float kMinMemReuseFactor = 0.5;
 constexpr float kRetryFactor = 0.1;
+constexpr size_t kAtomicCleanInputSize = 2;
 namespace {
 std::vector<AnfNodePtr> GetGraphInputs(const session::KernelGraph &graph) {
   auto graph_inputs = graph.inputs();
@@ -68,11 +69,21 @@ std::vector<AnfNodePtr> GetGraphInputs(const session::KernelGraph &graph) {
 }
 }  // namespace
 constexpr size_t kMinInputSize = 2;
-KernelRuntime::~KernelRuntime() {}
+KernelRuntime::~KernelRuntime() {
+  stream_ = nullptr;
+  independent_stream_ = nullptr;
+  communication_stream_ = nullptr;
+}
 
-bool KernelRuntime::Load(const session::KernelGraph &graph, bool is_task_sink) { return true; }
+bool KernelRuntime::Load(const session::KernelGraph &, bool) {
+  MS_LOG(INFO) << "Call default load.";
+  return true;
+}
 
-bool KernelRuntime::LoadData(const session::KernelGraph &) { return false; }
+bool KernelRuntime::LoadData(const session::KernelGraph &) {
+  MS_LOG(INFO) << "Call default load data.";
+  return false;
+}
 
 bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
   MS_EXCEPTION_IF_NULL(kernel);
@@ -789,7 +800,10 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
     output_ptr += align_size_list[j];
   }
 }
-bool KernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) { return false; }
+bool KernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  return false;
+}
 
 DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index) const {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -1168,8 +1182,7 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
                                            const std::shared_ptr<MemScheduler> &mem_scheduler) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
-  const size_t kNodeInputSize = 2;
-  if (cnode->inputs().size() != kNodeInputSize) {
+  if (cnode->inputs().size() != kAtomicCleanInputSize) {
     MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
   }
   MS_EXCEPTION_IF_NULL(cnode->inputs()[1]);
@@ -1349,7 +1362,9 @@ void KernelRuntime::SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &m
         tensor->set_sync_status(kNeedSyncHostToDevice);
         continue;
       }
-      SyncStream();
+      if (!SyncStream()) {
+        MS_LOG(ERROR) << "SyncStream failed";
+      }
       auto origin_ptr = device_address->ptr_;
       if (origin_ptr == nullptr) {
         device_address->ptr_ = mem_scheduler->GetOrMalloc(device_address.get(), device_address->size_);
@@ -1380,7 +1395,6 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
     if (!input_node->isa<Parameter>()) {
       continue;
     }
-    auto input_param = input_node->cast<ParameterPtr>();
     if (AnfAlgo::OutputAddrExist(input_node, 0)) {
       auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
       MS_EXCEPTION_IF_NULL(tensor);
@@ -1390,7 +1404,8 @@ void KernelRuntime::InitGraphInputTensors(const std::shared_ptr<MemScheduler> &m
         tensor->data_sync(false);
         priority = kMemPriorityLow;
       }
-      mem_scheduler->Init(device_address.get(), tensor->data_c(), tensor->data().nbytes(), priority);
+      auto tensor_size = LongToSize(tensor->data().nbytes());
+      mem_scheduler->Init(device_address.get(), tensor->data_c(), tensor_size, priority);
     }
   }
 }

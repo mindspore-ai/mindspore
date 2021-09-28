@@ -31,8 +31,8 @@ class MemHandler {
   virtual void FreeDevice(void *ptr) = 0;
   virtual void *MallocHost(size_t mem_size) = 0;
   virtual void FreeHost(void *ptr) = 0;
-  virtual void SwapIn(void *host_ptr, void *device_ptr, size_t mem_size, void *stream) = 0;
-  virtual void SwapOut(void *device_ptr, void *host_ptr, size_t mem_size, void *stream) = 0;
+  virtual void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) = 0;
+  virtual void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) = 0;
 };
 
 enum MemPriority { kMemPriorityLow, kMemPriorityMedium, kMemPriorityHigh };

@@ -78,7 +78,7 @@ bool MPICollective::CreateCommGroup(const std::string &name, const std::vector<u
   CHECK_RET(group_comm_.count(name), 0, "Group comm has already been created.");
   CHECK_RET(rtSetDevice(local_rank_id_), RT_ERROR_NONE, "Call rtSetDevice error.");
   HcclRootInfo rootInfo;
-  if (static_cast<size_t>(rank_id_) == ranks[0]) {
+  if (static_cast<unsigned int>(rank_id_) == ranks[0]) {
     CHECK_RET(HcclGetRootInfo(&rootInfo), ::HcclResult::HCCL_SUCCESS, "HcclGetRootInfo failed.");
   }
   MPI_Group mpi_group = MPI_GROUP_NULL;

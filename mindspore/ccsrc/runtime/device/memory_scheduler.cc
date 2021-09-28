@@ -15,12 +15,9 @@
  */
 
 #include "runtime/device/memory_scheduler.h"
-#include <map>
-#include <set>
-#include <memory>
-#include <utility>
 #include <algorithm>
 #include "utils/log_adapter.h"
+
 namespace mindspore {
 namespace device {
 void MemScheduler::Clear() {
@@ -277,7 +274,7 @@ void MemScheduler::GenEventSpan() {
       MS_EXCEPTION_IF_NULL(event);
       auto span = event->index - last_index;
       if (span > 1) {
-        (void)event_span_.insert(std::pair<size_t, std::shared_ptr<Event>>(span, event));
+        (void)event_span_.emplace(std::pair<size_t, std::shared_ptr<Event>>(span, event));
       }
       last_index = event->index;
     }

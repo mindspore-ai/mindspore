@@ -222,7 +222,7 @@ size_t AscendMemoryManager::GetAvailableMemSize() {
   return available_mem_size;
 }
 
-void AscendMemoryManager::SwapIn(void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
+void AscendMemoryManager::SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
     auto ret_rt_memcpy = rtMemcpy(device_ptr, mem_size, host_ptr, mem_size, RT_MEMCPY_HOST_TO_DEVICE);
     if (ret_rt_memcpy != RT_ERROR_NONE) {
@@ -239,7 +239,7 @@ void AscendMemoryManager::SwapIn(void *host_ptr, void *device_ptr, size_t mem_si
   }
 }
 
-void AscendMemoryManager::SwapOut(void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
+void AscendMemoryManager::SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
   if (stream == nullptr) {
     auto ret_rt_memcpy = rtMemcpy(host_ptr, mem_size, device_ptr, mem_size, RT_MEMCPY_DEVICE_TO_HOST);
     if (ret_rt_memcpy != RT_ERROR_NONE) {

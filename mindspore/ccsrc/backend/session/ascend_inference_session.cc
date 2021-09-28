@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include "backend/session/ascend_inference_session.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"
