@@ -281,6 +281,7 @@ void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base
     } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
       ofs.close();
+      return;
     }
     step++;
   }
@@ -326,6 +327,7 @@ void GpuDataSaver::WriteStepTrace(const std::string &saver_base_dir) {
       } catch (const std::exception &e) {
         MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
         ofs.close();
+        return;
       }
     }
   }
@@ -351,6 +353,7 @@ void GpuDataSaver::WriteStartTime(const std::string &saver_base_dir, const BaseT
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
     ofs.close();
+    return;
   }
 
   ofs.close();
