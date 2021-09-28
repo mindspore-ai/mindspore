@@ -102,6 +102,35 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
 
 static const std::unordered_map<std::string, std::vector<size_t>> NCHWOpMap = {};
 
+static const std::unordered_map<std::string, std::vector<size_t>> ToNCHWOpMap = {
+  {ops::kNameAdam, {10}},
+  {ops::kNameApplyMomentum, {4}},
+  {ops::kNameAvgPoolFusion, {1}},
+  {ops::kNameAvgPoolGrad, {}},
+  {ops::kNameBatchNorm, {1}},
+  {ops::kNameBatchNormGrad, {1, 2}},
+  {ops::kNameBatchToSpace, {1}},
+  {ops::kNameBiasAdd, {1}},
+  {ops::kNameBiasAddGrad, {1}},
+  {ops::kNameConv2DBackpropInputFusion, {1}},
+  {ops::kNameConv2DBackpropFilterFusion, {1, 2}},
+  {ops::kNameConv2DFusion, {1}},
+  {ops::kNameConv2dTransposeFusion, {1}},
+  {ops::kNameDepthToSpace, {1}},
+  {ops::kNameFusedBatchNorm, {1}},
+  {ops::kNameInstanceNorm, {1}},
+  {ops::kNameLRN, {1}},
+  {ops::kNameMaxPoolFusion, {1}},
+  {ops::kNameMaxPoolGrad, {}},
+  {ops::kNamePReLUFusion, {1}},
+  {ops::kNameResize, {1}},
+  {ops::kNameResizeGrad, {}},
+  {ops::kNameROIPooling, {1}},
+  {ops::kNameSGD, {2}},
+  {ops::kNameSpaceToBatch, {1}},
+  {ops::kNameSpaceToBatchND, {1}},
+  {ops::kNameSpaceToDepth, {1}}};
+
 // a certain op whose input's format is not fixed, bool value determines whether the op has axis attribute or not.
 static const std::unordered_map<std::string, bool> DynamicFormatOpList = {
   {ops::kNameAddN, false},           {ops::kNameCrop, true},         {ops::kNameSplit, true},
@@ -113,6 +142,7 @@ static const std::unordered_map<std::string, bool> DynamicFormatOpList = {
 
 const std::unordered_map<std::string, std::vector<size_t>> &GetNHWCOpMap() { return NHWCOpMap; }
 const std::unordered_map<std::string, std::vector<size_t>> &GetNCHWOpMap() { return NCHWOpMap; }
+const std::unordered_map<std::string, std::vector<size_t>> &GetToNCHWOpMap() { return ToNCHWOpMap; }
 bool IsDynamicFormatOp(const std::string &op_type) {
   return DynamicFormatOpList.find(op_type) != DynamicFormatOpList.end();
 }

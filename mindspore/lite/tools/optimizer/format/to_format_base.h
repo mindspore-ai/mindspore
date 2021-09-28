@@ -26,11 +26,6 @@
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/infershape_pass.h"
-#include "ops/fusion/conv2d_fusion.h"
-#include "ops/fusion/conv2d_transpose_fusion.h"
-#include "ops/adam.h"
-#include "ops/sgd.h"
-#include "ops/apply_momentum.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore {
@@ -66,7 +61,7 @@ class ToFormatBase : public Pass {
 
  protected:
   virtual STATUS GetTransNodeFormatType(const CNodePtr &cnode, opt::TransTypePair *trans_info) = 0;
-  virtual void SetSensitiveOps() { sensitive_ops_ = opt::GetNHWCOpMap(); }
+  virtual void SetSensitiveOps() { sensitive_ops_ = GetToNCHWOpMap(); }
   virtual bool DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph, const ParameterPtr &input,
                                              const ShapeVector &shape);
   virtual bool DecideWhetherInferShapeForNewNode() { return true; }

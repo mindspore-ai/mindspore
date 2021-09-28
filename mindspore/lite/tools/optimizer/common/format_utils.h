@@ -34,6 +34,7 @@ struct TransTypePair {
 };
 const std::unordered_map<std::string, std::vector<size_t>> &GetNHWCOpMap();
 const std::unordered_map<std::string, std::vector<size_t>> &GetNCHWOpMap();
+const std::unordered_map<std::string, std::vector<size_t>> &GetToNCHWOpMap();
 const std::vector<std::string> &GetDynamicFormatOpList();
 bool IsDynamicFormatOp(const std::string &op_type);
 bool IsDynamicFormatOpWithAxis(const std::string &op_type);
