@@ -100,6 +100,10 @@ class DatasetGraph:
             operation (dict): Enhancement operation.
             message (Operation): Enhancement operation proto message.
         """
+        if operation is None:
+            logger.warning("Summary can not collect the operation for dataset graph as the operation is None, "
+                           "please check the dataset.")
+            return
         for key, value in operation.items():
             if isinstance(value, (list, tuple)):
                 if all(isinstance(ele, int) for ele in value):
