@@ -593,8 +593,11 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
 #endif
 
 void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
-  MS_EXCEPTION_IF_NULL(task_fail_info);
-  MS_EXCEPTION_IF_NULL(current_graph_);
+  if (task_fail_info == nullptr || current_graph_ == nullptr) {
+    MS_LOG(ERROR) << "Execute TaskFailCallback failed. task_fail_info or current_graph_ is nullptr";
+    return;
+  }
+
   static std::mutex exception_mutex;
   constexpr uint32_t kOverflowThreshold = 5;
   std::lock_guard<std::mutex> lock(exception_mutex);
