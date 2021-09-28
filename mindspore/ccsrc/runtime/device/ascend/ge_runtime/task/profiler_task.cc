@@ -37,13 +37,16 @@ void ProfilerTask::Distribute() {
   MS_LOG(INFO) << "log id = " << task_info_->log_id() << ", notify = " << task_info_->notify()
                << ", flat = " << task_info_->flat();
   uint32_t model_id = 0;
-  model_id = rtModelGetId(model_handle_, &model_id);
+  rtError_t rt_model_ret = rtModelGetId(model_handle_, &model_id);
+  if (rt_model_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Call rt api rtModelGetId failed, ret: " << rt_model_ret;
+  }
   uint64_t new_model_id = 0;
   new_model_id = static_cast<uint64_t>(model_id);
   uint64_t first_id = 0;
   rtError_t rt_ret = rtProfilerTraceEx(first_id, new_model_id, task_info_->log_id(), stream_);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtProfilerTrace failed, ret: " << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtProfilerTraceEx failed, ret: " << rt_ret;
   }
   MS_LOG(INFO) << "DistributeTask end.";
 }
