@@ -118,7 +118,7 @@ class WriterPool(ctx.Process):
                     elif action == 'END':
                         break
                 except queue.Empty:
-                    pass
+                    continue
 
             for result in deq:
                 for plugin, data in result.get():

@@ -29,6 +29,8 @@ from mindspore.train.node_strategy_pb2 import ParallelStrategyMap as ckpt_strate
 
 from .lineage_pb2 import DatasetGraph, TrainLineage, EvaluationLineage, UserDefinedInfo
 
+MAX_PATH_LENGTH = 1024
+
 
 def _convert_type(types):
     """
@@ -75,16 +77,27 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_inf
     return exec_dataset
 
 
-def _make_directory(path: str):
+def _make_directory(path, arg_name='path'):
     """Make directory."""
-    if path is None or not isinstance(path, str) or path.strip() == "":
-        logger.error("The path(%r) is invalid type.", path)
-        raise TypeError("Input path is invalid type")
+    if not isinstance(path, str):
+        logger.error("The %s is invalid, the type should be string.", arg_name)
+        raise TypeError("The {} is invalid, the type should be string.".format(arg_name))
+    if path.strip() == "":
+        logger.error("The %s is invalid, it should be non-blank.", arg_name)
+        raise ValueError("The {} is invalid, it should be non-blank.".format(arg_name))
 
     path = os.path.realpath(path)
+
+    if len(path) > MAX_PATH_LENGTH:
+        logger.error("The %s length is too long, it should be limited in %s.", arg_name, MAX_PATH_LENGTH)
+        raise ValueError("The {} length is too long, it should be limited in {}.".format(arg_name, MAX_PATH_LENGTH))
+
     logger.debug("The abs path is %r", path)
 
     if os.path.exists(path):
+        if not os.path.isdir(path):
+            logger.error("The path(%r) is a file path, it should be a directory path.", path)
+            raise NotADirectoryError("The path({}) is a file path, it should be a directory path.".format(path))
         real_path = path
     else:
         logger.debug("The directory(%s) doesn't exist, will create it", path)

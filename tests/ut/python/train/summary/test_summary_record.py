@@ -62,7 +62,7 @@ class TestSummaryRecord:
     @security_off_wrap
     @pytest.mark.parametrize("log_dir", ["", None, 32])
     def test_log_dir_with_type_error(self, log_dir):
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, ValueError)):
             with SummaryRecord(log_dir):
                 pass
 
@@ -70,7 +70,7 @@ class TestSummaryRecord:
     @pytest.mark.parametrize("raise_exception", ["", None, 32])
     def test_raise_exception_with_type_error(self, raise_exception):
         summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
-        with pytest.raises(TypeError) as exc:
+        with pytest.raises((TypeError, ValueError)) as exc:
             with SummaryRecord(log_dir=summary_dir, raise_exception=raise_exception):
                 pass
 

@@ -21,6 +21,7 @@ from shutil import disk_usage
 import numpy as np
 
 from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
+from mindspore import log as logger
 
 from .._utils import _make_directory
 from ._summary_adapter import package_init_event
@@ -83,7 +84,7 @@ class BaseWriter:
         try:
             os.chmod(self._filepath, FILE_MODE)
         except FileNotFoundError:
-            pass
+            logger.debug("The summary file %r has been removed.", self._filepath)
         if self._writer is not None:
             self._writer.Shut()
 

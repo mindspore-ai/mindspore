@@ -35,7 +35,7 @@ from mindspore.train import lineage_pb2
 from mindspore.train.callback._dataset_graph import DatasetGraph
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.loss.loss import LossBase
-from mindspore.train._utils import check_value_type
+from mindspore.train._utils import check_value_type, _make_directory
 from ..._c_expression import security
 
 HYPER_CONFIG_ENV_NAME = "MINDINSIGHT_HYPER_CONFIG"
@@ -201,7 +201,7 @@ class SummaryCollector(Callback):
 
         super(SummaryCollector, self).__init__()
 
-        self._summary_dir = self._process_summary_dir(summary_dir)
+        self._summary_dir = _make_directory(summary_dir, "summary_dir")
         self._record = None
 
         self._check_positive('collect_freq', collect_freq)
@@ -241,23 +241,6 @@ class SummaryCollector(Callback):
 
     def __exit__(self, *err):
         self._record.close()
-
-    @staticmethod
-    def _process_summary_dir(summary_dir):
-        """Check the summary dir, and create a new directory if it not exists."""
-        check_value_type('summary_dir', summary_dir, str)
-        summary_dir = summary_dir.strip()
-        if not summary_dir:
-            raise ValueError('For `summary_dir` the value should be a valid string of path, but got empty string.')
-
-        summary_dir = os.path.realpath(summary_dir)
-        if not os.path.exists(summary_dir):
-            os.makedirs(summary_dir, exist_ok=True)
-        else:
-            if not os.path.isdir(summary_dir):
-                raise NotADirectoryError('For `summary_dir` it should be a directory path.')
-
-        return summary_dir
 
     @staticmethod
     def _check_positive(name, value, allow_none=False):
@@ -333,12 +316,12 @@ class SummaryCollector(Callback):
 
     def _process_specified_data(self, specified_data, action):
         """Check specified data type and value."""
+        check_value_type('collect_specified_data', specified_data, [dict, type(None)])
+
         if specified_data is None:
             if action:
                 return dict(self._DEFAULT_SPECIFIED_DATA)
             return dict()
-
-        check_value_type('collect_specified_data', specified_data, [dict, type(None)])
 
         for param_name in specified_data:
             check_value_type(param_name, param_name, [str])
