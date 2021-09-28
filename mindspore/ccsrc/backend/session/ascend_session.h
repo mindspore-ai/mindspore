@@ -94,7 +94,6 @@ class AscendSession : public SessionBasic {
   void SetSummaryNodes(KernelGraph *graph) override;
 #endif
   void InitRuntimeResource();
-  void SelectKernel(const KernelGraph &kernel_graph) const;
   void HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
@@ -135,9 +134,6 @@ class AscendSession : public SessionBasic {
 #endif
   // create parameter to receive data from multiple branch output
   void CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
-  void SelectKernel(NotNull<KernelGraphPtr> root_graph);
-  void RecurseSelectKernelInfo(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> const memo,
-                               size_t *const raise_precision_count, size_t *const reduce_precision_count) const;
   void IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
   void HardwareOptimize(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
 #ifdef ENABLE_DEBUGGER
@@ -164,6 +160,9 @@ class AscendSession : public SessionBasic {
                                    std::vector<tensor::TensorPtr> *input_tensors,
                                    const std::vector<int64_t> &tensors_mask, bool cache_miss);
   static bool DisableLazyBuild(const OpRunInfo &op_run_info);
+  void SelectKernel(const KernelGraphPtr &graph) const;
+  void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const;
+  void RecurseSelectKernelInfo(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *memo) const;
   // key is final_graph_id,value is child graph execute order of final graph
   std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
   // key is final_graph_id,value is the graph types of child graphs
@@ -176,6 +175,9 @@ class AscendSession : public SessionBasic {
   std::set<GraphId> built_graph_id_;
   // tensor with new device addr map
   std::map<tensor::TensorPtr, DeviceAddressPtr> tensor_device_addr_map_;
+  // Number of operators whose precision changes after select kernel
+  mutable size_t raise_precision_count_{0};
+  mutable size_t reduce_precision_count_{0};
 };
 MS_REG_SESSION(kAscendDevice, AscendSession);
 }  // namespace session

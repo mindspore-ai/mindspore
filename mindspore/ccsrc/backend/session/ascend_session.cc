@@ -723,7 +723,7 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   }
 #endif
   // select kernel build info
-  SelectKernel(*child_graph);
+  SelectKernel(child_graph);
 #ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name = "select_kernel_after_graph_" + std::to_string(child_graph->graph_id()) + ".ir";
@@ -1025,7 +1025,7 @@ KernelGraphPtr AscendSession::PreBuildOp(const OpRunInfo &op_run_info,
   auto graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask, true);
   MS_EXCEPTION_IF_NULL(graph);
   opt::RunOpAscendBackendIRFusionOptimization(graph);
-  SelectKernel(*graph);
+  SelectKernel(graph);
   RunOpHardwareOptimize(graph);
   CacheCNodeOutputInfo(*graph);
   return graph;
@@ -1174,37 +1174,6 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     MS_LOG(DEBUG) << "Pre build op finished, graph info: " << graph_item.second;
   }
   built_graph_id_.insert(graph_id);
-}
-
-// compile graph steps
-void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
-  size_t raise_precision_count = 0;
-  size_t reduce_precision_count = 0;
-  for (const auto &cnode : kernel_graph.execution_order()) {
-    auto status = device::ascend::SelectKernelInfo(cnode);
-    AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, cnode);
-    AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, cnode);
-    if (status == device::ascend::kStatusRaisePrecision) {
-      raise_precision_count++;
-    } else if (status == device::ascend::kStatusReducePrecision) {
-      reduce_precision_count++;
-    }
-    MS_LOG(INFO) << "Select ApplyKernel: " << cnode->DebugString();
-  }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    if (raise_precision_count > 0) {
-      MS_LOG(WARNING) << "There has " << raise_precision_count
-                      << " node/nodes used raise precision to selected the kernel!";
-    }
-    if (reduce_precision_count > 0) {
-      MS_LOG(WARNING) << "There has " << reduce_precision_count
-                      << " node/nodes used reduce precision to selected the kernel!";
-    }
-  }
-  MS_LOG(INFO) << "Finish!";
 }
 
 #ifndef ENABLE_SECURITY
@@ -1784,68 +1753,64 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
   }
 }
 
-void AscendSession::SelectKernel(NotNull<KernelGraphPtr> root_graph) {
-  MS_LOG(INFO) << "Start select kernel.";
-  size_t raise_precision_count = 0;
-  size_t reduce_precision_count = 0;
-
-  std::set<KernelGraphPtr> memo;
-  RecurseSelectKernelInfo(root_graph, NOT_NULL(&memo), &raise_precision_count, &reduce_precision_count);
-  memo.clear();
-
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    if (raise_precision_count > 0) {
-      MS_LOG(WARNING) << "There are " << raise_precision_count
-                      << " node/nodes used raise precision to selected the kernel!";
+void AscendSession::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
+  for (const auto &node : nodes) {
+    auto status = device::ascend::SelectKernelInfo(node);
+    AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
+    AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
+    if (status == device::ascend::kStatusRaisePrecision) {
+      raise_precision_count_++;
+    } else if (status == device::ascend::kStatusReducePrecision) {
+      reduce_precision_count_++;
     }
-    if (reduce_precision_count > 0) {
-      MS_LOG(WARNING) << "There are " << reduce_precision_count
-                      << " node/nodes used reduce precision to selected the kernel!";
-    }
+    MS_LOG(INFO) << "Select ApplyKernel: " << node->DebugString();
   }
-  MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::RecurseSelectKernelInfo(NotNull<KernelGraphPtr> graph,
-                                            NotNull<std::set<KernelGraphPtr> *> const memo,
-                                            size_t *const raise_precision_count,
-                                            size_t *const reduce_precision_count) const {
+void AscendSession::RecurseSelectKernelInfo(const KernelGraphPtr &graph, std::set<KernelGraphPtr> *memo) const {
+  MS_EXCEPTION_IF_NULL(memo);
   if (memo->find(graph) != memo->end()) {
     return;
   }
-  memo->insert(graph.get());
+  memo->insert(graph);
   MS_LOG(INFO) << "Start to select kernel info in graph: " << graph->graph_id();
+  SetOperatorInfo(graph->execution_order());
+  MS_LOG(INFO) << "Finish selecting kernel info in graph: " << graph->graph_id();
 
-  for (const auto &cnode : graph->execution_order()) {
-    if (AnfAlgo::IsCondControlKernel(cnode)) {
-      std::vector<KernelGraphPtr> child_graphs;
-      if (AnfAlgo::HasNodeAttr(kAttrChildGraph, cnode)) {
-        child_graphs = AnfAlgo::GetNodeAttr<std::vector<KernelGraphPtr>>(cnode, kAttrChildGraph);
-      }
-      for (auto &child_graph : child_graphs) {
-        RecurseSelectKernelInfo(NOT_NULL(child_graph), memo, raise_precision_count, reduce_precision_count);
-      }
-    }
-
-    auto status = device::ascend::SelectKernelInfo(cnode);
-    if (status == device::ascend::kStatusRaisePrecision) {
-      (*raise_precision_count)++;
-    } else if (status == device::ascend::kStatusReducePrecision) {
-      (*reduce_precision_count)++;
-    }
-  }
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     std::string file_name = "select_kernel_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph.get());
+    DumpIR(file_name, graph);
   }
 #endif
-  MS_LOG(INFO) << "Finish selecting kernel info in graph: " << graph->graph_id();
+
+  for (auto &child_graph : graph->child_graph_order()) {
+    RecurseSelectKernelInfo(child_graph.lock(), memo);
+  }
+}
+
+void AscendSession::SelectKernel(const KernelGraphPtr &graph) const {
+  MS_LOG(INFO) << "Start Select Kernel";
+  raise_precision_count_ = 0;
+  reduce_precision_count_ = 0;
+  std::set<KernelGraphPtr> memo;
+  RecurseSelectKernelInfo(graph, &memo);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    if (raise_precision_count_ > 0) {
+      MS_LOG(WARNING) << "There are " << raise_precision_count_
+                      << " node/nodes used raise precision to selected the kernel!";
+    }
+    if (reduce_precision_count_ > 0) {
+      MS_LOG(WARNING) << "There are " << reduce_precision_count_
+                      << " node/nodes used reduce precision to selected the kernel!";
+    }
+  }
+  MS_LOG(INFO) << "Finish!";
 }
 
 void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
