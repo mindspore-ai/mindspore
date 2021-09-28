@@ -1,4 +1,0 @@
-Pillow
-numpy
-easydict
-pillow

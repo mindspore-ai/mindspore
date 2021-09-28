@@ -1,9 +1,0 @@
-include ':dance'
-include ':hms'
-include ':common'
-include ':customView'
-include ':mindsporelibrary'
-include ':imageObject'
-include ':styletransfer'
-include ':app'
-rootProject.name = "MindSpore"
