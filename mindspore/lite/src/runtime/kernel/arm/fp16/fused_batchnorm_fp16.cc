@@ -64,68 +64,6 @@ void FusedBatchnormFp16CPUKernel::CalcMeanVar(float16_t *in, float16_t *scale, f
 
 int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-  MS_ASSERT(param != nullptr);
-  if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    MS_ASSERT(in_tensors_.size() == kMaxInIdx);
-    MS_ASSERT(out_tensors_.size() == 1);
-    auto input = in_tensors_.at(0);
-    auto scale = in_tensors_.at(kInScaleIdx);
-    auto offset = in_tensors_.at(kInOffsetIdx);
-    auto mean = in_tensors_.at(kInCurrentMeanIdx);
-    auto variance = in_tensors_.at(kInCurrentVarIdx);
-    auto output = out_tensors_.at(0);
-
-    auto input_fp16 = ms_context_->allocator->Malloc(input->ElementsNum() * sizeof(float16_t));
-    auto scale_fp16 = ms_context_->allocator->Malloc(scale->ElementsNum() * sizeof(float16_t));
-    auto offset_fp16 = ms_context_->allocator->Malloc(offset->ElementsNum() * sizeof(float16_t));
-    auto mean_fp16 = ms_context_->allocator->Malloc(mean->ElementsNum() * sizeof(float16_t));
-    auto variance_fp16 = ms_context_->allocator->Malloc(variance->ElementsNum() * sizeof(float16_t));
-    auto output_fp16 = ms_context_->allocator->Malloc(output->ElementsNum() * sizeof(float16_t));
-    if (input_fp16 == nullptr || scale_fp16 == nullptr || offset_fp16 == nullptr || mean_fp16 == nullptr ||
-        variance_fp16 == nullptr || output_fp16 == nullptr) {
-      ms_context_->allocator->Free(input_fp16);
-      ms_context_->allocator->Free(scale_fp16);
-      ms_context_->allocator->Free(offset_fp16);
-      ms_context_->allocator->Free(mean_fp16);
-      ms_context_->allocator->Free(variance_fp16);
-      ms_context_->allocator->Free(output_fp16);
-      return RET_ERROR;
-    }
-    CHECK_NULL_RETURN(input->data());
-    CHECK_NULL_RETURN(scale->data());
-    CHECK_NULL_RETURN(offset->data());
-    CHECK_NULL_RETURN(mean->data());
-    CHECK_NULL_RETURN(variance->data());
-    Float32ToFloat16(reinterpret_cast<float *>(input->data()), reinterpret_cast<float16_t *>(input_fp16),
-                     input->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(scale->data()), reinterpret_cast<float16_t *>(scale_fp16),
-                     scale->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(offset->data()), reinterpret_cast<float16_t *>(offset_fp16),
-                     offset->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(mean->data()), reinterpret_cast<float16_t *>(mean_fp16),
-                     mean->ElementsNum());
-    Float32ToFloat16(reinterpret_cast<float *>(variance->data()), reinterpret_cast<float16_t *>(variance_fp16),
-                     variance->ElementsNum());
-
-    if (IsTrain() && IsTrainable() && in_tensors_.size() >= kMaxInIdx) {
-      CalcMeanVar(reinterpret_cast<float16_t *>(input_fp16), reinterpret_cast<float16_t *>(scale_fp16),
-                  reinterpret_cast<float16_t *>(offset_fp16), reinterpret_cast<float16_t *>(mean_fp16),
-                  reinterpret_cast<float16_t *>(variance_fp16));
-    }
-    FusedBatchNormFp16(reinterpret_cast<float16_t *>(input_fp16), reinterpret_cast<float16_t *>(scale_fp16),
-                       reinterpret_cast<float16_t *>(offset_fp16), reinterpret_cast<float16_t *>(mean_fp16),
-                       reinterpret_cast<float16_t *>(variance_fp16), param, task_id, output_fp16);
-
-    Float16ToFloat32(reinterpret_cast<float16_t *>(output_fp16), reinterpret_cast<float *>(output),
-                     output->ElementsNum());
-    ms_context_->allocator->Free(input_fp16);
-    ms_context_->allocator->Free(scale_fp16);
-    ms_context_->allocator->Free(offset_fp16);
-    ms_context_->allocator->Free(mean_fp16);
-    ms_context_->allocator->Free(variance_fp16);
-    ms_context_->allocator->Free(output_fp16);
-    return RET_OK;
-  }
   CHECK_NULL_RETURN(in_tensors_.at(0)->data());
   CHECK_NULL_RETURN(out_tensors_.at(0)->data());
   if (IsTrain() && IsTrainable() && in_tensors_.size() >= kMaxInIdx) {
@@ -160,4 +98,6 @@ int FusedBatchnormFp16CPUKernel::Eval() {
   }
   return RET_OK;
 }
+
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_FusedBatchNorm, LiteKernelCreator<FusedBatchnormFp16CPUKernel>)
 }  // namespace mindspore::kernel
