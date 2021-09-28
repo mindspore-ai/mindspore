@@ -175,6 +175,9 @@ int Flags::InitInTensorShape() {
   std::vector<int64_t> shape;
   auto shape_strs = lite::StrSplit(content, std::string(";"));
   for (const auto &shape_str : shape_strs) {
+    if (shape_str.empty()) {
+      continue;
+    }
     shape.clear();
     auto string_split = lite::StrSplit(shape_str, std::string(":"));
     CHECK_LESS_RETURN(string_split.size(), kMinShapeSizeInStr);
