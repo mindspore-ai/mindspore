@@ -15,8 +15,8 @@
  */
 
 #include "backend/optimizer/ascend/format_type/trans_op_format_refine.h"
+#include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
-#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {

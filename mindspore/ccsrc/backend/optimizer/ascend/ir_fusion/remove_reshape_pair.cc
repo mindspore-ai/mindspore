@@ -17,9 +17,6 @@
 #include "backend/optimizer/ascend/ir_fusion/remove_reshape_pair.h"
 #include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
-#include "utils/utils.h"
-#include "base/core_ops.h"
-#include "frontend/operator/ops.h"
 #include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {
