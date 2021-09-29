@@ -624,7 +624,7 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
   MS_ASSERT(anf_nodes_map != nullptr && extra_subgraph_inputs != nullptr);
   STATUS status = RET_OK;
   for (const auto &onnx_node : onnx_graph.node()) {
-    ops::PrimitiveC *primitive_c;
+    ops::PrimitiveC *primitive_c = nullptr;
     auto node_parser = registry::NodeParserRegistry::GetNodeParser(kFmkTypeOnnx, onnx_node.op_type());
     if (node_parser != nullptr) {
       primitive_c = node_parser->Parse(onnx_graph, onnx_node);

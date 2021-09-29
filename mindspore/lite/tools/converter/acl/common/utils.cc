@@ -148,7 +148,7 @@ std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr) {
   }
 
   auto ptr = reinterpret_cast<int *>(default_param_ptr->data_c());
-  int64_t shape_size =
+  int shape_size =
     std::accumulate(default_param_ptr->shape().begin(), default_param_ptr->shape().end(), 1, std::multiplies<int>());
   for (int i = 0; i < shape_size; i++) {
     result.emplace_back(ptr[i]);

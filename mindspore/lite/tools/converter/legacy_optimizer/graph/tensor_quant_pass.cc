@@ -141,7 +141,7 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
       return RET_OK;
     }
     // do quantization
-    for (uint32_t j = 0; j < one_filter_size; j++) {
+    for (size_t j = 0; j < one_filter_size; j++) {
       auto index = j + i * one_filter_size;
       if (!channel_at_first) {
         index = j * channels + i;
