@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,39 @@
  * limitations under the License.
  */
 
+#include <map>
+#include <string>
+#include <set>
+#include "ops/op_utils.h"
 #include "ops/logical_xor.h"
 
 namespace mindspore {
 namespace ops {
-REGISTER_PRIMITIVE_C(kNameLogicalXor, LogicalXor);
+namespace {
+abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  return BroadCastInferShape(op_name, input_args);
+}
+
+TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  std::map<std::string, TypePtr> types;
+  const std::set<TypePtr> valid_types = {kBool};
+  types.emplace("x", input_args[0]->BuildType());
+  types.emplace("y", input_args[1]->BuildType());
+  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+}
+}  // namespace
+
+AbstractBasePtr LogicalXorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infer_type = InferType(primitive, input_args);
+  auto infer_shape = InferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(LogicalXor, prim::kPrimLogicalXor, LogicalXorInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

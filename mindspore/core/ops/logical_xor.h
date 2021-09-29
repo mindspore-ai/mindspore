@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 #ifndef MINDSPORE_CORE_OPS_LOGICAL_XOR_H_
 #define MINDSPORE_CORE_OPS_LOGICAL_XOR_H_
+#include <vector>
+#include <memory>
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
@@ -28,13 +30,17 @@ constexpr auto kNameLogicalXor = "LogicalXor";
 class MS_CORE_API LogicalXor : public PrimitiveC {
  public:
   /// \brief Constructor.
-  LogicalXor() : PrimitiveC(kNameLogicalXor) {}
+  LogicalXor() : PrimitiveC(kNameLogicalXor) { InitIOName({"x", "y"}, {"output"}); }
   /// \brief Destructor.
   ~LogicalXor() = default;
   MS_DECLARE_PARENT(LogicalXor, PrimitiveC);
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.numpy.logical_xor for the inputs.
   void Init() const {}
 };
+
+AbstractBasePtr LogicalXorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const std::vector<AbstractBasePtr> &input_args);
+using PrimLogicalXorPtr = std::shared_ptr<LogicalXor>;
 }  // namespace ops
 }  // namespace mindspore
 

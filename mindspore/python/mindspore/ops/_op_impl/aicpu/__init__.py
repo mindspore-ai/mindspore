@@ -38,6 +38,7 @@ from .dynamic_stitch import _dynamic_stitch_aicpu
 from .get_next import _get_next_aicpu
 from .print_tensor import _print_aicpu
 from .topk import _top_k_aicpu
+from .logical_xor import _logical_xor_aicpu
 from .is_finite import _is_finite_aicpu
 from .is_inf import _is_inf_aicpu
 from .is_nan import _is_nan_aicpu
