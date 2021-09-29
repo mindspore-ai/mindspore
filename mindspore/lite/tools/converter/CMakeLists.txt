@@ -17,6 +17,7 @@ endif()
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/converter_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter_flags.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/anf_transform.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graphdef_transform.cc
