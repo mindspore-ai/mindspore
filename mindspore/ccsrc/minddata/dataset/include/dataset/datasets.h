@@ -2843,6 +2843,98 @@ inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const
   return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
 
+/// \class Places365Dataset
+/// \brief A source dataset that reads and parses Places365 dataset.
+class Places365Dataset : public Dataset {
+ public:
+  /// \brief Constructor of Places365Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Dataset splits of Places365, can be `train-standard`, `train-challenge` or `val`.
+  /// \param[in] small Use the small images instead of the high resolution ones.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
+  explicit Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const bool small,
+                            const bool decode, const std::shared_ptr<Sampler> &sampler,
+                            const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of Places365Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Dataset splits of Places365, can be `train-standard`, `train-challenge` or `val`.
+  /// \param[in] small Use the small images instead of the high resolution ones.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const bool small,
+                            const bool decode, const Sampler *sampler, const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of Places365Dataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] usage Dataset splits of Places365, can be `train-standard`, `train-challenge` or `val`.
+  /// \param[in] small Use the small images instead of the high resolution ones.
+  /// \param[in] decode Decode the images after reading.
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, const bool small,
+                            const bool decode, const std::reference_wrapper<Sampler> sampler,
+                            const std::shared_ptr<DatasetCache> &cache);
+  ~Places365Dataset() = default;
+};
+
+/// \brief Function to create a Places365Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Dataset splits of Places365, can be `train-standard`, `train-challenge`
+///     or `val` (default="train-standard").
+/// \param[in] small Use the small images instead of the high resolution ones (default=false).
+/// \param[in] decode Decode the images after reading (default=true).
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples
+///     from the dataset. If sampler is not given, a `RandomSampler` will
+///     be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Places365Dataset.
+inline std::shared_ptr<Places365Dataset> Places365(
+  const std::string &dataset_dir, const std::string &usage = "train-standard", const bool small = false,
+  const bool decode = true, const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Places365Dataset>(StringToChar(dataset_dir), StringToChar(usage), small, decode, sampler,
+                                            cache);
+}
+
+/// \brief Function to create a Places365Dataset
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Dataset splits of Places365, can be `train-standard`, `train-challenge` or `val`.
+/// \param[in] small Use the small images instead of the high resolution ones.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Places365Dataset.
+inline std::shared_ptr<Places365Dataset> Places365(const std::string &dataset_dir, const std::string &usage,
+                                                   const bool small, const bool decode, const Sampler *sampler,
+                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Places365Dataset>(StringToChar(dataset_dir), StringToChar(usage), small, decode, sampler,
+                                            cache);
+}
+
+/// \brief Function to create a Places365Dataset.
+/// \note The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage Dataset splits of Places365, can be `train-standard`, `train-challenge` or `val`.
+/// \param[in] small Use the small images instead of the high resolution ones.
+/// \param[in] decode Decode the images after reading.
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Places365Dataset.
+inline std::shared_ptr<Places365Dataset> Places365(const std::string &dataset_dir, const std::string &usage,
+                                                   const bool small, const bool decode,
+                                                   const std::reference_wrapper<Sampler> sampler,
+                                                   const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<Places365Dataset>(StringToChar(dataset_dir), StringToChar(usage), small, decode, sampler,
+                                            cache);
+}
+
 /// \class QMnistDataset
 /// \brief A source dataset that reads and parses QMNIST dataset.
 class QMnistDataset : public Dataset {

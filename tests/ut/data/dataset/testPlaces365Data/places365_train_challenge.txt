@@ -1,0 +1,4 @@
+/a/airfield/00000001.jpg 0
+/a/airfield/00000002.jpg 0
+/a/airplane_cabin/00000006.jpg 1
+/a/airplane_cabin/00000007.jpg 1
