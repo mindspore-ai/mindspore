@@ -1793,11 +1793,12 @@ class SlicePatches(ImageTensorOperation):
 
     Examples:
         >>> # default padding mode
+        >>> decode_op = c_vision.Decode()
+        >>> num_h, num_w = (1, 4)
         >>> slice_patches_op = c_vision.SlicePatches(num_h, num_w)
+        >>> transforms_list = [decode_op, slice_patches_op]
         >>> cols = ['img' + str(x) for x in range(num_h*num_w)]
-        >>> dataset1 = dataset1.map(operations=decode_op, input_columns=["image"])
-        >>> dataset1 = dataset1.map(operations=resize_op, input_columns=["image"])
-        >>> dataset1 = dataset1.map(operations=slice_patches_op, input_columns=[
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_lis, input_columns=[
         ...                         "image"], output_columns=cols, column_order=cols)
     """
 
