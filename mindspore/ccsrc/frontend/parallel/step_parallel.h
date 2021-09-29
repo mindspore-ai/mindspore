@@ -110,8 +110,13 @@ std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNod
 // change parameters'shape in resource
 void CoverSliceShape(const FuncGraphPtr &root);
 
+void LableBatchSizeSplit(const CNodePtr &node);
+
 void SetVirtualDatasetStrategy(const CNodePtr &node);
 bool IsInsertVirtualOutput(const FuncGraphPtr &root);
+
+void SetStridedSliceSplitStrategy(const std::vector<AnfNodePtr> &all_nodes);
+
 // Create parallel operator for primitive node(has strategy)
 void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes);
 
