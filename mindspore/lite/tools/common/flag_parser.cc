@@ -30,7 +30,7 @@ Option<std::string> FlagParser::ParseFlags(int argc, const char *const *argv, bo
   }
   binName = GetFileName(argv[0]);
 
-  std::multimap<std::string, Option<std::string>> keyValues;
+  std::multimap<std::string, Option<std::string>> keyValues{};
   for (int i = 1; i < argc; i++) {
     std::string tmp = argv[i];
     Trim(&tmp);
