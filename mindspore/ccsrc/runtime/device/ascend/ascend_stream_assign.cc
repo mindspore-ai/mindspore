@@ -26,6 +26,7 @@
 #include "frontend/parallel/device_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_adjust.h"
+#include "runtime/device/ascend/ascend_stream_manager.h"
 #include "backend/optimizer/common/helper.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "utils/utils.h"
@@ -589,7 +590,7 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
   auto cnode_ptr_list = graph_ptr->execution_order();
   bool exit_independent = false;
   bool exit_hcom = false;
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
     CNodePtr cur_cnode_ptr = cnode_ptr_list[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
@@ -611,19 +612,19 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
     AssignCommonStreamId(cur_cnode_ptr);
   }
 
-  auto common_stream_num = resource_manager.get_cur_stream_num();
+  auto common_stream_num = resource_manager.cur_stream_num();
 
   if (exit_hcom) {
     AssignHcom(graph_ptr);
   }
-  auto hcom_stream_num = resource_manager.get_cur_stream_num() - common_stream_num;
+  auto hcom_stream_num = resource_manager.cur_stream_num() - common_stream_num;
 
   if (exit_independent) {
     AssignIndependent(graph_ptr);
   }
-  auto independent_stream_num = resource_manager.get_cur_stream_num() - common_stream_num - hcom_stream_num;
+  auto independent_stream_num = resource_manager.cur_stream_num() - common_stream_num - hcom_stream_num;
   auto total_stream_num =
-    resource_manager.get_cur_stream_num() + Uint32tMulWithOverflowCheck(hcom_stream_num, kHcomSecondaryStreamNum);
+    resource_manager.cur_stream_num() + Uint32tMulWithOverflowCheck(hcom_stream_num, kHcomSecondaryStreamNum);
   MS_LOG(INFO) << "Total stream number: " << total_stream_num << ", common stream number: " << common_stream_num
                << ", hcom stream number: " << hcom_stream_num << "*" << (kHcomSecondaryStreamNum + 1)
                << ", independent stream number: " << independent_stream_num << ".";
@@ -633,14 +634,14 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
                       << ", search details information in mindspore's FAQ.";
   }
 
-  MS_LOG(INFO) << "After stream assign, total stream nums:" << resource_manager.get_cur_stream_num();
+  MS_LOG(INFO) << "After stream assign, total stream nums:" << resource_manager.cur_stream_num();
 }
 
 void AscendStreamAssign::AssignCommonStreamId(const CNodePtr &cur_cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   uint32_t cur_common_stream_id = 0;
-  uint32_t cur_stream_num = resource_manager.get_cur_stream_num();
+  uint32_t cur_stream_num = resource_manager.cur_stream_num();
   if (cur_stream_num == 0) {
     cur_common_stream_id = resource_manager.ApplyNewStream();
   } else {
@@ -717,7 +718,7 @@ void AscendStreamAssign::AssignHcom(const NotNull<KernelGraphPtr> &graph_ptr) {
 
 uint32_t AscendStreamAssign::AssignHcomStreamId(const CNodePtr &cur_cnode_ptr, bool new_graph) {
   MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   auto task_num = GetHcomTaskNum(cur_cnode_ptr);
 
   uint32_t cur_hcom_stream_id;
@@ -779,7 +780,7 @@ void AscendStreamAssign::AssignIndependent(const NotNull<KernelGraphPtr> &graph_
 
 uint32_t AscendStreamAssign::AssignIndependentStreamId(const CNodePtr &cur_cnode_ptr, bool new_graph) {
   MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   uint32_t cur_independent_stream_id;
   if (new_graph) {
     cur_independent_stream_id = resource_manager.ApplyNewStream();
@@ -1226,7 +1227,7 @@ void AscendStreamAssign::InsertEventForHcomParallel(const NotNull<KernelGraphPtr
 }
 
 void AscendStreamAssign::InsertEventCommonDependHcom(const NotNull<KernelGraphPtr> &graph_ptr) {
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> cnodes = cnode_ptr_list;
   uint32_t cur_event_id = resource_manager.ApplyNewEvent();
@@ -1265,12 +1266,12 @@ void AscendStreamAssign::InsertEventCommonDependHcom(const NotNull<KernelGraphPt
   // one event allocated additional, should delete
   resource_manager.DeleteEvent();
   graph_ptr->set_execution_order(cnodes);
-  MS_LOG(INFO) << "After common depend hcom, total event nums:" << resource_manager.get_cur_event_num();
+  MS_LOG(INFO) << "After common depend hcom, total event nums:" << resource_manager.cur_event_num();
 }
 
 // after memory reuse is correct, use this function
 void AscendStreamAssign::InsertEventHcomDependCommonBak(const NotNull<KernelGraphPtr> &graph_ptr) {
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> cnodes;
   CNodePtr cur_cnode_ptr = nullptr;
@@ -1318,7 +1319,7 @@ void AscendStreamAssign::InsertEventHcomDependCommonBak(const NotNull<KernelGrap
   }
 
   graph_ptr->set_execution_order(cnodes);
-  MS_LOG(INFO) << "After hcom depend common, total event nums:" << resource_manager.get_cur_event_num();
+  MS_LOG(INFO) << "After hcom depend common, total event nums:" << resource_manager.cur_event_num();
 }
 
 vector<CNodePtr> AscendStreamAssign::GetLastInputCnode(const NotNull<KernelGraphPtr> &graph_ptr,
@@ -1403,7 +1404,7 @@ vector<CNodePtr> AscendStreamAssign::GetInputKernels(const CNodePtr &cnode) {
 }
 
 void AscendStreamAssign::InsertEventHcomDependCommon(const NotNull<KernelGraphPtr> &graph_ptr) {
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> cnodes;
   CNodePtr cur_cnode_ptr = nullptr;
@@ -1444,7 +1445,7 @@ void AscendStreamAssign::InsertEventHcomDependCommon(const NotNull<KernelGraphPt
   }
 
   graph_ptr->set_execution_order(cnodes);
-  MS_LOG(INFO) << "After hcom depend common, total event nums:" << resource_manager.get_cur_event_num();
+  MS_LOG(INFO) << "After hcom depend common, total event nums:" << resource_manager.cur_event_num();
 }
 
 void AscendStreamAssign::InsertEventHcomDependHcom(const NotNull<KernelGraphPtr> &graph_ptr) {
@@ -1503,7 +1504,7 @@ void AscendStreamAssign::InsertEventHcomDependHcom(const NotNull<KernelGraphPtr>
 void AscendStreamAssign::InsertEventBetweenHcom(const NotNull<KernelGraphPtr> &graph_ptr,
                                                 const std::vector<std::pair<uint32_t, vector<size_t>>> &hcom_index) {
   vector<CNodePtr> orders;
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   auto cnode_ptr_list = graph_ptr->execution_order();
   uint32_t cur_event_id = resource_manager.ApplyNewEvent();
   if (hcom_index.empty()) {
@@ -1591,7 +1592,7 @@ bool AscendStreamAssign::IsSatisfiedHcom(const std::vector<std::pair<uint32_t, v
 // section6
 void AscendStreamAssign::InsertEventForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr) {
   MS_LOG(INFO) << "Start";
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> cnodes = cnode_ptr_list;
   uint32_t cur_event_id = resource_manager.ApplyNewEvent();
@@ -1647,7 +1648,7 @@ void AscendStreamAssign::InsertEventForIndependentParallel(const NotNull<KernelG
   }
 
   graph_ptr->set_execution_order(new_cnodes);
-  MS_LOG(INFO) << "After independent parallel, total event nums:" << resource_manager.get_cur_event_num();
+  MS_LOG(INFO) << "After independent parallel, total event nums:" << resource_manager.cur_event_num();
   MS_LOG(INFO) << "End";
 }
 
@@ -1834,7 +1835,7 @@ void AscendStreamAssign::CheckResourceAssign(const NotNull<KernelGraphPtr> &grap
 }
 
 void AscendStreamAssign::CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_ptr) {
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   std::set<uint32_t> streams;
   uint32_t max_stream = 0;
   uint32_t min_stream = kInvalidStreamId;
@@ -1861,7 +1862,7 @@ void AscendStreamAssign::CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_
     if (min_stream != 0) {
       MS_LOG(EXCEPTION) << "Stream should start from 0, now is from " << min_stream;
     }
-    uint32_t assigned_stream_num = resource_manager.get_cur_stream_num();
+    uint32_t assigned_stream_num = resource_manager.cur_stream_num();
     if ((max_stream != assigned_stream_num - 1) || (streams.size() != assigned_stream_num)) {
       MS_LOG(EXCEPTION) << "Stream should be consecutive, max stream id:" << max_stream
                         << "; alloc stream nums:" << assigned_stream_num << "; streams size:" << streams.size();
@@ -1870,7 +1871,7 @@ void AscendStreamAssign::CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_
 }
 
 void AscendStreamAssign::CheckEventAssign(const NotNull<KernelGraphPtr> &graph_ptr) {
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   std::map<uint32_t, std::vector<CNodePtr>> event_map;
   uint32_t max_event_id = 0;
   uint32_t min_event_id = kInvalidEventId;
@@ -1901,7 +1902,7 @@ void AscendStreamAssign::CheckEventAssign(const NotNull<KernelGraphPtr> &graph_p
     if (min_event_id != 0) {
       MS_LOG(EXCEPTION) << "Event should start from 0, now is from " << min_event_id;
     }
-    uint32_t assigned_event_num = resource_manager.get_cur_event_num();
+    uint32_t assigned_event_num = resource_manager.cur_event_num();
     if ((max_event_id != assigned_event_num - 1) || (event_map.size() != assigned_event_num)) {
       MS_LOG(EXCEPTION) << "Event should be consecutive, however, assigned event num is: " << assigned_event_num
                         << ", max event id:" << max_event_id << ", event map is:" << event_map;
@@ -2024,8 +2025,8 @@ bool AscendStreamAssign::IsTaskSink() {
 
 void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_list) {
   MS_EXCEPTION_IF_NULL(wait_active_stream_list);
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
-  uint32_t total_stream_num = resource_manager.get_cur_stream_num();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
+  uint32_t total_stream_num = resource_manager.cur_stream_num();
   if (total_stream_num == 0) {
     MS_LOG(INFO) << "The total_common_stream_num is zero";
     return;
@@ -2134,8 +2135,8 @@ void AscendStreamAssign::GetStreamRelations() {
 }
 
 void AscendStreamAssign::FindStreamRelations(const NotNull<KernelGraphPtr> &graph_ptr) {
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
-  auto stream_num = resource_manager.get_cur_stream_num();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
+  auto stream_num = resource_manager.cur_stream_num();
   if (stream_num <= 1) {
     return;
   }
@@ -2378,8 +2379,8 @@ bool AscendStreamAssign::IsSatisfiedEvent(uint32_t send_stream_id, uint32_t recv
 }
 
 void AscendStreamAssign::FindEventRelations(const NotNull<KernelGraphPtr> &graph_ptr) {
-  AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
-  auto event_nums = resource_manager.get_cur_event_num();
+  AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
+  auto event_nums = resource_manager.cur_event_num();
   if (event_nums == 0) {
     return;
   }
