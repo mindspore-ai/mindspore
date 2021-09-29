@@ -26,7 +26,7 @@ namespace kernel {
 template <typename T>
 class AssignGpuKernel : public GpuKernel {
  public:
-  AssignGpuKernel() : input_size_(0) {}
+  AssignGpuKernel() : input_size_(0), is_null_input_(false) {}
   ~AssignGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

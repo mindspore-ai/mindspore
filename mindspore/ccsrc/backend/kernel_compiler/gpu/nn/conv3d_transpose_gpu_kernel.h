@@ -204,6 +204,7 @@ class Conv3dTransposeGpuFwdKernel : public GpuKernel {
     algo_selected_ = false;
     padded_descriptor_ = nullptr;
     stride_padded_descriptor_ = nullptr;
+    algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
     input_padded_descriptor_ = nullptr;
     cudnn_data_type_ = CUDNN_DATA_FLOAT;
     compute_format_ = CUDNN_TENSOR_NCHW;

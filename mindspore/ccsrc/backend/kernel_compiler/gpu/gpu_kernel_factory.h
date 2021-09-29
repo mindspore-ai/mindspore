@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class GpuKernelFactory {
 
   static GpuKernelFactory &GetInstance();
 
-  void Register(const std::string &kernel_name, const KernelAttr &kernel_attr, GpuKernelCreater &&creater);
+  void Register(const std::string &kernel_name, const KernelAttr &kernel_attr, GpuKernelCreater &&creator);
 
   GpuKernel *Create(const std::string &kernel_name, const CNodePtr &apply_kernel);
 
@@ -60,15 +60,17 @@ class GpuKernelFactory {
   void CheckSM(const KernelBuildInfo *kernel_info, const size_t &input_index);
   bool CheckIOParam(const std::string &kernel_name, const KernelBuildInfo *kernel_info,
                     std::vector<std::pair<KernelAttr, GpuKernelCreater>> *iter_second, size_t attr_index);
-  // map to maintain kernel and creater, KernelAttr object and creater must be registered as a pair.
+  // map to maintain kernel and creator, KernelAttr object and creator must be registered as a pair.
   std::map<std::string, std::vector<std::pair<KernelAttr, GpuKernelCreater>>> map_kernel_name_to_creater_;
 };
 
 class GpuKernelRegister {
  public:
-  GpuKernelRegister(const std::string &kernel_name, const KernelAttr &kernel_attr, GpuKernelCreater &&creater) {
-    GpuKernelFactory::GetInstance().Register(kernel_name, kernel_attr, std::move(creater));
+  GpuKernelRegister(const std::string &kernel_name, const KernelAttr &kernel_attr, GpuKernelCreater &&creator) {
+    GpuKernelFactory::GetInstance().Register(kernel_name, kernel_attr, std::move(creator));
   }
+
+  ~GpuKernelRegister() = default;
 };
 
 // This is necessary for gpu kernels to support uint8 data type. In cuda, an unsigned,

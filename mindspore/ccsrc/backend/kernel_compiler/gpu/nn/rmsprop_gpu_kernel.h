@@ -27,7 +27,8 @@ namespace kernel {
 template <typename T>
 class RMSPropGpuKernel : public GpuKernel {
  public:
-  RMSPropGpuKernel() : size_(1), use_center_(false), decay_(0.0), momentum_(0.9), epsilon_(1e-12) {}
+  RMSPropGpuKernel()
+      : size_(1), use_center_(false), is_null_input_(false), decay_(0.0), momentum_(0.9), epsilon_(1e-12) {}
   ~RMSPropGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

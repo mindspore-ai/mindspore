@@ -37,7 +37,8 @@ class AdaptiveAvgPool2DKernel : public GpuKernel {
         input_width(0),
         output_height(0),
         output_width(0),
-        size(0) {}
+        size(0),
+        is_null_input_(false) {}
   ~AdaptiveAvgPool2DKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

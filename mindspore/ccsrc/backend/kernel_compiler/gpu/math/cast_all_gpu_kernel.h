@@ -29,7 +29,7 @@ namespace kernel {
 template <typename T, typename S>
 class CastAllGpuFwdKernel : public GpuKernel {
  public:
-  CastAllGpuFwdKernel() : max_(0), input_size_(0), output_size_(0), num_input_(0) {}
+  CastAllGpuFwdKernel() : max_(0), input_size_(0), output_size_(0), num_input_(0), is_null_input_(false) {}
   ~CastAllGpuFwdKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

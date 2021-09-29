@@ -26,7 +26,7 @@ namespace kernel {
 template <typename T>
 class L2LossGpuKernel : public GpuKernel {
  public:
-  L2LossGpuKernel() : input_size_(1) {}
+  L2LossGpuKernel() : input_size_(1), is_null_input_(false) {}
   ~L2LossGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

@@ -27,7 +27,8 @@ namespace kernel {
 template <typename T, typename S>
 class OneHotGpuFwdKernel : public GpuKernel {
  public:
-  OneHotGpuFwdKernel() : input_size_(1), output_size_(1), depth_(0), left_dim_size_(1), right_dim_size_(1) {}
+  OneHotGpuFwdKernel()
+      : input_size_(1), output_size_(1), depth_(0), left_dim_size_(1), right_dim_size_(1), is_null_input_(false) {}
   ~OneHotGpuFwdKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

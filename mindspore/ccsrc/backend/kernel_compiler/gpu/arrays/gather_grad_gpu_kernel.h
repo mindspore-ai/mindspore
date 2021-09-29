@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T, typename S>
 class GatherGradGpuKernel : public GpuKernel {
  public:
-  GatherGradGpuKernel() : axis_(0) {}
+  GatherGradGpuKernel() : axis_(0), is_null_input_(false) {}
   ~GatherGradGpuKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

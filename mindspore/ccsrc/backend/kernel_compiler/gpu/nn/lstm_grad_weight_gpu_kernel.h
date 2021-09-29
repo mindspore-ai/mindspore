@@ -37,6 +37,7 @@ class LstmGradWeightGpuKernel : public GpuKernel {
         has_bias_(false),
         bidirectional_(false),
         states_init_(false),
+        is_null_input_(false),
         dropout_(0),
         weight_size_(0),
         reserved_size_(0),

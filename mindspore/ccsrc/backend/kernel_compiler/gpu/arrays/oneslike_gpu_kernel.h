@@ -25,7 +25,7 @@ namespace kernel {
 template <typename T>
 class OnesLikeGpuKernel : public GpuKernel {
  public:
-  OnesLikeGpuKernel() : input_size_(0), output_size_(0) {}
+  OnesLikeGpuKernel() : input_size_(0), output_size_(0), is_null_input_(false) {}
   ~OnesLikeGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
