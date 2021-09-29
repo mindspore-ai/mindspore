@@ -14,6 +14,7 @@
 # ============================================================================
 
 """tbe ops"""
+from .celu import _celu_tbe
 from .abs import _abs_tbe
 from .inplace_add import _inplace_add_tbe
 from .inplace_sub import _inplace_sub_tbe

@@ -70,7 +70,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      DepthwiseConv2dNative,
                      DropoutDoMask, Dropout, Dropout2D, Dropout3D, DropoutGenMask, Flatten,
                      InstanceNorm, BNTrainingReduce, BNTrainingUpdate,
-                     GeLU, Gelu, FastGeLU, FastGelu, Elu,
+                     GeLU, Gelu, FastGeLU, FastGelu, Elu, CeLU,
                      GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCLossV2, CTCLossV2Grad, CTCGreedyDecoder,
                      LogSoftmax, MaxPool3D, AvgPool3D,
                      MaxPool, DataFormatDimMap,
@@ -123,6 +123,7 @@ from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
 from ._inner_ops import (MatmulDDS, DSDMatmul, NonZero)
 
 __all__ = [
+    'CeLU',
     'Ger',
     'Unique',
     'ReverseSequence',
