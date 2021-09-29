@@ -282,7 +282,6 @@ bool TbeKernelSelect::TbeCheckSupported(const KernelBuildInfoIter &kernel_build_
   } else {
     auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
     if (!build_manager.AscendOpCheckSupported(cnode_ptr_)) {
-      MS_LOG(WARNING) << "Tbe check supported failed";
       ret = false;
     }
   }
