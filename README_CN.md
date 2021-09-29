@@ -232,7 +232,7 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
     [ 2.  2.  2.  2.]]]
     ```
 
-如果您想了解更多关于MindSpore Docker镜像的构建过程，请查看[docker](https://gitee.com/mindspore/mindspore/blob/master/docker/README.md) repo了解详细信息。
+如果您想了解更多关于MindSpore Docker镜像的构建过程，请查看[docker](https://gitee.com/mindspore/mindspore/blob/r1.5/scripts/docker/README.md) repo了解详细信息。
 
 ## 快速入门
 
