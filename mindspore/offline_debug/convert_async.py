@@ -126,8 +126,7 @@ class AsyncDumpConverter:
 
     def __init__(self, file_list, output_path):
         # check input path
-        for file_item in file_list:
-            file_item = os.path.realpath(file_item)
+        file_list = [os.path.realpath(file_item) for file_item in file_list]
         output_path = os.path.realpath(output_path)
 
         self.convert_tool = ConvertToolLoader()
@@ -147,7 +146,6 @@ class AsyncDumpConverter:
         """Main entry of the converter to convert async dump files into npy format."""
         self.convert_tool.log.print_info_log('Start to convert async dump files.')
         try:
-            ret_code = self.convert_tool.compare_none_error
             if self.args.format is not None:
                 convert = self.convert_tool.format_conversion(self.args)
             else:
@@ -202,12 +200,11 @@ class AsyncDumpConverter:
         # try looking for function in compatibility with the toolkit package version.
         progress = self.convert_tool.progress(len(files))
         if hasattr(convert_obj, 'multi_process'):
-            _ = setattr(convert_obj.multi_process, '_progress', progress)
+            setattr(convert_obj.multi_process, '_progress', progress)
         else:
-            _ = setattr(convert_obj, 'progress', progress)
+            setattr(convert_obj, 'progress', progress)
         multi_process_file_list, big_file_list = self._get_file_list(files, convert_obj)
         if multi_process_file_list:
-            ret_mp = self.convert_tool.compare_none_error
             if hasattr(convert_obj, 'multi_process'):
                 ret_mp = getattr(convert_obj.multi_process, '_do_multi_process')(multi_process_file_list)
             else:
@@ -229,7 +226,6 @@ class AsyncDumpConverter:
         """Process to get file lists in multi_process."""
         multi_process_file_list = []
         big_file_list = []
-        max_file_size = 0
         if hasattr(convert_obj, 'multi_process'):
             max_file_size = getattr(convert_obj.multi_process, 'get_max_file_size')()
         else:
@@ -247,7 +243,6 @@ class AsyncDumpConverter:
         """Process big file in multi_process."""
         return_code = self.convert_tool.compare_none_error
         for big_file in big_file_list:
-            ret_bf = self.convert_tool.compare_none_error
             if hasattr(convert_obj, '_convert_format_for_one_file'):
                 ret_bf, _ = getattr(convert_obj, '_convert_format_for_one_file')(big_file)
             else:
