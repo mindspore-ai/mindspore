@@ -90,21 +90,27 @@ public class AlBert extends TrainModel {
             logger.severe(Common.addTag("inputs size error"));
             return ret;
         }
-        MSTensor labelIdTensor = inputs.get(0);
+        MSTensor labelIdTensor = inputs.get(3);
         if (labelIdTensor == null) {
             logger.severe(Common.addTag("labelId tensor is null"));
             return ret;
         }
-        int inputSize = labelIdTensor.elementsNum(); // labelId,tokenId,inputId,maskId has same size
+        int inputSize = labelIdTensor.elementsNum();
         batchSize = labelIdTensor.getShape()[0];
         if (batchSize <= 0) {
             logger.severe(Common.addTag("batch size should bigger than 0"));
             return ret;
         }
         dataSize = inputSize / batchSize;
-        inputIdBufffer = ByteBuffer.allocateDirect(inputSize * Integer.BYTES);
-        tokenIdBufffer = ByteBuffer.allocateDirect(inputSize * Integer.BYTES);
-        maskIdBufffer = ByteBuffer.allocateDirect(inputSize * Integer.BYTES);
+        MSTensor tokenTypeIdTensor = inputs.get(0);
+        if (tokenTypeIdTensor == null) {
+            logger.severe(Common.addTag("tokenTypeIdTensor tensor is null"));
+            return ret;
+        }
+        int tokenTypeIdInputSize = tokenTypeIdTensor.elementsNum();
+        inputIdBufffer = ByteBuffer.allocateDirect(tokenTypeIdInputSize * Integer.BYTES);
+        tokenIdBufffer = ByteBuffer.allocateDirect(tokenTypeIdInputSize * Integer.BYTES);
+        maskIdBufffer = ByteBuffer.allocateDirect(tokenTypeIdInputSize * Integer.BYTES);
         inputIdBufffer.order(ByteOrder.nativeOrder());
         tokenIdBufffer.order(ByteOrder.nativeOrder());
         maskIdBufffer.order(ByteOrder.nativeOrder());
