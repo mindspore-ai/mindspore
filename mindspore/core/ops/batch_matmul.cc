@@ -36,13 +36,16 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
-  if (x_shp.size() < 3 || y_shp.size() < 2) {
+  constexpr size_t x_dim_limit = 2;
+  constexpr size_t y_dim_limit = 3;
+  if (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit) {
     MS_EXCEPTION(ValueError) << "For BatchMatMul, input x should be greater or equal to 3, input y should be greater "
                                 "or equal to 2 while x size = "
                              << x_shp.size() << ", y size = " << y_shp.size();
   }
-  std::vector<int> x_last(x_shp.end() - 2, x_shp.end());
-  std::vector<int> y_last(y_shp.end() - 2, y_shp.end());
+  constexpr size_t offset = 2;
+  std::vector<int> x_last(x_shp.end() - offset, x_shp.end());
+  std::vector<int> y_last(y_shp.end() - offset, y_shp.end());
   ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
   ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
   bool transpose_a = GetValue<bool>(transpose_a_ptr);
@@ -73,8 +76,8 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   bool y_not_dyn =
     std::all_of(y_shp.begin(), y_shp.end(), [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
   if (x_not_dyn && y_not_dyn) {
-    size_t x_offset = x_shp.size() - 2;
-    size_t y_offset = y_shp.size() - 2;
+    size_t x_offset = x_shp.size() - offset;
+    size_t y_offset = y_shp.size() - offset;
     auto x_c = x_shp[x_offset + (transpose_a ? 0 : 1)];
     auto y_r = y_shp[y_offset + (transpose_b ? 1 : 0)];
     if (x_c != y_r) {
@@ -85,17 +88,17 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   ShapeVector ret_shape;
   ShapeVector ret_min_shape;
   ShapeVector ret_max_shape;
-  auto make_shape = [&transpose_a, &transpose_b](ShapeVector &output, const ShapeVector xshp,
-                                                 const ShapeVector yshp) -> void {
-    for (size_t i = 0; i < xshp.size() - 2; i++) {
+  auto make_shape = [&transpose_a, &transpose_b, &offset](ShapeVector &output, const ShapeVector xshp,
+                                                          const ShapeVector yshp) -> void {
+    for (size_t i = 0; i < xshp.size() - offset; i++) {
       if (xshp[i] < 0) {
         output.push_back(abstract::Shape::SHP_ANY);
       } else {
         output.push_back(xshp[i]);
       }
     }
-    size_t x_offset = xshp.size() - 2;
-    size_t y_offset = yshp.size() - 2;
+    size_t x_offset = xshp.size() - offset;
+    size_t y_offset = yshp.size() - offset;
     output.push_back(xshp[x_offset + (transpose_a ? 1 : 0)]);
     output.push_back(yshp[y_offset + (transpose_b ? 0 : 1)]);
     return;

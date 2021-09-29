@@ -29,7 +29,8 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
-  abstract::CheckArgsSize(op_name, input_args, 3);
+  constexpr size_t input_num = 3;
+  abstract::CheckArgsSize(op_name, input_args, input_num);
   abstract::AbstractTensorPtr params =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
   abstract::AbstractTensorPtr indices =
