@@ -91,6 +91,7 @@ STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, Sh
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
   auto typePtr = abstract_tensor->element()->GetTypeTrack();
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "cast ptr failed");
   MS_CHECK_TRUE_MSG(typePtr != nullptr, RET_ERROR, "typePtr is nullptr");
   *data_type = typePtr->type_id();
   if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
@@ -105,12 +106,14 @@ int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
                          bool train_flag, DataInfo *data_info) {
   MS_ASSERT(value_node != nullptr && primitive != nullptr && data_info != nullptr);
   auto valueAbstract = value_node->abstract();
+  MS_CHECK_TRUE_MSG(valueAbstract != nullptr, RET_ERROR, "valueAbstract is nullptr");
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(valueAbstract);
   if (abstract_tensor == nullptr || abstract_tensor->element() == nullptr) {
     MS_LOG(ERROR) << "abstract_tensor or abstract_tensor->element() is nullptr";
     return RET_ERROR;
   }
   auto typePtr = abstract_tensor->element()->GetTypeTrack();
+  MS_CHECK_TRUE_MSG(typePtr != nullptr, RET_ERROR, "typePtr is nullptr");
   data_info->data_type_ = typePtr->type_id();
   auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
   std::vector<int32_t> dims(shape_vector.begin(), shape_vector.end());
@@ -121,6 +124,7 @@ int FetchFromTensorValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
   auto value = value_node->value();
   MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
   auto data = value->cast<tensor::TensorPtr>();
+  MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is invalid");
   data_info->data_.resize(data->Size());
   if (data_info->format_ != mindspore::NHWC && data_info->format_ != mindspore::NCHW) {
     MS_LOG(ERROR) << "schema tensor format is wrong, " << data_info->format_;
@@ -159,6 +163,7 @@ int FetchFromBoolImmValue(const ValueNodePtr &value_node, const PrimitivePtr &pr
   auto value = value_node->value();
   MS_CHECK_TRUE_MSG(value != nullptr, RET_ERROR, "value is nullptr");
   auto data = value->cast<mindspore::BoolImmPtr>();
+  MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr");
   auto data_value = data->value();
   if (memcpy_s(data_info->data_.data(), sizeof(bool), &data_value, sizeof(bool)) != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed";
@@ -173,6 +178,7 @@ int FetchFromNumberValue(const ValueNodePtr &value_node, const PrimitivePtr &pri
   data_info->shape_ = {1};
   data_info->data_.resize(sizeof(int));
   auto data = value_node->value()->cast<NumberPtr>();
+  MS_CHECK_TRUE_MSG(data != nullptr, RET_NULL_PTR, "cast NumberPtr failed");
   int number_type = data->number_type();
   if (TypeToTypeMap.find(number_type) != TypeToTypeMap.end()) {
     number_type = TypeToTypeMap.at(number_type);
@@ -256,16 +262,13 @@ int FetchDataFromParameterNode(const CNodePtr &cnode, size_t index, converter::F
                                DataInfo *data_info) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
   auto param_node = cnode->input(index)->cast<ParameterPtr>();
-  if (param_node == nullptr) {
-    MS_LOG(ERROR) << "input node is not parameter node.";
-    return RET_ERROR;
-  }
-
+  MS_CHECK_TRUE_MSG(param_node != nullptr, RET_ERROR, "input node is not parameter node.");
   if (FetchFromDefaultParam(param_node, fmk_type, data_info) != RET_OK) {
     MS_LOG(ERROR) << "fetch information from default param failed.";
     return RET_ERROR;
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "GetValueNode failed");
   if (prim->GetAttr(ops::kFormat) == nullptr && !param_node->has_default()) {
     data_info->format_ = mindspore::NHWC;
   }
@@ -289,10 +292,8 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
                            DataInfo *data_info) {
   MS_ASSERT(cnode != nullptr && data_info != nullptr);
   auto value_node = cnode->input(index)->cast<ValueNodePtr>();
-  if (value_node == nullptr) {
-    MS_LOG(ERROR) << "input node is not value node.";
-    return RET_ERROR;
-  }
+  MS_CHECK_TRUE_MSG(value_node != nullptr, RET_ERROR, "input node is not value node.");
+
   auto value = value_node->value();
   int ret = RET_OK;
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -328,6 +329,7 @@ int SetFormatForCnode(const CNodePtr &cnode, size_t index, converter::FmkType fm
                       DataInfo *data_info) {
   data_info->format_ = mindspore::NHWC;
   auto input_node_prim = GetValueNode<PrimitivePtr>((cnode->input(index)->cast<CNodePtr>()->input(0)));
+  MS_CHECK_TRUE_MSG(input_node_prim != nullptr, RET_ERROR, "GetValueNode failed");
   if (input_node_prim->GetAttr(ops::kFormat) != nullptr) {
     auto value = input_node_prim->GetAttr(ops::kFormat);
     if (value->isa<mindspore::Int64Imm>()) {
@@ -367,6 +369,7 @@ int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType f
     return RET_ERROR;
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
+  MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "cast ptr failed");
   auto type_ptr = abstract_tensor->element()->GetTypeTrack();
   MS_CHECK_TRUE_MSG(type_ptr != nullptr, RET_ERROR, "type_ptr is nullptr");
   if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
@@ -390,6 +393,7 @@ int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType f
       return RET_ERROR;
     }
     auto tensor_value = tensor_info->cast<tensor::TensorPtr>();
+    MS_CHECK_TRUE_MSG(tensor_value != nullptr, RET_ERROR, "cast ptr failed");
     if (tensor_value->Size() >= kTensorListMinSize) {
       data_info->data_.resize(tensor_value->Size());
       if (memcpy_s(data_info->data_.data(), tensor_value->Size(), tensor_value->data_c(), tensor_value->Size()) !=
@@ -410,21 +414,21 @@ int RemoveIfDepend(const CNodePtr &cnode) {
   inputs.emplace_back(cnode->input(0));
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     AnfNodePtr inputNode = cnode->input(i);
+    MS_CHECK_TRUE_MSG(inputNode != nullptr, RET_NULL_PTR, "inputNode is nullptr");
     if (!inputNode->isa<CNode>()) {
       inputs.emplace_back(cnode->input(i));
       continue;
     }
     auto depend_node = utils::cast<CNodePtr>(inputNode);
+    MS_CHECK_TRUE_MSG(depend_node != nullptr, RET_NULL_PTR, "depend_node is nullptr");
     auto value_node = depend_node->input(0)->cast<ValueNodePtr>();
-    if (value_node == nullptr) {
-      MS_LOG(ERROR) << "value node is invalid.";
-      return RET_ERROR;
-    }
+    MS_CHECK_TRUE_MSG(value_node != nullptr, RET_NULL_PTR, "value node is invalid.");
     if (value_node->value() != nullptr && opt::CheckPrimitiveType(depend_node, prim::kPrimDepend)) {
       has_depend = true;
       bool mask_out = (depend_node->inputs().size() == opt::kInputSizeThree);
       for (size_t j = 1; j < depend_node->inputs().size(); ++j) {
         AnfNodePtr depend_input_node = depend_node->input(j);
+        MS_CHECK_TRUE_MSG(depend_input_node != nullptr, RET_NULL_PTR, "depend_input_node is nullptr");
         if (depend_input_node->isa<CNode>()) {
           inputs.emplace_back(depend_input_node);
           if (mask_out) {
@@ -450,16 +454,15 @@ int RemoveIfMakeTuple(const CNodePtr &cnode) {
   inputs.emplace_back(cnode->input(0));
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     AnfNodePtr input_node = cnode->input(i);
+    MS_CHECK_TRUE_MSG(input_node != nullptr, RET_NULL_PTR, "input_node is nullptr");
     if (!input_node->isa<CNode>()) {
       inputs.emplace_back(cnode->input(i));
       continue;
     }
     auto make_tuple_node = utils::cast<CNodePtr>(input_node);
+    MS_CHECK_TRUE_MSG(make_tuple_node != nullptr, RET_NULL_PTR, "make_tuple_node is nullptr");
     auto value_node = make_tuple_node->input(0)->cast<ValueNodePtr>();
-    if (value_node == nullptr) {
-      MS_LOG(ERROR) << "value node is invalid.";
-      return RET_ERROR;
-    }
+    MS_CHECK_TRUE_MSG(value_node != nullptr, RET_NULL_PTR, "value node is invalid.");
     if (value_node->value() != nullptr && (opt::CheckPrimitiveType(make_tuple_node, prim::kPrimMakeTuple) ||
                                            opt::CheckPrimitiveType(make_tuple_node, opt::kPrimMakeTupleV2))) {
       has_make_tuple = true;
