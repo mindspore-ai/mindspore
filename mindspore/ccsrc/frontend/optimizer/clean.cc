@@ -334,6 +334,27 @@ AnfNodePtr EraseDictGetValues(const CNodePtr &node) {
   return inputs[1];
 }
 
+AnfNodePtr EraseDictItems(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &inputs = node->inputs();
+  const size_t expect_inputs_size = 2;
+  CheckInputsSize(inputs.size(), expect_inputs_size, GetCNodeFuncName(node));
+  const auto &tmp = inputs[0]->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(tmp);
+  MS_EXCEPTION_IF_NULL(tmp->value()->cast<ValueTuplePtr>());
+  ValuePtrList keys = tmp->value()->cast<ValueTuplePtr>()->value();
+  std::vector<AnfNodePtr> outer_node{NewValueNode(prim::kPrimMakeList)};
+  for (size_t i = 0; i < keys.size(); ++i) {
+    std::vector<AnfNodePtr> inner_node;
+    inner_node.push_back(NewValueNode(prim::kPrimMakeTuple));
+    inner_node.push_back(NewValueNode(keys[i]));
+    inner_node.push_back(NewCNode(
+      std::vector<AnfNodePtr>{NewValueNode(prim::kPrimTupleGetItem), inputs[1], NewValueNode(i)}, node->func_graph()));
+    outer_node.push_back(NewCNode(inner_node, node->func_graph()));
+  }
+  return NewCNode(outer_node, node->func_graph());
+}
+
 AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &inputs = node->inputs();
@@ -416,6 +437,8 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
       new_node = EraseMakeKeywordArgNode(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimExtractKeywordArg)) {
       new_node = EraseExtractKeywordArg(cnode);
+    } else if (IsPrimitiveCNode(node, prim::kPrimDictItems)) {
+      new_node = EraseDictItems(cnode);
     }
 
     if (new_node != nullptr) {

@@ -312,6 +312,21 @@ AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const Primitiv
   return std::make_shared<AbstractTuple>(values);
 }
 
+AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a dict.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
+  std::vector<AbstractAttribute> dict_elems = dict->elements();
+  AbstractBasePtrList items;
+  std::transform(dict_elems.begin(), dict_elems.end(), std::back_inserter(items), [](const AbstractAttribute &item) {
+    return std::make_shared<AbstractTuple>(
+      AbstractBasePtrList{std::make_shared<AbstractScalar>(item.first), item.second});
+  });
+  return std::make_shared<AbstractList>(items);
+}
+
 AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   // Inputs: a list and an object of a subclass of AbstractBase.

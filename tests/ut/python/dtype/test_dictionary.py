@@ -172,3 +172,20 @@ def test_dict_set_item_create_new():
     x = Tensor(np.ones([2, 2, 3], np.float32))
     net = DictSetNet()
     _ = net(x)
+
+
+def test_dict_items():
+    """
+    Description: test_dict_items
+    Expectation: the results are as expected
+    """
+
+    class DictItemsNet(Cell):
+        def __init__(self):
+            super(DictItemsNet, self).__init__()
+
+        def construct(self, x):
+            return x.items()
+    x = {"1": Tensor(1), "2": {"test": (1, 2)}}
+    net = DictItemsNet()
+    _ = net(x)
