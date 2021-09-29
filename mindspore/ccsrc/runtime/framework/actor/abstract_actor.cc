@@ -15,6 +15,7 @@
  */
 
 #include "runtime/framework/actor/abstract_actor.h"
+#include "runtime/framework/actor/output_actor.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -62,6 +63,32 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
       // The sequential num may be invalid, can't set the promise value of context.
       MS_LOG(ERROR) << error_info << ", sequential_num: " << context->sequential_num_;
       return;
+    }
+  }
+}
+
+void AbstractActor::SendOutputResult(OpContext<DeviceTensor> *const context) const {
+  MS_EXCEPTION_IF_NULL(context);
+  if (output_result_arrows_.size() != output_nodes_.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output result arrows is not equal to the output nodes.");
+  }
+
+  size_t output_node_index = 0;
+  for (const auto &result_arrow : output_result_arrows_) {
+    MS_EXCEPTION_IF_NULL(result_arrow);
+    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, output_nodes_[output_node_index],
+          result_arrow->from_output_index_, result_arrow->to_input_index_, context);
+    ++output_node_index;
+  }
+}
+
+void AbstractActor::SendOutputControl(OpContext<DeviceTensor> *const context) const {
+  MS_EXCEPTION_IF_NULL(context);
+
+  if (output_control_arrows_.size() > 0) {
+    auto from_aid = const_cast<AID *>(&GetAID());
+    for (auto &output_control : output_control_arrows_) {
+      Async(output_control, &OpActor::RunOpControl, from_aid, context);
     }
   }
 }

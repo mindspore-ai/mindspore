@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace runtime {
-
 const size_t kInputDeviceContextIndex = 0;
 const size_t kOutputDeviceContextIndex = 1;
 
@@ -162,12 +161,7 @@ void CopyActor::SendOutput(OpContext<DeviceTensor> *const context) const {
   }
 
   // Send output control.
-  if (output_control_arrows_.size() > 0) {
-    auto source_aid = const_cast<AID *>(&GetAID());
-    for (auto &output_control : output_control_arrows_) {
-      Async(output_control, &OpActor::RunOpControl, source_aid, context);
-    }
-  }
+  SendOutputControl(context);
 }
 }  // namespace runtime
 }  // namespace mindspore

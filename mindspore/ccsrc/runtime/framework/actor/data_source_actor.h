@@ -63,9 +63,6 @@ class DataSourceActor : public DebugAwareActor {
   // Construct the device tensors and fill to device tensor buffer from the member nodes during the data fetching.
   virtual void FillDataBuffer() = 0;
 
-  // Send output result of graph output to output actor.
-  virtual void SendResult(OpContext<DeviceTensor> *const context) = 0;
-
   // Send recorder info to recorder actor, only the device queue data source actor need.
   virtual void SendRecorderInfo(OpContext<DeviceTensor> *const context) {}
 
@@ -102,7 +99,6 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 
  protected:
   void FillDataBuffer() override;
-  void SendResult(OpContext<DeviceTensor> *const context) override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) override;
 
  private:
@@ -136,7 +132,6 @@ class HostQueueDataSourceActor : public DataSourceActor {
 
  protected:
   void FillDataBuffer() override;
-  void SendResult(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;

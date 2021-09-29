@@ -181,7 +181,7 @@ void DataPrepareActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
   auto source_aid = const_cast<AID *>(&GetAID());
   for (auto &kernel_aid : no_input_kernel_aids_) {
-    Async(kernel_aid, &KernelActor::RunOpControl, source_aid, context);
+    Async(kernel_aid, &OpActor::RunOpControl, source_aid, context);
   }
 
   // Trigger loop count actor running when there are no data source actor and kernel actor.
