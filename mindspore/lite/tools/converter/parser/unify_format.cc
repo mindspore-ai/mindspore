@@ -230,6 +230,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
   }
   auto shape_data = static_cast<float *>(shape_tensor->data_c());
   std::vector<float> new_shape;
+  MS_CHECK_TRUE_MSG(!shape_tensor->shape().empty(), RET_NULL_PTR, "out of range.");
   if (shape_tensor->shape().at(0) == kNumGatherIndiceSize_4) {
     new_shape = {shape_data[kNumIndex_0], shape_data[kNumIndex_2], shape_data[kNumIndex_3], shape_data[kNumIndex_1]};
   } else if (shape_tensor->shape().at(0) == kNumGatherIndiceSize_2) {
@@ -249,8 +250,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
     MS_LOG(ERROR) << "data is nullptr";
     return RET_ERROR;
   }
-  auto status = memcpy_s(new_shape_data, sizeof(float) * kNumGatherIndiceSize_4, new_shape.data(),
-                         sizeof(float) * kNumGatherIndiceSize_4);
+  auto status = memcpy_s(new_shape_data, tensor_info->Size(), new_shape.data(), tensor_info->Size());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "init parameter from tensor info failed";
     return RET_ERROR;
