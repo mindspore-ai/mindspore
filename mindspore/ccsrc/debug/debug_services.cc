@@ -262,11 +262,12 @@ void DebugServices::AddAnalyzedTensorToCache(const bool recheck, const unsigned 
 }
 
 void DebugServices::SetCheckWatchpointsResult(
-  const int chunk_id, partitioned_names *chunk_names, partitioned_names *chunk_slots,
-  partitioned_numbers *chunk_conditions, partitioned_id *chunk_watchpoint_id, partitioned_parameters *chunk_parameters,
-  partitioned_error_code *chunk_error_codes, partitioned_numbers *chunk_exec_orders,
-  partitioned_names *chunk_time_stamp, partitioned_id *chunk_device_id, partitioned_id *chunk_root_graph_id,
-  std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id, const int exec_order,
+  const int chunk_id, partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
+  partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
+  partitioned_parameters *const chunk_parameters, partitioned_error_code *const chunk_error_codes,
+  partitioned_numbers *const chunk_exec_orders, partitioned_names *const chunk_time_stamp,
+  partitioned_id *const chunk_device_id, partitioned_id *const chunk_root_graph_id,
+  std::vector<unsigned int> *const device_id, std::vector<unsigned int> *const root_graph_id, const int exec_order,
   const std::string time_stamp, const std::string &qualified_tensor_name, const std::string &tensor_slot,
   const watchpoint_t &wp, const unsigned int device_id_val, const unsigned int root_graph_id_val,
   const std::vector<parameter_t> &parameter_list, const int32_t error_code) {
@@ -287,14 +288,15 @@ void DebugServices::SetCheckWatchpointsResult(
 }
 
 void DebugServices::CheckWatchpointsForTensor(
-  partitioned_names *chunk_names, partitioned_names *chunk_slots, partitioned_numbers *chunk_conditions,
-  partitioned_id *const chunk_watchpoint_id, partitioned_parameters *chunk_parameters,
-  partitioned_error_code *chunk_error_codes, const std::vector<std::string> &op_overflows,
-  const std::vector<std::string> &async_file_pool, partitioned_numbers *chunk_exec_orders,
-  std::vector<std::shared_ptr<TensorData>> *tensor_list, int begin, int end, int chunk_id, const bool init_dbg_suspend,
-  const bool step_end, const bool recheck, partitioned_id *chunk_device_id, partitioned_id *chunk_root_graph_id,
-  std::vector<uint64_t> *chunk_tensor_byte_size, partitioned_names *chunk_time_stamp,
-  std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id) {
+  partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
+  partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
+  partitioned_parameters *const chunk_parameters, partitioned_error_code *const chunk_error_codes,
+  const std::vector<std::string> &op_overflows, const std::vector<std::string> &async_file_pool,
+  partitioned_numbers *const chunk_exec_orders, std::vector<std::shared_ptr<TensorData>> *const tensor_list, int begin,
+  int end, int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
+  partitioned_id *const chunk_device_id, partitioned_id *const chunk_root_graph_id,
+  std::vector<uint64_t> *const chunk_tensor_byte_size, partitioned_names *const chunk_time_stamp,
+  std::vector<unsigned int> *const device_id, std::vector<unsigned int> *const root_graph_id) {
   for (int i = begin; i < end; i++) {
     auto &tensor = (*tensor_list)[i];
     const auto tensor_name = tensor->GetName();
@@ -400,15 +402,13 @@ void DebugServices::CheckWatchpointsForTensor(
 #endif
   }
 }
-void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::vector<std::string> *const slot,
-                                     std::vector<int> *const condition, std::vector<unsigned int> *const watchpoint_id,
-                                     std::vector<std::vector<parameter_t>> *const parameters,
-                                     std::vector<int32_t> *const error_codes,
-                                     const std::vector<std::string> &op_overflows,
-                                     const std::vector<std::string> &async_file_pool,
-                                     std::vector<std::shared_ptr<TensorData>> *tensor_list, const bool init_dbg_suspend,
-                                     const bool step_end, const bool recheck, std::vector<unsigned int> *device_id,
-                                     std::vector<unsigned int> *root_graph_id) {
+void DebugServices::CheckWatchpoints(
+  std::vector<std::string> *const name, std::vector<std::string> *const slot, std::vector<int> *const condition,
+  std::vector<unsigned int> *const watchpoint_id, std::vector<std::vector<parameter_t>> *const parameters,
+  std::vector<int32_t> *const error_codes, const std::vector<std::string> &op_overflows,
+  const std::vector<std::string> &async_file_pool, std::vector<std::shared_ptr<TensorData>> *const tensor_list,
+  const bool init_dbg_suspend, const bool step_end, const bool recheck, std::vector<unsigned int> *const device_id,
+  std::vector<unsigned int> *const root_graph_id) {
   std::lock_guard<std::mutex> lg(lock_);
   auto t1 = std::chrono::high_resolution_clock::now();
   if (watchpoint_table_.empty()) {
@@ -474,15 +474,17 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *const name, std::
 }
 
 void DebugServices::SortWatchpointsInfo(
-  std::vector<std::future<void>> *tensor_future_vec, std::vector<int> *exec_order,
-  std::vector<std::string> *time_stamps, uint64_t *tensor_list_byte_size, std::vector<std::string> *name,
-  std::vector<std::string> *slot, std::vector<int> *condition, std::vector<unsigned int> *watchpoint_id,
-  std::vector<std::vector<parameter_t>> *parameters, std::vector<int32_t> *error_codes, partitioned_names *chunk_names,
-  partitioned_names *chunk_slots, partitioned_numbers *chunk_conditions, partitioned_id *chunk_watchpoint_id,
-  partitioned_parameters *chunk_parameters, partitioned_error_code *chunk_error_codes,
-  partitioned_numbers *chunk_exec_orders, partitioned_names *chunk_time_stamp,
-  std::vector<uint64_t> *chunk_tensor_byte_size, partitioned_id *chunk_device_id, partitioned_id *chunk_root_graph_id,
-  std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id) {
+  std::vector<std::future<void>> *const tensor_future_vec, std::vector<int> *const exec_order,
+  std::vector<std::string> *const time_stamps, uint64_t *const tensor_list_byte_size,
+  std::vector<std::string> *const name, std::vector<std::string> *const slot, std::vector<int> *const condition,
+  std::vector<unsigned int> *const watchpoint_id, std::vector<std::vector<parameter_t>> *const parameters,
+  std::vector<int32_t> *const error_codes, partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
+  partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
+  partitioned_parameters *const chunk_parameters, partitioned_error_code *const chunk_error_codes,
+  partitioned_numbers *const chunk_exec_orders, partitioned_names *const chunk_time_stamp,
+  std::vector<uint64_t> *const chunk_tensor_byte_size, partitioned_id *const chunk_device_id,
+  partitioned_id *const chunk_root_graph_id, std::vector<unsigned int> *const device_id,
+  std::vector<unsigned int> *const root_graph_id) {
   for (unsigned int i = 0; i < (*tensor_future_vec).size(); i++) {
     (*tensor_future_vec)[i].wait();
     (*tensor_future_vec)[i].get();
@@ -537,8 +539,10 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   MS_LOG(INFO) << "Reading in file: " << file_path;
   infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
   if (!infile.is_open()) {
-    MS_LOG(ERROR) << "Failed to open file (In ReadTensorFromNpy) " << file_path << " Errno:" << errno
-                  << " ErrInfo:" << strerror(errno);
+    MS_LOG(ERROR) << "Failed to open file (In ReadTensorFromNpy) " << file_path << " Errno:" << errno;
+    const int kMaxFilenameLength = 128;
+    char err_info[kMaxFilenameLength];
+    MS_LOG(ERROR) << " ErrInfo:" << strerror_r(errno, err_info, sizeof(err_info));
     return;
   }
   const int substr_len = 2;
@@ -691,7 +695,7 @@ void ReplaceSrcFileName(std::string *dump_style_name) {
   std::string::size_type dstlen = strdst.size();
 
   while ((pos = dump_style_name->find(strsrc, pos)) != std::string::npos) {
-    dump_style_name->replace(pos, srclen, strdst);
+    (void)dump_style_name->replace(pos, srclen, strdst);
     pos += dstlen;
   }
 }
@@ -857,7 +861,7 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
   tensor_data->SetShape(shape);
   tensor_data->SetTimeStamp(time_stamp);
   if (data_size) {
-    tensor_loader_->LoadNewTensor(tensor_data, false);
+    (void)tensor_loader_->LoadNewTensor(tensor_data, false);
   }
 
   // add to result_list
@@ -969,6 +973,7 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
         found_file = true;
       }
     }
+    (void)closedir(d);
   }
 
   if (found_file) {
@@ -986,7 +991,6 @@ void DebugServices::ReadDumpedTensorSync(const std::string &prefix_dump_file_nam
                     buffer, result_list);
     MS_LOG(INFO) << "Target tensor has not been found.";
   }
-  (void)closedir(d);
 }
 
 void DebugServices::ReadDumpedTensorAsync(const std::string &specific_dump_dir, const std::string &prefix_dump_to_check,
@@ -1327,8 +1331,10 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
           std::ifstream infile;
           infile.open(file_path.c_str(), std::ios::ate | std::ios::binary | std::ios::in);
           if (!infile.is_open()) {
-            MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name << " Errno:" << errno
-                          << " ErrInfo:" << strerror(errno);
+            MS_LOG(ERROR) << "Failed to open overflow bin file " << file_name << " Errno:" << errno;
+            const int kMaxFilenameLength = 128;
+            char err_info[kMaxFilenameLength];
+            MS_LOG(ERROR) << " ErrInfo:" << strerror_r(errno, err_info, sizeof(err_info));
             continue;
           }
 

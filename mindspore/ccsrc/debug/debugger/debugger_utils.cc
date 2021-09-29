@@ -42,11 +42,12 @@ std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &out
   // can add the filter list for more operators here....
   if (node_name == "BatchNorm") {
     MS_LOG(INFO) << "loading node named " << node_name;
-    real_outputs.insert(real_outputs.end(), {0, 3, 4});
+    (void)real_outputs.insert(real_outputs.end(), {0, 3, 4});
   } else {
     // by default, TensorLoader will load all outputs
     for (size_t j = 0; j < output_size; ++j) {
-      real_outputs.push_back(j);
+      size_t index = j;
+      real_outputs.push_back(index);
     }
   }
   return real_outputs;
@@ -89,7 +90,7 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, ui
 
   for (int j : real_outputs) {
     auto addr = kernel_outputs[j];
-    auto type = AnfAlgo::GetOutputInferDataType(cnode, j);
+    auto type = AnfAlgo::GetOutputInferDataType(cnode, (size_t)j);
     // For example, this happens with the Depend op
     if (type == kMetaTypeNone) {
       continue;
