@@ -606,10 +606,8 @@ def set_context(**kwargs):
             If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
-        enable_dump (bool): Whether to enable dump on Ascend. Default: False.
-        save_dump_path (str): When the program is executed on Ascend, operators can dump data in this path.
-            The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
-            So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
+        enable_dump (bool): This parameters is deprecated, and will be deleted in the next version.
+        save_dump_path (str): This parameters is deprecated, and will be deleted in the next version.
         enable_profiling (bool): This parameters is deprecated, and will be deleted in the next version.
             Please use mindspore.profiler.Profiler api instead.
         profiling_options (str): This parameters is deprecated, and will be deleted in the next version.
@@ -638,7 +636,7 @@ def set_context(**kwargs):
             If set to True, the network will only be compiled, not executed.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
             Each node has a scope. A scope of a subnode is the name of its parent node. If reserve_class_name_in_scope
-            is set, the class name will be saved after keyword 'net-' in the scope.
+            is set to True, the class name will be saved after keyword 'net-' in the scope.
             For example:
 
             Default/net-Net1/net-Net2 (reserve_class_name_in_scope=True)
@@ -663,8 +661,8 @@ def set_context(**kwargs):
             /en/master/enable_graph_kernel_fusion.html>`_.
         graph_kernel_flags (str) –
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
-            with enable_graph_kernel. Experienced user only.
-            For example, context.set_context(graph_kernel_flags="–opt_level=2 –dump_as_text"). Some general options:
+            with enable_graph_kernel. Only for experienced users.
+            For example, context.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text"). Some general options:
 
             - opt_level: Set the optimization level.
               Default: 2. Graph kernel fusion can be enabled equivalently by setting opt_level greater than 0.
@@ -682,8 +680,10 @@ def set_context(**kwargs):
 
             More options can refer to the implementation code. These options can also be set by environment
             variable MS_GRAPH_KERNEL_FLAGS, without modifying network source code.
-            For example, export MS_GRAPH_KERNEL_FLAGS="–opt_level=2 –dump_as_text".
-        enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
+            For example, export MS_GRAPH_KERNEL_FLAGS="--opt_level=2 --dump_as_text".
+        enable_reduce_precision (bool): Whether to enable precision reduction.
+            If the operator does not support the user-specified precision, the precision will
+            be changed automatically. Default: True.
         auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance.
             Default: NO_TUNE. The value must be in ['RL', 'GA', 'RL,GA'].
 
@@ -759,12 +759,10 @@ def set_context(**kwargs):
                              f"but got device target {device}")
     device = ctx.get_param(ms_ctx_param.device_target)
     for key, value in kwargs.items():
-        if key == "enable_auto_mixed_precision":
-            logger.warning(f" '{key}' mixing accuracy is controlled by amp, '{key}' will be deleted later.")
-            continue
-        if key in ('enable_profiling', 'profiling_options'):
-            logger.warning(f" '{key}' is deprecated. Please use Profiler instead. The parameter will"
-                           "be deleted in the next version.")
+        if key in ('enable_profiling', 'profiling_options', 'enable_auto_mixed_precision',
+                   'enable_dump', 'save_dump_path'):
+            logger.warning(f" '{key}' parameters will be deprecated."
+                           "For details, please see the interface parameter API comments")
             continue
         if not _check_target_specific_cfgs(device, key):
             continue
