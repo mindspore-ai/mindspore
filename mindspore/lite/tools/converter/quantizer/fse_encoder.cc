@@ -199,6 +199,7 @@ int GetMaxIndex(const uint16_t *arr, int arr_count) {
 
 void FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   MS_ASSERT(q != nullptr);
+  MS_ASSERT(table_log != nullptr);
   // The higher the number, the more accurate we'll be to the shannon entropy,
   // but also the larger the table, so `+3` is a good compromise.
   *table_log = std::min(MAX_TABLE_LOG, (fse_count_bits((uint32_t)q->size) + kFseTableExtendSize));

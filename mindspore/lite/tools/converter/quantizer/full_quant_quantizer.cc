@@ -184,25 +184,25 @@ void DivergInfo::HandleBinForKL(int quant_bint_nums, int bin_index, std::vector<
   MS_ASSERT(quantized_histogram != nullptr && expanded_histogram != nullptr);
   const float bin_interval = static_cast<float>(bin_index) / static_cast<float>(quant_bint_nums);
   // merge i bins to target bins
-  for (int j = 0; j < quant_bint_nums; ++j) {
-    const float start = j * bin_interval;
+  for (int i = 0; i < quant_bint_nums; ++i) {
+    const float start = i * bin_interval;
     const float end = start + bin_interval;
     const int left_upper = static_cast<int>(std::ceil(start));
     if (left_upper > start) {
       const double left_scale = left_upper - start;
-      quantized_histogram->at(j) += left_scale * this->histogram[left_upper - 1];
+      quantized_histogram->at(i) += left_scale * this->histogram[left_upper - 1];
     }
     const int right_lower = static_cast<int>(std::floor(end));
     if (right_lower < end) {
       const double right_scale = end - right_lower;
-      quantized_histogram->at(j) += right_scale * this->histogram[right_lower];
+      quantized_histogram->at(i) += right_scale * this->histogram[right_lower];
     }
     std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower,
-                  [&quantized_histogram, j](float item) { quantized_histogram->at(j) += item; });
+                  [&quantized_histogram, i](float item) { quantized_histogram->at(i) += item; });
   }
   // expand target bins to i bins in order to calculate KL with reference_histogram
-  for (int j = 0; j < quant_bint_nums; ++j) {
-    const float start = j * bin_interval;
+  for (int i = 0; i < quant_bint_nums; ++i) {
+    const float start = i * bin_interval;
     const float end = start + bin_interval;
     float count = 0;
     const int left_upper = static_cast<int>(std::ceil(start));
@@ -229,7 +229,7 @@ void DivergInfo::HandleBinForKL(int quant_bint_nums, int bin_index, std::vector<
     if (count == 0) {
       continue;
     }
-    const float average_num = quantized_histogram->at(j) / count;
+    const float average_num = quantized_histogram->at(i) / count;
     if (left_upper > start && this->histogram[left_upper - 1] != 0) {
       expanded_histogram->at(left_upper - 1) += average_num * left_scale;
     }
@@ -311,7 +311,7 @@ std::pair<CNodePtr, float> DivergInfo::GetScale() {
     max_value = percent_result.second;
   }
 
-  MS_ASSERT(quant_max - quant_min != 0);
+  MS_CHECK_TRUE_MSG(quant_max - quant_min != 0, {}, "quant_max - quant_min == 0");
   float scale = (max_value - min_value) / (quant_max - quant_min);
   this->scale_tmp = scale;
   MS_ASSERT(fabs(scale) <= 0.0f);
@@ -328,7 +328,7 @@ std::pair<CNodePtr, int32_t> DivergInfo::GetZeropoint() {
     MS_LOG(WARNING) << "unexpected quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
   }
   if (this->activation_quant_method == REMOVAL_OUTLIER) {
-    MS_ASSERT(fabs(scale_tmp) <= 0.0f);
+    MS_CHECK_TRUE_MSG(fabs(scale_tmp) <= 0.0f, {}, "fabs(scale_tmp) > 0.0f");
     zero_point = std::round(quant_max - percent_result.second / scale_tmp);
   }
   return std::make_pair(this->cnode, zero_point);
@@ -783,17 +783,19 @@ STATUS FullQuantQuantizer::QuantNode() {
     auto op_type = primitive->name();
     MS_LOG(DEBUG) << "OpName: " << op_name;
     if (op_type == lite::kNameTupleGetItem) {
-      auto index_node = cnode->input(2);
+      constexpr int tuple_get_item_input_size = 3;
+      MS_CHECK_TRUE_MSG(cnode->size() == tuple_get_item_input_size, RET_ERROR, "cnode->size() != 3");
+      auto index_node = cnode->input(THIRD_INPUT);
       auto index_value_node = std::dynamic_pointer_cast<mindspore::ValueNode>(index_node);
       if (index_value_node == nullptr) {
         MS_LOG(WARNING) << "index value node is null";
         continue;
       }
       size_t index = opt::CastToInt(index_value_node->value()).front();
-      auto input_node = cnode->input(1);
-      MS_ASSERT(input_node != nullptr);
+      auto input_node = cnode->input(SECOND_INPUT);
+      MS_CHECK_TRUE_MSG(input_node != nullptr, RET_ERROR, "input_node == nullptr");
       auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
-      MS_ASSERT(input_cnode != nullptr);
+      MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_ERROR, "input_cnode == nullptr");
       auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
       if (input_cnode_primitive == nullptr) {
         MS_LOG(WARNING) << "input_cnode_primitive is null";
@@ -843,17 +845,9 @@ STATUS FullQuantQuantizer::UpdateDivergInverval() {
 }
 
 /**
- * Pre Process
- * 1. generate config param
- *   1.1 read config file
- *   1.2 parse txt
- * 2. collect image files
- *   2.1 parse image files to input tensor
- * 3. save quantied node
+ *  Mark quantifiable nodes
  **/
 STATUS FullQuantQuantizer::PreProcess() {
-  // 3. collect to be quantized operators
-  // from user input
   auto cnodes = funcGraph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     AnfNodePtr anf = std::dynamic_pointer_cast<AnfNode>(cnode);
@@ -907,10 +901,11 @@ STATUS FullQuantQuantizer::DoInference() {
     return RET_ERROR;
   }
 
-  for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
+  for (size_t calib_index = 0; calib_index < calibrator_->GetBatchNum(); calib_index++) {
     // set multi-input data
     for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
-      STATUS status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), i, inputs[input_index]);
+      STATUS status =
+        calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), calib_index, inputs[input_index]);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "generate input data from images failed!";
         return RET_ERROR;
@@ -943,7 +938,7 @@ STATUS FullQuantQuantizer::DoInference() {
         auto tensor = beforeInputs[i];
         MS_ASSERT(tensor != nullptr);
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
-        MS_ASSERT(tensor_data != nullptr);
+        MS_CHECK_TRUE_MSG(tensor_data != nullptr, RET_NULL_PTR, "tensor_data is nullptr.");
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
         this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][i]);
@@ -973,6 +968,7 @@ STATUS FullQuantQuantizer::DoInference() {
       size_t output_i = 0;
       for (const auto &tensor : afterOutputs) {
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
+        MS_CHECK_TRUE_MSG(tensor_data != nullptr, RET_NULL_PTR, "tensor_data is nullptr.");
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
         this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][output_i]);
@@ -1175,31 +1171,33 @@ STATUS FullQuantQuantizer::CollectDataFrequency() {
       }
     }
 
-    KernelCallBack beforeCallBack = [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-                                        const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
-                                        const CallBackParam &callParam) {
+    KernelCallBack before_callback = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                                         const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                                         const CallBackParam &callParam) {
       auto diverg_info_map = calibrator_->GetInputDivergInfo();
       if (diverg_info_map->find(callParam.node_name) == diverg_info_map->end()) {
         return true;
       }
-      if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
+      if (FullQuantQuantizer::CheckFp32TensorVec(callParam.node_name, before_inputs) != RET_OK) {
         return true;
       }
-      for (size_t i = 0; i < (*diverg_info_map)[callParam.node_name].size(); i++) {
-        auto tensor = beforeInputs[i];
-        MS_ASSERT(tensor != nullptr);
+      int input_i = 0;
+      for (auto tensor : before_inputs) {
+        if (tensor->data_type() != kNumberTypeFloat32 || tensor->IsConst()) {
+          continue;
+        }
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
         MS_ASSERT(tensor_data != nullptr);
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
-        this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[callParam.node_name][i]);
+        this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[callParam.node_name][input_i++]);
       }
       return true;
     };
 
-    KernelCallBack afterCallBack = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                                       const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                                       const CallBackParam &call_param) {
+    KernelCallBack after_callBack = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
+                                        const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+                                        const CallBackParam &call_param) {
       auto diverg_info_map = calibrator_->GetOutputDivergInfo();
       if (diverg_info_map->find(call_param.node_name) == diverg_info_map->end()) {
         return true;
@@ -1208,17 +1206,17 @@ STATUS FullQuantQuantizer::CollectDataFrequency() {
         return true;
       }
       int output_i = 0;
+      // all outputs are same dtype.
       for (const auto &tensor : after_outputs) {
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
         MS_ASSERT(tensor_data != nullptr);
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
-        this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[call_param.node_name][output_i]);
-        output_i++;
+        this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[call_param.node_name][output_i++]);
       }
       return true;
     };
-    auto status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
+    auto status = fp32_session_->RunGraph(before_callback, after_callBack);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
