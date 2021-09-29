@@ -124,6 +124,7 @@ void DataPrepareActor::Init() {
 void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                    OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  MS_LOG(INFO) << "Data prepare actor(" << GetAID().Name() << ") prepares data.";
 
   // Convert actor running data from input tensors.
   if (input_tensors.size() > 0) {

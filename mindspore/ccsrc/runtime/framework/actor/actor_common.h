@@ -69,14 +69,14 @@ enum class KernelTransformType {
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
   {                                                            \
-    MS_LOG(ERROR) << message;                                  \
-    op_context.SetFailed(kFailure);                            \
+    (op_context).error_info_ = message;                        \
+    (op_context).SetFailed(kFailure);                          \
     return;                                                    \
   }
 
 #define SET_OPCONTEXT_SUCCESS_RET(op_context) \
   {                                           \
-    op_context.SetSuccess(kSuccess);          \
+    (op_context).SetSuccess(kSuccess);        \
     return;                                   \
   }
 
@@ -85,8 +85,8 @@ enum class KernelTransformType {
     if (strategy == GraphExecutionStrategy::kStep) {                                 \
       MS_LOG(EXCEPTION) << message;                                                  \
     }                                                                                \
-    MS_LOG(ERROR) << message;                                                        \
-    op_context.SetFailed(kFailure);                                                  \
+    (op_context).error_info_ = message;                                              \
+    (op_context).SetFailed(kFailure);                                                \
     return;                                                                          \
   }
 
@@ -98,12 +98,12 @@ enum class KernelTransformType {
     if (strategy == GraphExecutionStrategy::kStep) {                                                               \
       MS_LOG(EXCEPTION) << message;                                                                                \
     }                                                                                                              \
-    MS_LOG(ERROR) << message;                                                                                      \
+    (op_context).error_info_ = message;                                                                            \
     (op_context).SetFailed(kFailure);                                                                              \
     return;                                                                                                        \
   }
 
-void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num, size_t *max_thread_num);
+void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num);
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 

@@ -51,12 +51,6 @@ class DataSourceActor : public DebugAwareActor {
   // The process entry of data processing.
   void FetchData(OpContext<DeviceTensor> *const context);
 
-  // The memory related operation interface.
-  void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override{};
-  void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override{};
-  // Copy data from data source to the device tensor buffer of actor after memory alloc finished.
-  void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override{};
-
  protected:
   friend class GraphScheduler;
 
@@ -90,8 +84,10 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 
   void Init() override;
 
+  // The memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
+  // Copy data from data source to the device tensor buffer of actor after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
   void SendDebugReq(OpContext<DeviceTensor> *const context) override;
@@ -122,8 +118,10 @@ class HostQueueDataSourceActor : public DataSourceActor {
         host_queue_(host_queue) {}
   ~HostQueueDataSourceActor() override = default;
 
+  // The memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
+  // Copy data from data source to the device tensor buffer of actor after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
   size_t FetchNodePosition(const AnfNodePtr &node) const override;

@@ -105,7 +105,7 @@ class GraphScheduler {
   void Schedule(const ActorSet *actor_set);
 
   // The processing entry of actors running. The third parameter is used only in the step execution strategy.
-  bool Run(const ActorSet *actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
+  void Run(const ActorSet *actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
            const std::vector<TensorPtr> &input_tensors_with_value_node = {},
            GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 

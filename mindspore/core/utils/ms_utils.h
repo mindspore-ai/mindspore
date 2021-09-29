@@ -51,12 +51,17 @@ static inline int SetEnv(const char *envname, const char *envvar, int overwrite 
 }
 
 static inline void SetOMPThreadNum() {
-  size_t cpu_core_num = std::thread::hardware_concurrency();
-  size_t cpu_core_num_half = cpu_core_num / 2;
   const size_t kOMPThreadMaxNum = 16;
   const size_t kOMPThreadMinNum = 1;
+  // The actor concurrent execution max num.
+  const size_t kActorConcurrentMaxNum = 4;
 
-  size_t OMP_thread_num = cpu_core_num_half < kOMPThreadMinNum ? kOMPThreadMinNum : cpu_core_num_half;
+  size_t cpu_core_num = std::thread::hardware_concurrency();
+  size_t cpu_core_num_half = cpu_core_num / 2;
+  // Ensure that the calculated number of OMP threads is at most half the number of CPU cores.
+  size_t OMP_thread_num = cpu_core_num_half / kActorConcurrentMaxNum;
+
+  OMP_thread_num = OMP_thread_num < kOMPThreadMinNum ? kOMPThreadMinNum : OMP_thread_num;
   OMP_thread_num = OMP_thread_num > kOMPThreadMaxNum ? kOMPThreadMaxNum : OMP_thread_num;
 
   std::string OMP_env = std::to_string(OMP_thread_num);
