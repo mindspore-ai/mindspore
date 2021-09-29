@@ -34,18 +34,6 @@
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
-#include "backend/optimizer/ascend/mindir/space_batch_nd_attr_update.h"
-#include "backend/optimizer/ascend/mindir/dropout_unify_mindir.h"
-#include "backend/optimizer/ascend/mindir/maxpool_to_maxpool_with_argmax.h"
-#include "backend/optimizer/ascend/mindir/maxpool_with_argmax_unify_mindir.h"
-#include "backend/optimizer/ascend/mindir/conv2d_unify_mindir.h"
-#include "backend/optimizer/ascend/mindir/optimizer_unify_output.h"
-#include "backend/optimizer/ascend/mindir/fake_learned_scale_quant_grad_unify_mindir.h"
-#include "backend/optimizer/ascend/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
-#include "backend/optimizer/ascend/mindir/slice_grad_unify_mindir.h"
-#include "backend/optimizer/ascend/mindir/avg_pool_grad_unify_mindir.h"
-#include "backend/optimizer/ascend/mindir/bn_grad_unify_mindir.h"
-#include "backend/optimizer/ascend/mindir/all_to_all_unify_mindir.h"
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -380,63 +368,7 @@ void AscendSession::Init(uint32_t device_id) { InitExecutor(kAscendDevice, devic
 
 void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   SessionBasic::UnifyMindIR(graph);
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-#ifdef ENABLE_DUMP_IR
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_before_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph);
-    DumpIRProto(graph, "before_unify_mindir_hwopt_" + std::to_string(graph->graph_id()));
-  }
-#endif
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
-  unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropInputUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropFilterUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AvgPoolGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::FakeLearnedScaleQuantPerLayerGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::FakeLearnedScaleQuantPerChannelGradUnifyMindIR>());
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-  } else {
-    // Add PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR pass first to avoid the backward loss function
-    // from the python frontend matching the pattern defined in PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR.
-    unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
-  }
-  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::NeighborExchangeUnifyMindIR>());
-  unify_mindir_pm->AddPass(std::make_shared<opt::AllToAllUnifyMindIR>());
-
-  optimizer->AddPassManager(unify_mindir_pm);
-  (void)optimizer->Optimize(graph);
-  graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_after_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph);
-  }
-#endif
+  opt::AscendUnifyMindIR(graph);
 }
 
 void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,

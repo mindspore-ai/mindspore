@@ -2553,7 +2553,7 @@ void SessionBasic::DumpGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
 #endif
 }
 
-void SessionBasic::UnifyMindIR(const KernelGraphPtr &graph) { opt::CommonUnifyMindIROptimization(graph); }
+void SessionBasic::UnifyMindIR(const KernelGraphPtr &graph) { opt::CommonUnifyMindIR(graph); }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 void SessionBasic::InitPsWorker(const KernelGraphPtr &kernel_graph) {
