@@ -39,6 +39,7 @@ using mindspore::lite::Tensor;
 namespace mindspore::opt {
 namespace {
 constexpr size_t INITIAL_SIZE = 1024;
+constexpr auto kIsLinkWithControlFlow = "link_with_control_flow";
 void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *output_tensor) {
   if (input_tensor != nullptr) {
     for (auto &i : *input_tensor) {
@@ -283,7 +284,11 @@ bool ConstFoldPass::Run(const FuncGraphPtr &func_graph) {
     return false;
   }
   std::set<FuncGraphPtr> has_visited;
-  if (Process(func_graph, &has_visited) != lite::RET_OK) {
+  if (HandleCommonFold(func_graph, &has_visited) != lite::RET_OK) {
+    MS_LOG(ERROR) << "do constant fold pass failed,";
+    return false;
+  }
+  if (HandleSpecialFold(func_graph) != lite::RET_OK) {
     MS_LOG(ERROR) << "do constant fold pass failed,";
     return false;
   }
@@ -306,7 +311,7 @@ bool ConstFoldPass::Init(const FuncGraphPtr &func_graph) {
   return true;
 }
 
-int ConstFoldPass::Process(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *has_visited) {
+int ConstFoldPass::HandleCommonFold(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *has_visited) {
   MS_ASSERT(func_graph != nullptr);
   if (has_visited->find(func_graph) != has_visited->end()) {
     return lite::RET_OK;
@@ -322,16 +327,15 @@ int ConstFoldPass::Process(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr
     auto cnode = node->cast<CNodePtr>();
     for (size_t i = 0; i < cnode->size(); ++i) {
       if (IsValueNode<FuncGraph>(cnode->input(i))) {
-        is_control_flow_ = true;
         auto sub_graph = GetValueNode<FuncGraphPtr>(cnode->input(i));
         MS_ASSERT(sub_graph != nullptr);
-        if (Process(sub_graph, has_visited) != lite::RET_OK) {
+        if (HandleCommonFold(sub_graph, has_visited) != lite::RET_OK) {
           MS_LOG(ERROR) << "do subgraph const-fold failed.";
           return lite::RET_ERROR;
         }
       }
     }
-    if (!CheckCanFusion(cnode)) {
+    if (!CheckCanCommonFold(cnode)) {
       continue;
     }
     if (DoConstantFold(func_graph, cnode) != lite::RET_OK) {
@@ -342,7 +346,7 @@ int ConstFoldPass::Process(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr
   return lite::RET_OK;
 }
 
-bool ConstFoldPass::CheckCanFusion(const CNodePtr &cnode) const {
+bool ConstFoldPass::CheckCanCommonFold(const CNodePtr &cnode) const {
   MS_CHECK_TRUE_RET(cnode != nullptr, false);
   if (IsSpecialType(cnode)) {
     return false;
@@ -351,21 +355,72 @@ bool ConstFoldPass::CheckCanFusion(const CNodePtr &cnode) const {
     return false;
   }
   auto inputs = cnode->inputs();
-  bool is_all_const = std::all_of(inputs.begin(), inputs.end(), [](const AnfNodePtr &node) {
+  return std::all_of(inputs.begin(), inputs.end(), [](const AnfNodePtr &node) {
     return (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) ||
            (node->isa<Parameter>() && node->cast<ParameterPtr>()->has_default());
   });
-  if (is_all_const) {
-    return true;
+}
+
+int ConstFoldPass::HandleSpecialFold(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
+  if (lite::ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() == 0) {
+    return lite::RET_OK;
   }
-  if (CheckPrimitiveType(cnode, prim::kPrimShape)) {
-    if (is_control_flow_ || lite::ConverterInnerContext::GetInstance()->GetGraphInputTensorShapeMapSize() == 0) {
+  if (node_infershape_ == nullptr) {
+    node_infershape_ = std::make_shared<NodeInferShape>(fmk_type_, train_flag_);
+    MS_CHECK_TRUE_RET(node_infershape_ != nullptr, lite::RET_ERROR);
+  }
+  auto manager = Manage(func_graph);
+  MS_CHECK_TRUE_RET(manager != nullptr, lite::RET_ERROR);
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (!utils::isa<CNode>(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (!CheckCanSpecialFold(cnode)) {
+      continue;
+    }
+    if (DoConstantFold(func_graph, cnode) != lite::RET_OK) {
+      MS_LOG(ERROR) << "do constant fold failed.";
+      return lite::RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
+}
+
+bool ConstFoldPass::CheckCanSpecialFold(const CNodePtr &cnode) const {
+  MS_CHECK_TRUE_RET(cnode != nullptr, false);
+  for (size_t i = 0; i < cnode->size(); ++i) {
+    auto input_node = cnode->input(i);
+    MS_CHECK_TRUE_RET(input_node != nullptr, false);
+    if (IsValueNode<FuncGraph>(input_node)) {
       return false;
     }
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    return prim->GetAttr(kInferDone) != nullptr && GetValue<bool>(prim->GetAttr(kInferDone));
+    if (!input_node->isa<CNode>()) {
+      continue;
+    }
+    auto input_cnode = input_node->cast<CNodePtr>();
+    auto input_prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+    MS_CHECK_TRUE_RET(input_prim != nullptr, false);
+    bool is_link_with_control_flow = input_prim->GetAttr(kIsLinkWithControlFlow) == nullptr ||
+                                     GetValue<bool>(input_prim->GetAttr(kIsLinkWithControlFlow));
+    if (is_link_with_control_flow) {
+      return false;
+    }
   }
-  return false;
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_CHECK_TRUE_RET(prim != nullptr, false);
+  prim->AddAttr(kIsLinkWithControlFlow, MakeValue(false));
+  if (IsSpecialType(cnode)) {
+    return false;
+  }
+  MS_ASSERT(node_infershape_ != nullptr);
+  auto status = node_infershape_->InferShape(cnode);
+  if (CheckPrimitiveType(cnode, prim::kPrimShape)) {
+    return status == lite::RET_OK;
+  }
+  return CheckCanCommonFold(cnode);
 }
 
 int ConstFoldPass::DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {

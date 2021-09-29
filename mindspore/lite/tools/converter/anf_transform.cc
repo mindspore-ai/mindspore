@@ -190,7 +190,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::OnnxGeLUFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TfliteRelPosMultiHeadAttentionFusion>());
   fusion_pm->AddPass(std::make_shared<opt::GLUFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
+  fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk, config->trainModel));
   fusion_pm->AddPass(std::make_shared<opt::AffineFusion>());
   fusion_pm->AddPass(std::make_shared<opt::AffineActivationFusion>());
   if (config->fmk == converter::kFmkTypeMs && !config->trainModel) {
@@ -329,7 +329,7 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   CHECK_NULL_RETURN(const_fold_pm);
   const_fold_pm->AddPass(std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel));
   if (!config->trainModel) {
-    const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk));
+    const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk, config->trainModel));
   }
   const_fold_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
   const_fold_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
@@ -511,9 +511,9 @@ bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
   auto is_train = config->trainModel;
   std::unordered_map<std::string, opt::PassPtr> passes = {
     {"DumpGraph", std::make_shared<opt::DumpGraph>(config)},
-    {"ConstFoldPass", std::make_shared<opt::ConstFoldPass>(config->fmk)},
     {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train)},
     {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train)},
+    {"ConstFoldPass", std::make_shared<opt::ConstFoldPass>(fmk, is_train)},
     {"InferShapePass", std::make_shared<opt::InferShapePass>(fmk, is_train)},
     {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>()},
     {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>()},
