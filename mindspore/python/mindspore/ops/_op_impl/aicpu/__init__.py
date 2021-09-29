@@ -41,6 +41,7 @@ from .identity import _identity_aicpu
 from .identity_n import _identity_n_aicpu
 from .edit_distance import _edit_distance_aicpu
 from .unique_with_pad import _unique_with_pad_aicpu
+from .bartlett_window import _bartlett_window_aicpu
 from .add_n import _add_n_aicpu
 from .sub_and_filter import _sub_and_filter_aicpu
 from .pad_and_shift import _pad_and_shift_aicpu

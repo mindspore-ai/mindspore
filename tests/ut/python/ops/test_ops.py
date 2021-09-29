@@ -3597,6 +3597,10 @@ test_case_other_ops = [
                         Tensor(np.array([[[0.38, 0.17, 0.95, 0.40]]], np.float32)),
                         Tensor(np.array([0.8], np.float32))),
         'skip': ['backward']}),
+     ('BartlettWindow', {
+         'block': P.BartlettWindow(periodic=True, dtype=mstype.float32),
+         'desc_inputs': (Tensor(np.array([10], np.int32))),
+         'skip': ['backward']}),
     ('GatherNd', {
         'block': P.GatherNd(),
         'desc_inputs': (Tensor(np.ones((1, 3, 6, 6), np.float32)),
