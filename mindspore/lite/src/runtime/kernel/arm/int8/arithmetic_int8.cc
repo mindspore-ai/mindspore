@@ -79,16 +79,19 @@ int ArithmeticInt8CPUKernel::Init() {
 
   auto *input0_tensor = in_tensors_.at(0);
   auto in0_quant_args = input0_tensor->quant_params();
+  CHECK_LESS_RETURN(in0_quant_args.size(), 1);
   quant_args_.in0_args_.scale_ = in0_quant_args.front().scale;
   quant_args_.in0_args_.zp_ = in0_quant_args.front().zeroPoint;
 
   auto *input1_tensor = in_tensors_.at(1);
   auto in1_quant_args = input1_tensor->quant_params();
+  CHECK_LESS_RETURN(in1_quant_args.size(), 1);
   quant_args_.in1_args_.scale_ = in1_quant_args.front().scale;
   quant_args_.in1_args_.zp_ = in1_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
+  CHECK_LESS_RETURN(out_quant_args.size(), 1);
   quant_args_.out_args_.scale_ = out_quant_args.front().scale;
   quant_args_.out_args_.zp_ = out_quant_args.front().zeroPoint;
   if (!InferShapeDone()) {
