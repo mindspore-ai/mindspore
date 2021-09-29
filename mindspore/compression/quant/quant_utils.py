@@ -285,6 +285,52 @@ def query_quant_layers(network):
 
     Args:
         network (Cell): input network
+
+    Examples:
+        >>> from mindspore.compression.quant import QuantizationAwareTraining
+        >>> from mindspore.compression.quant.quant_utils import query_quant_layers
+        >>> class LeNet5(nn.Cell):
+        ...     def __init__(self, num_class=10, channel=1):
+        ...         super(LeNet5, self).__init__()
+        ...         self.type = "fusion"
+        ...         self.num_class = num_class
+        ...
+        ...         # change `nn.Conv2d` to `nn.Conv2dBnAct`
+        ...         self.conv1 = nn.Conv2dBnAct(channel, 6, 5, pad_mode='valid', activation='relu')
+        ...         self.conv2 = nn.Conv2dBnAct(6, 16, 5, pad_mode='valid', activation='relu')
+        ...         # change `nn.Dense` to `nn.DenseBnAct`
+        ...         self.fc1 = nn.DenseBnAct(16 * 5 * 5, 120, activation='relu')
+        ...         self.fc2 = nn.DenseBnAct(120, 84, activation='relu')
+        ...         self.fc3 = nn.DenseBnAct(84, self.num_class)
+        ...
+        ...         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        ...         self.flatten = nn.Flatten()
+        ...
+        ...     def construct(self, x):
+        ...         x = self.conv1(x)
+        ...         x = self.max_pool2d(x)
+        ...         x = self.conv2(x)
+        ...         x = self.max_pool2d(x)
+        ...         x = self.flatten(x)
+        ...         x = self.fc1(x)
+        ...         x = self.fc2(x)
+        ...         x = self.fc3(x)
+        ...         return x
+        ...
+        >>> net = LeNet5()
+        >>> quantizer = QuantizationAwareTraining(bn_fold=False, per_channel=[True, False], symmetric=[True, False])
+        >>> net_qat = quantizer.quantize(net)
+        >>> query_quant_layers(net_qat)
+        conv1.conv.fake_quant_weight                                       INT8
+        conv1.activation.fake_quant_act                                    INT8
+        conv2.conv.fake_quant_weight                                       INT8
+        conv2.activation.fake_quant_act                                    INT8
+        fc1.dense.fake_quant_weight                                        INT8
+        fc1.activation.fake_quant_act                                      INT8
+        fc2.dense.fake_quant_weight                                        INT8
+        fc2.activation.fake_quant_act                                      INT8
+        fc3.dense.fake_quant_weight                                        INT8
+        fc3.activation.fake_quant_act                                      INT8
     """
     network = Validator.check_isinstance("network", network, nn.Cell)
     tplt = "{0:60}\t{1:10}"
@@ -309,6 +355,42 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
         TypeError: If `quant_new_params` is not None and is not list.
         ValueError: If there are parameters in the `quant_model` that are neither in `params_dict`
             nor in `quant_new_params`.
+
+    Examples:
+        >>> from mindspore import load_checkpoint
+        >>> from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
+        >>> class LeNet5(nn.Cell):
+        ...     def __init__(self, num_class=10, channel=1):
+        ...         super(LeNet5, self).__init__()
+        ...         self.type = "fusion"
+        ...         self.num_class = num_class
+        ...
+        ...         # change `nn.Conv2d` to `nn.Conv2dBnAct`
+        ...         self.conv1 = nn.Conv2dBnAct(channel, 6, 5, pad_mode='valid', activation='relu')
+        ...         self.conv2 = nn.Conv2dBnAct(6, 16, 5, pad_mode='valid', activation='relu')
+        ...         # change `nn.Dense` to `nn.DenseBnAct`
+        ...         self.fc1 = nn.DenseBnAct(16 * 5 * 5, 120, activation='relu')
+        ...         self.fc2 = nn.DenseBnAct(120, 84, activation='relu')
+        ...         self.fc3 = nn.DenseBnAct(84, self.num_class)
+        ...
+        ...         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        ...         self.flatten = nn.Flatten()
+        ...
+        ...     def construct(self, x):
+        ...         x = self.conv1(x)
+        ...         x = self.max_pool2d(x)
+        ...         x = self.conv2(x)
+        ...         x = self.max_pool2d(x)
+        ...         x = self.flatten(x)
+        ...         x = self.fc1(x)
+        ...         x = self.fc2(x)
+        ...         x = self.fc3(x)
+        ...         return x
+        ...
+        >>> net = LeNet5()
+        >>> ckpt_file_name = "./checkpoint/LeNet5_noquant-1_32.ckpt"
+        >>> param_dict = load_checkpoint(ckpt_file_name)
+        >>> load_nonquant_param_into_quant_net(net, param_dict)
     """
     if quant_new_params is not None and not isinstance(quant_new_params, list):
         raise TypeError("quant_new_params must be list or None.")
