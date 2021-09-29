@@ -38,7 +38,8 @@ constexpr int kCellIndex = 3;
 constexpr int kOutputBatchIndex = 2;
 constexpr int kOutputHiddenIndex = 3;
 AnfNodePtr GetRealLstmWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode, int weight_index) {
-  MS_ASSERT(graph != nullptr && cnode != nullptr);
+  MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "graph is nullptr.");
+  MS_CHECK_TRUE_MSG(cnode != nullptr, nullptr, "cnode is nullptr.");
   if (!opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
     return nullptr;
   }
@@ -71,6 +72,7 @@ int InitLstmWeight(const ParameterPtr &parameter, void *data, size_t data_size, 
   size_t combined_num = is_bias ? static_cast<size_t>(kBiasNums) : 1;  // ih_bias and hh_bias are combined
   const auto &weight_order = kNH2NC;
   size_t weight_batch = num_directions * combined_num;
+  MS_CHECK_TRUE_MSG(!INT_MUL_OVERFLOW_THRESHOLD(kGateNums, weight_batch, SIZE_MAX), RET_ERROR, "overflow.");
   size_t weight_size = data_size / (kGateNums * weight_batch);
   for (size_t k = 0; k < num_directions; k++) {
     auto start_addr_x = static_cast<char *>(data) + data_size / num_directions * k;
@@ -151,6 +153,7 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
   std::vector<int64_t> bias_shape = {num_directions, kGateNums * kBiasNums * hidden_size};
 
   auto lstm_weight_node = GetRealLstmWeightNode(func_graph, lstm_cnode, kLSTMWeightIndex);
+  MS_CHECK_TRUE_MSG(lstm_weight_node != nullptr, RET_ERROR, "lstm_weight_node is nullptr.");
   lite::DataInfo data_info;
   if (lstm_weight_node->isa<Parameter>()) {
     auto ret = FetchDataFromParameterNode(lstm_cnode, kLSTMWeightIndex, converter::kFmkTypeMs, false, &data_info);
@@ -185,6 +188,7 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
   }
 
   auto ih_weight_paramter = func_graph->add_parameter();
+  MS_CHECK_TRUE_MSG(ih_weight_paramter != nullptr, lite::RET_NULL_PTR, "ih_weight_paramter is nullptr.");
   ih_weight_paramter->fullname_with_scope() = lstm_weight_node->fullname_with_scope() + "_ih";
   ret = InitLstmWeight(ih_weight_paramter, flatten_weight, ih_weight_size * num_directions, ih_weight_shape, data_type,
                        false, num_directions);
@@ -193,6 +197,7 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
   }
 
   auto hh_weight_paramter = func_graph->add_parameter();
+  MS_CHECK_TRUE_MSG(hh_weight_paramter != nullptr, lite::RET_NULL_PTR, "hh_weight_paramter is nullptr.");
   hh_weight_paramter->fullname_with_scope() = lstm_weight_node->fullname_with_scope() + "_hh";
   ret = InitLstmWeight(hh_weight_paramter, flatten_weight + ih_weight_size * num_directions,
                        hh_weight_size * num_directions, hh_weight_shape, data_type, false, num_directions);
@@ -200,6 +205,7 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
     return ret;
   }
   auto bias_paramter = func_graph->add_parameter();
+  MS_CHECK_TRUE_MSG(bias_paramter != nullptr, lite::RET_NULL_PTR, "bias_paramter is nullptr.");
   bias_paramter->fullname_with_scope() = lstm_weight_node->fullname_with_scope() + "_bias";
   ret = InitLstmWeight(bias_paramter, flatten_weight + (hh_weight_size + ih_weight_size) * num_directions,
                        bias_size * num_directions, bias_shape, data_type, true, num_directions);
@@ -220,6 +226,7 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
 }  // namespace
 
 bool LstmAdjustPass::Run(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "func_graph is nullptr.");
   auto node_list = TopoSort(func_graph->get_return());
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
