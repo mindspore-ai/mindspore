@@ -24,6 +24,7 @@
 #include <vector>
 #include <unordered_map>
 #include <utility>
+#include <fstream>
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "ops/primitive_c.h"
@@ -280,18 +281,72 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   MS_EXCEPTION_IF_NULL(tensor_abstract);
   node->set_abstract(tensor_abstract);
 
-  std::string initial_data = parameter_proto.raw_data();
-  auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  MS_EXCEPTION_IF_NULL(tensor_data_buf);
-  auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
-    return false;
+  if (parameter_proto.has_raw_data()) {
+    std::string initial_data = parameter_proto.raw_data();
+    auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data_buf);
+    auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
+    if (ret != 0) {
+      MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
+      return false;
+    }
+  } else {
+    auto ret = GetTensorDataFromExternal(parameter_proto, tensor_info);
+    if (!ret) {
+      return false;
+    }
   }
 
   node->set_default_param(tensor_info);
 
   anfnode_build_map_[parameter_proto.name()] = node;
+  return true;
+}
+bool MSANFModelParser::GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto,
+                                                 const tensor::TensorPtr &tensor_info) {
+  if (!tensor_proto.has_external_data()) {
+    return false;
+  }
+  const unsigned char *data = nullptr;
+  auto it = tenor_data_.find(tensor_proto.external_data().location());
+  if (it != tenor_data_.end()) {
+    data = it->second.get();
+  } else {
+    std::string file = mindir_path_ + "/" + tensor_proto.external_data().location();
+    if (mindir_dec_key_ != nullptr) {
+      size_t plain_len;
+      auto plain_data = Decrypt(&plain_len, file, mindir_dec_key_, mindir_key_size_, mindir_dec_mode_);
+      if (plain_data == nullptr) {
+        MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
+        return false;
+      }
+      tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
+      data = plain_data.get();
+    } else {
+      // Read file
+      std::basic_ifstream<Byte> fid(file, std::ios::in | std::ios::binary);
+      if (!fid) {
+        MS_LOG(EXCEPTION) << "Open file '" << file << "' failed, please check the correct of the file.";
+      }
+      fid.seekg(0, std::ios_base::end);
+      size_t file_size = static_cast<size_t>(fid.tellg());
+      fid.clear();
+      fid.seekg(0);
+      auto plain_data = std::make_unique<Byte[]>(file_size);
+      fid.read(plain_data.get(), file_size);
+      fid.close();
+      tenor_data_.emplace(tensor_proto.external_data().location(), std::move(plain_data));
+      data = plain_data.get();
+    }
+  }
+  auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
+  MS_EXCEPTION_IF_NULL(tensor_data_buf);
+  auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), data + tensor_proto.external_data().offset(),
+                      tensor_proto.external_data().length());
+  if (ret != 0) {
+    MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
+    return false;
+  }
   return true;
 }
 
