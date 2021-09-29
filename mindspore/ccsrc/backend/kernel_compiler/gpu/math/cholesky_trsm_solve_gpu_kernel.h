@@ -32,7 +32,19 @@ namespace kernel {
 template <typename T>
 class CholeskyTrsmGpuKernel : public GpuKernel {
  public:
-  CholeskyTrsmGpuKernel() : batch_(0), m_(0), lda_(0), is_null_input_(false), handle_(nullptr) {}
+  CholeskyTrsmGpuKernel()
+      : batch_(0),
+        m_(0),
+        lda_(0),
+        ldb_(0),
+        res_dim_(0),
+        split_dim_(0),
+        is_null_input_(false),
+        use_split_matrix_(false),
+        height_(0),
+        width_(0),
+        handle_(nullptr),
+        blas_handle_(nullptr) {}
   ~CholeskyTrsmGpuKernel() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

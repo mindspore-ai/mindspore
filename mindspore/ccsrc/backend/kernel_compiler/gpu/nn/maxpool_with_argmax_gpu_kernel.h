@@ -45,6 +45,7 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
         stride_width_(0),
         output_height_(0),
         output_width_(0),
+        is_null_input_(false),
         input_size_(0),
         output_size_(0) {}
   ~MaxPoolWithArgmaxGpuFwdKernel() override = default;

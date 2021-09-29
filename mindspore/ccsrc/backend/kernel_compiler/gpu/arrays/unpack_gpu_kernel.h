@@ -28,7 +28,8 @@ namespace kernel {
 template <typename T>
 class UnpackGpuFwdKernel : public GpuKernel {
  public:
-  UnpackGpuFwdKernel() : axis_(0), output_num_(0), input_size_(1), dims_after_axis_(1), outputs_host_(nullptr) {}
+  UnpackGpuFwdKernel()
+      : axis_(0), is_null_input_(false), output_num_(0), input_size_(1), dims_after_axis_(1), outputs_host_(nullptr) {}
   ~UnpackGpuFwdKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

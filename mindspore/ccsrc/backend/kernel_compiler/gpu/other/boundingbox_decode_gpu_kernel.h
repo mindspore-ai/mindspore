@@ -28,8 +28,8 @@ namespace kernel {
 template <typename T>
 class BoundingBoxDecodeGpuKernel : public GpuKernel {
  public:
-  BoundingBoxDecodeGpuKernel() : rois_size_(0), deltas_size_(0), bboxes_size_(0), wh_ratio_clip_(0.016) {}
-
+  BoundingBoxDecodeGpuKernel()
+      : rois_size_(0), deltas_size_(0), bboxes_size_(0), wh_ratio_clip_(0.016), is_null_input_(false) {}
   ~BoundingBoxDecodeGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

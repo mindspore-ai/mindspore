@@ -28,7 +28,7 @@ namespace kernel {
 template <typename T>
 class GeluGpuKernel : public GpuKernel {
  public:
-  GeluGpuKernel() : input_size_(0) {}
+  GeluGpuKernel() : input_size_(0), is_null_input_(false) {}
   ~GeluGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

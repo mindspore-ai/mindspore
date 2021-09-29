@@ -34,7 +34,11 @@ template <typename T>
 class BatchNormGradGpuKernel : public GpuKernel {
  public:
   BatchNormGradGpuKernel()
-      : x_size_(0),
+      : batch_(0),
+        channel_(0),
+        height_(0),
+        width_(0),
+        x_size_(0),
         para_size_(0),
         workspace_size_(0),
         reserve_size_(0),

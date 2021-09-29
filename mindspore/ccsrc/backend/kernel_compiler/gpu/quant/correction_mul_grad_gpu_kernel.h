@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class CorrectionMulGradGpuKernel : public GpuKernel {
  public:
-  CorrectionMulGradGpuKernel() : batch_size_(0), channel_(0), height_(0), width_(0) {}
+  CorrectionMulGradGpuKernel() : is_null_input_(false), batch_size_(0), channel_(0), height_(0), width_(0) {}
   ~CorrectionMulGradGpuKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

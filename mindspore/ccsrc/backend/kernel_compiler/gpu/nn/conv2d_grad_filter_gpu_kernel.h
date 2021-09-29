@@ -39,6 +39,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
         dy_desc_(nullptr),
         x_desc_(nullptr),
         padded_descriptor_(nullptr),
+        algo_(CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
         compute_format_(CUDNN_TENSOR_NCHW),
         old_height_(0),

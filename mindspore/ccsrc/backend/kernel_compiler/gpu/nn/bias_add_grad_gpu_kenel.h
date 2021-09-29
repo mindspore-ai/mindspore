@@ -39,6 +39,7 @@ class BiasAddGradGpuKernel : public GpuKernel {
         bias_size_(0),
         cudnn_handle_(nullptr),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
+        cudnn_compute_format_(CUDNN_TENSOR_NCHW),
         dy_desc_(nullptr),
         db_desc_(nullptr),
         op_desc_(nullptr) {}

@@ -37,6 +37,7 @@ class MaxPoolWithArgmaxGradGpuKernel : public GpuKernel {
         x_width_(0),
         dy_height_(0),
         dy_width_(0),
+        is_null_input_(false),
         x_size_(0),
         dy_size_(0),
         index_size_(0),

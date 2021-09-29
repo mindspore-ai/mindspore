@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class LayerNormGpuKernel : public GpuKernel {
  public:
-  LayerNormGpuKernel() : input_row_(1), input_col_(1), param_dim_(1) {}
+  LayerNormGpuKernel() : input_row_(1), input_col_(1), param_dim_(1), is_null_input_(false) {}
   ~LayerNormGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

@@ -30,7 +30,13 @@ template <typename T>
 class MirrorPadGpuBackKernel : public GpuKernel {
  public:
   MirrorPadGpuBackKernel()
-      : num_input_(0), num_paddings_(0), mode_(0), input_size_(1), output_size_(1), workspace_size_(0) {}
+      : num_input_(0),
+        num_paddings_(0),
+        mode_(0),
+        is_null_input_(false),
+        input_size_(1),
+        output_size_(1),
+        workspace_size_(0) {}
   ~MirrorPadGpuBackKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

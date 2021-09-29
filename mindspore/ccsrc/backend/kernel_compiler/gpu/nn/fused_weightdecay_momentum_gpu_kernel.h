@@ -27,7 +27,7 @@ constexpr size_t INPUT_NUM = 6;
 template <typename T, typename S>
 class FusedWeightDecayMomentumGpuKernel : public GpuKernel {
  public:
-  FusedWeightDecayMomentumGpuKernel() : element_num_(1) {}
+  FusedWeightDecayMomentumGpuKernel() : element_num_(1), is_null_input_(false) {}
   ~FusedWeightDecayMomentumGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

@@ -27,7 +27,8 @@ namespace kernel {
 template <typename T, typename S>
 class SigmoidCrossEntropyWithLogitsGradGpuKernel : public GpuKernel {
  public:
-  SigmoidCrossEntropyWithLogitsGradGpuKernel() : logits_size_(0), labels_size_(0), outputs_size_(0) {}
+  SigmoidCrossEntropyWithLogitsGradGpuKernel()
+      : logits_size_(0), labels_size_(0), outputs_size_(0), is_null_input_(false) {}
   ~SigmoidCrossEntropyWithLogitsGradGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

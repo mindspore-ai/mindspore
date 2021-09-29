@@ -26,7 +26,7 @@ namespace kernel {
 template <typename T>
 class SmoothL1LossGpuKernel : public GpuKernel {
  public:
-  SmoothL1LossGpuKernel() : input_size_(1), beta_(1.0) {}
+  SmoothL1LossGpuKernel() : input_size_(1), beta_(1.0), is_null_input_(false) {}
   ~SmoothL1LossGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

@@ -28,6 +28,7 @@ constexpr size_t MAX_DIMS = 8;
 class StridedSliceGpuCommon {
  public:
   StridedSliceGpuCommon() : null_output_(false) {}
+  ~StridedSliceGpuCommon() = default;
 
   void CollectInfo(const CNodePtr &kernel_node) {
     FillEmptyDims(kernel_node);

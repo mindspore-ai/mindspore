@@ -26,7 +26,14 @@ namespace kernel {
 template <typename T, typename S>
 class ArgmaxGpuKernel : public GpuKernel {
  public:
-  ArgmaxGpuKernel() : input_size_(0), output_size_(0), workspace_size_(0), bound_(0), outer_size_(0), inner_size_(0) {}
+  ArgmaxGpuKernel()
+      : input_size_(0),
+        output_size_(0),
+        workspace_size_(0),
+        bound_(0),
+        outer_size_(0),
+        inner_size_(0),
+        is_null_input_(false) {}
   ~ArgmaxGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

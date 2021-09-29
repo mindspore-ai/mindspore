@@ -34,7 +34,7 @@ static const std::map<std::string, Optype> kOpTypeMap = {
 template <typename T>
 class FloatStatusGpuKernel : public GpuKernel {
  public:
-  FloatStatusGpuKernel() : kernel_name_(OP_INVALID), input_size_(0), output_size_(0) {}
+  FloatStatusGpuKernel() : kernel_name_(OP_INVALID), input_size_(0), output_size_(0), is_null_input_(false) {}
   ~FloatStatusGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

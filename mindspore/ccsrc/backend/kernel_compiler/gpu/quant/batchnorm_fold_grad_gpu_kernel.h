@@ -35,6 +35,7 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
         momentum_(0.1),
         epsilon_(1e-12),
         is_training_(true),
+        is_null_input_(false),
         freeze_bn_(0),
         current_step_(0),
         batch_(0),

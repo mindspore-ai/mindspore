@@ -35,7 +35,8 @@ class FtrlGpuKernel : public GpuKernel {
         learning_rate_size_(0),
         l1_regularization_size_(0),
         l2_regularization_size_(0),
-        learning_rate_power_size_(0) {}
+        learning_rate_power_size_(0),
+        is_null_input_(false) {}
 
   ~FtrlGpuKernel() override = default;
 
