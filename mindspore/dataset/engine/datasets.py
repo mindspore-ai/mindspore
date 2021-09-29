@@ -2590,6 +2590,9 @@ class _PythonCallable:
         # Invoke original Python callable in master process in case the pool is gone.
         return self.py_callable(*args)
 
+    def to_json(self):
+        return self.py_callable.to_json()
+
     def _pool_is_running(self):
         # note here: the RUN state of python3.7 and python3.8 is different:
         # python3.7: RUN = 0
