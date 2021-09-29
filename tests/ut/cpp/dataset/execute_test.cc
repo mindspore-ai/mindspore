@@ -897,12 +897,8 @@ TEST_F(MindDataTestExecute, TestRiaaBiquadWithEager) {
 
 TEST_F(MindDataTestExecute, TestRiaaBiquadWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRiaaBiquadWithWrongArg.";
-  std::vector<float> labels = {
-    3.156, 5.690, 1.362, 1.093,
-    5.782, 6.381, 5.982, 3.098,
-    1.222, 6.027, 3.909, 7.993,
-    4.324, 1.092, 5.093, 0.991,
-    1.099, 4.092, 8.111, 6.666};
+  std::vector<float> labels = {3.156, 5.690, 1.362, 1.093, 5.782, 6.381, 5.982, 3.098, 1.222, 6.027,
+                               3.909, 7.993, 4.324, 1.092, 5.093, 0.991, 1.099, 4.092, 8.111, 6.666};
   std::shared_ptr<Tensor> input;
   ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({4, 5}), &input));
   auto input01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
@@ -917,12 +913,8 @@ TEST_F(MindDataTestExecute, TestRiaaBiquadWithWrongArg) {
 TEST_F(MindDataTestExecute, TestTrebleBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTrebleBiquadWithEager.";
   // Original waveform
-  std::vector<float> labels = {
-    3.156, 5.690, 1.362, 1.093,
-    5.782, 6.381, 5.982, 3.098,
-    1.222, 6.027, 3.909, 7.993,
-    4.324, 1.092, 5.093, 0.991,
-    1.099, 4.092, 8.111, 6.666};
+  std::vector<float> labels = {3.156, 5.690, 1.362, 1.093, 5.782, 6.381, 5.982, 3.098, 1.222, 6.027,
+                               3.909, 7.993, 4.324, 1.092, 5.093, 0.991, 1.099, 4.092, 8.111, 6.666};
   std::shared_ptr<Tensor> input;
   ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
   auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
@@ -949,9 +941,10 @@ TEST_F(MindDataTestExecute, TestTrebleBiquadWithWrongArg) {
   std::shared_ptr<TensorTransform> treble_biquad_op01 = std::make_shared<audio::TrebleBiquad>(0.0, 200.0);
   mindspore::dataset::Execute Transform01({treble_biquad_op01});
   EXPECT_ERROR(Transform01(input01, &input01));
-  //Check Q
+  // Check Q
   MS_LOG(INFO) << "Q is zero.";
-  std::shared_ptr<TensorTransform> treble_biquad_op02 = std::make_shared<audio::TrebleBiquad>(44100, 200.0, 3000.0, 0.0);
+  std::shared_ptr<TensorTransform> treble_biquad_op02 =
+    std::make_shared<audio::TrebleBiquad>(44100, 200.0, 3000.0, 0.0);
   mindspore::dataset::Execute Transform02({treble_biquad_op02});
   EXPECT_ERROR(Transform02(input02, &input02));
 }
@@ -1169,8 +1162,7 @@ TEST_F(MindDataTestExecute, TestMagphaseEager) {
   float power = 1.0;
   std::vector<mindspore::MSTensor> output_tensor;
   std::shared_ptr<Tensor> test;
-  std::vector<float> test_vector = {3, 4, -3, 4, 3, -4, -3, -4,
-                                    5, 12, -5, 12, 5, -12, -5, -12};
+  std::vector<float> test_vector = {3, 4, -3, 4, 3, -4, -3, -4, 5, 12, -5, 12, 5, -12, -5, -12};
   Tensor::CreateFromVector(test_vector, TensorShape({2, 4, 2}), &test);
   auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
   std::shared_ptr<TensorTransform> magphase(new audio::Magphase({power}));
@@ -1233,4 +1225,69 @@ TEST_F(MindDataTestExecute, TestRandomAdjustSharpnessEager) {
   auto transform = Execute({decode, random_adjust_sharpness_op});
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
+}
+
+TEST_F(MindDataTestExecute, TestDetectPitchFrequencyWithEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDetectPitchFrequencyWithEager.";
+  // Original waveform
+  std::vector<double> labels = {
+    3.716064453125000000e-03, 2.347656250000000000e-03, 9.246826171875000000e-03, 4.089477539062500000e-02,
+    3.138305664062500000e-02, 1.156616210937500000e-02, 0.394653320312500000e-02, 1.550292968750000000e-02,
+    1.614379882812500000e-02, 0.840209960937500000e-02, 1.718139648437500000e-02, 2.599121093750000000e-02,
+    5.647949218750000000e-02, 1.510620117187500000e-02, 2.385498046875000000e-02, 1.345825195312500000e-02,
+    1.419067382812500000e-02, 3.284790039062500000e-02, 9.052856445312500000e-02, 2.368896484375000000e-03};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> detect_pitch_frequency_01 =
+    std::make_shared<audio::DetectPitchFrequency>(30, 0.1, 3, 5, 25);
+  mindspore::dataset::Execute Transform01({detect_pitch_frequency_01});
+  // Detect pitch frequence
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_TRUE(s01.IsOk());
+}
+
+TEST_F(MindDataTestExecute, TestDetectPitchFrequencyWithWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDetectPitchFrequencyWithWrongArg.";
+  std::vector<float> labels = {
+    0.716064e-03, 5.347656e-03, 6.246826e-03, 2.089477e-02, 7.138305e-02,
+    4.156616e-02, 1.394653e-02, 3.550292e-02, 0.614379e-02, 3.840209e-02,
+  };
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 5}), &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  // Check frame_time
+  MS_LOG(INFO) << "frame_time is zero.";
+  std::shared_ptr<TensorTransform> detect_pitch_frequency_01 =
+    std::make_shared<audio::DetectPitchFrequency>(40, 0, 3, 3, 20);
+  mindspore::dataset::Execute Transform01({detect_pitch_frequency_01});
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_FALSE(s01.IsOk());
+  // Check win_length
+  MS_LOG(INFO) << "win_length is zero.";
+  std::shared_ptr<TensorTransform> detect_pitch_frequency_02 =
+    std::make_shared<audio::DetectPitchFrequency>(40, 0.1, 0, 3, 20);
+  mindspore::dataset::Execute Transform02({detect_pitch_frequency_02});
+  Status s02 = Transform02(input_02, &input_02);
+  EXPECT_FALSE(s02.IsOk());
+  // Check freq_low
+  MS_LOG(INFO) << "freq_low is zero.";
+  std::shared_ptr<TensorTransform> detect_pitch_frequency_03 =
+    std::make_shared<audio::DetectPitchFrequency>(40, 0.1, 3, 0, 20);
+  mindspore::dataset::Execute Transform03({detect_pitch_frequency_03});
+  Status s03 = Transform03(input_02, &input_02);
+  EXPECT_FALSE(s03.IsOk());
+  // Check freq_high
+  MS_LOG(INFO) << "freq_high is zero.";
+  std::shared_ptr<TensorTransform> detect_pitch_frequency_04 =
+    std::make_shared<audio::DetectPitchFrequency>(40, 0.1, 3, 3, 0);
+  mindspore::dataset::Execute Transform04({detect_pitch_frequency_04});
+  Status s04 = Transform04(input_02, &input_02);
+  EXPECT_FALSE(s04.IsOk());
+  // Check sample_rate
+  MS_LOG(INFO) << "sample_rate is zero.";
+  std::shared_ptr<TensorTransform> detect_pitch_frequency_05 = std::make_shared<audio::DetectPitchFrequency>(0);
+  mindspore::dataset::Execute Transform05({detect_pitch_frequency_05});
+  Status s05 = Transform05(input_02, &input_02);
+  EXPECT_FALSE(s05.IsOk());
 }

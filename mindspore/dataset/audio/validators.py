@@ -453,3 +453,25 @@ def check_vol(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_detect_pitch_frequency(method):
+    """Wrapper method to check the parameters of DetectPitchFrequency."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, frame_time, win_length, freq_low, freq_high], _ = parse_user_args(
+            method, *args, **kwargs)
+        type_check(sample_rate, (int,), "sample_rate")
+        check_int32_not_zero(sample_rate, "sample_rate")
+        type_check(frame_time, (float, int), "frame_time")
+        check_pos_float32(frame_time, "frame_time")
+        type_check(win_length, (int,), "win_length")
+        check_pos_int32(win_length, "win_length")
+        type_check(freq_low, (int, float), "freq_low")
+        check_pos_float32(freq_low, "freq_low")
+        type_check(freq_high, (int, float), "freq_high")
+        check_pos_float32(freq_high, "freq_high")
+        return method(self, *args, **kwargs)
+
+    return new_method

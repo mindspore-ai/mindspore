@@ -300,6 +300,33 @@ class DeemphBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Detect pitch frequency.
+class DetectPitchFrequency final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+  /// \param[in] frame_time Duration of a frame, the value must be greater than zero (default=0.02).
+  /// \param[in] win_length The window length for median smoothing (in number of frames), the value must
+  ///     be greater than zero (default=30).
+  /// \param[in] freq_low Lowest frequency that can be detected (Hz), the value must be greater than zero (default=85).
+  /// \param[in] freq_high Highest frequency that can be detected (Hz), the value must be greater than
+  ///     zero (default=3400).
+  explicit DetectPitchFrequency(int32_t sample_rate, float frame_time = 0.01, int32_t win_length = 30,
+                                int32_t freq_low = 85, int32_t freq_high = 3400);
+
+  /// \brief Destructor.
+  ~DetectPitchFrequency() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief EqualizerBiquad TensorTransform. Apply highpass biquad filter on audio.
 class EqualizerBiquad final : public TensorTransform {
  public:

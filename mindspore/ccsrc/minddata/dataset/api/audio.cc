@@ -28,6 +28,7 @@
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/detect_pitch_frequency_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
@@ -216,6 +217,30 @@ DeemphBiquad::DeemphBiquad(int32_t sample_rate) : data_(std::make_shared<Data>(s
 
 std::shared_ptr<TensorOperation> DeemphBiquad::Parse() {
   return std::make_shared<DeemphBiquadOperation>(data_->sample_rate_);
+}
+
+// DetectPitchFrequency Transform Operation.
+struct DetectPitchFrequency::Data {
+  Data(int32_t sample_rate, float frame_time, int32_t win_length, int32_t freq_low, int32_t freq_high)
+      : sample_rate_(sample_rate),
+        frame_time_(frame_time),
+        win_length_(win_length),
+        freq_low_(freq_low),
+        freq_high_(freq_high) {}
+  int32_t sample_rate_;
+  float frame_time_;
+  int32_t win_length_;
+  int32_t freq_low_;
+  int32_t freq_high_;
+};
+
+DetectPitchFrequency::DetectPitchFrequency(int32_t sample_rate, float frame_time, int32_t win_length, int32_t freq_low,
+                                           int32_t freq_high)
+    : data_(std::make_shared<Data>(sample_rate, frame_time, win_length, freq_low, freq_high)) {}
+
+std::shared_ptr<TensorOperation> DetectPitchFrequency::Parse() {
+  return std::make_shared<DetectPitchFrequencyOperation>(data_->sample_rate_, data_->frame_time_, data_->win_length_,
+                                                         data_->freq_low_, data_->freq_high_);
 }
 
 // EqualizerBiquad Transform Operation.

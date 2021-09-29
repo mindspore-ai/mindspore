@@ -155,6 +155,7 @@ constexpr char kComplexNormOp[] = "ComplexNormOp";
 constexpr char kContrastOp[] = "ContrastOp";
 constexpr char kDCShiftOp[] = "DCShiftOp";
 constexpr char kDeemphBiquadOp[] = "DeemphBiquadOp";
+constexpr char kDetectPitchFrequencyOp[] = "DetectPitchFrequencyOp";
 constexpr char kEqualizerBiquadOp[] = "EqualizerBiquadOp";
 constexpr char kFadeOp[] = "FadeOp";
 constexpr char kFrequencyMaskingOp[] = "FrequencyMaskingOp";

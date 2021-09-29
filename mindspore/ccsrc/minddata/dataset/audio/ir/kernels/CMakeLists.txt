@@ -14,6 +14,7 @@ add_library(audio-ir-kernels OBJECT
         contrast_ir.cc
         dc_shift_ir.cc
         deemph_biquad_ir.cc
+        detect_pitch_frequency_ir.cc
         equalizer_biquad_ir.cc
         fade_ir.cc
         frequency_masking_ir.cc

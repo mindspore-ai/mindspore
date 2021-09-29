@@ -32,6 +32,7 @@
 #include "minddata/dataset/audio/ir/kernels/contrast_ir.h"
 #include "minddata/dataset/audio/ir/kernels/dc_shift_ir.h"
 #include "minddata/dataset/audio/ir/kernels/deemph_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/detect_pitch_frequency_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
@@ -185,6 +186,19 @@ PYBIND_REGISTER(
         return deemph_biquad;
       }));
   }));
+
+PYBIND_REGISTER(DetectPitchFrequencyOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::DetectPitchFrequencyOperation, TensorOperation,
+                                   std::shared_ptr<audio::DetectPitchFrequencyOperation>>(
+                    *m, "DetectPitchFrequencyOperation")
+                    .def(py::init([](int32_t sample_rate, float frame_time, int32_t win_length, int32_t freq_low,
+                                     int32_t freq_high) {
+                      auto detect_pitch_frequency = std::make_shared<audio::DetectPitchFrequencyOperation>(
+                        sample_rate, frame_time, win_length, freq_low, freq_high);
+                      THROW_IF_ERROR(detect_pitch_frequency->ValidateParams());
+                      return detect_pitch_frequency;
+                    }));
+                }));
 
 PYBIND_REGISTER(EqualizerBiquadOperation, 1, ([](const py::module *m) {
                   (void)py::class_<audio::EqualizerBiquadOperation, TensorOperation,

@@ -1375,7 +1375,7 @@ TEST_F(MindDataTestPipeline, TestMagphaseWrongArgs) {
   std::shared_ptr<TensorTransform> magphase(new audio::Magphase(power_wrong));
   std::unordered_map<std::string, mindspore::MSTensor> row;
 
-  //Magphase: power must be greater than or equal to 0.
+  // Magphase: power must be greater than or equal to 0.
   std::shared_ptr<SchemaObj> schema = Schema();
   ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
   std::shared_ptr<Dataset> ds = RandomData(8, schema);
@@ -1384,4 +1384,101 @@ TEST_F(MindDataTestPipeline, TestMagphaseWrongArgs) {
   EXPECT_NE(ds, nullptr);
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestDetectPitchFrequencyBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDetectPitchFrequencyBasic.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 10000}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto DetectPitchFrequencyOp = audio::DetectPitchFrequency(44100);
+
+  ds = ds->Map({DetectPitchFrequencyOp});
+  EXPECT_NE(ds, nullptr);
+
+  // Detect pitch frequency
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 8};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestDetectPitchFrequencyParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDetectPitchFrequencyParamCheck.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  std::shared_ptr<Dataset> ds01;
+  std::shared_ptr<Dataset> ds02;
+  std::shared_ptr<Dataset> ds03;
+  std::shared_ptr<Dataset> ds04;
+  std::shared_ptr<Dataset> ds05;
+  EXPECT_NE(ds, nullptr);
+
+  // Check sample_rate
+  MS_LOG(INFO) << "sample_rate is zero.";
+  auto detect_pitch_frequency_op_01 = audio::DetectPitchFrequency(0);
+  ds01 = ds->Map({detect_pitch_frequency_op_01});
+  EXPECT_NE(ds01, nullptr);
+
+  std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
+  EXPECT_EQ(iter01, nullptr);
+
+  // Check frame_time
+  MS_LOG(INFO) << "frame_time is zero.";
+  auto detect_pitch_frequency_op_02 = audio::DetectPitchFrequency(30, 0);
+  ds02 = ds->Map({detect_pitch_frequency_op_02});
+  EXPECT_NE(ds02, nullptr);
+
+  std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
+  EXPECT_EQ(iter02, nullptr);
+
+  // Check win_length
+  MS_LOG(INFO) << "win_length is zero.";
+  auto detect_pitch_frequency_op_03 = audio::DetectPitchFrequency(30, 0.1, 0);
+  ds03 = ds->Map({detect_pitch_frequency_op_03});
+  EXPECT_NE(ds03, nullptr);
+
+  std::shared_ptr<Iterator> iter03 = ds03->CreateIterator();
+  EXPECT_EQ(iter03, nullptr);
+
+  // Check freq_low
+  MS_LOG(INFO) << "freq_low is zero.";
+  auto detect_pitch_frequency_op_04 = audio::DetectPitchFrequency(30, 0.1, 3, 0);
+  ds04 = ds->Map({detect_pitch_frequency_op_04});
+  EXPECT_NE(ds04, nullptr);
+
+  std::shared_ptr<Iterator> iter04 = ds04->CreateIterator();
+  EXPECT_EQ(iter04, nullptr);
+
+  // Check freq_high
+  MS_LOG(INFO) << "freq_high is zero.";
+  auto detect_pitch_frequency_op_05 = audio::DetectPitchFrequency(30, 0.1, 3, 5, 0);
+  ds05 = ds->Map({detect_pitch_frequency_op_05});
+  EXPECT_NE(ds05, nullptr);
+
+  std::shared_ptr<Iterator> iter05 = ds05->CreateIterator();
+  EXPECT_EQ(iter05, nullptr);
 }

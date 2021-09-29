@@ -372,6 +372,191 @@ Status Vol(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 /// \param power: Power of the norm.
 Status Magphase(const TensorRow &input, TensorRow *output, float power);
 
+/// \brief Compute Normalized Cross-Correlation Function (NCCF).
+/// \param input: Tensor of shape <channel,waveform_length>.
+/// \param output: Tensor of shape <channel, num_of_frames, lags>.
+/// \param sample_rate: The sample rate of the waveform (Hz).
+/// \param frame_time: Duration of a frame.
+/// \param freq_low: Lowest frequency that can be detected (Hz).
+/// \return Status code.
+template <typename T>
+Status ComputeNccf(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+                   float frame_time, int32_t freq_low) {
+  auto channel = input->shape()[0];
+  auto waveform_length = input->shape()[1];
+  size_t idx = 0;
+  size_t channel_idx = 1;
+  int32_t lags = static_cast<int32_t>(ceil(static_cast<float>(sample_rate) / freq_low));
+  int32_t frame_size = static_cast<int32_t>(ceil(sample_rate * frame_time));
+  int32_t num_of_frames = static_cast<int32_t>(ceil(static_cast<float>(waveform_length) / frame_size));
+  int32_t p = lags + num_of_frames * frame_size - waveform_length;
+  TensorShape output_shape({channel, num_of_frames, lags});
+  DataType intput_type = input->type();
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(output_shape, intput_type, output));
+  // pad p 0 in -1 dimension
+  std::vector<T> signal;
+  // Tensor -> vector
+  for (auto itr = input->begin<T>(); itr != input->end<T>();) {
+    while (idx < waveform_length * channel_idx) {
+      signal.push_back(*itr);
+      ++itr;
+      ++idx;
+    }
+    // Each channel is processed with the sliding window
+    // waveform：[channel, time] -->  waveform：[channel, time+p]
+    for (size_t i = 0; i < p; ++i) {
+      signal.push_back(static_cast<T>(0.0));
+    }
+    if (idx % waveform_length == 0) {
+      ++channel_idx;
+    }
+  }
+  // compute ncc
+  for (dsize_t lag = 1; lag <= lags; ++lag) {
+    // compute one ncc
+    // one ncc out
+    std::vector<T> out;
+    channel_idx = 1;
+    idx = 0;
+    size_t win_idx = 0;
+    size_t waveform_length_p = waveform_length + p;
+    // Traversal signal
+    for (auto itr = signal.begin(); itr != signal.end();) {
+      // Each channel is processed with the sliding window
+      size_t s1 = idx;
+      size_t s2 = idx + lag;
+      size_t frame_count = 0;
+      T s1_norm = static_cast<T>(0);
+      T s2_norm = static_cast<T>(0);
+      T ncc_umerator = static_cast<T>(0);
+      T ncc = static_cast<T>(0);
+      while (idx < waveform_length_p * channel_idx) {
+        // Sliding window
+        if (frame_count == num_of_frames) {
+          ++itr;
+          ++idx;
+          continue;
+        }
+        if (win_idx < frame_size) {
+          ncc_umerator += signal[s1] * signal[s2];
+          s1_norm += signal[s1] * signal[s1];
+          s2_norm += signal[s2] * signal[s2];
+          ++win_idx;
+          ++s1;
+          ++s2;
+        }
+        if (win_idx == frame_size) {
+          if (s1_norm != static_cast<T>(0.0) && s2_norm != static_cast<T>(0.0)) {
+            ncc = ncc_umerator / s1_norm / s2_norm;
+          } else {
+            ncc = static_cast<T>(0.0);
+          }
+          out.push_back(ncc);
+          ncc_umerator = static_cast<T>(0.0);
+          s1_norm = static_cast<T>(0.0);
+          s2_norm = static_cast<T>(0.0);
+          ++frame_count;
+          win_idx = 0;
+        }
+        ++itr;
+        ++idx;
+      }
+      if (idx % waveform_length_p == 0) {
+        ++channel_idx;
+      }
+    }  // compute one ncc
+    // cat tensor
+    auto itr_out = out.begin();
+    for (dsize_t row_idx = 0; row_idx < channel; ++row_idx) {
+      for (dsize_t frame_idx = 0; frame_idx < num_of_frames; ++frame_idx) {
+        RETURN_IF_NOT_OK((*output)->SetItemAt({row_idx, frame_idx, lag - 1}, *itr_out));
+        ++itr_out;
+      }
+    }
+  }  // compute ncc
+  return Status::OK();
+}
+
+/// \brief For each frame, take the highest value of NCCF.
+/// \param input: Tensor of shape <channel, num_of_frames, lags>.
+/// \param output: Tensor of shape <channel, num_of_frames>.
+/// \param sample_rate: The sample rate of the waveform (Hz).
+/// \param freq_high: Highest frequency that can be detected (Hz).
+/// \return Status code.
+template <typename T>
+Status FindMaxPerFrame(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+                       int32_t freq_high) {
+  std::vector<T> signal;
+  std::vector<int> out;
+  auto channel = input->shape()[0];
+  auto num_of_frames = input->shape()[1];
+  auto lags = input->shape()[2];
+  int32_t lag_min = static_cast<int32_t>(ceil(static_cast<float>(sample_rate) / freq_high));
+  TensorShape out_shape({channel, num_of_frames});
+  // pack batch
+  for (auto itr = input->begin<T>(); itr != input->end<T>(); ++itr) {
+    signal.push_back(*itr);
+  }
+  // find the best nccf
+  T best_max_value = static_cast<T>(0.0);
+  T half_max_value = static_cast<T>(0.0);
+  int32_t best_max_indices = 0;
+  int32_t half_max_indices = 0;
+  auto thresh = static_cast<T>(0.99);
+  auto lags_half = lags / 2;
+  for (dsize_t channel_idx = 0; channel_idx < channel; ++channel_idx) {
+    for (dsize_t frame_idx = 0; frame_idx < num_of_frames; ++frame_idx) {
+      auto index_01 = channel_idx * num_of_frames * lags + frame_idx * lags + lag_min;
+      best_max_value = signal[index_01];
+      half_max_value = signal[index_01];
+      best_max_indices = lag_min;
+      half_max_indices = lag_min;
+      for (dsize_t lag_idx = 0; lag_idx < lags; ++lag_idx) {
+        if (lag_idx > lag_min) {
+          auto index_02 = channel_idx * num_of_frames * lags + frame_idx * lags + lag_idx;
+          if (signal[index_02] > best_max_value) {
+            best_max_value = signal[index_02];
+            best_max_indices = lag_idx;
+            if (lag_idx < lags_half) {
+              half_max_value = signal[index_02];
+              half_max_indices = lag_idx;
+            }
+          }
+        }
+      }
+      // Add back minimal lag
+      // Add 1 empirical calibration offset
+      if (half_max_value > best_max_value * thresh) {
+        out.push_back(half_max_indices + 1);
+      } else {
+        out.push_back(best_max_indices + 1);
+      }
+    }
+  }
+  // unpack batch
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out, out_shape, output));
+  return Status::OK();
+}
+
+/// \brief Apply median smoothing to the 1D tensor over the given window.
+/// \param input: Tensor of shape<channel, num_of_frames>.
+/// \param output: Tensor of shape <channel, num_of_window>.
+/// \param win_length: The window length for median smoothing (in number of frames).
+/// \return Status code.
+Status MedianSmoothing(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t win_length);
+
+/// \brief Detect pitch frequency.
+/// \param input: Tensor of shape <channel,waveform_length>.
+/// \param output: Tensor of shape <channel, num_of_frames, lags>.
+/// \param sample_rate: The sample rate of the waveform (Hz).
+/// \param frame_time: Duration of a frame.
+/// \param win_length: The window length for median smoothing (in number of frames).
+/// \param freq_low: Lowest frequency that can be detected (Hz).
+/// \param freq_high: Highest frequency that can be detected (Hz).
+/// \return Status code.
+Status DetectPitchFrequency(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+                            float frame_time, int32_t win_length, int32_t freq_low, int32_t freq_high);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
