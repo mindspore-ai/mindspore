@@ -86,7 +86,8 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      FusedSparseFtrl, FusedSparseProximalAdagrad, SparseApplyRMSProp,
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2, ApplyAdagradDA,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
-                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink)
+                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink,
+                     ApplyAdamWithAmsgrad)
 from . import _quant_ops
 from ._quant_ops import *
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
@@ -425,6 +426,7 @@ __all__ = [
     "ApplyAdagrad",
     "ApplyAdagradV2",
     "ApplyAdagradDA",
+    "ApplyAdamWithAmsgrad",
     "ApplyAddSign",
     "ApplyPowerSign",
     "ApplyGradientDescent",

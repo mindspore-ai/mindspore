@@ -439,6 +439,7 @@ inline const PrimitivePtr kPrimLARSUpdate = std::make_shared<Primitive>("LARSUpd
 inline const PrimitivePtr kPrimApplyAddSign = std::make_shared<Primitive>("ApplyAddSign");
 inline const PrimitivePtr kPrimApplyAdagrad = std::make_shared<Primitive>("ApplyAdagrad");
 inline const PrimitivePtr kPrimApplyAdadelta = std::make_shared<Primitive>("ApplyAdadelta");
+inline const PrimitivePtr kPrimApplyAdamWithAmsgrad = std::make_shared<Primitive>("ApplyAdamWithAmsgrad");
 
 // Comm ops
 inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");
