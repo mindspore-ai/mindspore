@@ -204,7 +204,7 @@ class SomasSolverPre {
  private:
   size_t max_offset_;
   void SolverInputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors,
-                      const std::vector<DynamicBitSet> *pConstraints_v, const vector<vector<size_t>> &continuous_v);
+                      const vector<vector<size_t>> &continuous_v);
   void SolverOutputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors) const;
   vector<TensorsDescMap> CreateTensorsMaps(const TensorsDescMap &tensors, size_t total_sol);
   void TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints, const session::KernelGraph *graph);

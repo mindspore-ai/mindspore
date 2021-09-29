@@ -57,28 +57,12 @@ def _tune_init(job: TbeJob):
         sync_op_tune_params("tbe.common.tiling.tiling_api", "reset_repository", False, "")
 
     if need_ga or need_rl or offline_tune:
-        try:
-            import auto_tune.auto_tune_main as at_atm
-            from schedule_search.rl_online_tune import rl_tune_init  # pylint: disable=unused-import
-            if need_ga:
-                res = at_atm.check_soc_version()
-                if not res:
-                    job.error("check soc version failed in tune init")
-                    job.error("GATune run Failed. Run .o Failed, because soc_version doesn't match the device")
-                    return False
-        except ImportError:
-            msg = "TBEException", \
-                  "No module named `auto_tune` or `schedule_search`. If you want tune your op's performance," \
-                  "please configure `auto_tune` or `schedule_search` related environment variables." \
-                  "Try to set the following environment variables:" \
-                  "export fwk_path=/usr/local/Ascend/fwkacllib" \
-                  "export PYTHONPATH=${fwk_path}/python/site-packages:$PYTHONPATH" \
-                  "export PYTHONPATH=${fwk_path}/python/site-packages/auto_tune.egg/auto_tune:$PYTHONPATH" \
-                  "export PYTHONPATH=${fwk_path}/python/site-packages/schedule_search.egg:$PYTHONPATH"
-            job.error(msg)
+        res = __init_tune_env(job, need_ga)
+        if not res:
             return False
     else:
         return True
+
     if tune_dump_path:
         os.environ["TUNE_DUMP_PATH"] = str(tune_dump_path)
     if tune_bank_path:
@@ -95,6 +79,35 @@ def __directory_creation(path, concat_path):
     if not os.path.isdir(path):
         os.makedirs(path, 0o750)
     return path
+
+
+def __init_tune_env(job, need_ga):
+    """
+    Initialize tune env
+    """
+    try:
+        import auto_tune.auto_tune_main as at_atm
+        from schedule_search.rl_online_tune import rl_tune_init  # pylint: disable=unused-import
+        if need_ga:
+            res = at_atm.check_soc_version()
+            if not res:
+                job.error("check soc version failed in tune init")
+                job.error("GATune run Failed. Run .o Failed, because soc_version doesn't match the device")
+                return False
+        return True
+    except ImportError:
+        msg = "TBEException", \
+              "No module named `auto_tune` or `schedule_search`. If you want tune your op's performance," \
+              "please configure `auto_tune` or `schedule_search` related environment variables." \
+              "Try to set the following environment variables:" \
+              "export fwk_path=/usr/local/Ascend/fwkacllib" \
+              "export PYTHONPATH=${fwk_path}/python/site-packages:$PYTHONPATH" \
+              "export PYTHONPATH=${fwk_path}/python/site-packages/auto_tune.egg/auto_tune:$PYTHONPATH" \
+              "export PYTHONPATH=${fwk_path}/python/site-packages/schedule_search.egg:$PYTHONPATH"
+        job.error(msg)
+        return False
+    finally:
+        pass
 
 
 def __creating_default_custom_path(auto_tiling_mode, base_custom_path):
