@@ -144,21 +144,6 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
   RETURN_IF_NOT_OK(ValidateImageRank("Resize", input_cv->Rank()));
 
-  if (mode == InterpolationMode::kCubicPil) {
-    LiteMat imIn, imOut;
-    std::shared_ptr<Tensor> output_tensor;
-    TensorShape new_shape = TensorShape({output_height, output_width, 3});
-    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
-    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-    imOut.Init(output_width, output_height, input_cv->shape()[2], reinterpret_cast<void *>(buffer), LDataType::UINT8);
-    imIn.Init(input_cv->shape()[1], input_cv->shape()[0], input_cv->shape()[2], input_cv->mat().data, LDataType::UINT8);
-    if (ResizeCubic(imIn, imOut, output_width, output_height) == false) {
-      RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
-    }
-    *output = output_tensor;
-    return Status::OK();
-  }
-
   cv::Mat in_image = input_cv->mat();
   const uint32_t kResizeShapeLimits = 1000;
   // resize image too large or too small, 1000 is arbitrarily chosen here to prevent open cv from segmentation fault
@@ -173,6 +158,21 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   if (output_height == 0 || output_width == 0) {
     std::string err_msg = "Resize: the resizing width or height is invalid, width or height is zero.";
     return Status(StatusCode::kMDShapeMisMatch, err_msg);
+  }
+
+  if (mode == InterpolationMode::kCubicPil) {
+    LiteMat imIn, imOut;
+    std::shared_ptr<Tensor> output_tensor;
+    TensorShape new_shape = TensorShape({output_height, output_width, 3});
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+    imOut.Init(output_width, output_height, input_cv->shape()[2], reinterpret_cast<void *>(buffer), LDataType::UINT8);
+    imIn.Init(input_cv->shape()[1], input_cv->shape()[0], input_cv->shape()[2], input_cv->mat().data, LDataType::UINT8);
+    if (ResizeCubic(imIn, imOut, output_width, output_height) == false) {
+      RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
+    }
+    *output = output_tensor;
+    return Status::OK();
   }
   try {
     TensorShape shape{output_height, output_width};
