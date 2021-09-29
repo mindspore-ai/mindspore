@@ -350,7 +350,7 @@ class FeedForward(Cell):
         if expert_num > 1:
             self.mapping.shard(strategy_matmul=((ep, 1, 1), (ep, 1, mp)),
                                strategy_bias=((ep, 1, mp), (mp,)),
-                               strategy_activation=((ep, mp),))
+                               strategy_activation=((ep, 1, mp),))
         else:
             self.mapping.shard(strategy_matmul=((dp, 1), (1, mp)),
                                strategy_bias=((dp, mp), (mp,)),
@@ -787,7 +787,6 @@ class MultiHeadAttention(Cell):
                   value_past=None, batch_valid_length=None):
         self._check_inputs(query_tensor, key_tensor, value_tensor, attention_mask, key_past,
                            value_past, batch_valid_length)
-        batch_size = F.shape(attention_mask)[0]
         query_tensor, key_tensor, value_tensor, batch_size, ori_shape = self._convert_to_2d_tensor(query_tensor,
                                                                                                    key_tensor,
                                                                                                    value_tensor,
