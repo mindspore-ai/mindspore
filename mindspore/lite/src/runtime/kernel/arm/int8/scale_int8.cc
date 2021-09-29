@@ -172,6 +172,9 @@ int ScaleInt8CPUKernel::InitQuantArgs() {
   auto input = in_tensors_.at(0);
   auto scale = in_tensors_.at(1);
   auto output = out_tensors_.at(0);
+  CHECK_LESS_RETURN(input->quant_params().size(), 1);
+  CHECK_LESS_RETURN(scale->quant_params().size(), 1);
+  CHECK_LESS_RETURN(output->quant_params().size(), 1);
   auto input_scale = input->quant_params().front().scale;
   auto scale_scale = scale->quant_params().front().scale;
   auto output_scale = output->quant_params().front().scale;
@@ -188,6 +191,7 @@ int ScaleInt8CPUKernel::InitQuantArgs() {
 
   if (in_tensors_.size() == kScaleBiasInputsSize) {
     auto offset = in_tensors_.at(kOffsetIndex);
+    CHECK_LESS_RETURN(offset->quant_params().size(), 1);
     auto offset_scale = offset->quant_params().front().scale;
     scale_param_->offset_zp_ = offset->quant_params().front().zeroPoint;
 

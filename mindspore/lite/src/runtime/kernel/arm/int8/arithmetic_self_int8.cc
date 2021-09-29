@@ -32,11 +32,13 @@ int ArithmeticSelfInt8CPUKernel::Init() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
   CHECK_NULL_RETURN(input_tensor);
   auto in_quant_args = input_tensor->quant_params();
+  CHECK_LESS_RETURN(in_quant_args.size(), 1);
   para_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   para_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint * (-1);
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
+  CHECK_LESS_RETURN(out_quant_args.size(), 1);
   para_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
   para_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
