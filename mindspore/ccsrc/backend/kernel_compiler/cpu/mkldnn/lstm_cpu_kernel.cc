@@ -19,6 +19,9 @@
 #include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#ifdef PLATFORM_86
+#include <pmmintrin.h>
+#endif
 
 namespace mindspore {
 namespace kernel {

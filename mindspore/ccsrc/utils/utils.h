@@ -279,6 +279,8 @@ constexpr auto kBasicLSTMCellWeightGradOpName = "BasicLSTMCellWeightGrad";
 constexpr auto kBasicLSTMCellInputGradOpName = "BasicLSTMCellInputGrad";
 constexpr auto kBasicLSTMCellOpName = "BasicLSTMCell";
 constexpr auto kDynamicRNNOpName = "DynamicRNN";
+constexpr auto kLSTMOpName = "LSTM";
+constexpr auto kLSTMGradOpName = "LSTMGrad";
 constexpr auto kLSTMInputGradOpName = "LSTMInputGrad";
 constexpr auto kDynamicGRUV2OpName = "DynamicGRUV2";
 constexpr auto kGRUV2HiddenGradOpName = "GRUV2HiddenGrad";
@@ -656,6 +658,8 @@ const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 
 const std::set<std::string> kOpCacheBlackList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
                                                  kGetNextOpName};
+
+const std::set<std::string> kOpNeedSetFlushZeroModeList = {kLSTMOpName, kLSTMGradOpName};
 
 const std::set<std::string> kOpNotSupportMultiThreadExecList = {kAvgPoolOpName, kAvgPoolGradOpName, kMaxPoolOpName,
                                                                 kBatchNorm, kBatchNormGradOpName};
