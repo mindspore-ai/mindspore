@@ -187,7 +187,9 @@ std::shared_ptr<ops::Conv2DFusion> CopyConvPrim(const std::shared_ptr<ops::Conv2
   new_prim->set_activation_type(ori_conv_prim->get_activation_type());
   new_prim->set_pad_list(ori_conv_prim->get_pad_list());
   if (ori_conv_prim->GetAttr(ops::kIsDepthWise) != nullptr) {
-    bool is_depth_wise = GetValue<bool>(ori_conv_prim->GetAttr(ops::kIsDepthWise));
+    auto is_depth_value = ori_conv_prim->GetAttr(ops::kIsDepthWise);
+    MS_CHECK_TRUE_MSG(is_depth_value != nullptr, nullptr, "conv has no kIsDepthWise attribute");
+    bool is_depth_wise = GetValue<bool>(is_depth_value);
     new_prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(is_depth_wise));
   }
   return new_prim;
