@@ -64,8 +64,8 @@ int64_t While::get_body_subgraph_index() const {
 AbstractBasePtr WhileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
-  auto While_prim = primitive->cast<PrimWhilePtr>();
-  MS_CHECK_TRUE_RET(While_prim != nullptr, nullptr);
+  auto while_prim = primitive->cast<PrimWhilePtr>();
+  MS_CHECK_TRUE_RET(while_prim != nullptr, nullptr);
   AbstractBasePtrList output;
   for (int64_t i = 0; i < (int64_t)input_args.size(); i++) {
     auto build_shape_ptr = input_args[i]->BuildShape();

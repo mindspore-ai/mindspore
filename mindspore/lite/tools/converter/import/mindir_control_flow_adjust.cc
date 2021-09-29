@@ -33,23 +33,6 @@ constexpr const int kSwitchTruePartialIndex = 2;
 constexpr const int kSwitchFalsePartialIndex = 3;
 constexpr const int kPartialFgVnodeIndex = 1;
 
-FuncGraphPtr MindIRControlFlowAdjust::GetPartialFg(const CNodePtr &partial_node) {
-  MS_CHECK_TRUE_MSG(partial_node != nullptr, nullptr, "partial_node is nullptr.");
-  auto fg_vnode = partial_node->input(kPartialFgVnodeIndex)->cast<ValueNodePtr>();
-  if (fg_vnode == nullptr) {
-    MS_LOG(ERROR) << "fg is not right.";
-    status_ = RET_ERROR;
-    return nullptr;
-  }
-  auto partial_fg = GetValueNode<FuncGraphPtr>(fg_vnode);
-  if (partial_fg == nullptr) {
-    MS_LOG(ERROR) << "partial_fg is nullptr.";
-    status_ = RET_NULL_PTR;
-    return nullptr;
-  }
-  return partial_fg;
-}
-
 bool MindIRControlFlowAdjust::HasCallAfter(const FuncGraphPtr &partial_fg) {
   MS_CHECK_TRUE_MSG(partial_fg != nullptr, false, "partial_fg is nullptr.");
   auto output_node = partial_fg->output();
