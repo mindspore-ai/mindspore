@@ -352,9 +352,10 @@ class EmbeddingLookup(Cell):
                 rank_id = get_rank()
                 full_batch = _get_full_batch()
                 if rank_size > 1 and not (full_batch and slice_mode == "table_row_slice"):
-                    raise ValueError(f"For '{self.cls_name}', the cache of parameter server parallel only be used "
-                                     f"in \"full_batch\" and \"table_row_slice\" 'slice_mode', but got "
-                                     f"full_batch: {full_batch} and 'slice_mode': \"{slice_mode}\".")
+                    raise ValueError(f"For '{self.cls_name}', the cache of parameter server parallel should only be "
+                                     f"used in \"full_batch\" and the value of \"full_batch\" should be True. "
+                                     f"Meanwhile, the value of 'slice_mode' should be \"table_row_slice\"."
+                                     f"But got full_batch: {full_batch} and 'slice_mode': \"{slice_mode}\".")
                 self.vocab_cache_size = self.vocab_cache_size * rank_size
                 _set_rank_id(rank_id)
             self.cache_enable = True
