@@ -78,7 +78,9 @@ void AiCpuDynamicKernel::Initialize() {
     ext_info_handler_ =
       std::make_shared<AicpuExtInfoHandler>(cnode->fullname_with_scope(), input_num_, output_num_, shape_type);
     MS_EXCEPTION_IF_NULL(ext_info_handler_);
-    ext_info_handler_->Parse(ext_info_data_);
+    if (!ext_info_handler_->Parse(ext_info_data_)) {
+      MS_LOG(EXCEPTION) << "Parse AiCpu ext_info_handler failed";
+    }
   }
 
   if (ext_info_data_.empty()) {
@@ -217,10 +219,9 @@ void AiCpuDynamicKernel::PostExecute() {
     return;
   }
   if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {
-    MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error. Op name: " << cnode->fullname_with_scope();
-    return;
+    MS_LOG(EXCEPTION) << "Call runtime rtStreamSynchronize failed. Op name: " << cnode->fullname_with_scope();
   }
-  if (AnfAlgo::IsDynamicShape(cnode) && unknow_type_ == DEPEND_COMPUTE) {
+  if (AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(INFO) << "Update aicpu kernel output shape from ext_info. Op name: " << cnode->fullname_with_scope();
     UpdateOutputShapeFromExtInfo();
   }

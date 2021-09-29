@@ -52,20 +52,22 @@ class AicpuExtInfoHandler {
   uint8_t *GetExtInfo() const { return ext_info_.get(); }
   size_t GetExtInfoLen() const { return ext_info_len_; }
 
-  bool Parse(const std::string &ext_info);
+  [[nodiscard]] bool Parse(const std::string &ext_info);
 
-  bool UpdateInputShapeAndType(uint32_t input_index, const NotNull<AnfNodePtr> &anf_node);
+  [[nodiscard]] bool UpdateInputShapeAndType(uint32_t input_index, const NotNull<AnfNodePtr> &anf_node);
 
-  bool UpdateOutputShapeAndType(uint32_t output_index, const NotNull<AnfNodePtr> &anf_node);
+  [[nodiscard]] bool UpdateOutputShapeAndType(uint32_t output_index, const NotNull<AnfNodePtr> &anf_node);
 
-  bool GetOutputShapeAndType(uint32_t output_index, NotNull<std::vector<int64_t> *> shape, NotNull<TypeId *> data_type);
+  [[nodiscard]] bool GetOutputShapeAndType(uint32_t output_index, NotNull<std::vector<int64_t> *> shape,
+                                           NotNull<TypeId *> data_type);
 
  private:
-  bool ParseExtShapeType(AicpuExtInfo *aicpu_ext_info);
-  bool ParseExtInputShape(AicpuExtInfo *aicpu_ext_info);
-  bool ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info);
+  [[nodiscard]] bool ParseExtShapeType(AicpuExtInfo *aicpu_ext_info);
+  [[nodiscard]] bool ParseExtInputShape(AicpuExtInfo *aicpu_ext_info);
+  [[nodiscard]] bool ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info);
 
-  static bool UpdateShapeAndType(const std::vector<int64_t> &shape, NotNull<AicpuShapeAndType *> shape_and_type);
+  [[nodiscard]] static bool UpdateShapeAndType(const std::vector<int64_t> &shape,
+                                               NotNull<AicpuShapeAndType *> shape_and_type);
 
   static void GetShapeAndType(NotNull<const AicpuShapeAndType *> shape_and_type, NotNull<std::vector<int64_t> *> shape,
                               NotNull<TypeId *> data_type);
