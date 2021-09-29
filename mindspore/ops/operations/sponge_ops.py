@@ -3123,8 +3123,8 @@ class NeighborListUpdate(PrimitiveWithInfer):
           The data type is int32 and the shape is :math:`(n,)`.
         - **need_refresh_flag** (Tensor) - Whether the neighbor list of each atom need update or not.
           The data type is int32 and the shape is :math:`(1,)`.
-        - **refresh_count** (Union[Tensor, Scalar]) - Count how many iteration steps have passed since last update.
-          The data type is int32 and the shape is :math:`(1,)`, or refresh_count is a scalar with no shape.
+        - **refresh_count** (Tensor) - Count how many iteration steps have passed since last update.
+          The data type is int32 and the shape is :math:`(1,)` or :math:`()`.
 
     Outputs:
         - **res** (Tensor) - The return value after updating successfully.
