@@ -41,13 +41,17 @@ class CropAndResizeGpuKernel : public GpuKernel {
         input_width_(0),
         final_height_(0),
         final_width_(0),
-        channel_(0) {}
+        channel_(0),
+        is_null_input_(false) {}
   ~CropAndResizeGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *input_image = GetDeviceAddress<T>(inputs, 0);
     float *input_boxes = GetDeviceAddress<float>(inputs, 1);
@@ -72,6 +76,18 @@ class CropAndResizeGpuKernel : public GpuKernel {
     }
     // input image
     auto input_image_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto input_box_index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    auto input_crop_size_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_image_shape) || CHECK_NULL_INPUT(input_boxes_shape) ||
+                     CHECK_NULL_INPUT(input_box_index_shape) || CHECK_NULL_INPUT(input_crop_size_shape) ||
+                     CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'CropAndResizeGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     size_t input_image_shape_len = input_image_shape.size();
     if (input_image_shape_len != 4) {
       MS_LOG(ERROR) << " image tensor is " << input_image_shape_len << "-D, but CropAndResize supports only " << 4
@@ -86,7 +102,6 @@ class CropAndResizeGpuKernel : public GpuKernel {
     input_height_ = input_image_shape[1];
     input_width_ = input_image_shape[2];
     // input boxes
-    auto input_boxes_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     size_t input_boxes_shape_len = input_boxes_shape.size();
     if (input_boxes_shape_len != 2) {
       MS_LOG(ERROR) << "Boxes is rank" << input_boxes_shape_len << " but CropAndResize supports only rank " << 2
@@ -99,7 +114,6 @@ class CropAndResizeGpuKernel : public GpuKernel {
     }
     input_boxes_size_ *= sizeof(float);
     // input box_index
-    auto input_box_index_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     size_t input_box_index_shape_len = input_box_index_shape.size();
     if (input_box_index_shape_len != 1) {
       MS_LOG(ERROR) << "Box_index is rank " << input_box_index_shape_len << " but CropAndResize supports only rank "
@@ -110,7 +124,6 @@ class CropAndResizeGpuKernel : public GpuKernel {
     input_box_ind_size_ *= input_box_index_shape[0];  // single dim required
     input_box_ind_size_ *= sizeof(int);
     // input crop_size
-    auto input_crop_size_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
     size_t input_crop_size_shape_len = input_crop_size_shape.size();
     if (input_crop_size_shape_len != 1) {
       MS_LOG(ERROR) << "Crop_size is rank " << input_crop_size_shape_len << "-D, but CropAndResize supports only rank "
@@ -126,8 +139,11 @@ class CropAndResizeGpuKernel : public GpuKernel {
     input_crop_size_ *= input_crop_size_shape[0];
     input_crop_size_ *= sizeof(int);
     // output
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     auto output_shape_len = output_shape.size();
+    if (output_shape_len != 4) {
+      MS_LOG(ERROR) << "For 'CropAndResize', the rank of output should be 4, but got " << output_shape_len;
+      return false;
+    }
     output_size_ = 1;
     for (size_t i = 0; i < output_shape_len; i++) {
       output_size_ *= output_shape[i];
@@ -175,6 +191,7 @@ class CropAndResizeGpuKernel : public GpuKernel {
   int final_height_;
   int final_width_;
   int channel_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

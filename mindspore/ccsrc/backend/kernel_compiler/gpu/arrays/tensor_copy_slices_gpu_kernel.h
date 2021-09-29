@@ -31,11 +31,14 @@ namespace kernel {
 template <typename T>
 class TensorCopySlicesGpuKernel : public GpuKernel {
  public:
-  TensorCopySlicesGpuKernel() : input_size_(0), update_size_(0), output_size_(0) {}
+  TensorCopySlicesGpuKernel() : input_size_(0), update_size_(0), output_size_(0), is_null_input_(false) {}
   ~TensorCopySlicesGpuKernel() {}
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *update_addr = GetDeviceAddress<T>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -69,7 +72,13 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
     }
 
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-
+    auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_) || CHECK_NULL_INPUT(update_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'TensorCopySlicesGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
     if (input_shape_.size() > kMaxDims) {
       MS_LOG(ERROR) << "StridedSlice support dims no more than " << kMaxDims << ", but the input shape is "
                     << input_shape_.size();
@@ -79,6 +88,13 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
     begin_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
     end_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
     strides_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+
+    if (begin_.size() > input_shape_.size()) {
+      MS_LOG(ERROR) << "For 'TensorCopySlicesGpuKernel', the rank of begin attr cannot be more than the rank of input, "
+                    << "but got the rank of begin attr: " << begin_.size()
+                    << ", the rank of input: " << input_shape_.size();
+      return false;
+    }
 
     FillEmptyDims(kernel_node);
     output_shape_ = input_shape_;
@@ -100,6 +116,7 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
     auto len = begin_.size();
     size_t total_input_num = 1;
     for (size_t i = 0; i < len; ++i) {
+      MS_EXCEPTION_IF_ZERO("strides_[i]", strides_[i]);
       total_input_num *= ((end_[i] - begin_[i]) / strides_[i]);
     }
     if (total_input_num != total_update_num) {
@@ -161,6 +178,7 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
       if (begin_[i] <= end_[i] && strides_[i] > 0) {
         update_shape_.push_back((end_[i] - 1 - begin_[i]) / strides_[i] + 1);
       } else if (begin_[i] > end_[i] && strides_[i] < 0) {
+        MS_EXCEPTION_IF_ZERO("strides_[i] + 1", strides_[i] + 1);
         update_shape_.push_back((end_[i] - begin_[i] + 1) / strides_[i] + 1);
       } else {
         update_shape_.push_back(0);
@@ -185,6 +203,7 @@ class TensorCopySlicesGpuKernel : public GpuKernel {
   size_t update_size_;
   size_t output_size_;
   inline static size_t kMaxDims = 8;
+  bool is_null_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

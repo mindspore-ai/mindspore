@@ -84,6 +84,10 @@ class RandpermGpuKernel : public GpuKernel {
     }
 
     max_length_ = static_cast<size_t>(GetAttr<int64_t>(kernel_node, "max_length"));
+    if (max_length_ < 1) {
+      MS_LOG(ERROR) << "For 'RandpermGpuKernel', the max_length cannot be less than 1, but got " << max_length_;
+      return false;
+    }
     pad_ = static_cast<T>(GetAttr<int64_t>(kernel_node, "pad"));
 
     InitSizeLists();
