@@ -39,7 +39,8 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
 
   auto ret = memcpy_s(ext_info_.get(), ext_info_len_, ext_info.c_str(), ext_info.size());
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "The memcpy_s failed, node: " << node_name_ << " error no (" << ret << ")";
+    MS_LOG(ERROR) << "Call memcpy_s failed, node: " << node_name_ << " error no (" << ret << ")";
+    return false;
   }
 
   input_shape_and_type_.clear();
@@ -53,17 +54,20 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
     switch (aicpu_ext_info->infoType) {
       case kernel::FWK_ADPT_EXT_SHAPE_TYPE:
         if (!ParseExtShapeType(aicpu_ext_info)) {
-          MS_LOG(EXCEPTION) << "Parse ext shape type failed, node: " << node_name_;
+          MS_LOG(ERROR) << "Parse aicpu_ext_info shape type failed, node: " << node_name_;
+          return false;
         }
         break;
       case kernel::FWK_ADPT_EXT_INPUT_SHAPE:
         if (!ParseExtInputShape(aicpu_ext_info)) {
-          MS_LOG(EXCEPTION) << "Parse ext input shape failed, node: " << node_name_;
+          MS_LOG(ERROR) << "Parse aicpu_ext_info input shape failed, node: " << node_name_;
+          return false;
         }
         break;
       case kernel::FWK_ADPT_EXT_OUTPUT_SHAPE:
         if (!ParseExtOutputShape(aicpu_ext_info)) {
-          MS_LOG(EXCEPTION) << "Parse ext output shape failed, node: " << node_name_;
+          MS_LOG(ERROR) << "Parse aicpu_ext_info output shape failed, node: " << node_name_;
+          return false;
         }
         break;
       default:
@@ -76,8 +80,9 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
   }
 
   if (offset != ext_info_len_) {
-    MS_LOG(EXCEPTION) << "Node:" << node_name_ << " ext_info format error, parse not reach end, offset=" << offset
-                      << ", ext_info_len" << ext_info_len_;
+    MS_LOG(ERROR) << "Node:" << node_name_ << " ext_info format error, parse not reach end, offset=" << offset
+                  << ", ext_info_len" << ext_info_len_;
+    return false;
   }
   MS_LOG(INFO) << "Node:" << node_name_ << " parse ext info end.";
   return true;
@@ -124,9 +129,9 @@ bool AicpuExtInfoHandler::ParseExtOutputShape(AicpuExtInfo *aicpu_ext_info) {
   auto need_len = output_num_ * sizeof(AicpuShapeAndType);
   MS_EXCEPTION_IF_NULL(aicpu_ext_info);
   if (aicpu_ext_info->infoLen != need_len) {
-    MS_LOG(INFO) << "Node:" << node_name_
-                 << " parse ext output shape failed, aicpu_ext_info->infoLen:" << aicpu_ext_info->infoLen
-                 << " need_len:" << need_len;
+    MS_LOG(ERROR) << "Node:" << node_name_
+                  << " parse aicpu_ext_info output shape failed, aicpu_ext_info->infoLen:" << aicpu_ext_info->infoLen
+                  << " need_len:" << need_len;
     return false;
   }
 
@@ -148,9 +153,14 @@ bool AicpuExtInfoHandler::UpdateInputShapeAndType(uint32_t input_index, const No
   std::vector<int64_t> tmp_shape;
   std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(tmp_shape), SizeToLong);
   if (input_index >= input_shape_and_type_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid input_index: " << input_index
-                      << " the size of input_shape_and_type_ is: " << input_shape_and_type_.size();
+    MS_LOG(ERROR) << "Invalid input_index: " << input_index
+                  << " the size of input_shape_and_type_ is: " << input_shape_and_type_.size();
+    return false;
   }
+  if (tmp_shape.empty()) {
+    tmp_shape = {1};
+  }
+
   return UpdateShapeAndType(tmp_shape, NOT_NULL(input_shape_and_type_[input_index]));
 }
 
@@ -165,7 +175,7 @@ bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const 
   if (shape.size() != max_shape.size()) {
     MS_LOG(ERROR) << "shape size [" << shape.size() << "] != max_shape size [" << max_shape.size()
                   << "], node: " << node_name_;
-    return true;
+    return false;
   }
 
   for (size_t i = 0; i < shape.size(); ++i) {
@@ -178,18 +188,23 @@ bool AicpuExtInfoHandler::UpdateOutputShapeAndType(uint32_t output_index, const 
   std::vector<int64_t> tmp_shape;
   std::transform(shape.begin(), shape.end(), std::back_inserter(tmp_shape), SizeToLong);
   if (output_index >= output_shape_and_type_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid output_index: " << output_index
-                      << " the size of output_shape_and_type_ is: " << output_shape_and_type_.size();
+    MS_LOG(ERROR) << "Invalid output_index: " << output_index
+                  << " the size of output_shape_and_type_ is: " << output_shape_and_type_.size();
+    return false;
+  }
+  if (tmp_shape.empty()) {
+    tmp_shape = {1};
   }
   return UpdateShapeAndType(tmp_shape, NOT_NULL(output_shape_and_type_[output_index]));
 }
 
 bool AicpuExtInfoHandler::GetOutputShapeAndType(uint32_t output_index, NotNull<std::vector<int64_t> *> shape,
                                                 NotNull<TypeId *> data_type) {
-  MS_LOG(INFO) << "Get " << node_name_ << " Output:" << output_index << " Shape And Type";
+  MS_LOG(DEBUG) << "Get " << node_name_ << " Output:" << output_index << " Shape And Type";
   if (output_index >= output_shape_and_type_.size()) {
-    MS_LOG(EXCEPTION) << "Invalid output_index: " << output_index
-                      << " the size of output_shape_and_type_ is: " << output_shape_and_type_.size();
+    MS_LOG(ERROR) << "Invalid output_index: " << output_index
+                  << " the size of output_shape_and_type_ is: " << output_shape_and_type_.size();
+    return false;
   }
   GetShapeAndType(NOT_NULL(output_shape_and_type_[output_index]), shape, data_type);
   return true;
@@ -221,14 +236,14 @@ void AicpuExtInfoHandler::GetShapeAndType(NotNull<const AicpuShapeAndType *> sha
       break;
     }
     shape->emplace_back(tmpDim);
-    MS_LOG(INFO) << "Debug tmpDim:" << tmpDim;
+    MS_LOG(DEBUG) << "Debug tmpDim:" << tmpDim;
   }
 
   auto ms_type = kernel::AicpuOpUtil::ProtoTypeToMsType(shape_and_type->type);
   if (ms_type == -1) {
     MS_LOG(EXCEPTION) << "Unsupported Proto Type:" << shape_and_type->type;
   }
-  MS_LOG(INFO) << "Debug ms_type:" << ms_type;
+  MS_LOG(DEBUG) << "Debug ms_type:" << ms_type;
   *data_type = static_cast<TypeId>(ms_type);
 }
 }  // namespace ascend
