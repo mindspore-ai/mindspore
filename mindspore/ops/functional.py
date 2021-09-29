@@ -156,6 +156,7 @@ identity = P.identity()
 grad_first_parameter = GradOperation(get_all=False, get_by_list=False, sens_param=False)
 grad_all_parameters = GradOperation(get_all=True, get_by_list=False, sens_param=False)
 
+
 def grad(fn, grad_first_param=False):
     """
     A wrapper function to generate the gradient function for the input function.

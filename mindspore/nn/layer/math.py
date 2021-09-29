@@ -277,7 +277,7 @@ class LGamma(Cell):
 
         reflection = self.select(self.isfinite(reflection_denom),
                                  -reflection_denom - log_y + self.log_pi, # pylint: disable=invalid-unary-operand-type
-                                 -reflection_denom)  # pylint: disable=invalid-unary-operand-type
+                                 -reflection_denom) # pylint: disable=invalid-unary-operand-type
 
         result = self.select(need_to_reflect, reflection, log_y)
 

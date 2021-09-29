@@ -812,6 +812,7 @@ class LogSigmoid(Cell):
         ret = self.log(rec_exp_neg_input_1)
         return ret
 
+
 class SoftShrink(Cell):
     r"""
     Applies the soft shrinkage function elementwise.
@@ -859,6 +860,7 @@ class SoftShrink(Cell):
     def construct(self, input_x):
         output = self.softshrink(input_x)
         return output
+
 
 class HShrink(Cell):
     r"""

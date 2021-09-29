@@ -331,6 +331,7 @@ def _add_rowtensor_tensor(x, y):
    """
     return x + y
 
+
 @_add_backward.register("None", "None")
 def _add_nonetensor_tensor(x, y):
     """
