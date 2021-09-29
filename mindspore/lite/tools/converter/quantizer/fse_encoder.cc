@@ -43,7 +43,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint16_t *frequency, int frequency_co
   MS_ASSERT(delta_state != nullptr);
   MS_ASSERT(symbol_table != nullptr);
   MS_ASSERT(coding_table != nullptr);
-  int tablesize = 1 << table_log;
+  const int tablesize = 1 << table_log;
   int tablemask = tablesize - 1;
   int step = ((tablesize >> 1) + (tablesize >> kFseTableExtendSize) + kFseTableExtendSize);
   int pos = 0;
@@ -203,7 +203,7 @@ void FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   // The higher the number, the more accurate we'll be to the shannon entropy,
   // but also the larger the table, so `+3` is a good compromise.
   *table_log = std::min(MAX_TABLE_LOG, (fse_count_bits((uint32_t)q->size) + kFseTableExtendSize));
-  int new_table_size = 1 << (*table_log);
+  const int new_table_size = 1 << (*table_log);
   int curr_table_size = 0;
   for (int i = 0; i < q->size; i++) {
     curr_table_size += q->frequency[i];
