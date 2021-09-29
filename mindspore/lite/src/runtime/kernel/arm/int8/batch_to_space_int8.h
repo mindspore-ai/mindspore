@@ -32,7 +32,7 @@ class BatchToSpaceInt8CPUKernel : public InnerKernel {
 
   ~BatchToSpaceInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

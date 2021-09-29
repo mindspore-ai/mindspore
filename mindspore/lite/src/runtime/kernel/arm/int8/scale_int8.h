@@ -35,7 +35,7 @@ class ScaleInt8CPUKernel : public InnerKernel {
   }
   ~ScaleInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int InitParameter();

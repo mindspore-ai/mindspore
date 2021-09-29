@@ -29,7 +29,7 @@ class LogSoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
       : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx), tmp_data_(nullptr) {}
   ~LogSoftmaxCPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoLogSoftmaxLastAxis(int task_id);

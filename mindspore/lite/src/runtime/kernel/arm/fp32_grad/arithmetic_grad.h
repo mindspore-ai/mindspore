@@ -71,7 +71,7 @@ class ArithmeticGradCPUKernel : public InnerKernel {
     if (tile_data2 != nullptr) delete[] tile_data2;
   }
 
-  int Init() override;
+  int Prepare() override;
   int InferShape();
   int ReSize() override;
   int Run() override;

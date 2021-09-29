@@ -63,7 +63,7 @@ TEST_F(TestSkipGramFp32, ElTest) {
   kernel::SkipGramCPUKernel *op =
     new kernel::SkipGramCPUKernel(reinterpret_cast<OpParameter *>(skip_gram_param_), inputs_, outputs_, ctx);
 
-  op->Init();
+  op->Prepare();
   op->Run();
 
   std::vector<StringPack> output = mindspore::lite::ParseTensorBuffer(outputs_[0]);

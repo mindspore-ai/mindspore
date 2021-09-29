@@ -26,7 +26,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationType_RELU;
 
 namespace mindspore::kernel {
-int ReluXInt8CPUKernel::Init() {
+int ReluXInt8CPUKernel::Prepare() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);

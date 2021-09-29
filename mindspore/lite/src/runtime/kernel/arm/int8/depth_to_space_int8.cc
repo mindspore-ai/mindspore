@@ -38,7 +38,7 @@ DepthToSpaceInt8CPUKernel::~DepthToSpaceInt8CPUKernel() {
   }
 }
 
-int DepthToSpaceInt8CPUKernel::Init() {
+int DepthToSpaceInt8CPUKernel::Prepare() {
   param_->data_type_size_ = sizeof(int8_t);
 
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));

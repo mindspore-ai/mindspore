@@ -117,14 +117,8 @@ class LiteKernel {
     return kernel_->Prepare();
   }
 
-  virtual int Init() {
-    MS_ASSERT(kernel_ != nullptr);
-    if (desc_.provider == kBuiltin) {
-      return std::static_pointer_cast<InnerKernel>(kernel_)->Init();
-    }
-    return mindspore::lite::RET_OK;
-  }
   bool IsBuiltin() { return desc_.provider == kBuiltin; }
+
   virtual int ReSize() {
     MS_ASSERT(kernel_ != nullptr);
     return kernel_->ReSize();

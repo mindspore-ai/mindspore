@@ -73,7 +73,7 @@ int ConvolutionGradInputCPUKernelFp16::ReSize() {
   return RET_OK;
 }
 
-int ConvolutionGradInputCPUKernelFp16::Init() { return ReSize(); }
+int ConvolutionGradInputCPUKernelFp16::Prepare() { return ReSize(); }
 
 int ConvolutionGradInputCPUKernelFp16::Execute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);

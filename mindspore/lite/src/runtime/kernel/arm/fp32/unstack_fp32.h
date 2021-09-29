@@ -28,7 +28,7 @@ class UnstackCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~UnstackCPUKernel() { free(output_addr_array_); }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

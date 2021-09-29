@@ -29,7 +29,7 @@ class SliceInt8CPUKernel : public SliceCPUKernel {
       : SliceCPUKernel(parameter, inputs, outputs, ctx) {}
   ~SliceInt8CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int DoSlice(int task_id);
 };

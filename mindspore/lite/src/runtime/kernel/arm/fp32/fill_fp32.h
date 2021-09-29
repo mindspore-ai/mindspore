@@ -31,7 +31,7 @@ class FillCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
   ~FillCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoFill(int task_id);

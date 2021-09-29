@@ -32,7 +32,7 @@ class ConvolutionDepthwise3x3Fp16CPUKernel : public ConvolutionBaseCPUKernel {
                                  inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data() : nullptr) {}
   ~ConvolutionDepthwise3x3Fp16CPUKernel() override {}
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

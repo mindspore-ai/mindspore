@@ -51,7 +51,7 @@ int ArithmeticsInt8Launch(void *cdata, int task_id, float lhs_scale, float rhs_s
 }
 }  // namespace
 
-int ArithmeticInt8CPUKernel::Init() {
+int ArithmeticInt8CPUKernel::Prepare() {
   switch (op_parameter_->type_) {
     case PrimitiveType_Equal:
       arithmetic_run_ = ElementEqualInt8;

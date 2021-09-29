@@ -34,7 +34,7 @@ class TensorArrayCPUKernel : public InnerKernel {
 
   ~TensorArrayCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override { return 0; }
   int Run() override;
 
@@ -50,7 +50,7 @@ class TensorArrayBaseCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~TensorArrayBaseCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override { return 0; }
   inline int Run() override;
 
@@ -66,7 +66,7 @@ class TensorArrayReadCPUKernel : public TensorArrayBaseCPUKernel {
       : TensorArrayBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~TensorArrayReadCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override { return 0; }
   int Run() override;
 };
@@ -78,7 +78,7 @@ class TensorArrayWriteCPUKernel : public TensorArrayBaseCPUKernel {
       : TensorArrayBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~TensorArrayWriteCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override { return 0; }
   int Run() override;
 };

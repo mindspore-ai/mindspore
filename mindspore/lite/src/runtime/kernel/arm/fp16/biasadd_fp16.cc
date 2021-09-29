@@ -115,7 +115,7 @@ int BiasAddCPUFp16Kernel::GetBiasData() {
   return RET_OK;
 }
 
-int BiasAddCPUFp16Kernel::Init() {
+int BiasAddCPUFp16Kernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   bias_tensor_ = in_tensors_.at(1);

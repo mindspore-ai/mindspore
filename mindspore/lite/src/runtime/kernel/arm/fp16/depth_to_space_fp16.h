@@ -27,7 +27,7 @@ class DepthToSpaceFp16CPUKernel : public DepthToSpaceCPUKernel {
       : DepthToSpaceCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DepthToSpaceFp16CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
 };
 }  // namespace mindspore::kernel
 

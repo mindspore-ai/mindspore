@@ -221,7 +221,7 @@ int ScaleInt8CPUKernel::InitQuantArgs() {
   return RET_OK;
 }
 
-int ScaleInt8CPUKernel::Init() {
+int ScaleInt8CPUKernel::Prepare() {
   if (in_tensors_.size() < kScaleInputsSize || in_tensors_.size() > kScaleBiasInputsSize) {
     MS_LOG(ERROR) << "inputs to Scale operator should be 2 or 3, but " << in_tensors_.size() << " is given.";
     return RET_ERROR;

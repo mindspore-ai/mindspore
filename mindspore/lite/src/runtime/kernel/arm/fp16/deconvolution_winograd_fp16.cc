@@ -372,7 +372,7 @@ int DeConvWinogradFp16CPUKernel::ReSize() {
   CHECK_NULL_RETURN(deconv_param_);
 
   FreeResizeBuf();
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBaseCPUKernel init failed!";
     return ret;
@@ -398,7 +398,7 @@ int DeConvWinogradFp16CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int DeConvWinogradFp16CPUKernel::Init() {
+int DeConvWinogradFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));

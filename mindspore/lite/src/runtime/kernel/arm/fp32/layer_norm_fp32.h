@@ -32,7 +32,7 @@ class LayerNormCPUKernel : public InnerKernel {
   }
   ~LayerNormCPUKernel() override{};
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoLayerNorm(int thread_id);

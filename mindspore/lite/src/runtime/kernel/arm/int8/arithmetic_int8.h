@@ -33,7 +33,7 @@ class ArithmeticInt8CPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~ArithmeticInt8CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoArithmetic(int thread_id);

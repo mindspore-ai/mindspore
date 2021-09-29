@@ -76,7 +76,7 @@ void TestResizeNearestNeighborInt8::Prepare(const std::vector<int> &in_shape, co
   ctx_.thread_num_ = thread_num;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
   kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
-  auto ret = kernel_->Init();
+  auto ret = kernel_->Prepare();
   EXPECT_EQ(0, ret);
 }
 
@@ -100,7 +100,7 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor0) {
   err_percent_ = 0.25f;
 
   Prepare(in_shape, out_shape, input_data, output_data, quant_in, quant_out, false, thread_num);
-  kernel_->Init();
+  kernel_->Prepare();
   kernel_->Run();
 
   CompareOutputInt8(output_data, expect, 16, err_percent_);
@@ -126,7 +126,7 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor1) {
                         14, 14, 12, 12, 13, 13, 13, 12, 12, 13, 13, 13, 13, 14, 14, 14, 14, 13, 14, 14, 14, 14};
 
   Prepare(in_shape, out_shape, input_data, output_data, quant_in, quant_out, false, thread_num);
-  kernel_->Init();
+  kernel_->Prepare();
   kernel_->Run();
 
   CompareOutputInt8(output_data, expect, out_element_num, err_percent_);
@@ -153,7 +153,7 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor2) {
   };
 
   Prepare(in_shape, out_shape, input_data, output_data, quant_in, quant_out, true, thread_num);
-  kernel_->Init();
+  kernel_->Prepare();
   kernel_->Run();
 
   CompareOutputInt8(output_data, expect, out_element_num, err_percent_);
@@ -179,7 +179,7 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor3) {
                         38, 39, 30, 31, 32, 33, 34, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 35, 36, 37, 38, 39};
 
   Prepare(in_shape, out_shape, input_data, output_data, quant_in, quant_out, false, thread_num);
-  kernel_->Init();
+  kernel_->Prepare();
   kernel_->Run();
 
   CompareOutputInt8(output_data, expect, out_element_num, err_percent_);
@@ -206,7 +206,7 @@ TEST_F(TestResizeNearestNeighborInt8, NearestNeighbor4) {
   };
 
   Prepare(in_shape, out_shape, input_data, output_data, quant_in, quant_out, true, thread_num);
-  kernel_->Init();
+  kernel_->Prepare();
   kernel_->Run();
 
   CompareOutputInt8(output_data, expect, out_element_num, err_percent_);

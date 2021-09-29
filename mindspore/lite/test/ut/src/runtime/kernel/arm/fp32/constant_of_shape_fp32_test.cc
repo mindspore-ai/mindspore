@@ -58,7 +58,7 @@ TEST_F(TestConstantOfShapeFp32, Simple) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::ConstantOfShapeCPUKernel *op =
     new kernel::ConstantOfShapeCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx);
-  op->Init();
+  op->Prepare();
   op->Run();
   float correct[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
   float *output = reinterpret_cast<float *>(outputs_[0]->MutableData());

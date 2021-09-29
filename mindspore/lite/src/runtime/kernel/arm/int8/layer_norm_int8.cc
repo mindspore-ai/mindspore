@@ -93,7 +93,7 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
   return RET_OK;
 }
 
-int LayerNormInt8CPUKernel::Init() {
+int LayerNormInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(param_);

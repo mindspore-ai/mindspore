@@ -50,7 +50,7 @@ TEST_F(TestUniqueFp32, Unique) {
   auto kernel = creator(inputs, outputs, &parameter, ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);

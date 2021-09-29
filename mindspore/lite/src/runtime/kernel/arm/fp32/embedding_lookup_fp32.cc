@@ -24,7 +24,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_EmbeddingLookupFusion;
 
 namespace mindspore::kernel {
-int EmbeddingLookupCPUKernel::Init() {
+int EmbeddingLookupCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(param_);

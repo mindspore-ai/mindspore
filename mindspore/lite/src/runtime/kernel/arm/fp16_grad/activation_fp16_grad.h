@@ -32,7 +32,7 @@ class ActivationGradCPUKernelFp16 : public InnerKernel {
   }
   ~ActivationGradCPUKernelFp16() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoActivation(int task_id);

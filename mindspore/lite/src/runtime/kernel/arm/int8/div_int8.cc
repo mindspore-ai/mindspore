@@ -33,7 +33,7 @@ DivInt8CPUKernel::~DivInt8CPUKernel() {
     quant_args_ = nullptr;
   }
 }
-int DivInt8CPUKernel::Init() {
+int DivInt8CPUKernel::Prepare() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
   lite::Tensor *output = out_tensors_.at(0);

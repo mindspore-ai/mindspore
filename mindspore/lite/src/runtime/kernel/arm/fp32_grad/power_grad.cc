@@ -27,7 +27,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PowerGrad;
 
 namespace mindspore::kernel {
-int PowerGradCPUKernel::Init() {
+int PowerGradCPUKernel::Prepare() {
   if (in_tensors_.size() != 2) {
     MS_LOG(ERROR) << "Power Grad Filter should have 2 inputs";
     return RET_ERROR;

@@ -33,7 +33,7 @@ class AffineFp32CPUKernel : public InnerKernel {
   }
   ~AffineFp32CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

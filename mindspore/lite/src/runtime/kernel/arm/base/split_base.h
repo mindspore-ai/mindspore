@@ -38,7 +38,7 @@ class SplitBaseCPUKernel : public InnerKernel {
       param->split_sizes_ = nullptr;
     }
   }
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

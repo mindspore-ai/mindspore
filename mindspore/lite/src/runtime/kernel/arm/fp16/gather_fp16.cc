@@ -39,7 +39,7 @@ GatherFp16CPUKernel::~GatherFp16CPUKernel() {
   }
 }
 
-int GatherFp16CPUKernel::Init() {
+int GatherFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto input_tensor = in_tensors_.at(0);

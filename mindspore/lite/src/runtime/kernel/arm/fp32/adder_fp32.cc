@@ -31,7 +31,7 @@ using mindspore::schema::Format;
 using mindspore::schema::PrimitiveType_AdderFusion;
 
 namespace mindspore::kernel {
-int AdderCPUKernel::Init() {
+int AdderCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_[0]);
@@ -55,7 +55,7 @@ int AdderCPUKernel::ReSize() {
     return ret;
   }
 
-  ret = ConvolutionBaseCPUKernel::Init();
+  ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return ret;

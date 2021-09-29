@@ -30,7 +30,7 @@ namespace mindspore::kernel {
 constexpr static int kFirstIdx = 1;
 constexpr static int kSecondIdx = 2;
 
-int SelectCPUKernel::Init() { return RET_OK; }
+int SelectCPUKernel::Prepare() { return RET_OK; }
 
 int SelectCPUKernel::ReSize() { return RET_OK; }
 

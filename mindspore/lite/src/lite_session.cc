@@ -630,12 +630,28 @@ int LiteSession::PrepareKernels(Model *model) {
     }
   }
   AdjustModelOutputTensorInitRefCount(model);
+
   for (auto kernel : this->kernels_) {
     if (kernel->desc().arch == kernel::kDelegate) {
       auto ret = SetAllocatorForDelegateKernels(kernel);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
         return ret;
+      }
+    }
+
+    if (!is_train_session_ && kernel->desc().arch != kernel::kDelegate && kernel->desc().arch != kernel::kGPU) {
+      auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(kernel);
+      if (subgraph_kernel == nullptr) {
+        MS_LOG(ERROR) << "kernel: " << kernel->name() << " not is subgraph kernel.";
+        return RET_ERROR;
+      }
+      for (auto &node : subgraph_kernel->nodes()) {
+        auto ret = node->Prepare();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "node: " << node->name() << " prepare failed.";
+          return ret;
+        }
       }
     }
     auto ret = kernel->Prepare();

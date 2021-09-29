@@ -37,7 +37,7 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
     vec_matmul_ = false;
   }
   ~MatmulFp32BaseCPUKernel() override;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

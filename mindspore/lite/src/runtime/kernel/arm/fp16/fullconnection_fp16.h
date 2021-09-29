@@ -29,7 +29,7 @@ class FullconnectionFP16CPUKernel : public MatmulBaseFP16CPUKernel {
       : MatmulBaseFP16CPUKernel(parameter, inputs, outputs, ctx) {}
   ~FullconnectionFP16CPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

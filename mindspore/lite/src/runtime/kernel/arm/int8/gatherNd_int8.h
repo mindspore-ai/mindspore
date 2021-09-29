@@ -29,7 +29,7 @@ class GatherNdInt8CPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
   ~GatherNdInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoGatherNd(int task_id);

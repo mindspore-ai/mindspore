@@ -485,7 +485,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   auto *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
 
-  deconv->Init();
+  deconv->Prepare();
   deconv->Run();
 
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
@@ -554,7 +554,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest2) {
   auto *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
 
-  deconv->Init();
+  deconv->Prepare();
   deconv->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
 
@@ -634,7 +634,7 @@ TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   auto *deconv =
     new kernel::DeConvolutionCPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
 
-  deconv->Init();
+  deconv->Prepare();
   deconv->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
 

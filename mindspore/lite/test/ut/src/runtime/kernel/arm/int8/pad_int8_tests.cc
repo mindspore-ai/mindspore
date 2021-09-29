@@ -71,7 +71,7 @@ TEST_F(TestPadInt8, PadInt8Test1) {
   kernel::PadInt8CPUKernel *pad =
     new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx);
 
-  pad->Init();
+  pad->Prepare();
   pad->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 0));
 
@@ -124,7 +124,7 @@ TEST_F(TestPadInt8, PadInt8Test2) {
   kernel::PadInt8CPUKernel *pad =
     new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx);
 
-  pad->Init();
+  pad->Prepare();
   pad->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 0));
 
@@ -192,7 +192,7 @@ TEST_F(TestPadInt8, PadInt8TestInit4) {
   kernel::PadInt8CPUKernel *pad =
     new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx);
 
-  pad->Init();
+  pad->Prepare();
   pad->Run();
   ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 0));
 

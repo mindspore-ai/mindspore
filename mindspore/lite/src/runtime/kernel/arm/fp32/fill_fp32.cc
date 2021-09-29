@@ -28,7 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Fill;
 
 namespace mindspore::kernel {
-int FillCPUKernel::Init() {
+int FillCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kInputSize1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {

@@ -27,7 +27,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SoftmaxCrossEntropyWithLogits;
 
 namespace mindspore::kernel {
-int SoftmaxCrossEntropyWithLogitsCPUKernel::Init() { return ReSize(); }
+int SoftmaxCrossEntropyWithLogitsCPUKernel::Prepare() { return ReSize(); }
 
 void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *labels, const float *logits, float *grads,
                                                                 float *output2) const {

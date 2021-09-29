@@ -33,7 +33,7 @@ class SoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
     }
   };
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoSoftmaxLastAxis(int task_id);

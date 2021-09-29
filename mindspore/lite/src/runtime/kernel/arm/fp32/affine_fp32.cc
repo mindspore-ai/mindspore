@@ -176,7 +176,7 @@ int AffineFp32CPUKernel::IncrementInit() {
   return RET_OK;
 }
 
-int AffineFp32CPUKernel::Init() {
+int AffineFp32CPUKernel::Prepare() {
   // Update shape info of input and output
   if (!CheckAffineValid()) {
     MS_LOG(ERROR) << "Affine Parameter not vailed";
@@ -275,7 +275,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::FullMatmulKernelCreate() {
     params, input_tensors, out_tensors_, static_cast<const lite::InnerContext *>(this->ms_context_));
 
   if (kernel != nullptr) {
-    auto ret = kernel->Init();
+    auto ret = kernel->Prepare();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "matmul kernel init failed.";
       delete kernel;
@@ -329,7 +329,7 @@ kernel::InnerKernel *AffineFp32CPUKernel::IncrementMatmulKernelCreate() {
     params, input_tensors, {increment_output_}, static_cast<const lite::InnerContext *>(this->ms_context_));
 
   if (kernel != nullptr) {
-    auto ret = kernel->Init();
+    auto ret = kernel->Prepare();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "matmul kernel init failed.";
       delete kernel;

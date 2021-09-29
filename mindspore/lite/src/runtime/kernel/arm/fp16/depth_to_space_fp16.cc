@@ -22,7 +22,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DepthToSpace;
 
 namespace mindspore::kernel {
-int DepthToSpaceFp16CPUKernel::Init() {
+int DepthToSpaceFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   param_->data_type_size_ = sizeof(float16_t);

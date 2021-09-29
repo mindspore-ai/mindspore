@@ -54,7 +54,7 @@ class ConcatInt8CPUKernel : public InnerKernel {
     }
   }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   void DoExecute(int task_id);

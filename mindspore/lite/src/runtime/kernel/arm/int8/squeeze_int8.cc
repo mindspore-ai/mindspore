@@ -37,7 +37,7 @@ SqueezeInt8CPUKernel::~SqueezeInt8CPUKernel() {
   }
 }
 
-int SqueezeInt8CPUKernel::Init() {
+int SqueezeInt8CPUKernel::Prepare() {
   quant_squeeze_param_ = new (std::nothrow) SqueezeQuantArg;
   if (quant_squeeze_param_ == nullptr) {
     MS_LOG(ERROR) << "new quant_squeeze_param_ failed.";

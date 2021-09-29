@@ -31,7 +31,7 @@ class ArithmeticSelfGradFp16CPUKernel : public InnerKernel {
   }
   ~ArithmeticSelfGradFp16CPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoActivation(int task_id);

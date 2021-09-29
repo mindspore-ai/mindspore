@@ -39,7 +39,7 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
   int ForwardPostExecute(const int *labels, const float *losses, float *output) const;
   int GradPostExecute(const int *labels, const float *losses, float *grads) const;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Execute(int task_id);

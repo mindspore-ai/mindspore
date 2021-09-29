@@ -30,7 +30,7 @@ namespace {
 constexpr size_t kMirrorPadInputSize = 2;
 constexpr size_t kPadCommonInputSize = 2;
 }  // namespace
-int PadCPUKernel::Init() {
+int PadCPUKernel::Prepare() {
   MS_CHECK_TRUE_RET(in_tensors_.size() == kPadCommonInputSize || in_tensors_.size() == kInputSize2, RET_ERROR);
   MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
   CHECK_NULL_RETURN(in_tensors_[0]);

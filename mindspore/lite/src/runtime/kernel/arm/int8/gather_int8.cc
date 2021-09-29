@@ -29,7 +29,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
-int GatherInt8CPUKernel::Init() {
+int GatherInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
   auto in_quant_args = in_tensors_.at(0)->quant_params();

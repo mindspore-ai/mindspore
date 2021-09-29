@@ -28,7 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationType_HSWISH;
 
 namespace mindspore::kernel {
-int HswishInt8CPUKernel::Init() {
+int HswishInt8CPUKernel::Prepare() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
   MS_ASSERT(input);

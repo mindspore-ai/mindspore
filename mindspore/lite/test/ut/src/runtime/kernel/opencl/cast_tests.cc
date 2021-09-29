@@ -94,7 +94,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
     delete param;
     return;
   }
-  cast_kernel->Init();
+  cast_kernel->Prepare();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {
     input_tensor->MallocData(allocator);
@@ -128,7 +128,7 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
     delete sub_inner_kernel;
     return;
   }
-  sub_graph->Init();
+  sub_graph->Prepare();
   MS_LOG(INFO) << " initialize input data ";
   memcpy(inputs[0]->data(), input_data, input1_size);
 
@@ -203,7 +203,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
     delete param;
     return;
   }
-  cast_kernel->Init();
+  cast_kernel->Prepare();
   // to do allocate memory for inputs and outputs
   for (auto &input_tensor : inputs) {
     input_tensor->MallocData(allocator);
@@ -238,7 +238,7 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
     delete sub_inner_kernel;
     return;
   }
-  sub_graph->Init();
+  sub_graph->Prepare();
   MS_LOG(INFO) << " initialize input data ";
   memcpy(inputs[0]->data(), input_data, input1_size);
 

@@ -95,7 +95,7 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseInt8CPUKernel::Init() {
+int ConvolutionDepthwiseInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
@@ -115,7 +115,7 @@ int ConvolutionDepthwiseInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int ConvolutionDepthwiseInt8CPUKernel::ReSize() { return ConvolutionBaseCPUKernel::Init(); }
+int ConvolutionDepthwiseInt8CPUKernel::ReSize() { return ConvolutionBaseCPUKernel::Prepare(); }
 
 int ConvolutionDepthwiseInt8CPUKernel::Execute(int task_id) {
   auto buffer = row_buffer_ + conv_param_->output_w_ * conv_param_->output_channel_ * task_id;

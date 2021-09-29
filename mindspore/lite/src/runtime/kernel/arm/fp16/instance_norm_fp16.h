@@ -32,7 +32,7 @@ class InstanceNormFp16CPUKernel : public InnerKernel {
   }
   ~InstanceNormFp16CPUKernel() override { FreeTmpBuffer(); };
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoInstanceNorm(int task_id);

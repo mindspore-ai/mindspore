@@ -28,7 +28,7 @@ class FullconnectionInt8CPUKernel : public MatmulBaseInt8CPUKernel {
                               const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
       : MatmulBaseInt8CPUKernel(parameter, inputs, outputs, ctx) {}
   ~FullconnectionInt8CPUKernel() override = default;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
 };
 }  // namespace mindspore::kernel

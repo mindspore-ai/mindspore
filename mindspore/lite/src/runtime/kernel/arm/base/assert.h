@@ -27,7 +27,7 @@ class AssertCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~AssertCPUKernel() override {}
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 };

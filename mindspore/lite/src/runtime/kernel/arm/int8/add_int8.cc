@@ -38,7 +38,7 @@ QuantizedAddCPUKernel::~QuantizedAddCPUKernel() {
   }
 }
 
-int QuantizedAddCPUKernel::Init() {
+int QuantizedAddCPUKernel::Prepare() {
   para_ = reinterpret_cast<AddQuantParameter *>(malloc(sizeof(AddQuantParameter)));
   if (para_ == nullptr) {
     MS_LOG(ERROR) << "Malloc AddQuantParameter for add int8 op failed!";

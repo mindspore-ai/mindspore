@@ -32,7 +32,7 @@ class InstanceNormCPUKernel : public InnerKernel {
   }
   ~InstanceNormCPUKernel() override{};
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoInstanceNorm(int task_id);

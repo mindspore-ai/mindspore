@@ -31,7 +31,7 @@ MulInt8CPUKernel::~MulInt8CPUKernel() {
   }
 }
 
-int MulInt8CPUKernel::Init() {
+int MulInt8CPUKernel::Prepare() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
   lite::Tensor *output = out_tensors_.at(0);

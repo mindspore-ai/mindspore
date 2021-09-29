@@ -30,7 +30,7 @@ constexpr int kNumInputSize = 3;
 constexpr int kNumInput2 = 2;
 }  // namespace
 namespace mindspore::kernel {
-int TensorListSetItemCPUKernel::Init() {
+int TensorListSetItemCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));

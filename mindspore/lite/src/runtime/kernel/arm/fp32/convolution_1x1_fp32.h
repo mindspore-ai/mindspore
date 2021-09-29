@@ -37,7 +37,7 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
                           float *origin_weight, float *origin_bias)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, origin_weight, origin_bias) {}
   ~Convolution1x1CPUKernel();
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int ReSize() override;
 

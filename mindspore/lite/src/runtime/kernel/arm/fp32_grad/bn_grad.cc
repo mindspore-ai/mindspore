@@ -56,7 +56,7 @@ int BNGradCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int BNGradCPUKernel::Init() {
+int BNGradCPUKernel::Prepare() {
   CHECK_NULL_RETURN(op_parameter_);
   CHECK_LESS_RETURN(in_tensors_.size(), 6);
   CHECK_LESS_RETURN(out_tensors_.size(), 3);

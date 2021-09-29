@@ -36,7 +36,7 @@ int CastRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 }  // namespace
 
-int CastCPUKernel::Init() {
+int CastCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {

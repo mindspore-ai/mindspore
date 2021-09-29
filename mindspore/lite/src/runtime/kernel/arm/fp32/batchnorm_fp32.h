@@ -33,7 +33,7 @@ class BatchnormCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   virtual ~BatchnormCPUKernel() { FreeMeanAndVariance(); }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   virtual int InitConstTensor();

@@ -37,7 +37,7 @@ constexpr size_t kInputNumOpt = 3;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
-int OneHotCPUKernel::Init() {
+int OneHotCPUKernel::Prepare() {
   // indices depth on_value off_value
   if ((in_tensors_.size() != kInputNum && in_tensors_.size() != kInputNumOpt) || out_tensors_.size() != kOutputNum) {
     MS_LOG(ERROR) << "OneHot input size should be " << kInputNum << " or " << kInputNumOpt << ", got "

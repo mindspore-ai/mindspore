@@ -91,7 +91,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::MallocWeightBiasData() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseSWFp16CPUKernel::Init() {
+int ConvolutionDepthwiseSWFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   UpdateOriginWeightAndBias();
@@ -121,7 +121,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseSWFp16CPUKernel::ReSize() {
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

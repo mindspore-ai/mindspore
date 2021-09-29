@@ -65,7 +65,7 @@ class ResizeCPUKernel : public ResizeBaseCPUKernel {
 
   ~ResizeCPUKernel() override { FreeTmpBuffer(); }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   virtual int RunImpl(int task_id);

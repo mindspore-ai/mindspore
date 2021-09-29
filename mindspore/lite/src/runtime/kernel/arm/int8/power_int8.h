@@ -32,7 +32,7 @@ class PowerInt8CPUKernel : public InnerKernel {
   }
   ~PowerInt8CPUKernel() {}
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoPower(int task_id);

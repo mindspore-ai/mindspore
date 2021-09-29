@@ -26,12 +26,12 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
-int MatmulInt8CPUKernel::Init() {
+int MatmulInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   InitParameter();
 
-  auto ret = MatmulBaseInt8CPUKernel::Init();
+  auto ret = MatmulBaseInt8CPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch failed";
     return ret;

@@ -31,7 +31,7 @@ class SkipGramCPUKernel : public InnerKernel {
       : InnerKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {}
   ~SkipGramCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoExcute(int task_id);

@@ -36,7 +36,7 @@ const std::map<std::string, std::string> kRegexTransforms = {
 const int32_t kMaxStringLength = 300;
 }  // namespace
 
-int NormalizeCPUKernel::Init() {
+int NormalizeCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_[0]);

@@ -54,8 +54,6 @@ class InnerKernel : public Kernel {
 
   int Execute() override;
 
-  // called while compiling graph
-  int Prepare() override { return mindspore::lite::RET_OK; }
   virtual int Run() { return mindspore::lite::RET_ERROR; }
   int ReSize() override { return mindspore::lite::RET_ERROR; }
 
@@ -72,7 +70,7 @@ class InnerKernel : public Kernel {
     return lite::RET_OK;
   }
 
-  virtual int Init() { return mindspore::lite::RET_OK; }
+  int Prepare() override { return mindspore::lite::RET_OK; }
 
   OpParameter *op_parameter() const { return op_parameter_; }
 

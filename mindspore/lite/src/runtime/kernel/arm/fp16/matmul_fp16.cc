@@ -56,7 +56,7 @@ void MatmulFP16CPUKernel::InitBShape() {
   params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
 }
 
-int MatmulFP16CPUKernel::Init() {
+int MatmulFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
@@ -73,7 +73,7 @@ int MatmulFP16CPUKernel::Init() {
     InitBShape();
   }
 
-  auto ret = MatmulBaseFP16CPUKernel::Init();
+  auto ret = MatmulBaseFP16CPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

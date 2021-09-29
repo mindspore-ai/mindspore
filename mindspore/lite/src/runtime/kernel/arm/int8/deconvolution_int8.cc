@@ -62,7 +62,7 @@ int DeConvInt8CPUKernel::ReSize() {
 
   FreeTmpBuffer();
 
-  int error_code = ConvolutionBaseCPUKernel::Init();
+  int error_code = ConvolutionBaseCPUKernel::Prepare();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv int8 convolution base init failed.";
     return error_code;
@@ -81,7 +81,7 @@ int DeConvInt8CPUKernel::ReSize() {
   return RET_OK;
 }
 
-int DeConvInt8CPUKernel::Init() {
+int DeConvInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
   CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));

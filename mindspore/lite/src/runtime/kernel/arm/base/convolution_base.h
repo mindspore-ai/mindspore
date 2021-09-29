@@ -50,7 +50,7 @@ class ConvolutionBaseCPUKernel : public InnerKernel {
   }
   ~ConvolutionBaseCPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override { return 0; }
   int Run() override { return 0; }
   int SetIfPerChannel();

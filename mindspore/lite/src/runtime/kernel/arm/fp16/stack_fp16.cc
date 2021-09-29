@@ -73,7 +73,7 @@ void StackFp16CPUKernel::FreeBuffer() {
   }
 }
 
-int StackFp16CPUKernel::Init() {
+int StackFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   data_type_size_ = sizeof(float16_t);

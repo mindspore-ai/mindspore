@@ -29,7 +29,7 @@ class SliceFp16CPUKernel : public SliceCPUKernel {
       : SliceCPUKernel(parameter, inputs, outputs, ctx) {}
   ~SliceFp16CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int SliceFp16ParallelRun(int thread_id);
 

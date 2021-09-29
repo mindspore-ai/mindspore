@@ -36,10 +36,10 @@ namespace {
 constexpr int kResizeSizeDouble = 2;
 }  // namespace
 
-int ResizeCPUKernel::Init() {
+int ResizeCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto ret = ResizeBaseCPUKernel::Init();
+  auto ret = ResizeBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

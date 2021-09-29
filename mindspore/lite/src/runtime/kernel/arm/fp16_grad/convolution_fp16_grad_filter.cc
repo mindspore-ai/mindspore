@@ -77,7 +77,7 @@ int ConvolutionGradFilterCPUKernelFp16::ReSize() {
   return RET_OK;
 }
 
-int ConvolutionGradFilterCPUKernelFp16::Init() { return ReSize(); }
+int ConvolutionGradFilterCPUKernelFp16::Prepare() { return ReSize(); }
 
 int ConvolutionGradFilterCPUKernelFp16::Execute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);

@@ -25,8 +25,8 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore::kernel {
-int CropInt8CPUKernel::Init() {
-  auto ret = CropBaseCPUKernel::Init();
+int CropInt8CPUKernel::Prepare() {
+  auto ret = CropBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

@@ -80,7 +80,7 @@ int ConvolutionGradFilterCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int ConvolutionGradFilterCPUKernel::Init() { return ReSize(); }
+int ConvolutionGradFilterCPUKernel::Prepare() { return ReSize(); }
 
 int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);

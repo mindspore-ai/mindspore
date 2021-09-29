@@ -57,7 +57,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::InitPackedInputOutput() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseSWCPUKernelX86::Init() {
+int ConvolutionDepthwiseSWCPUKernelX86::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_AVX
@@ -87,7 +87,7 @@ int ConvolutionDepthwiseSWCPUKernelX86::Init() {
 }
 
 int ConvolutionDepthwiseSWCPUKernelX86::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
+  ConvolutionBaseCPUKernel::Prepare();
   InitSlidingParamConvDw(sliding_, conv_param_, oc_tile_);
   return RET_OK;
 }

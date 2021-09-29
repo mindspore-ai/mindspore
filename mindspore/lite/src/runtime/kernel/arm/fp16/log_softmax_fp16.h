@@ -30,7 +30,7 @@ class LogSoftmaxFp16CPUKernel : public SoftmaxBaseCPUKernel {
       : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx), tmp_data_(nullptr) {}
   ~LogSoftmaxFp16CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int MallocTmpBuffer();

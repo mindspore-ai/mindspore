@@ -35,7 +35,7 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, inputs.at(kWeightIndex)->data(),
                                  inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data() : nullptr) {}
   ~DeConvolutionCPUKernel() override;
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int ReSize() override;
 

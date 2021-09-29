@@ -76,7 +76,7 @@ void TestReduceFp16::Prepare(const std::vector<int> &input_shape, const std::vec
   ASSERT_NE(creator_, nullptr);
   kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc);
   ASSERT_NE(kernel_, nullptr);
-  auto ret = kernel_->Init();
+  auto ret = kernel_->Prepare();
   EXPECT_EQ(0, ret);
 }
 TEST_F(TestReduceFp16, Mean) {

@@ -33,7 +33,7 @@ class CropInt8CPUKernel : public CropBaseCPUKernel {
       : CropBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~CropInt8CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   void DoExecute(int task_id);

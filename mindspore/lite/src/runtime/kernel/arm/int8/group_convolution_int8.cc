@@ -52,7 +52,7 @@ int GroupConvolutionInt8CPUKernel::PostConcat(int group_id) {
   return RET_OK;
 }
 
-int GroupConvolutionInt8CPUKernel::Init() {
+int GroupConvolutionInt8CPUKernel::Prepare() {
   if (group_conv_creator_ == nullptr) {
     return lite::RET_ERROR;
   }
@@ -70,6 +70,6 @@ int GroupConvolutionInt8CPUKernel::Init() {
     group_convs_.emplace_back(
       CpuConvInt8KernelSelect(new_inputs, new_outputs, reinterpret_cast<OpParameter *>(new_conv_param), ctx_));
   }
-  return GroupConvolutionBaseCPUKernel::Init();
+  return GroupConvolutionBaseCPUKernel::Prepare();
 }
 }  // namespace mindspore::kernel

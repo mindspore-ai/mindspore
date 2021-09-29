@@ -125,7 +125,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
   return RET_OK;
 }
 
-int DeconvolutionDepthwiseInt8CPUKernel::Init() {
+int DeconvolutionDepthwiseInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_NULL_RETURN(in_tensors_.at(kInputIndex));
   CHECK_NULL_RETURN(in_tensors_.at(kWeightIndex));
@@ -161,7 +161,7 @@ int DeconvolutionDepthwiseInt8CPUKernel::ReSize() {
   CHECK_NULL_RETURN(sliding_);
 
   InitSlideParam();
-  ConvolutionBaseCPUKernel::Init();
+  ConvolutionBaseCPUKernel::Prepare();
   return RET_OK;
 }
 

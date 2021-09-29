@@ -33,7 +33,7 @@ class PoolingInt8CPUKernel : public PoolingBaseCPUKernel {
       : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~PoolingInt8CPUKernel() { FreeQuantParam(); }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);

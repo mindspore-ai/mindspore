@@ -106,7 +106,7 @@ int ConvolutionDelegateCPUKernel::GetBiasData() {
   return RET_OK;
 }
 
-int ConvolutionDelegateCPUKernel::Init() {
+int ConvolutionDelegateCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = GetWeightAndBias();
@@ -215,9 +215,9 @@ kernel::InnerKernel *ConvolutionDelegateCPUKernel::CpuConvFp32KernelSelect() {
   }
 
   if (kernel != nullptr) {
-    auto ret = kernel->Init();
+    auto ret = kernel->Prepare();
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "conv kernel init failed.";
+      MS_LOG(ERROR) << "conv kernel prepare failed.";
       delete kernel;
       op_parameter_ = nullptr;
       return nullptr;

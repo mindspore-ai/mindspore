@@ -47,7 +47,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
   return MatmulBaseFP16CPUKernel::ReSize();
 }
 
-int FullconnectionFP16CPUKernel::Init() {
+int FullconnectionFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_ARM64
@@ -68,7 +68,7 @@ int FullconnectionFP16CPUKernel::Init() {
     InitBShape();
   }
 
-  auto ret = MatmulBaseFP16CPUKernel::Init();
+  auto ret = MatmulBaseFP16CPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

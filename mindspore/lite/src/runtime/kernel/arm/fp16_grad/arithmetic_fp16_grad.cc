@@ -30,7 +30,7 @@ constexpr static int kX1Idx = 0;
 constexpr static int kX2Idx = 1;
 constexpr static int kDyIdx = 2;
 
-int ArithmeticGradCPUKernelFp16::Init() {
+int ArithmeticGradCPUKernelFp16::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), FOURTH_INPUT);
   CHECK_LESS_RETURN(out_tensors_.size(), THIRD_INPUT);
   CHECK_NULL_RETURN(in_tensors_[kX1Idx]);

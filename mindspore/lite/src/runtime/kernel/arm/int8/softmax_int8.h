@@ -29,7 +29,7 @@ class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {
       : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~SoftmaxInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoSoftmax(int task_id);

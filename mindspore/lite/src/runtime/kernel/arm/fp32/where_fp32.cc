@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_Where;
 namespace mindspore::kernel {
 constexpr uint32_t kSingleNum = 1;
 constexpr uint32_t kTripleNum = 3;
-int WhereCPUKernel::Init() {
+int WhereCPUKernel::Prepare() {
   MS_CHECK_TRUE_RET(in_tensors_.size() == kSingleNum || in_tensors_.size() == kTripleNum, RET_ERROR);
   MS_CHECK_TRUE_RET(out_tensors_.size() == 1, RET_ERROR);
   CHECK_NULL_RETURN(in_tensors_[0]);

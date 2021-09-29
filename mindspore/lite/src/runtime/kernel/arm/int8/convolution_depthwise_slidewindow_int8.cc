@@ -251,7 +251,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseSWInt8CPUKernel::Init() {
+int ConvolutionDepthwiseSWInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   sliding_ = new (std::nothrow) SlidingWindowParam;
@@ -281,7 +281,7 @@ int ConvolutionDepthwiseSWInt8CPUKernel::Init() {
 }
 
 int ConvolutionDepthwiseSWInt8CPUKernel::ReSize() {
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

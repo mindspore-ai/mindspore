@@ -30,7 +30,7 @@ namespace mindspore::kernel {
 namespace {
 const int kMaxThreadNum = 8;
 }
-int L2NormCPUKernel::Init() {
+int L2NormCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {

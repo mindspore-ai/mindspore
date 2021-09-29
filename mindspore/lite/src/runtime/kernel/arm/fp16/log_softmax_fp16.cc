@@ -38,8 +38,8 @@ LogSoftmaxFp16CPUKernel::~LogSoftmaxFp16CPUKernel() {
   }
 }
 
-int LogSoftmaxFp16CPUKernel::Init() {
-  auto ret = SoftmaxBaseCPUKernel::Init();
+int LogSoftmaxFp16CPUKernel::Prepare() {
+  auto ret = SoftmaxBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

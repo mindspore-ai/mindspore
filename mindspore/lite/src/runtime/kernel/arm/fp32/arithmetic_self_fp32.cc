@@ -59,7 +59,7 @@ ArithmeticSelfBoolFunc ArithmeticSelfCPUKernel::GetArithmeticSelfBoolFun(int pri
   return nullptr;
 }
 
-int ArithmeticSelfCPUKernel::Init() {
+int ArithmeticSelfCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {

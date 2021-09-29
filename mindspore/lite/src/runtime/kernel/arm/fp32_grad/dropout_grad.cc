@@ -30,7 +30,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DropoutGrad;
 
 namespace mindspore::kernel {
-int DropoutGradCPUKernel::Init() {
+int DropoutGradCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), THIRD_INPUT);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));

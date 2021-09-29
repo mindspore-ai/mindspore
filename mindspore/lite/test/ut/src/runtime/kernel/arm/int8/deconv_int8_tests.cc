@@ -390,7 +390,7 @@ TEST_F(TestDeconvInt8, DeConvInt8Test1) {
   int total_size = DeConvInt8TestInit1(&inputs_, &outputs_, deconv_param, &correct);
   auto *deconv = new kernel::DeConvInt8CPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx);
 
-  int ret = deconv->Init();
+  int ret = deconv->Prepare();
   ASSERT_EQ(0, ret);
 
   ret = deconv->Run();

@@ -25,7 +25,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_RaggedRange;
 
 namespace mindspore::kernel {
-int RaggedRangeCPUKernel::Init() {
+int RaggedRangeCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 3);
   CHECK_LESS_RETURN(out_tensors_.size(), 2);
   if (!InferShapeDone()) {

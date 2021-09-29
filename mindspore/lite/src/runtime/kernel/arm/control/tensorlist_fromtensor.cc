@@ -55,7 +55,7 @@ int TensorListFromTensorCPUKernel::IsCompatibleShape() {
   return RET_OK;
 }
 
-int TensorListFromTensorCPUKernel::Init() {
+int TensorListFromTensorCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), kNumInputSize);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));

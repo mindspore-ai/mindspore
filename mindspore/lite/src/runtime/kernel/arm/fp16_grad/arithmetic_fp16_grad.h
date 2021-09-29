@@ -60,7 +60,7 @@ class ArithmeticGradCPUKernelFp16 : public InnerKernel {
     if (tile_data2) delete[] tile_data2;
   }
 
-  int Init() override;
+  int Prepare() override;
   int InferShape();
   int ReSize() override;
   int Run() override;

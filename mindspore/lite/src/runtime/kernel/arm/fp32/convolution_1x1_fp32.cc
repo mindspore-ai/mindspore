@@ -39,7 +39,7 @@ void Convolution1x1CPUKernel::FreeTmpBuffer() {
 
 int Convolution1x1CPUKernel::ReSize() {
   FreeTmpBuffer();
-  auto error_code = ConvolutionBaseCPUKernel::Init();
+  auto error_code = ConvolutionBaseCPUKernel::Prepare();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv base init failed.";
     return error_code;
@@ -95,7 +95,7 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
   return RET_OK;
 }
 
-int Convolution1x1CPUKernel::Init() {
+int Convolution1x1CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
 #ifdef ENABLE_AVX

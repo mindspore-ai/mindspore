@@ -35,7 +35,7 @@ class RelativePositionAttentionCPUKernel : public InnerKernel {
 
   ~RelativePositionAttentionCPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

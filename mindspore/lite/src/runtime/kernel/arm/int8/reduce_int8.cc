@@ -102,8 +102,8 @@ void ReduceInt8CPUKernel::Match4DReducePattern() {
   }
 }
 
-int ReduceInt8CPUKernel::Init() {
-  auto ret = ReduceBaseCPUKernel::Init();
+int ReduceInt8CPUKernel::Prepare() {
+  auto ret = ReduceBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

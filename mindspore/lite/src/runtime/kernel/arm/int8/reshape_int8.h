@@ -34,7 +34,7 @@ class ReshapeInt8CPUKernel : public InnerKernel {
   }
   ~ReshapeInt8CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoExecute(int task_id);

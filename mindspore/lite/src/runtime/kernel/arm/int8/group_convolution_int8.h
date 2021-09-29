@@ -33,7 +33,7 @@ class GroupConvolutionInt8CPUKernel : public GroupConvolutionBaseCPUKernel {
   }  // opParameter(in channel, out channel) in this kernel has been split to groups, if
   // you want to get real params, multiply in channel / out channel with group num
   ~GroupConvolutionInt8CPUKernel() override = default;
-  int Init() override;
+  int Prepare() override;
   int SeparateInput(int group_id) override;
   int PostConcat(int group_id) override;
 };

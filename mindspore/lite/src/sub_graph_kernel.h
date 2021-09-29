@@ -93,7 +93,7 @@ class SubGraphKernel : public LiteKernel {
   }
 
   // called while compiling graph. Call node->Prepare() by default.
-  int Prepare() override;
+  int Prepare() override { return RET_OK; };
   // called before Run
   int Execute() override { return Execute(nullptr, nullptr); }
 
@@ -106,7 +106,7 @@ class SubGraphKernel : public LiteKernel {
 
   void InitInputTensorInitRefCount();
 
-  int Init() override { return mindspore::lite::RET_OK; }
+  virtual int SetFp16Attr() { return mindspore::lite::RET_OK; }
 
   std::string ToString() const override;
 
@@ -141,7 +141,7 @@ class CpuSubGraph : public SubGraphKernel {
 
   ~CpuSubGraph() override { delete this->executor_; }
   int Prepare() override;
-  int Init() override { return SubGraphKernel::Init(); }
+  int SetFp16Attr() override { return SubGraphKernel::SetFp16Attr(); }
   int Execute() override { return Execute(nullptr, nullptr); }
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 };
@@ -172,11 +172,11 @@ class CpuFp16SubGraph : public CpuSubGraph {
   }
 
   ~CpuFp16SubGraph() override = default;
-  int Init() override {
+  int SetFp16Attr() override {
     const auto *context = this->Context();
     MS_ASSERT(context != nullptr);
     support_fp16_ = context->device_and_pkg_support_fp16();
-    return CpuSubGraph::Init();
+    return CpuSubGraph::SetFp16Attr();
   }
 
   int Prepare() override {
@@ -225,7 +225,6 @@ class CustomSubGraph : public SubGraphKernel {
 
   ~CustomSubGraph() override { delete this->executor_; }
   int Prepare() override;
-  int Init() override { return SubGraphKernel::Init(); }
   int Execute() override { return Execute(nullptr, nullptr); }
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 };

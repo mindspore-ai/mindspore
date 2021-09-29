@@ -43,7 +43,7 @@ class ArithmeticCompareFP16CPUKernel : public InnerKernel {
   }
   ~ArithmeticCompareFP16CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoArithmetic(int task_id);

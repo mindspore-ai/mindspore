@@ -37,7 +37,7 @@ class TransposeCPUKernel : public InnerKernel {
   }
   ~TransposeCPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);

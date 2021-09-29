@@ -33,7 +33,7 @@ constexpr int kScatterShapeIndex = 0;
 constexpr int kScatterIndicesIndex = 1;
 constexpr int kScatterUpdateIndex = 2;
 }  // namespace
-int ScatterNDCPUKernel::Init() {
+int ScatterNDCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {

@@ -126,7 +126,7 @@ TEST_F(TestDetectionPostProcessFp32, Fast) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::DetectionPostProcessCPUKernel *op =
     new kernel::DetectionPostProcessCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx);
-  op->Init();
+  op->Prepare();
   op->Run();
 
   auto *output_boxes = reinterpret_cast<float *>(outputs_[0]->MutableData());

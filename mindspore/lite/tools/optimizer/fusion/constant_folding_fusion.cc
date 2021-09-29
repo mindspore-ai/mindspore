@@ -184,7 +184,7 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
     free(parameter);
     return nullptr;
   }
-  ret = lite_kernel->Init();
+  ret = lite_kernel->Prepare();
   if (ret != lite::RET_OK) {
     MS_LOG(ERROR) << "init failed.";
     free(parameter);

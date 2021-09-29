@@ -188,7 +188,7 @@ int OpenCLSubGraph::InsertOpsPass() {
   return RET_OK;
 }
 
-int OpenCLSubGraph::Init() {
+int OpenCLSubGraph::RunPass() {
   // The fp16 operator in heterogeneous scenes needs to be set to fp32
   // to prevent the frame from being converted to fp16 in advance.
   if (in_tensors()[0]->data_type() == kNumberTypeFloat32 || in_tensors()[0]->data_type() == kNumberTypeFloat16) {
@@ -302,6 +302,7 @@ void OpenCLSubGraph::GetInOutNodes() {
 
 int OpenCLSubGraph::Prepare() {
   ocl_runtime_->SetFp16Enable(subgraph_type() == kGpuFp16SubGraph);
+
   for (const auto tensor : in_tensors()) {
     MS_ASSERT(tensor);
     tensor->set_allocator(allocator_);

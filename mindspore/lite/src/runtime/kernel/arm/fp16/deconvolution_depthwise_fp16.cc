@@ -99,7 +99,7 @@ void DeconvolutionDepthwiseFp16CPUKernel::PackWeight() {
                            1, weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());
 }
 
-int DeconvolutionDepthwiseFp16CPUKernel::Init() {
+int DeconvolutionDepthwiseFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(conv_param_);
@@ -141,7 +141,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "InitSlideParam failed!";
     return ret;
   }
-  ret = ConvolutionBaseCPUKernel::Init();
+  ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

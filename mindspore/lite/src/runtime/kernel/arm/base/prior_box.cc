@@ -33,7 +33,7 @@ namespace {
 constexpr int kInputNum = 2;
 constexpr int kOutputNum = 1;
 }  // namespace
-int PriorBoxCPUKernel::Init() {
+int PriorBoxCPUKernel::Prepare() {
   if (prior_box_param_ == nullptr) {
     MS_LOG(ERROR) << "PriorBoxParameter nullptr";
     return RET_NULL_PTR;

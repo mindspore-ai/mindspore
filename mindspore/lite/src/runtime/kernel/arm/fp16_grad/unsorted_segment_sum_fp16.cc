@@ -29,7 +29,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_UnsortedSegmentSum;
 
 namespace mindspore::kernel {
-int UnsortedSegmentSumCPUKernelFp16::Init() {
+int UnsortedSegmentSumCPUKernelFp16::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(in_tensors_.at(0));

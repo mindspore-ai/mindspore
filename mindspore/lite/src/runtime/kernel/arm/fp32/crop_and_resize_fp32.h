@@ -32,7 +32,7 @@ class CropAndResizeCPUKernel : public InnerKernel {
 
   ~CropAndResizeCPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);

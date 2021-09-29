@@ -74,7 +74,7 @@ int ConvolutionCPUKernel::InitTmpBuffer() {
   return RET_OK;
 }
 
-int ConvolutionCPUKernel::Init() {
+int ConvolutionCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (op_parameter_->is_train_session_) {
@@ -101,7 +101,7 @@ int ConvolutionCPUKernel::ReSize() {
     MS_LOG(ERROR) << "Resize is invalid.";
     return ret;
   }
-  ret = ConvolutionBaseCPUKernel::Init();
+  ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv base init failed.";
     return ret;

@@ -45,7 +45,7 @@ void CalculateTableList(int8_t *table, const float input_scale, const int32_t in
   }
 }
 
-int SigmoidInt8CPUKernel::Init() {
+int SigmoidInt8CPUKernel::Prepare() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
   const float input_scale = input->quant_params().front().scale;

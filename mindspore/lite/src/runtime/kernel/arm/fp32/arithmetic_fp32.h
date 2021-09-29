@@ -69,7 +69,7 @@ class ArithmeticCPUKernel : public InnerKernel {
   }
   ~ArithmeticCPUKernel() { FreeConstTileBuff(); }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   virtual int DoArithmetic(int task_id);

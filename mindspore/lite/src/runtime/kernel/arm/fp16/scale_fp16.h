@@ -31,7 +31,7 @@ class ScaleFp16CPUKernel : public ScaleCPUKernel {
       : ScaleCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ScaleFp16CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int InitScaleOffset() override;

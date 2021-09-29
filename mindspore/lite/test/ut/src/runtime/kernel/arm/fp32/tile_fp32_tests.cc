@@ -56,7 +56,7 @@ TEST_F(TestTileFp32, Tile) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -104,7 +104,7 @@ TEST_F(TestTileFp32, SimpleTile1) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);
@@ -152,7 +152,7 @@ TEST_F(TestTileFp32, SimpleTile2) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc);
   EXPECT_NE(kernel, nullptr);
 
-  auto ret = kernel->Init();
+  auto ret = kernel->Prepare();
   EXPECT_EQ(0, ret);
   ret = kernel->Run();
   EXPECT_EQ(0, ret);

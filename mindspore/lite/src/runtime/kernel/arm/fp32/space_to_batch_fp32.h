@@ -31,7 +31,7 @@ class SpaceToBatchCPUKernel : public InnerKernel {
   }
   ~SpaceToBatchCPUKernel() {}
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   void ProcessInput();

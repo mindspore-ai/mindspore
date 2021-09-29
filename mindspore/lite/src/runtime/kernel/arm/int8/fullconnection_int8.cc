@@ -23,7 +23,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
-int FullconnectionInt8CPUKernel::Init() {
+int FullconnectionInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   param_->batch = 1;
@@ -32,7 +32,7 @@ int FullconnectionInt8CPUKernel::Init() {
 
   InitParameter();
 
-  auto ret = MatmulBaseInt8CPUKernel::Init();
+  auto ret = MatmulBaseInt8CPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch failed";
     return ret;

@@ -32,7 +32,7 @@ class LstmFp16CPUKernel : public InnerKernel {
 
   ~LstmFp16CPUKernel() override { FreeTmpBuffer(); }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

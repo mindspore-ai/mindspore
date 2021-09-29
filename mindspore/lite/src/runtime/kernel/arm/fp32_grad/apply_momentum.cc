@@ -97,13 +97,13 @@ int ApplyMomentumCPUKernel::Run() {
   return RET_OK;
 }
 
-int ApplyMomentumCPUKernel::Init() {
+int ApplyMomentumCPUKernel::Prepare() {
   CHECK_NULL_RETURN(apply_momentum_param_);
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_5D);
   for (int i = 0; i < DIMENSION_5D; i++) {
     CHECK_NULL_RETURN(in_tensors_.at(i));
   }
-  auto ret = OptimizerKernel::Init();
+  auto ret = OptimizerKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Failed to initialize Apply Momentum Kernel";
     return RET_ERROR;

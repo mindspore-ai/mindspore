@@ -274,7 +274,7 @@ TEST_F(CropTestFp32, CropTest11) {
   crop_param.offset_[0] = 0;
   crop_param.offset_[1] = 0;
   auto kernel = new kernel::CropCPUKernel(reinterpret_cast<OpParameter *>(&crop_param), inputs, outputs, ctx);
-  kernel->Init();
+  kernel->Prepare();
   kernel->Run();
 
   auto *output = reinterpret_cast<float *>(outputs[0]->MutableData());

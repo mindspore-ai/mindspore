@@ -36,7 +36,7 @@ class TransposeInt8CPUKernel : public InnerKernel {
   }
   ~TransposeInt8CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

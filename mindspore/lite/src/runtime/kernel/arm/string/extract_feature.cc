@@ -24,7 +24,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_CustomExtractFeatures;
 
 namespace mindspore::kernel {
-int ExtractFeatureCPUKernel::Init() {
+int ExtractFeatureCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), C2NUM);
   CHECK_NULL_RETURN(in_tensors_[0]);

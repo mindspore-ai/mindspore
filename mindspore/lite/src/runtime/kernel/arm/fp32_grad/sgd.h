@@ -35,7 +35,7 @@ class SgdCPUKernel : public OptimizerKernel {
       grad_sum_ = nullptr;
     }
   }
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int ExecuteInit(int task_id);

@@ -31,7 +31,7 @@ class BiasGradCPUKernel : public InnerKernel {
   }
   ~BiasGradCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Execute(int task_id);

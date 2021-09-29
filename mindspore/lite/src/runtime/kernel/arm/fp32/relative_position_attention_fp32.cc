@@ -686,7 +686,7 @@ void RelativePositionAttentionCPUKernel::FreeAllPackData() {
   FreePackedBiases();
 }
 
-int RelativePositionAttentionCPUKernel::Init() {
+int RelativePositionAttentionCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_11D);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = CheckWeights();

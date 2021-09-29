@@ -35,7 +35,7 @@ class Unsqueezeint8CPUKernel : public InnerKernel {
   }
   ~Unsqueezeint8CPUKernel() = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int DoUnsqueeze(int task_id);

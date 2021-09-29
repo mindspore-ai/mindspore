@@ -37,7 +37,7 @@ class GroupConvolutionBaseCPUKernel : public ConvolutionBaseCPUKernel {
                                   // you want to get real params, multiply in channel / out channel with group num
   ~GroupConvolutionBaseCPUKernel() override { FreeSubKernel(); }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int PreProcess() override;

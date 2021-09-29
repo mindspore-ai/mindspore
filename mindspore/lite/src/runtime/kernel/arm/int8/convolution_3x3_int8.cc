@@ -175,7 +175,7 @@ int Convolution3x3Int8CPUKernel::InitTmpBuffer() {
   return RET_OK;
 }
 
-int Convolution3x3Int8CPUKernel::Init() {
+int Convolution3x3Int8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto ret = SetQuantParam();
@@ -201,7 +201,7 @@ int Convolution3x3Int8CPUKernel::ReSize() {
     return ret;
   }
 
-  ret = ConvolutionBaseCPUKernel::Init();
+  ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";
     return RET_ERROR;

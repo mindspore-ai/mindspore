@@ -31,7 +31,7 @@ class DepthToSpaceInt8CPUKernel : public DepthToSpaceCPUKernel {
       : DepthToSpaceCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DepthToSpaceInt8CPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int Run() override;
 
  private:

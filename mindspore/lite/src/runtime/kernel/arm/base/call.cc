@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_Call;
 
 // this file is useless when move create actor before schedule.
 namespace mindspore::kernel {
-int CallCPUKernel::Init() { return RET_OK; }
+int CallCPUKernel::Prepare() { return RET_OK; }
 int CallCPUKernel::ReSize() { return RET_OK; }
 int CallCPUKernel::Run() { return RET_OK; }
 

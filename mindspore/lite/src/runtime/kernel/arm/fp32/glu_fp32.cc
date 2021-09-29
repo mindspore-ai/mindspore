@@ -62,7 +62,7 @@ void GluCPUKernel::FreeTmpBuffer() {
   }
 }
 
-int GluCPUKernel::Init() {
+int GluCPUKernel::Prepare() {
   if (!InferShapeDone()) {
     return RET_OK;
   }

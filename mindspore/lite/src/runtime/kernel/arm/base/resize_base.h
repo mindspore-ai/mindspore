@@ -32,7 +32,7 @@ class ResizeBaseCPUKernel : public InnerKernel {
 
   ~ResizeBaseCPUKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override { return 0; };
 
  protected:

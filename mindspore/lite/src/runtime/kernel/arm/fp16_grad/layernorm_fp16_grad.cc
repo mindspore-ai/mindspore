@@ -42,7 +42,7 @@ constexpr int kNumOutputDim_2 = 2;
 }  // namespace
 int LayerNormGradCPUKernelFp16::ReSize() { return RET_OK; }
 
-int LayerNormGradCPUKernelFp16::Init() {
+int LayerNormGradCPUKernelFp16::Prepare() {
   auto lngrad_param = reinterpret_cast<LayerNormGradParameter *>(op_parameter_);
   CHECK_NULL_RETURN(lngrad_param);
   CHECK_LESS_RETURN(in_tensors_.size(), 5);

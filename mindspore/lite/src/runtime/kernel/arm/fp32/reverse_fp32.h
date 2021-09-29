@@ -35,7 +35,7 @@ class ReverseCPUKernel : public InnerKernel {
     }
   }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int Stride(int index);

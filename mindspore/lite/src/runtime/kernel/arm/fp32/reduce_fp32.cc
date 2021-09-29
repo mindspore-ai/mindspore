@@ -39,10 +39,10 @@ using mindspore::schema::ReduceMode_ReduceSum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 namespace mindspore::kernel {
-int ReduceCPUKernel::Init() {
+int ReduceCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto ret = ReduceBaseCPUKernel::Init();
+  auto ret = ReduceBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     return ret;
   }

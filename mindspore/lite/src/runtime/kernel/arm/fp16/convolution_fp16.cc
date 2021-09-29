@@ -92,7 +92,7 @@ int ConvolutionFP16CPUKernel::InitTmpBuffer() {
   return RET_OK;
 }
 
-int ConvolutionFP16CPUKernel::Init() {
+int ConvolutionFP16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   UpdateOriginWeightAndBias();
@@ -135,7 +135,7 @@ int ConvolutionFP16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "Resize is invalid.";
     return ret;
   }
-  ret = ConvolutionBaseCPUKernel::Init();
+  ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init fail!ret: " << ret;
     return ret;

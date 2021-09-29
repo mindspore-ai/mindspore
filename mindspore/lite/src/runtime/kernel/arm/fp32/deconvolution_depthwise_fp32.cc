@@ -67,7 +67,7 @@ int DeconvolutionDepthwiseCPUKernel::InitPackedInputOutput() {
   return RET_OK;
 }
 
-int DeconvolutionDepthwiseCPUKernel::Init() {
+int DeconvolutionDepthwiseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(conv_param_);
@@ -107,7 +107,7 @@ int DeconvolutionDepthwiseCPUKernel::ReSize() {
     MS_LOG(ERROR) << "InitSlideParam is failed!";
     return ret;
   }
-  ret = ConvolutionBaseCPUKernel::Init();
+  ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBaseCPUKernel init failed!";
     return ret;

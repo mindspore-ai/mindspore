@@ -31,7 +31,7 @@ class MatmulInt8CPUKernel : public MatmulBaseInt8CPUKernel {
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : MatmulBaseInt8CPUKernel(parameter, inputs, outputs, ctx) {}
   ~MatmulInt8CPUKernel() override = default;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
 };
 }  // namespace mindspore::kernel

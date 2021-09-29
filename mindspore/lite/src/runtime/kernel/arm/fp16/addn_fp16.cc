@@ -37,7 +37,7 @@ int AddNLaunch(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
 }
 }  // namespace
 
-int AddNFp16CPUKernel::Init() { return RET_OK; }
+int AddNFp16CPUKernel::Prepare() { return RET_OK; }
 
 int AddNFp16CPUKernel::ReSize() { return RET_OK; }
 

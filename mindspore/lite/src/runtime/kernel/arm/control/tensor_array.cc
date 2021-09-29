@@ -39,7 +39,7 @@ constexpr int kHandleIndex = 0;
 constexpr int kIndexInputIdx = 1;
 constexpr int kValueIndex = 2;
 
-int TensorArrayCPUKernel::Init() {
+int TensorArrayCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   CHECK_NULL_RETURN(this->ta_param_);
@@ -82,7 +82,7 @@ inline int TensorArrayCPUKernel::Run() {
  * read operate just copy handle(tensor buffer) to output,
  * on the contrary, write just copy output to buffer.
  */
-int TensorArrayBaseCPUKernel::Init() {
+int TensorArrayBaseCPUKernel::Prepare() {
   // check index_tensor
   lite::Tensor *input_y = in_tensors_.at(kIndexInputIdx);
   CHECK_NULL_RETURN(input_y);
@@ -108,14 +108,14 @@ int TensorArrayBaseCPUKernel::Run() {
   return RET_OK;
 }
 
-int TensorArrayReadCPUKernel::Init() {
+int TensorArrayReadCPUKernel::Prepare() {
   // just check
   if (in_tensors_.size() != kTensorArrayReadInSize) {
     MS_LOG(ERROR) << "invalid input numbers of TensorArrayReadCPUKernel";
     return RET_ERROR;
   }
   // check index_tensor
-  TensorArrayBaseCPUKernel::Init();
+  TensorArrayBaseCPUKernel::Prepare();
   return RET_OK;
 }
 
@@ -126,13 +126,13 @@ int TensorArrayReadCPUKernel::Run() {
   return RET_OK;
 }
 
-int TensorArrayWriteCPUKernel::Init() {
+int TensorArrayWriteCPUKernel::Prepare() {
   // just check
   if (in_tensors_.size() != kTensorArrayWriteInSize) {
     MS_LOG(ERROR) << "invalid input numbers of TensorArrayWriteCPUKernel";
     return RET_ERROR;
   }
-  TensorArrayBaseCPUKernel::Init();
+  TensorArrayBaseCPUKernel::Prepare();
   return RET_OK;
 }
 

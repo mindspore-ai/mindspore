@@ -24,7 +24,7 @@ using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int ConvolutionDepthwise3x3CPUKernel::Init() {
+int ConvolutionDepthwise3x3CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (op_parameter_->is_train_session_) {
@@ -47,9 +47,9 @@ int ConvolutionDepthwise3x3CPUKernel::Init() {
 }
 
 int ConvolutionDepthwise3x3CPUKernel::ReSize() {
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Init() return is:" << ret;
+    MS_LOG(ERROR) << "ConvolutionBaseCPUKernel::Prepare() return is:" << ret;
     return ret;
   }
   conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);

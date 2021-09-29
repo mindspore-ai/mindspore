@@ -28,7 +28,7 @@ class SwitchCPUKernel : public InnerKernel {
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : InnerKernel(parameter, inputs, outputs, ctx) {}
   ~SwitchCPUKernel() override = default;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 };

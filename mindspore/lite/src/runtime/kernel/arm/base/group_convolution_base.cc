@@ -22,14 +22,14 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-int GroupConvolutionBaseCPUKernel::Init() {
+int GroupConvolutionBaseCPUKernel::Prepare() {
   for (int i = 0; i < group_num_; ++i) {
     auto sub_conv = group_convs_.at(i);
     if (sub_conv == nullptr) {
       MS_LOG(ERROR) << "sub con " << i << " is null.";
       return RET_ERROR;
     }
-    auto ret = group_convs_.at(i)->Init();
+    auto ret = group_convs_.at(i)->Prepare();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Sub kernel init failed.";
       return ret;

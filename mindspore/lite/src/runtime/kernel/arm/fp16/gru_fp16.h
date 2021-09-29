@@ -30,7 +30,7 @@ class GruFp16CPUKernel : public InnerKernel {
 
   ~GruFp16CPUKernel() override { FreeTmpBuffer(); }
 
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
 

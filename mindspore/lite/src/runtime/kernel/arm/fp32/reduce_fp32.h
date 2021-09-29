@@ -53,7 +53,7 @@ class ReduceCPUKernel : public ReduceBaseCPUKernel {
     int_reducer_ = nullptr;
   }
 
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int CallReduceUnit(int task_id);
 

@@ -31,7 +31,7 @@ class DeconvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
                                  inputs.size() == kInputSize2 ? inputs.at(kBiasIndex)->data() : nullptr) {}
   ~DeconvolutionDepthwiseCPUKernel() override;
 
-  int Init() override;
+  int Prepare() override;
   int InitSlideParam();
   int ReSize() override;
   int Run() override;

@@ -106,7 +106,7 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   return RET_OK;
 }
 
-int ConvolutionDepthwise3x3Int8CPUKernel::Init() {
+int ConvolutionDepthwise3x3Int8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 2);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   sliding_ = new (std::nothrow) SlidingWindowParam;
@@ -131,7 +131,7 @@ int ConvolutionDepthwise3x3Int8CPUKernel::Init() {
 }
 
 int ConvolutionDepthwise3x3Int8CPUKernel::ReSize() {
-  auto ret = ConvolutionBaseCPUKernel::Init();
+  auto ret = ConvolutionBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBaseCPUKernel Init failed.";
     return ret;
