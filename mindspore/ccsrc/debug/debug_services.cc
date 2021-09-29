@@ -1103,8 +1103,10 @@ std::vector<std::shared_ptr<TensorData>> DebugServices::ReadNeededDumpedTensors(
       } else {
         dump_style_name += ".input";
       }
-
-      proto_to_dump.push_back(std::tuple<std::string, std::string>(orig_name, dump_style_name));
+      if (std::find(proto_to_dump.begin(), proto_to_dump.end(),
+                    std::tuple<std::string, std::string>(orig_name, dump_style_name)) == proto_to_dump.end()) {
+        proto_to_dump.push_back(std::tuple<std::string, std::string>(orig_name, dump_style_name));
+      }
     }
 
     if (!is_sync_mode_) {
