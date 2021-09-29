@@ -78,9 +78,10 @@ int CommonAnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
   for (auto func_graph : all_func_graphs) {
     {
       auto asylic_optimizer = std::make_shared<opt::GraphOptimizer>();
-      MS_ASSERT(asylic_optimizer != nullptr);
+      MS_CHECK_TRUE_MSG(asylic_optimizer != nullptr, RET_NULL_PTR, "asylic_optimizer is nullptr.");
       auto asylic_pm = std::make_shared<opt::PassManager>("asylic pass manager", false);
-      MS_ASSERT(asylic_pm != nullptr);
+      MS_CHECK_TRUE_MSG(asylic_pm != nullptr, RET_NULL_PTR, "asylic_pm is nullptr.");
+
       // fuse tf1.x bidirection_gru into GRU, must be placed here because graph is cyclic
       asylic_pm->AddPass(std::make_shared<opt::TfBidirectionGruCfFusion>());
       // remove remaining cyclic nodes
@@ -93,14 +94,14 @@ int CommonAnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
       }
     }
     auto adjust_input = std::make_shared<InputAdjust>();
-    MS_ASSERT(adjust_input != nullptr);
+    MS_CHECK_TRUE_MSG(adjust_input != nullptr, RET_NULL_PTR, "adjust_input is nullptr.");
     if (!adjust_input->Run(func_graph)) {
       MS_LOG(ERROR) << "adjust input failed.";
       return RET_ERROR;
     }
     // adjust for conv1d
     auto conv1d_adjust = std::make_shared<Conv1DInOutAdjust>();
-    MS_ASSERT(conv1d_adjust != nullptr);
+    MS_CHECK_TRUE_MSG(conv1d_adjust != nullptr, RET_NULL_PTR, "conv1d_adjust is nullptr.");
     if (!conv1d_adjust->Run(func_graph)) {
       MS_LOG(ERROR) << "adjust conv1d failed.";
       return RET_ERROR;
@@ -110,7 +111,7 @@ int CommonAnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
 }
 
 int GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm) {
-  MS_ASSERT(perm != nullptr);
+  MS_CHECK_TRUE_MSG(perm != nullptr, RET_NULL_PTR, "perm is nullptr.");
   auto src_format_str = std::string(schema::EnumNameFormat(src_format));
   auto dst_format_str = std::string(schema::EnumNameFormat(dst_format));
   if (src_format_str.empty() || dst_format_str.empty() || src_format_str.size() != dst_format_str.size()) {
@@ -129,7 +130,7 @@ int GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::
 }
 
 int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm) {
-  MS_ASSERT(perm != nullptr);
+  MS_CHECK_TRUE_MSG(perm != nullptr, RET_NULL_PTR, "perm is nullptr.");
   auto src_format_str = std::string(schema::EnumNameFormat(src_format));
   auto dst_format_str = std::string(schema::EnumNameFormat(dst_format));
   if (src_format_str.empty() || dst_format_str.empty() || src_format_str.size() != dst_format_str.size()) {
@@ -148,7 +149,8 @@ int GetTransposePermSharing(schema::Format src_format, schema::Format dst_format
 }
 
 AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t index) {
-  MS_ASSERT(graph != nullptr && cnode != nullptr);
+  MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "graph is nullptr.");
+  MS_CHECK_TRUE_MSG(cnode != nullptr, nullptr, "cnode is nullptr.");
   auto weight_node = cnode->input(index);
   bool is_real_weight =
     !opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) && !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
@@ -163,14 +165,16 @@ AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
                      !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
   }
   auto manager = Manage(graph);
-  MS_ASSERT(manager != nullptr);
+  MS_CHECK_TRUE_MSG(manager != nullptr, nullptr, "manager is nullptr.");
   manager->Replace(cnode->input(index), weight_node);
   return weight_node;
 }
 
 int UnifyConvWeightFormat(const FuncGraphPtr &graph, const CNodePtr &cnode, schema::Format src_format,
                           schema::Format dst_format, std::set<AnfNodePtr> *has_visited) {
-  MS_ASSERT(graph != nullptr && cnode != nullptr && has_visited != nullptr);
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
+  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_NULL_PTR, "cnode is nullptr.");
+  MS_CHECK_TRUE_MSG(has_visited != nullptr, RET_NULL_PTR, "has_visited is nullptr.");
   if (src_format == dst_format) {
     return lite::RET_OK;
   }
@@ -191,7 +195,7 @@ int UnifyConvWeightFormat(const FuncGraphPtr &graph, const CNodePtr &cnode, sche
     is_const_weight = false;
   } else if (utils::isa<Parameter>(weight_node)) {
     auto weight_param_node = weight_node->cast<ParameterPtr>();
-    MS_ASSERT(weight_param_node != nullptr);
+    MS_CHECK_TRUE_MSG(weight_param_node != nullptr, RET_NULL_PTR, "weight_param_node is nullptr.");
     if (!weight_param_node->has_default()) {
       is_const_weight = false;
     }
@@ -210,7 +214,9 @@ int UnifyConvWeightFormat(const FuncGraphPtr &graph, const CNodePtr &cnode, sche
 
 int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
                             schema::Format dst_format, std::set<AnfNodePtr> *has_visited) {
-  MS_ASSERT(graph != nullptr && weight_node != nullptr && has_visited != nullptr);
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
+  MS_CHECK_TRUE_MSG(weight_node != nullptr, RET_NULL_PTR, "weight_node is nullptr.");
+  MS_CHECK_TRUE_MSG(has_visited != nullptr, RET_NULL_PTR, "has_visited is nullptr.");
   if (src_format == dst_format) {
     return lite::RET_OK;
   }
@@ -221,7 +227,7 @@ int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_
     return status;
   }
   auto manager = Manage(graph);
-  MS_ASSERT(manager != nullptr);
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_NULL_PTR, "manager is nullptr.");
   CNodePtr trans_cnode = nullptr;
   auto weight_node_users = manager->node_users()[weight_node];
   for (auto &weight_node_user : weight_node_users) {
@@ -236,7 +242,7 @@ int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_
     has_visited->insert(post_node);
     if (trans_cnode == nullptr) {
       trans_cnode = opt::GenTransposeNode(graph, weight_node, perm, weight_node->fullname_with_scope() + "_post_perm");
-      MS_ASSERT(trans_cnode != nullptr);
+      MS_CHECK_TRUE_MSG(trans_cnode != nullptr, RET_NULL_PTR, "trans_cnode is nullptr.");
       auto abstract = weight_node->abstract();
       ShapeVector shape;
       if (abstract != nullptr) {
@@ -256,7 +262,7 @@ int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_
         abstract = abstract->Clone();
       } else {
         abstract = CreateTensorAbstract(shape, TypeId::kNumberTypeFloat32);
-        MS_ASSERT(abstract != nullptr);
+        MS_CHECK_TRUE_MSG(abstract != nullptr, RET_NULL_PTR, "abstract is nullptr.");
       }
       auto shape_ptr = std::make_shared<abstract::Shape>(shape);
       MS_CHECK_TRUE_MSG(shape_ptr != nullptr, RET_NULL_PTR, "shape_ptr is nullptr.");
@@ -264,7 +270,7 @@ int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_
       trans_cnode->set_abstract(abstract);
     }
     auto post_cnode = post_node->cast<CNodePtr>();
-    MS_ASSERT(post_cnode != nullptr);
+    MS_CHECK_TRUE_MSG(post_cnode != nullptr, RET_NULL_PTR, "post_cnode is nullptr.");
     auto tr = manager->Transact();
     tr.SetEdge(post_cnode, weight_node_user.second, trans_cnode);
     tr.Commit();
@@ -274,7 +280,9 @@ int UnifyVariableConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_
 
 int UnifyConstConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
                          schema::Format dst_format, std::set<AnfNodePtr> *has_visited) {
-  MS_ASSERT(graph != nullptr && weight_node != nullptr && has_visited != nullptr);
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
+  MS_CHECK_TRUE_MSG(weight_node != nullptr, RET_NULL_PTR, "weight_node is nullptr.");
+  MS_CHECK_TRUE_MSG(has_visited != nullptr, RET_NULL_PTR, "has_visited is nullptr.");
   if (src_format == dst_format) {
     return lite::RET_OK;
   }
@@ -309,7 +317,9 @@ int UnifyConstConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_nod
 
 int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
                                 schema::Format dst_format, std::set<AnfNodePtr> *has_visited) {
-  MS_ASSERT(graph != nullptr && weight_node != nullptr && has_visited != nullptr);
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_NULL_PTR, "graph is nullptr.");
+  MS_CHECK_TRUE_MSG(weight_node != nullptr, RET_NULL_PTR, "weight_node is nullptr.");
+  MS_CHECK_TRUE_MSG(has_visited != nullptr, RET_NULL_PTR, "has_visited is nullptr.");
   if (src_format == dst_format) {
     return RET_OK;
   }
@@ -320,7 +330,7 @@ int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &wei
     return status;
   }
   auto manager = Manage(graph);
-  MS_ASSERT(manager != nullptr);
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_NULL_PTR, "manager is nullptr.");
   CNodePtr trans_cnode = nullptr;
   auto weight_node_users = manager->node_users()[weight_node];
   for (auto &weight_node_user : weight_node_users) {
@@ -335,12 +345,13 @@ int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &wei
     }
     if (trans_cnode == nullptr) {
       trans_cnode = opt::GenTransposeNode(graph, weight_node, perm, weight_node->fullname_with_scope() + "_post_perm");
-      MS_ASSERT(trans_cnode != nullptr);
+      MS_CHECK_TRUE_MSG(trans_cnode != nullptr, RET_NULL_PTR, "trans_cnode is nullptr.");
       auto prim = GetValueNode<PrimitivePtr>(trans_cnode->input(0));
-      MS_ASSERT(prim != nullptr);
+      MS_CHECK_TRUE_MSG(prim != nullptr, RET_NULL_PTR, "prim is nullptr.");
       prim->AddAttr(ops::kFormat, MakeValue<int64_t>(dst_format));
       auto weight_value = opt::GetTensorInfo(weight_node);
-      MS_ASSERT(weight_value != nullptr);
+      MS_CHECK_TRUE_MSG(weight_value != nullptr, RET_NULL_PTR, "weight_value is nullptr.");
+
       auto weight_shape = weight_value->shape();
       ShapeVector shape;
       if (!weight_shape.empty()) {
@@ -352,7 +363,7 @@ int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &wei
                        [&weight_shape](const int index) { return weight_shape[index]; });
       }
       auto abstract = weight_node->abstract();
-      MS_ASSERT(abstract != nullptr);
+      MS_CHECK_TRUE_MSG(abstract != nullptr, RET_NULL_PTR, "abstract is nullptr.");
       abstract = abstract->Clone();
       auto shape_ptr = std::make_shared<abstract::Shape>(shape);
       MS_CHECK_TRUE_MSG(shape_ptr != nullptr, RET_NULL_PTR, "shape_ptr is nullptr.");
@@ -360,7 +371,7 @@ int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &wei
       trans_cnode->set_abstract(abstract);
     }
     auto post_cnode = post_node->cast<CNodePtr>();
-    MS_ASSERT(post_cnode != nullptr);
+    MS_CHECK_TRUE_MSG(post_cnode != nullptr, RET_NULL_PTR, "post_cnode is nullptr.");
     auto tr = manager->Transact();
     tr.SetEdge(post_cnode, weight_node_user.second, trans_cnode);
     tr.Commit();
