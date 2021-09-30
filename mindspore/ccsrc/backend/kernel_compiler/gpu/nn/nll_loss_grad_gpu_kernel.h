@@ -22,6 +22,7 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/loss_with_reduction_impl.cuh"
+#include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -59,16 +60,9 @@ class NLLLossGradGpuKernel : public GpuKernel {
       input_size_ *= input_shape[i];
     }
     string reduction = GetAttr<string>(kernel_node, "reduction");
-
-    // if reduction is not 'none', tmp_nll is (N,) size
-    if (reduction == "none") {
-      reduction_ = 0;
-      num_dloss_ = n_;  // dloss is a vector
-    } else if (reduction == "sum") {
-      reduction_ = 2;
-    } else {
-      // reduction = 'mean'
-      reduction_ = 1;
+    reduction_ = GetReductionInt(reduction);
+    if (reduction_ == 0) {
+      num_dloss_ = n_;
     }
 
     InitSizeLists();

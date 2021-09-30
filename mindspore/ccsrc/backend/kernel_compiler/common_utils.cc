@@ -571,6 +571,17 @@ int Sign(float x) {
   return 0;
 }
 
+int GetReductionInt(const std::string &reduction) {
+  if (reduction == "none") {
+    return 0;
+  } else if (reduction == "sum") {
+    return 2;
+  } else {
+    // reduction = 'mean'
+    return 1;
+  }
+}
+
 std::pair<AnfNodePtr, size_t> GetKernelInput(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
 
