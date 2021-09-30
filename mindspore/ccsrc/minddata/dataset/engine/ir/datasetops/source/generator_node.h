@@ -34,11 +34,12 @@ class GeneratorNode : public MappableSourceNode {
  public:
   /// \brief Constructor
   GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
-                const std::vector<DataType> &column_types, int64_t source_len, std::shared_ptr<SamplerObj> sampler);
+                const std::vector<DataType> &column_types, int64_t source_len, std::shared_ptr<SamplerObj> sampler,
+                uint32_t num_parallel_workers);
 
   /// \brief Constructor
   GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema, int64_t source_len,
-                std::shared_ptr<SamplerObj> sampler);
+                std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers);
 
   /// \brief Destructor
   ~GeneratorNode() = default;
@@ -107,6 +108,7 @@ class GeneratorNode : public MappableSourceNode {
   std::shared_ptr<SchemaObj> schema_;
   std::shared_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass
   std::shared_ptr<SamplerObj> sampler_;
+  uint32_t num_parallel_workers_;
   int64_t source_len_;  // Length of the dataset source provided by the user, -1 means it's unknown
 
   /// \brief Base-class override for accepting IRNodePass visitor
