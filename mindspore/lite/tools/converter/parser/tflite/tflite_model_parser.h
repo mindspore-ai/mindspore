@@ -46,10 +46,6 @@ class TfliteModelParser : public converter::ModelParser {
   static int Tflite2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs);
 
  private:
-  std::unique_ptr<tflite::ModelT> tflite_model_;
-  std::map<int, CNodePtr> control_flow_nodes_;
-  std::map<CNodePtr, std::pair<FuncGraphPtr, FuncGraphPtr>> control_flow_map_;
-  char *tflite_model_buf_ = nullptr;
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const std::string &model_path);
   STATUS ConvertConstTensor(const std::unique_ptr<tflite::TensorT> &tensor, const ParameterPtr &parameter,
                             const std::string &tensor_name, bool is_uint8_weight_quant);
@@ -73,6 +69,13 @@ class TfliteModelParser : public converter::ModelParser {
                                      ops::PrimitiveC *primitive_c);
   static STATUS SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
                                     std::vector<QuantParamT> *quant_params, int round_type = 1);
+  STATUS TfliteModelVerify();
+
+ private:
+  std::unique_ptr<tflite::ModelT> tflite_model_;
+  std::map<int, CNodePtr> control_flow_nodes_;
+  std::map<CNodePtr, std::pair<FuncGraphPtr, FuncGraphPtr>> control_flow_map_;
+  char *tflite_model_buf_ = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore
