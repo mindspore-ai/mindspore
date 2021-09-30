@@ -381,9 +381,9 @@ class _Linear(Cell):
         x = self.matmul(x, weight)
         if self.has_bias:
             x = self.bias_add(x, self.cast(self.bias, self.dtype))
-        output = P.Reshape()(x, out_shape)
         if self.activation_flag:
-            output = self.activation(output)
+            x = self.activation(x)
+        output = P.Reshape()(x, out_shape)
         return output
 
     def shard(self, strategy_matmul, strategy_bias=None, strategy_activation=None):
