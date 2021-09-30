@@ -673,6 +673,7 @@ class Pad(Cell):
             e.g.:
 
             .. code-block::
+
                 mode = "CONSTANT".
                 paddings = [[1,1], [2,2]].
                 x = [[1,2,3], [4,5,6], [7,8,9]].
@@ -855,20 +856,20 @@ class ResizeBilinear(Cell):
         - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape
           :math:`(batch, channels, height, width)`, with data type of float16 or float32.
         - **size** (Union[tuple[int], list[int]]): A tuple or list of 2 int elements
-          :math:`(new_{height}, new_{width})`,the new size of the tensor.
+          :math:`(new\_height, new_\width)`,the new size of the tensor.
           One and only one of size and scale_factor can be set to None. Default: None.
         - **scale_factor** (int): The scale factor of new size of the tensor. The value should be positive integer.
           One and only one of size and scale_factor can be set to None. Default: None.
-        - **align_corners** (bool): If true, rescale input by :math:`(new_{height} - 1) / (height - 1)`, which exactly
-          aligns the 4 corners of images and resized images. If false, rescale by :math:`new_{height} / height`.
+        - **align_corners** (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`, which exactly
+          aligns the 4 corners of images and resized images. If false, rescale by :math:`new\_height / height`.
           Default: False.
 
     Outputs:
         Resized tensor.
-        If size is set, the result is 4-D tensor with shape :math:`(batch, channels, new_{height}, new_{width})`,
+        If size is set, the result is 4-D tensor with shape :math:`(batch, channels, new\_height, new\_width)`,
         and the data type is the same as `x`.
         If scale is set, the result is 4-D tensor with shape
-        :math:`(batch, channels, scale_{factor} * height, scale_{factor} * width)` and the data type is the same as `x`.
+        :math:`(batch, channels, scale\_factor * height, scale\_factor * width)` and the data type is the same as `x`.
 
     Raises:
         TypeError: If `size` is not one of tuple, list, None.
