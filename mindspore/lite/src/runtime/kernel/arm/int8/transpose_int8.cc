@@ -27,6 +27,8 @@ namespace {
 constexpr size_t kMaxShapeSize = 20;
 }  // namespace
 int TransposeInt8CPUKernel::Prepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -54,7 +56,7 @@ int TransposeInt8CPUKernel::ReSize() {
   // get perm data
   auto perm_tensor = in_tensors_.at(1);
   int *perm_data = reinterpret_cast<int *>(perm_tensor->data());
-  MS_ASSERT(perm_data != nullptr);
+  CHECK_NULL_RETURN(perm_data);
   transpose_param_->num_axes_ = perm_tensor->ElementsNum();
   for (int i = 0; i < transpose_param_->num_axes_; ++i) {
     transpose_param_->perm_[i] = perm_data[i];
@@ -70,11 +72,11 @@ int TransposeInt8CPUKernel::ReSize() {
 }
 
 int TransposeInt8CPUKernel::DoTranspose(int task_id) {
-  MS_ASSERT(in_ptr_);
-  MS_ASSERT(out_ptr_);
-  MS_ASSERT(in_shape_);
-  MS_ASSERT(out_shape_);
-  MS_ASSERT(transpose_param_);
+  CHECK_NULL_RETURN(in_ptr_);
+  CHECK_NULL_RETURN(out_ptr_);
+  CHECK_NULL_RETURN(in_shape_);
+  CHECK_NULL_RETURN(out_shape_);
+  CHECK_NULL_RETURN(transpose_param_);
   TransposeDimsInt8(in_ptr_, out_ptr_, out_shape_, transpose_param_, task_id, op_parameter_->thread_num_);
   return RET_OK;
 }
@@ -106,7 +108,9 @@ int TransposeInt8CPUKernel::Run() {
   auto out_dims = out_tensor->shape();
 
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensor->data());
+  CHECK_NULL_RETURN(in_ptr_);
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->data());
+  CHECK_NULL_RETURN(out_ptr_);
   GetNHNCTransposeFunc(in_tensor, out_tensor, transpose_param_);
   if (NHNCTransposeFunc_ != nullptr) {
     NHNCTransposeFunc_(in_ptr_, out_ptr_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2]);

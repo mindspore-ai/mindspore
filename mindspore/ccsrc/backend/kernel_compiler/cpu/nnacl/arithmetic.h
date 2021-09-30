@@ -20,26 +20,27 @@
 #include "nnacl/op_base.h"
 #include "nnacl/common_func.h"
 #include "nnacl/nnacl_utils.h"
+#define ARITHMETIC_SUPPORT_DIMS_NUM 10
 
 typedef struct ArithmeticParameter {
   OpParameter op_parameter_;
   bool broadcasting_;
   size_t ndim_;
   int activation_type_;
-  int in_shape0_[10];
+  int in_shape0_[ARITHMETIC_SUPPORT_DIMS_NUM];
   int in_elements_num0_;
-  int in_shape1_[10];
+  int in_shape1_[ARITHMETIC_SUPPORT_DIMS_NUM];
   int in_elements_num1_;
 
-  int out_shape_[10];
+  int out_shape_[ARITHMETIC_SUPPORT_DIMS_NUM];
   int out_elements_num_;
 
-  int in_strides0_[10];
-  int in_strides1_[10];
-  int out_strides_[10];
+  int in_strides0_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int in_strides1_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int out_strides_[ARITHMETIC_SUPPORT_DIMS_NUM];
 
-  int multiples0_[10];
-  int multiples1_[10];
+  int multiples0_[ARITHMETIC_SUPPORT_DIMS_NUM];
+  int multiples1_[ARITHMETIC_SUPPORT_DIMS_NUM];
   int eltwise_mode_;  // eltwise need
 } ArithmeticParameter;
 
