@@ -16,9 +16,6 @@
 
 #include "common/duplex_pipe.h"
 
-#include <iostream>
-#include <vector>
-
 namespace mindspore {
 int DuplexPipe::Open(const std::initializer_list<std::string> &arg_list, bool append_fds) {
   DP_EXCEPTION << "Not support for Windows by now.";

@@ -69,7 +69,7 @@ class SomasSolverCore {
   FittingType branching_strategy_;
   uint32_t sol_count_{0};
   AlgorithmType algorithm_;
-  size_t timing_{0};
+  int64_t timing_{0};
 
  private:
   const TensorsDescMap &tensors_;

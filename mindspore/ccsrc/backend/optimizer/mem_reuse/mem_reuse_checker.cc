@@ -16,9 +16,6 @@
 
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
 #include <fstream>
-#include <vector>
-#include <utility>
-#include <string>
 
 namespace mindspore {
 namespace memreuse {
