@@ -38,7 +38,7 @@ def get_version():
         >>> version = dbg_services.get_version()
     """
     if security.enable_security():
-        raise ValueError("Offline debugger is not supported in security mode. " \
+        raise ValueError("Offline debugger is not supported in security mode. "
                          "Please recompile mindspore without `-s on`.")
     return cds.DbgServices(False).GetVersion()
 
@@ -65,7 +65,7 @@ class DbgLogger:
 log = DbgLogger(False)
 
 
-class DbgServices():
+class DbgServices:
     """
     Offline Debug Services class.
 
@@ -76,13 +76,13 @@ class DbgServices():
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        >>>                              verbose=True)
+        ...                              verbose=True)
     """
 
     @check_init
     def __init__(self, dump_file_path, verbose=False):
         if security.enable_security():
-            raise ValueError("Offline debugger is not supported in security mode. "\
+            raise ValueError("Offline debugger is not supported in security mode. "
                              "Please recompile mindspore without `-s on`.")
         log.verbose = verbose
         log("in Python __init__, file path is ", dump_file_path)
@@ -110,10 +110,9 @@ class DbgServices():
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        >>>                              verbose=True)
+        ...                              verbose=True)
         >>> d_init = d.initialize(net_name="network name", is_sync_mode=True, max_mem_usage=4096)
         """
-
         log("in Python Initialize dump_file_path ", self.dump_file_path)
         self.initialized = True
         return self.dbg_instance.Initialize(net_name, self.dump_file_path, is_sync_mode, max_mem_usage)
@@ -173,19 +172,18 @@ class DbgServices():
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        >>>                              verbose=True)
+        ...                              verbose=True)
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.add_watchpoint(watchpoint_id=1,
-        >>>                              watch_condition=6,
-        >>>                              check_node_list={"conv2.bias" : {"rank_id": [0],
-                                                                          root_graph_id: [0], "is_output": True}},
-        >>>                              parameter_list=[dbg_services.Parameter(name="param",
-        >>>                                                                     disabled=False,
-        >>>                                                                     value=0.0,
-        >>>                                                                     hit=False,
-        >>>                                                                     actual_value=0.0)])
+        ...                              watch_condition=6,
+        ...                              check_node_list={"conv2.bias" : {"rank_id": [0],
+        ...                                                               root_graph_id: [0], "is_output": True}},
+        ...                              parameter_list=[dbg_services.Parameter(name="param",
+        ...                                                                     disabled=False,
+        ...                                                                     value=0.0,
+        ...                                                                     hit=False,
+        ...                                                                     actual_value=0.0)])
         """
-
         log("in Python AddWatchpoint")
         for node_name, node_info in check_node_list.items():
             for info_name, info_param in node_info.items():
@@ -210,20 +208,19 @@ class DbgServices():
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        >>>                              verbose=True)
+        ...                              verbose=True)
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.add_watchpoint(watchpoint_id=1,
-        >>>                              watch_condition=6,
-        >>>                              check_node_list={"conv2.bias" : {"rank_id": [5],
-                                                                          root_graph_id: [0], "is_output": True}},
-        >>>                              parameter_list=[dbg_services.Parameter(name="param",
-        >>>                                                                     disabled=False,
-        >>>                                                                     value=0.0,
-        >>>                                                                     hit=False,
-        >>>                                                                     actual_value=0.0)])
+        ...                              watch_condition=6,
+        ...                              check_node_list={"conv2.bias" : {"rank_id": [0],
+        ...                                                               root_graph_id: [0], "is_output": True}},
+        ...                              parameter_list=[dbg_services.Parameter(name="param",
+        ...                                                                     disabled=False,
+        ...                                                                     value=0.0,
+        ...                                                                     hit=False,
+        ...                                                                     actual_value=0.0)])
         >>> d_wp = d_wp.remove_watchpoint(watchpoint_id=1)
         """
-
         log("in Python Remove Watchpoint id ", watchpoint_id)
         return self.dbg_instance.RemoveWatchpoint(watchpoint_id)
 
@@ -242,20 +239,19 @@ class DbgServices():
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        >>>                              verbose=True)
+        ...                              verbose=True)
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.add_watchpoint(id=1,
-        >>>                              watch_condition=6,
-        >>>                              check_node_list={"conv2.bias" : {"rank_id": [5],
-                                                                          root_graph_id: [0], "is_output": True}},
-        >>>                              parameter_list=[dbg_services.Parameter(name="param",
-        >>>                                                                     disabled=False,
-        >>>                                                                     value=0.0,
-        >>>                                                                     hit=False,
-        >>>                                                                     actual_value=0.0)])
+        ...                              watch_condition=6,
+        ...                              check_node_list={"conv2.bias" : {"rank_id": [5],
+        ...                                                               root_graph_id: [0], "is_output": True}},
+        ...                              parameter_list=[dbg_services.Parameter(name="param",
+        ...                                                                     disabled=False,
+        ...                                                                     value=0.0,
+        ...                                                                     hit=False,
+        ...                                                                     actual_value=0.0)])
         >>> watchpoints = d_wp.check_watchpoints(iteration=8)
         """
-
         log("in Python CheckWatchpoints iteration ", iteration)
         iteration = replace_minus_one(iteration)
         watchpoint_list = self.dbg_instance.CheckWatchpoints(iteration)
@@ -296,16 +292,15 @@ class DbgServices():
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        >>>                              verbose=True)
+        ...                              verbose=True)
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> tensor_data_list = d_init.read_tensors([dbg_services.TensorInfo(node_name="conv2.bias",
-        >>>                                                                 slot=0,
-        >>>                                                                 iteration=8,
-        >>>                                                                 rank_id=5,
-        >>>                                                                 root_graph_id=0,
-        >>>                                                                 is_output=True)])
+        ...                                                                 slot=0,
+        ...                                                                 iteration=8,
+        ...                                                                 rank_id=5,
+        ...                                                                 root_graph_id=0,
+        ...                                                                 is_output=True)])
         """
-
         log("in Python ReadTensors info ", info)
         info_list_inst = []
         for elem in info:
@@ -336,14 +331,14 @@ class DbgServices():
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        >>>                              verbose=True)
+        ...                              verbose=True)
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> tensor_base_data_list = d_init.read_tensor_base([dbg_services.TensorInfo(node_name="conv2.bias",
-        >>>                                                                          slot=0,
-        >>>                                                                          iteration=8,
-        >>>                                                                          rank_id=5,
-        >>>                                                                          root_graph_id=0,
-        >>>                                                                          is_output=True)])
+        ...                                                                          slot=0,
+        ...                                                                          iteration=8,
+        ...                                                                          rank_id=5,
+        ...                                                                          root_graph_id=0,
+        ...                                                                          is_output=True)])
         """
         log("in Python ReadTensorsBase info ", info)
         info_list_inst = []
@@ -372,14 +367,14 @@ class DbgServices():
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        >>>                              verbose=True)
+        ...                              verbose=True)
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> tensor_stat_data_list = d_init.read_tensor_stats([dbg_services.TensorInfo(node_name="conv2.bias",
-        >>>                                                                           slot=0,
-        >>>                                                                           iteration=8,
-        >>>                                                                           rank_id=5,
-        >>>                                                                           root_graph_id=0,
-        >>>                                                                           is_output=True)])
+        ...                                                                           slot=0,
+        ...                                                                           iteration=8,
+        ...                                                                           rank_id=5,
+        ...                                                                           root_graph_id=0,
+        ...                                                                           is_output=True)])
         """
         log("in Python ReadTensorsStat info ", info)
         info_list_inst = []
@@ -399,7 +394,7 @@ class DbgServices():
         return tensor_stat_data_list_ret
 
 
-class TensorInfo():
+class TensorInfo:
     """
     Tensor Information class.
 
@@ -413,17 +408,16 @@ class TensorInfo():
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
-        >>>                                       slot=0,
-        >>>                                       iteration=8,
-        >>>                                       rank_id=5,
-        >>>                                       root_graph_id=0,
-        >>>                                       is_output=True)
+        ...                                       slot=0,
+        ...                                       iteration=8,
+        ...                                       rank_id=5,
+        ...                                       root_graph_id=0,
+        ...                                       is_output=True)
     """
-
     @check_tensor_info_init
     def __init__(self, node_name, slot, iteration, rank_id, root_graph_id, is_output=True):
         if security.enable_security():
-            raise ValueError("Offline debugger is not supported in security mode. " \
+            raise ValueError("Offline debugger is not supported in security mode. "
                              "Please recompile mindspore without `-s on`.")
         iteration = replace_minus_one(iteration)
         self.instance = cds.tensor_info(node_name, slot, iteration, rank_id, root_graph_id, is_output)
@@ -439,14 +433,13 @@ class TensorInfo():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
-            >>>                                       slot=0,
-            >>>                                       iteration=8,
-            >>>                                       rank_id=5,
-            >>>                                       root_graph_id=0,
-            >>>                                       is_output=True)
+            ...                                       slot=0,
+            ...                                       iteration=8,
+            ...                                       rank_id=5,
+            ...                                       root_graph_id=0,
+            ...                                       is_output=True)
             >>> name = tensor_info.node_name
         """
-
         return self.instance.get_node_name()
 
     @property
@@ -460,14 +453,13 @@ class TensorInfo():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
-            >>>                                       slot=0,
-            >>>                                       iteration=8,
-            >>>                                       rank_id=5,
-            >>>                                       root_graph_id=0,
-            >>>                                       is_output=True)
+            ...                                       slot=0,
+            ...                                       iteration=8,
+            ...                                       rank_id=5,
+            ...                                       root_graph_id=0,
+            ...                                       is_output=True)
             >>> slot = tensor_info.slot
         """
-
         return self.instance.get_slot()
 
     @property
@@ -481,14 +473,13 @@ class TensorInfo():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
-            >>>                                       slot=0,
-            >>>                                       iteration=8,
-            >>>                                       rank_id=5,
-            >>>                                       root_graph_id=0,
-            >>>                                       is_output=True)
+            ...                                       slot=0,
+            ...                                       iteration=8,
+            ...                                       rank_id=5,
+            ...                                       root_graph_id=0,
+            ...                                       is_output=True)
             >>> iteration = tensor_info.iteration
         """
-
         return self.instance.get_iteration()
 
     @property
@@ -502,14 +493,13 @@ class TensorInfo():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
-            >>>                                       slot=0,
-            >>>                                       iteration=8,
-            >>>                                       rank_id=5,
-            >>>                                       root_graph_id=0,
-            >>>                                       is_output=True)
+            ...                                       slot=0,
+            ...                                       iteration=8,
+            ...                                       rank_id=5,
+            ...                                       root_graph_id=0,
+            ...                                       is_output=True)
             >>> rank_id = tensor_info.rank_id
         """
-
         return self.instance.get_rank_id()
 
     @property
@@ -523,14 +513,13 @@ class TensorInfo():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
-            >>>                                       slot=0,
-            >>>                                       iteration=8,
-            >>>                                       rank_id=5,
-            >>>                                       root_graph_id=0,
-            >>>                                       is_output=True)
+            ...                                       slot=0,
+            ...                                       iteration=8,
+            ...                                       rank_id=5,
+            ...                                       root_graph_id=0,
+            ...                                       is_output=True)
             >>> rank_id = tensor_info.root_graph_id
         """
-
         return self.instance.get_root_graph_id()
 
     @property
@@ -544,18 +533,17 @@ class TensorInfo():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_info = dbg_services.TensorInfo(node_name="conv2.bias",
-            >>>                                       slot=0,
-            >>>                                       iteration=8,
-            >>>                                       rank_id=5,
-            >>>                                       root_graph_id=0,
-            >>>                                       is_output=True)
+            ...                                       slot=0,
+            ...                                       iteration=8,
+            ...                                       rank_id=5,
+            ...                                       root_graph_id=0,
+            ...                                       is_output=True)
             >>> is_output = tensor_info.is_output
         """
-
         return self.instance.get_is_output()
 
 
-class TensorData():
+class TensorData:
     """
     TensorData class.
 
@@ -568,15 +556,14 @@ class TensorData():
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> tensor_data = dbg_services.TensorData(data_ptr=b'\xba\xd0\xba\xd0',
-        >>>                                       data_size=4,
-        >>>                                       dtype=0,
-        >>>                                       shape=[2, 2])
+        ...                                       data_size=4,
+        ...                                       dtype=0,
+        ...                                       shape=[2, 2])
     """
-
     @check_tensor_data_init
     def __init__(self, data_ptr, data_size, dtype, shape):
         if security.enable_security():
-            raise ValueError("Offline debugger is not supported in security mode." \
+            raise ValueError("Offline debugger is not supported in security mode."
                              "Please recompile mindspore without `-s on`.")
         self.instance = cds.tensor_data(data_ptr, data_size, dtype, shape)
 
@@ -591,12 +578,11 @@ class TensorData():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_data = dbg_services.TensorData(data_ptr=b'\xba\xd0\xba\xd0',
-            >>>                                       data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2])
+            ...                                       data_size=4,
+            ...                                       dtype=0,
+            ...                                       shape=[2, 2])
             >>> data_ptr = tensor_data.data_ptr
         """
-
         return self.instance.get_data_ptr()
 
     @property
@@ -610,12 +596,11 @@ class TensorData():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_data = dbg_services.TensorData(data_ptr=b'\xba\xd0\xba\xd0',
-            >>>                                       data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2])
+            ...                                       data_size=4,
+            ...                                       dtype=0,
+            ...                                       shape=[2, 2])
             >>> data_size = tensor_data.data_size
         """
-
         return self.instance.get_data_size()
 
     @property
@@ -629,12 +614,11 @@ class TensorData():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_data = dbg_services.TensorData(data_ptr=b'\xba\xd0\xba\xd0',
-            >>>                                       data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2])
+            ...                                       data_size=4,
+            ...                                       dtype=0,
+            ...                                       shape=[2, 2])
             >>> dtype = tensor_data.dtype
         """
-
         return self.instance.get_dtype()
 
     @property
@@ -648,16 +632,15 @@ class TensorData():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_data = dbg_services.TensorData(data_ptr=b'\xba\xd0\xba\xd0',
-            >>>                                       data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2])
+            ...                                       data_size=4,
+            ...                                       dtype=0,
+            ...                                       shape=[2, 2])
             >>> shape = tensor_data.shape
         """
-
         return self.instance.get_shape()
 
 
-class TensorBaseData():
+class TensorBaseData:
 
     """
     TensorBaseData class.
@@ -670,13 +653,13 @@ class TensorBaseData():
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> tensor_base_data = dbg_services.TensorBaseData(data_size=4,
-        >>>                                       dtype=0,
-        >>>                                       shape=[2, 2])
+        ...                                                dtype=0,
+        ...                                                shape=[2, 2])
     """
     @check_tensor_base_data_init
     def __init__(self, data_size, dtype, shape):
         if security.enable_security():
-            raise ValueError("Offline debugger is not supported in security mode. " \
+            raise ValueError("Offline debugger is not supported in security mode. "
                              "Please recompile mindspore without `-s on`.")
         self.instance = cds.TensorBaseData(data_size, dtype, shape)
 
@@ -699,11 +682,10 @@ class TensorBaseData():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_base_data = dbg_services.TensorBaseData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2])
+            ...                                       dtype=0,
+            ...                                       shape=[2, 2])
             >>> data_size = tensor_base_data.data_size
         """
-
         return self.instance.data_size()
 
     @property
@@ -717,8 +699,8 @@ class TensorBaseData():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_base_data = dbg_services.TensorBaseData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2])
+            ...                                                dtype=0,
+            ...                                                shape=[2, 2])
             >>> dtype = tensor_base_data.dtype
         """
 
@@ -735,15 +717,14 @@ class TensorBaseData():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> tensor_base_data = dbg_services.TensorBaseData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2])
+            ...                                       dtype=0,
+            ...                                       shape=[2, 2])
             >>> shape = tensor_base_data.shape
         """
-
         return self.instance.shape()
 
 
-class TensorStatData():
+class TensorStatData:
 
     """
     TensorStatData class.
@@ -764,24 +745,19 @@ class TensorStatData():
         pos_inf_count (int): Number of positive infinity elements in tensor
         zero_count (int): Total number of zero elements in tensor
 
-
-
-
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> tensor_stat_data = dbg_services.TensorStatData
-        >>>                                       (data_size=4,
-        >>>                                       dtype=0,
-        >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-        >>>                                       min_value = 0.0, avg_value = 5.0,
-        >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-        >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+        >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+        ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+        ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+        ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+        ...                                                zero_count = 1)
     """
     @check_tensor_stat_data_init
     def __init__(self, data_size, dtype, shape, is_bool, max_value, min_value, avg_value, count,
                  neg_zero_count, pos_zero_count, nan_count, neg_inf_count, pos_inf_count, zero_count):
         if security.enable_security():
-            raise ValueError("Offline debugger is not supported in security mode. " \
+            raise ValueError("Offline debugger is not supported in security mode. "
                              "Please recompile mindspore without `-s on`.")
         self.instance = cds.TensorStatData(data_size, dtype, shape, is_bool, max_value,
                                            min_value, avg_value, count, neg_zero_count,
@@ -817,13 +793,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData
-            >>>                                       (data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4,
-            >>                                        nan_count = 0, neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> data_size = tensor_stat_data.data_size
         """
 
@@ -839,15 +813,13 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>                                        min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> dtype = tensor_stat_data.dtype
         """
-
         return self.instance.dtype()
 
     @property
@@ -860,15 +832,13 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> shape = tensor_stat_data.shape
         """
-
         return self.instance.shape()
 
     @property
@@ -881,12 +851,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> is_bool = tensor_stat_data.is_bool
         """
         return self.instance.is_bool()
@@ -901,12 +870,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> max_value = tensor_stat_data.max_value
         """
         return self.instance.max_value()
@@ -921,12 +889,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> min_value = tensor_stat_data.min_value
         """
         return self.instance.min_value()
@@ -941,12 +908,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> avg_value = tensor_stat_data.avg_value
         """
         return self.instance.avg_value()
@@ -961,12 +927,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> count = tensor_stat_data.count
         """
         return self.instance.count()
@@ -981,12 +946,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> neg_zero_count = tensor_stat_data.neg_zero_count
         """
         return self.instance.neg_zero_count()
@@ -1001,12 +965,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> pos_zero_count = tensor_stat_data.pos_zero_count
         """
         return self.instance.pos_zero_count()
@@ -1021,12 +984,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> zero_count = tensor_stat_data.zero_count
         """
         return self.instance.zero_count()
@@ -1041,12 +1003,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> nan_count = tensor_stat_data.nan_count
         """
         return self.instance.nan_count()
@@ -1061,12 +1022,11 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 4, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> neg_inf_count = tensor_stat_data.neg_inf_count
         """
         return self.instance.neg_inf_count()
@@ -1081,18 +1041,17 @@ class TensorStatData():
 
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4,
-            >>>                                       dtype=0,
-            >>>                                       shape=[2, 2], is_bool = false, max_value = 10.0,
-            >>>                                       min_value = 0.0, avg_value = 5.0,
-            >>>                                       count = 4, neg_zero_count = 0, pos_zero_count = 1, nan_count = 0,
-            >>>                                       neg_inf_count, pos_inf_count, zero_count = 1)
+            >>> tensor_stat_data = dbg_services.TensorStatData(data_size=4, dtype=0, shape=[2, 2], is_bool = false,
+            ...                                                max_value = 10.0, min_value = 0.0, avg_value = 5.0,
+            ...                                                count = 4, neg_zero_count = 0, pos_zero_count = 4,
+            ...                                                nan_count = 0, neg_inf_count = 0, pos_inf_count = 0,
+            ...                                                zero_count = 1)
             >>> pos_inf_count = tensor_stat_data.pos_inf_count
         """
         return self.instance.pos_inf_count()
 
 
-class WatchpointHit():
+class WatchpointHit:
     """
     WatchpointHit class.
 
@@ -1110,19 +1069,19 @@ class WatchpointHit():
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> watchpoint_hit = dbg_services.WatchpointHit(name="hit1",
-        >>>                                             slot=1,
-        >>>                                             condition=2,
-        >>>                                             watchpoint_id=3,
-        >>>                                             parameters=[param1, param2],
-        >>>                                             error_code=0,
-        >>>                                             rank_id=1,
-        >>>                                             root_graph_id=1)
+        ...                                             slot=1,
+        ...                                             condition=2,
+        ...                                             watchpoint_id=3,
+        ...                                             parameters=[param1, param2],
+        ...                                             error_code=0,
+        ...                                             rank_id=1,
+        ...                                             root_graph_id=1)
     """
 
     @check_watchpoint_hit_init
     def __init__(self, name, slot, condition, watchpoint_id, parameters, error_code, rank_id, root_graph_id):
         if security.enable_security():
-            raise ValueError("Offline debugger is not supported in security mode. " \
+            raise ValueError("Offline debugger is not supported in security mode. "
                              "Please recompile mindspore without `-s on`.")
         parameter_list_inst = []
         for elem in parameters:
@@ -1141,16 +1100,15 @@ class WatchpointHit():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> watchpoint_hit = dbg_services.WatchpointHit(name="hit1",
-            >>>                                             slot=1,
-            >>>                                             condition=2,
-            >>>                                             watchpoint_id=3,
-            >>>                                             parameters=[param1, param2],
-            >>>                                             error_code=0,
-            >>>                                             rank_id=1,
-            >>>                                             root_graph_id=1)
+            ...                                             slot=1,
+            ...                                             condition=2,
+            ...                                             watchpoint_id=3,
+            ...                                             parameters=[param1, param2],
+            ...                                             error_code=0,
+            ...                                             rank_id=1,
+            ...                                             root_graph_id=1)
             >>> name = watchpoint_hit.name
         """
-
         return self.instance.get_name()
 
     @property
@@ -1164,16 +1122,15 @@ class WatchpointHit():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> watchpoint_hit = dbg_services.WatchpointHit(name="hit1",
-            >>>                                             slot=1,
-            >>>                                             condition=2,
-            >>>                                             watchpoint_id=3,
-            >>>                                             parameters=[param1, param2],
-            >>>                                             error_code=0,
-            >>>                                             rank_id=1,
-            >>>                                             root_graph_id=1)
+            ...                                             slot=1,
+            ...                                             condition=2,
+            ...                                             watchpoint_id=3,
+            ...                                             parameters=[param1, param2],
+            ...                                             error_code=0,
+            ...                                             rank_id=1,
+            ...                                             root_graph_id=1)
             >>> slot = watchpoint_hit.slot
         """
-
         return self.instance.get_slot()
 
     @property
@@ -1187,16 +1144,15 @@ class WatchpointHit():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> watchpoint_hit = dbg_services.WatchpointHit(name="hit1",
-            >>>                                             slot=1,
-            >>>                                             condition=2,
-            >>>                                             watchpoint_id=3,
-            >>>                                             parameters=[param1, param2],
-            >>>                                             error_code=0,
-            >>>                                             rank_id=1,
-            >>>                                             root_graph_id=1)
+            ...                                             slot=1,
+            ...                                             condition=2,
+            ...                                             watchpoint_id=3,
+            ...                                             parameters=[param1, param2],
+            ...                                             error_code=0,
+            ...                                             rank_id=1,
+            ...                                             root_graph_id=1)
             >>> condition = watchpoint_hit.condition
         """
-
         return self.instance.get_condition()
 
     @property
@@ -1210,13 +1166,13 @@ class WatchpointHit():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> watchpoint_hit = dbg_services.WatchpointHit(name="hit1",
-            >>>                                             slot=1,
-            >>>                                             condition=2,
-            >>>                                             watchpoint_id=3,
-            >>>                                             parameters=[param1, param2],
-            >>>                                             error_code=0,
-            >>>                                             rank_id=1,
-            >>>                                             root_graph_id=1)
+            ...                                             slot=1,
+            ...                                             condition=2,
+            ...                                             watchpoint_id=3,
+            ...                                             parameters=[param1, param2],
+            ...                                             error_code=0,
+            ...                                             rank_id=1,
+            ...                                             root_graph_id=1)
             >>> watchpoint_id = watchpoint_hit.watchpoint_id
         """
 
@@ -1233,16 +1189,15 @@ class WatchpointHit():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> watchpoint_hit = dbg_services.WatchpointHit(name="hit1",
-            >>>                                             slot=1,
-            >>>                                             condition=2,
-            >>>                                             watchpoint_id=3,
-            >>>                                             parameters=[param1, param2],
-            >>>                                             error_code=0,
-            >>>                                             rank_id=1,
-            >>>                                             root_graph_id=1)
+            ...                                             slot=1,
+            ...                                             condition=2,
+            ...                                             watchpoint_id=3,
+            ...                                             parameters=[param1, param2],
+            ...                                             error_code=0,
+            ...                                             rank_id=1,
+            ...                                             root_graph_id=1)
             >>> parameters = watchpoint_hit.parameters
         """
-
         params = self.instance.get_parameters()
         param_list = []
         for elem in params:
@@ -1265,16 +1220,15 @@ class WatchpointHit():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> watchpoint_hit = dbg_services.WatchpointHit(name="hit1",
-            >>>                                             slot=1,
-            >>>                                             condition=2,
-            >>>                                             watchpoint_id=3,
-            >>>                                             parameters=[param1, param2],
-            >>>                                             error_code=0,
-            >>>                                             rank_id=1,
-            >>>                                             root_graph_id=1)
+            ...                                             slot=1,
+            ...                                             condition=2,
+            ...                                             watchpoint_id=3,
+            ...                                             parameters=[param1, param2],
+            ...                                             error_code=0,
+            ...                                             rank_id=1,
+            ...                                             root_graph_id=1)
             >>> error_code = watchpoint_hit.error_code
         """
-
         return self.instance.get_error_code()
 
     @property
@@ -1288,16 +1242,15 @@ class WatchpointHit():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> watchpoint_hit = dbg_services.WatchpointHit(name="hit1",
-            >>>                                             slot=1,
-            >>>                                             condition=2,
-            >>>                                             watchpoint_id=3,
-            >>>                                             parameters=[param1, param2],
-            >>>                                             error_code=0,
-            >>>                                             rank_id=1,
-            >>>                                             root_graph_id=1)
+            ...                                             slot=1,
+            ...                                             condition=2,
+            ...                                             watchpoint_id=3,
+            ...                                             parameters=[param1, param2],
+            ...                                             error_code=0,
+            ...                                             rank_id=1,
+            ...                                             root_graph_id=1)
             >>> rank_id = watchpoint_hit.rank_id
         """
-
         return self.instance.get_rank_id()
 
     @property
@@ -1311,20 +1264,19 @@ class WatchpointHit():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> watchpoint_hit = dbg_services.WatchpointHit(name="hit1",
-            >>>                                             slot=1,
-            >>>                                             condition=2,
-            >>>                                             watchpoint_id=3,
-            >>>                                             parameters=[param1, param2],
-            >>>                                             error_code=0,
-            >>>                                             rank_id=1,
-            >>>                                             root_graph_id=1)
+            ...                                             slot=1,
+            ...                                             condition=2,
+            ...                                             watchpoint_id=3,
+            ...                                             parameters=[param1, param2],
+            ...                                             error_code=0,
+            ...                                             rank_id=1,
+            ...                                             root_graph_id=1)
             >>> root_graph_id = watchpoint_hit.root_graph_id
         """
-
         return self.instance.get_root_graph_id()
 
 
-class Parameter():
+class Parameter:
     """
     Parameter class.
 
@@ -1338,16 +1290,15 @@ class Parameter():
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
         >>> parameter = dbg_services.Parameter(name="param",
-        >>>                                    disabled=False,
-        >>>                                    value=0.0,
-        >>>                                    hit=False,
-        >>>                                    actual_value=0.0)
+        ...                                    disabled=False,
+        ...                                    value=0.0,
+        ...                                    hit=False,
+        ...                                    actual_value=0.0)
     """
-
     @check_parameter_init
     def __init__(self, name, disabled, value, hit=False, actual_value=0.0):
         if security.enable_security():
-            raise ValueError("Offline debugger is not supported in security mode. " \
+            raise ValueError("Offline debugger is not supported in security mode. "
                              "Please recompile mindspore without `-s on`.")
         self.instance = cds.parameter(name, disabled, value, hit, actual_value)
 
@@ -1362,9 +1313,10 @@ class Parameter():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> parameter = dbg_services.Parameter(name="param",
-            >>>                                    disabled=False,
-            >>>                                    value=0.0,
-            >>>                                    hit=False,
+            ...                                    disabled=False,
+            ...                                    value=0.0,
+            ...                                    hit=False,
+            ...                                    actual_value=0.0)
             >>> name = watchpoint_hit.name
         """
 
@@ -1381,12 +1333,12 @@ class Parameter():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> parameter = dbg_services.Parameter(name="param",
-            >>>                                    disabled=False,
-            >>>                                    value=0.0,
-            >>>                                    hit=False,
+            ...                                    disabled=False,
+            ...                                    value=0.0,
+            ...                                    hit=False,
+            ...                                    actual_value=0.0)
             >>> disabled = watchpoint_hit.disabled
         """
-
         return self.instance.get_disabled()
 
     @property
@@ -1400,12 +1352,12 @@ class Parameter():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> parameter = dbg_services.Parameter(name="param",
-            >>>                                    disabled=False,
-            >>>                                    value=0.0,
-            >>>                                    hit=False,
+            ...                                    disabled=False,
+            ...                                    value=0.0,
+            ...                                    hit=False,
+            ...                                    actual_value=0.0)
             >>> value = watchpoint_hit.value
         """
-
         return self.instance.get_value()
 
     @property
@@ -1419,12 +1371,12 @@ class Parameter():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> parameter = dbg_services.Parameter(name="param",
-            >>>                                    disabled=False,
-            >>>                                    value=0.0,
-            >>>                                    hit=False,
+            ...                                    disabled=False,
+            ...                                    value=0.0,
+            ...                                    hit=False,
+            ...                                    actual_value=0.0)
             >>> hit = watchpoint_hit.hit
         """
-
         return self.instance.get_hit()
 
     @property
@@ -1438,10 +1390,10 @@ class Parameter():
         Examples:
             >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
             >>> parameter = dbg_services.Parameter(name="param",
-            >>>                                    disabled=False,
-            >>>                                    value=0.0,
-            >>>                                    hit=False,
+            ...                                    disabled=False,
+            ...                                    value=0.0,
+            ...                                    hit=False,
+            ...                                    actual_value=0.0)
             >>> actual_value = watchpoint_hit.actual_value
         """
-
         return self.instance.get_actual_value()
