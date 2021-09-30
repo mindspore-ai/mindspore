@@ -47,6 +47,10 @@ std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schem
 
 tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std::vector<int64_t> &shape,
                                    TypeId data_type) {
+  if (data_type == kTypeUnknown) {
+    MS_LOG(ERROR) << "data type of tensor is unknown";
+    return nullptr;
+  }
   tensor::TensorPtr tensor_info = nullptr;
   if (shape.empty() && data_size == mindspore::abstract::TypeIdSize(data_type)) {
     ShapeVector scalar_shape = {1};

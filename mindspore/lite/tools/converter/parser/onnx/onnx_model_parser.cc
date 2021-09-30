@@ -499,6 +499,44 @@ FuncGraphPtr OnnxModelParser::BuildBodyGraph(const onnx::NodeProto &loop_node, c
   return loop_body_graph;
 }
 
+namespace {
+STATUS CheckOnnxModel(const onnx::GraphProto &onnx_graph) {
+  // all input should in initialize
+  std::set<std::string> providers;
+  for (const auto &const_tensor : onnx_graph.initializer()) {
+    const auto &name = const_tensor.name();
+    if (providers.count(name) != 0) {
+      MS_LOG(ERROR) << "const tensor repeated";
+      return RET_ERROR;
+    }
+    providers.insert(name);
+  }
+  for (int i = 0; i < onnx_graph.input().size(); ++i) {
+    providers.insert(onnx_graph.input(i).name());
+  }
+  for (const auto &onnx_node : onnx_graph.node()) {
+    for (int i = 0; i < onnx_node.output_size(); i++) {
+      auto &output = onnx_node.output(i);
+      if (providers.count(output) != 0) {
+        MS_LOG(ERROR) << "Output tensor repeated";
+        return RET_ERROR;
+      }
+      providers.insert(output);
+    }
+  }
+  // all output should find
+  for (const auto &onnx_node : onnx_graph.node()) {
+    for (int i = 0; i < onnx_node.input_size(); i++) {
+      auto &input = onnx_node.input(i);
+      if (providers.count(input) == 0) {
+        MS_LOG(WARNING) << "Can not find node input: " << input;
+      }
+    }
+  }
+  return RET_OK;
+}
+}  // namespace
+
 api::FuncGraphPtr OnnxModelParser::Parse(const converter::ConverterParameters &flag) {
   auto model_file = flag.model_file;
   NotSupportOp::GetInstance()->set_fmk_type("ONNX");
@@ -580,6 +618,12 @@ STATUS OnnxModelParser::ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, con
   MS_ASSERT(onnx_graph != nullptr && anf_graph != nullptr);
   MS_ASSERT(anf_nodes_map != nullptr && extra_subgraph_inputs != nullptr);
   STATUS status = RET_OK;
+  status = CheckOnnxModel(onnx_graph);
+  if (status != RET_OK) {
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    MS_LOG(ERROR) << "input onnx model error: " << status;
+    return status;
+  }
   status = ConvertConstTensors(onnx_graph, anf_graph, anf_nodes_map);
   if (RET_OK != status) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);

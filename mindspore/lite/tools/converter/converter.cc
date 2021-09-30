@@ -124,6 +124,7 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Transform meta graph failed " << status;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    delete meta_graph;
     return nullptr;
   }
 
