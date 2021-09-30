@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/rolling_cpu_kernel.h"
-#include <cmath>
-#include <algorithm>
+#include <math.h>
 #include <map>
 #include <limits>
-#include <functional>
+#include <type_traits>
 #include "common/thread_pool.h"
 
 namespace mindspore {

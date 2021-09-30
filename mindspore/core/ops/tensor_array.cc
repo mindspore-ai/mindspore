@@ -15,13 +15,7 @@
  */
 
 #include "ops/tensor_array.h"
-#include <string>
-#include <algorithm>
-#include <memory>
-#include <set>
 #include <vector>
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {

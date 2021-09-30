@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/shift_cpu_kernel.h"
-#include <algorithm>
-#include <cmath>
 #include "common/thread_pool.h"
 
 namespace mindspore {

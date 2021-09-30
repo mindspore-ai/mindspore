@@ -15,7 +15,6 @@
  */
 
 #include <vector>
-#include <memory>
 #include "include/errorcode.h"
 #include "src/runtime/kernel/arm/control/tensor_array.h"
 #include "schema/model_generated.h"
