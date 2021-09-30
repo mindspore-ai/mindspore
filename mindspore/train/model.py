@@ -380,6 +380,7 @@ class Model:
                                                   epoch_num=epoch_num,
                                                   dataset_helper=dataset_helper)
         train_dataset._dataset_helper = dataset_helper
+        train_dataset._warmup_epoch = epoch
 
     def _init(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1):
         """
@@ -701,6 +702,12 @@ class Model:
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode is True:
             raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
+
+        if hasattr(train_dataset, '_warmup_epoch') and train_dataset._warmup_epoch != epoch:
+            raise ValueError("Use Model.build to initialize model, but the value of parameter `epoch` in Model.build "
+                             "is not equal to value in Model.train, got {} and {} separately."
+                             .format(train_dataset._warmup_epoch, epoch))
+
         Validator.check_is_int(sink_size)
         dataset_size = train_dataset.get_dataset_size()
         if dataset_size == 0:

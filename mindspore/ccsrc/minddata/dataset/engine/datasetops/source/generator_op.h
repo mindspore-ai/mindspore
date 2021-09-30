@@ -36,11 +36,13 @@ namespace mindspore {
 namespace dataset {
 #pragma GCC visibility push(hidden)
 
+constexpr int32_t kGetItemTimeOutMilliSeconds = 25000;
+
 class GeneratorOp : public PipelineOp, public RandomAccessOp {
  public:
   GeneratorOp(py::function generator_function, std::vector<std::string> column_names,
               std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
-              std::shared_ptr<SamplerRT> sampler);
+              std::shared_ptr<SamplerRT> sampler, uint32_t num_parallel_workers);
 
   ~GeneratorOp() = default;
 
@@ -81,6 +83,7 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   std::vector<DataType> column_types_;
   int32_t prefetch_size_;
   int64_t generator_counter_;
+  uint32_t num_parallel_workers_;
 
   py::object generator_;
 

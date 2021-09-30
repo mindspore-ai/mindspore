@@ -171,8 +171,10 @@ Status DeviceQueueOp::operator()() {
 Status DeviceQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue, sending data to Ascend.";
 #ifndef ENABLE_SECURITY
-  uint64_t batch_start_time, end_time;
-  uint64_t batch_record_start, batch_record_end;
+  uint64_t batch_start_time = 0;
+  uint64_t end_time = 0;
+  uint64_t batch_record_start = 0;
+  uint64_t batch_record_end = 0;
 #endif
   int64_t send_batch = 0;
   int32_t tdt_cost = 0;
@@ -221,11 +223,9 @@ Status DeviceQueueOp::SendDataToAscend() {
 #ifndef ENABLE_SECURITY
       DetectPerBatchTime(&batch_record_start, &batch_record_end);
 #endif
+      PrintBeginInfoWhenFirstBatch(first_push_flag_);
       RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
-      if (first_push_flag_ != true) {
-        MS_LOG(INFO) << "Loading dataset and push first batch into device successful.";
-        first_push_flag_ = true;
-      }
+      PrintEndInfoWhenFirstBatch(&first_push_flag_);
 #ifndef ENABLE_SECURITY
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, tdt_cost, &batch_start_time, &end_time,
                         connector_capacity, connector_size);
@@ -581,11 +581,9 @@ Status DeviceQueueOp::SendDataToGPU() {
 #ifndef ENABLE_SECURITY
       DetectPerBatchTime(&batch_record_start, &batch_record_end);
 #endif
+      PrintBeginInfoWhenFirstBatch(first_push_flag_);
       RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(current_row)));
-      if (first_push_flag_ != true) {
-        MS_LOG(INFO) << "Loading dataset and push first batch into device successful.";
-        first_push_flag_ = true;
-      }
+      PrintEndInfoWhenFirstBatch(&first_push_flag_);
 #ifndef ENABLE_SECURITY
       batch_record_start = ProfilingTime::GetCurMilliSecond();
 #endif
@@ -725,6 +723,23 @@ void DeviceQueueOp::DetectPerBatchTime(uint64_t *start_time, uint64_t *end_time)
     MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to fetch a batch of data from dataset "
                        "pipeline, which might result `GetNext` timeout problem. You may test dataset processing"
                        " performance(with creating dataset iterator) and optimize it.";
+  }
+}
+
+void DeviceQueueOp::PrintBeginInfoWhenFirstBatch(const bool &first_push_flag) {
+  if (first_push_flag != true) {
+    MS_LOG(INFO) << "Loading dataset and begin to push first batch into device ...";
+  }
+}
+
+void DeviceQueueOp::PrintEndInfoWhenFirstBatch(bool *first_push_flag) {
+  if (!first_push_flag) {
+    MS_LOG(WARNING) << "First batch flag: first_push_flag is nullptr";
+    return;
+  }
+  if (*first_push_flag != true) {
+    MS_LOG(INFO) << "Loading dataset and push first batch into device successful.";
+    *first_push_flag = true;
   }
 }
 #endif
