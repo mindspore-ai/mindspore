@@ -70,7 +70,8 @@ class NPUOp {
     if (index2_multi_out_index.empty()) {
       return SetNPUInputs(in_tensors, out_tensors, npu_inputs);
     }
-    return RET_OK;
+    MS_LOG(ERROR) << "The input operator of npu op: " << this->name() << " has multiple outputs. Override this method.";
+    return RET_ERROR;
   }
 
   virtual ge::Operator *GetNPUOp() { return nullptr; }
