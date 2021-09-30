@@ -36,6 +36,7 @@
 #include "src/delegate/tensorrt/op/slice_tensorrt.h"
 #include "src/delegate/tensorrt/op/pool_tensorrt.h"
 #include "src/delegate/tensorrt/op/pad_tensorrt.h"
+#include "src/delegate/tensorrt/op/resize_tensorrt.h"
 
 namespace mindspore::lite {
 TensorRTDelegate::~TensorRTDelegate() {
@@ -90,6 +91,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_MaxPoolFusion, GetTensorRTOp<PoolTensorRT>},
     {schema::PrimitiveType_PadFusion, GetTensorRTOp<PadTensorRT>},
     {schema::PrimitiveType_ReduceFusion, GetTensorRTOp<ReduceTensorRT>},
+    {schema::PrimitiveType_Resize, GetTensorRTOp<ResizeTensorRT>},
     {schema::PrimitiveType_ScaleFusion, GetTensorRTOp<ScaleTensorRT>},
     {schema::PrimitiveType_StridedSlice, GetTensorRTOp<SliceTensorRT>},
     {schema::PrimitiveType_Shape, GetTensorRTOp<ShapeTensorRT>},
