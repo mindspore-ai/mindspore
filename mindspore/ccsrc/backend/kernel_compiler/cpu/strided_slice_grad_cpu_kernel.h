@@ -46,9 +46,6 @@ class StridedSliceGradCPUKernel : public CPUKernel {
   StridedSliceParameter *param_{nullptr};
 };
 
-MS_REG_CPU_KERNEL(StridedSliceGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  StridedSliceGradCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 
