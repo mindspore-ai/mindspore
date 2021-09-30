@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_Unique;
 namespace mindspore::kernel {
 int UniqueCPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 2);
+  CHECK_LESS_RETURN(out_tensors_.size(), C2NUM);
   return RET_OK;
 }
 
@@ -34,11 +34,11 @@ int UniqueCPUKernel::ReSize() { return RET_OK; }
 
 int UniqueCPUKernel::Run() {
   auto input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  MS_ASSERT(input);
+  CHECK_NULL_RETURN(input);
   auto output0 = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  MS_ASSERT(output0);
+  CHECK_NULL_RETURN(output0);
   auto output1 = reinterpret_cast<int *>(out_tensors_.at(1)->MutableData());
-  MS_ASSERT(output1);
+  CHECK_NULL_RETURN(output1);
 
   int output0_len = 0;
   Unique(input, in_tensors_.at(0)->ElementsNum(), output0, &output0_len, output1);

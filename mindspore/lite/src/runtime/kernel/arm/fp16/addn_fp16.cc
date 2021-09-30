@@ -56,8 +56,11 @@ int AddNFp16CPUKernel::AddNParallelRun(int thread_id, float lhs_scale, float rhs
 int AddNFp16CPUKernel::Run() {
   elements_num_ = out_tensors_[0]->ElementsNum();
   auto input0_data = reinterpret_cast<float16_t *>(in_tensors_[0]->MutableData());
+  CHECK_NULL_RETURN(input0_data);
   auto input1_data = reinterpret_cast<float16_t *>(in_tensors_[1]->MutableData());
+  CHECK_NULL_RETURN(input1_data);
   auto out_data = reinterpret_cast<float16_t *>(out_tensors_[0]->MutableData());
+  CHECK_NULL_RETURN(out_data);
   if (static_cast<int>(elements_num_) < op_parameter_->thread_num_) {
     if (in_tensors_[0]->shape() == in_tensors_[1]->shape()) {
       ElementAddFp16(input0_data, input1_data, out_data, elements_num_);
@@ -71,6 +74,7 @@ int AddNFp16CPUKernel::Run() {
     }
 
     for (size_t i = 2; i < in_tensors_.size(); ++i) {
+      CHECK_NULL_RETURN(in_tensors_[i]->data());
       if (in_tensors_[i]->shape() == out_tensors_[0]->shape()) {
         ElementAddFp16(reinterpret_cast<float16_t *>(in_tensors_[i]->data()), out_data, out_data, elements_num_);
       } else {
@@ -95,6 +99,7 @@ int AddNFp16CPUKernel::Run() {
   }
   for (size_t i = 2; i < in_tensors_.size(); ++i) {
     in1_addr_ = reinterpret_cast<float16_t *>(in_tensors_[i]->MutableData());
+    CHECK_NULL_RETURN(in1_addr_);
     in2_addr_ = out_data;
     ret = ParallelLaunch(this->ms_context_, AddNLaunch, this, op_parameter_->thread_num_);
     if (ret != RET_OK) {
