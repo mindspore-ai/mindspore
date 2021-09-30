@@ -18,6 +18,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/fp32/prelu_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -37,12 +38,16 @@ static int PReluRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) 
 }
 
 int PReluCPUKernel::Prepare() {
+  constexpr int kSlopeIndex = 1;
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(in_tensors_[kInputIndex]);
+  CHECK_NULL_RETURN(in_tensors_[kSlopeIndex]);
+  CHECK_NULL_RETURN(out_tensors_[kOutputIndex]);
   if (in_tensors_[1]->ElementsNum() == 1) {
-    prelu_param_->channelShared = true;
+    param_->channelShared = true;
   } else {
-    prelu_param_->channelShared = false;
+    param_->channelShared = false;
   }
   if (!InferShapeDone()) {
     return RET_OK;
@@ -51,59 +56,47 @@ int PReluCPUKernel::Prepare() {
 }
 
 int PReluCPUKernel::DoExcute(int task_id) {
-  int thread_num = prelu_param_->op_parameter_.thread_num_;
+  int thread_num = param_->op_parameter_.thread_num_;
   if (thread_num == 0) {
     MS_LOG(ERROR) << "thread_num is 0!";
     return RET_ERROR;
   }
-  if (prelu_param_->channelShared) {
-    int step = UP_DIV(prelu_param_->input_num_, thread_num);
-    int start = task_id * step;
-    int end = MSMIN(start + step, prelu_param_->input_num_);
-    PReluShareChannel(input_data_, output_data_, prelu_param_->slope_[0], start, end);
+  int num = param_->channelShared ? param_->input_num_ : param_->input_num_ / param_->channel_num_;
+  int step = UP_DIV(num, thread_num);
+  int start = task_id * step;
+  int end = MSMIN(start + step, num);
+
+  if (param_->channelShared) {
+    PReluShareChannel(static_cast<float *>(input_data_), static_cast<float *>(output_data_),
+                      static_cast<float *>(slope_data_)[0], start, end);
   } else {
-    int step = UP_DIV(prelu_param_->tile_block_, thread_num);
-    int start = task_id * step;
-    int end = MSMIN(start + step, prelu_param_->tile_block_);
-    PRelu(input_data_, output_data_, prelu_param_->slope_, start, end, prelu_param_->channel_num_);
+    PRelu(static_cast<float *>(input_data_), static_cast<float *>(output_data_), static_cast<float *>(slope_data_),
+          start, end, param_->channel_num_);
   }
   return RET_OK;
 }
 
 int PReluCPUKernel::ReSize() {
-  auto input_tensor = in_tensors_.at(0);
-  auto in_shape = input_tensor->shape();
-  auto n_dim = in_shape.size();
-  auto channel_num = in_shape.at(n_dim - 1);
-  int input_plane = 1;
-  for (size_t i = 0; i < n_dim - 1; ++i) {
-    input_plane *= in_shape.at(i);
-  }
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_plane, channel_num), RET_ERROR);
-  prelu_param_->input_num_ = input_plane * channel_num;
-  prelu_param_->tile_block_ = input_plane;
-  prelu_param_->channel_num_ = channel_num;
+  auto &input = in_tensors_[kInputIndex];
+  param_->input_num_ = input->ElementsNum();
+  param_->channel_num_ = input->Channel();
   return RET_OK;
 }
 
 int PReluCPUKernel::Run() {
-  auto input_tensor = in_tensors_[0];
-  input_data_ = reinterpret_cast<float *>(input_tensor->data());
-  output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data());
+  constexpr int kSlopeIndex = 1;
+  input_data_ = in_tensors_[kInputIndex]->data();
+  slope_data_ = in_tensors_[kSlopeIndex]->data();
+  output_data_ = out_tensors_[kOutputIndex]->data();
   CHECK_NULL_RETURN(input_data_);
+  CHECK_NULL_RETURN(slope_data_);
   CHECK_NULL_RETURN(output_data_);
 
-  // negative slope tensor
-  auto negative_slope_tensor = in_tensors_.at(1);
-  CHECK_NULL_RETURN(negative_slope_tensor->data());
-  prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->data());
-
-  auto ret = ParallelLaunch(this->ms_context_, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, PReluRun, this, param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PRelu Run error: error_code[" << ret << "]";
     return RET_ERROR;
   }
-
   return RET_OK;
 }
 
