@@ -702,7 +702,7 @@ class Vol(AudioTensorOperation):
             If gain_type = amplitude, gain stands for nonnegative amplitude ratio.
             If gain_type = power, gain stands for power.
             If gain_type = db, gain stands for decibels.
-        gain_type (ScaleType, optional): Type of gain, contains the following three enumeration values
+        gain_type (GainType, optional): Type of gain, contains the following three enumeration values
             GainType.AMPLITUDE, GainType.POWER and GainType.DB (default=GainType.AMPLITUDE).
 
     Examples:
