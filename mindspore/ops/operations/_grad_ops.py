@@ -1864,7 +1864,7 @@ class SoftMarginLossGrad(Primitive):
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
 
-class StridedSliceGrad(PrimitiveWithInfer):
+class StridedSliceGrad(Primitive):
     """
     Performs grad of StridedSlice operation.
 
@@ -1893,22 +1893,6 @@ class StridedSliceGrad(PrimitiveWithInfer):
         validator.check_value_type('new_axis_mask', new_axis_mask, [int], self.name)
         validator.check_value_type('shrink_axis_mask', shrink_axis_mask, [int], self.name)
         self.init_prim_io_names(inputs=['dy', 'shapex', 'begin', 'end', 'strides'], outputs=['output'])
-
-    def __infer__(self, dy, shapex, begin, end, strides):
-        validator.check_tensor_dtype_valid("dy", dy['dtype'], mstype.number_type + (mstype.bool_,), self.name)
-
-        for idx, item in enumerate(shapex['value']):
-            validator.check_value_type("shapex[%d]" % idx, item, [int], self.name)
-        for idx, item in enumerate(begin['value']):
-            validator.check_value_type("begin[%d]" % idx, item, [int], self.name)
-        for idx, item in enumerate(end['value']):
-            validator.check_value_type("end[%d]" % idx, item, [int], self.name)
-        for idx, item in enumerate(strides['value']):
-            validator.check_value_type("strides[%d]" % idx, item, [int], self.name)
-
-        return {'shape': shapex['value'],
-                'dtype': dy['dtype'],
-                'value': None}
 
 
 class SoftplusGrad(PrimitiveWithInfer):

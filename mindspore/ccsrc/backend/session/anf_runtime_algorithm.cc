@@ -142,12 +142,15 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index,
   return inputs->push_back(std::make_pair(node, output_index));
 }
 
-// ops map that dynamic input order is differ from the fixed shape ops
+// ops pair that dynamic input order is differ from the fixed shape ops
+// pair: <real_input->ori_input, ori_input->real_input>
 static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_dynamic_node_list = {
+  {prim::kPrimStridedSliceGrad->name(),
+   {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}},
   {prim::kPrimConv2DBackpropInput->name(), {{{0, 2}, {1, 1}, {2, 0}}, {{0, 2}, {1, 1}, {2, 0}}}},
   {prim::kPrimConv2DBackpropFilter->name(), {{{0, 1}, {1, 2}, {2, 0}}, {{1, 0}, {2, 1}, {0, 2}}}}};
 
-// pair: ms input order to tbe input order, and tbe input order to ms input order
+// pair: <real_input->ori_input, ori_input->real_input>
 static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_node_list = {
   {prim::kPrimConv2DBackpropInput->name(), {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
   {kFusionOpConv2DBackpropInputReluGradV2Name, {{{0, 1}, {1, 0}, {2, 2}}, {{0, 1}, {1, 0}, {2, 2}}}},

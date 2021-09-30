@@ -46,12 +46,8 @@ class MS_CORE_API StridedSlice : public PrimitiveC {
   int64_t get_ellipsis_mask() const;
   int64_t get_new_axis_mask() const;
   int64_t get_shrink_axis_mask() const;
-  std::vector<int64_t> TenToTwo(int64_t num);
-  int64_t compute_slicing_length(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) const;
 };
-struct ComputeHasEllipsis {
-  bool has_ellipsis;
-};
+
 AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args);
 using PrimStridedSlicePtr = std::shared_ptr<StridedSlice>;

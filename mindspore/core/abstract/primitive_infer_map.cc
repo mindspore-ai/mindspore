@@ -43,6 +43,8 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   const auto kOneHot = prim::kPrimOneHot->name();
   const auto kDropoutGenMask = prim::kPrimDropoutGenMask->name();
   const auto kTranspose = prim::kPrimTranspose->name();
+  const auto kStridedSlice = prim::kPrimStridedSlice->name();
+  const auto kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
   const auto kReduceSum = prim::kPrimReduceSum->name();
   const auto kUnsortedSegmentSum = prim::kPrimUnsortedSegmentSum->name();
   const auto kUnsortedSegmentMin = prim::kPrimUnsortedSegmentMin->name();
@@ -53,6 +55,7 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   const auto kRange = prim::kPrimRange->name();
   const auto kConv2DBackpropFilter = prim::kPrimConv2DBackpropFilter->name();
   const auto kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
+
   // common dynamic shape depends
   static std::map<std::string, std::vector<int64_t>> dynamic_shape_depends = {{kUnsortedSegmentSum, {2}},
                                                                               {kUnsortedSegmentMin, {2}},
@@ -64,7 +67,9 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
                                                                               {kConv2DBackpropFilter, {2}},
                                                                               {kConv2DBackpropInput, {2}},
                                                                               {kOneHot, {1, 3}},
-                                                                              {kDropoutGenMask, {0}}};
+                                                                              {kDropoutGenMask, {0}},
+                                                                              {kStridedSlice, {1, 2, 3}},
+                                                                              {kStridedSliceGrad, {1, 2, 3, 4}}};
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

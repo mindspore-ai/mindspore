@@ -38,6 +38,7 @@ from ...common import dtype as mstype
 from ...common._decorator import deprecated
 from ...common.parameter import Parameter
 from ...common.tensor import Tensor
+from ..._c_expression import Tensor as Tensor_
 
 
 class _ScatterOp(PrimitiveWithInfer):
@@ -3228,26 +3229,60 @@ class StridedSlice(PrimitiveWithInfer):
         validator.check_non_negative_int(new_axis_mask, 'new_axis_mask', self.name)
         validator.check_non_negative_int(shrink_axis_mask, 'shrink_axis_mask', self.name)
 
+    def _check_and_get_value(self, slice_input, name):
+        """Check begin, end, strides. Get its length and value."""
+        slice_value = slice_input['value']
+        if slice_value is None:
+            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
+            slice_shape = slice_input['shape']
+            if len(slice_shape) != 1:
+                raise ValueError(f"For '{self.name}', both the 'begins', 'ends', and 'strides' must be 1-D, "
+                                 f"but got '{name}' shape: {slice_shape}.")
+            # not support scalar
+            return slice_value, slice_shape[0]
+
+        if isinstance(slice_value, Tensor_):
+            validator.check_tensor_dtype_valid(name, slice_input['dtype'], [mstype.int64], self.name)
+            slice_value = slice_value.asnumpy().tolist()
+        elif not isinstance(slice_value, tuple):
+            raise TypeError(f"For '{self.name}', both the 'begin', 'end', and 'strides' must be a tuple or Tensor, "
+                            f"but got '{name}': {slice_value}.")
+
+        if tuple(filter(lambda x: not isinstance(x, int), slice_value)):
+            raise TypeError(f"For '{self.name}', the elements of 'begin', 'end', and 'strides' must be int, "
+                            f"but got {name}: {slice_value}.")
+        return slice_value, len(slice_value)
+
     def __infer__(self, x, begin, end, strides):
-        begin_v, end_v, strides_v = begin['value'], end['value'], strides['value']
-        validator.check_value_type("begin", begin_v, [tuple], self.name)
-        validator.check_value_type("end", end_v, [tuple], self.name)
-        validator.check_value_type("strides", strides_v, [tuple], self.name)
+        x_shape = x['shape']
+        if -1 in x_shape:
+            raise ValueError(f"For '{self.name}', input x is currently not support dynamic shape.")
+        begin_v, begin_len = self._check_and_get_value(begin, 'begin')
+        end_v, end_len = self._check_and_get_value(end, 'end')
+        strides_v, strides_len = self._check_and_get_value(strides, 'strides')
 
-        if tuple(filter(lambda x: not isinstance(x, int), begin_v + end_v + strides_v)):
-            raise TypeError(f"For {self.name}, both the 'begin', 'end', and 'strides' must be a tuple of int, "
-                            f"but got 'begin': {begin_v}, 'end': {end_v}, 'strides': {strides_v}.")
-
-        if tuple(filter(lambda x: x == 0, strides_v)):
+        if strides_v is not None and tuple(filter(lambda x: x == 0, strides_v)):
             raise ValueError(f"For '{self.name}', the 'strides' cannot contain 0, but got 'strides': {strides_v}.")
 
-        if len(end_v) != len(begin_v) or len(strides_v) != len(begin_v):
-            raise ValueError(f"For '{self.name}', the length of 'begin' index and the length of 'end' index "
-                             f"must be the same as 'strides', but got the length of 'begin': {begin_v}, "
-                             f"'end' index: {end_v} and 'strides': {strides_v}.")
+        if begin_len != strides_len or end_len != strides_len:
+            raise ValueError(f"For '{self.name}', 'begin', 'end' and 'strides' must be the same length, but got "
+                             f"'begin' length: {begin_len}, 'end' length: {end_len}, 'strides' length: {strides_len}.")
 
-        ret_shape = self._compute_slicing_shape(x['shape'], begin_v, end_v, strides_v)
+        if None in (strides_v, begin_v, end_v):
+            ret_shape = self._compute_dynamic_slicing_shape(x_shape, begin_len)
+            ret_min_shape = [1] * len(x_shape)
+            ret_max_shape = x_shape
+            for i, val in enumerate(ret_shape):
+                if val > 0:
+                    ret_min_shape[i] = val
+                    ret_max_shape[i] = val
+            return {'shape': ret_shape,
+                    'dtype': x['dtype'],
+                    'value': None,
+                    'max_shape': ret_max_shape,
+                    'min_shape': ret_min_shape}
 
+        ret_shape = self._compute_slicing_shape(x_shape, begin_v, end_v, strides_v)
         if all(ret_shape):
             value = None
         else:
@@ -3361,6 +3396,29 @@ class StridedSlice(PrimitiveWithInfer):
                 ret_shape.append(slicing_length)
                 i += 1
                 j += 1
+        return ret_shape
+
+    def _compute_dynamic_slicing_shape(self, x_shape, slice_len):
+        """Computes the shape of the slicing for dynamic shape, mask is currently not supported."""
+        x_rank = len(x_shape)
+        if self.begin_mask != 0 or self.end_mask != 0 or self.ellipsis_mask or self.new_axis_mask != 0 \
+            or self.shrink_axis_mask != 0:
+            raise ValueError("Mask is currently not supported if 'begin', 'end' or 'strides' is not a constant.")
+        ret_shape = []
+        i, j = 0, 0
+        while i < x_rank or j < slice_len:
+            slicing_length = -1
+            if j >= slice_len:
+                if i >= len(x_shape):
+                    raise ValueError(f"For 'StridedSlice', the index must be less than or equal to "
+                                     f"the dimension of 'input_x', but got the dimension of 'input_x': {len(x_shape)} "
+                                     f"and the index: {i}.")
+                begin, end, stride = 0, x_shape[i], 1
+                if end > 0:
+                    slicing_length = _compute_slicing_length(begin, end, stride, x_shape, i)
+            ret_shape.append(slicing_length)
+            i += 1
+            j += 1
         return ret_shape
 
 
