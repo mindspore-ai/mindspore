@@ -73,6 +73,8 @@ class TfliteModelParser : public converter::ModelParser {
                                      ops::PrimitiveC *primitive_c);
   static STATUS SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
                                     std::vector<QuantParamT> *quant_params, int round_type = 1);
+
+  STATUS TfliteModelVerify();
 };
 }  // namespace lite
 }  // namespace mindspore

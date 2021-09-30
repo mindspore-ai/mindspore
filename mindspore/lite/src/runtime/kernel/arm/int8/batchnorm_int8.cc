@@ -171,6 +171,7 @@ int BatchnormInt8CPUKernel::Init() {
   CHECK_NULL_RETURN(batchnorm_param_);
   auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
+  CHECK_LESS_RETURN(n_dim - 1, 0);
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];
   batchnorm_param_->units_ = 1;
   for (size_t i = 0; i < n_dim - 1; i++) {

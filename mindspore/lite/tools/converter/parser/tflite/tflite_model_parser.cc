@@ -56,6 +56,57 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const std::st
   return tflite::UnPackModel(tflite_model_buf_);
 }
 
+STATUS TfliteModelParser::TfliteModelVerify() {
+  if (tflite_model_->subgraphs.empty()) {
+    MS_LOG(ERROR) << "tflite model does not has a main graph.";
+    return RET_ERROR;
+  }
+  const auto tflite_model_buffers_size = tflite_model_->buffers.size();
+  const auto tflite_model_operator_codes_size = tflite_model_->operator_codes.size();
+
+  for (auto &subgraph : tflite_model_->subgraphs) {
+    auto all_singraph_tensor_size = subgraph->tensors.size();
+    if (subgraph->inputs.empty() || subgraph->outputs.empty()) {
+      MS_LOG(ERROR) << "tflite subgraph inputs or outputs is empty.";
+      return RET_ERROR;
+    }
+    if (std::any_of(subgraph->inputs.begin(), subgraph->inputs.end(), [&all_singraph_tensor_size](int32_t index) {
+          return index >= static_cast<int32_t>(all_singraph_tensor_size) || index < 0;
+        })) {
+      MS_LOG(ERROR) << "tflite input illegal.";
+      return RET_ERROR;
+    }
+    if (std::any_of(subgraph->outputs.begin(), subgraph->outputs.end(), [&all_singraph_tensor_size](int32_t index) {
+          return index >= static_cast<int32_t>(all_singraph_tensor_size) || index < 0;
+        })) {
+      MS_LOG(ERROR) << "tflite output illegal.";
+      return RET_ERROR;
+    }
+    for (auto &op : subgraph->operators) {
+      if (op == nullptr) {
+        MS_LOG(ERROR) << "tflite contain nullptr op.";
+        return RET_ERROR;
+      }
+      if (op->opcode_index >= tflite_model_operator_codes_size) {
+        MS_LOG(ERROR) << "op is not a tflite opcode";
+        return RET_ERROR;
+      }
+    }
+
+    for (auto &tensor : subgraph->tensors) {
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "tflite model contain nullptr tensor.";
+        return RET_ERROR;
+      }
+      if (tensor->buffer >= tflite_model_buffers_size) {
+        MS_LOG(ERROR) << "tflite tensor buffer index beyond upper limit.";
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 api::FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters &flag) {
   auto model_file = flag.model_file;
   // load graph
@@ -65,8 +116,14 @@ api::FuncGraphPtr TfliteModelParser::Parse(const converter::ConverterParameters 
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
     return nullptr;
   }
+  auto status = TfliteModelVerify();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "tflite model verify failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    return nullptr;
+  }
 
-  auto status = ConvertTfliteGraph();
+  status = ConvertTfliteGraph();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert tflite graph failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
