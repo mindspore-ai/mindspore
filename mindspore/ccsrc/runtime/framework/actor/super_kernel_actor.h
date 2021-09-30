@@ -17,26 +17,17 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_SUPER_KERNEL_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_SUPER_KERNEL_ACTOR_H_
 
-#include <vector>
 #include <string>
 #include <memory>
 #include <utility>
-#include <unordered_map>
-#include "runtime/framework/actor/actor_common.h"
 #include "runtime/framework/actor/debug_aware_actor.h"
+#include "runtime/framework/actor/actor_common.h"
 #include "runtime/hardware/device_context.h"
-#include "runtime/framework/device_tensor_store.h"
-#include "backend/kernel_compiler/kernel.h"
 #include "ir/anf.h"
-#include "ir/tensor.h"
 
 namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
-using mindspore::device::KernelInfo;
-using mindspore::kernel::Address;
-using mindspore::kernel::KernelLaunchInfo;
-using mindspore::tensor::TensorPtr;
 
 // The Super kernel actor is used to represent the sink executing of graph which is the combination of kernels.
 class SuperKernelActor : public DebugAwareActor {

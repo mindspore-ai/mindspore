@@ -39,7 +39,18 @@ void SuperKernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpConte
   auto &sequential_num = context->sequential_num_;
   (void)input_op_datas_[sequential_num].emplace_back(input_data);
   if (CheckRunningCondition(context)) {
-    device_contexts_[0]->LaunchGraph(graph_);
+    MS_LOG(INFO) << "Super kernel actor(" << GetAID().Name() << ") launches graph: " << graph_->graph_id();
+    try {
+      auto ret = device_contexts_[0]->LaunchGraph(graph_);
+      if (!ret) {
+        std::string error_info = "Launch graph failed, graph id: " + graph_->graph_id();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      }
+    } catch (const std::exception &e) {
+      MsException::Instance().SetException();
+      std::string error_info = "Launch graph failed, graph id: " + graph_->graph_id();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
 
     // The input is invalid and needs to be erased when finish kernel launch.
     EraseInput(context);
@@ -54,7 +65,18 @@ void SuperKernelActor::RunOpControl(AID *const input_control, OpContext<DeviceTe
   auto &sequential_num = context->sequential_num_;
   (void)input_op_controls_[sequential_num].emplace_back(input_control);
   if (CheckRunningCondition(context)) {
-    device_contexts_[0]->LaunchGraph(graph_);
+    MS_LOG(INFO) << "Super kernel actor(" << GetAID().Name() << ") launches graph: " << graph_->graph_id();
+    try {
+      auto ret = device_contexts_[0]->LaunchGraph(graph_);
+      if (!ret) {
+        std::string error_info = "Launch graph failed, graph id: " + graph_->graph_id();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      }
+    } catch (const std::exception &e) {
+      MsException::Instance().SetException();
+      std::string error_info = "Launch graph failed, graph id: " + graph_->graph_id();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
 
     // The input is invalid and needs to be erased when finish kernel launch.
     EraseInput(context);

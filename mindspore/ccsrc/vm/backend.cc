@@ -42,9 +42,6 @@
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
-#ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#endif
 
 namespace mindspore {
 namespace compile {
@@ -846,12 +843,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   mindspore::ScopedLongRunning long_running;
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
-  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors)) {
-#ifdef ENABLE_DUMP_IR
-    mindspore::RDR::TriggerAll();
-#endif
-    MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
-  }
+  runtime::GraphScheduler::GetInstance().Run(actor_set, input_tensors);
 
   if (graph_compiler_info.device_contexts_.empty()) {
     MS_LOG(EXCEPTION) << "The device contexts is empty.";
@@ -1057,15 +1049,6 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(tensors_mask);
-  const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
-  if (graph_iter == actor_to_graph_compiler_info_.end()) {
-    MS_LOG(EXCEPTION) << "Can't find the graph compiler info.";
-  }
-  MS_EXCEPTION_IF_NULL(graph_iter->second);
-  const auto &graph_compiler_info = *(graph_iter->second);
-
-  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
-  MS_EXCEPTION_IF_NULL(actor_set);
 
   // Erase value node tensor.
   std::vector<tensor::TensorPtr> tensors_without_value_node;
@@ -1086,12 +1069,19 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, OpRunInfo *op_run_info
     }
   }
 
-  if (!runtime::GraphScheduler::GetInstance().Run(actor_set, {tensors_without_value_node}, *input_tensors,
-                                                  runtime::GraphExecutionStrategy::kStep)) {
-    MS_LOG(EXCEPTION) << "The actor runs failed, actor name: " << actor_set->name_;
-  }
+  // Run actor DAG.
+  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
+  MS_EXCEPTION_IF_NULL(actor_set);
+  runtime::GraphScheduler::GetInstance().Run(actor_set, {tensors_without_value_node}, *input_tensors,
+                                             runtime::GraphExecutionStrategy::kStep);
 
   // Fetch outputs.
+  const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
+  if (graph_iter == actor_to_graph_compiler_info_.end()) {
+    MS_LOG(EXCEPTION) << "Can't find the graph compiler info.";
+  }
+  MS_EXCEPTION_IF_NULL(graph_iter->second);
+  const auto &graph_compiler_info = *(graph_iter->second);
   const auto &graph = graph_compiler_info.graphs_.front();
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_);

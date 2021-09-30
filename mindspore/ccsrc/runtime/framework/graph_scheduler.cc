@@ -35,6 +35,7 @@
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/recorder_manager.h"
+#include "debug/rdr/running_data_recorder.h"
 #endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
@@ -76,6 +77,10 @@ std::vector<ActorReference> CollectActors(const ActorSet *actor_set) {
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     (void)actors.emplace_back(static_cast<ActorReference>(kernel_actor));
+  }
+  for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
+    MS_EXCEPTION_IF_NULL(super_kernel_actor);
+    (void)actors.emplace_back(static_cast<ActorReference>(super_kernel_actor));
   }
   for (auto &switch_actor : actor_set->switch_actors_) {
     MS_EXCEPTION_IF_NULL(switch_actor);
@@ -216,18 +221,16 @@ void GraphScheduler::Initialize() {
 
   // Create the thread pool of actor runtime and Set the OMP_NUM_THREADS env.
   size_t actor_thread_num = 0;
-  size_t OMP_thread_num = 0;
-  size_t max_thread_num = 0;
-  ComputeThreadNums(&actor_thread_num, &OMP_thread_num, &max_thread_num);
+  size_t actor_and_kernel_thread_num = 0;
+  ComputeThreadNums(&actor_thread_num, &actor_and_kernel_thread_num);
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
-  actor_manager->Initialize(true, actor_thread_num, max_thread_num);
-  std::string OMP_env = std::to_string(OMP_thread_num);
-  (void)common::SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
+  actor_manager->Initialize(true, actor_thread_num, actor_and_kernel_thread_num);
+  (void)common::SetOMPThreadNum();
   auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");
   MS_LOG(INFO) << "The actor thread number: " << actor_thread_num
-               << ", the computed OMP thread number : " << OMP_thread_num
-               << ", the used OMP thread number : " << OMP_thread_num_used;
+               << ", the kernel thread number: " << (actor_and_kernel_thread_num - actor_thread_num)
+               << ", the used OMP thread number: " << OMP_thread_num_used;
 
   BuildAndScheduleGlobalActor();
 }
@@ -315,7 +318,7 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   }
 }
 
-bool GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
+void GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vector<TensorPtr>> &input_tensors,
                          const std::vector<TensorPtr> &input_tensors_with_value_node, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
@@ -334,7 +337,7 @@ bool GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vecto
     actor_set->data_prepare_actor_->PrepareData(input_tensors, &op_context);
     MS_EXCEPTION_IF_NULL(actor_set->kernel_actors_[0]);
     actor_set->kernel_actors_[0]->RunOpControlWithInputTensor(nullptr, &op_context, &input_tensors_with_value_node);
-    return true;
+    return;
   }
 
   // Trigger data prepare actor running.
@@ -344,7 +347,12 @@ bool GraphScheduler::Run(const ActorSet *actor_set, const std::vector<std::vecto
   auto result_future = result[0].GetFuture();
   result_future.Wait();
   MsException::Instance().CheckException();
-  return result_future.IsOK();
+  if (!result_future.IsOK()) {
+#ifdef ENABLE_DUMP_IR
+    mindspore::RDR::TriggerAll();
+#endif
+    MS_LOG(EXCEPTION) << op_context.error_info_;
+  }
 }
 
 ActorSet *GraphScheduler::Fetch(const ActorInfo &actor_info) const {
@@ -405,9 +413,9 @@ void GraphScheduler::CacheGraphOutputToActor(const GraphCompilerInfo &graph_comp
       MS_EXCEPTION_IF_NULL(output_actor);
       (void)graph_output_to_actor_.emplace(origin_output_with_index, GraphOutputPair(output_actor, output_with_index));
       MS_LOG(INFO) << "Cache the graph " << graph->graph_id() << " output node:" << output_kernel->fullname_with_scope()
-                   << " with index: " << output_with_index.second << " to actor:" << output_actor->GetAID().Name()
+                   << " with index:" << output_with_index.second << " to actor:" << output_actor->GetAID().Name()
                    << ", from front node:" << origin_output_with_index.first->fullname_with_scope()
-                   << " with index: " << origin_output_with_index.second;
+                   << " with index:" << origin_output_with_index.second;
     }
   }
 }
@@ -1883,7 +1891,7 @@ void GraphScheduler::DumpAbstractActor(const AbstractActor *actor, std::ofstream
       MS_EXCEPTION_IF_NULL(result_arrow);
       MS_EXCEPTION_IF_NULL(output_node);
       ofs << "\t\t\tfrom_output_node:" << output_node->fullname_with_scope()
-          << "tfrom_output_index:" << result_arrow->from_output_index_
+          << "\tfrom_output_index:" << result_arrow->from_output_index_
           << "\tto_actor_name:" << result_arrow->to_op_id_.Name()
           << "\toutput_node_position:" << result_arrow->to_input_index_ << "\n";
     }
@@ -1990,7 +1998,7 @@ void GraphScheduler::DumpSuperKernelActor(const SuperKernelActor *actor, std::of
   const auto &graph = actor->graph_;
   MS_EXCEPTION_IF_NULL(graph);
 
-  ofs << "\t\tgraph id:" << graph->graph_id() << "\tgraphl_name:" << graph->ToString()
+  ofs << "\t\tgraph_id:" << graph->graph_id() << "\tgraphl_name:" << graph->ToString()
       << "\tis_sink:" << graph->is_sink() << "\tinputs_num:" << (graph->input_nodes()).size()
       << "\tkernels_num:" << (graph->execution_order()).size() << "\n";
 
@@ -2035,7 +2043,7 @@ void GraphScheduler::DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) c
 void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const {
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
-    ofs << "\tgraph id:" << graph->graph_id() << "\tis_sink:" << graph->is_sink() << "\n";
+    ofs << "\tgraph_id:" << graph->graph_id() << "\tis_sink:" << graph->is_sink() << "\n";
 
     for (auto &value_node : graph->graph_value_nodes()) {
       MS_EXCEPTION_IF_NULL(value_node);

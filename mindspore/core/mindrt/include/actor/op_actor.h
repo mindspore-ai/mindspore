@@ -60,6 +60,8 @@ struct OpContext {
   uuids::uuid *sequential_num_;
   std::vector<OpDataPtr<T>> *output_data_;
   std::vector<Promise<int>> *results_;
+  // Record the error info for print.
+  std::string error_info_{""};
   const void *kernel_call_back_before_;
   const void *kernel_call_back_after_;
 
