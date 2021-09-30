@@ -132,7 +132,7 @@ def check_range(x, dim_size):
     if isinstance(x, int) and not isinstance(x, bool):
         if x >= dim_size or x < -dim_size:
             raise IndexError(f'index {x} is out of bounds for dimension with size {dim_size}')
-        x = x%dim_size
+        x = x % dim_size
     return x
 
 
@@ -764,7 +764,7 @@ def int_to_index(i, shape):
     dim_size = shape[0]
     if i < -dim_size or i >= dim_size:
         raise IndexError(f'index {i} is out of bounds for axis 0 with size {dim_size}')
-    i = i%dim_size
+    i = i % dim_size
     if len(shape) == 1:
         return Tensor([[i]])
     grids = [np.array(list(range(size)), dtype=np.int64) for size in shape[1:]]

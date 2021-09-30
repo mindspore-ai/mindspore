@@ -1264,6 +1264,7 @@ class Roll(Primitive):
             validator.check_equal_int(axis, 0, "axis", self.name)
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
+
 class DSDMatmul(PrimitiveWithInfer):
     """
     The definition of the CusSquare primitive.
@@ -1301,7 +1302,6 @@ class MatmulDDS(PrimitiveWithInfer):
         global_size = seq_len // 4
         size_per_head = q[0] * q[-1] // self.heads
         heads = q[0] * q[-1] // size_per_head
-        # size_per_head = k[0] * k[-1] // heads
         block_size = local_mask[1] * local_mask[2] // bs
         block_num = seq_len // block_size
         l_size = (bs, heads, block_num, block_size // 16, block_size // 16, 16, 16)

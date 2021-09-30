@@ -48,6 +48,7 @@ class Registry(UserDict):
                     fn = self[prim_obj.name]
         return fn
 
+
 class PyFuncRegistry(UserDict):
     def register(self, key, value):
         self[key] = value
