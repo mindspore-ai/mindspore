@@ -1,23 +1,17 @@
 package:
-  name: mindspore-ascend
+  name: mindspore-gpu
   version: "1.5.0rc1"
 
 build:
   number: 0
-  rpaths:
-    - /usr/local/Ascend/nnae/latest/fwkacllib/lib64
-    - /usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64
-    - /usr/local/Ascend/fwkacllib/lib64
-    - /usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling
-    - /usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling
-    - /usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling
+  string: py39_cuda11.1
 
 requirements:
   build:
-    - python
+    - python>=3.9, <3.10
     - pip
   run:
-    - python
+    - python>=3.9, <3.10
     - numpy >=1.17.0
     - protobuf >=3.13.0
     - asttokens >=1.1.13
@@ -30,6 +24,7 @@ requirements:
     - astunparse >=1.6.3
     - packaging >=20.0
     - psutil >=5.7.0
+    - cudatoolkit >=11.1, <11.2
 
 about:
   home: https://www.mindspore.cn/
