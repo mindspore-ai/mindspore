@@ -717,7 +717,7 @@ class MultiHeadAttention(Cell):
         self.concat_v = P.Concat(axis=2)
         self.multiply_data = Tensor([
             -10000.0,
-        ], dtype=mstype.float32)
+        ], dtype=softmax_compute_type)
         self.batch_matmul = P.BatchMatMul().shard(
             ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),
              (parallel_config.data_parallel, parallel_config.model_parallel, 1, 1)))
