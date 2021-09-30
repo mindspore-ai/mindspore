@@ -50,6 +50,9 @@ class TfliteRelPosMultiHeadAttentionFusion : public MultiHeadAttentionFusion {
 
   CNodePtr CreateRelPosMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                               const std::string &base_name) const;
+
+  int SetQuantParamForAttentionNode(const PrimitivePtr &prim, const EquivPtr &equiv) const;
+
   const VectorRef DefineRelativeShiftPattern(const BaseRef &input) const;
 
  private:
