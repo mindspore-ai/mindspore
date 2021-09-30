@@ -69,6 +69,10 @@ class TFModelParser : public converter::ModelParser {
 
   STATUS ProcessControlFlowOp(const CNodePtr &anf_node, const string &op_type, const tensorflow::NodeDef &node_def);
 
+  std::set<std::string> GetAllNodeInputs();
+
+  STATUS GetGraphOutputNames(std::vector<AnfNodePtr> *output_nodes);
+
   STATUS ConvertRootGraphOutputs();
 
   void UpdateMap(const CNodePtr &cnode, const FuncGraphPtr &sub_func_graph, const std::string &sub_graph_name);
