@@ -225,6 +225,7 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
       ret = Tensor2TensorC(input, tensor_c);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Tensor to TensorC failed.";
+        free(tensor_c);
         return ret;
       }
       in_tensor_c->emplace_back(tensor_c);

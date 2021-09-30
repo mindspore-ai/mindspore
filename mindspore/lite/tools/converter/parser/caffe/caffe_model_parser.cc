@@ -47,6 +47,42 @@ constexpr size_t kFcWeightSecondShapeIndex = 1;
 constexpr size_t kFcBiasFirstShapeIndex = 0;
 constexpr size_t kFcBiasSecondShapeIndex = 1;
 constexpr size_t kFcBiasThirdShapeIndex = 2;
+
+STATUS CheckCaffeModel(const caffe::NetParameter &caffe_model, const caffe::NetParameter &caffe_weight) {
+  std::set<std::string> providers;
+  std::set<std::string> consumers;
+  for (int i = 0; i < caffe_model.input_size(); i++) {
+    const auto &input = caffe_model.input(i);
+    if (providers.count(input) != 0) {
+      MS_LOG(ERROR) << "Top repeated";
+      return RET_ERROR;
+    }
+    providers.insert(input);
+  }
+  for (const auto &layer : caffe_model.layers()) {
+    for (const auto &top : layer.top()) {
+      if (providers.count(top) != 0) {
+        MS_LOG(ERROR) << "Top repeated";
+        return RET_ERROR;
+      }
+      providers.insert(top);
+    }
+    for (const auto &bottom : layer.bottom()) {
+      if (consumers.count(bottom) != 0) {
+        MS_LOG(ERROR) << "Bottom repeated";
+        return RET_ERROR;
+      }
+      consumers.insert(bottom);
+    }
+  }
+  for (const auto &consumer : consumers) {
+    if (providers.count(consumer) == 0) {
+      MS_LOG(ERROR) << "Bottom and top mismatch";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace
 bool IsSkipedLayer(const caffe::LayerParameter &layer) {
   if (layer.type() == "Input" || layer.type() == "Dropout" || layer.type() == "Split") {
@@ -87,6 +123,12 @@ api::FuncGraphPtr CaffeModelParser::Parse(const converter::ConverterParameters &
   auto weight_file = flag.weight_file;
   STATUS status = InitOriginModel(model_file, weight_file);
   if (status != RET_OK) {
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+    return nullptr;
+  }
+  status = CheckCaffeModel(caffe_model_, caffe_weight_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Input caffe model error: " << status;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
