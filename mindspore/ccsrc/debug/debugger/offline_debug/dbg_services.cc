@@ -24,26 +24,25 @@ DbgServices::DbgServices(bool verbose) {
   if (!dbg_log_path.empty()) {
     DbgLogger::verbose = true;
   }
-  debug_services_ = new DebugServices();
+  debug_services_ = std::make_shared<DebugServices>();
 }
 
 DbgServices::DbgServices(const DbgServices &other) {
   MS_LOG(INFO) << "cpp DbgServices object is created via copy";
-  debug_services_ = new DebugServices(*other.debug_services_);
+  debug_services_ = other.debug_services_;
 }
 
 DbgServices &DbgServices::operator=(const DbgServices &other) {
   MS_LOG(INFO) << "cpp DbgServices object is being assigned a different state";
   if (this != &other) {
-    delete debug_services_;
-    debug_services_ = new DebugServices(*other.debug_services_);
+    debug_services_ = other.debug_services_;
   }
   return *this;
 }
 
 DbgServices::~DbgServices() {
   MS_LOG(INFO) << "cpp DbgServices object is deleted";
-  delete debug_services_;
+  debug_services_ = nullptr;
 }
 
 std::string DbgServices::GetVersion() const {
@@ -77,25 +76,25 @@ int32_t DbgServices::AddWatchpoint(
   unsigned int id, unsigned int watch_condition,
   std::map<std::string, std::map<std::string, std::variant<bool, std::vector<std::string>>>> check_nodes,
   std::vector<parameter_t> parameter_list) {
-  MS_LOG(INFO) << "cpp start";
+  MS_LOG(INFO) << "cpp DbgServices start AddWatchpoint";
 
   MS_LOG(INFO) << "cpp DbgServices AddWatchpoint id " << id;
   MS_LOG(INFO) << "cpp DbgServices AddWatchpoint watch_condition " << watch_condition;
   for (auto const &node : check_nodes) {
-    MS_LOG(INFO) << "cpp DbgServices AddWatchpoint name " << node.first;
+    MS_LOG(DEBUG) << "cpp DbgServices AddWatchpoint name " << node.first;
     auto attr_map = node.second;
 
     bool is_output = std::get<bool>(attr_map["is_output"]);
-    MS_LOG(INFO) << "cpp DbgServices AddWatchpoint is_output " << is_output;
+    MS_LOG(DEBUG) << "cpp DbgServices AddWatchpoint is_output " << is_output;
 
     std::vector<std::string> rank_id_str = std::get<std::vector<std::string>>(attr_map["rank_id"]);
     std::vector<std::uint32_t> rank_id;
     (void)std::transform(
       rank_id_str.begin(), rank_id_str.end(), std::back_inserter(rank_id),
       [](std::string &id_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(id_str)); });
-    MS_LOG(INFO) << "cpp DbgServices AddWatchpoint rank_id ";
+    MS_LOG(DEBUG) << "cpp DbgServices AddWatchpoint rank_id: ";
     for (auto const &i : rank_id) {
-      MS_LOG(INFO) << i << " ";
+      MS_LOG(DEBUG) << i << " ";
     }
 
     // std::vector<uint32_t> root_graph_id = std::get<std::vector<uint32_t>>(attr_map["root_graph_id"]);
@@ -104,9 +103,9 @@ int32_t DbgServices::AddWatchpoint(
     (void)std::transform(
       root_graph_id_str.begin(), root_graph_id_str.end(), std::back_inserter(root_graph_id),
       [](std::string &graph_str) -> std::uint32_t { return static_cast<uint32_t>(std::stoul(graph_str)); });
-    MS_LOG(INFO) << "cpp DbgServices AddWatchpoint root_graph_id";
+    MS_LOG(DEBUG) << "cpp DbgServices AddWatchpoint root_graph_id: ";
     for (auto const &j : root_graph_id) {
-      MS_LOG(INFO) << j << " ";
+      MS_LOG(DEBUG) << j << " ";
     }
   }
 
@@ -161,7 +160,7 @@ int32_t DbgServices::AddWatchpoint(
 
   debug_services_->AddWatchpoint(id, watch_condition, 0, check_node_list, parameter_list_backend,
                                  &check_node_device_list, &check_node_graph_list);
-  MS_LOG(INFO) << "cpp end";
+  MS_LOG(INFO) << "cpp DbgServices end AddWatchpoint";
   return 0;
 }
 
@@ -204,19 +203,19 @@ std::vector<watchpoint_hit_t> DbgServices::CheckWatchpoints(unsigned int iterati
     watchpoint_hit_t hit(name[i], std::stoi(slot[i]), condition[i], watchpoint_id[i], api_parameter_vector,
                          error_codes[i], rank_id[i], root_graph_id[i]);
 
-    MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t name " << hit.name;
-    MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t slot " << hit.slot;
-    MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t watchpoint_id " << hit.watchpoint_id;
-    MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t error_code " << hit.error_code;
-    MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t rank_id " << hit.rank_id;
-    MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t root_graph_id " << hit.root_graph_id;
+    MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t name " << hit.name;
+    MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t slot " << hit.slot;
+    MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t watchpoint_id " << hit.watchpoint_id;
+    MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t error_code " << hit.error_code;
+    MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t rank_id " << hit.rank_id;
+    MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t root_graph_id " << hit.root_graph_id;
 
     for (auto const &parameter_i : api_parameter_vector) {
-      MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t parameter name " << parameter_i.name;
-      MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t parameter disabled " << parameter_i.disabled;
-      MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t parameter value " << parameter_i.value;
-      MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t parameter hit " << parameter_i.hit;
-      MS_LOG(INFO) << "cpp DbgServices watchpoint_hit_t parameter actual_value " << parameter_i.actual_value;
+      MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t parameter name " << parameter_i.name;
+      MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t parameter disabled " << parameter_i.disabled;
+      MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t parameter value " << parameter_i.value;
+      MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t parameter hit " << parameter_i.hit;
+      MS_LOG(DEBUG) << "cpp DbgServices watchpoint_hit_t parameter actual_value " << parameter_i.actual_value;
     }
 
     hits.push_back(hit);
