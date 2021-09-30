@@ -42,6 +42,7 @@ void CloneGraphInputs(const FuncGraphPtr &origin, const FuncGraphPtr &mirror, No
   auto origin_inputs = origin->get_inputs();
   for (auto &input : origin_inputs) {
     auto mirror_input = mirror->add_parameter();
+    MS_CHECK_TRUE_RET_VOID(mirror_input != nullptr);
     if (input->abstract() != nullptr) {
       mirror_input->set_abstract(input->abstract()->Clone());
     }

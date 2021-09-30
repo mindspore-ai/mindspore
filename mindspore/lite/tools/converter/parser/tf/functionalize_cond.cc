@@ -60,11 +60,14 @@ STATUS FunctionalizeCond::GetSwitchBranchType(const CNodePtr &switch_cnode, Bran
 
 STATUS FunctionalizeCond::BranchSubGraphAddNodes(const FuncGraphPtr &graph, const AnfNodePtr &root_node,
                                                  BranchType branch_type) {
+  CHECK_NULL_RETURN(graph);
+  CHECK_NULL_RETURN(root_node);
   std::deque<AnfNodePtr> q;
   std::unordered_set<AnfNodePtr> vis;
   q.push_back(root_node);
   while (!q.empty()) {
     auto node = q.front();
+    CHECK_NULL_RETURN(node);
     q.pop_front();
     vis.insert(node);
     if (FunctionalizeControlOpPass::IsSwitch(node)) {
@@ -107,17 +110,21 @@ int FunctionalizeCond::PosInInputNodes(const CNodePtr &node) {
 }
 
 STATUS FunctionalizeCond::IdentifySubgraphInput(const FuncGraphPtr &graph, std::string graph_name) {
+  CHECK_NULL_RETURN(graph);
   std::vector<AnfNodePtr> nodes_need_drop{};
   for (auto &cnode : graph->GetOrderedCnodes()) {
     for (auto &input_node : cnode->inputs()) {
       if (FunctionalizeControlOpPass::IsSwitch(input_node)) {
+        CHECK_NULL_RETURN(input_node);
         auto switch_node = input_node->cast<CNodePtr>();
+        CHECK_NULL_RETURN(switch_node);
         auto switch_input = utils::cast<CNodePtr>(switch_node->input(1));
         auto pos = PosInInputNodes(switch_input);
         nodes_need_drop.push_back(cnode);
         pred_nodes_.push_back(switch_node->input(2));
         // set parameter
         auto parameter = graph->add_parameter();
+        CHECK_NULL_RETURN(parameter);
         parameter->set_abstract(cnode->abstract());
         // hardcode for subgraph input name
         parameter->set_name(graph_name + "_input_" + std::to_string(pos) + "_parameter");
@@ -155,20 +162,25 @@ FuncGraphPtr FunctionalizeCond::CreateBranchGraph(const AnfNodePtr &node, std::s
       return nullptr;
     }
     auto value_node = NewValueNode(return_prim_ptr);
+    MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
     std::vector<AnfNodePtr> op_inputs{value_node, node};  // If subgraph only has one output tensor
     auto return_cnode = graph->NewCNode(op_inputs);
     MS_CHECK_TRUE_RET(return_cnode != nullptr, nullptr);
     return_cnode->set_fullname_with_scope(name + "-return");
     return_cnode->set_func_graph(graph);
     graph->set_return(return_cnode);
-    graph->output()->cast<CNodePtr>()->set_fullname_with_scope(name + "_output_0_cnode");
+    auto graph_output = graph->output();
+    MS_CHECK_TRUE_RET(graph_output != nullptr, nullptr);
+    auto graph_output_cnode = graph_output->cast<CNodePtr>();
+    MS_CHECK_TRUE_RET(graph_output_cnode != nullptr, nullptr);
+    graph_output_cnode->set_fullname_with_scope(name + "_output_0_cnode");
   }
   return graph;
 }
 
 CNodePtr FunctionalizeCond::CreateNewIf(const FuncGraphPtr &else_branch, const FuncGraphPtr &then_branch) {
-  MS_ASSERT(else_branch != nullptr);
-  MS_ASSERT(then_branch != nullptr);
+  MS_CHECK_TRUE_RET(else_branch != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(then_branch != nullptr, nullptr);
 
   auto if_primc = std::make_shared<mindspore::lite::If>();
   if (if_primc == nullptr) {
@@ -180,7 +192,9 @@ CNodePtr FunctionalizeCond::CreateNewIf(const FuncGraphPtr &else_branch, const F
     return nullptr;
   }
   auto then_value_node = NewValueNode(then_branch);
+  MS_CHECK_TRUE_RET(then_value_node != nullptr, nullptr);
   auto else_value_node = NewValueNode(else_branch);
+  MS_CHECK_TRUE_RET(else_value_node != nullptr, nullptr);
   std::vector<AnfNodePtr> if_op_inputs = {if_value_node, then_value_node, else_value_node, pred_node_};
   std::copy(input_nodes_.begin(), input_nodes_.end(), std::back_inserter(if_op_inputs));
   return fg_->NewCNode(if_op_inputs);

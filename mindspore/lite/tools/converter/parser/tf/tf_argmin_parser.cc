@@ -30,6 +30,7 @@ ops::PrimitiveC *TFArgMinParser::Parse(const tensorflow::NodeDef &tf_op,
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   auto axis_node = tf_node_map.at(tf_op.input(tf_op.input_size() - 1));
+  MS_CHECK_TRUE_RET(axis_node != nullptr, nullptr);
   if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The attr value should be specified.";
     return nullptr;

@@ -20,6 +20,8 @@
 #include "tools/converter/parser/tf/functionalize_while.h"
 #include "tools/converter/parser/tf/functionalize_cond.h"
 #include "include/errorcode.h"
+#include "nnacl/op_base.h"
+#include "src/common/log_util.h"
 
 namespace mindspore::opt {
 
@@ -49,6 +51,7 @@ std::string FunctionalizeControlOpPass::NodeClusterName(const AnfNodePtr &node) 
 }
 
 void FunctionalizeControlOpPass::InitNodeClusters(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_RET_VOID(func_graph != nullptr);
   for (auto &node : func_graph->nodes()) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
@@ -104,6 +107,7 @@ STATUS FunctionalizeControlOpPass::BuildWhileSubgraph(const FuncGraphPtr &func_g
 }
 
 STATUS FunctionalizeControlOpPass::BuildIfSubgraph(const FuncGraphPtr &func_graph) {
+  CHECK_NULL_RETURN(func_graph);
   int ret = RET_OK;
   auto nodes = func_graph->nodes();
   for (auto &node : nodes) {

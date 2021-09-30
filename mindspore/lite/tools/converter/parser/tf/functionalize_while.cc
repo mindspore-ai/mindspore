@@ -121,7 +121,9 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeInput() {
   for (auto &node : node_cluster_) {
     if (FunctionalizeControlOpPass::IsEnter(node)) {
       auto enter_cnode = node->cast<CNodePtr>();
+      CHECK_NULL_RETURN(enter_cnode);
       input_enter_nodes_.push_back(enter_cnode);
+      CHECK_NULL_RETURN(while_node_);
       while_node_->add_input(enter_cnode->input(1));
     }
   }
@@ -141,6 +143,7 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeExternalInput() {
   }
   while (!todo.empty()) {
     AnfNodePtr node = todo.front();
+    CHECK_NULL_RETURN(node);
     todo.pop_front();
     if (FunctionalizeControlOpPass::IsMerge(node)) {
       merge_nodes.push_back(node->cast<CNodePtr>());
@@ -161,6 +164,7 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeExternalInput() {
 }
 
 bool FunctionalizeWhile::WhileNodeExternalInputIsContain(const AnfNodePtr &node) {
+  CHECK_NULL_RETURN(node);
   auto cnode = node->cast<CNodePtr>();
   return std::find(external_input_enter_nodes_.begin(), external_input_enter_nodes_.end(), cnode) !=
          external_input_enter_nodes_.end();
@@ -171,10 +175,14 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeOutput() {
   for (auto &node : node_cluster_) {
     // exit ->switch->merge->enter
     if (FunctionalizeControlOpPass::IsExit(node)) {
+      CHECK_NULL_RETURN(node);
       auto exit_node = node->cast<CNodePtr>();
       auto switch_node = BlongToWhichSwitch(exit_node);
+      CHECK_NULL_RETURN(switch_node);
       auto merge_node = BlongToWhichMerge(switch_node);
+      CHECK_NULL_RETURN(merge_node);
       auto enter_node = BlongToWhichExternalEnter(merge_node);
+      CHECK_NULL_RETURN(enter_node);
       int pos = PosInInputEnterNodes(enter_node);
       if (pos == -1) {
         MS_LOG(ERROR) << "not find in input enter nodes.";
@@ -222,14 +230,20 @@ STATUS FunctionalizeWhile::UpdateExitNodeUser() {
           return RET_NULL_PTR;
         }
         auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+        CHECK_NULL_RETURN(tuple_get_item_prim);
         const auto &exit_node = node;
         auto switch_node = BlongToWhichSwitch(exit_node);
+        CHECK_NULL_RETURN(switch_node);
         auto merge_node = BlongToWhichMerge(switch_node);
+        CHECK_NULL_RETURN(merge_node);
         auto enter_node = BlongToWhichExternalEnter(merge_node);
+        CHECK_NULL_RETURN(enter_node);
         int output_idx = PosInInputEnterNodes(enter_node);
         auto getItemValue = NewValueNode(MakeValue<int>(output_idx));
+        CHECK_NULL_RETURN(getItemValue);
         std::vector<AnfNodePtr> inputs{tuple_get_item_prim, while_node_, getItemValue};
         CNodePtr get_item_node = fg_->NewCNode(inputs);
+        CHECK_NULL_RETURN(get_item_node);
         std::string output_item_name = while_node_->fullname_with_scope() + "_getitem_" + std::to_string(output_idx);
         auto get_item_node_abstract = lite::CreateTensorAbstract({}, kNumberTypeFloat32);
         if (get_item_node_abstract == nullptr) {
@@ -291,6 +305,7 @@ STATUS FunctionalizeWhile::CondSubgraphAddNodes() {
   }
   while (!todo.empty()) {
     AnfNodePtr node = todo.back();
+    CHECK_NULL_RETURN(node);
     todo.pop_back();
     if (FunctionalizeControlOpPass::IsMerge(node)) {
       continue;
@@ -316,10 +331,14 @@ STATUS FunctionalizeWhile::CondSubgraphAddNodes() {
 STATUS FunctionalizeWhile::IdentifyCondSubgraphInput() {
   std::vector<AnfNodePtr> nodes_need_drop{};
   for (auto &cnode : cond_sub_func_graph_->GetOrderedCnodes()) {
+    CHECK_NULL_RETURN(cnode);
     for (auto &input_node : cnode->inputs()) {
       if (FunctionalizeControlOpPass::IsMerge(input_node)) {
+        CHECK_NULL_RETURN(input_node);
         auto merge_node = input_node->cast<CNodePtr>();
+        CHECK_NULL_RETURN(merge_node);
         auto enter_node = BlongToWhichEnter(merge_node);
+        CHECK_NULL_RETURN(enter_node);
         int pos = PosInInputEnterNodes(enter_node);
         nodes_need_drop.push_back(cnode);
 
@@ -369,7 +388,11 @@ STATUS FunctionalizeWhile::IdentifyCondSubgraphOutput() {
   cond_sub_func_graph_->set_return(return_cnode);
 
   // hardcode subgraph outputs name
-  cond_sub_func_graph_->output()->cast<CNodePtr>()->set_fullname_with_scope(cond_subgraph_name_ + "_output_0_cnode");
+  auto cond_sub_func_graph_output = cond_sub_func_graph_->output();
+  CHECK_NULL_RETURN(cond_sub_func_graph_output);
+  auto cond_sub_func_graph_output_cnode = cond_sub_func_graph_output->cast<CNodePtr>();
+  CHECK_NULL_RETURN(cond_sub_func_graph_output_cnode);
+  cond_sub_func_graph_output_cnode->set_fullname_with_scope(cond_subgraph_name_ + "_output_0_cnode");
   return RET_OK;
 }
 
@@ -407,6 +430,7 @@ STATUS FunctionalizeWhile::BodySubgraphAddNodes() {
   todo.clear();
   for (auto &node : node_cluster_) {
     if (FunctionalizeControlOpPass::IsNextIteration(node)) {
+      CHECK_NULL_RETURN(node);
       auto next_iteration_cnode = node->cast<CNodePtr>();
       for (size_t i = 1; i < next_iteration_cnode->inputs().size(); i++) {
         todo.push_back(next_iteration_cnode->input(i));
@@ -417,6 +441,7 @@ STATUS FunctionalizeWhile::BodySubgraphAddNodes() {
 
   while (!todo.empty()) {
     AnfNodePtr node = todo.back();
+    CHECK_NULL_RETURN(node);
     todo.pop_back();
     if (FunctionalizeControlOpPass::IsSwitch(node)) {
       continue;
@@ -444,9 +469,13 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphInput() {
   for (auto &cnode : body_sub_func_graph_->GetOrderedCnodes()) {
     for (auto &input_node : cnode->inputs()) {
       if (FunctionalizeControlOpPass::IsSwitch(input_node)) {
+        CHECK_NULL_RETURN(input_node);
         auto switch_node = input_node->cast<CNodePtr>();
+        CHECK_NULL_RETURN(switch_node);
         auto merge_node = BlongToWhichMerge(switch_node);
+        CHECK_NULL_RETURN(merge_node);
         auto enter_node = BlongToWhichEnter(merge_node);
+        CHECK_NULL_RETURN(enter_node);
         int pos = PosInInputEnterNodes(enter_node);
         if (pos == POS_INVALID) {
           continue;
@@ -496,6 +525,8 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
 
     tmp_output[pos] = node_pair.second;
     // hard code. set cnode output name
+    CHECK_NULL_RETURN(node_pair.second);
+    CHECK_NULL_RETURN(node_pair.second->cast<CNodePtr>());
     node_pair.second->cast<CNodePtr>()->set_fullname_with_scope(body_subgraph_name_ + "_output_" + std::to_string(pos) +
                                                                 "_cnode");
   }
@@ -506,9 +537,11 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
     return RET_NULL_PTR;
   }
   auto value_node = NewValueNode(return_prim_ptr);
+  CHECK_NULL_RETURN(value_node);
   // cond subgraph output is LoopCond's input
   std::vector<AnfNodePtr> op_inputs{value_node};
   auto return_cnode = body_sub_func_graph_->NewCNode(op_inputs);
+  CHECK_NULL_RETURN(return_cnode);
   return_cnode->set_fullname_with_scope(body_subgraph_name_ + "-return");
 
   if (tmp_output.size() == 1) {
@@ -521,8 +554,10 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
       return RET_NULL_PTR;
     }
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
+    CHECK_NULL_RETURN(make_tuple_prim);
     make_tuple_inputs.insert(make_tuple_inputs.begin(), make_tuple_prim);
     auto make_tuple_cnode = body_sub_func_graph_->NewCNode(make_tuple_inputs);
+    CHECK_NULL_RETURN(make_tuple_cnode);
     make_tuple_cnode->set_fullname_with_scope(return_cnode->fullname_with_scope() + "tuple");
 
     return_cnode->add_input(make_tuple_cnode);
@@ -562,7 +597,9 @@ STATUS FunctionalizeWhile::BuildBodyGraph() {
 STATUS FunctionalizeWhile::InsertFuncGraphToWhileInput() {
   // set while input cond and body vnode
   auto cond_value_node = NewValueNode(cond_sub_func_graph_);
+  CHECK_NULL_RETURN(cond_value_node);
   auto body_value_node = NewValueNode(body_sub_func_graph_);
+  CHECK_NULL_RETURN(body_value_node);
   auto inputs = while_node_->inputs();
   inputs.insert(inputs.begin() + 1, {cond_value_node, body_value_node});
   while_node_->set_inputs(inputs);

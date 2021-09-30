@@ -42,7 +42,7 @@ ops::PrimitiveC *TFLogicalOrParser::Parse(const tensorflow::NodeDef &tf_op,
                                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                           std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::LogicalOr>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
@@ -55,7 +55,7 @@ ops::PrimitiveC *TFLogicalNotParser::Parse(const tensorflow::NodeDef &tf_op,
                                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                            std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::LogicalNot>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));

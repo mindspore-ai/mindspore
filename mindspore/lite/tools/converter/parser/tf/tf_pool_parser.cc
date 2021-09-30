@@ -25,6 +25,8 @@
 
 namespace mindspore {
 namespace lite {
+constexpr int kTfPoolStrideListSize = 4;
+constexpr int kTfPoolKernelListSize = 4;
 ops::PrimitiveC *TFMaxPoolParser::Parse(const tensorflow::NodeDef &tf_op,
                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                         std::vector<std::string> *inputs, int *output_size) {
@@ -44,6 +46,7 @@ ops::PrimitiveC *TFMaxPoolParser::Parse(const tensorflow::NodeDef &tf_op,
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "strides", &attr_value)) {
     const auto &stride_list = attr_value.list();
+    MS_CHECK_TRUE_RET(stride_list.i_size() >= kTfPoolStrideListSize, nullptr);
     if (format == mindspore::Format::NCHW) {
       prim->set_strides({stride_list.i(2), stride_list.i(3)});
     } else {
@@ -53,6 +56,7 @@ ops::PrimitiveC *TFMaxPoolParser::Parse(const tensorflow::NodeDef &tf_op,
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "ksize", &attr_value)) {
     const auto &kernel_list = attr_value.list();
+    MS_CHECK_TRUE_RET(kernel_list.i_size() >= kTfPoolKernelListSize, nullptr);
     if (format == mindspore::Format::NCHW) {
       prim->set_kernel_size({kernel_list.i(2), kernel_list.i(3)});
     } else {
@@ -87,6 +91,7 @@ ops::PrimitiveC *TFAvgPoolParser::Parse(const tensorflow::NodeDef &tf_op,
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "strides", &attr_value)) {
     const auto &stride_list = attr_value.list();
+    MS_CHECK_TRUE_RET(stride_list.i_size() >= kTfPoolStrideListSize, nullptr);
     if (format == mindspore::Format::NCHW) {
       prim->set_strides({stride_list.i(2), stride_list.i(3)});
     } else {
@@ -96,6 +101,7 @@ ops::PrimitiveC *TFAvgPoolParser::Parse(const tensorflow::NodeDef &tf_op,
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "ksize", &attr_value)) {
     const auto &kernel_list = attr_value.list();
+    MS_CHECK_TRUE_RET(kernel_list.i_size() >= kTfPoolKernelListSize, nullptr);
     if (format == mindspore::Format::NCHW) {
       prim->set_kernel_size({kernel_list.i(2), kernel_list.i(3)});
     } else {
