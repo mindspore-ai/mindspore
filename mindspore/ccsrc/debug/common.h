@@ -22,6 +22,7 @@
 #include "utils/contract.h"
 #include "utils/ms_context.h"
 #include "utils/comm_manager.h"
+#include "utils/system/base.h"
 
 namespace mindspore {
 static const int MAX_DIRECTORY_LENGTH = 1024;
@@ -70,7 +71,10 @@ inline std::string ErrnoToString(const int error_number) {
   ret_info << " Errno: " << error_number;
 #if defined(SYSTEM_ENV_POSIX)
   char err_info[MAX_FILENAME_LENGTH];
-  ret_info << ", ErrInfo: " << strerror_r(error_number, err_info, sizeof(err_info));
+  char *ret = strerror_r(error_number, err_info, sizeof(err_info));
+  if (ret != nullptr) {
+    ret_info << ", ErrInfo: " << ret;
+  }
 #elif defined(SYSTEM_ENV_WINDOWS)
   char err_info[MAX_FILENAME_LENGTH];
   (void)strerror_s(err_info, sizeof(err_info), error_number);
