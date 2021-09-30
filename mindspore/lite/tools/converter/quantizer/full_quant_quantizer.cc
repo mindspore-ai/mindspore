@@ -657,8 +657,12 @@ STATUS FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Anf
     MS_LOG(ERROR) << "Get data type failed.";
     return RET_ERROR;
   }
+  // support for share weight.
+  if (type_id == kNumberTypeInt8) {
+    return RET_CONTINUE;
+  }
   if (type_id != kNumberTypeFloat32) {
-    ret = SetInOutQuantParam(input_node, nullptr, primitive, true, input_index);
+    ret = SetInOutQuantParam(input_node, nullptr, primitive, true, input_index - 1);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Set In/Out quant param failed.";
       return ret;
