@@ -66,6 +66,10 @@ STATUS TfliteModelParser::TfliteModelVerify() {
 
   for (auto &subgraph : tflite_model_->subgraphs) {
     auto all_singraph_tensor_size = subgraph->tensors.size();
+    if (subgraph->inputs.empty() || subgraph->outputs.empty()) {
+      MS_LOG(ERROR) << "tflite subgraph inputs or outputs is empty.";
+      return RET_ERROR;
+    }
     if (std::any_of(subgraph->inputs.begin(), subgraph->inputs.end(), [&all_singraph_tensor_size](int32_t index) {
           return index >= static_cast<int32_t>(all_singraph_tensor_size) || index < 0;
         })) {
