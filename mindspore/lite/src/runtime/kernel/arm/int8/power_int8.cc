@@ -36,10 +36,12 @@ int PowerInt8CPUKernel::Init() {
   MSLITE_CHECK_PTR(output);
 
   auto in_quant_args = input->quant_params();
+  CHECK_LESS_RETURN(in_quant_args.size(), 1);
   param_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   param_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto out_quant_args = output->quant_params();
+  CHECK_LESS_RETURN(out_quant_args.size(), 1);
   param_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
   param_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
@@ -69,6 +71,7 @@ int PowerInt8CPUKernel::DoPower(int task_id) {
   if (in_tensors_.size() == 2) {
     auto exp_tensor = in_tensors_.at(1);
     auto exp_quant_args = exp_tensor->quant_params();
+    CHECK_LESS_RETURN(exp_quant_args.size(), 1);
     param_->quant_arg_.exp_args_.scale_ = exp_quant_args.front().scale;
     param_->quant_arg_.exp_args_.zp_ = exp_quant_args.front().zeroPoint;
     exp_ptr = reinterpret_cast<int8_t *>(exp_tensor->MutableData());

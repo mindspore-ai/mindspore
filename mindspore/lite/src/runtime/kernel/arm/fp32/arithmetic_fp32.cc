@@ -55,7 +55,7 @@ int ArithmeticCPUKernel::ReSize() {
   CalcMultiplesAndStrides(param_);
   if (param_->broadcasting_) {
     outside_ = 1;
-    for (int i = static_cast<int>(param_->ndim_) - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(param_->ndim_) - 1; i >= 0 && i < ARITHMETIC_SUPPORT_DIMS_NUM; --i) {
       if (param_->in_shape0_[i] != param_->in_shape1_[i]) {
         break_pos_ = i;
         break;
@@ -144,6 +144,7 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
     if (input0_ptr_ == nullptr) {
       return RET_ERROR;
     }
+    CHECK_NULL_RETURN(in_tensors_[0]->data());
     TileConstTensor(in_tensors_[0]->data(), input0_ptr_, param_->ndim_, param_->in_shape0_, param_->in_strides0_,
                     param_->out_strides_, param_->multiples0_);
     input0_broadcast_ = true;
@@ -156,6 +157,7 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
       FreeConstTileBuff();
       return RET_ERROR;
     }
+    CHECK_NULL_RETURN(in_tensors_[1]->data());
     TileConstTensor(in_tensors_[1]->data(), input1_ptr_, param_->ndim_, param_->in_shape1_, param_->in_strides1_,
                     param_->out_strides_, param_->multiples1_);
     input1_broadcast_ = true;
@@ -377,6 +379,7 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   if (count <= 0) {
     return RET_OK;
   }
+  CHECK_LESS_RETURN(ARITHMETIC_SUPPORT_DIMS_NUM, param_->ndim_);
   int offset = stride * task_id * data_type_len_;
   /* run opt function, one of input is scalar */
   if (IsScalarClac()) {  // 2 32 240 240, 1 1 1 1
@@ -426,11 +429,14 @@ int ArithmeticCPUKernel::Run() {
   }
   if (!input0_broadcast_) {
     input0_ptr_ = in_tensors_[0]->data();
+    CHECK_NULL_RETURN(input0_ptr_);
   }
   if (!input1_broadcast_) {
     input1_ptr_ = in_tensors_[1]->data();
+    CHECK_NULL_RETURN(input1_ptr_);
   }
   output_ptr_ = out_tensors_[0]->data();
+  CHECK_NULL_RETURN(output_ptr_);
   return ParallelLaunch(this->ms_context_, ArithmeticsRun, this, op_parameter_->thread_num_);
 }
 

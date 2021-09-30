@@ -39,6 +39,8 @@ DepthToSpaceInt8CPUKernel::~DepthToSpaceInt8CPUKernel() {
 }
 
 int DepthToSpaceInt8CPUKernel::Init() {
+  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
   param_->data_type_size_ = sizeof(int8_t);
 
   in_quant_arg_ = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
@@ -48,6 +50,7 @@ int DepthToSpaceInt8CPUKernel::Init() {
   }
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
+  CHECK_LESS_RETURN(in_quant_args.size(), 1);
   in_quant_arg_->scale_ = in_quant_args.front().scale;
   in_quant_arg_->zp_ = in_quant_args.front().zeroPoint;
 
@@ -58,6 +61,7 @@ int DepthToSpaceInt8CPUKernel::Init() {
   }
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto out_quant_args = out_tensor->quant_params();
+  CHECK_LESS_RETURN(out_quant_args.size(), 1);
   out_quant_arg_->scale_ = out_quant_args.front().scale;
   out_quant_arg_->zp_ = out_quant_args.front().zeroPoint;
   if (!InferShapeDone()) {
@@ -70,7 +74,9 @@ int DepthToSpaceInt8CPUKernel::Run() {
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
   const int8_t *input_data = reinterpret_cast<const int8_t *>(input->data());
+  CHECK_NULL_RETURN(input_data);
   int8_t *output_data = reinterpret_cast<int8_t *>(output->data());
+  CHECK_NULL_RETURN(output_data);
   auto in_shape = input->shape();
   if (std::abs(in_quant_arg_->scale_ - out_quant_arg_->scale_) < FLT_EPSILON &&
       in_quant_arg_->zp_ == out_quant_arg_->zp_) {

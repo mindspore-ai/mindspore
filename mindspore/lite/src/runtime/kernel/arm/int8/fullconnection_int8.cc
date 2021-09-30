@@ -26,6 +26,7 @@ namespace mindspore::kernel {
 int FullconnectionInt8CPUKernel::Init() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NULL_RETURN(param_);
   param_->batch = 1;
   param_->a_transpose_ = false;
   param_->b_transpose_ = true;
@@ -45,6 +46,7 @@ int FullconnectionInt8CPUKernel::Init() {
 }
 
 int FullconnectionInt8CPUKernel::ReSize() {
+  CHECK_NULL_RETURN(param_);
   int row = 1;
   for (size_t i = 0; i < out_tensors_.at(0)->shape().size() - 1; ++i) {
     row *= (out_tensors_.at(0)->shape()).at(i);
