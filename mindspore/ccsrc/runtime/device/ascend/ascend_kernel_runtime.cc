@@ -1186,7 +1186,7 @@ std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceTimeEvent() {
 uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {
   auto ascend_mem_manager = std::dynamic_pointer_cast<AscendMemoryManager>(mem_manager_);
   MS_EXCEPTION_IF_NULL(ascend_mem_manager);
-  return ascend_mem_manager->GetDeviceMemSize();
+  return ascend_mem_manager->GetMsMaxMemSize();
 }
 
 bool AscendKernelRuntime::DeleteDumpDir(const std::string &path) {

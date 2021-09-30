@@ -29,18 +29,11 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
   AscendMemoryPool(const AscendMemoryPool &) = delete;
   AscendMemoryPool &operator=(const AscendMemoryPool &) = delete;
 
-  void Init(uint8_t *device_mem_base, uint64_t device_mem_size, uint64_t dynamic_mem_offset);
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
-  void ResetIdleMemBuf();
-  void set_device_mem_size(uint64_t device_mem_size);
-  void set_device_mem_pool_base(uint8_t *device_mem_pool_base);
-  void set_device_mem_pool_offset(uint64_t device_mem_pool_offset);
-  void set_graph_dynamic_mem_offset(uint64_t graph_dynamic_mem_offset);
-
-  uint64_t device_mem_pool_offset() const;
   size_t free_mem_size() override;
-  size_t total_mem_size() override;
+
+  void ResetIdleMemBuf();
 
   static AscendMemoryPool &GetInstance() {
     static AscendMemoryPool instance;
@@ -48,17 +41,11 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
   }
 
  protected:
-  // The real size by memory alloc aligned.
-  size_t AlignMemorySize(size_t size) const override;
   // Calculate memory block required alloc size when adding the memory block.
   size_t CalMemBlockAllocSize(size_t size) override;
 
  private:
   AscendMemoryPool() = default;
-  uint8_t *device_mem_pool_base_{nullptr};
-  uint64_t device_mem_size_{0};
-  uint64_t device_mem_pool_offset_{0};
-  uint64_t graph_dynamic_mem_offset_{0};
 };
 }  // namespace ascend
 }  // namespace device

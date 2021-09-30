@@ -36,7 +36,6 @@ class CPUMemoryPool : public DynamicMemPoolBestFit {
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
   size_t free_mem_size() override;
-  size_t total_mem_size() override;
 
  private:
   CPUMemoryPool() = default;

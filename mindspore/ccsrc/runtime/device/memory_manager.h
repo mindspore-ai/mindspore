@@ -39,10 +39,7 @@ class MemoryManager : public MemHandler {
 
   virtual void MallocDeviceMemory() = 0;
   virtual void FreeDeviceMemory() = 0;
-  virtual void ResetDynamicMemory() {
-    total_dynamic_size_ = 0;
-    dynamic_mem_offset_ = 0;
-  }
+  virtual void ResetDynamicMemory() {}
   virtual void ClearGlobalIdleMem() {}
 
   virtual void MallocSomasDynamicMem(const session::KernelGraph &graph);
@@ -110,12 +107,6 @@ class MemoryManager : public MemHandler {
  protected:
   virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) = 0;
   virtual uint8_t *MallocDynamicMem(size_t size, bool communication_mem);
-  uint8_t *device_mem_base_{nullptr};
-  uint64_t device_mem_size_{0};
-  uint64_t dynamic_mem_offset_{0};
-  uint64_t static_mem_offset_{0};
-  size_t total_static_size_ = 0;
-  size_t total_dynamic_size_ = 0;
   SomasPtr somas_reuse_util_ptr_{nullptr};
   std::map<size_t, std::queue<void *>> cached_host_mem_;
   std::map<void *, std::shared_ptr<std::vector<uint8_t>>> host_mem_block_map_;

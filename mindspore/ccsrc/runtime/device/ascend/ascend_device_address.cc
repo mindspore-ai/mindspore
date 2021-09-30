@@ -73,6 +73,9 @@ const std::set<std::string> kOpNeedTransFormat = {
   kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
 
 void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) {
+  if (size == 0) {
+    return;
+  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
