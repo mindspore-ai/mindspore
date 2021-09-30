@@ -298,6 +298,10 @@ class FeedForward(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore.parallel.nn import FeedForward
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore import Tensor
         >>> model = FeedForward(hidden_size=15, ffn_hidden_size=30, dropout_rate=0.1)
         >>> tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
         >>> output = model(tensor)
@@ -406,16 +410,18 @@ class AttentionMask(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore.parallel.nn import AttentionMask
+        >>> from mindspore import Tensor
         >>> mask = AttentionMask(seq_length=4)
         >>> mask_array = np.array([[1, 1, 1, 0]], np.float32)
         >>> inputs = Tensor(mask_array)
         >>> res = mask(inputs)
         >>> print(res)
-        [[[1, 0, 0, 0],
-         [1, 1, 0, 0],
-         [1, 1, 1, 0],
-         [0, 0, 0, 0]]]
+        [[[1. 0. 0. 0],
+          [1. 1. 0. 0],
+          [1. 1. 1. 0],
+          [0. 0. 0. 0]]]
     """
 
     @_args_type_validator_check(seq_length=Validator.check_positive_int,
@@ -489,6 +495,10 @@ class VocabEmbedding(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore.parallel.nn import VocabEmbedding
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
         >>> model = VocabEmbedding(vocab_size=30, embedding_size=30)
         >>> tensor = Tensor(np.ones((20, 15)), mstype.int32)
         >>> output, table = model(tensor)
@@ -549,9 +559,9 @@ class MultiHeadAttention(Cell):
         attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1
         compute_dtype(dtype.Number): The computation type of dense. Default dtype.float16.
             Should be dtype.float32 or dtype.float16.
-        param_init_type(dtype.Number). The parameter initialization type of the module. Default dtype.float32.
+        param_init_type(dtype.Number): The parameter initialization type of the module. Default dtype.float32.
             Should be dtype.float32 or dtype.float16.
-        softmax_compute_type(dtype.Number). The type of softmax computation module. Default dtype.float32.
+        softmax_compute_type(dtype.Number): The type of softmax computation module. Default dtype.float32.
             Should be dtype.float32 or dtype.float16.
         use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
         parallel_config(OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
@@ -589,6 +599,10 @@ class MultiHeadAttention(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore.parallel.nn import MultiHeadAttention
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore import Tensor
         >>> model = MultiHeadAttention(batch_size=2, hidden_size=15, src_seq_length=20, tgt_seq_length=20,
         ...                            num_heads=3)
         >>> from_tensor = Tensor(np.ones((2, 20, 15)), mstype.float32)
@@ -601,6 +615,36 @@ class MultiHeadAttention(Cell):
         (2, 3, 5, 20)
         >>> print(past[1].shape)
         (2, 3, 20, 5)
+        # When use use_past=True, it includes two steps to implement the incremental prediction.
+        # Step 1: set is_first_iteration=True, and input the full sequence length's state.
+        # We need to prepare the memory parameters for saving key and value states firstly.
+        >>> key_past = Tensor(np.zeros(shape=(2, 3, 5, 20)), mstype.float16)
+        >>> value_past = Tensor(np.zeros(shape=(2, 3, 20, 5)), mstype.float16)
+        >>> batch_valid_length = Tensor(np.ones((2,)), mstype.int32)
+        # Set is_first_iteration=True to generate the full memory states
+        >>> model.add_flags_recursive(is_first_iteration=True)
+        >>> attn_out, past = model(from_tensor, to_tensor, to_tensor, attention_mask, key_past, value_past,
+        ...                        batch_valid_length)
+        >>> print(attn_out.shape)
+        (2, 20, 15)
+        >>> print(past[0].shape)
+        (2, 3, 5, 20)
+        >>> print(past[1].shape)
+        (2, 3, 20, 5)
+        >>> from_tensor = Tensor(np.ones((2, 1, 15)), mstype.float32)
+        >>> to_tensor = Tensor(np.ones((2, 1, 15)), mstype.float16)
+        >>> attention_mask = Tensor(np.ones((2, 1, 20)), mstype.float16)
+        # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
+        # sequence.
+        >>> model.add_flags_recursive(is_first_iteration=False)
+        >>> attn_out, past = model(from_tensor, to_tensor, to_tensor, attention_mask, key_past, value_past,
+        ...                        batch_valid_length)
+        >>> print(attn_out.shape)
+        (2, 1, 15)
+        >>> print(past[0].shape)
+        (2, 3, 5, 1)
+        >>> print(past[1].shape)
+        (2, 3, 1, 5)
     """
 
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
@@ -673,7 +717,7 @@ class MultiHeadAttention(Cell):
         self.concat_v = P.Concat(axis=2)
         self.multiply_data = Tensor([
             -10000.0,
-        ], dtype=mstype.float32)
+        ], dtype=softmax_compute_type)
         self.batch_matmul = P.BatchMatMul().shard(
             ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),
              (parallel_config.data_parallel, parallel_config.model_parallel, 1, 1)))
@@ -838,13 +882,13 @@ class MultiHeadAttention(Cell):
                                [self.batch_size, self.src_seq_length, self.tgt_seq_length])
         else:
             _check_shape_equal(F.shape(query_tensor), "query_tensor", self.cls_name,
-                               [self.batch_size, 1, self.hidden_size])
+                               [[self.batch_size, 1, self.hidden_size], [self.batch_size, self.hidden_size]])
             _check_shape_equal(F.shape(key_tensor), "key_tensor", self.cls_name,
-                               [self.batch_size, 1, self.hidden_size])
+                               [[self.batch_size, 1, self.hidden_size], [self.batch_size, self.hidden_size]])
             _check_shape_equal(F.shape(value_tensor), "value_tensor", self.cls_name,
-                               [self.batch_size, 1, self.hidden_size])
+                               [[self.batch_size, 1, self.hidden_size], [self.batch_size, self.hidden_size]])
             _check_shape_equal(F.shape(attention_mask), "attention_mask", self.cls_name,
-                               [self.batch_size, 1, self.tgt_seq_length])
+                               [[self.batch_size, 1, self.tgt_seq_length], [self.batch_size, self.hidden_size]])
 
         _check_input_dtype(F.dtype(query_tensor), "query_tensor", [mstype.float32, mstype.float16], self.cls_name)
         _check_input_dtype(F.dtype(key_tensor), "key_tensor", [mstype.float32, mstype.float16], self.cls_name)
@@ -1014,6 +1058,10 @@ class TransformerEncoderLayer(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore.parallel.nn import TransformerEncoderLayer
+        >>> from mindspore import Tensor
         >>> model = TransformerEncoderLayer(batch_size=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
         ...                                 num_heads=2)
         >>> encoder_input_value = Tensor(np.ones((2, 16, 8)), mstype.float32)
@@ -1021,6 +1069,34 @@ class TransformerEncoderLayer(Cell):
         >>> output, past = model(encoder_input_value, encoder_input_mask)
         >>> print(output.shape)
         (2, 16, 8)
+        >>> print(past[0].shape)
+        (2, 2, 4, 16)
+        >>> print(past[1].shape)
+        (2, 2, 16, 4)
+        # When use use_past=True, it includes two steps to implement the incremental prediction.
+        # Step 1: set is_first_iteration=True, and input the full sequence length's state.
+        >>> batch_valid_length = Tensor(np.ones((2,)), mstype.int32)
+        >>> init_reset = Tensor([True], mstype.bool_)
+        # Set is_first_iteration=True to generate the full memory states
+        >>> model = TransformerEncoderLayer(batch_size=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
+        ...                                 num_heads=2, use_past=True)
+        >>> model.add_flags_recursive(is_first_iteration=True)
+        >>> hidden, past = model(encoder_input_value, encoder_input_mask, init_reset, batch_valid_length)
+        >>> print(hidden.shape)
+        (2, 16, 8)
+        >>> print(past[0].shape)
+        (2, 2, 4, 16)
+        >>> print(past[1].shape)
+        (2, 2, 16, 4)
+        >>> encoder_input_value = Tensor(np.ones((2, 1, 8)), mstype.float32)
+        >>> encoder_input_mask = Tensor(np.ones((2, 16, 16)), mstype.float16)
+        >>> init_reset = Tensor([False], mstype.bool_)
+        # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
+        # sequence.
+        >>> model.add_flags_recursive(is_first_iteration=False)
+        >>> hidden, past = model(encoder_input_value, encoder_input_mask, init_reset, batch_valid_length)
+        >>> print(hidden.shape)
+        (2, 1, 8)
         >>> print(past[0].shape)
         (2, 2, 4, 16)
         >>> print(past[1].shape)
@@ -1298,6 +1374,10 @@ class TransformerDecoderLayer(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore.parallel.nn import TransformerDecoderLayer
+        >>> from mindspore import Tensor
         >>> model = TransformerDecoderLayer(batch_size=2, hidden_size=64, ffn_hidden_size=64, num_heads=2,
         ...                                 src_seq_length=20, tgt_seq_length=10)
         >>> encoder_input_value = Tensor(np.ones((2, 20, 64)), mstype.float32)
@@ -1683,6 +1763,10 @@ class TransformerEncoder(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore.parallel.nn import TransformerEncoder
+        >>> from mindspore import Tensor
         >>> model = TransformerEncoder(batch_size=2, num_layers=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
         ...                            num_heads=2)
         >>> encoder_input_value = Tensor(np.ones((2, 16, 8)), mstype.float32)
@@ -1695,6 +1779,34 @@ class TransformerEncoder(Cell):
         >>> print(past[0][0].shape)
         (2, 2, 4, 16)
         >>> print(past[0][1].shape)
+        (2, 2, 16, 4)
+        # When use use_past=True, it includes two steps to implement the incremental prediction.
+        # Step 1: set is_first_iteration=True, and input the full sequence length's state.
+        >>> batch_valid_length = Tensor(np.ones((2,)), mstype.int32)
+        >>> init_reset = Tensor([True], mstype.bool_)
+        # Set is_first_iteration=True to generate the full memory states
+        >>> model = TransformerEncoder(batch_size=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
+        ...                            num_heads=2, use_past=True)
+        >>> model.add_flags_recursive(is_first_iteration=True)
+        >>> hidden, past = model(encoder_input_value, encoder_input_mask, init_reset, batch_valid_length)
+        >>> print(hidden.shape)
+        (2, 16, 8)
+        >>> print(past[0].shape)
+        (2, 2, 4, 16)
+        >>> print(past[1].shape)
+        (2, 2, 16, 4)
+        >>> encoder_input_value = Tensor(np.ones((2, 1, 8)), mstype.float32)
+        >>> encoder_input_mask = Tensor(np.ones((2, 16, 16)), mstype.float16)
+        >>> init_reset = Tensor([False], mstype.bool_)
+        # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
+        # sequence.
+        >>> model.add_flags_recursive(is_first_iteration=False)
+        >>> hidden, past = model(encoder_input_value, encoder_input_mask, init_reset, batch_valid_length)
+        >>> print(hidden.shape)
+        (2, 1, 8)
+        >>> print(past[0].shape)
+        (2, 2, 4, 16)
+        >>> print(past[1].shape)
         (2, 2, 16, 4)
     """
 
@@ -1861,6 +1973,10 @@ class TransformerDecoder(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore.parallel.nn import TransformerDecoder
+        >>> from mindspore import Tensor
         >>> model = TransformerDecoder(batch_size=2, num_layers=1, hidden_size=64, ffn_hidden_size=64,
         ...                            num_heads=2, src_seq_length=20, tgt_seq_length=10)
         >>> encoder_input_value = Tensor(np.ones((2, 20, 64)), mstype.float32)
@@ -2069,6 +2185,10 @@ class Transformer(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore.parallel.nn import Transformer
+        >>> from mindspore import Tensor
         >>> model = Transformer(batch_size=2, encoder_layers=1, decoder_layers=2, hidden_size=64, ffn_hidden_size=64,
         ...         src_seq_length=20, tgt_seq_length=10)
         >>> encoder_input_value = Tensor(np.ones((2, 20, 64)), mstype.float32)

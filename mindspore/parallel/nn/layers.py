@@ -251,6 +251,7 @@ class _LayerNorm(Cell):
         Args:
             strategy (tuple): The strategy for the dropout. Should be the same shape as the inputs.
         Examples:
+            >>> import mindspore
             >>> net = mindspore.parallel.nn.transformer.LayerNorm(normalized_shape=(1024, 10))
             >>> net.shard(((10, 2, 1),))
         """
@@ -297,7 +298,7 @@ class _Linear(Cell):
             eg. 'ReLU'.Default: None.
         expert_num (int): The number of experts used in this Linear. Here, for the case expert_num > 1, BatchMatMul is
             used and the first dimension in BatchMatMul indicate expert_num. Default: 1.
-        compute_dtype (mstype): The computation type. Default: mstype.float16
+        compute_dtype (dtype.Number): The computation type. Default: mstype.float16
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
           to :math:`in\_channels` in `Inputs`.
@@ -461,6 +462,10 @@ class FixedSparseAttention(nn.Cell):
         ``Ascend``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore.parallel.nn import FixedSparseAttention
+        >>> from mindspore import Tensor
         >>> model = FixedSparseAttention(batch_size=2,
         ...                              num_heads=8,
         ...                              size_per_head=64,
