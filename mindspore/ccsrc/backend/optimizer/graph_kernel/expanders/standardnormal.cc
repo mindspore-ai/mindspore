@@ -26,7 +26,7 @@ class StandardNormal : public OpExpander {
  public:
   StandardNormal() {
     std::initializer_list<std::string> attrs{"seed", "seed2"};
-    validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
+    (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~StandardNormal() {}
 

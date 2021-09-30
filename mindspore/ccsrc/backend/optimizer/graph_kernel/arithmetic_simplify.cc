@@ -393,7 +393,7 @@ class ExtraReduce1PatternTree : public PatternTree {
         if (st.find(n) != st.end()) {
           shift++;
         } else {
-          mp[SizeToLong(n - shift)] = n;
+          mp[n - shift] = n;
         }
       }
       std::for_each(first_axis.begin(), first_axis.end(), [&axis_set](auto &i) { axis_set.insert(i); });

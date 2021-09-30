@@ -86,7 +86,7 @@ class AkgKernelPool {
   virtual ~AkgKernelPool() = default;
 
   int32_t Init(const std::vector<JsonNodePair> &build_args);
-  int32_t Release();
+  int32_t Release() const;
   int32_t FetchKernels(std::set<size_t> *out);
   int32_t UpdateAndWait(const std::set<size_t> &ids);
 

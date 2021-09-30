@@ -210,7 +210,7 @@ int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
   return 0;
 }
 
-int32_t AkgKernelPool::Release() {
+int32_t AkgKernelPool::Release() const {
   {
     LockMng lock(fd_);
     if (!lock.locked_) {
