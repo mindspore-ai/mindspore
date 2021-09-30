@@ -283,6 +283,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
   if (offset + sizeof(uint16_t) > max_size) {
     MS_LOG(ERROR) << "offset over max size"
                   << " offset:" << offset << " max_size:" << max_size;
+    return RET_ERROR;
   }
   *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)table_log;
   offset += sizeof(uint16_t);
@@ -297,6 +298,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
     if (offset + sizeof(uint16_t) > max_size) {
       MS_LOG(ERROR) << "offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
+      return RET_ERROR;
     }
     *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)fse_quant.frequency[j];
     offset += sizeof(uint16_t);
@@ -305,6 +307,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
     if (offset + sizeof(uint16_t) > max_size) {
       MS_LOG(ERROR) << "offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
+      return RET_ERROR;
     }
     *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)0;
     offset += sizeof(uint16_t);
@@ -313,6 +316,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
     if (offset + sizeof(float) > max_size) {
       MS_LOG(ERROR) << "offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
+      return RET_ERROR;
     }
     *(reinterpret_cast<float *>(&out8[offset])) = static_cast<float>(fse_quant.centroids[j]);
     offset += sizeof(float);
@@ -321,6 +325,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
     if (offset + sizeof(uint16_t) > max_size) {
       MS_LOG(ERROR) << "offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
+      return RET_ERROR;
     }
     *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)0;
     offset += sizeof(uint16_t);
@@ -329,6 +334,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
     if (offset + sizeof(uint64_t) > max_size) {
       MS_LOG(ERROR) << "offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
+      return RET_ERROR;
     }
     *(reinterpret_cast<uint64_t *>(&out8[offset])) = (uint64_t)bs->GetChunks()[j];
     offset += sizeof(uint64_t);
@@ -336,12 +342,14 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
   if (offset + sizeof(uint64_t) > max_size) {
     MS_LOG(ERROR) << "offset over max size"
                   << " offset:" << offset << " max_size:" << max_size;
+    return RET_ERROR;
   }
   *(reinterpret_cast<uint64_t *>(&out8[offset])) = (uint64_t)bs->GetCurrChunk();
   offset += sizeof(uint64_t);
   if (offset + sizeof(uint8_t) > max_size) {
     MS_LOG(ERROR) << "offset over max size"
                   << " offset:" << offset << " max_size:" << max_size;
+    return RET_ERROR;
   }
   *(reinterpret_cast<uint8_t *>(&out8[offset])) = (uint8_t)bs->GetCurrBitCount();
   offset += sizeof(uint8_t);
@@ -349,6 +357,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
     tensor_input->data.resize(offset);
     if (memcpy_s(tensor_input->data.data(), offset, out8, offset) != EOK) {
       MS_LOG(ERROR) << "memcpy failed.";
+      return RET_ERROR;
     }
   }
   tensor_input->quantParams.clear();
