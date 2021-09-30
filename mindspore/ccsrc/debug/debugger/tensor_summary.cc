@@ -328,10 +328,10 @@ void TensorSummary<T>::InitCalculators(const std::vector<DebugServices::watchpoi
         range_counts_[wp_id]->set_range_end_inclusive(wp.parameter_list[1].value);
       }
     } else if (wp.tensor_update_ratio_mean_enabled() && prev_tensor_ptr_) {
-      (void)means_.insert({"curr_prev_diff_mean", std::make_unique<MeanCalculator>()});
-      (void)means_.insert({"abs_prev_mean", std::make_unique<MeanCalculator>()});
+      (void)means_.emplace("curr_prev_diff_mean", std::make_unique<MeanCalculator>());
+      (void)means_.emplace("abs_prev_mean", std::make_unique<MeanCalculator>());
     } else if (wp.abs_mean_enabled()) {
-      (void)means_.insert({"abs_current_mean", std::make_unique<MeanCalculator>()});
+      (void)means_.emplace("abs_current_mean", std::make_unique<MeanCalculator>());
     }
   }
 }

@@ -31,7 +31,7 @@ def get_version():
     Function to return offline Debug Services version.
 
     Returns:
-        version (str): dbgServices version.
+        version (str): DbgServices version.
 
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
@@ -48,7 +48,7 @@ class DbgLogger:
     Offline Debug Services Logger
 
     Args:
-        verbose (bool): whether to print logs.
+        verbose (bool): Whether to print logs.
 
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
@@ -70,8 +70,8 @@ class DbgServices:
     Offline Debug Services class.
 
     Args:
-        dump_file_path (str): directory where the dump files are saved.
-        verbose (bool): whether to print logs (default: False)..
+        dump_file_path (str): Directory where the dump files are saved.
+        verbose (bool): Whether to print logs. Default: False.
 
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
@@ -200,7 +200,7 @@ class DbgServices:
         Removing watchpoint from Debug Service instance.
 
         Args:
-            watchpoint_id (int): Watchpoint id
+            watchpoint_id (int): Watchpoint id.
 
         Returns:
             Debug Service instance with removed watchpoint.
@@ -733,17 +733,17 @@ class TensorStatData:
         data_size (int): Size of data in bytes.
         dtype (int): An encoding representing the type of TensorData.
         shape (list): Shape of tensor.
-        is_bool (bool): Whether the data type is bool
-        max_value (float): Maximum value in tensor's elements
-        min_value (float): Minimum value in tensor's elements
-        avg_value (float): Average value of all tensor's elements
-        count (int): Number of elements in tensor
-        neg_zero_count (int): Number of negative elements in tensor
-        pos_zero_count (int): Number of positive elements in tensor
-        nan_cout (int): Number of nan elements in tensor
-        neg_inf_count (int): Number of negative infinity elements in tensor
-        pos_inf_count (int): Number of positive infinity elements in tensor
-        zero_count (int): Total number of zero elements in tensor
+        is_bool (bool): Whether the data type is bool.
+        max_value (float): Maximum value in tensor's elements.
+        min_value (float): Minimum value in tensor's elements.
+        avg_value (float): Average value of all tensor's elements.
+        count (int): Number of elements in tensor.
+        neg_zero_count (int): Number of negative elements in tensor.
+        pos_zero_count (int): Number of positive elements in tensor.
+        nan_cout (int): Number of nan elements in tensor.
+        neg_inf_count (int): Number of negative infinity elements in tensor.
+        pos_inf_count (int): Number of positive infinity elements in tensor.
+        zero_count (int): Total number of zero elements in tensor.
 
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services

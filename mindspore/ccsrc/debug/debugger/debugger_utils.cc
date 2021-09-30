@@ -35,9 +35,9 @@ using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 namespace mindspore {
 static const size_t PARAMETER_OUTPUT_INDEX = 0;
 
-std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &output_size) {
+std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size) {
   // define a vector containing real output number
-  std::vector<int> real_outputs;
+  std::vector<size_t> real_outputs;
   // P.BatchNorm is used for training and inference
   // can add the filter list for more operators here....
   if (node_name == "BatchNorm") {
@@ -46,8 +46,7 @@ std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &out
   } else {
     // by default, TensorLoader will load all outputs
     for (size_t j = 0; j < output_size; ++j) {
-      size_t index = j;
-      real_outputs.push_back(index);
+      real_outputs.push_back(j);
     }
   }
   return real_outputs;
@@ -86,11 +85,11 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, ui
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
   auto node_name = AnfAlgo::GetCNodeName(cnode);
   std::string kernel_name = GetKernelNodeName(cnode);
-  std::vector<int> real_outputs = CheckRealOutput(node_name, output_size);
+  std::vector<size_t> real_outputs = CheckRealOutput(node_name, output_size);
 
-  for (int j : real_outputs) {
+  for (size_t j : real_outputs) {
     auto addr = kernel_outputs[j];
-    auto type = AnfAlgo::GetOutputInferDataType(cnode, (size_t)j);
+    auto type = AnfAlgo::GetOutputInferDataType(cnode, j);
     // For example, this happens with the Depend op
     if (type == kMetaTypeNone) {
       continue;

@@ -28,7 +28,9 @@ import numpy as np
 
 
 class ConvertToolLoader:
-    """Module to load CANN conversion tool."""
+    """
+    Module to load CANN conversion tool.
+    """
 
     def __init__(self):
         self.utils = None
@@ -44,7 +46,9 @@ class ConvertToolLoader:
 
     @staticmethod
     def find_toolkit_path():
-        """Find the path to Ascend toolkit."""
+        """
+        Find the path to Ascend toolkit.
+        """
         ascend_toolkit_path = os.getenv("ASCEND_TOOLKIT_PATH")
         if not ascend_toolkit_path:
             ascend_toolkit_path = "/usr/local/Ascend"
@@ -63,7 +67,9 @@ class ConvertToolLoader:
         return msaccucmp_file_list[0].parent
 
     def load_convert_tool(self):
-        """load CANN conversion tool from the toolkit path."""
+        """
+        Load CANN conversion tool from the toolkit path.
+        """
         # add toolkit path to system searching module path
         if str(self.toolkit_path) not in sys.path:
             sys.path.insert(0, str(self.toolkit_path))
@@ -99,13 +105,17 @@ class ConvertToolLoader:
             self.compare_exception = self.utils.CompareError
 
     def reset_system_path(self):
-        # restore system searching module path
+        """
+        Restore system searching module path
+        """
         if str(self.toolkit_path) in sys.path:
             sys.path.remove(str(self.toolkit_path))
 
 
 def parse_args(file_list, output_path):
-    """Helper function to parse the input argument for the conversion configuration."""
+    """
+    Helper function to parse the input argument for the conversion configuration.
+    """
     args_dict = dict()
     args_dict['dump_version'] = '2.0'
     args_dict['format'] = 'NCHW'
@@ -122,7 +132,9 @@ def parse_args(file_list, output_path):
 
 
 class AsyncDumpConverter:
-    """Convert the target async dump data into npy files."""
+    """
+    Convert the target async dump data into npy files.
+    """
 
     def __init__(self, file_list, output_path):
         # check input path
@@ -138,12 +150,16 @@ class AsyncDumpConverter:
         self.clear_failed_list_file()
 
     def clear_failed_list_file(self):
-        """Remove existing failed txt file."""
+        """
+        Remove existing failed txt file.
+        """
         if self.failed_file_path and os.path.exists(self.failed_file_path):
             os.remove(self.failed_file_path)
 
     def convert_files(self):
-        """Main entry of the converter to convert async dump files into npy format."""
+        """
+        Main entry of the converter to convert async dump files into npy format.
+        """
         self.convert_tool.log.print_info_log('Start to convert async dump files.')
         try:
             if self.args.format is not None:
@@ -164,7 +180,9 @@ class AsyncDumpConverter:
         self.convert_tool.log.print_info_log('Finish to convert async dump files.')
 
     def convert_failed_tensors(self):
-        """Convert the failed tensor recorded in the failed txt file."""
+        """
+        Convert the failed tensor recorded in the failed txt file.
+        """
         self.convert_tool.log.print_info_log(
             'Start to convert failed tensors recorded in ' + self.failed_file_path + '.')
         with open(self.failed_file_path) as failed_lines:
@@ -177,7 +195,9 @@ class AsyncDumpConverter:
                         'Failed to convert ' + failed_line + ' to Host format: ' + str(err))
 
     def convert_one_failed_tensor(self, failed_tensor):
-        """Convert failed operator one by one."""
+        """
+        Convert failed operator one by one.
+        """
         if len(failed_tensor) <= 1:
             raise ValueError(
                 "Invalid tensor info in convert_failed_file_list.txt")
@@ -191,11 +211,13 @@ class AsyncDumpConverter:
             tensor = getattr(op_data, tensor_type)[index]
             dump_data_array = self.convert_tool.utils.deserialize_dump_data_to_array(tensor)
             array = dump_data_array.reshape(tensor.shape.dim)
-            self._save_tensor_to_npy_file(
-                file_path, tensor_type, index, tensor.format, array)
+            out_path = self._generate_path(file_path, tensor_type, index, tensor.format)
+            self._save_tensor_to_npy_file(out_path, array)
 
     def handle_multi_process(self, convert_obj, files):
-        """Convert async format files to npy in a multithreaded manner."""
+        """
+        Convert async format files to npy in a multithreaded manner.
+        """
         return_code = self.convert_tool.compare_none_error
         # try looking for function in compatibility with the toolkit package version.
         progress = self.convert_tool.progress(len(files))
@@ -223,7 +245,9 @@ class AsyncDumpConverter:
         return return_code
 
     def _get_file_list(self, files, convert_obj):
-        """Process to get file lists in multi_process."""
+        """
+        Process to get file lists in multi_process.
+        """
         multi_process_file_list = []
         big_file_list = []
         max_file_size = 0
@@ -241,7 +265,9 @@ class AsyncDumpConverter:
         return multi_process_file_list, big_file_list
 
     def _process_big_file(self, big_file_list, convert_obj):
-        """Process big file in multi_process."""
+        """
+        Process big file in multi_process.
+        """
         return_code = self.convert_tool.compare_none_error
         for big_file in big_file_list:
             if hasattr(convert_obj, '_convert_format_for_one_file'):
@@ -256,8 +282,18 @@ class AsyncDumpConverter:
                 return_code = ret_bf
         return return_code
 
-    def _save_tensor_to_npy_file(self, file_path, tensor_type, idx, tensor_format, dump_data_array):
-        """Save tensor file into npy format."""
+    @staticmethod
+    def _save_tensor_to_npy_file(out_path, dump_data_array):
+        """
+        Save tensor file into npy format.
+        """
+        np.save(out_path, dump_data_array)
+        os.chmod(out_path, stat.S_IRUSR)
+
+    def _generate_path(self, file_path, tensor_type, idx, tensor_format):
+        """
+        Generate path and filename to the target npy files
+        """
         file_name = os.path.basename(file_path)
         name_splits = file_name.split('.')
         name_splits[1] = name_splits[1].split('_')[-1]
@@ -268,12 +304,12 @@ class AsyncDumpConverter:
             idx,
             self.convert_tool.common.get_format_string(tensor_format)
         )
-        out_path = os.path.join(self.output_path, out_file_name)
-        np.save(out_path, dump_data_array)
-        os.chmod(out_path, stat.S_IRUSR)
+        return os.path.join(self.output_path, out_file_name)
 
     def _rename_generated_npy_files(self):
-        """In order to follow dump naming convention, rename npy files generated by CANN conversion tool."""
+        """
+        In order to follow dump naming convention, rename npy files generated by CANN conversion tool.
+        """
         target_file_list = []
         for in_file in self.files_to_convert:
             target_file_list.extend(glob.glob(in_file + "*.npy"))

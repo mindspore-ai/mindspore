@@ -189,6 +189,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_proto_list);
 
+  // send multi_graphs and clear the graph_proto_list_
+  void SendMultiGraphsAndClear(const KernelGraphPtr &graph_ptr);
+
   // wait for command and process command
   // send command request and process reply in a loop
   // break if RunCMD

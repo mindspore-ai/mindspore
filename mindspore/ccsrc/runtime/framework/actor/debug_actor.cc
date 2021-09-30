@@ -57,7 +57,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
   } else if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kGPU) {
 #ifdef ENABLE_DEBUGGER
     auto debugger = Debugger::GetInstance();
-    if (debugger) {
+    if (debugger != nullptr) {
       std::string kernel_name = cnode->fullname_with_scope();
       debugger->SetCurNode(kernel_name);
       bool read_data = CheckReadData(cnode);
@@ -111,7 +111,7 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
 
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
-  if (debugger) {
+  if (debugger != nullptr) {
     debugger->Debugger::UpdateStepNumGPU();
     // Reset exec_order for the next step
     exec_order_ = 0;
