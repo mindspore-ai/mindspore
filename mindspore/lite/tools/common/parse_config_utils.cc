@@ -19,6 +19,7 @@
 #include "mindspore/lite/tools/common/string_util.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
+
 namespace mindspore {
 namespace lite {
 int ReadFileToIfstream(const std::string &file_path, std::ifstream *ifstream) {

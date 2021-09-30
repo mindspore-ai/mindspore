@@ -72,6 +72,7 @@ bool RemoveUnusedTransposeOpPass::Run(const FuncGraphPtr &func_graph) {
     }
     if (CheckPrimitiveType(node, prim::kPrimTranspose)) {
       auto transpose_cnode = node->cast<CNodePtr>();
+      MS_ASSERT(transpose_cnode != nullptr);
       if (!CheckPrimitiveType(transpose_cnode->input(kTransposeInput), prim::kPrimConv2DFusion)) {
         continue;
       }
@@ -90,6 +91,7 @@ bool RemoveUnusedTransposeOpPass::Run(const FuncGraphPtr &func_graph) {
         continue;
       }
       auto transpose_cnode = conv_node->input(kTransposeInput)->cast<CNodePtr>();
+      MS_ASSERT(transpose_cnode != nullptr);
       auto perm = GetTransposePerm(transpose_cnode);
       if (perm == kPermNHWC) {
         manager->Replace(transpose_cnode, transpose_cnode->input(1));

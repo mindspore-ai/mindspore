@@ -90,16 +90,16 @@ std::vector<int> TransformOpAxesAttr(const std::vector<int> &origin_axes, Format
   return cur_axes;
 }
 
-void TransformAttrByAxes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
-                         const std::vector<int> &axes, FormatTransNodeType trans_type,
-                         NodeInferShape *node_infer_shape) {
+int TransformAttrByAxes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
+                        const std::vector<int> &axes, FormatTransNodeType trans_type,
+                        NodeInferShape *node_infer_shape) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr && node_infer_shape != nullptr);
   if (input_index >= cnode->size() || axes.empty()) {
-    return;
+    return lite::RET_ERROR;
   }
   auto origin_input = node_infer_shape->GetIntVecInput(cnode, input_index);
   if (origin_input.size() != axes.size()) {
-    return;
+    return lite::RET_ERROR;
   }
   std::vector<int> cur_input;
   for (int dim = 0; dim < static_cast<int>(kInputSizeFour); ++dim) {
@@ -119,7 +119,9 @@ void TransformAttrByAxes(const FuncGraphPtr &func_graph, const CNodePtr &cnode, 
     }
   }
   auto param_node = BuildIntVecParameterNode(func_graph, cur_input, cnode->input(input_index)->fullname_with_scope());
+  MS_CHECK_TRUE_MSG(param_node != nullptr, lite::RET_ERROR, "BuildIntVecParameterNode failed");
   func_graph->manager()->Replace(cnode->input(input_index), param_node);
+  return lite::RET_OK;
 }
 
 STATUS ChangeCommonOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode, FormatTransNodeType trans_type,
@@ -266,6 +268,7 @@ STATUS ChangeOpSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode, Form
   }
   int element_num = shape.front();
   auto prim = GetValueNode<std::shared_ptr<ops::SliceFusion>>(cnode->input(0));
+  MS_CHECK_TRUE_MSG(prim != nullptr, RET_ERROR, "GetValueNode failed");
   std::vector<int> axes;
   if (prim->GetAttr(ops::kAxes) == nullptr || prim->get_axes().empty()) {
     for (int index = 0; index < element_num; ++index) {
@@ -314,6 +317,7 @@ STATUS ChangeOpStrideSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode
   auto cur_axes = TransformOpAxesAttr(axes, trans_type);
   auto param_node =
     BuildIntVecParameterNode(func_graph, cur_axes, cnode->input(kInputIndexFour)->fullname_with_scope());
+  MS_CHECK_TRUE_MSG(param_node != nullptr, RET_ERROR, "BuildIntVecParameterNode failed");
   func_graph->manager()->Replace(cnode->input(kInputIndexFour), param_node);
   return lite::RET_OK;
 }

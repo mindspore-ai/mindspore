@@ -20,7 +20,6 @@
 #include <vector>
 #include <map>
 #include <queue>
-#include <utility>
 #include "src/common/log_adapter.h"
 #include "tools/common/node_util.h"
 #include "tools/common/graph_util.h"
@@ -29,18 +28,43 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite {
-SubGraph::SubGraph(FuncGraphPtr belong_anf, std::string graph_name, const std::set<CNodePtr> &head_nodes)
-    : belong_anf_(std::move(belong_anf)), name_(std::move(graph_name)) {
-  InitSubGraphNode(head_nodes);
-  InitSubGraphInNode();
-  InitSubGraphOutNode();
+int SubGraph::Init(const std::set<CNodePtr> &head_nodes) {
+  auto ret = InitSubGraphNode(head_nodes);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitSubGraphNode failed";
+    return RET_ERROR;
+  }
+  ret = InitSubGraphInNode();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitSubGraphInNode failed";
+    return RET_ERROR;
+  }
+  ret = InitSubGraphOutNode();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitSubGraphOutNode failed";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
-void SubGraph::Reset(const std::set<CNodePtr> &nodes, const std::set<CNodePtr> &head_nodes) {
+int SubGraph::Reset(const std::set<CNodePtr> &nodes, const std::set<CNodePtr> &head_nodes) {
   this->nodes_ = nodes;
-  InitSubGraphNode(head_nodes);
-  InitSubGraphInNode();
-  InitSubGraphOutNode();
+  auto ret = InitSubGraphNode(head_nodes);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitSubGraphNode failed";
+    return RET_ERROR;
+  }
+  ret = InitSubGraphInNode();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitSubGraphInNode failed";
+    return RET_ERROR;
+  }
+  ret = InitSubGraphOutNode();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitSubGraphOutNode failed";
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 std::set<CNodePtr> SubGraph::GetNodes() const { return this->nodes_; }
@@ -125,11 +149,11 @@ std::set<CNodePtr> SubGraph::GetOutputCNodes() const {
   return outputs;
 }
 
-void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
+int SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
   MS_ASSERT(belong_anf_ != nullptr);
   MS_ASSERT(belong_anf_->manager() != nullptr);
   auto node_users = belong_anf_->manager()->node_users();
-  std::queue<CNodePtr> q;
+  std::queue<CNodePtr> q{};
   for (const auto &head_node : head_nodes) {
     if (head_node == nullptr) {
       continue;
@@ -138,7 +162,7 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
   }
   while (!q.empty()) {
     auto cur_node = q.front();
-    MS_CHECK_PTR_IF_NULL(cur_node);
+    MS_CHECK_TRUE_MSG(cur_node != nullptr, RET_NULL_PTR, "cur_node is nullptr");
     q.pop();
     this->nodes_.insert(cur_node);
     // check output-cnode of cur-node only depend on cur-node
@@ -153,11 +177,12 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
         continue;
       }
       auto post_cnode = utils::cast<CNodePtr>(post_node);
+      MS_CHECK_TRUE_MSG(post_cnode != nullptr, RET_NULL_PTR, "cast failed");
       // return-node should not be include into subgraph absolutely // ut
       if (opt::CheckPrimitiveType(post_cnode, prim::kPrimReturn)) {
         continue;
       }
-      MS_CHECK_PTR_IF_NULL(post_cnode);
+      MS_CHECK_TRUE_MSG(post_cnode != nullptr, RET_NULL_PTR, "post_cnode is nullptr");
       bool non_depend = true;
       // check all inputs of output-cnode
       for (const auto &input : post_cnode->inputs()) {
@@ -167,6 +192,7 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
         // input cnode is not contained in subgraph
         if (utils::isa<CNodePtr>(input)) {
           auto input_cnode = utils::cast<CNodePtr>(input);
+          MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_NULL_PTR, "cast ptr failed");
           if (this->nodes_.count(input_cnode) == 0) {
             non_depend = false;
             break;
@@ -175,6 +201,7 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
         // input parameter is a graph input
         if (utils::isa<ParameterPtr>(input)) {
           auto input_parameter = utils::cast<ParameterPtr>(input);
+          MS_CHECK_TRUE_MSG(input_parameter != nullptr, RET_NULL_PTR, "cast failed");
           if (!input_parameter->has_default()) {
             non_depend = false;
             break;
@@ -186,9 +213,10 @@ void SubGraph::InitSubGraphNode(const std::set<CNodePtr> &head_nodes) {
       }
     }
   }
+  return RET_OK;
 }
 
-void SubGraph::InitSubGraphInNode() {
+int SubGraph::InitSubGraphInNode() {
   MS_ASSERT(belong_anf_ != nullptr);
   MS_ASSERT(belong_anf_->manager() != nullptr);
   auto node_users = belong_anf_->manager()->node_users();
@@ -203,6 +231,7 @@ void SubGraph::InitSubGraphInNode() {
           }
           if (utils::isa<CNodePtr>(input)) {
             auto input_cnode = utils::cast<CNodePtr>(input);
+            MS_CHECK_TRUE_MSG(input_cnode != nullptr, false, "cast failed");
             if (this->nodes_.count(input_cnode) == 0) {
               return true;
             }
@@ -210,6 +239,7 @@ void SubGraph::InitSubGraphInNode() {
           // graph input or shared weight input // ut
           if (utils::isa<ParameterPtr>(input)) {
             auto input_parameter = utils::cast<ParameterPtr>(input);
+            MS_CHECK_TRUE_MSG(input_parameter != nullptr, false, "cast failed");
             if (!input_parameter->has_default()) {
               return true;
             }
@@ -223,9 +253,10 @@ void SubGraph::InitSubGraphInNode() {
       in_nodes_.insert(node);
     }
   }
+  return RET_OK;
 }
 
-void SubGraph::InitSubGraphOutNode() {
+int SubGraph::InitSubGraphOutNode() {
   MS_ASSERT(belong_anf_ != nullptr);
   MS_ASSERT(belong_anf_->manager() != nullptr);
   auto node_users = belong_anf_->manager()->node_users();
@@ -250,6 +281,7 @@ void SubGraph::InitSubGraphOutNode() {
                          return true;
                        }
                        auto output_cnode = utils::cast<CNodePtr>(output_node);
+                       MS_CHECK_TRUE_MSG(output_cnode != nullptr, false, "cast failed");
                        if (this->nodes_.count(output_cnode) == 0) {
                          return true;
                        }
@@ -258,6 +290,7 @@ void SubGraph::InitSubGraphOutNode() {
       continue;
     out_nodes_.insert(node);
   }
+  return RET_OK;
 }
 
 bool SubGraph::MergeSubGraph(const SubGraphPtr &subgraph) {
@@ -272,7 +305,10 @@ bool SubGraph::MergeSubGraph(const SubGraphPtr &subgraph) {
     auto new_nodes2 = subgraph->GetNodes();
     new_nodes.insert(new_nodes2.begin(), new_nodes2.end());
     new_nodes.insert(common_outputs.begin(), common_outputs.end());
-    this->Reset(new_nodes, common_outputs);
+    if (this->Reset(new_nodes, common_outputs) != RET_OK) {
+      MS_LOG(ERROR) << "Reset failed";
+      return false;
+    }
     return true;
   }
 
@@ -280,7 +316,10 @@ bool SubGraph::MergeSubGraph(const SubGraphPtr &subgraph) {
     auto new_nodes = this->GetNodes();
     auto new_nodes2 = subgraph->GetNodes();
     new_nodes.insert(new_nodes2.begin(), new_nodes2.end());
-    this->Reset(new_nodes);
+    if (this->Reset(new_nodes) != RET_OK) {
+      MS_LOG(ERROR) << "Reset failed";
+      return false;
+    }
     return true;
   }
   return false;
@@ -290,8 +329,8 @@ bool SubGraph::MergeSubGraph(const SubGraphPtr &subgraph) {
 SubGraphPtr SubGraph::FindBeforeSubGraphInBelongAnf() const {
   MS_ASSERT(belong_anf_ == nullptr);
   // find before subgraph's nodes
-  std::queue<CNodePtr> q;
-  std::set<CNodePtr> before_nodes;
+  std::queue<CNodePtr> q{};
+  std::set<CNodePtr> before_nodes{};
   for (const auto &node : this->GetInCNodes()) {
     for (const auto &in_cnode : lite::GetInputCNode(node)) {
       if (in_cnode == nullptr) {
@@ -311,7 +350,12 @@ SubGraphPtr SubGraph::FindBeforeSubGraphInBelongAnf() const {
   }
   // construct before subgraph
   auto before_subgraph = std::make_shared<SubGraph>(belong_anf_, this->name_ + "/before_subgraph");
-  before_subgraph->Reset(before_nodes);
+  MS_CHECK_TRUE_MSG(before_subgraph != nullptr, nullptr, "before_subgraph is nullptr");
+  MS_CHECK_TRUE_MSG(before_subgraph != nullptr, nullptr, "before_subgraph is nullptr");
+  if (before_subgraph->Reset(before_nodes) != RET_OK) {
+    MS_LOG(ERROR) << "Reset failed";
+    return nullptr;
+  }
   return before_subgraph;
 }
 
@@ -325,8 +369,8 @@ SubGraphPtr SubGraph::FindAfterSubGraphInBelongAnf() const {
     return nullptr;
   }
   // find after subgraph's nodes
-  std::queue<CNodePtr> q;
-  std::set<CNodePtr> after_nodes;
+  std::queue<CNodePtr> q{};
+  std::set<CNodePtr> after_nodes{};
   auto output_node = belong_anf_->output();
   if (!utils::isa<CNodePtr>(output_node)) {
     MS_LOG(ERROR) << "Output node of anf should be a cnode: " << output_node->fullname_with_scope();
@@ -348,7 +392,11 @@ SubGraphPtr SubGraph::FindAfterSubGraphInBelongAnf() const {
   }
   // construct before subgraph
   auto after_subgraph = std::make_shared<SubGraph>(belong_anf_, this->name_ + "/after_subgraph");
-  after_subgraph->Reset(after_nodes);
+  MS_CHECK_TRUE_MSG(after_subgraph != nullptr, nullptr, "after_subgraph is nullptr");
+  if (after_subgraph->Reset(after_nodes) != RET_OK) {
+    MS_LOG(ERROR) << "Reset failed";
+    return nullptr;
+  }
   return after_subgraph;
 }
 
@@ -366,6 +414,7 @@ int SubGraph::CreatePartialInBelongAnf() {
   }
   // create func_graph of partial
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_NULL_PTR, "func_graph is nullptr");
   auto manager = belong_anf_->manager();
   manager->AddFuncGraph(func_graph);
   func_graph->set_attr("graph_name", MakeValue(graph_name));
@@ -373,12 +422,20 @@ int SubGraph::CreatePartialInBelongAnf() {
   // create cnode and parameter for func_graph of partial
   std::vector<AnfNodePtr> partial_inputs;
   std::map<AnfNodePtr, AnfNodePtr> partial_inputs_and_subgraph_input_map;
-  CreateParameterForPartialSubGraph(func_graph, &partial_inputs, &partial_inputs_and_subgraph_input_map);
-  CreateCNodeForPartialSubGraph(func_graph, partial_inputs_and_subgraph_input_map);
+  auto ret = CreateParameterForPartialSubGraph(func_graph, &partial_inputs, &partial_inputs_and_subgraph_input_map);
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "CreateParameterForPartialSubGraph output failed";
+    return ret;
+  }
+  ret = CreateCNodeForPartialSubGraph(func_graph, partial_inputs_and_subgraph_input_map);
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "CreateCNodeForPartialSubGraph failed";
+    return ret;
+  }
   // add return for func_graph of partial
   auto sub_graph_outputs = this->GetOutCNodes();
   MS_ASSERT(!sub_graph_outputs.empty());
-  auto ret = SetFuncGraphOutput(func_graph, sub_graph_outputs);
+  ret = SetFuncGraphOutput(func_graph, sub_graph_outputs);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "Set subgraph output failed";
     return ret;
@@ -386,8 +443,11 @@ int SubGraph::CreatePartialInBelongAnf() {
   // create partial cnode
   auto partial_prim = std::make_shared<mindspore::ops::PartialFusion>();
   auto graph_value_node = NewValueNode(func_graph);
+  MS_CHECK_TRUE_MSG(partial_prim != nullptr, RET_NULL_PTR, "partial_prim is nullptr");
+  MS_CHECK_TRUE_MSG(graph_value_node != nullptr, RET_NULL_PTR, "graph_value_node is nullptr");
   partial_inputs.insert(partial_inputs.begin(), graph_value_node);
   auto partial_cnode = belong_anf_->NewCNode(partial_prim, partial_inputs);
+  MS_CHECK_TRUE_MSG(partial_cnode != nullptr, RET_NULL_PTR, "partial_cnode is nullptr");
   partial_cnode->set_fullname_with_scope(graph_name + "/partial");
   for (size_t i = 0; i < partial_inputs.size(); ++i) {
     const auto &input = partial_inputs.at(i);
@@ -396,6 +456,7 @@ int SubGraph::CreatePartialInBelongAnf() {
   // create call cnode
   std::vector<AnfNodePtr> call_node_inputs{partial_cnode};
   auto call_cnode = belong_anf_->NewCNode(call_node_inputs);
+  MS_CHECK_TRUE_MSG(call_cnode != nullptr, RET_NULL_PTR, "call_cnode is nullptr");
   call_cnode->set_fullname_with_scope(graph_name + "/call");
   // replace belong-graph's output
   auto return_node = belong_anf_->get_return();
@@ -412,7 +473,7 @@ int SubGraph::SetFuncGraphOutput(const FuncGraphPtr &graph, const std::set<CNode
   return lite::SetFuncGraphOutput(graph, output_nodes);
 }
 
-void SubGraph::CreateParameterForPartialSubGraph(
+int SubGraph::CreateParameterForPartialSubGraph(
   const FuncGraphPtr &sub_graph, std::vector<AnfNodePtr> *partial_inputs,
   std::map<AnfNodePtr, AnfNodePtr> *partial_inputs_and_subgraph_input_map) {
   MS_ASSERT(sub_graph != nullptr);
@@ -436,6 +497,7 @@ void SubGraph::CreateParameterForPartialSubGraph(
       // create subgraph input parameter from cnode and record partial inputs
       if (utils::isa<CNodePtr>(input)) {
         auto input_cnode = utils::cast<CNodePtr>(input);
+        MS_CHECK_TRUE_MSG(input_cnode != nullptr, RET_NULL_PTR, "cast ptr failed");
         if (this->GetNodes().count(input_cnode) > 0) {
           continue;
         }
@@ -450,6 +512,7 @@ void SubGraph::CreateParameterForPartialSubGraph(
       auto node_users = this->belong_anf_->manager()->node_users();
       if (utils::isa<ParameterPtr>(input)) {
         auto parameter = utils::cast<ParameterPtr>(input);
+        MS_CHECK_TRUE_MSG(parameter != nullptr, RET_NULL_PTR, "cast ptr failed");
         // graph input: create a parameter
         if (!parameter->has_default()) {
           auto new_parameter = sub_graph->add_parameter();
@@ -475,9 +538,10 @@ void SubGraph::CreateParameterForPartialSubGraph(
       }
     }
   }
+  return RET_OK;
 }
 
-void SubGraph::CreateCNodeForPartialSubGraph(
+int SubGraph::CreateCNodeForPartialSubGraph(
   const FuncGraphPtr &sub_graph, const std::map<AnfNodePtr, AnfNodePtr> &partial_inputs_and_subgraph_input_map) {
   MS_ASSERT(sub_graph != nullptr);
   // move cnode from belong_graph to subgraph
@@ -500,6 +564,7 @@ void SubGraph::CreateCNodeForPartialSubGraph(
     }
     this->belong_anf_->DropNode(node);
   }
+  return RET_OK;
 }
 
 int SubGraph::ApplySubGraph() {
@@ -546,7 +611,10 @@ int SubGraph::ApplySubGraph() {
   MS_ASSERT(after_partial_cnode != nullptr);
   subgraph_nodes.insert(after_partial_cnode);
   subgraph_nodes.insert(call_cnode);
-  this->Reset(subgraph_nodes);
+  if (this->Reset(subgraph_nodes) != RET_OK) {
+    MS_LOG(ERROR) << "Reset failed";
+    return false;
+  }
   // create subgraph partial // add partial to main subgraph
   ret = this->CreatePartialInBelongAnf();
   if (ret != RET_OK) {

@@ -53,11 +53,11 @@ class DecreaseTransposeAlgo : public Pass {
   STATUS HandleGraphMultiNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                               std::set<CNodePtr> *visit_transposes);
   STATUS InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, TransTypePair *trans_insert_info);
-  void SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
-  void ResetSubGraphInput();
-  void SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
-  void SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
-  void ModifyCNodeFormat(const CNodePtr &cnode, FormatTransNodeType pre_trans_type);
+  int SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
+  int ResetSubGraphInput();
+  int SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
+  int SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph);
+  int ModifyCNodeFormat(const CNodePtr &cnode, FormatTransNodeType pre_trans_type);
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
   NodeInferShape node_infer_shape_;

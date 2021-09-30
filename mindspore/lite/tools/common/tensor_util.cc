@@ -18,6 +18,7 @@
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "abstract/utils.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> &tensor) {
@@ -131,6 +132,7 @@ std::unique_ptr<schema::TensorT> CreateTensorTFromTensorInfo(const tensor::Tenso
     return nullptr;
   }
   auto schema_tensor = std::make_unique<schema::TensorT>();
+  MS_CHECK_TRUE_MSG(schema_tensor != nullptr, nullptr, "schema_tensor is nullptr");
   schema_tensor->name = tensor_name;
   auto ret = UpdateTensorTFromTensorInfo(tensor_info, &schema_tensor);
   if (ret != RET_OK) {

@@ -37,6 +37,7 @@ static bool IsSupportedNode(const BaseRef &n) {
   };
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
+    MS_ASSERT(anf_node != nullptr);
     return std::any_of(support_list.begin(), support_list.end(),
                        [&anf_node](const auto &primitive) { return CheckPrimitiveType(anf_node, primitive); });
   }
@@ -95,6 +96,7 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
   }
   auto new_return_node = func_graph->NewCNode({NewValueNode(return_prim_ptr), make_tuple_cnode});
   new_return_node->set_fullname_with_scope(return_cnode->fullname_with_scope());
+  MS_ASSERT(new_return_node != nullptr);
   func_graph->set_return(new_return_node);
   MS_ASSERT(new_return_node != nullptr);
 
@@ -103,7 +105,9 @@ static int SetGraphOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &tens
 
 const BaseRef AddTensorArray::DefinePattern() const {
   auto support_detect = std::make_shared<CondVar>(IsSupportedNode);
+  MS_ASSERT(support_detect != nullptr);
   auto inputs_var = std::make_shared<SeqVar>();
+  MS_ASSERT(inputs_var != nullptr);
   return VectorRef({support_detect, inputs_var});
 }
 
@@ -137,6 +141,7 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
   }
 
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
+  MS_ASSERT(abstract_tensor != nullptr);
   if (!utils::isa<tensor::TensorPtr>(abstract_tensor->GetValueTrack())) {  // input node not complete infershape
     MS_LOG(DEBUG) << "Value of abstract is not tensor::Tensor, indicate that infershape has failed";
     return nullptr;
@@ -168,6 +173,7 @@ const AnfNodePtr AddTensorArray::Process(const FuncGraphPtr &func_graph, const A
     NewValueNode(tensor_array),
     NewValueNode(kDefaultNumTensors),
   });
+  MS_ASSERT(tensor_array_node != nullptr);
   tensor_array_node->set_abstract(abstract->Clone());
   tensor_array_node->set_fullname_with_scope(cnode->fullname_with_scope() + "_tensor_array");
 
