@@ -105,15 +105,19 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const CNodePtr &start) {
   constexpr size_t kVecReserve = 64;
   std::vector<CNodePtr> vec;
   vec.reserve(kVecReserve);
-  vec.emplace_back(start);
   auto seen = NewSeenGeneration();
+  start->seen_ = seen;
+  vec.emplace_back(start);
   for (size_t i = 0; i < vec.size(); ++i) {
     CNodePtr &node = vec[i];
-    node->seen_ = seen;
     auto &inputs = node->inputs();
     for (auto &input : inputs) {
+      if (input->seen_ == seen) {
+        continue;
+      }
+      input->seen_ = seen;
       auto input_cnode = input->cast<CNodePtr>();
-      if (input_cnode != nullptr && input_cnode->seen_ != seen) {
+      if (input_cnode != nullptr) {
         vec.emplace_back(std::move(input_cnode));
       }
     }
