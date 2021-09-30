@@ -19,7 +19,7 @@ from functools import wraps
 
 import mindspore.offline_debug.dbg_services as cds
 from mindspore.offline_debug.mi_validator_helpers import parse_user_args, type_check, \
-    type_check_list, check_dir, check_uint32, check_uint64, check_iteration
+    type_check_list, check_dir, check_uint32, check_uint64, check_iteration, check_param_id
 
 
 def check_init(method):
@@ -27,10 +27,9 @@ def check_init(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [dump_file_path, verbose], _ = parse_user_args(method, *args, **kwargs)
+        [dump_file_path], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(dump_file_path, (str,), "dump_file_path")
-        type_check(verbose, (bool,), "verbose")
         check_dir(dump_file_path)
 
         return method(self, *args, **kwargs)
@@ -70,19 +69,9 @@ def check_add_watchpoint(method):
             for info_name, info_param in node_info.items():
                 type_check(info_name, (str,), "node parameter name")
                 if info_name in ["rank_id"]:
-                    if isinstance(info_param, str):
-                        if info_param not in ["*"]:
-                            raise ValueError("Node parameter {} only accepts '*' as string.".format(info_name))
-                    else:
-                        for param in info_param:
-                            check_uint32(param, "rank_id")
+                    check_param_id(info_param, info_name="rank_id")
                 elif info_name in ["root_graph_id"]:
-                    if isinstance(info_param, str):
-                        if info_param not in ["*"]:
-                            raise ValueError("Node parameter {} only accepts '*' as string.".format(info_name))
-                    else:
-                        for param in info_param:
-                            check_uint32(param, "root_graph_id")
+                    check_param_id(info_param, info_name="root_graph_id")
                 elif info_name in ["is_output"]:
                     type_check(info_param, (bool,), "is_output")
                 else:

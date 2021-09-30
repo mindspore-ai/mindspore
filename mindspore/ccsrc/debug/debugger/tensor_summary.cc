@@ -25,7 +25,6 @@
 
 #ifdef OFFLINE_DBG_MODE
 #include "base/float16.h"
-#include "offline_debug/offline_logger.h"
 #endif
 
 #ifdef ONLINE_DBG_MODE
@@ -91,10 +90,10 @@ double VarianceAndMeanCalculator::GetVariance() const {
 double VarianceAndMeanCalculator::GetStandardDeviation() { return sqrt(GetVariance()); }
 
 template <typename T>
-TensorSummary<T>::TensorSummary(void *current_tensor_ptr, void *const previous_tensor_ptr, uint32_t num_elements,
-                                uint32_t prev_num_elements)
-    : current_tensor_ptr_(reinterpret_cast<T *>(current_tensor_ptr)),
-      prev_tensor_ptr_(reinterpret_cast<T *>(previous_tensor_ptr)),
+TensorSummary<T>::TensorSummary(const void *current_tensor_ptr, const void *const previous_tensor_ptr,
+                                uint32_t num_elements, uint32_t prev_num_elements)
+    : current_tensor_ptr_(reinterpret_cast<const T *>(current_tensor_ptr)),
+      prev_tensor_ptr_(reinterpret_cast<const T *>(previous_tensor_ptr)),
       num_elements_(num_elements),
       prev_num_elements_(prev_num_elements),
       min_(std::numeric_limits<double>::max()),

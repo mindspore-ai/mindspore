@@ -131,3 +131,21 @@ def type_check_list(args, types, arg_names):
 def replace_minus_one(value):
     """ replace -1 with a default value """
     return value if value != -1 else UINT32_MAX
+
+def check_param_id(info_param, info_name):
+    """
+    Check the type of info_param.
+
+    Args:
+        info_param (Union[list[int], str]): Info parameters of check_node_list that is either list of ints or *.
+        info_name (str): Info name of check_node_list.
+
+    Raises:
+        ValueError: When the type of info_param is not correct, otherwise nothing.
+    """
+    if isinstance(info_param, str):
+        if info_param not in ["*"]:
+            raise ValueError("Node parameter {} only accepts '*' as string.".format(info_name))
+    else:
+        for param in info_param:
+            check_uint32(param, info_name)

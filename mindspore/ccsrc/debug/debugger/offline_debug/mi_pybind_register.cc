@@ -21,7 +21,7 @@
 PYBIND11_MODULE(_mindspore_offline_debug, m) {
   m.doc() = "pybind11 debug services api";
   (void)py::class_<DbgServices>(m, "DbgServices")
-    .def(py::init<bool>())
+    .def(py::init())
     .def("Initialize", &DbgServices::Initialize)
     .def("AddWatchpoint", &DbgServices::AddWatchpoint)
     .def("RemoveWatchpoint", &DbgServices::RemoveWatchpoint)

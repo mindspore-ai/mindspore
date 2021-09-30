@@ -167,7 +167,7 @@ void DebuggerProtoExporter::SetValueToProto(const ValuePtr &val, debugger::Value
     TypePtr elem_type = dyn_cast<TensorType>(val)->element();
     type_proto->mutable_tensor_type()->set_elem_type(GetDebuggerNumberDataType(elem_type));
   } else {
-    MS_LOG(WARNING) << "Unsupported type " << val->type_name();
+    MS_LOG(INFO) << "Unsupported type " << val->type_name();
   }
 }
 
