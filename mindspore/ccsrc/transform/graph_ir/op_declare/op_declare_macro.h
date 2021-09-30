@@ -164,6 +164,9 @@ namespace mindspore::transform {
   static struct RegAdptDesc##name {                                    \
    public:                                                             \
     RegAdptDesc##name() { OpAdapterMap::get()[name_str] = adpt_desc; } \
+                                                                       \
+   private:                                                            \
+    char ph_;                                                          \
   } g_reg_adpt_desc_##name;
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MACRO_H_
