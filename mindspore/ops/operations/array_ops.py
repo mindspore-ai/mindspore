@@ -2193,7 +2193,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
 
         \text { output }_i=\text{max}_{j \ldots} \text { data }[j \ldots]
 
-    where :math:`max` over tuples :math:`j...` such that :math:`segment_ids[j...] == i`.
+    where :math:`max` over tuples :math:`j...` such that :math:`segment\_ids[j...] == i`.
 
     Note:
         If the segment_id i is absent in the segment_ids, then output[i] will be filled with
