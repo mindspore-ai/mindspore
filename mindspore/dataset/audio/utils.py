@@ -20,7 +20,18 @@ from enum import Enum
 
 
 class FadeShape(str, Enum):
-    """Fade Shape"""
+    """
+    Fade Shapes.
+
+    Possible enumeration values are: FadeShape.EXPONENTIAL, FadeShape.HALFSINE, FadeShape.LINEAR,
+    FadeShape.LOGARITHMIC, FadeShape.QUARTERSINE.
+
+    - FadeShape.EXPONENTIAL: means the fade shape is exponential mode.
+    - FadeShape.HALFSINE: means the fade shape is half_sine mode.
+    - FadeShape.LINEAR: means the fade shape is linear mode.
+    - FadeShape.LOGARITHMIC: means the fade shape is logarithmic mode.
+    - FadeShape.QUARTERSINE: means the fade shape is quarter_sine mode.
+    """
     LINEAR: str = "linear"
     EXPONENTIAL: str = "exponential"
     LOGARITHMIC: str = "logarithmic"
@@ -29,13 +40,28 @@ class FadeShape(str, Enum):
 
 
 class GainType(str, Enum):
-    """Gain Type"""
+    """"
+    Gain Types.
+
+    Possible enumeration values are: GainType.AMPLITUDE, GainType.DB, GainType.POWER.
+
+    - GainType.AMPLITUDE: means input gain type is amplitude.
+    - GainType.DB: means input gain type is decibel.
+    - GainType.POWER: means input gain type is power.
+    """
     POWER: str = "power"
     AMPLITUDE: str = "amplitude"
     DB: str = "db"
 
 
 class ScaleType(str, Enum):
-    """Scale Type"""
+    """
+    Scale Types.
+
+    Possible enumeration values are: ScaleType.MAGNITUDE, ScaleType.POWER.
+
+    - ScaleType.MAGNITUDE: means the scale of input audio is magnitude.
+    - ScaleType.POWER: means the scale of input audio is power.
+    """
     POWER: str = "power"
     MAGNITUDE: str = "magnitude"
