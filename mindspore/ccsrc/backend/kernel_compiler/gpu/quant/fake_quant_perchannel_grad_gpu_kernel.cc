@@ -53,7 +53,7 @@ bool FakeQuantPerChannelGradGpuKernel::Init(const CNodePtr &kernel_node) {
 
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
-  num_bits_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
+  num_bits_ = static_cast<unsigned int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
   if (num_bits_ <= 2 || num_bits_ >= 16) {
     MS_LOG(EXCEPTION) << "Attr \'num_bits\' " << num_bits_ << " is out of range, expected between 2 and 16.";
   }

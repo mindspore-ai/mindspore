@@ -114,7 +114,7 @@ class DetTriangleGpuKernel : public GpuKernel {
   size_t output_size_;
   size_t matrix_n_ = 0;
   int fill_mode_ = 0;
-  bool is_null_input_;
+  bool is_null_input_ = false;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

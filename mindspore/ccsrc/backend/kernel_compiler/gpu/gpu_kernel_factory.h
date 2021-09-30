@@ -69,7 +69,6 @@ class GpuKernelRegister {
   GpuKernelRegister(const std::string &kernel_name, const KernelAttr &kernel_attr, GpuKernelCreater &&creator) {
     GpuKernelFactory::GetInstance().Register(kernel_name, kernel_attr, std::move(creator));
   }
-
   ~GpuKernelRegister() = default;
 };
 

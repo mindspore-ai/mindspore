@@ -27,7 +27,22 @@ namespace kernel {
 template <typename T>
 class ROIAlignGpuFwdKernel : public GpuKernel {
  public:
-  ROIAlignGpuFwdKernel() : x_size_(0), rois_size_(0), output_size_(0) {}
+  ROIAlignGpuFwdKernel()
+      : pooled_height_(0),
+        pooled_width_(0),
+        spatial_scale_(),
+        sample_num_(0),
+        roi_end_mode_(0),
+        roi_rows_(0),
+        roi_cols_(0),
+        batch_N_(0),
+        channels_(0),
+        height_(0),
+        width_(0),
+        is_null_input_(false),
+        x_size_(0),
+        rois_size_(0),
+        output_size_(0) {}
   ~ROIAlignGpuFwdKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

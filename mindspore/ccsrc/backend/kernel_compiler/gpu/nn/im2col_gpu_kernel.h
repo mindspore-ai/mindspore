@@ -35,6 +35,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
         input_desc_(nullptr),
         output_desc_(nullptr),
         filter_desc_(nullptr),
+        conv_algorithm_(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM),
         conv_desc_n(nullptr),
         padded_desc_n(nullptr),
         cudnn_data_type_(CUDNN_DATA_FLOAT),

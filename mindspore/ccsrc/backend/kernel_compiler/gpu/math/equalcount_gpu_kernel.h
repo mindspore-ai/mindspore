@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class EqualCountGpuKernel : public GpuKernel {
  public:
-  EqualCountGpuKernel() : input_size_(0), output_size_(0), workspace_size_(0) {}
+  EqualCountGpuKernel() : input_size_(0), output_size_(0), workspace_size_(0), is_null_input_(false) {}
   ~EqualCountGpuKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

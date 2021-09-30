@@ -48,7 +48,7 @@ class FakeQuantPerLayerGpuKernel : public GpuKernel {
   float quant_max_;
   int quant_num_;
   int global_step_;
-  int num_bits_;
+  unsigned int num_bits_;
   int quant_delay_;
   bool training_;
   bool narrow_range_;
