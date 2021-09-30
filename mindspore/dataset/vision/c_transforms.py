@@ -1798,8 +1798,9 @@ class SlicePatches(ImageTensorOperation):
         >>> slice_patches_op = c_vision.SlicePatches(num_h, num_w)
         >>> transforms_list = [decode_op, slice_patches_op]
         >>> cols = ['img' + str(x) for x in range(num_h*num_w)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_lis, input_columns=[
-        ...                         "image"], output_columns=cols, column_order=cols)
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"],
+        ...                                                 output_columns=cols, column_order=cols)
     """
 
     @check_slice_patches
