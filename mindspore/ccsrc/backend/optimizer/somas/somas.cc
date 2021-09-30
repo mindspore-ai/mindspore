@@ -999,17 +999,16 @@ void Somas::ComputeConflictPairs() {
     size_t process_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
     MS_LOG(INFO) << "Threads Num is " << process_num;
 
-    size_t start_index = 0;
-    size_t total_size = tensors_list_.size();
-    size_t job_size = total_size / process_num;
+    int64_t start_index = 0;
+    int64_t total_size = tensors_list_.size();
+    int64_t job_size = total_size / process_num;
     if (job_size == 0) {
       job_size = total_size;
     }
     std::vector<common::Task> tasks;
     while (start_index < total_size) {
-      size_t end_index = (start_index + job_size) > total_size ? total_size : start_index + job_size;
-      auto jobs = std::vector<SomasTensorPtr>(tensors_list_.begin() + SizeToUlong(start_index),
-                                              tensors_list_.begin() + SizeToUlong(end_index));
+      int64_t end_index = (start_index + job_size) > total_size ? total_size : start_index + job_size;
+      auto jobs = std::vector<SomasTensorPtr>(tensors_list_.begin() + start_index, tensors_list_.begin() + end_index);
       auto task = [this, jobs, &nodes_dependency]() {
         this->ComputeMultiTensorConflicts(jobs, tensors_list_, nodes_dependency, &reuse_matrix_);
         return common::SUCCESS;
@@ -1651,10 +1650,10 @@ std::string Somas::SomasMemory() const {
       auto place_tensor = id_tensor.second;
       MS_EXCEPTION_IF_NULL(place_tensor);
       std::string scope_name;
-      size_t src_stm_id = 0xffff;
+      int64_t src_stm_id = 0xffff;
       if (place_tensor->GetSourceNode() != nullptr) {
         scope_name = place_tensor->GetSourceNode()->scope_full_name_;
-        src_stm_id = SizeToLong(place_tensor->GetSourceNode()->GetStream()->GetId());
+        src_stm_id = place_tensor->GetSourceNode()->GetStream()->GetId();
       } else {
         scope_name = "Somas Tensor";
       }
