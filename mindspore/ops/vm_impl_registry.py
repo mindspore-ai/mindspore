@@ -47,6 +47,21 @@ def get_vm_impl_fn(prim):
 
     Returns:
         function, vm function
+
+    Examples:
+        >>> from mindspore.ops import vm_impl_registry
+        >>> from mindspore.ops.vm_impl_registry import get_vm_impl_fn
+        ...
+        >>> @vm_impl_registry.register("Type")
+        >>> def vm_impl_dtype(self):
+        ...   def vm_impl(x):
+        ...     return type(x)
+        ...   return vm_impl
+        ...
+        >>> fn = get_vm_impl_fn("Type")
+        >>> out = fn(1.0)
+        >>> print(out)
+        <class 'float'>
     """
     out = vm_impl_registry.get(prim, None)
     if out:
