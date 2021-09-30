@@ -49,9 +49,12 @@ class CrossEntropyLoss(Cell):
         Tensor. the corresponding cross entropy loss
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import dtype as mstype
         >>> from mindspore.parallel.nn import CrossEntropyLoss
+        >>> from mindspore import Tensor
         >>> loss = CrossEntropyLoss()
-        >>> logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), mindspore.float32)
+        >>> logits = Tensor(np.array([[3, 5, 6, 9, 12, 33, 42, 12, 32, 72]]), mstype.float32)
         >>> labels_np = np.array([1]).astype(np.int32)
         >>> input_mask = Tensor(np.ones(1).astype(np.float32))
         >>> labels = Tensor(labels_np)
