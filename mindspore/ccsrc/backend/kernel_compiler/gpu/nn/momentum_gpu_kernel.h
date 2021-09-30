@@ -29,6 +29,7 @@ class MomentumGpuKernel : public GpuKernel {
  public:
   MomentumGpuKernel()
       : use_nesterov_(false),
+        is_null_input_(false),
         variable_size_(0),
         accumulation_size_(0),
         learning_rate_size_(0),

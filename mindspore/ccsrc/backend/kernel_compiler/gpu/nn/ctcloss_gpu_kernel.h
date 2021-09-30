@@ -35,7 +35,31 @@ class CtcLossGpuKernel : public GpuKernel {
         sequence_lengths_size_(0),
         preprocess_collapse_repeated_(false),
         ctc_merge_repeated_(true),
-        ignore_longer_outputs_than_inputs_(false) {}
+        ignore_longer_outputs_than_inputs_(false),
+        is_null_input_(false),
+        probs(nullptr),
+        label_indices(nullptr),
+        label_values(nullptr),
+        sequence_length(nullptr),
+        costs(nullptr),
+        grads(nullptr),
+        softmax_probs(nullptr),
+        cum_labels_length(nullptr),
+        label_squence_length(nullptr),
+        label_value_sp(nullptr),
+        label_value_pcr(nullptr),
+        prob_num(nullptr),
+        precum_labels_length(nullptr),
+        max_labels_length(nullptr),
+        numclass(0),
+        batch(0),
+        max_time(0),
+        max_sequence(0),
+        max_labels_length_host(0),
+        batch_label(0),
+        label_value_with_blank(nullptr),
+        log_alpha_b(nullptr),
+        log_beta_b(nullptr) {}
   ~CtcLossGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

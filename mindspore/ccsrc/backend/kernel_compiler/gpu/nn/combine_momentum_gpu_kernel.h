@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T, typename S>
 class CombineMomentumGpuKernel : public GpuKernel {
  public:
-  CombineMomentumGpuKernel() : element_num_(1), num_(0), input_num_(6) {}
+  CombineMomentumGpuKernel() : element_num_(1), num_(0), input_num_(6), is_null_input_(false) {}
   ~CombineMomentumGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

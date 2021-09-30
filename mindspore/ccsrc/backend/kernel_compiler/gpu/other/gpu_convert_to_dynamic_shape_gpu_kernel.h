@@ -90,6 +90,7 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
     cuda_stream_ptr_ = nullptr;
     input_shape_.clear();
     input_size_ = 1;
+    is_null_input_ = false;
   }
 
  protected:

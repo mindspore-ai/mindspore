@@ -87,7 +87,7 @@ class BroadcastToGpuKernel : public GpuKernel {
  private:
   size_t input_shape_[4] = {1, 1, 1, 1};
   size_t output_shape_[4] = {1, 1, 1, 1};
-  bool is_null_input_;
+  bool is_null_input_ = false;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

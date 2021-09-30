@@ -29,7 +29,7 @@ namespace kernel {
 template <typename T>
 class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
  public:
-  BinaryCrossEntropyGradGpuKernel() : input_size_(1), reduction_(1), weight_defined_(false) {}
+  BinaryCrossEntropyGradGpuKernel() : input_size_(1), reduction_(1), weight_defined_(false), is_null_input_(false) {}
   ~BinaryCrossEntropyGradGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

@@ -59,7 +59,7 @@ bool FakeQuantPerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
   // get attribute
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
-  num_bits_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
+  num_bits_ = static_cast<unsigned int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
   training_ = GetValue<bool>(prim->GetAttr("training"));
   symmetric_ = GetValue<bool>(prim->GetAttr("symmetric"));
   narrow_range_ = GetValue<bool>(prim->GetAttr("narrow_range"));
@@ -112,8 +112,9 @@ void FakeQuantPerChannelGpuKernel::InitSizeLists() {
   workspace_size_list_.push_back(sizeof(float) * num_channels_);  // max in channel
 }
 
-void FakeQuantPerChannelGpuKernel::CalFakeQuantize(float *input, float *output, float *input_min, float *input_max,
-                                                   float *nudge_min, float *nudge_max, float *scale, void *stream_ptr) {
+void FakeQuantPerChannelGpuKernel::CalFakeQuantize(const float *input, float *output, float *input_min,
+                                                   float *input_max, float *nudge_min, float *nudge_max, float *scale,
+                                                   void *stream_ptr) {
   CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, nudge_min, nudge_max, scale, num_channels_,
                      symmetric_, reinterpret_cast<cudaStream_t>(stream_ptr));
   CalFakeQuantPerChannel(input, output, input_size_ / sizeof(float), num_channels_, nudge_min, nudge_max, scale,

@@ -39,7 +39,7 @@ class FakeQuantPerChannelGpuKernel : public GpuKernel {
   void InitSizeLists() override;
 
  private:
-  void CalFakeQuantize(float *input, float *output, float *input_min, float *input_max, float *nudge_min,
+  void CalFakeQuantize(const float *input, float *output, float *input_min, float *input_max, float *nudge_min,
                        float *nudge_max, float *scale, void *stream_ptr);
 
   size_t input_size_;
@@ -47,7 +47,7 @@ class FakeQuantPerChannelGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
-  int num_channels_;
+  unsigned int num_channels_;
   int num_bits_;
   bool training_;
   bool symmetric_;
