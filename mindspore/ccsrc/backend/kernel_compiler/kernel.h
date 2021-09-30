@@ -107,6 +107,7 @@ enum Processor {
   AICORE = 0,
   AICPU,
   CUDA,
+  CPU,
 };
 
 struct FlexArray {

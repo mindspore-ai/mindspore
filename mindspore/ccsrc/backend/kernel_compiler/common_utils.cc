@@ -157,16 +157,21 @@ FusionType GetFusionTypeByName(const std::string &name) {
 }
 
 void KernelMeta::Initialize() {
-  kernel_meta_path_ = std::string(kGpuKernelMeta) + "/";
+  if (GetStrProcessorFromContext() == kProcessorCpu) {
+    kernel_meta_path_ = std::string(kCpuKernelMeta);
+  } else {
+    kernel_meta_path_ = std::string(kGpuKernelMeta) + "/";
 
 #if defined(_WIN32) || defined(_WIN64)
-  auto ret = mkdir(kernel_meta_path_.c_str());
+    auto ret = mkdir(kernel_meta_path_.c_str());
 #else
-  auto ret = mkdir(kernel_meta_path_.c_str(), S_IRWXG | S_IRWXU);
+    auto ret = mkdir(kernel_meta_path_.c_str(), S_IRWXG | S_IRWXU);
 #endif
-  if (ret != 0) {
-    MS_LOG(INFO) << "kernel dir [" << kernel_meta_path_ << "], will be created later";
+    if (ret != 0) {
+      MS_LOG(INFO) << "kernel dir [" << kernel_meta_path_ << "], will be created later";
+    }
   }
+
   initialized_ = true;
 }
 
@@ -238,6 +243,8 @@ KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &pro
   std::string kernel_json;
   if (processor == kProcessorAiCore || processor == kProcessorAiCpu) {
     kernel_json = kCceKernelMeta;
+  } else if (processor == kProcessorCpu) {
+    kernel_json = kCpuKernelMeta;
   } else {
     kernel_json = bin_map->kernel_meta_path();
   }
@@ -872,6 +879,8 @@ Processor GetProcessorFromContext() {
     processor = kernel::Processor::CUDA;
   } else if (device_info == kAscendDevice) {
     processor = kernel::Processor::AICORE;
+  } else if (device_info == kCPUDevice) {
+    processor = kernel::Processor::CPU;
   }
   return processor;
 }
@@ -883,6 +892,8 @@ std::string GetStrProcessorFromContext() {
     str_processor = kernel::kProcessorCuda;
   } else if (processor == kernel::Processor::AICORE) {
     str_processor = kernel::kProcessorAiCore;
+  } else if (processor == kernel::Processor::CPU) {
+    str_processor = kernel::kProcessorCpu;
   }
   return str_processor;
 }

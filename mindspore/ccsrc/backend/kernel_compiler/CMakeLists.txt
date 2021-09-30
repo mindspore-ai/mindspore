@@ -13,12 +13,6 @@ if(ENABLE_D)
     file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "kernel_query.cc"
         "kernel_fusion.cc"
-        "akg/akg_kernel_build.cc"
-        "akg/ascend/*.cc"
-        "akg/akg_kernel_json_generator.cc"
-        "akg/akg_kernel_json_decoder.cc"
-        "akg/akg_kernel_attrs_process.cc"
-        "akg/akg_kernel_metadata.cc"
         "tbe/*.cc"
         "host/*.cc"
         "aicpu/*.cc"
@@ -95,11 +89,6 @@ endif()
 if(ENABLE_GPU)
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "gpu/*.cu"
-        "akg/akg_kernel_build.cc"
-        "akg/gpu/*.cc"
-        "akg/akg_kernel_json_generator.cc"
-        "akg/akg_kernel_json_decoder.cc"
-        "akg/akg_kernel_attrs_process.cc"
     )
 
     file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "gpu/*.cc")
@@ -122,7 +111,35 @@ if(ENABLE_GPU)
     # add_library(_mindspore_kernel_cuda_obj OBJECT ${CUDA_SRC_LIST})
 endif()
 
-set_property(SOURCE ${KERNEL_SRC_LIST} ${CPU_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST}
+if(ENABLE_AKG AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    file(GLOB_RECURSE AKG_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "akg/akg_kernel_build.cc"
+        "akg/akg_kernel_json_generator.cc"
+        "akg/akg_kernel_json_decoder.cc"
+        "akg/akg_kernel_attrs_process.cc"
+    )
+    if(ENABLE_GPU)
+        file(GLOB_RECURSE AKG_GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "akg/gpu/*.cc"
+        )
+        list(APPEND AKG_SRC_LIST ${AKG_GPU_SRC_LIST})
+    endif()
+    if(ENABLE_D)
+        file(GLOB_RECURSE AKG_D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "akg/ascend/*.cc"
+            "akg/akg_kernel_metadata.cc"
+        )
+        list(APPEND AKG_SRC_LIST ${AKG_D_SRC_LIST})
+    endif()
+    if(ENABLE_CPU)
+        file(GLOB_RECURSE AKG_CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "akg/cpu/*.cc"
+        )
+        list(APPEND AKG_SRC_LIST ${AKG_CPU_SRC_LIST})
+    endif()
+endif()
+
+set_property(SOURCE ${KERNEL_SRC_LIST} ${CPU_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST} ${AKG_SRC_LIST}
     PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_KERNEL)
 add_library(_mindspore_backend_kernel_compiler_obj OBJECT ${KERNEL_SRC_LIST} ${CPU_SRC_LIST}
-    ${GPU_SRC_LIST} ${D_SRC_LIST} ${QUANTUM_SRC_LIST})
+    ${GPU_SRC_LIST} ${D_SRC_LIST} ${AKG_SRC_LIST} ${QUANTUM_SRC_LIST})

@@ -151,3 +151,7 @@ endif()
 if(ENABLE_CPU AND NOT WIN32)
     add_compile_definitions(ENABLE_ARMOUR)
 endif()
+
+if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
+    add_compile_definitions(ENABLE_AKG)
+endif()

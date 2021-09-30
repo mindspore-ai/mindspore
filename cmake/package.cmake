@@ -291,7 +291,7 @@ install(
     COMPONENT mindspore
 )
 
-if((ENABLE_D OR ENABLE_GPU) AND ENABLE_AKG)
+if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
     set (AKG_PATH ${BUILD_PATH}/mindspore/akg)
     file(REMOVE_RECURSE ${AKG_PATH}/_akg)
     file(MAKE_DIRECTORY ${AKG_PATH}/_akg)

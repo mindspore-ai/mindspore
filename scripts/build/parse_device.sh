@@ -40,6 +40,7 @@ parse_device()
       exit 1
     fi
     export CUDA_VERSION="$DEVICE_VERSION"
+    export ENABLE_AKG="on"
   elif [[ "X$DEVICE" == "Xd" || "X$DEVICE" == "Xascend" ]]; then
     # version default 910
     if [[ "X$DEVICE_VERSION" == "X" ]]; then
@@ -54,6 +55,7 @@ parse_device()
       export ENABLE_ACL="on"
       ENABLE_CPU="on"
       export ENABLE_MPI="on"
+      export ENABLE_AKG="on"
     else
       echo "Invalid value ${DEVICE_VERSION} for option -V"
       usage

@@ -121,7 +121,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   pm->AddPass(std::make_shared<InsertPadOps>(), OptLevel_1, is_gpu);
 
   // Universal arithmetic simplify
-  pm->AddPass(std::make_shared<ArithmeticSimplify>(), OptLevel_2, is_gpu);
+  pm->AddPass(std::make_shared<ArithmeticSimplify>(), OptLevel_2, is_gpu || is_cpu);
 
   // Common subexpression elimination
   pm->AddPass(std::make_shared<GraphKernelCSE>(), OptLevel_2);
@@ -158,7 +158,7 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
 PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   auto pm = std::make_shared<GraphKernelPassManager>(4, "highlevelopt2");
   // Enable atomic add
-  pm->AddPass(std::make_shared<AtomicCleanInsertter>(), OptLevel_2);
+  pm->AddPass(std::make_shared<AtomicCleanInsertter>(), OptLevel_2, is_gpu || is_ascend);
 
   // Enable atomic add for stitch nodes.
   auto level = GetPassLevelByFlag(context::GraphKernelFlags::GetInstance().enable_stitch_fusion);
@@ -170,8 +170,8 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   pm->AddPass(std::make_shared<DecreaseComputePrecision>(), level_low_precision, is_ascend);
 
   // Enable tsa and uss
-  pm->AddPass(std::make_shared<TsaAtomicAddToFirstTensor>(), OptLevel_1);
-  pm->AddPass(std::make_shared<UssAtomicAdd>(), OptLevel_1);
+  pm->AddPass(std::make_shared<TsaAtomicAddToFirstTensor>(), OptLevel_1, is_gpu);
+  pm->AddPass(std::make_shared<UssAtomicAdd>(), OptLevel_1, is_gpu);
 
   return pm;
 }
@@ -204,6 +204,7 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
 
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
   optimizer->AddPassManager(PreProcess());

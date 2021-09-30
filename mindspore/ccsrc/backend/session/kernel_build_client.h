@@ -256,7 +256,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
   ~AscendKernelBuildClient() override { Close(); }
 };
 
-class GpuKernelBuildClient : public KernelBuildClient {
+class AkgKernelBuildClient : public KernelBuildClient {
  public:
   // Server configure
   constexpr inline static auto kGetPathScript =
@@ -264,15 +264,15 @@ class GpuKernelBuildClient : public KernelBuildClient {
     "\""
     "import pkgutil;"
     "path = pkgutil"
-    ".get_loader(\\\"mindspore._extends.remote.kernel_build_server_gpu\\\")"  // Server module name
+    ".get_loader(\\\"mindspore._extends.remote.kernel_build_server_akg\\\")"  // Server module name
     ".get_filename();"
     "print('[~]' + path)"
     "\"";
 
-  constexpr inline static auto kServerScript = "kernel_build_server_gpu.py";
+  constexpr inline static auto kServerScript = "kernel_build_server_akg.py";
 
-  static GpuKernelBuildClient &Instance() {
-    static GpuKernelBuildClient instance;
+  static AkgKernelBuildClient &Instance() {
+    static AkgKernelBuildClient instance;
     return instance;
   }
 
@@ -283,15 +283,15 @@ class GpuKernelBuildClient : public KernelBuildClient {
     return GetScriptFilePath(env, kGetPathScript, kServerScript);
   }
 
-  GpuKernelBuildClient(const GpuKernelBuildClient &) = delete;
-  GpuKernelBuildClient &operator=(const GpuKernelBuildClient &) = delete;
+  AkgKernelBuildClient(const AkgKernelBuildClient &) = delete;
+  AkgKernelBuildClient &operator=(const AkgKernelBuildClient &) = delete;
 
-  GpuKernelBuildClient(GpuKernelBuildClient &&) = delete;
-  GpuKernelBuildClient &operator=(GpuKernelBuildClient &&) = delete;
+  AkgKernelBuildClient(AkgKernelBuildClient &&) = delete;
+  AkgKernelBuildClient &operator=(AkgKernelBuildClient &&) = delete;
 
  private:
-  GpuKernelBuildClient() { Open(); }
-  ~GpuKernelBuildClient() override { Close(); }
+  AkgKernelBuildClient() { Open(); }
+  ~AkgKernelBuildClient() override { Close(); }
 };
 }  // namespace kernel
 }  // namespace mindspore

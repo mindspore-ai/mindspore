@@ -187,20 +187,6 @@ install(
   COMPONENT mindspore
 )
 
-if((ENABLE_D OR ENABLE_GPU) AND ENABLE_AKG)
-  set (AKG_PATH ${CMAKE_SOURCE_DIR}/build/mindspore/akg)
-  file(REMOVE_RECURSE ${AKG_PATH}/_akg)
-  file(MAKE_DIRECTORY ${AKG_PATH}/_akg)
-  file(TOUCH ${AKG_PATH}/_akg/__init__.py)
-  install(DIRECTORY "${AKG_PATH}/akg" DESTINATION "${AKG_PATH}/_akg")
-  install(
-    DIRECTORY
-    ${AKG_PATH}/_akg
-    DESTINATION ${INSTALL_PY_DIR}/
-    COMPONENT mindspore
-  )
-endif()
-
 if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/dataset)
   install(
     DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/dataset

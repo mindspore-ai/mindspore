@@ -172,7 +172,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   FlagRegister reg(flag_map);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  bool is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  bool is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
 
   // Set opt_level first, some flags' default value depends on it.
   // Default optimization level is level 2 when enable graphkernel
@@ -192,7 +192,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
 
   // Integer flags
   reg.AddFlag("online_tuning", &online_tuning);
-  reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_gpu ? OpLevel_MAX : OpLevel_0);
+  reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_ascend ? OpLevel_0 : OpLevel_MAX);
 
   // String flags
   reg.AddFlag("repository_path", &repository_path);

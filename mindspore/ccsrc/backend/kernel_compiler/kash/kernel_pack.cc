@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,14 @@ bool KernelPack::ReadFromJsonFile(const std::string &json_f, const std::string &
   json_->len = bin_size;
   (void)kernel_json.seekg(0, std::ios::beg);
   (void)kernel_json.read(json_->contents, SizeToLong(json_->len));
+
+  if (processor == kProcessorCpu) {
+    std::string bin_f = json_f.substr(0, json_f.length() - 5) + ".so";
+    if (!CheckHash(json_f, bin_f, js)) {
+      return false;
+    }
+    return true;
+  }
 
   if (processor == kProcessorCuda) {
     std::string bin_f = json_f.substr(0, json_f.length() - 5) + ".ptx";

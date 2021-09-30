@@ -13,8 +13,6 @@ endif()
 if(ENABLE_D OR ENABLE_ACL)
     file(GLOB_RECURSE _D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "ascend/*.cc"
-        "graph_kernel/*.cc"
-        "graph_kernel/model/*.cc"
     )
     list(APPEND _PREACTIVATE_SRC_LIST ${_D_SRC_LIST})
 endif()
@@ -22,8 +20,6 @@ endif()
 if(ENABLE_GPU)
     file(GLOB_RECURSE _GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "gpu/*.cc"
-        "graph_kernel/*.cc"
-        "graph_kernel/model/*.cc"
     )
     list(APPEND _PREACTIVATE_SRC_LIST ${_GPU_SRC_LIST})
 endif()
@@ -41,6 +37,13 @@ endif()
 if(ENABLE_CPU)
     file(GLOB_RECURSE _CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "cpu/*.cc")
     list(APPEND _PREACTIVATE_SRC_LIST ${_CPU_SRC_LIST})
+endif()
+
+if(ENABLE_AKG AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    file(GLOB_RECURSE _GK_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "graph_kernel/*.cc"
+        )
+    list(APPEND _PREACTIVATE_SRC_LIST ${_GK_SRC_LIST})
 endif()
 
 set_property(SOURCE ${_PREACTIVATE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS

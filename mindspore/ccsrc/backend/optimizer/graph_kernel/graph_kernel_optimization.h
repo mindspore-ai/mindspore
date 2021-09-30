@@ -46,6 +46,7 @@ class GraphKernelOptimizer {
 
   bool is_gpu{false};
   bool is_ascend{false};
+  bool is_cpu{false};
 };
 
 void GraphKernelOptimize(const KernelGraphPtr &kernel_graph);

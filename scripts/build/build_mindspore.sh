@@ -79,8 +79,11 @@ build_mindspore()
     if [[ "X$USE_GLOG" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DUSE_GLOG=ON"
     fi
-    if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" || "X$ENABLE_GPU" = "Xon" ]]; then
+    if [[ "X$ENABLE_AKG" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_AKG=ON"
+        if [[ "X$ENABLE_CPU" = "Xon" && "X$ENABLE_D" != "Xon" && "X$ENABLE_GPU" != "Xon" ]]; then
+            CMAKE_ARGS="${CMAKE_ARGS} -DUSE_LLVM=ON"
+        fi
     fi
     if [[ "X$ENABLE_ACL" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_ACL=ON"

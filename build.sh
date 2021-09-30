@@ -45,7 +45,7 @@ update_submodule()
   cd "${BASEPATH}/graphengine"
   git submodule update --init metadef
   cd "${BASEPATH}"
-  if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" || "X$ENABLE_GPU" = "Xon" ]]; then
+  if [[ "X$ENABLE_AKG" = "Xon" ]]; then
       git submodule update --init --recursive akg
   fi
 }
@@ -56,7 +56,6 @@ build_exit()
     stty echo
     exit 1
 }
-
 
 make_clean()
 {

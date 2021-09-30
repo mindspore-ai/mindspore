@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_
 #include <string>
 #include "backend/kernel_compiler/akg/akg_kernel_build.h"
 #include "base/base.h"
 
 namespace mindspore {
 namespace kernel {
-class AkgGpuKernelBuilder : public AkgKernelBuilder {
+class AkgCpuKernelBuilder : public AkgKernelBuilder {
  public:
-  AkgGpuKernelBuilder() = default;
-  ~AkgGpuKernelBuilder() = default;
+  AkgCpuKernelBuilder() = default;
+  ~AkgCpuKernelBuilder() = default;
 
   kernel::KernelBuildClient *GetClient() override { return &(kernel::AkgKernelBuildClient::Instance()); }
   KernelPackPtr AkgSearchCache(const std::string &kernel_name) override;
@@ -34,8 +34,6 @@ class AkgGpuKernelBuilder : public AkgKernelBuilder {
                        const AnfNodePtr &anf_node) override;
   void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
 };
-
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_

@@ -18,10 +18,12 @@
 #include <string>
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "runtime/device/cpu/cpu_memory_manager.h"
+#include "backend/kernel_compiler/akg/cpu/akg_cpu_kernel_build.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "runtime/device/cpu/kernel_select_cpu.h"
 #include "utils/trace_base.h"
+#include "utils/context/graph_kernel_flags.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
@@ -29,6 +31,8 @@
 #include "backend/optimizer/cpu/insert_format_transform_op.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "profiler/device/cpu/cpu_profiling.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -113,6 +117,14 @@ void CPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
 
   // Run final optimization.
   opt::CommonFinalOptimization(graph);
+
+#ifdef ENABLE_AKG
+  // Run graph kernel fusion optimization
+  if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    graphkernel::GraphKernelOptimize(graph);
+    graph->SetExecOrderByDefault();
+  }
+#endif
 }
 
 void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
@@ -173,9 +185,19 @@ void CPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const
 }
 
 void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
+  kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
+  MS_EXCEPTION_IF_NULL(bin_map);
+  std::vector<AnfNodePtr> akg_nodes;
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (AnfAlgo::IsControlOpExecInBackend(node)) {
+      continue;
+    }
+    if (session::AnfRuntimeAlgorithm::GetKernelType(node) == KernelType::AKG_KERNEL) {
+      if (!bin_map->initialized()) {
+        bin_map->Initialize();
+      }
+      akg_nodes.push_back(node);
       continue;
     }
     std::string kernel_name = AnfAlgo::GetCNodeName(node);
@@ -195,6 +217,10 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
     cpu_kernel->Init(node);
     AnfAlgo::SetKernelMod(cpu_kernel, node.get());
   }
+#ifdef ENABLE_AKG
+  kernel::AkgCpuKernelBuilder akg_cpu_kernel_builder;
+  (void)akg_cpu_kernel_builder.AkgKernelParallelBuild(akg_nodes);
+#endif
 }
 
 void CPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
@@ -212,8 +238,6 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto cpu_kernel_mod = dynamic_cast<kernel::CPUKernel *>(kernel_mod);
-  MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
 
 #ifdef PLATFORM_86
   // Some CPU kernels need set the flush zero mode to improve performance.
@@ -226,6 +250,8 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   // Some CPU kernels can't initialize kernel and launch kernel in different thread, so reinitialize the kernels before
   // launch.
   if (kOpNotSupportMultiThreadExecList.find(AnfAlgo::GetCNodeName(kernel)) != kOpNotSupportMultiThreadExecList.end()) {
+    auto cpu_kernel_mod = dynamic_cast<kernel::CPUKernel *>(kernel_mod);
+    MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
     cpu_kernel_mod->InitKernel(kernel);
   }
 #ifndef ENABLE_SECURITY

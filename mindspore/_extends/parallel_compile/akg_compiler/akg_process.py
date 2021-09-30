@@ -33,7 +33,7 @@ def copy_json(pid_path, ppid_path):
         shutil.move(os.path.join(pid_path, json_file), ppid_path)
 
 
-def _compile_akg_task_gpu(json_strs, attrs):
+def _compile_akg_task_default(json_strs, attrs):
     """
     compile func called in single process
 
@@ -110,16 +110,14 @@ class AkgProcess:
         if self.argc == 0:
             raise ValueError("json must be not null")
         args = [(arg, attrs) for arg in self.args]
-        if self.platform == "GPU":
-            with Pool(processes=self.process_num) as pool:
-                res = pool.starmap_async(_compile_akg_task_gpu, args)
-                res.get(timeout=self.wait_time)
-        elif self.platform == "ASCEND":
+        if self.platform == "ASCEND":
             with Pool(processes=self.process_num) as pool:
                 res = pool.starmap_async(_compile_akg_task_ascend, args)
                 res.get(timeout=self.wait_time)
         else:
-            raise ValueError("The value of 'platform' must be 'GPU' or 'ASCEND'.")
+            with Pool(processes=self.process_num) as pool:
+                res = pool.starmap_async(_compile_akg_task_default, args)
+                res.get(timeout=self.wait_time)
         return True
 
     def accept_json(self, json):
