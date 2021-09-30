@@ -27,14 +27,13 @@ ops::PrimitiveC *TFOneHotParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::OneHot>();
-
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "axis", &attr_value)) {
     MS_LOG(ERROR) << "The axis attr should be specified";
     return nullptr;
   }
   prim->set_axis(attr_value.i());
-  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); ++i) {
     if (AddOpInput(tf_op, i, inputs) != RET_OK) {
