@@ -27,6 +27,11 @@ constexpr size_t kPadDims = 4;
 constexpr size_t kExplicitPaddingsDims = 8;
 constexpr size_t NHWCTopPadPos = 2;
 constexpr size_t NCHWTopPadPos = 4;
+constexpr int kTfConvBaseKernelSize = 4;
+constexpr int kTfConvBaseStrideSize = 2;
+constexpr int kTfConvBaseDilationSize = 2;
+constexpr int kTfConvBaseDilationListSize = 4;
+constexpr int kTfConvBaseStrideListSize = 4;
 }  // namespace
 
 STATUS TFConvBaseParser::ParseKernels(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
@@ -42,6 +47,7 @@ STATUS TFConvBaseParser::ParseKernels(const tensorflow::NodeDef &node_def, const
     MS_LOG(ERROR) << "Dims of Kernel should be 4.";
     return RET_PARAM_INVALID;
   }
+  MS_CHECK_TRUE_RET(kernel->size() == kTfConvBaseKernelSize, RET_ERROR);
   kernel->at(0) = shape.dim(0).size();
   kernel->at(1) = shape.dim(1).size();
   kernel->at(2) = shape.dim(2).size();
@@ -53,11 +59,13 @@ STATUS TFConvBaseParser::ParseStrides(const tensorflow::NodeDef &node_def, const
                                       std::vector<int64_t> *strides) {
   MS_ASSERT(strides != nullptr);
   tensorflow::AttrValue attr_value;
+  MS_CHECK_TRUE_RET(strides->size() >= kTfConvBaseStrideSize, RET_ERROR);
   if (!TensorFlowUtils::FindAttrValue(node_def, "strides", &attr_value)) {
     strides->at(0) = 1;
     strides->at(1) = 1;
   } else {
     auto stride_list = attr_value.list();
+    MS_CHECK_TRUE_RET(stride_list.i_size() >= kTfConvBaseStrideListSize, RET_ERROR);
     if (format == mindspore::NHWC) {
       strides->at(0) = stride_list.i(1);
       strides->at(1) = stride_list.i(2);
@@ -100,11 +108,13 @@ STATUS TFConvBaseParser::ParseDilations(const tensorflow::NodeDef &node_def, con
                                         std::vector<int64_t> *dilations) {
   MS_ASSERT(dilations != nullptr);
   tensorflow::AttrValue attr_value;
+  MS_CHECK_TRUE_RET(dilations->size() >= kTfConvBaseDilationSize, RET_ERROR);
   if (!TensorFlowUtils::FindAttrValue(node_def, "dilations", &attr_value)) {
     dilations->at(0) = 1;
     dilations->at(1) = 1;
   } else {
     auto dilation_list = attr_value.list();
+    MS_CHECK_TRUE_RET(dilation_list.i_size() >= kTfConvBaseDilationListSize, RET_ERROR);
     if (format == mindspore::NHWC) {
       dilations->at(0) = dilation_list.i(1);
       dilations->at(1) = dilation_list.i(2);

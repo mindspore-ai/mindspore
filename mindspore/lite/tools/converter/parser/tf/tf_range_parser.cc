@@ -33,6 +33,7 @@ ops::PrimitiveC *TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     prim->set_start(attr_value.i());
   } else {
     auto start_node = tf_node_map.at(TensorFlowUtils::GetFlattenNodeName(tf_op.input(0)));
+    MS_CHECK_TRUE_RET(start_node != nullptr, nullptr);
     if (TensorFlowUtils::FindAttrValue(*start_node, "value", &attr_value)) {
       MS_LOG(INFO) << "Found raggedrange start node value attr, means it has default value";
       prim->set_start(attr_value.i());
@@ -43,6 +44,7 @@ ops::PrimitiveC *TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     prim->set_limit(attr_value.i());
   } else {
     auto limit_node = tf_node_map.at(TensorFlowUtils::GetFlattenNodeName(tf_op.input(1)));
+    MS_CHECK_TRUE_RET(limit_node != nullptr, nullptr);
     if (TensorFlowUtils::FindAttrValue(*limit_node, "value", &attr_value)) {
       MS_LOG(INFO) << "Found raggedrange limit node value attr, means it has default value";
       prim->set_limit(attr_value.i());
@@ -53,6 +55,7 @@ ops::PrimitiveC *TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     prim->set_delta(attr_value.i());
   } else {
     auto delta_node = tf_node_map.at(TensorFlowUtils::GetFlattenNodeName(tf_op.input(2)));
+    MS_CHECK_TRUE_RET(delta_node != nullptr, nullptr);
     if (TensorFlowUtils::FindAttrValue(*delta_node, "value", &attr_value)) {
       MS_LOG(INFO) << "Found raggedrange delta node value attr, means it has default value";
     }
