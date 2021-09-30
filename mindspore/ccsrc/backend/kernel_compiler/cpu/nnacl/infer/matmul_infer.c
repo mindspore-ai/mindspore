@@ -25,8 +25,9 @@ int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_
     return NNACL_PARAM_INVALID;
   }
   for (size_t i = 0; i < (a_shape_size - 2) && i < (b_shape_size - 2); ++i) {
-    int cmp_value = MSMIN(a_shape[i], b_shape[i]);
-    if (a_shape[i] != b_shape[i] && cmp_value != 1) {
+    int min_value = MSMIN(a_shape[i], b_shape[i]);
+    int max_value = MSMAX(a_shape[i], b_shape[i]);
+    if (max_value % min_value != 0) {
       return NNACL_INPUT_TENSOR_ERROR;
     }
   }

@@ -104,9 +104,9 @@ int MatmulCPUKernel::InitBroadcastParams() {
   int out_batch = 1;
   for (size_t i = 0; i < a_shape.size() - kHWDimNumber; ++i) {
     out_batch *= MSMAX(a_shape[i], b_shape[i]);
-    if (a_shape[i] < b_shape[i] && a_shape[i] == 1) {
+    if (a_shape[i] < b_shape[i] && b_shape[i] % a_shape[i] == 0) {
       a_broadcast_ = true;
-    } else if (a_shape[i] > b_shape[i] && b_shape[i] == 1) {
+    } else if (a_shape[i] > b_shape[i] && a_shape[i] % b_shape[i] == 0) {
       b_broadcast_ = true;
     } else if (a_shape[i] != b_shape[i]) {
       MS_LOG(ERROR) << "matmul don't support broadcast for dimension " << a_shape << " and " << b_shape;
