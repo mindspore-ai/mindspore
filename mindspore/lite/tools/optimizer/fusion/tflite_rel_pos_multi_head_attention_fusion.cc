@@ -217,47 +217,10 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
   MS_ASSERT(func_graph != nullptr && equiv != nullptr);
   auto attention_prim = BuildAttentionPrim(equiv);
   MS_CHECK_TRUE_RET(attention_prim != nullptr, nullptr);
-  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSize, kOutputSize);
-  MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
-  auto query_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[query_prim_]));
-  MS_CHECK_TRUE_RET(query_prim != nullptr, nullptr);
-  auto query_quant_param_holder = query_prim->GetAttr("quant_params");
-  if (query_quant_param_holder != nullptr) {
-    quant_params_holder->set_input_quant_param(
-      kWeightQueryIndex, query_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
+  if (SetQuantParamForAttentionNode(attention_prim, equiv) != lite::RET_OK) {
+    MS_LOG(ERROR) << "set quant param for attehtion node failed.";
+    return nullptr;
   }
-  auto key_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[key_prim_]));
-  MS_CHECK_TRUE_RET(key_prim != nullptr, nullptr);
-  auto key_quant_param_holder = key_prim->GetAttr("quant_params");
-  if (key_quant_param_holder != nullptr) {
-    quant_params_holder->set_input_quant_param(
-      kWeightKeyIndex, key_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
-  }
-  auto value_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[value_prim_]));
-  MS_CHECK_TRUE_RET(value_prim != nullptr, nullptr);
-  auto value_quant_param_holder = value_prim->GetAttr("quant_params");
-  if (value_quant_param_holder != nullptr) {
-    quant_params_holder->set_input_quant_param(
-      kWeightValueIndex, value_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
-  }
-
-  auto pos_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[pos_prim_]));
-  MS_CHECK_TRUE_RET(pos_prim != nullptr, nullptr);
-  auto pos_quant_param_holder = pos_prim->GetAttr("quant_params");
-  if (pos_quant_param_holder != nullptr) {
-    quant_params_holder->set_input_quant_param(
-      kWeightPosIndex, pos_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
-  }
-
-  auto output_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[output_prim_]));
-  MS_CHECK_TRUE_RET(output_prim != nullptr, nullptr);
-  auto output_quant_param_holder = output_prim->GetAttr("quant_params");
-  if (output_quant_param_holder != nullptr) {
-    quant_params_holder->set_input_quant_param(
-      kWeightOutputIndex, output_quant_param_holder->cast<lite::QuantParamHolderPtr>()->get_input_quant_params().at(1));
-  }
-
-  attention_prim->AddAttr("quant_params", quant_params_holder);
   auto value_node = NewValueNode(attention_prim);
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
   auto input_q = utils::cast<AnfNodePtr>((*equiv)[input_q_]);
@@ -319,6 +282,69 @@ CNodePtr TfliteRelPosMultiHeadAttentionFusion::CreateRelPosMultiHeadAttentionNod
   MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
   new_node->set_fullname_with_scope(base_name);
   return new_node;
+}
+
+int TfliteRelPosMultiHeadAttentionFusion::SetQuantParamForAttentionNode(const PrimitivePtr &prim,
+                                                                        const EquivPtr &equiv) const {
+  MS_ASSERT(prim != nullptr && equiv != nullptr);
+  auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(kInputSize, kOutputSize);
+  MS_CHECK_TRUE_RET(quant_params_holder != nullptr, lite::RET_ERROR);
+  auto query_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[query_prim_]));
+  MS_CHECK_TRUE_RET(query_prim != nullptr, lite::RET_ERROR);
+  auto query_quant_param_holder = query_prim->GetAttr("quant_params");
+  if (query_quant_param_holder != nullptr) {
+    auto query_quant_param = query_quant_param_holder->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(query_quant_param != nullptr, lite::RET_ERROR);
+    if (query_quant_param->get_input_quant_params().size() > 1) {
+      quant_params_holder->set_input_quant_param(kWeightQueryIndex, query_quant_param->get_input_quant_params().at(1));
+    }
+  }
+  auto key_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[key_prim_]));
+  MS_CHECK_TRUE_RET(key_prim != nullptr, lite::RET_ERROR);
+  auto key_quant_param_holder = key_prim->GetAttr("quant_params");
+  if (key_quant_param_holder != nullptr) {
+    auto key_quant_param = key_quant_param_holder->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(key_quant_param != nullptr, lite::RET_ERROR);
+    if (key_quant_param->get_input_quant_params().size() > 1) {
+      quant_params_holder->set_input_quant_param(kWeightKeyIndex, key_quant_param->get_input_quant_params().at(1));
+    }
+  }
+  auto value_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[value_prim_]));
+  MS_CHECK_TRUE_RET(value_prim != nullptr, lite::RET_ERROR);
+  auto value_quant_param_holder = value_prim->GetAttr("quant_params");
+  if (value_quant_param_holder != nullptr) {
+    auto value_quant_param = value_quant_param_holder->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(value_quant_param != nullptr, lite::RET_ERROR);
+    if (value_quant_param->get_input_quant_params().size() > 1) {
+      quant_params_holder->set_input_quant_param(kWeightValueIndex, value_quant_param->get_input_quant_params().at(1));
+    }
+  }
+
+  auto pos_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[pos_prim_]));
+  MS_CHECK_TRUE_RET(pos_prim != nullptr, lite::RET_ERROR);
+  auto pos_quant_param_holder = pos_prim->GetAttr("quant_params");
+  if (pos_quant_param_holder != nullptr) {
+    auto pos_quant_param = pos_quant_param_holder->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(pos_quant_param != nullptr, lite::RET_ERROR);
+    if (pos_quant_param->get_input_quant_params().size() > 1) {
+      quant_params_holder->set_input_quant_param(kWeightPosIndex, pos_quant_param->get_input_quant_params().at(1));
+    }
+  }
+
+  auto output_prim = GetValueNode<PrimitivePtr>(utils::cast<AnfNodePtr>((*equiv)[output_prim_]));
+  MS_CHECK_TRUE_RET(output_prim != nullptr, lite::RET_ERROR);
+  auto output_quant_param_holder = output_prim->GetAttr("quant_params");
+  if (output_quant_param_holder != nullptr) {
+    auto output_quant_param = output_quant_param_holder->cast<lite::QuantParamHolderPtr>();
+    MS_CHECK_TRUE_RET(output_quant_param != nullptr, lite::RET_ERROR);
+    if (output_quant_param->get_input_quant_params().size() > 1) {
+      quant_params_holder->set_input_quant_param(kWeightOutputIndex,
+                                                 output_quant_param->get_input_quant_params().at(1));
+    }
+  }
+
+  prim->AddAttr("quant_params", quant_params_holder);
+  return lite::RET_OK;
 }
 
 const VectorRef TfliteRelPosMultiHeadAttentionFusion::DefineRelativeShiftPattern(const BaseRef &input) const {
