@@ -22,6 +22,7 @@ from mindspore.offline_debug.mi_validators import check_init, check_initialize, 
          check_tensor_info_init, check_tensor_data_init, check_tensor_base_data_init, check_tensor_stat_data_init,\
               check_watchpoint_hit_init, check_parameter_init
 from mindspore.offline_debug.mi_validator_helpers import replace_minus_one
+from mindspore import log as logger
 if not security.enable_security():
     import mindspore._mindspore_offline_debug as cds
 
@@ -40,29 +41,7 @@ def get_version():
     if security.enable_security():
         raise ValueError("Offline debugger is not supported in security mode. "
                          "Please recompile mindspore without `-s on`.")
-    return cds.DbgServices(False).GetVersion()
-
-
-class DbgLogger:
-    """
-    Offline Debug Services Logger
-
-    Args:
-        verbose (bool): Whether to print logs.
-
-    Examples:
-        >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> version = dbg_services.DbgLogger(verbose=False)
-    """
-    def __init__(self, verbose):
-        self.verbose = verbose
-
-    def __call__(self, *logs):
-        if self.verbose:
-            print(logs)
-
-
-log = DbgLogger(False)
+    return cds.DbgServices().GetVersion()
 
 
 class DbgServices:
@@ -71,25 +50,21 @@ class DbgServices:
 
     Args:
         dump_file_path (str): Directory where the dump files are saved.
-        verbose (bool): Whether to print logs. Default: False.
 
     Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        ...                              verbose=True)
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
     """
 
     @check_init
-    def __init__(self, dump_file_path, verbose=False):
+    def __init__(self, dump_file_path):
         if security.enable_security():
             raise ValueError("Offline debugger is not supported in security mode. "
                              "Please recompile mindspore without `-s on`.")
-        log.verbose = verbose
-        log("in Python __init__, file path is ", dump_file_path)
+        logger.info("in Python __init__, file path is %s", dump_file_path)
         self.dump_file_path = dump_file_path
-        self.dbg_instance = cds.DbgServices(verbose)
+        self.dbg_instance = cds.DbgServices()
         self.version = self.dbg_instance.GetVersion()
-        self.verbose = verbose
         self.initialized = False
 
     @check_initialize
@@ -109,11 +84,10 @@ class DbgServices:
 
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        ...                              verbose=True)
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
         >>> d_init = d.initialize(net_name="network name", is_sync_mode=True, max_mem_usage=4096)
         """
-        log("in Python Initialize dump_file_path ", self.dump_file_path)
+        logger.info("in Python Initialize dump_file_path %s", self.dump_file_path)
         self.initialized = True
         return self.dbg_instance.Initialize(net_name, self.dump_file_path, is_sync_mode, max_mem_usage)
 
@@ -134,8 +108,7 @@ class DbgServices:
 
         Examples:
         >>> from mindspore.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        >>>                              verbose=True)
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.transform_check_node_list(info_name="rank_id",
         >>>                                         info_param=[0],
@@ -171,8 +144,7 @@ class DbgServices:
 
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        ...                              verbose=True)
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.add_watchpoint(watchpoint_id=1,
         ...                              watch_condition=6,
@@ -184,7 +156,7 @@ class DbgServices:
         ...                                                                     hit=False,
         ...                                                                     actual_value=0.0)])
         """
-        log("in Python AddWatchpoint")
+        logger.info("in Python AddWatchpoint")
         for node_name, node_info in check_node_list.items():
             for info_name, info_param in node_info.items():
                 check_node_list = self.transform_check_node_list(info_name, info_param, node_name, check_node_list)
@@ -207,8 +179,7 @@ class DbgServices:
 
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        ...                              verbose=True)
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.add_watchpoint(watchpoint_id=1,
         ...                              watch_condition=6,
@@ -221,7 +192,7 @@ class DbgServices:
         ...                                                                     actual_value=0.0)])
         >>> d_wp = d_wp.remove_watchpoint(watchpoint_id=1)
         """
-        log("in Python Remove Watchpoint id ", watchpoint_id)
+        logger.info("in Python Remove Watchpoint id %d", watchpoint_id)
         return self.dbg_instance.RemoveWatchpoint(watchpoint_id)
 
     @check_initialize_done
@@ -238,8 +209,7 @@ class DbgServices:
 
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        ...                              verbose=True)
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> d_wp = d_init.add_watchpoint(id=1,
         ...                              watch_condition=6,
@@ -252,7 +222,7 @@ class DbgServices:
         ...                                                                     actual_value=0.0)])
         >>> watchpoints = d_wp.check_watchpoints(iteration=8)
         """
-        log("in Python CheckWatchpoints iteration ", iteration)
+        logger.info("in Python CheckWatchpoints iteration %d", iteration)
         iteration = replace_minus_one(iteration)
         watchpoint_list = self.dbg_instance.CheckWatchpoints(iteration)
         watchpoint_hit_list = []
@@ -291,8 +261,7 @@ class DbgServices:
 
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        ...                              verbose=True)
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> tensor_data_list = d_init.read_tensors([dbg_services.TensorInfo(node_name="conv2.bias",
         ...                                                                 slot=0,
@@ -301,10 +270,12 @@ class DbgServices:
         ...                                                                 root_graph_id=0,
         ...                                                                 is_output=True)])
         """
-        log("in Python ReadTensors info ", info)
+        logger.info("in Python ReadTensors info:")
+        logger.info(info)
         info_list_inst = []
         for elem in info:
-            log("in Python ReadTensors info ", info)
+            logger.info("in Python ReadTensors info:")
+            logger.info(info)
             info_list_inst.append(elem.instance)
         tensor_data_list = self.dbg_instance.ReadTensors(info_list_inst)
         tensor_data_list_ret = []
@@ -330,8 +301,7 @@ class DbgServices:
 
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        ...                              verbose=True)
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> tensor_base_data_list = d_init.read_tensor_base([dbg_services.TensorInfo(node_name="conv2.bias",
         ...                                                                          slot=0,
@@ -340,10 +310,12 @@ class DbgServices:
         ...                                                                          root_graph_id=0,
         ...                                                                          is_output=True)])
         """
-        log("in Python ReadTensorsBase info ", info)
+        logger.info("in Python ReadTensorsBase info:")
+        logger.info(info)
         info_list_inst = []
         for elem in info:
-            log("in Python ReadTensorsBase info ", info)
+            logger.info("in Python ReadTensorsBase info:")
+            logger.info(info)
             info_list_inst.append(elem.instance)
         tensor_base_data_list = self.dbg_instance.ReadTensorsBase(info_list_inst)
         tensor_base_data_list_ret = []
@@ -366,8 +338,7 @@ class DbgServices:
 
         Examples:
         >>> from mindspore.ccsrc.debug.debugger.offline_debug import dbg_services
-        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path",
-        ...                              verbose=True)
+        >>> d = dbg_services.DbgServices(dump_file_path="dump_file_path")
         >>> d_init = d.initialize(is_sync_mode=True)
         >>> tensor_stat_data_list = d_init.read_tensor_stats([dbg_services.TensorInfo(node_name="conv2.bias",
         ...                                                                           slot=0,
@@ -376,10 +347,12 @@ class DbgServices:
         ...                                                                           root_graph_id=0,
         ...                                                                           is_output=True)])
         """
-        log("in Python ReadTensorsStat info ", info)
+        logger.info("in Python ReadTensorsStat info:")
+        logger.info(info)
         info_list_inst = []
         for elem in info:
-            log("in Python ReadTensorsStat info ", info)
+            logger.info("in Python ReadTensorsStat info:")
+            logger.info(info)
             info_list_inst.append(elem.instance)
         tensor_stat_data_list = self.dbg_instance.ReadTensorsStat(info_list_inst)
         tensor_stat_data_list_ret = []

@@ -183,7 +183,7 @@ struct TensorStatData {
 
 class DbgServices {
  public:
-  explicit DbgServices(bool verbose = false);
+  DbgServices();
 
   DbgServices(const DbgServices &other);
 

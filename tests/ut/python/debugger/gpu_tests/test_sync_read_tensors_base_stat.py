@@ -64,7 +64,7 @@ class TestOfflineReadTensorBaseStat:
         cls.test_path = build_dump_structure([name1, name2, name3, name4],
                                              [value_tensor, inf_tensor, nan_tensor, invalid_tensor],
                                              "Test", cls.tensor_info)
-        cls.debugger_backend = d.DbgServices(dump_file_path=cls.test_path, verbose=True)
+        cls.debugger_backend = d.DbgServices(dump_file_path=cls.test_path)
         _ = cls.debugger_backend.initialize(net_name="Test", is_sync_mode=True)
 
     @classmethod

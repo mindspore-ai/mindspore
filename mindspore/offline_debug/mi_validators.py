@@ -27,10 +27,9 @@ def check_init(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [dump_file_path, verbose], _ = parse_user_args(method, *args, **kwargs)
+        [dump_file_path], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(dump_file_path, (str,), "dump_file_path")
-        type_check(verbose, (bool,), "verbose")
         check_dir(dump_file_path)
 
         return method(self, *args, **kwargs)
