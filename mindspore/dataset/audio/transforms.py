@@ -689,9 +689,10 @@ class TimeStretch(AudioTensorOperation):
     Stretch STFT in time at a given rate, without changing the pitch.
 
     Args:
-        hop_length (int, optional): Length of hop between STFT windows (default=None).
+        hop_length (int, optional): Length of hop between STFT windows (default=None, will use ((n_freq - 1) * 2) // 2).
         n_freq (int, optional): Number of filter banks form STFT (default=201).
-        fixed_rate (float, optional): Rate to speed up or slow down the input in time (default=None).
+        fixed_rate (float, optional): Rate to speed up or slow down the input in time
+            (default=None, will keep the original rate).
 
     Examples:
         >>> import numpy as np
@@ -708,7 +709,7 @@ class TimeStretch(AudioTensorOperation):
 
         n_fft = (n_freq - 1) * 2
         self.hop_length = hop_length if hop_length is not None else n_fft // 2
-        self.fixed_rate = fixed_rate if fixed_rate is not None else np.nan
+        self.fixed_rate = fixed_rate if fixed_rate is not None else 1
 
     def parse(self):
         return cde.TimeStretchOperation(self.hop_length, self.n_freq, self.fixed_rate)

@@ -537,9 +537,10 @@ class TimeMasking final : public TensorTransform {
 class TimeStretch final : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] hop_length Length of hop between STFT windows. Default: None.
-  /// \param[in] n_freq Number of filter banks form STFT. Default: 201.
-  /// \param[in] fixed_rate Rate to speed up or slow down the input in time. Default: None.
+  /// \param[in] hop_length Length of hop between STFT windows (Default: None, will use ((n_freq - 1) * 2) // 2).
+  /// \param[in] n_freq Number of filter banks form STFT (Default: 201).
+  /// \param[in] fixed_rate Rate to speed up or slow down the input in time
+  ///     (Default: std::numeric_limits<float>::quiet_NaN(), will keep the original rate).
   explicit TimeStretch(float hop_length = std::numeric_limits<float>::quiet_NaN(), int n_freq = 201,
                        float fixed_rate = std::numeric_limits<float>::quiet_NaN());
 
