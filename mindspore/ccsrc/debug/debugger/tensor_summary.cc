@@ -25,7 +25,6 @@
 
 #ifdef OFFLINE_DBG_MODE
 #include "base/float16.h"
-#include "offline_debug/offline_logger.h"
 #endif
 
 #ifdef ONLINE_DBG_MODE

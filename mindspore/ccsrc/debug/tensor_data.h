@@ -21,11 +21,9 @@
 #include <string>
 #include <cstring>
 #include <iostream>
-#ifdef OFFLINE_DBG_MODE
-#include "debugger/offline_debug/offline_logger.h"
-#else
-#include "ir/tensor.h"
 #include "mindspore/core/utils/log_adapter.h"
+#ifdef ONLINE_DBG_MODE
+#include "ir/tensor.h"
 #endif
 
 #ifdef ONLINE_DBG_MODE

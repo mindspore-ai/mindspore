@@ -25,9 +25,6 @@
 #include <utility>
 #include <deque>
 #include <algorithm>
-#ifdef OFFLINE_DBG_MODE
-#include "debugger/offline_debug/offline_logger.h"
-#endif
 #include "debug/tensor_data.h"
 #ifdef ONLINE_DBG_MODE
 #include "debug/data_dump/dump_json_parser.h"
