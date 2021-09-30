@@ -164,22 +164,34 @@ int UpdatePreTensors(NPUOp *cur_op) {
   return RET_OK;
 }
 
+bool NodeWithNhwc2nchw2nhwcOutput(NPUOp *cur_op) {
+  auto out_ops = cur_op->out_ops();
+  if (out_ops.empty()) {
+    return false;
+  }
+  bool all_out_ops_transpose = std::all_of(out_ops.begin(), out_ops.end(), [](NPUOp *op) {
+    return op->type() == schema::PrimitiveType_Transpose && op->out_ops().size() == 1 &&
+           op->out_ops()[0]->type() == schema::PrimitiveType_Transpose && op->out_ops()[0]->out_ops().empty();
+  });
+  return all_out_ops_transpose;
+}
+
 int UpdatePostTensors(NPUOp *cur_op) {
   auto tensor = cur_op->outputs()[0];
 
-  // in case: node->nh2nc->nc2nh(graph output) --->>> node->nc2nh, node out_tensor should be put to nnc2nh out tensors
+  // in case: node->nh2nc->nc2nh(graph output) --->>> node->nc2nh, node out_tensor should be put to nc2nh out tensors
   auto out_ops = cur_op->out_ops();
-  if (!out_ops.empty() && out_ops.size() == 1 && out_ops[0]->out_ops().size() == 1 &&
-      out_ops[0]->out_ops()[0]->out_ops().empty() &&
-      out_ops[0]->out_ops()[0]->type() == schema::PrimitiveType_Transpose) {
-    auto nc_tensor = out_ops[0]->outputs()[0];  // nh2nc's out tensor
-    cur_op->set_outputs({nc_tensor});
-    auto post_post_op = out_ops[0]->out_ops()[0];
-    // nc2nh op set in_tensor out_tensor
-    auto post_post_k_in_tensors = post_post_op->inputs();
-    post_post_k_in_tensors[0] = nc_tensor;
-    post_post_op->set_inputs(post_post_k_in_tensors);
-    post_post_op->set_outputs({tensor});
+  if (NodeWithNhwc2nchw2nhwcOutput(cur_op)) {
+    std::vector<MSTensor> outputs;
+    for (auto i = 0; i < out_ops.size(); ++i) {
+      auto ori_out_tensor = cur_op->outputs()[i];
+      auto nc_tensor = out_ops[i]->outputs()[0];
+      outputs.push_back(nc_tensor);
+      auto post_post_op = out_ops[i]->out_ops()[0];
+      post_post_op->set_inputs({nc_tensor});
+      post_post_op->set_outputs({ori_out_tensor});
+    }
+    cur_op->set_outputs(outputs);
     return RET_OK;
   }
 

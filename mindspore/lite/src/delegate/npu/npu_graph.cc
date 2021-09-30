@@ -29,7 +29,7 @@ NPUGraph::~NPUGraph() {
     delete op;
   }
   for (auto tensor : insert_tensors_) {
-    delete tensor;
+    MSTensor::DestroyTensorPtr(tensor);
   }
 }
 
