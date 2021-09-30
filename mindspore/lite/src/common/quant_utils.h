@@ -156,7 +156,7 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
   }
   size_t one_filter_size = elem_count / channels;
   bool do_quant = quant_param_size / (sizeof(float) * 8 - bit_num) < one_filter_size;
-  if (!do_quant && quant_type == schema::QuantType_WeightQuant) {
+  if (!do_quant && quant_type == schema::QuantType_QUANT_WEIGHT) {
     MS_LOG(INFO) << "too few elements in a filter, no need to quantize. " << one_filter_size;
     return RET_QUANT_CONTINUE;
   }
@@ -188,14 +188,14 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
       auto quant_data = QuantizeData<T>(raw_data, &quant_param, quant_max, quant_min);
       (*quant_datas)[index] = quant_data;
 
-      if (quant_type == schema::QuantType_WeightQuant) {
+      if (quant_type == schema::QuantType_QUANT_WEIGHT) {
         float dequant_data = quant_param.scale * (quant_data - quant_param.zeroPoint);
         dequant_datas[index] = dequant_data;
         average_dequant += dequant_data;
         average_raw += raw_data;
       }
     }
-    if (quant_type == schema::QuantType_WeightQuant && !k_means) {
+    if (quant_type == schema::QuantType_QUANT_WEIGHT && !k_means) {
       // mean
       average_dequant = average_dequant / one_filter_size;
       average_raw = average_raw / one_filter_size;
