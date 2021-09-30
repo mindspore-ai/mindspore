@@ -84,6 +84,7 @@ STATUS FindAreaSurroundedByTranspose(const FuncGraphPtr &func_graph, const CNode
         return lite::RET_ERROR;
       }
       auto cur_node_post = cur_node_user.first->cast<CNodePtr>();
+      MS_CHECK_TRUE_MSG(cur_node_post != nullptr, RET_ERROR, "cast ptr failed");
       if (middle_nodes->find(cur_node_post) != middle_nodes->end() ||
           out_nodes->find(cur_node_post) != out_nodes->end()) {
         continue;
@@ -138,6 +139,7 @@ bool JudgeCanOptimizerForMultiOp(const FuncGraphPtr &func_graph, const std::set<
       continue;
     }
     auto middle_node_prim = GetValueNode<PrimitivePtr>(middle_cnode->input(0));
+    MS_CHECK_TRUE_MSG(middle_node_prim != nullptr, false, "GetValueNode failed");
     if (!transpose_strategy.CanChangeOpAxis(func_graph, middle_cnode)) {
       return false;
     }
@@ -145,30 +147,30 @@ bool JudgeCanOptimizerForMultiOp(const FuncGraphPtr &func_graph, const std::set<
   return true;
 }
 
-void ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index, FmkType fmk_type,
-                           bool train_flag, FormatTransNodeType trans_type) {
+int ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index, FmkType fmk_type,
+                          bool train_flag, FormatTransNodeType trans_type) {
   MS_ASSERT(cnode != nullptr);
   if (utils::isa<CNodePtr>(cnode->input(index))) {
-    return;
+    return lite::RET_OK;
   }
   lite::DataInfo data_info;
-  int status;
+  int status = 0;
   if (utils::isa<ParameterPtr>(cnode->input(index))) {
     auto input_node = cnode->input(index)->cast<ParameterPtr>();
-    MS_ASSERT(input_node != nullptr);
+    MS_CHECK_TRUE_MSG(input_node != nullptr, lite::RET_ERROR, "input_node is nullptr");
     if (!input_node->has_default()) {
-      return;
+      return lite::RET_OK;
     }
     status = lite::FetchDataFromParameterNode(cnode, index, fmk_type, train_flag, &data_info);
   } else {
     status = lite::FetchDataFromValueNode(cnode, index, fmk_type, train_flag, &data_info);
   }
   if (status != lite::RET_OK) {
-    return;
+    return lite::RET_ERROR;
   }
   if (data_info.shape_.empty() ||
       (data_info.data_type_ != kNumberTypeFloat32 && data_info.data_type_ != kNumberTypeFloat)) {
-    return;
+    return lite::RET_OK;
   }
   ShapeVector expand_shape(data_info.shape_.begin(), data_info.shape_.end());
   if (data_info.shape_.size() == 1) {
@@ -180,22 +182,24 @@ void ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode
   }
   auto tensor = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_info.data_type_), expand_shape,
                                                  data_info.data_.data(), data_info.data_.size());
+  MS_CHECK_TRUE_MSG(tensor != nullptr, lite::RET_ERROR, "tensor is nullptr");
   if (trans_type == kNHWC2NCHW) {
     (void)TransFilterFormat(tensor, schema::Format_KHWC, schema::Format_KCHW);
   } else {
     (void)TransFilterFormat(tensor, schema::Format_KCHW, schema::Format_KHWC);
   }
   auto param_node = func_graph->add_parameter();
-  MS_CHECK_TRUE_MSG(param_node != nullptr, , "add_parameter failed");
+  MS_CHECK_TRUE_MSG(param_node != nullptr, lite::RET_ERROR, "add_parameter failed");
   param_node->set_name(cnode->input(index)->fullname_with_scope());
   status = lite::InitParameterFromTensorInfo(param_node, tensor);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "init parameter from tensor info failed";
-    return;
+    return lite::RET_ERROR;
   }
   auto tr = func_graph->manager()->Transact();
   tr.SetEdge(cnode, index, param_node);
   tr.Commit();
+  return lite::RET_OK;
 }
 }  // namespace
 
@@ -273,6 +277,7 @@ STATUS DecreaseTransposeAlgo::InsertPreTransNode(const FuncGraphPtr &func_graph,
                                                  const std::vector<int> &perm) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto prim_node = cnode->input(0);
+  MS_CHECK_TRUE_MSG(prim_node != nullptr, lite::RET_ERROR, "prim_node is nullptr");
   auto prim = GetValueNode<PrimitivePtr>(prim_node);
   MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "GetValueNode Failed");
   auto &specify_nhwc_op_map = GetNHWCOpMap();
@@ -346,7 +351,11 @@ STATUS DecreaseTransposeAlgo::InsertPreTransNode(const FuncGraphPtr &func_graph,
       return lite::RET_ERROR;
     }
   }
-  ModifyCNodeFormat(cnode, trans_insert_info->pre_);
+  status = ModifyCNodeFormat(cnode, trans_insert_info->pre_);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "ModifyCNodeFormat failed.";
+    return lite::RET_ERROR;
+  }
   status = node_infer_shape_.InferShape(cnode);
   if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
     MS_LOG(ERROR) << "infer shape failed.";
@@ -439,14 +448,22 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
       continue;
     }
     for (size_t i = 1; i < middle_cnode->size(); ++i) {
-      ConvertTensorToNCOrNH(func_graph, middle_cnode, i, fmk_type_, train_flag_, trans_info.post_);
+      status = ConvertTensorToNCOrNH(func_graph, middle_cnode, i, fmk_type_, train_flag_, trans_info.post_);
+      if (status != lite::RET_OK) {
+        MS_LOG(ERROR) << "ConvertTensorToNCOrNH failed.";
+        return lite::RET_ERROR;
+      }
     }
     status = transpose_strategy_.ChangeOpAxis(func_graph, middle_cnode, trans_info.post_);
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "change op attr failed.";
       return lite::RET_ERROR;
     }
-    ModifyCNodeFormat(middle_cnode, trans_info.post_);
+    status = ModifyCNodeFormat(middle_cnode, trans_info.post_);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "ModifyCNodeFormat failed.";
+      return lite::RET_ERROR;
+    }
     status = node_infer_shape_.InferShape(middle_cnode);
     if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
       MS_LOG(ERROR) << "infer shape failed.";
@@ -456,7 +473,7 @@ STATUS DecreaseTransposeAlgo::HandleGraphMultiNode(const FuncGraphPtr &func_grap
   return lite::RET_OK;
 }
 
-void DecreaseTransposeAlgo::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
+int DecreaseTransposeAlgo::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
   MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
   auto sub_inputs = sub_graph->get_inputs();
   sub_inputs_map_[sub_graph] = sub_inputs;
@@ -475,6 +492,7 @@ void DecreaseTransposeAlgo::SetSubGraphInput(const CNodePtr &cnode, const FuncGr
       MS_ASSERT(out_cnode != nullptr);
       MS_ASSERT(trans_cnode != nullptr);
       auto out_prim = GetValueNode<PrimitivePtr>(out_cnode->input(0));
+      MS_CHECK_TRUE_MSG(out_prim != nullptr, lite::RET_ERROR, "GetValueNode failed");
       if (out_prim->GetAttr(kInferDone) == nullptr || !GetValue<bool>(out_prim->GetAttr(kInferDone))) {
         param_node->abstract()->set_shape(std::make_shared<abstract::Shape>(shape_vec));
       }
@@ -499,9 +517,10 @@ void DecreaseTransposeAlgo::SetSubGraphInput(const CNodePtr &cnode, const FuncGr
       }
     }
   }
+  return lite::RET_OK;
 }
 
-void DecreaseTransposeAlgo::ResetSubGraphInput() {
+int DecreaseTransposeAlgo::ResetSubGraphInput() {
   for (auto iter = sub_inputs_map_.begin(); iter != sub_inputs_map_.end(); ++iter) {
     auto &sub_graph = iter->first;
     auto &sub_inputs = iter->second;
@@ -509,7 +528,7 @@ void DecreaseTransposeAlgo::ResetSubGraphInput() {
     MS_ASSERT(manager != nullptr);
     for (auto &sub_input : sub_inputs) {
       auto param_node = sub_graph->add_parameter();
-      MS_CHECK_TRUE_MSG(param_node != nullptr, , "add parameter failed");
+      MS_CHECK_TRUE_MSG(param_node != nullptr, lite::RET_ERROR, "add parameter failed");
       param_node->set_abstract(sub_input->abstract()->Clone());
       param_node->set_name(sub_input->fullname_with_scope());
       manager->Replace(sub_input, param_node);
@@ -518,9 +537,10 @@ void DecreaseTransposeAlgo::ResetSubGraphInput() {
       sub_param_input->set_default_param(nullptr);
     }
   }
+  return lite::RET_OK;
 }
 
-void DecreaseTransposeAlgo::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
+int DecreaseTransposeAlgo::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
   MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
   MS_ASSERT(return_node != nullptr);
@@ -548,11 +568,13 @@ void DecreaseTransposeAlgo::SetSubGraphOutput(const CNodePtr &cnode, const FuncG
     trans_cnode->set_fullname_with_scope(trans_input_name);
   }
   return_node->set_inputs(origin_input);
+  return lite::RET_OK;
 }
 
-void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
+int DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
   MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
+  MS_CHECK_TRUE_MSG(return_node != nullptr, lite::RET_ERROR, "return_node is nullptr");
   auto origin_inputs = return_node->inputs();
   lite::RemoveIfDepend(return_node);
   lite::RemoveIfMakeTuple(return_node);
@@ -560,7 +582,7 @@ void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const Fun
   bool infer_done = true;
   for (size_t i = 1; i < return_node->size(); ++i) {
     auto abstract_base = GetCNodeInputAbstract(return_node, i);
-    MS_CHECK_TRUE_MSG(abstract_base != nullptr, , "GetCNodeInputAbstract failed");
+    MS_CHECK_TRUE_MSG(abstract_base != nullptr, lite::RET_ERROR, "GetCNodeInputAbstract failed");
     abstract_list.emplace_back(abstract_base->Clone());
     auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
     MS_ASSERT(abstract_tensor != nullptr);
@@ -572,11 +594,12 @@ void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const Fun
     }
     if (utils::isa<CNodePtr>(return_node->input(i))) {
       auto input_cnode = return_node->input(i)->cast<CNodePtr>();
+      MS_CHECK_TRUE_MSG(input_cnode != nullptr, lite::RET_ERROR, "input_cnode is nullptr");
       if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
         input_cnode = input_cnode->input(1)->cast<CNodePtr>();
       }
       auto input_prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-      MS_CHECK_TRUE_MSG(input_prim != nullptr, , "GetValueNode failed");
+      MS_CHECK_TRUE_MSG(input_prim != nullptr, lite::RET_ERROR, "GetValueNode failed");
       if (input_prim->GetAttr(kInferDone) == nullptr || !GetValue<bool>(input_prim->GetAttr(kInferDone))) {
         infer_done = false;
       }
@@ -592,22 +615,25 @@ void DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const Fun
     cnode->set_abstract(abstract_list.front());
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_CHECK_TRUE_MSG(prim != nullptr, , "GetValueNode Failed");
+  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "GetValueNode Failed");
   prim->AddAttr(kInferDone, MakeValue<bool>(infer_done));
+
+  return lite::RET_OK;
 }
 
-void DecreaseTransposeAlgo::ModifyCNodeFormat(const CNodePtr &cnode, FormatTransNodeType pre_trans_type) {
+int DecreaseTransposeAlgo::ModifyCNodeFormat(const CNodePtr &cnode, FormatTransNodeType pre_trans_type) {
   MS_ASSERT(cnode != nullptr);
   if (pre_trans_type == kNONE) {
-    return;
+    return lite::RET_OK;
   }
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_CHECK_TRUE_MSG(primitive != nullptr, , "GetValueNode Failed");
+  MS_CHECK_TRUE_MSG(primitive != nullptr, lite::RET_ERROR, "GetValueNode Failed");
   if (pre_trans_type == kNHWC2NCHW) {
     primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NCHW));
   } else {
     primitive->AddAttr(ops::kFormat, MakeValue<int64_t>(mindspore::NHWC));
   }
+  return lite::RET_OK;
 }
 
 bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &func_graph) {
@@ -618,7 +644,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &fun
     return false;
   }
   auto node_list = TopoSort(func_graph->get_return());
-  int status;
+  int status = 0;
   for (auto &node : node_list) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
@@ -634,18 +660,38 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &fun
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
       }
-      SetSubGraphInput(cnode, sub_func_graph);
+      auto ret = SetSubGraphInput(cnode, sub_func_graph);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "SetSubGraphInput failed";
+        return false;
+      }
       (void)DecreaseTransposeForSingleOp(sub_func_graph);
-      SetSubGraphOutput(cnode, sub_func_graph);
+      ret = SetSubGraphOutput(cnode, sub_func_graph);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "SetSubGraphOutput failed";
+        return false;
+      }
       sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
       }
-      SetSubGraphInput(cnode, sub_func_graph);
+      ret = SetSubGraphInput(cnode, sub_func_graph);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "SetSubGraphInput failed";
+        return false;
+      }
       (void)DecreaseTransposeForSingleOp(sub_func_graph);
-      SetSubGraphOutput(cnode, sub_func_graph);
-      SetSubGraphAbstract(cnode, sub_func_graph);
+      ret = SetSubGraphOutput(cnode, sub_func_graph);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "SetSubGraphOutput failed";
+        return false;
+      }
+      ret = SetSubGraphAbstract(cnode, sub_func_graph);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "SetSubGraphAbstract failed";
+        return false;
+      }
       continue;
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -726,7 +772,12 @@ bool DecreaseTransposeAlgo::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "run local trans insert optimizer failed.";
     return false;
   }
-  ResetSubGraphInput();
+
+  auto ret = ResetSubGraphInput();
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "ResetSubGraphInput failed.";
+    return false;
+  }
   // if input format of several ops surrounded only by transpose op all can be NHWC,
   // we can delete these transpose ops, and at the same time, transform these middle ops.
   if (!DecreaseTransposeForMultiOp(func_graph)) {

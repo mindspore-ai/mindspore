@@ -168,6 +168,7 @@ int ControlFlowPass::SplitGraph(const FuncGraphPtr &fg, AnfNodePtr *control_flow
     }
     visited_nodes->insert(node);
     auto cnode = utils::cast<CNodePtr>(node);
+    MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cast ptr failed");
     for (size_t i = 0; i < cnode->inputs().size(); i++) {
       auto input = cnode->input(i);
       if (visited_nodes->find(input) == visited_nodes->end()) {
@@ -191,6 +192,7 @@ int ControlFlowPass::SplitGraph(const FuncGraphPtr &fg, AnfNodePtr *control_flow
 int ControlFlowPass::CreateAfterGraph(const FuncGraphPtr &main_fg, const std::vector<AnfNodePtr> &remain_nodes,
                                       const CNodePtr &aim_cnode, FuncGraphPtr *after_fg) {
   *after_fg = std::make_shared<FuncGraph>();
+  MS_CHECK_TRUE_MSG(*after_fg != nullptr, lite::RET_NULL_PTR, "*after_fg is nullptr");
   auto manager = main_fg->manager();
   manager->AddFuncGraph(*after_fg);
   (*after_fg)->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeTf)));
@@ -282,6 +284,7 @@ int ControlFlowPass::CreateWhileCondCallNode(
 int ControlFlowPass::CreateWhileBodyPartialNode(const FuncGraphPtr &cond_fg, const CNodePtr &while_cnode,
                                                 CNodePtr *body_partial_node) {
   auto body_vnode = while_cnode->input(kWhileBodyIndex);
+  MS_CHECK_TRUE_MSG(body_vnode != nullptr, lite::RET_NULL_PTR, "body_vnode is nullptr");
   auto body_fg = GetValueNode<std::shared_ptr<FuncGraph>>(body_vnode);
   if (body_fg == nullptr) {
     MS_LOG(ERROR) << "Get value as func_graph failed.";
@@ -469,13 +472,14 @@ int ControlFlowPass::ProcessWhileOp(const FuncGraphPtr &fg, const std::set<AnfNo
   ValueNodePtr switch_anf_primitive = lite::GetSwitchAnfPrim();
   if (switch_anf_primitive == nullptr) {
     MS_LOG(ERROR) << "GetSwitchAnfPrim failed.";
-    return false;
+    return lite::RET_ERROR;
   }
 
   // insert switch node
   std::vector<AnfNodePtr> switch_node_inputs = {switch_anf_primitive, cond_fg->output(), body_partial_node,
                                                 after_partial_cnode};
   auto switch_cnode = cond_fg->NewCNode(switch_node_inputs);
+  MS_CHECK_TRUE_MSG(switch_cnode != nullptr, RET_ERROR, "NewCnode failed");
   switch_cnode->set_fullname_with_scope("while-Switch-" + cond_fg->get_attr("graph_name")->ToString());
 
   // insert call node
@@ -590,6 +594,7 @@ int ControlFlowPass::CreateIfPartialNode(const FuncGraphPtr &fg, const size_t &i
     after_partial_cnode_inputs.push_back(then_fg->output());
   } else {
     auto then_fg_output = then_fg->output()->cast<CNodePtr>();
+    MS_CHECK_TRUE_MSG(then_fg_output != nullptr, RET_ERROR, "cast ptr failed");
     for (size_t i = kCNodeFirstInputIndex; i < then_fg_output->inputs().size(); ++i) {
       after_partial_cnode_inputs.push_back(then_fg_output->input(i));
     }

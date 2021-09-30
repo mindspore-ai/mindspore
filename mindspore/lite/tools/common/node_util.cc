@@ -27,6 +27,7 @@
 #include "mindspore/core/ops/switch.h"
 #include "mindspore/core/ops/call.h"
 #include "mindspore/core/ops/fusion/partial_fusion.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -332,6 +333,7 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
 size_t GetCNodeOutputsSize(const std::shared_ptr<AnfNode> &anf_node, bool train_flag) {
   MS_ASSERT(anf_node != nullptr);
   auto cnode = anf_node->cast<CNodePtr>();
+  MS_ASSERT(cnode != nullptr);
   if (train_flag &&
       (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) || opt::CheckPrimitiveType(cnode, prim::kPrimAdam))) {
     return 1;
@@ -350,6 +352,7 @@ bool IsPartialFusion(const AnfNodePtr &node) {
   }
   if (node->isa<mindspore::CNode>()) {
     auto cnode = node->cast<CNodePtr>();
+    MS_CHECK_TRUE_MSG(cnode != nullptr, false, "cast ptr failed");
     auto vnode_value = cnode->input(0)->cast<ValueNodePtr>()->value();
     return GetValue<NamedPtr>(vnode_value)->name() == "PartialFusion";
   }
@@ -364,6 +367,7 @@ bool IsCall(const AnfNodePtr &node) {
     return false;
   }
   auto cnode = node->cast<CNodePtr>();
+  MS_CHECK_TRUE_MSG(cnode != nullptr, false, "cast ptr failed");
   if (cnode->inputs().empty()) {
     return false;
   }
@@ -400,19 +404,25 @@ bool IsMakeTuple(const AnfNodePtr &node) {
 
 ValueNodePtr GetPartialFusionPrim() {
   auto partial_prim = std::make_shared<mindspore::ops::PartialFusion>();
+  MS_CHECK_TRUE_MSG(partial_prim != nullptr, nullptr, "partial_prim is nullptr");
   ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
+  MS_CHECK_TRUE_MSG(partial_anf_prim != nullptr, nullptr, "partial_anf_prim is nullptr");
   return partial_anf_prim;
 }
 
 ValueNodePtr GetSwitchAnfPrim() {
   auto switch_prim = std::make_shared<mindspore::ops::Switch>();
+  MS_CHECK_TRUE_MSG(switch_prim != nullptr, nullptr, "switch_prim is nullptr");
   ValueNodePtr switch_anf_prim = NewValueNode(switch_prim);
+  MS_CHECK_TRUE_MSG(switch_prim != nullptr, nullptr, "switch_prim is nullptr");
   return switch_anf_prim;
 }
 
 ValueNodePtr GetCallAnfPrim() {
   auto call_prim = std::make_shared<mindspore::ops::Call>();
+  MS_CHECK_TRUE_MSG(call_prim != nullptr, nullptr, "call_prim is nullptr");
   ValueNodePtr call_anf_prim = NewValueNode(call_prim);
+  MS_CHECK_TRUE_MSG(call_anf_prim != nullptr, nullptr, "call_anf_prim is nullptr");
   return call_anf_prim;
 }
 }  // namespace lite
