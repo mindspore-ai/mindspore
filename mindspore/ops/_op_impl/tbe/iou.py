@@ -23,7 +23,8 @@ iou_op_info = TBERegOp("IOU") \
     .compute_cost(10) \
     .kernel_name("iou") \
     .partial_flag(True) \
-    .attr("mode", "required", "str", "all") \
+    .attr("mode", "optional", "str", "all", "iou") \
+    .attr("eps", "optional", "float", "all", "1.0") \
     .input(0, "bboxes", False, "required", "all") \
     .input(1, "gtboxes", False, "required", "all") \
     .output(0, "overlap", False, "required", "all") \
