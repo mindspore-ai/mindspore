@@ -49,10 +49,10 @@ INIT_OP_NAME = 'Default/InitDataSetQueue'
 
 def _environment_check():
     if c_expression.security.enable_security():
-        raise Runtime("Profiler is not supported if compiled with \'-s on\'")
+        raise RuntimeError("Profiler is not supported if compiled with \'-s on\'")
     if context.get_context("mode") == context.PYNATIVE_MODE:
-        raise Runtime("Profiler is not supported in pynative mode currently, "
-                      "and it is only supported in graph mode.")
+        raise RuntimeError("Profiler is not supported in pynative mode currently, "
+                           "and it is only supported in graph mode.")
 
 
 class ProfileOption(Enum):
