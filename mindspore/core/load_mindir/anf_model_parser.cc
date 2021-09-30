@@ -77,9 +77,9 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const std::unordered_map<s
   std::stack<std::string> rules;
   std::stack<P> value;
   int count = 0;
-  for (int i = 0; i < static_cast<int>(str.length()); i++) {
+  for (size_t i = 0; i < str.length(); i++) {
     if (str[i] == '[') {
-      rules.push("[");
+      rules.push(std::string("["));
     } else if (str[i] == ']') {
       // rules
       std::vector<P> vec;
@@ -105,7 +105,7 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const std::unordered_map<s
     } else {
       count++;
       if (str[i + 1] == '[' || str[i + 1] == ']' || str[i + 1] == ',') {
-        auto value_name = str.substr(i - count + 1, count);
+        auto value_name = str.substr(static_cast<int>(i) - count + 1, count);
         if (kv.find(value_name) == kv.end()) {
           MS_LOG(ERROR) << "Node's attributes and shape do not match.";
           return nullptr;

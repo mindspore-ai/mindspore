@@ -42,8 +42,8 @@ class MindIREngine {
   void Init(const AbstractBasePtrList &args);
   static AbstractBasePtr InferPrimitiveShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
   void EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr &node, const AbstractBasePtrListPtr &args);
-  void EvalPartialPrimitive(const PrimitivePtr &prim, const CNodePtr &node, const AbstractBasePtrListPtr &args);
-  void EvalReturnPrimitive(const PrimitivePtr &prim, const CNodePtr &node);
+  void EvalPartialPrimitive(const CNodePtr &node, const AbstractBasePtrListPtr &args);
+  void EvalReturnPrimitive(const CNodePtr &node);
   void InferParameter(const AnfNodePtr &node);
   void InferValueNode(const AnfNodePtr &node);
   void InferCNode(const AnfNodePtr &node);
@@ -195,7 +195,7 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
   SaveNodeInferResult(node, result);
 }
 
-void MindIREngine::EvalReturnPrimitive(const PrimitivePtr &prim, const CNodePtr &node) {
+void MindIREngine::EvalReturnPrimitive(const CNodePtr &node) {
   if (node->inputs().size() < 2) {
     MS_LOG(EXCEPTION) << node->DebugString() << " input size < 2";
   }
@@ -220,8 +220,7 @@ void MindIREngine::EvalReturnPrimitive(const PrimitivePtr &prim, const CNodePtr 
   }
 }
 
-void MindIREngine::EvalPartialPrimitive(const PrimitivePtr &prim, const CNodePtr &node,
-                                        const AbstractBasePtrListPtr &args) {
+void MindIREngine::EvalPartialPrimitive(const CNodePtr &node, const AbstractBasePtrListPtr &args) {
   // Args has  been resolved
   if (args != nullptr) {
     if (args->size() < 2) {
@@ -307,12 +306,12 @@ void MindIREngine::EvalPrimitiveAbastract(const abstract::PrimitiveAbstractClosu
   auto prim = func->prim();
   // Return Primitive
   if (prim->name() == prim::kPrimReturn->name()) {
-    EvalReturnPrimitive(prim, node);
+    EvalReturnPrimitive(node);
     return;
   }
   // Partial Primitive
   if (prim->name() == prim::kPrimPartial->name()) {
-    EvalPartialPrimitive(prim, node, args);
+    EvalPartialPrimitive(node, args);
     return;
   }
   // common Primitive
