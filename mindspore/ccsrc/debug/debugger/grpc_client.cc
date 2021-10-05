@@ -48,7 +48,6 @@ EventReply GrpcClient::WaitForCommand(const Metadata &metadata) {
   EventReply reply;
   grpc::ClientContext context;
   grpc::Status status = stub_->WaitCMD(&context, metadata, &reply);
-
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: WaitForCommand";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
@@ -61,7 +60,6 @@ EventReply GrpcClient::SendMetadata(const Metadata &metadata) {
   EventReply reply;
   grpc::ClientContext context;
   grpc::Status status = stub_->SendMetadata(&context, metadata, &reply);
-
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendMetadata";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
@@ -114,7 +112,6 @@ EventReply GrpcClient::SendGraph(const GraphProto &graph) {
   }
   writer->WritesDone();
   grpc::Status status = writer->Finish();
-
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendGraph";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
@@ -136,7 +133,6 @@ EventReply GrpcClient::SendMultiGraphs(const std::list<Chunk> &chunks) {
   }
   writer->WritesDone();
   grpc::Status status = writer->Finish();
-
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendMultigraphs";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
@@ -158,7 +154,6 @@ EventReply GrpcClient::SendTensors(const std::list<TensorProto> &tensors) {
   }
   writer->WritesDone();
   grpc::Status status = writer->Finish();
-
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendTensors";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
@@ -180,7 +175,6 @@ EventReply GrpcClient::SendWatchpointHits(const std::list<WatchpointHit> &watchp
   }
   writer->WritesDone();
   grpc::Status status = writer->Finish();
-
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendWatchpointHits";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();

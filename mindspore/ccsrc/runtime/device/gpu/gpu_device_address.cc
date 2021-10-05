@@ -150,6 +150,7 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
     return ret;
   }
   auto tensor_data = std::make_shared<mindspore::TensorData>();
+  MS_EXCEPTION_IF_NULL(tensor_data);
   tensor_data->SetName(tensor_name);
   tensor_data->SetExecutionOrder(execution_order);
   tensor_data->SetSlot(slot);

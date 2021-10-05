@@ -24,7 +24,7 @@ using mindspore::kernel::KernelLaunchInfo;
 
 namespace mindspore {
 
-std::vector<int> CheckRealOutput(const std::string &node_name, const size_t &output_size);
+std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &output_size);
 
 void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info_, uint32_t exec_order_);
 
