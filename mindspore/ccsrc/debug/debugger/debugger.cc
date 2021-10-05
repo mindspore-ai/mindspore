@@ -294,6 +294,7 @@ void Debugger::PreExecuteGraphDebugger(const std::vector<KernelGraphPtr> &graphs
     DumpSetup(graph);
   }
 }
+
 void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
   // access lock for public method
@@ -313,23 +314,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   if (graph_proto_list_.size() > 1) {
     // there are more than one graphs are not dataset_graph
     if (not_dataset_graph_sum_ > 0) {
-      // only try to enable debugger if they are not all dataset graphs
-      if (!debugger_enabled_) {
-        EnableDebugger();
-      }
-      if (debugger_enabled_) {
-        // only send compiled graphs once at the initial step.
-        auto dbg_graph_ptr = graph_ptr_;
-        // use current graph ptr to load parameters
-        graph_ptr_ = graph_ptr;
-        LoadParametersAndConst();
-        // revert graph ptr to original value
-        graph_ptr_ = dbg_graph_ptr;
-
-        SendMultiGraphsAndSuspend(graph_proto_list_);
-
-        graph_proto_list_.clear();
-      }
+      SendMultiGraphsAndClear(graph_ptr);
     }
   } else if (graph_proto_list_.size() == 1) {
     // single graph, and not the initial step
@@ -359,6 +344,27 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   // resets for the new graph
   suspended_at_last_kernel_ = false;
 }
+
+void Debugger::SendMultiGraphsAndClear(const KernelGraphPtr &graph_ptr) {
+  // only try to enable debugger if they are not all dataset graphs
+  if (!debugger_enabled_) {
+    EnableDebugger();
+  }
+  if (debugger_enabled_) {
+    // only send compiled graphs once at the initial step.
+    auto dbg_graph_ptr = graph_ptr_;
+    // use current graph ptr to load parameters
+    graph_ptr_ = graph_ptr;
+    LoadParametersAndConst();
+    // revert graph ptr to original value
+    graph_ptr_ = dbg_graph_ptr;
+
+    SendMultiGraphsAndSuspend(graph_proto_list_);
+
+    graph_proto_list_.clear();
+  }
+}
+
 bool Debugger::DumpDataEnabledIteration() const {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   if (!dump_json_parser.e2e_dump_enabled()) {
@@ -382,6 +388,7 @@ uint32_t Debugger::GetRankID() {
   uint32_t rank_id = device_context->GetRankID();
   return rank_id;
 }
+
 void Debugger::Dump(const KernelGraphPtr &kernel_graph) const {
   uint32_t rank_id = GetRankID();
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
@@ -406,6 +413,7 @@ void Debugger::DumpSetup(const KernelGraphPtr &kernel_graph) const {
   E2eDump::DumpSetup(kernel_graph.get(), rank_id);
   MS_LOG(INFO) << "Finish!";
 }
+
 void Debugger::DumpInGraphCompiler(const KernelGraphPtr &kernel_graph) {
   // This function will be called for new GPU runtime using MindRTBackend
   auto &json_parser = DumpJsonParser::GetInstance();
@@ -491,6 +499,7 @@ bool Debugger::ReadNodeDataRequired(const CNodePtr &kernel) const {
   }
   return false;
 }
+
 void Debugger::PostExecuteNode(const CNodePtr &kernel, bool last_kernel) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
@@ -1020,7 +1029,7 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
       // add tensor to result list and increment result_index to check next item in ret_name
       tensor_list.push_back(tensor_item);
       if (size_iter > INT_MAX - g_chunk_size) {
-        MS_EXCEPTION(ValueError) << size_iter << " + " << g_chunk_size << " would lead to integer overflow！";
+        MS_EXCEPTION(ValueError) << size_iter << " + " << g_chunk_size << " would lead to integer overflow!";
       }
       size_iter += g_chunk_size;
     }
@@ -1434,6 +1443,7 @@ void Debugger::UpdateStepNum(const session::KernelGraph *graph) {
     ++num_step_;
   }
 }
+
 void Debugger::UpdateStepNumGPU() {
   // UpdateStepNum with DebugActor::DebugOnStepEnd
   if (device_target_ == kGPUDevice && (debugger_enabled_ || DumpDataEnabledIteration())) {
@@ -1452,6 +1462,7 @@ void Debugger::ClearCurrentData() {
     }
   }
 }
+
 bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
   return debug_services_->TensorExistsInCurrent(tensor_name);
 }
