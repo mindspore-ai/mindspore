@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <chrono>
 
-DbgServices::DbgServices(bool verbose) { debug_services_ = std::make_shared<DebugServices>(); }
+DbgServices::DbgServices() { debug_services_ = std::make_shared<DebugServices>(); }
 
 DbgServices::DbgServices(const DbgServices &other) {
   MS_LOG(INFO) << "cpp DbgServices object is created via copy";
