@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <vector>
 #include "minddata/dataset/engine/consumers/python_tree_consumer.h"
 
 namespace mindspore::dataset {

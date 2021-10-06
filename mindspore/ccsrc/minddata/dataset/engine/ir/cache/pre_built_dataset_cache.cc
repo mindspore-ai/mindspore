@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
 
 #include "minddata/dataset/engine/ir/cache/pre_built_dataset_cache.h"
 #include "minddata/dataset/engine/datasetops/cache_lookup_op.h"

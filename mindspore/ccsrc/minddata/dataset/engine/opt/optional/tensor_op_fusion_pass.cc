@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/text/kernels/tokenizer_op.h"
-#include <memory>
-#include <string>
-#include <string_view>
-#include <vector>
 #include "minddata/dataset/text/kernels/data_utils.h"
 
 namespace mindspore {

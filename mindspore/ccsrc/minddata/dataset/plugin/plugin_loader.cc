@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
 #include <numeric>
-#include <set>
-#include <string>
-#include <vector>
-
 #include "minddata/dataset/plugin/plugin_loader.h"
 #include "minddata/dataset/plugin/shared_lib_util.h"
 #include "mindspore/core/utils/log_adapter.h"

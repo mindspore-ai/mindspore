@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <fstream>
-#include <set>
 #include <utility>
 
 #include "minddata/dataset/core/config_manager.h"

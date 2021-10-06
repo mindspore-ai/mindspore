@@ -15,8 +15,6 @@
  */
 #include "minddata/dataset/kernels/data/compose_op.h"
 
-#include <vector>
-
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"

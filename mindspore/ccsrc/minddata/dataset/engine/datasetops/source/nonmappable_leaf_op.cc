@@ -15,14 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/source/nonmappable_leaf_op.h"
 
-#include <algorithm>
-
-#include <memory>
-#include <mutex>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
 #include "minddata/dataset/engine/db_connector.h"

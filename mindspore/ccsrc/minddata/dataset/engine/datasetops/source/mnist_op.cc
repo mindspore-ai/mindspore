@@ -16,8 +16,6 @@
 #include "minddata/dataset/engine/datasetops/source/mnist_op.h"
 
 #include <fstream>
-#include <iomanip>
-#include <set>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"

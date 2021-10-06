@@ -16,12 +16,6 @@
 
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 
-#include <map>
-#include <memory>
-#include <stack>
-#include <string>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/mind_record_sampler.h"
 #include "minddata/dataset/engine/ir/datasetops/cache_lookup_node.h"

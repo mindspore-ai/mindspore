@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"
-#include <unordered_set>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
