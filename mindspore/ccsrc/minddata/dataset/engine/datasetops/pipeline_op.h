@@ -57,14 +57,6 @@ class PipelineOp : public DatasetOp {
   // @return The number of workers inside this op.  Pipeline ops only have a single worker.
   int32_t NumWorkers() const override { return 1; }
 
-  // Getter
-  // @return the number of threads consuming from the previous Connector
-  int32_t NumConsumers() const override { return 1; }
-
-  // Getter
-  // @return The number of threads that push data to the output connector
-  int32_t NumProducers() const override { return 1; }
-
  protected:
   // *******************************************************************************
   // I'm predicting there will be common arguments or functionality for pipeline ops,

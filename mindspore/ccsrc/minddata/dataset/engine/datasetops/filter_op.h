@@ -69,8 +69,6 @@ class FilterOp : public ParallelOp<TensorRow, TensorRow> {
   // @return Name of the current Op
   std::string Name() const override { return kFilterOp; }
 
-  int32_t NumConsumers() const override;
-
  private:
   // predicate_func python callable which returns a boolean value.
   std::shared_ptr<TensorOp> predicate_func_;

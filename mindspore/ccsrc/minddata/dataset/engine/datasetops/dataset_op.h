@@ -210,14 +210,6 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   virtual int32_t NumWorkers() const = 0;
 
   // \brief Getter function
-  // \return The number of threads consuming from previous op.
-  virtual int32_t NumConsumers() const = 0;
-
-  // \brief Getter function
-  // \return The number of threads producing to the output connector.
-  virtual int32_t NumProducers() const = 0;
-
-  // \brief Getter function
   // \return T/F if this is an inlined operator
   bool inlined() const { return (oc_queue_size_ == 0); }
 

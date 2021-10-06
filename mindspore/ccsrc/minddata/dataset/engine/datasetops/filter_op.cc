@@ -159,7 +159,5 @@ Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate
 
   return Status(StatusCode::kSuccess, "FilterOp predicate func call succeed");
 }
-int32_t FilterOp::NumConsumers() const { return 1; }
-
 }  // namespace dataset
 }  // namespace mindspore

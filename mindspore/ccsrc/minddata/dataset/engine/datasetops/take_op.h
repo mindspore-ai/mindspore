@@ -59,8 +59,6 @@ class TakeOp : public PipelineOp {
   std::string Name() const override { return kTakeOp; }
 
   Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
-  int32_t NumConsumers() const override;
-  int32_t NumProducers() const override;
 
  private:
   int32_t max_takes_;   // The number of takes that the user requested

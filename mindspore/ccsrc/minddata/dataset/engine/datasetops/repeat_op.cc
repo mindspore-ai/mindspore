@@ -115,18 +115,6 @@ Status RepeatOp::EofReceived(int32_t worker_id) {
   return Status::OK();
 }
 
-int32_t RepeatOp::NumConsumers() const {
-  if (parent_.empty()) {
-    MS_LOG(DEBUG) << "Repeat operator, no parent node, assuming it's root and returning 1.";
-    return 1;
-  } else if (parent_[0] == nullptr) {
-    MS_LOG(DEBUG) << "Repeat operator, pointer to the first parent is null. Returning 0.";
-    return 0;
-  } else {
-    return parent_[0]->NumConsumers();
-  }
-}
-
 // Drive reset actions if needed
 Status RepeatOp::Reset() {
   // If there's nested repeats, an ascendant repeat may have ourself listed as an eoe op.
@@ -138,15 +126,6 @@ Status RepeatOp::Reset() {
   }
   state_ = OpState::kDeOpRunning;
   return Status::OK();
-}
-
-int32_t RepeatOp::NumProducers() const {
-  if (child_.empty() || child_[0] == nullptr) {
-    MS_LOG(DEBUG) << "Repeat operator, pointer to child node is null. Returning 0.";
-    return 0;
-  } else {
-    return child_[0]->NumProducers();
-  }
 }
 
 int64_t RepeatOp::GetTreeRepeatCount() { return num_repeats_; }

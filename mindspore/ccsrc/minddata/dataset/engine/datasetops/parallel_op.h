@@ -79,18 +79,6 @@ class ParallelOp : public DatasetOp {
 
   int32_t NumWorkers() const override { return num_workers_; }
 
-  // Getter
-  // @return the number of threads consuming from the previous Connector
-  int32_t NumConsumers() const override { return num_workers_; }
-
-  // Getter
-  // @return the number of producers pushing to the output Connector
-  // @notes The number of producers is commonly the same as number of workers, except in the case
-  // when a worker connector is set up.  In that case, there are n workers, and a single master
-  // such that only 1 thread is a producer rather than the n workers.
-  // @return the number of producers
-  int32_t NumProducers() const override { return num_producers_; }
-
  protected:
   /// Interface for derived classes to implement. All derived classes must provide the entry
   /// function with the main execution loop for worker threads.
@@ -140,7 +128,6 @@ class ParallelOp : public DatasetOp {
 
   /// The number of worker threads
   int32_t num_workers_;
-  int32_t num_producers_;  // The number of threads pushing to the out_connector_
   /// The size of input/output worker queeus
   int32_t worker_connector_size_;
   /// queues to hold the input rows to workers

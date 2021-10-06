@@ -237,10 +237,6 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
                               std::set<int32_t> *pad_cols, std::vector<std::shared_ptr<Tensor>> *pad_vals,
                               std::vector<std::vector<dsize_t>> *pad_shapes);
 
-  // the number of thread pulling from the mOutConnector of the Op below
-  // @return int32_t, 1
-  int32_t NumConsumers() const override { return 1; }
-
   // get the batch size for next batch
   // @return Status The status code returned
   Status GetBatchSize(int32_t *batch_size, CBatchInfo info);

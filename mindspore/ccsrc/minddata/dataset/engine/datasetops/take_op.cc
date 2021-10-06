@@ -68,26 +68,5 @@ Status TakeOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) 
 
   return Status::OK();
 }
-
-int32_t TakeOp::NumConsumers() const {
-  if (parent_.empty()) {
-    MS_LOG(DEBUG) << "Return operator, no parent node, assuming it's the root and returning 1.";
-    return 1;
-  } else if (parent_[0] == nullptr) {
-    MS_LOG(DEBUG) << "Return operator, pointer to the first parent is null. Returning 0.";
-    return 0;
-  } else {
-    return parent_[0]->NumConsumers();
-  }
-}
-
-int32_t TakeOp::NumProducers() const {
-  if (child_.empty() || child_[0] == nullptr) {
-    MS_LOG(DEBUG) << "Return operator, pointer to child node is null. Returning 0.";
-    return 0;
-  } else {
-    return child_[0]->NumProducers();
-  }
-}
 }  // namespace dataset
 }  // namespace mindspore
