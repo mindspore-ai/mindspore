@@ -173,9 +173,9 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
         wait_for_workers_post_.Set();
       }
     } else if (blk->eof()) {
-      RETURN_IF_NOT_OK(out_connector_->SendEOF(worker_id));
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
     } else if (blk->eoe()) {
-      RETURN_IF_NOT_OK(out_connector_->SendEOE(worker_id));
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
     } else {
       std::vector<int64_t> keys;
       RETURN_IF_NOT_OK(blk->GetKeys(&keys));
@@ -195,7 +195,7 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
             RETURN_STATUS_UNEXPECTED(errMsg);
           }
         }
-        RETURN_IF_NOT_OK(out_connector_->Add(std::move(row), worker_id));
+        RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(row)));
       }
     }
   } while (true);
@@ -203,9 +203,7 @@ Status CacheBase::FetchFromCache(int32_t worker_id) {
 }
 
 Status CacheBase::RegisterResources() {
-  RETURN_UNEXPECTED_IF_NULL(tree_);
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(worker_in_queues_.Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
   RETURN_IF_NOT_OK(prefetch_queues_.Register(tree_->AllTasks()));
   return Status::OK();
 }

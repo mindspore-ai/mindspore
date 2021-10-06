@@ -132,7 +132,7 @@ class ParallelOp : public DatasetOp {
   int32_t worker_connector_size_;
   /// queues to hold the input rows to workers
   QueueList<T> worker_in_queues_;
-  /// queues to hold the output of workers
+  /// queues to hold the output from workers
   QueueList<S> worker_out_queues_;
 };
 }  // namespace dataset
