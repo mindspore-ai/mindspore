@@ -63,26 +63,7 @@ DIV2KOp::DIV2KOp(int32_t num_workers, const std::string &dataset_dir, const std:
       downgrade_(downgrade),
       scale_(scale),
       decode_(decode),
-      data_schema_(std::move(data_schema)) {
-  io_block_queues_.Init(num_workers_, queue_size);
-}
-
-Status DIV2KOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
-  }
-
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&DIV2KOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
-  // The order of the following 3 functions must not be changed!
-  RETURN_IF_NOT_OK(ParseDIV2KData());    // Parse div2k data and get num rows, blocking
-  RETURN_IF_NOT_OK(CountDatasetInfo());  // Count the total rows
-  RETURN_IF_NOT_OK(InitSampler());       // Pass numRows to Sampler
-  return Status::OK();
-}
+      data_schema_(std::move(data_schema)) {}
 
 // Load 1 TensorRow (hr_image, lr_image) using 1 ImageLabelPair. 1 function call produces 1 TensorTow.
 Status DIV2KOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
@@ -126,7 +107,7 @@ void DIV2KOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status DIV2KOp::ParseDIV2KData() {
+Status DIV2KOp::PrepareData() {
   std::string hr_dir_key;
   std::string lr_dir_key;
 
@@ -144,6 +125,7 @@ Status DIV2KOp::ParseDIV2KData() {
     RETURN_IF_NOT_OK(GetDIV2KLRDirRealName(hr_dir_key, lr_dir_key));
     RETURN_IF_NOT_OK(GetDIV2KDataByUsage());
   }
+  RETURN_IF_NOT_OK(CountDatasetInfo());  // Count the total rows
   return Status::OK();
 }
 
@@ -246,7 +228,7 @@ Status DIV2KOp::CountDatasetInfo() {
 
 Status DIV2KOp::CountTotalRows(const std::string &dir, const std::string &usage, const std::string &downgrade,
                                int32_t scale, int64_t *count) {
-  // the logic of counting the number of samples is copied from ParseDIV2KData()
+  // the logic of counting the number of samples is copied from PrepareData()
   RETURN_UNEXPECTED_IF_NULL(count);
   *count = 0;
   const int64_t num_samples = 0;
@@ -265,7 +247,7 @@ Status DIV2KOp::CountTotalRows(const std::string &dir, const std::string &usage,
   int32_t op_connect_size = cfg->op_connector_size();
   std::shared_ptr<DIV2KOp> op = std::make_shared<DIV2KOp>(
     num_workers, dir, usage, downgrade, scale, false, op_connect_size, std::move(new_schema), std::move(new_sampler));
-  RETURN_IF_NOT_OK(op->ParseDIV2KData());
+  RETURN_IF_NOT_OK(op->PrepareData());
   *count = static_cast<int64_t>(op->image_hr_lr_pairs_.size());
   return Status::OK();
 }

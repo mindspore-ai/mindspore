@@ -92,7 +92,7 @@ class MindRecordOp : public MappableLeafOp {
 
   // Called first when function is called
   // @return
-  Status LaunchThreadsAndInitOp() override;
+  Status RegisterAndLaunchThreads() override;
 
   /// Overrides base class reset method.  When an operator does a reset, it cleans up any state
   /// info from it's previous execution and then initializes itself so that it can be executed
@@ -134,6 +134,10 @@ class MindRecordOp : public MappableLeafOp {
   // @return - Status
   Status ComputeColMap() override;
 
+ protected:
+  Status PrepareData() override;
+
+ private:
   std::vector<std::string> dataset_file_;                  // dataset files
   bool load_dataset_;                                      // load dataset from single file or not
   std::vector<std::string> columns_to_load_;               // Columns to load from dataset

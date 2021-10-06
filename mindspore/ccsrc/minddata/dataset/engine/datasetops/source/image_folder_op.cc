@@ -39,14 +39,13 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, std::string file_dir, int32_t que
       dirname_offset_(0) {
   folder_name_queue_ = std::make_unique<Queue<std::string>>(num_wkrs * queue_size);
   image_name_queue_ = std::make_unique<Queue<FolderImagesPair>>(num_wkrs * queue_size);
-  io_block_queues_.Init(num_workers_, queue_size);
 }
 
 // Master thread that pulls the prescan worker's results.
 // Keep collecting results until all prescan workers quit
 // Then consolidate 2 level shuffles together into 1 giant vector
 // calculate numRows then return
-Status ImageFolderOp::PrescanMasterEntry(const std::string &filedir) {
+Status ImageFolderOp::PrepareData() {
   std::vector<FolderImagesPair> v;
   int64_t cnt = 0;
   while (cnt != num_workers_) {  // count number of end signals
@@ -217,28 +216,21 @@ Status ImageFolderOp::StartAsyncWalk() {
   return Status::OK();
 }
 
-Status ImageFolderOp::LaunchThreadsAndInitOp() {
-  RETURN_UNEXPECTED_IF_NULL(tree_);
-  // Registers QueueList and individual Queues for interrupt services
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
+Status ImageFolderOp::RegisterAndLaunchThreads() {
+  RETURN_IF_NOT_OK(ParallelOp::RegisterAndLaunchThreads());
   RETURN_IF_NOT_OK(folder_name_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(image_name_queue_->Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
+
   // The following code launch 3 threads group
   // 1) A thread that walks all folders and push the folder names to a util:Queue folder_name_queue_.
   // 2) Workers that pull foldername from folder_name_queue_, walk it and return the sorted images to image_name_queue
   // 3) Launch main workers that load TensorRows by reading all images
-  RETURN_IF_NOT_OK(
-    tree_->AllTasks()->CreateAsyncTask("walk dir", std::bind(&ImageFolderOp::StartAsyncWalk, this), nullptr, id()));
+  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(Name() + "::WalkDir",
+                                                      std::bind(&ImageFolderOp::StartAsyncWalk, this), nullptr, id()));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
                                         std::bind(&ImageFolderOp::PrescanWorkerEntry, this, std::placeholders::_1),
                                         Name() + "::PrescanWorkerEntry", id()));
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(
-    num_workers_, std::bind(&ImageFolderOp::WorkerEntry, this, std::placeholders::_1), Name() + "::WorkerEntry", id()));
-  TaskManager::FindMe()->Post();
-  // The order of the following 2 functions must not be changed!
-  RETURN_IF_NOT_OK(this->PrescanMasterEntry(folder_path_));  // Master thread of pre-scan workers, blocking
-  RETURN_IF_NOT_OK(this->InitSampler());                     // pass numRows to Sampler
+
   return Status::OK();
 }
 
@@ -318,5 +310,6 @@ Status ImageFolderOp::GetNumClasses(int64_t *num_classes) {
   num_classes_ = *num_classes;
   return Status::OK();
 }
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -87,13 +87,9 @@ class CityscapesOp : public MappableLeafOp {
   /// \return Status - The status code returned.
   Status LoadTensorRow(row_id_type index, TensorRow *trow) override;
 
-  /// \brief Called first when function is called.
-  /// \return Status - The status code returned.
-  Status LaunchThreadsAndInitOp() override;
-
   /// \brief Parse Cityscapes data.
   /// \return Status - The status code returned.
-  Status ParseCityscapesData();
+  Status PrepareData() override;
 
   /// \brief Get Cityscapes data by usage.
   /// \param[in] images_dir - path to the images in the dataset.

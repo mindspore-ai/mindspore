@@ -36,26 +36,7 @@ FlickrOp::FlickrOp(int32_t num_workers, const std::string &dataset_dir, const st
       dataset_dir_(dataset_dir),
       file_path_(file_path),
       decode_(decode),
-      data_schema_(std::move(data_schema)) {
-  io_block_queues_.Init(num_workers_, queue_size);
-}
-
-Status FlickrOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
-  }
-
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&FlickrOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
-  // The order of the following 2 functions must not be changed!
-  RETURN_IF_NOT_OK(ParseFlickrData());   // Parse Flickr data and get num rows, blocking
-  RETURN_IF_NOT_OK(CountDatasetInfo());  // Count the total rows
-  RETURN_IF_NOT_OK(InitSampler());       // Pass numRows to Sampler
-  return Status::OK();
-}
+      data_schema_(std::move(data_schema)) {}
 
 // Load 1 TensorRow (image, annotations) using 1 ImageLabelPair. 1 function call produces 1 TensorTow
 Status FlickrOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
@@ -93,7 +74,7 @@ void FlickrOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status FlickrOp::ParseFlickrData() {
+Status FlickrOp::PrepareData() {
   auto real_file_path = FileUtils::GetRealPath(file_path_.data());
   if (!real_file_path.has_value()) {
     MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_path_;
@@ -156,6 +137,7 @@ Status FlickrOp::ParseFlickrData() {
   }
 
   file_handle.close();
+  RETURN_IF_NOT_OK(CountDatasetInfo());  // Count the total rows
   return Status::OK();
 }
 
@@ -231,7 +213,7 @@ Status FlickrOp::CountTotalRows(const std::string &dir, const std::string &file,
   std::shared_ptr<FlickrOp> op = std::make_shared<FlickrOp>(num_workers, dir, file, false, op_connect_size,
                                                             std::move(new_schema), std::move(new_sampler));
 
-  RETURN_IF_NOT_OK(op->ParseFlickrData());
+  RETURN_IF_NOT_OK(op->PrepareData());
   *count = static_cast<int64_t>(op->image_annotation_pairs_.size());
   return Status::OK();
 }

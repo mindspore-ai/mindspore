@@ -45,7 +45,6 @@ AlbumOp::AlbumOp(int32_t num_wkrs, std::string file_dir, int32_t queue_size, boo
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
     column_name_id_map_[data_schema_->Column(i).Name()] = i;
   }
-  io_block_queues_.Init(num_workers_, queue_size);
 }
 
 // Helper function for string comparison
@@ -61,7 +60,7 @@ bool StrComp(const std::string &a, const std::string &b) {
 
 // Single thread to go through the folder directory and gets all file names
 // calculate numRows then return
-Status AlbumOp::PrescanEntry() {
+Status AlbumOp::PrepareData() {
   Path folder(folder_path_);
   dirname_offset_ = folder_path_.length();
   std::shared_ptr<Path::DirIterator> dirItr = Path::DirIterator::OpenDirectory(&folder);
@@ -420,23 +419,6 @@ void AlbumOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status AlbumOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
-  }
-  RETURN_IF_NOT_OK(this->PrescanEntry());
-
-  // registers QueueList and individual Queues for interrupt services
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  // launch main workers that load TensorRows by reading all images
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&AlbumOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
-  RETURN_IF_NOT_OK(this->InitSampler());  // pass numRows to Sampler
-  return Status::OK();
-}
-
 Status AlbumOp::ComputeColMap() {
   // Set the column name map (base class field)
   if (column_name_id_map_.empty()) {
@@ -451,7 +433,7 @@ Status AlbumOp::ComputeColMap() {
 
 Status AlbumOp::GetNextRowPullMode(TensorRow *const row) {
   if (image_rows_.empty()) {
-    RETURN_IF_NOT_OK(PrescanEntry());
+    RETURN_IF_NOT_OK(PrepareData());
   }
   if (sample_ids_ == nullptr) {
     RETURN_IF_NOT_OK(this->InitSampler());

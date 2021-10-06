@@ -28,7 +28,10 @@ MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared
 
 // Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
 Status MappableLeafOp::operator()() {
-  RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
+  // Registering and launching worker threads have to be before in sync with caller (i.e., before FindMe()::Post())
+  RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
+  TaskManager::FindMe()->Post();
+  RETURN_IF_NOT_OK(InitOp());
   TensorRow sample_row;
   RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
   int64_t row_cnt = 0;
@@ -41,23 +44,23 @@ Status MappableLeafOp::operator()() {
           continue;  // index out of bound, skipping
         }
         RETURN_IF_NOT_OK(
-          io_block_queues_[row_cnt++ % num_workers_]->Add(std::make_unique<IOBlock>(*itr, IOBlock::kDeIoBlockNone)));
+          worker_in_queues_[row_cnt++ % num_workers_]->Add(std::make_unique<IOBlock>(*itr, IOBlock::kDeIoBlockNone)));
       }
       RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_row));
     }
     if (IsLastIteration()) {
       std::unique_ptr<IOBlock> eoe_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe);
       std::unique_ptr<IOBlock> eof_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof);
-      RETURN_IF_NOT_OK(io_block_queues_[(row_cnt++) % num_workers_]->Add(std::move(eoe_block)));
-      RETURN_IF_NOT_OK(io_block_queues_[(row_cnt++) % num_workers_]->Add(std::move(eof_block)));
+      RETURN_IF_NOT_OK(worker_in_queues_[(row_cnt++) % num_workers_]->Add(std::move(eoe_block)));
+      RETURN_IF_NOT_OK(worker_in_queues_[(row_cnt++) % num_workers_]->Add(std::move(eof_block)));
       for (int32_t i = 0; i < num_workers_; ++i) {
         RETURN_IF_NOT_OK(
-          io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
+          worker_in_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
       }
       return Status::OK();
     } else {  // not the last repeat.
       RETURN_IF_NOT_OK(
-        io_block_queues_[(row_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+        worker_in_queues_[(row_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
     }
 
     if (epoch_sync_flag_) {
@@ -92,7 +95,7 @@ Status MappableLeafOp::InitSampler() {
 Status MappableLeafOp::WorkerEntry(int32_t worker_id) {
   TaskManager::FindMe()->Post();
   std::unique_ptr<IOBlock> io_block;
-  RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
   while (io_block != nullptr) {
     if (io_block->wait()) {
       // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
@@ -101,20 +104,29 @@ Status MappableLeafOp::WorkerEntry(int32_t worker_id) {
         wait_for_workers_post_.Set();
       }
     } else if (io_block->eoe()) {
-      RETURN_IF_NOT_OK(out_connector_->SendEOE(worker_id));
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
     } else if (io_block->eof()) {
-      RETURN_IF_NOT_OK(out_connector_->SendEOF(worker_id));
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
     } else {
       std::vector<int64_t> keys;
       RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
       if (keys.empty()) return Status::OK();  // empty key is a quit signal for workers
       TensorRow trow;
       RETURN_IF_NOT_OK(this->LoadTensorRow(keys[0], &trow));
-      RETURN_IF_NOT_OK(out_connector_->Add(std::move(trow), worker_id));
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(trow)));
     }
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+    RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
   }
   RETURN_STATUS_UNEXPECTED("[Internal ERROR] Unexpected nullptr received in worker.");
+}
+Status MappableLeafOp::WaitForWorkers() {
+  num_workers_paused_ = 0;
+  for (int32_t i = 0; i < num_workers_; i++) {
+    RETURN_IF_NOT_OK(worker_in_queues_[i]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagWait)));
+  }
+  RETURN_IF_NOT_OK(wait_for_workers_post_.Wait());
+  wait_for_workers_post_.Clear();
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

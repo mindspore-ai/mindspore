@@ -134,11 +134,6 @@ Status TFReaderOp::Init() {
   // Build the index with our files such that each file corresponds to a key id.
   RETURN_IF_NOT_OK(filename_index_->insert(dataset_files_list_));
 
-  // The creation of the internal connector has been delayed until now, since we may have adjusted the
-  // number of workers.  Now that the worker count is established, create the connector now in the
-  // parallel op base.
-  RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
-
   jagged_rows_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
 
   // temporary: make size large enough to hold all files + EOE to avoid hangs

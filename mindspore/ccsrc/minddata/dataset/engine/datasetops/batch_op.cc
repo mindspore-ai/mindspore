@@ -52,28 +52,13 @@ Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
 BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
                  const std::vector<std::string> &in_col, const std::vector<std::string> &out_col,
                  py::function batch_size_func, py::function batch_map_func, PadInfo pad_map)
-    : ParallelOp(num_workers, op_queue_size),
-      start_batch_size_(batch_size),
-      drop_(drop),
-      pad_(pad),
-      in_col_names_(in_col),
-      out_col_names_(out_col),
-      batch_size_func_(batch_size_func),
-      batch_map_func_(batch_map_func),
-      pad_info_(pad_map),
-      batch_num_(0),
-      batch_cnt_(0) {
-  // Adjust connector queue size.  After batch each row is batch_size times larger
-  int32_t queue_size = std::max(1, op_queue_size / start_batch_size_);
-  if (num_workers == 1) {
-    // ensure there is at least 2 queue slots for whole operation..  If only 1 worker, incrase it to 2
-    queue_size = std::max(2, queue_size);
-  }
-
-  worker_queues_.Init(num_workers, queue_size);
+    : BatchOp(batch_size, drop, pad, op_queue_size, num_workers, in_col, pad_map) {
+  batch_size_func_ = batch_size_func;
+  batch_map_func_ = batch_map_func;
+  out_col_names_ = out_col;
 }
 // if PYTHON is disabled. per_batch_map can't be used
-#else
+#endif
 BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
                  const std::vector<std::string> &cols_to_map, PadInfo pad_map)
     : ParallelOp(num_workers, op_queue_size),
@@ -84,20 +69,18 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size,
       pad_info_(pad_map),
       batch_num_(0),
       batch_cnt_(0) {
-  int32_t queue_size = std::max(1, op_queue_size / start_batch_size_);
+  // Adjust connector queue size.  After batch each row is batch_size times larger
+  worker_connector_size_ = std::max(1, worker_connector_size_ / start_batch_size_);
   if (num_workers == 1) {
     // ensure there is at least 2 queue slots for whole operation..  If only 1 worker, incrase it to 2
-    queue_size = std::max(2, queue_size);
+    worker_connector_size_ = std::max(2, worker_connector_size_);
   }
-  worker_queues_.Init(num_workers, queue_size);
 }
-#endif
 
 Status BatchOp::operator()() {
-  Status rc = LaunchThreadsAndInitOp();
+  RETURN_IF_NOT_OK(RegisterAndLaunchThreads());
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
-  RETURN_IF_NOT_OK(rc);
   int64_t epoch_num = 0, batch_num = 0, cnt = 0;
   TensorRow new_row;
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
@@ -110,7 +93,7 @@ Status BatchOp::operator()() {
       table->emplace_back(new_row);
       // if # of rows is enough to make 1 batch, send it to worker_queue
       if (table->size() == static_cast<size_t>(cur_batch_size)) {
-        RETURN_IF_NOT_OK(worker_queues_[cnt % num_workers_]->EmplaceBack(
+        RETURN_IF_NOT_OK(worker_in_queues_[cnt % num_workers_]->EmplaceBack(
           std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt + 1 - epoch_num))));
         cnt++;
         table = std::make_unique<TensorQTable>();
@@ -120,7 +103,7 @@ Status BatchOp::operator()() {
     }
     // Reminder logic, execute only when there is a remainder (table is non empty) and don't drop
     if (drop_ == false && table->empty() == false) {
-      RETURN_IF_NOT_OK(worker_queues_[cnt % num_workers_]->EmplaceBack(
+      RETURN_IF_NOT_OK(worker_in_queues_[cnt % num_workers_]->EmplaceBack(
         std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt + 1 - epoch_num))));
       cnt++;
     }
@@ -129,7 +112,7 @@ Status BatchOp::operator()() {
     batch_num = 0;
     epoch_num++;
     RETURN_IF_NOT_OK(
-      worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOE))));
+      worker_in_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOE))));
     RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(epoch_num, batch_num, cnt - epoch_num)));
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
@@ -143,11 +126,11 @@ Status BatchOp::operator()() {
 #endif
   }  // end of EofHandled() == false
   RETURN_IF_NOT_OK(
-    worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOF))));
+    worker_in_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOF))));
   // EOF received, send quit signal to all workers
   for (int32_t ind = 0; ind < num_workers_; ind++) {
     RETURN_IF_NOT_OK(
-      worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kQuit))));
+      worker_in_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kQuit))));
   }
   return Status::OK();
 }
@@ -229,18 +212,18 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
 Status BatchOp::WorkerEntry(int32_t workerId) {
   TaskManager::FindMe()->Post();
   std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair;
-  RETURN_IF_NOT_OK(worker_queues_[workerId]->PopFront(&table_pair));
+  RETURN_IF_NOT_OK(worker_in_queues_[workerId]->PopFront(&table_pair));
   while (table_pair.second.ctrl_ != batchCtrl::kQuit) {
     if (table_pair.second.ctrl_ == batchCtrl::kEOE) {
-      RETURN_IF_NOT_OK(out_connector_->SendEOE(workerId));
+      RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
     } else if (table_pair.second.ctrl_ == batchCtrl::kEOF) {
-      RETURN_IF_NOT_OK(out_connector_->SendEOF(workerId));
+      RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
     } else if (table_pair.second.ctrl_ == batchCtrl::kNoCtrl) {
       TensorRow new_row;
       RETURN_IF_NOT_OK(MakeBatchedRow(std::move(table_pair), &new_row));
-      RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row), workerId));
+      RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(std::move(new_row)));
     }
-    RETURN_IF_NOT_OK(worker_queues_[workerId]->PopFront(&table_pair));
+    RETURN_IF_NOT_OK(worker_in_queues_[workerId]->PopFront(&table_pair));
   }
   return Status::OK();
 }
@@ -256,17 +239,6 @@ Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchIn
     RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));
   }  // do padding if needed
   RETURN_IF_NOT_OK(BatchRows(&table_pair.first, new_row, table_pair.first->size()));
-  return Status::OK();
-}
-
-Status BatchOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "[Internal ERROR] Pipeline init failed, Execution tree not set.");
-  }
-  RETURN_IF_NOT_OK(worker_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&BatchOp::WorkerEntry, this, std::placeholders::_1), Name(), id()));
   return Status::OK();
 }
 
@@ -602,6 +574,7 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
   }
   return Status::OK();
 }
+Status BatchOp::WaitForWorkers() { return Status::OK(); }
 
 }  // namespace dataset
 }  // namespace mindspore

@@ -44,23 +44,13 @@ CifarOp::CifarOp(CifarType type, const std::string &usage, int32_t num_works, co
       data_schema_(std::move(data_schema)) {
   constexpr uint64_t kUtilQueueSize = 512;
   cifar_raw_data_block_ = std::make_unique<Queue<std::vector<unsigned char>>>(kUtilQueueSize);
-  io_block_queues_.Init(num_workers_, queue_size);
 }
 
-Status CifarOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
-  }
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
+Status CifarOp::RegisterAndLaunchThreads() {
+  ParallelOp::RegisterAndLaunchThreads();
+  RETURN_IF_NOT_OK(cifar_raw_data_block_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
     "Get cifar data block", std::bind(&CifarOp::ReadCifarBlockDataAsync, this), nullptr, id()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&CifarOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
-  // The order of the following 2 functions must not be changed!
-  RETURN_IF_NOT_OK(ParseCifarData());  // Parse cifar data and get num rows, blocking
-  RETURN_IF_NOT_OK(InitSampler());     // Pass numRows to Sampler
   return Status::OK();
 }
 
@@ -220,7 +210,7 @@ Status CifarOp::GetCifarFiles() {
   return Status::OK();
 }
 
-Status CifarOp::ParseCifarData() {
+Status CifarOp::PrepareData() {
   std::vector<unsigned char> block;
   RETURN_IF_NOT_OK(cifar_raw_data_block_->PopFront(&block));
   uint32_t cur_block_index = 0;

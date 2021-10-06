@@ -66,7 +66,7 @@ class AlbumOp : public MappableLeafOp {
 
   /// \brief Initialize AlbumOp related var, calls the function to walk all files
   /// \return Status The status code returned
-  Status PrescanEntry();
+  Status PrepareData() override;
 
   /// \brief A print method typically used for debugging
   /// \param[in] out
@@ -158,10 +158,6 @@ class AlbumOp : public MappableLeafOp {
   /// \param[in, out] TensorRow row Json content stored into a tensor row
   /// \return Status The status code returned
   Status loadColumnData(const std::string &file, int32_t index, nlohmann::json js, TensorRow *row);
-
-  /// \brief Called first when function is called
-  /// \return Status The status code returned
-  Status LaunchThreadsAndInitOp() override;
 
   /// \brief Gets the next row
   /// \param row[out] - Fetched TensorRow

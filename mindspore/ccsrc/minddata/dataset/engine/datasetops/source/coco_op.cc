@@ -57,9 +57,7 @@ CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, 
       image_folder_path_(image_folder_path),
       annotation_path_(annotation_path),
       data_schema_(std::move(data_schema)),
-      extra_metadata_(extra_metadata) {
-  io_block_queues_.Init(num_workers_, queue_size);
-}
+      extra_metadata_(extra_metadata) {}
 
 void CocoOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
@@ -260,7 +258,7 @@ Status CocoOp::SearchNodeInJson(const nlohmann::json &input_tree, std::string no
   return Status::OK();
 }
 
-Status CocoOp::ParseAnnotationIds() {
+Status CocoOp::PrepareData() {
   nlohmann::json js;
   try {
     auto realpath = FileUtils::GetRealPath(annotation_path_.data());
@@ -475,20 +473,6 @@ Status CocoOp::CategoriesColumnLoad(const nlohmann::json &categories_tree) {
   return Status::OK();
 }
 
-Status CocoOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
-  }
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&CocoOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
-  RETURN_IF_NOT_OK(this->ParseAnnotationIds());
-  RETURN_IF_NOT_OK(this->InitSampler());
-  return Status::OK();
-}
-
 Status CocoOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor) {
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(path, tensor));
 
@@ -500,7 +484,7 @@ Status CocoOp::ReadImageToTensor(const std::string &path, const ColDescriptor &c
 }
 
 Status CocoOp::CountTotalRows(int64_t *count) {
-  RETURN_IF_NOT_OK(ParseAnnotationIds());
+  RETURN_IF_NOT_OK(PrepareData());
   *count = static_cast<int64_t>(image_ids_.size());
   return Status::OK();
 }
@@ -523,7 +507,7 @@ Status CocoOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<i
       MS_LOG(ERROR) << "Invalid parameter, GetClassIndex only valid in \"Detection\" and \"Panoptic\" task.";
       RETURN_STATUS_UNEXPECTED("Invalid parameter, GetClassIndex only valid in \"Detection\" and \"Panoptic\" task.");
     }
-    RETURN_IF_NOT_OK(ParseAnnotationIds());
+    RETURN_IF_NOT_OK(PrepareData());
     for (const auto &label : label_index_) {
       (*output_class_indexing).emplace_back(std::make_pair(label.first, label.second));
     }

@@ -57,7 +57,6 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, std::vector<std::str
       sample_bytes_(sample_bytes),
       shuffle_mode_(shuffle_mode),
       shard_reader_(std::move(shard_reader)) {
-  io_block_queues_.Init(num_workers_, op_connector_queue_size);
   epoch_sync_flag_ = true;  // MindRecordOp needs to turn this flag on, otherwise, calling ShuffleTask() before all
                             // tasks are consumed by the worker threads would cause problem.
 }
@@ -146,7 +145,7 @@ void MindRecordOp::Print(std::ostream &out, bool show_all) const {
 Status MindRecordOp::WorkerEntry(int32_t worker_id) {
   TaskManager::FindMe()->Post();
   std::unique_ptr<IOBlock> io_block;
-  RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
   while (io_block != nullptr) {
     if (io_block->wait()) {
       // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
@@ -154,17 +153,17 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
       if (++num_workers_paused_ == num_workers_) {
         wait_for_workers_post_.Set();
       }
-      RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+      RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
       continue;
     }
     if (io_block->eoe()) {
-      RETURN_IF_NOT_OK(out_connector_->SendEOE(worker_id));
-      RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
+      RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
       continue;
     }
     if (io_block->eof()) {
-      RETURN_IF_NOT_OK(out_connector_->SendEOF(worker_id));
-      RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+      RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
+      RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
       continue;
     }
 
@@ -188,8 +187,8 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
       MS_LOG(DEBUG) << "MindRecord operator consumed row " << row_id << " by worker " << worker_id << ".";
     }
     RETURN_IF_NOT_OK(GetRowFromReader(&fetched_row, row_id, worker_id));
-    RETURN_IF_NOT_OK(out_connector_->Add(std::move(fetched_row), worker_id));
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
+    RETURN_IF_NOT_OK(worker_out_queues_[worker_id]->EmplaceBack(std::move(fetched_row)));
+    RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&io_block));
   }
   RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker.");
 }
@@ -301,17 +300,14 @@ Status MindRecordOp::Reset() {
   return Status::OK();
 }
 
-Status MindRecordOp::LaunchThreadsAndInitOp() {
-  RETURN_UNEXPECTED_IF_NULL(tree_);
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(shard_reader_->Launch(true));
-  // Launch main workers that load TensorRows by reading all images
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&MindRecordOp::WorkerEntry, this, std::placeholders::_1), "", id()));
+Status MindRecordOp::PrepareData() {
   num_rows_ = shard_reader_->GetNumRows();
-  RETURN_IF_NOT_OK(this->InitSampler());  // pass numRows to Sampler
-  TaskManager::FindMe()->Post();
+  return Status::OK();
+}
+
+Status MindRecordOp::RegisterAndLaunchThreads() {
+  RETURN_IF_NOT_OK(ParallelOp::RegisterAndLaunchThreads());
+  RETURN_IF_NOT_OK(shard_reader_->Launch(true));
   return Status::OK();
 }
 

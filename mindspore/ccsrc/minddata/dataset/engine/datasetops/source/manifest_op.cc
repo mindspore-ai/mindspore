@@ -42,24 +42,7 @@ ManifestOp::ManifestOp(int32_t num_works, std::string file, int32_t queue_size, 
       class_index_(class_index),
       decode_(decode),
       usage_(usage) {
-  io_block_queues_.Init(num_workers_, queue_size);
   (void)std::transform(usage_.begin(), usage_.end(), usage_.begin(), ::tolower);
-}
-
-Status ManifestOp::LaunchThreadsAndInitOp() {
-  if (tree_ == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
-  }
-  RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&ManifestOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-  TaskManager::FindMe()->Post();
-  RETURN_IF_NOT_OK(ParseManifestFile());
-  RETURN_IF_NOT_OK(CountDatasetInfo());
-  RETURN_IF_NOT_OK(InitSampler());
-  return Status::OK();
 }
 
 // Load 1 TensorRow (image,label) using 1 ImageLabelPair. 1 function call produces 1 TensorTow
@@ -135,7 +118,7 @@ Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids)
 // Manifest file content
 // {"source": "/path/to/image1.jpg", "usage":"train", annotation": ...}
 // {"source": "/path/to/image2.jpg", "usage":"eval", "annotation": ...}
-Status ManifestOp::ParseManifestFile() {
+Status ManifestOp::PrepareData() {
   auto realpath = FileUtils::GetRealPath(file_.data());
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Invalid file, get real path failed, path=" << file_;
@@ -203,7 +186,7 @@ Status ManifestOp::ParseManifestFile() {
   }
   num_classes_ = classes.size();
   file_handle.close();
-
+  RETURN_IF_NOT_OK(CountDatasetInfo());
   return Status::OK();
 }
 
@@ -267,7 +250,7 @@ Status ManifestOp::CountDatasetInfo() {
 
 Status ManifestOp::CountTotalRows(int64_t *count) {
   *count = 0;
-  RETURN_IF_NOT_OK(ParseManifestFile());
+  RETURN_IF_NOT_OK(PrepareData());
   *count = static_cast<int64_t>(image_labelname_.size());
   return Status::OK();
 }
@@ -291,7 +274,7 @@ Status ManifestOp::GetNumClasses(int64_t *num_classes) {
     return Status::OK();
   }
   int64_t classes_count;
-  RETURN_IF_NOT_OK(ParseManifestFile());
+  RETURN_IF_NOT_OK(PrepareData());
   classes_count = static_cast<int64_t>(label_index_.size());
   *num_classes = classes_count;
   num_classes_ = classes_count;
@@ -300,7 +283,7 @@ Status ManifestOp::GetNumClasses(int64_t *num_classes) {
 
 Status ManifestOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
   if ((*output_class_indexing).empty()) {
-    RETURN_IF_NOT_OK(ParseManifestFile());
+    RETURN_IF_NOT_OK(PrepareData());
     RETURN_IF_NOT_OK(CountDatasetInfo());
     int32_t count = 0;
     for (const auto &label : label_index_) {

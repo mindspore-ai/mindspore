@@ -36,6 +36,14 @@ namespace dataset {
 // Forward declare
 class ExecutionTree;
 
+// A unit of job for map worker thread.
+// MapWorkerJob holds a list of MapJob where each MapJob can be a CpuMapJob, GpuMapJob or DvppMapJob.
+struct MapWorkerJob {
+  explicit MapWorkerJob(TensorRow tr) : tensor_row(std::move(tr)) {}
+  std::vector<std::shared_ptr<MapJob>> jobs;
+  TensorRow tensor_row;
+};
+
 // MapOp class implements the Map operator. It will apply a list of operations to each record specified by column names.
 // The column order behavior after MapOp is as follows.
 // [Case 1] If the number of Input Columns == the number of Output Column, column ordering after MapOp
@@ -61,7 +69,7 @@ class ExecutionTree;
 //     for the Tensors produced by TensorOp Compute().
 // Remainder Columns : columns that exist in the dataset but are not mentioned in Input Columns.
 //     These columns will not be passed to TensorOp Compute(), but will be appended to the end of the Output Columns.
-class MapOp : public ParallelOp {
+class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
  public:
   // Constructor of MapOp
   // @note The builder class should be used to call it.
@@ -115,22 +123,11 @@ class MapOp : public ParallelOp {
   const auto &TFuncs() const { return tfuncs_; }
 
  private:
-  // A unit of job for map worker thread.
-  // MapWorkerJob holds a list of MapJob where each MapJob can be a CpuMapJob, GpuMapJob or DvppMapJob.
-  struct MapWorkerJob {
-    explicit MapWorkerJob(TensorRow tr) : tensor_row(std::move(tr)) {}
-    std::vector<std::shared_ptr<MapJob>> jobs;
-    TensorRow tensor_row;
-  };
-
   // A helper function to create jobs for workers.
   Status GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job);
 
   // A helper function that fetch worker map job from local queues and extract the data and map job list
   Status FetchNextWork(uint32_t worker_id, TensorRow *row, std::vector<std::shared_ptr<MapJob>> *job_list);
-
-  // Local queues where worker threads get a job from
-  QueueList<std::unique_ptr<MapWorkerJob>> local_queues_;
 
   //  Tensorops to be read and applied by worker threads
   std::vector<std::shared_ptr<TensorOp>> tfuncs_;

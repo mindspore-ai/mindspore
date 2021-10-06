@@ -43,7 +43,7 @@ class FilenameBlock;
 
 using StringIndex = AutoIndexObj<std::string>;
 
-class NonMappableLeafOp : public ParallelOp {
+class NonMappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow> {
  public:
   // Constructor of TFReaderOp (2)
   // @note The builder class should be used to call this constructor.

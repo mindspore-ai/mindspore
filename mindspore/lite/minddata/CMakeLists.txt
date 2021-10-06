@@ -161,7 +161,6 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/engine/datasetops/shuffle_op.cc
         ${MINDDATA_DIR}/engine/datasetops/pipeline_op.cc
         ${MINDDATA_DIR}/engine/datasetops/batch_op.cc
-        ${MINDDATA_DIR}/engine/datasetops/parallel_op.cc
         ${MINDDATA_DIR}/engine/datasetops/map_op/map_op.cc
         ${MINDDATA_DIR}/engine/datasetops/map_op/cpu_map_job.cc
         ${MINDDATA_DIR}/engine/datasetops/source/album_op.cc

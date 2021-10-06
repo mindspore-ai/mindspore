@@ -225,11 +225,7 @@ class CocoOp : public MappableLeafOp {
 
   // Read annotation from Annotation folder
   // @return Status The status code returned
-  Status ParseAnnotationIds();
-
-  // Called first when function is called
-  // @return Status The status code returned
-  Status LaunchThreadsAndInitOp() override;
+  Status PrepareData() override;
 
   // @param nlohmann::json image_tree - image tree of json
   // @param std::vector<std::string> *image_vec - image id list of json

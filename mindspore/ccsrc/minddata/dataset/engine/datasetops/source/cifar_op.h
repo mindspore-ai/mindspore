@@ -82,7 +82,7 @@ class CifarOp : public MappableLeafOp {
 
   // Called first when function is called
   // @return
-  Status LaunchThreadsAndInitOp() override;
+  Status RegisterAndLaunchThreads() override;
 
   /// Get cifar files in dir
   /// @return
@@ -98,7 +98,7 @@ class CifarOp : public MappableLeafOp {
 
   /// Parse cifar data
   /// @return
-  Status ParseCifarData();
+  Status PrepareData() override;
 
   /// Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   /// @param (std::map<uint32_t, std::vector<uint32_t >> *cls_ids - val all ids for this class

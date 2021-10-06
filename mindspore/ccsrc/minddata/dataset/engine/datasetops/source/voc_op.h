@@ -130,14 +130,14 @@ class VOCOp : public MappableLeafOp {
   // @return Status The status code returned
   void ParseNodeValue(XMLElement *bbox_node, const char *name, float *value);
 
-  // Called first when function is called
-  // @return Status The status code returned
-  Status LaunchThreadsAndInitOp() override;
-
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
 
+ protected:
+  Status PrepareData() override;
+
+ private:
   bool decode_;
   int64_t row_cnt_;
   std::string folder_path_;

@@ -37,7 +37,7 @@ namespace dataset {
 /// \brief This is the base class for CacheOp and CacheLookupOp which share many similarities.
 /// \see CacheOp
 /// \see CacheLookupOp
-class CacheBase : public ParallelOp {
+class CacheBase : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow> {
  public:
   /// \brief Base class constructor
   /// \param num_workers Number of parallel workers
