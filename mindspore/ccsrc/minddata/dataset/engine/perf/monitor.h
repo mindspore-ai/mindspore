@@ -26,12 +26,11 @@
 namespace mindspore {
 namespace dataset {
 class ExecutionTree;
+class TreeConsumer;
 class Monitor {
  public:
   // Monitor object constructor
-  explicit Monitor(ExecutionTree *tree);
-
-  Monitor() = default;
+  explicit Monitor(TreeConsumer *tree_consumer);
 
   ~Monitor() = default;
 
@@ -39,9 +38,13 @@ class Monitor {
   // This function will be the entry point of mindspore::Dataset::Task
   Status operator()();
 
+  // Setter for execution tree pointer
+  void SetTree(ExecutionTree *tree) { tree_ = tree; }
+
  private:
   int64_t sampling_interval_;
   ExecutionTree *tree_;
+  TreeConsumer *tree_consumer_;
 };
 }  // namespace dataset
 }  // namespace mindspore

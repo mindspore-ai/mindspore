@@ -31,12 +31,15 @@
 namespace mindspore {
 namespace dataset {
 // Constructor
-ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit) {
+ExecutionTree::ExecutionTree(bool make_prof_mgr) : id_count_(0), tree_state_(kDeTStateInit) {
   tg_ = std::make_unique<TaskGroup>();
   root_ = nullptr;
   prepare_flags_ = 0;
 #ifndef ENABLE_SECURITY
-  profiling_manager_ = std::make_unique<ProfilingManager>(this);
+  // Check if should make ProfilingManager
+  if (make_prof_mgr) {
+    profiling_manager_ = std::make_shared<ProfilingManager>(nullptr);
+  }
 #endif
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
@@ -192,7 +195,7 @@ Status ExecutionTree::Launch() {
 #ifndef ENABLE_SECURITY
   if (profiling_manager_->IsProfilingEnable()) {
     // Setup profiling manager
-    RETURN_IF_NOT_OK(profiling_manager_->Initialize());
+    RETURN_IF_NOT_OK(profiling_manager_->Initialize(this));
     // Launch Monitor Thread
     RETURN_IF_NOT_OK(profiling_manager_->LaunchMonitor());
   }

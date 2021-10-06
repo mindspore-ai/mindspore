@@ -72,6 +72,16 @@ class TreeAdapter {
   // Optional optimizations status
   bool OptimizationEnabled() const { return optimize_; }
 
+#ifndef ENABLE_SECURITY
+  /// \brief Setter for Profiling Manager
+  void SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager) {
+    profiling_manager_ = profiling_manager;
+  }
+
+  /// \brief Getter for profiling manager, no ownership
+  ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
+#endif
+
  private:
   // Run the mandatory pass checking the syntax and semantics of the IR tree
   Status PrePass(std::shared_ptr<DatasetNode> ir);
@@ -93,7 +103,8 @@ class TreeAdapter {
   std::unique_ptr<ExecutionTree> tree_;  // current connector capacity of root op, used for profiling
   bool optimize_;                        // Flag to enable optional optimization pass
 #ifndef ENABLE_SECURITY
-  std::shared_ptr<DatasetIteratorTracing> tracing_;  // trace profiling data
+  std::shared_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
+  std::shared_ptr<DatasetIteratorTracing> tracing_;      // trace profiling data
 #endif
   int32_t cur_batch_num_;           // current batch number, used for profiling
   int32_t cur_connector_size_;      // current connector size of root op, used for profiling

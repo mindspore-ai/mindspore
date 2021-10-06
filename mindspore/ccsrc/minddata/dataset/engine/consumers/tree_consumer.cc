@@ -23,6 +23,10 @@
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
+#ifndef ENABLE_SECURITY
+#include "minddata/dataset/engine/perf/monitor.h"
+#include "minddata/dataset/engine/perf/profiling.h"
+#endif
 #include "minddata/dataset/engine/tree_adapter.h"
 
 #ifndef ENABLE_ANDROID
@@ -34,7 +38,13 @@
 namespace mindspore {
 namespace dataset {
 // TreeConsumer
-TreeConsumer::TreeConsumer() { tree_adapter_ = std::make_unique<TreeAdapter>(); }
+TreeConsumer::TreeConsumer() {
+  tree_adapter_ = std::make_unique<TreeAdapter>();
+#ifndef ENABLE_SECURITY
+  profiling_manager_ = std::make_shared<ProfilingManager>(this);
+  tree_adapter_->SetProfilingManagerPtr(profiling_manager_);
+#endif
+}
 
 Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d)); }
 Status TreeConsumer::Terminate() {
@@ -583,6 +593,9 @@ Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &
 
 TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), first_row_obtained_(false) {
   tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
+#ifndef ENABLE_SECURITY
+  tree_adapter_->SetProfilingManagerPtr(profiling_manager_);
+#endif
 }
 
 Status TreeGetters::Init(std::shared_ptr<DatasetNode> d) {
@@ -715,6 +728,9 @@ Status DatasetSizeGetter::Init(std::shared_ptr<DatasetNode> d) {
 Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *dataset_size) {
   RETURN_UNEXPECTED_IF_NULL(dataset_size);
   std::shared_ptr<TreeAdapter> tree_adapter = std::make_shared<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
+#ifndef ENABLE_SECURITY
+  tree_adapter->SetProfilingManagerPtr(profiling_manager_);
+#endif
   tree_adapters_.push_back(tree_adapter);
   RETURN_IF_NOT_OK(tree_adapter->Compile(ir_node, 1));
   TensorRow row;

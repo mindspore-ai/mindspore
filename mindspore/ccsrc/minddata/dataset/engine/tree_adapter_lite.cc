@@ -19,7 +19,13 @@
 namespace mindspore {
 namespace dataset {
 
-TreeAdapterLite::TreeAdapterLite() : root_(nullptr) { tree_ = std::make_unique<ExecutionTree>(); }
+TreeAdapterLite::TreeAdapterLite() : root_(nullptr) {
+  // Create ExecutionTree. Indicate to create ProfilingManager since it has not been created yet.
+  tree_ = std::make_unique<ExecutionTree>(true);
+#ifndef ENABLE_SECURITY
+  tree_->SetProfilingManagerPtr(nullptr);
+#endif
+}
 
 Status TreeAdapterLite::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *const op) {
   RETURN_UNEXPECTED_IF_NULL(ir);
