@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <string>
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/engine/opt/pre/deep_copy_pass.h"
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <algorithm>
-#include <unordered_map>
-#include <vector>
 #include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 
 namespace mindspore::dataset {

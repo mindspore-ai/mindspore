@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <string>
-#include <vector>
 #include "minddata/dataset/core/tensor_helpers.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"

@@ -53,6 +53,7 @@ using mindspore::Status;
 using mindspore::dataset::BorderType;
 using mindspore::dataset::InterpolationMode;
 
+namespace mindspore {
 class MDToDApi {
  public:
   std::shared_ptr<mindspore::dataset::AlbumOp> _iter;
@@ -461,3 +462,4 @@ extern "C" int MDToDApi_UpdateNoOfFaces(MDToDApi *pMDToDApi, int32_t noOfFaces) 
   }
   return 0;
 }
+}  // namespace mindspore

@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <fstream>
-#include <iomanip>
 
 #include "utils/file_utils.h"
 #include "minddata/dataset/core/config_manager.h"

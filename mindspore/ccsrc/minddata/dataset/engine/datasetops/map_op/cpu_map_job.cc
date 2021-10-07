@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
-#include <vector>
-#include <utility>
 #include <set>
 #include <string>
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"

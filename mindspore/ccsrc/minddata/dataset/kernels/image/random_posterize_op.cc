@@ -16,7 +16,6 @@
 
 #include "minddata/dataset/kernels/image/random_posterize_op.h"
 
-#include <random>
 #include <opencv2/imgcodecs.hpp>
 
 #include "minddata/dataset/util/random.h"

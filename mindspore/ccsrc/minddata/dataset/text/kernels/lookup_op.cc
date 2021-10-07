@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <string>
-
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/text/kernels/lookup_op.h"
 
