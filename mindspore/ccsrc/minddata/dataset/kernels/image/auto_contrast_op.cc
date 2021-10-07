@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
 
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #include "minddata/dataset/kernels/image/image_utils.h"

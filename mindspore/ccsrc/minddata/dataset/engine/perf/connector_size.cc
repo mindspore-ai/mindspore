@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/perf/connector_size.h"
-#include <algorithm>
 #include <fstream>
-#include <memory>
-#include <string>
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/path.h"

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
-#include <vector>
 #include "minddata/dataset/engine/datasetops/map_op/gpu_map_job.h"
 
 namespace mindspore {

@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+namespace mindspore {
 class MDToDApi;
 
 typedef struct MDToDBuff {
@@ -57,6 +58,7 @@ typedef struct MDToDResult {
   MDToDBuff_t imageQualitiesBuff;
   MDToDBuff_t faceEmbeddingsBuff;
 } MDToDResult_t;
+}  // namespace mindspore
 
 using (*MDToDApi_pathTest_t)(const char *path) = int;
 using (*MDToDApi_testAlbum_t)() = int;

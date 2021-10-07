@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
-
 #include "minddata/dataset/kernels/ir/vision/resize_ir.h"
 
 #include "minddata/dataset/kernels/image/resize_op.h"

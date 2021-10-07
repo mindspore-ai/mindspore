@@ -15,8 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/take_op.h"
 
-#include <algorithm>
-
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 

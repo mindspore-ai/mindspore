@@ -59,9 +59,9 @@ void ConcatOp::Print(std::ostream &out, bool show_all) const {
 // This definition is added to pass the cyclomatic complexity rule of <= 20 units
 // The NOLINT directive is to disable cpplint check.
 // Clang format and cpplint give conflicting recommendations on this line below.
-#define f(fv, sv, shard_index)                                                     \
-  ((fv == -1 && sv == -1) || (fv < sv && shard_index >= fv && shard_index < sv) || \
-   (fv > sv && (shard_index >= fv || shard_index < sv)))  // NOLINT
+#define f(fv, sv, shard_index)                                                                     \
+  (((fv) == -1 && (sv) == -1) || ((fv) < (sv) && (shard_index) >= (fv) && (shard_index) < (sv)) || \
+   ((fv) > (sv) && ((shard_index) >= (fv) || (shard_index) < (sv))))  // NOLINT
 
 Status ConcatOp::Verify(int32_t id, const TensorRow &new_row) {
   if (id == 0) {

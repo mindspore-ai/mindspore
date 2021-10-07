@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
-#include <algorithm>
 #include <cstring>
 #include <memory>
 #include <vector>

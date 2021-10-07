@@ -15,10 +15,6 @@
  */
 #include "minddata/dataset/util/json_helper.h"
 
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <map>
 #include <nlohmann/json.hpp>
 
 #include "minddata/dataset/util/log_adapter.h"

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
 #include "minddata/dataset/engine/opt/post/generator_node_pass.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 

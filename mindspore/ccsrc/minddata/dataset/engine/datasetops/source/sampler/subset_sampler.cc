@@ -15,10 +15,6 @@
  */
 #include "minddata/dataset/engine/datasetops/source/sampler/subset_sampler.h"
 
-#include <algorithm>
-#include <memory>
-#include <string>
-
 namespace mindspore {
 namespace dataset {
 // Constructor.

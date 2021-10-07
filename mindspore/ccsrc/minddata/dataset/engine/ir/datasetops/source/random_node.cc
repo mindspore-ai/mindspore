@@ -16,11 +16,6 @@
 
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/random.h"

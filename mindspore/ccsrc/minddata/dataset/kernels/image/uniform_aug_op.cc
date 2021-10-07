@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-#include <utility>
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
 #include "minddata/dataset/util/random.h"
 

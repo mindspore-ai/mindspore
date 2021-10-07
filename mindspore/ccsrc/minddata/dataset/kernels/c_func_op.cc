@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include <memory>
-#include <vector>
-
 #include "minddata/dataset/kernels/c_func_op.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
