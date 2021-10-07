@@ -76,7 +76,7 @@
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
-#include "tools/converter/acl/acl_pass.h"
+#include "tools/converter/adapter/acl_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -298,14 +298,12 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
 }
 
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  if (config->device == "Ascend310") {
-    auto acl_pass =
-      std::make_shared<opt::AclPass>(config->fmk, config->graphInputFormatStr, config->aclModelOptionCfgParam);
-    if (!acl_pass->Run(old_graph)) {
-      MS_LOG(ERROR) << "Acl pass failed.";
-      return RET_ERROR;
-    }
+  auto acl_pass = std::make_shared<opt::AclPass>(*config);
+  if (!acl_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Acl pass failed.";
+    return RET_ERROR;
   }
+
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);

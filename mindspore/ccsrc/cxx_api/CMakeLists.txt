@@ -68,6 +68,7 @@ if(BUILD_LITE)
     list(REMOVE_ITEM MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model_multi.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model.cc"
+            "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_vm/*.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/types.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc"
