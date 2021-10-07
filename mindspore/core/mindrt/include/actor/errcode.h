@@ -27,6 +27,7 @@ constexpr int ERRORCODE_SUCCESS = 1;
 constexpr int ACTOR_PARAMER_ERR = -101;
 constexpr int ACTOR_NOT_FIND = -102;
 constexpr int IO_NOT_FIND = -103;
+constexpr int ACTOR_TERMINATED = -104;
 
 // TCP module err code -301 ~ -400
 // Null
