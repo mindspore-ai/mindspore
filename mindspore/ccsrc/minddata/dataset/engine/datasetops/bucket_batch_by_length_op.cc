@@ -158,7 +158,7 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
   RETURN_IF_NOT_OK(BatchOp::BatchRows(bucket, &batched_bucket, batch_size));
   (*bucket)->clear();
 
-  RETURN_IF_NOT_OK(out_connector_->Add(std::move(batched_bucket), 0));
+  RETURN_IF_NOT_OK(out_connector_->Add(std::move(batched_bucket)));
 
   batch_count_++;
 

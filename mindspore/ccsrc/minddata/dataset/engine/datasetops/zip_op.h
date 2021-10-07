@@ -64,14 +64,14 @@ class ZipOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return kZipOp; }
 
-  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
+  Status GetNextRow(TensorRow *row) override;
 
  private:
   // Special handle case where an empty row has been received from child iterator
   // @note - we need to drain eoe signals from all children connectors.
   // @details - when this function is called, then we encountered eoe at child iterator
   // we have to drain rows from other child iterators until we hit eoe from all other child iterators
-  Status drainPipeline(int32_t skip_child, int32_t worker_id, bool retry_if_eoe);
+  Status drainPipeline(int32_t skip_child);
 
   // Merges 1 row from each childIterator together
   // \param[in] new_zip_row - input and output, will be a non-empty row if all rows from childConnectors are non-empty
@@ -84,7 +84,7 @@ class ZipOp : public PipelineOp {
   //       1    a     T
   //       \    |     /
   //         1, a, T
-  Status getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child, int32_t worker_id, bool retry_if_eoe);
+  Status getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child);
 
   // Computing the assignment of the column name map.
   // @return - Status

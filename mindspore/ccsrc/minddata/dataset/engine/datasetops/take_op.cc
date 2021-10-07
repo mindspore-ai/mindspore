@@ -19,7 +19,6 @@
 
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/db_connector.h"
 
 namespace mindspore {
 namespace dataset {
@@ -43,10 +42,10 @@ void TakeOp::Print(std::ostream &out, bool show_all) const {
 
 Status TakeOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is an inlined operator."); }
 
-Status TakeOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+Status TakeOp::GetNextRow(TensorRow *row) {
   bool eoe_received = false;
   if (take_count_ < max_takes_) {
-    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
     if (row->eoe()) {
       eoe_received = true;
     } else {
@@ -57,7 +56,7 @@ Status TakeOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) 
   if (take_count_ == max_takes_) {
     // drain
     while (!row->eoe()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+      RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
     }
     eoe_received = true;
   }

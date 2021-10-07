@@ -40,19 +40,19 @@ void EpochCtrlOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status EpochCtrlOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+Status EpochCtrlOp::GetNextRow(TensorRow *row) {
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("EpochCtrlOp can't be the leaf node(first operator) of pipeline.");
   }
 
   // `retry_if_eoe` is false because EpochCtrlOp does not eat EOE.
-  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, false));
+  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
 
   // Only intercept EOE for EoeReceived processing, after that the EOE is forwarded to next op.
   // Other TensorRows containing data or EOF will simply be forwarded.
   // EOF can simply be forwarded because this op does not spawn any thread, thus does not require clean up.
   if (row->eoe()) {
-    RETURN_IF_NOT_OK(EoeReceived(worker_id));
+    RETURN_IF_NOT_OK(EoeReceived(0));
   }
 
   return Status::OK();

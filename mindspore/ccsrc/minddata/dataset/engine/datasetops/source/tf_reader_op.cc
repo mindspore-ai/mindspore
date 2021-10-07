@@ -30,7 +30,6 @@
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
-#include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/util/status.h"

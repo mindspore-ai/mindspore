@@ -25,7 +25,6 @@
 
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
-#include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/util/random.h"
@@ -88,7 +87,7 @@ Status NonMappableLeafOp::operator()() {
         workers_done++;
       } else if (total_rows_ == 0 || rows_read < total_rows_) {
         // we need to push a row
-        RETURN_IF_NOT_OK(out_connector_->Add(std::move(fetched_row), 0));
+        RETURN_IF_NOT_OK(out_connector_->Add(std::move(fetched_row)));
         rows_read++;
       } else {
         // IOBlockQueue thread needs to:

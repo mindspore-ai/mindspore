@@ -182,7 +182,7 @@ Status ChildIterator::FetchNextTensorRow(TensorRow *out_row) {
     RETURN_STATUS_UNEXPECTED(err);
   }
 
-  RETURN_IF_NOT_OK(current_op_->child(child_idx_)->GetNextRow(out_row, worker_id_));
+  RETURN_IF_NOT_OK(current_op_->child(child_idx_)->GetNextRow(out_row));
   // If an eoe is picked up here, we simply return an empty vector and it's up to the
   // caller to decide what it wants to do next.TensorRow
   if (out_row->eoe()) {
@@ -219,7 +219,7 @@ Status ChildIterator::Drain() {
   TensorRow row;
   // else we drain until eoe or eof, eof here is for sanity check
   while (!row.eoe() && !row.eof()) {
-    RETURN_IF_NOT_OK(current_op_->child(child_idx_)->GetNextRow(&row, worker_id_));
+    RETURN_IF_NOT_OK(current_op_->child(child_idx_)->GetNextRow(&row));
   }
   if (row.eof()) {
     return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Child iterator picked up EOF in drain.");

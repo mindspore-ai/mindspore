@@ -57,23 +57,23 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
 // a row from our child.
 // This function sets the `retryIfEoe` flag when popping from the child connector. This way,
 // this function will retry to pop the connector again and will get the non-EOE row if any.
-Status RepeatOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
+Status RepeatOp::GetNextRow(TensorRow *row) {
   if (child_.empty()) {
     RETURN_STATUS_UNEXPECTED("Pipeline init failed, RepeatOp can't be the first op in pipeline.");
   }
 
-  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, true));
+  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
   // Loop until non EOE is received
   while (row->eoe()) {
-    RETURN_IF_NOT_OK(EoeReceived(worker_id));
+    RETURN_IF_NOT_OK(EoeReceived(0));
     if (state_ == OpState::kDeOpIdle) {
       return Status::OK();
     }
-    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, true));
+    RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
   }
   // Check if the last buf is next eof
   if (row->eof()) {
-    RETURN_IF_NOT_OK(EofReceived(worker_id));
+    RETURN_IF_NOT_OK(EofReceived(0));
   }
   return Status::OK();
 }

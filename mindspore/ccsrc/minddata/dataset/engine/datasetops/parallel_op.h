@@ -110,7 +110,7 @@ class ParallelOp : public DatasetOp {
     TensorRow row;
     do {
       RETURN_IF_NOT_OK(worker_out_queues_[ctr++ % num_workers_]->PopFront(&row));
-      if (row.eoe() || row.eof() || !row.empty()) {
+      if (row.eoe() || row.eof() || !row.skip()) {
         RETURN_IF_NOT_OK(out_connector_->Add(std::move(row)));
       }
     } while (!row.eof());

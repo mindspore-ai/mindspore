@@ -20,7 +20,6 @@
 #include <unordered_map>
 
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -33,8 +32,8 @@ RenameOp::RenameOp(const std::vector<std::string> &in_col_names, const std::vect
 RenameOp::~RenameOp() {}
 
 // Gets a row from the child operator and projects the row.
-Status RenameOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
-  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row, worker_id, retry_if_eoe));
+Status RenameOp::GetNextRow(TensorRow *row) {
+  RETURN_IF_NOT_OK(child_[0]->GetNextRow(row));
   if (row->eoe()) {
     UpdateRepeatAndEpochCounter();
   }
