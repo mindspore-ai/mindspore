@@ -483,8 +483,13 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
   }
 }
 
-bool StrategyFound(std::unordered_map<std::string, ValuePtr> attrs) {
+bool StrategyFound(const std::unordered_map<std::string, ValuePtr> &attrs) {
   auto iter = attrs.find(STRATEGY);
+  return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
+}
+
+bool AttrFound(const std::unordered_map<std::string, ValuePtr> &attrs, const std::string &target) {
+  auto iter = attrs.find(target);
   return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
 }
 

@@ -69,7 +69,9 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
                     const CNodePtr &middle_node, int64_t index, TensorRedistribution tensor_redistribution,
                     const CNodePtr &pre_node);
 
-bool StrategyFound(std::unordered_map<std::string, ValuePtr> attrs);
+bool StrategyFound(const std::unordered_map<std::string, ValuePtr> &attrs);
+
+bool AttrFound(const std::unordered_map<std::string, ValuePtr> &attrs, const std::string &target);
 
 void MarkForwardCNode(const FuncGraphPtr &root);
 

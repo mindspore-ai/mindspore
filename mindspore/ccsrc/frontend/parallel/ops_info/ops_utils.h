@@ -92,6 +92,7 @@ constexpr char STRATEGY[] = "strategy";
 constexpr char STAGE_ATTR[] = "stage";
 constexpr char GEN_STRATEGY[] = "gen_strategy";
 constexpr char REDUCE_OP_SUM[] = "sum";
+constexpr char STRATEGY_GEN_MODE[] = "strategy_gen_mode";
 constexpr char REDUCE_OP_MAX[] = "max";
 constexpr char REDUCE_OP_MIN[] = "min";
 constexpr char REDUCE_OP_ANY[] = "any";
