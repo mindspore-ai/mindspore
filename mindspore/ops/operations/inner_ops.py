@@ -23,6 +23,7 @@ from ...common.dtype import tensor, dtype_to_pytype
 from ..primitive import prim_attr_register, Primitive, PrimitiveWithInfer
 from .. import signature as sig
 
+
 class ScalarCast(PrimitiveWithInfer):
     """
     Casts the input scalar to another type.

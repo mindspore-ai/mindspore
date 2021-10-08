@@ -28,6 +28,7 @@ from mindspore._checkparam import Validator as validator
 
 __all__ = ['GRU', 'RNN', 'GRUCell', 'RNNCell']
 
+
 @constexpr
 def _init_state(shape, dtype, is_lstm):
     hx = Tensor(np.zeros(shape), dtype)
@@ -36,15 +37,18 @@ def _init_state(shape, dtype, is_lstm):
         return (hx, cx)
     return hx
 
+
 @constexpr
 def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
+
 
 @constexpr
 def _check_batch_size_equal(batch_size_x, batch_size_hx, cls_name):
     if batch_size_x != batch_size_hx:
         raise ValueError(f"For '{cls_name}' batch size of x and hx should be equal, but got {batch_size_x} of x"
                          f"and {batch_size_hx} of hx.")
+
 
 def _rnn_tanh_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     '''RNN cell function with tanh activation'''
@@ -56,6 +60,7 @@ def _rnn_tanh_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
         hgates = P.MatMul(False, True)(hidden, w_hh) + b_hh
     return P.Tanh()(igates + hgates)
 
+
 def _rnn_relu_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     '''RNN cell function with relu activation'''
     if b_ih is None:
@@ -65,6 +70,7 @@ def _rnn_relu_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
         igates = P.MatMul(False, True)(inputs, w_ih) + b_ih
         hgates = P.MatMul(False, True)(hidden, w_hh) + b_hh
     return P.ReLU()(igates + hgates)
+
 
 def _lstm_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     '''LSTM cell function'''
@@ -85,6 +91,7 @@ def _lstm_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
 
     return hy, cy
 
+
 def _gru_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     '''GRU cell function'''
     if b_ih is None:
@@ -102,6 +109,7 @@ def _gru_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     hy = newgate + inputgate * (hidden - newgate)
 
     return hy
+
 
 class _DynamicRNN(Cell):
     '''Dynamic RNN module to compute RNN cell by timesteps'''
@@ -179,6 +187,7 @@ class _DynamicRNN(Cell):
         if seq_length is None:
             return self.recurrent(x, h, w_ih, w_hh, b_ih, b_hh)
         return self.variable_recurrent(x, h, seq_length, w_ih, w_hh, b_ih, b_hh)
+
 
 class _RNNBase(Cell):
     '''Basic class for RNN operators'''
@@ -363,6 +372,7 @@ class _RNNBase(Cell):
             x = P.Transpose()(x, (1, 0, 2))
         return x, h
 
+
 class RNN(_RNNBase):
     r"""
     Stacked Elman RNN layers.
@@ -441,6 +451,7 @@ class RNN(_RNNBase):
             mode = 'RNN_TANH'
 
         super(RNN, self).__init__(mode, *args, **kwargs)
+
 
 class GRU(_RNNBase):
     r"""
@@ -523,6 +534,7 @@ class GRU(_RNNBase):
         mode = 'GRU'
         super(GRU, self).__init__(mode, *args, **kwargs)
 
+
 class _RNNCellBase(Cell):
     '''Basic class for RNN Cells'''
     def __init__(self, input_size: int, hidden_size: int, has_bias: bool, num_chunks: int):
@@ -546,6 +558,7 @@ class _RNNCellBase(Cell):
         stdv = 1 / math.sqrt(self.hidden_size)
         for weight in self.get_parameters():
             weight.set_data(initializer(Uniform(stdv), weight.shape))
+
 
 class RNNCell(_RNNCellBase):
     r"""
@@ -611,6 +624,7 @@ class RNNCell(_RNNCellBase):
         else:
             ret = _rnn_relu_cell(x, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
         return ret
+
 
 class GRUCell(_RNNCellBase):
     r"""

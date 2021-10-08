@@ -82,6 +82,7 @@ class _BinaryOp(PrimitiveWithInfer):
     def infer_max_shape(self, x_shape, y_shape):
         return get_broadcast_shape(x_shape, y_shape, self.name, "max_shape")
 
+
 class _MathBinaryOp(_BinaryOp):
     """
     Define math binary operators.
@@ -4515,6 +4516,7 @@ class Abs(Primitive):
         """Initialize Abs"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
+
 class Sign(PrimitiveWithInfer):
     r"""
     Performs sign on the tensor element-wise.
@@ -5333,6 +5335,7 @@ class Erfinv(Primitive):
         """Initialize Erfinv"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
+
 class Conj(PrimitiveWithInfer):
     """
     Returns a Tensor that is the real part of the input.
@@ -5370,6 +5373,7 @@ class Conj(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('input_tensor', input_dtype,
                                            [mstype.complex64, mstype.complex128], self.name)
         return input_dtype
+
 
 class Real(PrimitiveWithInfer):
     """
