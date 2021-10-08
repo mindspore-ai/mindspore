@@ -31,7 +31,13 @@ template <typename T>
 class NMSWithMaskGpuFwdKernel : public GpuKernel {
  public:
   NMSWithMaskGpuFwdKernel()
-      : num_input_(0), iou_value_(0.5), input_size_(0), output_size_(0), workspace_size_(0), ceil_power_2(0) {}
+      : num_input_(0),
+        iou_value_(0.5),
+        is_null_input_(false),
+        input_size_(0),
+        output_size_(0),
+        workspace_size_(0),
+        ceil_power_2(0) {}
   ~NMSWithMaskGpuFwdKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

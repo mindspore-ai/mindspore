@@ -111,6 +111,7 @@ class SquaredDifferenceOpGpuKernel : public GpuKernel {
   void ResetResource() noexcept override {
     op_type_ = BROADCAST_TYPE_SQUARED_DIFFERENCE;
     need_broadcast_ = false;
+    is_comp_op_ = false;
     is_null_input_ = false;
     input1_num_ = 1;
     input2_num_ = 1;

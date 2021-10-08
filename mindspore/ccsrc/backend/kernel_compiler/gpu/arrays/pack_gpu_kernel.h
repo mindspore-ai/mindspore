@@ -28,7 +28,8 @@ namespace kernel {
 template <typename T>
 class PackGpuFwdKernel : public GpuKernel {
  public:
-  PackGpuFwdKernel() : axis_(0), input_num_(1), output_size_(0), dims_behind_axis_(1), inputs_host_(nullptr) {}
+  PackGpuFwdKernel()
+      : axis_(0), is_null_input_(false), input_num_(1), output_size_(0), dims_behind_axis_(1), inputs_host_(nullptr) {}
   ~PackGpuFwdKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

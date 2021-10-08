@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class SGDGpuKernel : public GpuKernel {
  public:
-  SGDGpuKernel() : size_(1), dampening_(0.0), weight_decay_(0.0), nesterov_(false) {}
+  SGDGpuKernel() : size_(1), dampening_(0.0), weight_decay_(0.0), nesterov_(false), is_null_input_(false) {}
   ~SGDGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

@@ -36,7 +36,8 @@ class AdamWeightDecayGpuKernel : public GpuKernel {
         beta2_size_(0),
         epsilon_size_(0),
         decay_size_(0),
-        gradient_size_(0) {}
+        gradient_size_(0),
+        is_null_input_(false) {}
 
   ~AdamWeightDecayGpuKernel() override = default;
 

@@ -38,7 +38,8 @@ class TensorScatterUpdateGpuFwdKernel : public GpuKernel {
         work_shape_(nullptr),
         indices_dim_0_(0),
         indices_dim_1_(0),
-        memcpy_flag_(false) {}
+        memcpy_flag_(false),
+        is_null_input_(false) {}
   ~TensorScatterUpdateGpuFwdKernel() {
     if (indices_stride_ != nullptr) {
       device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(static_cast<void *>(indices_stride_));

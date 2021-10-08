@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class FlattenGpuFwdKernel : public GpuKernel {
  public:
-  FlattenGpuFwdKernel() : input_size_(0) {}
+  FlattenGpuFwdKernel() : input_size_(0), is_null_input_(false) {}
   ~FlattenGpuFwdKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

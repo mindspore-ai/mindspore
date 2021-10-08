@@ -135,6 +135,7 @@ class PadGpuFwdKernel : public GpuKernel {
     input_size_ = 0;
     output_size_ = 0;
     workspace_size_ = 0;
+    is_null_input_ = false;
     flattened_paddings_.clear();
     input_shape_.clear();
     strides_.clear();

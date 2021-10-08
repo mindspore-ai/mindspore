@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T, typename S>
 class GatherGpuFwdKernel : public GpuKernel {
  public:
-  GatherGpuFwdKernel() : axis_(0) {}
+  GatherGpuFwdKernel() : axis_(0), is_null_input_(false) {}
   ~GatherGpuFwdKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

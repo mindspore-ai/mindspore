@@ -30,7 +30,7 @@ template <typename T, typename S>
 class RandomChoiceWithMaskGpuKernel : public GpuKernel {
  public:
   RandomChoiceWithMaskGpuKernel()
-      : input_shape_size_(0), seed_(0), seed2_(0), input_size_(1), count_(0), ceil_power2_(0) {}
+      : input_shape_size_(0), seed_(0), seed2_(0), input_size_(1), count_(0), ceil_power2_(0), is_null_input_(false) {}
   ~RandomChoiceWithMaskGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

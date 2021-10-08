@@ -27,7 +27,7 @@ constexpr size_t INPUT_NUM = 6;
 template <typename T, typename S>
 class FusedScaleMomentumGpuKernel : public GpuKernel {
  public:
-  FusedScaleMomentumGpuKernel() : element_num_(1) {}
+  FusedScaleMomentumGpuKernel() : element_num_(1), is_null_input_(false) {}
   ~FusedScaleMomentumGpuKernel() override = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }

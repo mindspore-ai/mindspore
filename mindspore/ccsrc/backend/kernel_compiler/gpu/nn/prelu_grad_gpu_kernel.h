@@ -121,7 +121,7 @@ class PReLUGradGpuKernel : public GpuKernel {
   }
 
  private:
-  bool is_null_input_;
+  bool is_null_input_{false};
   size_t input_length_{0};
   size_t weight_length_{0};
   size_t per_channel_length_{0};

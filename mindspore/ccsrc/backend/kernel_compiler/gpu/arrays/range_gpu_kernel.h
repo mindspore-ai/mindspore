@@ -25,7 +25,7 @@ namespace kernel {
 template <typename T>
 class RangeGPUKernel : public GpuKernel {
  public:
-  RangeGPUKernel() : input_size_(0), output_size_(0), start_(0.), limit_(1.), delta_(1.) {}
+  RangeGPUKernel() : input_size_(0), output_size_(0), start_(0.), limit_(1.), delta_(1.), is_null_input_(false) {}
   ~RangeGPUKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
