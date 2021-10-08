@@ -872,7 +872,7 @@ def sometrue(a, axis=None, keepdims=False):
             performed. Default: None.
             If None, perform a logical OR over all the dimensions of the input array.
             If negative, it counts from the last to the first axis.
-            If tuple of ints, a reduction is performed on multiple axes, instead of a single axis or
+            If tuple of integers, a reduction is performed on multiple axes, instead of a single axis or
             all the axes as before.
         keepdims (bool): Default: False.
             If True, the axes which are reduced are left in the result as dimensions with size one.
@@ -885,7 +885,7 @@ def sometrue(a, axis=None, keepdims=False):
         Returns single boolean unless axis is not None
 
     Raises:
-        TypeError: If input is not array_like or `axis` is not int or tuple of ints or
+        TypeError: If input is not array_like or `axis` is not int or tuple of integers or
             `keepdims` is not integer or `initial` is not scalar.
         ValueError: If any axis is out of range or duplicate axes exist.
 

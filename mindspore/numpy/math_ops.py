@@ -594,7 +594,7 @@ def mean(a, axis=None, keepdims=False, dtype=None):
     Args:
         a (Tensor): input tensor containing numbers whose mean is desired.
                     If a is not an array, a conversion is attempted.
-        axis (None or int or tuple of ints, optional): Axis or axes along
+        axis (None or int or tuple of integers, optional): Axis or axes along
                     which the means are computed. The default is to compute
                     the mean  of the flattened array. If this is a tuple of
                     ints, a mean is performed over multiple axes.
@@ -890,7 +890,11 @@ def std(x, axis=None, ddof=0, keepdims=False):
             If `None`, compute the standard deviation of the flattened array.
         ddof (int): Means Delta Degrees of Freedom. The divisor used in calculations is :math:`N - ddof`,
             where :math:`N` represents the number of elements. Default: 0.
-        keepdims: Default: `False`.
+        keepdims: If this is set to True, the axes which are reduced are left in the result as
+            dimensions with size one. With this option, the result will broadcast correctly against the input tensor.
+            If the default value is passed, then keepdims will not be passed through to the std method of
+            sub-classes of tensor, however any non-default value will be. If the sub-class’ method does not
+            implement keepdims any exceptions will be raised. Default: `False`.
 
     Returns:
         Standard deviation tensor.
@@ -928,7 +932,7 @@ def var(x, axis=None, ddof=0, keepdims=False):
         ddof (int): Means Delta Degrees of Freedom. Default: 0.
             The divisor used in calculations is :math:`N - ddof`, where :math:`N` represents the number of elements.
         keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
-            dimensions with size one. With this option, the result will broadcast correctly against the input array.
+            dimensions with size one. With this option, the result will broadcast correctly against the input tensor.
             If the default value is passed, then keepdims will not be passed through to the var method of
             sub-classes of tensor, however any non-default value will be. If the sub-class’ method does not
             implement keepdims any exceptions will be raised. Default: `False`.
@@ -1385,15 +1389,15 @@ def amax(a, axis=None, keepdims=False, initial=None, where=True):
 
     Args:
         a (Tensor): Input data.
-        axis (None or int or tuple of ints, optional): defaults to None. Axis or
+        axis (None or int or tuple of integers, optional): defaults to None. Axis or
             axes along which to operate. By default, flattened input is used. If
-            this is a tuple of ints, the maximum is selected over multiple axes,
+            this is a tuple of integers, the maximum is selected over multiple axes,
             instead of a single axis or all the axes as before.
         keepdims (boolean, optional): defaults to False.
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
-        initial (scalar, optional):
+        initial (scalar, optional): defaults to None.
             The minimum value of an output element. Must be present to allow
             computation on empty slice.
         where (boolean Tensor, optional): defaults to True.
@@ -1440,15 +1444,15 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
 
     Args:
         a (Tensor): Input data.
-        axis (None or int or tuple of ints, optional): defaults to None. Axis or
+        axis (None or int or tuple of integers, optional): defaults to None. Axis or
             axes along which to operate. By default, flattened input is used. If
-            this is a tuple of ints, the minimum is selected over multiple axes,
+            this is a tuple of integers, the minimum is selected over multiple axes,
             instead of a single axis or all the axes as before.
         keepdims (bool, optional): defaults to False.
             If this is set to True, the axes which are reduced are left in the
             result as dimensions with size one. With this option, the result will
             broadcast correctly against the input array.
-        initial (Number, optional):
+        initial (Number, optional): defaults to None.
             The maximum value of an output element. Must be present to allow
             computation on empty slice.
         where (bool Tensor, optional): defaults to True.
@@ -2029,8 +2033,8 @@ def trapz(y, x=None, dx=1.0, axis=-1):
             corresponding to the `y` values. If `x` is None, the sample points are
             assumed to be evenly spaced `dx` apart. The default is None.
         dx (scalar, optional): The spacing between sample points when `x` is None. The
-            default is 1.
-        axis (int, optional): The axis along which to integrate.
+            default is 1.0.
+        axis (int, optional): The axis along which to integrate. Defaults to -1.
 
     Returns:
         Tensor of float, definite integral as approximated by trapezoidal rule.
@@ -2300,7 +2304,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
             and observations. Each row of `m` represents a variable, and each column
             represents a single observation of all those variables. Also see `rowvar` below.
         y (Union[Tensor, list, tuple], optional): An additional set of variables
-            and observations. `y` has the same form as that of `m`.
+            and observations. `y` has the same form as that of `m`, default is ``None``.
         rowvar(bool, optional): If `rowvar` is ``True`` (default), then each row represents
             a variable, with observations in the columns. Otherwise, the relationship
             is transposed: each column represents a variable, while the rows contain
@@ -2316,12 +2320,12 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None, aweights=N
             is ``None``.
         fweights (Union[Tensor, list, tuple], optional): 1-D tensor of integer
             frequency weights; the number of times each observation vector should
-            be repeated.
+            be repeated. The default value is ``None``.
         aweights (Union[Tensor, list, tuple], optional): 1-D tensor of observation
             vector weights. These relative weights are typically larger for observations
             considered more important and smaller for observations considered less
             important. If :math:`ddof=0` the tensor of weights can be used to assign probabilities
-            to observation vectors.
+            to observation vectors. The default value is ``None``.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Data-type of the
             result. By default, the return data-type will have mstype.float32 precision.
 
@@ -4036,7 +4040,7 @@ def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
         axis (Union[None, int, tuple(int)]): Axis or axes along which a sum is performed. Default: None.
             If None, sum all of the elements of the input array.
             If axis is negative it counts from the last to the first axis.
-            If axis is a tuple of ints, a sum is performed on all of the axes specified in the tuple
+            If axis is a tuple of integers, a sum is performed on all of the axes specified in the tuple
             instead of a single axis or all the axes as before.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
@@ -4045,7 +4049,8 @@ def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
             If the default value is passed, then keepdims will not be passed through to the sum method of
             sub-classes of ndarray, however any non-default value will be. If the sub-class’ method does not
             implement keepdims any exceptions will be raised. Default: `False`.
-        initial (scalar): Starting value for the sum.
+        initial (scalar): Starting value for the sum, if `None`, which refers to the first element of the reduction.
+            Default: `None`.
 
     Returns:
         Tensor. An array with the same shape as a, with the specified axis removed.
@@ -4053,7 +4058,7 @@ def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
         If an output array is specified, a reference to out is returned.
 
     Raises:
-        TypeError: If input is not array_like or `axis` is not int or tuple of ints or
+        TypeError: If input is not array_like or `axis` is not int or tuple of integers or
             `keepdims` is not integer or `initial` is not scalar.
         ValueError: If any axis is out of range or duplicate axes exist.
 
@@ -4597,9 +4602,10 @@ def bincount(x, weights=None, minlength=0, length=None):
     Args:
         x (Union[list, tuple, Tensor]): 1-d input array.
         weights (Union[int, float, bool, list, tuple, Tensor], optional): Weights,
-            array of the same shape as `x`.
+            array of the same shape as `x`. Defaults to None.
         minlength (int, optional): A minimum number of bins for the output array.
-        length (int, optional): Number of bins.
+            Defaults to 0.
+        length (int, optional): Number of bins. Defaults to None.
 
     Returns:
         Tensor, the result of binning the input array. The length of out is equal to
@@ -4664,7 +4670,7 @@ def histogram(a, bins=10, range=None, weights=None, density=False): # pylint: di
             the range are ignored. The first element of the range must be less than
             or equal to the second.
         weights (Union[int, float, bool, list, tuple, Tensor], optional): An array
-            of weights, of the same shape as `a`. Each value in a only contributes
+            of weights, of the same shape as `a`. Each value in `a` only contributes
             its associated weight towards the bin count (instead of 1). If density
             is True, the weights are normalized, so that the integral of the density
             over the range remains 1.
@@ -5446,7 +5452,7 @@ def ravel_multi_index(multi_index, dims, mode='clip', order='C'):
     Args:
         multi_index (tuple of array_like):
             A tuple of integer arrays, one array for each dimension.
-        dims (Union[int, tuple of ints]): The shape of array into which the indices from multi_index apply.
+        dims (Union[int, tuple of integers]): The shape of array into which the indices from multi_index apply.
         mode ({`wrap`, `clip`}): Specifies how out-of-bounds indices are handled. Default: `clip`.
 
             - `wrap`: wrap around
@@ -5555,7 +5561,7 @@ def norm(x, ord=None, axis=None, keepdims=False): # pylint: disable=redefined-bu
             the 2-norm of ``x.ravel`` will be returned.
         ord (Union[None, 'fro', 'nuc', inf, -inf, int, float], optional): Order of the norm.
             inf means numpy’s inf object. The default is None.
-        axis (Union[None, int, 2-tuple of ints], optional): If `axis` is an integer, it
+        axis (Union[None, int, 2-tuple of integers], optional): If `axis` is an integer, it
             specifies the axis of `x` along which to compute the vector norms. If `axis` is
             a 2-tuple, it specifies the axes that hold 2-D matrices, and the matrix norms of
             these matrices are computed. If `axis` is None then either a vector norm (when x
