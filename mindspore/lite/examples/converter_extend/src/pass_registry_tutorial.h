@@ -25,6 +25,8 @@ class PassTutorial : public registry::PassBase {
  public:
   PassTutorial() : PassBase("PassTutorial") {}
 
+  ~PassTutorial() = default;
+
   bool Execute(const api::FuncGraphPtr &func_graph) override;
 
  private:
