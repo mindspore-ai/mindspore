@@ -60,13 +60,14 @@ void NPUPassUtils::UpdateOp(NPUOp *op, const std::vector<NPUOp *> &in_ops, const
 void NPUPassUtils::UpdateNH2NCTransNodePreOp(NPUOp *pre_op, NPUOp *trans_op, NPUOp *op) {
   // For op before trans, update the out_ops; the output tensor of op is the input tensor of trans.
   std::vector<NPUOp *> out_ops = pre_op->out_ops();
-  for (size_t i = 0; i < out_ops.size(); i++) {
+  size_t i = 0;
+  for (; i < out_ops.size(); i++) {
     if (out_ops[i] == op) {
       out_ops[i] = trans_op;
       break;
     }
   }
-  if (out_ops.empty()) {
+  if (i == out_ops.size()) {
     out_ops.push_back(trans_op);
   }
   pre_op->set_out_ops(out_ops);
