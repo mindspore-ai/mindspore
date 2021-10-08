@@ -85,11 +85,13 @@ def _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queu
         network = _DataWrapper(network, dataset_types, dataset_shapes, queue_name, min_shapes, max_shapes)
     return network
 
+
 def has_dynamic_shape(dataset_shapes):
     for shape in dataset_shapes:
         if -1 in shape:
             return True
     return False
+
 
 def _generate_network_with_dataset(network, dataset_helper, queue_name):
     dataset_types, dataset_shapes = dataset_helper.types_shapes()
@@ -276,11 +278,13 @@ class DatasetHelper:
         self.iter.continue_send()
 
     def get_data_info(self):
-        """In sink mode, it returns the types and shapes of the current data. Generally, it works in dynamic shape scenarios."""
+        """In sink mode, it returns the types and shapes of the current data.
+        Generally, it works in dynamic shape scenarios."""
         return self.iter.get_data_info()
 
     def dynamic_min_max_shapes(self):
-        """Return the types and shapes of the dataset. The type and shape of each data in the dataset should be consistent"""
+        """Return the types and shapes of the dataset.
+        The type and shape of each data in the dataset should be consistent"""
         return self.iter.dynamic_min_max_shapes()
 
 
