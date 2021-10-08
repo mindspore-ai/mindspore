@@ -69,14 +69,17 @@ set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
 
 if(BUILD_LITE)
     list(APPEND MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/../../../mindspore/ccsrc/utils/config_manager.cc")
+    file(GLOB_RECURSE ACL_REMOVE_SRC ${CMAKE_CURRENT_SOURCE_DIR}
+            "model/acl/acl_vm/*.cc"
+            )
     list(REMOVE_ITEM MSLIB_SRC "${CMAKE_CURRENT_SOURCE_DIR}/akg_kernel_register.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model_multi.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_model.cc"
-            "${CMAKE_CURRENT_SOURCE_DIR}/model/acl/acl_vm/*.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/types.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc"
             "${CMAKE_CURRENT_SOURCE_DIR}/model/model_impl.cc"
+            ${ACL_REMOVE_SRC}
             $<TARGET_OBJECTS:_mindspore_vm_obj>)
 endif()
 

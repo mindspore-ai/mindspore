@@ -69,7 +69,12 @@ STATUS UpsampleMapper::AttrAdjust(const PrimitivePtr &src_prim, const ValueNodeP
   MS_LOG(DEBUG) << "The scale value: " << scale[1];
   auto dst_prim = std::make_shared<acl::Upsample>();
   CHECK_NULL_RETURN(dst_prim);
-  dst_prim->AddAttr("scale", MakeValue(scale[1]));
+  float attr_scale = 1;
+  dst_prim->AddAttr("scale", MakeValue(attr_scale));
+  int64_t stride_h = static_cast<int64_t>(scale[1]);
+  int64_t stride_w = stride_h;
+  dst_prim->AddAttr("stride_h", MakeValue(stride_h));
+  dst_prim->AddAttr("stride_w", MakeValue(stride_w));
   val_node->set_value(dst_prim);
   return RET_OK;
 }
