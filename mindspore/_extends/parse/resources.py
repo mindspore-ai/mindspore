@@ -111,6 +111,7 @@ convert_object_map = {
     T.len:          M.ms_len,
     T.bool_:        M.bool_,
     T.map:          C.Map(),
+    T.filter:       M.filter_,
     T.partial:      F.partial,
     T.zip:          C.zip_operation,
     T.enumerate:    M.enumerate_,

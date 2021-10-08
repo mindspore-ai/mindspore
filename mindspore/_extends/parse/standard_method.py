@@ -1793,3 +1793,11 @@ def list_append(self_, item):
 def to_array(x):
     """Implementation of `to_array`."""
     return x.__ms_to_array__()
+
+def filter_(fun, iter_):
+    """Support the use of built-in function filter."""
+    result = []
+    for elem in iter_:
+        if fun(elem):
+            result.append(elem)
+    return result
