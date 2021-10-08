@@ -122,6 +122,7 @@ class KernelGraph : public FuncGraph {
   }
   void ReplaceGraphInput(const AnfNodePtr &old_parameter, const AnfNodePtr &new_parameter);
   std::vector<AnfNodePtr> outputs() const;
+  CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs) override;
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs) override;
   CNodePtr NewCNodeWithInfos(const std::vector<AnfNodePtr> &inputs, const CNodePtr &ori_cnode = nullptr);
   void CreateKernelInfoFromNewParameter(const CNodePtr &cnode);
@@ -402,6 +403,7 @@ class KernelGraph : public FuncGraph {
   void CheckLoop();
   uint32_t GetLoopNum(const std::map<AnfNodePtr, size_t> &none_zero_nodes);
   void GetLoopNodesByDFS(const AnfNodePtr &node, uint32_t *loop_num);
+  void PostNewCNode(const CNodePtr &cnode);
 
   // members
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;

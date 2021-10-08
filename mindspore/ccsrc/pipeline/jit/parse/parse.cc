@@ -605,7 +605,7 @@ AnfNodePtr Parser::GenerateMakeTuple(const FunctionBlockPtr &block, const std::v
   make_tuple_nodes.push_back(make_tuple_op);
   (void)std::transform(element_nodes.begin(), element_nodes.end(), std::back_inserter(make_tuple_nodes),
                        [](AnfNodePtr arg) -> AnfNodePtr { return arg; });
-  return block->func_graph()->NewCNodeInOrder(make_tuple_nodes);
+  return block->func_graph()->NewCNodeInOrder(std::move(make_tuple_nodes));
 }
 
 AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &args) {
@@ -674,7 +674,7 @@ CNodePtr MakeUnpackCall(const FuncGraphPtr &func_graph, const AnfNodePtr &call_f
   unpack_call_nodes.push_back(call_function_node);
   (void)std::transform(packed_arguments.begin(), packed_arguments.end(), std::back_inserter(unpack_call_nodes),
                        [](AnfNodePtr node) -> AnfNodePtr { return node; });
-  CNodePtr unpack_call = func_graph->NewCNodeInOrder(unpack_call_nodes);
+  CNodePtr unpack_call = func_graph->NewCNodeInOrder(std::move(unpack_call_nodes));
   return unpack_call;
 }
 
@@ -691,7 +691,7 @@ AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const A
   func_call_nodes.push_back(call_function_node);
   (void)std::transform(group_arguments.begin(), group_arguments.end(), std::back_inserter(func_call_nodes),
                        [](AnfNodePtr node) -> AnfNodePtr { return node; });
-  CNodePtr call_anf_node = block->func_graph()->NewCNodeInOrder(func_call_nodes);
+  CNodePtr call_anf_node = block->func_graph()->NewCNodeInOrder(std::move(func_call_nodes));
   return call_anf_node;
 }
 
@@ -751,7 +751,7 @@ bool Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
     make_dict_nodes.push_back(make_dict_op);
     make_dict_nodes.push_back(keys_tuple);
     make_dict_nodes.push_back(values_tuple);
-    packed_arguments->push_back(block->func_graph()->NewCNodeInOrder(make_dict_nodes));
+    packed_arguments->push_back(block->func_graph()->NewCNodeInOrder(std::move(make_dict_nodes)));
   }
   return need_unpack;
 }
@@ -886,7 +886,7 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
                                  NewValueNode(false_block->func_graph())});
 
     std::vector<AnfNodePtr> call_graph_nodes{switch_app};
-    auto switch_app_call = block_fg->NewCNodeInOrder(call_graph_nodes);
+    auto switch_app_call = block_fg->NewCNodeInOrder(std::move(call_graph_nodes));
     return switch_app_call;
   }
 }
@@ -961,7 +961,7 @@ AnfNodePtr Parser::ParseTuple(const FunctionBlockPtr &block, const py::object &n
     AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
     tuple_vec.emplace_back(node_ptr);
   }
-  CNodePtr tuple_app = block->func_graph()->NewCNodeInOrder(tuple_vec);
+  CNodePtr tuple_app = block->func_graph()->NewCNodeInOrder(std::move(tuple_vec));
   return tuple_app;
 }
 
@@ -982,7 +982,7 @@ AnfNodePtr Parser::ParseList(const FunctionBlockPtr &block, const py::object &no
     AnfNodePtr node_ptr = ParseExprNode(block, elts[i]);
     list_vec.emplace_back(node_ptr);
   }
-  CNodePtr list_app = block->func_graph()->NewCNodeInOrder(list_vec);
+  CNodePtr list_app = block->func_graph()->NewCNodeInOrder(std::move(list_vec));
   return list_app;
 }
 
@@ -1025,7 +1025,7 @@ AnfNodePtr Parser::ParseExtSlice(const FunctionBlockPtr &block, const py::object
     AnfNodePtr node_ptr = ParseExprNode(block, slice_tuple[i]);
     node_vec.emplace_back(node_ptr);
   }
-  CNodePtr tuple_conde = block->func_graph()->NewCNodeInOrder(node_vec);
+  CNodePtr tuple_conde = block->func_graph()->NewCNodeInOrder(std::move(node_vec));
   return tuple_conde;
 }
 
@@ -1532,7 +1532,7 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
                                                               NewValueNode(false_block->func_graph())});
 
   std::vector<AnfNodePtr> call_graph_nodes{switch_app};
-  CNodePtr switch_app_call = block->func_graph()->NewCNodeInOrder(call_graph_nodes);
+  CNodePtr switch_app_call = block->func_graph()->NewCNodeInOrder(std::move(call_graph_nodes));
   return switch_app_call;
 }
 
@@ -1681,7 +1681,7 @@ AnfNodePtr Parser::ParseListComp(const FunctionBlockPtr &block, const py::object
   auto call_function_node = NewValueNode(top_block->func_graph());
   std::vector<AnfNodePtr> func_call_nodes;
   func_call_nodes.push_back(call_function_node);
-  AnfNodePtr output = block->func_graph()->NewCNodeInOrder(func_call_nodes);
+  AnfNodePtr output = block->func_graph()->NewCNodeInOrder(std::move(func_call_nodes));
   return output;
 }
 
@@ -2192,7 +2192,7 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     auto &params = func_graph->parameters();
     (void)std::transform(params.begin(), params.end(), std::back_inserter(inputs),
                          [](AnfNodePtr node) -> AnfNodePtr { return node; });
-    func_graph->set_output(func_graph->NewCNodeInOrder(inputs));
+    func_graph->set_output(func_graph->NewCNodeInOrder(std::move(inputs)));
   } else {
     // ret = cell_obj(*arg, *kwargs)
     auto call_fn = MakeUnpackCall(func_graph, NewValueNode(cell_ptr), func_graph->parameters());

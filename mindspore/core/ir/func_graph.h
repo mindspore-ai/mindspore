@@ -184,10 +184,12 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   ParameterPtr AddWeightParameter(const std::string &name);
 
   // Create a cnode with given inputs, bound to this graph.
+  virtual CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs);
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>()) override;
   CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs) final;
 
   // Create a cnode with given inputs, bound to this graph and push back to order list.
+  CNodePtr NewCNodeInOrder(std::vector<AnfNodePtr> &&inputs);
   CNodePtr NewCNodeInOrder(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
   CNodePtr NewCNodeInOrder(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
 
@@ -506,6 +508,11 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   return fg->NewCNode(inputs);
+}
+
+inline CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &fg) {
+  MS_EXCEPTION_IF_NULL(fg);
+  return fg->NewCNode(std::move(inputs));
 }
 
 size_t NewFgSeenGeneration();

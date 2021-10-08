@@ -41,6 +41,16 @@ CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_gra
   primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
 }
 
+CNode::CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph)
+    : AnfNode(func_graph),
+      inputs_(std::move(inputs)),
+      stop_gradient_(false),
+      output_value_(std::make_pair(nullptr, "")),
+      input_tensor_num_(-1) {
+  primal_attrs_ = PrimalAttrManager::GetInstance().GetCurrentPrimalAttr();
+  primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
+}
+
 // Check if CNode is an apply with the specific Primitive.
 bool CNode::IsApply(const PrimitivePtr &value) const {
   if (value == nullptr) {

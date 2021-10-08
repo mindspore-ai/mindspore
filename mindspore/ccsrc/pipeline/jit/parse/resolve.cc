@@ -202,7 +202,7 @@ bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, 
       }
       args.push_back(out);
     }
-    output = NewCNode(args, func_graph);
+    output = NewCNode(std::move(args), func_graph);
   } else {
     ValuePtr convert_result = nullptr;
     bool converted = ConvertData(obj, &convert_result, parse::python_adapter::UseSignatureInResolve());
@@ -261,7 +261,7 @@ AnfNodePtr TransformToMakeTupleNodes(const FuncGraphManagerPtr &manager, const F
     }
     nodes.emplace_back(node);
   }
-  auto cnode = func_graph->NewCNode(nodes);
+  auto cnode = func_graph->NewCNode(std::move(nodes));
   return cnode;
 }
 
@@ -340,7 +340,7 @@ AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpa
   if (!data_converter::IsCellInstance(obj)) {
     AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
     AnfNodePtrList inputs = {NewValueNode(prim::kPrimGetAttr), resolved_node, attr};
-    AnfNodePtr res_node = node->func_graph()->NewCNode(inputs);
+    AnfNodePtr res_node = node->func_graph()->NewCNode(std::move(inputs));
     TraceManager::ClearParseOrResolveDebugInfo();
     return res_node;
   }
@@ -354,7 +354,7 @@ AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpa
   MS_LOG(DEBUG) << "name_space: " << new_namespace->ToString() << ", symbol: " << new_symbol->ToString();
 
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimResolve), NewValueNode(new_namespace), NewValueNode(new_symbol)};
-  AnfNodePtr resolved_node = node->func_graph()->NewCNode(inputs);
+  AnfNodePtr resolved_node = node->func_graph()->NewCNode(std::move(inputs));
   TraceManager::ClearParseOrResolveDebugInfo();
   return resolved_node;
 }

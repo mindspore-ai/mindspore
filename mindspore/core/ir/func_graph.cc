@@ -150,8 +150,18 @@ ValuePtr FuncGraph::get_attr(const std::string &key) const {
   return iter == attrs_.cend() ? nullptr : iter->second;
 }
 
+CNodePtr FuncGraph::NewCNode(std::vector<AnfNodePtr> &&inputs) {
+  return std::make_shared<CNode>(std::move(inputs), shared_from_base<FuncGraph>());
+}
+
 CNodePtr FuncGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   return std::make_shared<CNode>(inputs, shared_from_base<FuncGraph>());
+}
+
+CNodePtr FuncGraph::NewCNodeInOrder(std::vector<AnfNodePtr> &&inputs) {
+  CNodePtr cnode = NewCNode(std::move(inputs));
+  order_.push_back(cnode);
+  return cnode;
 }
 
 CNodePtr FuncGraph::NewCNodeInOrder(const std::vector<AnfNodePtr> &inputs) {
@@ -714,12 +724,12 @@ static std::vector<AnfNodePtr> MakeInputNodes(const PrimitivePtr &primitive, con
 
 CNodePtr FuncGraph::NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
   auto input_node_list = MakeInputNodes(primitive, inputs);
-  return NewCNode(input_node_list);
+  return NewCNode(std::move(input_node_list));
 }
 
 CNodePtr FuncGraph::NewCNodeInOrder(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
   auto input_node_list = MakeInputNodes(primitive, inputs);
-  return NewCNodeInOrder(input_node_list);
+  return NewCNodeInOrder(std::move(input_node_list));
 }
 
 ParameterPtr FuncGraph::add_weight(const tensor::MetaTensorPtr &meta_tensor) {
