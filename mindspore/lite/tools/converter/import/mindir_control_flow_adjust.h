@@ -34,7 +34,6 @@ class MindIRControlFlowAdjust {
   bool Run(const FuncGraphPtr &graph);
 
  private:
-  FuncGraphPtr GetPartialFg(const CNodePtr &partial_node);
   std::vector<AnfNodePtr> GetFgOutput(const FuncGraphPtr &fg);
   int ModifyFgToCallAfterFg(const FuncGraphPtr &fg, const FuncGraphPtr &after_fg);
   bool HasCallAfter(const FuncGraphPtr &partial_fg);
