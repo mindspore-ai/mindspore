@@ -36,6 +36,7 @@ class SubGraph {
   explicit SubGraph(FuncGraphPtr belong_anf, std::string graph_name = "")
       : belong_anf_(std::move(belong_anf)), name_(std::move(graph_name)) {}
 
+  virtual ~SubGraph() = default;
   int Init(const std::set<CNodePtr> &head_nodes = {});
   int Reset(const std::set<CNodePtr> &nodes, const std::set<CNodePtr> &head_nodes = {});
 

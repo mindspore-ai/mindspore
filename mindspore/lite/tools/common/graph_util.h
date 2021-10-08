@@ -192,13 +192,13 @@ bool SparsityCompress(const std::set<T> &quant_data_set, const std::map<T, size_
   }
   // nz values indexing && get coor
   std::vector<size_t> coors(nz_cnt);
-  int coors_index = 0;
-  int prev_index = -1;
-  for (int di = 0; (unsigned int)di < elem_cnt; di++) {
+  size_t coors_index = 0;
+  size_t prev_index = -1;
+  for (size_t di = 0; di < elem_cnt; di++) {
     auto cur_channel = di / elem_perchannel;
     auto zp = quant_params[cur_channel]->zeroPoint;
     auto nz_value = quant_data[di];
-    if (nz_value != zp || (di - prev_index) >= (1 << coor_best_bit)) {
+    if (nz_value != zp || (di - prev_index) >= (size_t)(1 << coor_best_bit)) {
       MS_ASSERT(coors_index < nz_cnt);
       coors[coors_index++] = di - prev_index - 1;
       prev_index = di;
@@ -239,13 +239,13 @@ size_t CalCoorBestBit(const std::vector<T> &quant_data, size_t elem_cnt,
   for (int bit = 2; bit <= 10; bit++) {
     // search
     size_t nn_cnt = 0;
-    int prev_index = -1;
+    size_t prev_index = -1;
     auto channel_cnt = quant_params.size();
     auto elem_perchannel = elem_cnt / channel_cnt;
-    for (int i = 0; (unsigned int)i < elem_cnt; i++) {
+    for (size_t i = 0; i < elem_cnt; i++) {
       auto cur_channel = i / elem_perchannel;
       auto zp = quant_params[cur_channel]->zeroPoint;
-      if (quant_data[i] != zp || (i - prev_index) >= (1 << bit)) {
+      if (quant_data[i] != zp || (i - prev_index) >= (size_t)(1 << bit)) {
         nn_cnt++;
         prev_index = i;
       }
