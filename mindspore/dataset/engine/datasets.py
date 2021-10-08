@@ -66,7 +66,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
-    check_sbu_dataset, check_qmnist_dataset
+    check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -6348,6 +6348,138 @@ class PaddedDataset(GeneratorDataset):
         super().__init__(dataset, column_names=dataset.column_names, num_shards=None, shard_id=None, shuffle=False)
         self._dataset_size = len(dataset.padded_samples)
         self.padded_samples = padded_samples
+
+
+class EMnistDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing the EMNIST dataset.
+
+    The generated dataset has two columns :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        name (str): Name of splits for this dataset, can be "byclass", "bymerge", "balanced", "letters", "digits"
+            or "mnist".
+        usage (str, optional): Usage of this dataset, can be "train", "test" or "all".
+            (default=None, will read all samples).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> emnist_dataset_dir = "/path/to/emnist_dataset_directory"
+        >>>
+        >>> # Read 3 samples from EMNIST dataset
+        >>> dataset = ds.EMnistDataset(dataset_dir=emnist_dataset_dir, name="mnist", num_samples=3)
+        >>>
+        >>> # Note: In emnist_dataset dataset, each dictionary has keys "image" and "label"
+
+    About EMNIST dataset:
+
+    The EMNIST dataset is a set of handwritten character digits derived from the NIST Special
+    Database 19 and converted to a 28x28 pixel image format and dataset structure that directly
+    matches the MNIST dataset. Further information on the dataset contents and conversion process
+    can be found in the paper available at https://arxiv.org/abs/1702.05373v1.
+
+    The numbers of characters and classes of each split of EMNIST are as follows:
+
+    By Class: 814,255 characters and 62 unbalanced classes.
+    By Merge: 814,255 characters and 47 unbalanced classes.
+    Balanced: 131,600 characters and 47 balanced classes.
+    Letters: 145,600 characters and 26 balanced classes.
+    Digits: 280,000 characters and 10 balanced classes.
+    MNIST: 70,000 characters and 10 balanced classes.
+
+    Here is the original EMNIST dataset structure.
+    You can unzip the dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+
+        .
+        └── mnist_dataset_dir
+             ├── emnist-mnist-train-images-idx3-ubyte
+             ├── emnist-mnist-train-labels-idx1-ubyte
+             ├── emnist-mnist-test-images-idx3-ubyte
+             ├── emnist-mnist-test-labels-idx1-ubyte
+             ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @article{cohen_afshar_tapson_schaik_2017,
+        title        = {EMNIST: Extending MNIST to handwritten letters},
+        DOI          = {10.1109/ijcnn.2017.7966217},
+        journal      = {2017 International Joint Conference on Neural Networks (IJCNN)},
+        author       = {Cohen, Gregory and Afshar, Saeed and Tapson, Jonathan and Schaik, Andre Van},
+        year         = {2017},
+        howpublished = {https://www.westernsydney.edu.au/icns/reproducible_research/
+                        publication_support_materials/emnist}
+        }
+    """
+
+    @check_emnist_dataset
+    def __init__(self, dataset_dir, name, usage=None, num_samples=None, num_parallel_workers=None,
+                 shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.name = name
+        self.usage = replace_none(usage, "all")
+
+    def parse(self, children=None):
+        return cde.EMnistNode(self.dataset_dir, self.name, self.usage, self.sampler)
 
 
 class FlickrDataset(MappableDataset):

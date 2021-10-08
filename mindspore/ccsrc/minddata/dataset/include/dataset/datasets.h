@@ -1628,6 +1628,93 @@ inline std::shared_ptr<DIV2KDataset> DIV2K(const std::string &dataset_dir, const
                                         decode, sampler, cache);
 }
 
+/// \class EMnistDataset
+/// \brief A source dataset for reading and parsing EMnist dataset.
+class EMnistDataset : public Dataset {
+ public:
+  /// \brief Constructor of EMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] name Name of splits for EMNIST, can be "byclass", "bymerge", "balanced", "letters", "digits"
+  ///     or "mnist".
+  /// \param[in] usage Part of dataset of EMNIST, can be "train", "test" or "all".
+  /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+  ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                         const std::vector<char> &usage, const std::shared_ptr<Sampler> &sampler,
+                         const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of EMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] name Name of splits for EMNIST, can be "byclass", "bymerge", "balanced", "letters", "digits"
+  ///     or "mnist".
+  /// \param[in] usage Part of dataset of EMNIST, can be "train", "test" or "all".
+  /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                         const std::vector<char> &usage, const Sampler *sampler,
+                         const std::shared_ptr<DatasetCache> &cache);
+
+  /// \brief Constructor of EMnistDataset.
+  /// \param[in] dataset_dir Path to the root directory that contains the dataset.
+  /// \param[in] name Name of splits for EMNIST, can be "byclass", "bymerge", "balanced", "letters", "digits"
+  ///     or "mnist".
+  /// \param[in] usage Part of dataset of EMNIST, can be "train", "test" or "all".
+  /// \param[in] sampler Sampler object used to choose samples from the dataset.
+  /// \param[in] cache Tensor cache to use.
+  explicit EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                         const std::vector<char> &usage, const std::reference_wrapper<Sampler> sampler,
+                         const std::shared_ptr<DatasetCache> &cache);
+  ~EMnistDataset() = default;
+};
+
+/// \brief Function to create a EMnistDataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] name Name of splits for EMNIST, can be "byclass", "bymerge", "balanced", "letters", "digits" or "mnist".
+/// \param[in] usage Usage of EMNIST, can be "train", "test" or "all" (default = "all").
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not.
+///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current EMnistDataset.
+inline std::shared_ptr<EMnistDataset> EMnist(
+  const std::string &dataset_dir, const std::string &name, const std::string &usage = "all",
+  const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<EMnistDataset>(StringToChar(dataset_dir), StringToChar(name), StringToChar(usage), sampler,
+                                         cache);
+}
+
+/// \brief Function to create a EMnistDataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] name Name of splits for EMNIST, can be "byclass", "bymerge", "balanced", "letters", "digits" or "mnist".
+/// \param[in] usage Usage of EMNIST, can be "train", "test" or "all".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current EMnistDataset.
+inline std::shared_ptr<EMnistDataset> EMnist(const std::string &dataset_dir, const std::string &usage,
+                                             const std::string &name, const Sampler *sampler,
+                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<EMnistDataset>(StringToChar(dataset_dir), StringToChar(name), StringToChar(usage), sampler,
+                                         cache);
+}
+
+/// \brief Function to create a EMnistDataset.
+/// \notes The generated dataset has two columns ["image", "label"].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] name Name of splits for EMNIST, can be "byclass", "bymerge", "balanced", "letters", "digits" or "mnist".
+/// \param[in] usage Usage of EMNIST, can be "train", "test" or "all".
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current EMnistDataset.
+inline std::shared_ptr<EMnistDataset> EMnist(const std::string &dataset_dir, const std::string &name,
+                                             const std::string &usage, const std::reference_wrapper<Sampler> sampler,
+                                             const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<EMnistDataset>(StringToChar(dataset_dir), StringToChar(name), StringToChar(usage), sampler,
+                                         cache);
+}
+
 /// \class FlickrDataset
 /// \brief A source dataset for reading and parsing Flickr dataset.
 class FlickrDataset : public Dataset {

@@ -33,6 +33,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/div2k_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/emnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
@@ -149,6 +150,17 @@ PYBIND_REGISTER(DIV2KNode, 2, ([](const py::module *m) {
                                                                toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(div2k->ValidateParams());
                       return div2k;
+                    }));
+                }));
+
+PYBIND_REGISTER(EMnistNode, 2, ([](const py::module *m) {
+                  (void)py::class_<EMnistNode, DatasetNode, std::shared_ptr<EMnistNode>>(*m, "EMnistNode",
+                                                                                         "to create an EMnistNode")
+                    .def(py::init([](std::string dataset_dir, std::string name, std::string usage, py::handle sampler) {
+                      auto emnist =
+                        std::make_shared<EMnistNode>(dataset_dir, name, usage, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(emnist->ValidateParams());
+                      return emnist;
                     }));
                 }));
 

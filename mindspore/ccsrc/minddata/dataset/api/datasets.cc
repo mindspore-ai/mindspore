@@ -96,6 +96,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/div2k_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/emnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
@@ -1039,6 +1040,33 @@ DIV2KDataset::DIV2KDataset(const std::vector<char> &dataset_dir, const std::vect
   auto sampler_obj = sampler.get().Parse();
   auto ds = std::make_shared<DIV2KNode>(CharToString(dataset_dir), CharToString(usage), CharToString(downgrade), scale,
                                         decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+EMnistDataset::EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                             const std::vector<char> &usage, const std::shared_ptr<Sampler> &sampler,
+                             const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<EMnistNode>(CharToString(dataset_dir), CharToString(name), CharToString(usage),
+                                         sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+EMnistDataset::EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                             const std::vector<char> &usage, const Sampler *sampler,
+                             const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<EMnistNode>(CharToString(dataset_dir), CharToString(name), CharToString(usage),
+                                         sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+EMnistDataset::EMnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                             const std::vector<char> &usage, const std::reference_wrapper<Sampler> sampler,
+                             const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<EMnistNode>(CharToString(dataset_dir), CharToString(name), CharToString(usage),
+                                         sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
