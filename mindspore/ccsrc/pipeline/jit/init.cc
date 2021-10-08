@@ -302,16 +302,15 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("reset_algo_parameters", &CostModelContext::ResetAlgoParameters, "Reset the AlgoParameters.");
 
   (void)py::module::import("atexit").attr("register")(py::cpp_function{[&]() -> void {
+#ifdef ENABLE_MINDDATA
+    MS_LOG(INFO) << "Start releasing dataset handles...";
+    py::module iterators = py::module::import("mindspore.dataset.engine.iterators");
+    (void)iterators.attr("_cleanup")();
+    MS_LOG(INFO) << "End release dataset handles.";
+#endif
     // only in case that c++ calling python interface, ClearResAtexit should be called.
     if (mindspore::parse::python_adapter::IsPythonEnv()) {
       mindspore::pipeline::ClearResAtexit();
-
-#ifdef ENABLE_MINDDATA
-      MS_LOG(INFO) << "Start releasing dataset handles...";
-      py::module iterators = py::module::import("mindspore.dataset.engine.iterators");
-      (void)iterators.attr("_cleanup")();
-      MS_LOG(INFO) << "End release dataset handles.";
-#endif
     }
   }});
 
