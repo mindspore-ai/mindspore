@@ -452,6 +452,35 @@ class _MicroBatch(Cell):
         return micro_inputs
 
 
+class MicroBatchInterleaved(Cell):
+    """
+    Wrap the network with Batch Size.
+
+    Args:
+        network (Cell): The target network to wrap.
+        interleave_num (int): split num of batch size. Default: 2.
+
+    Examples:
+        >>> net = Net()
+        >>> net = MicroBatchInterleaved(net, 4)
+    """
+    def __init__(self, network, interleave_num=2):
+        super(MicroBatchInterleaved, self).__init__(auto_prefix=False)
+        self.network = network
+        self.interleave_num = interleave_num
+        self.interleave_inputs = nn.CellList()
+        for _ in range(interleave_num):
+            interleave_data = _MicroBatch(interleave_num)
+            self.interleave_inputs.append(interleave_data)
+
+    def construct(self, *inputs):
+        output = 0.0
+        for i in range(self.interleave_num):
+            interleave_input = self.interleave_inputs[i](i, *inputs)
+            output += self.network(*interleave_input)
+        return output / self.interleave_num
+
+
 class PipelineCell(Cell):
     """
     Wrap the network with Micro Batch.
