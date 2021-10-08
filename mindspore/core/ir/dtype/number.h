@@ -166,23 +166,23 @@ class MS_CORE_API Complex : public Number {
 };
 
 inline const TypePtr kBool = std::make_shared<Bool>();
-inline const TypePtr kInt8 = std::make_shared<Int>(8);
-inline const TypePtr kInt16 = std::make_shared<Int>(16);
-inline const TypePtr kInt32 = std::make_shared<Int>(32);
-inline const TypePtr kInt64 = std::make_shared<Int>(64);
-inline const TypePtr kUInt8 = std::make_shared<UInt>(8);
-inline const TypePtr kUInt16 = std::make_shared<UInt>(16);
-inline const TypePtr kUInt32 = std::make_shared<UInt>(32);
-inline const TypePtr kUInt64 = std::make_shared<UInt>(64);
-inline const TypePtr kFloat16 = std::make_shared<Float>(16);
-inline const TypePtr kFloat32 = std::make_shared<Float>(32);
-inline const TypePtr kFloat64 = std::make_shared<Float>(64);
+inline const TypePtr kInt8 = std::make_shared<Int>(static_cast<int>(BitsNum::eBits8));
+inline const TypePtr kInt16 = std::make_shared<Int>(static_cast<int>(BitsNum::eBits16));
+inline const TypePtr kInt32 = std::make_shared<Int>(static_cast<int>(BitsNum::eBits32));
+inline const TypePtr kInt64 = std::make_shared<Int>(static_cast<int>(BitsNum::eBits64));
+inline const TypePtr kUInt8 = std::make_shared<UInt>(static_cast<int>(BitsNum::eBits8));
+inline const TypePtr kUInt16 = std::make_shared<UInt>(static_cast<int>(BitsNum::eBits16));
+inline const TypePtr kUInt32 = std::make_shared<UInt>(static_cast<int>(BitsNum::eBits32));
+inline const TypePtr kUInt64 = std::make_shared<UInt>(static_cast<int>(BitsNum::eBits64));
+inline const TypePtr kFloat16 = std::make_shared<Float>(static_cast<int>(BitsNum::eBits16));
+inline const TypePtr kFloat32 = std::make_shared<Float>(static_cast<int>(BitsNum::eBits32));
+inline const TypePtr kFloat64 = std::make_shared<Float>(static_cast<int>(BitsNum::eBits64));
 inline const TypePtr kInt = std::make_shared<Int>();
 inline const TypePtr kUInt = std::make_shared<UInt>();
 inline const TypePtr kFloat = std::make_shared<Float>();
 inline const TypePtr kNumber = std::make_shared<Number>();
-inline const TypePtr kComplex64 = std::make_shared<Complex>(64);
-inline const TypePtr kComplex128 = std::make_shared<Complex>(128);
+inline const TypePtr kComplex64 = std::make_shared<Complex>(static_cast<int>(BitsNum::eBits64));
+inline const TypePtr kComplex128 = std::make_shared<Complex>(static_cast<int>(BitsNum::eBits128));
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_DTYPE_NUMBER_H_

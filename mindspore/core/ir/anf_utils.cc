@@ -33,19 +33,14 @@ bool AnfUtils::IsNodeOutputDynamicShape(const CNodePtr &node) {
     MS_LOG(INFO) << "Invalid base shape, node: " << node->fullname_with_scope();
     return false;
   }
-  if (base_shape->isa<abstract::Shape>()) {
-    if (IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
-      return true;
-    }
+  if (base_shape->isa<abstract::Shape>() && IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
+    return true;
   } else if (base_shape->isa<abstract::TupleShape>()) {
     auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
     MS_EXCEPTION_IF_NULL(tuple_shape);
     for (size_t i = 0; i < tuple_shape->size(); i++) {
       auto b_shape = (*tuple_shape)[i];
-      if (!b_shape->isa<abstract::Shape>()) {
-        continue;
-      }
-      if (IsShapeDynamic(b_shape->cast<abstract::ShapePtr>())) {
+      if (b_shape->isa<abstract::Shape>() && IsShapeDynamic(b_shape->cast<abstract::ShapePtr>())) {
         return true;
       }
     }

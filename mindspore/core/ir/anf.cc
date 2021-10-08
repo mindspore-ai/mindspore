@@ -63,6 +63,9 @@ void CNode::add_input(const AnfNodePtr &input) {
 }
 
 void CNode::set_input(size_t i, const AnfNodePtr &new_input) {
+  if (i >= inputs_.size()) {
+    MS_LOG(EXCEPTION) << "i:" << i << " out of range:" << inputs_.size() << ", cnode:" << DebugString();
+  }
   inputs_[i] = new_input;
   input_tensor_num_ = -1;
 }
@@ -74,7 +77,7 @@ void CNode::set_inputs(const std::vector<AnfNodePtr> &inputs) {
 
 const AnfNodePtr &CNode::input(size_t i) const {
   if (i >= inputs_.size()) {
-    MS_LOG(EXCEPTION) << "i:" << i << "out of range:" << inputs_.size() << ",cnode:" << DebugString();
+    MS_LOG(EXCEPTION) << "i:" << i << "out of range:" << inputs_.size() << ", cnode:" << DebugString();
   }
   return inputs_.at(i);
 }
@@ -130,7 +133,7 @@ ParamInfoPtr Parameter::param_info() const {
 std::string ValueNode::ToString() const {
   MS_EXCEPTION_IF_NULL(value_);
   if (value_->isa<FuncGraph>()) {
-    return value_->cast<FuncGraphPtr>()->ToString();
+    return value_->ToString();
   }
   std::ostringstream buffer;
   buffer << AnfNode::ToString();
@@ -168,10 +171,7 @@ bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
 }
 
 PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return nullptr;
-  }
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = dyn_cast<CNode>(node);
   if (cnode != nullptr) {
     if (cnode->size() > 0) {
       auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -187,8 +187,8 @@ std::string GetCNodeFuncName(const CNodePtr cnode) {
   }
 
   AnfNodePtr valuenode = cnode->input(0);
-  if (valuenode->isa<ValueNode>()) {
-    auto value = GetValueNode(valuenode);
+  auto value = GetValueNode(valuenode);
+  if (value != nullptr) {
     // check whether the valuenode is primitive
     if (value->isa<Primitive>()) {
       return value->cast<PrimitivePtr>()->name();
