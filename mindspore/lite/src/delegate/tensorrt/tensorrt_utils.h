@@ -36,8 +36,6 @@ struct ActivationParams {
   bool has_beta;
   float beta;
 };
-// Convert shape to Cuda Dims.
-nvinfer1::Dims ConvertCudaDims(const std::vector<int64_t> &shape);
 
 // Convert Tensor data to Cuda dims.
 nvinfer1::Dims ConvertCudaDims(const void *data, int64_t size);
@@ -80,5 +78,32 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, 
                         size_t thread_count);
 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format);
+
+template <typename T1, typename T2>
+bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {
+  if (shape1.size() != shape2.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < shape1.size(); i++) {
+    if (std::abs(shape1[i] - shape2[i]) > 1e-6) {
+      return false;
+    }
+  }
+  return true;
+}
+
+template <typename T>
+nvinfer1::Dims ConvertCudaDims(const std::vector<T> &shape) {
+  nvinfer1::Dims dims{};
+  if (!shape.empty() && shape.size() <= static_cast<size_t>(dims.MAX_DIMS)) {
+    dims.nbDims = shape.size();
+    for (int i = 0; i < dims.nbDims; i++) {
+      dims.d[i] = static_cast<int>(shape[i]);
+    }
+  } else {
+    MS_LOG(ERROR) << "invalid shape.";
+  }
+  return dims;
+}
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_
