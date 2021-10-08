@@ -26,6 +26,7 @@
 #include "coder/utils/type_cast.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
+#include "coder/generator/component/component.h"
 
 namespace mindspore::lite::micro {
 /*
@@ -81,6 +82,8 @@ class MemoryAllocator {
     return buffer;
   }
 
+  Tensor *MallocTensor(TypeId data_type, const std::vector<int> &shape);
+
   /*
    * get the actual runtime address with it's type,
    * including tensor, workspace
@@ -103,9 +106,10 @@ class MemoryAllocator {
       return type_info + wrap(item->second);
     }
 
-    auto iter =
-      std::find_if(malloc_weights_addr_.begin(), malloc_weights_addr_.end(),
-                   [&variable](const std::pair<Tensor *, std::string> &a) { return variable == (a.first)->data(); });
+    auto iter = std::find_if(malloc_weights_addr_.begin(), malloc_weights_addr_.end(),
+                             [&variable](const std::pair<Tensor *, std::string> &a) {
+                               return variable == (a.first)->data() || variable == a.first;
+                             });
     if (iter != malloc_weights_addr_.end()) {
       return iter->second;
     }
@@ -134,9 +138,9 @@ class MemoryAllocator {
   std::map<std::string, Tensor *> saved_weights() const { return saved_weights_addr_; }
   size_t total_buffer_size() const { return tensors_size_ + workspace_size_; }
   void enable_is_next() { is_next_ = true; }
+  void *MallocWeightTensor(TypeId type_id, size_t size, MallocType type);
 
  private:
-  void *MallocWeightTensor(TypeId type_id, size_t size, MallocType type);
   int AssignTensors(const std::vector<std::unique_ptr<OperatorCoder>> &nodes);
   void AssignGraphInputs(const std::vector<Tensor *> &inputs);
   void AssignWorkspaces(void *addr, size_t size);

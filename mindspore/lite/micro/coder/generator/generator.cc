@@ -71,6 +71,10 @@ void Generator::CodeNetRunFunc(std::ofstream &ofs) {
   for (const auto &block : ctx_->code_blocks()) {
     ofs << "  {\n" << block << "  }\n";
   }
+
+  for (const auto &block : ctx_->after_inference_code_blocks()) {
+    ofs << block << "\n";
+  }
   ofs << "}\n";
 }
 

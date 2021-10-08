@@ -231,4 +231,9 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ReluXQuantAr
                  relu_quant_arg.input_multiplier_, relu_quant_arg.left_shift_, relu_quant_arg.right_shift_,
                  relu_quant_arg.quantized_output_min, relu_quant_arg.quantized_output_max);
 }
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const SpliceWrapperParam &splice_param) {
+  CodeBaseStruct("SpliceWrapperParam", name, splice_param.src_row, splice_param.src_col, splice_param.dst_row,
+                 splice_param.dst_col, splice_param.context_size, ToString(splice_param.context),
+                 splice_param.src_to_dst_row_offset);
+}
 }  // namespace mindspore::lite::micro::nnacl

@@ -92,15 +92,14 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
                            in_channel * kernel_plane);
   }
 
-  auto bias_data_size = static_cast<size_t>(oc_block_num * sizeof(float));
-  bias_data_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
-  MS_CHECK_PTR(bias_data_);
   if (input_tensors_.size() == kInputSize2) {
+    auto bias_data_size = static_cast<size_t>(oc_block_num * sizeof(float));
+    bias_data_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
+    MS_CHECK_PTR(bias_data_);
+
     init_code.CodeMallocExpression(bias_data_, bias_data_size);
     init_code.CodeFunction("memset", bias_data_, 0, bias_data_size);
     init_code.CodeFunction("memcpy", bias_data_, bias_tensor_, out_channel_size * sizeof(float));
-  } else {
-    return RET_ERROR;
   }
   context->AppendInitCode(init_code.str());
   return RET_OK;

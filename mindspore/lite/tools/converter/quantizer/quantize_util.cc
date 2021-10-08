@@ -25,6 +25,7 @@
 #include <set>
 #include <functional>
 #include "include/version.h"
+#include "ops/affine.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/fusion/full_connection.h"
@@ -71,7 +72,8 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
                                                           prim::kPrimSplit,         prim::kPrimTranspose,
                                                           prim::kPrimReduceFusion,  prim::kPrimDivFusion,
                                                           prim::kPrimSqrt,          prim::kPrimPowFusion,
-                                                          prim::kPrimUnsqueeze,     prim::kPrimLayerNormFusion};
+                                                          prim::kPrimUnsqueeze,     prim::kPrimLayerNormFusion,
+                                                          prim::kPrimAffine};
   // The return node does not need to be quantified.
   if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn) || opt::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
     return false;

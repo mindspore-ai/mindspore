@@ -146,6 +146,12 @@ void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderCon
          "}\n\n";
 }
 
+void CodeGlobalCodeBlocks(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  for (const auto &block : ctx->global_code_blocks()) {
+    ofs << block << "\n";
+  }
+}
+
 void CodeInputState(std::ofstream &ofs) {
   ofs << "/**\n"
       << "  * set input tensors\n"

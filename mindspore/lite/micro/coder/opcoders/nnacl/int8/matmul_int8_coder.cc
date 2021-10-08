@@ -37,12 +37,12 @@ int MatMulInt8Coder::ReSize(CoderContext *const context) {
   int batch = 1;
   std::vector<int> x_shape = input_tensor_->shape();
   std::vector<int> o_shape = output_tensor_->shape();
-  MS_CHECK_RET_CODE(x_shape.size() >= kBiasIndex, "x_shape size is less than two");
+  MS_CHECK_TRUE(x_shape.size() >= kBiasIndex, "x_shape size is less than two");
   for (size_t i = 0; i < x_shape.size() - kBiasIndex; ++i) {
     batch *= x_shape[i];
   }
   param_->batch = batch;
-  MS_CHECK_RET_CODE(o_shape.size() >= kBiasIndex, "o_shape size is less than two");
+  MS_CHECK_TRUE(o_shape.size() >= kBiasIndex, "o_shape size is less than two");
   param_->row_ = o_shape[o_shape.size() - kBiasIndex];
   param_->col_ = o_shape[o_shape.size() - kWeightIndex];
   param_->deep_ = param_->a_transpose_ ? x_shape[x_shape.size() - kBiasIndex] : x_shape[x_shape.size() - kWeightIndex];

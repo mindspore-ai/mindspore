@@ -17,6 +17,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_INT8_SERIALIZER_H_
 #include <ostream>
 #include <string>
+#include "wrapper/base/affine_wrapper.h"
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/softmax_parameter.h"
 #include "coder/opcoders/serializers/serializer.h"
@@ -56,6 +57,7 @@ class NNaclInt8Serializer : public Serializer {
   void CodeStruct(const std::string &name, const SubQuantArg &sub_quant_arg);
   void CodeStruct(const std::string &name, const DivQuantArg &div_quant_arg);
   void CodeStruct(const std::string &name, const ReluXQuantArg &relu_quant_arg);
+  void CodeStruct(const std::string &name, const SpliceWrapperParam &splice_param);
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_INT8_SERIALIZER_H_

@@ -54,11 +54,11 @@ int MatmulCPUKernel::Prepare() {
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   MatmulFp32BaseCPUKernel::InitParameter();
 
-  if (params_->a_const_ == true) {
+  if (params_->a_const_) {
     InitShapeA();
   }
 
-  if (params_->b_const_ == true) {
+  if (params_->b_const_) {
     InitShapeB();
   }
 
