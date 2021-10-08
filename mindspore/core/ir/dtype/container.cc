@@ -24,7 +24,7 @@ namespace mindspore {
 static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_dumptext) {
   std::ostringstream oss;
   bool begin = true;
-  int cnt = 0;
+  size_t cnt = 0;
   // write 'Tuple[Bool, Bool, Bool, Int, Float, Float]' as 'Tuple[Bool...3, Int, Float...2]'
   for (size_t i = 0; i < elements.size(); ++i) {
     TypePtr elem = elements[i];
@@ -95,25 +95,13 @@ Class::Class(const Named &tag, const ClassAttrVector &attributes,
              const std::unordered_map<std::string, ValuePtr> &methods)
     : Object(kObjectTypeClass, false), attributes_(attributes), tag_(tag), methods_(methods) {}
 
-std::string List::ToString() const {
+std::string List::DumpContent(bool is_dumptext) const {
   std::ostringstream buffer;
   if (IsGeneric()) {
     buffer << "List";
   } else {
     buffer << "List[";
-    buffer << DumpTypeVector(elements_, false);
-    buffer << "]";
-  }
-  return buffer.str();
-}
-
-std::string List::DumpText() const {
-  std::ostringstream buffer;
-  if (IsGeneric()) {
-    buffer << "List";
-  } else {
-    buffer << "List[";
-    buffer << DumpTypeVector(elements_, true);
+    buffer << DumpTypeVector(elements_, is_dumptext);
     buffer << "]";
   }
   return buffer.str();
@@ -133,27 +121,7 @@ TypePtr Class::DeepCopy() const {
   }
 }
 
-std::string Class::ToString() const {
-  std::ostringstream buffer;
-  if (IsGeneric()) {
-    buffer << "cls";
-  } else {
-    bool begin = true;
-    buffer << "cls." << tag_ << "[";
-    for (auto &attr : attributes_) {
-      if (!begin) {
-        buffer << ", ";
-      } else {
-        begin = false;
-      }
-      buffer << attr.first << ":" << attr.second->ToString();
-    }
-    buffer << "]";
-  }
-  return buffer.str();
-}
-
-std::string Class::DumpText() const {
+std::string Class::DumpContent(bool is_dumptext) const {
   std::ostringstream buffer;
   if (IsGeneric()) {
     buffer << "Cls";
@@ -166,7 +134,8 @@ std::string Class::DumpText() const {
       } else {
         begin = false;
       }
-      buffer << attr.first << ":" << attr.second->DumpText();
+      auto sub_content = is_dumptext ? attr.second->DumpText() : attr.second->ToString();
+      buffer << attr.first << ":" << sub_content;
     }
     buffer << "]";
   }
@@ -208,25 +177,13 @@ const TypePtr Tuple::operator[](std::size_t dim) const {
   return elements_[dim];
 }
 
-std::string Tuple::ToString() const {
+std::string Tuple::DumpContent(bool is_dumptext) const {
   std::ostringstream buffer;
   if (IsGeneric()) {
     buffer << "Tuple";
   } else {
     buffer << "Tuple[";
-    buffer << DumpTypeVector(elements_, false);
-    buffer << "]";
-  }
-  return buffer.str();
-}
-
-std::string Tuple::DumpText() const {
-  std::ostringstream buffer;
-  if (IsGeneric()) {
-    buffer << "Tuple";
-  } else {
-    buffer << "Tuple[";
-    buffer << DumpTypeVector(elements_, true);
+    buffer << DumpTypeVector(elements_, is_dumptext);
     buffer << "]";
   }
   return buffer.str();
@@ -252,7 +209,7 @@ std::string DumpKeyVector(std::vector<std::string> keys) {
   return buffer.str();
 }
 
-std::string Dictionary::ToString() const {
+std::string Dictionary::DumpContent(bool) const {
   std::ostringstream buffer;
   std::vector<std::string> keys;
   std::vector<TypePtr> values;
@@ -270,8 +227,6 @@ std::string Dictionary::ToString() const {
   }
   return buffer.str();
 }
-
-std::string Dictionary::DumpText() const { return ToString(); }
 
 bool Dictionary::operator==(const mindspore::Type &other) const {
   if (!IsSameObjectType(*this, other)) {

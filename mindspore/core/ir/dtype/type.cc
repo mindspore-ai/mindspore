@@ -82,13 +82,6 @@ static std::unordered_map<TypeId, std::string> g_type_2_lable{
   {kObjectTypeIOMonad, MS_TYPE2LABLE(kObjectTypeIOMonad)},
   {kMonadTypeEnd, MS_TYPE2LABLE(kMonadTypeEnd)}};
 
-enum class BitsNum : int {
-  eBits8 = 8,
-  eBits16 = 16,
-  eBits32 = 32,
-  eBits64 = 64,
-  eBits128 = 128,
-};
 TypeId IntBitsToTypeId(const int nbits) {
   switch (nbits) {
     case static_cast<int>(BitsNum::eBits8):

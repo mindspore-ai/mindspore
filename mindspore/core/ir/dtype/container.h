@@ -54,11 +54,12 @@ class MS_CORE_API List : public Object {
   bool operator==(const Type &other) const override;
   std::size_t size() const { return elements_.size(); }
   TypePtrList elements() const { return elements_; }
-  std::string ToString() const override;
   std::string ToReprString() const override { return "list_"; }
-  std::string DumpText() const override;
+  std::string ToString() const override { return DumpContent(false); }
+  std::string DumpText() const override { return DumpContent(true); };
 
  private:
+  std::string DumpContent(bool is_dumptext) const;
   TypePtrList elements_;
 };
 using ListPtr = std::shared_ptr<List>;
@@ -76,8 +77,8 @@ class MS_CORE_API Class : public Object {
 
   bool operator==(const Type &other) const override;
   TypePtr DeepCopy() const override;
-  std::string ToString() const override;
-  std::string DumpText() const override;
+  std::string ToString() const override { return DumpContent(false); }
+  std::string DumpText() const override { return DumpContent(true); };
   void set_value(const std::unordered_map<std::string, ValuePtr> &v) { attributes_value_ = v; }
 
   Named tag() { return tag_; }
@@ -88,6 +89,7 @@ class MS_CORE_API Class : public Object {
   ClassAttrVector attributes_;
 
  private:
+  std::string DumpContent(bool is_dumptext) const;
   Named tag_;
   std::unordered_map<std::string, ValuePtr> methods_;
   // For AbstractClass build value
@@ -111,9 +113,9 @@ class MS_CORE_API Tuple : public Object {
   TypeId generic_type_id() const override { return kObjectTypeTuple; }
   TypePtr DeepCopy() const override;
 
-  std::string ToString() const override;
   std::string ToReprString() const override { return "tuple_"; }
-  std::string DumpText() const override;
+  std::string ToString() const override { return DumpContent(false); }
+  std::string DumpText() const override { return DumpContent(true); };
   const TypePtr operator[](size_t dim) const;
   bool operator==(const Type &other) const override;
 
@@ -121,6 +123,7 @@ class MS_CORE_API Tuple : public Object {
   std::size_t size() const { return elements_.size(); }
 
  private:
+  std::string DumpContent(bool is_dumptext) const;
   TypePtrList elements_;
 };
 using TuplePtr = std::shared_ptr<Tuple>;
@@ -138,10 +141,11 @@ class MS_CORE_API Dictionary : public Object {
 
   bool operator==(const Type &other) const override;
   TypePtr DeepCopy() const override;
-  std::string ToString() const override;
-  std::string DumpText() const override;
+  std::string ToString() const override { return DumpContent(false); }
+  std::string DumpText() const override { return DumpContent(true); };
 
  private:
+  std::string DumpContent(bool is_dumptext) const;
   std::vector<std::pair<std::string, TypePtr>> key_values_;
 };
 using DictionaryPtr = std::shared_ptr<Dictionary>;

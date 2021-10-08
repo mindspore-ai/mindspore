@@ -271,86 +271,46 @@ TypePtr FunctionStrToType(const std::string &type_name) {
 }  // namespace
 
 TypePtr GetTypeByFullString(const std::string &type_name) {
-  if (type_name == "None") {
-    return std::make_shared<TypeNone>();
-  }
-  if (type_name == "Ellipsis") {
-    return std::make_shared<TypeEllipsis>();
-  }
-  if (type_name == "TypeType") {
-    return std::make_shared<TypeType>();
-  }
-  if (type_name == "SymbolicKeyType") {
-    return std::make_shared<SymbolicKeyType>();
-  }
-  if (type_name == "RefKeyType") {
-    return std::make_shared<RefKeyType>();
-  }
-  if (type_name == "EnvType") {
-    return std::make_shared<EnvType>();
-  }
-  if (type_name == "Number") {
-    return std::make_shared<Number>();
-  }
-  if (type_name == "Bool") {
-    return std::make_shared<Bool>();
-  }
-  if (type_name == "Slice") {
-    return std::make_shared<Slice>();
-  }
-  if (type_name == "Dictionary") {
-    return std::make_shared<Dictionary>();
-  }
-  if (type_name == "String") {
-    return std::make_shared<String>();
-  }
-  if (type_name == "Problem") {
-    return std::make_shared<Problem>();
-  }
-  if (type_name == "mstype") {
-    return std::make_shared<TypeType>();
-  }
-  if (type_name == "UMonad") {
-    return kUMonadType;
-  }
-  if (type_name == "IOMonad") {
-    return kIOMonadType;
-  }
-  return nullptr;
+  static std::map<std::string, TypePtr> type_map = {{"None", std::make_shared<TypeNone>()},
+                                                    {"Ellipsis", std::make_shared<TypeEllipsis>()},
+                                                    {"TypeType", std::make_shared<TypeType>()},
+                                                    {"SymbolicKeyType", std::make_shared<SymbolicKeyType>()},
+                                                    {"RefKeyType", std::make_shared<RefKeyType>()},
+                                                    {"EnvType", std::make_shared<EnvType>()},
+                                                    {"Number", std::make_shared<Number>()},
+                                                    {"Bool", std::make_shared<Bool>()},
+                                                    {"Slice", std::make_shared<Slice>()},
+                                                    {"Dictionary", std::make_shared<Dictionary>()},
+                                                    {"String", std::make_shared<String>()},
+                                                    {"Problem", std::make_shared<Problem>()},
+                                                    {"mstype", std::make_shared<TypeType>()},
+                                                    {"UMonad", kUMonadType},
+                                                    {"IOMonad", kIOMonadType}};
+
+  auto iter = type_map.find(type_name);
+  return iter == type_map.end() ? nullptr : iter->second;
 }
 
 TypePtr GetTypeByStringStarts(const std::string &type_name) {
-  if (type_name.compare(0, strlen("Int"), "Int") == 0) {
-    return StringToNumberType<Int>(type_name, "Int");
-  }
-  if (type_name.compare(0, strlen("UInt"), "UInt") == 0) {
-    return StringToNumberType<UInt>(type_name, "UInt");
-  }
-  if (type_name.compare(0, strlen("Float"), "Float") == 0) {
-    return StringToNumberType<Float>(type_name, "Float");
-  }
-  if (type_name.compare(0, strlen("Tensor"), "Tensor") == 0) {
-    return TensorStrToType(type_name);
-  }
-  if (type_name.compare(0, strlen("Undetermined"), "Undetermined") == 0) {
-    return UndeterminedStrToType(type_name);
-  }
-  if (type_name.compare(0, strlen("RowTensor"), "RowTensor") == 0) {
-    return RowTensorStrToType(type_name);
-  }
-  if (type_name.compare(0, strlen("SparseTensor"), "SparseTensor") == 0) {
-    return SparseTensorStrToType(type_name);
-  }
-  if (type_name.compare(0, strlen("List"), "List") == 0) {
-    return ListStrToType(type_name);
-  }
-  if (type_name.compare(0, strlen("Tuple"), "Tuple") == 0) {
-    return TupleStrToType(type_name);
-  }
-  if (type_name.compare(0, strlen("Function"), "Function") == 0) {
-    return FunctionStrToType(type_name);
-  }
-  return nullptr;
+  struct name_cmp {
+    bool operator()(const std::string &l, const std::string &r) {
+      auto cmp_len = std::min(l.length(), r.length());
+      return r.compare(0, cmp_len, l, 0, cmp_len) < 0;
+    }
+  };
+  static std::map<std::string, std::function<TypePtr(const std::string &type_name)>, name_cmp> type_map = {
+    {"Int", [](const std::string &type_name) -> TypePtr { return StringToNumberType<Int>(type_name, "Int"); }},
+    {"UInt", [](const std::string &type_name) -> TypePtr { return StringToNumberType<UInt>(type_name, "UInt"); }},
+    {"Float", [](const std::string &type_name) -> TypePtr { return StringToNumberType<Float>(type_name, "Float"); }},
+    {"Tensor", [](const std::string &type_name) -> TypePtr { return TensorStrToType(type_name); }},
+    {"Undetermined", [](const std::string &type_name) -> TypePtr { return UndeterminedStrToType(type_name); }},
+    {"RowTensor", [](const std::string &type_name) -> TypePtr { return RowTensorStrToType(type_name); }},
+    {"SparseTensor", [](const std::string &type_name) -> TypePtr { return SparseTensorStrToType(type_name); }},
+    {"List", [](const std::string &type_name) -> TypePtr { return ListStrToType(type_name); }},
+    {"Tuple", [](const std::string &type_name) -> TypePtr { return TupleStrToType(type_name); }},
+    {"Function", [](const std::string &type_name) -> TypePtr { return FunctionStrToType(type_name); }}};
+  auto iter = type_map.find(type_name);
+  return iter == type_map.end() ? nullptr : iter->second(type_name);
 }
 
 TypePtr StringToType(const std::string &type_name) {
@@ -375,17 +335,13 @@ bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type) {
     MS_LOG(ERROR) << "Type is nullptr.";
     return false;
   }
-  if (base_type->type_id() == kTypeUnknown || x->type_id() == kTypeUnknown) {
+  auto type_id = base_type->type_id();
+  if (type_id == kTypeUnknown || x->type_id() == kTypeUnknown) {
     return false;
   } else if (!(base_type->IsGeneric())) {
     return *(base_type) == *(x);
-  } else if (base_type->type_id() == x->type_id()) {
-    return true;
-  } else if (base_type->type_id() == x->generic_type_id()) {
-    return true;
-  } else if (base_type->type_id() == x->object_type()) {
-    return true;
-  } else if (base_type->type_id() == x->meta_type()) {
+  } else if (type_id == x->type_id() || type_id == x->generic_type_id() || type_id == x->object_type() ||
+             type_id == x->meta_type()) {
     return true;
   } else {
     return false;

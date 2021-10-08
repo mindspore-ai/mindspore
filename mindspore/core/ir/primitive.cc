@@ -37,16 +37,13 @@ Primitive::Primitive(const std::string &name, const bool is_base, const PrimType
 
 Primitive::Primitive(const std::string &name, const std::unordered_map<std::string, ValuePtr> &attrs)
     : Named(name),
+      attrs_(attrs),
       is_base_(true),
       has_signature_(false),
       prim_type_(kPrimTypeBuiltIn),
       record_evaluate_add_attr_(false),
       is_const_prim_(false),
-      id_(MakeId()) {
-  for (auto &attr : attrs) {
-    attrs_[attr.first] = attr.second;
-  }
-}
+      id_(MakeId()) {}
 
 Primitive::Primitive(const Primitive &prim)
     : Named(prim),
