@@ -144,10 +144,6 @@ class SliceGradGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "Input dims is " << input_shape.size() << ", but SliceGradGpuKernel only support 4d or lower.";
       return false;
     }
-    if (input_shape.size() == 0) {
-      MS_LOG(ERROR) << "Input dims is " << input_shape.size() << ", scalar is not supported.";
-      return false;
-    }
     return true;
   }
 
