@@ -73,6 +73,12 @@ class ProfilingUtils {
   // Generate profiling trace
   static ProfilingTraceInfo GenerateProfilingTrace(const session::KernelGraph &kernel_graph);
 
+  // Insert two profiling trace points, one in front and one behind
+  static void InsertProfilingCustomOp(const mindspore::AnfNodePtr &anf_node,
+                                      const ProfilingTraceInfo &profiling_trace_info,
+                                      NotNull<session::KernelGraph *> graph_ptr,
+                                      NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
+
   static std::map<uint32_t, std::vector<std::string>> graph_kernel_name() { return graph_kernel_name_; }
 
   inline static constexpr char kProfiling[] = "Profiling";
@@ -102,6 +108,7 @@ class ProfilingUtils {
   inline static std::map<uint32_t, std::vector<CNodePtr>> graph_profiling_cnode_;
   inline static std::map<uint32_t, std::vector<std::string>> graph_kernel_name_;
   inline static std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> graph_point_;
+  inline static uint32_t custom_node_index_;
 };
 }  // namespace ascend
 }  // namespace device
