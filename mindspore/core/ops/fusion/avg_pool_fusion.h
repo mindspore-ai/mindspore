@@ -26,18 +26,52 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPoolFusion = "AvgPoolFusion";
+/// \brief AvgPoolFusion defined AvgPool operator prototype of lite.
 class MS_CORE_API AvgPoolFusion : public AvgPool {
  public:
+  /// \brief Constructor.
   AvgPoolFusion() : AvgPool(kNameAvgPoolFusion) { InitIOName({"x"}, {"output"}); }
+
+  /// \brief Destructor.
   ~AvgPoolFusion() = default;
+
   MS_DECLARE_PARENT(AvgPoolFusion, AvgPool);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] kernel_size Define the size of the kernel.
+  /// \param[in] stride Define the moving size of the kernel.
+  /// \param[in] pad_mode Define the padding method.
+  /// \param[in] format Define the format of input tensor.
+  /// \param[in] pad Define the concrete padding value on each dimension
+  /// \param[in] round_mode Define numerical operation mode of the output tensor.
+  /// \param[in] global Define a boolean value to indicate whether to do global pooling. If true, kernel_size will be
+  ///            useless.
+  /// \param[in] activation_type Define the activation type.
   void Init(const std::vector<int64_t> &kernel_size = {1}, const std::vector<int64_t> &stride = {1},
             const PadMode &pad_mode = VALID, const Format &format = NCHW,
             const std::vector<int64_t> &pad = {0, 0, 0, 0}, const RoundMode &round_mode = FLOOR,
             const bool global = false, const ActivationType activation_type = NO_ACTIVATION);
+
+  /// \brief Method to set global attribute.
+  ///
+  /// \param[in] global Define a boolean value to indicate whether to do global pooling. If true, kernel_size will be
+  ///            useless.
   void set_global(const bool global);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType activation_type);
+
+  /// \brief Method to get global attribute.
+  ///
+  /// \return a boolean value to indicate whether to do global pooling. If true, kernel_size will be useless.
   bool get_global() const;
+
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
 };
 

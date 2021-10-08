@@ -23,15 +23,41 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePowFusion = "PowFusion";
+/// \brief PowFusion defined Pow operator prototype of lite.
 class MS_CORE_API PowFusion : public Pow {
  public:
+  /// \brief Constructor.
   PowFusion() : Pow(kNamePowFusion) {}
+
+  /// \brief Destructor.
   ~PowFusion() = default;
+
   MS_DECLARE_PARENT(PowFusion, Pow);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] scale Define a size factor applied to input.
+  /// \param[in] shift Define a bias applied to input.
   void Init(const float &scale, const float &shift);
+
+  /// \brief Method to set scale attribute. Default is 1.0.
+  ///
+  /// \param[in] scale Define a size factor applied to input.
   void set_scale(const float &scale);
+
+  /// \brief Method to set shift attribute. Default is 0.0.
+  ///
+  /// \param[in] shift Define a bias applied to input.
   void set_shift(const float &shift);
+
+  /// \brief Method to get scale attribute.
+  ///
+  /// \return a size factor.
   float get_scale() const;
+
+  /// \brief Method to get shift attribute.
+  ///
+  /// \return a bias value.
   float get_shift() const;
 };
 }  // namespace ops

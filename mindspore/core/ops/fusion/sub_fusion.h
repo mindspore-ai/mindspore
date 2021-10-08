@@ -23,13 +23,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSubFusion = "SubFusion";
+/// \brief SubFusion defined Sub operator prototype of lite.
 class MS_CORE_API SubFusion : public Sub {
  public:
+  /// \brief Constructor.
   SubFusion() : Sub(kNameSubFusion) {}
+
+  /// \brief Destructor.
   ~SubFusion() = default;
+
   MS_DECLARE_PARENT(SubFusion, Sub);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void Init(const ActivationType &activation_type = NO_ACTIVATION);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType &activation_type);
+
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
 };
 }  // namespace ops

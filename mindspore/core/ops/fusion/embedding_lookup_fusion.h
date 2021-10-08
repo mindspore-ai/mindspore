@@ -27,15 +27,34 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEmbeddingLookupFusion = "EmbeddingLookupFusion";
+/// \brief EmbeddingLookupFusion defined EmbeddingLookup operator prototype of lite.
 class MS_CORE_API EmbeddingLookupFusion : public PrimitiveC {
  public:
+  /// \brief Constructor.
   EmbeddingLookupFusion() : PrimitiveC(kNameEmbeddingLookupFusion) {
     InitIOName({"params", "indices", "offset"}, {"output"});
   }
+
+  /// \brief Destructor.
   ~EmbeddingLookupFusion() = default;
+
   MS_DECLARE_PARENT(EmbeddingLookupFusion, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] max_norm Define the max l2-norm value of each embedding. Each embedding will be clip if l2-norm is
+  ///            larger than this value.
   void Init(const float max_norm = 0.0);
+
+  /// \brief Method to set max_norm attribute.
+  ///
+  /// \param[in] max_norm Define the max l2-norm value of each embedding. Each embedding will be clip if l2-norm is
+  ///            larger than this value.
   void set_max_norm(const float max_norm);
+
+  /// \brief Method to get max_norm attribute.
+  ///
+  /// \return a value which indicates a max l2-norm value.
   float get_max_norm() const;
 };
 }  // namespace ops

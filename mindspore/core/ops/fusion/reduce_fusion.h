@@ -27,20 +27,66 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceFusion = "ReduceFusion";
+/// \brief ReduceFusion defined Reduce operator prototype of lite.
 class MS_CORE_API ReduceFusion : public Reduce {
  public:
+  /// \brief Constructor.
   ReduceFusion() : Reduce(kNameReduceFusion) {}
+
+  /// \brief Destructor.
   ~ReduceFusion() = default;
+
   MS_DECLARE_PARENT(ReduceFusion, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] keep_dims Define a boolean value to indicate whether output dimension is kept or not.
+  /// \param[in] mode Define the concrete reduction mode.
+  /// \param[in] reduce_to_end Define a boolean value to indicate whether the operation need to do from the given axis
+  ///            to the last.
+  /// \param[in] coeff Define a size factor applied to output.
   void Init(const bool keep_dims = false, const ReduceMode mode = ReduceMode::Reduce_Mean,
             const bool reduce_to_end = false, const float coeff = 1.0);
+
+  /// \brief Method to set keep_dims attribute.
+  ///
+  /// \param[in] keep_dims Define a boolean value to indicate whether output dimension is kept or not.
   void set_keep_dims(const bool keep_dims);
+
+  /// \brief Method to set mode attribute.
+  ///
+  /// \param[in] mode Define the concrete reduction mode.
   void set_mode(const ReduceMode mode);
+
+  /// \brief Method to set reduce_to_end attribute.
+  ///
+  /// \param[in] reduce_to_end Define a boolean value to indicate whether the operation need to do from the given axis
+  ///            to the last.
   void set_reduce_to_end(const bool reduce_to_end);
+
+  /// \brief Method to set coeff attribute.
+  ///
+  /// \param[in] coeff Define a size factor applied to output.
   void set_coeff(const float coeff);
+
+  /// \brief Method to get keep_dims attribute.
+  ///
+  /// \return a boolean value.
   bool get_keep_dims() const;
+
+  /// \brief Method to get mode attribute.
+  ///
+  /// \return reduction mode.
   ReduceMode get_mode() const;
+
+  /// \brief Method to get reduce_to_end attribute.
+  ///
+  /// \return a boolean value.
   bool get_reduce_to_end() const;
+
+  /// \brief Method to get coeff attribute.
+  ///
+  /// \return a size factor applied to output.
   float get_coeff() const;
 };
 AbstractBasePtr ReduceFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

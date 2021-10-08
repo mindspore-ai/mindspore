@@ -181,43 +181,43 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
+        return lite::RET_ERROR;
       }
       auto ret = SetSubGraphInput(cnode, sub_func_graph);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphInput failed: " << ret;
-        return false;
+        return lite::RET_ERROR;
       }
       if (InferProcess(sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "subgraph infer shape failed.";
-        return false;
+        return lite::RET_ERROR;
       }
       if (SetSubGraphOutput(cnode, sub_func_graph)) {
         MS_LOG(ERROR) << "SetSubGraphOutput failed.";
-        return false;
+        return lite::RET_ERROR;
       }
       sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kInputIndexTwo));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-        return false;
+        return lite::RET_ERROR;
       }
       ret = SetSubGraphInput(cnode, sub_func_graph);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphInput failed: " << ret;
-        return false;
+        return lite::RET_ERROR;
       }
       if (InferProcess(sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "subgraph infer shape failed.";
-        return false;
+        return lite::RET_ERROR;
       }
       if (SetSubGraphOutput(cnode, sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphOutput failed.";
-        return false;
+        return lite::RET_ERROR;
       }
       ret = SetSubGraphAbstract(cnode, sub_func_graph);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphAbstract failed: " << ret;
-        return false;
+        return lite::RET_ERROR;
       }
       continue;
     }

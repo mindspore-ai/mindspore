@@ -26,14 +26,34 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLayerNormFusion = "LayerNormFusion";
+/// \brief LayerNormFusion defined LayerNorm operator prototype of lite.
 class MS_CORE_API LayerNormFusion : public LayerNorm {
  public:
+  /// \brief Constructor.
   LayerNormFusion() : LayerNorm(kNameLayerNormFusion) {}
+
+  /// \brief Destructor.
   ~LayerNormFusion() = default;
+
   MS_DECLARE_PARENT(LayerNormFusion, LayerNorm);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] begin_norm_axis Define the first normalization dimension of input.
+  /// \param[in] begin_params_axis Define the first parameter dimension.
+  /// \param[in] epsilon Define a value added to the denominator for numerical stability.
+  /// \param[in] elementwise_affine Define a boolean value to indicate that the operation is element-wise or not.
   void Init(const int64_t begin_norm_axis = 1, const int64_t begin_params_axis = 1, const float epsilon = 1e-7,
             const bool elementwise_affine = false);
+
+  /// \brief Method to set elementwise_affine attribute.
+  ///
+  /// \param[in] elementwise_affine Define a boolean value to indicate that the operation is element-wise or not.
   void set_elementwise_affine(const bool elementwise_affine);
+
+  /// \brief Method to get elementwise_affine attribute.
+  ///
+  /// \return a boolean value.
   bool get_elementwise_affine() const;
 };
 

@@ -25,15 +25,41 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLpNormalization = "LpNormalization";
+/// \brief LpNormalization defined LpNormalization operator prototype of lite.
 class MS_CORE_API LpNormalization : public PrimitiveC {
  public:
+  /// \brief Constructor.
   LpNormalization() : PrimitiveC(kNameLpNormalization) {}
+
+  /// \brief Destructor.
   ~LpNormalization() = default;
+
   MS_DECLARE_PARENT(LpNormalization, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] axis Define the dim to do normalization.
+  /// \param[in] p Define the norm series.
   void Init(const int64_t axis, const int64_t p);
+
+  /// \brief Method to set axis attribute.
+  ///
+  /// \param[in] axis Define the dim to do normalization.
   void set_axis(const int64_t axis);
+
+  /// \brief Method to set p attribute.
+  ///
+  /// \param[in] p Define the norm series.
   void set_p(const int64_t p);
+
+  /// \brief Method to get axis attribute.
+  ///
+  /// \return the dim to do normalization.
   int64_t get_axis() const;
+
+  /// \brief Method to get p attribute.
+  ///
+  /// \return the norm series.
   int64_t get_p() const;
 };
 

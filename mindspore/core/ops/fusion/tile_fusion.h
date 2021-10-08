@@ -25,13 +25,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTileFusion = "TileFusion";
+/// \brief TileFusion defined Tile operator prototype of lite.
 class MS_CORE_API TileFusion : public Tile {
  public:
+  /// \brief Constructor.
   TileFusion() : Tile(kNameTileFusion) {}
+
+  /// \brief Destructor.
   ~TileFusion() = default;
+
   MS_DECLARE_PARENT(TileFusion, Tile);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] dims Define this operation will be performed on which axes.
   void Init(const std::vector<int64_t> &dims);
+
+  /// \brief Method to set dims attribute.
+  ///
+  /// \param[in] dims Define this operation will be performed on which axes.
   void set_dims(const std::vector<int64_t> &dims);
+
+  /// \brief Method to get dims attribute.
+  ///
+  /// \return axes.
   std::vector<int64_t> get_dims() const;
 };
 }  // namespace ops

@@ -31,13 +31,32 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNonMaxSuppression = "NonMaxSuppression";
+/// \brief NonMaxSuppression QuantDTypeCast the NonMaxSuppression operator prototype.
 class MS_CORE_API NonMaxSuppression : public PrimitiveC {
  public:
+  /// \brief Constructor.
   NonMaxSuppression() : PrimitiveC(kNameNonMaxSuppression) {}
+
+  /// \brief Destructor.
   ~NonMaxSuppression() = default;
+
   MS_DECLARE_PARENT(NonMaxSuppression, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] center_point_box Define a value to indicate the format of the box data. If the value is 0, the box data
+  ///            is supplied by diagonal point, such as [y1, x1, y2, x2](the pair [y1, x1] is picture coordinate). If
+  ///            the value is 1, the box data is supplied as [x_center, y_center, width, height].
   void Init(const int64_t center_point_box = 0);
+
+  /// \brief Method to set center_point_box attribute.
+  ///
+  /// \param[in] center_point_box a value to indicate the format of the box data.
   void set_center_point_box(const int64_t center_point_box);
+
+  /// \brief Method to get center_point_box attribute.
+  ///
+  /// \return a integer value.
   int64_t get_center_point_box() const;
 };
 AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

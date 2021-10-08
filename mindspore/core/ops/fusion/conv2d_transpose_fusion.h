@@ -25,24 +25,72 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2dTransposeFusion = "Conv2dTransposeFusion";
+/// \brief Conv2dTransposeFusion defined Conv2dTranspose operator prototype of lite.
 class MS_CORE_API Conv2dTransposeFusion : public Conv2DTranspose {
  public:
+  /// \brief Constructor.
   Conv2dTransposeFusion() : Conv2DTranspose(kNameConv2dTransposeFusion) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});
   }
+
+  /// \brief Destructor.
   ~Conv2dTransposeFusion() = default;
+
   MS_DECLARE_PARENT(Conv2dTransposeFusion, Conv2DTranspose);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] in_channel Define the number of input channel.
+  /// \param[in] out_channel Define the number of output channel.
+  /// \param[in] kernel_size Define the size of the filter kernel.
+  /// \param[in] mode Define the category of conv, which is useless on lite.
+  /// \param[in] pad_mode Define the padding method.
+  /// \param[in] pad Define the concrete padding value on H and W dimension, which is replaced with pad_list.
+  /// \param[in] stride Define the moving size of the filter kernel.
+  /// \param[in] dilation Define the coefficient of expansion of the filter kernel, which is useful for dilated
+  ///            convolution-transpose.
+  /// \param[in] group Define the number of group.
+  /// \param[in] format Define the format of input tensor.
+  /// \param[in] pad_list Define the concrete padding value on H and W dimension.
+  /// \param[in] output_paddings Define the additional elements added to the side with higher coordinate indices in the
+  ///            output, which is used to control the selection-range of the output tensor.
+  /// \param[in] activation_type Define the activation type.
   void Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0},
             const std::vector<int64_t> &stride = {1, 1}, const std::vector<int64_t> &dilation = {1, 1},
             int64_t group = 1, const Format &format = NCHW, const std::vector<int64_t> &pad_list = {0, 0, 0, 0},
             const std::vector<int64_t> &output_paddings = {0}, ActivationType activation_type = NO_ACTIVATION);
+
+  /// \brief Method to set kernel_size attribute.
+  ///
+  /// \param[in] kernel_size Define the size of the filter kernel.
   void set_kernel_size(const std::vector<int64_t> &kernel_size) override;
+
+  /// \brief Method to set dilation attribute.
+  ///
+  /// \param[in] dilation Define the coefficient of expansion of the filter kernel, which is useful for dilated
+  ///            convolution-transpose.
   void set_dilation(const std::vector<int64_t> &dilation) override;
+
+  /// \brief Method to set output_paddings attribute.
+  ///
+  /// \param[in] output_paddings Define the additional elements added to the side with higher coordinate indices in the
+  ///            output, which is used to control the selection-range of the output tensor.
   void set_output_paddings(const std::vector<int64_t> &output_paddings);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(ActivationType activation_type);
 
+  /// \brief Method to get output_paddings attribute.
+  ///
+  /// \return output_paddings value.
   std::vector<int64_t> get_output_paddings() const;
+
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
 };
 }  // namespace ops

@@ -23,15 +23,41 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePadFusion = "PadFusion";
+/// \brief PadFusion defined Pad operator prototype of lite.
 class MS_CORE_API PadFusion : public Pad {
  public:
+  /// \brief Constructor.
   PadFusion() : Pad(kNamePadFusion) { InitIOName({"x"}, {"y"}); }
+
+  /// \brief Destructor.
   ~PadFusion() = default;
+
   MS_DECLARE_PARENT(PadFusion, Pad);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] padding_mode Define the padding mode.
+  /// \param[in] constant_value Define the padding value.
   void Init(const PaddingMode &padding_mode, const float constant_value);
+
+  /// \brief Method to set padding_mode attribute.
+  ///
+  /// \param[in] padding_mode Define the padding mode.
   void set_padding_mode(const PaddingMode &padding_mode);
+
+  /// \brief Method to set constant_value attribute.
+  ///
+  /// \param[in] constant_value Define the padding value.
   void set_constant_value(const float constant_value);
+
+  /// \brief Method to get padding_mode attribute.
+  ///
+  /// \return padding mode.
   PaddingMode get_padding_mode() const;
+
+  /// \brief Method to get constant_value attribute.
+  ///
+  /// \return a constant value.
   float get_constant_value() const;
 };
 }  // namespace ops

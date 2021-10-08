@@ -26,13 +26,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAddFusion = "AddFusion";
+/// \brief AddFusion defined Add operator prototype of lite.
 class MS_CORE_API AddFusion : public Add {
  public:
+  /// \brief Constructor.
   AddFusion() : Add(kNameAddFusion) { InitIOName({"x", "y"}, {"output"}); }
+
+  /// \brief Destructor.
   ~AddFusion() = default;
+
   MS_DECLARE_PARENT(AddFusion, Add);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void Init(const ActivationType activation_type);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType activation_type);
+
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
 };
 

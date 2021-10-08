@@ -28,17 +28,42 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdderFusion = "AdderFusion";
+/// \brief AdderFusion defined Adder operator prototype of lite.
 class MS_CORE_API AdderFusion : public Adder {
  public:
+  /// \brief Constructor.
   AdderFusion() : Adder(kNameAdderFusion) {}
+
+  /// \brief Destructor.
   ~AdderFusion() = default;
+
   MS_DECLARE_PARENT(AdderFusion, Adder);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] in_channel Define the number of input channel.
+  /// \param[in] out_channel Define the number of output channel.
+  /// \param[in] kernel_size Define the size of the filter kernel.
+  /// \param[in] pad_mode Define the padding method.
+  /// \param[in] stride Define the moving size of the filter kernel.
+  /// \param[in] pad_list Define the concrete padding value on H and W dimension.
+  /// \param[in] dilation Define the coefficient of expansion of the filter kernel.
+  /// \param[in] group Define the number of group.
+  /// \param[in] format Define the format of input tensor.
+  /// \param[in] activation_type Define the activation type.
   void Init(const int64_t in_channel, const int64_t out_channel, const std::vector<int64_t> &kernel_size,
             const PadMode &pad_mode, const std::vector<int64_t> &stride, const std::vector<int64_t> &pad_list,
             const std::vector<int64_t> &dilation, const int64_t group, const Format &format,
             const ActivationType activation_type);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType activation_type);
 
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
 };
 }  // namespace ops

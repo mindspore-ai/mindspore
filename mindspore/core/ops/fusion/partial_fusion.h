@@ -23,13 +23,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePartialFusion = "PartialFusion";
+/// \brief PartialFusion defined Partial operator prototype of lite.
 class MS_CORE_API PartialFusion : public PrimitiveC {
  public:
+  /// \brief Constructor.
   PartialFusion() : PrimitiveC(kNamePartialFusion) {}
+
+  /// \brief Destructor.
   ~PartialFusion() = default;
+
   MS_DECLARE_PARENT(PartialFusion, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] sub_graph_index Define a index value to indicate which sub-graph.
   void Init(const int64_t sub_graph_index);
+
+  /// \brief Method to set sub_graph_index attribute.
+  ///
+  /// \param[in] sub_graph_index Define a index value to indicate which sub-graph.
   void set_sub_graph_index(const int64_t sub_graph_index);
+
+  /// \brief Method to get sub_graph_index attribute.
+  ///
+  /// \return sub-graph index.
   int64_t get_sub_graph_index() const;
 };
 }  // namespace ops
