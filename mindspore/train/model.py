@@ -717,7 +717,7 @@ class Model:
                     dataset_sink_mode=dataset_sink_mode,
                     sink_size=sink_size)
 
-    def build(self, train_dataset=None, valid_dataset=None, sink_size=-1):
+    def build(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1):
         """
         Build computational graphs and data graphs with the sink mode.
 
@@ -736,6 +736,7 @@ class Model:
             valid_dataset (Dataset): An evaluating dataset iterator. If `valid_dataset` is defined, evaluation graphs
                                      will be initialized, and `metrics` in `Model` can not be None. Default: None.
             sink_size (int): Control the amount of data in each sink. Default: -1.
+            epoch (int): Control the training epochs. Default: 1.
 
         Examples:
             >>> from mindspore import Model, nn, FixedLossScaleManager
@@ -748,10 +749,10 @@ class Model:
             >>> loss_scale_manager = FixedLossScaleManager()
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
-            >>> model.build(dataset)
+            >>> model.build(dataset, epoch=2)
             >>> model.train(2, dataset)
         """
-        self._init(train_dataset, valid_dataset, sink_size)
+        self._init(train_dataset, valid_dataset, sink_size, epoch)
 
     def _eval_dataset_sink_process(self, valid_dataset, list_callback=None, cb_params=None):
         """
