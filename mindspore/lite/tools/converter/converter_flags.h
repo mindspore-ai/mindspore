@@ -26,7 +26,7 @@
 #include "schema/inner/model_generated.h"
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "tools/converter/quantizer/quant_params.h"
-#include "tools/converter/acl/common/acl_types.h"
+#include "tools/converter/adapter/acl/common/acl_types.h"
 
 namespace mindspore {
 namespace lite {

@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_ACL_OPTION_PARAM_PARSER_H
 #include <string>
 #include "tools/converter/config_parser/config_file_parser.h"
-#include "tools/converter/acl/common/acl_types.h"
+#include "tools/converter/adapter/acl/common/acl_types.h"
 #include "include/errorcode.h"
 
 namespace mindspore {

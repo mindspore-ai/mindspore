@@ -37,25 +37,25 @@ STATUS AclOptionParamParser::ParseAclOptionCfg(const AclOptionCfgString &acl_opt
   }
   if (!acl_option_string.device_id.empty()) {
     if (ParseDeviceId(acl_option_string.device_id, acl_option_cfg) != RET_OK) {
-      MS_LOG(ERROR) << "Parse device id failed.";
+      MS_LOG(ERROR) << "Parse device id failed, val: " << acl_option_string.device_id;
       return RET_INPUT_PARAM_INVALID;
     }
   }
   if (!acl_option_string.output_type.empty()) {
     if (ParseOutputType(acl_option_string.output_type, acl_option_cfg) != RET_OK) {
-      MS_LOG(ERROR) << "Parse output type failed.";
+      MS_LOG(ERROR) << "Parse output type failed, val； " << acl_option_string.output_type;
       return RET_INPUT_PARAM_INVALID;
     }
   }
   if (!acl_option_string.dynamic_batch_size.empty()) {
     if (ParseDynamicBatchSize(acl_option_string.dynamic_batch_size, acl_option_cfg) != RET_OK) {
-      MS_LOG(ERROR) << "Parse dynamic batch size failed.";
+      MS_LOG(ERROR) << "Parse dynamic batch size failed, val: " << acl_option_string.dynamic_batch_size;
       return RET_INPUT_PARAM_INVALID;
     }
   }
   if (!acl_option_string.input_shape_vector.empty()) {
     if (ParseInputShapeVector(acl_option_string.input_shape_vector, acl_option_cfg) != RET_OK) {
-      MS_LOG(ERROR) << "Parse input shape vector failed.";
+      MS_LOG(ERROR) << "Parse input shape vector failed, val: " << acl_option_string.input_shape_vector;
       return RET_INPUT_PARAM_INVALID;
     }
   }

@@ -50,6 +50,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/import/primitive_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_adjust.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/import/mindir_control_flow_adjust.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/adapter/acl_pass.cc
 
         ../optimizer/common/node_pass_extends.cc
         ../optimizer/common/pass_manager_extends.cc
@@ -126,10 +127,6 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/special_node_postprocess.cc
         )
 
-if(NOT MSLITE_ENABLE_ACL)
-    list(APPEND CONVERTER_SRC "acl/stub/stub_acl_pass.cc")
-endif()
-
 add_subdirectory(../anf_exporter anf_exporter)
 add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
@@ -145,7 +142,7 @@ add_subdirectory(${CORE_DIR} mindspore_core)
 if(MSLITE_ENABLE_ACL)
     set(MODE_ASCEND_ACL ON)
     include(${TOP_DIR}/cmake/dependency_graphengine.cmake)
-    add_subdirectory(acl)
+    add_subdirectory(adapter/acl)
     link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 endif()
 
