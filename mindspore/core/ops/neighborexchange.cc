@@ -101,12 +101,15 @@ void Check(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &in
   auto send_rank_ids = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSendRankIds));
   const int64_t input_num = 0;
   if (send_rank_ids.empty()) {
-    (void)CheckAndConvertUtils::CheckInteger("input_numbers", input_args.size(), kEqual, input_num, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("input_numbers", SizeToLong(input_args.size()), kEqual, input_num,
+                                             prim_name);
     return;
   }
   // check input shape & attr send shape
-  (void)CheckAndConvertUtils::CheckInteger("input_numbers", input_args.size(), kEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTuple>(prim_name, input_args, 0);
+  const int64_t input_num_ = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input_numbers", SizeToLong(input_args.size()), kEqual, input_num_,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTuple>(prim_name, input_args, input_num);
   auto abstract_tuple = input_args[0]->cast<abstract::AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   auto abstract_element = abstract_tuple->elements();

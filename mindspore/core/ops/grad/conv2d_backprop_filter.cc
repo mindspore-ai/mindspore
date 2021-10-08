@@ -24,9 +24,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kDoutIndex = 0;
-constexpr size_t kInputIndex = 1;
-constexpr size_t kFilterSizeIdex = 2;
+constexpr int64_t kDoutIndex = 0;
+constexpr int64_t kInputIndex = 1;
+constexpr int64_t kFilterSizeIdex = 2;
 constexpr size_t kStride2dSize = 2;
 constexpr size_t kStride4dSize = 4;
 
@@ -56,7 +56,6 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
   std::vector<int64_t> out_shape;
   abstract::ShapePtr ret_shape;
   TransStrideTo4D(primitive, input_args);
-
   auto filter_size = input_args[kFilterSizeIdex];
   auto filter_size_v = filter_size->BuildValue();
   MS_EXCEPTION_IF_NULL(filter_size_v);

@@ -29,7 +29,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, input_num, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
+                                           prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   auto x_rank = SizeToLong(x_shape.size());

@@ -55,9 +55,11 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   }
   // Indices must be rank 1
   const int64_t input_num1 = 1;
-  (void)CheckAndConvertUtils::CheckInteger("indices dim", indices_shape.size(), kEqual, input_num1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices dim", SizeToLong(indices_shape.size()), kEqual, input_num1,
+                                           prim_name);
   // Dimension of var must be equal or greater than 1
-  (void)CheckAndConvertUtils::CheckInteger("dimension of var", var_shape.size(), kGreaterEqual, input_num1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of var", SizeToLong(var_shape.size()), kGreaterEqual, input_num1,
+                                           prim_name);
   // Indices shape must be equal to the first dimension of var
   CheckAndConvertUtils::Check("indices shape", indices_shape[0], kEqual, "the first dimension of var", var_shape[0],
                               prim_name);

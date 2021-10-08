@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-void Split::Init(const std::vector<int64_t> &size_splits, const int64_t axis, const int64_t output_num) {
+void Split::Init(const int64_t axis, const int64_t output_num) {
   this->set_axis(axis);
   this->set_output_num(output_num);
 }

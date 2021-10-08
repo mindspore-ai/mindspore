@@ -32,7 +32,8 @@ void ImpleSquare(void *origin, void *target, size_t size) {
   }
 }
 
-abstract::ShapePtr SquareInferShape(const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr SquareInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
@@ -52,7 +53,7 @@ AbstractBasePtr SquareInfer(const abstract::AnalysisEnginePtr &, const Primitive
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
 
-  return abstract::MakeAbstract(SquareInferShape(input_args), SquareInferType(primitive, input_args));
+  return abstract::MakeAbstract(SquareInferShape(primitive, input_args), SquareInferType(primitive, input_args));
 }
 
 ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -72,7 +73,7 @@ ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
 
   auto data_size = x_tensor->DataSize();
   auto dtype = x_tensor->data_type();
-  auto shape = SquareInferShape(input_args)->shape();
+  auto shape = SquareInferShape(prim, input_args)->shape();
   auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape);  // same shape and dtype
   auto x_datac = x_tensor->data_c();
   auto result_datac = result_tensor->data_c();

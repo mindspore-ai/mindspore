@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t k5DInputDims = 5;
+constexpr int64_t k5DInputDims = 5;
 constexpr size_t kKernelDims = 3;
 constexpr size_t kStridesDims = 3;
 constexpr size_t kPadDims = 6;
