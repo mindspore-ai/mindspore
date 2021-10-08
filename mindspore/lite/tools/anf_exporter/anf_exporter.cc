@@ -122,7 +122,11 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
           return RET_OK;
         }
         quant::FSEEncoder fse_encoder;
-        fse_encoder.Compress(tensor_input);
+        auto status = fse_encoder.Compress(tensor_input);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "fse encode compress failed." << status;
+          return RET_ERROR;
+        }
       } else if (bit_num <= kBitNum8) {
         repetition_packed = PackRepetition<int8_t>(bit_num, tensor_input);
       } else {
