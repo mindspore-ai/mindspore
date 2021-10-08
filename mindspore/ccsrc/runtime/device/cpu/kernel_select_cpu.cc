@@ -280,7 +280,7 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (kernel_attr.GetOutputSize() != output_num) {
-      MS_LOG(EXCEPTION) << "Output num is not equal!";
+      MS_LOG(DEBUG) << "Output num is not equal!";
       continue;
     }
     int input_dtype_matched_num =
