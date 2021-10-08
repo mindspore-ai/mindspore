@@ -22,6 +22,7 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from .. import functional as F
 from .. import operations as P
 
+
 @bprop_getters.register(P.MaskedFill)
 def get_bprop_masked_select(self):
     """Generate bprop for MaskedFill"""

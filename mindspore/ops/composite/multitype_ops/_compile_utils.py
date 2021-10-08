@@ -242,11 +242,11 @@ def _transform_ellipsis_to_slice(data, tuple_index, op_name):
     ellipsis_occupy_dims = data_rank - (len(slice_positions) + len(int_positions) +
                                         len(tensor_positions) + len(sequence_positions))
     ellipsis_cnt = len(ellipsis_positions)
-    # pylint: disable=chained-comparison
-    if ellipsis_occupy_dims < 0 and ellipsis_cnt >= 0:
-        exp_msg = const_utils.gen_exception_msg(
-            "Tuple index {} out rang of tensor shape {}.", tuple_index, data_shape)
-        const_utils.raise_index_error(exp_msg)
+    if ellipsis_occupy_dims < 0:
+        if ellipsis_cnt >= 0:
+            exp_msg = const_utils.gen_exception_msg(
+                "Tuple index {} out rang of tensor shape {}.", tuple_index, data_shape)
+            const_utils.raise_index_error(exp_msg)
 
     tuple_index_new = ()
     for i, index in enumerate(tuple_index):

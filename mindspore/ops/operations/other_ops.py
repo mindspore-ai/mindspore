@@ -24,6 +24,7 @@ from ...common import dtype as mstype
 from ..primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from .._register_for_op import PyFuncRegistry
 
+
 class Assign(Primitive):
     """
     Assigns `Parameter` with a value.
@@ -878,8 +879,11 @@ class identity(Primitive):
         return x
 
 pyfunc_register = PyFuncRegistry()
+
+
 def get_pyfunc(fn_id):
     return pyfunc_register.get(fn_id)
+
 
 class PyFunc(PrimitiveWithInfer):
     r"""
