@@ -549,6 +549,7 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         axis (Union[int, tuple[int], list[int]]): The dimensions to reduce.
             Default:(), reduce all dimensions. Only constant value is allowed.
         keep_dims (bool):
+
             - If true, keep these reduced dimensions and the length as 1.
             - If false, don't keep these dimensions. Default:False.
 
@@ -701,7 +702,7 @@ class SequenceMask(PrimitiveWithCheck):
     """
     Returns a mask tensor representing the first N positions of each cell.
 
-    If lengths has shape [d_1, d_2, ..., d_n], then the resulting tensor mask has type dtype and shape
+    If lengths has shape [d_1, d_2, ..., d_n], then the resulting tensor mask has type and shape
     [d_1, d_2, ..., d_n, maxlen], with mask[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])
 
     Inputs:
