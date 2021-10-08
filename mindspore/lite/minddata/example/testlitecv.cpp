@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
   std::cout << "lite_mat_rgb: height=" << lite_mat_rgb.height_ << ", width=" << lite_mat_rgb.width_ << std::endl;
 
   LiteMat lite_mat_resize;
-  constexpr target_size = 256;
+  constexpr int32_t target_size = 256;
   ResizeBilinear(lite_mat_rgb, lite_mat_resize, target_size, target_size);
   std::cout << "lite_mat_resize: height=" << lite_mat_resize.height_ << ", width=" << lite_mat_resize.width_
             << std::endl;
