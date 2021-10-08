@@ -1,13 +1,17 @@
 # find python library
-execute_process(
-        COMMAND "${PYTHON_EXECUTABLE}" -c "import distutils.sysconfig as sysconfig; import os; \
-                  print(os.path.join(sysconfig.get_config_var('LIBDIR'), sysconfig.get_config_var('PY3LIBRARY')))"
-        RESULT_VARIABLE result
-        OUTPUT_VARIABLE PY3_LIBG)
-string(STRIP "${PY3_LIBG}" PY3_LIBG)
-message("Python3 general library = " ${PY3_LIBG})
-string(STRIP "${PYTHON_LIBRARIES}" PY3_LIB)
-message("Python3 library = " ${PY3_LIB})
+if(MODE_ASCEND_ACL)
+    get_filename_component(PYTHON_LIB_REALPATH ${PYTHON_LIBRARIES} ABSOLUTE)
+    get_filename_component(PYTHON_LIB_DIR ${PYTHON_LIB_REALPATH} PATH)
+
+    execute_process(
+            COMMAND "${PYTHON_EXECUTABLE}" -c "import distutils.sysconfig as sysconfig; \
+                  print(sysconfig.get_config_var('PY3LIBRARY'))"
+            RESULT_VARIABLE result
+            OUTPUT_VARIABLE PY3LIBRARY)
+    set(PY3_LIBG ${PYTHON_LIB_DIR}/${PY3LIBRARY})
+    string(STRIP "${PY3_LIBG}" PY3_LIBG)
+    message("Python3 general library = " ${PY3_LIBG})
+endif()
 # build mindspore_shared_lib
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
@@ -80,18 +84,18 @@ if(NOT BUILD_LITE)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    target_link_libraries(mindspore_shared_lib PRIVATE ${PY3_LIB} ${SECUREC_LIBRARY}
+    target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
             -Wl,-force_load mindspore -Wl,-noall_load mindspore_core proto_input mindspore_gvar mindspore::protobuf)
 else()
     if(ENABLE_D OR ENABLE_GPU)
-        target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${PY3_LIB} ${SECUREC_LIBRARY}
+        target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--as-needed ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
             -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_core proto_input mindspore_gvar
             mindspore::protobuf)
     else()
         if(BUILD_LITE)
             target_link_libraries(mindspore_shared_lib PRIVATE ${SECUREC_LIBRARY})
         else()
-            target_link_libraries(mindspore_shared_lib PRIVATE ${PY3_LIB} ${SECUREC_LIBRARY}
+            target_link_libraries(mindspore_shared_lib PRIVATE ${PY3_LIBG} ${SECUREC_LIBRARY}
                     mindspore mindspore_core proto_input mindspore_gvar mindspore::protobuf)
         endif()
     endif()
