@@ -192,6 +192,25 @@ void InitAccumParallel(float init_value, size_t total_len, float *embedding_data
     threads[i].join();
   }
 }
+
+void CopyTensorData(void *dest_ptr, size_t tensor_size, void *src_ptr) {
+  MS_EXCEPTION_IF_NULL(dest_ptr);
+  MS_EXCEPTION_IF_NULL(src_ptr);
+  char *dest = reinterpret_cast<char *>(dest_ptr);
+  char *src = reinterpret_cast<char *>(src_ptr);
+
+  // The security memcpy function 'memcpy_s' limits the value of the second parameter 'destMax' not to be greater than
+  // SECUREC_MEM_MAX_LEN. If tensor size(buffer length) is greater than SECUREC_MEM_MAX_LEN, the tensor should be cut
+  // into segments to copy.
+  for (size_t offset = 0; offset < tensor_size; offset += SECUREC_MEM_MAX_LEN) {
+    size_t copy_len = std::min(tensor_size - offset, SECUREC_MEM_MAX_LEN);
+    size_t dest_len = copy_len;
+    int ret = memcpy_s(dest + offset, dest_len, src + offset, copy_len);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "Failed to memcpy tensor, errorno(" << ret << ")";
+    }
+  }
+}
 }  // namespace
 
 void ParameterServer::InitEmbeddingTable(
@@ -222,7 +241,7 @@ void ParameterServer::InitEmbeddingTable(
           MS_LOG(EXCEPTION) << "Can not find parameter info for: " << param_name;
         }
         // Cache embedding table parameter by weight key to parameter node pointer.
-        embedding_tables_.emplace(key, iter->second);
+        (void)embedding_tables_.emplace(key, iter->second);
 
         InitRandomNormal(0, kStdDev, input_shapes, param_init_info.global_seed_, param_init_info.op_seed_,
                          embedding_data);
@@ -514,8 +533,8 @@ void ParameterServer::CacheEmbeddingTableParamPtr() {
 
     MS_EXCEPTION_IF_NULL(embedding_table);
     if (embedding_table->isa<Parameter>()) {
-      embedding_parameter_tables_.emplace(embedding_table->fullname_with_scope(),
-                                          embedding_table->cast<ParameterPtr>());
+      (void)embedding_parameter_tables_.emplace(embedding_table->fullname_with_scope(),
+                                                embedding_table->cast<ParameterPtr>());
     }
   }
 
@@ -545,19 +564,7 @@ void ParameterServer::SyncEmbeddingTables() {
     MS_EXCEPTION_IF_NULL(new_tensor_data_ptr);
     MS_EXCEPTION_IF_NULL(weights_[key]->data());
 
-    if (new_tensor_size < SECUREC_MEM_MAX_LEN) {
-      int64_t ret = memcpy_s(new_tensor_data_ptr, new_tensor_size, weights_[key]->data(), embedding_table_size);
-      if (ret != 0) {
-        MS_LOG(EXCEPTION) << "Failed to memcpy embedding table, key: " << key << ", errorno(" << ret << ")";
-        return;
-      }
-    } else {
-      auto ret = std::memcpy(new_tensor_data_ptr, weights_[key]->data(), new_tensor_size);
-      if (ret != new_tensor_data_ptr) {
-        MS_LOG(EXCEPTION) << "Failed to memcpy embedding table, key: " << key;
-      }
-      return;
-    }
+    CopyTensorData(new_tensor_data_ptr, new_tensor_size, weights_[key]->data());
 
     auto paramter_tensor_ptr = embedding_table.second->default_param();
     MS_EXCEPTION_IF_NULL(paramter_tensor_ptr);
