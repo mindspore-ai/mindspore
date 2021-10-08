@@ -21,7 +21,7 @@ from functools import wraps
 from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32_not_zero, \
     check_list_same_size, check_non_negative_float32, check_non_negative_int32, check_pos_float32, check_pos_int32, \
     check_value, parse_user_args, type_check
-from .utils import FadeShape, GainType, ScaleType
+from .utils import FadeShape, GainType, Interpolation, Modulation, ScaleType
 
 
 def check_amplitude_to_db(method):
@@ -472,6 +472,41 @@ def check_detect_pitch_frequency(method):
         check_pos_float32(freq_low, "freq_low")
         type_check(freq_high, (int, float), "freq_high")
         check_pos_float32(freq_high, "freq_high")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_flanger(method):
+    """Wrapper method to check the parameters of Flanger."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, delay, depth, regen, width, speed, phase, modulation, interpolation], _ = parse_user_args(
+            method, *args, **kwargs)
+        type_check(sample_rate, (int,), "sample_rate")
+        check_int32_not_zero(sample_rate, "sample_rate")
+
+        type_check(delay, (float, int), "delay")
+        check_value(delay, [0, 30], "delay")
+
+        type_check(depth, (float, int), "depth")
+        check_value(depth, [0, 10], "depth")
+
+        type_check(regen, (float, int), "regen")
+        check_value(regen, [-95, 95], "regen")
+
+        type_check(width, (float, int), "width")
+        check_value(width, [0, 100], "width")
+
+        type_check(speed, (float, int), "speed")
+        check_value(speed, [0.1, 10], "speed")
+
+        type_check(phase, (float, int), "phase")
+        check_value(phase, [0, 100], "phase")
+
+        type_check(modulation, (Modulation), "modulation")
+        type_check(interpolation, (Interpolation), "interpolation")
         return method(self, *args, **kwargs)
 
     return new_method

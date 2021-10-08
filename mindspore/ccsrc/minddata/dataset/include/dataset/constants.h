@@ -26,6 +26,18 @@ namespace dataset {
 using uchar = unsigned char;
 using dsize_t = int64_t;
 
+/// \brief The modulation in Flanger
+enum class Modulation {
+  kSinusoidal = 0,  ///< Use sinusoidal modulation.
+  kTriangular = 1   ///< Use triangular modulation.
+};
+
+/// \brief The interpolation in Flanger
+enum class Interpolation {
+  kLinear = 0,    ///< Use linear for delay-line interpolation.
+  kQuadratic = 1  ///< Use quadratic for delay-line interpolation.
+};
+
 /// \brief The color conversion code
 enum class ConvertMode {
   COLOR_BGR2BGRA = 0,                 ///< Add alpha channel to BGR image.

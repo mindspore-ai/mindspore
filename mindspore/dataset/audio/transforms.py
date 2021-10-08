@@ -23,12 +23,12 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 from ..transforms.c_transforms import TensorOperation
-from .utils import FadeShape, GainType, ScaleType
+from .utils import FadeShape, GainType, Interpolation, Modulation, ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
-    check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, check_fade, check_highpass_biquad, \
-    check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_decoding, check_riaa_biquad, \
-    check_time_stretch, check_treble_biquad, check_vol
+    check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, check_fade, check_flanger, \
+    check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_decoding, \
+    check_riaa_biquad, check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -496,6 +496,59 @@ class Fade(AudioTensorOperation):
 
     def parse(self):
         return cde.FadeOperation(self.fade_in_len, self.fade_out_len, DE_C_FADESHAPE_TYPE[self.fade_shape])
+
+
+DE_C_MODULATION_TYPE = {Modulation.SINUSOIDAL: cde.Modulation.DE_MODULATION_SINUSOIDAL,
+                        Modulation.TRIANGULAR: cde.Modulation.DE_MODULATION_TRIANGULAR}
+
+
+DE_C_INTERPOLATION_TYPE = {Interpolation.LINEAR: cde.Interpolation.DE_INTERPOLATION_LINEAR,
+                           Interpolation.QUADRATIC: cde.Interpolation.DE_INTERPOLATION_QUADRATIC}
+
+
+class Flanger(AudioTensorOperation):
+    """
+    Apply a flanger effect to the audio.
+
+    Args:
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
+        delay (float, optional): Desired delay in milliseconds (ms), range: [0, 30] (default=0.0).
+        depth (float, optional): Desired delay depth in milliseconds (ms), range: [0, 10] (default=2.0).
+        regen (float, optional): Desired regen (feedback gain) in dB, range: [-95, 95] (default=0.0).
+        width (float, optional): Desired width (delay gain) in dB, range: [0, 100] (default=71.0).
+        speed (float, optional): Modulation speed in Hz, range: [0.1, 10] (default=0.5).
+        phase (float, optional): Percentage phase-shift for multi-channel, range: [0, 100] (default=25.0).
+        modulation (Modulation, optional): Modulation of the input tensor (default=Modulation.SINUSOIDAL).
+            It can be one of Modulation.SINUSOIDAL or Modulation.TRIANGULAR.
+        interpolation (Interpolation, optional): Interpolation of the input tensor (default=Interpolation.LINEAR).
+            It can be one of Interpolation.LINEAR or Interpolation.QUADRATIC.
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[2.716064453125e-03, 6.34765625e-03], [9.246826171875e-03, 1.0894775390625e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Flanger(44100)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_flanger
+    def __init__(self, sample_rate, delay=0.0, depth=2.0, regen=0.0, width=71.0, speed=0.5,
+                 phase=25.0, modulation=Modulation.SINUSOIDAL, interpolation=Interpolation.LINEAR):
+        self.sample_rate = sample_rate
+        self.delay = delay
+        self.depth = depth
+        self.regen = regen
+        self.width = width
+        self.speed = speed
+        self.phase = phase
+        self.modulation = modulation
+        self.interpolation = interpolation
+
+    def parse(self):
+        return cde.FlangerOperation(self.sample_rate, self.delay, self.depth, self.regen, self.width, self.speed,
+                                    self.phase, DE_C_MODULATION_TYPE[self.modulation],
+                                    DE_C_INTERPOLATION_TYPE[self.interpolation])
 
 
 class FrequencyMasking(AudioTensorOperation):

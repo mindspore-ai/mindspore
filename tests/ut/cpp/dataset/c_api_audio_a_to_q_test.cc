@@ -1482,3 +1482,112 @@ TEST_F(MindDataTestPipeline, TestDetectPitchFrequencyParamCheck) {
   std::shared_ptr<Iterator> iter05 = ds05->CreateIterator();
   EXPECT_EQ(iter05, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestFlangerBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlangerBasic.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto FlangerOp = audio::Flanger(44100);
+
+  ds = ds->Map({FlangerOp});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by flanger
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFlangerParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlangerParamCheck.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  // Check sample_rate
+  MS_LOG(INFO) << "sample_rate is zero.";
+  auto flanger_op_sample_rate =
+    audio::Flanger(0, 0.0, 2.0, 0.0, 71.0, 0.5, 25.0, Modulation::kSinusoidal, Interpolation::kLinear);
+  std::shared_ptr<Dataset> dsSample_rate = ds->Map({flanger_op_sample_rate});
+  EXPECT_NE(dsSample_rate, nullptr);
+  std::shared_ptr<Iterator> iterSample_rate = dsSample_rate->CreateIterator();
+  EXPECT_EQ(iterSample_rate, nullptr);
+
+  // Check delay
+  MS_LOG(INFO) << "delay is out of range.";
+  auto flanger_op_delay =
+    audio::Flanger(44100, 50.0, 2.0, 0.0, 71.0, 0.5, 25.0, Modulation::kSinusoidal, Interpolation::kLinear);
+  std::shared_ptr<Dataset> dsDelay = ds->Map({flanger_op_delay});
+  EXPECT_NE(dsDelay, nullptr);
+  std::shared_ptr<Iterator> iterDelay = dsDelay->CreateIterator();
+  EXPECT_EQ(iterDelay, nullptr);
+
+  // Check depth
+  MS_LOG(INFO) << "depth is out of range.";
+  auto flanger_op_depth =
+    audio::Flanger(44100, 0.0, 20.0, 0.0, 71.0, 0.5, 25.0, Modulation::kSinusoidal, Interpolation::kLinear);
+  std::shared_ptr<Dataset> dsDepth = ds->Map({flanger_op_depth});
+  EXPECT_NE(dsDepth, nullptr);
+  std::shared_ptr<Iterator> iterDepth = dsDepth->CreateIterator();
+  EXPECT_EQ(iterDepth, nullptr);
+
+  // Check regen
+  MS_LOG(INFO) << "regen is out of range.";
+  auto flanger_op_regen =
+    audio::Flanger(44100, 0.0, 2.0, 100.0, 71.0, 0.5, 25.0, Modulation::kSinusoidal, Interpolation::kLinear);
+  std::shared_ptr<Dataset> dsRegen = ds->Map({flanger_op_regen});
+  EXPECT_NE(dsRegen, nullptr);
+  std::shared_ptr<Iterator> iterRegen = dsRegen->CreateIterator();
+  EXPECT_EQ(iterRegen, nullptr);
+
+  // Check width
+  MS_LOG(INFO) << "width is out of range.";
+  auto flanger_op_width =
+    audio::Flanger(44100, 0.0, 2.0, 0.0, 200.0, 0.5, 25.0, Modulation::kSinusoidal, Interpolation::kLinear);
+  std::shared_ptr<Dataset> dsWidth = ds->Map({flanger_op_width});
+  EXPECT_NE(dsWidth, nullptr);
+  std::shared_ptr<Iterator> iterWidth = dsWidth->CreateIterator();
+  EXPECT_EQ(iterWidth, nullptr);
+
+  // Check speed
+  MS_LOG(INFO) << "speed is out of range.";
+  auto flanger_op_speed =
+    audio::Flanger(44100, 0.0, 2.0, 0.0, 71.0, 20, 25.0, Modulation::kSinusoidal, Interpolation::kLinear);
+  std::shared_ptr<Dataset> dsSpeed = ds->Map({flanger_op_speed});
+  EXPECT_NE(dsSpeed, nullptr);
+  std::shared_ptr<Iterator> iterSpeed = dsSpeed->CreateIterator();
+  EXPECT_EQ(iterSpeed, nullptr);
+
+  // Check phase
+  MS_LOG(INFO) << "phase is out of range.";
+  auto flanger_op_phase =
+    audio::Flanger(44100, 0.0, 2.0, 0.0, 71.0, 20, 25.0, Modulation::kSinusoidal, Interpolation::kLinear);
+  std::shared_ptr<Dataset> dsPhase = ds->Map({flanger_op_phase});
+  EXPECT_NE(dsPhase, nullptr);
+  std::shared_ptr<Iterator> iterPhase = dsPhase->CreateIterator();
+  EXPECT_EQ(iterPhase, nullptr);
+}
