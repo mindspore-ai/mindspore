@@ -47,39 +47,36 @@ class SliceGpuFwdKernel : public GpuKernel {
     size_t input_rank = input_shape_.size();
     switch (input_rank) {
       case 1:
-        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
-                    size_[0], input_shape_[0]);
+        Slice1DKernel(begin_[0], size_[0], input_shape_[0], input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       case 2:
-        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
-                    begin_[1], size_[0], size_[1], input_shape_[0], input_shape_[1]);
+        Slice2DKernel(begin_[0], begin_[1], size_[0], size_[1], input_shape_[0], input_shape_[1], input, output,
+                      reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       case 3:
-        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
-                    begin_[1], begin_[2], size_[0], size_[1], size_[2], input_shape_[0], input_shape_[1],
-                    input_shape_[2]);
+        Slice3DKernel(begin_[0], begin_[1], begin_[2], size_[0], size_[1], size_[2], input_shape_[0], input_shape_[1],
+                      input_shape_[2], input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       case 4:
-        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
-                    begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3], input_shape_[0],
-                    input_shape_[1], input_shape_[2], input_shape_[3]);
+        Slice4DKernel(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3],
+                      input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input, output,
+                      reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       case 5:
-        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
-                    begin_[1], begin_[2], begin_[3], begin_[4], size_[0], size_[1], size_[2], size_[3], size_[4],
-                    input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input_shape_[4]);
+        Slice5DKernel(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], size_[0], size_[1], size_[2], size_[3],
+                      size_[4], input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input_shape_[4],
+                      input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       case 6:
-        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
-                    begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], size_[0], size_[1], size_[2], size_[3],
-                    size_[4], size_[5], input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3],
-                    input_shape_[4], input_shape_[5]);
+        Slice6DKernel(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], size_[0], size_[1], size_[2],
+                      size_[3], size_[4], size_[5], input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3],
+                      input_shape_[4], input_shape_[5], input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       case 7:
-        SliceKernel(input, output, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr), begin_[0],
-                    begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], begin_[6], size_[0], size_[1], size_[2],
-                    size_[3], size_[4], size_[5], size_[6], input_shape_[0], input_shape_[1], input_shape_[2],
-                    input_shape_[3], input_shape_[4], input_shape_[5], input_shape_[6]);
+        Slice7DKernel(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], begin_[6], size_[0], size_[1],
+                      size_[2], size_[3], size_[4], size_[5], size_[6], input_shape_[0], input_shape_[1],
+                      input_shape_[2], input_shape_[3], input_shape_[4], input_shape_[5], input_shape_[6], input,
+                      output, reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       default:
         MS_LOG(EXCEPTION) << "gpu Slice operator does not support inputs with rank >= " << input_rank << ".";
