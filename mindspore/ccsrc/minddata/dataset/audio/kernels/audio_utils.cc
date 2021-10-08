@@ -651,5 +651,79 @@ Status Magphase(const TensorRow &input, TensorRow *output, float power) {
 
   return Status::OK();
 }
+
+Status MedianSmoothing(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t win_length) {
+  auto channel = input->shape()[0];
+  auto num_of_frames = input->shape()[1];
+  // Centered windowed
+  int32_t pad_length = (win_length - 1) / 2;
+  int32_t out_length = num_of_frames + pad_length - win_length + 1;
+  TensorShape out_shape({channel, out_length});
+  std::vector<int> signal;
+  std::vector<int> out;
+  std::vector<int> indices(channel * (num_of_frames + pad_length), 0);
+  // "replicate" padding in any dimension
+  for (auto itr = input->begin<int>(); itr != input->end<int>(); ++itr) {
+    signal.push_back(*itr);
+  }
+  for (int i = 0; i < channel; ++i) {
+    for (int j = 0; j < pad_length; ++j) {
+      indices[i * (num_of_frames + pad_length) + j] = signal[i * num_of_frames];
+    }
+  }
+  for (int i = 0; i < channel; ++i) {
+    for (int j = 0; j < num_of_frames; ++j) {
+      indices[i * (num_of_frames + pad_length) + j + pad_length] = signal[i * num_of_frames + j];
+    }
+  }
+  for (int i = 0; i < channel; ++i) {
+    int32_t index = i * (num_of_frames + pad_length);
+    for (int j = 0; j < out_length; ++j) {
+      std::vector<int> tem(indices.begin() + index, indices.begin() + win_length + index);
+      std::sort(tem.begin(), tem.end());
+      out.push_back(tem[pad_length]);
+      ++index;
+    }
+  }
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out, out_shape, output));
+  return Status::OK();
+}
+
+Status DetectPitchFrequency(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
+                            float frame_time, int32_t win_length, int32_t freq_low, int32_t freq_high) {
+  std::shared_ptr<Tensor> nccf;
+  std::shared_ptr<Tensor> indices;
+  std::shared_ptr<Tensor> smooth_indices;
+  // pack batch
+  TensorShape input_shape = input->shape();
+  TensorShape to_shape({input->Size() / input_shape[-1], input_shape[-1]});
+  RETURN_IF_NOT_OK(input->Reshape(to_shape));
+  if (input->type() == DataType(DataType::DE_FLOAT32)) {
+    RETURN_IF_NOT_OK(ComputeNccf<float>(input, &nccf, sample_rate, frame_time, freq_low));
+    RETURN_IF_NOT_OK(FindMaxPerFrame<float>(nccf, &indices, sample_rate, freq_high));
+  } else if (input->type() == DataType(DataType::DE_FLOAT64)) {
+    RETURN_IF_NOT_OK(ComputeNccf<double>(input, &nccf, sample_rate, frame_time, freq_low));
+    RETURN_IF_NOT_OK(FindMaxPerFrame<double>(nccf, &indices, sample_rate, freq_high));
+  } else {
+    RETURN_IF_NOT_OK(ComputeNccf<float16>(input, &nccf, sample_rate, frame_time, freq_low));
+    RETURN_IF_NOT_OK(FindMaxPerFrame<float16>(nccf, &indices, sample_rate, freq_high));
+  }
+  RETURN_IF_NOT_OK(MedianSmoothing(indices, &smooth_indices, win_length));
+
+  // Convert indices to frequency
+  constexpr double EPSILON = 1e-9;
+  TensorShape freq_shape = smooth_indices->shape();
+  std::vector<float> out;
+  for (auto itr_fre = smooth_indices->begin<int>(); itr_fre != smooth_indices->end<int>(); ++itr_fre) {
+    out.push_back(sample_rate / (EPSILON + *itr_fre));
+  }
+
+  // unpack batch
+  auto shape_vec = input_shape.AsVector();
+  shape_vec[shape_vec.size() - 1] = freq_shape[-1];
+  TensorShape out_shape(shape_vec);
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out, out_shape, output));
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

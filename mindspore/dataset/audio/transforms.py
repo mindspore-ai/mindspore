@@ -26,8 +26,8 @@ from ..transforms.c_transforms import TensorOperation
 from .utils import FadeShape, GainType, ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
-    check_deemph_biquad, check_equalizer_biquad, check_fade, check_highpass_biquad, check_lfilter, \
-    check_lowpass_biquad, check_magphase, check_masking, check_mu_law_decoding, check_riaa_biquad, \
+    check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, check_fade, check_highpass_biquad, \
+    check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_decoding, check_riaa_biquad, \
     check_time_stretch, check_treble_biquad, check_vol
 
 
@@ -377,6 +377,45 @@ class DeemphBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.DeemphBiquadOperation(self.sample_rate)
+
+
+class DetectPitchFrequency(AudioTensorOperation):
+    """
+    Detect pitch frequency.
+
+    It is implemented using normalized cross-correlation function and median smoothing.
+
+    Args:
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+        frame_time (float, optional): Duration of a frame, the value must be greater than zero (default=0.01).
+        win_length (int, optional): The window length for median smoothing (in number of frames), the value must be
+            greater than zero (default=30).
+        freq_low (int, optional): Lowest frequency that can be detected (Hz), the value must be greater than zero
+            (default=85).
+        freq_high (int, optional): Highest frequency that can be detected (Hz), the value must be greater than zero
+            (default=3400).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[0.716064e-03, 5.347656e-03, 6.246826e-03, 2.089477e-02, 7.138305e-02],
+        ...                      [4.156616e-02, 1.394653e-02, 3.550292e-02, 0.614379e-02, 3.840209e-02]])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.DetectPitchFrequency(30, 0.1, 3, 5, 25)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_detect_pitch_frequency
+    def __init__(self, sample_rate, frame_time=0.01, win_length=30, freq_low=85, freq_high=3400):
+        self.sample_rate = sample_rate
+        self.frame_time = frame_time
+        self.win_length = win_length
+        self.freq_low = freq_low
+        self.freq_high = freq_high
+
+    def parse(self):
+        return cde.DetectPitchFrequencyOperation(self.sample_rate, self.frame_time,
+                                                 self.win_length, self.freq_low, self.freq_high)
 
 
 class EqualizerBiquad(AudioTensorOperation):
