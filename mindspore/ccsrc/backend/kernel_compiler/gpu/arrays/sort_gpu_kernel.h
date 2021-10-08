@@ -42,6 +42,9 @@ class SortGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_device = GetDeviceAddress<T>(inputs, 0);
 
     T *output_device = GetDeviceAddress<T>(outputs, 0);
@@ -127,10 +130,17 @@ class SortGpuKernel : public GpuKernel {
     }
 
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'SortGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
 
     input_rank_ = input_shape_.size();
-    if (input_rank_ > TRANSPOSE_MAX_DIMENSION) {
-      MS_LOG(ERROR) << "Sort cannot support input that has more than " << TRANSPOSE_MAX_DIMENSION << " dimensions.";
+    if (input_rank_ > TRANSPOSE_MAX_DIMENSION || input_rank_ < 1) {
+      MS_LOG(ERROR) << "For 'SortGpuKernel', the rank of input cannot be more than " << TRANSPOSE_MAX_DIMENSION
+                    << " dimensions or less than 1 dimension.";
       return false;
     }
 
@@ -144,6 +154,11 @@ class SortGpuKernel : public GpuKernel {
 
     if (axis_ < 0) {
       axis_ += input_rank_;
+    }
+    if ((size_t)axis_ >= input_rank_) {
+      MS_LOG(ERROR) << "For 'SortGpuKernel', axis should be less than the rank of input, bot got axis: " << axis_
+                    << " the rank of input: " << input_rank_;
+      return false;
     }
 
     perm_.resize(input_rank_);
@@ -172,6 +187,7 @@ class SortGpuKernel : public GpuKernel {
     input_size_ = 0;
     axis_ = 0;
     descending_ = false;
+    is_null_input_ = false;
     input_shape_.clear();
     input_rank_ = 0;
     transposed_shape_.clear();
@@ -206,6 +222,7 @@ class SortGpuKernel : public GpuKernel {
   size_t input_size_;
   int64_t axis_;
   bool descending_;
+  bool is_null_input_;
   std::vector<size_t> input_shape_;
   size_t input_rank_;
 

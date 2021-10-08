@@ -36,6 +36,7 @@ class ReverseSequenceGpuFwdKernel : public GpuKernel {
         input_size_(0),
         batch_dim_(0),
         seq_dim_(0),
+        is_null_input_(false),
         seq_len_size_(0),
         total_index_dim_(0),
         output_size_(0),
@@ -46,6 +47,9 @@ class ReverseSequenceGpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     S *seq_len = GetDeviceAddress<S>(inputs, 1);
     size_t *input_shape_ptr = GetDeviceAddress<size_t>(workspace, 0);
@@ -75,10 +79,16 @@ class ReverseSequenceGpuFwdKernel : public GpuKernel {
       return false;
     }
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (CHECK_NULL_INPUT(input_shape_)) {
-      MS_LOG(WARNING) << "ReverseSequence input is null";
+    auto seq_len_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_) || CHECK_NULL_INPUT(seq_len_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ReverseSequenceGpuKernel', input is null.";
       InitSizeLists();
       return true;
+    }
+    if (input_shape_.size() < 1) {
+      MS_LOG(EXCEPTION) << "For 'ReverseSequenceGpuKernel', the rank of input cannot be less than 1, but got "
+                        << input_shape_.size();
     }
     input_size_ = 1;
     shape_size_ = input_shape_.size();  // required for calls
@@ -86,12 +96,6 @@ class ReverseSequenceGpuFwdKernel : public GpuKernel {
       input_size_ *= input_shape_[i];
     }
     // get seq len shape
-    auto seq_len_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    if (CHECK_NULL_INPUT(seq_len_shape)) {
-      MS_LOG(WARNING) << "ReverseSequence seq lengths input is null";
-      InitSizeLists();
-      return true;
-    }
     seq_len_size_ = seq_len_shape.size();
     output_size_ = input_size_;  // size does not change
     // Allocate workspace memory to use for storing indices for each thread to compute with
@@ -116,6 +120,7 @@ class ReverseSequenceGpuFwdKernel : public GpuKernel {
   size_t input_size_;
   int64_t batch_dim_;
   int64_t seq_dim_;
+  bool is_null_input_;
   size_t seq_len_size_;
   size_t total_index_dim_;
   size_t output_size_;

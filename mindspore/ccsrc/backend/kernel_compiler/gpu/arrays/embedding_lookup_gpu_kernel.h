@@ -37,6 +37,9 @@ class EmbeddingLookupKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     VARIABLE_NOT_USED(workspace);
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
@@ -69,6 +72,16 @@ class EmbeddingLookupKernel : public GpuKernel {
     input_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     indices_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     output_shapes_ = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ =
+      CHECK_NULL_INPUT(input_shapes_) || CHECK_NULL_INPUT(indices_shapes_) || CHECK_NULL_INPUT(output_shapes_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'EmbeddingLookupGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
+    if (input_shapes_.size() < 1) {
+      MS_LOG(EXCEPTION) << "For 'EmbeddingLookupGpuKernel', the rank of input cannot be less than 1.";
+    }
     if (!is_dynamic_shape_) {
       offset_ = GetAttr<int64_t>(kernel_node, "offset");
     }
@@ -78,6 +91,7 @@ class EmbeddingLookupKernel : public GpuKernel {
   }
   void ResetResource() noexcept override {
     is_dynamic_shape_ = false;
+    is_null_input_ = false;
     input_shapes_.clear();
     indices_shapes_.clear();
     output_shapes_.clear();
@@ -138,6 +152,7 @@ class EmbeddingLookupKernel : public GpuKernel {
   size_t dims_[3] = {};
   int64_t offset_;
   bool is_dynamic_shape_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

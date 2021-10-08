@@ -38,6 +38,9 @@ class NLLLossGradGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input_device = GetDeviceAddress<T>(inputs, 0);
     T *dloss_device = GetDeviceAddress<T>(inputs, 1);
     int32_t *target_device = GetDeviceAddress<int32_t>(inputs, 2);  // nll_loss_grad only supports int32 target
@@ -54,6 +57,16 @@ class NLLLossGradGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'NllLossGradGpuKernel', input is null";
+      InitSizeLists();
+      return true;
+    }
+    if (input_shape.size() < 2) {
+      MS_LOG(EXCEPTION) << "For 'NllLossGradGpuKernel', the rank of input cannot less than 2, but got "
+                        << input_shape.size();
+    }
     n_ = static_cast<int>(input_shape[0]);
     c_ = static_cast<int>(input_shape[1]);
     for (size_t i = 0; i < input_shape.size(); i++) {
@@ -73,6 +86,7 @@ class NLLLossGradGpuKernel : public GpuKernel {
     input_size_ = 1;
     n_ = 0;
     c_ = 0;
+    is_null_input_ = false;
     reduction_ = 1;  // default value
     num_dloss_ = 1;  // default size (scalar)
     input_size_list_.clear();
@@ -96,6 +110,7 @@ class NLLLossGradGpuKernel : public GpuKernel {
   int reduction_;
   int n_;
   int c_;
+  bool is_null_input_;
   int num_dloss_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

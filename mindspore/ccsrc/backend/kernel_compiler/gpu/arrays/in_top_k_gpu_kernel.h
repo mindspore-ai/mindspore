@@ -40,6 +40,9 @@ class InTopKGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *predictions_device = GetDeviceAddress<T>(inputs, 0);
     int32_t *targets_device = GetDeviceAddress<int32_t>(inputs, 1);
 
@@ -106,6 +109,16 @@ class InTopKGpuKernel : public GpuKernel {
     }
 
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    if (input_shape_.size() < 2) {
+      MS_LOG(EXCEPTION) << "For 'InTopKGpuKernel', the rank of input cannot be less than 2, but got "
+                        << input_shape_.size();
+    }
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'InTopKGpuKernel', input is null.";
+      InitSizeLists();
+      return true;
+    }
     input_rank_ = input_shape_.size();
     input_size_ = 1;
     for (size_t i = 0; i < input_rank_; i++) {
@@ -136,6 +149,7 @@ class InTopKGpuKernel : public GpuKernel {
     input_rank_ = 0;
     outer_size_ = 0;
     inner_size_ = 0;
+    is_null_input_ = false;
     top_k_init_ = static_cast<T>(0.);
     input_size_list_.clear();
     output_size_list_.clear();
@@ -171,6 +185,7 @@ class InTopKGpuKernel : public GpuKernel {
   // for topk
   size_t outer_size_;
   size_t inner_size_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

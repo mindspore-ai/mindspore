@@ -41,6 +41,9 @@ class MeshgridGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *ones_device = GetDeviceAddress<T>(workspace, 0);
     CalOnesLike(output_size_, static_cast<T *>(nullptr), ones_device, reinterpret_cast<cudaStream_t>(stream_ptr));
 
@@ -79,9 +82,14 @@ class MeshgridGpuKernel : public GpuKernel {
     input_size_ = 1;
     input_count_ = AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t i = 0; i < input_count_; i++) {
-      size_t input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i)[0];
-      input_shapes_.push_back(input_shape);
-      input_size_ *= input_shape;
+      auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+      if (input_shape.size() < 1) {
+        MS_LOG(ERROR) << "For 'MeshGridGpuKernel', the rank of input" << i << " cannot be less than 1.";
+        return false;
+      }
+      size_t input_size = input_shape[0];
+      input_shapes_.push_back(input_size);
+      input_size_ *= input_size;
     }
 
     output_size_ = 1;
@@ -89,6 +97,12 @@ class MeshgridGpuKernel : public GpuKernel {
 
     // inferred shape swaps output shape for us if needed
     output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(output_shape_);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'MeshGridGpuKernel', output is null.";
+      InitSizeLists();
+      return true;
+    }
 
     if (output_count_ != input_count_) {
       MS_LOG(ERROR) << "output count is " << output_count_ << ", but MeshgridGpuKernel needs " << input_count_
@@ -101,7 +115,7 @@ class MeshgridGpuKernel : public GpuKernel {
     }
 
     // need to pad output shape with ones for broadcast kernel
-    for (size_t i = 0; i < output_shape_.size() - MAX_DIMS; i++) {
+    for (size_t i = 0; i < MAX_DIMS - output_shape_.size(); i++) {
       output_shape_.push_back(1);
     }
 
@@ -118,6 +132,7 @@ class MeshgridGpuKernel : public GpuKernel {
     output_size_ = 0;
     output_count_ = 0;
     swap_indexing_ = true;
+    is_null_input_ = false;
 
     input_size_list_.clear();
     output_size_list_.clear();
@@ -145,6 +160,7 @@ class MeshgridGpuKernel : public GpuKernel {
   size_t output_size_;
   size_t output_count_;
   bool swap_indexing_;
+  bool is_null_input_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

@@ -36,6 +36,9 @@ class ResizeBilinearGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    if (is_null_input_) {
+      return true;
+    }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
     float h_scale = Scaling(input_h_, output_h_, align_corners_);
@@ -58,8 +61,15 @@ class ResizeBilinearGpuKernel : public GpuKernel {
     }
     std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     std::vector<size_t> output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    if (input_shape.size() != 4) {
-      MS_LOG(ERROR) << "Input is " << input_shape.size() << "-D, but ResizeBilinear supports only 4-D inputs.";
+    is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "For 'ResizeBilinearGpuKernel', input or output is null.";
+      InitSizeLists();
+      return true;
+    }
+    if (input_shape.size() != 4 || output_shape.size() != 4) {
+      MS_LOG(ERROR) << "For 'ResizeBilinear', the rank of input and output must be 4, but got the rank of input: "
+                    << input_shape.size() << ", the rank of output: " << output_shape.size();
       return false;
     }
     n_ = SizeToInt(input_shape[0]);
@@ -83,6 +93,7 @@ class ResizeBilinearGpuKernel : public GpuKernel {
 
   void ResetResource() noexcept override {
     align_corners_ = false;
+    is_null_input_ = false;
     n_ = 0;
     c_ = 0;
     input_h_ = 0;
@@ -110,6 +121,7 @@ class ResizeBilinearGpuKernel : public GpuKernel {
   }
 
   bool align_corners_;
+  bool is_null_input_;
   int n_;
   int c_;
   int input_h_;
