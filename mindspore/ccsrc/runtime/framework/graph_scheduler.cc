@@ -63,42 +63,42 @@ inline bool IsSingleOpActorSet(const ActorSet *actor_set) {
 }
 
 // Convert the actors vector by the actor set.
-std::vector<ActorReference> CollectActors(const ActorSet *actor_set) {
+std::vector<AbstractActorPtr> CollectActors(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
-  std::vector<ActorReference> actors;
+  std::vector<AbstractActorPtr> actors;
 
   if (actor_set->data_prepare_actor_ != nullptr) {
-    (void)actors.emplace_back(static_cast<ActorReference>(actor_set->data_prepare_actor_));
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(actor_set->data_prepare_actor_));
   }
   for (auto &data_source_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_source_actor);
-    (void)actors.emplace_back(static_cast<ActorReference>(data_source_actor));
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(data_source_actor));
   }
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
-    (void)actors.emplace_back(static_cast<ActorReference>(kernel_actor));
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(kernel_actor));
   }
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
-    (void)actors.emplace_back(static_cast<ActorReference>(super_kernel_actor));
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(super_kernel_actor));
   }
   for (auto &switch_actor : actor_set->switch_actors_) {
     MS_EXCEPTION_IF_NULL(switch_actor);
-    (void)actors.emplace_back(static_cast<ActorReference>(switch_actor));
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(switch_actor));
   }
   for (auto &gather_actor : actor_set->gather_actors_) {
     MS_EXCEPTION_IF_NULL(gather_actor);
-    (void)actors.emplace_back(static_cast<ActorReference>(gather_actor));
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(gather_actor));
   }
   for (auto &copy_actor : actor_set->copy_actors_) {
     MS_EXCEPTION_IF_NULL(copy_actor);
-    (void)actors.emplace_back(static_cast<ActorReference>(copy_actor));
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(copy_actor));
   }
   if (actor_set->loop_count_actor_ != nullptr) {
-    (void)actors.emplace_back(static_cast<ActorReference>(actor_set->loop_count_actor_));
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(actor_set->loop_count_actor_));
   }
   if (actor_set->output_actor_ != nullptr) {
-    (void)actors.emplace_back(static_cast<ActorReference>(actor_set->output_actor_));
+    (void)actors.emplace_back(static_cast<AbstractActorPtr>(actor_set->output_actor_));
   }
 
   return actors;
@@ -294,8 +294,8 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   (void)actors_.emplace(actor_set->name_, actor_set);
 
   DumpActor(actor_set.get(), graph_compiler_info);
-  if (!CheckActorValid(actor_set.get(), graph_compiler_info.strategy_)) {
-    MS_LOG(EXCEPTION) << "The actor set of " << graph_compiler_info.name_ << " is invalid.";
+  if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
+    CheckActorValid(actor_set.get());
   }
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
@@ -1072,6 +1072,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
     // Link.
     (void)from_actor->output_data_arrows_.emplace_back(op_arrow_to_copy);
     copy_actor->input_datas_num_++;
+    (void)copy_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
 
     // Set the member of the copy actor.
     auto to_kernel_mod = AnfAlgo::GetKernelMod(to_kernel_with_input_idx.first);
@@ -1093,6 +1094,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
   auto op_arrow_from_copy = std::make_shared<DataArrow>(0, to_actor->GetAID(), to_input_index);
   (void)copy_actor->output_data_arrows_.emplace_back(op_arrow_from_copy);
   to_actor->input_datas_num_++;
+  (void)to_actor->input_data_arrow_aids_.emplace_back(copy_actor->GetAID());
   UpdateRefCount(copy_actor->output_.get());
 }
 
@@ -1171,6 +1173,7 @@ void GraphScheduler::LinkControlArrowByAutoMonad(AbstractActor *to_actor, const 
                  << ", to actor: " << to_actor->GetAID().Name();
     (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
     to_actor->input_controls_num_++;
+    (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
   }
 }
 
@@ -1190,6 +1193,7 @@ void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, cons
                  << ", from actor: " << from_actor->GetAID().Name() << ", to actor: " << to_actor->GetAID().Name();
     (void)from_actor->output_control_arrows_.emplace_back(to_aid);
     to_actor->input_controls_num_++;
+    (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
   }
 }
 
@@ -1216,16 +1220,19 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
       if (input_actor != nullptr) {
         (void)input_actor->output_control_arrows_.emplace_back(from_send_actor->GetAID());
         from_send_actor->input_controls_num_++;
+        (void)from_send_actor->input_control_arrow_aids_.emplace_back(input_actor->GetAID());
       }
     }
 
     // from_send_actor --> from_recv_actor
     (void)from_send_actor->output_control_arrows_.emplace_back(from_recv_actor->GetAID());
     from_recv_actor->input_controls_num_++;
+    (void)from_recv_actor->input_control_arrow_aids_.emplace_back(from_send_actor->GetAID());
 
     // from_recv_actor --> to_allreduce_actor
     (void)from_recv_actor->output_control_arrows_.emplace_back(to_allreduce_actor->GetAID());
     to_allreduce_actor->input_controls_num_++;
+    (void)to_allreduce_actor->input_control_arrow_aids_.emplace_back(from_recv_actor->GetAID());
   }
 
   for (auto &to_iter : graph->allreduce_to_send_recv_pairs()) {
@@ -1246,10 +1253,12 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
     // from_allreduce_actor  --> to_send_actor
     (void)from_allreduce_actor->output_control_arrows_.emplace_back(to_send_actor->GetAID());
     to_send_actor->input_controls_num_++;
+    (void)to_send_actor->input_control_arrow_aids_.emplace_back(from_allreduce_actor->GetAID());
 
     // to_send_actor --> to_recv_actor
     (void)to_send_actor->output_control_arrows_.emplace_back(to_recv_actor->GetAID());
     to_recv_actor->input_controls_num_++;
+    (void)to_recv_actor->input_control_arrow_aids_.emplace_back(to_send_actor->GetAID());
 
     // to_recv_actor --> outputs of from_allreduce_actor
     for (auto &output_data_arrow : from_allreduce_actor->output_data_arrows_) {
@@ -1257,6 +1266,7 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
       if (output_actor != nullptr) {
         (void)to_recv_actor->output_control_arrows_.emplace_back(output_actor->GetAID());
         output_actor->input_controls_num_++;
+        (void)output_actor->input_control_arrow_aids_.emplace_back(to_recv_actor->GetAID());
       }
     }
 
@@ -1309,6 +1319,7 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
     MS_EXCEPTION_IF_NULL(to_actor);
     (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
     to_actor->input_controls_num_++;
+    (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
   }
 
   // Ensure all actors execute orderly to optimize the execution performance in the multi device scenario currently.
@@ -1322,6 +1333,7 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
       if ((from_actor != nullptr) && (to_actor != nullptr)) {
         (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
         to_actor->input_controls_num_++;
+        (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
       }
     }
   }
@@ -1335,20 +1347,25 @@ void GraphScheduler::LinkControlArrowForDataPrepareActor(DataPrepareActor *data_
   // Data prepare actor --> data source actor.
   for (auto &data_source_actor : actor_set->data_source_actors_) {
     MS_EXCEPTION_IF_NULL(data_source_actor);
-    (void)data_prepare_actor->data_source_aids_.emplace_back(data_source_actor->GetAID());
+    (void)data_prepare_actor->output_control_arrows_.emplace_back(data_source_actor->GetAID());
+    data_source_actor->input_controls_num_++;
+    (void)data_source_actor->input_control_arrow_aids_.emplace_back(data_prepare_actor->GetAID());
   }
 
   // Data prepare actor --> no input kernel actor.
   for (auto &no_input_kernel_actor : actor_set->no_input_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(no_input_kernel_actor);
-    (void)data_prepare_actor->no_input_kernel_aids_.emplace_back(no_input_kernel_actor->GetAID());
+    (void)data_prepare_actor->output_control_arrows_.emplace_back(no_input_kernel_actor->GetAID());
     no_input_kernel_actor->input_controls_num_++;
+    (void)no_input_kernel_actor->input_control_arrow_aids_.emplace_back(data_prepare_actor->GetAID());
   }
 
   // Data prepare actor --> loop count actor.
   if ((actor_set->data_source_actors_.size() + actor_set->no_input_kernel_actors_.size() == 0) &&
       (actor_set->loop_count_actor_ != nullptr)) {
-    data_prepare_actor->loop_count_aid_ = &(actor_set->loop_count_actor_->GetAID());
+    (void)data_prepare_actor->output_control_arrows_.emplace_back(actor_set->loop_count_actor_->GetAID());
+    actor_set->loop_count_actor_->input_controls_num_++;
+    (void)actor_set->loop_count_actor_->input_control_arrow_aids_.emplace_back(data_prepare_actor->GetAID());
   }
 }
 
@@ -1392,6 +1409,7 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   for (auto &no_output_actor : no_output_actors) {
     (void)no_output_actor->output_control_arrows_.emplace_back(loop_count_actor->GetAID());
     loop_count_actor->input_controls_num_++;
+    (void)loop_count_actor->input_control_arrow_aids_.emplace_back(no_output_actor->GetAID());
   }
 
   // Loop count actor --> data prepare actor.
@@ -1463,6 +1481,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         auto op_arrow = std::make_shared<DataArrow>(output_with_index.second, to_actor->GetAID(), output_position);
         (void)from_actor->output_result_arrows_.emplace_back(op_arrow);
         (void)from_actor->output_nodes_.emplace_back(output_with_index.first);
+        (void)to_actor->input_result_arrow_aids_.emplace_back(from_actor->GetAID());
 
         // Update the real compute node in the host data source actor.
         if (kernel_type == KernelTransformType::kHostDataSourceActor) {
@@ -1525,6 +1544,7 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ke
       // Link from kernel actor to copy actor.
       (void)kernel_actor->output_control_arrows_.emplace_back(copy_actor->GetAID());
       copy_actor->input_controls_num_++;
+      (void)copy_actor->input_control_arrow_aids_.emplace_back(kernel_actor->GetAID());
     }
   }
 }
@@ -1539,82 +1559,60 @@ void GraphScheduler::LinkDataArrowForSwitchActor(SwitchActor *from_actor, const 
                                                  OpActor<DeviceTensor> *to_actor, const size_t to_index,
                                                  const size_t branch_index) {}
 
-bool GraphScheduler::CheckActorValid(const ActorSet *actor_set, GraphExecutionStrategy strategy) const {
+void GraphScheduler::CheckActorValid(const ActorSet *actor_set) const {
   MS_EXCEPTION_IF_NULL(actor_set);
-  // Check the data source actors.
-  for (const auto &data_source_actor : actor_set->data_source_actors_) {
-    MS_EXCEPTION_IF_NULL(data_source_actor);
-    if (data_source_actor->output_data_arrows_.size() + data_source_actor->output_result_arrows_.size() +
-          data_source_actor->output_control_arrows_.size() ==
-        0) {
-      MS_LOG(ERROR) << data_source_actor->GetAID().Name() << " has no user.";
-      return false;
+  auto actors = CollectActors(actor_set);
+  for (auto &actor : actors) {
+    MS_EXCEPTION_IF_NULL(actor);
+    if ((actor->input_datas_num_ != actor->input_data_arrow_aids_.size()) ||
+        (actor->input_controls_num_ != actor->input_control_arrow_aids_.size())) {
+      MS_LOG(EXCEPTION) << "The input num of " << actor->GetAID().Name()
+                        << " is wrong, expect data num: " << actor->input_datas_num_
+                        << ", actual data num: " << actor->input_data_arrow_aids_.size()
+                        << ", expect control num: " << actor->input_controls_num_
+                        << ", actual control num: " << actor->input_control_arrow_aids_.size();
+    }
+
+    if ((actor->type_ != KernelTransformType::kOutputActor) && (actor->type_ != KernelTransformType::kLoopCountActor) &&
+        (actor->output_data_arrows_.size() == 0) && (actor->output_control_arrows_.size() == 0) &&
+        (actor->output_result_arrows_.size() == 0)) {
+      MS_LOG(EXCEPTION) << actor->GetAID().Name() << " has no user.";
+    }
+    if ((actor->type_ != KernelTransformType::kOutputActor) &&
+        (actor->type_ != KernelTransformType::kDataPrepareActor) && (actor->input_datas_num_ == 0) &&
+        (actor->input_controls_num_ == 0)) {
+      MS_LOG(EXCEPTION) << actor->GetAID().Name() << " has no source.";
+    }
+
+    // Check the input of kernel actors and copy actors.
+    if ((actor->type_ == KernelTransformType::kKernelActor) || (actor->type_ == KernelTransformType::kCopyActor)) {
+      size_t expect_toal_input_num = 1;
+      if (actor->type_ == KernelTransformType::kKernelActor) {
+        auto kernel_actor = dynamic_cast<KernelActor *>(actor.get());
+        MS_EXCEPTION_IF_NULL(kernel_actor);
+        expect_toal_input_num = AnfAlgo::GetInputTensorNum(kernel_actor->kernel_);
+      }
+      auto input_data_num = actor->input_datas_num_;
+      auto device_tensor_store_num = actor->device_tensor_store_keys_.size();
+      if (input_data_num + device_tensor_store_num != expect_toal_input_num) {
+        MS_LOG(EXCEPTION) << "The input building of " << actor->GetAID().Name()
+                          << " is wrong, input data num: " << input_data_num
+                          << ", device tensor store num: " << device_tensor_store_num
+                          << ", total input num: " << expect_toal_input_num;
+      }
     }
   }
 
-  if (strategy == GraphExecutionStrategy::kStep) {
-    return true;
+  // Check the output actor.
+  auto output_actor = actor_set->output_actor_;
+  MS_EXCEPTION_IF_NULL(output_actor);
+  if (output_actor->input_result_arrow_aids_.size() + output_actor->device_tensor_store_keys_.size() !=
+      output_actor->outputs_num_) {
+    MS_LOG(EXCEPTION) << "The outputs num of output actor is wrong, the total outputs num: "
+                      << output_actor->outputs_num_
+                      << ", the input result arrows num: " << output_actor->input_result_arrow_aids_.size()
+                      << ", the device tensor store num: " << output_actor->device_tensor_store_keys_.size();
   }
-
-  // Check the super kernel actors.
-  for (const auto &super_kernel_actor : actor_set->super_kernel_actors_) {
-    MS_EXCEPTION_IF_NULL(super_kernel_actor);
-    if (super_kernel_actor->output_data_arrows_.size() + super_kernel_actor->output_control_arrows_.size() == 0) {
-      MS_LOG(ERROR) << super_kernel_actor->GetAID().Name() << " has no user.";
-      return false;
-    }
-  }
-
-  // Check the kernel actors.
-  for (const auto &kernel_actor : actor_set->kernel_actors_) {
-    MS_EXCEPTION_IF_NULL(kernel_actor);
-    if (kernel_actor->output_data_arrows_.size() + kernel_actor->output_control_arrows_.size() == 0) {
-      MS_LOG(ERROR) << kernel_actor->GetAID().Name() << " has no user.";
-      return false;
-    }
-
-    auto input_num = AnfAlgo::GetInputTensorNum(kernel_actor->kernel_);
-    auto input_data_num = kernel_actor->input_datas_num_;
-    auto device_tensor_store_num = kernel_actor->device_tensor_store_keys_.size();
-    if (input_data_num + device_tensor_store_num != input_num) {
-      MS_LOG(ERROR) << "The input building of " << AnfAlgo::GetNodeDebugString(kernel_actor->kernel_)
-                    << " is wrong, input data num: " << input_data_num
-                    << ", device tensor store num: " << device_tensor_store_num << ", total input num: " << input_num;
-      return false;
-    }
-  }
-
-  // Check the copy actors.
-  for (const auto &copy_actor : actor_set->copy_actors_) {
-    MS_EXCEPTION_IF_NULL(copy_actor);
-    if (copy_actor->output_data_arrows_.size() + copy_actor->output_control_arrows_.size() == 0) {
-      MS_LOG(ERROR) << copy_actor->GetAID().Name() << " has no user.";
-      return false;
-    }
-
-    const size_t kCopyActorInputDataNum = 1;
-    auto input_data_num = copy_actor->input_datas_num_;
-    size_t device_tensor_store_num = copy_actor->device_tensor_store_keys_.size();
-    if (input_data_num + device_tensor_store_num != kCopyActorInputDataNum) {
-      MS_LOG(ERROR) << "The input building of " << copy_actor->GetAID().Name()
-                    << " is wrong, input data num: " << input_data_num
-                    << ", device tensor store num: " << device_tensor_store_num
-                    << ", total input num: " << kCopyActorInputDataNum;
-      return false;
-    }
-  }
-
-  // Check the loop count actor.
-  const auto &loop_count_actor = actor_set->loop_count_actor_;
-  if ((loop_count_actor != nullptr) &&
-      (actor_set->data_source_actors_.size() + actor_set->kernel_actors_.size() + actor_set->copy_actors_.size() > 0)) {
-    if (loop_count_actor->input_controls_num_ == 0) {
-      MS_LOG(ERROR) << loop_count_actor->GetAID().Name() << " has no source.";
-      return false;
-    }
-  }
-
-  return true;
 }
 
 void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info) {
@@ -1819,14 +1817,6 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
 
 void GraphScheduler::DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) const {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\t\tdevice_contexts_num:" << actor->device_contexts_.size()
-      << "\tdevice_tensor_store_keys_num:" << actor->device_tensor_store_keys_.size()
-      << "\tinput_data_arrow_actors_num:" << actor->input_datas_num_
-      << "\tinput_control_arrow_actors_num:" << actor->input_controls_num_ << "\n";
-  ofs << "\t\toutput_data_arrows_num:" << actor->output_data_arrows_.size()
-      << "\toutput_control_arrows_num:" << actor->output_control_arrows_.size()
-      << "\toutput_result_arrows_num:" << actor->output_result_arrows_.size() << "\n";
-
   if (actor->device_contexts_.size() > 0) {
     ofs << "\t\tdevice_contexts:" << actor->device_contexts_.size() << "\n ";
     for (const auto &device_context : actor->device_contexts_) {
@@ -1902,14 +1892,6 @@ void GraphScheduler::DumpDataPrepareActor(const DataPrepareActor *actor, std::of
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
   DumpAbstractActor(actor, ofs);
-
-  ofs << "\t\toutput_control_arrows:" << actor->data_source_aids_.size() + actor->no_input_kernel_aids_.size() << "\n ";
-  for (const auto &aid : actor->data_source_aids_) {
-    ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
-  }
-  for (const auto &aid : actor->no_input_kernel_aids_) {
-    ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
-  }
 
   ofs << "\t\tcontinuous_memory_nodes:" << actor->continuous_memory_nodes_.size() << "\n ";
   for (const auto &iter : actor->continuous_memory_nodes_) {
@@ -2023,7 +2005,13 @@ void GraphScheduler::DumpOutputActor(const OutputActor *actor, std::ofstream &of
   MS_EXCEPTION_IF_NULL(actor);
   ofs << "\tactor_name:" << actor->GetAID().Name() << "\tloop_count:" << actor->loop_count_
       << "\toutputs_num:" << actor->outputs_num_ << "\n";
+
   DumpAbstractActor(actor, ofs);
+
+  ofs << "\t\tinput_result_arrows:" << actor->input_result_arrow_aids_.size() << "\n ";
+  for (const auto &input_result_arrow_aid : actor->input_result_arrow_aids_) {
+    ofs << "\t\t\tfrom_actor_name:" << input_result_arrow_aid.Name() << "\n";
+  }
 }
 
 void GraphScheduler::DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) const {
@@ -2043,7 +2031,8 @@ void GraphScheduler::DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) c
 void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const {
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
-    ofs << "\tgraph_id:" << graph->graph_id() << "\tis_sink:" << graph->is_sink() << "\n";
+    ofs << "\tgraph_id:" << graph->graph_id() << "\tis_sink:" << graph->is_sink()
+        << "\texecution_strategy:" << graph_compiler_info.strategy_ << "\n";
 
     for (auto &value_node : graph->graph_value_nodes()) {
       MS_EXCEPTION_IF_NULL(value_node);

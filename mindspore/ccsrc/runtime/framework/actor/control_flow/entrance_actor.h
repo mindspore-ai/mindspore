@@ -40,16 +40,15 @@ class EntranceActor : public AbstractActor {
 
   void Init() override;
 
-  // The entrance actor run when receive the input control.
-  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
   // The entrance actor run when receive the real parameter nodes and branch id.
   void CollectRealParametersAndBranchId(const std::vector<KernelWithIndex> &real_parameters, int branch_id,
                                         OpContext<DeviceTensor> *const context);
 
+ protected:
+  void Run(OpContext<DeviceTensor> *const context) override;
+
  private:
   friend class GraphScheduler;
-
-  void SendOutput(OpContext<DeviceTensor> *const context) const;
 
   // Formal parameters of actor, which is the front node.
   std::vector<KernelWithIndex> formal_parameters_;

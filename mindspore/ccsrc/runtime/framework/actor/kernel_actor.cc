@@ -74,59 +74,26 @@ void KernelActor::Init() {
     auto device_address = output_device_tensors_[data_arrow->from_output_index_];
     auto data =
       std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, device_address, data_arrow->to_input_index_);
-    (void)output_data_.emplace_back(data.get());
-    (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(std::move(data));
+    (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(data.get());
+    (void)output_data_.emplace_back(std::move(data));
   }
 }
 
-void KernelActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
+void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
 
-  auto &sequential_num = context->sequential_num_;
-  (void)input_op_datas_[sequential_num].emplace_back(input_data);
-  if (input_data->data_ == nullptr) {
-    std::string error_info =
-      "Input data of actor:" + GetAID().Name() + " num:" + std::to_string(input_data->index_) + " is empty";
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+  // Infer kernel shape and update abstract info for dynamic shape kernel.
+  if (is_dynamic_shape_) {
+    device_contexts_[0]->UpdateDynamicShape(kernel_);
   }
-  // When all the inputs are collected, then allocate memory and callback launch.
-  if (CheckRunningCondition(context)) {
-    // Infer kernel shape and update abstract info for dynamic shape kernel.
-    if (is_dynamic_shape_) {
-      device_contexts_[0]->UpdateDynamicShape(kernel_);
-    }
 
-    FetchInputDeviceTensor(context);
-    FetchOutputDeviceTensor();
-    if (memory_alloc_list_.size() > 0) {
-      SendMemoryAllocReq(context);
-    } else {
-      OnMemoryAllocFinish(context);
-    }
-  }
-}
-
-void KernelActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
-
-  auto &sequential_num = context->sequential_num_;
-  (void)input_op_controls_[sequential_num].emplace_back(input_control);
-  // When all the inputs are collected, then allocate memory and callback launch.
-  if (CheckRunningCondition(context)) {
-    // Infer kernel shape and update abstract info for dynamic shape kernel.
-    if (is_dynamic_shape_) {
-      device_contexts_[0]->UpdateDynamicShape(kernel_);
-    }
-
-    FetchInputDeviceTensor(context);
-    FetchOutputDeviceTensor();
-    if (memory_alloc_list_.size() > 0) {
-      SendMemoryAllocReq(context);
-    } else {
-      OnMemoryAllocFinish(context);
-    }
+  FetchInputDeviceTensor(context);
+  FetchOutputDeviceTensor();
+  if (memory_alloc_list_.size() > 0) {
+    SendMemoryAllocReq(context);
+  } else {
+    OnMemoryAllocFinish(context);
   }
 }
 
@@ -410,39 +377,17 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
   if (memory_free_list_.size() > 0) {
     SendMemoryFreeReq(context);
   }
-  SendOutput(context);
+
+  if (strategy_ == GraphExecutionStrategy::kPipeline) {
+    SendOutput(context);
+  }
 }
 
-void KernelActor::SendOutput(OpContext<DeviceTensor> *const context) const {
-  MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(kernel_);
-  if (strategy_ == GraphExecutionStrategy::kStep) {
-    return;
-  }
-
-  // Must be the execution order: send result --> send data --> send control, avoid the illegal timing problem.
-  // 1.Send graph output result.
-  SendOutputResult(context);
-
-  // 2.Send output data.
-  for (auto &output_data : output_data_) {
-    MS_EXCEPTION_IF_NULL(output_data);
-    Async(output_data->op_id_, &OpActor::RunOpData, output_data, context);
-  }
-
-  // 3.Send output control.
-  SendOutputControl(context);
-
-  // 4.Send recorder info.
+void KernelActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
   if (recorder_aid_ != nullptr) {
+    MS_EXCEPTION_IF_NULL(kernel_);
     Async(*recorder_aid_, &RecorderActor::RecordInfo, kernel_->fullname_with_scope(), &launch_info_,
           device_contexts_[0], context);
-  }
-
-  // No output.
-  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
-      (output_result_arrows_.size() == 0)) {
-    SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 }
 }  // namespace runtime

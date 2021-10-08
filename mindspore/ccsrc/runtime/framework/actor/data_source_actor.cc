@@ -58,43 +58,21 @@ void DataSourceActor::FetchData(OpContext<DeviceTensor> *const context) {
   SendMemoryAllocReq(context);
 }
 
-void DataSourceActor::SendOutput(OpContext<DeviceTensor> *const context) {
+void DataSourceActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *data_arrow,
+                                       OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(output_data);
+  MS_EXCEPTION_IF_NULL(data_arrow);
   MS_EXCEPTION_IF_NULL(context);
-  // No output.
-  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
-      (output_result_arrows_.size() == 0)) {
-    SET_OPCONTEXT_SUCCESS_RET((*context));
-  }
 
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
   }
 
-  // Must be the execution order: send result --> send data --> send control, avoid the illegal timing problem.
-  // 1.Send graph output result.
-  SendOutputResult(context);
-
-  // 2.Send output data.
   const auto &output_device_tensors = buffers_.front();
-  for (size_t i = 0; i < output_data_arrows_.size(); ++i) {
-    auto &data_arrow = output_data_arrows_[i];
-    auto &output_data = output_data_[i];
-    MS_EXCEPTION_IF_NULL(data_arrow);
-    MS_EXCEPTION_IF_NULL(output_data);
-    if (IntToSize(data_arrow->from_output_index_) >= output_device_tensors.size()) {
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
-    }
-    output_data->data_ = output_device_tensors[data_arrow->from_output_index_];
-    Async(data_arrow->to_op_id_, &OpActor::RunOpData, output_data.get(), context);
+  if (IntToSize(data_arrow->from_output_index_) >= output_device_tensors.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The output index is of range.");
   }
-
-  // 3.Send output control.
-  SendOutputControl(context);
-
-  // 4.Send recorder info.
-  if (recorder_aid_ != nullptr) {
-    SendRecorderInfo(context);
-  }
+  output_data->data_ = output_device_tensors[data_arrow->from_output_index_];
 }
 
 void DeviceQueueDataSourceActor::Init() {
@@ -180,6 +158,8 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     return;
   }
 
+  EraseInput(context);
+
   // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
   // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of
   // the current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully,
@@ -197,7 +177,7 @@ void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *const co
   SendOutput(context);
 }
 
-void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) {
+void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
   if (recorder_aid_ != nullptr) {
     MS_EXCEPTION_IF_NULL(data_kernel_);
     Async(*recorder_aid_, &RecorderActor::RecordInfo, data_kernel_->fullname_with_scope(), &launch_info_,
@@ -278,6 +258,8 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
     }
   }
   host_queue_->Pop();
+
+  EraseInput(context);
 
   // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
   // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of

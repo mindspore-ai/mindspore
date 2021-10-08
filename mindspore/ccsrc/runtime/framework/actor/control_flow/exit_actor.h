@@ -44,8 +44,6 @@ class ExitActor : public AbstractActor {
  private:
   friend class GraphScheduler;
 
-  void SendOutput(OpContext<DeviceTensor> *const context) const;
-
   // Formal parameters of actor, which is the front node.
   std::vector<KernelWithIndex> formal_parameters_;
 

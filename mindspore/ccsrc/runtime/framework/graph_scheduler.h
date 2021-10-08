@@ -207,8 +207,7 @@ class GraphScheduler {
                                    const size_t branch_index = SIZE_MAX);
 
   // Check whether the actor set is valid.
-  bool CheckActorValid(const ActorSet *actor_set,
-                       GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline) const;
+  void CheckActorValid(const ActorSet *actor_set) const;
 
   // Persist device tensors of graph's some nodes(such as weights and value nodes).
   void PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info);
