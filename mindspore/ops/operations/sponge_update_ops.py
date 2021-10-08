@@ -2272,7 +2272,7 @@ class ConstrainForceVirial(PrimitiveWithInfer):
         self.init_prim_io_names(
             inputs=['crd', 'quarter_cof', 'mass_inverse',
                     'scaler', 'pair_dr', 'atom_i_serials', 'atom_j_serials',
-                    'constant_rs', 'constrain_ks', 'test_frc', 'atom_virial'],
+                    'constant_rs', 'constrain_ks'],
             outputs=['uint_crd', 'frc', 'virial'])
 
     def infer_shape(self, crd, quarter_cof, mass_inverse, scaler_shape, pair_dr_shape, atom_i_serials_shape,
