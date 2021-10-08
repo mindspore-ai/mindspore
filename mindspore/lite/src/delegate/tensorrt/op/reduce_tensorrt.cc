@@ -58,6 +58,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   bool keep_dims = reduce_op->keep_dims();
   out_format_ = tensorrt_in_tensors_[0].format_;
   nvinfer1::ITensor *shuffler_input = tensorrt_in_tensors_[0].trt_tensor_;
+  MS_LOG(DEBUG) << "origin input " << GetTensorFormat(shuffler_input, out_format_);
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       !SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
     if (tensorrt_in_tensors_[0].format_ == Format::NCHW) {
@@ -65,6 +66,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
       if (transpose_layer == nullptr) {
         MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
+        return RET_ERROR;
       }
       transpose_layer->setName((op_name_ + "_transpose_in").c_str());
       shuffler_input = transpose_layer->getOutput(0);
@@ -76,22 +78,22 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   nvinfer1::ITensor *reduce_input = shuffler_input;
   // 4 dims support reduce at each axis
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims != DIMENSION_4D) {
-    nvinfer1::IShuffleLayer *unsqueeze_layer = network->addShuffle(*tensorrt_in_tensors_[0].trt_tensor_);
+  if (reduce_input->getDimensions().nbDims < DIMENSION_4D) {
+    nvinfer1::IShuffleLayer *unsqueeze_layer = network->addShuffle(*reduce_input);
     if (unsqueeze_layer == nullptr) {
       MS_LOG(ERROR) << "add Shuffle op failed for TensorRT.";
       return RET_ERROR;
     }
     unsqueeze_layer->setName((op_name_ + "_unsqueeze4dims").c_str());
-    nvinfer1::Dims unsqueeze_dims = tensorrt_in_tensors_[0].trt_tensor_->getDimensions();
-    for (int i = unsqueeze_dims.nbDims; i < 4; i++) {
+    nvinfer1::Dims unsqueeze_dims = reduce_input->getDimensions();
+    for (int i = unsqueeze_dims.nbDims; i < DIMENSION_4D; i++) {
       unsqueeze_dims.d[i] = 1;
     }
-    unsqueeze_dims.nbDims = 4;
-
+    unsqueeze_dims.nbDims = DIMENSION_4D;
     unsqueeze_layer->setReshapeDimensions(unsqueeze_dims);
     reduce_input = unsqueeze_layer->getOutput(0);
   }
+  MS_LOG(DEBUG) << "after transpose and expand dims " << GetTensorFormat(reduce_input, out_format_);
 
   uint32_t reduceAxis = GetAxis();
   nvinfer1::IReduceLayer *layer = network->addReduce(*reduce_input, reduce_op_, reduceAxis, keep_dims);
@@ -118,8 +120,9 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "addReduce output tensor create failed for TensorRT.";
     return RET_ERROR;
   }
-  out_tensor->setName(out_tensors_[0].Name().c_str());
+  out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_});
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor, out_format_);
   return RET_OK;
 }
 uint32_t ReduceTensorRT::GetAxis() {
@@ -134,10 +137,10 @@ uint32_t ReduceTensorRT::GetAxis() {
     MS_LOG(WARNING) << "not int data type";
   }
   int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
-  uint32_t base = std::pow(2, in_tensors_[0].Shape().size());
+  // uint32_t base = std::pow(2, DIMENSION_4D);
   for (int i = 0; i < axis_tensor.ElementNum(); i++) {
     int format_axis_data = *axis_data;
-    reduceAxis |= (base - (1u << format_axis_data));
+    reduceAxis |= 1u << format_axis_data;
     axis_data++;
   }
   MS_LOG(DEBUG) << "reduceAxis: " << reduceAxis;

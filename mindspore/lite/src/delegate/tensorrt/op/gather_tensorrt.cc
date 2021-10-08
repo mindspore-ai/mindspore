@@ -95,7 +95,7 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   gather_layer->setName(op_name_.c_str());
-  gather_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  gather_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{gather_layer->getOutput(0), out_format});
   return RET_OK;
 }
