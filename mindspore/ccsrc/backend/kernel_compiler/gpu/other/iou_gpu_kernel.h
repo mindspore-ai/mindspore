@@ -28,7 +28,7 @@ namespace kernel {
 template <typename T>
 class IOUGpuKernel : public GpuKernel {
  public:
-  IOUGpuKernel() : gt_boxes_size_(0), anchor_boxes_size_(0), iou_size_(0), mode_(0) {}
+  IOUGpuKernel() : gt_boxes_size_(0), anchor_boxes_size_(0), iou_size_(0), mode_(0), is_null_input_(false) {}
 
   ~IOUGpuKernel() override = default;
 

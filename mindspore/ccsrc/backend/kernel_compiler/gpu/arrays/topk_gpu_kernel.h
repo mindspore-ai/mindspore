@@ -29,7 +29,8 @@ namespace kernel {
 template <typename T, typename S>
 class TopKGpuKernel : public GpuKernel {
  public:
-  TopKGpuKernel() : sorted_(false), outer_size_(1), inner_size_(1), k_(1), input_shape_size_(0) {}
+  TopKGpuKernel()
+      : sorted_(false), is_null_input_(false), outer_size_(1), inner_size_(1), k_(1), input_shape_size_(0) {}
   ~TopKGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

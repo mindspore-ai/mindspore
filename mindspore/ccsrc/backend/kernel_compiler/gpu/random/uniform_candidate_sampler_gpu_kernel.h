@@ -32,7 +32,13 @@ template <typename T, typename S>
 class UniformCandidateSamplerGpuKernel : public GpuKernel {
  public:
   UniformCandidateSamplerGpuKernel()
-      : num_true_(0), num_sampled_(0), unique_(false), range_max_(0), input_size_(0), remove_accidental_hits_(false) {}
+      : num_true_(0),
+        num_sampled_(0),
+        unique_(false),
+        range_max_(0),
+        input_size_(0),
+        remove_accidental_hits_(false),
+        is_null_input_(false) {}
   ~UniformCandidateSamplerGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

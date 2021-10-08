@@ -37,7 +37,8 @@ class AdamGpuKernel : public GpuKernel {
         beta1_size_(0),
         beta2_size_(0),
         epsilon_size_(0),
-        gradient_size_(0) {}
+        gradient_size_(0),
+        is_null_input_(false) {}
 
   ~AdamGpuKernel() override = default;
 

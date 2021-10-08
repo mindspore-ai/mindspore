@@ -187,6 +187,7 @@ class Conv3dGradInputGpuKernel : public GpuKernel {
     dy_desc_ = nullptr;
     dx_desc_ = nullptr;
     padded_descriptor_ = nullptr;
+    algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
     cudnn_data_type_ = CUDNN_DATA_FLOAT;
     compute_format_ = CUDNN_TENSOR_NCHW;
     old_depth_ = 0;

@@ -28,7 +28,7 @@ namespace kernel {
 template <typename T>
 class FusedAdamWeightDecayGpuKernel : public GpuKernel {
  public:
-  FusedAdamWeightDecayGpuKernel() : element_nums_(0), weight_decay_(false) {}
+  FusedAdamWeightDecayGpuKernel() : element_nums_(0), weight_decay_(false), is_null_input_(false) {}
   ~FusedAdamWeightDecayGpuKernel() override = default;
 
   bool Init(const CNodePtr &kernel_node) override {

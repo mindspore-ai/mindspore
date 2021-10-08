@@ -35,7 +35,8 @@ class IndexAddGpuKernel : public GpuKernel {
         src_axis_size_(0),
         dst_axis_size_(0),
         inner_size_(0),
-        use_lock_(true) {}
+        use_lock_(true),
+        is_null_input_(false) {}
   ~IndexAddGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

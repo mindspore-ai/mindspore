@@ -28,7 +28,12 @@ template <typename T, typename S, typename G>
 class AdagradGpuKernel : public GpuKernel {
  public:
   AdagradGpuKernel()
-      : variable_size_(0), accumulation_size_(0), learning_rate_size_(0), gradient_size_(0), update_slots(true) {}
+      : variable_size_(0),
+        accumulation_size_(0),
+        learning_rate_size_(0),
+        gradient_size_(0),
+        update_slots(true),
+        is_null_input_(false) {}
 
   ~AdagradGpuKernel() override = default;
 
