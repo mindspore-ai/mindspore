@@ -491,9 +491,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype,
             If `dtype` is None, infer the data type from other input arguments. Default is None.
         axis (int, optional): The axis in the result to store the samples. Relevant
-            only if start or stop are array-like.  By default :math:`(0)`, the samples will
-            be along a new axis inserted at the beginning. Use :math:`-1` to get an axis at the end.
-            Default is :math:`0`.
+            only if start or stop are array-like.  By default, the samples will
+            be along a new axis inserted at the beginning. Use -1 to get an axis at the end.
+            Default is 0.
 
     Returns:
         Tensor, with `num` equally spaced samples in the closed interval
@@ -564,13 +564,13 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
             not included. Default is True.
         base (Union[int, float], optional): The base of the log space. The step size
             between the elements in :math:`ln(samples) / ln(base)` (or :math:`log_{base}(samples)`)
-            is uniform. Default is :math:`10.0`.
+            is uniform. Default is 10.0.
         dtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor dtype.
             If `dtype` is None, infer the data type from other input arguments. Default is None.
         axis (int, optional): The axis in the result to store the samples. Relevant
-            only if start or stop is array-like.  By default (:math:`0`), the samples will
-            be along a new axis inserted at the beginning. Use :math:`-1` to get an axis at the end.
-            Default is :math:`0`.
+            only if start or stop is array-like.  By default, the samples will
+            be along a new axis inserted at the beginning. Use -1 to get an axis at the end.
+            Default is 0.
 
     Returns:
         Tensor, equally spaced on a log scale.
@@ -657,7 +657,7 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
 
 def eye(N, M=None, k=0, dtype=mstype.float32):
     """
-    Returns a 2-D tensor with ones on the diagnoal and zeros elsewhere.
+    Returns a 2-D tensor with ones on the diagonal and zeros elsewhere.
 
     Args:
         N (int): Number of rows in the output, must be larger than 0.
@@ -984,12 +984,12 @@ def tri(N, M=None, k=0, dtype=mstype.float32):
             :math:`k = 0` is the main diagonal, while :math:`k < 0` is below it, and :math:`k > 0` is above.
             The default is 0.
         dtype(:class:`mindspore.dtype`, optional): Data type of the returned array. The default
-            is :class:`mindspore.dtype`.
+            is mstype.float32.
 
     Returns:
         Tensor with shape `(N, M)`, with its lower triangle filled with
         ones and zeros elsewhere; in other words :math:`T[i,j] = 1` for :math:`j <= i + k`,
-        :math:`0` otherwise.
+        0 otherwise.
 
     Raises:
         TypeError: If input arguments have types not specified above.
@@ -1936,7 +1936,7 @@ def triu_indices(n, k=0, m=None):
 
     Args:
         n (int): The size of the arrays for which the returned indices will be valid.
-        k (int, optional): Diagonal offset.
+        k (int, optional): Diagonal offset, default is 0.
         m (int, optional): The column dimension of the arrays for which the returned
             arrays will be valid. By default `m` is taken equal to `n`.
 
@@ -1965,7 +1965,7 @@ def tril_indices(n, k=0, m=None):
 
     Args:
         n (int): The size of the arrays for which the returned indices will be valid.
-        k (int, optional): Diagonal offset.
+        k (int, optional): Diagonal offset, default is 0.
         m (int, optional): The column dimension of the arrays for which the returned
             arrays will be valid. By default `m` is taken equal to `n`.
 
@@ -1994,7 +1994,7 @@ def triu_indices_from(arr, k=0):
 
     Args:
         arr (Union[Tensor, list, tuple]): 2-dimensional array.
-        k (int, optional): Diagonal offset.
+        k (int, optional): Diagonal offset, default is 0.
 
     Returns:
         triu_indices_from, tuple of 2 tensor, shape(N)
@@ -2026,7 +2026,7 @@ def tril_indices_from(arr, k=0):
 
     Args:
         arr (Union[Tensor, list, tuple]): 2-dimensional array.
-        k (int, optional): Diagonal offset.
+        k (int, optional): Diagonal offset, default is 0.
 
     Returns:
         triu_indices_from, tuple of 2 tensor, shape(N)

@@ -79,11 +79,12 @@ def expand_dims(a, axis):
 
 def squeeze(a, axis=None):
     """
-    Removes single-dimensional entries from the shape of an tensor.
+    Removes single-dimensional entries from the shape of a tensor.
 
     Args:
         a (Tensor): Input tensor array.
-        axis (Union[None, int, list(int), tuple(list)]): Default is None.
+        axis (Union[None, int, list(int), tuple(list)]): The axis(axes) to squeeze,
+            default is None.
 
     Returns:
         Tensor, with all or a subset of the dimensions of length :math:`1` removed.
@@ -886,7 +887,7 @@ def stack(arrays, axis=0):
     Args:
         arrays (sequence of Tensor): Each array must have the same shape.
         axis (int, optional): The axis in the result array along which the
-            input arrays are stacked.
+            input arrays are stacked. Default: 0.
 
     Returns:
         Tensor, The stacked array has one more dimension than the input
@@ -1045,7 +1046,7 @@ def roll(a, shift, axis=None):
         shift (Union[int, tuple(int)]: The number of places by which elements are
             shifted. If a tuple, then axis must be a tuple of the same size, and
             each of the given axes is shifted by the corresponding number. If shift
-            is an int while axis is a tuple of ints, then the same value is used
+            is an int while axis is a tuple of integers, then the same value is used
             for all given axes.
         axis (Union[int, tuple(int)], optional): Axis or axes along which elements
             are shifted. By default, the array is flattened before shifting, after
@@ -1630,15 +1631,12 @@ def flip(m, axis=None):
 
     The shape of the array is preserved, but the elements are reordered.
 
-    Note:
-        On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
-
     Args:
         m (Tensor): Input array.
-        axis (None or int or tuple of ints, optional): Axis or axes along which
+        axis (None or int or tuple of integers, optional): Axis or axes along which
             to flip over. The default, ``axis=None``, will flip over all of the axes
             of the input array. If `axis` is negative it counts from the last to
-            the first axis. If `axis` is a tuple of ints, flipping is performed on
+            the first axis. If `axis` is a tuple of integers, flipping is performed on
             all of the axes specified in the tuple.
 
     Returns:
@@ -1648,7 +1646,7 @@ def flip(m, axis=None):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Example:
         >>> import mindspore.numpy as np
@@ -1689,9 +1687,6 @@ def flipud(m):
     Flips the entries in each column in the up/down direction.
     Rows are preserved, but appear in a different order than before.
 
-    Note:
-        On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
-
     Args:
         m (Tensor): Input array.
 
@@ -1702,7 +1697,7 @@ def flipud(m):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Example:
         >>> import mindspore.numpy as np
@@ -1722,9 +1717,6 @@ def fliplr(m):
     Flips the entries in each row in the left/right direction.
     Columns are preserved, but appear in a different order than before.
 
-    Note:
-        On CPU, the supported dtypes are np.float16, np.float32, and np.float64.
-
     Args:
         m (Tensor): Input array.
 
@@ -1735,7 +1727,7 @@ def fliplr(m):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Example:
         >>> import mindspore.numpy as np
@@ -1954,7 +1946,7 @@ def rot90(a, k=1, axes=(0, 1)):
     Raises:
         TypeError: if input `a` is not a Tensor or
             the argument `k` is not integer or
-            the argument `axes` is not tuple of ints or list of ints.
+            the argument `axes` is not tuple of integers or list of ints.
         ValueError: if any axis is out of range or
             the length of `axes` is not `2`.
 
@@ -2241,7 +2233,7 @@ def array_str(a):
 
     Note:
         Numpy argument `max_line_width`, `precision` and `suppress_small` are not supported.
-        Graph mode dose not support the function.
+        Graph mode does not support the function.
 
     Args:
         a (Tensor): Input data.
@@ -2412,7 +2404,7 @@ def unravel_index(indices, shape, order='C'):
     Args:
         indices (Union[int, float, bool, list, tuple, Tensor]): An integer array whose elements
             are indices into the flattened version of an array of dimensions shape.
-        shape (tuple of ints): The shape of the array to use for unraveling indices.
+        shape (tuple of integers): The shape of the array to use for unraveling indices.
         order (Union['C', 'F'], optional): Determines whether the indices should be viewed as
             indexing in row-major (C-style) or column-major (Fortran-style) order.
 
