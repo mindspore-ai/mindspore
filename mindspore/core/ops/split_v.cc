@@ -36,42 +36,42 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   if (split_dim < 0) {
     split_dim += x_rank;
   }
-  auto shape_of_split_dim = x_shape[split_dim];
+  auto shape_of_split_dim = x_shape[LongToSize(split_dim)];
   auto num_split = GetValue<int64_t>(primitive->GetAttr("num_split"));
-  CheckAndConvertUtils::CheckInteger("num_split", num_split, kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("num_split", num_split, kGreaterEqual, 1, prim_name);
   auto size_splits = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSizeSplits));
   CheckAndConvertUtils::Check("num_split", num_split, kEqual, "rank of size_splits", SizeToLong(size_splits.size()),
                               prim_name);
   auto default_idx = std::find(size_splits.begin(), size_splits.end(), -1);
   if (default_idx == size_splits.end()) {
-    int sum_of_size_splits = 0;
+    int64_t sum_of_size_splits = 0;
     for (int64_t i = 0; i < num_split; i++) {
-      CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
-                                         {0, shape_of_split_dim}, prim_name);
-      sum_of_size_splits += size_splits[i];
+      (void)CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
+                                               {0, shape_of_split_dim}, prim_name);
+      sum_of_size_splits += size_splits[LongToSize(i)];
     }
     CheckAndConvertUtils::Check("sum of size_splits", sum_of_size_splits, kEqual, "dimension of value along split_dim",
                                 shape_of_split_dim, prim_name);
   } else {
-    size_splits.erase(default_idx);
+    (void)size_splits.erase(default_idx);
     auto excessive_default_idx = std::find(size_splits.begin(), size_splits.end(), -1);
     if (excessive_default_idx != size_splits.end()) {
       MS_EXCEPTION(ValueError) << "Got more than one default value -1 in size_splits.";
     } else {
-      int sum_of_size_splits = 0;
+      int64_t sum_of_size_splits = 0;
       for (int64_t i = 0; i < num_split - 1; i++) {
-        CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
-                                           {0, shape_of_split_dim}, prim_name);
-        sum_of_size_splits += size_splits[i];
+        (void)CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
+                                                 {0, shape_of_split_dim}, prim_name);
+        sum_of_size_splits += size_splits[LongToSize(i)];
       }
       auto default_value = shape_of_split_dim - sum_of_size_splits;
-      size_splits.insert(default_idx, default_value);
+      (void)size_splits.insert(default_idx, default_value);
     }
   }
   std::vector<abstract::BaseShapePtr> shape_tuple;
   for (int64_t i = 0; i < num_split; i++) {
     auto shape = x_shape;
-    shape[split_dim] = size_splits[i];
+    shape[split_dim] = size_splits[LongToSize(i)];
     abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
     shape_tuple.push_back(out_shape);
   }

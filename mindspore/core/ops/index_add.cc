@@ -26,7 +26,8 @@ abstract::ShapePtr IndexAddInferShape(const PrimitivePtr &primitive, const std::
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 3;
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, input_num, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
+                                           prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -39,16 +40,16 @@ abstract::ShapePtr IndexAddInferShape(const PrimitivePtr &primitive, const std::
   CheckAndConvertUtils::CheckInRange("axis", axis, kIncludeNeither, {-x_rank - 1, x_rank}, prim_name);
   auto idx_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto idx_rank = SizeToLong(idx_shape.size());
-  CheckAndConvertUtils::CheckInteger("idx size", idx_rank, kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("idx size", idx_rank, kEqual, 1, prim_name);
   auto axis_rank = axis;
   if (axis < 0) {
     axis_rank = axis + x_rank;
   }
-  CheckAndConvertUtils::Check("size of indices", idx_shape[0], kEqual, "dimension of y[axis]", y_shape[axis_rank],
-                              prim_name);
+  (void)CheckAndConvertUtils::Check("size of indices", idx_shape[0], kEqual, "dimension of y[axis]", y_shape[axis_rank],
+                                    prim_name);
   for (int dim = 0; dim < x_rank; dim = dim + 1) {
     if (dim != axis_rank) {
-      CheckAndConvertUtils::Check("x dim", x_shape[dim], kEqual, "y dim", y_shape[dim], prim_name);
+      (void)CheckAndConvertUtils::Check("x dim", x_shape[dim], kEqual, "y dim", y_shape[dim], prim_name);
     }
   }
   return std::make_shared<abstract::Shape>(x_shape);
@@ -66,8 +67,8 @@ TypePtr IndexAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   auto var_type = input_args[kInputIndex0]->BuildType();
   auto indices_type = input_args[kInputIndex1]->BuildType();
   auto updates_type = input_args[kInputIndex2]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_type, indices_types, prim->name());
-  CheckAndConvertUtils::CheckTensorTypeValid("input_y type", updates_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_type, indices_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_y type", updates_type, valid_types, prim->name());
   return CheckAndConvertUtils::CheckTensorTypeValid("input_x type", var_type, valid_types, prim->name());
 }
 }  // namespace

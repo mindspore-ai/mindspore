@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kInputSize = 2;
+constexpr int64_t kInputSize = 2;
 abstract::ShapePtr SoftMarginLossInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

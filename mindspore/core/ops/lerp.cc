@@ -41,8 +41,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto weight_shape = weight_shape_map[kShape];
   auto broadcast_shape = CalBroadCastShape(start_shape, end_shape, op_name, "start", "end");
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    CalBroadCastShape(start_shape, weight_shape, op_name, "start", "weight");
-    CalBroadCastShape(end_shape, weight_shape, op_name, "end", "weight");
+    (void)CalBroadCastShape(start_shape, weight_shape, op_name, "start", "weight");
+    (void)CalBroadCastShape(end_shape, weight_shape, op_name, "end", "weight");
     broadcast_shape = CalBroadCastShape(broadcast_shape, weight_shape, op_name);
   }
   return std::make_shared<abstract::Shape>(broadcast_shape);
@@ -56,8 +56,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   const int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
   std::map<std::string, TypePtr> types;
-  types.emplace("start", input_args[0]->BuildType());
-  types.emplace("end", input_args[1]->BuildType());
+  (void)types.emplace("start", input_args[0]->BuildType());
+  (void)types.emplace("end", input_args[1]->BuildType());
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     (void)types.emplace("weight", input_args[kInputIndex2]->BuildType());
   } else {

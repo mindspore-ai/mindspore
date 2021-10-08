@@ -31,7 +31,7 @@ class MS_CORE_API Split : public PrimitiveC {
   Split() : PrimitiveC(kNameSplit) {}
   ~Split() = default;
   MS_DECLARE_PARENT(Split, PrimitiveC);
-  void Init(const std::vector<int64_t> &size_splits, const int64_t axis, const int64_t output_num);
+  void Init(const int64_t axis, const int64_t output_num);
   void set_size_splits(const std::vector<int64_t> &size_splits);
   void set_axis(const int64_t axis);
   void set_output_num(const int64_t output_num);

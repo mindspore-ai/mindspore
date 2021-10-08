@@ -27,12 +27,12 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   (void)CheckAndConvertUtils::CheckInteger("input args size", SizeToLong(input_args.size()), kGreaterEqual, 1,
                                            prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  size_t prod = 1;
+  int64_t prod = 1;
   size_t size = x_shape.size();
   for (size_t i = 1; i < size; i++) {
     prod = prod * x_shape[i];
   }
-  std::vector<int64_t> out_shape = {x_shape[0], SizeToLong(prod)};
+  std::vector<int64_t> out_shape = {x_shape[0], prod};
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

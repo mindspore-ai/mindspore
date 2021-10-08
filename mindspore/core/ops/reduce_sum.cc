@@ -49,7 +49,7 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
       if (keep_dims_value) {
         for (it = axis_items.begin(); it != axis_items.end(); ++it) {
           auto axis_value = GetValue<int64_t>(*it);
-          shape->at(axis_value) = 1;
+          shape->at(LongToSize(axis_value)) = 1;
         }
       } else {
         std::vector<int64_t> axis_value_list;
@@ -70,7 +70,7 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
     int64_t axis_value = GetValue<int64_t>(axis);
     axis_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
     if (keep_dims_value) {
-      shape->at(axis_value) = 1;
+      shape->at(LongToSize(axis_value)) = 1;
     } else {
       (void)shape->erase(shape->begin() + axis_value);
     }
@@ -185,7 +185,9 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kGreaterEqual, 1, primitive->name());
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kGreaterEqual, input_num,
+                                           primitive->name());
   return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
 }
 }  // namespace ops

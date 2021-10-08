@@ -66,7 +66,6 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   size_t slice_len = begin_v.size();
   std::vector<int64_t> begin_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kBeginMask)));
   std::vector<int64_t> end_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kEndMask)));
-  std::vector<int64_t> ellipsis_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kEllipsisMask)));
   std::vector<int64_t> new_axis_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kNewAxisMask)));
   std::vector<int64_t> shrink_axis_pos = TenToTwo(GetValue<int64_t>(primitive->GetAttr(kShrinkAxisMask)));
   (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(new_axis_pos.size()), kGreaterEqual,
@@ -80,7 +79,7 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   }
 
   size_t ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + num;
-  (void)infer_shape->insert(infer_shape->end(), x_shape.begin() + i,
+  (void)infer_shape->insert(infer_shape->end(), x_shape.begin() + LongToSize(i),
                             x_shape.begin() + SizeToLong(i + ellipsis_occupied_dims));
   j += 1;
   i += ellipsis_occupied_dims;

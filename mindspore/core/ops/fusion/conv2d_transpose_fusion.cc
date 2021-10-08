@@ -40,7 +40,7 @@ void Conv2dTransposeFusion::Init(int64_t in_channel, int64_t out_channel, const 
 }
 
 void Conv2dTransposeFusion::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  const size_t kernel_len = 2;
+  const int64_t kernel_len = 2;
   (void)CheckAndConvertUtils::CheckInteger(kKernelSize, SizeToLong(kernel_size.size()), kEqual, kernel_len, name());
   for (int64_t item : kernel_size) {
     (void)CheckAndConvertUtils::CheckInteger(kKernelSize, item, kGreaterEqual, 1, name());
@@ -49,7 +49,7 @@ void Conv2dTransposeFusion::set_kernel_size(const std::vector<int64_t> &kernel_s
 }
 
 void Conv2dTransposeFusion::set_dilation(const std::vector<int64_t> &dilation) {
-  const size_t dilation_size = 2;
+  const int64_t dilation_size = 2;
   (void)CheckAndConvertUtils::CheckInteger(kDilation, SizeToLong(dilation.size()), kEqual, dilation_size, name());
   for (int64_t item : dilation) {
     (void)CheckAndConvertUtils::CheckInteger(kDilation, item, kGreaterEqual, 1, name());

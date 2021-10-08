@@ -28,6 +28,9 @@ namespace {
 abstract::TupleShapePtr LayerNormBetaGammaBackpropInferShape(const PrimitivePtr &primitive,
                                                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   ValuePtr gamma_value_ptr = primitive->GetAttr("shape_gamma");
   MS_EXCEPTION_IF_NULL(gamma_value_ptr);
   auto gamma_shape = GetValue<ShapeVector>(gamma_value_ptr);
