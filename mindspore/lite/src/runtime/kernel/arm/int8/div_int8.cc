@@ -41,8 +41,6 @@ int DivInt8CPUKernel::Prepare() {
   MS_ASSERT(input1);
   MS_ASSERT(output);
 
-  broadcast_ = input0->ElementsNum() != input1->ElementsNum();
-
   quant_args_ = reinterpret_cast<DivQuantArg *>(malloc(sizeof(DivQuantArg)));
   if (quant_args_ == nullptr) {
     MS_LOG(ERROR) << "Malloc DivQuantArg for Div int8 op failed!";
@@ -69,7 +67,12 @@ int DivInt8CPUKernel::Prepare() {
   return ReSize();
 }
 
-int DivInt8CPUKernel::ReSize() { return RET_OK; }
+int DivInt8CPUKernel::ReSize() {
+  lite::Tensor *input0 = in_tensors_.at(0);
+  lite::Tensor *input1 = in_tensors_.at(1);
+  broadcast_ = input0->ElementsNum() != input1->ElementsNum();
+  return RET_OK;
+}
 
 int DivInt8CPUKernel::DoExecute(int task_id) {
   auto input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->MutableData());
