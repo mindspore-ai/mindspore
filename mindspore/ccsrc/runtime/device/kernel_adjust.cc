@@ -878,6 +878,8 @@ void KernelAdjust::InsertProfilingKernel(const ProfilingTraceInfo &profiling_tra
     ProfilingUtils::InsertProfilingTraceFp(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
                                            NOT_NULL(&new_cnode_list));
     new_cnode_list.emplace_back(cnode_ptr);
+    ProfilingUtils::InsertProfilingCustomOp(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
+                                            NOT_NULL(&new_cnode_list));
     ProfilingUtils::InsertProfilingTraceBpEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
                                               NOT_NULL(&new_cnode_list));
     ProfilingUtils::InsertProfilingTraceIterEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
