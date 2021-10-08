@@ -642,7 +642,7 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::K
 
 #ifndef ENABLE_SECURITY
 void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) {
-  if (!ascend::ProfilingManager::GetInstance().IsProfiling()) {
+  if (!ascend::ProfilingManager::GetInstance().IsProfilingInitialized()) {
     MS_LOG(INFO) << "No need to profiling";
     return;
   }

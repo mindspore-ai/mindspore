@@ -25,6 +25,9 @@
 #include "utils/convert_utils.h"
 #include "runtime/base.h"
 #include <nlohmann/json.hpp>
+#include "runtime/device/ascend/profiling/profiling_utils.h"
+
+using mindspore::device::ascend::ProfilingUtils;
 
 namespace {
 constexpr Status PROF_SUCCESS = 0;
@@ -39,7 +42,8 @@ ProfilingManager &ProfilingManager::GetInstance() {
   return inst;
 }
 
-ProfilingManager::ProfilingManager() : device_id_(0), prof_cb_({0}), hccl_enabled_bef_profiling_enabled_(false) {}
+ProfilingManager::ProfilingManager()
+    : device_id_(0), prof_cb_({0}), cur_state_(kProfilingInvalid), profiling_path_("") {}
 
 uint64_t ProfilingManager::GetJobId() const { return 0; }
 
@@ -110,57 +114,15 @@ Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) {
   return PROF_SUCCESS;
 }
 
-bool ProfilingManager::StartupProfiling(uint32_t device_id) {
-  auto is_profiling = IsProfiling();
-  if (!is_profiling) {
-    int32_t cb_ret = MsprofInit(0XFF, nullptr, 0);
-    if (cb_ret != UintToInt(PROF_SUCCESS)) {
-      MS_LOG(ERROR) << "Call msprofCtrlCallback failed, ret: " << cb_ret;
-      return false;
-    }
-    MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
-    return true;
-  }
-
-  if (hccl_enabled_bef_profiling_enabled_) {
-    MS_LOG(ERROR)
-      << "Please check the Profiler object initialized before mindspore.context.set_auto_parallel_context() "
-         "and mindspore.communication.management.init(). Profiler should be initialized before these code.";
-    return false;
-  }
-
+bool ProfilingManager::InitProfiling(const std::string &profiling_path, uint32_t device_id) {
+  profiling_path_ = profiling_path;
   device_id_ = device_id;
-
-  struct MsprofGeOptions prof_conf = {0};
-  if (GetProfConf(NOT_NULL(&prof_conf)) != PROF_SUCCESS) {
-    MS_LOG(ERROR) << "Get prof conf failed.";
-    return false;
-  }
-
-  if (!ProfStartUp(NOT_NULL(&prof_conf))) {
-    MS_LOG(ERROR) << "ProfMgrStartUp failed.";
-    return false;
-  }
-  return true;
-}
-
-bool ProfilingManager::ProfStartUp(const NotNull<MsprofGeOptions *> prof_conf) const {
-  MS_LOG(INFO) << "Prof start up. ";
 
   bool ret = ProfRegisterCtrlCallback();
   if (ret == false) {
     return ret;
   }
 
-  // call profiling start up api
-  int32_t cb_ret = MsprofInit(static_cast<uint32_t>(MsprofCtrlCallbackType::MSPROF_CTRL_INIT_GE_OPTIONS),
-                              static_cast<void *>(prof_conf.get()), sizeof(MsprofGeOptions));
-  if (cb_ret != UintToInt(PROF_SUCCESS)) {
-    MS_LOG(ERROR) << "Call msprofCtrlCallback failed, ret: " << cb_ret;
-    return false;
-  }
-
-  MS_LOG(INFO) << "Start up profiling success.";
   return true;
 }
 
@@ -188,25 +150,6 @@ rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /* len */) {
   return RT_ERROR_NONE;
 }
 
-bool ProfilingManager::StopProfiling() const {
-  MS_LOG(INFO) << "StopProfiling";
-  if (!IsProfiling()) {
-    MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
-    return true;
-  }
-
-  // plugin unregister
-  PluginUnInit();
-
-  // stop profiling
-  int32_t cb_ret = MsprofFinalize();
-  if (cb_ret != 0) {
-    MS_LOG(WARNING) << "Call MsprofFinalize failed, ret: " << cb_ret;
-    return false;
-  }
-  return true;
-}
-
 Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter_data) const {
   if (prof_cb_.msprofReporterCallback == nullptr) {
     MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
@@ -224,6 +167,58 @@ Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter
   return PROF_SUCCESS;
 }
 
+Status ProfilingManager::ProfHandleInit() {
+  MS_LOG(INFO) << "Begin to init profiling. Current profiling state is " << cur_state_;
+  cur_state_ = kProfilingInit;
+  auto cb_ret = ProfilingManager::GetInstance().PluginInit();
+  if (cb_ret != PROF_SUCCESS) {
+    MS_LOG(ERROR) << "Failed to init profiling.";
+    return PROF_FAILED;
+  }
+
+  return PROF_SUCCESS;
+}
+
+Status ProfilingManager::ProfHandleStart() {
+  MS_LOG(INFO) << "Begin to start profiling. Current profiling state is " << cur_state_;
+  cur_state_ = kProfilingStart;
+
+  // Report graph data if there is any cache data.
+  ProfilingUtils::ReportAllGraphProfilingData();
+
+  return PROF_SUCCESS;
+}
+
+Status ProfilingManager::ProfHandleStop() {
+  MS_LOG(INFO) << "Begin to stop profiling. Current profiling state is " << cur_state_;
+  cur_state_ = kProfilingStop;
+  return PROF_SUCCESS;
+}
+
+Status ProfilingManager::ProfHandleFinalize() {
+  MS_LOG(INFO) << "Begin to finalize profiling. Current profiling state is " << cur_state_;
+  cur_state_ = kProfilingFinalize;
+  ProfilingManager::GetInstance().PluginUnInit();
+
+  return PROF_SUCCESS;
+}
+
+Status ProfilingManager::ProfCommandHandle(ProfCommandHandleType type) {
+  // Only need process "Init"/“Start”/“Stop”/“Finalize”
+  if (type == kProfCommandhandleInit) {
+    return ProfHandleInit();
+  } else if (type == kProfCommandhandleStart) {
+    return ProfHandleStart();
+  } else if (type == kProfCommandhandleStop) {
+    return ProfHandleStop();
+  } else if (type == kProfCommandhandleFinalize) {
+    return ProfHandleFinalize();
+  }
+
+  MS_LOG(ERROR) << "Receive invalid profiling type " << type << ". Current profiling state is << " << cur_state_;
+  return PROF_FAILED;
+}
+
 Status ProfCtrlSwitchHandle(void *data) {
   if (data == nullptr) {
     MS_LOG(ERROR) << "Ctrl switch handl data is nullptr.";
@@ -235,18 +230,7 @@ Status ProfCtrlSwitchHandle(void *data) {
   return ProfCommandHandle(type);
 }
 
-Status ProfCommandHandle(ProfCommandHandleType type) {
-  MS_LOG(INFO) << "ProfCommandHandle start, type:" << type;
-  if (type == kProfCommandhandleInit) {
-    auto cb_ret = ProfilingManager::GetInstance().PluginInit();
-    if (cb_ret != PROF_SUCCESS) {
-      MS_LOG(ERROR) << "Profiling plugin int failed.";
-      return PROF_FAILED;
-    }
-  }
-
-  return PROF_SUCCESS;
-}
+Status ProfCommandHandle(ProfCommandHandleType type) { return ProfilingManager::GetInstance().ProfCommandHandle(type); }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

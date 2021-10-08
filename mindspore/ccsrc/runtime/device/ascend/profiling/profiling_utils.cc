@@ -390,14 +390,15 @@ bool ProfilingUtils::ValidComputeGraph(const session::KernelGraph &kernel_graph)
   return false;
 }
 
-void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
-                                         const session::KernelGraph &kernel_graph) {
-  if (!ValidComputeGraph(kernel_graph)) {
-    MS_LOG(INFO) << "Not a valid compute graph:" << kernel_graph.graph_id();
-    return;
+void ProfilingUtils::ReportAllGraphProfilingData() {
+  for (auto data : report_data_) {
+    ReportProfilingData(data.task_ids_, data.stream_ids_, data.graph_id_);
   }
+}
 
-  auto ret = graph_profiling_cnode_.find(kernel_graph.graph_id());
+void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
+                                         uint32_t graph_id) {
+  auto ret = graph_profiling_cnode_.find(graph_id);
   if (ret == graph_profiling_cnode_.end()) {
     MS_LOG(ERROR) << "Graph id not found";
     return;
@@ -415,7 +416,7 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
   graph_reporter.ReportData();
 
   // Report profiling point
-  auto point_iter = graph_point_.find(kernel_graph.graph_id());
+  auto point_iter = graph_point_.find(graph_id);
   if (point_iter == graph_point_.end()) {
     MS_LOG(ERROR) << "Graph id not found in graph_point";
     return;
@@ -425,6 +426,12 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
     point_reporter.AddReportData(point);
   }
   point_reporter.ReportData();
+}
+
+void ProfilingUtils::SetReportProfilingData(const std::vector<uint32_t> &task_ids,
+                                            const std::vector<uint32_t> &stream_ids, uint32_t graph_id) {
+  GraphProfilingData report_data = {task_ids, stream_ids, graph_id};
+  report_data_.emplace_back(report_data);
 }
 }  // namespace ascend
 }  // namespace device

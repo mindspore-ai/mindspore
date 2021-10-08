@@ -16,6 +16,7 @@
 #include <string>
 #include "prof_mgr_core.h"
 #include "prof_callback.h"
+#include "acl/acl_prof.h"
 
 namespace Msprof {
 namespace Engine {
@@ -73,3 +74,19 @@ int32_t MsprofInit(uint32_t dataType, void *data, uint32_t dataLen) { return 0; 
  * @return 0:SUCCESS, >0:FAILED
  */
 int32_t MsprofFinalize() { return 0; }
+
+ACL_FUNC_VISIBILITY aclError aclprofInit(const char *profilerResultPath, size_t length) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclprofStart(const aclprofConfig *profilerConfig) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclprofStop(const aclprofConfig *profilerConfig) { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclError aclprofFinalize() { return ACL_SUCCESS; }
+
+ACL_FUNC_VISIBILITY aclprofConfig *aclprofCreateConfig(uint32_t *deviceIdList, uint32_t deviceNums,
+                                                       aclprofAicoreMetrics aicoreMetrics,
+                                                       aclprofAicoreEvents *aicoreEvents, uint64_t dataTypeConfig) {
+  return nullptr;
+}
+
+ACL_FUNC_VISIBILITY aclError aclprofDestroyConfig(const aclprofConfig *profilerConfig) { return ACL_SUCCESS; }
