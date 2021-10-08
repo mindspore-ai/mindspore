@@ -50,10 +50,10 @@ TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
   }
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
   std::map<std::string, TypePtr> types;
-  types.emplace("grad", input_args[0]->BuildType());
-  types.emplace("input_x", input_args[1]->BuildType());
-  types.emplace("input_y", input_args[2]->BuildType());
-  types.emplace("cdist", input_args[3]->BuildType());
+  (void)types.emplace("grad", input_args[0]->BuildType());
+  (void)types.emplace("input_x", input_args[1]->BuildType());
+  (void)types.emplace("input_y", input_args[2]->BuildType());
+  (void)types.emplace("cdist", input_args[3]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
 }
 }  // namespace

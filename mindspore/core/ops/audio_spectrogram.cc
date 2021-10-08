@@ -78,7 +78,7 @@ int64_t Log2Ceil(int64_t length) {
   int64_t floor = 0;
   for (int64_t i = 4; i >= 0; --i) {
     const int64_t shift = static_cast<int64_t>(1UL << static_cast<unsigned>(i));
-    int64_t tmp = SizeToLong(length >> shift);
+    int64_t tmp = SizeToLong(static_cast<uint64_t>(length) >> static_cast<uint64_t>(shift));
     if (tmp != 0) {
       length = tmp;
       floor += shift;

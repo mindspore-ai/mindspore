@@ -111,11 +111,11 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   int64_t out_h = abstract::Shape::SHP_ANY;
   int64_t out_w = abstract::Shape::SHP_ANY;
   if (pad_mode == VALID) {
-    out_h = static_cast<int64_t>(ceil((in_h - (kernel_h - 1)) / stride_h));
-    out_w = static_cast<int64_t>(ceil((in_w - (kernel_w - 1)) / stride_w));
+    out_h = static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
+    out_w = static_cast<int64_t>(std::ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
   } else if (pad_mode == SAME) {
-    out_h = static_cast<int64_t>(ceil(in_h / stride_h));
-    out_w = static_cast<int64_t>(ceil(in_w / stride_w));
+    out_h = static_cast<int64_t>(std::ceil(in_h / static_cast<float>(stride_h)));
+    out_w = static_cast<int64_t>(std::ceil(in_w / static_cast<float>(stride_w)));
   }
   std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
   if (format == NHWC) {

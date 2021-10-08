@@ -27,14 +27,13 @@ void ImpleSquare(void *origin, void *target, size_t size) {
   MS_EXCEPTION_IF_NULL(target);
   auto origin_data = reinterpret_cast<T *>(origin);
   auto target_data = reinterpret_cast<T *>(target);
-  MS_EXCEPTION_IF_NULL(origin_data);
-  MS_EXCEPTION_IF_NULL(target_data);
   for (size_t i = 0; i < size; ++i) {
     target_data[i] = origin_data[i] * origin_data[i];
   }
 }
 
 abstract::ShapePtr SquareInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
@@ -80,47 +79,47 @@ ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
   auto result_datac = result_tensor->data_c();
   switch (dtype) {
     case kNumberTypeInt8: {
-      ImpleSquare<int8_t>(x_datac, result_datac, data_size);
+      ImpleSquare<int8_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeInt16: {
-      ImpleSquare<int16_t>(x_datac, result_datac, data_size);
+      ImpleSquare<int16_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeInt32: {
-      ImpleSquare<int32_t>(x_datac, result_datac, data_size);
+      ImpleSquare<int32_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeInt64: {
-      ImpleSquare<int64_t>(x_datac, result_datac, data_size);
+      ImpleSquare<int64_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt8: {
-      ImpleSquare<uint8_t>(x_datac, result_datac, data_size);
+      ImpleSquare<uint8_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt16: {
-      ImpleSquare<uint16_t>(x_datac, result_datac, data_size);
+      ImpleSquare<uint16_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt32: {
-      ImpleSquare<uint32_t>(x_datac, result_datac, data_size);
+      ImpleSquare<uint32_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeUInt64: {
-      ImpleSquare<uint64_t>(x_datac, result_datac, data_size);
+      ImpleSquare<uint64_t>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeFloat16: {
-      ImpleSquare<float16>(x_datac, result_datac, data_size);
+      ImpleSquare<float16>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeFloat32: {
-      ImpleSquare<float>(x_datac, result_datac, data_size);
+      ImpleSquare<float>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     case kNumberTypeFloat64: {
-      ImpleSquare<double>(x_datac, result_datac, data_size);
+      ImpleSquare<double>(x_datac, result_datac, IntToSize(data_size));
       break;
     }
     default: {
