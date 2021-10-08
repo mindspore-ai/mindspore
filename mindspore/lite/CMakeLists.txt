@@ -49,14 +49,6 @@ option(ENABLE_VERBOSE "" off)
 option(ENABLE_MODEL_OBF "if support model obfuscation" off)
 set(BUILD_MINDDATA "lite_cv" CACHE STRING "off, lite, lite_cv, wrapper or full")
 
-if(APPLE)
-    find_package(Patch)
-    if(NOT Patch_FOUND)
-        message(FATAL_ERROR "Patch not found, "
-                "please set environment variable MS_PATCH_PATH to path where Patch is located,"
-                "usually found in GIT_PATH/usr/bin on Windows")
-    endif()
-endif()
 if(DEFINED ENV{MSLITE_GPU_BACKEND})
     set(MSLITE_GPU_BACKEND $ENV{MSLITE_GPU_BACKEND})
 endif()
