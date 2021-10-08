@@ -40,7 +40,7 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto dim_val = GetValue<int64_t>(input_args[1]->BuildValue());
   auto rank = x_shape.size();
-  CheckAndConvertUtils::CheckInRange<int64_t>("axis", dim_val, kIncludeBoth, {-rank - 1, rank}, prim_name);
+  (void)CheckAndConvertUtils::CheckInRange<int64_t>("axis", dim_val, kIncludeBoth, {-rank - 1, rank}, prim_name);
   if (dim_val < 0) {
     dim_val += SizeToLong(x_shape.size()) + 1;
   }

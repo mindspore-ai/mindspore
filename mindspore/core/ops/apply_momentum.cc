@@ -80,9 +80,9 @@ AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const Pr
   (void)CheckAndConvertUtils::CheckTensorTypeValid("v_type", v_tensor_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("a_type", a_tensor_type, valid_types, prim_name);
   std::map<std::string, TypePtr> args;
-  args.insert(std::make_pair("l_type", l_type));
-  args.insert(std::make_pair("g_type", g_type));
-  args.insert(std::make_pair("m_type", m_type));
+  (void)args.insert(std::make_pair("l_type", l_type));
+  (void)args.insert(std::make_pair("g_type", g_type));
+  (void)args.insert(std::make_pair("m_type", m_type));
   CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, valid_types, prim_name);
   auto g_type_tensor = g_type->cast<TensorTypePtr>();
   auto element = g_type_tensor->element();

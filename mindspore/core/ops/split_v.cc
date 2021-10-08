@@ -48,7 +48,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
     for (int64_t i = 0; i < num_split; i++) {
       (void)CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
                                                {0, shape_of_split_dim}, prim_name);
-      sum_of_size_splits += size_splits[i];
+      sum_of_size_splits += size_splits[LongToSize(i)];
     }
     CheckAndConvertUtils::Check("sum of size_splits", sum_of_size_splits, kEqual, "dimension of value along split_dim",
                                 shape_of_split_dim, prim_name);
@@ -62,7 +62,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
       for (int64_t i = 0; i < num_split - 1; i++) {
         (void)CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
                                                  {0, shape_of_split_dim}, prim_name);
-        sum_of_size_splits += size_splits[i];
+        sum_of_size_splits += size_splits[LongToSize(i)];
       }
       auto default_value = shape_of_split_dim - sum_of_size_splits;
       (void)size_splits.insert(default_idx, default_value);

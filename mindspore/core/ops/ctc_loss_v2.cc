@@ -30,7 +30,7 @@ namespace {
 constexpr size_t kLenLogProbs = 3;
 constexpr size_t kLenTarget = 2;
 constexpr int64_t kMulti = 2;
-constexpr size_t kInputSize = 4;
+constexpr int64_t kInputSize = 4;
 abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
