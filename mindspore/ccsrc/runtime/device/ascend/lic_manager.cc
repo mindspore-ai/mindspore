@@ -46,6 +46,10 @@ static const std::map<std::string, OptPassEnum> kPassCodeMap = {
   {std::to_string(37), OptPassEnum::MulAddFusion},
   {std::to_string(38), OptPassEnum::SoftmaxGradExtFusion},
   {std::to_string(39), OptPassEnum::ClipByNormNoDivSquareSumFusion},
+  {std::to_string(42), OptPassEnum::MulAddNPass},
+  {std::to_string(43), OptPassEnum::Resnet50DbnDwFusionPass},
+  {std::to_string(45), OptPassEnum::MatmulConfusiontransposeUbFusion},
+  {std::to_string(47), OptPassEnum::TbeBatchMatmulElementWiseFusionPass},
 };
 
 inline std::vector<std::string> SplitStrByRegex(const std::string &str, const std::string &regex) {

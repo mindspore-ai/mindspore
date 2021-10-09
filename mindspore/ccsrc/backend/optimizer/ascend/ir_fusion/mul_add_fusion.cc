@@ -73,7 +73,7 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
   }
 
   if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MulAddFusion)) {
-    return node;
+    return nullptr;
   }
 
   CNodePtr mul = nullptr;
