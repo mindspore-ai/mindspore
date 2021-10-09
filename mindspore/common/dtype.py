@@ -181,7 +181,7 @@ def pytype_to_dtype(obj):
         return obj
     if isinstance(obj, type) and obj in _simple_types:
         return _simple_types[obj]
-    raise NotImplementedError(f"Unsupported convert python type {obj} to MindSpore type.")
+    raise NotImplementedError(f"The python type {obj} cannot be converted to MindSpore type.")
 
 
 def get_py_obj_dtype(obj):

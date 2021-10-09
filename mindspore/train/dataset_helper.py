@@ -337,8 +337,8 @@ class _DatasetIter:
         if hasattr(dataset, '__loop_size__'):
             loop_size = dataset.__loop_size__
             if loop_size <= dataset.get_dataset_size() and dataset.get_dataset_size() % loop_size != 0:
-                raise ValueError(f"Dataset size {dataset.get_dataset_size()} and sink_size {loop_size} "
-                                 f"are not matched, sink_size should be divisible by dataset size.")
+                raise ValueError(f"Dataset size {dataset.get_dataset_size()} and 'sink_size' {loop_size} "
+                                 f"are not matched, dataset size should be divisible by 'sink_size'.")
             sink_count = math.ceil(dataset.get_dataset_size() / loop_size)
         return sink_count
 

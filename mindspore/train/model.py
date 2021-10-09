@@ -158,15 +158,17 @@ class Model:
         self._build_predict_network()
 
     def _check_for_graph_cell(self, kwargs):
+        """Check for graph cell"""
         if not isinstance(self._network, nn.GraphCell):
             return
         if self._amp_level != "O0":
             logger.warning("amp_level will not work when network is a GraphCell.")
 
         if self._loss_fn is not None or self._optimizer is not None:
-            raise ValueError("Currently loss_fn and optimizer should be None when network is a GraphCell. ")
+            raise ValueError("For 'Model', 'loss_fn' and 'optimizer' should be None when network is a GraphCell, "
+                             "but got 'loss_fn': {}, 'optimizer': {}.".format(self._loss_fn, self._optimizer))
         if kwargs:
-            raise ValueError("Currently kwargs should be empty when network is a GraphCell. ")
+            raise ValueError("For 'Model', the '**kwargs' argument should be empty when network is a GraphCell.")
 
     def _process_amp_args(self, kwargs):
         if self._amp_level in ["O0", "O3"]:
@@ -180,8 +182,8 @@ class Model:
     def _check_amp_level_arg(self, optimizer, amp_level):
         if optimizer is None and amp_level != "O0":
             raise ValueError(
-                "Auto mixed precision will not work because optimizer arg is None.Please set amp_level='O0' "
-                "to disable auto mixed precision or set optimizer arg not None to use auto mixed precision.")
+                "Auto mixed precision will not work because 'optimizer' is None.Please set amp_level='O0' "
+                "to disable auto mixed precision or set 'optimizer' not be None to use auto mixed precision.")
 
     def _check_kwargs(self, kwargs):
         for arg in kwargs:
@@ -215,7 +217,7 @@ class Model:
         """Build train network"""
         network = self._network
         if self._loss_scale_manager is not None and self._optimizer is None:
-            raise ValueError("Optimizer can not be None when set loss_scale_manager.")
+            raise ValueError("The argument 'optimizer' can not be None when set 'loss_scale_manager'.")
 
         if self._optimizer:
             if self._loss_scale_manager_set:
@@ -254,8 +256,8 @@ class Model:
 
         if eval_network is not None:
             if eval_indexes is not None and not (isinstance(eval_indexes, list) and len(eval_indexes) == 3):
-                raise ValueError("Eval_indexes must be a list or None. If eval_indexes is a list, length of it \
-                                 must be three. But got {}".format(eval_indexes))
+                raise ValueError("The argument 'eval_indexes' must be a list or None. If 'eval_indexes' is a list, "
+                                 "length of it must be three. But got {}".format(len(eval_indexes)))
 
             self._eval_network = eval_network
             self._eval_indexes = eval_indexes
@@ -299,11 +301,10 @@ class Model:
         if isinstance(outputs, Tensor):
             outputs = (outputs,)
         if not isinstance(outputs, tuple):
-            raise ValueError(f"The argument `outputs` should be tuple, but got {type(outputs)}.")
+            raise ValueError(f"The argument 'outputs' should be tuple, but got {type(outputs)}.")
 
         if self._eval_indexes is not None and len(outputs) < 3:
-            raise ValueError("The length of `outputs` must be greater than or equal to 3, \
-                             but got {}".format(len(outputs)))
+            raise ValueError("The length of 'outputs' must be >= 3, but got {}".format(len(outputs)))
 
         for metric in self._metric_fns.values():
             if self._eval_indexes is None:
@@ -399,7 +400,7 @@ class Model:
             raise RuntimeError('Pre-init process only supports GRAPH MODE and Ascend target currently.')
 
         if not train_dataset and not valid_dataset:
-            raise ValueError("'Train_dataset' and 'valid_dataset' can not both be None or empty.")
+            raise ValueError("The argument 'train_dataset' and 'valid_dataset' can not both be None or empty.")
 
         _device_number_check(self._parallel_mode, self._device_number)
 
@@ -707,7 +708,7 @@ class Model:
         if sink_size == -1:
             sink_size = dataset_size
         if sink_size < -1 or sink_size == 0:
-            raise ValueError("The 'sink_size' must be -1 or positive, but got sink_size {}.".format(sink_size))
+            raise ValueError("The argument 'sink_size' must be -1 or positive, but got {}.".format(sink_size))
 
         _device_number_check(self._parallel_mode, self._device_number)
 
@@ -941,7 +942,8 @@ class Model:
             raise RuntimeError("Pre-compile process that generate parameter layout for the train network "
                                "only supports GRAPH MODE and Ascend target currently.")
         if _get_parallel_mode() not in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            raise RuntimeError('Infer train layout only supports semi auto parallel and auto parallel mode.')
+            raise RuntimeError("'infer_train_layout' only supports 'semi_auto_parallel' and 'auto_parallel' "
+                               "mode, but got {}.".format(_get_parallel_mode()))
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         if not dataset_sink_mode:
             raise ValueError("Only dataset sink mode is supported for now.")
