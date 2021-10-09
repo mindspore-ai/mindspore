@@ -288,23 +288,17 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/util/arena.cc
         )
 
-    add_library(minddata-lite SHARED
+    add_library(minddata-lite-obj OBJECT
             ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log.cc
             ${CORE_DIR}/utils/ms_utils.cc
             ${MINDDATA_FULL_SRC}
             )
+    add_dependencies(minddata-lite-obj fbs_src)
 
-    add_library(minddata-lite_static STATIC
-            ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log.cc
-            ${CORE_DIR}/utils/ms_utils.cc
-            ${MINDDATA_FULL_SRC}
-            )
+    add_library(minddata-lite SHARED $<TARGET_OBJECTS:minddata-lite-obj>)
+    add_library(minddata-lite_static STATIC $<TARGET_OBJECTS:minddata-lite-obj>)
     set_target_properties(minddata-lite_static PROPERTIES OUTPUT_NAME "minddata-lite")
-
-    add_dependencies(minddata-lite fbs_src)
-    add_dependencies(minddata-lite_static fbs_src)
 
     find_package(Threads REQUIRED)
     target_link_libraries(minddata-lite
