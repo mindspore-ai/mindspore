@@ -218,15 +218,18 @@ Status DeviceQueueOp::SendDataToAscend() {
       md_channel_info_->RecordPreprocessBatch(send_batch);
       md_channel_info_->RecordPushStartTime();
 #endif
+#ifndef ENABLE_SECURITY
+      DetectPerBatchTime(&batch_record_start, &batch_record_end);
+#endif
       RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
       if (first_push_flag_ != true) {
         MS_LOG(INFO) << "Loading dataset and push first batch into device successful.";
         first_push_flag_ = true;
       }
 #ifndef ENABLE_SECURITY
-      DetectPerBatchTime(&batch_record_start, &batch_record_end);
       ProfilingRecorder(is_profiling_enable, profiling_node, send_batch, tdt_cost, &batch_start_time, &end_time,
                         connector_capacity, connector_size);
+      batch_record_start = ProfilingTime::GetCurMilliSecond();
 #endif
       send_batch++;
 #ifdef ENABLE_DUMP_IR
@@ -575,13 +578,16 @@ Status DeviceQueueOp::SendDataToGPU() {
     while (!current_row.eoe() && !is_break_loop && !GpuBufferMgr::GetInstance().IsClosed()) {
       RETURN_IF_NOT_OK(FilterMetadata(&current_row));
       RETURN_IF_NOT_OK(CheckExceptions(current_row));
+#ifndef ENABLE_SECURITY
+      DetectPerBatchTime(&batch_record_start, &batch_record_end);
+#endif
       RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(current_row)));
       if (first_push_flag_ != true) {
         MS_LOG(INFO) << "Loading dataset and push first batch into device successful.";
         first_push_flag_ = true;
       }
 #ifndef ENABLE_SECURITY
-      DetectPerBatchTime(&batch_record_start, &batch_record_end);
+      batch_record_start = ProfilingTime::GetCurMilliSecond();
 #endif
       if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
         RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
@@ -705,8 +711,9 @@ Status DeviceQueueOp::DetectFirstBatch() {
       count_num++;
       MS_LOG(WARNING) << "Bad performance attention, it waits more than 25 seconds and unable to fetch first Batch of "
                          "data from dataset pipeline, which might result `GetNext` timeout problem. You may test "
-                         "dataset processing performance and optimize it. Notes: shuffle operation is turn on for "
-                         "loading Dataset in default, which may effect first batch loading time.";
+                         "dataset processing performance (with creating dataset iterator) and optimize it. Notes: "
+                         "shuffle operation is turn on for loading Dataset in default, which may effect first batch "
+                         "loading time.";
     }
   }
   return Status::OK();
@@ -715,11 +722,10 @@ Status DeviceQueueOp::DetectFirstBatch() {
 void DeviceQueueOp::DetectPerBatchTime(uint64_t *start_time, uint64_t *end_time) {
   *end_time = ProfilingTime::GetCurMilliSecond();
   if (*end_time - *start_time > kTimeOutMilliSeconds) {
-    MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to fetch and send a batch of data"
-                       " into device, which might result `GetNext` timeout problem. You may test dataset processing"
-                       " performance and optimize it or check whether sending data part is blocked as queue is full.";
+    MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to fetch a batch of data from dataset "
+                       "pipeline, which might result `GetNext` timeout problem. You may test dataset processing"
+                       " performance(with creating dataset iterator) and optimize it.";
   }
-  *start_time = *end_time;
 }
 #endif
 }  // namespace dataset
