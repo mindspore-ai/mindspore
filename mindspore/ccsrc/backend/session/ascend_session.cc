@@ -540,7 +540,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   // build kernel
   BuildKernel(root_graph);
 #ifndef ENABLE_SECURITY
-  SetSummaryNodes(root_graph.get());
+  SessionBasic::SetSummaryNodes(root_graph.get());
 #endif
   // Alloc memory for child graph's inputs
   AssignStaticMemory(NOT_NULL(root_graph), NOT_NULL(&memo));
