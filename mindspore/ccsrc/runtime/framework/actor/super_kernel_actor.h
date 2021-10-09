@@ -42,17 +42,11 @@ class SuperKernelActor : public DebugAwareActor {
 
   void Init() override;
 
-  // The super kernel actor run when receive the input data.
-  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
-
-  // The super kernel actor run when receive the input control.
-  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
+ protected:
+  void Run(OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;
-
-  // Send output data and output controls when finish kernel launch.
-  void SendOutput(OpContext<DeviceTensor> *const context) const;
 
   KernelGraphPtr graph_;
 };

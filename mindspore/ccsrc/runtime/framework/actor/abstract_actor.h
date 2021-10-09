@@ -45,6 +45,11 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
 
+  // The actor run when receive the input data.
+  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
+  // The actor run when receive the input control.
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
+
   // Get the position of node in the actor.
   virtual size_t FetchNodePosition(const AnfNodePtr &node) const { return 0; }
 
@@ -53,12 +58,19 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // Check whether satisfy the actor running condition.
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const;
+  // The actor run really when satisfy the actor running condition.
+  virtual void Run(OpContext<DeviceTensor> *const context) {}
+
   // Erase input data and input controls when finish actor running.
-  void EraseInput(const OpContext<DeviceTensor> *const context);
-  // Send the output result by output_result_arrows_.
-  void SendOutputResult(OpContext<DeviceTensor> *const context) const;
-  // Send the output control by output_control_arrows_.
-  void SendOutputControl(OpContext<DeviceTensor> *const context) const;
+  void EraseInput(const OpContext<DeviceTensor> *context);
+
+  // Update the output data before send output data.
+  virtual void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *data_arrow,
+                                OpContext<DeviceTensor> *const context) {}
+  // Send output to downstream actors to trigger running.
+  virtual void SendOutput(OpContext<DeviceTensor> *const context);
+  // Send recorder info to recorder actor.
+  virtual void SendRecorderInfo(OpContext<DeviceTensor> *const context) const {}
 
   KernelTransformType type_;
 
@@ -67,6 +79,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // The id of recorder actor. Send message to it for recording info.
   const AID *recorder_aid_;
+
+  // The output_data_ corresponds to the output_data_arrows_ one by one.
+  std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
 
   // The output nodes and output result arrows of graph output.
   std::vector<AnfNodePtr> output_nodes_;

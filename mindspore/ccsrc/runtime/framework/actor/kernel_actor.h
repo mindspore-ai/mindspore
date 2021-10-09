@@ -58,10 +58,6 @@ class KernelActor : public DebugAwareActor {
 
   void Init() override;
 
-  // The kernel actor run when receive the input data.
-  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
-  // The kernel actor run when receive the input control.
-  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
   // The kernel actor run when receive the input control and input tensors, used in step mode.
   void RunOpControlWithInputTensor(AID *const input_control, OpContext<DeviceTensor> *const context,
                                    const std::vector<TensorPtr> *input_tensors);
@@ -77,6 +73,10 @@ class KernelActor : public DebugAwareActor {
   // The callback after debug finished.
   void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
+ protected:
+  void Run(OpContext<DeviceTensor> *const context) override;
+  void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
+
  private:
   friend class GraphScheduler;
 
@@ -91,9 +91,6 @@ class KernelActor : public DebugAwareActor {
   void PreLaunchKernel(OpContext<DeviceTensor> *const context);
   // The processing after kernel launch: 1.erase input, 2.free memory, 3.send output.
   void PostLaunchKernel(OpContext<DeviceTensor> *const context);
-
-  // Send output data and output controls when finish kernel launch.
-  void SendOutput(OpContext<DeviceTensor> *const context) const;
 
   // The info of kernel.
   CNodePtr kernel_;
@@ -127,10 +124,8 @@ class KernelActor : public DebugAwareActor {
   // The kernel launch info is fetched by the device tensors.
   KernelLaunchInfo launch_info_;
 
-  // Cache unique output data by output index to modify the output data effectively.
-  std::vector<std::vector<OpDataUniquePtr<DeviceTensor>>> output_data_by_output_index_;
-  //  The output_data_ corresponds to the output_data_arrows_ one by one.
-  std::vector<OpData<DeviceTensor> *> output_data_;
+  // Cache output data by output index to modify the output data effectively.
+  std::vector<std::vector<OpData<DeviceTensor> *>> output_data_by_output_index_;
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

@@ -25,15 +25,11 @@
 
 namespace mindspore {
 namespace runtime {
-void LoopCountActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
+void LoopCountActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto sequential_num = context->sequential_num_;
-  (void)input_op_controls_[sequential_num].emplace_back(input_control);
-  if (CheckRunningCondition(context)) {
-    // Need wait MemoryManagerActor running finished to avoid the illegal memory timing problem before
-    // LoopCountActor exits, because other processors which are not in actor also will process device tensor.
-    Async(memory_manager_aid_, &MemoryManagerActor::Wait, context, GetAID());
-  }
+  // Need wait MemoryManagerActor running finished to avoid the illegal memory timing problem before
+  // LoopCountActor exits, because other processors which are not in actor also will process device tensor.
+  Async(memory_manager_aid_, &MemoryManagerActor::Wait, context, GetAID());
 }
 
 void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {

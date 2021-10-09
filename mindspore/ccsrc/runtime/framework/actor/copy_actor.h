@@ -42,16 +42,16 @@ class CopyActor : public MemoryAwareActor {
 
   void Init() override;
 
-  // The copy actor run when receive the input data.
-  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
-  // The copy actor run when receive the input control.
-  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
-
   // The memory related operation interface.
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
   // The copy processing after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
+
+ protected:
+  void Run(OpContext<DeviceTensor> *const context) override;
+  void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *data_arrow,
+                        OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;
@@ -59,16 +59,10 @@ class CopyActor : public MemoryAwareActor {
   // Fetch the device tensor for copy.
   void FetchDeviceTensor(OpContext<DeviceTensor> *const context);
 
-  // Send output data and output controls when finish copy.
-  void SendOutput(OpContext<DeviceTensor> *const context) const;
-
   // The input device tensor is saved from the input data or fetched by device_tensor_store_keys_.
   std::vector<DeviceTensor *> input_device_tensor_;
   // The output device tensor is saved from the output or fetched by device_tensor_store_keys_.
   std::vector<DeviceTensor *> output_device_tensor_;
-
-  //  The output_data_ corresponds to the output_data_arrows_ one by one.
-  std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
 
   // The output is created in the copy actor build, so can't be the raw pointer.
   DeviceTensorPtr output_;

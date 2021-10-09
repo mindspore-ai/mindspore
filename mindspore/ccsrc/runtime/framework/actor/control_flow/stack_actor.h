@@ -44,7 +44,6 @@ class StackActor : public MemoryAwareActor {
 
  private:
   friend class GraphScheduler;
-  void SendOutput(OpContext<DeviceTensor> *const context) const;
 
   // Formal parameters record the input front-end node, these nodes may be parameter, kernel, call node.
   std::vector<KernelWithIndex> formal_parameters_;

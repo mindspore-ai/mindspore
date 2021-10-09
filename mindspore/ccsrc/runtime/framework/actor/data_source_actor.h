@@ -48,27 +48,23 @@ class DataSourceActor : public DebugAwareActor {
 
   void Init() override;
 
-  // The process entry of data processing.
-  void FetchData(OpContext<DeviceTensor> *const context);
-
  protected:
   friend class GraphScheduler;
+
+  void Run(OpContext<DeviceTensor> *const context) override { FetchData(context); }
+
+  // The process entry of data processing.
+  void FetchData(OpContext<DeviceTensor> *const context);
 
   // Construct the device tensors and fill to device tensor buffer from the member nodes during the data fetching.
   virtual void FillDataBuffer() = 0;
 
-  // Send recorder info to recorder actor, only the device queue data source actor need.
-  virtual void SendRecorderInfo(OpContext<DeviceTensor> *const context) {}
-
-  // Send output to downstream actors to trigger computing after fetching data finished.
-  void SendOutput(OpContext<DeviceTensor> *const context);
+  void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *data_arrow,
+                        OpContext<DeviceTensor> *const context) override;
 
   // The buffers store the device tensors.
   std::queue<std::vector<DeviceTensor *>> buffers_;
   size_t buffer_capacity_;
-
-  //  The output_data_ corresponds to the output_data_arrows_ one by one.
-  std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
 };
 
 // The class represents that the data source is device queue.
@@ -95,7 +91,7 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
 
  protected:
   void FillDataBuffer() override;
-  void SendRecorderInfo(OpContext<DeviceTensor> *const context) override;
+  void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
  private:
   friend class GraphScheduler;

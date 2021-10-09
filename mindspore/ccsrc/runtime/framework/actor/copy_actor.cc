@@ -45,26 +45,10 @@ void CopyActor::Init() {
   }
 }
 
-void CopyActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
+void CopyActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  auto &sequential_num = context->sequential_num_;
-  (void)input_op_datas_[sequential_num].emplace_back(input_data);
-  // When all the inputs are collected, then allocate memory and callback copy.
-  if (CheckRunningCondition(context)) {
-    FetchDeviceTensor(context);
-    SendMemoryAllocReq(context);
-  }
-}
-
-void CopyActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  auto &sequential_num = context->sequential_num_;
-  (void)input_op_controls_[sequential_num].emplace_back(input_control);
-  // When all the inputs are collected, then allocate memory and callback copy.
-  if (CheckRunningCondition(context)) {
-    FetchDeviceTensor(context);
-    SendMemoryAllocReq(context);
-  }
+  FetchDeviceTensor(context);
+  SendMemoryAllocReq(context);
 }
 
 void CopyActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
@@ -146,22 +130,10 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
   }
 }
 
-void CopyActor::SendOutput(OpContext<DeviceTensor> *const context) const {
-  MS_EXCEPTION_IF_NULL(context);
-  // No output.
-  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0)) {
-    SET_OPCONTEXT_SUCCESS_RET((*context));
-  }
-
-  // Send output data.
-  for (auto &output_data : output_data_) {
-    MS_EXCEPTION_IF_NULL(output_data);
-    output_data->data_ = output_device_tensor_[0];
-    Async(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
-  }
-
-  // Send output control.
-  SendOutputControl(context);
+void CopyActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *,
+                                 OpContext<DeviceTensor> *const) {
+  MS_EXCEPTION_IF_NULL(output_data);
+  output_data->data_ = output_device_tensor_[0];
 }
 }  // namespace runtime
 }  // namespace mindspore

@@ -20,6 +20,31 @@
 
 namespace mindspore {
 namespace runtime {
+void AbstractActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  auto &sequential_num = context->sequential_num_;
+  (void)input_op_datas_[sequential_num].emplace_back(input_data);
+
+  auto is_run = CheckRunningCondition(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data and check running condition:" << is_run;
+  if (is_run) {
+    Run(context);
+  }
+}
+
+void AbstractActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  auto &sequential_num = context->sequential_num_;
+  (void)input_op_controls_[sequential_num].emplace_back(input_control);
+
+  auto is_run = CheckRunningCondition(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
+                << ") receive the input op control and check running condition:" << is_run;
+  if (is_run) {
+    Run(context);
+  }
+}
+
 bool AbstractActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
@@ -67,29 +92,46 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
-void AbstractActor::SendOutputResult(OpContext<DeviceTensor> *const context) const {
+void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  // Must be the execution order: send result --> send data --> send control, avoid the illegal timing problem.
+  // 1.Send graph output result.
   if (output_result_arrows_.size() != output_nodes_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output result arrows is not equal to the output nodes.");
   }
-
   size_t output_node_index = 0;
   for (const auto &result_arrow : output_result_arrows_) {
     MS_EXCEPTION_IF_NULL(result_arrow);
-    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, output_nodes_[output_node_index],
+    Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, output_nodes_[output_node_index++],
           result_arrow->from_output_index_, result_arrow->to_input_index_, context);
-    ++output_node_index;
   }
-}
 
-void AbstractActor::SendOutputControl(OpContext<DeviceTensor> *const context) const {
-  MS_EXCEPTION_IF_NULL(context);
+  // 2.Send output data.
+  if (output_data_arrows_.size() != output_data_.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output data arrows is not equal to the output data.");
+  }
+  size_t output_data_arrow_index = 0;
+  for (auto &output_data : output_data_) {
+    MS_EXCEPTION_IF_NULL(output_data);
+    UpdateOutputData(output_data.get(), output_data_arrows_[output_data_arrow_index++].get(), context);
+    Async(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
+  }
 
+  // 3.Send output control.
   if (output_control_arrows_.size() > 0) {
     auto from_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
       Async(output_control, &OpActor::RunOpControl, from_aid, context);
     }
+  }
+
+  // 4.Send recorder info.
+  SendRecorderInfo(context);
+
+  // No output.
+  if ((output_data_arrows_.size() == 0) && (output_control_arrows_.size() == 0) &&
+      (output_result_arrows_.size() == 0)) {
+    SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 }
 }  // namespace runtime

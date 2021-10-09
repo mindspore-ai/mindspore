@@ -45,8 +45,7 @@ class DataPrepareActor : public DebugAwareActor {
         graph_compiler_info_(graph_compiler_info),
         strategy_(GraphExecutionStrategy::kPipeline),
         host_data_source_actor_(host_data_source_actor),
-        host_tensor_queue_(host_tensor_queue),
-        loop_count_aid_(nullptr) {}
+        host_tensor_queue_(host_tensor_queue) {}
   ~DataPrepareActor() override = default;
 
   void Init() override;
@@ -64,9 +63,6 @@ class DataPrepareActor : public DebugAwareActor {
 
  private:
   friend class GraphScheduler;
-
-  // Send output controls when finish data prepare.
-  void SendOutput(OpContext<DeviceTensor> *const context);
 
   void PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                        OpContext<DeviceTensor> *const context);
@@ -102,12 +98,6 @@ class DataPrepareActor : public DebugAwareActor {
   GraphExecutionStrategy strategy_;
   HostQueueDSActorPtr host_data_source_actor_;
   HostTensorQueuePtr host_tensor_queue_;
-
-  // The output controls contain the data source actors and the no input kernel actors.
-  std::vector<AID> data_source_aids_;
-  std::vector<AID> no_input_kernel_aids_;
-  // If has no data source actor and kernel actor, then need send to loop count actor.
-  const AID *loop_count_aid_;
 
   // The nodes need continuous memory, which must allocate in the begin of step running. The first bool of pair
   // expresses the inputs of node need continuous memory, the second bool of pair expresses the outputs of node need

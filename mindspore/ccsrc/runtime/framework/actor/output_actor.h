@@ -76,6 +76,9 @@ class OutputActor : public AbstractActor {
   size_t loop_count_;
   size_t current_count_;
 
+  // The dependent input result arrow actors.
+  std::vector<AID> input_result_arrow_aids_;
+
   // The outputs.
   std::vector<TensorPtr> outputs_;
   std::vector<KernelWithIndex> output_nodes_;

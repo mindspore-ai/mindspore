@@ -124,7 +124,7 @@ void DataPrepareActor::Init() {
 void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                    OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_LOG(INFO) << "Data prepare actor(" << GetAID().Name() << ") prepares data.";
+  MS_LOG(DEBUG) << "Data prepare actor(" << GetAID().Name() << ") prepares data.";
 
   // Convert actor running data from input tensors.
   if (input_tensors.size() > 0) {
@@ -173,22 +173,6 @@ void DataPrepareActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
 void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   SendOutput(context);
-}
-
-void DataPrepareActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  for (auto &data_source_aid : data_source_aids_) {
-    Async(data_source_aid, &DataSourceActor::FetchData, context);
-  }
-
-  auto source_aid = const_cast<AID *>(&GetAID());
-  for (auto &kernel_aid : no_input_kernel_aids_) {
-    Async(kernel_aid, &OpActor::RunOpControl, source_aid, context);
-  }
-
-  // Trigger loop count actor running when there are no data source actor and kernel actor.
-  if ((data_source_aids_.size() + no_input_kernel_aids_.size() == 0) && (loop_count_aid_ != nullptr)) {
-    Async(*loop_count_aid_, &LoopCountActor::RunOpControl, source_aid, context);
-  }
 }
 
 void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
