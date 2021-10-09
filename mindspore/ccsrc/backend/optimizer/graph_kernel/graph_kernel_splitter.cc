@@ -881,7 +881,7 @@ class CostModelSplitSchemer : public SplitSchemer {
   }
 
   virtual std::string CollectSplitFlags() {
-    const auto &flags = context::GraphKernelFlags::GetInstance();
+    const auto &flags = GraphKernelFlags::GetInstance();
     nlohmann::json flag_json;
     flag_json["dump_as_text"] = flags.dump_as_text;
     flag_json["enable_stitch_fusion"] = flags.enable_stitch_fusion;

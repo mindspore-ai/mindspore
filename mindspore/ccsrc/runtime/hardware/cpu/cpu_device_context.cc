@@ -120,7 +120,7 @@ void CPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
 
 #ifdef ENABLE_AKG
   // Run graph kernel fusion optimization
-  if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+  if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     graphkernel::GraphKernelOptimize(graph);
     graph->SetExecOrderByDefault();
   }

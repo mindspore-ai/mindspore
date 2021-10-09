@@ -526,7 +526,7 @@ static std::vector<Expression> expressions = {
 };
 
 std::unordered_map<std::string, std::vector<PatternTreePtr>> GetExpressions() {
-  const auto &flags = context::GraphKernelFlags::GetInstance();
+  const auto &flags = GraphKernelFlags::GetInstance();
   std::unordered_map<std::string, std::vector<PatternTreePtr>> expression_map;
   std::unordered_set<std::string> enable_ids{flags.enable_simplify_exprs_only.begin(),
                                              flags.enable_simplify_exprs_only.end()};

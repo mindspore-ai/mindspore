@@ -50,7 +50,7 @@ void MatmulEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGrap
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
       if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
           AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
           AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimAddN)) {

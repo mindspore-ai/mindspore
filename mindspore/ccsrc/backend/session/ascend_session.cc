@@ -1185,7 +1185,7 @@ void AscendSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_
 }
 
 void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  if (!context::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+  if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return;
   }
   graphkernel::GraphKernelOptimize(kernel_graph);

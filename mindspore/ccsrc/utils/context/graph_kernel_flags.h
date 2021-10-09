@@ -22,10 +22,8 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include "utils/ms_context.h"
 
-namespace mindspore {
-namespace context {
+namespace mindspore::graphkernel {
 constexpr unsigned int OptLevel_0 = 0;  // Disabled
 constexpr unsigned int OptLevel_1 = 1;  // Basic functions
 constexpr unsigned int OptLevel_2 = 2;  // Default functions
@@ -55,6 +53,8 @@ class GraphKernelFlags {
   bool IsEnableGraphKernel() const { return opt_level > OptLevel_0; }
 
   GraphKernelFlags(const GraphKernelFlags &flags) = delete;
+  GraphKernelFlags(GraphKernelFlags &&flags) = delete;
+  void operator=(const GraphKernelFlags &flags) = delete;
   ~GraphKernelFlags() = default;
 
  public:
@@ -196,14 +196,7 @@ class GraphKernelFlags {
       : flags_cache_(graph_kernel_flags), enable_graph_kernel_(enable_graph_kernel) {}
 
   // get the `graph_kernel_flags` and `enable_graph_kernel`
-  static std::pair<std::string, bool> GetGraphKernelContext() {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    // Use the environment variable in priority
-    auto env_flags = std::getenv("MS_GRAPH_KERNEL_FLAGS");
-    std::string flags = env_flags ? std::string(env_flags) : context->get_param<std::string>(MS_CTX_GRAPH_KERNEL_FLAGS);
-    return std::make_pair(flags, context->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL));
-  }
+  static std::pair<std::string, bool> GetGraphKernelContext();
 
   // parse and refresh the flags
   void Refresh();
@@ -215,6 +208,5 @@ class GraphKernelFlags {
   // cache the enable_graph_kernel value to check whether the context is changed.
   bool enable_graph_kernel_;
 };
-}  // namespace context
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_UTILS_GRAPH_KERNEL_FLAGS_H

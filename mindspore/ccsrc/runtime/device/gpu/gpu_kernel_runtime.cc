@@ -74,7 +74,7 @@ bool GPUKernelRuntime::SyncStream() {
 }
 
 bool GPUKernelRuntime::Init() {
-  enable_relation_cache_ = context::GraphKernelFlags::GetInstance().IsEnableGraphKernel();
+  enable_relation_cache_ = graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel();
 
   if (device_init_) {
     if (!cur_thread_device_inited) {
