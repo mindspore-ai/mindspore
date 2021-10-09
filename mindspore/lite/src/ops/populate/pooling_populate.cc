@@ -20,6 +20,45 @@ using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore {
 namespace lite {
+namespace {
+void UpdateRoundMode(enum schema::RoundMode round_mode, PoolingParameter *param) {
+  switch (round_mode) {
+    case schema::RoundMode_FLOOR:
+      param->round_mode_ = RoundMode_Floor;
+      break;
+    case schema::RoundMode_CEIL:
+      param->round_mode_ = RoundMode_Ceil;
+      break;
+    default:
+      param->round_mode_ = RoundMode_No;
+      break;
+  }
+}
+
+void UpdateActivationType(enum schema::ActivationType type, PoolingParameter *param) {
+  if (type == schema::ActivationType_RELU) {
+    param->act_type_ = ActType_Relu;
+  } else if (type == schema::ActivationType_RELU6) {
+    param->act_type_ = ActType_Relu6;
+  } else {
+    param->act_type_ = ActType_No;
+  }
+}
+
+void UpdatePadMode(enum schema::PadMode pad_mode, PoolingParameter *param) {
+  switch (pad_mode) {
+    case schema::PadMode_SAME:
+      param->pad_mode_ = Pad_same;
+      break;
+    case schema::PadMode_VALID:
+      param->pad_mode_ = Pad_valid;
+      break;
+    default:
+      param->pad_mode_ = Pad_pad;
+      break;
+  }
+}
+}  // namespace
 OpParameter *PopulateAvgPoolParameter(const void *primitive) {
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   auto pooling_prim = static_cast<const schema::Primitive *>(primitive);
@@ -65,38 +104,9 @@ OpParameter *PopulateAvgPoolParameter(const void *primitive) {
     param->window_h_ = static_cast<int>(*(kernel_size->begin()));
   }
 
-  auto round_mode = value->round_mode();
-  switch (round_mode) {
-    case schema::RoundMode_FLOOR:
-      param->round_mode_ = RoundMode_Floor;
-      break;
-    case schema::RoundMode_CEIL:
-      param->round_mode_ = RoundMode_Ceil;
-      break;
-    default:
-      param->round_mode_ = RoundMode_No;
-      break;
-  }
-
-  if (value->activation_type() == schema::ActivationType_RELU) {
-    param->act_type_ = ActType_Relu;
-  } else if (value->activation_type() == schema::ActivationType_RELU6) {
-    param->act_type_ = ActType_Relu6;
-  } else {
-    param->act_type_ = ActType_No;
-  }
-
-  switch (value->pad_mode()) {
-    case schema::PadMode_SAME:
-      param->pad_mode_ = Pad_same;
-      break;
-    case schema::PadMode_VALID:
-      param->pad_mode_ = Pad_valid;
-      break;
-    default:
-      param->pad_mode_ = Pad_pad;
-      break;
-  }
+  UpdateRoundMode(value->round_mode(), param);
+  UpdateActivationType(value->activation_type(), param);
+  UpdatePadMode(value->pad_mode(), param);
   return reinterpret_cast<OpParameter *>(param);
 }
 
@@ -141,38 +151,9 @@ OpParameter *PopulateMaxPoolParameter(const void *primitive) {
     }
   }
 
-  auto round_mode = value->round_mode();
-  switch (round_mode) {
-    case schema::RoundMode_FLOOR:
-      param->round_mode_ = RoundMode_Floor;
-      break;
-    case schema::RoundMode_CEIL:
-      param->round_mode_ = RoundMode_Ceil;
-      break;
-    default:
-      param->round_mode_ = RoundMode_No;
-      break;
-  }
-
-  if (value->activation_type() == schema::ActivationType_RELU) {
-    param->act_type_ = ActType_Relu;
-  } else if (value->activation_type() == schema::ActivationType_RELU6) {
-    param->act_type_ = ActType_Relu6;
-  } else {
-    param->act_type_ = ActType_No;
-  }
-
-  switch (value->pad_mode()) {
-    case schema::PadMode_SAME:
-      param->pad_mode_ = Pad_same;
-      break;
-    case schema::PadMode_VALID:
-      param->pad_mode_ = Pad_valid;
-      break;
-    default:
-      param->pad_mode_ = Pad_pad;
-      break;
-  }
+  UpdateRoundMode(value->round_mode(), param);
+  UpdateActivationType(value->activation_type(), param);
+  UpdatePadMode(value->pad_mode(), param);
   return reinterpret_cast<OpParameter *>(param);
 }
 
