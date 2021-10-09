@@ -725,5 +725,60 @@ Status DetectPitchFrequency(const std::shared_ptr<Tensor> &input, std::shared_pt
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(out, out_shape, output));
   return Status::OK();
 }
+
+Status GenerateWaveTable(std::shared_ptr<Tensor> *output, const DataType &type, Modulation modulation,
+                         int32_t table_size, float min, float max, float phase) {
+  RETURN_UNEXPECTED_IF_NULL(output);
+  int32_t phase_offset = static_cast<int32_t>(phase / PI / 2 * table_size + 0.5);
+  // get the offset of the i-th
+  std::vector<int32_t> point;
+  for (auto i = 0; i < table_size; i++) {
+    point.push_back((i + phase_offset) % table_size);
+  }
+
+  std::shared_ptr<Tensor> wave_table;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({table_size}), DataType(DataType::DE_FLOAT32), &wave_table));
+
+  auto iter = wave_table->begin<float>();
+
+  if (modulation == Modulation::kSinusoidal) {
+    for (int i = 0; i < table_size; iter++, i++) {
+      // change phase
+      *iter = (sin(point[i] * PI / table_size * 2) + 1) / 2;
+    }
+  } else {
+    for (int i = 0; i < table_size; iter++, i++) {
+      // change phase
+      *iter = point[i] * 2.0 / table_size;
+      // get complete offset
+      int32_t value = static_cast<int>(4 * point[i] / table_size);
+      // change the value of the square wave according to the number of complete offsets
+      if (value == 0) {
+        *iter = *iter + 0.5;
+      } else if (value == 1 || value == 2) {
+        *iter = 1.5 - *iter;
+      } else if (value == 3) {
+        *iter = *iter - 1.5;
+      }
+    }
+  }
+  for (iter = wave_table->begin<float>(); iter != wave_table->end<float>(); iter++) {
+    *iter = *iter * (max - min) + min;
+  }
+  if (type.IsInt()) {
+    for (iter = wave_table->begin<float>(); iter != wave_table->end<float>(); iter++) {
+      if (*iter < 0) {
+        *iter = *iter - 0.5;
+      } else {
+        *iter = *iter + 0.5;
+      }
+    }
+    RETURN_IF_NOT_OK(TypeCast(wave_table, output, DataType(DataType::DE_INT32)));
+  } else if (type.IsFloat()) {
+    RETURN_IF_NOT_OK(TypeCast(wave_table, output, DataType(DataType::DE_FLOAT32)));
+  }
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

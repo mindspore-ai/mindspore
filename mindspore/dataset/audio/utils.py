@@ -54,6 +54,32 @@ class GainType(str, Enum):
     DB: str = "db"
 
 
+class Interpolation(str, Enum):
+    """
+    Interpolation Type.
+
+    Possible enumeration values are: Interpolation.LINEAR, Interpolation.QUADRATIC.
+
+    - Interpolation.LINEAR: means input interpolation type is linear.
+    - Interpolation.QUADRATIC: means input interpolation type is quadratic.
+    """
+    LINEAR: str = "linear"
+    QUADRATIC: str = "quadratic"
+
+
+class Modulation(str, Enum):
+    """
+    Modulation Type.
+
+    Possible enumeration values are: Modulation.SINUSOIDAL, Modulation.TRIANGULAR.
+
+    - Modulation.SINUSOIDAL: means input modulation type is sinusoidal.
+    - Modulation.TRIANGULAR: means input modulation type is triangular.
+    """
+    SINUSOIDAL: str = "sinusoidal"
+    TRIANGULAR: str = "triangular"
+
+
 class ScaleType(str, Enum):
     """
     Scale Types.

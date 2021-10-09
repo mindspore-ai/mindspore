@@ -374,6 +374,38 @@ class Fade final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Apply a flanger effect to the audio.
+class Flanger final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] delay Desired delay in milliseconds (ms), range: [0, 30] (Default: 0.0).
+  /// \param[in] depth Desired delay depth in milliseconds (ms), range: [0, 10] (Default: 2.0).
+  /// \param[in] regen Desired regen (feedback gain) in dB., range: [-95, 95] (Default: 0.0).
+  /// \param[in] width Desired width (delay gain) in dB, range: [0, 100] (Default: 71.0).
+  /// \param[in] speed Modulation speed in Hz, range: [0.1, 10] (Default: 0.5).
+  /// \param[in] phase Percentage phase-shift for multi-channel, range: [0, 100] (Default: 25.0).
+  /// \param[in] modulation Modulation of input tensor, must be one of [Modulation::kSinusoidal,
+  ///     Modulation::kTriangular] (Default:Modulation::kSinusoidal).
+  /// \param[in] interpolation Interpolation of input tensor, must be one of [Interpolation::kLinear,
+  ///     Interpolation::kQuadratic] (Default:Interpolation::kLinear).
+  explicit Flanger(int32_t sample_rate, float delay = 0.0, float depth = 2.0, float regen = 0.0, float width = 71.0,
+                   float speed = 0.5, float phase = 25.0, Modulation modulation = Modulation::kSinusoidal,
+                   Interpolation interpolation = Interpolation::kLinear);
+
+  /// \brief Destructor.
+  ~Flanger() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief FrequencyMasking TensorTransform.
 /// \notes Apply masking to a spectrogram in the frequency domain.
 class FrequencyMasking final : public TensorTransform {

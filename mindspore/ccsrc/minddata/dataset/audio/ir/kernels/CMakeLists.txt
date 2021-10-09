@@ -17,6 +17,7 @@ add_library(audio-ir-kernels OBJECT
         detect_pitch_frequency_ir.cc
         equalizer_biquad_ir.cc
         fade_ir.cc
+        flanger_ir.cc
         frequency_masking_ir.cc
         highpass_biquad_ir.cc
         lfilter_ir.cc

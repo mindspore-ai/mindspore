@@ -31,6 +31,7 @@
 #include "minddata/dataset/audio/ir/kernels/detect_pitch_frequency_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
+#include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
@@ -274,6 +275,40 @@ Fade::Fade(int32_t fade_in_len, int32_t fade_out_len, FadeShape fade_shape)
 
 std::shared_ptr<TensorOperation> Fade::Parse() {
   return std::make_shared<FadeOperation>(data_->fade_in_len_, data_->fade_out_len_, data_->fade_shape_);
+}
+
+// Flanger Transform Operation.
+struct Flanger::Data {
+  Data(int32_t sample_rate, float delay, float depth, float regen, float width, float speed, float phase,
+       Modulation modulation, Interpolation interpolation)
+      : sample_rate_(sample_rate),
+        delay_(delay),
+        depth_(depth),
+        regen_(regen),
+        width_(width),
+        speed_(speed),
+        phase_(phase),
+        modulation_(modulation),
+        interpolation_(interpolation) {}
+  int32_t sample_rate_;
+  float delay_;
+  float depth_;
+  float regen_;
+  float width_;
+  float speed_;
+  float phase_;
+  Modulation modulation_;
+  Interpolation interpolation_;
+};
+
+Flanger::Flanger(int32_t sample_rate, float delay, float depth, float regen, float width, float speed, float phase,
+                 Modulation modulation, Interpolation interpolation)
+    : data_(std::make_shared<Data>(sample_rate, delay, depth, regen, width, speed, phase, modulation, interpolation)) {}
+
+std::shared_ptr<TensorOperation> Flanger::Parse() {
+  return std::make_shared<FlangerOperation>(data_->sample_rate_, data_->delay_, data_->depth_, data_->regen_,
+                                            data_->width_, data_->speed_, data_->phase_, data_->modulation_,
+                                            data_->interpolation_);
 }
 
 // FrequencyMasking Transform Operation.

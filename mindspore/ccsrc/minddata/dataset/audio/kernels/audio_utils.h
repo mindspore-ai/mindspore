@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
@@ -557,6 +558,245 @@ Status MedianSmoothing(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
 Status DetectPitchFrequency(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate,
                             float frame_time, int32_t win_length, int32_t freq_low, int32_t freq_high);
 
+/// \brief A helper function for phaser, generates a table with given parameters.
+/// \param output: Tensor of shape <time>.
+/// \param type: can choose DataType::DE_FLOAT32 or DataType::DE_INT32.
+/// \param modulation: Modulation of the input tensor.
+///     It can be one of Modulation.kSinusoidal or Modulation.kTriangular.
+/// \param table_size: The length of table.
+/// \param min: Calculate the sampling rate within the delay time.
+/// \param max: Calculate the sampling rate within the delay and delay depth time.
+/// \param phase: Phase offset of function.
+/// \return Status code.
+Status GenerateWaveTable(std::shared_ptr<Tensor> *output, const DataType &type, Modulation modulation,
+                         int32_t table_size, float min, float max, float phase);
+
+/// \brief Flanger about interpolation effect.
+/// \param input: Tensor of shape <batch, channel, time>.
+/// \param int_delay: A dimensional vector about integer delay, subscript representing delay.
+/// \param frac_delay: A dimensional vector about delay obtained by using the frac function.
+/// \param interpolation: Interpolation of the input tensor.
+///     It can be one of Interpolation::kLinear or Interpolation::kQuadratic.
+/// \param delay_buf_pos: Minimum dimension length about delay_bufs.
+/// \Returns Flanger about interpolation effect.
+template <typename T>
+std::vector<std::vector<T>> FlangerInterpolation(const std::shared_ptr<Tensor> &input, std::vector<int> int_delay,
+                                                 const std::vector<T> &frac_delay, Interpolation interpolation,
+                                                 int delay_buf_pos) {
+  int n_batch = input->shape()[0];
+  int n_channels = input->shape()[-2];
+  int delay_buf_length = input->shape()[-1];
+
+  std::vector<std::vector<T>> delayed_value_a(n_batch, std::vector<T>(n_channels, 0));
+  std::vector<std::vector<T>> delayed_value_b(n_batch, std::vector<T>(n_channels, 0));
+  for (int j = 0; j < n_batch; j++) {
+    for (int k = 0; k < n_channels; k++) {
+      // delay after obtaining the current number of channels
+      auto iter_input = input->begin<T>();
+      int it = j * n_channels * delay_buf_length + k * delay_buf_length;
+      iter_input += it + (delay_buf_pos + int_delay[k]) % delay_buf_length;
+      delayed_value_a[j][k] = *(iter_input);
+      iter_input = input->begin<T>();
+      iter_input += it + (delay_buf_pos + int_delay[k] + 1) % delay_buf_length;
+      delayed_value_b[j][k] = *(iter_input);
+    }
+  }
+  // delay subscript backward
+  for (int j = 0; j < n_channels; j++) {
+    int_delay[j] = int_delay[j] + 2;
+  }
+  std::vector<std::vector<T>> delayed(n_batch, std::vector<T>(n_channels, 0));
+  std::vector<std::vector<T>> delayed_value_c(n_batch, std::vector<T>(n_channels, 0));
+  if (interpolation == Interpolation::kLinear) {
+    for (int j = 0; j < n_batch; j++) {
+      for (int k = 0; k < n_channels; k++) {
+        delayed[j][k] = delayed_value_a[j][k] + (delayed_value_b[j][k] - delayed_value_a[j][k]) * frac_delay[k];
+      }
+    }
+  } else {
+    for (int j = 0; j < n_batch; j++) {
+      for (int k = 0; k < n_channels; k++) {
+        auto iter_input = input->begin<T>();
+        int it = j * n_channels * delay_buf_length + k * delay_buf_length;
+        iter_input += it + (delay_buf_pos + int_delay[k]) % delay_buf_length;
+        delayed_value_c[j][k] = *(iter_input);
+      }
+    }
+    // delay subscript backward
+    for (int j = 0; j < n_channels; j++) {
+      int_delay[j] = int_delay[j] + 1;
+    }
+    std::vector<std::vector<T>> frac_delay_coefficient(n_batch, std::vector<T>(n_channels, 0));
+    std::vector<std::vector<T>> frac_delay_value(n_batch, std::vector<T>(n_channels, 0));
+    for (int j = 0; j < n_batch; j++) {
+      for (int k = 0; k < n_channels; k++) {
+        delayed_value_c[j][k] = delayed_value_c[j][k] - delayed_value_a[j][k];
+        delayed_value_b[j][k] = delayed_value_b[j][k] - delayed_value_a[j][k];
+        frac_delay_coefficient[j][k] = delayed_value_c[j][k] * 0.5 - delayed_value_b[j][k];
+        frac_delay_value[j][k] = delayed_value_b[j][k] * 2 - delayed_value_c[j][k] * 0.5;
+        // the next delay is obtained by delaying the data in the buffer
+        delayed[j][k] = delayed_value_a[j][k] +
+                        (frac_delay_coefficient[j][k] * frac_delay[k] + frac_delay_value[j][k]) * frac_delay[k];
+      }
+    }
+  }
+  return delayed;
+}
+
+/// \brief Interval limiting function.
+/// \param output_waveform: Tensor of shape <..., time>.
+/// \param min: If value is less than min, min is returned.
+/// \param max: If value is greater than max, max is returned.
+/// \Returns Tensor at the same latitude.
+template <typename T>
+std::shared_ptr<Tensor> Clamp(const std::shared_ptr<Tensor> &tensor, T min, T max) {
+  for (auto itr = tensor->begin<T>(); itr != tensor->end<T>(); itr++) {
+    if (*itr > max) {
+      *itr = max;
+    } else if (*itr < min) {
+      *itr = min;
+    }
+  }
+  return tensor;
+}
+
+/// \brief Apply flanger effect.
+/// \param input/output: Tensor of shape <..., channel, time>.
+/// \param sample_rate: Sampling rate of the waveform, e.g. 44100 (Hz), the value can't be zero.
+/// \param delay: Desired delay in milliseconds (ms), range: [0, 30].
+/// \param depth: Desired delay depth in milliseconds (ms), range: [0, 10].
+/// \param regen: Desired regen (feedback gain) in dB., range: [-95, 95].
+/// \param width: Desired width (delay gain) in dB, range: [0, 100].
+/// \param speed: Modulation speed in Hz, range: [0.1, 10].
+/// \param phase: Percentage phase-shift for multi-channel, range: [0, 100].
+/// \param modulation: Modulation of the input tensor.
+///     It can be one of Modulation::kSinusoidal or Modulation::kTriangular.
+/// \param interpolation: Interpolation of the input tensor.
+///     It can be one of Interpolation::kLinear or Interpolation::kQuadratic.
+/// \return Status code.
+template <typename T>
+Status Flanger(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int32_t sample_rate, float delay,
+               float depth, float regen, float width, float speed, float phase, Modulation modulation,
+               Interpolation interpolation) {
+  std::shared_ptr<Tensor> waveform;
+  if (input->type() == DataType::DE_FLOAT64) {
+    waveform = input;
+  } else {
+    RETURN_IF_NOT_OK(TypeCast(input, &waveform, DataType(DataType::DE_FLOAT32)));
+  }
+  // convert to 3D (batch, channels, time)
+  TensorShape actual_shape = waveform->shape();
+  TensorShape toShape({waveform->Size() / actual_shape[-2] / actual_shape[-1], actual_shape[-2], actual_shape[-1]});
+  RETURN_IF_NOT_OK(waveform->Reshape(toShape));
+
+  // scaling
+  T feedback_gain = static_cast<T>(regen) / 100;
+  T delay_gain = static_cast<T>(width) / 100;
+  T channel_phase = static_cast<T>(phase) / 100;
+  T delay_min = static_cast<T>(delay) / 1000;
+  T delay_depth = static_cast<T>(depth) / 1000;
+
+  // balance output:
+  T in_gain = 1.0 / (1 + delay_gain);
+  delay_gain = delay_gain / (1 + delay_gain);
+  // balance feedback loop:
+  delay_gain = delay_gain * (1 - abs(feedback_gain));
+
+  int delay_buf_length = static_cast<int>((delay_min + delay_depth) * sample_rate + 0.5);
+  delay_buf_length = delay_buf_length + 2;
+
+  int lfo_length = static_cast<int>(sample_rate / speed);
+
+  T table_min = floor(delay_min * sample_rate + 0.5);
+  T table_max = delay_buf_length - 2.0;
+  // generate wave table
+  T lfo_phase = 3 * PI / 2;
+  std::shared_ptr<Tensor> lfo;
+  RETURN_IF_NOT_OK(GenerateWaveTable(&lfo, DataType(DataType::DE_FLOAT32), modulation, lfo_length,
+                                     static_cast<float>(table_min), static_cast<float>(table_max),
+                                     static_cast<float>(lfo_phase)));
+  int n_batch = waveform->shape()[0];
+  int n_channels = waveform->shape()[-2];
+  int time = waveform->shape()[-1];
+  std::vector<T> delay_tensor(n_channels, 0.0), frac_delay(n_channels, 0.0);
+  std::vector<int> cur_channel_phase(n_channels, 0), int_delay(n_channels, 0);
+  // next delay
+  std::vector<std::vector<T>> delay_last(n_batch, std::vector<T>(n_channels, 0));
+
+  // initialization of delay_bufs
+  TensorShape delay_bufs_shape({n_batch, n_channels, delay_buf_length});
+  std::shared_ptr<Tensor> delay_bufs, output_waveform;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(delay_bufs_shape, waveform->type(), &delay_bufs));
+  RETURN_IF_NOT_OK(delay_bufs->Zero());
+  // initialization of output_waveform
+  TensorShape output_waveform_shape({n_batch, n_channels, actual_shape[-1]});
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(output_waveform_shape, waveform->type(), &output_waveform));
+
+  int delay_buf_pos = 0, lfo_pos = 0;
+  for (int i = 0; i < time; i++) {
+    delay_buf_pos = (delay_buf_pos + delay_buf_length - 1) % delay_buf_length;
+    for (int j = 0; j < n_channels; j++) {
+      // get current channel phase
+      cur_channel_phase[j] = static_cast<int>(j * lfo_length * channel_phase + 0.5);
+      // through the current channel phase and lfo arrays to get the delay
+      auto iter_lfo = lfo->begin<float>();
+      delay_tensor[j] = *(iter_lfo + (lfo_pos + cur_channel_phase[j]) % lfo_length);
+      // the frac delay is obtained by using the frac function
+      frac_delay[j] = delay_tensor[j] - static_cast<int>(delay_tensor[j]);
+      delay_tensor[j] = floor(delay_tensor[j]);
+      int_delay[j] = static_cast<int>(delay_tensor[j]);
+    }
+    // get the waveform of [:, :, i]
+    std::shared_ptr<Tensor> temp;
+    TensorShape temp_shape({n_batch, n_channels});
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(temp_shape, waveform->type(), &temp));
+    Slice ss1(0, n_batch), ss2(0, n_channels), ss3(i, i + 1);
+    SliceOption sp1(ss1), sp2(ss2), sp3(ss3);
+    std::vector<SliceOption> slice_option;
+    slice_option.push_back(sp1), slice_option.push_back(sp2), slice_option.push_back(sp3);
+    RETURN_IF_NOT_OK(waveform->Slice(&temp, slice_option));
+
+    auto iter_temp = temp->begin<T>();
+    auto iter_delay_bufs = delay_bufs->begin<T>();
+    for (int j = 0; j < n_batch; j++) {
+      for (int k = 0; k < n_channels; k++) {
+        iter_delay_bufs += delay_buf_pos;
+        // the value of delay_bufs is processed by next delay
+        *(iter_delay_bufs) = *iter_temp + delay_last[j][k] * feedback_gain;
+        iter_delay_bufs -= (delay_buf_pos - delay_buf_length);
+        iter_temp++;
+      }
+    }
+    // different delayed values can be obtained by judging the type of interpolation
+    std::vector<std::vector<T>> delayed(n_batch, std::vector<T>(n_channels, 0));
+    delayed = FlangerInterpolation<T>(delay_bufs, int_delay, frac_delay, interpolation, delay_buf_pos);
+
+    for (int j = 0; j < n_channels; j++) {
+      int_delay[j] = int_delay[j] + 1;
+    }
+    iter_temp = temp->begin<T>();
+    for (int j = 0; j < n_batch; j++) {
+      for (int k = 0; k < n_channels; k++) {
+        auto iter_output_waveform = output_waveform->begin<T>();
+        // update the next delay
+        delay_last[j][k] = delayed[j][k];
+        int it = j * n_channels * actual_shape[-1] + k * actual_shape[-1];
+        iter_output_waveform += it + i;
+        // the results are obtained by balancing the output and balancing the feedback loop
+        *(iter_output_waveform) = *(iter_temp)*in_gain + delayed[j][k] * delay_gain;
+        iter_temp++;
+      }
+    }
+    // update lfo location
+    lfo_pos = (lfo_pos + 1) % lfo_length;
+  }
+  // the output value is limited by the interval limit function
+  output_waveform = Clamp<T>(output_waveform, -1, 1);
+  // convert dimension to waveform dimension
+  RETURN_IF_NOT_OK(output_waveform->Reshape(actual_shape));
+  RETURN_IF_NOT_OK(TypeCast(output_waveform, output, input->type()));
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_

@@ -35,6 +35,7 @@
 #include "minddata/dataset/audio/ir/kernels/detect_pitch_frequency_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
+#include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
@@ -228,6 +229,32 @@ PYBIND_REGISTER(FadeOperation, 1, ([](const py::module *m) {
                       auto fade = std::make_shared<audio::FadeOperation>(fade_in_len, fade_out_len, fade_shape);
                       THROW_IF_ERROR(fade->ValidateParams());
                       return fade;
+                    }));
+                }));
+
+PYBIND_REGISTER(Modulation, 0, ([](const py::module *m) {
+                  (void)py::enum_<Modulation>(*m, "Modulation", py::arithmetic())
+                    .value("DE_MODULATION_SINUSOIDAL", Modulation::kSinusoidal)
+                    .value("DE_MODULATION_TRIANGULAR", Modulation::kTriangular)
+                    .export_values();
+                }));
+
+PYBIND_REGISTER(Interpolation, 0, ([](const py::module *m) {
+                  (void)py::enum_<Interpolation>(*m, "Interpolation", py::arithmetic())
+                    .value("DE_INTERPOLATION_LINEAR", Interpolation::kLinear)
+                    .value("DE_INTERPOLATION_QUADRATIC", Interpolation::kQuadratic)
+                    .export_values();
+                }));
+
+PYBIND_REGISTER(FlangerOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::FlangerOperation, TensorOperation, std::shared_ptr<audio::FlangerOperation>>(
+                    *m, "FlangerOperation")
+                    .def(py::init([](int32_t sample_rate, float delay, float depth, float regen, float width,
+                                     float speed, float phase, Modulation modulation, Interpolation interpolation) {
+                      auto flanger = std::make_shared<audio::FlangerOperation>(sample_rate, delay, depth, regen, width,
+                                                                               speed, phase, modulation, interpolation);
+                      THROW_IF_ERROR(flanger->ValidateParams());
+                      return flanger;
                     }));
                 }));
 
