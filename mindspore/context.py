@@ -409,7 +409,7 @@ def set_auto_parallel_context(**kwargs):
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
-                       should be set as True. Default: False. The interface is not be recommended currently,
+                       should be set as True. Default: False. The interface is not to be recommended currently,
                        it is better using 'dataset_strategy' to replace it.
         dataset_strategy (Union[str, tuple]): Dataset sharding strategy. Default: "data_parallel".
                        dataset_strategy="data_parallel" is equal to full_batch=False, dataset_strategy="full_batch" is
@@ -422,8 +422,9 @@ def set_auto_parallel_context(**kwargs):
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how the devices are
-                        distributed alone the pipeline. The total devices will be divided into 'pipeline_stags' stages.
-                        Currently this could only be used when parallel mode semi_auto_parallel is enabled. Default: 1.
+                        distributed alone in the pipeline. The total devices will be divided into 'pipeline_stags'
+                        stages. Currently, this could only be used when parallel mode semi_auto_parallel is enabled.
+                        Default: 1.
         grad_accumulation_step (int): Set the accumulation steps of gradients in auto and semi auto parallel mode.
                         This should be a positive int. Default: 1.
 
@@ -431,6 +432,7 @@ def set_auto_parallel_context(**kwargs):
         ValueError: If input key is not attribute in auto parallel context.
 
     Examples:
+        >>> from mindspore import context
         >>> context.set_auto_parallel_context(device_num=8)
         >>> context.set_auto_parallel_context(global_rank=0)
         >>> context.set_auto_parallel_context(gradients_mean=True)
@@ -460,6 +462,11 @@ def get_auto_parallel_context(attr_key):
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
+
+    Examples:
+        >>> from mindspore import context
+        >>> parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        >>> dataset_strategy = context.get_auto_parallel_context("dataset_strategy")
     """
     return _get_auto_parallel_context(attr_key)
 

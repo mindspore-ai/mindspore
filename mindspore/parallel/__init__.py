@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-This interface is ONLY used in Auto-parallel procedure.
+This interface is only used in Auto-parallel procedure.
 """
 from .algo_parameter_config import get_algo_parameters, reset_algo_parameters, \
     set_algo_parameters

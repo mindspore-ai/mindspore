@@ -47,7 +47,7 @@ class _AlgoParameterConfig:
 
     def set_fully_use_devices(self, not_fully):
         """
-        Set the flag of whether ONLY generating strategies that fully use all available devices.
+        Set the flag of whether only generating strategies that fully use all available devices.
         Default: True
 
         Args:
@@ -58,7 +58,7 @@ class _AlgoParameterConfig:
 
     def get_fully_use_devices(self):
         """
-        Get the flag of whether ONLY generating strategies that fully use all available devices.
+        Get the flag of whether only generating strategies that fully use all available devices.
 
         Return:
             The flag.
@@ -231,7 +231,7 @@ def set_algo_parameters(**kwargs):
         tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: False
         tensor_slice_align_size (int): The minimum tensor slice shape of MatMul, the value must be in [1, 1024].
             Default: 16
-        fully_use_devices (bool): Whether ONLY generating strategies that fully use all available devices.
+        fully_use_devices (bool): Whether only generating strategies that fully use all available devices.
             Default: True
         elementwise_op_strategy_follow (bool): Whether the elementwise operator has the same strategies as its
             subsequent operators. Default: False

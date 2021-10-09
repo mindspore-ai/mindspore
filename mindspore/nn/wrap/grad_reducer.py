@@ -284,9 +284,11 @@ class DistributedGradReducer(Cell):
 
     Args:
         parameters (list): the parameters to be updated.
-        mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients. Default: False.
+        mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients. Default: True.
         degree (int): The mean coefficient. Usually it equals to device number. Default: None.
         fusion_type (int): The type of all reduce fusion. Default: 1.
+        group (str): The communication group to work on. Normally, the group should be created by create_group,
+                     otherwise, using the default group. Default: WORLD_COMM_GROUP.
 
     Raises:
         ValueError: If degree is not a int or less than 0.
