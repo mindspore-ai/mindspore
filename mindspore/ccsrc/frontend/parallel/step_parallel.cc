@@ -351,10 +351,10 @@ void InsertRedistribution(const RedistributionOpListPtr &redistribution_oplist_p
     if (prim_out != nullptr && prim_in != nullptr) {
       auto prim_out_attr = prim_out->attrs();
       auto prim_in_attr = prim_in->attrs();
-      if (prim_out_attr.find(RECOMPUTE_COMM_OP) != prim_out_attr.end() &&
-          !GetValue<bool>(prim_out_attr[RECOMPUTE_COMM_OP]) &&
-          prim_in_attr.find(RECOMPUTE_COMM_OP) != prim_in_attr.end() &&
-          !GetValue<bool>(prim_in_attr[RECOMPUTE_COMM_OP]) &&
+      if (((prim_out_attr.find(RECOMPUTE_COMM_OP) != prim_out_attr.end() &&
+            !GetValue<bool>(prim_out_attr[RECOMPUTE_COMM_OP])) ||
+           (prim_in_attr.find(RECOMPUTE_COMM_OP) != prim_in_attr.end() &&
+            !GetValue<bool>(prim_in_attr[RECOMPUTE_COMM_OP]))) &&
           COMMUNICATION_OPS.find(op_name) != COMMUNICATION_OPS.end()) {
         MS_LOG(INFO) << "The redistribution node would not be recomputed.";
         instance_name = instance_name + "_" + NOT_RECOMPUTE;
