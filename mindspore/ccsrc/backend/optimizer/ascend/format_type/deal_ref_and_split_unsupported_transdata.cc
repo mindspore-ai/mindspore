@@ -50,9 +50,9 @@ session::KernelWithIndex DealRefAndSpiltUnSupportedTransdata::FindRefOriginNode(
       }
     }
 
-    // deal special (trans,cast,reshape) op
+    // deal special (trans,cast,reshape) op and nop-node
     if (op_name == prim::kPrimCast->name() || op_name == prim::kPrimTranspose->name() ||
-        op_name == prim::kPrimReshape->name() || op_name == kTransDataOpName) {
+        op_name == prim::kPrimReshape->name() || op_name == kTransDataOpName || opt::IsNopNode(cnode)) {
       AnfNodePtr next_node = cnode->input(1);
       return FindRefOriginNode(next_node);
     }
@@ -230,7 +230,7 @@ void DealRefAndSpiltUnSupportedTransdata::DealBroadCastAsRef(const FuncGraphPtr 
   if (AnfAlgo::GetCNodeName(cnode) == kBroadcastOpName) {
     auto input_size = AnfAlgo::GetInputTensorNum(cnode);
     for (size_t i = 0; i < input_size; ++i) {
-      auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, i);
+      auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, i, true);
       auto input_node = input_node_with_index.first;
       MS_EXCEPTION_IF_NULL(input_node);
       MS_LOG(INFO) << "origin node:" << input_node->fullname_with_scope();
