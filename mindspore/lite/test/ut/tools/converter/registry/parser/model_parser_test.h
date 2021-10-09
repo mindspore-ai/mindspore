@@ -22,7 +22,7 @@
 #include <vector>
 #include "include/registry/model_parser.h"
 #include "include/registry/model_parser_registry.h"
-#include "ut/tools/converter/registry/node_parser_test.h"
+#include "ut/tools/converter/registry/parser/node_parser_test.h"
 
 namespace mindspore {
 class ModelParserTest : public converter::ModelParser {

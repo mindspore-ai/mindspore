@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ut/tools/converter/registry/model_parser_test.h"
+#include "ut/tools/converter/registry/parser/model_parser_test.h"
 #include <map>
 #include <vector>
 #include "include/errorcode.h"

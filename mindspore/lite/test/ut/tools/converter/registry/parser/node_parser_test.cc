@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ut/tools/converter/registry/node_parser_test.h"
+#include "ut/tools/converter/registry/parser/node_parser_test.h"
 #include <map>
 #include <string>
 #include <vector>
