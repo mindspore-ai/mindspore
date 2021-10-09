@@ -156,7 +156,8 @@ class CheckpointConfig:
             keep_checkpoint_per_n_minutes = Validator.check_non_negative_int(keep_checkpoint_per_n_minutes)
 
         if saved_network is not None and not isinstance(saved_network, nn.Cell):
-            raise TypeError(f"The type of saved_network must be None or Cell, but got {str(type(saved_network))}.")
+            raise TypeError(f"For 'CheckpointConfig', the type of 'saved_network' must be None or Cell, "
+                            f"but got {str(type(saved_network))}.")
 
         if not save_checkpoint_steps and not save_checkpoint_seconds and \
                 not keep_checkpoint_max and not keep_checkpoint_per_n_minutes:
@@ -249,7 +250,7 @@ class CheckpointConfig:
         if append_info is None or append_info == []:
             return None
         if not isinstance(append_info, list):
-            raise TypeError(f"The type of 'append_info' must list, but got {str(type(append_info))}.")
+            raise TypeError(f"The type of 'append_info' must be list, but got {str(type(append_info))}.")
         handle_append_info = {}
         if "epoch_num" in append_info:
             handle_append_info["epoch_num"] = 0
@@ -258,18 +259,21 @@ class CheckpointConfig:
         dict_num = 0
         for element in append_info:
             if not isinstance(element, str) and not isinstance(element, dict):
-                raise TypeError(f"The type of append_info element must be str or dict, but got {str(type(element))}.")
+                raise TypeError(f"The type of 'append_info' element must be str or dict, "
+                                f"but got {str(type(element))}.")
             if isinstance(element, str) and element not in _info_list:
-                raise TypeError(f"The type of append_info element must be in {_info_list}, but got {element}.")
+                raise ValueError(f"The value of element in the argument 'append_info' must be in {_info_list}, "
+                                 f"but got {element}.")
             if isinstance(element, dict):
                 dict_num += 1
                 if dict_num > 1:
-                    raise TypeError(f"The element of append_info must has only one dict.")
+                    raise TypeError(f"The element of 'append_info' must has only one dict.")
                 for key, value in element.items():
                     if isinstance(key, str) and isinstance(value, (int, float, bool)):
                         handle_append_info[key] = value
                     else:
-                        raise TypeError(f"The type of dict in append_info must be key: str, value: int or float.")
+                        raise TypeError(f"The type of dict in 'append_info' must be key: string, value: int or float, "
+                                        f"but got key: {type(key)}, value: {type(value)}")
 
         return handle_append_info
 
@@ -304,9 +308,8 @@ class ModelCheckpoint(Callback):
         self._last_triggered_step = 0
 
         if not isinstance(prefix, str) or prefix.find('/') >= 0:
-            raise ValueError("'Prefix' {} for checkpoint file name is invalid, 'prefix' must be "
-                             "str and does not contain '/', please check and correct it and then "
-                             "continue".format(prefix))
+            raise ValueError("The argument 'prefix' for checkpoint file name is invalid, 'prefix' must be "
+                             "string and does not contain '/', but got {}.".format(prefix))
         self._prefix = prefix
 
         if directory is not None:
@@ -318,7 +321,8 @@ class ModelCheckpoint(Callback):
             self._config = CheckpointConfig()
         else:
             if not isinstance(config, CheckpointConfig):
-                raise TypeError("The argument 'config' should be CheckpointConfig type.")
+                raise TypeError("The argument 'config' should be 'CheckpointConfig' type, "
+                                "but got {}.".format(type(config)))
             self._config = config
 
         # get existing checkpoint files
