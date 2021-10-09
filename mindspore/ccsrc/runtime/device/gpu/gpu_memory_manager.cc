@@ -73,61 +73,25 @@ bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList
 void GPUMemoryManager::MallocDeviceMemory() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  // If use the dynamic memory pool, then alloc the first memory block to init.
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL)) {
-    if (ps::ps_cache_instance.initialized_ps_cache()) {
-      return;
-    }
-    auto device_addr = MallocMemFromMemPool(1);
-    if (!device_addr) {
-      MS_LOG(EXCEPTION) << "Dynamic memory pool init error.";
-    }
-  } else {
-    // Need to reserve 20% space for dynamic memory
-    const float init_gpu_mem_ratio = 0.8;
-    size_t mem_size = FloatToSize(GPUMemoryAllocator::GetInstance().free_mem_size() * init_gpu_mem_ratio);
-    auto alloc_size =
-      GPUMemoryAllocator::GetInstance().AllocDeviceMem(mem_size, reinterpret_cast<void **>(&device_mem_base_));
-    device_mem_size_ = alloc_size;
-    static_mem_offset_ = device_mem_size_;
+  if (ps::ps_cache_instance.initialized_ps_cache()) {
+    return;
+  }
+  auto device_addr = MallocMemFromMemPool(1);
+  if (!device_addr) {
+    MS_LOG(EXCEPTION) << "Dynamic memory pool init error.";
   }
 }
 
-void GPUMemoryManager::FreeDeviceMemory() {
-  if (device_mem_base_ != nullptr) {
-    if (!GPUMemoryAllocator::GetInstance().FreeDeviceMem(device_mem_base_)) {
-      MS_LOG(EXCEPTION) << "Could not free gpu device memory.";
-    }
-  }
-  GPUMemoryAllocator::GetInstance().ReleaseDeviceRes();
-}
+void GPUMemoryManager::FreeDeviceMemory() { GPUMemoryAllocator::GetInstance().ReleaseDeviceRes(); }
 
 uint8_t *GPUMemoryManager::MallocStaticMem(size_t size, bool, uint32_t) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL)) {
-    auto device_ptr = MallocMemFromMemPool(size);
-    if (device_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << size;
-    }
-    return AddressOffset(device_ptr, 0);
+  auto device_ptr = MallocMemFromMemPool(size);
+  if (device_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << size;
   }
-
-  auto align_size = GetCommonAlignSize(size);
-  if (static_mem_offset_ < align_size) {
-    MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
-                      << "] static[" << total_static_size_ << "])"
-                      << " malloc [" << align_size << "] failed!";
-  }
-  auto offset = static_mem_offset_ - align_size;
-  if (dynamic_mem_offset_ > offset) {
-    MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
-                      << "] static[" << total_static_size_ << "])"
-                      << " malloc [" << align_size << "] failed!";
-  }
-  total_static_size_ += align_size;
-  static_mem_offset_ = offset;
-  return device_mem_base_ + offset;
+  return AddressOffset(device_ptr, 0);
 }
 }  // namespace gpu
 }  // namespace device

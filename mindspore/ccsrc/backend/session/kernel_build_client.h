@@ -22,6 +22,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 
 #include "common/duplex_pipe.h"
 #include "utils/log_adapter.h"
@@ -88,6 +89,7 @@ class KernelBuildClient {
 
   // Send a request and fetch its response
   std::string SendRequest(std::string data) {
+    std::lock_guard<std::mutex> locker(mutex_);
     Request(data);
     return Response();
   }
@@ -137,6 +139,8 @@ class KernelBuildClient {
   virtual ~KernelBuildClient() = default;
 
  private:
+  // Support multi-thread.
+  std::mutex mutex_;
   bool init_;
   std::shared_ptr<DuplexPipe> dp_;
 };

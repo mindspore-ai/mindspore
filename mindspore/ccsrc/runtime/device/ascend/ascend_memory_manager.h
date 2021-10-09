@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "runtime/device/memory_manager.h"
-#include "graphengine/inc/external/runtime/rt_error_codes.h"
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -35,7 +35,7 @@ class AscendMemoryManager : public MemoryManager {
   void *MallocMemFromMemPool(size_t size) override;
   void *MallocDevice(size_t size) override;
   void FreeMemFromMemPool(void *device_ptr) override;
-  uint64_t GetDeviceMemSize();
+  uint64_t GetMsMaxMemSize();
   void MallocSomasDynamicMem(const session::KernelGraph &graph) override;
   uint8_t *MallocCommunicationMemFromMemPool(size_t size) override;
   std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) override {
@@ -49,12 +49,6 @@ class AscendMemoryManager : public MemoryManager {
  protected:
   uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) override;
   uint8_t *MallocDynamicMem(size_t size, bool communication_mem) override;
-
- private:
-  uint8_t *device_mem_pool_base_{nullptr};
-  uint64_t device_mem_pool_size_{0};
-
-  uint64_t GetDeviceMemSizeFromContext();
 };
 }  // namespace ascend
 }  // namespace device

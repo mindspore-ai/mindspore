@@ -114,7 +114,6 @@ class DynamicMemPoolBestFit {
   virtual size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) = 0;
   virtual bool FreeDeviceMem(const DeviceMemPtr &addr) = 0;
   virtual size_t free_mem_size() = 0;
-  virtual size_t total_mem_size() = 0;
 
  protected:
   // The real size by memory alloc aligned.

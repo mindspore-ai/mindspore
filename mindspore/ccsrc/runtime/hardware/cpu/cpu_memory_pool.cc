@@ -90,8 +90,6 @@ bool CPUMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
 }
 
 size_t CPUMemoryPool::free_mem_size() { return GetSystemMemorySize("MemAvailable"); }
-
-size_t CPUMemoryPool::total_mem_size() { return GetSystemMemorySize("MemTotal"); }
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

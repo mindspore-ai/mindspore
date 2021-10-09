@@ -27,7 +27,7 @@ namespace gpu {
 const size_t kGBToByte = 1024 << 20;
 
 bool GPUMemoryAllocator::Init() {
-  size_t total_size = total_mem_size();
+  size_t total_size = CudaDriver::total_mem_size();
   size_t free_size = CudaDriver::free_mem_size();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -98,8 +98,6 @@ size_t GPUMemoryAllocator::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
 bool GPUMemoryAllocator::FreeDeviceMem(const DeviceMemPtr &addr) { return CudaDriver::FreeDeviceMem(addr); }
 
 size_t GPUMemoryAllocator::free_mem_size() { return std::min(CudaDriver::free_mem_size(), available_device_memory_); }
-
-size_t GPUMemoryAllocator::total_mem_size() { return CudaDriver::total_mem_size(); }
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

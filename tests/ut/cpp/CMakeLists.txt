@@ -130,6 +130,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_event.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/kernel_build_ascend.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_kernel_runtime.cc"
+        "../../../mindspore/ccsrc/runtime/device/ascend/ascend_memory_adapter.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_memory_manager.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_device_address.cc"
         "../../../mindspore/ccsrc/runtime/device/ascend/ascend_memory_pool.cc"
