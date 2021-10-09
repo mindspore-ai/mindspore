@@ -14,9 +14,9 @@
 # ============================================================================
 """unit tests for numpy math operations"""
 
+import os
 import pytest
 import numpy as onp
-
 import mindspore.numpy as mnp
 from mindspore import context
 from mindspore.common.dtype import dtype_to_nptype
@@ -823,14 +823,6 @@ def test_log1p():
     run_unary_test(mnp_log1p, onp_log1p, test_case, error=1e-5)
 
 
-def mnp_logaddexp(x1, x2):
-    return mnp.logaddexp(x1, x2)
-
-
-def onp_logaddexp(x1, x2):
-    return onp.logaddexp(x1, x2)
-
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -838,14 +830,9 @@ def onp_logaddexp(x1, x2):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_logaddexp():
-    test_cases = [
-        onp.random.randint(1, 5, (5, 6, 3, 2)).astype('float16')]
-    for _, x1 in enumerate(test_cases):
-        for _, x2 in enumerate(test_cases):
-            expected = onp_logaddexp(x1, x2)
-            actual = mnp_logaddexp(to_tensor(x1), to_tensor(x2))
-            onp.testing.assert_almost_equal(actual.asnumpy().tolist(), expected.tolist(),
-                                            decimal=2)
+    os.putenv('GLOG_v', '0')
+    ret = os.system('pytest -s ./debug.py::test_logaddexp_inner --disable-warnings')
+    assert ret == 0
 
 
 def mnp_log2(x):
@@ -866,14 +853,6 @@ def test_log2():
     run_unary_test(mnp_log2, onp_log2, test_case, error=1e-5)
 
 
-def mnp_logaddexp2(x1, x2):
-    return mnp.logaddexp2(x1, x2)
-
-
-def onp_logaddexp2(x1, x2):
-    return onp.logaddexp2(x1, x2)
-
-
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -881,17 +860,9 @@ def onp_logaddexp2(x1, x2):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_logaddexp2():
-    test_cases = [
-        onp.random.randint(1, 5, (2)).astype('float16'),
-        onp.random.randint(1, 5, (3, 2)).astype('float16'),
-        onp.random.randint(1, 5, (1, 3, 2)).astype('float16'),
-        onp.random.randint(1, 5, (5, 6, 3, 2)).astype('float16')]
-    for _, x1 in enumerate(test_cases):
-        for _, x2 in enumerate(test_cases):
-            expected = onp_logaddexp2(x1, x2)
-            actual = mnp_logaddexp2(to_tensor(x1), to_tensor(x2))
-            onp.testing.assert_almost_equal(actual.asnumpy().tolist(), expected.tolist(),
-                                            decimal=2)
+    os.putenv('GLOG_v', '0')
+    ret = os.system('pytest -s ./debug.py::test_logaddexp2_inner --disable-warnings')
+    assert ret == 0
 
 
 def mnp_log10(x):
