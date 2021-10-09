@@ -89,7 +89,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
-  activation_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(activation_layer->getOutput(0), Format::NCHW);
   return RET_OK;
@@ -174,14 +174,14 @@ int PoolTensorRT::ParseParams() {
 void PoolTensorRT::AddParams(nvinfer1::IPoolingLayer *pooling_layer) {
   nvinfer1::Dims stride_dims = ConvertCudaDims(stride_);
   pooling_layer->setStrideNd(stride_dims);
-  pooling_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
-  if (pad_mode_ != schema::PadMode::PadMode_SAME && pad_mode_ != schema::PadMode::PadMode_PAD) {
-    MS_LOG(WARNING) << "needs check pad mode of " << EnumNamePadMode(pad_mode_) << " for node: " << op_name_;
+  if (pad_mode_ == schema::PadMode::PadMode_SAME) {
+    pooling_layer->setPaddingMode(nvinfer1::PaddingMode::kSAME_UPPER);
+  } else {
+    nvinfer1::Dims dims{};
+    dims.nbDims = DIMENSION_2D;
+    dims.d[0] = padding_[0];
+    dims.d[1] = padding_[DIMENSION_2D];
+    pooling_layer->setPaddingNd(dims);
   }
-  nvinfer1::Dims dims{};
-  dims.nbDims = DIMENSION_2D;
-  dims.d[0] = padding_[1];
-  dims.d[1] = padding_[DIMENSION_2D];
-  pooling_layer->setPaddingNd(dims);
 }
 }  // namespace mindspore::lite

@@ -74,8 +74,7 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     bias_layer->setName(bias_layer_name.c_str());
     out_tensor = bias_layer->getOutput(0);
   }
-
-  out_tensor->setName(out_tensors_[0].Name().c_str());
+  out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format});
   return RET_OK;
 }

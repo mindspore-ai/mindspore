@@ -81,7 +81,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   first_in_tensor_index_ =
-    strcmp(tensorrt_in_tensors_[0].trt_tensor_->getName(), in_tensors_[0].Name().c_str()) == 0 ? 0 : 1;
+    SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape()) ? 0 : 1;
 
   if (this->tensorrt_in_tensors_.size() != INPUT_SIZE2) {
     int ret = AddConstTensor(network);
@@ -153,7 +153,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       MS_LOG(WARNING) << "deal with scale and shift for pow op";
     }
   }
-  op_out_tensor->setName(out_tensors_[0].Name().c_str());
+  op_out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{op_out_tensor, tensorrt_in_tensors_[1].format_});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(op_out_tensor, tensorrt_in_tensors_[1].format_);
   return RET_OK;
@@ -211,12 +211,13 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
 int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
   // create ITensor from MS constant tensor of index 1 - first_in_tensor_index_
   nvinfer1::ITensor *constant_input = nullptr;
-  if (this->in_tensors_[1 - first_in_tensor_index_].Shape().size() == 0) {
+  if (this->in_tensors_[1 - first_in_tensor_index_].Shape().size() == 0 ||
+      this->in_tensors_[1 - first_in_tensor_index_].ElementNum() == 1) {
     constant_input = lite::ConvertScalarToITensor(network, this->in_tensors_[first_in_tensor_index_].Shape().size(),
                                                   in_tensors_[1 - first_in_tensor_index_].Data().get(),
                                                   in_tensors_[1 - first_in_tensor_index_].DataType());
     if (constant_input == nullptr) {
-      MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << op_name_;
+      MS_LOG(ERROR) << "create Itensor from scalar tensor failed: " << op_name_;
       return RET_ERROR;
     }
     this->AddInnerInTensors(ITensorHelper{constant_input, tensorrt_in_tensors_[0].format_});

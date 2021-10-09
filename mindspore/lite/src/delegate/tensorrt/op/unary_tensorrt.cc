@@ -52,7 +52,7 @@ int UnaryTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   cal_layer->setName(op_name_.c_str());
 
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
-  op_out_tensor->setName(out_tensors_[0].Name().c_str());
+  op_out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{op_out_tensor, tensorrt_in_tensors_[0].format_});
   return RET_OK;
 }
