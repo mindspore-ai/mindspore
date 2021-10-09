@@ -29,7 +29,7 @@ namespace kernel {
 template <typename T, typename G, typename S>
 class RandomCategoricalGpuKernel : public GpuKernel {
  public:
-  RandomCategoricalGpuKernel() : batch_size_(0), num_classes_(0), num_samples_(0), seed_(0) {}
+  RandomCategoricalGpuKernel() : is_null_input_(false), batch_size_(0), num_classes_(0), num_samples_(0), seed_(0) {}
   ~RandomCategoricalGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

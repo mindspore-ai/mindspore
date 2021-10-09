@@ -53,7 +53,10 @@ class RandomOpGpuKernel : public GpuKernel {
         output_size_(sizeof(T)),
         workspace_size_(sizeof(curandState)),
         seed_(0),
-        seed2_(0) {}
+        seed2_(0),
+        mask_generator_(nullptr),
+        states_init_(false),
+        is_null_input_(false) {}
   ~RandomOpGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -191,7 +194,7 @@ class RandomOpGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   curandGenerator_t mask_generator_;
-  bool states_init_{false};
+  bool states_init_;
   bool is_null_input_;
 };
 }  // namespace kernel

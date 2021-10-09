@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class BoundingBoxEncodeGpuKernel : public GpuKernel {
  public:
-  BoundingBoxEncodeGpuKernel() : anchor_size_(0), groundtruth_size_(0), deltas_size_(0) {}
+  BoundingBoxEncodeGpuKernel() : anchor_size_(0), groundtruth_size_(0), deltas_size_(0), is_null_input_(false) {}
 
   ~BoundingBoxEncodeGpuKernel() override = default;
 
