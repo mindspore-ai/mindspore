@@ -25,16 +25,17 @@ namespace lite {
 ArithmeticParameter *PopulateArithmeticV0CommonPara(const void *prim) {
   auto *primitive = static_cast<const schema::v0::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
-  auto *param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+  ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(ArithmeticParameter));
-  param->op_parameter_.type_ = primitive->value_type();
+
   param->broadcasting_ = false;
   param->ndim_ = 0;
   param->activation_type_ = 0;
+  param->op_parameter_.type_ = primitive->value_type();
   return param;
 }
 
