@@ -4,8 +4,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -fPIC -std=c++17")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
-set(MS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mindspore-lite-1.3.0-linux-x64/runtime")
-set(LITECV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mindspore-lite-1.3.0-linux-x64/runtime/include/dataset")
+set(MS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mindspore-lite-1.5.0-linux-x64/runtime")
+set(LITECV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mindspore-lite-1.5.0-linux-x64/runtime/include/dataset")
 
 include_directories(${MS_DIR} ${LITECV_DIR})
 
