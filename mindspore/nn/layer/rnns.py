@@ -49,6 +49,13 @@ def _check_batch_size_equal(batch_size_x, batch_size_hx, cls_name):
         raise ValueError(f"For '{cls_name}' batch size of x and hx should be equal, but got {batch_size_x} of x"
                          f"and {batch_size_hx} of hx.")
 
+@constexpr
+def _check_is_tensor(param_name, input_data, cls_name):
+    """Internal function, used to check whether the input data is Tensor."""
+    if input_data is not None and not isinstance(P.typeof(input_data), mstype.tensor_type):
+        raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.tensor_type}', "
+                        f"but got '{P.typeof(input_data)}'")
+
 
 def _rnn_tanh_cell(inputs, hidden, w_ih, w_hh, b_ih, b_hh):
     '''RNN cell function with tanh activation'''
@@ -613,6 +620,8 @@ class RNNCell(_RNNCellBase):
         self.nonlinearity = nonlinearity
 
     def construct(self, x, hx):
+        _check_is_tensor('x', x, self.cls_name)
+        _check_is_tensor('hx', hx, self.cls_name)
         x_dtype = P.dtype(x)
         hx_dtype = P.dtype(hx)
         _check_input_dtype(x_dtype, "x", [mstype.float32], self.cls_name)
@@ -681,6 +690,8 @@ class GRUCell(_RNNCellBase):
         super().__init__(input_size, hidden_size, has_bias, num_chunks=3)
 
     def construct(self, x, hx):
+        _check_is_tensor('x', x, self.cls_name)
+        _check_is_tensor('hx', hx, self.cls_name)
         x_dtype = P.dtype(x)
         hx_dtype = P.dtype(hx)
         _check_input_dtype(x_dtype, "x", [mstype.float32], self.cls_name)
