@@ -4,25 +4,25 @@ if(MSLITE_ENABLE_V0)
 endif()
 include_directories(${CCSRC_DIR}/backend/kernel_compiler/cpu)
 
-if(NOT MSLITE_STRING_KERNEL)
+if(NOT MSLITE_ENABLE_STRING_KERNEL)
     add_compile_definitions(STRING_KERNEL_CLIP)
 endif()
-if(NOT MSLITE_CONTROLFLOW_TENSORLIST)
+if(NOT MSLITE_ENABLE_CONTROLFLOW)
     add_compile_definitions(CONTROLFLOW_TENSORLIST_CLIP)
 endif()
-if(NOT MSLITE_AUTO_PARALLEL)
+if(NOT MSLITE_ENABLE_AUTO_PARALLEL)
     add_compile_definitions(AUTO_PARALLEL_CLIP)
 endif()
-if(NOT MSLITE_WEIGHT_DECODE)
+if(NOT MSLITE_ENABLE_WEIGHT_DECODE)
     add_compile_definitions(WEIGHT_DECODE_CLIP)
 endif()
-if(NOT MSLITE_CUSTOM_KERNEL_REGISTRY)
+if(NOT MSLITE_ENABLE_CUSTOM_KERNEL)
     add_compile_definitions(CUSTOM_KERNEL_REGISTRY_CLIP)
 endif()
 if(NOT MSLITE_ENABLE_RUNTIME_PASS)
     add_compile_definitions(RUNTIME_PASS_CLIP)
 endif()
-if(NOT MSLITE_DELEGATE_USE)
+if(NOT MSLITE_ENABLE_DELEGATE)
     add_compile_definitions(DELEGATE_CLIP)
 endif()
 
@@ -110,7 +110,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
 
-if(MSLITE_STRING_KERNEL)
+if(MSLITE_ENABLE_STRING_KERNEL)
     set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
@@ -123,14 +123,14 @@ if(MSLITE_ENABLE_RUNTIME_PASS)
             )
 endif()
 
-if(MSLITE_CONTROLFLOW_TENSORLIST)
+if(MSLITE_ENABLE_CONTROLFLOW)
     set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
         )
 endif()
 
-if(MSLITE_WEIGHT_DECODE)
+if(MSLITE_ENABLE_WEIGHT_DECODE)
     set(LITE_SRC
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
@@ -140,14 +140,14 @@ if(MSLITE_WEIGHT_DECODE)
         )
 endif()
 
-if(MSLITE_AUTO_PARALLEL)
+if(MSLITE_ENABLE_AUTO_PARALLEL)
     set(LITE_SRC
             ${LITE_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_split.cc
             )
 endif()
 
-if(MSLITE_CUSTOM_KERNEL_REGISTRY)
+if(MSLITE_ENABLE_CUSTOM_KERNEL)
     file(GLOB KERNEL_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/registry/*.cc)
 else()
     set(KERNEL_REG_SRC

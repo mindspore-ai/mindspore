@@ -4,7 +4,7 @@ file(GLOB OPS_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/populate/*.cc
     )
-if(MSLITE_STRING_KERNEL)
+if(MSLITE_ENABLE_STRING_KERNEL)
     file(GLOB OPS_SRC_STRING
             ${CMAKE_CURRENT_SOURCE_DIR}/populate/string/*.cc
             )
@@ -13,7 +13,7 @@ if(MSLITE_STRING_KERNEL)
             ${OPS_SRC_STRING}
             )
 endif()
-if(MSLITE_CONTROLFLOW_TENSORLIST)
+if(MSLITE_ENABLE_CONTROLFLOW)
     file(GLOB OPS_SRC_CONTROL_TENSORLIST
             ${CMAKE_CURRENT_SOURCE_DIR}/populate/control/*.cc
             )
@@ -25,7 +25,7 @@ endif()
 if(MSLITE_ENABLE_V0)
     file(GLOB_RECURSE COMPAT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/compat/*.cc)
     file(GLOB OPS_SRC_V0 ${CMAKE_CURRENT_SOURCE_DIR}/populate/v0/*.cc)
-    if(MSLITE_STRING_KERNEL)
+    if(MSLITE_ENABLE_STRING_KERNEL)
         file(GLOB OPS_SRC_STRING_V0
                 ${CMAKE_CURRENT_SOURCE_DIR}/populate/v0/string/*.cc
                 )
@@ -34,7 +34,7 @@ if(MSLITE_ENABLE_V0)
                 ${OPS_SRC_STRING_V0}
                 )
     endif()
-    if(MSLITE_CONTROLFLOW_TENSORLIST)
+    if(MSLITE_ENABLE_CONTROLFLOW)
         file(GLOB OPS_SRC_CONTROL_TENSORLIST_V0
                 ${CMAKE_CURRENT_SOURCE_DIR}/populate/v0/control/*.cc
                 )
