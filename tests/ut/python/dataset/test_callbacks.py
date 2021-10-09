@@ -79,6 +79,47 @@ class MyDSCallback(Begin, EpochBegin, EpochEnd, StepBegin, StepEnd):
     pass
 
 
+def verify_events(events, epoch_num, step_num, step_size=1, map_num=1, repeat=1):
+    '''
+    Make sure that the events are in correct order.
+    * begin is the first
+    * epoch x begin before epoch x end
+    * epoch x end before epoch x+1 begin
+    * step x begin before step x end
+    * step x begin before step x+1 begin
+    * step x end before step x+1 end
+    '''
+    assert events[0][0] == "begin_0_0_0"
+    epochs = list(filter(lambda e: 'epoch' in e[0], events))
+    i = 0
+    while i < len(epochs):
+        epoch_num = epochs[i][0].split('_')[2]
+        e_type = epochs[i][0].split('_')[1]
+        assert str(i // 2 + 1) == epoch_num
+        assert e_type == "begin"
+        i += 1
+        epoch_num = epochs[i][0].split('_')[2]
+        e_type = epochs[i][0].split('_')[1]
+        assert str(i // 2 + 1) == epoch_num
+        assert e_type == "end"
+        i += 1
+
+    steps = list(filter(lambda e: 'step' in e[0], events))
+    steps = [(s[0].split('_')[1], s[0].split('_')[-1]) for s in steps]
+
+    steps_map = {}
+    max_step = 0
+    for s in steps:
+        if s[1] in steps_map:
+            assert steps_map[s[1]] == 'begin'
+            assert s[0] == 'end'
+        else:
+            assert s[0] == 'begin'
+            steps_map[s[1]] = 'begin'
+            assert int(s[1]) > max_step
+            max_step = max(max_step, int(s[1]))
+
+
 def generate_expected(epoch_num, step_num, step_size=1, map_num=1, repeat=1):
     events = []
     cb_id = list(range(map_num))
@@ -121,6 +162,11 @@ def build_test_case_1cb(epochs, steps, step_size=1, repeat=1):
             pass
 
     expected_events = generate_expected(epochs, steps, step_size, 1, repeat)
+    expected_events = [e[0] for e in expected_events]
+    verify_events(events, epochs, steps, step_size, repeat)
+    events = [e[0] for e in events]
+    expected_events.sort()
+    events.sort()
     assert expected_events == events
 
 
@@ -141,6 +187,9 @@ def build_test_case_2cbs(epochs, steps):
             pass
 
     expected_events = generate_expected(epochs, steps)
+    expected_events.sort()
+    events1.sort()
+    events2.sort()
     assert expected_events == events1
     assert expected_events == events2
 
@@ -449,6 +498,12 @@ def test_callbacks_one_cb():
                         ('step_begin_1_4_4', [3]), ('epoch_end_1_4_4', [3]), ('step_begin_2_1_5', [3]),
                         ('step_begin_2_2_6', [3]), ('step_begin_2_3_7', [3]), ('step_begin_2_4_8', [3]),
                         ('epoch_end_2_4_8', [3])]
+    events1.sort()
+    events2.sort()
+    events3.sort()
+    expected_events1.sort()
+    expected_events2.sort()
+    expected_events3.sort()
     assert events1 == expected_events1
     assert events2 == expected_events2
     assert events3 == expected_events3

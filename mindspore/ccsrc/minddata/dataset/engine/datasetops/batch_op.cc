@@ -217,6 +217,8 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOE)));
     } else if (table_pair.second.ctrl_ == batchCtrl::kEOF) {
       RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagEOF)));
+    } else if (table_pair.second.ctrl_ == batchCtrl::kWait) {
+      RETURN_IF_NOT_OK(worker_out_queues_[workerId]->EmplaceBack(TensorRow(TensorRow::TensorRowFlags::kFlagWait)));
     } else if (table_pair.second.ctrl_ == batchCtrl::kNoCtrl) {
       TensorRow new_row;
       RETURN_IF_NOT_OK(MakeBatchedRow(std::move(table_pair), &new_row));
@@ -573,7 +575,15 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
   }
   return Status::OK();
 }
-Status BatchOp::WaitForWorkers() { return Status::OK(); }
+Status BatchOp::WaitForWorkers() {
+  num_workers_paused_ = 0;
+  for (int32_t i = 0; i < num_workers_; i++) {
+    RETURN_IF_NOT_OK(worker_in_queues_[i]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kWait))));
+  }
+  RETURN_IF_NOT_OK(wait_for_workers_post_.Wait());
+  wait_for_workers_post_.Clear();
+  return Status::OK();
+}
 
 }  // namespace dataset
 }  // namespace mindspore

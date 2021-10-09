@@ -45,7 +45,8 @@ class ParallelOp : public DatasetOp {
         num_workers_(num_workers),
         worker_connector_size_(op_connector_size),
         num_workers_paused_(0),
-        epoch_sync_flag_(false) {
+        epoch_sync_flag_(false),
+        next_worker_id_(0) {
     // reduce excessive memory usage with high parallelism
     // when num_workers > 4, reduce op_connector_size to have similar total size if there were only 4 workers
     constexpr int32_t worker_limit = 4;
@@ -106,14 +107,59 @@ class ParallelOp : public DatasetOp {
 
   virtual Status Collector() {
     TaskManager::FindMe()->Post();
-    uint64_t ctr = 0;
+    // num_rows received, including eoe, num_step of current epoch
+    int64_t num_rows = 0, ep_step = 0, total_step = 0;
+    int32_t current_repeats = 0, current_epochs = 0;
     TensorRow row;
     do {
-      RETURN_IF_NOT_OK(worker_out_queues_[ctr++ % num_workers_]->PopFront(&row));
-      if (row.eoe() || row.eof() || !row.skip()) {
-        RETURN_IF_NOT_OK(out_connector_->Add(std::move(row)));
+      RETURN_IF_NOT_OK(worker_out_queues_[num_rows++ % num_workers_]->PopFront(&row));
+      if (row.wait()) {
+        // When collector receives the signal from workere thread, it increments a atomic int
+        // If num_worker signals are received, wakes up the main thread
+        if (++num_workers_paused_ == num_workers_) {
+          wait_for_workers_post_.Set();
+          num_rows = 0;
+        }
+        continue;
+      } else if (row.eoe()) {
+        current_repeats++;
+        // check whether this is the end of a real epoch (not all eoe signals end of epoch)
+        if (current_repeats % GetOpNumRepeatsPerEpoch() == 0) {
+          current_epochs++;
+          RETURN_IF_NOT_OK(callback_manager_.EpochEnd(CallbackParam(current_epochs, ep_step, total_step)));
+          ep_step = 0;
+        }
+      } else if (row.eof()) {
+        RETURN_IF_NOT_OK(callback_manager_.End(CallbackParam(current_epochs + 1, ep_step, total_step)));
+      } else if (row.skip()) {
+        continue;
+      } else if (row.Flags() == TensorRow::TensorRowFlags::kFlagNone) {
+        ++ep_step;
+        ++total_step;
+        RETURN_IF_NOT_OK(callback_manager_.StepEnd(CallbackParam(current_epochs + 1, ep_step, total_step)));
       }
+      RETURN_IF_NOT_OK(out_connector_->Add(std::move(row)));
     } while (!row.eof());
+    return Status::OK();
+  }
+
+  /// Add a new worker to the parallelOp. The function will have to wait for all workers to process current rows.
+  /// Then it adds a new thread to the list.
+  /// \note The caller of this function has to be the main thread of the Op, since it's the only entity responsible to
+  /// push rows to workers_in_queue
+  /// \return Status The status code returned
+  Status AddNewWorkers(int32_t num_new_workers = 1) override {
+    // wait for workers to process the current rows
+    RETURN_IF_NOT_OK(WaitForWorkers());
+    for (int32_t i = 0; i < num_new_workers; i++) {
+      worker_in_queues_.AddQueue(tree_->AllTasks());
+      worker_out_queues_.AddQueue(tree_->AllTasks());
+      RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
+        Name() + "::WorkerEntry", std::bind(&ParallelOp::WorkerEntry, this, num_workers_), nullptr, id()));
+      num_workers_++;
+      MS_LOG(INFO) << "A new worker has been added to op: " << Name() << "::" << id()
+                   << " num_workers=" << num_workers_;
+    }
     return Status::OK();
   }
 
@@ -128,6 +174,15 @@ class ParallelOp : public DatasetOp {
 
   /// The number of worker threads
   int32_t num_workers_;
+
+  int32_t NextWorkerID() {
+    int32_t next_worker = next_worker_id_;
+    next_worker_id_ = (next_worker_id_ + 1) % num_workers_;
+    return next_worker;
+  }
+
+  std::atomic_int next_worker_id_;
+
   /// The size of input/output worker queeus
   int32_t worker_connector_size_;
   /// queues to hold the input rows to workers

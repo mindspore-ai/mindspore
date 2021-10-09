@@ -112,6 +112,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // Getter function to get all of our parents.
   std::vector<DatasetOp *> parents() const;
 
+  virtual Status AddNewWorkers(int32_t num_new_workers = 1) {
+    return Status(StatusCode::kMDUnexpectedError, "Add new workers is not supported for non-ParallelOps");
+  }
+
   // \brief Inserts a operator as the parent current op.
   // \notes Inserted op will become the sole parent of the current op.
   //     The existing parent of the current op will be transferred to the inserted op.

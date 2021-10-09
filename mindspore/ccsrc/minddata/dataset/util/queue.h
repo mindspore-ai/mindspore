@@ -234,6 +234,11 @@ class QueueList {
 
   ~QueueList() = default;
 
+  Status AddQueue(TaskGroup *vg) {
+    queue_list_.emplace_back(std::make_unique<Queue<T>>(queue_list_[0]->capacity()));
+    return queue_list_[queue_list_.size() - 1]->Register(vg);
+  }
+
  private:
   // Queue contains non-copyable objects, so it cannot be added to a vector due to the vector
   // requirement that objects must have copy semantics.  To resolve this, we use a vector of unique
