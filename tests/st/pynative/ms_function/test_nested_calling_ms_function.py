@@ -21,6 +21,7 @@ import pytest
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore import ms_function
+from mindspore import ops
 
 context.set_context(mode=context.PYNATIVE_MODE)
 input_x = Tensor(np.ones([1, 1, 120, 640]), dtype=mstype.float32)
@@ -57,11 +58,8 @@ def test_ms_function_nested_local():
         z = r1 * r2
         return z
 
-    with pytest.raises(TypeError) as info:
-        output2 = function2(input_x, input_y)
-        print(output2)
-    assert "Not support nested calling of local ms_function, please delete decorator of 'function11'." in str(
-        info.value)
+    output2 = function2(input_x, input_y)
+    assert np.allclose(output2.asnumpy(), ret_output_2.asnumpy(), 0.0001, 0.0001)
 
 
 @ms_function
@@ -95,3 +93,36 @@ def test_ms_function_nested_global():
 
     output2 = function2_g(input_x, input_y)
     assert np.allclose(output2.asnumpy(), ret_output_2.asnumpy(), 0.0001, 0.0001)
+
+
+@pytest.mark.level1
+@pytest.mark.timeout(60)
+@pytest.mark.env_Ascend_1p
+@pytest.mark.env_Gpu_1p
+@pytest.mark.env_CPU
+@pytest.mark.Function
+def test_ms_function_nested_grad():
+    """
+    Feature: Nested call of ms_function
+    Description: test nested call of ms_function
+    Expectation: First derivative 75, Second derivative 30
+    """
+    x = Tensor([5], dtype=mstype.float32)
+    exp1 = Tensor([75], dtype=mstype.float32)
+    exp2 = Tensor([30], dtype=mstype.float32)
+    def f(x):
+        return x**3
+
+    # 一阶：3*x^2 = 75
+    out = ms_function(ops.grad(f))(x)
+    assert np.allclose(out[0].asnumpy(), exp1[0].asnumpy(), 0.0001, 0.0001)
+    out = ms_function(ms_function(ops.grad(f)))(x)
+    assert np.allclose(out[0].asnumpy(), exp1[0].asnumpy(), 0.0001, 0.0001)
+
+    # 二阶：6*x = 30
+    out = ops.grad(ops.grad(f))(x)
+    assert np.allclose(out[0].asnumpy(), exp2[0].asnumpy(), 0.0001, 0.0001)
+    out = ms_function(ops.grad(ops.grad(f)))(x)
+    assert np.allclose(out[0].asnumpy(), exp2[0].asnumpy(), 0.0001, 0.0001)
+    out = ms_function(ms_function(ops.grad(ops.grad(f))))(x)
+    assert np.allclose(out[0].asnumpy(), exp2[0].asnumpy(), 0.0001, 0.0001)

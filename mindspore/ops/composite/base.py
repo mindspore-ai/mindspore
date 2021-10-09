@@ -332,6 +332,7 @@ class GradOperation(GradOperation_):
         GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param)
         self.grad_fn = None
         self.fn = None
+        self.pynative_ = False
 
     def _pynative_forward_run(self, grad, args, kwargs, fn):
         """ Pynative forward run to build grad graph. """
@@ -359,6 +360,10 @@ class GradOperation(GradOperation_):
         if self.grad_fn is not None and self.fn == fn:
             return self.grad_fn
         grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
+        # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
+        # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
+        #   In pure PYNATIVE_MODE the out layer after_grad just used to set pynative flag for inner GradOperation.
+        #   In PYNATIVE_MODE calling Grad from ms_function, use the out layer after_grad do grad in GRAPH_MODE.
         if context.get_context("mode") == context.GRAPH_MODE:
             if self.get_by_list:
                 @ms_function
@@ -368,7 +373,7 @@ class GradOperation(GradOperation_):
                 @ms_function
                 def after_grad(*args):
                     return grad_(fn)(*args)
-        else:
+        elif self.pynative_:
             @_wrap_func
             def after_grad(*args, **kwargs):
                 if _pynative_executor.check_graph(fn, *args, **kwargs):
@@ -378,6 +383,16 @@ class GradOperation(GradOperation_):
                 out = _pynative_executor(fn, *args, **kwargs)
                 _pynative_executor.clear_grad(fn, *args, **kwargs)
                 return out
+        else:
+            grad_.pynative_ = True
+            # after_grad of this branch can't use @ms_function, just directly call grad_
+            if self.get_by_list:
+                def after_grad(*args, **kwargs):
+                    return grad_(fn, weights)(*args, **kwargs)
+            else:
+                def after_grad(*args, **kwargs):
+                    return grad_(fn)(*args, **kwargs)
+
         self.grad_fn = after_grad
         self.fn = fn
         return self.grad_fn
