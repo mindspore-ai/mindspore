@@ -36,7 +36,7 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/fp32_grad/*.c
 )
 
-if(MSLITE_STRING_KERNEL)
+if(MSLITE_ENABLE_STRING_KERNEL)
     file(GLOB KERNEL_SRC_INFER_STRING
             ${NNACL_DIR}/infer/string/*.c
             )
@@ -45,7 +45,7 @@ if(MSLITE_STRING_KERNEL)
             ${KERNEL_SRC_INFER_STRING}
             )
 endif()
-if(MSLITE_CONTROLFLOW_TENSORLIST)
+if(MSLITE_ENABLE_CONTROLFLOW)
     file(GLOB KERNEL_SRC_INFER_CONTROL_TENSORLIST
             ${NNACL_DIR}/infer/control/*.c
             )
