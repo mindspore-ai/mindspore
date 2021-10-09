@@ -35,77 +35,6 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::kernel::tbe::TbeUtils;
-bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
-  auto build_manger = std::make_shared<ParallelBuildManager>();
-  MS_EXCEPTION_IF_NULL(build_manger);
-  static std::set<std::string> processed_kernel = {};
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
-  std::string offline_tune = common::GetEnv("ENABLE_TUNE_DUMP");
-  if (!offline_tune.empty()) {
-    for (size_t j = 0; j < offline_tune.length(); j++) {
-      offline_tune[j] = tolower(offline_tune[j]);
-    }
-    if (!(offline_tune == "true" || offline_tune == "false")) {
-      MS_LOG(ERROR) << "Invalid environment variable 'ENABLE_TUNE_DUMP', it should be 'true' or 'false', but got "
-                    << tune_mode;
-      return false;
-    }
-  }
-
-  for (const auto &anf_node : anf_nodes) {
-    // gen kernel json
-    if (AnfAlgo::GetKernelMod(anf_node) != nullptr) {
-      continue;
-    }
-    nlohmann::json kernel_json;
-    TbeKernelJsonCreator creator(SINGLE_BUILD);
-    if (!creator.GenTbeSingleKernelJson(anf_node, &kernel_json)) {
-      MS_LOG(ERROR) << "GenTbeSingleKernelJson failed";
-      TbeUtils::SaveJsonInfo(kernel_json["op_info"]["kernel_name"], kernel_json.dump());
-      return false;
-    }
-    // get size
-    std::vector<size_t> input_size_list;
-    std::vector<size_t> output_size_list;
-    (void)TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list);
-    // search cache
-    const std::string &json_name = creator.json_name();
-    if (build_manger->SearchInCache(json_name, input_size_list, output_size_list, anf_node.get()) &&
-        ((!offline_tune.empty() && offline_tune != "true") || tune_mode == "NO_TUNE")) {
-      continue;
-    }
-    // same op not need build, but need wait build finish to set kernel mode
-    if (processed_kernel.find(json_name) != processed_kernel.end()) {
-      build_manger->SaveSameOpInfo(anf_node, json_name, input_size_list, output_size_list);
-      continue;
-    }
-    (void)processed_kernel.insert(json_name);
-    // op build
-    TbeUtils::SaveJsonInfo(kernel_json["op_info"]["kernel_name"], kernel_json.dump());
-    auto task_id = ParallelBuildManager::StartCompileOp(kernel_json);
-    build_manger->SaveTaskInfo(task_id, anf_node, json_name, input_size_list, output_size_list);
-  }
-  while (!build_manger->IsAllTaskFinish()) {
-    int task_id = -1;
-    std::string task_result;
-    std::string build_result;
-    auto ret = ParallelBuildManager::WaitOne(&task_id, &task_result, &build_result);
-    if (!ret) {
-      MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id
-                                  << " trace: " << trace::DumpSourceLines(build_manger->GetAnfNodeByTaskID(task_id));
-    }
-
-    if (task_result != "Success") {
-      MS_EXCEPTION(ArgumentError) << "task compile Failed, task id:" << task_id << ", cause:" << task_result
-                                  << " trace: " << trace::DumpSourceLines(build_manger->GetAnfNodeByTaskID(task_id));
-    }
-    (void)build_manger->TaskFinishProcess(task_id, build_result);
-  }
-  return build_manger->GenSameOpKernelMod();
-}
-
 ParallelBuildManager::~ParallelBuildManager() { ResetTaskInfo(); }
 
 void ParallelBuildManager::SavePreBuildTaskInfo(int32_t task_id, const AnfNodePtr &anf_node,
@@ -139,11 +68,6 @@ void ParallelBuildManager::SaveTaskInfo(int32_t task_id, const mindspore::AnfNod
   task_info.output_size_list.assign(output_size_list.begin(), output_size_list.end());
   task_info.scope_id = scope_id;
   task_map_[task_id] = task_info;
-}
-
-bool ParallelBuildManager::IsAllTaskFinish() const {
-  MS_LOG(INFO) << "wait process task_num: " << task_map_.size();
-  return task_map_.empty();
 }
 
 void ParallelBuildManager::PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result) {
@@ -198,15 +122,10 @@ std::pair<int32_t, KernelModPtr> ParallelBuildManager::TaskFinishProcess(int32_t
     }
     AnfAlgo::SetKernelMod(kernel_mod, cur_node.get());
     MS_LOG(INFO) << json_name << ": save compile info to json file, compile_info:" << build_ret;
-    std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
-    if (!old_build.empty()) {
-      AnfAlgo::SetNodeAttr(kAttrCompileInfo, MakeValue(build_ret), cur_node);
-    } else {
-      bool save_flag = true;
-      TbeUtils::SaveCompileInfo(json_name, build_ret, &save_flag);
-      if (!save_flag) {
-        MS_LOG(EXCEPTION) << "Save json file failed, compile_info:" << build_ret;
-      }
+    bool save_flag = true;
+    TbeUtils::SaveCompileInfo(json_name, build_ret, &save_flag);
+    if (!save_flag) {
+      MS_LOG(EXCEPTION) << "Save json file failed, compile_info:" << build_ret;
     }
   }
   auto ret = std::make_pair(task_iter->second.scope_id, kernel_mod);
@@ -296,18 +215,8 @@ KernelModPtr ParallelBuildManager::GenKernelMod(const std::vector<size_t> &input
   return kernel_mod_ptr;
 }
 
-int ParallelBuildManager::StartCompileOp(const nlohmann::json &kernel_json) {
-  auto tune_mode = kernel_json["SocInfo"]["autoTilingMode"];
-  return AscendKernelBuildClient::Instance().TbeStart(kernel_json.dump(), tune_mode);
-}
-
 std::string ParallelBuildManager::ProcessTbeJob(const nlohmann::json &kernel_json) {
   return AscendKernelBuildClient::Instance().TbeSendJob(kernel_json.dump());
-}
-
-bool ParallelBuildManager::WaitOne(int *task_id, std::string *task_result, std::string *pre_build_result) {
-  MS_EXCEPTION_IF_NULL(task_id);
-  return AscendKernelBuildClient::Instance().TbeWait(task_id, task_result, pre_build_result);
 }
 
 void ParallelBuildManager::ResetTaskInfo() noexcept {

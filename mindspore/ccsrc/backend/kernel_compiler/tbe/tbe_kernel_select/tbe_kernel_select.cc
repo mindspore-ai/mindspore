@@ -269,21 +269,10 @@ bool TbeKernelSelect::TbeCheckSupported(const KernelBuildInfoIter &kernel_build_
   // replace kernel_info with current kernel info
   auto kernel_build_info_tmp = AnfAlgo::GetSelectKernelBuildInfo(cnode_ptr_);
   AnfAlgo::SetSelectKernelBuildInfo(*kernel_build_info_iter, cnode_ptr_.get());
-  std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
   bool ret = true;
-  if (!old_build.empty()) {
-    nlohmann::json kernel_json;
-    TbeKernelJsonCreator creator(CHECK_SUPPORTED);
-    ret = creator.GenTbeSingleKernelJson(cnode_ptr_, &kernel_json);
-    if (!ret) {
-      MS_LOG(EXCEPTION) << "Gen tbe single kernel json for check support failed.";
-    }
-    ret = AscendKernelBuildClient::Instance().CheckSupported(kernel_json.dump());
-  } else {
-    auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    if (!build_manager.AscendOpCheckSupported(cnode_ptr_)) {
-      ret = false;
-    }
+  auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
+  if (!build_manager.AscendOpCheckSupported(cnode_ptr_)) {
+    ret = false;
   }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_tmp, cnode_ptr_.get());
   return ret;
@@ -444,27 +433,9 @@ std::vector<std::string> TbeKernelSelect::SplitStrToVec(const std::string &op_se
 
 std::string TbeKernelSelect::OpSelectFormat() {
   std::string res_json_str;
-  std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
-  if (!old_build.empty()) {
-    nlohmann::json kernel_json;
-    TbeKernelJsonCreator creator(OP_SELECT_FORMAT);
-    bool ret = creator.GenTbeSingleKernelJson(cnode_ptr_, &kernel_json);
-    if (!ret) {
-      MS_LOG(EXCEPTION) << "GenTbeSingleKernelJson failed.";
-    }
-    res_json_str = AscendKernelBuildClient::Instance().SelectFormat(kernel_json.dump());
-    if (res_json_str.empty()) {
-      MS_LOG(EXCEPTION) << "Op select format error, input args: " << kernel_json.dump();
-    }
-    if (res_json_str.find("TBEException") != std::string::npos) {
-      MS_LOG(EXCEPTION) << "Dynamic op select failed: " << res_json_str << ", input args: " << kernel_json.dump();
-    }
-  } else {
-    MS_LOG(INFO) << "Format select for node:[" << AnfAlgo::GetCNodeName(cnode_ptr_) << ", "
-                 << cnode_ptr_->fullname_with_scope() << "].";
-    auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    res_json_str = build_manager.AscendOpSelectFormat(cnode_ptr_);
-  }
+  MS_LOG(INFO) << "Format select for node:[" << cnode_ptr_->fullname_with_scope() << "].";
+  auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
+  res_json_str = build_manager.AscendOpSelectFormat(cnode_ptr_);
   return res_json_str;
 }
 

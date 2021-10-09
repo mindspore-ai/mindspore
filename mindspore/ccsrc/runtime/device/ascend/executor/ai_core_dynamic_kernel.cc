@@ -71,23 +71,13 @@ void AiCoreDynamicKernel::ParseCompileJson() {
   if (!AnfAlgo::IsDynamicShape(cnode)) {
     return;
   }
-
-  MS_LOG(INFO) << "Get compile_info from attr start.";
-  std::string old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
-  if (!old_build.empty()) {
-    if (!AnfAlgo::HasNodeAttr(kAttrCompileInfo, cnode)) {
-      MS_LOG(EXCEPTION) << "Get compile info failed. node name: " << AnfAlgo::GetCNodeName(cnode);
-    }
-    op_compile_info_ = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrCompileInfo);
-  } else {
-    bool get_flag = true;
-    TbeUtils::GetCompileInfo(cnode, &op_compile_info_, &get_flag);
-    if (!get_flag) {
-      MS_LOG(EXCEPTION) << "Get compile_info failed. The compile result of [" << cnode->fullname_with_scope()
-                        << "] maybe not in the json file(kernel_meta/) or the file had been deleted.";
-    }
+  bool get_flag = true;
+  TbeUtils::GetCompileInfo(cnode, &op_compile_info_, &get_flag);
+  if (!get_flag) {
+    MS_LOG(EXCEPTION) << "Get compile_info failed. The compile result of [" << cnode->fullname_with_scope()
+                      << "] maybe not in the json file(kernel_meta/) or the file had been deleted.";
   }
-  MS_LOG(INFO) << "Get compile_info:" << op_compile_info_;
+  MS_LOG(INFO) << "Node: " << cnode->fullname_with_scope() << " get compile_info: " << op_compile_info_;
 }
 
 void AiCoreDynamicKernel::Initialize() {

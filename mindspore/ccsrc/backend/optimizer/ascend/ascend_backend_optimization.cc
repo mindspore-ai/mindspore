@@ -477,13 +477,10 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
     MS_LOG(WARNING) << "Dynamic shape skip fusion";
     return;
   }
-  auto old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
-  if (old_build.empty()) {
+  auto pre_build = common::GetEnv("MS_DISABLE_PREBUILD");
+  if (pre_build.empty()) {
     auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    auto pre_build = common::GetEnv("MS_DISABLE_PREBUILD");
-    if (pre_build.empty()) {
-      build_manager.AscendPreBuild(kernel_graph);
-    }
+    build_manager.AscendPreBuild(kernel_graph);
   }
 #ifdef ENABLE_DUMP_IR
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);

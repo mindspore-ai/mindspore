@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace kernel {
-inline static bool init_flag = false;
 void ReplaceStr(std::string *dest, const std::string &replace, char new_char) {
   std::string::size_type start = 0;
   while ((start = (*dest).find(replace, start)) != std::string::npos) {
@@ -90,44 +89,6 @@ bool KernelBuildClient::AkgWait() {
   return true;
 }
 
-void AscendKernelBuildClient::TbePre(const std::string &mode) {
-  auto res = SendRequest(kTbePre);
-  if (res.find(kSuccess) == std::string::npos) {
-    MS_LOG(EXCEPTION) << "PRE failed, res: " << res;
-  }
-  MS_LOG(INFO) << "Pre " << res;
-  // init env for auto tune
-  res = SendRequest(kTbeTune);
-  if (res != kAck) {
-    MS_LOG(EXCEPTION) << "Send tune single failed, res: " << res;
-  }
-  res = SendRequest(mode);
-  if (res != kSuccess) {
-    MS_LOG(EXCEPTION) << "PRE failed, res: " << res;
-  }
-}
-
-int AscendKernelBuildClient::TbeStart(const std::string &json, const std::string &mode) {
-  if (!init_flag) {
-    TbePre(mode);
-    init_flag = true;
-  }
-  // Start compiling..
-  auto res = SendRequest(kTbeStart);
-  if (res != kAck) {
-    MS_LOG(ERROR) << "START failed, res: " << res;
-    return -1;
-  }
-  // Send the json data.
-  res = SendRequest(json);
-  if (res == kFailed) {
-    MS_LOG(ERROR) << "TBE/START responds failed, res: " << res;
-    return -1;
-  }
-  // Return task id.
-  return std::stoi(res);
-}
-
 std::string AscendKernelBuildClient::TbeSendJob(const std::string &job_json_str) {
   auto res = SendRequest(job_json_str);
   if (res == kFailed) {
@@ -135,63 +96,6 @@ std::string AscendKernelBuildClient::TbeSendJob(const std::string &job_json_str)
     return "";
   }
   return res;
-}
-
-bool AscendKernelBuildClient::TbeWait(int *task_id, std::string *task_result, std::string *pre_build_result) {
-  // Start waiting..
-  auto res = SendRequest(kTbeWait);
-  if (res != kAck) {
-    MS_LOG(ERROR) << "TBE/WAIT failed, res: " << res;
-    return false;
-  }
-  // Request task id.
-  *task_id = std::stoi(SendRequest(kContinue));
-  // Request task result.
-  *task_result = SendRequest(kContinue);
-  // Request prebuild result.
-  *pre_build_result = SendRequest(kContinue);
-  return true;
-}
-
-void AscendKernelBuildClient::TbeReset() {
-  // Start compiling..
-  init_flag = false;
-  auto res = SendRequest(kTbeReset);
-  if (res != kAck) {
-    MS_LOG(EXCEPTION) << "TBE/RESET response is: " << res;
-  }
-}
-
-std::string AscendKernelBuildClient::SelectFormat(const std::string &json) {
-  // Start compiling..
-  auto res = SendRequest(kFormat);
-  if (res != kAck) {
-    MS_LOG(ERROR) << "FORMAT failed, res: " << res;
-    return "";
-  }
-  // Send the json data.
-  res = SendRequest(json);
-  if (res == kErr) {
-    MS_LOG(ERROR) << "FORMAT responds failed, res: " << res;
-    return "";
-  }
-  return res;
-}
-
-bool AscendKernelBuildClient::CheckSupported(const std::string &json) {
-  // Checking support..
-  auto res = SendRequest(kSupport);
-  if (res != kAck) {
-    MS_LOG(ERROR) << "SUPPORT failed, res: " << res;
-    return false;
-  }
-  // Send the json data.
-  res = SendRequest(json);
-  if (res != kTrue) {
-    MS_LOG(INFO) << "SUPPORT responds failed, res: " << res;
-    return false;
-  }
-  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

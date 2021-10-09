@@ -818,77 +818,6 @@ std::string TbeKernelJsonCreator::GetDeviceOutputFormat(const AnfNodePtr &anf_no
   return format;
 }
 
-void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list) {
-  MS_EXCEPTION_IF_NULL(input_size_list);
-  for (size_t i = 0; i < input_json.size(); i++) {
-    for (size_t m = 0; m < input_json[i].size(); m++) {
-      size_t size_i = 1;
-      if (input_json[i][m][kJValid] == false) {
-        continue;
-      }
-      for (size_t j = 0; j < input_json[i][m][kJShape].size(); ++j) {
-        if (input_json[i][m][kJShape][j] == -1) {
-          auto input_max_shape = input_json[i][m][kJRange];
-          if (j >= input_max_shape.size()) {
-            MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
-          }
-          MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << input_max_shape[j][1];
-          size_i *= LongToSize(input_max_shape[j][1]);
-          continue;
-        }
-        size_i *= static_cast<size_t>(input_json[i][m][kJShape][j]);
-      }
-      std::string dtype = input_json[i][m][kJDtype];
-      size_t nbyte = tbe::GetDtypeNbyte(dtype);
-      size_i *= nbyte;
-      input_size_list->push_back(size_i);
-    }
-  }
-}
-
-void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *output_size_list) {
-  MS_EXCEPTION_IF_NULL(output_size_list);
-  for (size_t i = 0; i < output_json.size(); i++) {
-    for (size_t m = 0; m < output_json[i].size(); m++) {
-      size_t size_i = 1;
-      if (output_json[i][m][kJValid] == false) {
-        std::string output_name = output_json[i][m][kJName];
-        MS_LOG(INFO) << "Output name:" << output_name << " is optional, valid is false.";
-        continue;
-      }
-      for (size_t j = 0; j < output_json[i][m][kJShape].size(); ++j) {
-        if (output_json[i][m][kJShape][j] == -1) {
-          auto output_max_shape = output_json[i][m][kJRange];
-          if (j >= output_max_shape.size()) {
-            MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
-          }
-          MS_LOG(INFO) << "Change -1 Shape to Max Shape:" << output_max_shape[j][1];
-          size_i *= LongToSize(output_max_shape[j][1]);
-          continue;
-        }
-        size_i *= static_cast<size_t>(output_json[i][m][kJShape][j]);
-      }
-      std::string dtype = output_json[i][m][kJDtype];
-      size_t nbyte = tbe::GetDtypeNbyte(dtype);
-      size_i *= nbyte;
-      output_size_list->push_back(size_i);
-    }
-  }
-}
-
-bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
-                               std::vector<size_t> *output_size_list) {
-  if (input_size_list == nullptr || output_size_list == nullptr) {
-    MS_LOG(ERROR) << "Input size or output size is nullptr";
-    return false;
-  }
-  input_size_list->clear();
-  output_size_list->clear();
-  GetInputSizeList(kernel_json[kJOpInfo][kJInputs], input_size_list);
-  GetOutputSizeList(kernel_json[kJOpInfo][kJOutputs], output_size_list);
-  return true;
-}
-
 void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *input_size_list, size_t *size_i) {
   if (input_json[kJShape].size() == 1 && input_json[kJShape][0] == -2) {
     auto input_max_shape = input_json[kJShape];
@@ -916,8 +845,8 @@ void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *inp
   input_size_list->push_back((*size_i));
 }
 
-void GetInputSizeList2(const nlohmann::json &input_json, std::vector<size_t> *input_size_list,
-                       const AnfNodePtr &anf_node) {
+void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list,
+                      const AnfNodePtr &anf_node) {
   for (size_t i = 0; i < input_json.size(); i++) {
     if (input_json[i].is_array()) {
       for (size_t m = 0; m < input_json[i].size(); m++) {
@@ -965,8 +894,8 @@ void GetRealOutputSize(const nlohmann::json &output_json, size_t i, std::vector<
   output_size_list->push_back((*size_i));
 }
 
-void GetOutputSizeList2(const nlohmann::json &output_json, std::vector<size_t> *output_size_list,
-                        const AnfNodePtr &anf_node) {
+void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *output_size_list,
+                       const AnfNodePtr &anf_node) {
   for (size_t i = 0; i < output_json.size(); i++) {
     if (output_json[i].is_array()) {
       for (size_t m = 0; m < output_json[i].size(); m++) {
@@ -990,8 +919,8 @@ void GetOutputSizeList2(const nlohmann::json &output_json, std::vector<size_t> *
   }
 }
 
-bool TbeKernelBuild::GetIOSize2(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
-                                std::vector<size_t> *output_size_list, const AnfNodePtr &anf_node) {
+bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
+                               std::vector<size_t> *output_size_list, const AnfNodePtr &anf_node) {
   if (input_size_list == nullptr || output_size_list == nullptr) {
     MS_LOG(ERROR) << "Input size or output size is nullptr";
     return false;
@@ -1002,8 +931,8 @@ bool TbeKernelBuild::GetIOSize2(const nlohmann::json &kernel_json, std::vector<s
   for (size_t i = 0; i < op_list.size(); i++) {
     auto op_info = op_list[i];
     if (op_info["type"] != "Data") {
-      GetInputSizeList2(op_info["input_desc"], input_size_list, anf_node);
-      GetOutputSizeList2(op_info["output_desc"], output_size_list, anf_node);
+      GetInputSizeList(op_info["input_desc"], input_size_list, anf_node);
+      GetOutputSizeList(op_info["output_desc"], output_size_list, anf_node);
     }
   }
   return true;

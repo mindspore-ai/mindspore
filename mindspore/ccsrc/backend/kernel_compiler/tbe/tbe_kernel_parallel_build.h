@@ -28,8 +28,6 @@
 
 namespace mindspore {
 namespace kernel {
-bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);
-
 struct KernelBuildTaskInfo {
   AnfNodePtr node;
   std::string processor;
@@ -55,7 +53,6 @@ class ParallelBuildManager {
   bool GenSameFusionOpKernelMod(std::map<int64_t, KernelModPtr> *kernel_mode_ret) const;
   bool SearchInCache(const std::string &json_name, const std::vector<size_t> &input_size_list,
                      const std::vector<size_t> &output_size_list, AnfNode *node) const;
-  bool IsAllTaskFinish() const;
   void PreTaskFinishProcess(int32_t task_id, const std::string &pre_build_result);
   std::pair<int32_t, KernelModPtr> TaskFinishProcess(int32_t task_id, const std::string &build_ret,
                                                      bool set_kernel_mod = true);
@@ -63,9 +60,7 @@ class ParallelBuildManager {
                             const KernelPackPtr &kernel_pack) const;
 
   // Interactive with real backend, who could be implemented by Python.
-  static int StartCompileOp(const nlohmann::json &kernel_json);
   std::string ProcessTbeJob(const nlohmann::json &kernel_json);
-  static bool WaitOne(int *task_id, std::string *task_result, std::string *build_result);
   void ResetTaskInfo() noexcept;
   AnfNodePtr GetAnfNodeByTaskID(int32_t task_id);
 

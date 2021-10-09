@@ -108,7 +108,6 @@ std::string TbeUtils::GetOpDebugPath() {
   if (debug_path != "") {
     return debug_path;
   }
-  auto old_build = common::GetEnv("MS_OLD_BUILD_PROCESS");
   std::string config_path;
   if (!Common::CommonFuncForConfigPath("./", common::GetEnv(kCOMPILER_CACHE_PATH), &config_path)) {
     MS_LOG(EXCEPTION) << "Invalid environment variable 'MS_COMPILER_CACHE_PATH', the path is "
@@ -116,29 +115,22 @@ std::string TbeUtils::GetOpDebugPath() {
                       << ". Please check (1) whether the path exists, (2) whether the path has the access "
                          "permission, (3) whether the path is too long. ";
   }
+  // cppcheck-suppress *
   if (config_path.empty()) {
-    MS_LOG(EXCEPTION) << "config path is empty.";
+    MS_LOG(EXCEPTION) << "Config path of 'MS_COMPILER_CACHE_PATH' is empty.";
   }
-  if (!old_build.empty()) {
-    if (config_path[config_path.length() - 1] == '/') {
-      debug_path = config_path;
-    } else {
-      debug_path = config_path + "/";
-    }
-    return debug_path;
+  std::string rank_id_str = common::GetEnv(kRankID);
+  if (rank_id_str.empty()) {
+    MS_LOG(DEBUG) << "Environment variable 'RANK_ID' is empty, using the default value: 0";
+    rank_id_str = "0";
+  }
+  // cppcheck-suppress *
+  if (config_path[config_path.length() - 1] == '/') {
+    debug_path = config_path + "rank_" + rank_id_str + "/";
   } else {
-    std::string rank_id_str = common::GetEnv(kRankID);
-    if (rank_id_str.empty()) {
-      MS_LOG(DEBUG) << "Using the default value: 0";
-      rank_id_str = "0";
-    }
-    if (config_path[config_path.length() - 1] == '/') {
-      debug_path = config_path + "rank_" + rank_id_str + "/";
-    } else {
-      debug_path = config_path + "/" + "rank_" + rank_id_str + "/";
-    }
-    return debug_path;
+    debug_path = config_path + "/" + "rank_" + rank_id_str + "/";
   }
+  return debug_path;
 }
 
 std::string GetOpDebugLevel() {
