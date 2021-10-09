@@ -54,6 +54,7 @@ nlohmann::json GetContextProfilingOption() {
 
 ProfilingTraceInfo ProfilingUtils::GenerateProfilingTrace(const session::KernelGraph &kernel_graph) {
   MS_LOG(INFO) << "Profiling graph:" << kernel_graph.graph_id() << " Start to get trace";
+  custom_node_index_ = 5000;
   auto &cnode_exec_order = kernel_graph.execution_order();
   auto profiling_option = GetContextProfilingOption();
 
@@ -311,6 +312,29 @@ CNodePtr ProfilingUtils::CreateProfilingCNodeWithStream(const mindspore::AnfNode
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(anf_node.get()), profiling_node.get());
   AnfAlgo::SetStreamId(AnfAlgo::GetStreamId(anf_node), profiling_node.get());
   return profiling_node;
+}
+
+void ProfilingUtils::InsertProfilingCustomOp(const AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
+                                             NotNull<session::KernelGraph *> graph_ptr,
+                                             NotNull<std::vector<CNodePtr> *> kernel_list) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto iter = profiling_trace_info.trace_custom_node.find(anf_node->fullname_with_scope());
+  if (iter == profiling_trace_info.trace_custom_node.end()) {
+    return;
+  }
+  MS_LOG(INFO) << "Profiling graph:" << graph_ptr->graph_id() << " Match CustomOp:" << anf_node->fullname_with_scope();
+  // custom op profiling job start from 10000.
+  auto custom_point_id = kDouble * custom_node_index_;
+  ProfilingContent front_profiling_content = {false, custom_point_id, 0};
+  CNodePtr front_node = CreateProfilingCNodeWithStream(anf_node, front_profiling_content, graph_ptr);
+  kernel_list->insert(kernel_list->end() - 1, front_node);
+  SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), custom_point_id);
+
+  ProfilingContent back_profiling_content = {false, custom_point_id + 1, 0};
+  CNodePtr back_node = CreateProfilingCNodeWithStream(anf_node, back_profiling_content, graph_ptr);
+  kernel_list->insert(kernel_list->end(), back_node);
+  SaveProfilingPoint(graph_ptr->graph_id(), anf_node->fullname_with_scope(), custom_point_id + 1);
+  ++custom_node_index_;
 }
 
 void ProfilingUtils::InsertProfilingTraceBpEnd(const AnfNodePtr &anf_node,
