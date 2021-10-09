@@ -46,6 +46,22 @@ class FileWriter:
 
     Raises:
         ParamValueError: If `file_name` or `shard_num` is invalid.
+
+    Examples:
+        >>> from mindspore.mindrecord import FileWriter
+        >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
+        >>> indexes = ["file_name", "label"]
+        >>> data = [{"file_name": "1.jpg", "label": 0,
+        ...         "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff\xd9"},
+        ...         {"file_name": "2.jpg", "label": 56,
+        ...         "data": b"\xe6\xda\xd1\xae\x07\xb8>\xd4\x00\xf8\x129\x15\xd9\xf2q\xc0\xa2\x91YFUO\x1dsE1\x1ep"},
+        ...         {"file_name": "3.jpg", "label": 99,
+        ...         "data": b"\xaf\xafU<\xb8|6\xbd}\xc1\x99[\xeaj+\x8f\x84\xd3\xcc\xa0,i\xbb\xb9-\xcdz\xecp{T\xb1\xdb"}]
+        >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
+        >>> writer.add_schema(schema_json, "test_schema")
+        >>> writer.add_index(indexes)
+        >>> writer.write_raw_data(data)
+        >>> writer.commit()
     """
 
     def __init__(self, file_name, shard_num=1):
@@ -94,7 +110,13 @@ class FileWriter:
             FileNameError: If path contains invalid characters.
             MRMOpenError: If failed to open MindRecord file.
             MRMOpenForAppendError: If failed to open file for appending data.
+
+        Examples:
+        >>> write_append = FileWriter.open_for_append("test.mindrecord")
+        >>> write_append.write_raw_data(data)
+        >>> write_append.commit()
         """
+
         check_filename(file_name)
         # construct ShardHeader
         reader = ShardReader()
@@ -115,6 +137,9 @@ class FileWriter:
     def add_schema(self, content, desc=None):
         """
         The schema is added to describe the raw data to be written.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter`.
 
         Args:
             content (dict): Dictionary of schema content.
@@ -142,6 +167,8 @@ class FileWriter:
             The index fields should be primitive type. e.g. int/float/str.
             If the function is not called, the fields of the primitive type
             in schema are set as indexes by default.
+
+            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter`.
 
         Args:
             index_fields (list[str]): fields from schema.
@@ -231,8 +258,11 @@ class FileWriter:
 
     def write_raw_data(self, raw_data, parallel_writer=False):
         """
-        Convert raw data into a seried of consecutive MindRecord \
+        Convert raw data into a series of consecutive MindRecord \
         files after the raw data is verified against the schema.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter`.
 
         Args:
            raw_data (list[dict]): List of raw data.
@@ -264,17 +294,25 @@ class FileWriter:
         """
         Set the size of header which contains shard information, schema information, \
         page meta information, etc. The larger a header, the more data \
-        the MindRecord file can store.
+        the MindRecord file can store. If the size of header is larger than \
+        the default size(16MB), users need to call the API to set a proper size.
+
 
         Args:
             header_size (int): Size of header, between 16*1024(16KB) and
-                128*1024*1024(128MB).
+                128*1024*1024(128MB).(default=16MB)
+
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
 
         Raises:
             MRMInvalidHeaderSizeError: If failed to set header size.
+
+        Examples:
+            >>> from mindspore.mindrecord import FileWriter
+            >>> # define writer
+            >>> writer.set_header_size(1 << 25) # 32MB
 
         """
         return self._writer.set_header_size(header_size)
@@ -283,23 +321,33 @@ class FileWriter:
         """
         Set the size of page that represents the area where data is stored, \
         and the areas are divided into two types: raw page and blob page. \
-        The larger a page, the more data the page can store.
+        The larger a page, the more data the page can store. If the size of \
+        a sample is larger than the default size(32MB), users need to call the API \
+        to set a proper size.
 
         Args:
            page_size (int): Size of page, between 32*1024(32KB) and
-               256*1024*1024(256MB).
+               256*1024*1024(256MB).(default=32MB)
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
 
         Raises:
             MRMInvalidPageSizeError: If failed to set page size.
+
+        Examples:
+            >>> from mindspore.mindrecord import FileWriter
+            >>> # define writer
+            >>> writer.set_page_size(1 << 26) # 128MB
         """
         return self._writer.set_page_size(page_size)
 
     def commit(self):
         """
         Flush data in memory to disk and generate the corresponding database files.
+
+        Note:
+            Please refer to the Examples of class: `mindspore.mindrecord.FileWriter`.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
