@@ -35,7 +35,7 @@ class MemHandler {
   virtual void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) = 0;
 };
 
-enum MemPriority { kMemPriorityLow, kMemPriorityMedium, kMemPriorityHigh };
+enum MemPriority { kMemPriorityLow, kMemPriorityHigh };
 
 class MemScheduler {
   enum EventType { kInit, kMalloc, kGet, kFree, kSwapIn, kSwapOut };
@@ -58,9 +58,11 @@ class MemScheduler {
 
   bool need_record_event() const { return need_record_event_; }
 
+  void set_need_record_event(bool flag) { need_record_event_ = flag; }
+
   bool optimized() const { return optimized_; }
 
-  void SetOptimized(bool flag) { optimized_ = flag; }
+  void set_optimized(bool flag) { optimized_ = flag; }
 
   void SetMemHandler(const std::shared_ptr<MemHandler> &handler) { mem_handler_ = handler; }
 
@@ -68,7 +70,7 @@ class MemScheduler {
 
   void *GetOrMalloc(const void *key, size_t mem_size, MemPriority priority = kMemPriorityLow);
 
-  void RecordMemUsage() { compute_index_ = 0; }
+  void Reset() { compute_index_ = 0; }
 
   bool PreCompute(void *stream);
 
@@ -88,7 +90,7 @@ class MemScheduler {
 
  private:
   void Record(const void *key, const EventType &event_type, size_t mem_size = 0);
-  void GenEvents();
+  void GenComputeMemEvents();
   void CheckMemSize();
   void CountMemUsage();
   void GenEventSpan();
@@ -104,6 +106,7 @@ class MemScheduler {
   size_t compute_index_{0};
   bool need_record_event_{true};
   bool optimized_{false};
+  bool has_compute_mem_events_{false};
   std::shared_ptr<MemHandler> mem_handler_{nullptr};
   bool need_swap_{false};
   std::multimap<size_t, std::shared_ptr<Event>> event_span_;

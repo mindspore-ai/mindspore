@@ -1456,7 +1456,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
     mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
     MS_EXCEPTION_IF_NULL(mem_scheduler);
     mem_scheduler->SetMemHandler(mem_manager_);
-    mem_scheduler->RecordMemUsage();
+    mem_scheduler->Reset();
     InitGraphInputTensors(mem_scheduler, graph);
   }
   const auto &kernels = graph.execution_order();
@@ -1513,9 +1513,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
     }
     LaunchKernelEvent(kernel_post_run_events, i);
   }
-  if (mem_scheduler != nullptr) {
-    mem_scheduler->OptMemUsage();
-  }
+
   return true;
 }
 
@@ -1527,16 +1525,21 @@ void KernelRuntime::UseMemSchedulerIfNeeded(const session::KernelGraph &graph) {
     auto mem_scheduler = mem_scheduler_manager_.GetOrCreateMemScheduler(graph.graph_id());
     if (mem_scheduler->need_record_event()) {
       (void)LaunchKernelMod(graph, true);
+      mem_scheduler->set_need_record_event(false);
     }
     float mem_used_factor = kMaxMemReuseFactor;
     while (!mem_scheduler->optimized() && mem_used_factor >= kMinMemReuseFactor) {
       mem_scheduler->SetMemUsedFactor(mem_used_factor);
+      mem_scheduler->OptMemUsage();
       bool ret = LaunchKernelMod(graph, true);
       if (ret) {
-        mem_scheduler->SetOptimized(true);
+        mem_scheduler->set_optimized(true);
       } else {
         mem_used_factor -= kRetryFactor;
       }
+    }
+    if (!mem_scheduler->optimized()) {
+      MS_LOG_EXCEPTION << "Can't run graph " << graph.graph_id() << " for memory limit.";
     }
   }
 }
