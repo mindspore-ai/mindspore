@@ -1179,15 +1179,15 @@ class TruncatedNormal(PrimitiveWithInfer):
 
 class Size(PrimitiveWithInfer):
     r"""
-    Returns the size of a tensor.
+    Returns the size of a Tensor.
 
-    Returns an int scalar representing the elements size of input, the total number of elements in the tensor.
+    Returns an int scalar representing the elements' size of input, the total number of elements in the tensor.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number.
 
     Outputs:
-        int. A scalar representing the elements size of `input_x`, tensor is the number of elements
+        int. A scalar representing the elements' size of `input_x`, tensor is the number of elements
         in a tensor, :math:`size=x_1*x_2*...x_R`. The data type is an int.
 
     Raises:
@@ -3546,11 +3546,11 @@ class DiagPart(PrimitiveWithInfer):
 class Eye(PrimitiveWithInfer):
     """
 
-    Creates a tensor with ones on the diagonal and zeros the rest.
+    Creates a tensor with ones on the diagonal and zeros in the rest.
 
     Inputs:
-        - **n** (int) - The number of rows of returned tensor. only constant value.
-        - **m** (int) - The number of columns of returned tensor. only constant value.
+        - **n** (int) - The number of rows of returned tensor. Constant value only.
+        - **m** (int) - The number of columns of returned tensor. Constant value only.
         - **t** (mindspore.dtype) - MindSpore's dtype, The data type of the returned tensor.
           The data type can be Number.
 
@@ -3743,8 +3743,8 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
 
     Outputs:
-        Tensor, the shape of the output tensor is :math:`(N, C, NEW\_H, NEW\_W)`.
-          The data type is same as the `input_x`.
+        Tensor, the shape of the output tensor is  :math:`(N, C, NEW\_H, NEW\_W)`.
+          The data type is the same as the `input_x`.
 
     Raises:
         TypeError: If `size` is neither tuple nor list.
@@ -3838,7 +3838,7 @@ class GatherNd(PrimitiveWithInfer):
 
 class TensorScatterUpdate(PrimitiveWithInfer):
     """
-    Creates a new tensor by updating the positions in `input_x` indicicated by
+    Creates a new tensor by updating the positions in `input_x` indicated by
     `indices`, with values from `update`. This operation is almost equivalent to using
     ScatterNd, except that the updates are applied on `input_x` instead of a zero tensor.
 
@@ -3918,7 +3918,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
 
 class TensorScatterAdd(PrimitiveWithInfer):
     """
-    Creates a new tensor by adding the values from the positions in `input_x` indicicated by
+    Creates a new tensor by adding the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are given for the same
     index, the updated result will be the sum of all values. This operation is almost
     equivalent to using ScatterNdAdd, except that the updates are applied on `Tensor`
@@ -4015,8 +4015,7 @@ class ScatterUpdate(_ScatterOpDynamic):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
@@ -4035,6 +4034,8 @@ class ScatterUpdate(_ScatterOpDynamic):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4077,8 +4078,7 @@ class ScatterNdUpdate(_ScatterNdOp):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
@@ -4096,6 +4096,8 @@ class ScatterNdUpdate(_ScatterNdOp):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4142,8 +4144,7 @@ class ScatterMax(_ScatterOp):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
@@ -4162,6 +4163,8 @@ class ScatterMax(_ScatterOp):
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4195,8 +4198,7 @@ class ScatterMin(_ScatterOp):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -4215,6 +4217,8 @@ class ScatterMin(_ScatterOp):
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4247,8 +4251,7 @@ class ScatterAdd(_ScatterOpDynamic):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Note:
         This is an in-place update operator. Therefore, the `input_x` will be updated after the operation is completed.
@@ -4270,6 +4273,8 @@ class ScatterAdd(_ScatterOpDynamic):
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4359,8 +4364,7 @@ class ScatterSub(_ScatterOpDynamic):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -4379,6 +4383,8 @@ class ScatterSub(_ScatterOpDynamic):
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -4468,8 +4474,7 @@ class ScatterMul(_ScatterOp):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -4488,6 +4493,8 @@ class ScatterMul(_ScatterOp):
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4570,8 +4577,7 @@ class ScatterDiv(_ScatterOp):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -4590,6 +4596,8 @@ class ScatterDiv(_ScatterOp):
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4678,8 +4686,7 @@ class ScatterNdAdd(_ScatterNdOp):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -4699,6 +4706,8 @@ class ScatterNdAdd(_ScatterNdOp):
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4756,7 +4765,6 @@ class ScatterNdSub(_ScatterNdOp):
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
     relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Args:
         use_locking (bool): Whether protect the assignment by a lock. Default: False.
@@ -4776,6 +4784,8 @@ class ScatterNdSub(_ScatterNdOp):
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4823,8 +4833,7 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Inputs:
         - **input_x** (Parameter) - The target parameter. The data type must be float16, float32 or int32.
@@ -4839,6 +4848,8 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
         TypeError: If dtype of `indices` is not int32.
         TypeError: If dtype of `input_x` is not one of float16, float32, int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -4868,7 +4879,7 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
 
 class SpaceToDepth(PrimitiveWithInfer):
     r"""
-    Rearranges blocks of spatial data into depth.
+    Rearrange blocks of spatial data into depth.
 
     The output tensor's `height` dimension is :math:`height / block\_size`.
 
@@ -4883,11 +4894,11 @@ class SpaceToDepth(PrimitiveWithInfer):
         block_size (int): The block size used to divide spatial data. It must be >= 2.
 
     Inputs:
-        - **x** (Tensor) - The target tensor. The data tyoe is Number. It must be a 4-D tensor.
+        - **x** (Tensor) - The target tensor. The data type is Number. It must be a 4-D tensor.
 
     Outputs:
-        Tensor, the same data type as `x`. It must be a 4-D tensor.Tensor of shape
-          :math:`(N, ( C_{in} * \text{block_size} * 2), H_{in} / \text{block_size}, W_{in} / \text{block_size})`.
+        Tensor, the same data type as `x`. It must be a 4-D tensor. Tensor of shape
+        :math:`(N, ( C_{in} * \text{block_size} * 2), H_{in} / \text{block_size}, W_{in} / \text{block_size})`.
 
     Raises:
         TypeError: If `block_size` is not an int.
@@ -4937,7 +4948,7 @@ class SpaceToDepth(PrimitiveWithInfer):
 
 class DepthToSpace(PrimitiveWithInfer):
     r"""
-    Rearranges blocks of depth data into spatial dimensions.
+    Rearrange blocks of depth data into spatial dimensions.
 
     This is the reverse operation of SpaceToDepth.
 
@@ -5013,7 +5024,7 @@ class SpaceToBatch(PrimitiveWithInfer):
     of the input are zero padded according to paddings if necessary.
 
     Args:
-        block_size (int): The block size of dividing blocks with value greater than or euqual to 2.
+        block_size (int): The block size of dividing blocks with value greater than or equal to 2.
         paddings (Union[tuple, list]): The padding values for H and W dimension, containing 2 subtraction lists.
             Each subtraction list contains 2 integer value. All values must be greater than 0.
             paddings[i] specifies the paddings for the spatial dimension i, which corresponds to the
@@ -5190,7 +5201,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
     Args:
         block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
             than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
-            number of spatial dimensions. If `block_shape` is a int, the block size of M dimendions are the same,
+            number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the same,
             equal to `block_shape`. M must be 2.
         paddings (Union[tuple, list]): The padding values for H and W dimension, containing 2 subtraction list.
             Each contains 2 integer value. All values must be greater than 0.
@@ -5203,7 +5214,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the output tensor with the same data type as input. Assume input shape is :math:`(n, c, h, w)` with
-        :math:`block\_shape` and :math:`padddings`. The shape of the output tensor will be :math:`(n', c', h', w')`,
+        :math:`block\_shape` and :math:`paddings`. The shape of the output tensor will be :math:`(n', c', h', w')`,
         where
 
         :math:`n' = n*(block\_shape[0]*block\_shape[1])`
@@ -5291,13 +5302,13 @@ class BatchToSpaceND(PrimitiveWithInfer):
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
     This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
-    is the corresponding number of blocks after division. The output tensor's H, W dimension is product of
+    is the corresponding number of blocks after division. The output tensor's H, W dimension is the product of
     original H, W dimension and block_shape with given amount to crop from dimension, respectively.
 
     Args:
         block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
             than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
-            number of spatial dimensions. If `block_shape` is a int, the block size of M dimendions are the same,
+            number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the same,
             equal to `block_shape`. M must be 2.
         crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 subtraction list,
             each containing 2 int value.
@@ -5459,11 +5470,13 @@ class Meshgrid(PrimitiveWithInfer):
     Given N one-dimensional coordinate tensors, returns a tuple outputs of N N-D
     coordinate tensors for evaluating expressions on an N-D grid.
 
-
     Args:
-        indexing (str): Either 'xy' or 'ij'. Default: 'xy'.
-          When the indexing argument is set to 'xy' (the default), the broadcasting
-          instructions for the first two dimensions are swapped.
+        indexing (‘xy’, ‘ij’, optional): Cartesian (‘xy’, default) or
+            matrix (‘ij’) indexing of output. In the 2-D case with
+            inputs of length `M` and `N`, the outputs are of shape `(N, M)`
+            for ‘xy’ indexing and `(M, N)` for ‘ij’ indexing. In the 3-D
+            case with inputs of length `M`, `N` and `P`, outputs are of shape
+            `(N, M, P)` for ‘xy’ indexing and `(M, N, P)` for ‘ij’ indexing.
 
     Inputs:
         - **input** (Union[tuple]) - A Tuple of N 1-D Tensor objects.
@@ -5711,10 +5724,24 @@ class ReverseSequence(PrimitiveWithInfer):
 
 
 class EditDistance(PrimitiveWithInfer):
-    """
+    r"""
     Computes the Levenshtein Edit Distance. It is used to measure the similarity of two sequences. The inputs are
     variable-length sequences provided by SparseTensors (hypothesis_indices, hypothesis_values, hypothesis_shape)
     and (truth_indices, truth_values, truth_shape).
+
+    .. math::
+
+        \operatorname{lev}_{a, b}(i, j)=\left\{\begin{array}{ll}
+        \max (i, j)  \qquad \qquad \qquad \qquad \qquad \quad \  \text { if } \min (i, j)=0 \\
+        \min \left\{\begin{array}{ll}
+        \operatorname{lev}_{a, b}(i-1, j)+1 & \\
+        \operatorname{lev}_{a, b}(i, j-1)+1 & \text { otherwise. } \\
+        \operatorname{lev}_{a, b}(i-1, j-1)+1_{\left(a_{i} \neq b_{j}\right)}
+        \end{array}\right. &
+        \end{array}\right.
+
+    Where the :math:`a` indicates the hypothesis and the :math:`a` indicates the truth. For ease of understanding,
+    i and j here in may be considered as lengths of a and b.
 
     Args:
         normalize (bool): If true, edit distances are normalized by length of truth. Default: True.
@@ -5906,7 +5933,7 @@ class EmbeddingLookup(PrimitiveWithCheck):
           This represents a Tensor slice, instead of the entire Tensor. Currently, the dimension is restricted to be 2.
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor. Values can be out of range of `input_params`,
-          and the exceeding part will be filled with 0 in the output. Values does not support negative and the result
+          and the exceeding part will be filled with 0 in the output. Values do not support negative and the result
           is undefined if values are negative. The data type should be int32 or int64.
         - **offset** (int) - Specifies the offset value of this `input_params` slice. Thus the real indices
           are equal to `input_indices` minus `offset`.
@@ -6415,7 +6442,7 @@ class TensorScatterMin(PrimitiveWithInfer):
 
 class TensorScatterSub(PrimitiveWithInfer):
     """
-    Creates a new tensor by subtracting the values from the positions in `input_x` indicicated by
+    Creates a new tensor by subtracting the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
     index, the result of the update will be to subtract these values respectively. This operation is almost
     equivalent to using ScatterNdSub, except that the updates are applied on `Tensor` instead of `Parameter`.

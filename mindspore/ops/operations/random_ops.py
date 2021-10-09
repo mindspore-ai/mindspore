@@ -591,7 +591,7 @@ class UniformCandidateSampler(PrimitiveWithInfer):
         unique (bool): Whether all sampled classes in a batch are unique.
         range_max (int): The number of possible classes, must be non-negative.
         seed (int): Used for random number generation, must be non-negative. If seed has a value of 0,
-            seed will be replaced with a randomly generated value. Default: 0.
+            the seed will be replaced with a randomly generated value. Default: 0.
         remove_accidental_hits (bool): Whether accidental hit is removed. Default: False.
 
     Inputs:
@@ -608,7 +608,7 @@ class UniformCandidateSampler(PrimitiveWithInfer):
     Raises:
         TypeError: If neither `num_true` nor `num_sampled` is an int.
         TypeError: If neither `unique` nor `remove_accidental_hits` is a bool.
-        TypeError: If neither `range_max` nor `seed` is a int.
+        TypeError: If neither `range_max` nor `seed` is an int.
         TypeError: If `true_classes` is not a Tensor.
 
     Supported Platforms:

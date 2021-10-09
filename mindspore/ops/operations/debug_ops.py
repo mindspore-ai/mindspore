@@ -296,7 +296,8 @@ class InsertGradientOf(PrimitiveWithInfer):
         ...
         ...     print("forward: ", f(1.1, 0.1))
         ...     print("clip_gradient:", fd(1.1, 0.1))
-        ...
+        forward: 0.11000000685453415
+        clip_gradient: ()
     """
 
     @prim_attr_register
@@ -314,7 +315,7 @@ class InsertGradientOf(PrimitiveWithInfer):
 
 class HookBackward(PrimitiveWithInfer):
     """
-    This operation is used as a tag to hook gradient in intermediate variables.  Note that this function
+    This operation is used as a tag to hook gradient in intermediate variables. Note that this function
     is only supported in Pynative Mode.
 
     Note:
@@ -326,6 +327,11 @@ class HookBackward(PrimitiveWithInfer):
 
     Args:
         hook_fn (Function): Python function. hook function.
+        cell_id (str): Used to identify whether the function registered by the hook is actually registered on
+                       the specified Cell. where the Cell is an object. For example, 'nn.Add' is a Cell object.
+                       The default value of cell_id is ", in this case, the system will automatically register
+                       when registering. Add a value of cell_id, the value of cell_id currently does not support
+                       custom values。
 
     Inputs:
         - **inputs** (Tensor) - The variable to hook.
@@ -351,6 +357,7 @@ class HookBackward(PrimitiveWithInfer):
         ...
         >>> output = backward(1, 2)
         >>> print(output)
+        ()
     """
 
     def __init__(self, hook_fn, cell_id=""):

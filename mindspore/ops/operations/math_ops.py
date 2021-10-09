@@ -185,7 +185,7 @@ class Add(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -268,10 +268,9 @@ class AssignAdd(PrimitiveWithInfer):
 
     Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
+    the relatively highest priority data type.
     If `value` is a number, the number is automatically converted to Tensor,
     and the data type is consistent with the Tensor data type involved in the operation.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Note:
         Since `variable` is a data type Parameter, the data type cannot be changed,
@@ -291,6 +290,8 @@ class AssignAdd(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `value` is neither Number nor Tensor.
+        RuntimeError: If the data type of `variable` and `value` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -338,10 +339,9 @@ class AssignSub(PrimitiveWithInfer):
 
     Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
+    the relatively highest priority data type.
     If `value` is a number, the number is automatically converted to Tensor,
     and the data type is consistent with the Tensor data type involved in the operation.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
 
     Note:
         Since `variable` is a data type Parameter, the data type cannot be changed,
@@ -361,6 +361,8 @@ class AssignSub(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `value` is neither Number nor Tensor.
+        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
+                      when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -1200,7 +1202,6 @@ class MatMul(PrimitiveWithCheck):
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
 
     def check_shape_size(self, x1, x2):
-        """Check the shape size of inputs for MatMul."""
         if len(x1) != 2 or len(x2) != 2:
             raise ValueError(f"For '{self.name}', inputs 'x', 'y' should have the same dimension size and "
                              f"be equal to 2, but got the size of 'x': ({len(x1)}) and the size of 'y': ({len(x2)}).")
@@ -1525,7 +1526,7 @@ class Neg(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is number.
-          :math:`(N,*)` where :math:`*` means ,any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
 
     Outputs:
         Tensor, has the same shape and dtype as input.
@@ -1577,7 +1578,7 @@ class InplaceAdd(PrimitiveWithInfer):
         - **x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
         - **input_v** (Tensor) - The second input is a tensor that has the same dimension sizes as x except
-          the first dimension, which must be the same as indices's size. It has the same data type with `x`.
+          the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
     Outputs:
         Tensor, has the same shape and dtype as x.
@@ -1646,7 +1647,7 @@ class InplaceSub(PrimitiveWithInfer):
         - **x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
         - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
-          the first dimension, which must be the same as indices's size. It has the same data type with `x`.
+          the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
     Outputs:
         Tensor, has the same shape and dtype as x.
@@ -1710,7 +1711,7 @@ class Sub(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -1760,7 +1761,7 @@ class Mul(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -1811,7 +1812,7 @@ class SquaredDifference(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -1859,7 +1860,7 @@ class Square(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is number.
-          :math:`(N,*)` where :math:`*` means ,any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -1946,7 +1947,7 @@ class Sqrt(PrimitiveWithCheck):
 
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is number.
-          :math:`(N,*)` where :math:`*` means ,any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
 
     Outputs:
         Tensor, has the same shape and data type as the `x`.
@@ -2044,7 +2045,7 @@ class Pow(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -2420,7 +2421,7 @@ class Minimum(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
     If one of the elements being compared is a NaN, then that element is returned.
@@ -2478,7 +2479,7 @@ class Maximum(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
     If one of the elements being compared is a NaN, then that element is returned.
@@ -2536,7 +2537,7 @@ class RealDiv(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -2587,7 +2588,7 @@ class Div(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -2646,7 +2647,7 @@ class DivNoNan(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -2783,7 +2784,7 @@ class FloorDiv(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -2827,7 +2828,7 @@ class TruncateDiv(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -2867,13 +2868,13 @@ class TruncateMod(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
     .. warning::
         - The input data does not support 0.
-        - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
+        - When the elements of input exceed 2048 , the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
@@ -2919,7 +2920,7 @@ class Mod(_MathBinaryOp):
 
     .. warning::
         - The input data does not support 0.
-        - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
+        - When the elements of input exceed 2048, the accuracy of operator cannot guarantee the requirement of
           double thousandths in the mini form.
         - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
         - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
@@ -3099,7 +3100,7 @@ class Xdivy(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -3144,7 +3145,7 @@ class Xlogy(_MathBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -3442,8 +3443,7 @@ class ApproximateEqual(_LogicBinaryOp):
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Args:
         tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
@@ -3458,6 +3458,8 @@ class ApproximateEqual(_LogicBinaryOp):
 
     Raises:
         TypeError: If `tolerance` is not a float.
+        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
+                      when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -3593,7 +3595,7 @@ class Greater(_LogicBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -3647,7 +3649,7 @@ class GreaterEqual(_LogicBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -3745,7 +3747,7 @@ class Less(_LogicBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
@@ -4176,7 +4178,7 @@ class NPUAllocFloatStatus(PrimitiveWithInfer):
     The flag is a tensor whose shape is `(8,)` and data type is `mindspore.dtype.float32`.
 
     Note:
-        Examples: see `NPUGetFloatStatus`.
+        Please refer to the Examples of class: `mindspore.ops.NPUAllocFloatStatus`.
 
     Outputs:
         Tensor, has the shape of `(8,)`.
@@ -4211,7 +4213,7 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
     is overflow happened.
     In addition, there are strict sequencing requirements for use, i.e., before using the NPUGetFloatStatus operator,
     need to ensure that the NPUClearFlotStatus and your compute has been executed.
-    We use Depend to ensure the execution order.
+    We use Depend on ensure the execution order.
 
     Inputs:
         - **x** (Tensor) - The output tensor of `NPUAllocFloatStatus`.
@@ -4268,9 +4270,9 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         `NPUClearFloatStatus` is called.
         In addition, there are strict sequencing requirements for use, i.e., before using the NPUGetFloatStatus
         operator, need to ensure that the NPUClearFlotStatus and your compute has been executed.
-        We use Depend to ensure the execution order.
+        We use depend on ensure the execution order.
 
-        Examples: see `NPUGetFloatStatus`.
+        Please refer to the Examples of class: `mindspore.ops.NPUGetFloatStatus`.
 
     Inputs:
         - **x** (Tensor) - The output tensor of `NPUAllocFloatStatus`.
@@ -4356,7 +4358,7 @@ class ACos(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
-           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -4397,7 +4399,7 @@ class Sin(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
-           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -4798,8 +4800,7 @@ class Atan2(_MathBinaryOp):
 
     Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Inputs:
         - **x** (Tensor) - The input tensor.
@@ -4813,6 +4814,8 @@ class Atan2(_MathBinaryOp):
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
+        RuntimeError: If the data type of `x` and `y` conversion of Parameter is required
+                      when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -4892,8 +4895,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to
     make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Inputs:
         - **x** (Tensor) - The input tensor with int16, int32 or uint16 data type.
@@ -4905,6 +4907,8 @@ class BitwiseAnd(_BitwiseBinaryOp):
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
+        RuntimeError: If the data type of `x` and `y` conversion of Parameter is required
+                      when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -4930,8 +4934,7 @@ class BitwiseOr(_BitwiseBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to
     make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Inputs:
         - **x** (Tensor) - The input tensor with int16, int32 or uint16 data type.
@@ -4942,6 +4945,8 @@ class BitwiseOr(_BitwiseBinaryOp):
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
+        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
+                      when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -4967,8 +4972,7 @@ class BitwiseXor(_BitwiseBinaryOp):
     Inputs of `x` and `y` comply with the implicit type conversion rules to
     make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Inputs:
         - **x** (Tensor) - The input tensor with int16, int32 or uint16 data type.
@@ -4979,6 +4983,8 @@ class BitwiseXor(_BitwiseBinaryOp):
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor.
+        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
+                      when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend``
@@ -5271,7 +5277,7 @@ class MatrixInverse(PrimitiveWithInfer):
     Raises:
         TypeError: If `adjoint` is not a bool.
         TypeError: If dtype of `x` is neither float32 nor float64.
-        ValueError: If the last two dimensions of `x` is not same size.
+        ValueError: If the last two dimensions of `x` is not the same size.
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
@@ -5318,9 +5324,10 @@ class IndexAdd(Primitive):
 
     Inputs:
         - **x** (Parameter) - The input tensor to add to.
-        - **indices** (Tensor) - The index of `x` on the `axis` th dimension to add to, with data type int32.
-          The `indices` must be 1D with the same size as the size of the `axis` th dimension of `y`. The values
-          of `indices` should be in the range of 0 to the size of the `axis` th dimension of `x`.
+        - **indices** (Tensor) - Add the  value of `x` and `y` along the dimension of the `axis` according to the
+          specified index value, with data type int32.
+          The `indices` must be 1D with the same size as the size of `y` in the `axis` dimension. The values
+          of `indices` should be in [0, b), where the b is the size of `x` in the `axis` dimension.
         - **y** (Tensor) - The input tensor with the value to add. Must have same data type as `x`.
           The shape must be the same as `x` except the `axis` th dimension.
 
