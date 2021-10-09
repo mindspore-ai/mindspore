@@ -38,7 +38,8 @@ class MultinomialGpuKernel : public GpuKernel {
         distributions_(0),
         workspace_size_(sizeof(curandState)),
         seed_(0),
-        seed2_(0) {}
+        seed2_(0),
+        is_null_input_(false) {}
   ~MultinomialGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

@@ -56,7 +56,7 @@ bool FakeQuantPerLayerGpuKernel::Init(const CNodePtr &kernel_node) {
 
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
-  num_bits_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
+  num_bits_ = static_cast<unsigned int>(GetValue<int64_t>(prim->GetAttr("num_bits")));
   quant_delay_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("quant_delay")));
   training_ = GetValue<bool>(prim->GetAttr("training"));
   symmetric_ = GetValue<bool>(prim->GetAttr("symmetric"));

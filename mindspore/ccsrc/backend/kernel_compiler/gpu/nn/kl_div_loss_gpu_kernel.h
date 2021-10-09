@@ -28,7 +28,7 @@ namespace kernel {
 template <typename T>
 class KLDivLossGpuKernel : public GpuKernel {
  public:
-  KLDivLossGpuKernel() : input_size_(1), reduction_(1) {}
+  KLDivLossGpuKernel() : input_size_(1), reduction_(1), is_null_input_(false), workspace_size_(0) {}
   ~KLDivLossGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

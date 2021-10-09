@@ -179,6 +179,7 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     input_desc_ = nullptr;
     output_desc_ = nullptr;
     filter_desc_ = nullptr;
+    conv_algorithm_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
     conv_desc_ = nullptr;
     padded_desc_ = nullptr;
     cudnn_data_type_ = CUDNN_DATA_FLOAT;

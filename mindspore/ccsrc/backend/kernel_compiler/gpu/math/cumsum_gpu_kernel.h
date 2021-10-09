@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,14 @@ constexpr int kMaxDimsSize = 3;
 template <typename T>
 class CumSumGpuKernel : public GpuKernel {
  public:
-  CumSumGpuKernel() : exclusive_(false), reverse_(false), axis_(0), input_size_0_(0), stride_(0), stride2_(0) {}
+  CumSumGpuKernel()
+      : exclusive_(false),
+        reverse_(false),
+        is_null_input_(false),
+        axis_(0),
+        input_size_0_(0),
+        stride_(0),
+        stride2_(0) {}
   ~CumSumGpuKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

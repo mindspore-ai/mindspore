@@ -27,7 +27,13 @@ namespace kernel {
 template <typename T>
 class ResizeNearestNeighborGpuKernel : public GpuKernel {
  public:
-  ResizeNearestNeighborGpuKernel() : align_corners_(false), shape_size_(0), input_size_(0), output_size_(0) {}
+  ResizeNearestNeighborGpuKernel()
+      : align_corners_(false),
+        is_null_input_(false),
+        shape_size_(0),
+        input_size_(0),
+        output_size_(0),
+        workspace_size_(0) {}
   ~ResizeNearestNeighborGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

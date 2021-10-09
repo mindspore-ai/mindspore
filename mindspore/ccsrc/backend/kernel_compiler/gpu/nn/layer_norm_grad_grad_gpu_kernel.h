@@ -27,7 +27,8 @@ namespace kernel {
 template <typename T>
 class LayerNormGradGradGpuKernel : public GpuKernel {
  public:
-  LayerNormGradGradGpuKernel() : input_row_(1), input_col_(1), param_dim_(1), input_size_(1) {}
+  LayerNormGradGradGpuKernel()
+      : input_row_(1), input_col_(1), param_dim_(1), input_size_(1), is_null_input_(false), epsilon_() {}
   ~LayerNormGradGradGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }

@@ -44,7 +44,7 @@ class FakeQuantPerChannelGradGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 
-  int num_bits_;
+  unsigned int num_bits_;
   float quant_min_;
   float quant_max_;
   int num_channels_;

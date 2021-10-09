@@ -148,7 +148,7 @@ class BiasAddGradGpuKernel : public GpuKernel {
       return;
     }
     if (data_format_ == kOpFormat_NHWC) {
-      size_t required_sharedmem_size = 32 * 33 * sizeof(float);
+      const size_t required_sharedmem_size = 32 * 33 * sizeof(float);
       // nhwc opt implementation performs not so well when bias_size_ <= 6
       if (required_sharedmem_size > SHARED_MEM_PER_BLOCK || bias_size_ <= 6) {
         use_cudnn_ = true;
