@@ -114,7 +114,7 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
         case DataType::kNumberTypeFloat16: {
           const uint16_t *shape_data_fp16 = static_cast<const uint16_t *>(shape_data);
           for (int i = 0; i < in_tensors_[1].ElementNum(); i++) {
-            out_shape.push_back(static_cast<float>(*(shape_data_fp16 + i)));
+            out_shape.push_back(ShortToFloat32(*(shape_data_fp16 + i)));
           }
           break;
         }
