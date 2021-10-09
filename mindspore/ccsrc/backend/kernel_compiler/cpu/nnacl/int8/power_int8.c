@@ -23,17 +23,18 @@ int PowerInt8(const int8_t *input, const int8_t *exp_ptr, int8_t *output, int co
   int output_zp = param->quant_arg_.out_args_.zp_;
   int act_min = param->quant_arg_.output_activation_min_;
   int act_max = param->quant_arg_.output_activation_max_;
+  double exp_scale = param->quant_arg_.exp_args_.scale_;
+  int exp_zp = param->quant_arg_.exp_args_.zp_;
 
   if (param->broadcast_) {
+    float exp_val = exp_scale * (exp_ptr[0] - exp_zp);
     for (int i = 0; i < count; ++i) {
       float input_val = input_scale * (input[i] - input_zp);
-      float output_val = pow(param->scale_ * input_val + param->shift_, param->power_);
+      float output_val = pow(param->scale_ * input_val + param->shift_, exp_val);
       int32_t output_scaled = round(output_val / output_scale) + output_zp;
       output[i] = (int8_t)MSMAX(act_min, MSMIN(output_scaled, act_max));
     }
   } else {
-    double exp_scale = param->quant_arg_.exp_args_.scale_;
-    int exp_zp = param->quant_arg_.exp_args_.zp_;
     for (int i = 0; i < count; ++i) {
       float input_val = input_scale * (input[i] - input_zp);
       float exp_val = exp_scale * (exp_ptr[i] - exp_zp);
