@@ -189,7 +189,8 @@ void GetCachedFuncGraph(const ResourcePtr &resource, const std::string &queue_na
   MS_LOG(INFO) << "Use the compilation cache \"" << realpath.value() << "\" and execute the backend actions only.";
   FuncGraphPtr fg = mindspore::LoadMindIR(realpath.value());
   if (fg == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed to load the compilation cache file: " << realpath.value();
+    MS_LOG(ERROR) << "Failed to load the compilation cache file: " << realpath.value();
+    return;
   }
   FuncGraphManagerPtr mng = fg->manager();
   if (mng == nullptr) {
@@ -213,18 +214,27 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto realpath = Common::CreatePrefixPath(kCompileCacheFilePath);
   if (!realpath.has_value()) {
-    MS_LOG(EXCEPTION) << "Get real path failed. filename=" << kCompileCacheFilePath;
+    MS_LOG(ERROR) << "Get real path failed. filename=" << kCompileCacheFilePath;
+    return;
   }
 
   ChangeFileMode(realpath.value(), S_IRWXU);
   std::ofstream fout(realpath.value());
   if (!fout.is_open()) {
-    MS_LOG(EXCEPTION) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
+    MS_LOG(ERROR) << "Open cache file '" << realpath.value() << "' failed!" << ErrnoToString(errno);
+    return;
   }
   FuncGraphPtr fg = resource->func_graph();
-  mind_ir::ModelProto fg_model = GetBinaryProto(fg, true);
-  if (!fg_model.SerializeToOstream(&fout)) {
-    MS_LOG(EXCEPTION) << "Failed to cache the graph to file " << realpath.value();
+  ModelProtoPtr fg_model = GetBinaryProto(fg, true);
+  if (fg_model == nullptr) {
+    MS_LOG(ERROR) << "Get binary proto for graph " << fg->ToString() << " failed.";
+    fout.close();
+    return;
+  }
+  if (!fg_model->SerializeToOstream(&fout)) {
+    MS_LOG(ERROR) << "Failed to cache the graph to file " << realpath.value();
+    fout.close();
+    return;
   }
   fout.close();
   ChangeFileMode(realpath.value(), S_IRUSR);
