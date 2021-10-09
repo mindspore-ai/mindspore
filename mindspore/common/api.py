@@ -18,6 +18,7 @@
 import types
 import sys
 import os
+import time
 from collections import OrderedDict
 from functools import wraps
 
@@ -128,6 +129,7 @@ class _MindsporeFunctionExecutor:
         if hasattr(obj, fn.__name__):
             self.obj = obj
         self._graph_executor = GraphExecutor_.get_instance()
+        self._create_time = int(time.time() * 1e9)
 
     def build_data_init_graph(self, graph_name):
         """Build GE data graph and init graph for the given graph name."""
@@ -167,6 +169,10 @@ class _MindsporeFunctionExecutor:
                 logger.error(f'`obj` module not equal to `fn` module: {self.obj.__module__}, {self.fn.__module__}')
             self.obj.__parse_method__ = method_name
             generate_name = generate_name + '.' + str(self.obj.create_time) + '.' + str(id(self.obj))
+        else:
+            # Different instance of same class may use same memory(means same obj_id) at diff times.
+            # To avoid unexpected phase matched, add create_time to generate_name.
+            generate_name = generate_name + '.' + str(self._create_time)
 
         key = generate_arguments_key(dic)
         phase = generate_name + '.' + str(key)
