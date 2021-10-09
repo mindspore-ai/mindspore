@@ -51,7 +51,7 @@ const AnfNodePtr TransposeReshapeFusion::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(equiv);
 
   if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::TransposeReshapeFusion)) {
-    return node;
+    return nullptr;
   }
 
   auto reshape_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kBackendReshapeInputTensorNum);

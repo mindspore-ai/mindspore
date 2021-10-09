@@ -55,7 +55,7 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(node);
 
   if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MomentumLossscaleFusion)) {
-    return node;
+    return nullptr;
   }
 
   auto cnode = node->cast<CNodePtr>();

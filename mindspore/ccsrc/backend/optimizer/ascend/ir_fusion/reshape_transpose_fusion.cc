@@ -69,7 +69,7 @@ const AnfNodePtr ReshapeTransposeFusion::Process(const FuncGraphPtr &func_graph,
   }
 
   if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::ReshapeTransposeFusion)) {
-    return node;
+    return nullptr;
   }
 
   auto prim = std::make_shared<Primitive>(kConfusionTransposeDOpName);

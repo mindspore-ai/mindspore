@@ -101,7 +101,7 @@ const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNo
   MS_EXCEPTION_IF_NULL(node);
 
   if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::SquareSumFusion)) {
-    return node;
+    return nullptr;
   }
 
   CNodePtr sum = nullptr;

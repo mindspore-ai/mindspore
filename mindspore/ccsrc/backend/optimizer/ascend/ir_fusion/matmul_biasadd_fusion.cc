@@ -34,7 +34,7 @@ const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const A
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
   if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MatmulBiasaddFusion)) {
-    return node;
+    return nullptr;
   }
 
   auto matmul = GetAnfNodeByVar(equiv, matmul_var_);
