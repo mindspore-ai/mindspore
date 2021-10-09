@@ -563,19 +563,29 @@ class MultiHeadAttention(Cell):
             Should be dtype.float32 or dtype.float16.
         softmax_compute_type(dtype.Number): The type of softmax computation module. Default dtype.float32.
             Should be dtype.float32 or dtype.float16.
-        use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
+        use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
+            words and want to generate the ten more words. We just need to compute the two words's state only once,
+            and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
+            The first step, set the is_first_iteration to be True by
+            `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
+            is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
+            pass the single step's input tensor, and loop it. Default False.
         parallel_config(OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
                                            an instance of `OpParallelConfig` with default args.
 
     Inputs:
         - **query_tensor** (Tensor) - the query vector with shape (batch_size, src_seq_length, hidden_size) or
-          (batch_size * src_seq_length, hidden_size).
+          (batch_size * src_seq_length, hidden_size), if the use_past is False or is_first_iteration=True. Otherwise,
+          must be (batch_size, 1, hidden_size)
         - **key_tensor** (Tensor) - the key vector with shape (batch_size, tgt_seq_length, hidden_size) or
-          (batch_size * src_seq_length, hidden_size).
+          (batch_size * tgt_seq_length, hidden_size), if the use_past is False or is_first_iteration=True. Otherwise,
+          must be (batch_size, 1, hidden_size)
         - **value_tensor** (Tensor) - the value vector with shape (batch_size, tgt_seq_length, hidden_size) or
-          (batch_size * src_seq_length, hidden_size).
+          (batch_size * tgt_seq_length, hidden_size), if the use_past is False or is_first_iteration=True. Otherwise,
+          must be (batch_size, 1, hidden_size)
         - **attention_mask** (Tensor) - the attention mask matrix with shape (batch_size, src_seq_length,
-          tgt_seq_length).
+          tgt_seq_length), if the use_past is False or is_first_iteration=True. Otherwise,
+          must be (batch_size, 1, tgt_seq_length)
         - **key_past** (Tensor) - Float16 tensor with shape (batch_size, num_heads, size_per_head, tgt_seq_length).
           The past calculated key vector. Used for incremental prediction when the use_past is True.
           Default None.
@@ -589,7 +599,8 @@ class MultiHeadAttention(Cell):
         Tuple, a tuple contains(`output`, `layer_present`)
 
         - **output** (Tensor) - Tensor, the float tensor of the output of the layer with
-          shape (batch_size, src_seq_length, hidden_size) or (batch_size * src_seq_length, hidden_size)
+          shape (batch_size, src_seq_length, hidden_size) or (batch_size * src_seq_length, hidden_size),
+          if the use_past is False or is_first_iteration=True. Otherwise, it will be (batch_size, 1, hidden_size).
 
         - **layer_present** (Tuple) - A tuple of the Tensor of the projected key and value vector with
           ((batch_size, num_heads, size_per_head, tgt_seq_length),
@@ -618,6 +629,8 @@ class MultiHeadAttention(Cell):
         # When use use_past=True, it includes two steps to implement the incremental prediction.
         # Step 1: set is_first_iteration=True, and input the full sequence length's state.
         # We need to prepare the memory parameters for saving key and value states firstly.
+        >>> model = MultiHeadAttention(batch_size=2, hidden_size=15, src_seq_length=20, tgt_seq_length=20,
+        ...                            num_heads=3, use_past=True)
         >>> key_past = Tensor(np.zeros(shape=(2, 3, 5, 20)), mstype.float16)
         >>> value_past = Tensor(np.zeros(shape=(2, 3, 20, 5)), mstype.float16)
         >>> batch_valid_length = Tensor(np.ones((2,)), mstype.int32)
@@ -642,9 +655,9 @@ class MultiHeadAttention(Cell):
         >>> print(attn_out.shape)
         (2, 1, 15)
         >>> print(past[0].shape)
-        (2, 3, 5, 1)
+        (2, 3, 5, 20)
         >>> print(past[1].shape)
-        (2, 3, 1, 5)
+        (2, 3, 20, 5)
     """
 
     @_args_type_validator_check(batch_size=Validator.check_positive_int,
@@ -1029,15 +1042,23 @@ class TransformerEncoderLayer(Cell):
             Should be dtype.float32 or dtype.float16. Default mstype.float32.
         param_init_type(dtype.Number): The parameter initialization type of the module.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
-        use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
+        use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
+            words and want to generate the ten more words. We just need to compute the two words's state only once,
+            and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
+            The first step, set the is_first_iteration to be True by
+            `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
+            is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
+            pass the single step's input tensor, and loop it. Default False.
         moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
         parallel_config(OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
                                            an instance of `OpParallelConfig` with default args.
 
     Inputs:
         - **x** (Tensor) - Float Tensor, shape should be [batch_size, seq_length, hidden_size] or
-          [batch_size * seq_length, hidden_size].
-        - **input_mask** (Tensor) - Float Tensor, attention mask with shape [batch_size, seq_length, seq_length].
+          [batch_size * seq_length, hidden_size], if the use_past is False or is_first_iteration=True. Otherwise,
+          should be [batch_size, 1, hidden_size]
+        - **input_mask** (Tensor) - Float Tensor, attention mask with shape [batch_size, seq_length, seq_length],
+          if the use_past is False or is_first_iteration=True. Otherwise, should be [batch_size, 1, hidden_size]
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
           past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
         - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index. Used
@@ -1047,7 +1068,8 @@ class TransformerEncoderLayer(Cell):
         Tuple, a tuple contains(`output`, `layer_present`).
 
         - **output** (Tensor) - The float tensor of the output of the layer with
-          shape (batch_size, seq_length, hidden_size) or (batch_size * seq_length, hidden_size).
+          shape (batch_size, seq_length, hidden_size) or (batch_size * seq_length, hidden_size), if the use_past is
+          False or is_first_iteration=True. Otherwise, it will be (batch_size, 1, hidden_size)
 
         - **layer_present** (Tuple) - A tuple of the Tensor of the projected key and value vector with
           ((batch_size, num_heads, size_per_head, seq_length),
@@ -1088,7 +1110,7 @@ class TransformerEncoderLayer(Cell):
         >>> print(past[1].shape)
         (2, 2, 16, 4)
         >>> encoder_input_value = Tensor(np.ones((2, 1, 8)), mstype.float32)
-        >>> encoder_input_mask = Tensor(np.ones((2, 16, 16)), mstype.float16)
+        >>> encoder_input_mask = Tensor(np.ones((2, 1, 16)), mstype.float16)
         >>> init_reset = Tensor([False], mstype.bool_)
         # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
         # sequence.
@@ -1350,9 +1372,11 @@ class TransformerDecoderLayer(Cell):
         - **decoder_mask** (Tensor) - the attention mask for decoder with shape [batch_size, src_seq_length,
           seq_length].
         - **encoder_output** (Tensor) - the output of the encoder with shape [batch_size, seq_length, hidden_size] or
-          [batch_size * seq_length, hidden_size].
+          [batch_size * seq_length, hidden_size]. Note this args can not be passed by None when the net is in outermost
+          layer. Default None.
         - **memory_mask** (Tensor) - the memory mask of the cross attention with shape [batch, tgt_seq_length,
-          src_seq_length], where tgt_seq_length is the length of the decoder.
+          src_seq_length] where tgt_seq_length is the length of the decoder. Note this args can not be passed by
+          None when the net is in outermost layer. Default None.
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
           past value parameter used in the incremental prediction. Only valid when use_past is True. Default True.
         - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index. Used
@@ -1727,7 +1751,13 @@ class TransformerEncoder(Cell):
             Should be dtype.float32 or dtype.float16. Default mstype.float32.
         param_init_type(dtype.Number): The parameter initialization type of the module.
             Should be dtype.float32 or dtype.float16. Default dtype.float32.
-        use_past(bool): Use the past state to compute, used for incremental prediction. Default False.
+        use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
+            words and want to generate the ten more words. We just need to compute the two words's state only once,
+            and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
+            The first step, set the is_first_iteration to be True by
+            `model.add_flags_recursive(is_first_iteration=True)`, and pass the full inputs. Then, set the
+            is_first_iteration to be False by `model.add_flags_recursive(is_first_iteration=False)`. At this moment,
+            pass the single step's input tensor, and loop it. Default False.
         lambda_func: A function can determine the fusion index, pipeline stages and recompute attribute. If the user
             wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a function
             that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
@@ -1742,7 +1772,8 @@ class TransformerEncoder(Cell):
 
     Inputs:
         - **hidden_states** (Tensor) - Tensor, shape should be [batch_size, seq_length, hidden_size] or
-          [batch_size * seq_length, hidden_size]
+          [batch_size * seq_length, hidden_size], if the use_past is False or is_first_iteration=True. Otherwise,
+          should be [batch_size, 1, hidden_size].
         - **attention_mask** (Tensor) - Tensor, attention mask with shape [batch_size, seq_length, seq_length]
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
           past value parameter used in the incremental prediction. Only valid when use_past is True. Default True
@@ -1753,7 +1784,8 @@ class TransformerEncoder(Cell):
         Tuple, a tuple contains(`output`, `layer_present`)
 
         - **output** (Tensor) - The float tensor of the output of the layer with
-          shape (batch_size, seq_length, hidden_size) or (batch_size * seq_length, hidden_size)
+          shape (batch_size, seq_length, hidden_size) or (batch_size * seq_length, hidden_size), if the use_past is
+          False or is_first_iteration=True. Otherwise, it will be (batch_size, 1, hidden_size).
         - **layer_present** (Tuple) - A tuple with size of num_layers, where each tuple contains the Tensor the
           projected key and value vector with shape ((batch_size, num_heads, size_per_head, seq_length),
           and (batch_size, num_heads, seq_length, size_per_head)).
@@ -1785,7 +1817,7 @@ class TransformerEncoder(Cell):
         >>> init_reset = Tensor([True], mstype.bool_)
         # Set is_first_iteration=True to generate the full memory states
         >>> model = TransformerEncoder(batch_size=2, hidden_size=8, ffn_hidden_size=64, seq_length=16,
-        ...                            num_heads=2, use_past=True)
+        ...                            num_heads=2, num_layers=2, use_past=True)
         >>> model.add_flags_recursive(is_first_iteration=True)
         >>> hidden, past = model(encoder_input_value, encoder_input_mask, init_reset, batch_valid_length)
         >>> print(hidden.shape)
@@ -1795,7 +1827,7 @@ class TransformerEncoder(Cell):
         >>> print(past[1].shape)
         (2, 2, 16, 4)
         >>> encoder_input_value = Tensor(np.ones((2, 1, 8)), mstype.float32)
-        >>> encoder_input_mask = Tensor(np.ones((2, 16, 16)), mstype.float16)
+        >>> encoder_input_mask = Tensor(np.ones((2, 1, 16)), mstype.float16)
         >>> init_reset = Tensor([False], mstype.bool_)
         # Step 2: set is_first_iteration=False, and pass the single word to run the prediction rather than the full
         # sequence.
@@ -1948,10 +1980,11 @@ class TransformerDecoder(Cell):
           [batch_size * seq_length, hidden_size]
         - **attention_mask** (Tensor) - the attention mask for decoder with shape [batch_size, seq_length, seq_length]
         - **encoder_output** (Tensor) - the output of the encoder with shape [batch_size, seq_length, hidden_size] or
-          [batch_size * seq_length, hidden_size]
+          [batch_size * seq_length, hidden_size]. Note this args can not be passed by None when the net is in outermost
+          layer. Default None.
         - **memory_mask** (Tensor) - the memory mask of the cross attention with shape [batch, tgt_seq_length,
-          src_seq_length] where tgt_seq_length is the length of the decoder. the output of the encoder with shape
-          [batch_size, seq_length, hidden_size],
+          src_seq_length] where tgt_seq_length is the length of the decoder. Note this args can not be passed by
+          None when the net is in outermost layer. Default None.
         - **init_reset** (Tensor) - A bool tensor with shape [1], used to clear the past key parameter and
           past value parameter used in the incremental prediction. Only valid when use_past is True. Default True
         - **batch_valid_length** (Tensor) - Int32 tensor with shape [batch_size] the past calculated the index.
