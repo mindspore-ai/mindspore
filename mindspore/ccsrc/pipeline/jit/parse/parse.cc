@@ -2186,17 +2186,21 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
   }
 
   auto unpacking = func_graph->has_vararg() || func_graph->has_kwarg();
-  TraceGuard guard(current_graph->get_return()->debug_info()->location());
   if (!unpacking) {
     std::vector<AnfNodePtr> inputs;
     inputs.emplace_back(NewValueNode(cell_ptr));
     auto &params = func_graph->parameters();
     (void)std::transform(params.begin(), params.end(), std::back_inserter(inputs),
                          [](AnfNodePtr node) -> AnfNodePtr { return node; });
-    func_graph->set_output(func_graph->NewCNodeInOrder(inputs));
+    auto call_node = func_graph->NewCNodeInOrder(inputs);
+
+    TraceGuard guard(current_graph->get_return()->debug_info()->location());
+    func_graph->set_output(call_node);
   } else {
     // ret = cell_obj(*arg, *kwargs)
     auto call_fn = MakeUnpackCall(func_graph, NewValueNode(cell_ptr), func_graph->parameters());
+
+    TraceGuard guard(current_graph->get_return()->debug_info()->location());
     // Set output as ret
     func_graph->set_output(call_fn);
   }
