@@ -605,7 +605,7 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
     auto json_name = json_creator->GetJsonName();
     std::vector<size_t> in_size_list;
     std::vector<size_t> out_size_list;
-    (void)TbeKernelBuild::GetIOSize2(kernel_json, &in_size_list, &out_size_list, node);
+    (void)TbeKernelBuild::GetIOSize(kernel_json, &in_size_list, &out_size_list, node);
     if (!is_tune_flag_ && op_debug_level_ != "1" &&
         build_manager_->SearchInCache(json_name, in_size_list, out_size_list, node.get())) {
       continue;

@@ -40,8 +40,6 @@ struct FusionScopeInfo {
   std::vector<AnfNodePtr> compute_nodes;
   std::vector<AnfNodePtr> output_nodes;
 };
-
-std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> &fusion_scopes);
 }  // namespace kernel
 }  // namespace mindspore
 

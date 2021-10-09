@@ -12,7 +12,6 @@ endif()
 if(ENABLE_D)
     file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "kernel_query.cc"
-        "kernel_fusion.cc"
         "tbe/*.cc"
         "host/*.cc"
         "aicpu/*.cc"

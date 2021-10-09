@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/kernel_fusion.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
 #include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
-#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
-std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> &fusion_scopes) {
-  std::map<int64_t, KernelModPtr> kernel_mod_ret;
-  for (const auto &fusion_scope_iter : fusion_scopes) {
-    kernel_mod_ret[fusion_scope_iter.scope_id] = std::make_shared<TbeKernelMod>(nullptr);
-  }
-  return kernel_mod_ret;
-}
 namespace ascend {
 std::string AscendKernelCompileManager::AscendOpSelectFormat(const AnfNodePtr &node) { return std::string(); }
 bool AscendKernelCompileManager::AscendOpCheckSupported(const AnfNodePtr &node) { return true; }

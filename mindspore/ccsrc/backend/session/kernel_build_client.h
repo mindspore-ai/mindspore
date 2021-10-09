@@ -237,11 +237,6 @@ class AscendKernelBuildClient : public KernelBuildClient {
     auto env = GetPyExe();
     return GetScriptFilePath(env, kGetPathScript, kServerScript);
   }
-
-  // Before building.
-  std::string SelectFormat(const std::string &json);
-  bool CheckSupported(const std::string &json);
-
   // Run TBE building.
   std::string TbeSendJob(const std::string &job_json_str);
   int TbeStart(const std::string &json, const std::string &mode);
@@ -255,7 +250,6 @@ class AscendKernelBuildClient : public KernelBuildClient {
   AscendKernelBuildClient &operator=(AscendKernelBuildClient &&) = delete;
 
  private:
-  void TbePre(const std::string &mode);
   AscendKernelBuildClient() { Open(); }
   ~AscendKernelBuildClient() override { Close(); }
 };
