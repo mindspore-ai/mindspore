@@ -20,6 +20,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/optimizer/common/helper.h"
+#include "runtime/device/ascend/lic_manager.h"
 
 namespace mindspore {
 namespace opt {
@@ -56,6 +57,10 @@ const BaseRef MulAddNFusion::DefinePattern() const {
 const AnfNodePtr MulAddNFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                         const EquivPtr &equiv) const {
   if (graph == nullptr || node == nullptr || equiv == nullptr) {
+    return nullptr;
+  }
+
+  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MulAddNPass)) {
     return nullptr;
   }
 
