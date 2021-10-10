@@ -57,7 +57,7 @@ const AnfNodePtr SoftmaxGradExtFusion::Process(const FuncGraphPtr &graph, const 
   MS_EXCEPTION_IF_NULL(node);
 
   if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::SoftmaxGradExtFusion)) {
-    return node;
+    return nullptr;
   }
 
   auto input0 = GetAnfNodeByVar(equiv, input0_);

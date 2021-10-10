@@ -196,7 +196,7 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
   MS_EXCEPTION_IF_NULL(node);
 
   if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::FusedBatchNormFusion)) {
-    return node;
+    return nullptr;
   }
 
   AnfNodePtr bn_training_reduce = CreateBNTrainingReduce(func_graph, node, equiv);

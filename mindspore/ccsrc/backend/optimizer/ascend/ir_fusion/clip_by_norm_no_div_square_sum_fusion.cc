@@ -47,7 +47,7 @@ const AnfNodePtr ClipByNormNoDivSquareSumFusion::Process(const FuncGraphPtr &gra
   MS_EXCEPTION_IF_NULL(equiv);
 
   if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::ClipByNormNoDivSquareSumFusion)) {
-    return node;
+    return nullptr;
   }
 
   BaseRef &input_gnode = (*equiv)[input_];
