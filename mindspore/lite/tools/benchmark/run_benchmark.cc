@@ -16,6 +16,8 @@
 
 #include "tools/benchmark/run_benchmark.h"
 #include <string>
+#include "tools/benchmark/benchmark_c_api.h"
+
 namespace mindspore {
 namespace lite {
 int RunBenchmark(int argc, const char **argv) {
@@ -34,11 +36,21 @@ int RunBenchmark(int argc, const char **argv) {
 
   BenchmarkBase *benchmark = nullptr;
   // get dump data output path
-  auto new_api = std::getenv("ENABLE_NEW_API");
-  if (new_api == nullptr || std::string(new_api) != "true") {
-    benchmark = new Benchmark(&flags);
+  auto api_type = std::getenv("MSLITE_API_TYPE");
+  if (api_type != nullptr) {
+    MS_LOG(INFO) << "MSLITE_API_TYPE = " << api_type;
+    std::cout << "MSLITE_API_TYPE = " << api_type << std::endl;
+  }
+  if (api_type == nullptr || std::string(api_type) == "OLD") {
+    benchmark = new (std::nothrow) Benchmark(&flags);
+  } else if (std::string(api_type) == "NEW") {
+    benchmark = new (std::nothrow) BenchmarkUnifiedApi(&flags);
+  } else if (std::string(api_type) == "C") {
+    benchmark = new (std::nothrow) tools::BenchmarkCApi(&flags);
   } else {
-    benchmark = new BenchmarkUnifiedApi(&flags);
+    MS_LOG(ERROR) << "Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)";
+    std::cerr << "Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)" << std::endl;
+    return RET_ERROR;
   }
   if (benchmark == nullptr) {
     MS_LOG(ERROR) << "new benchmark failed ";

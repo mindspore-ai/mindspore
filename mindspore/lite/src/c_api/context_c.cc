@@ -134,7 +134,7 @@ MSDeviceInfoHandle MSDeviceInfoCreate(MSDeviceType device_type) {
   } else if (device_type == kMSDeviceTypeKirinNPU) {
     impl = new (std::nothrow) mindspore::KirinNPUDeviceInfo();
   } else {
-    MS_LOG(ERROR) << "Unsupported Feature.";
+    MS_LOG(ERROR) << "Unsupported Feature. device_type: " << device_type;
     return nullptr;
   }
   if (impl == nullptr) {
@@ -227,7 +227,7 @@ bool MSDeviceInfoGetEnableFP16(const MSDeviceInfoHandle device_info) {
     auto impl = static_cast<mindspore::GPUDeviceInfo *>(device_info);
     return impl->GetEnableFP16();
   } else {
-    MS_LOG(ERROR) << "Unsupported Feature.";
+    MS_LOG(ERROR) << "Unsupported Feature. device_type: " << device_type;
     return false;
   }
 }

@@ -38,6 +38,10 @@
 #include "schema/model_generated.h"
 
 namespace mindspore::lite {
+#define BENCHMARK_LOG_ERROR(str) \
+  MS_LOG(ERROR) << str;          \
+  std::cerr << str << std::endl;
+
 enum MS_API InDataType { kImage = 0, kBinary = 1 };
 
 enum MS_API AiModelDescription_Frequency {
@@ -182,12 +186,13 @@ class MS_API BenchmarkBase {
 
   int ReadCalibData();
 
-  virtual int ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
-                             const std::vector<size_t> &dims) = 0;
+  int ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name, const std::vector<size_t> &dims);
+
+  virtual TypeId GetDataTypeByNameOrShape(const std::string &tensor_name, const std::vector<size_t> &dims) = 0;
 
   virtual int CompareOutput() = 0;
 
-  int CompareStringData(const std::string &name, tensor::MSTensor *tensor);
+  int CompareStringData(const std::string &name, const std::vector<std::string> &output_strings);
 
   int InitDumpConfigFromJson(char *path);
 
