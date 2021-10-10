@@ -26,16 +26,23 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr InferShape(const std::vector<AbstractBasePtr> &input_args) {
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  return std::make_shared<abstract::Shape>(in_shape);
+abstract::ShapePtr FloorInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = prim->name();
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto x = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
+  auto shape_element = x->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  return shape_element;
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+TypePtr FloorInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  auto x_type = input_args[0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
+  return x_type;
 }
 }  // namespace
 AbstractBasePtr FloorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -43,8 +50,10 @@ AbstractBasePtr FloorInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args), InferShape(input_args));
+  auto infer_type = FloorInferType(primitive, input_args);
+  auto infer_shape = FloorInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameFloor, Floor);
+REGISTER_PRIMITIVE_EVAL_IMPL(Floor, prim::kPrimFloor, FloorInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
