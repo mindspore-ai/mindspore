@@ -26,11 +26,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRaggedRange = "RaggedRange";
+/// \brief RaggedRange operator prototype.
 class MS_CORE_API RaggedRange : public PrimitiveC {
  public:
+  /// \brief Constructor
   RaggedRange() : PrimitiveC(kNameRaggedRange) {}
+  /// \brief Destructor
   ~RaggedRange() = default;
   MS_DECLARE_PARENT(RaggedRange, PrimitiveC);
+  /// \brief Method to init the op.
   void Init() {}
 };
 
