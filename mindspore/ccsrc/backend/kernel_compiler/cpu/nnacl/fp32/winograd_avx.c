@@ -17,6 +17,256 @@
 #include "nnacl/fp32/winograd_avx.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 
+void InputTransform4x4AvxUnit(const float *src_data, float *dst_data, const int src_step, const int dst_step,
+                              const int real_c) {
+  if (real_c == C8NUM) {
+    MS_FLOAT32X8 src[16];
+    MS_FLOAT32X8 t[16];
+    MS_FLOAT32X8 m[16];
+    LoadAvx16Data;
+    for (int l = 0; l < 4; ++l) {
+      int offset = l * 4;
+      t[l] = MS_SUB256_F32(src[offset], src[2 + offset]);
+      t[4 + l] = MS_ADD256_F32(src[1 + offset], src[2 + offset]);
+      t[8 + l] = MS_SUB256_F32(src[2 + offset], src[1 + offset]);
+      t[12 + l] = MS_SUB256_F32(src[3 + offset], src[1 + offset]);
+    }
+    for (int l = 0; l < 4; ++l) {
+      int offset = l * 4;
+      m[l] = MS_SUB256_F32(t[offset], t[2 + offset]);
+      m[4 + l] = MS_ADD256_F32(t[1 + offset], t[2 + offset]);
+      m[8 + l] = MS_SUB256_F32(t[2 + offset], t[1 + offset]);
+      m[12 + l] = MS_SUB256_F32(t[3 + offset], t[1 + offset]);
+    }
+    for (int i = 0; i < 16; i++) {
+      MS_ST256_F32(dst_data + i * dst_step, m[i]);
+    }
+  } else {
+    float src[16];
+    float t[16];
+    float m[16];
+    for (int i = 0; i < real_c; ++i) {
+      for (int j = 0; j < 16; ++j) {
+        src[j] = src_data[i + j * src_step];
+      }
+      for (int l = 0; l < 4; ++l) {
+        int offset = l * 4;
+        t[l] = src[offset] - src[2 + offset];
+        t[4 + l] = src[1 + offset] + src[2 + offset];
+        t[8 + l] = src[2 + offset] - src[1 + offset];
+        t[12 + l] = src[3 + offset] - src[1 + offset];
+      }
+      for (int l = 0; l < 4; ++l) {
+        int offset = l * 4;
+        m[l] = t[offset] - t[2 + offset];
+        m[4 + l] = t[1 + offset] + t[2 + offset];
+        m[8 + l] = t[2 + offset] - t[1 + offset];
+        m[12 + l] = t[3 + offset] - t[1 + offset];
+      }
+      for (int k = 0; k < 16; ++k) {
+        dst_data[i + k * dst_step] = m[k];
+      }
+    }
+  }
+}
+
+void InputTransform6x6AvxUnit(const float *src_data, float *dst_data, const int src_step, const int dst_step,
+                              const int real_c) {
+  if (real_c == C8NUM) {
+    MS_FLOAT32X8 src[36];
+    MS_FLOAT32X8 t[36];
+    MS_FLOAT32X8 m[36];
+    LoadAvx36Data;
+    for (int l = 0; l < 6; ++l) {
+      int offset = l * 6;
+      MS_FLOAT32X8 tmp1 = MS_SUB256_F32(src[3 + offset], src[1 + offset]);
+      MS_FLOAT32X8 tmp2 = MS_SUB256_F32(src[4 + offset], src[2 + offset]);
+      t[l] = MS_ADD256_F32(MS_SUB256_F32(MS_MUL256_N_F32(src[offset], 4), MS_MUL256_N_F32(src[2 + offset], 5)),
+                           src[4 + offset]);
+      t[6 + l] = MS_ADD256_F32(MS_MUL256_N_F32(MS_ADD256_F32(src[1 + offset], src[2 + offset]), -4),
+                               MS_ADD256_F32(src[3 + offset], src[4 + offset]));
+      t[12 + l] = MS_ADD256_F32(MS_MUL256_N_F32(MS_SUB256_F32(src[1 + offset], src[2 + offset]), 4),
+                                MS_SUB256_F32(src[4 + offset], src[3 + offset]));
+      t[18 + l] = MS_ADD256_F32(MS_MUL256_N_F32(tmp1, 2), tmp2);
+      t[24 + l] = MS_ADD256_F32(MS_MUL256_N_F32(tmp1, -2), tmp2);
+      t[30 + l] = MS_ADD256_F32(MS_SUB256_F32(MS_MUL256_N_F32(src[1 + offset], 4), MS_MUL256_N_F32(src[3 + offset], 5)),
+                                src[5 + offset]);
+    }
+    for (int l = 0; l < 6; ++l) {
+      int offset = l * 6;
+      MS_FLOAT32X8 tmp1 = MS_SUB256_F32(t[3 + offset], t[1 + offset]);
+      MS_FLOAT32X8 tmp2 = MS_SUB256_F32(t[4 + offset], t[2 + offset]);
+      m[l] =
+        MS_ADD256_F32(MS_SUB256_F32(MS_MUL256_N_F32(t[offset], 4), MS_MUL256_N_F32(t[2 + offset], 5)), t[4 + offset]);
+      m[6 + l] = MS_ADD256_F32(MS_MUL256_N_F32(MS_ADD256_F32(t[1 + offset], t[2 + offset]), -4),
+                               MS_ADD256_F32(t[3 + offset], t[4 + offset]));
+      m[12 + l] = MS_ADD256_F32(MS_MUL256_N_F32(MS_SUB256_F32(t[1 + offset], t[2 + offset]), 4),
+                                MS_SUB256_F32(t[4 + offset], t[3 + offset]));
+      m[18 + l] = MS_ADD256_F32(MS_MUL256_N_F32(tmp1, 2), tmp2);
+      m[24 + l] = MS_ADD256_F32(MS_MUL256_N_F32(tmp1, -2), tmp2);
+      m[30 + l] = MS_ADD256_F32(MS_SUB256_F32(MS_MUL256_N_F32(t[1 + offset], 4), MS_MUL256_N_F32(t[3 + offset], 5)),
+                                t[5 + offset]);
+    }
+    for (int i = 0; i < 36; i++) {
+      MS_ST256_F32(dst_data + i * dst_step, m[i]);
+    }
+  } else {
+    float src[36];
+    float t[36];
+    float m[36];
+    for (int i = 0; i < real_c; ++i) {
+      for (int j = 0; j < 36; ++j) {
+        src[j] = src_data[i + j * src_step];
+      }
+      for (int l = 0; l < 6; ++l) {
+        int offset = l * 6;
+        float tmp1 = src[3 + offset] - src[1 + offset];
+        float tmp2 = src[4 + offset] - src[2 + offset];
+        t[l] = 4 * src[offset] - 5 * src[2 + offset] + src[4 + offset];
+        t[6 + l] = -4 * (src[1 + offset] + src[2 + offset]) + (src[3 + offset] + src[4 + offset]);
+        t[12 + l] = 4 * (src[1 + offset] - src[2 + offset]) + (src[4 + offset] - src[3 + offset]);
+        t[18 + l] = 2 * tmp1 + tmp2;
+        t[24 + l] = -2 * tmp1 + tmp2;
+        t[30 + l] = 4 * src[1 + offset] - 5 * src[3 + offset] + src[5 + offset];
+      }
+      for (int l = 0; l < 6; ++l) {
+        int offset = l * 6;
+        float tmp1 = t[3 + offset] - t[1 + offset];
+        float tmp2 = t[4 + offset] - t[2 + offset];
+        m[l] = 4 * t[offset] - 5 * t[2 + offset] + t[4 + offset];
+        m[6 + l] = -4 * (t[1 + offset] + t[2 + offset]) + (t[3 + offset] + t[4 + offset]);
+        m[12 + l] = 4 * (t[1 + offset] - t[2 + offset]) + (t[4 + offset] - t[3 + offset]);
+        m[18 + l] = 2 * tmp1 + tmp2;
+        m[24 + l] = -2 * tmp1 + tmp2;
+        m[30 + l] = 4 * t[1 + offset] - 5 * t[3 + offset] + t[5 + offset];
+      }
+      for (int k = 0; k < 36; ++k) {
+        dst_data[i + k * dst_step] = m[k];
+      }
+    }
+  }
+}
+
+void InputTransform8x8AvxUnit_block8(const float *src_data, float *dst_data, const int src_step, const int dst_step) {
+  MS_FLOAT32X8 src[64];
+  MS_FLOAT32X8 t[64];
+  MS_FLOAT32X8 m[64];
+  LoadAvx64Data;
+  for (int l = 0; l < 8; ++l) {
+    int offset = l * 8;
+    t[l] = MS_SUB256_F32(
+      MS_ADD256_F32(MS_SUB256_F32(MS_MUL256_N_F32(src[offset], 0.5625), MS_MUL256_N_F32(src[2 + offset], 3.0625)),
+                    MS_MUL256_N_F32(src[4 + offset], 3.5)),
+      src[6 + offset]);
+    MS_FLOAT32X8 tmp1 = MS_ADD256_F32(MS_MUL256_N_F32(src[1 + offset], 1.125), MS_MUL256_N_F32(src[5 + offset], 0.5));
+    MS_FLOAT32X8 tmp2 = MS_SUB256_F32(MS_MUL256_N_F32(src[2 + offset], 2.25), MS_MUL256_N_F32(src[4 + offset], 3.25));
+    t[8 + l] =
+      MS_ADD256_F32(MS_SUB256_F32(MS_ADD256_F32(tmp1, tmp2), MS_MUL256_N_F32(src[3 + offset], 1.625)), src[6 + offset]);
+    t[16 + l] =
+      MS_ADD256_F32(MS_ADD256_F32(MS_SUB256_F32(tmp2, tmp1), MS_MUL256_N_F32(src[3 + offset], 1.625)), src[6 + offset]);
+    tmp1 = MS_ADD256_F32(MS_MUL256_N_F32(src[1 + offset], 0.5625), src[5 + offset]);
+    tmp2 = MS_SUB256_F32(MS_MUL256_N_F32(src[2 + offset], 0.5625), MS_MUL256_N_F32(src[4 + offset], 2.5));
+    t[24 + l] =
+      MS_ADD256_F32(MS_SUB256_F32(MS_ADD256_F32(tmp1, tmp2), MS_MUL256_N_F32(src[3 + offset], 2.5)), src[6 + offset]);
+    t[32 + l] =
+      MS_ADD256_F32(MS_ADD256_F32(MS_SUB256_F32(tmp2, tmp1), MS_MUL256_N_F32(src[3 + offset], 2.5)), src[6 + offset]);
+    tmp1 = MS_ADD256_F32(MS_MUL256_N_F32(src[1 + offset], 0.375), MS_MUL256_N_F32(src[5 + offset], 1.5));
+    tmp2 = MS_SUB256_F32(MS_MUL256_N_F32(src[2 + offset], 0.25), MS_MUL256_N_F32(src[4 + offset], 1.25));
+    t[40 + l] =
+      MS_ADD256_F32(MS_SUB256_F32(MS_ADD256_F32(tmp1, tmp2), MS_MUL256_N_F32(src[3 + offset], 1.875)), src[6 + offset]);
+    t[48 + l] =
+      MS_ADD256_F32(MS_ADD256_F32(MS_SUB256_F32(tmp2, tmp1), MS_MUL256_N_F32(src[3 + offset], 1.875)), src[6 + offset]);
+    t[56 + l] = MS_ADD256_F32(
+      MS_SUB256_F32(MS_ADD256_F32(MS_MUL256_N_F32(src[1 + offset], -0.5625), MS_MUL256_N_F32(src[3 + offset], 3.0625)),
+                    MS_MUL256_N_F32(src[5 + offset], 3.5)),
+      src[7 + offset]);
+  }
+  for (int l = 0; l < 8; ++l) {
+    int offset = l * 8;
+    m[l] = MS_SUB256_F32(
+      MS_ADD256_F32(MS_SUB256_F32(MS_MUL256_N_F32(t[offset], 0.5625), MS_MUL256_N_F32(t[2 + offset], 3.0625)),
+                    MS_MUL256_N_F32(t[4 + offset], 3.5)),
+      t[6 + offset]);
+    MS_FLOAT32X8 tmp1 = MS_ADD256_F32(MS_MUL256_N_F32(t[1 + offset], 1.125), MS_MUL256_N_F32(t[5 + offset], 0.5));
+    MS_FLOAT32X8 tmp2 = MS_SUB256_F32(MS_MUL256_N_F32(t[2 + offset], 2.25), MS_MUL256_N_F32(t[4 + offset], 3.25));
+    m[8 + l] =
+      MS_ADD256_F32(MS_SUB256_F32(MS_ADD256_F32(tmp1, tmp2), MS_MUL256_N_F32(t[3 + offset], 1.625)), t[6 + offset]);
+    m[16 + l] =
+      MS_ADD256_F32(MS_ADD256_F32(MS_SUB256_F32(tmp2, tmp1), MS_MUL256_N_F32(t[3 + offset], 1.625)), t[6 + offset]);
+    tmp1 = MS_ADD256_F32(MS_MUL256_N_F32(t[1 + offset], 0.5625), t[5 + offset]);
+    tmp2 = MS_SUB256_F32(MS_MUL256_N_F32(t[2 + offset], 0.5625), MS_MUL256_N_F32(t[4 + offset], 2.5));
+    m[24 + l] =
+      MS_ADD256_F32(MS_SUB256_F32(MS_ADD256_F32(tmp1, tmp2), MS_MUL256_N_F32(t[3 + offset], 2.5)), t[6 + offset]);
+    m[32 + l] =
+      MS_ADD256_F32(MS_ADD256_F32(MS_SUB256_F32(tmp2, tmp1), MS_MUL256_N_F32(t[3 + offset], 2.5)), t[6 + offset]);
+    tmp1 = MS_ADD256_F32(MS_MUL256_N_F32(t[1 + offset], 0.375), MS_MUL256_N_F32(t[5 + offset], 1.5));
+    tmp2 = MS_SUB256_F32(MS_MUL256_N_F32(t[2 + offset], 0.25), MS_MUL256_N_F32(t[4 + offset], 1.25));
+    m[40 + l] =
+      MS_ADD256_F32(MS_SUB256_F32(MS_ADD256_F32(tmp1, tmp2), MS_MUL256_N_F32(t[3 + offset], 1.875)), t[6 + offset]);
+    m[48 + l] =
+      MS_ADD256_F32(MS_ADD256_F32(MS_SUB256_F32(tmp2, tmp1), MS_MUL256_N_F32(t[3 + offset], 1.875)), t[6 + offset]);
+    m[56 + l] = MS_ADD256_F32(
+      MS_SUB256_F32(MS_ADD256_F32(MS_MUL256_N_F32(t[1 + offset], -0.5625), MS_MUL256_N_F32(t[3 + offset], 3.0625)),
+                    MS_MUL256_N_F32(t[5 + offset], 3.5)),
+      t[7 + offset]);
+  }
+  for (int i = 0; i < 64; i++) {
+    MS_ST256_F32(dst_data + i * dst_step, m[i]);
+  }
+}
+
+void InputTransform8x8AvxUnit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c) {
+  if (real_c == C8NUM) {
+    InputTransform8x8AvxUnit_block8(src_data, dst_data, src_step, dst_step);
+  } else {
+    float src[64];
+    float t[64];
+    float m[64];
+    for (int i = 0; i < real_c; ++i) {
+      for (int j = 0; j < 64; ++j) {
+        src[j] = src_data[i + j * src_step];
+      }
+      for (int l = 0; l < 8; ++l) {
+        int offset = l * 8;
+        t[l] = 0.5625f * src[offset] - 3.0625f * src[2 + offset] + 3.5f * src[4 + offset] - src[6 + offset];
+        float tmp1 = 1.125f * src[1 + offset] + 0.5f * src[5 + offset];
+        float tmp2 = 2.25f * src[2 + offset] - 3.25f * src[4 + offset];
+        t[8 + l] = tmp1 + tmp2 - 1.625f * src[3 + offset] + src[6 + offset];
+        t[16 + l] = tmp2 - tmp1 + 1.625f * src[3 + offset] + src[6 + offset];
+        tmp1 = 0.5625f * src[1 + offset] + src[5 + offset];
+        tmp2 = 0.5625f * src[2 + offset] - 2.5f * src[4 + offset];
+        t[24 + l] = tmp1 + tmp2 - 2.5f * src[3 + offset] + src[6 + offset];
+        t[32 + l] = tmp2 - tmp1 + 2.5f * src[3 + offset] + src[6 + offset];
+        tmp1 = 0.375f * src[1 + offset] + 1.5f * src[5 + offset];
+        tmp2 = 0.25f * src[2 + offset] - 1.25f * src[4 + offset];
+        t[40 + l] = tmp1 + tmp2 - 1.875f * src[3 + offset] + src[6 + offset];
+        t[48 + l] = tmp2 - tmp1 + 1.875f * src[3 + offset] + src[6 + offset];
+        t[56 + l] = -0.5625f * src[1 + offset] + 3.0625f * src[3 + offset] - 3.5f * src[5 + offset] + src[7 + offset];
+      }
+      for (int l = 0; l < 8; ++l) {
+        int offset = l * 8;
+        m[l] = 0.5625f * t[offset] - 3.0625f * t[2 + offset] + 3.5f * t[4 + offset] - t[6 + offset];
+        float tmp1 = 1.125f * t[1 + offset] + 0.5f * t[5 + offset];
+        float tmp2 = 2.25f * t[2 + offset] - 3.25f * t[4 + offset];
+        m[8 + l] = tmp1 + tmp2 - 1.625f * t[3 + offset] + t[6 + offset];
+        m[16 + l] = tmp2 - tmp1 + 1.625f * t[3 + offset] + t[6 + offset];
+        tmp1 = 0.5625f * t[1 + offset] + t[5 + offset];
+        tmp2 = 0.5625f * t[2 + offset] - 2.5f * t[4 + offset];
+        m[24 + l] = tmp1 + tmp2 - 2.5f * t[3 + offset] + t[6 + offset];
+        m[32 + l] = tmp2 - tmp1 + 2.5f * t[3 + offset] + t[6 + offset];
+        tmp1 = 0.375f * t[1 + offset] + 1.5f * t[5 + offset];
+        tmp2 = 0.25f * t[2 + offset] - 1.25f * t[4 + offset];
+        m[40 + l] = tmp1 + tmp2 - 1.875f * t[3 + offset] + t[6 + offset];
+        m[48 + l] = tmp2 - tmp1 + 1.875f * t[3 + offset] + t[6 + offset];
+        m[56 + l] = -0.5625f * t[1 + offset] + 3.0625f * t[3 + offset] - 3.5f * t[5 + offset] + t[7 + offset];
+      }
+      for (int k = 0; k < 64; ++k) {
+        dst_data[i + k * dst_step] = m[k];
+      }
+    }
+  }
+}
+
 void OutputTransform4x2AvxUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                int dst_step, int out_c, int r_w, int r_h, int r_c) {
   MS_FLOAT32X8 src[16];

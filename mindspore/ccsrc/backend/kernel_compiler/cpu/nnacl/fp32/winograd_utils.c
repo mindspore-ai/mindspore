@@ -20,10 +20,10 @@
 #include "nnacl/base/conv_common_base.h"
 #include "nnacl/errorcode.h"
 
-static InputTransFunc InputTransFuncList[] = {
-  NULL, NULL, NULL, NULL, InputTransform4x4Unit, NULL, InputTransform6x6Unit, NULL, InputTransform8x8Unit};
-
 #ifdef ENABLE_AVX
+static InputTransFunc InputTransFuncList[] = {
+  NULL, NULL, NULL, NULL, InputTransform4x4AvxUnit, NULL, InputTransform6x6AvxUnit, NULL, InputTransform8x8AvxUnit};
+
 static OutputTransFunc OutputTransFuncList[] = {
   OutputTransform4x2AvxUnit,      OutputTransform4x3AvxUnit,      OutputTransform4x2ReluAvxUnit,
   OutputTransform4x3ReluAvxUnit,  OutputTransform4x2Relu6AvxUnit, OutputTransform4x3Relu6AvxUnit,
@@ -38,6 +38,9 @@ static OutputTransFunc OutputTransFuncList[] = {
   OutputTransform8x2Relu6AvxUnit, OutputTransform8x3Relu6AvxUnit, OutputTransform8x4Relu6AvxUnit,
   OutputTransform8x5Relu6AvxUnit, OutputTransform8x6Relu6AvxUnit, OutputTransform8x7Relu6AvxUnit};
 #else
+static InputTransFunc InputTransFuncList[] = {
+  NULL, NULL, NULL, NULL, InputTransform4x4Unit, NULL, InputTransform6x6Unit, NULL, InputTransform8x8Unit};
+
 static OutputTransFunc OutputTransFuncList[] = {
   OutputTransform4x2Unit,      OutputTransform4x3Unit,      OutputTransform4x2ReluUnit,  OutputTransform4x3ReluUnit,
   OutputTransform4x2Relu6Unit, OutputTransform4x3Relu6Unit, OutputTransform6x2Unit,      OutputTransform6x3Unit,

@@ -24,7 +24,12 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
   int input_unit = conv_param->input_unit_;
   int output_unit = conv_param->output_unit_;
   int in_channel = conv_param->input_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
+#ifdef ENABLE_AVX
+  int tile = C8NUM;
+#else
+  int tile = C4NUM;
+#endif
+  int ic4 = UP_DIV(in_channel, tile);
   int pad_h = conv_param->pad_u_;
   int pad_w = conv_param->pad_l_;
   int input_h = conv_param->input_h_;
@@ -45,25 +50,27 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
     int dst_plane_offset = c * in_channel;
     for (int ic = 0; ic < ic4; ic++) {
       // clear tmp buffer
-      memset(tmp_data, 0, input_unit * input_unit * C4NUM * (int)(sizeof(float)));
+      memset(tmp_data, 0, input_unit * input_unit * tile * (int)(sizeof(float)));
 
-      int real_c = in_channel - ic * C4NUM;
-      real_c = real_c > C4NUM ? C4NUM : real_c;
-      int src_ic4_offset = src_plane_offset + ic * C4NUM;
+      int real_c = in_channel - ic * tile;
+      real_c = real_c > tile ? tile : real_c;
+      int src_ic4_offset = src_plane_offset + ic * tile;
       // get real input block with padding
-      if (real_c == C4NUM) {
+      if (real_c == tile) {
         for (int interval = interval_y_s; interval < interval_y_e; interval++) {
           int src_y_offset = src_ic4_offset + (interval * input_w + interval_x_s) * in_channel;
-          int dst_y_offset = interval * input_unit * C4NUM + interval_x_s * C4NUM;
+          int dst_y_offset = interval * input_unit * tile + interval_x_s * tile;
           for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
             int src_x_offset = src_y_offset + j * in_channel;
-            int dst_x_offset = dst_y_offset + j * C4NUM;
+            int dst_x_offset = dst_y_offset + j * tile;
             float *src_addr = (float *)(input_data) + src_x_offset;
             float *dst_addr = tmp_data + dst_x_offset;
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+#ifdef ENABLE_AVX
+            MS_ST256_F32(dst_addr, MS_LD256_F32(src_addr));
+#elif defined(ENABLE_ARM) || defined(ENABLE_SSE)
             MS_STQ_F32(dst_addr, MS_LDQ_F32(src_addr));
 #else
-            for (int k = 0; k < C4NUM; k++) {
+            for (int k = 0; k < tile; k++) {
               dst_addr[k] = src_addr[k];
             }
 #endif
@@ -72,10 +79,10 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
       } else {
         for (int interval = interval_y_s; interval < interval_y_e; interval++) {
           int src_y_offset = src_ic4_offset + (interval * input_w + interval_x_s) * in_channel;
-          int dst_y_offset = interval * input_unit * C4NUM + interval_x_s * C4NUM;
+          int dst_y_offset = interval * input_unit * tile + interval_x_s * tile;
           for (int j = 0; j < (interval_x_e - interval_x_s); j++) {
             int src_x_offset = src_y_offset + j * in_channel;
-            int dst_x_offset = dst_y_offset + j * C4NUM;
+            int dst_x_offset = dst_y_offset + j * tile;
             float *src_addr = (float *)(input_data) + src_x_offset;
             float *dst_addr = tmp_data + dst_x_offset;
             for (int k = 0; k < real_c; k++) {
@@ -86,10 +93,10 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
       }
       // input transform
       const int tile_num = C12NUM;
-      int dst_ic4_offset = dst_plane_offset + ic * C4NUM;
+      int dst_ic4_offset = dst_plane_offset + ic * tile;
       int dst_step = tile_num * in_channel;
       float *trans_input_ptr = trans_input + dst_ic4_offset;
-      func(tmp_data, trans_input_ptr, C4NUM, dst_step, real_c);
+      func(tmp_data, trans_input_ptr, tile, dst_step, real_c);
     }
     out_tile_index++;
   }  // cal_tile_num loop

@@ -68,6 +68,7 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   int output_unit_{0};
   int oc_block_{0};
   int tile_num_{0};
+  int tmp_data_tile_{0};
   float *tmp_data_ = nullptr;
   float *trans_input_ = nullptr;
   float *gemm_out_ = nullptr;
