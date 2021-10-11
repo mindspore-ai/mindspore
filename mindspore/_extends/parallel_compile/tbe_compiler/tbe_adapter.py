@@ -173,7 +173,8 @@ def _parallel_compilation_init(initialize: TbeJob):
     pid_str = os.getpid()
     time_str = datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3]
     pid_ts = "{}_pid{}".format(time_str, pid_str)
-    ret = init_multi_process_env(embedding, soc_info, auto_tiling_mode, global_loglevel, enable_event, pid_ts)
+    ret = init_multi_process_env(embedding, soc_info, auto_tiling_mode, "0",
+                                 global_loglevel, enable_event, pid_ts, None)
     if ret is None:
         initialize.error("Init multiprocess env failed")
         return False
