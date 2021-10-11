@@ -25,13 +25,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAssert = "Assert";
+/// \brief Assert defined Assert operator prototype of lite.
 class MS_CORE_API Assert : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Assert() : PrimitiveC(kNameAssert) {}
+
+  /// \brief Destructor.
   ~Assert() = default;
+
   MS_DECLARE_PARENT(Assert, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] summarize Define print the number of each tensor.
   void Init(const int64_t summarize = 3);
+
+  /// \brief Method to set summarize attributes.
+  ///
+  /// \param[in] summarize Define print the number of each tensor.
   void set_summarize(const int64_t summarize);
+
+  /// \brief Method to get summarize attributes.
+  ///
+  /// \return summarize attributes.
   int64_t get_summarize() const;
 };
 
