@@ -180,7 +180,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             self.end = [(x + 1) * parameter_rank_number for x in range(_device_number)]
             self.end[-1] = len(self.weights)
 
-            current_weights = self.weights[self.start[self.server_rank] : self.end[self.server_rank]]
+            current_weights = self.weights[self.start[self.server_rank]: self.end[self.server_rank]]
             self.grad_clone = ParameterTuple(current_weights).clone(prefix="delta_weight")
             self.adasum = AdaSum(_rank, _device_number, group_number, self.grad_clone)
 
@@ -190,7 +190,6 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             server_group_name = "allreduce_" + str(current_index)
             create_group(server_group_name, group_list[current_index])
             self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree, group=server_group_name)
-
 
     def construct(self, *inputs):
         if self.freeze:
@@ -245,14 +244,14 @@ class BoostTrainOneStepCell(TrainOneStepCell):
     def adasum_process(self, loss, grads):
         """adasum algorithm process."""
         loss = F.depend(loss, self.optimizer(grads))
-        rank_weights = self.weights[self.start[self.server_rank] : self.end[self.server_rank]]
+        rank_weights = self.weights[self.start[self.server_rank]: self.end[self.server_rank]]
         grad_clone = F.depend(self.grad_clone, loss)
         delta_w = self.hyper_map(F.partial(_get_delta_weight), rank_weights, grad_clone)
         adasum_res = self.adasum(delta_w, rank_weights, grad_clone)
         sync_tensor = F.depend(self.sync_tensor, adasum_res)
         sync_flag = self.adasum.sync_barrier(sync_tensor)
         for i in range(self.device_number):
-            weight_tuple = self.weights[self.start[i] : self.end[i]]
+            weight_tuple = self.weights[self.start[i]: self.end[i]]
             node_rank = F.depend(weight_tuple, sync_flag)
             update_weights = self.adasum.broadcast_list[i](node_rank)
             if i == self.server_rank:
