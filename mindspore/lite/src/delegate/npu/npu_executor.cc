@@ -95,6 +95,10 @@ int NPUExecutor::Run(const std::vector<mindspore::MSTensor> &in_tensors,
     return RET_ERROR;
   }
 
+  if (npu_output_tensors_.size() != out_tensors.size()) {
+    MS_LOG(ERROR) << "The output count is not euqal to ms tensor.";
+    return RET_ERROR;
+  }
   for (size_t i = 0; i < npu_output_tensors_.size(); ++i) {
     mindspore::MSTensor out_tensor = out_tensors[i];
     auto data = out_tensor.MutableData();

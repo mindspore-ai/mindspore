@@ -20,7 +20,8 @@ namespace mindspore {
 constexpr int ARITHMETIC_INPUT_NUM = 2;
 int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (in_tensors[0].Shape().size() != in_tensors[1].Shape().size()) {
+  if (in_tensors[0].Shape().size() != 0 && in_tensors[1].Shape().size() != 0 &&
+      in_tensors[0].Shape().size() != in_tensors[1].Shape().size()) {
     MS_LOG(WARNING) << name_ << " for the two inputs, the dimension size must be same."
                     << " size 1 is:" << in_tensors[0].Shape().size() << " size 2 is:" << in_tensors[1].Shape().size();
     return RET_NOT_SUPPORT;

@@ -112,6 +112,36 @@ int ConvolutionNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_te
   return RET_OK;
 }
 
+int ConvolutionNPUOp::SetNPUInputs(
+  const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &out_tensors,
+  const std::vector<ge::Operator *> &npu_inputs,
+  const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
+  auto ret = InitWeightConst(in_tensors);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set weight and bias for convolution op " << name_ << " failed when running npu";
+    return RET_ERROR;
+  }
+  conv_->set_input_filter(*weight_);
+  if (in_tensors.size() == CONV_INPUT_SIZE) {
+    ret = InitBiasConst(in_tensors);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Set bias for convolution op " << name_ << " failed when running npu";
+      return RET_ERROR;
+    }
+    conv_->set_input_bias(*bias_);
+  }
+
+  if (!index2_multi_out_index.empty()) {
+    auto itr = index2_multi_out_index.begin();
+    auto in_op = itr->second.first;
+    MS_CHECK_TRUE_RET(in_op != nullptr, RET_ERROR);
+    conv_->SetInput(itr->first, *in_op, itr->second.second);
+  } else {
+    conv_->set_input_x(*npu_inputs[0]);
+  }
+  return RET_OK;
+}
+
 ge::Operator *ConvolutionNPUOp::GetNPUOp() {
   if (act_type_ == schema::ActivationType_NO_ACTIVATION) {
     return conv_;
