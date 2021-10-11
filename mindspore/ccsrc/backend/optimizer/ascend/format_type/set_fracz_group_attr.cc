@@ -102,6 +102,51 @@ bool HasFraczGroupAttrAndSet(const AnfNodePtr &node, size_t index, int64_t group
   return true;
 }
 
+std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPtr &manager, const CNodePtr &cnode,
+                                                        size_t index, int64_t groups) {
+  auto node_name = AnfAlgo::GetCNodeName(cnode);
+  auto input_num = AnfAlgo::GetInputTensorNum(cnode);
+  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  auto node_user = manager->node_users();
+  std::vector<KernelWithIndex> ret;
+  if (node_name == kDependName || node_name == kLoadName) {
+    if (index != 0) {
+      return ret;
+    }
+    input_num = 1;
+    output_num = 1;
+  }
+  for (size_t i = 0; i < input_num; ++i) {
+    if (AnfAlgo::GetInputFormat(cnode, i) == kOpFormat_FRAC_Z) {
+      auto input = cnode->input(i + 1);
+      if (node_name == kTupleGetItemName) {
+        auto item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode);
+        while (input->isa<CNode>() && AnfAlgo::GetCNodeName(input) == kDependName) {
+          AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), input);
+          input = input->cast<CNodePtr>()->input(1);
+        }
+        (void)ret.emplace_back(input, item_index);
+      } else {
+        (void)ret.emplace_back(input, 0);
+      }
+    }
+  }
+  if (kOptOperatorSet.find(node_name) == kOptOperatorSet.end()) {
+    for (size_t i = 0; i < output_num; ++i) {
+      if (AnfAlgo::GetOutputFormat(cnode, i) == kOpFormat_FRAC_Z) {
+        auto output = GetOutputItem(manager, cnode, groups, i);
+        if (output != nullptr) {
+          std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
+                         [](KernelWithIndex node_index) {
+                           return KernelWithIndex{node_index.first, node_index.second - 1};
+                         });
+        }
+      }
+    }
+  }
+  return ret;
+}
+
 std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &manager, const AnfNodePtr &node,
                                                    size_t index, int64_t groups) {
   std::vector<KernelWithIndex> ret;
@@ -129,43 +174,7 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
                      });
     }
   } else {
-    auto input_num = AnfAlgo::GetInputTensorNum(cnode);
-    auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
-    if (node_name == kDependName || node_name == kLoadName) {
-      if (index != 0) {
-        return ret;
-      }
-      input_num = 1;
-      output_num = 1;
-    }
-    for (size_t i = 0; i < input_num; ++i) {
-      if (AnfAlgo::GetInputFormat(cnode, i) == kOpFormat_FRAC_Z) {
-        auto input = cnode->input(i + 1);
-        if (node_name == kTupleGetItemName) {
-          auto item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode);
-          while (input->isa<CNode>() && AnfAlgo::GetCNodeName(input) == kDependName) {
-            AnfAlgo::SetNodeAttr(kAttrFracZGroup, MakeValue(groups), input);
-            input = input->cast<CNodePtr>()->input(1);
-          }
-          (void)ret.emplace_back(input, item_index);
-        } else {
-          (void)ret.emplace_back(input, 0);
-        }
-      }
-    }
-    if (kOptOperatorSet.find(node_name) == kOptOperatorSet.end()) {
-      for (size_t i = 0; i < output_num; ++i) {
-        if (AnfAlgo::GetOutputFormat(cnode, i) == kOpFormat_FRAC_Z) {
-          auto output = GetOutputItem(manager, cnode, groups, i);
-          if (output != nullptr) {
-            std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                           [](KernelWithIndex node_index) {
-                             return KernelWithIndex{node_index.first, node_index.second - 1};
-                           });
-          }
-        }
-      }
-    }
+    ret = GetCNodeNeighborFraczNodes(manager, cnode, index, groups);
   }
   return ret;
 }

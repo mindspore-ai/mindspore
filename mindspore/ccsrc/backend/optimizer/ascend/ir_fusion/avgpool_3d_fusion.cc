@@ -143,7 +143,7 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   // assist tensor 1
   int64_t c1 = (fc + kC0 - 1) / kC0;
   std::vector<int64_t> assist_shape = {c1 * kd * kh * kw, 1, kC0, kC0};  // frac_z_3d
-  auto infer_shape = {IntToSize(1), LongToSize(fc), LongToSize(kd), LongToSize(kh), LongToSize(kw)};
+  std::vector<size_t> infer_shape = {IntToSize(1), LongToSize(fc), LongToSize(kd), LongToSize(kh), LongToSize(kw)};
   float val = 1.0 / (kd * kh * kw);
   if (divisor_override) {
     val = 1.0 / divisor_override;
@@ -151,30 +151,8 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
     val = 1.0;
   }
   // create value node
-  tensor::TensorPtr assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
-  MS_EXCEPTION_IF_NULL(assist_tensor);
-  TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat16);
-  tensor::DeviceInfo device_info{kOpFormat_FRACTAL_Z_3D, tensor_type, kOpFormat_FRACTAL_Z_3D};
-  assist_tensor->set_device_info(device_info);
-  auto tensor_data = reinterpret_cast<float16 *>(assist_tensor->data_c());
   int64_t cnt = c1 * kd * kh * kw;
-  for (int64_t i = 0; i < cnt; ++i) {
-    for (int64_t j = 0; j < kC0; ++j) {
-      for (int64_t k = 0; k < kC0; ++k) {
-        float t = j == k ? val : 0;
-        *tensor_data = float16(t);
-        ++tensor_data;
-      }
-    }
-  }
-
-  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, assist_shape);
-  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto value_node = kernel_graph->NewValueNode(x_abstract, assist_tensor);
-  kernel_graph->AddValueNodeToGraph(value_node);
-  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {infer_shape}, value_node.get());
-  return value_node;
+  return ConstructFilterValueNode(func_graph, val, assist_shape, infer_shape, cnt);
 }
 
 AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64_t fc, int64_t fd, int64_t fh,
@@ -234,6 +212,33 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64
   return value_node;
 }
 }  // namespace
+
+AnfNodePtr ConstructFilterValueNode(const FuncGraphPtr &func_graph, float val, const std::vector<int64_t> &assist_shape,
+                                    const std::vector<size_t> &infer_shape, int64_t cnt) {
+  tensor::TensorPtr assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
+  MS_EXCEPTION_IF_NULL(assist_tensor);
+  TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat16);
+  tensor::DeviceInfo device_info{kOpFormat_FRACTAL_Z_3D, tensor_type, kOpFormat_FRACTAL_Z_3D};
+  assist_tensor->set_device_info(device_info);
+  auto tensor_data = reinterpret_cast<float16 *>(assist_tensor->data_c());
+  for (int64_t i = 0; i < cnt; ++i) {
+    for (int64_t j = 0; j < kC0; ++j) {
+      for (int64_t k = 0; k < kC0; ++k) {
+        float t = j == k ? val : 0;
+        *tensor_data = float16(t);
+        ++tensor_data;
+      }
+    }
+  }
+
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, assist_shape);
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto value_node = kernel_graph->NewValueNode(x_abstract, assist_tensor);
+  kernel_graph->AddValueNodeToGraph(value_node);
+  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {infer_shape}, value_node.get());
+  return value_node;
+}
 
 const BaseRef AvgPool3DFusion::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
