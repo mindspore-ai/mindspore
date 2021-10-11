@@ -68,12 +68,12 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   auto splice_node = pre_node->cast<CNodePtr>();
-  if (IsMarkedTrainOp(splice_node)) {
-    return nullptr;
-  }
-  if (pre_node == nullptr) {
+  if (splice_node == nullptr) {
     MS_LOG(ERROR) << "the splice_node is null.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return nullptr;
+  }
+  if (IsMarkedTrainOp(splice_node)) {
     return nullptr;
   }
   auto splice_prim = GetValueNode<std::shared_ptr<ops::Splice>>(splice_node->input(kAnfPrimitiveIndex));
