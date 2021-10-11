@@ -51,6 +51,11 @@ class LoopCountActor : public DebugAwareActor {
   // The callback after debug finished.
   void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
+  // Get the member.
+  size_t loop_count() const { return loop_count_; }
+  const AID &data_prepare_aid() const { return data_prepare_aid_; }
+  const AID &output_aid() const { return output_aid_; }
+
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
   void SendOutput(OpContext<DeviceTensor> *const context) override;

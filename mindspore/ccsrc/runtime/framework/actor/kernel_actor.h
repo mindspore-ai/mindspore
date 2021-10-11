@@ -73,6 +73,8 @@ class KernelActor : public DebugAwareActor {
   // The callback after debug finished.
   void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
+  const CNodePtr &kernel() const { return kernel_; }
+
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;

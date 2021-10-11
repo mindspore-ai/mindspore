@@ -66,6 +66,10 @@ class OutputActor : public AbstractActor {
   // context of tensor be rewritten in the next step or next loop.
   void UpdateOutputDeviceAddress();
 
+  // Get the member.
+  size_t loop_count() const { return loop_count_; }
+  size_t outputs_num() const { return outputs_num_; }
+  const std::vector<AID> &input_result_arrow_aids() const { return input_result_arrow_aids_; }
   std::vector<TensorPtr> &outputs() { return outputs_; }
 
  private:

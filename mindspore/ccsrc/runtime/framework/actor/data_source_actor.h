@@ -89,6 +89,8 @@ class DeviceQueueDataSourceActor : public DataSourceActor {
   void SendDebugReq(OpContext<DeviceTensor> *const context) override;
   void OnDebugFinish(OpContext<DeviceTensor> *const context) override;
 
+  const CNodePtr &data_kernel() const { return data_kernel_; }
+
  protected:
   void FillDataBuffer() override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;

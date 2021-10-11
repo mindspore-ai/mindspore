@@ -48,6 +48,8 @@ class CopyActor : public MemoryAwareActor {
   // The copy processing after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
+  const DeviceTensorPtr &output() const { return output_; }
+
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
   void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *data_arrow,

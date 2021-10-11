@@ -365,6 +365,7 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
 const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
+  MS_LOG(INFO) << "Status record: start compile function graph: " << func_graph->ToString();
   auto root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
   root_graph_ = root_graph.get();
@@ -403,6 +404,8 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
   const ActorInfo &actor_info = graph_compiler_info->name_;
   (void)actor_to_graph_compiler_info_.emplace(graph_compiler_info->name_, std::move(graph_compiler_info));
+  MS_LOG(INFO) << "Status record: end compile function graph: " << func_graph->ToString()
+               << ", produce actor: " << actor_info;
   return actor_info;
 }
 
@@ -787,7 +790,6 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
 }
 
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs) {
-  MS_LOG(INFO) << "Run actor begin, actor name: " << actor_info;
   MS_EXCEPTION_IF_NULL(root_graph_);
   if (IsGraphOutputValueNodeOrParameter(root_graph_->output(), args, outputs)) {
     return;
@@ -800,6 +802,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     return;
   }
 
+  MS_LOG(INFO) << "Status record: start run actor: " << actor_info;
   // Fetch the graph compiler info.
   const auto &graph_iter = actor_to_graph_compiler_info_.find(actor_info);
   if (graph_iter == actor_to_graph_compiler_info_.end()) {
@@ -837,6 +840,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
   if (real_execution_mode_ == kPynativeMode) {
     RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
+    MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
     return;
   }
   // Run actor DAG.
@@ -875,7 +879,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
 
   // Update device address for output node of graph.
   actor_set->output_actor_->UpdateOutputDeviceAddress();
-  MS_LOG(INFO) << "Run actor end, actor name: " << actor_info;
+  MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
 void MindRTBackend::ConstructOutputs(const AnfNodePtr &output_node,

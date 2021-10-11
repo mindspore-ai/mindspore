@@ -61,6 +61,10 @@ class DataPrepareActor : public DebugAwareActor {
   void SendMemoryAllocReq(OpContext<DeviceTensor> *const context) override;
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
+  const std::map<std::pair<CNodePtr, DeviceContext *>, std::pair<bool, bool>> &continuous_memory_nodes() const {
+    return continuous_memory_nodes_;
+  }
+
  private:
   friend class GraphScheduler;
 

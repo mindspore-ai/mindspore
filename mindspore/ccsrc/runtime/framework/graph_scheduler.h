@@ -28,15 +28,7 @@
 #include <algorithm>
 #include <fstream>
 #include "runtime/framework/graph_compiler.h"
-#include "runtime/framework/actor/data_prepare_actor.h"
-#include "runtime/framework/actor/data_source_actor.h"
-#include "runtime/framework/actor/loop_count_actor.h"
-#include "runtime/framework/actor/kernel_actor.h"
-#include "runtime/framework/actor/super_kernel_actor.h"
-#include "runtime/framework/actor/output_actor.h"
-#include "runtime/framework/actor/copy_actor.h"
-#include "runtime/framework/actor/control_flow/switch_actor.h"
-#include "runtime/framework/actor/control_flow/gather_actor.h"
+#include "runtime/framework/actor/actor_dump.h"
 #include "thread/actor_threadpool.h"
 
 namespace mindspore {
@@ -223,17 +215,6 @@ class GraphScheduler {
 
   // Display the actor information of corresponding kernel graph.
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
-  void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) const;
-  void DumpDataPrepareActor(const DataPrepareActor *actor, std::ofstream &ofs) const;
-  void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) const;
-  void DumpLoopCountActor(const LoopCountActor *actor, std::ofstream &ofs) const;
-  void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) const;
-  void DumpSuperKernelActor(const SuperKernelActor *actor, std::ofstream &ofs) const;
-  void DumpNoInputKernelActor(const AbstractActor *actor, std::ofstream &ofs) const;
-  void DumpOutputActor(const OutputActor *actor, std::ofstream &ofs) const;
-  void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) const;
-  void DumpGatherActor(const GatherActor *actor, std::ofstream &ofs) const;
-  void DumpSwitchActor(const SwitchActor *actor, std::ofstream &ofs) const;
   void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
 
   // The global maps, only be cleared in the deconstruction.
