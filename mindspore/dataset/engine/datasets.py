@@ -92,7 +92,15 @@ ShuffleToShuffleMode = {Shuffle.FILES: cde.ShuffleMode.FILES,
 
 
 def shuffle_to_shuffle_mode(shuffle):
-    """class Shuffle Enum to int"""
+    """
+    Shuffle Enum to Shuffle Mode
+
+    Args:
+        shuffle (Shuffle): shuffle flag to shuffle mode in C layer
+
+    Returns:
+        ShuffleMode, shuffle mode
+    """
     shuffle_mode = cde.ShuffleMode.GLOBAL  # Global shuffle
     if not isinstance(shuffle, Shuffle):
         if shuffle is None or shuffle:
@@ -105,7 +113,15 @@ def shuffle_to_shuffle_mode(shuffle):
 
 
 def shuffle_to_bool(shuffle):
-    """class Shuffle Enum to bool"""
+    """
+    Shuffle Enum to bool
+
+    Args:
+        shuffle (Shuffle): shuffle flag to bool
+
+    Returns:
+        bool, True / False
+    """
     shuffle_bool = True
     if not isinstance(shuffle, Shuffle):
         if shuffle is None:
@@ -2648,8 +2664,8 @@ class MapDataset(Dataset):
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
             data between processes.  This is only used if python_multiprocessing is set to True (default=16).
 
-        Raises:
-            ValueError: If len(input_columns) != len(output_columns) and column_order is not specified.
+    Raises:
+        ValueError: If len(input_columns) != len(output_columns) and column_order is not specified.
     """
 
     def __init__(self, input_dataset, operations=None, input_columns=None, output_columns=None, column_order=None,
@@ -4243,6 +4259,35 @@ class GeneratorDataset(MappableDataset):
                 raise RuntimeError("Attempt to construct a random access dataset, '__len__' method is required!")
             try:
                 if new_op.num_parallel_workers > 1:
+                    # if use num_parallel_workers is to large when python_multiprocessing=True which would cause OOM error
+                    # get the num_shards
+                    valid_num_shards = 1
+                    if isinstance(self.sampler, samplers.DistributedSampler):
+                        valid_num_shards = self.sampler.num_shards
+                    elif self.num_shards is not None:
+                        valid_num_shards = self.num_shards
+
+                    # get process memory usage
+                    process = psutil.Process(os.getpid())
+                    process_memory = process.memory_info().rss
+                    sys_memory = psutil.virtual_memory().total
+
+                    total_memory_maybe_used = process_memory * (new_op.num_parallel_workers + 1) * valid_num_shards
+                    if total_memory_maybe_used / sys_memory > 0.85:
+                        valid_num_worker = math.floor(sys_memory * 0.85 / valid_num_shards / process_memory - 1)
+                        valid_num_worker = 1 if valid_num_worker <= 0 else valid_num_worker
+                        if total_memory_maybe_used / sys_memory > 1.0:
+                            info = "GeneratorDataset num_parallel_workers: " + str(new_op.num_parallel_workers) + \
+                                   " is too large which maybe cause a lot of memory occupation (>100%) during multi " \
+                                   "process running. Therefore, it is recommended to reduce num_parallel_workers to " \
+                                   + str(valid_num_worker) + " or smaller."
+                            raise RuntimeError(info)
+                        info = "GeneratorDataset num_parallel_workers: " + str(new_op.num_parallel_workers) + \
+                               " is too large which maybe cause a lot of memory occupation (>85%) during multi " \
+                               "process running. Therefore, it is recommended to reduce num_parallel_workers to " \
+                               + str(valid_num_worker) + " or smaller."
+                        logger.warning(info)
+
                     sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing,
                                           self.max_rowsize)
                     new_op.prepared_source = (lambda sample_ids: _cpp_sampler_fn_mp(sample_ids, sample_fn))
