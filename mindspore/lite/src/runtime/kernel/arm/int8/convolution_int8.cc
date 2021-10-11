@@ -34,14 +34,18 @@ void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
   support_optimize_ = false;
 #endif
 
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64)
+#if !defined(SUPPORT_NNIE)
   if (mindspore::lite::IsSupportSDot()) {
     matmul_func_ = MatMulRInt8_optimize_handler;
     support_optimize_ = true;
   } else {
+#endif
     tile_num_ = 4;
     support_optimize_ = false;
+#if !defined(SUPPORT_NNIE)
   }
+#endif
 #endif
   conv_param_->tile_num_ = tile_num_;
 }
