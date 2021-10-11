@@ -433,6 +433,7 @@ class Conv1d(_Conv):
             weight_init,
             bias_init)
         self.padding = (0, 0, padding, padding)
+        Validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.cls_name)
         self.conv2d = P.Conv2D(out_channel=self.out_channels,
                                kernel_size=self.kernel_size,
                                mode=1,
@@ -442,7 +443,6 @@ class Conv1d(_Conv):
                                dilation=self.dilation,
                                group=self.group)
         self.bias_add = P.BiasAdd()
-        Validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.cls_name)
         self.expand_dims = P.ExpandDims()
         self.squeeze = P.Squeeze(2)
         self.shape = P.Shape()
