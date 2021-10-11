@@ -26,7 +26,7 @@ ValuePtr GetPythonOps(const std::string &op_name, const std::string &module_name
   ValuePtr node = nullptr;
   bool succ = parse::ConvertData(obj, &node, use_signature);
   if (!succ) {
-    MS_LOG(EXCEPTION) << "get Python op " << op_name << " from " << module_name << " fail";
+    MS_LOG(EXCEPTION) << "Get Python op " << op_name << " from " << module_name << " fail.";
   }
   return node;
 }

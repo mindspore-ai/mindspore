@@ -237,7 +237,7 @@ void DoAutoCast(const std::string &func_name, const std::vector<Signature> &sign
     if ((arg_value->isa<TensorType>()) && arg_type_id == it->second) {
       continue;
     }
-    MS_LOG(DEBUG) << "do cast for inputs " << i << " " << (*op_inputs)[i + 1]->ToString() << " " << arg_type_id
+    MS_LOG(DEBUG) << "Do cast for inputs " << i << " " << (*op_inputs)[i + 1]->ToString() << " " << arg_type_id
                   << " to " << it->second;
     (*op_inputs)[i + 1] = DoCast((*op_inputs)[i + 1], it->second, graph);
   }
@@ -339,7 +339,7 @@ void RaiseExceptionForConvertRefDtype(const std::string &func_name, const std::s
                                       const std::string &target_type) {
   MS_LOG(EXCEPTION) << "In op '" << func_name << "', \n"
                     << "the type of writable argument is '" << ref_type << "', "
-                    << "but the largest type in the same SignatureEumDtype is '" << target_type
+                    << "but the largest type in the same SignatureEnumDType is '" << target_type
                     << "'. The writable arg type is not equal to the largest type, "
                     << "so can not cast automatically.";
 }

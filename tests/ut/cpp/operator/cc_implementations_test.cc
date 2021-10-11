@@ -191,7 +191,7 @@ TEST_F(TestImplementations, ScalarDivTest) {
     ScalarDiv(list);
     FAIL();
   } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("Divisor could not be zero") != std::string::npos);
+    ASSERT_TRUE(std::string(err.what()).find("The divisor could not be zero.") != std::string::npos);
   }
   list.clear();
 

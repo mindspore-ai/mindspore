@@ -88,7 +88,7 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "List in Map should have same length";
+    MS_LOG(EXCEPTION) << "List in Map should have same length.";
   }
 
   constexpr size_t kPrimHoldLen = 1;
@@ -147,7 +147,7 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "tuple in Map should have same length";
+    MS_LOG(EXCEPTION) << "Tuple in Map should have same length.";
   }
 
   constexpr size_t kPrimHoldLen = 1;
@@ -227,7 +227,7 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
 
 AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs) {
   if (arg_pairs.empty()) {
-    MS_EXCEPTION(TypeError) << "map() must have at least two arguments";
+    MS_EXCEPTION(TypeError) << "The map operator must have at least two arguments.";
   }
   bool found = false;
   TypeId id = kObjectTypeEnd;
