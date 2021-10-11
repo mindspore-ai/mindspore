@@ -398,7 +398,7 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
       return true;
     }
     start = end + 1;
-    end = iteration_.find("|", start);
+    end = static_cast<int>(iteration_.find("|", start));
   }
   std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
   int range_idx = temp.find("-");
