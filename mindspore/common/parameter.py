@@ -599,7 +599,10 @@ class Parameter(Tensor_):
 
         if self.init_in_server and self.is_param_ps and isinstance(self.init_mode, Tensor) and \
            self.init_mode.init is not None and (_is_role_worker() or _is_role_sched()):
-            data = self.init_mode.init_data(0, [1])
+            if self.cache_enable:
+                data = self.init_mode.init_data(*init_data_args)
+            else:
+                data = self.init_mode.init_data(0, [1])
         else:
             data = self.init_mode.init_data(*init_data_args)
 

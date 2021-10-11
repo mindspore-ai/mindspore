@@ -209,13 +209,13 @@ void Worker::AddEmbeddingTable(const Key &key, const size_t &row_count) {
   embedding_row_cnt_[key] = row_count;
 }
 
-void Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &input_shape,
+bool Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &input_shape,
                                   const std::vector<size_t> &indices_shape, const std::vector<size_t> &output_shape,
                                   const ParamInitInfoMessage &info) {
   bool has_init = IsKeyInit(key);
   if (has_init) {
     MS_LOG(DEBUG) << "The key embedding table of key " << key << " is initialized.";
-    return;
+    return true;
   }
 
   EmbeddingTableMeta embedding_table_meta;
@@ -232,10 +232,10 @@ void Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &
   int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
   if (ret != 0) {
     MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
-    return;
+    return false;
   }
 
-  worker_node_.Broadcast(core::NodeRole::SERVER, res, kv_data.length(), kInitEmbeddingsCmd);
+  return worker_node_.Broadcast(core::NodeRole::SERVER, res, kv_data.length(), kInitEmbeddingsCmd);
 }
 
 void Worker::InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::TensorPtr &tensor) {
@@ -277,7 +277,7 @@ void Worker::InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::Ten
   }
 }
 
-void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_ids, std::vector<float> *lookup_result,
+bool Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_ids, std::vector<float> *lookup_result,
                                  int64_t cmd) {
   MS_EXCEPTION_IF_NULL(lookup_result);
   EmbeddingTableLookup embedding_table_lookup;
@@ -299,7 +299,7 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
-        return;
+        return false;
       }
       data.push_back(res);
       sizes.push_back(kv_data.length());
@@ -309,6 +309,7 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
   std::vector<VectorPtr> resp;
   if (!worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(cmd), &resp)) {
     MS_LOG(ERROR) << "Worker send failed!";
+    return false;
   }
   int64_t single_id_len = SizeToLong(lookup_result->size() / lookup_ids.size());
   std::unordered_map<Key, std::shared_ptr<std::pair<float *, int64_t>>> id_addr_map;
@@ -357,14 +358,15 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
     MS_EXCEPTION_IF_NULL(src_data);
     auto mem_ret = memcpy_s(dst_data, dst_size, src_data, src_size);
     if (mem_ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << mem_ret << ")";
-      return;
+      MS_LOG(ERROR) << "memcpy_s error, errorno(" << mem_ret << ")";
+      return false;
     }
     offset += single_id_len;
   }
+  return true;
 }
 
-void Worker::UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vector<int> &lookup_ids,
+bool Worker::UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vector<int> &lookup_ids,
                                   const std::vector<float> &vals) {
   KVMessage kvs;
   *kvs.mutable_keys() = {keys.begin(), keys.end()};
@@ -385,13 +387,13 @@ void Worker::UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vecto
       int ret = memcpy_s(res.get(), dest_size, kv_data.data(), kv_data.length());
       if (ret != 0) {
         MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
-        return;
+        return false;
       }
       data.push_back(res);
       sizes.push_back(kv_data.length());
     }
   }
-  worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(kUpdateEmbeddingsCmd));
+  return worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, LongToInt(kUpdateEmbeddingsCmd));
 }
 
 void Worker::Finalize() {

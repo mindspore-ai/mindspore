@@ -170,12 +170,12 @@ void PsCacheManager::AddEmbeddingTable() const {
   }
 }
 
-void PsCacheManager::InitParameterServer() {
+bool PsCacheManager::InitParameterServer() {
   MS_LOG(INFO) << "PS embedding cache table init begin:" << finish_insert_init_info_;
   std::unique_lock<std::mutex> locker(data_mutex_);
   insert_init_info_.wait(locker, [this] { return finish_insert_init_info_ == true || running_ == false; });
   if (!running_) {
-    return;
+    return true;
   }
   for (const auto &item : hash_tables_) {
     const auto &param_name = item.first;
@@ -193,12 +193,16 @@ void PsCacheManager::InitParameterServer() {
     info.set_global_seed(param_init_info.global_seed_);
     info.set_op_seed(param_init_info.op_seed_);
     // if worker role
-    Worker::GetInstance().InitPSEmbeddingTable(key, input_shape, indices_shape, output_shape, info);
+    if (!Worker::GetInstance().InitPSEmbeddingTable(key, input_shape, indices_shape, output_shape, info)) {
+      MS_LOG(ERROR) << "InitPSEmbeddingTable failed.";
+      return false;
+    }
   }
 
   finish_init_parameter_server_ = true;
   data_prase_.notify_one();
   MS_LOG(INFO) << "PS embedding cache table init end.";
+  return true;
 }
 
 void PsCacheManager::InitDataChannel() {
@@ -336,7 +340,12 @@ void PsCacheManager::ProcessDataTask(uint32_t device_id, const void *context) {
     return;
   }
 
-  InitParameterServer();
+  if (!InitParameterServer()) {
+    MS_LOG(ERROR) << "InitParameterServer failed.";
+    running_ = false;
+    return;
+  }
+
   InitDataChannel();
   while (running_) {
     if (!ProcessData()) {
@@ -410,9 +419,9 @@ bool PsCacheManager::ProcessData() {
     return false;
   }
   RETURN_IF_FALSE(embedding_device_cache_->cache_->SynchronizeStream());
+  (void)gettimeofday(&end_time, nullptr);
   // Finish the data process and notify data prefetch.
   RETURN_IF_FALSE(PsDataPrefetch::GetInstance().FinalizeData(channel_name_));
-  (void)gettimeofday(&end_time, nullptr);
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   const uint64_t milli_second_ratio = 1000;
@@ -435,7 +444,7 @@ bool PsCacheManager::CheckCacheHitOrOutRangeTask(const int *batch_ids, const siz
 
   for (size_t i = 0; i < batch_ids_len; ++i) {
     if (batch_ids[i] < emb_table_slice_bounds_.first) {
-      hash_index[i] = batch_ids[i] - vocab_cache_size_diff_;
+      hash_index[i] = batch_ids[i] - emb_table_slice_bounds_.first + cache_indices_bounds_.first;
       out_range[i] = true;
       continue;
     }
@@ -879,7 +888,7 @@ bool PsCacheManager::HashSwapHostToServer(size_t key, const HashTableInfo &hash_
     MS_LOG(ERROR) << "Lookup id memcpy failed.";
     return false;
   }
-  Worker::GetInstance().UpdateEmbeddingTable({key}, lookup_ids, swap_out_data);
+  RETURN_IF_FALSE(Worker::GetInstance().UpdateEmbeddingTable({key}, lookup_ids, swap_out_data));
   return true;
 }
 
@@ -905,7 +914,8 @@ bool PsCacheManager::HashSwapServerToHost(size_t key, const HashTableInfo &hash_
     MS_LOG(ERROR) << "Lookup id memcpy failed.";
     return false;
   }
-  Worker::GetInstance().DoPSEmbeddingLookup(key, lookup_ids, &lookup_result, mindspore::ps::kEmbeddingLookupCmd);
+  RETURN_IF_FALSE(
+    Worker::GetInstance().DoPSEmbeddingLookup(key, lookup_ids, &lookup_result, mindspore::ps::kEmbeddingLookupCmd));
   RETURN_IF_FALSE(InsertHostHashTable(embedding_size, IntToSize(swap_indices_size), server_to_host_index,
                                       lookup_result.data(), host_hash_table_addr));
   return true;
@@ -964,7 +974,8 @@ bool PsCacheManager::HashSwapDeviceIn(const int *swap_in_ids, const int *swap_in
     MS_LOG(ERROR) << "Lookup id memcpy failed.";
     return false;
   }
-  Worker::GetInstance().DoPSEmbeddingLookup(key, lookup_ids, &lookup_result, mindspore::ps::kEmbeddingLookupCmd);
+  RETURN_IF_FALSE(
+    Worker::GetInstance().DoPSEmbeddingLookup(key, lookup_ids, &lookup_result, mindspore::ps::kEmbeddingLookupCmd));
   // Hash swap-in in device.
   RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyHostMemToDevice(
     embedding_device_cache_->hash_swap_value_addr_, lookup_result.data(),
@@ -996,7 +1007,7 @@ bool PsCacheManager::UpdataEmbeddingTable(const std::vector<float> &swap_out_dat
   }
   // Need synchronize event to ensure that the swap-out in device is completed.
   RETURN_IF_FALSE(embedding_device_cache_->cache_->SynchronizeEvent());
-  Worker::GetInstance().UpdateEmbeddingTable({key}, lookup_ids, swap_out_data);
+  RETURN_IF_FALSE(Worker::GetInstance().UpdateEmbeddingTable({key}, lookup_ids, swap_out_data));
   return true;
 }
 
@@ -1055,7 +1066,7 @@ bool PsCacheManager::SyncHostEmbeddingTable() {
       MS_LOG(ERROR) << "Lookup id memcpy failed.";
       return false;
     }
-    Worker::GetInstance().UpdateEmbeddingTable({key}, lookup_ids, swap_out_data);
+    RETURN_IF_FALSE(Worker::GetInstance().UpdateEmbeddingTable({key}, lookup_ids, swap_out_data));
   }
   return true;
 }
@@ -1109,7 +1120,7 @@ bool PsCacheManager::SyncDeviceEmbeddingTable() {
       MS_LOG(ERROR) << "Lookup id memcpy failed.";
       return false;
     }
-    Worker::GetInstance().UpdateEmbeddingTable({key}, lookup_ids, swap_out_data);
+    RETURN_IF_FALSE(Worker::GetInstance().UpdateEmbeddingTable({key}, lookup_ids, swap_out_data));
   }
   return true;
 }
