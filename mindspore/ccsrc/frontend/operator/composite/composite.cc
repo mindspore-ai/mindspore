@@ -64,53 +64,6 @@ ElemwiseMap kElemwiseMap = {{"__add__", kPrimScalarAdd}, {"__sub__", kPrimScalar
                             {"__gt__", kPrimScalarGt},   {"__ne__", kPrimScalarNe},   {"__le__", kPrimScalarLe},
                             {"__ge__", kPrimScalarGe}};
 
-// copy from python API: reduce.
-// Apply a function of two arguments cumulatively to the items of a sequence,
-// from left to right, so as to reduce the sequence to a single value.For example,
-// reduce(lambda x, y: x + y, [ 1, 2, 3, 4, 5 ]) calculates ((((1 + 2) + 3) + 4) + 5).
-AnyPtr Reduce(const OpsFunction &func, const AnyPtrList &list) {
-  std::shared_ptr<Any> ret;
-  size_t size = list.size();
-  if (size < 2) {
-    MS_LOG(EXCEPTION) << "length of inputs of Reduce is less than 2";
-  }
-
-  AnyPtrList input;
-  input.push_back(list[0]);
-  input.push_back(list[1]);
-  ret = std::make_shared<Any>(func(input));
-
-  for (size_t i = 2; i < size; ++i) {
-    input.clear();
-    input.push_back(ret);
-    input.push_back(list[i]);
-    ret = std::make_shared<Any>(func(input));
-  }
-
-  return ret;
-}
-
-AnfNodePtr Reduce(const AnfNodeOpsFunction &func, const std::vector<AnfNodePtr> &list) {
-  size_t size = list.size();
-  if (size < 2) {
-    MS_LOG(EXCEPTION) << "length of inputs of Reduce is less than 2";
-  }
-
-  std::vector<AnfNodePtr> input;
-  input.push_back(list[0]);
-  input.push_back(list[1]);
-  AnfNodePtr ret = func(input);
-
-  for (size_t i = 2; i < size; ++i) {
-    input.clear();
-    input.push_back(ret);
-    input.push_back(list[i]);
-    ret = func(input);
-  }
-
-  return ret;
-}
-
 ValuePtr kCompositeHyperMap = std::make_shared<HyperMap>();
 
 void HyperMap::Init() {
@@ -236,7 +189,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
       return false;
     });
   if (is_not_same) {
-    MS_LOG(EXCEPTION) << "tuple in HyperMap should have same length";
+    MS_LOG(EXCEPTION) << "Tuple in HyperMap should have same length";
   }
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
@@ -508,7 +461,7 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
 
 FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   if (args_spec_list.size() != 1) {
-    MS_LOG(EXCEPTION) << "tail requires a non-empty tuple.";
+    MS_LOG(EXCEPTION) << "Tail requires a non-empty tuple.";
   }
 
   AbstractBasePtr a = args_spec_list[0];
@@ -925,7 +878,7 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
                     << ", function: " << stub->ToString();
       return stub;
     }
-    MS_LOG(EXCEPTION) << "TupleAdd argument should be tuple,but " << args_spec_list[0]->ToString() << ", "
+    MS_LOG(EXCEPTION) << "TupleAdd argument should be tuple, but " << args_spec_list[0]->ToString() << ", "
                       << args_spec_list[1]->ToString();
   }
 

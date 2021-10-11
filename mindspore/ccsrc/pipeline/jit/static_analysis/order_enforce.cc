@@ -40,7 +40,7 @@ class OrderEnforcer {
       if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
         HandleUpdateState(node);
       } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-        // op(MakTuple(Load, ...)) sometimes do not attach update_state,
+        // op(MakeTuple(Load, ...)) sometimes do not attach update_state,
         // So need special treatment in order to ensure the exec_order of MakeTuple users.
         HandleMakeTupleUsers(node);
       }
