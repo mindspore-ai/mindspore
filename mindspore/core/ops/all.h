@@ -23,13 +23,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAll = "All";
+/// \brief All defined All operator prototype of lite.
 class MS_CORE_API All : public PrimitiveC {
  public:
+  /// \brief Constructor.
   All() : PrimitiveC(kNameAll) {}
+
+  /// \brief Destructor.
   ~All() = default;
+
   MS_DECLARE_PARENT(All, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] keep_dims Define the dim.
   void Init(const int64_t keep_dims);
+
+  /// \brief Method to set keep_dims attributes.
+  ///
+  /// \param[in] keep_dims Define the dim.
   void set_keep_dims(const int64_t keep_dims);
+
+  /// \brief Method to get keep_dims attributes.
+  ///
+  /// \return keep_dims attributes.
   int64_t get_keep_dims() const;
 };
 }  // namespace ops
