@@ -1,5 +1,6 @@
 include_directories(${TENSORRT_PATH}/include)
 include_directories(${CUDA_PATH}/include)
+include_directories($(CCSRC_DIR)/backend/kernel_compiler/cpu)
 file(GLOB_RECURSE TENSORRT_RUNTIME_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc

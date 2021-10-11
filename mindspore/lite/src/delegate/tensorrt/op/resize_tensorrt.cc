@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include "src/delegate/tensorrt/op/resize_tensorrt.h"
+#include "nnacl/nnacl_common.h"
 
 namespace mindspore::lite {
 int ResizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,

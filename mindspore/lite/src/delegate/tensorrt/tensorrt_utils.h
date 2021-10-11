@@ -84,8 +84,6 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, 
 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format);
 
-float ShortToFloat32(uint16_t src_value);
-
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {
   if (shape1.size() != shape2.size()) {
