@@ -169,6 +169,9 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
     }
   } else {
     const TensorC *shape_tensor = inputs[1];
+    if (shape_tensor->data_ == NULL) {
+      return NNACL_INFER_INVALID;
+    }
     dst_shape_size = GetElementNum(shape_tensor);
     if (dst_shape_size > MAX_SHAPE_SIZE) {
       return NNACL_INPUT_TENSOR_ERROR;

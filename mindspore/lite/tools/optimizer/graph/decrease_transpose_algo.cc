@@ -168,7 +168,8 @@ int ConvertTensorToNCOrNH(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
   if (status != lite::RET_OK) {
     return lite::RET_ERROR;
   }
-  if (data_info.shape_.empty() ||
+  if (data_info.shape_.empty() || (data_info.shape_.size() == 1 && data_info.shape_[0] == 0) ||
+      std::all_of(data_info.shape_.begin(), data_info.shape_.end(), [](int val) { return val == 1; }) ||
       (data_info.data_type_ != kNumberTypeFloat32 && data_info.data_type_ != kNumberTypeFloat)) {
     return lite::RET_OK;
   }
@@ -274,42 +275,6 @@ STATUS DecreaseTransposeAlgo::GenNewInput(const FuncGraphPtr &func_graph, const 
 }
 
 STATUS DecreaseTransposeAlgo::InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                                 const std::vector<int> &perm) {
-  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  auto prim_node = cnode->input(0);
-  MS_CHECK_TRUE_MSG(prim_node != nullptr, lite::RET_ERROR, "prim_node is nullptr");
-  auto prim = GetValueNode<PrimitivePtr>(prim_node);
-  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "GetValueNode Failed");
-  auto &specify_nhwc_op_map = GetNHWCOpMap();
-  auto &specify_nchw_op_map = GetNCHWOpMap();
-  if (specify_nhwc_op_map.find(prim->name()) == specify_nhwc_op_map.end() &&
-      specify_nchw_op_map.find(prim->name()) == specify_nchw_op_map.end()) {
-    MS_LOG(ERROR) << "op don't meet nhwc condition.";
-    return lite::RET_ERROR;
-  }
-  std::vector<size_t> insert_index = specify_nchw_op_map.find(prim->name()) == specify_nchw_op_map.end()
-                                       ? specify_nhwc_op_map.at(prim->name())
-                                       : specify_nchw_op_map.at(prim->name());
-  if (insert_index.empty()) {
-    if (CheckPrimitiveType(cnode, prim::kPrimResizeGrad) && prim->GetAttr(ops::kMethod) != nullptr &&
-        GetValue<int64_t>(prim->GetAttr(ops::kMethod)) == static_cast<int64_t>(mindspore::ResizeMethod::NEAREST)) {
-      insert_index.push_back(1);
-    } else {
-      for (size_t i = 1; i < cnode->size(); ++i) {
-        insert_index.push_back(i);
-      }
-    }
-  }
-  for (auto &index : insert_index) {
-    if (GenNewInput(func_graph, cnode, perm, true, index) != lite::RET_OK) {
-      MS_LOG(ERROR) << "generate a new input failed.";
-      return lite::RET_ERROR;
-    }
-  }
-  return lite::RET_OK;
-}
-
-STATUS DecreaseTransposeAlgo::InsertPreTransNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                  TransTypePair *trans_insert_info) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   MS_ASSERT(trans_insert_info != nullptr);
@@ -329,27 +294,10 @@ STATUS DecreaseTransposeAlgo::InsertPreTransNode(const FuncGraphPtr &func_graph,
     MS_LOG(ERROR) << "change op attr failed.";
     return lite::RET_ERROR;
   }
-  auto before_perm = trans_insert_info->pre_ == kNHWC2NCHW ? kNH2NC : kNC2NH;
-  for (size_t i = 1; i < cnode->size(); ++i) {
-    if (IsMonadNode(cnode->input(i))) {
-      continue;
-    }
-    if (CheckPrimitiveType(cnode->input(i), prim::kPrimMakeTuple) ||
-        CheckPrimitiveType(cnode->input(i), kPrimMakeTupleV2)) {
-      auto input_make_tuple = cnode->input(i)->cast<CNodePtr>();
-      MS_ASSERT(input_make_tuple != nullptr);
-      for (size_t j = 1; j < input_make_tuple->size(); ++j) {
-        if (GenNewInput(func_graph, input_make_tuple, before_perm, true, j) != lite::RET_OK) {
-          MS_LOG(ERROR) << "generate a new input failed.";
-          return lite::RET_ERROR;
-        }
-      }
-      continue;
-    }
-    if (GenNewInput(func_graph, cnode, before_perm, true, i) != lite::RET_OK) {
-      MS_LOG(ERROR) << "generate a new input failed.";
-      return lite::RET_ERROR;
-    }
+  status = DoPreInsert(func_graph, cnode, trans_insert_info->pre_);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "Do pre insert failed.";
+    return lite::RET_ERROR;
   }
   status = ModifyCNodeFormat(cnode, trans_insert_info->pre_);
   if (status != lite::RET_OK) {
@@ -360,6 +308,63 @@ STATUS DecreaseTransposeAlgo::InsertPreTransNode(const FuncGraphPtr &func_graph,
   if (status != lite::RET_OK && status != lite::RET_INFER_INVALID) {
     MS_LOG(ERROR) << "infer shape failed.";
     return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+STATUS DecreaseTransposeAlgo::DoPreInsert(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                          FormatTransNodeType trans_type) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  auto abstract = cnode->abstract();
+  MS_CHECK_TRUE_RET(abstract != nullptr, lite::RET_NULL_PTR);
+  if (utils::isa<abstract::AbstractTuplePtr>(abstract)) {
+    auto abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
+    auto abstract_list = abstract_tuple->elements();
+    MS_CHECK_TRUE_RET(!abstract_list.empty(), lite::RET_OUT_OF_TENSOR_RANGE);
+    abstract = abstract_list.front();
+    MS_CHECK_TRUE_RET(abstract != nullptr, lite::RET_NULL_PTR);
+  }
+  ShapeVector shape;
+  if (FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
+    MS_LOG(ERROR) << "fetch shape from abstract fauled.";
+    return lite::RET_ERROR;
+  }
+  auto HandleFunc = [this, &shape](const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t index,
+                                   FormatTransNodeType trans_type) -> STATUS {
+    auto before_perm = trans_type == kNHWC2NCHW ? kNH2NC : kNC2NH;
+    if (shape.size() == kInputSizeFour && !cnode->input(index)->isa<CNode>()) {
+      if (ConvertTensorToNCOrNH(func_graph, cnode, index, fmk_type_, train_flag_, trans_type) != lite::RET_OK) {
+        MS_LOG(ERROR) << "ConvertTensorToNCOrNH failed.";
+        return lite::RET_ERROR;
+      }
+    } else if (GenNewInput(func_graph, cnode, before_perm, true, index) != lite::RET_OK) {
+      MS_LOG(ERROR) << "generate a new input failed.";
+      return lite::RET_ERROR;
+    }
+    return lite::RET_OK;
+  };
+  for (size_t i = 1; i < cnode->size(); ++i) {
+    MS_CHECK_TRUE_RET(cnode->input(i) != nullptr, lite::RET_NULL_PTR);
+    if (IsMonadNode(cnode->input(i))) {
+      continue;
+    }
+    if (CheckPrimitiveType(cnode->input(i), prim::kPrimMakeTuple) ||
+        CheckPrimitiveType(cnode->input(i), kPrimMakeTupleV2)) {
+      auto input_make_tuple = cnode->input(i)->cast<CNodePtr>();
+      MS_ASSERT(input_make_tuple != nullptr);
+      for (size_t j = 1; j < input_make_tuple->size(); ++j) {
+        MS_CHECK_TRUE_RET(input_make_tuple->input(j) != nullptr, lite::RET_NULL_PTR);
+        if (HandleFunc(func_graph, input_make_tuple, j, trans_type) != lite::RET_OK) {
+          MS_LOG(ERROR) << "handle pre insert failed.";
+          return lite::RET_ERROR;
+        }
+      }
+      continue;
+    }
+    if (HandleFunc(func_graph, cnode, i, trans_type) != lite::RET_OK) {
+      MS_LOG(ERROR) << "handle pre insert failed.";
+      return lite::RET_ERROR;
+    }
   }
   return lite::RET_OK;
 }

@@ -20,7 +20,11 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "ops/transpose.h"
+#include "ops/adam.h"
+#include "ops/apply_momentum.h"
+#include "ops/fusion/conv2d_fusion.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/sgd.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/conv1d_inout_adjust.h"
 #include "tools/converter/parser/inputs_adjust.h"
