@@ -28,8 +28,8 @@ constexpr int64_t kInputXDimP = -1;
 constexpr int64_t kInputYDimR = -2;
 
 std::vector<size_t> CalCdistBroadCastShape(std::vector<size_t> x_shape, std::vector<size_t> y_shape) {
-  x_shape.insert(x_shape.end() + kInputXDimP, 1);
-  y_shape.insert(y_shape.end() + kInputYDimR, 1);
+  (void)x_shape.insert(x_shape.end() + kInputXDimP, 1);
+  (void)y_shape.insert(y_shape.end() + kInputYDimR, 1);
   if (x_shape.size() != y_shape.size()) {
     MS_EXCEPTION(ValueError) << "For Cdist, input_x and input_y should have the same rank.";
   }
@@ -39,13 +39,13 @@ std::vector<size_t> CalCdistBroadCastShape(std::vector<size_t> x_shape, std::vec
   auto length = x_shape.size();
   std::vector<size_t> broadcast_shape;
   std::copy(x_shape.begin(), x_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
-  for (int64_t i = -length; i < 0; i++) {
-    if (x_shape[length + i] == 1) {
-      broadcast_shape.push_back(y_shape[length + i]);
-    } else if (y_shape[length + i] == 1) {
-      broadcast_shape.push_back(x_shape[length + i]);
-    } else if (x_shape[length + i] == y_shape[length + i]) {
-      broadcast_shape.push_back(x_shape[length + i]);
+  for (size_t i = length; i > 0; --i) {
+    if (x_shape[length - i] == 1) {
+      broadcast_shape.push_back(y_shape[length - i]);
+    } else if (y_shape[length - i] == 1) {
+      broadcast_shape.push_back(x_shape[length - i]);
+    } else if (x_shape[length - i] == y_shape[length - i]) {
+      broadcast_shape.push_back(x_shape[length - i]);
     } else {
       MS_EXCEPTION(ValueError) << "The two input shape can not broadcast, x_shape: " << x_shape << ", y_shape"
                                << y_shape;
@@ -64,7 +64,7 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   auto expand_dims = func_graph->NewCNode(expand_dims_inputs);
   auto dtype = AnfAlgo::GetOutputInferDataType(input_node, 0);
   auto expand_shape = AnfAlgo::GetOutputInferShape(input_node, 0);
-  expand_shape.insert(expand_shape.end() + dim, 1);
+  (void)expand_shape.insert(expand_shape.end() + dim, 1);
   AnfAlgo::SetOutputInferTypeAndShape({dtype}, {expand_shape}, expand_dims.get());
   AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(dim), expand_dims);
   AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), expand_dims);

@@ -31,6 +31,9 @@ class AvgPool3DFusion : public PatternProcessPass {
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
+
+AnfNodePtr ConstructFilterValueNode(const FuncGraphPtr &func_graph, float val, const std::vector<int64_t> &assist_shape,
+                                    const std::vector<size_t> &infer_shape, int64_t cnt);
 }  // namespace opt
 }  // namespace mindspore
 

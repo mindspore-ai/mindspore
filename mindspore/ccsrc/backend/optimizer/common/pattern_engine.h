@@ -179,7 +179,6 @@ class PatternEngine {
                 VectorRef *const values_expr) const;
   bool ToVector(const VectorRef &pattern_ref, const VectorRef &expr_ref, VectorRef *const values_pattern,
                 VectorRef *const values_expr) const;
-  static bool AnfNodeEqual(const BaseRef &a, const BaseRef &b);
   static bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b);
   std::shared_ptr<Visitor> visitor_;
 };
