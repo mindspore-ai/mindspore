@@ -23,12 +23,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCall = "call";
+/// \brief Call op means function call in the MindIR. This operator is defined for serialization.
 class MS_CORE_API Call : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Call() : PrimitiveC(kNameCall) {}
+  /// \brief Destructor.
   ~Call() = default;
   MS_DECLARE_PARENT(Call, PrimitiveC);
-  void Init() {}
 };
 }  // namespace ops
 }  // namespace mindspore
