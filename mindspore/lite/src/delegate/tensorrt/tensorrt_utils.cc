@@ -388,4 +388,23 @@ std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format for
   out_string += dim_string;
   return out_string;
 }
+float ShortToFloat32(uint16_t src_value) {
+  const float32_bits magic = {113 << 23};
+  const unsigned int shifted_exp = 0x7c00 << 13;
+  float32_bits o;
+
+  o.u = (src_value & 0x7fff) << 13;
+  unsigned int exp = shifted_exp & o.u;
+  o.u += (127 - 15) << 23;
+
+  if (exp == shifted_exp) {
+    o.u += (128 - 16) << 23;
+  } else if (exp == 0) {
+    o.u += 1 << 23;
+    o.f -= magic.f;
+  }
+
+  o.u |= (src_value & 0x8000) << 16;
+  return o.f;
+}
 }  // namespace mindspore::lite
