@@ -251,7 +251,8 @@ class RunContext:
     """
     def __init__(self, original_args):
         if not isinstance(original_args, dict):
-            raise TypeError("The argument 'original_args' of RunContext should be dict type.")
+            raise TypeError("The argument 'original_args' of RunContext should be dict type, "
+                            "but got {}.".format(type(original_args)))
         self._original_args = original_args
         self._stop_requested = False
 

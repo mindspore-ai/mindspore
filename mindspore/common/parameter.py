@@ -50,10 +50,10 @@ def init_to_value(init):
             return 0.0
         if init == 'ones':
             return 1.0
-        raise ValueError("The 'init' argument should be one of values in 'zeros', 'ones'.")
+        raise ValueError("The argument 'init' should be one of values in ['zeros', 'ones'].")
     if isinstance(init, numbers.Number):
         return float(init)
-    raise ValueError("The 'init' argument should be number or string.")
+    raise ValueError("The argument 'init' should be number or string, but got {}.".format(type(init)))
 
 
 class Parameter(Tensor_):
@@ -161,8 +161,8 @@ class Parameter(Tensor_):
         elif isinstance(default_input, (np.ndarray, list)):
             Tensor_.__init__(self, default_input)
         else:
-            raise TypeError(f"The 'default_input' argument must be [`Tensor`, `int`, `float`, `numpy.ndarray`, `list`]."
-                            f"But got type {type(default_input)}.")
+            raise TypeError(f"The type of the argument 'default_input' must be in ['Tensor', 'int', 'float',"
+                            f" 'numpy.ndarray', 'list']. But got type {type(default_input)}.")
 
     def __deepcopy__(self, memodict):
         new_obj = Parameter(self)
@@ -222,10 +222,10 @@ class Parameter(Tensor_):
                 initialized on server. Default: False.
         """
         if not(_is_role_worker() or _is_role_pserver() or _is_role_sched()):
-            raise RuntimeError("Must complete following two steps before calling set_param_ps: \
-                               1. set_ps_context(enable_ps=True) \
-                               2. export MS_ROLE environment variable \
-                               Please refer to the official website for detailed usage.")
+            raise RuntimeError("Must complete following two steps before calling set_param_ps: \n"
+                               "1. context.set_ps_context(enable_ps=True) \n"
+                               "2. export MS_ROLE environment variable \n"
+                               "Please refer to the official website for detailed usage.")
         if init_in_server and (not self.name.endswith("embedding_table")):
             raise RuntimeError("Can not initialize parameter '{}' in server, only parameters of "
                                "sparse operator support initialization in server.".format(self.name))
@@ -284,7 +284,8 @@ class Parameter(Tensor_):
                 raise ValueError("The length of the '{}' name should be less than {}.".
                                  format(name_, PARAMETER_NAME_PREFIX_MAX_LEN))
         else:
-            raise ValueError("The type of the parameter's name should be `str` or `None`.")
+            raise ValueError("The type of the Parameter's name should be 'string' or 'None', "
+                             "but got {}.".format(type(name_)))
 
         if _is_role_worker() and self.cache_enable:
             if len(self.shape) != 2:
@@ -579,9 +580,9 @@ class Parameter(Tensor_):
         init_data_args = ()
         if layout is not None:
             if not isinstance(layout, tuple):
-                raise TypeError("The layout should be tuple, but got layout is {}.".format(layout))
+                raise TypeError("The argument 'layout' should be tuple, but got {}.".format(type(layout)))
             if len(layout) < 6:
-                raise ValueError("The length of layout must be larger than 5, but got layout is {}.".format(layout))
+                raise ValueError("The length of 'layout' must be larger than 5, but got {}.".format(len(layout)))
             slice_index = int(_get_slice_index(layout[0], layout[1]))
             init_data_args += (slice_index, layout[2], layout[5])
 
