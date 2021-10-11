@@ -138,7 +138,8 @@ def _calculate_fan_in_and_fan_out(shape):
     """
     dimensions = len(shape)
     if dimensions < 2:
-        raise ValueError("Fan in and fan out can not be computed for tensor with fewer than 2 dimensions")
+        raise ValueError("'fan_in' and 'fan_out' can not be computed for tensor with fewer than"
+                         " 2 dimensions, but got dimensions {}.".format(dimensions))
     if dimensions == 2:  # Linear
         fan_in = shape[1]
         fan_out = shape[0]
@@ -488,6 +489,10 @@ def initializer(init, shape=None, dtype=mstype.float32):
     Returns:
         Union[Tensor], return is Tensor object.
 
+    Raises:
+        TypeError: The type of the argument 'init' is not correct.
+        ValueError: Some values is not correct.
+
 
     Examples:
         >>> import mindspore
@@ -497,15 +502,15 @@ def initializer(init, shape=None, dtype=mstype.float32):
         >>> tensor3 = initializer(0, [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
-        raise TypeError("Unsupported init type '{}', init should be 'Tensor', 'number', 'str' "
-                        "or 'initializer' type".format(type(init)))
+        raise TypeError("The type of the 'init' argument should be 'Tensor', 'number', 'str' "
+                        "or 'initializer', but got {}.".format(type(init)))
 
     if isinstance(init, Tensor):
         init_shape = init.shape
         shape = shape if isinstance(shape, (tuple, list)) else [shape]
         if shape is not None and init_shape != tuple(shape):
-            raise ValueError("The shape of init should be same as variable shape, but got the shape of init {} and "
-                             "the variable shape {}.".format(list(init.shape), shape))
+            raise ValueError("The shape of the 'init' argument should be same as the argument 'shape', but got the "
+                             "'init' shape {} and the 'shape' {}.".format(list(init.shape), shape))
         return init
 
     if isinstance(shape, list):
@@ -515,7 +520,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
     for value in shape if shape is not None else ():
         if not isinstance(value, int) or value <= 0:
-            raise ValueError(f"Shape is invalid, the value of shape must be positive integer, but got shape:{shape}")
+            raise ValueError(f"The argument 'shape' is invalid, the value of 'shape' must be positive integer, "
+                             f"but got {shape}")
 
     if isinstance(init, str):
         init = _INITIALIZER_ALIAS[init.lower()]()
