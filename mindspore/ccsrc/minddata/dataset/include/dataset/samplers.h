@@ -88,6 +88,12 @@ class DistributedSampler final : public Sampler {
   /// \param[in] offset The starting position where access to elements in the dataset begins (default=-1).
   /// \param[in] even_dist If true, each shard would return the same number of rows (default=true).
   ///     If false the total rows returned by all the shards would not have overlap.
+  /// \par Example
+  /// \code
+  ///      /* creates a distributed sampler with 2 shards in total. This shard is shard 0 */
+  ///      std::string file_path = "/path/to/test.mindrecord";
+  ///      std::shared_ptr<Dataset> ds = MindData(file_path, {}, std::make_shared<DistributedSampler>(2, 0, false));
+  /// \endcode
   DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle = true, int64_t num_samples = 0,
                      uint32_t seed = 1, int64_t offset = -1, bool even_dist = true);
   /// \brief Destructor.
@@ -119,6 +125,12 @@ class PKSampler final : public Sampler {
   /// \param[in] num_val Number of elements to sample for each class.
   /// \param[in] shuffle If true, the class IDs are shuffled (default=false).
   /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
+  /// \par Example
+  /// \code
+  ///      /* creates a PKSampler that will get 3 samples from every class. */
+  ///      std::string folder_path = "/path/to/image/folder";
+  ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<PKSampler>(3));
+  /// \endcode
   explicit PKSampler(int64_t num_val, bool shuffle = false, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -144,6 +156,12 @@ class RandomSampler final : public Sampler {
   /// \brief Constructor
   /// \param[in] replacement If true, put the sample ID back for the next draw (default=false).
   /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
+  /// \par Example
+  /// \code
+  ///      /* creates a RandomSampler that will get 10 samples randomly */
+  ///      std::string folder_path = "/path/to/image/folder";
+  ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  /// \endcode
   explicit RandomSampler(bool replacement = false, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -168,6 +186,12 @@ class SequentialSampler final : public Sampler {
   /// \brief Constructor
   /// \param[in] start_index Index to start sampling at (default=0, start at first id).
   /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
+  /// \par Example
+  /// \code
+  ///      /* creates a SequentialSampler that will get 2 samples sequentially in original dataset */
+  ///      std::string folder_path = "/path/to/image/folder";
+  ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 2));
+  /// \endcode
   explicit SequentialSampler(int64_t start_index = 0, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -192,6 +216,12 @@ class SubsetSampler : public Sampler {
   /// \brief Constructor
   /// \param[in] indices A vector sequence of indices.
   /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
+  /// \par Example
+  /// \code
+  ///      /* creates a SubsetSampler, will sample from the provided indices */
+  ///      std::string folder_path = "/path/to/image/folder";
+  ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<SubsetSampler>({0, 2, 5}));
+  /// \endcode
   explicit SubsetSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -215,6 +245,12 @@ class SubsetRandomSampler final : public SubsetSampler {
   /// \brief Constructor
   /// \param[in] indices A vector sequence of indices.
   /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
+  /// \par Example
+  /// \code
+  ///      /* create a SubsetRandomSampler, will sample from the provided indices */
+  ///      std::string folder_path = "/path/to/image/folder";
+  ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<SubsetRandomSampler>({2, 7}));
+  /// \endcode
   explicit SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
 
   /// \brief Destructor.
@@ -237,6 +273,14 @@ class WeightedRandomSampler final : public Sampler {
   /// \param[in] weights A vector sequence of weights, not necessarily summing up to 1.
   /// \param[in] num_samples The number of samples to draw (default=0, return all samples).
   /// \param[in] replacement If true, put the sample ID back for the next draw (default=true).
+  /// \par Example
+  /// \code
+  ///      /* creates a WeightedRandomSampler that will sample 4 elements without replacement */
+  ///      std::vector<double> weights = {0.9, 0.8, 0.68, 0.7, 0.71, 0.6, 0.5, 0.4, 0.3, 0.5, 0.2, 0.1};
+  ///      sampler = std::make_shared<WeightedRandomSampler>(weights, 4);
+  ///      std::string folder_path = "/path/to/image/folder";
+  ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  /// \endcode
   explicit WeightedRandomSampler(std::vector<double> weights, int64_t num_samples = 0, bool replacement = true);
 
   /// \brief Destructor.

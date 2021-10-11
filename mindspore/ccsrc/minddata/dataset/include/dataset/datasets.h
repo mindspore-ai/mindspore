@@ -134,11 +134,24 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \brief Function to set runtime number of workers.
   /// \param[in] num_workers The number of threads in this operator.
   /// \return Shared pointer to the original object.
+  /// \par Example
+  /// \code
+  ///      /* Set number of workers(threads) to process the dataset in parallel */
+  ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true);
+  ///      ds = ds->SetNumWorkers(16);
+  /// \endcode
   std::shared_ptr<Dataset> SetNumWorkers(int32_t num_workers);
 
   /// \brief A Function to create an PullBasedIterator over the Dataset.
   /// \param[in] columns List of columns to be used to specify the order of columns.
   /// \return Shared pointer to the Iterator.
+  /// \par Example
+  /// \code
+  ///      /* dataset is an instance of Dataset object */
+  ///      std::shared_ptr<Iterator> = dataset->CreatePullBasedIterator();
+  ///      std::unordered_map<std::string, mindspore::MSTensor> row;
+  ///      iter->GetNextRow(&row);
+  /// \endcode
   std::shared_ptr<PullIterator> CreatePullBasedIterator(std::vector<std::vector<char>> columns = {});
 
   /// \brief Function to create an Iterator over the Dataset pipeline.
@@ -146,6 +159,13 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] num_epochs Number of epochs to run through the pipeline (default=-1, which means infinite epochs).
   ///     An empty row is returned at the end of each epoch.
   /// \return Shared pointer to the Iterator.
+  /// \par Example
+  /// \code
+  ///      /* dataset is an instance of Dataset object */
+  ///      std::shared_ptr<Iterator> = dataset->CreateIterator();
+  ///      std::unordered_map<std::string, mindspore::MSTensor> row;
+  ///      iter->GetNextRow(&row);
+  /// \endcode
   std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {}, int32_t num_epochs = -1) {
     return CreateIteratorCharIF(VectorStringToChar(columns), num_epochs);
   }
@@ -181,6 +201,14 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] num_files Number of dataset files (default=1).
   /// \param[in] dataset_type Dataset format (default="mindrecord").
   /// \return Returns true if no error encountered else false.
+  /// \par Example
+  /// \code
+  ///      /* Create a dataset and save its data into MindRecord */
+  ///      std::string folder_path = "/path/to/cifar_dataset";
+  ///      std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<SequentialSampler>(0, 10));
+  ///      std::string save_file = "Cifar10Data.mindrecord";
+  ///      bool rc = ds->Save(save_file);
+  /// \endcode
   bool Save(std::string dataset_path, int32_t num_files = 1, std::string dataset_type = "mindrecord") {
     return SaveCharIF(StringToChar(dataset_path), num_files, StringToChar(dataset_type));
   }
@@ -193,6 +221,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///     available to make the last batch, then those rows will
   ///     be dropped and not propagated to the next node.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Create a dataset where every 100 rows is combined into a batch */
+  ///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true);
+  ///      ds = ds->Batch(100, true);
+  /// \endcode
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
 
   /// \brief Function to create a BucketBatchByLengthDataset.
@@ -221,6 +255,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] drop_remainder If true, will drop the last batch for each bucket if it is not a full batch
   ///    (default=false).
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Bucket elements according to their lengths */
+  ///      std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  ///      ds = ds->BucketBatchByLength({"image"}, {1, 2, 3}, {4, 5, 6, 7});
+  /// \endcode
   std::shared_ptr<BucketBatchByLengthDataset> BucketBatchByLength(
     const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
     const std::vector<int32_t> &bucket_batch_sizes,
@@ -243,6 +283,14 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///     The input sentence must be pretokenized when using word type.
   /// \param[in] params A vector contains more option parameters of sentencepiece library.
   /// \return Shared pointer to the SentencePieceVocab.
+  /// \par Example
+  /// \code
+  ///      /* Build a SentencePieceVocab from TextFile dataset */
+  ///      std::string vocab_file = "/path/to/txtfile";
+  ///      std::shared_ptr<Dataset> ds_vocab = TextFile({vocab_file}, 0, ShuffleMode::kFalse);
+  ///      std::shared_ptr<SentencePieceVocab> vocab =
+  ///          ds_vocab->BuildSentencePieceVocab({}, 5000, 0.9995, SentencePieceModel::kUnigram, {});
+  /// \endcode
   std::shared_ptr<SentencePieceVocab> BuildSentencePieceVocab(
     const std::vector<std::string> &col_names, int32_t vocab_size, float character_coverage,
     SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params) {
@@ -263,6 +311,13 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] special_first Whether special_tokens will be prepended/appended to vocab, If special_tokens
   ///    is specified and special_first is set to default, special_tokens will be prepended.
   /// \return Shared pointer to the Vocab.
+  /// \par Example
+  /// \code
+  ///      /* Build a Vocab from TextFile dataset */
+  ///      std::string vocab_file = "/path/to/txtfile";
+  ///      std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  ///      std::shared_ptr<Vocab> vocab = ds->BuildVocab();
+  /// \endcode
   std::shared_ptr<Vocab> BuildVocab(const std::vector<std::string> &columns = {},
                                     const std::pair<int64_t, int64_t> &freq_range = {0, kDeMaxFreq},
                                     int64_t top_k = kDeMaxTopk, const std::vector<std::string> &special_tokens = {},
@@ -275,6 +330,13 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \note Concat the datasets in the input.
   /// \param[in] datasets List of shared pointers to the dataset that should be concatenated together.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Create a dataset by concatenating dataset_1 and dataset_2 with "+" operator */
+  ///      std::shared_ptr<Dataset> dataset = dataset_1 + dataset_2;
+  ///      /* Create a dataset by concatenating dataset_1 and dataset_2 with concat operation */
+  ///      std::shared_ptr<Dataset> dataset = dataset_1->Concat({dataset_2});
+  /// \endcode
   std::shared_ptr<ConcatDataset> Concat(const std::vector<std::shared_ptr<Dataset>> &datasets) {
     std::vector<std::shared_ptr<Dataset>> all_datasets{shared_from_this()};
     all_datasets.insert(std::end(all_datasets), std::begin(datasets), std::end(datasets));
@@ -286,6 +348,28 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] predicate Function callable which returns a boolean value. If false then filter the element.
   /// \param[in] input_columns List of names of the input columns to filter.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Define a predicate function */
+  ///      MSTensorVec Predicate1(MSTensorVec in) {
+  ///        // Return true if input is equal to 3
+  ///        uint64_t input_value;
+  ///        TensorRow input = VecToRow(in);
+  ///        (void)input.at(0)->GetItemAt(&input_value, {0});
+  ///        bool result = (input_value == 3);
+  ///        // Convert from boolean to TensorRow
+  ///        TensorRow output;
+  ///        std::shared_ptr<Tensor> out;
+  ///        (void)Tensor::CreateEmpty(mindspore::dataset::TensorShape({}),
+  ///                                  mindspore::dataset::DataType(mindspore::dataset::DataType::Type::DE_BOOL), &out);
+  ///        (void)out->SetItemAt({}, result);
+  ///        output.push_back(out);
+  ///        return RowToVec(output);
+  ///      }
+  ///
+  ///      /* Apply predicate function for datase */
+  ///      std::shared_ptr<Dataset> ds = ds->Filter(Predicate1, {"label"});
+  /// \endcode
   std::shared_ptr<FilterDataset> Filter(std::function<MSTensorVec(MSTensorVec)> predicate,
                                         const std::vector<std::string> &input_columns = {}) {
     return std::make_shared<FilterDataset>(shared_from_this(), predicate, VectorStringToChar(input_columns));
@@ -308,6 +392,40 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
   /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///     // Create objects for the tensor ops
+  ///     std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>(true);
+  ///     std::shared_ptr<TensorTransform> random_color_op = std::make_shared<vision::RandomColor>(0.0, 0.0);
+  ///
+  ///     /* 1) Simple map example */
+  ///     // Apply decode_op on column "image". This column will be replaced by the outputted
+  ///     // column of decode_op. Since column_order is not provided, both columns "image"
+  ///     // and "label" will be propagated to the child node in their original order.
+  ///     dataset = dataset->Map({decode_op}, {"image"});
+  ///
+  ///     // Decode and rename column "image" to "decoded_image".
+  ///     dataset = dataset->Map({decode_op}, {"image"}, {"decoded_image"});
+  ///
+  ///     // Specify the order of the output columns.
+  ///     dataset = dataset->Map({decode_op}, {"image"}, {}, {"label", "image"});
+  ///
+  ///     // Rename column "image" to "decoded_image" and also specify the order of the output columns.
+  ///     dataset = dataset->Map({decode_op}, {"image"}, {"decoded_image"}, {"label", "decoded_image"});
+  ///
+  ///     // Rename column "image" to "decoded_image" and keep only this column.
+  ///     dataset = dataset->Map({decode_op}, {"image"}, {"decoded_image"}, {"decoded_image"});
+  ///
+  ///    /* 2) Map example with more than one operation */
+  ///    // Create a dataset where the images are decoded, then randomly color jittered.
+  ///    // decode_op takes column "image" as input and outputs one column. The column
+  ///    // outputted by decode_op is passed as input to random_jitter_op.
+  ///    // random_jitter_op will output one column. Column "image" will be replaced by
+  ///    // the column outputted by random_jitter_op (the very last operation). All other
+  ///    // columns are unchanged. Since column_order is not specified, the order of the
+  ///    // columns will remain the same.
+  ///    dataset = dataset->Map({decode_op, random_jitter_op}, {"image"})
+  /// \endcode
   std::shared_ptr<MapDataset> Map(std::vector<TensorTransform *> operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
@@ -391,6 +509,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \note Applies project to the dataset.
   /// \param[in] columns The name of columns to project.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Reorder the original column names in dataset */
+  ///      std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  ///      ds = ds->Project({"label", "image"});
+  /// \endcode
   std::shared_ptr<ProjectDataset> Project(const std::vector<std::string> &columns) {
     return std::make_shared<ProjectDataset>(shared_from_this(), VectorStringToChar(columns));
   }
@@ -400,6 +524,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] input_columns List of the input columns to rename.
   /// \param[in] output_columns List of the output columns.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Rename the original column names in dataset */
+  ///      std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  ///      ds = ds->Rename({"image", "label"}, {"image_output", "label_output"});
+  /// \endcode
   std::shared_ptr<RenameDataset> Rename(const std::vector<std::string> &input_columns,
                                         const std::vector<std::string> &output_columns) {
     return std::make_shared<RenameDataset>(shared_from_this(), VectorStringToChar(input_columns),
@@ -409,6 +539,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \note Repeats this dataset count times. Repeat indefinitely if count is -1.
   /// \param[in] count Number of times the dataset should be repeated.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Create a dataset where the dataset is repeated for 50 epochs */
+  ///      std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  ///      ds = ds->Repeat(50);
+  /// \endcode
   std::shared_ptr<RepeatDataset> Repeat(int32_t count = -1) {
     return std::make_shared<RepeatDataset>(shared_from_this(), count);
   }
@@ -416,6 +552,12 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \note Randomly shuffles the rows of this dataset.
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Create a shuffled dataset using a shuffle buffer of size 4 */
+  ///      std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  ///      ds = ds->Shuffle(4);
+  /// \endcode
   std::shared_ptr<ShuffleDataset> Shuffle(int32_t buffer_size) {
     return std::make_shared<ShuffleDataset>(shared_from_this(), buffer_size);
   }
@@ -424,12 +566,24 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \note Skips count elements in this dataset.
   /// \param[in] count Number of elements the dataset to be skipped.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Create a dataset which skips first 3 elements from data */
+  ///      std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  ///      ds = ds->Skip(3);
+  /// \endcode
   std::shared_ptr<SkipDataset> Skip(int32_t count) { return std::make_shared<SkipDataset>(shared_from_this(), count); }
 
   /// \brief Function to create a TakeDataset.
   /// \note Takes count elements in this dataset.
   /// \param[in] count Number of elements the dataset to be taken.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Create a dataset where the dataset includes 50 elements. */
+  ///      std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  ///      ds = ds->Take(50);
+  /// \endcode
   std::shared_ptr<TakeDataset> Take(int32_t count = -1) {
     return std::make_shared<TakeDataset>(shared_from_this(), count);
   }
@@ -438,6 +592,13 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \note Applies zip to the dataset.
   /// \param[in] datasets A list of shared pointers to the datasets that we want to zip.
   /// \return Shared pointer to the current Dataset.
+  /// \par Example
+  /// \code
+  ///      /* Create a dataset which is the combination of dataset and dataset_1 */
+  ///      std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  ///      std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  ///      std::shared_ptr<Dataset> ds = ds->Zip({ds1, ds2});
+  /// \endcode
   std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
     std::vector<std::shared_ptr<Dataset>> all_datasets = datasets;
     all_datasets.push_back(shared_from_this());
@@ -880,6 +1041,22 @@ class AlbumDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the AlbumDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/album_dataset_directory";
+///      std::string schema_file = "/path/to/album_schema_file";
+///      std::vector<std::string> column_names = {"image", "label", "id"};
+///      std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: As we defined before, each data dictionary owns keys "image", "label" and "id" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
                                            const std::vector<std::string> &column_names = {}, bool decode = false,
                                            const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -972,6 +1149,20 @@ class CelebADataset : public Dataset {
 /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the CelebADataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/celeba_dataset_directory";
+///      std::shared_ptr<Dataset> ds = CelebA(folder_path, "all", std::make_shared<SequentialSampler>(0, 5));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In CelebA dataset, each data dictionary owns keys "image" and "attr" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<CelebADataset> CelebA(
   const std::string &dataset_dir, const std::string &usage = "all",
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(), bool decode = false,
@@ -1057,6 +1248,20 @@ class Cifar10Dataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the Cifar10Dataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/cifar10_dataset_directory";
+///      std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In CIFAR10 dataset, each data dictionary owns keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<Cifar10Dataset> Cifar10(
   const std::string &dataset_dir, const std::string &usage = "all",
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -1131,6 +1336,20 @@ class Cifar100Dataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the Cifar100Dataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/cifar100_dataset_directory";
+///      std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", std::make_shared<RandomSampler>());
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In CIFAR100 dataset, each dictionary has 3 keys: "image", "fine_label" and "coarse_label" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<Cifar100Dataset> Cifar100(
   const std::string &dataset_dir, const std::string &usage = "all",
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -1232,6 +1451,20 @@ class CityscapesDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current CityscapesDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/cityscapes_dataset_directory";
+///      std::shared_ptr<Dataset> ds = Cityscapes(dataset_path, "train", "fine", "color");
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In Cityscapes dataset, each data dictionary owns keys "image" and "task" */
+///      auto task = row["task"];
+/// \endcode
 inline std::shared_ptr<CityscapesDataset> Cityscapes(
   const std::string &dataset_dir, const std::string &usage, const std::string &quality_mode, const std::string &task,
   bool decode = false, const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -1328,6 +1561,19 @@ class CLUEDataset : public Dataset {
 ///     specified only when num_shards is also specified (Default = 0).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the CLUEDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string train_file = "/path/to/clue_dataset_file";
+///      std::shared_ptr<Dataset> ds = CLUE({train_file}, "AFQMC", "train", 0, ShuffleMode::kFalse);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      auto text = row["sentence1"];
+/// \endcode
 inline std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &dataset_files,
                                          const std::string &task = "AFQMC", const std::string &usage = "train",
                                          int64_t num_samples = 0, ShuffleMode shuffle = ShuffleMode::kGlobal,
@@ -1400,6 +1646,21 @@ class CocoDataset : public Dataset {
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \param[in] extra_metadata Flag to add extra meta-data to row. (default=false).
 /// \return Shared pointer to the CocoDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/coco_dataset_directory";
+///      std::string annotation_file = "/path/to/annotation_file";
+///      std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In COCO dataset, each dictionary has keys "image" and "annotation" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                          const std::string &task = "Detection", const bool &decode = false,
                                          const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -1513,6 +1774,21 @@ class CSVDataset : public Dataset {
 ///    specified only when num_shards is also specified (Default = 0).
 /// \param[in] cache Tensor cache to use.(default=nullptr which means no cache is used).
 /// \return Shared pointer to the CSVDataset
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string train_file = "/path/to/csv_file";
+///      std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
+///      std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, 0, ShuffleMode::kFalse);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: As we defined before, the dataset has column "col1", "col2", "col3" and "col4" */
+///      auto col1 = row["col1"];
+/// \endcode
 inline std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, char field_delim = ',',
                                        const std::vector<std::shared_ptr<CsvBase>> &column_defaults = {},
                                        const std::vector<std::string> &column_names = {}, int64_t num_samples = 0,
@@ -1582,6 +1858,20 @@ class DIV2KDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current DIV2KDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_path = "/path/to/div2k_dataset_directory";
+///      std::shared_ptr<Dataset> ds = DIV2K(dataset_path, "train", "bicubic", 2);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In DIV2K dataset, each dictionary has keys "hr_image" and "lr_image" */
+///      auto hr_image = row["hr_image"];
+/// \endcode
 inline std::shared_ptr<DIV2KDataset> DIV2K(const std::string &dataset_dir, const std::string &usage,
                                            const std::string &downgrade, int32_t scale, bool decode = false,
                                            const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -1677,6 +1967,20 @@ class EMnistDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current EMnistDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/emnist_dataset_directory";
+///      std::shared_ptr<Dataset> ds = EMnist(folder_path, "mnist", "train", std::make_shared<RandomSampler>(false, 5));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In EMNIST dataset dataset, each dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<EMnistDataset> EMnist(
   const std::string &dataset_dir, const std::string &name, const std::string &usage = "all",
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -1760,6 +2064,21 @@ class FlickrDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current FlickrDataset
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_path = "/path/to/flickr30k_dataset_directory";
+///      std::string file_path = "/path/to/token_file";
+///      std::shared_ptr<Dataset> ds = Flickr(dataset_path, file_path);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In FLICKR dataset, each dictionary has keys "image" and "annotation" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<FlickrDataset> Flickr(
   const std::string &dataset_dir, const std::string &annotation_file, bool decode = false,
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -1855,6 +2174,20 @@ class ImageFolderDataset : public Dataset {
 /// \param[in] class_indexing a class name to label map.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the ImageFolderDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_path = "/path/to/image_directory";
+///      std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In ImageFolder dataset, each data dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<ImageFolderDataset> ImageFolder(
   const std::string &dataset_dir, bool decode = false,
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -1961,6 +2294,20 @@ class ManifestDataset : public Dataset {
 /// \param[in] decode Decode the images after reading (default=false).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the ManifestDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_path = "/path/to/manifest_file";
+///      std::shared_ptr<Dataset> ds = Manifest(file_path);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In Manifest dataset, each data dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<ManifestDataset> Manifest(
   const std::string &dataset_file, const std::string &usage = "train",
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -2154,6 +2501,21 @@ class MindDataDataset : public Dataset {
 ///    ShuffleMode::kInfile - Shuffle samples in file.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MindDataDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string dataset_path = "/path/to/mindrecord_file";
+///      std::vector<std::string> column_names = {"data", "file_name", "label"};
+///      std::shared_ptr<Dataset> ds = MindData(file_path, column_names);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: As we defined before, each data dictionary owns keys "data", "file_name" and "label" */
+///      auto data = row["data"];
+/// \endcode
 inline std::shared_ptr<MindDataDataset> MindData(
   const std::string &dataset_file, const std::vector<std::string> &columns_list = {},
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(), nlohmann::json *padded_sample = nullptr,
@@ -2229,6 +2591,23 @@ inline std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file
 ///    ShuffleMode::kInfile - Shuffle samples in file.
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the MindDataDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string file_path1 = "/path/to/mindrecord_file1";
+///      std::string file_path2 = "/path/to/mindrecord_file2";
+///      std::string file_list = {file_path1, file_path2};
+///      std::vector<std::string> column_names = {"data", "file_name", "label"};
+///      std::shared_ptr<Dataset> ds = MindData(file_list, column_names);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: As we defined before, each data dictionary owns keys "data", "file_name" and "label" */
+///      auto data = row["data"];
+/// \endcode
 inline std::shared_ptr<MindDataDataset> MindData(
   const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list = {},
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(), nlohmann::json *padded_sample = nullptr,
@@ -2328,6 +2707,20 @@ class MnistDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the MnistDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/mnist_dataset_directory";
+///      std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In MNIST dataset, each dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage = "all",
                                            const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
                                            const std::shared_ptr<DatasetCache> &cache = nullptr) {
@@ -2409,6 +2802,20 @@ class QMnistDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the QMnistDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/qmnist_dataset_directory";
+///      std::shared_ptr<Dataset> ds = QMnist(folder_path, "train", true, std::make_shared<RandomSampler>(false, 5));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In QMNIST dataset, each dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<QMnistDataset> QMnist(
   const std::string &dataset_dir, const std::string &usage = "all", bool compat = true,
   const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
@@ -2484,6 +2891,22 @@ class RandomDataDataset : public Dataset {
 /// \param[in] columns_list List of columns to be read (default={}, read all columns).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the RandomDataset.
+/// \par Example
+/// \code
+///      /* Define MindData objects */
+///      std::shared_ptr<SchemaObj> schema = Schema();
+///      schema->add_column("column1", mindspore::DataType::kNumberTypeUInt8, {2});
+///      schema->add_column("column2", mindspore::DataType::kNumberTypeUInt8, {1});
+///      std::shared_ptr<Dataset> ds = RandomData(50, schema);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: As we defined the schema before, each data dictionary owns keys "column1" and "column2" */
+///      auto column1 = row["column1"];
+/// \endcode
 template <typename T = std::shared_ptr<SchemaObj>>
 std::shared_ptr<RandomDataDataset> RandomData(const int32_t &total_rows = 0, const T &schema = nullptr,
                                               const std::vector<std::string> &columns_list = {},
@@ -2540,6 +2963,20 @@ class SBUDataset : public Dataset {
 ///     given, a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current SBUDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/sbu_dataset_directory";
+///      std::shared_ptr<Dataset> ds = SBU(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In SBU dataset, each dictionary has keys "image" and "caption" */
+///      auto caption = row["caption"];
+/// \endcode
 inline std::shared_ptr<SBUDataset> SBU(const std::string &dataset_dir, bool decode = false,
                                        const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
                                        const std::shared_ptr<DatasetCache> &cache = nullptr) {
@@ -2612,6 +3049,20 @@ class TextFileDataset : public Dataset {
 ///     specified only when num_shards is also specified (Default = 0).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the TextFileDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string file_path = "/path/to/text_file_dataset_file";
+///      std::shared_ptr<Dataset> ds = TextFile({file_path}, 2);
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In TextFile dataset, each dictionary has key "text" */
+///      auto text = row["text"];
+/// \endcode
 inline std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &dataset_files, int64_t num_samples = 0,
                                                  ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
                                                  int32_t shard_id = 0,
@@ -2702,6 +3153,21 @@ class TFRecordDataset : public Dataset {
 ///     each shard may be not equal).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the TFRecordDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string file_path = "/path/to/tfrecord_file";
+///      std::string schema_path = "/path/to/schema_file";
+///      std::shared_ptr<Dataset> ds = TFRecord({file_path}, schema_path, {"image"});
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: The columns of generated dataset depend on the source TFRecord files. */
+///      auto image = row["image"];
+/// \endcode
 template <typename T = std::shared_ptr<SchemaObj>>
 std::shared_ptr<TFRecordDataset> TFRecord(const std::vector<std::string> &dataset_files, const T &schema = nullptr,
                                           const std::vector<std::string> &columns_list = {}, int64_t num_samples = 0,
@@ -2770,6 +3236,20 @@ class USPSDataset : public Dataset {
 ///     specified only when num_shards is also specified (Default = 0).
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current USPSDataset.
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/usps_dataset_directory";
+///      std::shared_ptr<Dataset> ds = USPS(folder_path, "train");
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In USPS dataset, each dictionary has keys "image" and "label" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<USPSDataset> USPS(const std::string &dataset_dir, const std::string &usage = "all",
                                          int64_t num_samples = 0, ShuffleMode shuffle = ShuffleMode::kGlobal,
                                          int32_t num_shards = 1, int32_t shard_id = 0,
@@ -2842,6 +3322,22 @@ class VOCDataset : public Dataset {
 /// \param[in] cache Tensor cache to use (default=nullptr which means no cache is used).
 /// \param[in] extra_metadata Flag to add extra meta-data to row (default=false).
 /// \return Shared pointer to the VOCDataset
+/// \par Example
+/// \code
+///      /* Define dataset path and MindData object */
+///      std::string folder_path = "/path/to/voc_dataset_directory";
+///      std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", class_index, false,
+///                                        std::make_shared<SequentialSampler>(0, 6));
+///
+///      /* Create iterator to read dataset */
+///      std::shared_ptr<Iterator> iter = ds->CreateIterator();
+///      std::unordered_map<std::string, mindspore::MSTensor> row;
+///      iter->GetNextRow(&row);
+///
+///      /* Note: In VOC dataset, if task='Segmentation', each dictionary has keys "image" and "target" */
+///      /* Note: In VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation" */
+///      auto image = row["image"];
+/// \endcode
 inline std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
                                        const std::string &usage = "train",
                                        const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
