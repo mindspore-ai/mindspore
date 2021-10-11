@@ -75,7 +75,7 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
 #endif
       num++;
     } else {
-      MS_LOG(INFO) << "pass " << pass->name() << "is null";
+      MS_LOG(INFO) << "pass is null";
     }
   }
   return changed;
