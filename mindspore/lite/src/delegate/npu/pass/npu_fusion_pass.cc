@@ -157,6 +157,9 @@ int UpdatePreTensors(NPUOp *cur_op) {
     tensors_vec.resize(cur_op->inputs().size());
     auto const_index = nodes2const_index[cur_op->type()];
     for (auto index : const_index) {
+      if (index >= cur_op->inputs().size()) {
+        continue;
+      }
       tensors_vec[index] = cur_op->inputs()[index];
     }
   }
@@ -463,6 +466,7 @@ int NPUFusionPass::Run(NPUGraph *subgraph) {
           continue;
         case schema::PrimitiveType_AddFusion:
         case schema::PrimitiveType_MulFusion:
+        case schema::PrimitiveType_DivFusion:
         case schema::PrimitiveType_Activation:
         case schema::PrimitiveType_Eltwise:
           i -= cur_op->in_ops().size();

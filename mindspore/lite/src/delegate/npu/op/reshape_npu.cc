@@ -50,6 +50,23 @@ int ReshapeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensor
   return RET_OK;
 }
 
+int ReshapeNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
+                               const std::vector<mindspore::MSTensor> &out_tensors,
+                               const std::vector<ge::Operator *> &npu_inputs,
+                               const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
+  for (auto pair : index2_multi_out_index) {
+    auto in_op = pair.second.first;
+    MS_CHECK_TRUE_RET(in_op != nullptr, RET_ERROR);
+    reshape_->SetInput(pair.first, *in_op, pair.second.second);
+  }
+  for (int i = 0; i < npu_inputs.size(); ++i) {
+    if (index2_multi_out_index.find(i) == index2_multi_out_index.end()) {
+      reshape_->SetInput(i, *npu_inputs[i], 0);
+    }
+  }
+  return RET_OK;
+}
+
 ge::Operator *ReshapeNPUOp::GetNPUOp() { return this->reshape_; }
 
 ReshapeNPUOp::~ReshapeNPUOp() {

@@ -171,10 +171,6 @@ int NPUTransformPass::Run(NPUGraph *subgraph) {
       i++;
       continue;
     }
-    if (op->type() == schema::PrimitiveType_Resize && op->inputs()[0].Shape()[1] > op->outputs()[0].Shape()[1]) {
-      i++;
-      continue;
-    }
     // insert pre_ops before op in vector
     // modify loop index add (pre_ops.size() + 1) to the post_ops insert location
     std::vector<NPUOp *> pre_ops;
