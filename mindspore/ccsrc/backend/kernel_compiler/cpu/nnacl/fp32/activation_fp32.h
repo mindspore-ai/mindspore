@@ -32,6 +32,7 @@ typedef struct ActivationParameter {
 extern "C" {
 #endif
 int Fp32Relu(const float *src, int length, float *dst);
+int Int32Relu(const int32_t *src, int length, int32_t *dst);
 int Fp32Relu6(const float *src, int length, float *dst);
 int LRelu(const float *src, int length, float *dst, float alpha);
 int Sigmoid(const float *src, int length, float *dst);

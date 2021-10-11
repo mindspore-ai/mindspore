@@ -39,6 +39,13 @@ int Fp32Relu(const float *src, int length, float *dst) {
   return NNACL_OK;
 }
 
+int Int32Relu(const int32_t *src, int length, int32_t *dst) {
+  for (int i = 0; i < length; ++i) {
+    dst[i] = src[i] > 0 ? src[i] : 0;
+  }
+  return NNACL_OK;
+}
+
 int Fp32Relu6(const float *src, int length, float *dst) {
   int i = 0;
 
