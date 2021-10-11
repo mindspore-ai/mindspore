@@ -5157,7 +5157,7 @@ class Eps(PrimitiveWithInfer):
     Creates a tensor filled with `x` dtype minimum value.
 
     Inputs:
-        - **x** (Tensor) - Input tensor. The data type must be float16 or float32.
+        - **x** (Tensor) - Input tensor. The data type must be float16, float32 or float64.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
@@ -5179,14 +5179,16 @@ class Eps(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['input_x'], outputs=['y'])
 
     def __infer__(self, input_x):
-        valid_dtypes = [mstype.float16, mstype.float32]
+        valid_dtypes = [mstype.float16, mstype.float32, mstype.float64]
         validator.check_tensor_dtype_valid('input_x', input_x['dtype'], valid_dtypes, self.name)
 
         x_nptype = mstype.dtype_to_nptype(input_x['dtype'].element_type())
         if x_nptype == np.float16:
             min_val = 2 ** (-14)
-        else:
+        elif x_nptype == np.float32:
             min_val = 2 ** (-16)
+        else:
+            min_val = 2 ** (-52)
 
         res = np.full(input_x['shape'], min_val, x_nptype)
         out = {
