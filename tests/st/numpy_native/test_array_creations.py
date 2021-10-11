@@ -14,9 +14,9 @@
 # ============================================================================
 """unit tests for numpy array operations"""
 
+import os
 import pytest
 import numpy as onp
-
 import mindspore.numpy as mnp
 from mindspore import context
 
@@ -935,36 +935,9 @@ def test_empty_like_exception():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_pad():
-    x_np = onp.random.random([2, 3, 4]).astype("float32")
-    x_ms = mnp.asarray(x_np.tolist())
-
-    # pad constant
-    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 2), (3, 4)))
-    onp_res = onp.pad(x_np, ((1, 1), (2, 2), (3, 4)))
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 3), (4, 5)), constant_values=((3, 4), (5, 6), (7, 8)))
-    onp_res = onp.pad(x_np, ((1, 1), (2, 3), (4, 5)), constant_values=((3, 4), (5, 6), (7, 8)))
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-
-    # pad statistic
-    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 2), (3, 4)), mode="mean", stat_length=((1, 2), (2, 10), (3, 4)))
-    onp_res = onp.pad(x_np, ((1, 1), (2, 2), (3, 4)), mode="mean", stat_length=((1, 2), (2, 10), (3, 4)))
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-
-    # pad edge
-    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 2), (3, 4)), mode="edge")
-    onp_res = onp.pad(x_np, ((1, 1), (2, 2), (3, 4)), mode="edge")
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-
-    # pad wrap
-    mnp_res = mnp.pad(x_ms, ((1, 1), (2, 2), (3, 4)), mode="wrap")
-    onp_res = onp.pad(x_np, ((1, 1), (2, 2), (3, 4)), mode="wrap")
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
-
-    # pad linear_ramp
-    mnp_res = mnp.pad(x_ms, ((1, 3), (5, 2), (3, 0)), mode="linear_ramp", end_values=((0, 10), (9, 1), (-10, 99)))
-    onp_res = onp.pad(x_np, ((1, 3), (5, 2), (3, 0)), mode="linear_ramp", end_values=((0, 10), (9, 1), (-10, 99)))
-    match_all_arrays(mnp_res, onp_res, error=1e-5)
+    os.putenv('GLOG_v', '0')
+    ret = os.system('pytest -s ./debug.py::test_pad_inner --disable-warnings')
+    assert ret == 0
 
 
 def pad_with_msfunc(vector, pad_width, iaxis, kwargs):
