@@ -31,11 +31,15 @@ class ELBO(Cell):
 
     Args:
         latent_prior(str): The prior distribution of latent space. Default: Normal.
+
             - Normal: The prior distribution of latent space is Normal.
+
         output_prior(str): The distribution of output data. Default: Normal.
+
             - Normal: If the distribution of output data is Normal, the reconstruct loss is MSELoss.
 
     Inputs:
+
         - **input_data** (Tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
         - **target_data** (Tensor) - the target tensor of shape :math:`(N,)`.
 

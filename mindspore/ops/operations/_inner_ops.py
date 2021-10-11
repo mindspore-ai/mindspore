@@ -549,6 +549,7 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         axis (Union[int, tuple[int], list[int]]): The dimensions to reduce.
             Default:(), reduce all dimensions. Only constant value is allowed.
         keep_dims (bool):
+
             - If true, keep these reduced dimensions and the length as 1.
             - If false, don't keep these dimensions. Default:False.
 
