@@ -502,7 +502,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
         >>> tensor3 = initializer(0, [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
-        raise TypeError("The type of the 'init' argument should be 'Tensor', 'number', 'str' "
+        raise TypeError("The type of the 'init' argument should be 'Tensor', 'number', 'string' "
                         "or 'initializer', but got {}.".format(type(init)))
 
     if isinstance(init, Tensor):
