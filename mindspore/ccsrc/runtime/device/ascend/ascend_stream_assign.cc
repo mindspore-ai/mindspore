@@ -1448,56 +1448,59 @@ void AscendStreamAssign::InsertEventHcomDependCommon(const NotNull<KernelGraphPt
   MS_LOG(INFO) << "After hcom depend common, total event nums:" << resource_manager.cur_event_num();
 }
 
+std::vector<std::pair<uint32_t, vector<size_t>>> AscendStreamAssign::GetStreamIDHcomMap(
+  std::vector<CNodePtr> cnode_ptr_list, std::string group, size_t graph_id) {
+  std::vector<std::pair<uint32_t, vector<size_t>>> stream_indices;
+  for (size_t i = 0; i < cnode_ptr_list.size(); i++) {
+    auto cur_cnode = cnode_ptr_list[i];
+    if (!IsHcom(cur_cnode)) {
+      continue;
+    }
+
+    uint32_t cur_stream_id = AnfAlgo::GetStreamId(cur_cnode);
+    auto group_name = GetHcomGroup(cur_cnode);
+    auto cur_graph_id = AnfAlgo::GetGraphId(cur_cnode.get());
+    MS_LOG(INFO) << "Hcom node name:" << AnfAlgo::GetCNodeName(cur_cnode) << "; group:" << group_name
+                 << "; stream id:" << cur_stream_id;
+    if (group_name != group || cur_graph_id != graph_id) {
+      continue;
+    }
+
+    bool exit = false;
+    for (auto &item : stream_indices) {
+      if (item.first == cur_stream_id) {
+        item.second.emplace_back(i);
+        exit = true;
+        break;
+      }
+    }
+    if (!exit) {
+      stream_indices.emplace_back(std::make_pair(cur_stream_id, std::vector<size_t>{i}));
+    }
+  }
+  return stream_indices;
+}
+
+void AscendStreamAssign::InsertEventHcomDependHcomAtSameGroup(
+  const NotNull<KernelGraphPtr> &graph_ptr, std::pair<std::string, std::map<uint32_t, std::set<uint32_t>>> group_item) {
+  for (const auto &graph_item : group_item.second) {
+    auto stream_indices = GetStreamIDHcomMap(graph_ptr->execution_order(), group_item.first, graph_item.first);
+    constexpr size_t kStreamMax = 2;
+    if (stream_indices.size() < kStreamMax) {
+      MS_LOG(INFO) << "Group:" << group_item.first << ", Graph: " << graph_item.first
+                   << " different stream hcom size is less than 2, no need insert event between them";
+      continue;
+    }
+    InsertEventBetweenHcom(graph_ptr, stream_indices);
+  }
+}
+
 void AscendStreamAssign::InsertEventHcomDependHcom(const NotNull<KernelGraphPtr> &graph_ptr) {
   if (group_hcom_graph_map_.empty()) {
     return;
   }
   for (const auto &group_item : group_hcom_graph_map_) {
-    auto group = group_item.first;
-    for (const auto &graph_item : group_item.second) {
-      auto graph_id = graph_item.first;
-      auto cnode_ptr_list = graph_ptr->execution_order();
-      std::vector<std::pair<uint32_t, vector<size_t>>> stream_indices;
-      for (size_t i = 0; i < cnode_ptr_list.size(); i++) {
-        auto cur_cnode = cnode_ptr_list[i];
-        if (!IsHcom(cur_cnode)) {
-          continue;
-        }
-
-        uint32_t cur_stream_id = AnfAlgo::GetStreamId(cur_cnode);
-        auto group_name = GetHcomGroup(cur_cnode);
-        auto cur_graph_id = AnfAlgo::GetGraphId(cur_cnode.get());
-        MS_LOG(INFO) << "Hcom node name:" << AnfAlgo::GetCNodeName(cur_cnode) << "; group:" << group_name
-                     << "; stream id:" << cur_stream_id;
-        if (group_name != group || cur_graph_id != graph_id) {
-          continue;
-        }
-
-        if (stream_indices.empty()) {
-          stream_indices.emplace_back(std::make_pair(cur_stream_id, std::vector<size_t>{i}));
-        } else {
-          bool exit = false;
-          for (auto &item : stream_indices) {
-            if (item.first == cur_stream_id) {
-              item.second.emplace_back(i);
-              exit = true;
-              break;
-            }
-          }
-          if (!exit) {
-            stream_indices.emplace_back(std::make_pair(cur_stream_id, std::vector<size_t>{i}));
-          }
-        }
-      }
-
-      constexpr size_t kStreamMax = 2;
-      if (stream_indices.size() < kStreamMax) {
-        MS_LOG(INFO) << "Group:" << group
-                     << "; different stream hcom size is less than 2, no need insert event between them";
-        continue;
-      }
-      InsertEventBetweenHcom(graph_ptr, stream_indices);
-    }
+    InsertEventHcomDependHcomAtSameGroup(graph_ptr, group_item);
   }
 }
 
