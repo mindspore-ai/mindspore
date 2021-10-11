@@ -44,7 +44,7 @@ std::vector<std::vector<size_t>> GenerateLoadGroups(const FuncGraphPtr &fg, cons
                          IsPrimitiveCNode(cnode, prim::kPrimPartial) || IsPrimitiveCNode(cnode, prim::kPrimSwitch) ||
                          IsPrimitiveCNode(cnode, prim::kPrimSwitchLayer);
     if (is_special_op) {
-      special_op_indexs->emplace_back(i);
+      (void)special_op_indexs->emplace_back(i);
     }
 
     // Record param user in toposort nodes.
@@ -57,7 +57,7 @@ std::vector<std::vector<size_t>> GenerateLoadGroups(const FuncGraphPtr &fg, cons
           cur_param = input->cast<CNodePtr>()->input(1);
         }
         if (cur_param != nullptr) {
-          (*unload_users_record)[cur_param].emplace_back(i);
+          (void)(*unload_users_record)[cur_param].emplace_back(i);
         }
       }
       continue;
@@ -349,7 +349,7 @@ bool AutoMonadEliminator::EliminateAutoMonadNode(const FuncGraphManagerPtr &mana
     fg->set_output(input);
     changed = true;
   }
-  MS_LOG(DEBUG) << "changed: " << changed;
+  MS_LOG(DEBUG) << "Changed: " << changed;
   return changed;
 }
 }  // namespace opt
