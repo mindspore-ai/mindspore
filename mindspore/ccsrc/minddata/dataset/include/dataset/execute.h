@@ -98,12 +98,35 @@ class Execute {
   /// \param[in] input Tensor to be transformed.
   /// \param[out] output Transformed tensor.
   /// \return Status error code, returns OK if no error encountered.
+  /// \par Example
+  /// \code
+  ///      /* Usage of Execute */
+  ///      std::shared_ptr<TensorTransform> decode = std::make_shared<vision::Decode>();
+  ///      std::shared_ptr<TensorTransform> center_crop(new vision::CenterCrop({30}));
+  ///      std::shared_ptr<TensorTransform> rescale = std::make_shared<vision::Rescale>(1. / 3, 0.5);
+  ///      mindspore::dataset::Execute transform = Execute({decode, center_crop, rescale});
+  ///
+  ///      /* Apply transforms */
+  ///      mindspore::MSTensor image = ReadFileToTensor("apple.jpg");
+  ///      Status rc = transform(image, &image);
+  /// \endcode
   Status operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output);
 
   /// \brief Callable function to execute the TensorTransform in eager mode.
   /// \param[in] input_tensor_list List of Tensor to be transformed.
   /// \param[out] out Result tensor after transform.
   /// \return Status error code, returns OK if no error encountered.
+  /// \par Example
+  /// \code
+  ///      /* Usage of Execute */
+  ///      auto tokenizer = text::BasicTokenizer();
+  ///      mindspore::dataset::Execute transform = Execute({tokenizer});
+  ///
+  ///      /* Apply transforms */
+  ///      std::vector<mindspore::MSTensor> txt = ReadTextToTensor("demo.txt");
+  ///      std::vector<mindspore::MSTensor> txt_result;
+  ///      Status rc = transform1({txt}, &txt_result);
+  /// \endcode
   Status operator()(const std::vector<mindspore::MSTensor> &input_tensor_list, std::vector<mindspore::MSTensor> *out);
 
   /// \brief Given a set of Executes, run them

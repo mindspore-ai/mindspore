@@ -63,6 +63,13 @@ class Iterator {
   /// \note Type of return data is a unordered_map(with column name).
   /// \param[out] row The output tensor row.
   /// \return Status error code, returns OK if no error encountered.
+  /// \par Example
+  /// \code
+  ///      /* dataset is an instance of Dataset object */
+  ///      std::shared_ptr<Iterator> = dataset->CreateIterator();
+  ///      std::unordered_map<std::string, mindspore::MSTensor> row;
+  ///      iter->GetNextRow(&row);
+  /// \endcode
   Status GetNextRow(MSTensorMap *row) {
     if (row == nullptr) {
       return Status(kMDUnexpectedError, "Got nullptr when GetNext row.");
@@ -84,6 +91,13 @@ class Iterator {
   /// \note Type of return data is a vector(without column name).
   /// \param[out] row The output tensor row.
   /// \return Status error code, returns OK if no error encountered.
+  /// \par Example
+  /// \code
+  ///      /* dataset is an instance of Dataset object */
+  ///      std::shared_ptr<Iterator> = dataset->CreateIterator();
+  ///      std::vector<mindspore::MSTensor> row;
+  ///      iter->GetNextRow(&row);
+  /// \endcode
   virtual Status GetNextRow(MSTensorVec *row);
 
   /// \brief Function to shut down the data pipeline.
@@ -144,6 +158,13 @@ class PullIterator : public Iterator {
   /// \note Type of return data is a vector(without column name).
   /// \param[out] row The output tensor row.
   /// \return Status error code, returns OK if no error encountered else false.
+  /// \par Example
+  /// \code
+  ///      /* dataset is an instance of Dataset object */
+  ///      std::shared_ptr<Iterator> = dataset->CreatePullBasedIterator();
+  ///      std::vector<mindspore::MSTensor> row;
+  ///      iter->GetNextRow(&row);
+  /// \endcode
   Status GetNextRow(MSTensorVec *const row) override;
 
   /// \brief Function to get specified rows from the data pipeline.
@@ -151,6 +172,13 @@ class PullIterator : public Iterator {
   /// \param[in] num_rows The number of rows to fetch.
   /// \param[out] row The output tensor row.
   /// \return Status error code, returns OK if no error encountered else false.
+  /// \par Example
+  /// \code
+  ///      /* dataset is an instance of Dataset object */
+  ///      std::shared_ptr<Iterator> = dataset->CreatePullBasedIterator();
+  ///      std::vector<std::vector<mindspore::MSTensor>> rows;
+  ///      iter->GetNextRow(5, &rows);
+  /// \endcode
   Status GetRows(int32_t num_rows, std::vector<MSTensorVec> *const row);
 
   /// \brief Method for building and launching the pipeline.

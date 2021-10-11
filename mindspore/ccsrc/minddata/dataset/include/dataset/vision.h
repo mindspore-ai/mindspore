@@ -38,7 +38,7 @@ class TensorOperation;
 namespace vision {
 
 /// \brief AdjustGamma TensorTransform.
-/// \notes Apply gamma correction on input image.
+/// \note Apply gamma correction on input image.
 class AdjustGamma final : public TensorTransform {
  public:
   /// \brief Constructor.
