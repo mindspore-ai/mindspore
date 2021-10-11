@@ -29,23 +29,47 @@ constexpr auto kNameAffine = "Affine";
 constexpr auto kAffineContext = "context";
 constexpr auto kAffineOutputDim = "output_dim";
 
+/// \brief Assert defined Affine operator prototype of lite.
 class MS_CORE_API Affine : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Affine() : PrimitiveC(kNameAffine) { InitIOName({"x1", "x2"}, {"outputs"}); }
+  /// \brief Destructor.
   ~Affine() = default;
   MS_DECLARE_PARENT(Affine, PrimitiveC);
+  /// \brief Method to init the op's attributes.
   void Init(const std::vector<int64_t> &contexts, int64_t output_dim, bool transpose_a = false,
             bool transpose_b = false);
+  /// \brief Method to set context attributes.
+  ///
+  /// \param[in] keep_dims Define the context.
   void set_context(const std::vector<int64_t> &);
+  /// \brief Method to set output_dim attributes.
+  ///
+  /// \param[in] output_dim Define the output dim.
   void set_output_dim(int64_t output_dim);
+  /// \brief Method to set transpose_a attributes.
+  ///
+  /// \param[in] transpose_b Define the if transpose a tensor.
   void set_transpose_a(bool transpose_a);
+  /// \brief Method to set transpose_b attributes.
+  ///
+  /// \param[in] transpose_b Define the if transpose b tensor.
   void set_transpose_b(bool transpose_b);
+  /// \brief Method to set activation_type attributes.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType &activation_type);
 
+  /// \brief Method to get transpose_a attributes.
   bool get_transpose_a() const;
+  /// \brief Method to get transpose_b attributes.
   bool get_transpose_b() const;
+  /// \brief Method to get context attributes.
   std::vector<int64_t> get_context() const;
+  /// \brief Method to get output_dim attributes.
   int64_t get_output_dim() const;
+  /// \brief Method to get activation_type attributes.
   ActivationType get_activation_type() const;
 };
 }  // namespace ops
