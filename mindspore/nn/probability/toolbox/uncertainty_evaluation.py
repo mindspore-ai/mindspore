@@ -40,8 +40,10 @@ class UncertaintyEvaluation:
         model (Cell): The model for uncertainty evaluation.
         train_dataset (Dataset): A dataset iterator to train model.
         task_type (str): Option for the task types of model
+
             - regression: A regression model.
             - classification: A classification model.
+
         num_classes (int): The number of labels of classification.
                       If the task type is classification, it must be set; otherwise, it is not needed.
                       Default: None.

@@ -1478,6 +1478,7 @@ class Tensor(Tensor_):
             axis (int, optional): The axis over which to select values. By default,
                 the flattened input array is used. Default: `None`.
             mode (‘raise’, ‘wrap’, ‘clip’, optional):
+
                 - edge: Pads with the edge values of `arr`.
                 - raise: Raises an error;
                 - wrap: Wraps around;
