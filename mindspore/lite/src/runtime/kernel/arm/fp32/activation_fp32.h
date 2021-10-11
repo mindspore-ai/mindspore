@@ -40,6 +40,10 @@ class ActivationCPUKernel : public InnerKernel {
   int DoActivation(int task_id);
 
  private:
+  int DoActivationFp32(int task_id);
+  int DoActivationInt32(int task_id);
+
+ private:
   int thread_count_;
   int type_;
   float alpha_;
