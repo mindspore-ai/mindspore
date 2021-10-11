@@ -16,6 +16,13 @@ This module is to support text processing for NLP. It includes two parts:
 transforms and utils. transforms is a high performance
 NLP text processing module which is developed with ICU4C and cppjieba.
 utils provides some general methods for NLP text processing.
+
+Common imported modules in corresponding API examples are as follows:
+
+.. code-block::
+
+    import mindspore.dataset as ds
+    from mindspore.dataset import text
 """
 import platform
 from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, \

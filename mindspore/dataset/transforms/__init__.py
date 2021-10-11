@@ -15,6 +15,15 @@
 This module is to support common augmentations. C_transforms is a high performance
 image augmentation module which is developed with C++ OpenCV. Py_transforms
 provide more kinds of image augmentations which is developed with Python PIL.
+
+Common imported modules in corresponding API examples are as follows:
+
+.. code-block::
+
+    import mindspore.dataset as ds
+    import mindspore.dataset.vision.c_transforms as c_vision
+    from mindspore.dataset.transforms import c_transforms
+    from mindspore.dataset.transforms import py_transforms
 """
 from .. import vision
 from . import c_transforms
