@@ -186,12 +186,23 @@ build_lite() {
               -DENABLE_ASAN=${ENABLE_ASAN} -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
       fi
     else
+      if [ "$(uname)" == "Darwin" ]; then
+        pkg_name=mindspore-lite-${VERSION_STR}-ios-simulator
+        cmake -DCMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake -DPLATFORM=SIMULATOR64 -DMSLITE_ENABLE_MINDRT="on" \
+              -DCMAKE_BUILD_TYPE="Release" -DPLATFORM_ARM64="off" -DENABLE_NEON="off" -DMSLITE_ENABLE_TOOLS="off" -DMSLITE_ENABLE_CONVERTER=off \
+              -DMSLITE_ENABLE_TRAIN="off" -DMSLITE_GPU_BACKEND="off" -DMSLITE_ENABLE_NPU="off" -DBUILD_MINDDATA="" -DMSLITE_ENABLE_V0=on \
+              -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite" \
+              -G Xcode ..
+      else
         cmake -DPLATFORM_X86_64=on -DCMAKE_BUILD_TYPE=${LITE_BUILD_TYPE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE}              \
               -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
               -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DENABLE_VERBOSE=${ENABLE_VERBOSE} "${BASEPATH}/mindspore/lite"
+      fi
     fi
-    if [ "$(uname)" == "Darwin" ]; then
+    if [[ "$(uname)" == "Darwin" && "${local_lite_platform}" != "x86_64" ]]; then
         xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet
+    elif [[ "$(uname)" == "Darwin" && "${local_lite_platform}" == "x86_64" ]]; then
+        xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphonesimulator -quiet
     else
       make -j$THREAD_NUM && make install && make package
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
@@ -210,7 +221,7 @@ build_lite() {
     else
         if [ "$(uname)" == "Darwin" ]; then
           mkdir -p ${BASEPATH}/output
-          cp -r ${BASEPATH}/mindspore/lite/build/src/Release-iphoneos/mindspore-lite.framework ${BASEPATH}/output/mindspore-lite.framework
+          cp -r ${BASEPATH}/mindspore/lite/build/src/Release-*/mindspore-lite.framework ${BASEPATH}/output/mindspore-lite.framework
           cd ${BASEPATH}/output
           tar -zcvf ${pkg_name}.tar.gz mindspore-lite.framework/
           sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256
