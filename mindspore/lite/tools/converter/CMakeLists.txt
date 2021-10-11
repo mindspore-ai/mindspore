@@ -119,6 +119,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/control_flow_pass.cc
         ../optimizer/graph/primitive_adjust_pass.cc
         ../optimizer/graph/decrease_transpose_algo.cc
+        ../optimizer/graph/lite_tensor_extractor.cc
         ../optimizer/graph/node_infershape.cc
         ../optimizer/graph/transpose_strategy.cc
         ../optimizer/graph/reduce_same_act_pass.cc

@@ -69,19 +69,14 @@ int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size
     return NNACL_NULL_PTR;
   }
 
-  for (size_t i = 0; i < num_elements; i++) {
-    tmp_shape.shape_size_[i] = 0;
-    tmp_shape.shape_[i] = NULL;
+  for (size_t i = 0; i < num_elements; ++i) {
+    tmp_shape.shape_size_[i] = output->element_shape_size_;
+    tmp_shape.shape_[i] = output->element_shape_;
   }
-  int ret = MallocTensorListData(output, kTypeUnknown, &tmp_shape);
-  if (ret != NNACL_OK) {
-    free(tmp_shape.shape_size_);
-    free(tmp_shape.shape_);
-    return NNACL_ERR;
-  }
+  int ret = MallocTensorListData(output, reserve_param->element_dtype_, &tmp_shape);
   free(tmp_shape.shape_size_);
   free(tmp_shape.shape_);
-  return NNACL_OK;
+  return ret;
 }
 
 REG_INFER(TensorListReserve, PrimType_TensorListReserve, TensorListReserveInferShape)
