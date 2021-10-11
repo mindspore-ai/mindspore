@@ -2,6 +2,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB CONVERTER_COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/graph_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/meta_graph_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/node_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/storage.cc
