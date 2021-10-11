@@ -42,7 +42,10 @@ int BatchnormCPUKernel::Init() {
 
 int BatchnormCPUKernel::ReSize() {
   FreeMeanAndVariance();
-  FillParam();
+  auto status = FillParam();
+  if (status != RET_OK) {
+    return RET_ERROR;
+  }
   return InitConstTensor();
 }
 
@@ -57,10 +60,11 @@ void BatchnormCPUKernel::FreeMeanAndVariance() {
   }
 }
 
-void BatchnormCPUKernel::FillParam() {
+int BatchnormCPUKernel::FillParam() {
   auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  CHECK_LESS_RETURN(n_dim - 1, 0);
   param->channel_ = input_shapes[n_dim - 1];
   param->unit_ = 1;
   for (size_t i = 0; i < n_dim - 1; i++) {
@@ -69,6 +73,7 @@ void BatchnormCPUKernel::FillParam() {
   if (default_momentum_ < 0.0f) {
     default_momentum_ = param->momentum_;
   }
+  return RET_OK;
 }
 
 int BatchnormCPUKernel::InitConstTensor() {

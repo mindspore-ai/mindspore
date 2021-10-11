@@ -37,10 +37,12 @@ int SliceInt8CPUKernel::Init() {
   CHECK_NULL_RETURN(param_);
 
   auto in_quant_args = input->quant_params();
+  CHECK_LESS_RETURN(in_quant_args.size(), 1);
   param_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   param_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto out_quant_args = output->quant_params();
+  CHECK_LESS_RETURN(out_quant_args.size(), 1);
   param_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
   param_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 
