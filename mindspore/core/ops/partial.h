@@ -23,11 +23,18 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePartial = "Partial";
+/// \brief Partial defined Partial operator prototype of lite.
 class MS_CORE_API Partial : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Partial() : PrimitiveC(kNamePartial) {}
+
+  /// \brief Destructor.
   ~Partial() = default;
+
   MS_DECLARE_PARENT(Partial, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
   void Init() {}
 };
 }  // namespace ops
