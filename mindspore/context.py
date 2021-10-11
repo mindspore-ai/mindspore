@@ -528,7 +528,7 @@ def set_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
-        The mode is not recommended being changed after net was initialized because the implementations of some
+        The mode is not recommended to be changed after net was initialized because the implementations of some
         operations are different in graph mode and pynative mode. Default: GRAPH_MODE.
 
     Some configurations are device specific, see the below table for details:
