@@ -27,6 +27,9 @@
 #endif
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "runtime/device/gpu/gpu_common.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 
 namespace mindspore {
 namespace kernel {
@@ -113,6 +116,9 @@ bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
         MS_LOG(INFO) << "Waiting for data...(" << repeat << " / 10)";
         continue;
       } else {
+#ifdef ENABLE_DUMP_IR
+        mindspore::RDR::TriggerAll();
+#endif
         MS_LOG(EXCEPTION) << "Get data timeout";
       }
     }
