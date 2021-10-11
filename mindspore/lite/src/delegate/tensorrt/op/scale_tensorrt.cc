@@ -128,8 +128,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (activation_tensor->getDimensions().nbDims > static_cast<int>(out_tensors_[0].Shape().size())) {
     op_out_tensor = AddSqueezeOp(activation_tensor, network);
   }
-
-  op_out_tensor->setName(out_tensors_[0].Name().c_str());
+  op_out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{op_out_tensor, out_format_});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(op_out_tensor, out_format_);
   return RET_OK;

@@ -45,7 +45,7 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   shape_layer->setName(op_name_.c_str());
-  shape_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  shape_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{shape_layer->getOutput(0), tensorrt_in_tensors_[0].format_});
   return RET_OK;
 }

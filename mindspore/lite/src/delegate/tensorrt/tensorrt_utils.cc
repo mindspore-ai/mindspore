@@ -19,18 +19,6 @@
 #include <map>
 
 namespace mindspore::lite {
-nvinfer1::Dims ConvertCudaDims(const std::vector<int64_t> &shape) {
-  nvinfer1::Dims dims{};
-  if (!shape.empty() && shape.size() <= static_cast<size_t>(dims.MAX_DIMS)) {
-    dims.nbDims = shape.size();
-    for (int i = 0; i < dims.nbDims; i++) {
-      dims.d[i] = shape[i];
-    }
-  } else {
-    MS_LOG(ERROR) << "invalid shape.";
-  }
-  return dims;
-}
 nvinfer1::Dims ConvertCudaDims(int data, size_t size) {
   nvinfer1::Dims dims{};
   if (size > static_cast<size_t>(dims.MAX_DIMS)) {

@@ -119,8 +119,7 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
-
-  activation_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  activation_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{activation_layer->getOutput(0), Format::NCHW});
   return RET_OK;
 }

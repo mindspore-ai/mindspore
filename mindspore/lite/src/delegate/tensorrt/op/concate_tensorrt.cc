@@ -24,7 +24,7 @@ int ConcateTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  if (in_tensors.size() != INPUT_SIZE2) {
+  if (in_tensors.size() < INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
@@ -102,7 +102,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     concate_layer->setAxis(axis);
   }
   concate_layer->setName(op_name_.c_str());
-  concate_layer->getOutput(0)->setName(out_tensors_[0].Name().c_str());
+  concate_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{concate_layer->getOutput(0), out_format});
   return RET_OK;
 }

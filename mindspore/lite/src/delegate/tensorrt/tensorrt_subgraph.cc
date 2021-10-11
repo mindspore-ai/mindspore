@@ -139,6 +139,13 @@ bool TensorRTSubGraph::SupportFP16() {
 }
 
 nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor) {
+  for (int i = 0; i < this->network_->getNbInputs(); i++) {
+    if (in_tensor.Name().compare(this->network_->getInput(i)->getName()) == 0) {
+      MS_LOG(INFO) << "input tensor is already added in network: " << in_tensor.Name();
+      return this->network_->getInput(i);
+    }
+  }
+
   auto cuda_dtype = ConvertDataType(in_tensor.DataType());
   if (static_cast<int>(cuda_dtype) == -1) {
     MS_LOG(ERROR) << "Unsupported input data type " << static_cast<int>(in_tensor.DataType());
@@ -214,13 +221,13 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
       if (trt_tensor.trt_tensor_ == nullptr) {
         // weight tensor
         if (trt_specific_weight_nodes_.find(cur_op->type()) == trt_specific_weight_nodes_.end()) {
-          if (in_tensor == nullptr) {
-            MS_LOG(ERROR) << "Weight Tensor is nullptr.";
+          if (in_tensor.Data() == nullptr) {
+            MS_LOG(ERROR) << "Weight Tensor data is nullptr.";
             return RET_ERROR;
           }
           trt_tensor.trt_tensor_ = lite::ConvertConstantTensor(this->network_, in_tensor);
           trt_tensor.format_ = Format::NHWC;
-          MS_LOG(INFO) << "auto convert constant tensor for: " << cur_op->GetOpName();
+          MS_LOG(INFO) << "auto convert constant tensor for: " << in_tensor.Name();
           cur_op->AddInnerInTensors(trt_tensor);
         }
       } else {
@@ -261,7 +268,8 @@ int TensorRTSubGraph::MarkOutputs() {
         if (out_op->outputs()[index] == out_tensor) {
           nvinfer1::ITensor *out_trt_tensor = out_op->GetInnerOutTensor()[index].trt_tensor_;
           if (out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-              out_op->GetInnerOutTensor()[index].format_ == Format::NCHW) {
+              out_op->GetInnerOutTensor()[index].format_ == Format::NCHW &&
+              !SameDims(out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions(), out_tensor.Shape())) {
             // transpose subgraph output from nchw to nhwc
             nvinfer1::IShuffleLayer *transpose_layer_out =
               NCHW2NHWC(network_, *out_op->GetInnerOutTensor()[index].trt_tensor_);
@@ -270,6 +278,7 @@ int TensorRTSubGraph::MarkOutputs() {
               return RET_ERROR;
             }
             transpose_layer_out->setName((out_tensor.Name() + "_transpose2NHWC").c_str());
+            out_trt_tensor = transpose_layer_out->getOutput(0);
           }
 
           out_trt_tensor->setName(out_tensor.Name().c_str());
@@ -421,12 +430,16 @@ int TensorRTSubGraph::Execute() {
     return RET_ERROR;
   }
   for (size_t i = 0; i < inputs_.size(); i++) {
-    runtime_->GetAllocator()->MarkMemValid(trt_in_tensor_name_[i], false);
+    if (runtime_->GetAllocator()->GetMemIsValid(trt_in_tensor_name_[i])) {
+      MS_LOG(INFO) << "no need memcpy to cuda for input tensor: " << trt_in_tensor_name_[i];
+      continue;
+    }
     int ret = runtime_->GetAllocator()->SyncMemInHostAndDevice(inputs_[i], trt_in_tensor_name_[i], true);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "sync mem from host to device failed for " << trt_in_tensor_name_[i];
       return ret;
     }
+    runtime_->GetAllocator()->MarkMemValid(trt_in_tensor_name_[i], true);
   }
 
   auto ret = this->trt_context_->executeV2(tensor_bindings_);
@@ -459,6 +472,11 @@ int TensorRTSubGraph::Execute() {
       MS_LOG(ERROR) << "sync mem from device to host failed for " << trt_out_tensor_name_[i];
       return sync_ret;
     }
+    runtime_->GetAllocator()->MarkMemValid(trt_out_tensor_name_[i], false);
+  }
+  // make mem invalid, prepare for next execute
+  for (size_t i = 0; i < inputs_.size(); i++) {
+    runtime_->GetAllocator()->MarkMemValid(trt_in_tensor_name_[i], false);
   }
   return RET_OK;
 }
@@ -467,7 +485,7 @@ ITensorHelper TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, const min
   for (auto input_op : cur_op->in_ops()) {
     for (size_t i = 0; i < input_op->outputs().size(); i++) {
       auto out_tensor = input_op->outputs().at(i);
-      if (in_tensor == out_tensor) {
+      if (in_tensor.Name().compare(out_tensor.Name()) == 0) {
         return input_op->GetInnerOutTensor().at(i);
       }
     }
