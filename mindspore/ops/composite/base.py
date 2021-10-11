@@ -446,7 +446,8 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
                 continue
             output = fn(*args)
             return output
-        raise ValueError(f"For 'MultitypeFuncGraph', cannot find fn match given args.")
+        raise ValueError(f"For 'MultitypeFuncGraph', cannot find fn match given args. Got (sigs, fn): {self.entries}, "
+                         f"and (dtype, args): {types}.")
 
     def register(self, *type_names):
         """

@@ -470,7 +470,7 @@ class _Reduce(PrimitiveWithInfer):
                 output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
         else:
             if axis_v is None:
-                raise ValueError(f"For {self.name}, axis could not be none.")
+                raise ValueError(f"For {self.name}, the 'axis' cannot be None.")
             out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
             output_max_shape = out_shape
             output_min_shape = out_shape
