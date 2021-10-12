@@ -103,7 +103,9 @@ void *CpuKernelManager::GetFunction(const std::string &kernel_name) {
   } else {
     fn = kernel_name;
   }
-  std::string fn_so = kCpuKernelMeta + fn + ".so";
+  KernelMeta *bin_map = KernelMeta::GetInstance();
+  auto fn_so = bin_map->kernel_meta_path();
+  fn_so.append(fn + ".so");
   auto handle = dlopen(fn_so.c_str(), RTLD_LAZY | RTLD_LOCAL);
   if (handle == nullptr) {
     MS_LOG(ERROR) << "Load " << fn_so << " failed. kernel: " << kernel_name;

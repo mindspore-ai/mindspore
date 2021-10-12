@@ -382,7 +382,18 @@ int32_t AkgKernelPool::Wait() const {
   return -1;
 }
 
+KernelPackPtr AkgKernelBuilder::AkgSearchCache(const std::string &kernel_name) {
+  auto processor = GetStrProcessorFromContext();
+  return SearchCache(kernel_name, processor);
+}
+
+KernelPackPtr AkgKernelBuilder::AkgInsertCache(const std::string &kernel_name) {
+  auto processor = GetStrProcessorFromContext();
+  return InsertCache(kernel_name, processor);
+}
+
 std::vector<JsonNodePair> AkgKernelBuilder::GetNotCachedKernels(const std::vector<JsonNodePair> &build_args) {
+  LoadCache();
   std::unordered_set<std::string> kernel_name_set;
   std::vector<JsonNodePair> new_build_args;
   for (const auto &[json_generator, anf_node] : build_args) {
@@ -523,6 +534,40 @@ bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build
   }
 
   return true;
+}
+
+void AkgKernelBuilder::LoadCache() {
+  static bool has_load = false;
+  if (has_load) {
+    return;
+  }
+  auto bin_map = KernelMeta::GetInstance();
+  auto kernel_dir = bin_map->kernel_meta_path();
+  DIR *dir = opendir(kernel_dir.c_str());
+  if (dir == nullptr) {
+    MS_LOG(DEBUG) << "kernel dir [" << kernel_dir << "] not exist";
+    return;
+  }
+  struct dirent *entry;
+  constexpr size_t SUFFIX_LENS = 5;
+  while ((entry = readdir(dir)) != nullptr) {
+    std::string kernel_json = entry->d_name;
+    if (kernel_json.length() <= SUFFIX_LENS) {
+      continue;
+    }
+    auto suffix = kernel_json.substr(kernel_json.length() - SUFFIX_LENS);
+    if (suffix != kJsonSuffix) {
+      continue;
+    }
+    auto sp = kernel_json.rfind('/');
+    if (sp != std::string::npos) {
+      continue;
+    }
+    auto kernel_name = kernel_json.substr(0, kernel_json.length() - SUFFIX_LENS);
+    bin_map->Insert(kernel_name, kernel_dir + kernel_json);
+  }
+  has_load = true;
+  return;
 }
 
 bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
