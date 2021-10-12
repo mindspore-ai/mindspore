@@ -142,7 +142,7 @@ AnfNodePtr TsaAtomicAddToFirstTensor::ProcessTsaFirstNode(const KernelGraphPtr &
 }
 
 void TsaAtomicAddToFirstTensor::CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
-                                                       const AnfNodePtr &modified_input) {
+                                                       const AnfNodePtr &modified_input, bool) {
   // Change kernel build info with modify input
   auto kernel_info = static_cast<device::KernelInfo *>(composite_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);

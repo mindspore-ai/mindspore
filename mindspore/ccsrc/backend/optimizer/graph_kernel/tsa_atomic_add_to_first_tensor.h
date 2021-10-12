@@ -49,7 +49,8 @@ class TsaAtomicAddToFirstTensor : public AtomicCleanInsertter {
 
  private:
   void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) override;
-  void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) override;
+  void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
+                              bool bypass = true) override;
   void ProcessTsa(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node, const FuncGraphManagerPtr &mng);
   AnfNodePtr ProcessTsaFirstNode(const KernelGraphPtr &main_graph, const AnfNodePtr &node);
   AnfNodePtr FindTsaFirstRealInputInGraph(const KernelGraphPtr &main_graph, const AnfNodePtr &node);

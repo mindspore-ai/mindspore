@@ -35,14 +35,12 @@ CNodePtr AddCastCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, c
                       const TypeId &input_type, const TypeId &output_type, const std::vector<size_t> &origin_shape,
                       const TypeId &origin_type) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  std::string input_format = format;
-  std::string output_format = format;
   CNodePtr cast = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), input});
   MS_EXCEPTION_IF_NULL(cast);
   // set kernel build info
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-  builder.SetInputsFormat({input_format});
-  builder.SetOutputsFormat({output_format});
+  builder.SetInputsFormat({format});
+  builder.SetOutputsFormat({format});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
   builder.SetFusionType(kernel::FusionType::OPAQUE);
@@ -260,8 +258,7 @@ bool DecreaseComputePrecision::Run(const FuncGraphPtr &func_graph) {
     }
   }
   if (changed) {
-    mng->RemoveRoots();
-    mng->KeepRoots({func_graph});
+    UpdateMng(mng, func_graph);
   }
   return changed;
 }

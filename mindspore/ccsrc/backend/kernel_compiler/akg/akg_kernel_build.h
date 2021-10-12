@@ -105,6 +105,16 @@ class AkgKernelPool {
   constexpr inline static int32_t kDoneIdx_ = 2;
 
  private:
+  inline size_t *ListBegin(int32_t list_idx) const { return kernel_lists_[list_idx]; }
+
+  inline size_t *ListEnd(int32_t list_idx) const {
+    return kernel_lists_[list_idx] + kernel_lists_[list_idx][kMaxKernelNum_];
+  }
+
+  inline void ResetListSize(int32_t list_idx, size_t val) { kernel_lists_[list_idx][kMaxKernelNum_] = val; }
+
+  inline void IncListSize(int32_t list_idx, size_t val) { kernel_lists_[list_idx][kMaxKernelNum_] += val; }
+
   void *CreateSharedMem(const std::string &path);
   std::string GetCurrentPath() const;
 
