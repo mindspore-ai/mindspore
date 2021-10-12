@@ -16,6 +16,8 @@
 
 #include "backend/optimizer/graph_kernel/add_stitch_atomic_clean_gpu.h"
 
+#include <algorithm>
+#include <string>
 #include "base/core_ops.h"
 #include "ir/tensor.h"
 #include "utils/utils.h"
@@ -29,42 +31,6 @@
 
 namespace mindspore {
 namespace opt {
-void StitchAtomicCleanInsertter::CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) {
-  // Change kernel build info.
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(composite_node->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  const auto &origin_kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-  auto origin_inputs_format = origin_kernel_build_info->GetAllInputFormats();
-  auto origin_outputs_format = origin_kernel_build_info->GetAllOutputFormats();
-  auto origin_inputs_type = origin_kernel_build_info->GetAllInputDeviceTypes();
-  auto origin_outputs_type = origin_kernel_build_info->GetAllOutputDeviceTypes();
-  auto origin_processor = origin_kernel_build_info->processor();
-
-  std::vector<std::string> &new_inputs_format = origin_inputs_format;
-  std::vector<TypeId> &new_inputs_type = origin_inputs_type;
-  std::vector<std::string> new_outputs_format;
-  std::vector<TypeId> new_outputs_type;
-  for (size_t i = 0; i < origin_outputs_format.size(); ++i) {
-    new_outputs_format.push_back(origin_outputs_format[i]);
-    new_outputs_type.push_back(origin_outputs_type[i]);
-  }
-
-  auto kernel_with_index = AnfAlgo::VisitKernel(new_input, 0);
-  new_inputs_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
-  new_inputs_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
-
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder new_info_builder;
-  new_info_builder.SetInputsFormat(new_inputs_format);
-  new_info_builder.SetInputsDeviceType(new_inputs_type);
-  new_info_builder.SetOutputsFormat(new_outputs_format);
-  new_info_builder.SetOutputsDeviceType(new_outputs_type);
-  new_info_builder.SetProcessor(origin_processor);
-  new_info_builder.SetKernelType(KernelType::AKG_KERNEL);
-  new_info_builder.SetFusionType(kernel::FusionType::OPAQUE);
-  auto new_selected_info = new_info_builder.Build();
-  AnfAlgo::SetSelectKernelBuildInfo(new_selected_info, composite_node.get());
-}
-
 CNodePtr StitchAtomicCleanInsertter::CreateInplaceAssignNode(const FuncGraphPtr &sub_graph,
                                                              const AnfNodePtr &new_parameter) const {
   // add inplaceassign
@@ -114,7 +80,7 @@ void StitchAtomicCleanInsertter::ProcessOriginCNode(const AnfNodePtr &composite_
       }
       connected = true;
     }
-    CorrectKernelBuildInfo(composite_node, new_input);
+    CorrectKernelBuildInfo(composite_node, new_input, false);
   }
 
   auto old_graph_name = GetValue<std::string>(sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
@@ -179,8 +145,7 @@ bool StitchAtomicCleanInsertter::Run(const FuncGraphPtr &func_graph) {
   }
 
   if (changed) {
-    mng->RemoveRoots();
-    mng->KeepRoots({func_graph});
+    UpdateMng(mng, func_graph);
   }
 
   return changed;

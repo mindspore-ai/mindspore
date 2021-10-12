@@ -109,8 +109,8 @@ bool RaiseReductionPrecision::Run(const FuncGraphPtr &func_graph) {
     mng = Manage(func_graph, true);
     func_graph->set_manager(mng);
   }
-  auto todos = TopoSort(func_graph->get_return());
   bool changed = false;
+  auto todos = TopoSort(func_graph->get_return());
   for (const auto &node : todos) {
     if (AnfAlgo::IsGraphKernel(node)) {
       auto sub_func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
@@ -119,8 +119,7 @@ bool RaiseReductionPrecision::Run(const FuncGraphPtr &func_graph) {
     }
   }
   if (changed) {
-    mng->RemoveRoots();
-    mng->KeepRoots({func_graph});
+    UpdateMng(mng, func_graph);
   }
   return changed;
 }

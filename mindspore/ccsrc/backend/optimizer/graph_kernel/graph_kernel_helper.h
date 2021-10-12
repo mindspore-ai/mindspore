@@ -145,6 +145,9 @@ void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList
 
 std::vector<PrimitivePtr> GetValidOps(
   const std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> &ops_with_level, unsigned int level);
+
+void UpdateMng(FuncGraphManagerPtr mng, const FuncGraphPtr &func_graph);
 }  // namespace opt
 }  // namespace mindspore
+
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_
