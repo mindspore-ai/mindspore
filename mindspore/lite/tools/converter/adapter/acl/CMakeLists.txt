@@ -16,6 +16,7 @@ file(GLOB ACL_SRC
         )
 
 set(ENABLE_ACL on)
+set(MODE_ASCEND_ACL off)
 
 add_subdirectory(${TOP_DIR}/mindspore/ccsrc/transform/graph_ir _mindspore_transform_graph_ir_obj)
 add_subdirectory(${TOP_DIR}/mindspore/ccsrc/cxx_api mindspore_shared_lib)

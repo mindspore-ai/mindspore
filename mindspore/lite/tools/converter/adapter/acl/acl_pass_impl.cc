@@ -35,7 +35,7 @@
 
 namespace mindspore {
 namespace opt {
-constexpr std::set kDevice = {"Ascend310", "Ascend710"};
+static const std::set<std::string> kDevice = {"Ascend310", "Ascend710"};
 namespace {
 constexpr auto kMakeTuple = "MakeTuple";
 constexpr auto kOutputNames = "outputs_names";
@@ -45,6 +45,8 @@ constexpr auto kNCHWFormat = "NCHW";
 constexpr auto kToNHWCFormatPass = "ToNHWCFormat";
 constexpr auto kToNCHWFormatPass = "ToNCHWFormat";
 constexpr auto kInferShapePass = "InferShapePass";
+constexpr auto kConstFoldPass = "ConstFoldPass";
+constexpr auto kRemoveRedundantOpPass = "RemoveRedundantOpPass";
 constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
@@ -54,7 +56,6 @@ constexpr size_t kTupleGetItemFirstInputIdx = 1;
 AclPassImpl::AclPassImpl(const converter::Flags &config)
     : device_type_(config.device),
       fmk_type_(config.fmk),
-      graph_input_format_(std::move(config.graphInputFormatStr)),
       acl_model_option_cfg_(std::move(config.aclModelOptionCfgParam)) {}
 
 ParameterPtr AclPassImpl::CreateOmParameter(const FuncGraphPtr &func_graph, const Buffer &om_data) {
@@ -153,14 +154,26 @@ STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraph
   return lite::RET_OK;
 }
 
+STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
+  if (!lite::RunOptimizerPass(func_graph, {kRemoveRedundantOpPass})) {
+    MS_LOG(ERROR) << "Remove redundant op pass failed.";
+    return lite::RET_ERROR;
+  }
+  if (!lite::RunOptimizerPass(func_graph, {kConstFoldPass})) {
+    MS_LOG(ERROR) << "Const fold pass failed.";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
 STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
   if (fmk_type_ == converter::kFmkTypeMs) {
-    MS_LOG(INFO) << "MindIr no need to pre proc graph.";
+    MS_LOG(DEBUG) << "MindIr no need to change format.";
     return lite::RET_OK;
   }
   // The format of nodes (cnode, parameter, val) must be nchw due to interface of convert om
   if (!lite::RunOptimizerPass(func_graph, {kInferShapePass, kToNCHWFormatPass, kDelRedundantTranspose})) {
-    MS_LOG(ERROR) << "To nchw format success.";
+    MS_LOG(ERROR) << "To nchw format failed.";
     return lite::RET_ERROR;
   }
   MS_LOG(DEBUG) << "Pre proc graph success.";
@@ -168,10 +181,6 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
-  if (graph_input_format_ == kNCHWFormat) {
-    MS_LOG(INFO) << "No need to transpose format to nhwc.";
-    return lite::RET_OK;
-  }
   if (!lite::RunOptimizerPass(func_graph, {kToNHWCFormatPass})) {
     MS_LOG(ERROR) << "To NHWC Format failed.";
     return lite::RET_ERROR;

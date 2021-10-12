@@ -44,6 +44,7 @@ class AclPassImpl {
 
  private:
   bool IsDeviceAscend();
+  STATUS CommonPass(const FuncGraphPtr &func_graph);
   STATUS PreProcGraph(const FuncGraphPtr &func_graph);
   STATUS PostProcGraph(const FuncGraphPtr &func_graph);
   STATUS DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager);
@@ -66,7 +67,6 @@ class AclPassImpl {
 
   std::string device_type_;
   FmkType fmk_type_;
-  std::string graph_input_format_;
   lite::acl::AclModelOptionCfg acl_model_option_cfg_;
   ParameterPtr om_parameter_ = nullptr;
   CNodePtr custom_node_ = nullptr;

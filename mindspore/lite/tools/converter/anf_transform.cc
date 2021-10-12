@@ -511,6 +511,7 @@ bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
   auto is_train = config->trainModel;
   std::unordered_map<std::string, opt::PassPtr> passes = {
     {"DumpGraph", std::make_shared<opt::DumpGraph>(config)},
+    {"RemoveRedundantOpPass", std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel)},
     {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train)},
     {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train)},
     {"ConstFoldPass", std::make_shared<opt::ConstFoldPass>(fmk, is_train)},

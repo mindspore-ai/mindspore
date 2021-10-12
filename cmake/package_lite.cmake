@@ -464,7 +464,7 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
 
         if(MSLITE_ENABLE_ACL)
-            set(LITE_ACL_DIR ${TOP_DIR}/mindspore/lite/build/tools/converter/acl)
+            set(LITE_ACL_DIR ${TOP_DIR}/mindspore/lite/build/tools/converter/adapter/acl)
             install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
