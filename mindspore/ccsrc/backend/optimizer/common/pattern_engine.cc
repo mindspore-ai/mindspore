@@ -269,7 +269,7 @@ EquivPtr PatternEngine::Match(const BaseRef &pattern, const BaseRef &expr, const
   }
 
   // 2. check equal
-  if (PatternEngine::AnfNodeEqual(pattern_ref, expr_ref)) {
+  if (opt::AnfEqual(pattern_ref, expr_ref)) {
     return equiv;
   }
 
@@ -299,57 +299,6 @@ EquivPtr PatternEngine::Match(const BaseRef &pattern, const BaseRef &expr, const
   equiv = AlignSVar(values_pattern, values_expr, primitive_vars, equiv);
   UpdateEquivMap(values_pattern, expr_ref, primitive_vars, equiv);
   return equiv;
-}
-
-bool PatternEngine::AnfNodeEqual(const BaseRef &a, const BaseRef &b) {
-  if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
-    auto a_node = utils::cast<AnfNodePtr>(a);
-    auto b_node = utils::cast<AnfNodePtr>(b);
-    MS_EXCEPTION_IF_NULL(a_node);
-    MS_EXCEPTION_IF_NULL(b_node);
-    if (IsValueNode<Primitive>(a_node) && IsValueNode<Primitive>(b_node)) {
-      auto a_value_node = a_node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(a_value_node);
-      auto a_value = a_value_node->value();
-      MS_EXCEPTION_IF_NULL(a_value);
-      auto a_prim = a_value->cast<PrimitivePtr>();
-      MS_EXCEPTION_IF_NULL(a_prim);
-
-      auto b_value_node = b_node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(b_value_node);
-      auto b_value = b_value_node->value();
-      MS_EXCEPTION_IF_NULL(b_value);
-      auto b_prim = b_value->cast<PrimitivePtr>();
-      MS_EXCEPTION_IF_NULL(b_prim);
-
-      return a_prim->name() == b_prim->name();
-    } else if (a_node->isa<ValueNode>() && b_node->isa<ValueNode>()) {
-      auto a_value_node_ptr = a_node->cast<ValueNodePtr>();
-      if (a_value_node_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "cast value node ptr fail";
-      }
-      auto a_value_ptr = a_value_node_ptr->value();
-      if (a_value_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "value ptr is nullptr";
-      }
-
-      auto b_value_node_ptr = b_node->cast<ValueNodePtr>();
-      if (b_value_node_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "cast value node ptr fail";
-      }
-      auto b_value_ptr = b_value_node_ptr->value();
-      if (b_value_ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "value ptr is nullptr";
-      }
-
-      return (*a_value_ptr) == (*b_value_ptr);
-    }
-    MS_LOG(DEBUG) << "check AnfNodePtr equal";
-  }
-  if (utils::isa<FuncGraphPtr>(a) && utils::isa<FuncGraphPtr>(b)) {
-    MS_LOG(DEBUG) << "check GraphPtr equal";
-  }
-  return a == b;
 }
 
 bool PatternEngine::CNodeTypeEqual(const BaseRef &a, const BaseRef &b) {

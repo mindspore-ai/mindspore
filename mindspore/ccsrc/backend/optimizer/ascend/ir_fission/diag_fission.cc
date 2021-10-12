@@ -27,10 +27,9 @@ constexpr size_t kDiagInputNum = 1;
 constexpr size_t kDiagInputMaxDim = 4;
 
 template <typename T>
-void SetAssistTensorData(void *data, T value, size_t dims_size) {
+void SetAssistTensorData(void *data, const T &value, size_t dims_size) {
   MS_EXCEPTION_IF_NULL(data);
   auto tensor_data = reinterpret_cast<T *>(data);
-  MS_EXCEPTION_IF_NULL(tensor_data);
   for (size_t i = 0; i < dims_size; ++i) {
     tensor_data[(1 + dims_size) * i] = value;
   }
@@ -46,7 +45,7 @@ ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const
   for (size_t i = 0; i < ori_shape.size(); i++) {
     dims = dims * ori_shape[i];
   }
-  output_shape.insert(output_shape.end(), ori_shape.begin(), ori_shape.end());
+  (void)output_shape.insert(output_shape.end(), ori_shape.begin(), ori_shape.end());
   auto type = AnfAlgo::GetOutputInferDataType(node, 0);
   std::vector<int64_t> assist_shape;
   std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(assist_shape), SizeToLong);
@@ -95,7 +94,7 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
   }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDiag->name()))};
   auto assist_const = CreateAssistNode(graph, diag_cnode, input_shape);
-  new_inputs.insert(new_inputs.end(), diag_cnode->inputs().begin() + 1, diag_cnode->inputs().end());
+  (void)new_inputs.insert(new_inputs.end(), diag_cnode->inputs().begin() + 1, diag_cnode->inputs().end());
   new_inputs.push_back(assist_const);
   CNodePtr new_cnode = graph->NewCNode(new_inputs);
   MS_EXCEPTION_IF_NULL(new_cnode);
