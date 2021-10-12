@@ -418,14 +418,14 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
         fill_value (Union[int, tuple]): The pixel intensity of the borders if
             the padding_mode is 'constant'. If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
-        padding_mode (str): The method of padding. Can be any of
-            ['constant', 'edge', 'reflect', 'symmetric'].
-            - 'constant', means it fills the border with constant values
-            - 'edge', means it pads with the last value on the edge
-            - 'reflect', means it reflects the values on the edge omitting the last
-            value of edge
-            - 'symmetric', means it reflects the values on the edge repeating the last
-            value of edge
+        padding_mode (str): The method of padding. Can be any of ['constant', 'edge', 'reflect', 'symmetric'].
+
+              - 'constant', means it fills the border with constant values
+              - 'edge', means it pads with the last value on the edge
+              - 'reflect', means it reflects the values on the edge omitting the last
+                value of edge
+              - 'symmetric', means it reflects the values on the edge repeating the last
+                value of edge
 
     Returns:
         PIL image, Cropped image.
@@ -845,14 +845,14 @@ def pad(img, padding, fill_value, padding_mode):
         fill_value (Union[int, tuple]): The pixel intensity of the borders if
             the padding_mode is "constant". If it is a 3-tuple, it is used to
             fill R, G, B channels respectively.
-        padding_mode (str): The method of padding. Can be any of
-            ['constant', 'edge', 'reflect', 'symmetric'].
-            - 'constant', means it fills the border with constant values
-            - 'edge', means it pads with the last value on the edge
-            - 'reflect', means it reflects the values on the edge omitting the last
-            value of edge
-            - 'symmetric', means it reflects the values on the edge repeating the last
-            value of edge
+        padding_mode (str): The method of padding. Can be any of ['constant', 'edge', 'reflect', 'symmetric'].
+
+              - 'constant', means it fills the border with constant values
+              - 'edge', means it pads with the last value on the edge
+              - 'reflect', means it reflects the values on the edge omitting the last
+                value of edge
+              - 'symmetric', means it reflects the values on the edge repeating the last
+                value of edge
 
     Returns:
         img (PIL image), Padded image.

@@ -876,6 +876,7 @@ def get_ps_context(attr_key):
 
     Args:
         attr_key (str): The key of the attribute:
+
             - enable_ps (bool): Whether to enable parameter server training mode.
 
     Returns:
