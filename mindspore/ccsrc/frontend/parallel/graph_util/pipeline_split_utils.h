@@ -57,7 +57,7 @@ void Reorder(const FuncGraphPtr &root);
 void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager);
 void HandleMicroBatch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
 void BroadCastMicroBatch(const CNodePtr &node, NodeUsersMap *node_users_map, const ValuePtr &value, size_t max_depth);
-AnfNodePtr GetPreNode(const AnfNodePtr &node, size_t max_depth);
+AnfNodePtr GetPreNode(const AnfNodePtr &node);
 void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
 void SetStridedSliceStrategy(const AnfNodePtr &node);
 void ParameterStartNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager);
