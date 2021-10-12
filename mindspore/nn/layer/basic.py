@@ -856,7 +856,7 @@ class ResizeBilinear(Cell):
         - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape
           :math:`(batch, channels, height, width)`, with data type of float16 or float32.
         - **size** (Union[tuple[int], list[int]]): A tuple or list of 2 int elements
-          :math:`(new\_height, new_\width)`,the new size of the tensor.
+          :math:`(new\_height, new\_width)`,the new size of the tensor.
           One and only one of size and scale_factor can be set to None. Default: None.
         - **scale_factor** (int): The scale factor of new size of the tensor. The value should be positive integer.
           One and only one of size and scale_factor can be set to None. Default: None.
