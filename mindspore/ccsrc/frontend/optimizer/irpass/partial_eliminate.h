@@ -58,7 +58,6 @@ class PartialEliminater : public AnfVisitor {
       (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args));
       TraceGuard guard(std::make_shared<TracePartialTransform>(node->debug_info()));
       auto new_node = node->func_graph()->NewCNode(args);
-      new_node->set_abstract(node->abstract());
       return new_node;
     }
     // {X, Ys, Xs} if Xs has monad

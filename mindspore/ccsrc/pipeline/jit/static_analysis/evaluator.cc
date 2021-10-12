@@ -273,51 +273,6 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   return res;
 }
 
-EvalResultPtr BaseFuncGraphEvaluator::RunShortCircuit(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                                                      const AnfNodeConfigPtr &out_conf) {
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &conf) -> AbstractBasePtr {
-                         MS_EXCEPTION_IF_NULL(conf);
-                         return conf->ObtainEvalResult()->abstract();
-                       });
-  args_spec_list = NormalizeArgs(args_spec_list);
-  args_spec_list = BroadenUndeterminedArgs(args_spec_list);
-
-  auto func_graph_evaluator = dyn_cast<FuncGraphEvaluator>(shared_from_base<BaseFuncGraphEvaluator>());
-  if (func_graph_evaluator == nullptr) {
-    MS_LOG(EXCEPTION) << "Only support for FuncGraphEvaluator, but it's " << ToString();
-  }
-  const auto &fg = func_graph_evaluator->GetFuncGraph(engine, args_spec_list);
-  MS_EXCEPTION_IF_NULL(fg);
-  const auto &output = fg->output();
-  MS_EXCEPTION_IF_NULL(output);
-  if (!IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
-    MS_LOG(DEBUG) << "FuncGraph output is not MakeTuple but: " << output->DebugString();
-    return nullptr;
-  }
-  const auto &output_cnode = output->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(output_cnode);
-  const auto &inputs = output_cnode->inputs();
-  if (inputs.size() != 3) {
-    MS_LOG(DEBUG) << "Size of func graph output is 3, but: " << output->DebugString();
-    return nullptr;
-  }
-  const auto &primal_abstract = inputs[1]->user_data<abstract::AbstractBase>("primal_abstract");
-  const auto &item_fg = GetValueNode<FuncGraphPtr>(inputs[2]);
-  if (primal_abstract != nullptr && item_fg != nullptr) {
-    MS_LOG(DEBUG) << "Try to build result from primal abstract: " << primal_abstract->ToString()
-                  << " and fg: " << item_fg->ToString();
-    auto context = parent_context_->NewContext(fg, args_spec_list);
-    const auto &item_fg_abstract = std::make_shared<abstract::FuncGraphAbstractClosure>(item_fg, context, inputs[2]);
-    AbstractBasePtrList abs_list{primal_abstract, item_fg_abstract};
-    const auto &tuple_abstract = std::make_shared<abstract::AbstractTuple>(abs_list);
-    auto res = std::make_shared<EvalResult>(tuple_abstract, nullptr);
-    return res;
-  }
-  return nullptr;
-}
-
 void BroadenArgs(const AbstractBasePtrList &args_spec_list, AbstractBasePtrList *broaded_args) {
   MS_EXCEPTION_IF_NULL(broaded_args);
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(*broaded_args),
