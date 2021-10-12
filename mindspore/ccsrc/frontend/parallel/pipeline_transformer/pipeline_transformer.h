@@ -69,8 +69,7 @@ class PipelineTransformer {
                                   const ValuePtr &micro, size_t pos, const std::vector<AnfNodePtr> ops);
   ValuePtr SetMicroBatch(const AnfNodePtr &node, int64_t micro_size);
   std::vector<AnfNodePtr> HandleSharedParameter();
-  SendAttr InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, int64_t user_node_stage,
-                      int64_t node_stage, const ValuePtr &value);
+  SendAttr InsertSend(const AnfNodePtr &parameter, int64_t user_node_stage, int64_t node_stage, const ValuePtr &value);
   AnfNodePtr InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
                            int64_t user_node_stage, int64_t node_stage, const ValuePtr &value,
                            const AnfNodePtr &graph_param);

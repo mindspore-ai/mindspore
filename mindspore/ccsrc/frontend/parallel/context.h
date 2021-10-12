@@ -135,7 +135,7 @@ class ParallelContext {
   void Reset();
   void ParallelParameterContextInitShape(const FuncGraphPtr &func_graph);
   void ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                            AbstractBasePtr ptr);
+                                            const AbstractBasePtr &ptr);
   void ParallelParameterContextCkptShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
                                          const AbstractBasePtr &ptr);
 
