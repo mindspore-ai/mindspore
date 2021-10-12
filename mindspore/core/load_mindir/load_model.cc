@@ -199,12 +199,12 @@ std::string LoadPreprocess(const std::string &file_name) {
 
 std::vector<std::shared_ptr<FuncGraph>> LoadMindIRs(std::vector<std::string> file_names, bool is_lite,
                                                     const unsigned char *dec_key, const size_t key_len,
-                                                    const std::string &dec_mode, bool inc_load) {
+                                                    const std::string &dec_mode) {
   std::vector<std::shared_ptr<FuncGraph>> funcgraph_vec;
   MS_LOG(DEBUG) << "Load multiple MindIR files.";
   for (const auto &file_name : file_names) {
     MS_LOG(DEBUG) << "Load " << file_name;
-    funcgraph_vec.push_back(LoadMindIR(file_name, is_lite, dec_key, key_len, dec_mode, inc_load));
+    funcgraph_vec.push_back(LoadMindIR(file_name, is_lite, dec_key, key_len, dec_mode, true));
   }
   return funcgraph_vec;
 }
@@ -281,6 +281,9 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   model_parser.SetMindIRKeySize(key_len);
   model_parser.SetMindIRDecMode(dec_mode);
 
+  if (!inc_load) {
+    MSANFModelParser::LoadTensorMapClear();
+  }
   if (is_lite) {
     model_parser.SetLite();
   }

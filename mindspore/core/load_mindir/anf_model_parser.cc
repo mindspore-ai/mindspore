@@ -36,6 +36,7 @@
 using std::string;
 
 namespace mindspore {
+std::map<std::string, tensor::TensorPtr> MSANFModelParser::load_tensor_map_;
 static constexpr char kConstantValueNode[] = "Constant";
 static constexpr char kCNodeShapeAttr[] = "shape";
 static constexpr char kCNodeShape1Attr[] = "shape1";
