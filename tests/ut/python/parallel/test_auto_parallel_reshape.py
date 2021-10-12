@@ -47,8 +47,44 @@ class GradWrap(nn.Cell):
     def construct(self, x):
         return grad_all(self.network)(x)
 
+class NetWithLossTwoInput(nn.Cell):
+    def __init__(self, network):
+        super(NetWithLossTwoInput, self).__init__()
+        self.loss = VirtualLoss()
+        self.network = network
+
+    def construct(self, x, y):
+        predict = self.network(x, y)
+        return self.loss(predict)
+
+class GradWrapTwoInput(nn.Cell):
+    def __init__(self, network):
+        super(GradWrapTwoInput, self).__init__()
+        self.network = network
+
+    def construct(self, x, y):
+        return grad_all(self.network)(x, y)
+
+
+def compile_graph(net, parallel_mode, device_num, x):
+    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
+    net.set_auto_parallel()
+    net.set_train()
+    _cell_graph_executor.compile(net, x)
+
+def compile_graph_two_input(net, parallel_mode, device_num, x, y):
+    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
+    net.set_auto_parallel()
+    net.set_train()
+    _cell_graph_executor.compile(net, x, y)
+
 
 def test_reshape_matmul():
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: reshape - matmul net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -62,16 +98,16 @@ def test_reshape_matmul():
             return out
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([8 * size, 28, 1, 1]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_graph(net, "auto_parallel", size, x)
 
 def test_reshape_reshape():
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: reshape - reshape net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -85,17 +121,17 @@ def test_reshape_reshape():
             return out
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([8 * size, 28, 1, 1]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_graph(net, "auto_parallel", size, x)
 
 
 def test_reshape_auto_1():
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: relu - reshape - matmul net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -111,17 +147,17 @@ def test_reshape_auto_1():
             return out
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([8 * size, 28, 1, 1]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_graph(net, "auto_parallel", size, x)
 
 
 def test_reshape_auto_2():
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: reshape - matmul -reshape net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -140,17 +176,17 @@ def test_reshape_auto_2():
             return out
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([8 * size, 28, 1, 1]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_graph(net, "auto_parallel", size, x)
 
 
 def test_reshape_auto_3():
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: reshape as last node net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -166,17 +202,17 @@ def test_reshape_auto_3():
             return out
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([8 * size, 28]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_graph(net, "auto_parallel", size, x)
 
 
 def test_reshape_auto_4():
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: reshape - reshape net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -193,35 +229,17 @@ def test_reshape_auto_4():
             return out
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([8 * size, 28, 1, 1]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_graph(net, "auto_parallel", size, x)
 
 
 def test_reshape_auto_5():
-    class NetWithLoss5(nn.Cell):
-        def __init__(self, network):
-            super(NetWithLoss5, self).__init__()
-            self.loss = VirtualLoss()
-            self.network = network
-
-        def construct(self, x, y):
-            predict = self.network(x, y)
-            return self.loss(predict)
-
-    class GradWrap5(nn.Cell):
-        def __init__(self, network):
-            super(GradWrap5, self).__init__()
-            self.network = network
-
-        def construct(self, x, y):
-            return grad_all(self.network)(x, y)
-
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: modify wide&deep small net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -243,35 +261,17 @@ def test_reshape_auto_5():
             return out
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([4, 1024 * size, 1]), dtype=ms.float32)
     y = Tensor(np.ones([4, 1024 * size,]), dtype=ms.float32)
-
-    net = GradWrap5(NetWithLoss5(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    net = GradWrapTwoInput(NetWithLossTwoInput(Net()))
+    compile_graph_two_input(net, "auto_parallel", size, x, y)
 
 def test_reshape_auto_6():
-    class NetWithLoss6(nn.Cell):
-        def __init__(self, network):
-            super(NetWithLoss6, self).__init__()
-            self.loss = VirtualLoss()
-            self.network = network
-
-        def construct(self, x, y):
-            predict = self.network(x, y)
-            return self.loss(predict)
-
-    class GradWrap6(nn.Cell):
-        def __init__(self, network):
-            super(GradWrap6, self).__init__()
-            self.network = network
-
-        def construct(self, x, y):
-            return grad_all(self.network)(x, y)
-
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: modify wide&deep small net in auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -291,17 +291,17 @@ def test_reshape_auto_6():
             return out
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([4, 1024, 1]), dtype=ms.float32)
     y = Tensor(np.ones([4, 1024,]), dtype=ms.float32)
-
-    net = GradWrap6(NetWithLoss6(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    net = GradWrapTwoInput(NetWithLossTwoInput(Net()))
+    compile_graph_two_input(net, "auto_parallel", size, x, y)
 
 def test_reshape_auto_7():
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: reshape weight net in semi auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -315,16 +315,16 @@ def test_reshape_auto_7():
             return out
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([128, 28]), dtype=ms.float32)
-
     net = GradWrap(NetWithLoss(Net()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x)
+    compile_graph(net, "semi_auto_parallel", size, x)
 
 def test_reshape_depend_reshape():
+    """
+    Feature: distribute operator reshape in auto parallel.
+    Description: reshape - depend -reshape net in semi auto parallel.
+    Expectation: compile done without error.
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -355,25 +355,10 @@ def test_reshape_depend_reshape():
             predict = self.network(x, y)
             return self.mean(predict, ())
 
-    class GradWrap1(nn.Cell):
-        def __init__(self, network):
-            super(GradWrap1, self).__init__()
-            self.network = network
-
-        def construct(self, x, y):
-            return grad_all(self.network)(x, y)
-
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([128, 96]), dtype=ms.float32)
     y = Tensor(np.ones([256, 48]), dtype=ms.float32)
-    net = GradWrap1(NetWithLoss1(Net()))
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net.set_auto_parallel()
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
-    net_auto = GradWrap1(NetWithLoss1(Net()))
-    context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    net_auto.set_auto_parallel()
-    net_auto.set_train()
-    _cell_graph_executor.compile(net_auto, x, y)
+    net = GradWrapTwoInput(NetWithLoss1(Net()))
+    compile_graph_two_input(net, "semi_auto_parallel", size, x, y)
+    net_auto = GradWrapTwoInput(NetWithLoss1(Net()))
+    compile_graph_two_input(net_auto, "auto_parallel", size, x, y)
