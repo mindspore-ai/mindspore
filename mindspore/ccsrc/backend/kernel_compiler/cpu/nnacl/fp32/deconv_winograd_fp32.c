@@ -170,8 +170,8 @@ void DeConvWgInputPack(const float *src_ptr, float *dst_ptr, int channel, int st
   float *dst = dst_ptr;
 
   for (int ic = 0; ic < ic4div; ic++) {
-#ifdef ENABLE_ARM
-    vst1q_f32(dst, vld1q_f32(src));
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+    MS_STQ_F32(dst, MS_LDQ_F32(src));
 #else
     memcpy(dst, src, C4NUM * sizeof(float));
 #endif
@@ -406,10 +406,27 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
       :
       : [ src_ptr ] "r"(src_ptr), [ dst_ptr ] "r"(dst_ptr), [ src_step ] "r"(src_step), [ dst_step ] "r"(dst_step)
       : "x7", "x8", "x10", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7");
-#elif ENABLE_ARM32
+#elif defined(ENABLE_ARM32)
     size_t src_step = src_stride * sizeof(float);
     size_t dst_step = dst_stride * sizeof(float);
     DeConvWgMergeArm32(src_ptr, dst_ptr, src_step, dst_step);
+#elif defined(ENABLE_SSE)
+    MS_STQ_F32(dst_ptr + 0 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 0 * dst_stride), MS_LDQ_F32(src_ptr + 0 * src_stride)));
+    MS_STQ_F32(dst_ptr + 1 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 1 * dst_stride), MS_LDQ_F32(src_ptr + 1 * src_stride)));
+    MS_STQ_F32(dst_ptr + 2 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 2 * dst_stride), MS_LDQ_F32(src_ptr + 2 * src_stride)));
+    MS_STQ_F32(dst_ptr + 3 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 3 * dst_stride), MS_LDQ_F32(src_ptr + 3 * src_stride)));
+    MS_STQ_F32(dst_ptr + 4 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 4 * dst_stride), MS_LDQ_F32(src_ptr + 4 * src_stride)));
+    MS_STQ_F32(dst_ptr + 5 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 5 * dst_stride), MS_LDQ_F32(src_ptr + 5 * src_stride)));
+    MS_STQ_F32(dst_ptr + 6 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 6 * dst_stride), MS_LDQ_F32(src_ptr + 6 * src_stride)));
+    MS_STQ_F32(dst_ptr + 7 * dst_stride,
+               MS_ADDQ_F32(MS_LDQ_F32(dst_ptr + 7 * dst_stride), MS_LDQ_F32(src_ptr + 7 * src_stride)));
 #else
     for (int j = 0; j < 8; j++) {
       const float *s = src_ptr + j * src_stride;
@@ -423,11 +440,11 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
     dst_ptr += 8 * dst_stride;
   }
   for (; i < count; i++) {
-#ifdef ENABLE_ARM
-    float32x4_t src_data = vld1q_f32(src_ptr);
-    float32x4_t dst_data = vld1q_f32(dst_ptr);
-    dst_data = vaddq_f32(src_data, dst_data);
-    vst1q_f32(dst_ptr, dst_data);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+    MS_FLOAT32X4 src_data = MS_LDQ_F32(src_ptr);
+    MS_FLOAT32X4 dst_data = MS_LDQ_F32(dst_ptr);
+    dst_data = MS_ADDQ_F32(src_data, dst_data);
+    MS_STQ_F32(dst_ptr, dst_data);
 #else
     for (int j = 0; j < 4; j++) {
       dst_ptr[j] += src_ptr[j];
@@ -514,8 +531,8 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
   }
   /* pack tile input */
   int tile_in_unit_stride = deconv_param->ic_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
-#ifdef ENABLE_ARM
-  float32x4_t zero = vdupq_n_f32(0.0f);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0.0f);
 #endif
   for (int unit_index = 0; unit_index < calculate_count; unit_index++) {
     int plane_index = start_index + unit_index;
@@ -532,8 +549,8 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
         int h_index = h_start + hi;
         if (w_index >= conv_param->input_w_ || h_index >= conv_param->input_h_) {
           for (int ic4_index = 0; ic4_index < deconv_param->ic_div4_; ic4_index++) {
-#ifdef ENABLE_ARM
-            vst1q_f32(dst + ic4_index * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM, zero);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+            MS_STQ_F32(dst + ic4_index * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM, zero);
 #else
             for (int i = 0; i < 4; i++) {
               dst[C4NUM * DECONV_WINOGRAD_DEFAULT_TILE * ic4_index + i] = 0;
