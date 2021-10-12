@@ -107,10 +107,6 @@ const AnfNodePtr DereluFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
-  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::DereluFusion)) {
-    return nullptr;
-  }
-
   auto relu_grad = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(relu_grad);
   auto relu = GetRelu(relu_grad);

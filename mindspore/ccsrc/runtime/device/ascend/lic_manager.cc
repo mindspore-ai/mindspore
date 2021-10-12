@@ -29,10 +29,7 @@ constexpr auto kAllOpen = "ALL";
 
 static const std::map<std::string, OptPassEnum> kPassCodeMap = {
   {std::to_string(3), OptPassEnum::MatmulBiasaddFusion},
-  {std::to_string(8), OptPassEnum::DereluFusion},
   {std::to_string(9), OptPassEnum::TransposeReshapeFusion},
-  {std::to_string(10), OptPassEnum::MomentumLossscaleFusion},
-  {std::to_string(12), OptPassEnum::FusedBatchNormFusion},
   {std::to_string(15), OptPassEnum::BnupdateEltwiseEltwiseFusionPass},
   {std::to_string(16), OptPassEnum::BnupdateEltwiseFusionPass},
   {std::to_string(17), OptPassEnum::Conv2DBackpropEltwiseFusionPass},
@@ -44,7 +41,6 @@ static const std::map<std::string, OptPassEnum> kPassCodeMap = {
   {std::to_string(34), OptPassEnum::EltwiseFusionPass},
   {std::to_string(36), OptPassEnum::MultiOutputFusionPass},
   {std::to_string(37), OptPassEnum::MulAddFusion},
-  {std::to_string(38), OptPassEnum::SoftmaxGradExtFusion},
   {std::to_string(39), OptPassEnum::ClipByNormNoDivSquareSumFusion},
   {std::to_string(42), OptPassEnum::MulAddNPass},
   {std::to_string(43), OptPassEnum::Resnet50DbnDwFusionPass},

@@ -54,10 +54,6 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
 
-  if (!LicManager::GetInstance().GetPassSwitch(OptPassEnum::MomentumLossscaleFusion)) {
-    return nullptr;
-  }
-
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   CheckCNodeInputSize(cnode, kApplyMomentumInputTensorNum);
