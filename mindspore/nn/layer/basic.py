@@ -906,7 +906,7 @@ class ResizeBilinear(Cell):
         super(ResizeBilinear, self).__init__()
 
     def construct(self, x, size=None, scale_factor=None, align_corners=False):
-        shape = bilinear(x.shape, size, scale_factor, align_corners)
+        shape = bilinear(x.shape, size, scale_factor, align_corners, self.cls_name)
         resize_bilinear = P.ResizeBilinear(shape, align_corners)
         return resize_bilinear(x)
 

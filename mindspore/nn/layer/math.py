@@ -884,7 +884,7 @@ class MatMul(Cell):
     def construct(self, x1, x2):
         x1_shape = self.shape_op(x1)
         x2_shape = self.shape_op(x2)
-        check_col_row_equal(x1_shape, x2_shape, self.transpose_x1, self.transpose_x2)
+        check_col_row_equal(x1_shape, x2_shape, self.transpose_x1, self.transpose_x2, self.cls_name)
         matmul_op = matmul_op_select(x1_shape, x2_shape, self.transpose_x1, self.transpose_x2)
 
         x1_dim, x2_dim = len(x1_shape), len(x2_shape)
