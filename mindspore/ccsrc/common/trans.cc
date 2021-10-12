@@ -311,21 +311,22 @@ std::vector<int64_t> FracZDeviceDynamicShape(const std::vector<int64_t> &shape) 
   if (!CheckDims(shape)) {
     MS_LOG(EXCEPTION) << "Check dims failed.";
   }
+  auto tmp = SizeToLong(kCubeSize);
   std::vector<int64_t> device_shape;
   if (HasShapeDynamic({shape[kC], shape[kH], shape[kW]})) {
     device_shape.push_back(Shape::SHP_ANY);
   } else {
-    const int64_t cin16 = ((shape[kC] + kCubeSize - 1) / kCubeSize) * kCubeSize;
-    device_shape.push_back(shape[kH] * shape[kW] * cin16 / kCubeSize);
+    const int64_t cin16 = ((shape[kC] + tmp - 1) / tmp) * tmp;
+    device_shape.push_back(shape[kH] * shape[kW] * cin16 / tmp);
   }
   if (shape[kN] == Shape::SHP_ANY) {
     device_shape.push_back(Shape::SHP_ANY);
   } else {
-    const int64_t cout16 = ((shape[kN] + kCubeSize - 1) / kCubeSize) * kCubeSize;
-    device_shape.push_back(cout16 / kCubeSize);
+    const int64_t cout16 = ((shape[kN] + tmp - 1) / tmp) * tmp;
+    device_shape.push_back(cout16 / tmp);
   }
-  device_shape.push_back(kCubeSize);
-  device_shape.push_back(kCubeSize);
+  device_shape.push_back(tmp);
+  device_shape.push_back(tmp);
   return device_shape;
 }
 
@@ -349,8 +350,9 @@ std::vector<int64_t> Nc1hwc0DeviceDynamicShape(const std::vector<int64_t> &shape
     MS_LOG(EXCEPTION) << "Check dims failed.";
   }
   std::vector<int64_t> device_shape;
-  const int64_t C1 = (shape[kC] == Shape::SHP_ANY) ? Shape::SHP_ANY : (shape[kC] + kCubeSize - 1) / kCubeSize;
-  const int64_t C0 = kCubeSize;
+  auto tmp = SizeToLong(kCubeSize);
+  const int64_t C1 = (shape[kC] == Shape::SHP_ANY) ? Shape::SHP_ANY : (shape[kC] + tmp - 1) / tmp;
+  const int64_t C0 = tmp;
   device_shape.push_back(shape[kN]);
   device_shape.push_back(C1);
   device_shape.push_back(shape[kH]);
@@ -381,9 +383,10 @@ std::vector<int64_t> Ndc1hwc0DeviceDynamicShape(const std::vector<int64_t> &shap
   if (shape.size() != kNcdhw) {
     MS_LOG(EXCEPTION) << "Check dims failed, expect shape dim 5, but got shape dim : " << shape.size();
   }
+  auto tmp = SizeToLong(kCubeSize);
   std::vector<int64_t> device_shape;
-  const int64_t C1 = (shape[1] == Shape::SHP_ANY) ? Shape::SHP_ANY : (shape[1] + kCubeSize - 1) / kCubeSize;
-  const int64_t C0 = kCubeSize;
+  const int64_t C1 = (shape[1] == Shape::SHP_ANY) ? Shape::SHP_ANY : (shape[1] + tmp - 1) / tmp;
+  const int64_t C0 = tmp;
   device_shape.push_back(shape[N_ncdhw]);
   device_shape.push_back(shape[D_ncdhw]);
   device_shape.push_back(C1);
@@ -414,17 +417,18 @@ std::vector<int64_t> Fracz3DDeviceDynamicShape(const std::vector<int64_t> &shape
     MS_LOG(EXCEPTION) << "Check dims failed, expect shape dim 5, but got shape dim : " << shape.size();
   }
   std::vector<int64_t> device_shape;
+  auto tmp = SizeToLong(kCubeSize);
   if (HasShapeDynamic({shape[C_ncdhw], shape[D_ncdhw], shape[H_ncdhw], shape[W_ncdhw]})) {
     device_shape.push_back(Shape::SHP_ANY);
   } else {
-    const int64_t C1 = (shape[1] + kCubeSize - 1) / kCubeSize;
+    const int64_t C1 = (shape[1] + tmp - 1) / tmp;
     device_shape.push_back(shape[D_ncdhw] * C1 * shape[H_ncdhw] * shape[W_ncdhw]);
   }
 
-  const int64_t N1 = (shape[0] == Shape::SHP_ANY) ? Shape::SHP_ANY : (shape[0] + kCubeSize - 1) / kCubeSize;
+  const int64_t N1 = (shape[0] == Shape::SHP_ANY) ? Shape::SHP_ANY : (shape[0] + tmp - 1) / tmp;
   device_shape.push_back(N1);
-  device_shape.push_back(kCubeSize);
-  device_shape.push_back(kCubeSize);
+  device_shape.push_back(tmp);
+  device_shape.push_back(tmp);
   return device_shape;
 }
 
@@ -447,13 +451,14 @@ std::vector<int64_t> C1hwncoc0DeviceDynamicShape(const std::vector<int64_t> &sha
     MS_LOG(EXCEPTION) << "Check dims failed.";
   }
   std::vector<int64_t> device_shape;
+  auto tmp = SizeToLong(kCubeSize);
   shape[kC] == Shape::SHP_ANY ? device_shape.push_back(Shape::SHP_ANY)
-                              : device_shape.push_back((shape[kC] - 1) / kCubeSize + 1);
+                              : device_shape.push_back((shape[kC] - 1) / tmp + 1);
   device_shape.push_back(shape[kH]);
   device_shape.push_back(shape[kW]);
   device_shape.push_back(shape[kN]);
-  device_shape.push_back(kCubeSize);
-  device_shape.push_back(kCubeSize);
+  device_shape.push_back(tmp);
+  device_shape.push_back(tmp);
   return device_shape;
 }
 
@@ -489,8 +494,8 @@ std::vector<int64_t> FracZc04DeviceDynamicShape(const std::vector<int64_t> &shap
   int64_t no = (shape_kN == Shape::SHP_ANY) ? Shape::SHP_ANY : DivCeil(shape.at(kN), SizeToLong(kCubeSize));
   device_shape.push_back(first_dim);
   device_shape.push_back(no);
-  device_shape.push_back(kCubeSize);
-  device_shape.push_back(kCubeSize);
+  device_shape.push_back(SizeToLong(kCubeSize));
+  device_shape.push_back(SizeToLong(kCubeSize));
   return device_shape;
 }
 
@@ -561,11 +566,13 @@ std::vector<int64_t> ChannelLastDeviceDynamicShape(const std::vector<int64_t> &s
   auto dim = shape.size();
   std::vector<int64_t> axis;
   axis.resize(dim);
-  std::iota(axis.begin() + 1, axis.end(), 2);
+  int step_value = 2;
+  std::iota(axis.begin() + 1, axis.end(), step_value);
   axis[dim - 1] = 1;
 
   std::vector<int64_t> device_shape;
-  std::transform(axis.begin(), axis.end(), std::back_inserter(device_shape), [&shape](int n) { return shape[n]; });
+  (void)std::transform(axis.begin(), axis.end(), std::back_inserter(device_shape),
+                       [&shape](size_t n) { return shape[n]; });
 
   return device_shape;
 }
@@ -604,16 +611,17 @@ std::vector<int64_t> FracZDeviceShapeWithGroups(const std::vector<int64_t> &shap
   if (groups <= 0) {
     MS_LOG(EXCEPTION) << "The value of groups should be greater than 0, but got " << groups;
   }
+  auto tmp = SizeToLong(kCubeSize);
   if (!HasShapeDynamic({shape[kC], shape[kN]})) {
     size_t group_size = LongToSize(groups);
     size_t cin_ori_tmp = LongToSize(shape[kC]);
     size_t cout_ori_tmp = LongToSize(shape[kN]) / group_size;
     size_t e_mult =
       std::min(Lcm(Lcm(cin_ori_tmp, kCubeSize) / cin_ori_tmp, Lcm(cout_ori_tmp, kCubeSize) / cout_ori_tmp), group_size);
-    int64_t cin_opt = DivCeil(e_mult * cin_ori_tmp, kCubeSize) * kCubeSize;
-    c1_dim = cin_opt / kCubeSize;
-    g_dim = DivCeil(group_size, e_mult);
-    n1 = DivCeil(cout_ori_tmp * e_mult, kCubeSize);
+    int64_t cin_opt = SizeToLong(DivCeil(e_mult * cin_ori_tmp, kCubeSize) * kCubeSize);
+    c1_dim = cin_opt / tmp;
+    g_dim = SizeToLong(DivCeil(group_size, e_mult));
+    n1 = SizeToLong(DivCeil(cout_ori_tmp * e_mult, kCubeSize));
   }
 
   std::vector<int64_t> device_shape;
@@ -623,8 +631,8 @@ std::vector<int64_t> FracZDeviceShapeWithGroups(const std::vector<int64_t> &shap
     device_shape.push_back(Shape::SHP_ANY);
   }
   device_shape.push_back(n1);
-  device_shape.push_back(kNiSize);
-  device_shape.push_back(kCubeSize);
+  device_shape.push_back(SizeToLong(kNiSize));
+  device_shape.push_back(tmp);
   return device_shape;
 }
 
@@ -651,19 +659,19 @@ std::vector<size_t> FracNZDeviceShape(const std::vector<size_t> &shape) {
 
 std::vector<int64_t> FracNZDeviceDynamicShape(const std::vector<int64_t> &shape) {
   std::vector<int64_t> device_shape;
-  if (shape.size() == 1 && (shape[0] == 1 || shape[0] % kCubeSize == 0)) {
+  if (shape.size() == 1 && (shape[0] == 1 || shape[0] % SizeToLong(kCubeSize) == 0)) {
     // For [1] and [1024] shape we can trait it as NZ shape
     return shape;
   }
   if (shape.size() < kShape2dDims) {
     MS_LOG(EXCEPTION) << "Format FRACTAL_NZ don't support shape with " << shape.size() << " dims";
   } else {
-    (void)std::copy(shape.begin(), shape.end() - 2, std::back_inserter(device_shape));
+    (void)std::copy(shape.begin(), shape.end() - kDim2, std::back_inserter(device_shape));
   }
-  int64_t h_shape = shape[shape.size() - 2];
-  int64_t w_shape = shape[shape.size() - 1];
-  int64_t h1 = (h_shape == Shape::SHP_ANY) ? Shape::SHP_ANY : (h_shape - 1) / kCubeSize + 1;
-  int64_t w1 = (w_shape == Shape::SHP_ANY) ? Shape::SHP_ANY : (w_shape - 1) / kCubeSize + 1;
+  int64_t h_shape = shape[shape.size() - kDim2];
+  int64_t w_shape = shape[shape.size() - kDim1];
+  int64_t h1 = (h_shape == Shape::SHP_ANY) ? Shape::SHP_ANY : (h_shape - 1) / SizeToLong(kCubeSize) + 1;
+  int64_t w1 = (w_shape == Shape::SHP_ANY) ? Shape::SHP_ANY : (w_shape - 1) / SizeToLong(kCubeSize) + 1;
   device_shape.push_back(w1);
   device_shape.push_back(h1);
   device_shape.push_back(kCubeSize);
@@ -1945,15 +1953,24 @@ bool FracZ3DToNcdhw(const FormatArgs &args, void *result) {
   return true;
 }
 
-bool NchwFracZTransWithGroups(const FormatArgs &args, void *result, bool to_device, int64_t groups) {
-  MS_EXCEPTION_IF_NULL(result);
+bool CheckDimsAndDtypes(const FormatArgs &args, size_t *size) {
   if (args.host_shape.size() != kNchwDims) {
     MS_LOG(ERROR) << "Invalid host shape, host shape dims:" << args.host_shape.size() << ", expect dims:" << kNchwDims;
     return false;
   }
-  auto size = abstract::TypeIdSize(args.src_data_type);
-  if (size < 1) {
+  *size = abstract::TypeIdSize(args.src_data_type);
+  if (*size < 1) {
     MS_LOG(ERROR) << "Illegal dtype";
+    return false;
+  }
+  return true;
+}
+
+bool NchwFracZTransWithGroups(const FormatArgs &args, void *result, bool to_device, int64_t groups) {
+  MS_EXCEPTION_IF_NULL(result);
+  size_t size = 0;
+  if (!(CheckDimsAndDtypes(args, &size))) {
+    MS_LOG(ERROR) << "Illegal input args";
     return false;
   }
   if (groups <= 0) {
