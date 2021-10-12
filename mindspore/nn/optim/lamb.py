@@ -171,12 +171,30 @@ def _check_param_value(beta1, beta2, eps, prim_name):
 
 
 class Lamb(Optimizer):
-    """
-    Lamb Dynamic Learning Rate.
+    r"""
+    Lamb(Layer-wise Adaptive Moments optimizer for Batching training) Dynamic Learning Rate.
 
-    LAMB is an optimization algorithm employing a layerwise adaptive large batch
-    optimization technique. Refer to the paper `LARGE BATCH OPTIMIZATION FOR DEEP LEARNING: TRAINING BERT IN 76
+    LAMB is an optimization algorithm employing a layerwise adaptive large batch optimization technique.
+    Refer to the paper `LARGE BATCH OPTIMIZATION FOR DEEP LEARNING: TRAINING BERT IN 76
     MINUTES <https://arxiv.org/abs/1904.00962>`_.
+
+    The LAMB optimizer aims to increase the training batch size without reducing the accuracy,
+    and it supports adaptive element-by-element update and accurate layered correction.
+
+    The updating of parameters follows:
+
+    ..  math::
+        \begin{gather*}
+        m_t = \beta_1 m_{t - 1}+ (1 - \beta_1)g_t\\
+        v_t = \beta_2 v_{t - 1}  + (1 - \beta_2)g_t^2\\
+        m_t = \frac{m_t}{\beta_1^t}\\
+        v_t = \frac{v_t}{\beta_2^t}\\
+        r_t = \frac{m_t}{\sqrt{v_t}+\epsilon}\\
+        w_t = w_{t-1} -\eta_t \frac{\left \| w_{t-1}\right \|}{\left \| r_t + \lambda w_{t-1}\right \|} (r_t + \lambda w_{t-1})
+        \end{gather*}
+
+    where :math:`m` is the 1st moment, and :math:`v` the 2nd moment, :math:`\eta` the
+    learning rate, :math:`\lambda` the LAMB weight decay rate.
 
     Note:
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the

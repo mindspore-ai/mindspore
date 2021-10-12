@@ -899,5 +899,5 @@ def get_activation(name, prim_name=None):
         return None
 
     if name not in _activation:
-        raise KeyError(f"{msg_prefix} 'name' should be in {_activation}, but got {name}.")
+        raise KeyError(f"{msg_prefix} 'name' should be in {list(_activation.keys())}, but got {name}.")
     return _activation[name]()
