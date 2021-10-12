@@ -1555,41 +1555,6 @@ void GraphScheduler::LinkOutputResultArrowForSwitchActor(const GraphCompilerInfo
     return;
   }
 
-  // When there is a call node in the output, the output will be sent to the output actor by the switch actor of
-  // the funcgraph called by the call node.
-  const auto &outputs = graph_compiler_info.origin_outputs_order_;
-  for (const auto &output : outputs) {
-    const auto &output_node = output.first.first;
-    const auto &output_index = output.first.second;
-    const auto output_poses = output.second;
-
-    if (IsCallNode(output_node)) {
-      const auto &func_graphs = FetchFuncGraphbyCallNode(output_node);
-      for (const auto func_graph : func_graphs) {
-        const auto &actor_name = func_graph->get_return()->DebugString();
-        auto actor = FetchActor(actor_name);
-        MS_EXCEPTION_IF_NULL(actor);
-        auto switch_actor = dynamic_cast<SwitchActor *>(actor);
-        MS_EXCEPTION_IF_NULL(switch_actor);
-
-        // Set branch index into switch actor.
-        size_t branch_index = switch_actor->branch_id_to_index_.size();
-        if (switch_actor->branch_id_to_index_.find(kMainBranchID) != switch_actor->branch_id_to_index_.end()) {
-          branch_index = switch_actor->branch_id_to_index_[kMainBranchID];
-        } else {
-          switch_actor->branch_id_to_index_[kMainBranchID] = branch_index;
-        }
-
-        // Link output result arrow.
-        for (const auto output_pos : output_poses) {
-          auto op_arrow = std::make_shared<DataArrow>(output_index, to_actor->GetAID(), output_pos);
-          to_actor->device_contexts_[output_pos] = switch_actor->device_context_;
-          (void)switch_actor->output_branch_result_arrows_[branch_index].emplace_back(op_arrow);
-        }
-      }
-    }
-  }
-
   const auto &switch_actors = actor_set->switch_actors_;
   for (const auto &from_actor : switch_actors) {
     MS_EXCEPTION_IF_NULL(from_actor);
