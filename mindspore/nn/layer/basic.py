@@ -838,7 +838,7 @@ def bilinear(shape, size, scale, align_corners, prim_name=None):
         raise ValueError(f"{msg_prefix} 'size' and 'scale' both not none.")
     if size is not None:
         if not isinstance(size, (tuple, list)):
-            raise ValueError(f"{msg_prefix} 'size' must be tuple or list, but got {type(size).__name__}.")
+            raise ValueError(f"{msg_prefix} 'size' must be tuple or list or None, but got {type(size).__name__}.")
         Validator.check_int(len(size), 2, Rel.EQ, "size", "bilinear")
         Validator.check_int(size[0], 1, Rel.GE, "size[0]", "bilinear")
         Validator.check_int(size[1], 1, Rel.GE, "size[1]", "bilinear")

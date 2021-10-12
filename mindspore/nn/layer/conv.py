@@ -665,10 +665,24 @@ class Conv3dTranspose(_Conv):
     r"""
     Compute a 3D transposed convolution, which is also known as a deconvolution
     (although it is not an actual deconvolution).
+    The transposed convolution operator multiplies each input value element-wise by a learnable kernel,
+    and sums over the outputs from all input feature planes.
+    This module can be seen as the gradient of Conv3d with respect to its input.
 
-    `x` is typically of shape :math:`(N, C, D, H, W)`, where :math:`N` is batch size and :math:`C` is channel number.
+    `x` is typically of shape :math:`(N, C, D, H, W)`, where :math:`N` is batch size, :math:`C` is channel number,
+    :math:`D` is the characteristic depth, :math:`H` is the height of the characteristic layer,
+    and :math:`W` is the width of the characteristic layer.
+    The calculation process of transposed convolution is equivalent to the reverse calculation of convolution.
 
-    If the 'pad_mode' is set to be "pad", the height and width of output are defined as:
+    The pad_mode argument effectively adds :math:`dilation * (kernel\_size - 1) - padding` amount of zero padding
+    to both sizes of the input. So that when a Conv3d and a ConvTranspose3d are initialized with same parameters,
+    they are inverses of each other in regard to the input and output shapes.
+    However, when stride > 1, Conv3d maps multiple input shapes to the same output shape.
+    ConvTranspose3d provide padding argument to  increase the calculated output shape on one or more side.
+
+    The height and width of output are defined as:
+
+    if the 'pad_mode' is set to be "pad",
 
     .. math::
         D_{out} = (D_{in} - 1) \times \text{stride_d} - 2 \times \text{padding_d} + \text{dilation_d} \times
@@ -679,6 +693,25 @@ class Conv3dTranspose(_Conv):
 
         W_{out} = (W_{in} - 1) \times \text{stride_w} - 2 \times \text{padding_w} + \text{dilation_w} \times
         (\text{kernel_size_w} - 1) + \text{output_padding_w} + 1
+
+    if the 'pad_mode' is set to be "same",
+
+    .. math::
+
+        D_{out} = (D_{in} + \text{stride_d} - 1)/\text{stride_d} \\
+        H_{out} = (H_{in} + \text{stride_h} - 1)/\text{stride_h} \\
+        W_{out} = (W_{in} + \text{stride_w} - 1)/\text{stride_w}
+
+    if the 'pad_mode' is set to be "valid",
+
+    .. math::
+
+        D_{out} = (D_{in} - 1) \times \text{stride_d} + \text{dilation_d} \times
+        (\text{kernel_size_d} - 1) + 1 \\
+        H_{out} = (H_{in} - 1) \times \text{stride_h} + \text{dilation_h} \times
+        (\text{kernel_size_h} - 1) + 1 \\
+        W_{out} = (W_{in} - 1) \times \text{stride_w} + \text{dilation_w} \times
+        (\text{kernel_size_w} - 1) + 1
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -859,10 +892,20 @@ class Conv2dTranspose(_Conv):
 
     Compute a 2D transposed convolution, which is also known as a deconvolution
     (although it is not an actual deconvolution).
+    This module can be seen as the gradient of Conv2d with respect to its input.
 
-    `x` is typically of shape :math:`(N, C, H, W)`, where :math:`N` is batch size and :math:`C` is channel number.
+    `x` is typically of shape :math:`(N, C, H, W)`, where :math:`N` is batch size, :math:`C` is channel number,
+    :math:`H` is the height of the characteristic layer and :math:`W` is the width of the characteristic layer.
 
-    If the 'pad_mode' is set to be "pad", the height and width of output are defined as:
+    The pad_mode argument effectively adds :math:`dilation * (kernel\_size - 1) - padding` amount of zero padding
+    to both sizes of the input. So that when a Conv2d and a ConvTranspose2d are initialized with same parameters,
+    they are inverses of each other in regard to the input and output shapes.
+    However, when stride > 1, Conv2d maps multiple input shapes to the same output shape.
+    ConvTranspose2d provide padding argument to  increase the calculated output shape on one or more side.
+
+    The height and width of output are defined as:
+
+    if the 'pad_mode' is set to be "pad",
 
     .. math::
 
@@ -871,6 +914,22 @@ class Conv2dTranspose(_Conv):
 
         W_{out} = (W_{in} - 1) \times \text{stride[1]} - \left (\text{padding[2]} + \text{padding[3]}\right ) +
         \text{dilation[1]} \times (\text{kernel_size[1]} - 1) + 1
+
+    if the 'pad_mode' is set to be "same",
+
+    .. math::
+
+        H_{out} = (H_{in} + \text{stride[0]} - 1)/\text{stride[0]} \\
+        W_{out} = (W_{in} + \text{stride[1]} - 1)/\text{stride[1]}
+
+    if the 'pad_mode' is set to be "valid",
+
+    .. math::
+
+        H_{out} = (H_{in} - 1) \times \text{stride[0]} + \text{dilation[0]} \times
+        (\text{ks_w[0]} - 1) + 1 \\
+        W_{out} = (W_{in} - 1) \times \text{stride[1]} + \text{dilation[1]} \times
+        (\text{ks_w[1]} - 1) + 1
 
     where :math:`\text{kernel_size[0]}` is the height of the convolution kernel and :math:`\text{kernel_size[1]}`
     is the width of the convolution kernel.
@@ -1042,15 +1101,27 @@ class Conv1dTranspose(_Conv):
 
     Compute a 1D transposed convolution, which is also known as a deconvolution
     (although it is not an actual deconvolution).
+    This module can be seen as the gradient of Conv1d with respect to its input.
 
-    `x` is typically of shape :math:`(N, C, W)`, where :math:`N` is batch size and :math:`C` is channel number.
+    `x` is typically of shape :math:`(N, C, W)`, where :math:`N` is batch size, :math:`C` is channel number and
+    :math:`W` is the characteristic length.
 
-    If the 'pad_mode' is set to be "pad", the width of output is defined as:
+    The padding argument effectively adds :math:`dilation * (kernel\_size - 1) - padding` amount of zero padding to
+    both sizes of the input. So that when a Conv1d and a ConvTranspose1d are initialized with same parameters,
+    they are inverses of each other in regard to the input and output shapes. However, when stride > 1,
+    Conv1d maps multiple input shapes to the same output shape.
+
+    The width of output is defined as:
 
     .. math::
 
-        W_{out} = (W_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times
-        (\text{ks_w} - 1) + 1
+        W_{out} = \begin{cases}
+        (W_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times
+        (\text{ks_w} - 1) + 1, & \text{if pad_mode='pad'}\\
+        (W_{in} + \text{stride} - 1)/\text{stride}, & \text{if pad_mode='same'}\\
+        (W_{in} - 1) \times \text{stride} + \text{dilation} \times
+        (\text{ks_w} - 1) + 1, & \text{if pad_mode='valid'}
+        \end{cases}
 
     where :math:`\text{ks_w}` is the width of the convolution kernel.
 

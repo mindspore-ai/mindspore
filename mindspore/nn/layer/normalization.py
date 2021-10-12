@@ -165,12 +165,13 @@ class _BatchNorm(Cell):
     def list_group(self, world_rank, group_size):
         """ Check whether world_rank and group_size  are valid. """
         if group_size > get_group_size():
-            raise ValueError(f"For '{self.cls_name}', the 'group_size' cannot be greater than local rank size, "
-                             f"but got 'group_size': {group_size}, local rank size: {get_group_size()}.")
+            raise ValueError(f"For '{self.cls_name}', the 'device_num_each_group' cannot be greater than "
+                             f"local rank size, but got 'device_num_each_group': {group_size}, "
+                             f"local rank size: {get_group_size()}.")
         if len(world_rank) % group_size != 0:
-            raise ValueError(f"For '{self.cls_name}', the dimension of 'world_rank' should be divisible by "
-                             f"'group_size', but got the length of 'world_rank': {len(world_rank)}, "
-                             f"'group_size': {group_size}.")
+            raise ValueError(f"For '{self.cls_name}', the dimension of device_list should be divisible by "
+                             f"'device_num_each_group', but got the length of device_list: {len(world_rank)}, "
+                             f"'device_num_each_group': {group_size}.")
         world_rank_list = zip(*(iter(world_rank),) * group_size)
         group_list = [list(i) for i in world_rank_list]
         return group_list
@@ -242,8 +243,8 @@ class _BatchNorm(Cell):
 def _channel_check(channel, num_channel, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if channel != num_channel:
-        raise ValueError(f"{msg_prefix} channel should be equal to num_channel, but got channel: "
-                         f"{channel}, num_channel: {num_channel}.")
+        raise ValueError(f"{msg_prefix} channel(the second dim of the input 'x') should be equal to num_channels, "
+                         f"but got channel: {channel}, num_channels: {num_channel}.")
 
 
 @constexpr

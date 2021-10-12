@@ -4058,7 +4058,8 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     .. math::
 
         \begin{array}{ll} \\
-            L_{ij} = -W_{ij}[Y_{ij}log(X_{ij}) + (1 - Y_{ij})log(1 - X_{ij})]
+            p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
+            L_{ij} = -[Y_{ij} * log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
         \end{array}
 
     :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
@@ -4074,6 +4075,23 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     the first method is to provide the loss value directly,
     the second method is to calculate the average value of all losses,
     and the third method is to calculate the sum of all losses.
+
+    This operator will multiply the output by the corresponding weight.
+    The tensor weight assigns different weights to each piece of data in the batch,
+    and the tensor pos_weight adds corresponding weights to the positive examples of each category.
+
+    In addition, it can trade off recall and precision by adding weights to positive examples.
+    In the case of multi-label classification the loss can be described as:
+
+    .. math::
+        \begin{array}{ll} \\
+            p_{ij,c} = sigmoid(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
+            L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
+        \end{array}
+
+    where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
+    n is the number of the sample in the batch and :math:`p_c` is the weight of the positive answer for the class c.
+    :math:`p_c>1` increases the recall, :math:`p_c<1` increases the precision.
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',
@@ -4149,8 +4167,25 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
 
 
 class Pad(PrimitiveWithInfer):
-    """
+    r"""
     Pads the input tensor according to the paddings.
+    For example,
+    to pad only the last dimension of the input tensor, then pad has the form (padding_left,padding_right);
+    to pad the last 2 dimensions of the input tensor, then use
+    (padding_left,padding_right, padding_top,padding_bottom);
+    to pad the last 3 dimensions, use
+    (padding_left,padding_right, padding_top,padding_bottom padding_front,padding_back).
+
+    .. math::
+        \begin{aligned}
+            &\text{ input_x_shape} = (N_{1},N_{2},...,N_{n}) \\
+            &\begin{aligned}
+                \text{output_shape = }(&N_{1}+paddings[0,0]+paddings[0,1], \\
+                                 & N_{2}+paddings[1,0]+paddings[1,1], \\
+                                 &... , \\
+                                 & N_{n}+paddings[n-1,0]+paddings[n-1,1])
+            \end{aligned}
+        \end{aligned}
 
     Args:
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
@@ -7264,8 +7299,15 @@ class Dropout(PrimitiveWithCheck):
 
 class Dropout2D(PrimitiveWithInfer):
     """
-    During training, randomly zeroes some of the channels of the input tensor
-    with probability 1-`keep_prob` from a Bernoulli distribution.
+    During training, randomly zeroes some of the channels of the input tensor with probability 1-`keep_prob`
+    from a Bernoulli distribution(For a 4-dimensional tensor with a shape of NCHW, the channel feature map refers
+    to a 2-dimensional feature map with the shape of HW).
+
+    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a 2D tensor input[i,j].
+    Each channel will be zeroed out independently on every forward call with probability 1-`keep_prob` using samples
+    from a Bernoulli distribution.
+
+    Dropout2D can improve the independence between channel feature maps.
 
     Args:
         keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
@@ -7315,7 +7357,14 @@ class Dropout2D(PrimitiveWithInfer):
 class Dropout3D(PrimitiveWithInfer):
     """
     During training, randomly zeroes some of the channels of the input tensor
-    with probability 1-`keep_prob` from a Bernoulli distribution.
+    with probability 1-`keep_prob` from a Bernoulli distribution(For a 5-dimensional tensor with a shape of NCDHW,
+    the channel feature map refers to a 3-dimensional feature map with a shape of DHW).
+
+    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a 3D tensor input[i,j,k].
+    Each channel will be zeroed out independently on every forward call with probability 1-`keep_prob`
+    using samples from a Bernoulli distribution.
+
+    Dropout3D can improve the independence between channel feature maps.
 
     Args:
         keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,

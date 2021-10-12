@@ -128,13 +128,13 @@ def _check_axes(axes, prim_name=None):
     if not isinstance(axes, int):
         axes = list(axes)  # to avoid immutability issues
         if len(axes) != 2:
-            raise ValueError(f"{msg_prefix} dimension of axes should be 2, but got {axes}.")
+            raise ValueError(f"{msg_prefix} dimension of 'axes' should be 2, but got 'axes': {axes}.")
         axes = _int_to_tuple_conv(axes)  # convert before length checks
         if len(axes[0]) != len(axes[1]):
-            raise ValueError(f"{msg_prefix} first and second dim of axes have to be the same size/length, "
-                             f"but got {axes}.")
+            raise ValueError(f"{msg_prefix} first and second dim of 'axes' have to be the same size/length, "
+                             f"but got 'axes': {axes}.")
         if len(axes[0]) != len(set(axes[0])) or len(axes[1]) != len(set(axes[1])):
-            raise ValueError(f"{msg_prefix} axes cannot have duplicating values, but got {axes}.")
+            raise ValueError(f"{msg_prefix} 'axes' cannot have duplicating values, but got {axes}.")
     return axes
 
 

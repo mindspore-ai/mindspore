@@ -5137,8 +5137,14 @@ class Eps(PrimitiveWithInfer):
 
 class LinSpace(PrimitiveWithInfer):
     r"""
-    Generates values in an interval (inclusive of start and stop) and returns the corresponding
-    interpolated array with **num** number of ticks.
+    The OP returns a Tensor whose value is num evenly spaced in the interval start and stop (including start and stop),
+    and the length of the output Tensor is num.
+
+    .. math::
+        \begin{aligned}
+        &step = (stop - start)/(num - 1)\\
+        &output = [start, start+step, start+2*step, ... , stop]
+        \end{aligned}
 
     Inputs:
         - **start** (Tensor[float32]) - Start value of interval, With shape of 0-D.
