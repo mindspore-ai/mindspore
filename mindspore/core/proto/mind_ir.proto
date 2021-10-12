@@ -113,6 +113,13 @@ message TensorProto {
     BFLOAT16 = 16;
     FLOAT64 = 17;
   }
+  message ExternalDataProto {
+  //POSIX filesystem path relative to the directory where the MindIR model was stored.
+    optional string location = 1;
+    optional int64 offset = 2;
+    optional int64 length = 3;
+    optional string checksum= 4;
+  }
   repeated int64 dims = 1;
   optional int32 data_type = 2;
   repeated float float_data = 3;
@@ -124,4 +131,7 @@ message TensorProto {
   optional bytes raw_data = 9;
   repeated double double_data = 10;
   repeated uint64 uint64_data = 11;
+  optional ExternalDataProto external_data = 12;
 }
+
+

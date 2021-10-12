@@ -274,6 +274,13 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   }
 
   MSANFModelParser model_parser;
+
+  auto mindir_path = std::string(abs_path_buff);
+  model_parser.SetMindIRPath(mindir_path.substr(0, mindir_path.rfind("/")));
+  model_parser.SetMindIRDecKey(dec_key);
+  model_parser.SetMindIRKeySize(key_len);
+  model_parser.SetMindIRDecMode(dec_mode);
+
   if (is_lite) {
     model_parser.SetLite();
   }

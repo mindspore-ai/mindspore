@@ -20,10 +20,11 @@
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <memory>
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "ir/func_graph.h"
 #include "proto/mind_ir.pb.h"
-
+#include "utils/crypto.h"
 namespace mindspore {
 using int32 = int32_t;
 using int64 = int64_t;
@@ -43,12 +44,17 @@ class MSANFModelParser {
   bool IsLite() const { return is_lite_; }
   void SetIncLoad() { inc_load_ = true; }
   bool IsIncLoad() const { return inc_load_; }
+  void SetMindIRPath(const std::string &file_path) { mindir_path_ = file_path; }
+  void SetMindIRDecKey(const unsigned char *dec_key) { mindir_dec_key_ = dec_key; }
+  void SetMindIRKeySize(size_t size) { mindir_key_size_ = size; }
+  void SetMindIRDecMode(const std::string dec_mode) { mindir_dec_mode_ = dec_mode; }
 
  private:
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
   bool BuildParameterForFuncGraph(const ParameterPtr &node, const mind_ir::TensorProto &tensor_proto);
+  bool GetTensorDataFromExternal(const mind_ir::TensorProto &tensor_proto, const tensor::TensorPtr &tensor_info);
   bool BuildInputForFuncGraph(const ParameterPtr &node, const mind_ir::ValueInfoProto &value_proto);
   tensor::TensorPtr BuildTensorInfoForFuncGraph(const mind_ir::TensorProto &tensor_proto);
   CNodePtr BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::NodeProto &node_proto);
@@ -80,6 +86,11 @@ class MSANFModelParser {
   bool inc_load_ = false;
   std::unordered_map<std::string, AnfNodePtr> anfnode_build_map_;
   std::map<std::string, tensor::TensorPtr> load_tensor_map_;
+  std::string mindir_path_;
+  const unsigned char *mindir_dec_key_{nullptr};
+  size_t mindir_key_size_;
+  std::string mindir_dec_mode_;
+  std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;
 };
 }  // namespace mindspore
 
