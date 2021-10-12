@@ -131,7 +131,6 @@ class Scheduler {
   bool SubGraphHasScheduled(const int &index);
   void SubGraphMarkScheduled(const int &index);
   void SetSubgraphForPartialNode();
-  bool IsControlFlowParttern(const std::vector<kernel::LiteKernel *> &kernels);
   int ConstructControlFlowMainGraph(std::vector<kernel::LiteKernel *> *kernels);
 #endif
 
