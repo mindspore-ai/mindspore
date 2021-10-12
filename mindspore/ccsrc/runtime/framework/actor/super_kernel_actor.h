@@ -42,6 +42,8 @@ class SuperKernelActor : public DebugAwareActor {
 
   void Init() override;
 
+  const KernelGraphPtr &graph() const { return graph_; }
+
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
 

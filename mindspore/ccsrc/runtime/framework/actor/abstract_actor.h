@@ -53,6 +53,17 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Get the position of node in the actor.
   virtual size_t FetchNodePosition(const AnfNodePtr &node) const { return 0; }
 
+  // Get the member.
+  KernelTransformType type() const { return type_; }
+  const std::vector<const DeviceContext *> &device_contexts() const { return device_contexts_; }
+  const std::vector<AnfNodePtr> &output_result_nodes() const { return output_result_nodes_; }
+  const std::vector<DataArrowPtr> &output_result_arrows() const { return output_result_arrows_; }
+  const std::vector<std::pair<size_t, AnfNodePtr>> &device_tensor_store_keys() const {
+    return device_tensor_store_keys_;
+  }
+  const std::vector<AID> &input_data_arrow_aids() const { return input_data_arrow_aids_; }
+  const std::vector<AID> &input_control_arrow_aids() const { return input_control_arrow_aids_; }
+
  protected:
   friend class GraphScheduler;
 
@@ -84,7 +95,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
 
   // The output nodes and output result arrows of graph output.
-  std::vector<AnfNodePtr> output_nodes_;
+  std::vector<AnfNodePtr> output_result_nodes_;
   std::vector<DataArrowPtr> output_result_arrows_;
 
   // The dependent device tensor stores,  the dependent expression is pair<index, AnfNode>.
