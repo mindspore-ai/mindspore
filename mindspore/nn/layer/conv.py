@@ -674,7 +674,7 @@ class Conv3dTranspose(_Conv):
     and :math:`W` is the width of the characteristic layer.
     The calculation process of transposed convolution is equivalent to the reverse calculation of convolution.
 
-    The pad_mode argument effectively adds :math:`dilation * (kernel_size - 1) - padding` amount of zero padding
+    The pad_mode argument effectively adds :math:`dilation * (kernel\_size - 1) - padding` amount of zero padding
     to both sizes of the input. So that when a Conv3d and a ConvTranspose3d are initialized with same parameters,
     they are inverses of each other in regard to the input and output shapes.
     However, when stride > 1, Conv3d maps multiple input shapes to the same output shape.
@@ -897,7 +897,7 @@ class Conv2dTranspose(_Conv):
     `x` is typically of shape :math:`(N, C, H, W)`, where :math:`N` is batch size, :math:`C` is channel number,
     :math:`H` is the height of the characteristic layer and :math:`W` is the width of the characteristic layer.
 
-    The pad_mode argument effectively adds :math:`dilation * (kernel_size - 1) - padding` amount of zero padding
+    The pad_mode argument effectively adds :math:`dilation * (kernel\_size - 1) - padding` amount of zero padding
     to both sizes of the input. So that when a Conv2d and a ConvTranspose2d are initialized with same parameters,
     they are inverses of each other in regard to the input and output shapes.
     However, when stride > 1, Conv2d maps multiple input shapes to the same output shape.
@@ -1106,7 +1106,7 @@ class Conv1dTranspose(_Conv):
     `x` is typically of shape :math:`(N, C, W)`, where :math:`N` is batch size, :math:`C` is channel number and
     :math:`W` is the characteristic length.
 
-    The padding argument effectively adds :math:`dilation * (kernel_size - 1) - padding` amount of zero padding to
+    The padding argument effectively adds :math:`dilation * (kernel\_size - 1) - padding` amount of zero padding to
     both sizes of the input. So that when a Conv1d and a ConvTranspose1d are initialized with same parameters,
     they are inverses of each other in regard to the input and output shapes. However, when stride > 1,
     Conv1d maps multiple input shapes to the same output shape.
@@ -1118,9 +1118,9 @@ class Conv1dTranspose(_Conv):
         W_{out} = \begin{cases}
         (W_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times
         (\text{ks_w} - 1) + 1, & \text{if pad_mode='pad'}\\
-        (W_{in} + \text{stride} - 1)/\text{stride}, & \text{if pad_mode='SAME'}\\
+        (W_{in} + \text{stride} - 1)/\text{stride}, & \text{if pad_mode='same'}\\
         (W_{in} - 1) \times \text{stride} + \text{dilation} \times
-        (\text{ks_w} - 1) + 1, & \text{if pad_mode='VALID'}
+        (\text{ks_w} - 1) + 1, & \text{if pad_mode='valid'}
         \end{cases}
 
     where :math:`\text{ks_w}` is the width of the convolution kernel.

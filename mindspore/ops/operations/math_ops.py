@@ -5205,8 +5205,10 @@ class LinSpace(PrimitiveWithInfer):
     and the length of the output Tensor is num.
 
     .. math::
-        step = (stop - start)/(num - 1)\\
-        output = [start, start+step, start+2*step, ... , stop]
+        \begin{aligned}
+        &step = (stop - start)/(num - 1)\\
+        &output = [start, start+step, start+2*step, ... , stop]
+        \end{aligned}
 
     Inputs:
         - **start** (Tensor[float32]) - Start value of interval, With shape of 0-D.

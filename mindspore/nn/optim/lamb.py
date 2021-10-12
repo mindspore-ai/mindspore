@@ -176,7 +176,7 @@ class Lamb(Optimizer):
 
     LAMB is an optimization algorithm employing a layerwise adaptive large batch optimization technique.
     Refer to the paper `LARGE BATCH OPTIMIZATION FOR DEEP LEARNING: TRAINING BERT IN 76
-    MINUTES <https://arxiv.org/abs/1904.00962>`.
+    MINUTES <https://arxiv.org/abs/1904.00962>`_.
 
     The LAMB optimizer aims to increase the training batch size without reducing the accuracy,
     and it supports adaptive element-by-element update and accurate layered correction.

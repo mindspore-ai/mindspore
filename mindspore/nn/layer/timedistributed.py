@@ -117,7 +117,7 @@ class TimeDistributed(Cell):
         self.reshape = Reshape()
 
     def construct(self, inputs):
-        _check_data(isinstance(inputs, Tensor))
+        _check_data(isinstance(inputs, Tensor), self.cls_name)
         _check_inputs_dim(inputs.shape, self.cls_name)
         time_axis = self.time_axis % len(inputs.shape)
         if self.reshape_with_axis is not None:
@@ -132,7 +132,7 @@ class TimeDistributed(Cell):
             inputs_shape_new = inputs.shape
             inputs = self.reshape(inputs, inputs_shape_new[: reshape_pos] + (-1,) + inputs_shape_new[reshape_pos + 2:])
             outputs = self.layer(inputs)
-            _check_data(isinstance(outputs, Tensor))
+            _check_data(isinstance(outputs, Tensor), self.cls_name)
             _check_reshape_pos(reshape_pos, inputs.shape, outputs.shape, self.cls_name)
             outputs_shape_new = outputs.shape[:reshape_pos] + inputs_shape_new[reshape_pos: reshape_pos + 2]
             if reshape_pos + 1 < len(outputs.shape):
@@ -144,7 +144,7 @@ class TimeDistributed(Cell):
         y = ()
         for item in inputs:
             outputs = self.layer(item)
-            _check_data(isinstance(outputs, Tensor))
+            _check_data(isinstance(outputs, Tensor), self.cls_name)
             _check_expand_dims_axis(time_axis, outputs.ndim, self.cls_name)
             y += (outputs,)
         y = Stack(time_axis)(y)

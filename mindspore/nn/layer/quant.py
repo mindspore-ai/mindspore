@@ -436,7 +436,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
             max_array = self._get_init_array(self.max_init)
             if not np.greater(max_array, min_array).all():
                 raise ValueError(f"For '{self.cls_name}', the 'max_init' should be greater than 'min_init', "
-                                 f"but got 'max_array': {max_array}, 'min_init': {min_init}.")
+                                 f"but got 'max_init': {max_init}, 'min_init': {min_init}.")
 
             self.minq.set_data(Tensor(min_array))
             self.maxq.set_data(Tensor(max_array))
@@ -521,7 +521,8 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         """
         if isinstance(init_date, list) and self.per_channel and len(init_date) != self.num_channels:
             raise ValueError(f"For '{self.cls_name}', the length of 'min_init/max_init' list should be equal to "
-                             f"'num_channels' for perchannel quant scenario, but got {len(init_date)}.")
+                             f"'num_channels' for perchannel quant scenario, but got 'min_init/max_init': {init_date} "
+                             f"and num_channels: {self.num_channels}.")
         if isinstance(init_date, list) and not self.per_channel and len(init_date) != 1:
             raise ValueError(f"For '{self.cls_name}', the length of the 'min_init/max_init' list should be 1 for "
                              f"perlayer quant scenario, but got {len(init_date)}.")
