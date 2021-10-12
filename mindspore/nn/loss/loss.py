@@ -1320,7 +1320,8 @@ class FocalLoss(LossBase):
 
         self.gamma = validator.check_value_type("gamma", gamma, [float])
         if weight is not None and not isinstance(weight, Tensor):
-            raise TypeError(f"For '{self.cls_name}', the type of 'weight' should be a Tensor.")
+            raise TypeError(f"For '{self.cls_name}', the type of 'weight' should be a Tensor, "
+                            f"but got {type(weight).__name__}.")
         if isinstance(weight, Tensor) and weight.ndim != 1:
             raise ValueError(f"For '{self.cls_name}', the dimension of 'weight' should be 1, but got {weight.ndim}.")
         self.weight = weight
