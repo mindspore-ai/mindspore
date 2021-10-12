@@ -27,7 +27,6 @@ namespace cpu {
 std::shared_ptr<MPIAdapter> MPIAdapter::instance_ = nullptr;
 std::shared_ptr<MPIAdapter> MPIAdapter::Instance() {
   if (instance_ == nullptr) {
-    MS_LOG(DEBUG) << "Create new mpi adapter instance.";
     instance_.reset(new (std::nothrow) MPIAdapter());
   }
   return instance_;
