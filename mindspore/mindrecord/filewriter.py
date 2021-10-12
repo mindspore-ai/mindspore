@@ -32,7 +32,7 @@ __all__ = ['FileWriter']
 
 
 class FileWriter:
-    """
+    r"""
     Class to write user defined raw data into MindRecord files.
 
     Note:
@@ -112,9 +112,9 @@ class FileWriter:
             MRMOpenForAppendError: If failed to open file for appending data.
 
         Examples:
-        >>> write_append = FileWriter.open_for_append("test.mindrecord")
-        >>> write_append.write_raw_data(data)
-        >>> write_append.commit()
+            >>> write_append = FileWriter.open_for_append("test.mindrecord")
+            >>> write_append.write_raw_data(data)
+            >>> write_append.commit()
         """
 
         check_filename(file_name)
