@@ -23,6 +23,7 @@
 #include <utility>
 #include <algorithm>
 #include <unordered_map>
+#include <set>
 #include "runtime/framework/control_node_parser.h"
 #include "runtime/framework/device_tensor_store.h"
 #include "runtime/framework/actor/actor_common.h"
@@ -70,10 +71,13 @@ class OutputActor : public AbstractActor {
   size_t loop_count() const { return loop_count_; }
   size_t outputs_num() const { return outputs_num_; }
   const std::vector<AID> &input_result_arrow_aids() const { return input_result_arrow_aids_; }
+  const std::set<AnfNodePtr> &output_address_persisted_nodes() const { return output_address_persisted_nodes_; }
   std::vector<TensorPtr> &outputs() { return outputs_; }
 
  private:
   friend class GraphScheduler;
+
+  TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position);
 
   // The loop count is constant, the current count is increased after each step running finished.
   // Collect the output result in the last loop which is represented by "loop_count_ - current_count_ == 1".
@@ -86,6 +90,9 @@ class OutputActor : public AbstractActor {
   // The outputs.
   std::vector<TensorPtr> outputs_;
   std::vector<KernelWithIndex> output_nodes_;
+  // Record the output nodes whose output address must be persisted and can't be changed.
+  // For example the output address of output node in the sink graph is persisted.
+  std::set<AnfNodePtr> output_address_persisted_nodes_;
   size_t outputs_num_;
   size_t current_outputs_num_;
   bool need_loop_count_;

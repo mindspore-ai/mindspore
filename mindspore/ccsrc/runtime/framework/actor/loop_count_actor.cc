@@ -39,7 +39,6 @@ void LoopCountActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context)
 
 void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  EraseInput(context);
 
   total_running_count_++;
   current_count_++;
@@ -52,16 +51,11 @@ void LoopCountActor::IncreaseLoopCount(OpContext<DeviceTensor> *const context) {
     return;
   }
 
-  SendOutput(context);
+  PostRun(context);
 }
 
 void LoopCountActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   Async(*debug_aid_, &DebugActor::DebugOnStepEnd, context, &GetAID());
-}
-
-void LoopCountActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  SendOutput(context);
 }
 
 void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {

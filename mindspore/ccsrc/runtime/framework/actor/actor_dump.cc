@@ -159,8 +159,9 @@ void DumpSuperKernelActor(const SuperKernelActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(graph);
 
   ofs << "\t\tgraph_id:" << graph->graph_id() << "\tgraphl_name:" << graph->ToString()
-      << "\tis_sink:" << graph->is_sink() << "\tinputs_num:" << (graph->input_nodes()).size()
-      << "\tkernels_num:" << (graph->execution_order()).size() << "\n";
+      << "\tis_executing_sink:" << graph->is_executing_sink() << "\tis_loop_count_sink:" << graph->is_loop_count_sink()
+      << "\tinputs_num:" << (graph->input_nodes()).size() << "\tkernels_num:" << (graph->execution_order()).size()
+      << "\n";
 
   DumpAbstractActor(actor, ofs);
   ofs << "\n";
@@ -239,6 +240,12 @@ void DumpOutputActor(const OutputActorPtr &actor, std::ofstream &ofs) {
   ofs << "\t\tinput_result_arrows:" << actor->input_result_arrow_aids().size() << "\n ";
   for (const auto &input_result_arrow_aid : actor->input_result_arrow_aids()) {
     ofs << "\t\t\tfrom_actor_name:" << input_result_arrow_aid.Name() << "\n";
+  }
+
+  ofs << "\t\toutput_address_persisted_nodes:" << actor->output_address_persisted_nodes().size() << "\n ";
+  for (const auto &output_address_persisted_node : actor->output_address_persisted_nodes()) {
+    MS_EXCEPTION_IF_NULL(output_address_persisted_node);
+    ofs << "\t\t\toutput_address_persisted_node_name:" << output_address_persisted_node->fullname_with_scope() << "\n";
   }
 }
 

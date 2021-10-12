@@ -50,10 +50,7 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
-  // The input is invalid and needs to be erased when finish kernel launch.
-  EraseInput(context);
-  SendOutput(context);
+  PostRun(context);
 }
-
 }  // namespace runtime
 }  // namespace mindspore

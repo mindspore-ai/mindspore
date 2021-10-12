@@ -303,6 +303,21 @@ GraphId GraphCompiler::CompileGraph(const AnfNodePtrList &nodes, const AnfNodePt
   KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs);
   MS_EXCEPTION_IF_NULL(graph);
 
+  // Unify the MindIR, must be before of the graph optimization.
+  device_context->UnifyMindIR(graph);
+
+  // The graph common optimization.
+  graph->UpdateGraphAquireGilAttr();
+  opt::BackendCommonOptimization(graph);
+  graph->SetInputNodes();
+  auto manager = MakeManager({graph});
+  if (manager) {
+    manager->AddFuncGraph(graph);
+    graph->set_manager(manager);
+  }
+  session_->SetInputNodeUsage(graph, manager);
+  graph->SetOptimizerFlag();
+
   // Cache the backend graph output nodes to front nodes with output index.
   for (auto &output : outputs) {
     auto backend_node = graph->GetBackendAnfByFrontAnf(output);
@@ -325,6 +340,12 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
     MS_EXCEPTION_IF_NULL(graph);
     graph->set_root_graph_id(root_graph->graph_id());
   }
+
+  // Unify the MindIR, must be before of the graph optimization.
+  device_context->UnifyMindIR(root_graph);
+
+  // The graph common optimization.
+  opt::BackendCommonOptimization(root_graph);
 
   // Cache the backend graph output nodes to front nodes with output index.
   auto output = func_graph->output();
@@ -349,6 +370,12 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   }
 #endif
 
+  // Set the graph sink flag.
+  auto is_executing_sink = device_context->IsExecutingSink(graph);
+  auto is_loop_count_sink = device_context->IsLoopCountSink(graph);
+  graph->set_is_executing_sink(is_executing_sink);
+  graph->set_is_loop_count_sink(is_loop_count_sink);
+
   MS_LOG(INFO) << "Get graph outputs before optimizer, graph id: " << graph->graph_id();
   auto outputs_before_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());
 
@@ -361,10 +388,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   // Adjust kernel graph before run graph.
   device_context->PreprocessBeforeRunGraph(graph);
-
-  // Set the graph sink flag.
-  auto is_sink = device_context->IsGraphSink(graph);
-  graph->set_is_sink(is_sink);
 
   MS_LOG(INFO) << "Get graph outputs after optimizer, graph id: " << graph->graph_id();
   auto outputs_after_optimizer = AnfAlgo::GetAllOutputWithIndex(graph->output());

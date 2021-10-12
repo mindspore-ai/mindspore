@@ -426,7 +426,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
 
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
-    if (graph->is_sink()) {
+    if (graph->is_executing_sink()) {
       LinkDataArrowInSinkMode(graph, graph_compiler_info);
     } else {
       LinkDataArrowInNonSinkMode(graph, graph_compiler_info, &auto_monad_actors, &communication_nodes);
@@ -488,7 +488,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     }
 
     // The graph sink mode has no device queue data source actor.
-    if (!graph->is_sink()) {
+    if (!graph->is_executing_sink()) {
       // Build device queue data source actor.
       const auto &execution_order = graph->execution_order();
       const auto &iter =
@@ -555,7 +555,7 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (graph->is_sink()) {
+    if (graph->is_executing_sink()) {
       continue;
     }
 
@@ -592,7 +592,7 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (!graph->is_sink()) {
+    if (!graph->is_executing_sink()) {
       continue;
     }
 
@@ -612,6 +612,9 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
   }
 
   auto loop_count = ConfigManager::GetInstance().iter_num();
+  if ((graph_compiler_info.graphs_.size() == 1) && graph_compiler_info.graphs_[0]->is_loop_count_sink()) {
+    loop_count = 1;
+  }
   auto actor_name = graph_compiler_info.name_ + "_LoopCountActor";
   auto loop_count_actor =
     std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_);
@@ -628,6 +631,9 @@ OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_c
   }
 
   auto loop_count = ConfigManager::GetInstance().iter_num();
+  if ((graph_compiler_info.graphs_.size() == 1) && graph_compiler_info.graphs_[0]->is_loop_count_sink()) {
+    loop_count = 1;
+  }
   auto actor_name = graph_compiler_info.name_ + "_" + "OutputActor";
   bool need_loop_count = (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) ? true : false;
 
@@ -660,7 +666,7 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
     for (size_t index = 0; index < graph_compiler_info.graphs_.size(); ++index) {
       const auto &graph = graph_compiler_info.graphs_[index];
       MS_EXCEPTION_IF_NULL(graph);
-      if (graph->is_sink()) {
+      if (graph->is_executing_sink()) {
         continue;
       }
 
@@ -1481,6 +1487,9 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         (void)from_actor->output_result_arrows_.emplace_back(op_arrow);
         (void)from_actor->output_result_nodes_.emplace_back(output_with_index.first);
         (void)to_actor->input_result_arrow_aids_.emplace_back(from_actor->GetAID());
+        if (kernel_type == KernelTransformType::kSuperKernelActor) {
+          (void)to_actor->output_address_persisted_nodes_.insert(output_with_index.first);
+        }
 
         // Update the real compute node in the host data source actor.
         if (kernel_type == KernelTransformType::kHostDataSourceActor) {
@@ -1694,7 +1703,7 @@ void GraphScheduler::FetchKernelTransformTypeAndName(const AnfNodePtr &node, con
   MS_EXCEPTION_IF_NULL(kernel_type);
   MS_EXCEPTION_IF_NULL(kernel_name);
 
-  if (graph->is_sink() && ((node == nullptr) || node->isa<CNode>())) {
+  if (graph->is_executing_sink() && ((node == nullptr) || node->isa<CNode>())) {
     *kernel_type = KernelTransformType::kSuperKernelActor;
     *kernel_name = graph->ToString() + "_SuperKernelActor";
     return;
@@ -1775,7 +1784,8 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
 
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
-    ofs << "\tgraph_id:" << graph->graph_id() << "\tis_sink:" << graph->is_sink()
+    ofs << "\tgraph_id:" << graph->graph_id() << "\tis_executing_sink:" << graph->is_executing_sink()
+        << "\tis_loop_count_sink:" << graph->is_loop_count_sink()
         << "\texecution_strategy:" << graph_compiler_info.strategy_ << "\n";
 
     for (auto &value_node : graph->graph_value_nodes()) {

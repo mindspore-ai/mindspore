@@ -24,6 +24,7 @@
 #include "runtime/device/bucket.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/optimizer/common/common_backend_optimization.h"
 
 namespace mindspore {
 namespace device {
@@ -84,6 +85,9 @@ class DeviceContext {
   // Get device address type according different device type, such GPU, Ascend.
   virtual DeviceAddressType GetDeviceAddressType() const = 0;
 
+  // Unify the MindIR, the default behavior uses the common unified MindIR.
+  virtual void UnifyMindIR(const KernelGraphPtr &graph) const { opt::CommonUnifyMindIR(graph); }
+
   // Optimize the kernel graph for graph mode.
   virtual void OptimizeGraph(const KernelGraphPtr &graph) const {}
 
@@ -108,7 +112,10 @@ class DeviceContext {
   virtual void UpdateDynamicShape(const CNodePtr &kernel) const { AnfAlgo::InferShape(kernel); }
 
   // Whether the graph sink executing through the device capability, the default behavior is not sink and return false.
-  virtual bool IsGraphSink(const KernelGraphPtr &graph) const { return false; }
+  virtual bool IsExecutingSink(const KernelGraphPtr &graph) const { return false; }
+  // Whether the graph loop sink executing through the device capability, the default behavior is not loop sink and
+  // return false.
+  virtual bool IsLoopCountSink(const KernelGraphPtr &graph) const { return false; }
 
   // Launch graph, device such as Ascend support the whole graph sink to the device executing.
   virtual bool LaunchGraph(const KernelGraphPtr &graph) const { return true; }

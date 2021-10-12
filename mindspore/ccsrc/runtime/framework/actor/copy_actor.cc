@@ -78,15 +78,7 @@ void CopyActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
 
-  // The input is invalid and needs to be erased when finish copy.
-  EraseInput(context);
-
-  // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
-  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of the
-  // current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully, the
-  // other is to ensure the execution order and avoid the illegal memory timing problem.
-  SendMemoryFreeReq(context);
-  SendOutput(context);
+  PostRun(context);
 }
 
 void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {

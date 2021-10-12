@@ -276,6 +276,7 @@ class KernelGraph : public FuncGraph {
   void UpdateGraphDynamicAttr();
   void SetGraphDynamicAttr(bool is_dynamic_shape) { is_dynamic_shape_ = is_dynamic_shape; }
   bool is_dynamic_shape() const { return is_dynamic_shape_; }
+  void UpdateGraphAquireGilAttr();
   void SetOptimizerFlag();
   void SetInputNodes();
   const std::vector<AnfNodePtr> &input_nodes() const { return input_nodes_; }
@@ -379,8 +380,10 @@ class KernelGraph : public FuncGraph {
 
   bool IsDatasetGraph() const;
 
-  bool is_sink() const { return is_sink_; }
-  void set_is_sink(bool is_sink) { is_sink_ = is_sink; }
+  bool is_executing_sink() const { return is_executing_sink_; }
+  void set_is_executing_sink(bool is_executing_sink) { is_executing_sink_ = is_executing_sink; }
+  bool is_loop_count_sink() const { return is_loop_count_sink_; }
+  void set_is_loop_count_sink(bool is_loop_count_sink) { is_loop_count_sink_ = is_loop_count_sink; }
 
  private:
   // remove value node form graph
@@ -495,7 +498,9 @@ class KernelGraph : public FuncGraph {
   bool is_need_gil_{false};
 
   // Indicate whether the kernel graph sink to the device executing.
-  bool is_sink_{false};
+  bool is_executing_sink_{false};
+  // Indicate whether the kernel graph loop sink to the device executing.
+  bool is_loop_count_sink_{false};
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
