@@ -23,7 +23,7 @@ void MatMulSparse8x8(const float *a, const float *b, const uint32_t *nnz, const 
                      const float *bias, ActType act_type, int out_stride) {
 #ifndef ENABLE_ARM64
   return;
-#endif
+#else
   // mul-acc
   for (int oc = 0; oc < 8; oc++) {
     uint32_t cur_nnz = nnz[oc];
@@ -50,4 +50,5 @@ void MatMulSparse8x8(const float *a, const float *b, const uint32_t *nnz, const 
     *(c + 6 * out_stride + oc) = vacc2[2];
     *(c + 7 * out_stride + oc) = vacc2[3];
   }
+#endif
 }
