@@ -201,6 +201,9 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
       int16_t *row1_ptr1 = row1_ptr;
       for (int x = 0; x < dst_width; x++) {
         const unsigned char *src_start_p = src_start + x_offset[x];
+        if ((src_start_p + 3 - src) >= (src_width * src_height)) {
+          continue;
+        }
         row1_ptr1[x] = (src_start_p[0] * x_weight_p[0] + src_start_p[3] * x_weight_p[1]) >> 4;
         x_weight_p += 2;
       }
