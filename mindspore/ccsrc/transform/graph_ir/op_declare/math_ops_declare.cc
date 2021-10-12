@@ -52,7 +52,7 @@ REG_ADPT_DESC(ActULQClampMinGrad, kNameActULQClampMinGrad, ADPT_DESC(ActULQClamp
 // HistogramFixedWidthD
 INPUT_MAP(HistogramFixedWidthD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(range)}};
 ATTR_MAP(HistogramFixedWidthD) = {{"nbins", ATTR_DESC(nbins, AnyTraits<int64_t>())},
-                                  {"dtype", ATTR_DESC(dtype, AnyTraits<std::string>())}};
+                                  {"dtype", ATTR_DESC(dtype, AnyTraits<int64_t>())}};
 OUTPUT_MAP(HistogramFixedWidthD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(HistogramFixedWidthD, kNameHistogramFixedWidthD, ADPT_DESC(HistogramFixedWidthD))
 
