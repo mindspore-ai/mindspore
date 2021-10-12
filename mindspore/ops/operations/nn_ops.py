@@ -2009,7 +2009,7 @@ class MaxPool3D(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', attr 'pad_list' should be an positive int number or a tuple of "
                              f"three or six positive int numbers, but got {len(self.pad_list)} numbers.")
         if self.pad_mode != 'CALCULATED' and self.pad_list != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', the 'pad_list' must be zero when 'pad_mode' is not \"CALCULATED\", "
+            raise ValueError(f"For '{self.name}', the 'pad_list' must be zero when 'pad_mode' is not \"pad\", "
                              f"but got 'pad_list' is {self.pad_list} and 'pad_mode' is {pad_mode}.")
         if self.pad_mode == 'CALCULATED':
             for item in self.pad_list:
