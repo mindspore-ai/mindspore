@@ -55,8 +55,7 @@ void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *inp
   input_size_list->push_back((*size_i));
 }
 
-void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list,
-                      const AnfNodePtr &anf_node) {
+void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *input_size_list) {
   for (size_t i = 0; i < input_json.size(); i++) {
     if (input_json[i].is_array()) {
       for (size_t m = 0; m < input_json[i].size(); m++) {
@@ -103,8 +102,7 @@ void GetRealOutputSize(const nlohmann::json &output_json, std::vector<size_t> *o
   output_size_list->push_back((*size_i));
 }
 
-void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *output_size_list,
-                       const AnfNodePtr &anf_node) {
+void GetOutputSizeList(const nlohmann::json &output_json, std::vector<size_t> *output_size_list) {
   for (size_t i = 0; i < output_json.size(); i++) {
     if (output_json[i].is_array()) {
       for (size_t m = 0; m < output_json[i].size(); m++) {
@@ -140,8 +138,8 @@ bool TbeKernelBuild::GetIOSize(const nlohmann::json &kernel_json, std::vector<si
   for (size_t i = 0; i < op_list.size(); i++) {
     auto op_info = op_list[i];
     if (op_info["type"] != "Data") {
-      GetInputSizeList(op_info["input_desc"], input_size_list, anf_node);
-      GetOutputSizeList(op_info["output_desc"], output_size_list, anf_node);
+      GetInputSizeList(op_info["input_desc"], input_size_list);
+      GetOutputSizeList(op_info["output_desc"], output_size_list);
     }
   }
   return true;

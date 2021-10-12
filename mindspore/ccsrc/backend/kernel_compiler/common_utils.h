@@ -47,6 +47,48 @@ constexpr unsigned int AUTODIFF_COMPILE_OVERTIME = 600;
 constexpr auto kArgDataformat = "data_format";
 
 const std::vector<std::string> support_devices = {"aicore", "aicpu", "cuda"};
+const std::unordered_map<std::string, TypeId> type_id_maps = {
+  {"float", TypeId::kNumberTypeFloat32},
+  {"float16", TypeId::kNumberTypeFloat16},
+  {"float32", TypeId::kNumberTypeFloat32},
+  {"float64", TypeId::kNumberTypeFloat64},
+  {"int", TypeId::kNumberTypeInt},
+  {"int8", TypeId::kNumberTypeInt8},
+  {"int16", TypeId::kNumberTypeInt16},
+  {"int32", TypeId::kNumberTypeInt32},
+  {"int64", TypeId::kNumberTypeInt64},
+  {"uint", TypeId::kNumberTypeUInt},
+  {"uint8", TypeId::kNumberTypeUInt8},
+  {"uint16", TypeId::kNumberTypeUInt16},
+  {"uint32", TypeId::kNumberTypeUInt32},
+  {"uint64", TypeId::kNumberTypeUInt64},
+  {"bool", TypeId::kNumberTypeBool},
+  {"int4", TypeId::kNumberTypeInt4},
+  {"complex64", TypeId::kNumberTypeComplex64},
+  {"complex128", TypeId::kNumberTypeComplex128},
+  {"", TypeId::kMetaTypeNone},
+};
+const std::map<TypeId, std::string> type_id_str_map = {
+  {TypeId::kNumberTypeFloat32, "float32"},
+  {TypeId::kNumberTypeFloat16, "float16"},
+  {TypeId::kNumberTypeFloat, "float32"},
+  {TypeId::kNumberTypeFloat64, "float64"},
+  {TypeId::kNumberTypeInt, "int"},
+  {TypeId::kNumberTypeInt8, "int8"},
+  {TypeId::kNumberTypeInt16, "int16"},
+  {TypeId::kNumberTypeInt32, "int32"},
+  {TypeId::kNumberTypeInt64, "int64"},
+  {TypeId::kNumberTypeUInt, "uint"},
+  {TypeId::kNumberTypeUInt8, "uint8"},
+  {TypeId::kNumberTypeUInt16, "uint16"},
+  {TypeId::kNumberTypeUInt32, "uint32"},
+  {TypeId::kNumberTypeUInt64, "uint64"},
+  {TypeId::kNumberTypeBool, "int8"},
+  {TypeId::kNumberTypeInt4, "int4"},
+  {TypeId::kNumberTypeComplex64, "complex64"},
+  {TypeId::kNumberTypeComplex128, "complex128"},
+  {TypeId::kMetaTypeNone, ""},
+};
 
 struct KernelMetaInfo {
   uintptr_t func_stub_;
