@@ -35,7 +35,7 @@ class LayerInput {
   bool IsTensor() const { return type_ == InputType::kTensor; }
   bool IsWeight() const { return type_ == InputType::kWeight; }
 
-  nvinfer1::Weights *weight() {
+  const nvinfer1::Weights *weight() {
     if (!IsWeight()) {
       MS_LOG(WARNING) << "weight not initialized.";
       return nullptr;
