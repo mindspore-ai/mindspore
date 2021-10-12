@@ -57,50 +57,59 @@ class Net(nn.Cell):
         out, _ = self.dropout(out)
         return out
 
-
-def test_dropout_semi_auto():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    net = GradWrap(NetWithLoss(Net()))
+def compile_graph(net, device_num, parallel_mode, x, y):
+    context.set_auto_parallel_context(device_num=device_num, global_rank=0, parallel_mode=parallel_mode)
     net.set_auto_parallel()
-
-    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     net.set_train()
     _cell_graph_executor.compile(net, x, y)
+
+def test_dropout_semi_auto():
+    """
+    Feature: distribute operator dropout in auto parallel with gpu backend.
+    Description: dropout net without strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
+    net = GradWrap(NetWithLoss(Net()))
+    x = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([32, 128]), dtype=ms.float32)
+    compile_graph(net, 8, "semi_auto_parallel", x, y)
 
 
 def test_dropout_semi_auto2():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    """
+    Feature: distribute operator dropout in auto parallel with gpu backend.
+    Description: dropout net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
     strategy1 = ((8, 1),)
     strategy2 = ((4, 2), (2, 1))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    net.set_auto_parallel()
-
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_graph(net, 8, "semi_auto_parallel", x, y)
 
 
 def test_dropout_semi_auto3():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
+    """
+    Feature: distribute operator dropout in auto parallel with gpu backend.
+    Description: dropout net with strategy in semi auto parallel.
+    Expectation: compile done without error.
+    """
     strategy1 = ((2, 4),)
     strategy2 = ((4, 2), (2, 1))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
-    net.set_auto_parallel()
-
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_graph(net, 8, "semi_auto_parallel", x, y)
 
 
 def test_dropout_auto():
-    context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="auto_parallel")
+    """
+    Feature: distribute operator dropout in auto parallel with gpu backend.
+    Description: dropout net in auto parallel.
+    Expectation: compile done without error.
+    """
     net = GradWrap(NetWithLoss(Net()))
-    net.set_auto_parallel()
-
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
-    net.set_train()
-    _cell_graph_executor.compile(net, x, y)
+    compile_graph(net, 8, "auto_parallel", x, y)
