@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-static std::map<std::string, Shape> param_shapes;
+std::map<std::string, Shape> param_shapes;
 
 std::vector<std::string> PARALLEL_MODE_LIST = {STAND_ALONE, DATA_PARALLEL, HYBRID_PARALLEL, SEMI_AUTO_PARALLEL,
                                                AUTO_PARALLEL};
@@ -48,6 +48,7 @@ std::shared_ptr<ParallelContext> ParallelContext::GetInstance() {
 ParallelContext::ParallelContext() { Reset(); }
 
 void ParallelContext::Reset() {
+  init_param_shape_ = true;
   gradients_mean_ = false;
   full_batch_ = false;
   gradient_fp32_sync_ = true;
@@ -228,7 +229,7 @@ void ParallelContext::ParallelParameterContextInitShape(const FuncGraphPtr &func
 
 // Restore the parameters' shape for evaluation/prediction in auto-parallel or semi-auto-parallel mode
 void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph,
-                                                           const ParameterPtr &param_node, AbstractBasePtr ptr) {
+                                                           const ParameterPtr &param_node, const AbstractBasePtr &ptr) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);

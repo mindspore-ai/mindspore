@@ -353,7 +353,7 @@ StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithZeroComm(const StrategyPt
   for (auto &key_value : cost_map_) {
     const auto &candidate_prev_op_stra = key_value.first.first;
     if (prev_op_stra->IsEqual(candidate_prev_op_stra) && (key_value.second[0]->communication_cost_ == 0.0)) {
-      next_op_stras.emplace_back(key_value.first.second, key_value.second[0]->computation_cost_);
+      (void)next_op_stras.emplace_back(key_value.first.second, key_value.second[0]->computation_cost_);
     }
   }
   if (next_op_stras.empty()) {
@@ -376,7 +376,7 @@ StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithZeroComm(const StrategyPt
   for (auto &key_value : cost_map_) {
     const auto &candidate_next_op_stra = key_value.first.second;
     if (next_op_stra->IsEqual(candidate_next_op_stra) && (key_value.second[0]->communication_cost_ == 0.0)) {
-      prev_op_stras.emplace_back(key_value.first.first, key_value.second[0]->computation_cost_);
+      (void)prev_op_stras.emplace_back(key_value.first.first, key_value.second[0]->computation_cost_);
     }
   }
   if (prev_op_stras.empty()) {

@@ -62,7 +62,7 @@ static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LO
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL};
 // g_RefMap, for CNode B input i is a RefKey[Parameter C],
 // it will be one item in map with key: C, and value: (B, i)
-static std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
+std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 
 void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool accu_flag) {
   if (new_node_input.empty()) {
@@ -1574,7 +1574,7 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
         // if there are multiple node users, they share one same allgather
         auto next_cnode = FindCNode(parameter, op_name, cnode->func_graph(), 0);
         if (next_cnode.first) {
-          manager->SetEdge(cnode, SizeToInt(param_pair.second), next_cnode.second);
+          manager->SetEdge(cnode, param_pair.second, next_cnode.second);
           MS_LOG(INFO) << "Parallel optimizer is shared between " << parameter->ToString() << " and "
                        << GetPrimName(cnode);
         } else {
@@ -2645,7 +2645,7 @@ ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default() && ParameterRequireGrad(input_parameter)) {
-        param_names.emplace_back(std::make_pair(input_parameter->name(), input_parameter));
+        (void)param_names.emplace_back(std::make_pair(input_parameter->name(), input_parameter));
       }
     } else if (input->isa<CNode>()) {
       CNodePtr cnode = input->cast<CNodePtr>();
@@ -2707,7 +2707,7 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
         }
         std::vector<std::pair<int64_t, int64_t>> manual_shape;
         for (int64_t i = 0; i < UlongToLong(param_split_shapes.size()); ++i) {
-          manual_shape.push_back({param_split_shapes[i], index_offsets[i]});
+          manual_shape.push_back({param_split_shapes[LongToSize(i)], index_offsets[LongToSize(i)]});
         }
         manual_shape_map[param_name] = manual_shape;
       }

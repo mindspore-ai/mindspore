@@ -309,23 +309,23 @@ void ReorderForBackward(const PipelinePair &forward_start_pair, const PipelinePa
   auto stage_id = g_device_manager->stage_id();
   for (size_t i = LongToSize(stage_num - stage_id); i < (forward_start_pair.first.size()); ++i) {
     auto prior_node1 = forward_end_before_pair.second[i];
-    auto post_node1 = backward_start_pair.first[LongToSize(i - stage_num + stage_id + 1)];
+    auto post_node1 = backward_start_pair.first[LongToSize(SizeToLong(i) - stage_num + stage_id + 1)];
     InsertDepend(prior_node1, post_node1, manager, root);
-    auto prior_node2 = backward_end_pair.second[LongToSize(i - stage_num + stage_id)];
+    auto prior_node2 = backward_end_pair.second[LongToSize(SizeToLong(i) - stage_num + stage_id)];
     auto post_node2 = forward_start_pair.first[i];
     InsertDepend(prior_node2, post_node2, manager, root);
   }
   for (size_t i = LongToSize(stage_num - stage_id); i < (forward_start_pair.first.size() + 1); ++i) {
     if (!IsLastStage()) {
-      auto prior_node3 = backward_start_pair.second[LongToSize(i - stage_num + stage_id)];
+      auto prior_node3 = backward_start_pair.second[LongToSize(SizeToLong(i) - stage_num + stage_id)];
       auto post_node3 = forward_end_pair.first[i - 1];
       InsertDepend(prior_node3, post_node3, manager, root);
       auto prior_node4 = forward_end_pair.second[i - 1];
-      auto post_node4 = backward_end_pair.first[LongToSize(i - stage_num + stage_id)];
+      auto post_node4 = backward_end_pair.first[LongToSize(SizeToLong(i) - stage_num + stage_id)];
       InsertDepend(prior_node4, post_node4, manager, root);
     }
   }
-  for (size_t j = LongToSize(backward_start_pair.first.size() - stage_num + stage_id + 1);
+  for (size_t j = LongToSize(SizeToLong(backward_start_pair.first.size()) - stage_num + stage_id + 1);
        j < backward_start_pair.first.size(); ++j) {
     auto prior_node5 = backward_end_pair.second[j - 1];
     auto post_node5 = backward_start_pair.first[j];
