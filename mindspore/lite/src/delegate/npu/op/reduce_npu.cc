@@ -15,14 +15,21 @@
  */
 
 #include "src/delegate/npu/op/reduce_npu.h"
+#include "src/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
 int ReduceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
   auto reduce_prim = primitive->value_as_ReduceFusion();
   if (reduce_prim == nullptr) {
-    MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
+    MS_LOG(ERROR) << "Get null primitive value for op: " << name_;
     return RET_ERROR;
+  }
+  CHECK_LESS_RETURN(in_tensors.size(), 2);
+  auto reduce_axes = inputs_.at(1);
+  if (!reduce_axes.IsConst()) {
+    MS_LOG(WARNING) << "Npu Reduce op dose not support non-const axes.";
+    return RET_NOT_SUPPORT;
   }
   reduce_mode_ = reduce_prim->mode();
   if (reduce_mode_ != schema::ReduceMode_ReduceMean) {
@@ -30,7 +37,7 @@ int ReduceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
     return RET_NOT_SUPPORT;
   }
   if (reduce_prim->reduce_to_end()) {
-    MS_LOG(WARNING) << "Npu reduce op does not support attribute reduce_to_end";
+    MS_LOG(WARNING) << "Npu Reduce op does not support attribute reduce_to_end";
     return RET_NOT_SUPPORT;
   }
   return RET_OK;
@@ -69,6 +76,22 @@ int ReduceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
 }
 
 ge::Operator *ReduceNPUOp::GetNPUOp() { return this->reduce_; }
+
+int ReduceNPUOp::HandleAxis() {
+  CHECK_LESS_RETURN(inputs_.size(), 2);
+  auto reduce_axes = inputs_.at(1);
+  int num_axes = reduce_axes.Shape().at(0);
+  MS_CHECK_TRUE_RET(reduce_axes.MutableData() != nullptr, RET_ERROR);
+  int *axes_data = reinterpret_cast<int *>(reduce_axes.MutableData());
+  for (int i = 0; i < num_axes; i++) {
+    axes_data[i] = TransFormAxis(axes_data[i]);
+    if (axes_data[i] == NCHW_INVALID) {
+      MS_LOG(ERROR) << "Transform axis for Reduce op failed.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 
 ReduceNPUOp::~ReduceNPUOp() {
   if (reduce_ != nullptr) {

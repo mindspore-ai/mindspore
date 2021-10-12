@@ -42,10 +42,13 @@ class SoftmaxNPUOp : public NPUOp {
                    const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
+  int HandleAxis() override;
+
   ge::Operator *GetNPUOp() override;
 
  private:
   hiai::op::Softmax *softmax_ = nullptr;
+  int32_t axis_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_SOFTMAX_NPU_H_

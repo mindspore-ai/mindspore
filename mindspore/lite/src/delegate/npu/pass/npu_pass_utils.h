@@ -54,8 +54,6 @@ class NPUPassUtils {
   static NPUOp *OpInputFromOp(NPUOp *op, mindspore::MSTensor in_tensor);
   static std::vector<mindspore::MSTensor> GetNonConstInputs(NPUOp *op);
   static bool Scale4dCase(NPUOp *op);
-  static void AssistDataNHWC2NCHW(int *data, size_t unit_size);
-  static int MaskDataNHWC2NCHW(int mask);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_PASS_UTILS_H_

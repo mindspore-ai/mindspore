@@ -16,7 +16,6 @@
 
 #include "src/delegate/npu/op/strided_slice_npu.h"
 #include "src/delegate/npu/npu_converter_utils.h"
-#include "src/delegate/npu/pass/npu_pass_utils.h"
 
 namespace mindspore {
 int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -102,11 +101,30 @@ ge::Operator *StridedSliceNPUOp::GetNPUOp() {
 }
 
 int StridedSliceNPUOp::HandleAxis() {
-  begins_mask_ = NPUPassUtils::MaskDataNHWC2NCHW(begins_mask_);
-  ends_mask_ = NPUPassUtils::MaskDataNHWC2NCHW(ends_mask_);
-  ellipsis_mask_ = NPUPassUtils::MaskDataNHWC2NCHW(ellipsis_mask_);
-  shrink_axis_mask_ = NPUPassUtils::MaskDataNHWC2NCHW(shrink_axis_mask_);
-  new_axis_mask_ = NPUPassUtils::MaskDataNHWC2NCHW(new_axis_mask_);
+  if (inputs_.size() < MIN_INPUT_SIZE) {
+    MS_LOG(ERROR) << "StridedSlice in tensors size < " << MIN_INPUT_SIZE;
+    return RET_ERROR;
+  }
+  auto begin_tensor = inputs_.at(BEGIN_INDEX);
+  int *begin = reinterpret_cast<int *>(begin_tensor.MutableData());
+  MS_ASSERT(begin);
+  AssistDataNHWC2NCHW(begin, 1);
+  auto end_tensor = inputs_.at(END_INDEX);
+  int *end = reinterpret_cast<int *>(end_tensor.MutableData());
+  MS_ASSERT(end);
+  AssistDataNHWC2NCHW(end, 1);
+  auto stride_tensor = inputs_.at(STRIDE_INDEX);
+  if (inputs_.size() == ONNX_INPUT_SIZE) {
+    stride_tensor = inputs_.at(ONNX_STRIDE_INDEX);
+  }
+  int *stride = reinterpret_cast<int *>(stride_tensor.MutableData());
+  MS_ASSERT(stride);
+  AssistDataNHWC2NCHW(stride, 1);
+  begins_mask_ = MaskDataNHWC2NCHW(begins_mask_);
+  ends_mask_ = MaskDataNHWC2NCHW(ends_mask_);
+  ellipsis_mask_ = MaskDataNHWC2NCHW(ellipsis_mask_);
+  shrink_axis_mask_ = MaskDataNHWC2NCHW(shrink_axis_mask_);
+  new_axis_mask_ = MaskDataNHWC2NCHW(new_axis_mask_);
   return RET_OK;
 }
 

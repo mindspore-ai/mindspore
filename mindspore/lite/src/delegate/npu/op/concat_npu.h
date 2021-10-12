@@ -49,7 +49,7 @@ class ConcatNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
-  int HandleAxis();
+  int HandleAxis() override;
 
  private:
   hiai::op::ConcatD *concat_ = nullptr;

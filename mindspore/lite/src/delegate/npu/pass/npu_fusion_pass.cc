@@ -18,17 +18,12 @@
 #include <vector>
 #include "src/delegate/npu/pass/npu_pass_utils.h"
 #include "src/delegate/npu/npu_converter_utils.h"
-#include "src/delegate/npu/op/concat_npu.h"
-#include "src/delegate/npu/op/split_npu.h"
-#include "src/delegate/npu/op/pad_npu.h"
-#include "src/delegate/npu/op/strided_slice_npu.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace {
 constexpr int kNumDims = 4;
-constexpr int kNumInputSize = 4;
 }  // namespace
 
 namespace mindspore {
@@ -259,107 +254,7 @@ int NPUFusionPass::CommonFusion(NPUOp *cur_op) {
     MS_LOG(ERROR) << "UpdateOp failed.";
     return RET_ERROR;
   }
-  return RET_OK;
-}
-
-int NPUFusionPass::ConcatFusion(NPUOp *cur_op) {
-  if (cur_op == nullptr) {
-    return RET_ERROR;
-  }
-  int ret = UpdateOp(cur_op);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "UpdateOp failed.";
-    return ret;
-  }
-  if (cur_op->type() != schema::PrimitiveType_Concat) {
-    return RET_ERROR;
-  }
-  auto concat_op = static_cast<ConcatNPUOp *>(cur_op);
-  ret = concat_op->HandleAxis();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "HandleAxis failed.";
-    return ret;
-  }
-  return RET_OK;
-}
-
-int NPUFusionPass::SplitFusion(NPUOp *cur_op) {
-  if (cur_op == nullptr) {
-    return RET_ERROR;
-  }
-  int ret = UpdateOp(cur_op);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "UpdateOp failed.";
-    return RET_ERROR;
-  }
-  if (cur_op->type() != schema::PrimitiveType_Split) {
-    return RET_ERROR;
-  }
-  auto split_op = static_cast<SplitNPUOp *>(cur_op);
-  ret = split_op->HandleAxis();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "HandleAxis failed.";
-    return ret;
-  }
-  return RET_OK;
-}
-
-int NPUFusionPass::PadFusion(NPUOp *cur_op) {
-  if (cur_op == nullptr) {
-    return RET_ERROR;
-  }
-  int ret = UpdateOp(cur_op);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "UpdateOp failed.";
-    return ret;
-  }
-  if (cur_op->type() != schema::PrimitiveType_PadFusion) {
-    return RET_ERROR;
-  }
-  auto pad_op = static_cast<PadNPUOp *>(cur_op);
-  ret = pad_op->HandleAxis();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "HandleAxis failed.";
-    return ret;
-  }
-  return RET_OK;
-}
-
-int NPUFusionPass::StridedSliceFusion(NPUOp *cur_op) {
-  // basic requirement: input is nhwc 4d
-  if (cur_op == nullptr) {
-    return RET_ERROR;
-  }
-  int ret = UpdateOp(cur_op);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "UpdateOp failed.";
-    return ret;
-  }
-  if (cur_op->inputs().size() < kNumInputSize) {
-    MS_LOG(ERROR) << "in tensors size < " << kNumInputSize;
-    return RET_ERROR;
-  }
-  if (cur_op->type() != schema::PrimitiveType_StridedSlice) {
-    return RET_ERROR;
-  }
-  auto begin_tensor = cur_op->inputs().at(BEGIN_INDEX);
-  int *begin = reinterpret_cast<int *>(begin_tensor.MutableData());
-  MS_ASSERT(begin);
-  (void)NPUPassUtils::AssistDataNHWC2NCHW(begin, 1);
-  auto end_tensor = cur_op->inputs().at(END_INDEX);
-  int *end = reinterpret_cast<int *>(end_tensor.MutableData());
-  MS_ASSERT(end);
-  NPUPassUtils::AssistDataNHWC2NCHW(end, 1);
-  auto stride_tensor = cur_op->inputs().at(STRIDE_INDEX);
-  if (cur_op->inputs().size() == ONNX_INPUT_SIZE) {
-    stride_tensor = cur_op->inputs().at(ONNX_STRIDE_INDEX);
-  }
-  int *stride = reinterpret_cast<int *>(stride_tensor.MutableData());
-  MS_ASSERT(stride);
-  NPUPassUtils::AssistDataNHWC2NCHW(stride, 1);
-
-  auto stride_slice_op = static_cast<StridedSliceNPUOp *>(cur_op);
-  ret = stride_slice_op->HandleAxis();
+  ret = cur_op->HandleAxis();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "HandleAxis failed.";
     return ret;
@@ -447,34 +342,8 @@ int NPUFusionPass::Run(NPUGraph *subgraph) {
     auto cur_op = (*all_ops_)[i];
     auto ret = RET_OK;
     if (CheckFusion(cur_op)) {
-      switch (cur_op->type()) {
-        case schema::PrimitiveType_Split:
-          i -= cur_op->in_ops().size();
-          ret = SplitFusion(cur_op);
-          continue;
-        case schema::PrimitiveType_Concat:
-          i -= cur_op->in_ops().size();
-          ret = ConcatFusion(cur_op);
-          continue;
-        case schema::PrimitiveType_PadFusion:
-          i -= cur_op->in_ops().size();
-          ret = PadFusion(cur_op);
-          continue;
-        case schema::PrimitiveType_StridedSlice:
-          i -= cur_op->in_ops().size();
-          ret = StridedSliceFusion(cur_op);
-          continue;
-        case schema::PrimitiveType_AddFusion:
-        case schema::PrimitiveType_MulFusion:
-        case schema::PrimitiveType_DivFusion:
-        case schema::PrimitiveType_Activation:
-        case schema::PrimitiveType_Eltwise:
-          i -= cur_op->in_ops().size();
-          ret = CommonFusion(cur_op);
-          continue;
-        default:
-          continue;
-      }
+      i -= cur_op->in_ops().size();
+      ret = CommonFusion(cur_op);
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Fusion failed.";

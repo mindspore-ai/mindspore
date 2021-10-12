@@ -171,19 +171,9 @@ int NPUTransformPass::Run(NPUGraph *subgraph) {
       i++;
       continue;
     }
-    if (op->type() == schema::PrimitiveType_InstanceNorm) {
-      if (op->inputs().empty()) {
-        MS_LOG(ERROR) << op->name() << " inputs empty";
-        return RET_ERROR;
-      }
-      if (op->inputs().front().format() == mindspore::Format::NCHW) {
-        i++;
-        continue;
-      }
-      if (op->inputs().front().format() != mindspore::Format::NHWC) {
-        MS_LOG(ERROR) << "instance_norm input[0] should be NHWC or NCHW";
-        return RET_ERROR;
-      }
+    if (op->type() == schema::PrimitiveType_InstanceNorm && op->inputs().front().format() == mindspore::Format::NCHW) {
+      i++;
+      continue;
     }
     // insert pre_ops before op in vector
     // modify loop index add (pre_ops.size() + 1) to the post_ops insert location

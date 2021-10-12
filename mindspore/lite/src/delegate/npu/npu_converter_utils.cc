@@ -186,6 +186,33 @@ int TransFormAxis(int axis) {
   }
 }
 
+void AssistDataNHWC2NCHW(int *data, size_t unit_size) {
+  MS_ASSERT(data != nullptr);
+  for (size_t i = 0; i < unit_size; ++i) {
+    int c = data[3 * unit_size + i];
+    // n h w c
+    // n c h w
+    data[3 * unit_size + i] = data[2 * unit_size + i];
+    data[2 * unit_size + i] = data[unit_size + i];
+    data[unit_size + i] = c;
+  }
+}
+
+int MaskDataNHWC2NCHW(int mask) {
+  int mask_vec[4];
+  for (int i = 0; i < 4; ++i) {
+    mask_vec[i] = (uint32_t)(mask) & (1 << i);
+  }
+  AssistDataNHWC2NCHW(mask_vec, 1);
+  int ret = 0;
+  for (int i = 0; i < 4; ++i) {
+    if (mask_vec[i]) {
+      ret += 1 << i;
+    }
+  }
+  return ret;
+}
+
 int ConverterToNPUActivationMode(schema::ActivationType type) {
   switch (type) {
     case schema::ActivationType_SIGMOID:
