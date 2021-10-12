@@ -16,7 +16,6 @@
 
 #include "backend/kernel_compiler/cpu/random_choice_with_mask_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
-#define MAX_DIMENSION 5
 
 namespace mindspore {
 namespace kernel {

@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/cpu/roi_align_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/roi_align_utils.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
@@ -72,9 +73,9 @@ bool ROIAlignCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
       int c, ph, pw, roi_bin_grid_h, roi_bin_grid_w;
       T bin_size_h, bin_size_w, roi_start_h, roi_start_w;
 
-      bin_box(SizeToInt(thread_idx), rois, roi_cols_, spatial_scale_, sample_num_, roi_end_mode_, channels_, height_,
-              width_, pooled_height_, pooled_width_, &offset, &n, &c, &ph, &pw, &roi_bin_grid_h, &roi_bin_grid_w,
-              &bin_size_h, &bin_size_w, &roi_start_h, &roi_start_w);
+      roi::bin_box(SizeToInt(thread_idx), rois, roi_cols_, spatial_scale_, sample_num_, roi_end_mode_, channels_,
+                   height_, width_, pooled_height_, pooled_width_, &offset, &n, &c, &ph, &pw, &roi_bin_grid_h,
+                   &roi_bin_grid_w, &bin_size_h, &bin_size_w, &roi_start_h, &roi_start_w);
 
       // (n, c, ph, pw) is the base param of pooled map
       const T count_points_in_grid_cell = static_cast<T>(roi_bin_grid_h) * static_cast<T>(roi_bin_grid_w);
@@ -91,7 +92,7 @@ bool ROIAlignCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
           // calculate bilinear interpolation
           int x_low = 0, y_low = 0, x_high = 0, y_high = 0;
           T w1, w2, w3, w4;
-          bilinear_interpolate(height_, width_, y, x, &x_low, &y_low, &x_high, &y_high, &w1, &w2, &w3, &w4);
+          roi::bilinear_interpolate(height_, width_, y, x, &x_low, &y_low, &x_high, &y_high, &w1, &w2, &w3, &w4);
           if (x_low >= 0 && x_high >= 0 && y_low >= 0 && y_high >= 0 && y_low < height_ && y_high < height_ &&
               x_low < width_ && x_high < width_) {
             T v1 = input[offset + y_low * width_ + x_low];
@@ -124,107 +125,6 @@ void ROIAlignCPUKernel<T>::CheckParam(const std::vector<kernel::AddressPtr> &inp
   if (outputs.size() != kOutputSize) {
     MS_LOG(EXCEPTION) << "Output number is: " << outputs.size() << ", but ROIAlign needs " << kOutputSize << "outputs.";
   }
-}
-
-template <typename T>
-void ROIAlignCPUKernel<T>::bilinear_interpolate(const int height, const int width, T y, T x, int *x_low, int *y_low,
-                                                int *x_high, int *y_high, T *w1, T *w2, T *w3, T *w4) {
-  constexpr float eps = 0.00007;
-  const T ZERO = T(0.0);
-  const T ONE = T(1.0);
-  if (y < static_cast<T>(-1.0) || y > static_cast<T>(height) || x < static_cast<T>(-1.0) || x > static_cast<T>(width)) {
-    *w1 = *w2 = *w3 = *w4 = static_cast<T>(0);
-    *x_low = *x_high = *y_low = *y_high = -1;
-    return;
-  }
-
-  // low bounder is at least zero
-  y = y <= ZERO ? ZERO : y;
-  x = x <= ZERO ? ZERO : x;
-
-  // top left point
-  *y_low = (y <= static_cast<T>(eps) ? 0 : static_cast<int>(floor(y)));
-  *x_low = (x <= static_cast<T>(eps) ? 0 : static_cast<int>(floor(x)));
-
-  // bottom right point
-  if (*y_low >= height - 1) {
-    *y_high = *y_low = height - 1;
-    y = static_cast<T>(*y_low);
-  } else {
-    *y_high = *y_low + 1;
-  }
-
-  if (*x_low >= width - 1) {
-    *x_high = *x_low = width - 1;
-    x = static_cast<T>(*x_low);
-  } else {
-    *x_high = *x_low + 1;
-  }
-
-  // distance to nearest points
-  T lx, ly, hx, hy;
-  ly = y - static_cast<T>(*y_low), lx = x - static_cast<T>(*x_low);
-  hy = ONE - ly, hx = ONE - lx;
-
-  // weight is evaluated by the distance to point away.
-  //   the closer to point home, the more weight, the farther to point away.
-  *w1 = hy * hx, *w2 = hy * lx, *w3 = ly * hx, *w4 = ly * lx;
-  return;
-}
-
-template <typename T>
-void ROIAlignCPUKernel<T>::bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_scale,
-                                   const int sample_num, int roi_end_mode, const int channels, const int height,
-                                   const int width, const int pooled_height, const int pooled_width, int *offset,
-                                   int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h, int *roi_bin_grid_w,
-                                   T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
-  constexpr int START_W = 0;
-  constexpr int START_H = 1;
-  constexpr int END_W = 2;
-  constexpr int END_H = 3;
-  constexpr float eps = 0.00007;
-  // (n, c, ph, pw) is the base param of pooled map
-  *pw = thread_idx % pooled_width;
-  *ph = (thread_idx / pooled_width) % pooled_height;
-  *c = (thread_idx / pooled_width / pooled_height) % channels;
-  *n = thread_idx / pooled_width / pooled_height / channels;
-
-  // Roi has
-  //   1. 4 points, or
-  //   2. indicator + 4 points (1 + 4)
-  const T *roi_box = roi_boxes + (*n) * roi_cols;
-  int roi_batch_ind = 0;
-  if (roi_cols == ROIS_COLS) {
-    roi_batch_ind = FloatToInt(rint(static_cast<float>(roi_box[0]) + eps));
-    roi_box++;
-  }
-
-  // Scale and shift ROI
-  *roi_start_w = roi_box[START_W] * spatial_scale;
-  *roi_start_h = roi_box[START_H] * spatial_scale;
-  T roi_end_w = (roi_box[END_W] + static_cast<T>(roi_end_mode)) * spatial_scale;
-  T roi_end_h = (roi_box[END_H] + static_cast<T>(roi_end_mode)) * spatial_scale;
-
-  // New ROI height/width
-  T roi_width = roi_end_w - (*roi_start_w);
-  T roi_height = roi_end_h - (*roi_start_h);
-
-  if (roi_end_mode == 0) {  // backward compatibility
-    // Force malformed ROIs to be 1x1
-    roi_width = roi_width > static_cast<T>(1.0) ? roi_width : static_cast<T>(1.0);
-    roi_height = roi_height > static_cast<T>(1.0) ? roi_height : static_cast<T>(1.0);
-  }
-
-  // ratio of roi / pooled
-  *bin_size_h = static_cast<T>(roi_height) / static_cast<T>(pooled_height);
-  *bin_size_w = static_cast<T>(roi_width) / static_cast<T>(pooled_width);
-
-  *offset = (roi_batch_ind * channels + (*c)) * height * width;
-
-  // grid (int) by Sample ratio if defined, otherwise by pooled H/W
-  *roi_bin_grid_h = (sample_num > 0) ? sample_num : static_cast<int>(floor(roi_height / static_cast<T>(pooled_height)));
-  *roi_bin_grid_w = (sample_num > 0) ? sample_num : static_cast<int>(floor(roi_width / static_cast<T>(pooled_width)));
-  return;
 }
 }  // namespace kernel
 }  // namespace mindspore

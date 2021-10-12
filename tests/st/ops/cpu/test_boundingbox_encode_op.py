@@ -32,20 +32,13 @@ class NetBoundingBoxEncode(nn.Cell):
         return self.encode(anchor, groundtruth)
 
 def bbox2delta(proposals, gt, means, stds):
-    px = (proposals[..., 0] + proposals[..., 2]) * 0.5
-    py = (proposals[..., 1] + proposals[..., 3]) * 0.5
-    pw = proposals[..., 2] - proposals[..., 0] + 1.0
-    ph = proposals[..., 3] - proposals[..., 1] + 1.0
+    p_width = proposals[..., 2] - proposals[..., 0] + 1.0
+    p_height = proposals[..., 3] - proposals[..., 1] + 1.0
 
-    gx = (gt[..., 0] + gt[..., 2]) * 0.5
-    gy = (gt[..., 1] + gt[..., 3]) * 0.5
-    gw = gt[..., 2] - gt[..., 0] + 1.0
-    gh = gt[..., 3] - gt[..., 1] + 1.0
-
-    dx = (gx - px) / pw
-    dy = (gy - py) / ph
-    dw = np.log(gw / pw)
-    dh = np.log(gh / ph)
+    dx = (((gt[..., 0] + gt[..., 2]) * 0.5) - ((proposals[..., 0] + proposals[..., 2]) * 0.5)) / p_width
+    dy = (((gt[..., 1] + gt[..., 3]) * 0.5) - ((proposals[..., 1] + proposals[..., 3]) * 0.5)) / p_height
+    dw = np.log((gt[..., 2] - gt[..., 0] + 1.0) / p_width)
+    dh = np.log((gt[..., 3] - gt[..., 1] + 1.0) / p_height)
     means = np.array(means, np.float32)
     stds = np.array(stds, np.float32)
     deltas = np.stack([(dx - means[0]) / stds[0], (dy - means[1]) / stds[1],
