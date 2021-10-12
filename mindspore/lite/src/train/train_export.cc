@@ -128,7 +128,7 @@ int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tenso
   } else {
     bool channel_at_first = (src_tensor->shape().at(0) == channels);
     ret = DoPerChannelQuant<int8_t>(reinterpret_cast<float *>(src_tensor->data()), src_tensor->ElementsNum(),
-                                    schema::QuantType_WeightQuant, &(quant_params), quant_max, quant_min, bit_num,
+                                    schema::QuantType_QUANT_WEIGHT, &(quant_params), quant_max, quant_min, bit_num,
                                     false, &data, channels, channel_at_first);
   }
   if (ret == RET_QUANT_CONTINUE) {

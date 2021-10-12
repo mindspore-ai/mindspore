@@ -118,13 +118,13 @@ STATUS WeightQuantizer::DoOptimizerQuantize(const CNodePtr &cnode) {
 
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
-      status = MixedBitQuantFilter(tensor_info, primitive, QuantType_WeightQuant, WeightQuantType::MIXED_BIT_PER_LAYER,
+      status = MixedBitQuantFilter(tensor_info, primitive, QuantType_QUANT_WEIGHT, WeightQuantType::MIXED_BIT_PER_LAYER,
                                    type_id_, flags.mixedBitWeightQuantParam.init_scale, idx - 1);
     } else if (type_id_ == kNumberTypeInt8) {
-      status = FixedBitQuantFilter<int8_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_,
+      status = FixedBitQuantFilter<int8_t>(tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_, quant_min_,
                                            bit_num_, weight_quant_type, type_id_, idx - 1);
     } else if (type_id_ == kNumberTypeInt16) {
-      status = FixedBitQuantFilter<int16_t>(tensor_info, primitive, QuantType_WeightQuant, quant_max_, quant_min_,
+      status = FixedBitQuantFilter<int16_t>(tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_, quant_min_,
                                             bit_num_, weight_quant_type, type_id_, idx - 1);
     }
     if (status == RET_QUANT_CONTINUE) {

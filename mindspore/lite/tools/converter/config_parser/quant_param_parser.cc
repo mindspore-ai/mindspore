@@ -40,7 +40,7 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
     MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be a valid number.";
     return RET_INPUT_PARAM_INVALID;
   }
-  if (common_quant->quant_type == schema::QuantType_WeightQuant) {
+  if (common_quant->quant_type == schema::QuantType_QUANT_WEIGHT) {
     if (common_quant->bit_num < 0 || common_quant->bit_num > kQuantBitNumInt16) {
       MS_LOG(ERROR) << "INPUT ILLEGAL: bit_num should be [0,16].";
       return RET_INPUT_PARAM_INVALID;
@@ -106,7 +106,7 @@ int QuantParamParser::ParseFullQuant(const FullQuantString &full_quant_string, q
 
 int QuantParamParser::ParseQuantType(const std::string &quant_type_str, schema::QuantType *quant_type) {
   if (quant_type_str == "WEIGHT_QUANT") {
-    (*quant_type) = schema::QuantType_WeightQuant;
+    (*quant_type) = schema::QuantType_QUANT_WEIGHT;
     return RET_OK;
   } else if (quant_type_str == "FULL_QUANT") {
     (*quant_type) = schema::QuantType_QUANT_ALL;
