@@ -133,7 +133,7 @@ build_lite() {
 
     LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DENABLE_ASAN=${ENABLE_ASAN} -DCMAKE_INSTALL_PREFIX=${BUILD_PATH}/output/tmp"
 
-    if [ "$(uname)" == "Darwin" ]; then
+    if [[ "$(uname)" == "Darwin" && "${local_lite_platform}" != "x86_64" ]]; then
       LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DCMAKE_BUILD_TYPE=Debug/-DCMAKE_BUILD_TYPE=Release/g'`
       LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_TRAIN=off -DMSLITE_GPU_BACKEND=off -DMSLITE_ENABLE_NPU=off"
       LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=off"
@@ -183,8 +183,17 @@ build_lite() {
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DANDROID_NATIVE_API_LEVEL=19 -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=arm64-v8a -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang -DANDROID_STL=${MSLITE_ANDROID_STL}"
       fi
     else
-      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=lite_cv"
-      LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_X86_64=on"
+      if [ "$(uname)" == "Darwin" ]; then
+         pkg_name=mindspore-lite-${VERSION_STR}-ios-simulator
+         CMAKE_TOOLCHAIN_FILE=${BASEPATH}/cmake/lite_ios.cmake
+         LITE_CMAKE_ARGS=`echo $LITE_CMAKE_ARGS | sed 's/-DCMAKE_BUILD_TYPE=Debug/-DCMAKE_BUILD_TYPE=Release/g'`
+         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM=SIMULATOR64 -DPLATFORM_ARM64=off -DENABLE_NEON=off -DMSLITE_ENABLE_TRAIN=off -DMSLITE_GPU_BACKEND=off -DMSLITE_ENABLE_NPU=off -DBUILD_MINDDATA=off -DMSLITE_ENABLE_V0=on"
+         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_ENABLE_TOOLS=off -DMSLITE_ENABLE_CONVERTER=off"
+         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -G Xcode .."
+      else
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DBUILD_MINDDATA=lite_cv"
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_X86_64=on"
+      fi
     fi
 
     if [[ "X$CMAKE_TOOLCHAIN_FILE" != "X" ]]; then
@@ -197,8 +206,10 @@ build_lite() {
     echo "cmake ${LITE_CMAKE_ARGS} ${BASEPATH}/mindspore/lite"
     cmake ${LITE_CMAKE_ARGS}  "${BASEPATH}/mindspore/lite"
 
-    if [ "$(uname)" == "Darwin" ]; then
+    if [[ "$(uname)" == "Darwin" && "${local_lite_platform}" != "x86_64" ]]; then
         xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphoneos -quiet
+    elif [[ "$(uname)" == "Darwin" && "${local_lite_platform}" == "x86_64" ]]; then
+        xcodebuild ONLY_ACTIVE_ARCH=NO -configuration Release -scheme mindspore-lite_static -target mindspore-lite_static -sdk iphonesimulator -quiet
     else
       make -j$THREAD_NUM && make install && make package
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
@@ -217,7 +228,7 @@ build_lite() {
     else
         if [ "$(uname)" == "Darwin" ]; then
           mkdir -p ${BASEPATH}/output
-          cp -r ${BASEPATH}/mindspore/lite/build/src/Release-iphoneos/mindspore-lite.framework ${BASEPATH}/output/mindspore-lite.framework
+          cp -r ${BASEPATH}/mindspore/lite/build/src/Release-*/mindspore-lite.framework ${BASEPATH}/output/mindspore-lite.framework
           cd ${BASEPATH}/output
           tar -zcvf ${pkg_name}.tar.gz mindspore-lite.framework/
           sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256

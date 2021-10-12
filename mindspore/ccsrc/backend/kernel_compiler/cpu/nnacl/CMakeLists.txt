@@ -3,7 +3,7 @@ project(nnacl)
 set(NNACL_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${NNACL_DIR}/..)
 
-if(PLATFORM_ARM32 OR PLATFORM_ARM64)
+if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND DEFINED ARCHS)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fstrict-aliasing \
         -ffunction-sections -fdata-sections -ffast-math -Wno-shorten-64-to-32")

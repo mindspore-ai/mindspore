@@ -26,7 +26,7 @@ if(NOT MSLITE_ENABLE_DELEGATE)
     add_compile_definitions(DELEGATE_CLIP)
 endif()
 
-if(PLATFORM_ARM32 OR PLATFORM_ARM64)
+if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT APPLE)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
@@ -243,7 +243,7 @@ endif()
 add_library(mindspore-lite SHARED $<TARGET_OBJECTS:lite_src_mid>)
 set_target_properties(mindspore-lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
-if(DEFINED ARCHS)
+if(APPLE)
     set(MINDSPORE_LITE_PUB_HDRS
             ${CMAKE_CURRENT_SOURCE_DIR}/../include/context.h
             ${CMAKE_CURRENT_SOURCE_DIR}/../include/errorcode.h
