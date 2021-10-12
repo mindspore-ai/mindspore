@@ -23,36 +23,110 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSplitWithOverlap = "SplitWithOverlap";
+/// \brief All defined All operator prototype of lite.
 class MS_CORE_API SplitWithOverlap : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SplitWithOverlap() : PrimitiveC(kNameSplitWithOverlap) {}
+
+  /// \brief Destructor.
   ~SplitWithOverlap() = default;
   MS_DECLARE_PARENT(SplitWithOverlap, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] number_split Define the number split.
+  /// \param[in] ratio Define the ratio.
+  /// \param[in] extend_top Define the extend top.
+  /// \param[in] extend_bottom Define the extend bottom.
+  /// \param[in] split_dim Define the split dim.
+  /// \param[in] stride Define the pad stride.
+  /// \param[in] pad_top Define the pad top.
+  /// \param[in] trans_format Define the trans format.
   void Init(int64_t number_split, const std::vector<int64_t> &ratio, const std::vector<int64_t> &extend_top,
             const std::vector<int64_t> &extend_bottom, int64_t split_dim, int64_t stride, int64_t pad_top,
             bool trans_format);
 
+  /// \brief Method to set ratio attributes.
+  ///
+  /// \param[in] ratio Define the ratio.
   void set_ratio(const std::vector<int64_t> &ratio);
+
+  /// \brief Method to set extend_top attributes.
+  ///
+  /// \param[in] extend_top Define the extend top.
   void set_extend_top(const std::vector<int64_t> &extend_top);
+
+  /// \brief Method to set extend_bottom attributes.
+  ///
+  /// \param[in] extend_bottom Define the extend bottom.
   void set_extend_bottom(const std::vector<int64_t> &extend_bottom);
+
+  /// \brief Method to set number_split attributes.
+  ///
+  /// \param[in] number_split Define the number split.
   void set_number_split(int64_t number_split);
+
+  /// \brief Method to set split_dim attributes.
+  ///
+  /// \param[in] split_dim Define the split dim.
   void set_split_dim(int64_t split_dim);
+
+  /// \brief Method to set stride attributes.
+  ///
+  /// \param[in] stride Define the stride.
   void set_split_stride(int64_t stride);
+
+  /// \brief Method to set pad_top attributes.
+  ///
+  /// \param[in] pad_top Define the pad top.
   void set_pad_top(int64_t pad_top);
+
+  /// \brief Method to set trans_format attributes.
+  ///
+  /// \param[in] trans_format Define the trans format.
   void set_trans_format(bool trans_format);
 
+  /// \brief Method to get ratio attributes.
+  ///
+  /// \return ratio attributes.
   std::vector<int64_t> get_ratio() const;
+
+  /// \brief Method to get extend_top attributes.
+  ///
+  /// \return extend_top attributes.
   std::vector<int64_t> get_extend_top() const;
+
+  /// \brief Method to get extend_bottom attributes.
+  ///
+  /// \return extend_bottom attributes.
   std::vector<int64_t> get_extend_bottom() const;
+
+  /// \brief Method to get number_split attributes.
+  ///
+  /// \return number_split attributes.
   int64_t get_number_split() const;
+
+  /// \brief Method to get split_dim attributes.
+  ///
+  /// \return split_dim attributes.
   int64_t get_split_dim() const;
+
+  /// \brief Method to get split_stride attributes.
+  ///
+  /// \return split_stride attributes.
   int64_t get_split_stride() const;
+
+  /// \brief Method to get pad_top attributes.
+  ///
+  /// \return pad_top attributes.
   int64_t get_pad_top() const;
+
+  /// \brief Method to get trans_format attributes.
+  ///
+  /// \return trans_format attributes.
   bool get_trans_format() const;
 };
-AbstractBasePtr SplitWithOverlapInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
-using PrimSplitWithOverlap = std::shared_ptr<SplitWithOverlap>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SPLIT_WITH_OVERLAP_H_
