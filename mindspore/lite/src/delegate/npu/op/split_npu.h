@@ -42,7 +42,7 @@ class SplitNPUOp : public NPUOp {
                    const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
-  int HandleAxis();
+  int HandleAxis() override;
 
   ge::Operator *GetNPUOp() override;
 

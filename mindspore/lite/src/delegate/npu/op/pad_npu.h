@@ -42,7 +42,7 @@ class PadNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
-  int HandleAxis();
+  int HandleAxis() override;
 
  private:
   hiai::op::PadV2 *pad_ = nullptr;

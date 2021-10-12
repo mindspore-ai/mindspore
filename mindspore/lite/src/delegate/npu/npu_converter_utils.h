@@ -86,6 +86,10 @@ int ConverterToNPUActivationMode(schema::ActivationType type);
 
 int TransFormAxis(int axis);
 
+void AssistDataNHWC2NCHW(int *data, size_t unit_size);
+
+int MaskDataNHWC2NCHW(int mask);
+
 bool IsContainMSTensor(const std::vector<mindspore::MSTensor> &tensor_vec, const mindspore::MSTensor tensor);
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_NPU_CONVERTER_UITLS_H_

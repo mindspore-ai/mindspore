@@ -42,6 +42,8 @@ class ReduceNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
+  int HandleAxis() override;
+
  private:
   schema::ReduceMode reduce_mode_ = schema::ReduceMode_ReduceMean;
   hiai::Operator *reduce_ = nullptr;

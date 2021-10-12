@@ -28,6 +28,14 @@ int InstanceNormNPUOp::Init(const schema::Primitive *primitive, const std::vecto
     MS_LOG(ERROR) << "New instance norm npu operator for op " << name_ << " failed.";
     return RET_ERROR;
   }
+  if (in_tensors.empty()) {
+    MS_LOG(ERROR) << name_ << " inputs empty";
+    return RET_ERROR;
+  }
+  if (in_tensors.at(0).format() != mindspore::Format::NHWC && in_tensors.at(0).format() != mindspore::Format::NHWC) {
+    MS_LOG(ERROR) << "instance_norm input[0] should be NHWC or NCHW";
+    return RET_ERROR;
+  }
   auto instance_norm_prim = primitive->value_as_InstanceNorm();
   if (instance_norm_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;

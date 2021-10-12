@@ -23,6 +23,7 @@
 
 namespace mindspore {
 constexpr int ONNX_INPUT_SIZE = 5;
+constexpr int MIN_INPUT_SIZE = 4;
 constexpr int BEGIN_INDEX = 1;
 constexpr int END_INDEX = 2;
 constexpr int STRIDE_INDEX = 3;
@@ -48,7 +49,7 @@ class StridedSliceNPUOp : public NPUOp {
 
   ge::Operator *GetNPUOp() override;
 
-  int HandleAxis();
+  int HandleAxis() override;
 
   int SetCast(const ge::Operator *input, const ge::Operator *cur_op, const mindspore::MSTensor in_tensor,
               const mindspore::MSTensor out_tensor);
