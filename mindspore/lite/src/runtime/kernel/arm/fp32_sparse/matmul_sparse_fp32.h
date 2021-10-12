@@ -40,7 +40,7 @@ class MatmulSparseCPUKernel : public InnerKernel {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~MatmulSparseCPUKernel() override;
-  int Init() override;
+  int Prepare() override;
   int ReSize() override;
   int Run() override;
   int RunInstrinsics();

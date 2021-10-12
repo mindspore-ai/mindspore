@@ -129,7 +129,7 @@ int MatmulSparseCPUKernel::PrepareBias() {
   return RET_OK;
 }
 
-int MatmulSparseCPUKernel::Init() {
+int MatmulSparseCPUKernel::Prepare() {
   if (!InferShapeDone()) {
     return RET_ERROR;
   }
@@ -185,7 +185,7 @@ int MatmulSparseCPUKernel::PackInput() {
   auto stride = matrix_a_pack_size_ / task_num;
 
   auto *src = reinterpret_cast<const float *>(in_tensors_[0]->data());
-  for (int i = 0; i < task_num; i++) {
+  for (size_t i = 0; i < task_num; i++) {
     PackNHWCToNCHWFp32(src + i * stride, a_pack_ + i * stride, params_->batch, kBlockSize, params_->deep_, 0, 0);
   }
   return RET_OK;
