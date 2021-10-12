@@ -62,7 +62,6 @@ int TypeStrToDstType(const std::string &type_str) {
   }
   return kInvalid;
 }
-
 }  // namespace
 std::unordered_set<std::string> TbeAdapter::input_order_adjusted_ops_ = {kConv2DBackpropInputOpName,
                                                                          kConv2DBackpropFilterOpName,
