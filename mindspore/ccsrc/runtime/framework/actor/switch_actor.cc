@@ -407,7 +407,6 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
     }
     size_t from_index = branch_inputs_pos_[index][IntToSize(result_arrow->from_output_index_)];
 
-    MS_LOG(DEBUG) << "Switch actor:" << GetAID() << " send result addr:" << input_device_tensors_[from_index];
     bool is_send = false;
     for (const auto &backend_node : backend_parameters_[from_index]) {
       for (size_t j = 0; j < AnfAlgo::GetOutputTensorNum(backend_node.first); ++j) {
@@ -417,8 +416,6 @@ void SwitchActor::SendOutput(OpContext<DeviceTensor> *context) {
           Async(result_arrow->to_op_id_, &OutputActor::CollectOutput, backend_node.first, output_index,
                 result_arrow->to_input_index_, context);
           is_send = true;
-          MS_LOG(DEBUG) << "Switch actor:" << GetAID() << " send result addr:" << input_device_tensors_[from_index]
-                        << " succeed";
           break;
         }
       }
@@ -459,8 +456,7 @@ void SwitchActor::EraseInput(OpContext<DeviceTensor> *const context) {
                                                     [](const auto &input_data) { return input_data.second.empty(); })) {
     auto ret = input_data_.erase(context->sequential_num_);
     if (ret == 0) {
-      std::string error_info = "Erase input data failed: " + GetAID().Name();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+      MS_LOG(WARNING) << "Erase input data failed for switch actor: " << GetAID();
     }
   }
 

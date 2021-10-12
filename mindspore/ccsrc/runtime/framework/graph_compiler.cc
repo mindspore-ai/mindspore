@@ -98,7 +98,6 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
       size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
       auto device_address = device_context->CreateDeviceAddress(nullptr, tensor_size,
                                                                 AnfAlgo::GetOutputFormat(item, index), output_type_id);
-      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(item) << " addr:" << device_address;
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
   }
@@ -139,7 +138,6 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
 
     device::DeviceAddressPtr address =
       device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id);
-    MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address;
     MS_EXCEPTION_IF_NULL(address);
     AnfAlgo::SetOutputAddr(address, output_idx++, value_node.get());
   }
@@ -163,7 +161,6 @@ void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const Ker
       size_t tensor_size = value.size();
       auto address = device_context->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
       MS_EXCEPTION_IF_NULL(address);
-      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address;
 
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
     }
@@ -190,7 +187,6 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
       std::string output_format = AnfAlgo::GetOutputFormat(kernel, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
       auto device_address = device_context->CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type);
-      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(kernel) << " addr:" << device_address;
       AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
     }
   }
@@ -210,7 +206,6 @@ void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, con
     auto workspace_sizes = kernel_mod->GetWorkspaceSizeList();
     for (size_t i = 0; i < workspace_sizes.size(); ++i) {
       auto device_address = device_context->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown);
-      MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(kernel) << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());
     }
   }

@@ -168,7 +168,6 @@ void CreateDeviceTensorForValueNode(const AnfNodePtr &front_node, const AnfNodeP
   device::DeviceAddressPtr address =
     device_context->CreateDeviceAddress(nullptr, tensor_size, output_format, output_type_id);
   MS_EXCEPTION_IF_NULL(address);
-  MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(front_node) << " addr:" << address;
   AnfAlgo::SetOutputAddr(address, 0, front_node.get());
 }
 
@@ -193,7 +192,6 @@ void CreateDeviceTensorForFrontParameter(const AnfNodePtr &node, const DeviceCon
   // Create device tensor.
   device::DeviceAddressPtr address = device_context->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id);
   MS_EXCEPTION_IF_NULL(address);
-  MS_LOG(DEBUG) << "Create addr for node:" << AnfAlgo::GetNodeDebugString(node) << " addr:" << address;
   AnfAlgo::SetOutputAddr(address, 0, node.get());
 }
 
@@ -978,59 +976,6 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
 void ControlNodeParser::FetchFrontToFrontParameter(
   const std::vector<AnfNodePtr> &control_nodes,
   std::unordered_map<AnfNodePtr, std::vector<AnfNodePtr>> *front_to_front_parameter) {
-  // Function used to collect the input of call node.
-  const auto &call_input_parse = [front_to_front_parameter](const std::vector<AnfNodePtr> &parameters,
-                                                            const std::vector<AnfNodePtr> &call_inputs,
-                                                            const size_t call_input_start_pos) {
-    for (size_t i = 0; i < call_inputs.size(); ++i) {
-      if (call_inputs[i]->isa<Parameter>()) {
-        (*front_to_front_parameter)[call_inputs[i]].push_back(parameters[i + call_input_start_pos]);
-      }
-    }
-  };
-
-  // Function used to collect the input of partial node.
-  const auto &partial_input_parse = [call_input_parse, front_to_front_parameter](
-                                      const AnfNodePtr &partial_node, const std::vector<AnfNodePtr> &call_inputs) {
-    const auto &cnode = partial_node->cast<CNodePtr>();
-    const auto &inputs = cnode->inputs();
-    const auto &func_graph = GetValueNode<FuncGraphPtr>(inputs[kPartialFuncGraphPos]);
-    const auto &parameters = func_graph->parameters();
-    for (size_t i = kPartialInputStartPos; i < inputs.size(); ++i) {
-      if (inputs[i]->isa<Parameter>()) {
-        (*front_to_front_parameter)[inputs[i]].push_back(parameters[i - kPartialInputStartPos]);
-      }
-    }
-    call_input_parse(parameters, call_inputs, inputs.size() - kPartialInputStartPos);
-  };
-
-  // Function used to collect the input of switch node.
-  const auto &switch_input_parse = [&](const AnfNodePtr &switch_node, const std::vector<AnfNodePtr> &call_inputs) {
-    CNodePtr cnode = switch_node->cast<CNodePtr>();
-    const auto &switch_inputs = cnode->inputs();
-    if (AnfAlgo::CheckPrimitiveType(switch_node, prim::kPrimSwitch)) {
-      // Parse the switch node. The switch node has two partial node inputs.
-      if (AnfAlgo::CheckPrimitiveType(switch_inputs[kSwitchTrueBranchPos], prim::kPrimPartial)) {
-        partial_input_parse(switch_inputs[kSwitchTrueBranchPos], call_inputs);
-        partial_input_parse(switch_inputs[kSwitchFalseBranchPos], call_inputs);
-      }
-    } else {
-      // Parse the switchlayer node. The switchlayer node has a maketuple node input, which is a tuple of funcgraphs.
-      // call_inputs will be the input of these funcgraphs.
-      const auto &tuple_node = switch_inputs[kSwitchLayerBranchPos]->cast<CNodePtr>();
-      const auto &tuple_inputs = tuple_node->inputs();
-      for (size_t i = kMakeTupleInputStartPos; i < tuple_inputs.size(); ++i) {
-        const auto &input = tuple_inputs[i];
-        if (AnfAlgo::CheckPrimitiveType(input, prim::kPrimPartial)) {
-          partial_input_parse(input, call_inputs);
-        } else {
-          auto func_graph = GetValueNode<FuncGraphPtr>(input);
-          call_input_parse(func_graph->parameters(), call_inputs, 0);
-        }
-      }
-    }
-  };
-
   for (const auto &node : control_nodes) {
     CNodePtr cnode = node->cast<CNodePtr>();
     const auto &inputs = cnode->inputs();
@@ -1042,19 +987,6 @@ void ControlNodeParser::FetchFrontToFrontParameter(
         if (inputs[i]->isa<Parameter>()) {
           (*front_to_front_parameter)[inputs[i]].push_back(parameters[i - kCallInputStartPos]);
         }
-      }
-    } else if (inputs[0]->isa<CNode>()) {
-      // Call node which the first input node is a switch or switchlayer node.
-      if (AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitch) ||
-          AnfAlgo::CheckPrimitiveType(inputs[0], prim::kPrimSwitchLayer)) {
-        std::vector<AnfNodePtr> call_inputs;
-        call_inputs.assign(inputs.begin() + SizeToInt(kCallInputStartPos), inputs.end());
-        switch_input_parse(inputs[0], call_inputs);
-      } else if (IsCallNode(inputs[0])) {
-        continue;
-      } else {
-        MS_LOG(EXCEPTION) << "First input node of call node is not switch, node:"
-                          << AnfAlgo::GetNodeDebugString(inputs[0]);
       }
     }
   }
@@ -1328,9 +1260,6 @@ void ControlNodeParser::FetchFrontToBackendKernel(const std::vector<KernelGraphP
         if (front_node != nullptr) {
           for (size_t j = 0; j < AnfAlgo::GetOutputTensorNum(kernel); ++j) {
             front_to_backend_kernels_[{front_node, j}] = {{kernel, j}, device_context};
-            MS_LOG(DEBUG) << "Add front to backend kernel, front:" << AnfAlgo::GetNodeDebugString(front_node)
-                          << "index:" << j << " addr:" << front_node
-                          << " second:" << AnfAlgo::GetNodeDebugString(kernel) << "index:" << j << " addr:" << kernel;
           }
         }
       }
