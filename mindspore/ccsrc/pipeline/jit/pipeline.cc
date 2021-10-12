@@ -144,8 +144,8 @@ bool CheckArgValid(const py::handle &arg) {
     return std::all_of(dict_arg.begin(), dict_arg.end(), [](const auto &pair) { return CheckArgValid(pair.second); });
   }
 
-  return py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg) || py::isinstance<Number>(arg) ||
-         (py::isinstance<Tensor>(arg) && !py::hasattr(arg, "__parameter__"));
+  return py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg) || py::isinstance<py::none>(arg) ||
+         py::isinstance<Number>(arg) || (py::isinstance<Tensor>(arg) && !py::hasattr(arg, "__parameter__"));
 }
 
 std::string GetCompileExceptionInfo() {
@@ -245,7 +245,7 @@ void CheckArgsValid(const py::tuple &args) {
   for (size_t i = 0; i < args.size(); i++) {
     if (!CheckArgValid(args[i])) {
       MS_EXCEPTION(TypeError)
-        << "The inputs types of the outermost network support bool, int, float, tensor, "
+        << "The inputs types of the outermost network support bool, int, float, None, tensor, "
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
            "and tuple or list containing only these types, and dict whose values are these types, but the "
         << i << "th arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
