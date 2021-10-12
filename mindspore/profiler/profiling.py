@@ -127,6 +127,7 @@ class Profiler:
     _hwts_output_filename_target = "output_format_data_hwts_"
     _opcompute_output_filename_target = "output_op_compute_time_"
     _aicpu_op_output_filename_target = "output_data_preprocess_aicpu_"
+    _has_analysed = False
 
     def __init__(self, **kwargs):
         _environment_check()
@@ -237,6 +238,10 @@ class Profiler:
         """
         Collect and analyse performance data, called after training or during training. The example shows above.
         """
+        if Profiler._has_analysed:
+            msg = "Do not analyze twice in the profiler."
+            raise RuntimeError(msg)
+        Profiler._has_analysed = True
         _environment_check()
         self._cpu_profiler.stop()
         _stop_dataset_profiler()
