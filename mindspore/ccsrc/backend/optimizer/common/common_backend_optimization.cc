@@ -123,7 +123,6 @@ void AddDynamicShapeAttrPass(const std::shared_ptr<session::KernelGraph> &kernel
   pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   opt->AddPassManager(pm);
   (void)opt->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
 }
 
 }  // namespace opt
