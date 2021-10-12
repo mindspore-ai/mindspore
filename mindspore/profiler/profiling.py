@@ -49,10 +49,10 @@ INIT_OP_NAME = 'Default/InitDataSetQueue'
 
 def _environment_check():
     if c_expression.security.enable_security():
-        raise Runtime("Profiler is not supported if compiled with \'-s on\'")
+        raise RuntimeError("Profiler is not supported if compiled with \'-s on\'")
     if context.get_context("mode") == context.PYNATIVE_MODE:
-        raise Runtime("Profiler is not supported in pynative mode currently, "
-                      "and it is only supported in graph mode.")
+        raise RuntimeError("Profiler is not supported in pynative mode currently, "
+                           "and it is only supported in graph mode.")
 
 
 class ProfileOption(Enum):
@@ -294,10 +294,6 @@ class Profiler:
         aicpu_data_parser = DataPreProcessParser(source_path, output_data_preprocess_aicpu)
         aicpu_data_parser.execute()
 
-        # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
-        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict, self._dev_id, self._rank_id)
-        flops_parser.execute()
-
         # Parsing minddata AICPU profiling
         MinddataParser.execute(source_path, self._output_path, self._rank_id)
 
@@ -323,8 +319,10 @@ class Profiler:
 
         # analyse step trace info
         points = None
+        is_training_mode_flag = False
+
         try:
-            points = self._analyse_step_trace(source_path, framework_parser)
+            points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
         except ProfilerException as err:
             logger.warning(err.message)
 
@@ -347,6 +345,11 @@ class Profiler:
                 self._analyse_hccl_info()
             except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
                 logger.warning(err.message)
+
+        # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
+        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
+                                   self._dev_id, self._rank_id, is_training_mode_flag)
+        flops_parser.execute()
 
         os.environ['PROFILING_MODE'] = str("false")
         self._ascend_profiler.stop()
@@ -430,14 +433,14 @@ class Profiler:
             skip_first_step_flag = framework_parser.check_op_name(INIT_OP_NAME)
             point_info = framework_parser.point_info
             # recognize inference or training mode
-            is_traning_mode_flag = framework_parser.check_op_name("Gradients")
+            is_training_mode_flag = framework_parser.check_op_name("Gradients")
             # parser the step trace files and save the result to disk
             source_path = validate_and_normalize_path(source_path)
             parser = AscendStepTraceParser(input_dir=source_path,
                                            output_file_path=step_trace_intermediate_file_path,
                                            job_id=self._job_id_env,
                                            skip_first_step=skip_first_step_flag,
-                                           is_training_mode=is_traning_mode_flag)
+                                           is_training_mode=is_training_mode_flag)
             parser.update_tag_op_type_map(point_info)
             parser.parse_and_save()
             point_info = parser.record_point_info(point_info, point_info_file_path)
@@ -446,7 +449,7 @@ class Profiler:
         logger.info("Finish saving the intermediate result: %s", step_trace_intermediate_file_path)
         logger.info("The point info is: %s", point_info)
 
-        return point_info
+        return point_info, is_training_mode_flag
 
     def _analyse_timeline(self, aicpu_parser, optime_parser, source_path):
         """
