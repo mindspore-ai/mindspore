@@ -532,7 +532,7 @@ int AnfExporter::SetMetaGraphInput(const FuncGraphPtr &func_graph,
   for (const auto &input : func_graph->get_inputs()) {
     auto iter = graph_inputs_map_.find(input);
     if (iter == graph_inputs_map_.end()) {
-      return RET_ERROR;
+      continue;
     }
     meta_graphT->inputIndex.emplace_back(iter->second);
   }
