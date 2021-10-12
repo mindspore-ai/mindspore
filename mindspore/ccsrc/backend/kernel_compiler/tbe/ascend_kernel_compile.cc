@@ -606,12 +606,14 @@ bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNode
     std::vector<size_t> in_size_list;
     std::vector<size_t> out_size_list;
     (void)TbeKernelBuild::GetIOSize(kernel_json, &in_size_list, &out_size_list, node);
-    if (!is_tune_flag_ && op_debug_level_ != "1" &&
-        build_manager_->SearchInCache(json_name, in_size_list, out_size_list, node.get())) {
-      continue;
-    }
+    // step1: if same node has been dispitch, no need to compile
     if (single_processed_kernels_.find(json_name) != single_processed_kernels_.end()) {
       build_manager_->SaveSameOpInfo(node, json_name, in_size_list, out_size_list);
+      continue;
+    }
+    // step2: if node has in the cache, load the cache.
+    if (!is_tune_flag_ && op_debug_level_ != "1" &&
+        build_manager_->SearchInCache(json_name, in_size_list, out_size_list, node.get())) {
       continue;
     }
     (void)single_processed_kernels_.insert(json_name);
