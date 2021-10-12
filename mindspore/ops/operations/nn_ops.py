@@ -4186,8 +4186,8 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         \end{array}
 
     where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
-    n is the number of the sample in the batch and p_c is the weight of the positive answer for the class c.
-    p_c>1 increases the recall, p_c<1 increases the precision.
+    n is the number of the sample in the batch and :math:`p_c` is the weight of the positive answer for the class c.
+    :math:`p_c>1` increases the recall, :math:`p_c<1` increases the precision.
 
     Args:
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',
@@ -4273,13 +4273,15 @@ class Pad(PrimitiveWithInfer):
     (padding_left,padding_right, padding_top,padding_bottom padding_front,padding_back).
 
     .. math::
-        \text{ input_x_shape} = (N_{1},N_{2},...,N_{n})\\
         \begin{aligned}
-            \text{output_shape = }(&N_{1}+paddings[0,0]+paddings[0,1], \\
-                             & N_{2}+paddings[1,0]+paddings[1,1], \\
-                             &... , \\
-                             & N_{n}+paddings[n-1,0]+paddings[n-1,1])
+            &\text{ input_x_shape} = (N_{1},N_{2},...,N_{n}) \\
+            &\begin{aligned}
+                \text{output_shape = }(&N_{1}+paddings[0,0]+paddings[0,1], \\
+                                 & N_{2}+paddings[1,0]+paddings[1,1], \\
+                                 &... , \\
+                                 & N_{n}+paddings[n-1,0]+paddings[n-1,1])
             \end{aligned}
+        \end{aligned}
 
     Args:
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
@@ -7405,7 +7407,7 @@ class Dropout2D(PrimitiveWithInfer):
     from a Bernoulli distribution(For a 4-dimensional tensor with a shape of NCHW, the channel feature map refers
     to a 2-dimensional feature map with the shape of HW).
 
-    For example, the j_th channel of the i_th sample in the batched input is a 2D tensor input[i,j].
+    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a 2D tensor input[i,j].
     Each channel will be zeroed out independently on every forward call with probability 1-`keep_prob` using samples
     from a Bernoulli distribution.
 
@@ -7463,7 +7465,7 @@ class Dropout3D(PrimitiveWithInfer):
     with probability 1-`keep_prob` from a Bernoulli distribution(For a 5-dimensional tensor with a shape of NCDHW,
     the channel feature map refers to a 3-dimensional feature map with a shape of DHW).
 
-    For example, the j_th channel of the i_th sample in the batched input is a 3D tensor input[i,j,k].
+    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a 3D tensor input[i,j,k].
     Each channel will be zeroed out independently on every forward call with probability 1-`keep_prob`
     using samples from a Bernoulli distribution.
 
