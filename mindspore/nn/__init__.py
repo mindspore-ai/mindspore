@@ -17,7 +17,8 @@ Neural Networks Cells.
 
 Pre-defined building blocks or computing units to construct neural networks.
 """
-from . import layer, loss, optim, metrics, wrap, grad, probability, sparse, dynamic_lr
+from . import layer, loss, optim, metrics, wrap, grad, probability, sparse, dynamic_lr,\
+              reinforcement
 from .learning_rate_schedule import *
 from .dynamic_lr import *
 from .cell import Cell, GraphKernel, GraphCell
@@ -28,7 +29,7 @@ from .metrics import *
 from .wrap import *
 from .grad import Jvp, Vjp
 from .sparse import *
-
+from .reinforcement import *
 
 __all__ = ["Cell", "GraphKernel", "GraphCell"]
 __all__.extend(layer.__all__)
@@ -40,5 +41,6 @@ __all__.extend(grad.__all__)
 __all__.extend(sparse.__all__)
 __all__.extend(learning_rate_schedule.__all__)
 __all__.extend(dynamic_lr.__all__)
+__all__.extend(reinforcement.__all__)
 
 __all__.sort()

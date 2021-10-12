@@ -758,6 +758,9 @@ inline const PrimitivePtr kPrimDynamicBroadcastGradientArgs =
 // Random
 inline const PrimitivePtr kPrimStandardNormal = std::make_shared<Primitive>("StandardNormal");
 
+// RL Ops
+inline const PrimitivePtr kPrimTensorArrayStack = std::make_shared<Primitive>("TensorArrayStack");
+
 class DoSignaturePrimitive : public Primitive {
  public:
   explicit DoSignaturePrimitive(const std::string &name, const ValuePtr &function)

@@ -236,6 +236,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMemCpyAsync, R{InferImplMemCpyAsync, nullptr, true}},
     {prim::kPrimFusedPushWeight, R{nullptr, nullptr, true}},
     {prim::kPrimFusedPullWeight, R{nullptr, nullptr, true}},
+    // RL Ops
+    {prim::kPrimTensorArrayStack, R{InferImplTensorArrayStack, nullptr, true}},
   };
   return prim_eval_implement_map;
 }
