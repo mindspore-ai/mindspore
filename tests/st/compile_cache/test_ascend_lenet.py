@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import os
+import pathlib
 import numpy as np
 import pytest
 
@@ -87,6 +88,30 @@ def test_lenet():
     net = LeNet()
     train(net, data, label)
     assert os.path.exists(path)
+
+    data1 = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    label1 = Tensor(np.ones([32]).astype(np.int32))
+    net1 = LeNet()
+    train(net1, data1, label1)
+    context.set_context(save_compile_cache=False, load_compile_cache=False)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_lenet_load_failed():
+    path = "compile_cache.mindir"
+    if os.path.exists(path):
+        os.remove(path)
+    assert not os.path.exists(path)
+    data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    label = Tensor(np.ones([32]).astype(np.int32))
+    net = LeNet()
+    train(net, data, label)
+    assert os.path.exists(path)
+    os.remove(path)
+    pathlib.Path(path).touch()
 
     data1 = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
     label1 = Tensor(np.ones([32]).astype(np.int32))

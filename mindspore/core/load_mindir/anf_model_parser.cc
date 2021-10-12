@@ -232,11 +232,13 @@ tensor::TensorPtr MSANFModelParser::BuildTensorInfoForFuncGraph(const mind_ir::T
 
   if (!tensor_proto.has_data_type()) {
     MS_LOG(ERROR) << "mind_ir build tensor: " << tensor_proto.name() << " failed";
-    MS_LOG(EXCEPTION) << "mind_ir TensorProto has no data_type.";
+    MS_LOG(ERROR) << "mind_ir TensorProto has no data_type.";
+    return nullptr;
   }
   if (kDefaultValueSwitchMap.find(tensor_proto.data_type()) == kDefaultValueSwitchMap.end()) {
     MS_LOG(ERROR) << "mind_ir build tensor: " << tensor_proto.name() << " failed";
-    MS_LOG(EXCEPTION) << "mind_ir TensorProto data_type: " << tensor_proto.data_type() << " is not support yet!";
+    MS_LOG(ERROR) << "mind_ir TensorProto data_type: " << tensor_proto.data_type() << " is not support yet!";
+    return nullptr;
   }
 
   tensor::TensorPtr tensor_info =
@@ -258,7 +260,9 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   node->set_name(debug_info_name);
 
   tensor::TensorPtr tensor_info = BuildTensorInfoForFuncGraph(parameter_proto);
-  MS_EXCEPTION_IF_NULL(tensor_info);
+  if (tensor_info == nullptr) {
+    return false;
+  }
   MS_LOG(DEBUG) << "Load parameter name: " << debug_info_name;
   if (!IsIncLoad() || load_tensor_map_.find(debug_info_name) == load_tensor_map_.end()) {
     load_tensor_map_[debug_info_name] = tensor_info;
@@ -311,7 +315,9 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
   if (value_proto.tensor_size() > 0) {
     const mind_ir::TensorProto &tensor_proto = value_proto.tensor(0);
     tensor::TensorPtr tensor_info = BuildTensorInfoForFuncGraph(tensor_proto);
-    MS_EXCEPTION_IF_NULL(tensor_info);
+    if (tensor_info == nullptr) {
+      return false;
+    }
     auto tensor_abstract = tensor_info->ToAbstract();
     node->set_abstract(tensor_abstract);
   } else if (value_proto.has_denotation()) {
@@ -797,7 +803,8 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
   if (node_type.size() > kOpTypeFlagSize && node_type.substr(0, kOpTypeFlagSize) == kOperatorTypeFlag) {
     auto anfNode = GetAnfNode(node_type.substr(kOpTypeFlagSize));
     if (anfNode == nullptr) {
-      MS_LOG(EXCEPTION) << "Can't find the ref:" << node_type;
+      MS_LOG(ERROR) << "Can't find the ref:" << node_type;
+      return nullptr;
     }
     return anfNode;
   }
@@ -828,7 +835,8 @@ AnfNodePtr MSANFModelParser::BuildOperatorNode(const mind_ir::NodeProto &node_pr
       continue;
     }
     if (!GetAttrValueForCNode(prim, attr_proto)) {
-      MS_LOG(EXCEPTION) << "Parser prim: " << node_type << " attributes error : " << attr_proto.DebugString();
+      MS_LOG(ERROR) << "Parser prim: " << node_type << " attributes error : " << attr_proto.DebugString();
+      return nullptr;
     }
   }
   prim->set_attr("is_load", MakeValue(true));
@@ -919,7 +927,12 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   MS_LOG(DEBUG) << "Process CNode: " << node_name;
   // Build inputs.
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(BuildOperatorNode(node_proto));
+  auto operator_node = BuildOperatorNode(node_proto);
+  if (operator_node == nullptr) {
+    MS_LOG(ERROR) << "Build operator node " << node_name << " failed!";
+    return nullptr;
+  }
+  inputs.push_back(operator_node);
   for (int i = 0; i < node_proto.input_size(); ++i) {
     auto anfNode = GetAnfNode(node_proto.input(i));
     if (anfNode == nullptr) {
@@ -949,7 +962,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
 bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph,
                                                const mind_ir::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  if (importProto.output_size() < 0 || importProto.output_size() > INT_MAX) {
+  if (importProto.output_size() <= 0 || importProto.output_size() > INT_MAX) {
     MS_LOG(ERROR) << "importProto.output_size is : " << importProto.output_size();
     return false;
   }
@@ -1089,10 +1102,12 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto) {
     FuncGraphPtr graph = std::make_shared<FuncGraph>();
     const auto &graph_proto = model_proto.functions(i);
     if (!graph_proto.has_name()) {
-      MS_LOG(EXCEPTION) << "The function has not a name. Please export mindIR again. ";
+      MS_LOG(ERROR) << "The function has not a name. Please export mindIR again. ";
+      return nullptr;
     }
     if (anfnode_build_map_.count(graph_proto.name()) > 0) {
-      MS_LOG(EXCEPTION) << "There is a duplication function graph name: " << graph_proto.name();
+      MS_LOG(ERROR) << "There is a duplication function graph name: " << graph_proto.name();
+      return nullptr;
     }
     anfnode_build_map_[graph_proto.name()] = std::make_shared<ValueNode>(graph);
   }
