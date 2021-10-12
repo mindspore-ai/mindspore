@@ -180,13 +180,13 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
     - number = check_is_number(number, int, "bias")
     - number = check_is_number(number, int, "bias", "bias_class")
     """
-    prim_name = f'in \'{prim_name}\'' if prim_name else ''
-    arg_name = f'\'{arg_name}\'' if arg_name else 'Input value'
+    prim_name = f"For \'{prim_name}\', the" if prim_name else 'The'
+    arg_name = f"\'{arg_name}\'" if arg_name else 'input value'
     if isinstance(arg_value, arg_type) and not isinstance(arg_value, bool):
         if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
-            raise ValueError(f'{arg_name} {prim_name} must be legal float, but got `{arg_value}`.')
+            raise ValueError(f'{prim_name} {arg_name} must be legal float, but got `{arg_value}`.')
         return arg_value
-    raise TypeError(f'{arg_name} {prim_name} must be {arg_type.__name__}, but got `{type(arg_value).__name__}`')
+    raise TypeError(f'{prim_name} type of {arg_name} must be {arg_type.__name__}, but got `{type(arg_value).__name__}`')
 
 
 def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg_name=None, prim_name=None):
@@ -556,8 +556,8 @@ class Validator:
             if isinstance(arg_val, type(mstype.tensor)):
                 arg_val = arg_val.element_type()
             if not arg_val in valid_values:
-                raise TypeError(f'For \'{prim_name}\', the `{arg_key}` should be in {valid_values},'
-                                f' but `{arg_key}` is {arg_val}.')
+                raise TypeError(f'For \'{prim_name}\', the type of `{arg_key}` should be in {valid_values},'
+                                f' but got {arg_val}.')
             return arg
 
         def _check_types_same(arg1, arg2):
