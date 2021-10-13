@@ -506,8 +506,8 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
   // If it can node find valid ai_core kernel info, re-find in ai_cpu kernel info
   if (select_status == kNoMatched) {
-    MS_LOG(WARNING) << "The node [" << kernel_node->fullname_with_scope()
-                    << "] cannot find valid TBE kernel info, try to get ai_cpu kernel info";
+    MS_LOG(DEBUG) << "The node [" << kernel_node->fullname_with_scope()
+                  << "] cannot find valid TBE kernel info, try to get ai_cpu kernel info";
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
     AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);

@@ -168,8 +168,8 @@ def _parallel_compilation_init(initialize: TbeJob):
     soc_info = get_soc_info(initialize.content)
     auto_tiling_mode = initialize.content["SocInfo"]["autoTilingMode"]
     offline_tune = initialize.content["SocInfo"]["offlineTune"]
-    global_loglevel = initialize.content["log_level"]
-    enable_event = initialize.content["enable_event"]
+    global_loglevel = None
+    enable_event = 1
     pid_str = os.getpid()
     time_str = datetime.now().strftime('%Y%m%d_%H%M%S%f')[:-3]
     pid_ts = "{}_pid{}".format(time_str, pid_str)

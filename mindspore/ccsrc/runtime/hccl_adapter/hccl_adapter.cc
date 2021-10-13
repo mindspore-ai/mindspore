@@ -214,7 +214,7 @@ bool HcclAdapter::GenTask(const AnfNodePtr &node, HcclDataType datatype,
   MS_EXCEPTION_IF_NULL(ops_kernel_builder_);
   ge::Status ret = ops_kernel_builder_->CalcOpRunningParam(*ge_node);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder CalcOpRunningParam failed, check slog for detail, ret = " << ret;
+    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder CalcOpRunningParam failed, ret = " << ret;
     return false;
   }
   MS_LOG(INFO) << "Start to call GenerateTask";
@@ -222,7 +222,7 @@ bool HcclAdapter::GenTask(const AnfNodePtr &node, HcclDataType datatype,
   std::vector<domi::TaskDef> domi_tasks;
   ret = ops_kernel_builder_->GenerateTask(*ge_node, unused_ctx, domi_tasks);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder GenerateTask failed, check slog for detail, ret = " << ret;
+    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder GenerateTask failed, ret = " << ret;
     return false;
   }
 
@@ -247,7 +247,7 @@ int64_t HcclAdapter::CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType data
   MS_LOG(INFO) << "Start to call CalcOpRunningParam";
   ge::Status ret = ops_kernel_builder_->CalcOpRunningParam(*ge_node);
   if (ret != ge::SUCCESS) {
-    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder CalcOpRunningParam failed, check slog for detail, ret = " << ret;
+    MS_LOG(ERROR) << "Call hccl OpsKernelBuilder CalcOpRunningParam failed, ret = " << ret;
     return false;
   }
 
@@ -341,20 +341,20 @@ bool HcclAdapter::InitKernelInfoStore(uint32_t device_id, std::string_view rank_
   auto options = GenHcclOptions(device_id, rank_id, rank_file);
   auto ret = ops_kernel_builder_->Initialize(options);
   if (ret != ge::SUCCESS) {
-    MS_LOG(EXCEPTION) << "Init hccl kernel builder failed, check slog for detail, ret = " << ret;
+    MS_LOG(EXCEPTION) << "Init hccl kernel builder failed.";
   }
 
   // get ops_kernel_info_store
   ret = init_hcom_graph_adapter_(options);
   if (ret != ge::SUCCESS) {
-    MS_LOG(EXCEPTION) << "Init hccl graph adapter failed, check slog for detail, ret = " << ret;
+    MS_LOG(EXCEPTION) << "Init hccl graph adapter failed.";
   }
 
   get_hccl_kernel_info_store_(&ops_kernel_info_store_);
   MS_EXCEPTION_IF_NULL(ops_kernel_info_store_);
   ret = ops_kernel_info_store_->Initialize(options);
   if (ret != ge::SUCCESS) {
-    MS_LOG(EXCEPTION) << "Init info store failed, check slog for detail, ret = " << ret;
+    MS_LOG(EXCEPTION) << "Init info store failed.";
   }
   MS_LOG(INFO) << "Init hccl kernel info store success.";
   return true;
