@@ -26,11 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRound = "Round";
+/// \brief Returns half to even of a tensor element-wise.
+/// Refer to Python API @ref mindspore.ops.Round for more details.
 class MS_CORE_API Round : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Round() : PrimitiveC(kNameRound) { InitIOName({"input_x"}, {"output"}); }
+  /// \brief Destructor.
   ~Round() = default;
   MS_DECLARE_PARENT(Round, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 

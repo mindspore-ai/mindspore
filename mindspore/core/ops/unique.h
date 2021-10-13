@@ -23,11 +23,17 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnique = "Unique";
+/// \brief Returns the unique elements of input tensor and also returns a tensor containing
+/// the index of each value of input tensor corresponding to the output unique tensor.
+/// Refer to Python API @ref mindspore.ops.Unique for more details.
 class MS_CORE_API Unique : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Unique() : PrimitiveC(kNameUnique) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~Unique() = default;
   MS_DECLARE_PARENT(Unique, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 }  // namespace ops

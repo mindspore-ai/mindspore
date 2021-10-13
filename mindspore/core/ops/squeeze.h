@@ -31,13 +31,22 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSqueeze = "Squeeze";
+/// \brief Returns a tensor with the same data type but dimensions of 1 are removed based on axis.
+/// Refer to Python API @ref mindspore.ops.Squeeze for more details.
 class MS_CORE_API Squeeze : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Squeeze() : PrimitiveC(kNameSqueeze) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~Squeeze() = default;
   MS_DECLARE_PARENT(Squeeze, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Squeeze for the inputs.
   void Init(const std::vector<int64_t> &axis = {});
+  /// \brief Set axis.
   void set_axis(const std::vector<int64_t> &axis);
+  /// \brief Get axis.
+  ///
+  /// \return axis.
   std::vector<int64_t> get_axis() const;
 };
 

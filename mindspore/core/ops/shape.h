@@ -26,11 +26,16 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Returns the shape of the input tensor.
+/// Refer to Python API @ref mindspore.ops.Shape for more details.
 class MS_CORE_API Shape : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Shape() : PrimitiveC(prim::kPrimShape->name()) {}
+  /// \brief Destructor.
   ~Shape() = default;
   MS_DECLARE_PARENT(Shape, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 using PrimShapePtr = std::shared_ptr<Shape>;

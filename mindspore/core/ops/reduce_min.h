@@ -27,9 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceMin = "ReduceMin";
+/// \brief Reduces a dimension of a tensor by the minimum value in the dimension, by default.
+/// Refer to Python API @ref mindspore.ops.ReduceMin for more details.
 class MS_CORE_API ReduceMin : public Reduce {
  public:
+  /// \brief Constructor.
   ReduceMin() : Reduce(kNameReduceMin) { InitIOName({"input_x", "axis"}, {"y"}); }
+  /// \brief Destructor.
   ~ReduceMin() = default;
   MS_DECLARE_PARENT(ReduceMin, Reduce);
 };

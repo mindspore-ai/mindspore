@@ -27,13 +27,22 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Outputs a scalar to a protocol buffer through a scalar summary operator.
+/// Refer to Python API @ref mindspore.ops.ScalarSummary for more details.
 class MS_CORE_API ScalarSummary : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ScalarSummary() : PrimitiveC(prim::kPrimScalarSummary->name()) {}
+  /// \brief Destructor.
   ~ScalarSummary() = default;
   MS_DECLARE_PARENT(ScalarSummary, PrimitiveC);
+  /// \brief Init.
   void Init();
+  /// \brief Set side_effect_io.
   void set_side_effect_io();
+  /// \brief Get side_effect_io.
+  ///
+  /// \return side_effect_io.
   bool get_side_effect_io() const;
 };
 }  // namespace ops

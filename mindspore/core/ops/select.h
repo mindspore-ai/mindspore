@@ -31,11 +31,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSelect = "Select";
+/// \brief Returns the selected elements, either from input x or input y, depending on the condition.
+/// Refer to Python API @ref mindspore.ops.Select for more details.
 class MS_CORE_API Select : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Select() : PrimitiveC(kNameSelect) { InitIOName({"condition", "x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~Select() = default;
   MS_DECLARE_PARENT(Select, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 }  // namespace ops

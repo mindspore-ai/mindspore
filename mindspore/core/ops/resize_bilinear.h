@@ -27,15 +27,28 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResizeBilinear = "ResizeBilinear";
+/// \brief Resizes an image to a certain size using the bilinear interpolation.
+/// Refer to Python API @ref mindspore.ops.ResizeBilinear for more details.
 class MS_CORE_API ResizeBilinear : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ResizeBilinear() : PrimitiveC(kNameResizeBilinear) {}
+  /// \brief Destructor.
   ~ResizeBilinear() = default;
   MS_DECLARE_PARENT(ResizeBilinear, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ResizeBilinear for the inputs.
   void Init(const std::vector<int64_t> &size, const bool align_corners = false);
+  /// \brief Set size.
   void set_size(const std::vector<int64_t> &size);
+  /// \brief Set align_corners.
   void set_align_corners(const bool align_corners);
+  /// \brief Get size.
+  ///
+  /// \return size.
   std::vector<int64_t> get_size() const;
+  /// \brief Get align_corners.
+  ///
+  /// \return align_corners.
   bool get_align_corners() const;
 };
 AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

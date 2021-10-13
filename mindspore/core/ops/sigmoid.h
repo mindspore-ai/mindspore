@@ -23,11 +23,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSigmoid = "Sigmoid";
+/// \brief Sigmoid activation function. Refer to Python API @ref mindspore.ops.Sigmoid for more details.
 class MS_CORE_API Sigmoid : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Sigmoid() : PrimitiveC(kNameSigmoid) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~Sigmoid() = default;
   MS_DECLARE_PARENT(Sigmoid, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 }  // namespace ops

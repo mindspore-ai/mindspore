@@ -23,11 +23,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTanh = "Tanh";
+/// \brief Tanh activation function. Refer to Python API @ref mindspore.ops.Tanh for more details.
 class MS_CORE_API Tanh : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Tanh() : PrimitiveC(kNameTanh) {}
+  /// \brief Destructor.
   ~Tanh() = default;
   MS_DECLARE_PARENT(Tanh, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 }  // namespace ops
