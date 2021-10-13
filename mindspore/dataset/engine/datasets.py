@@ -2150,7 +2150,8 @@ class BatchDataset(Dataset):
             res_q_list = []
 
             # Register clean zombie subprocesses signal here
-            signal.signal(signal.SIGCHLD, wait_child_processes)
+            if platform.system().lower() != "windows":
+                signal.signal(signal.SIGCHLD, wait_child_processes)
 
             # If user didn't specify num_parallel_workers, set it to default
             if self.num_parallel_workers is not None:
@@ -2648,7 +2649,8 @@ class MapDataset(Dataset):
 
             if callable_list:
                 # Register clean zombie subprocesses signal here
-                signal.signal(signal.SIGCHLD, wait_child_processes)
+                if platform.system().lower() != "windows":
+                    signal.signal(signal.SIGCHLD, wait_child_processes)
 
                 # Construct pool with the callable list
                 # The callable list and _pyfunc_worker_init are used to pass lambda function in to subprocesses
@@ -3594,7 +3596,8 @@ class SamplerFn:
         # Event for end of epoch
         if multi_process is True:
             # Register clean zombie subprocesses signal here
-            signal.signal(signal.SIGCHLD, wait_child_processes)
+            if platform.system().lower() != "windows":
+                signal.signal(signal.SIGCHLD, wait_child_processes)
 
             try:
                 self.eof = multiprocessing.Event()
