@@ -3103,7 +3103,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
     if (pipeline_stages > 1) {
       HandleMicroBatch(all_nodes, manager);
       ParameterStartNode(all_nodes, manager);
-      LastStageEndNode(all_nodes, manager);
+      LastStageEndNode(all_nodes, manager, root);
     }
 
     // mark the forward cnodes, parallel only care these nodes
