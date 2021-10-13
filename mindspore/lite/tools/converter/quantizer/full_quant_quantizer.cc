@@ -107,6 +107,7 @@ STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, cons
       MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[0].scale
                     << " is too small, need to update";
       double activate_scale = input_scales[0];
+      MS_CHECK_TRUE_MSG(activate_scale != 0, RET_ERROR, "activate_scale == 0");
       double filter_scale = std::abs(max_raw_data) / (activate_scale * quanted_bias_abs_limit);
       weight_quant_params[0].scale = filter_scale;
       weight_quant_params[0].zeroPoint = 0;
@@ -182,6 +183,7 @@ void DivergInfo::DumpHistogram() {
 void DivergInfo::HandleBinForKL(int quant_bint_nums, int bin_index, std::vector<float> *quantized_histogram,
                                 std::vector<float> *expanded_histogram) {
   MS_ASSERT(quantized_histogram != nullptr && expanded_histogram != nullptr);
+  MS_ASSERT(quant_bint_nums != 0);
   const float bin_interval = static_cast<float>(bin_index) / static_cast<float>(quant_bint_nums);
   // merge i bins to target bins
   for (int i = 0; i < quant_bint_nums; ++i) {
