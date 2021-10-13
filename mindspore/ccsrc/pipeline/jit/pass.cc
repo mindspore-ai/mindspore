@@ -618,9 +618,26 @@ bool RemoveValueNodeDuplicationsPass(const ResourcePtr &res) {
   HashCache hash_cache;
   HashValue hashes;
   // Remove duplicated value nodes across all graphs in manager
+  auto node_user_map = manager->node_users();
   for (auto &fg : manager->func_graphs()) {
     auto value_nodes = fg->value_nodes();
     for (const auto &value_pair : value_nodes) {
+      auto users = node_user_map[value_pair.first];
+      // For data parallel with some parameters redundant, the allreduce will share the same value node
+      // which will raise an error when do allreduce fusion, so the solution is to make the allreduce's value node
+      // not be removed, if we found the fusion tag.
+      if (users.size() == 1) {
+        auto cnode = users.front().first->cast<CNodePtr>();
+        if (IsPrimitiveCNode(cnode, prim::kPrimAllReduce) && cnode->inputs().size() > 1 &&
+            cnode->input(1)->isa<ValueNode>()) {
+          auto allreduce_prim = GetCNodePrimitive(users.front().first);
+          auto attrs = allreduce_prim->attrs();
+          auto fusion_id = attrs.find(mindspore::parallel::FUSION);
+          if (fusion_id != attrs.end() && GetValue<int64_t>(fusion_id->second) > 0) {
+            continue;
+          }
+        }
+      }
       TryToDoReplace(manager.get(), value_pair.first, &hash_cache, &hashes);
     }
   }
