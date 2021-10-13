@@ -38,6 +38,7 @@
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
+#include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -398,6 +399,19 @@ MuLawDecoding::MuLawDecoding(int32_t quantization_channels) : data_(std::make_sh
 
 std::shared_ptr<TensorOperation> MuLawDecoding::Parse() {
   return std::make_shared<MuLawDecodingOperation>(data_->quantization_channels_);
+}
+
+// Overdrive Transform Operation.
+struct Overdrive::Data {
+  Data(float gain, float color) : gain_(gain), color_(color) {}
+  float gain_;
+  float color_;
+};
+
+Overdrive::Overdrive(float gain, float color) : data_(std::make_shared<Data>(gain, color)) {}
+
+std::shared_ptr<TensorOperation> Overdrive::Parse() {
+  return std::make_shared<OverdriveOperation>(data_->gain_, data_->color_);
 }
 
 // RiaaBiquad Transform Operation.

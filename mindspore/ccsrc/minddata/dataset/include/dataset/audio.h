@@ -543,6 +543,27 @@ class MuLawDecoding final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Overdrive TensorTransform.
+class Overdrive final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] gain Coefficient of overload in dB, in range of [0, 100] (Default: 20.0).
+  /// \param[in] color Coefficient of translation, in range of [0, 100] (Default: 20.0).
+  explicit Overdrive(float gain = 20.0f, float color = 20.0f);
+
+  /// \brief Destructor.
+  ~Overdrive() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply RIAA vinyl playback equalization.
 class RiaaBiquad final : public TensorTransform {
  public:

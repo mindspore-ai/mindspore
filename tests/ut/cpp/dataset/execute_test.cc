@@ -876,6 +876,56 @@ TEST_F(MindDataTestExecute, TestMuLawDecodingEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Overdrive
+/// Description: test basic usage of Overdrive
+/// Expectation: get correct number of data
+TEST_F(MindDataTestExecute, TestOverdriveBasicWithEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestOverdriveBasicWithEager.";
+  // Original waveform
+  std::vector<float> labels = {
+    2.716064453125000000e-03, 6.347656250000000000e-03, 9.246826171875000000e-03, 1.089477539062500000e-02,
+    1.138305664062500000e-02, 1.156616210937500000e-02, 1.394653320312500000e-02, 1.550292968750000000e-02,
+    1.614379882812500000e-02, 1.840209960937500000e-02, 1.718139648437500000e-02, 1.599121093750000000e-02,
+    1.647949218750000000e-02, 1.510620117187500000e-02, 1.385498046875000000e-02, 1.345825195312500000e-02,
+    1.419067382812500000e-02, 1.284790039062500000e-02, 1.052856445312500000e-02, 9.368896484375000000e-03};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({2, 10}), &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> phaser_op_01 = std::make_shared<audio::Overdrive>(5.0, 3.0);
+  mindspore::dataset::Execute Transform01({phaser_op_01});
+  Status s01 = Transform01(input_02, &input_02);
+  EXPECT_TRUE(s01.IsOk());
+}
+
+/// Feature: Overdrive
+/// Description: test invalid parameter of Overdrive
+/// Expectation: throw exception correctly
+TEST_F(MindDataTestExecute, TestOverdriveWrongArgWithEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestOverdriveWrongArgWithEager";
+  std::vector<double> labels = {
+    0.271, 1.634, 9.246, 0.108,
+    1.138, 1.156, 3.394, 1.55,
+    3.614, 1.8402, 0.718, 4.599,
+    5.64, 2.510620117187500000e-02, 1.38, 5.825,
+    4.1906, 5.28, 1.052, 9.36};
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(labels, TensorShape({4, 5}), &input));
+
+  // verify the gain range from 0 to 100
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> overdrive_op1 = std::make_shared<audio::Overdrive>(100.1);
+  mindspore::dataset::Execute Transform01({overdrive_op1});
+  Status s01 = Transform01(input_01, &input_01);
+  EXPECT_FALSE(s01.IsOk());
+
+  // verify the color range from 0 to 100
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> overdrive_op2 = std::make_shared<audio::Overdrive>(5.0, 100.1);
+  mindspore::dataset::Execute Transform02({overdrive_op2});
+  Status s02 = Transform02(input_02, &input_02);
+  EXPECT_FALSE(s02.IsOk());
+}
+
 TEST_F(MindDataTestExecute, TestRiaaBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRiaaBiquadWithEager.";
   // Original waveform

@@ -28,7 +28,7 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
     check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, check_fade, check_flanger, \
     check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_decoding, \
-    check_riaa_biquad, check_time_stretch, check_treble_biquad, check_vol
+    check_overdrive, check_riaa_biquad, check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -717,6 +717,33 @@ class MuLawDecoding(AudioTensorOperation):
 
     def parse(self):
         return cde.MuLawDecodingOperation(self.quantization_channels)
+
+
+class Overdrive(AudioTensorOperation):
+    """
+    Apply overdrive on input audio.
+
+    Args:
+        gain (float): Desired gain at the boost (or attenuation) in dB, in range of [0, 100] (default=20.0).
+        color (float): Controls the amount of even harmonic content in the over-driven output,
+            in range of [0, 100] (default=20.0).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Overdrive()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_overdrive
+    def __init__(self, gain=20.0, color=20.0):
+        self.gain = gain
+        self.color = color
+
+    def parse(self):
+        return cde.OverdriveOperation(self.gain, self.color)
 
 
 class RiaaBiquad(AudioTensorOperation):
