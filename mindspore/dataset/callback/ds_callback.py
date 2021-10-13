@@ -30,12 +30,15 @@ class DSCallback:
         step_size (int, optional): The number of steps between the step_begin and step_end are called (Default=1).
 
     Examples:
+        >>> from mindspore.dataset import DSCallback
+        >>>
         >>> class PrintInfo(DSCallback):
         >>>     def ds_epoch_end(self, ds_run_context):
         >>>         print(cb_params.cur_epoch_num)
         >>>         print(cb_params.cur_step_num)
         >>>
-        >>> data = data.map(operations=op, callbacks=PrintInfo())
+        >>> # dataset is an instance of Dataset object
+        >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
     """
 
     @check_callback
@@ -127,9 +130,12 @@ class WaitedDSCallback(Callback, DSCallback):
            will be equal to the batch size (Default=1).
 
     Examples:
-        >>> my_cb = MyWaitedCallback(32)
-        >>> data = data.map(operations=AugOp(), callbacks=my_cb)
-        >>> data = data.batch(32)
+        >>> from mindspore.dataset import WaitedDSCallback
+        >>>
+        >>> my_cb = WaitedDSCallback(32)
+        >>> # dataset is an instance of Dataset object
+        >>> dataset = dataset.map(operations=AugOp(), callbacks=my_cb)
+        >>> dataset = dataset.batch(32)
         >>> # define the model
         >>> model.train(epochs, data, callbacks=[my_cb])
     """

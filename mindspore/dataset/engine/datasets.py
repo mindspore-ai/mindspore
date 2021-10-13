@@ -264,7 +264,7 @@ class Dataset:
     def close_pool(self):
         """
         Close multiprocessing pool in dataset. If you are familiar with multiprocessing library, you can regard this
-        as a deconstructor for a processingPool object.
+        as a destructor for a processingPool object.
         """
         if hasattr(self, 'process_pool') and self.process_pool is not None:
             self.process_pool.close()
@@ -587,7 +587,7 @@ class Dataset:
             RuntimeError: If exist sync operators before shuffle.
 
         Examples:
-            >>> # dataset is an instance of Dataset object.
+            >>> # dataset is an instance object of Dataset
             >>> # Optionally set the seed for the first epoch
             >>> ds.config.set_seed(58)
             >>> # Create a shuffled dataset using a shuffle buffer of size 4
@@ -823,7 +823,7 @@ class Dataset:
             RepeatDataset, dataset repeated.
 
         Examples:
-            >>> # dataset is an instance of Dataset object.
+            >>> # dataset is an instance object of Dataset
             >>>
             >>> # Create a dataset where the dataset is repeated for 50 epochs
             >>> dataset = dataset.repeat(50)
@@ -852,7 +852,7 @@ class Dataset:
             SkipDataset, dataset that containing rows like origin rows subtract skipped rows.
 
         Examples:
-            >>> # dataset is an instance of Dataset object.
+            >>> # dataset is an instance object of Dataset
             >>> # Create a dataset which skips first 3 elements from data
             >>> dataset = dataset.skip(3)
         """
@@ -876,7 +876,7 @@ class Dataset:
             TakeDataset, dataset taken.
 
         Examples:
-            >>> # dataset is an instance of Dataset object.
+            >>> # dataset is an instance object of Dataset
             >>> # Create a dataset where the dataset includes 50 elements.
             >>> dataset = dataset.take(50)
         """
@@ -1085,7 +1085,7 @@ class Dataset:
             RenameDataset, dataset renamed.
 
         Examples:
-            >>> # dataset is an instance of Dataset object.
+            >>> # dataset is an instance object of Dataset
             >>> input_columns = ["input_col1", "input_col2", "input_col3"]
             >>> output_columns = ["output_col1", "output_col2", "output_col3"]
             >>>
@@ -1112,7 +1112,7 @@ class Dataset:
             ProjectDataset, dataset projected.
 
         Examples:
-            >>> # dataset is an instance of Dataset object
+            >>> # dataset is an instance object of Dataset
             >>> columns_to_project = ["column3", "column1", "column2"]
             >>>
             >>> # Create a dataset that consists of column3, column1, column2
@@ -1135,28 +1135,30 @@ class Dataset:
             freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
                 range will be stored.
                 Naturally 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
-                an be set to default, which corresponds to 0/total_words separately
+                can be set to default, which corresponds to 0/total_words separately.
             top_k(int): Number of words to be built into vocab. top_k most frequent words are
                 taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
-            special_tokens(list[str]): A list of strings, each one is a special token
+            special_tokens(list[str]): A list of strings, each one is a special token.
             special_first(bool): Whether special_tokens will be prepended/appended to vocab, If special_tokens
-                is specified and special_first is set to default, special_tokens will be prepended
+                is specified and special_first is set to default, special_tokens will be prepended.
 
         Returns:
             Vocab, vocab built from the dataset.
 
         Example:
+            >>> import numpy as np
+            >>>
             >>> def gen_corpus():
             ...     # key: word, value: number of occurrences, reason for using letters is so their order is apparent
             ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
             ...     for k, v in corpus.items():
             ...         yield (np.array([k] * v, dtype='S'),)
-            >>> column_names = ["column1", "column2", "column3"]
+            >>> column_names = ["column1"]
             >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
-            >>> dataset = dataset.build_vocab(columns=["column3", "column1", "column2"],
+            >>> dataset = dataset.build_vocab(columns=["column1"],
             ...                               freq_range=(1, 10), top_k=5,
             ...                               special_tokens=["<pad>", "<unk>"],
-            ...                               special_first=True,vocab='vocab')
+            ...                               special_first=True)
 
         """
         vocab = cde.Vocab()
@@ -1213,6 +1215,7 @@ class Dataset:
 
         Example:
             >>> from mindspore.dataset.text import SentencePieceModel
+            >>>
             >>> def gen_corpus():
             ...     # key: word, value: number of occurrences, reason for using letters is so their order is apparent
             ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
@@ -1223,8 +1226,8 @@ class Dataset:
             >>> dataset = dataset.build_sentencepiece_vocab(columns=["column3", "column1", "column2"],
             ...                                             vocab_size=5000,
             ...                                             character_coverage=0.9995,
-            ...                                             model_type=SentencePieceModel.Unigram,
-            ...                                             params={},vocab='vocab')
+            ...                                             model_type=SentencePieceModel.UNIGRAM,
+            ...                                             params={})
         """
         vocab = cde.SentencePieceVocab()
 
@@ -1253,13 +1256,13 @@ class Dataset:
 
         Args:
             apply_func (function): A function that must take one 'Dataset' as an argument and
-                                   return a preprogressing 'Dataset'.
+                                   return a preprocessed 'Dataset'.
 
         Returns:
             Dataset, dataset applied by the function.
 
         Examples:
-            >>> # dataset is an instance of Dataset object
+            >>> # dataset is an instance object of Dataset
             >>>
             >>> # Declare an apply_func function which returns a Dataset object
             >>> def apply_func(data):
@@ -1427,7 +1430,7 @@ class Dataset:
             TupleIterator, tuple iterator over the dataset.
 
         Examples:
-            >>> # dataset is an instance of Dataset object
+            >>> # dataset is an instance object of Dataset
             >>> iterator = dataset.create_tuple_iterator()
             >>> for item in iterator:
             ...     # item is a list
@@ -1459,7 +1462,7 @@ class Dataset:
             DictIterator, dictionary iterator over the dataset.
 
         Examples:
-            >>> # dataset is an instance of Dataset object
+            >>> # dataset is an instance object of Dataset
             >>> iterator = dataset.create_dict_iterator()
             >>> for item in iterator:
             ...     # item is a dict
@@ -1487,7 +1490,7 @@ class Dataset:
             tuple, tuple of the input index information.
 
         Examples:
-            >>> # dataset is an instance of Dataset object
+            >>> # dataset is an instance object of Dataset
             >>> # set input_indexs
             >>> dataset.input_indexs = 10
             >>> print(dataset.input_indexs)
@@ -1939,6 +1942,7 @@ class MappableDataset(SourceDataset):
             new_sampler (Sampler): The sampler to use for the current dataset.
 
         Examples:
+            >>> # dataset is an instance object of Dataset
             >>> # use a DistributedSampler instead
             >>> new_sampler = ds.DistributedSampler(10, 2)
             >>> dataset.use_sampler(new_sampler)
@@ -1987,8 +1991,8 @@ class MappableDataset(SourceDataset):
             1. There is an optimized split function, which will be called automatically when the dataset
                that calls this function is a MappableDataset.
             2. Dataset should not be sharded if split is going to be called. Instead, create a
-               DistributedSampler and specify a split to shard after splitting. If dataset is
-               sharded after a split, it is strongly recommended to set the same seed in each instance
+               DistributedSampler and specify a split to shard after splitting. If the dataset is
+               sharded after a split, it is strongly recommended setting the same seed in each instance
                of execution, otherwise each shard may not be part of the same split (see Examples).
             3. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
                Shuffling the dataset may not be deterministic, which means the data in each split

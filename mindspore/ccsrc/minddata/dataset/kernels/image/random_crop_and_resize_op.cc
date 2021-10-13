@@ -109,12 +109,15 @@ Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int
     // Note rnd_aspect_ is already a random distribution of the input aspect ratio in logarithmic sample_scale.
     double const sample_aspect = exp(rnd_aspect_(rnd_));
 
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / h_in) > w_in,
-                                 "RandomCropAndResizeOp: multiplication out of bounds");
-    CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / h_in / w_in) > sample_scale,
-                                 "RandomCropAndResizeOp: multiplication out of bounds");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      (std::numeric_limits<int32_t>::max() / h_in) > w_in,
+      "RandomCropAndResizeOp: multiplication out of bounds, check image width and image height first.");
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      (std::numeric_limits<int32_t>::max() / h_in / w_in) > sample_scale,
+      "RandomCropAndResizeOp: multiplication out of bounds, check image width, image height and sample scale first.");
     CHECK_FAIL_RETURN_UNEXPECTED((std::numeric_limits<int32_t>::max() / h_in / w_in / sample_scale) > sample_aspect,
-                                 "RandomCropAndResizeOp: multiplication out of bounds");
+                                 "RandomCropAndResizeOp: multiplication out of bounds, check image width, image "
+                                 "height, sample scale and sample aspect first.");
     *crop_width = static_cast<int32_t>(std::round(std::sqrt(h_in * w_in * sample_scale * sample_aspect)));
     *crop_height = static_cast<int32_t>(std::round(*crop_width / sample_aspect));
 

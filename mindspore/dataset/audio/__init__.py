@@ -17,6 +17,13 @@ This module is to support audio augmentations.
 It includes two parts: transforms and utils.
 transforms is a high performance processing module with common audio operations.
 utils provides some general methods for audio processing.
+
+Common imported modules in corresponding API examples are as follows:
+
+.. code-block::
+
+    import mindspore.dataset as ds
+    from mindspore.dataset import audio
 """
 from . import transforms
 from . import utils
