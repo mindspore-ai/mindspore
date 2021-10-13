@@ -1021,7 +1021,7 @@ def parse_print(print_file_name):
         ...         def __init__(self):
         ...             super().__init__()
         ...             self.print = ops.Print()
-
+        ...
         ...         def construct(self, input_pra):
         ...             self.print('print:', input_pra)
         ...             return input_pra
@@ -1030,7 +1030,6 @@ def parse_print(print_file_name):
         >>> input_pra = Tensor(x)
         >>> net = PrintInputTensor()
         >>> net(input_pra)
-
         >>> data = mindspore.parse_print('./log.data')
         >>> print(data)
         ['print:', Tensor(shape=[2, 4], dtype=Float32, value=
