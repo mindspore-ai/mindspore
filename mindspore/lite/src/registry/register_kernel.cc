@@ -46,7 +46,7 @@ Status RegisterKernel::RegKernel(const std::vector<char> &arch, const std::vecto
 
 CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, KernelDescHelper *desc) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  if (desc == nullptr) {
+  if (desc == nullptr || primitive == nullptr) {
     return nullptr;
   }
   KernelDesc kernel_desc = {desc->data_type, desc->type, CharToString(desc->arch), CharToString(desc->provider)};
