@@ -119,12 +119,12 @@ std::vector<int64_t> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, c
   auto shape_len = ori_shape.size();
   for (size_t i = 0; i < axis.size(); ++i) {
     auto axis_idx = (frac_nz_axis[i] + shape_len) % shape_len;
-    if (axis_idx == shape_len - 1) {
-      frac_nz_axis[i] = axis_idx - 1;
-      frac_nz_axis.push_back(axis_idx + 2);
-    } else if (axis_idx == shape_len - 2) {
-      frac_nz_axis[i] = axis_idx + 1;
-      frac_nz_axis.push_back(axis_idx + 2);
+    if (axis_idx == shape_len - kIndex1) {
+      frac_nz_axis[i] = axis_idx - kIndex1;
+      frac_nz_axis.push_back(axis_idx + kIndex2);
+    } else if (axis_idx == shape_len - kIndex2) {
+      frac_nz_axis[i] = axis_idx + kIndex1;
+      frac_nz_axis.push_back(axis_idx + kIndex2);
     } else {
       frac_nz_axis[i] = axis_idx;
     }
@@ -219,7 +219,7 @@ void GetDefaultFormat(const CNodePtr &kernel_node, std::string *default_format, 
   } else {
     std::vector<std::pair<std::string, size_t>> pairs;
     for (auto iter = all_input_formats.begin(); iter != all_input_formats.end(); ++iter) {
-      pairs.push_back(std::make_pair(iter->first, iter->second));
+      pairs.emplace_back(std::make_pair(iter->first, iter->second));
     }
 
     std::sort(pairs.begin(), pairs.end(), cmp_format_num);
@@ -234,7 +234,7 @@ void GetDefaultFormat(const CNodePtr &kernel_node, std::string *default_format, 
       continue;
     }
     auto weight_infer_shape = AnfAlgo::GetOutputInferShape(input_kernel_node, 0);
-    if (weight_infer_shape.size() < 2 && *default_format == kOpFormat_FRAC_NZ) {
+    if (weight_infer_shape.size() < kShape2dDims && *default_format == kOpFormat_FRAC_NZ) {
       *default_format = kOpFormat_DEFAULT;
       *use_same_format = true;
       break;
