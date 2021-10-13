@@ -388,21 +388,21 @@ class Cell(Cell_):
 
         return all_prims
 
-    def set_strategy_gen_mode(self, mode):
+    def shard(self, strategy):
         """
         while using auto_parallel_context = ParallelMode.AUTO_PARALLEL, if this method is applied, then
-            1. mode = "batch":
+            1. strategy = "data_parallel":
                 for all primitive ops in this cell(including ops of cells that wrapped by this cell),
                 if parallel strategy is not specified, then instead of auto-searching,
-                batch parallel strategy will be generated for those primitive ops.
+                data parallel strategy will be generated for those primitive ops.
         """
-        strategy_gen_modes = ["batch"]
-        if mode not in strategy_gen_modes:
-            raise AssertionError(f"unexpected input {mode}, must be one of {strategy_gen_modes}")
+        strategy_gen_modes = ["data_parallel"]
+        if strategy not in strategy_gen_modes:
+            raise AssertionError(f"unexpected input {strategy}, must be one of {strategy_gen_modes}")
 
         all_prims = self._get_prims_recursively()
         for prim in all_prims:
-            prim.add_prim_attr("strategy_gen_mode", mode)
+            prim.add_prim_attr("strategy_gen_mode", strategy)
 
     class CellGuard:
         def __enter__(self):
