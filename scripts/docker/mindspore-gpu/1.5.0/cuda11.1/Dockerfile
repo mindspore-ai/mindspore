@@ -1,6 +1,6 @@
 FROM nvidia/cuda:11.1-cudnn8-devel-ubuntu18.04
 
-MAINTAINER leonwanghui <leon.wanghui@huawei.com>
+MAINTAINER MindSpore Authors
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
@@ -85,6 +85,6 @@ RUN cd /tmp \
     && rm -f /tmp/openmpi-4.0.3.tar.gz
 
 # Install MindSpore cuda-11.1, MindInsight, Serving whl package
-RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.5.0-rc1/MindSpore/gpu/x86_64/cuda-11.1/mindspore_gpu-1.5.0rc1-cp37-cp37m-linux_x86_64.whl \
-    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.5.0-rc1/MindInsight/any/mindinsight-1.5.0rc1-py3-none-any.whl \
-    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.5.0-rc1/Serving/x86_64/mindspore_serving-1.5.0rc1-cp37-cp37m-linux_x86_64.whl
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.5.0/MindSpore/gpu/x86_64/cuda-11.1/mindspore_gpu-1.5.0-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.5.0/MindInsight/any/mindinsight-1.5.0-py3-none-any.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.5.0/Serving/x86_64/mindspore_serving-1.5.0-cp37-cp37m-linux_x86_64.whl

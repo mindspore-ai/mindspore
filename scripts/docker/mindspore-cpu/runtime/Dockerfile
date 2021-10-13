@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-MAINTAINER leonwanghui <leon.wanghui@huawei.com>
+MAINTAINER MindSpore Authors
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
