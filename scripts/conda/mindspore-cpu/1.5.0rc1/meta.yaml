@@ -1,17 +1,16 @@
 package:
-  name: mindspore-gpu
-  version: "1.5.0"
+  name: mindspore-cpu
+  version: "1.5.0rc1"
 
 build:
   number: 0
-  string: py37_cuda11.1
 
 requirements:
   build:
-    - python>=3.7, <3.8
+    - python
     - pip
   run:
-    - python>=3.7, <3.8
+    - python
     - numpy >=1.17.0
     - protobuf >=3.13.0
     - asttokens >=1.1.13
@@ -24,7 +23,6 @@ requirements:
     - astunparse >=1.6.3
     - packaging >=20.0
     - psutil >=5.7.0
-    - cudatoolkit >=11.1, <11.2
 
 about:
   home: https://www.mindspore.cn/
