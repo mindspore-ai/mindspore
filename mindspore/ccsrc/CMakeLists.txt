@@ -241,11 +241,7 @@ endforeach()
 set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 
-if(ENABLE_GE)
-    target_link_libraries(mindspore mindspore_core graph)
-else()
-    target_link_libraries(mindspore mindspore_core)
-endif()
+target_link_libraries(mindspore mindspore_core)
 
 if(ENABLE_DEBUGGER)
     # debugger: link grpc
@@ -256,15 +252,6 @@ target_link_libraries(mindspore securec mindspore::flatbuffers)
 
 if(NOT WIN32)
   target_link_libraries(mindspore dl)
-endif()
-
-if(ENABLE_GE)
-    if(ENABLE_TRAIN)
-        target_link_libraries(mindspore ge_runner hccl)
-    else()
-        target_link_libraries(mindspore ge_runner)
-    endif()
-    target_link_libraries(mindspore tsdclient datatransfer ascendcl runtime)
 endif()
 
 if(MODE_ASCEND_ALL OR MODE_ASCEND_ACL)
@@ -293,6 +280,13 @@ if(MODE_ASCEND_ALL OR MODE_ASCEND_ACL)
         set(ASCEND_TOOLKIT_RUNTIME_PATH ${ASCEND_PATH}/ascend-toolkit/latest/fwkacllib/lib64)
         set(ASCEND_TOOLKIT_OPP_PATH ${ASCEND_PATH}/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     endif()
+endif()
+
+if(ENABLE_GE)
+    find_library(GE_RUNNER ge_runner ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(GRAPH graph ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(HCCL hccl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    target_link_libraries(mindspore ${GE_RUNNER} ${GRAPH} ${HCCL})
 endif()
 
 if(MODE_ASCEND_ALL)
