@@ -69,6 +69,9 @@ void *MemScheduler::GetOrMalloc(const void *key, size_t mem_size, MemPriority pr
     }
     return nullptr;
   }
+  if (!has_compute_mem_events_) {
+    return nullptr;
+  }
   auto iter = mem_result_.find(key);
   if (iter != mem_result_.end()) {
     auto ptr = iter->second;
@@ -80,7 +83,7 @@ void *MemScheduler::GetOrMalloc(const void *key, size_t mem_size, MemPriority pr
 }
 
 bool MemScheduler::PreCompute(void *stream) {
-  if (need_record_event_) {
+  if (!has_compute_mem_events_) {
     return true;
   }
   MS_EXCEPTION_IF_NULL(mem_handler_);
@@ -100,9 +103,6 @@ bool MemScheduler::PreCompute(void *stream) {
       if (priority != kMemPriorityLow && iter != high_priority_device_ptr_.end()) {
         MS_EXCEPTION_IF_NULL(iter->second);
         mem_result_[event->key] = iter->second;
-        if (priority == kMemPriorityMedium) {
-          mem_handler_->SwapIn(host_ptr, iter->second, event->mem_size, stream);
-        }
         continue;
       }
       auto device_ptr = mem_handler_->MallocDevice(event->mem_size);
@@ -136,7 +136,7 @@ bool MemScheduler::PreCompute(void *stream) {
       mem_result_[event->key] = device_ptr;
       if (!from_init) {
         mem_handler_->FreeHost(host_ptr);
-        swap_host_ptr_.erase(event->key);
+        (void)swap_host_ptr_.erase(event->key);
       }
     }
   }
@@ -144,7 +144,7 @@ bool MemScheduler::PreCompute(void *stream) {
 }
 
 bool MemScheduler::PostCompute(void *stream) {
-  if (need_record_event_) {
+  if (!has_compute_mem_events_) {
     ++compute_index_;
     return true;
   }
@@ -177,7 +177,7 @@ bool MemScheduler::PostCompute(void *stream) {
       MS_EXCEPTION_IF_NULL(host_ptr);
       mem_handler_->SwapOut(device_ptr, host_ptr, event->mem_size, stream);
       mem_handler_->FreeDevice(device_ptr);
-      mem_result_.erase(device_ptr);
+      (void)mem_result_.erase(device_ptr);
     }
   }
   ++compute_index_;
@@ -185,7 +185,6 @@ bool MemScheduler::PostCompute(void *stream) {
 }
 
 void MemScheduler::OptMemUsage() {
-  need_record_event_ = false;
   if (optimized_) {
     return;
   }
@@ -195,7 +194,8 @@ void MemScheduler::OptMemUsage() {
     GenEventSpan();
     GenNoSwapEventSet();
   }
-  GenEvents();
+  GenComputeMemEvents();
+  has_compute_mem_events_ = true;
 }
 
 void MemScheduler::CountMemUsage() {
@@ -210,11 +210,10 @@ void MemScheduler::CountMemUsage() {
       continue;
     }
     auto first_event = mem_events[0];
-    MS_EXCEPTION_IF_NULL(first_event);
-    size_t i = 0;
-    if (first_event->type == kInit && mem_events.size() > 1) {
+    size_t cur_index = 0;
+    if (first_event != nullptr && first_event->type == kInit && mem_events.size() > 1) {
       first_event = mem_events[1];
-      i = 1;
+      cur_index = 1;
     }
     auto last_event = mem_events[mem_events.size() - 1];
     for (size_t start_index = first_event->index; start_index <= last_event->index; ++start_index) {
@@ -224,8 +223,8 @@ void MemScheduler::CountMemUsage() {
         MS_LOG(ERROR) << "Error mem event index " << start_index;
       }
     }
-    for (; i < mem_events.size(); ++i) {
-      auto &event = mem_events[i];
+    for (; cur_index < mem_events.size(); ++cur_index) {
+      auto &event = mem_events[cur_index];
       MS_EXCEPTION_IF_NULL(event);
       if (event->index < compute_index_) {
         min_mem_used_[event->index] += first_event->mem_size;
@@ -248,8 +247,8 @@ void MemScheduler::CheckMemSize() {
   if (mem_used_without_swap_ > available_mem_size) {
     need_swap_ = true;
   }
-  MS_LOG(INFO) << "Available mem size: " << available_mem_size << ", graph needs mem size:" << mem_used_without_swap_
-               << "without swap, and needs at least " << min_mem_needed_ << " with swap.";
+  MS_LOG(INFO) << "Available mem size: " << available_mem_size << ", graph needs mem size: " << mem_used_without_swap_
+               << " without swap, and needs at least " << min_mem_needed_ << " with swap.";
 }
 
 void MemScheduler::GenEventSpan() {
@@ -257,20 +256,19 @@ void MemScheduler::GenEventSpan() {
     return;
   }
   for (auto &item : mem_events_) {
-    auto &mem_events = item.second;
-    if (mem_events.empty()) {
+    auto &tensor_events = item.second;
+    if (tensor_events.empty()) {
       continue;
     }
-    auto first_event = mem_events[0];
-    MS_EXCEPTION_IF_NULL(first_event);
-    size_t i = 0;
-    if (first_event->type == kInit && mem_events.size() > 1) {
-      first_event = mem_events[1];
-      i = 1;
+    auto first_event = tensor_events[0];
+    size_t cur_index = 0;
+    if (first_event != nullptr && first_event->type == kInit && tensor_events.size() > 1) {
+      first_event = tensor_events[1];
+      cur_index = 1;
     }
     size_t last_index = first_event->index;
-    for (; i < mem_events.size(); ++i) {
-      auto &event = mem_events[i];
+    for (; cur_index < tensor_events.size(); ++cur_index) {
+      auto &event = tensor_events[cur_index];
       MS_EXCEPTION_IF_NULL(event);
       auto span = event->index - last_index;
       if (span > 1) {
@@ -303,12 +301,14 @@ void MemScheduler::GenNoSwapEventSet() {
         cur_mem_used[i] -= event->mem_size;
       }
     } else {
-      no_swap_events_.emplace(event);
+      (void)no_swap_events_.emplace(event);
     }
   }
 }
 
-void MemScheduler::GenEvents() {
+void MemScheduler::GenComputeMemEvents() {
+  pre_compute_events_.clear();
+  post_compute_events_.clear();
   pre_compute_events_.resize(compute_index_);
   post_compute_events_.resize(compute_index_);
   for (auto &item : mem_events_) {
@@ -351,10 +351,10 @@ void MemScheduler::GenEvents() {
         auto swap_in_event = std::make_shared<Event>(kSwapIn, event->index);
         swap_in_event->key = item.first;
         swap_in_event->mem_size = first_event->mem_size;
-        pre_compute_events_[event->index].emplace_back(swap_in_event);
+        (void)pre_compute_events_[event->index].emplace_back(swap_in_event);
       }
       if (event->index < pre_compute_events_.size()) {
-        pre_compute_events_[event->index].emplace_back(event);
+        (void)pre_compute_events_[event->index].emplace_back(event);
       }
       pre_index = event->index;
     }
@@ -366,7 +366,7 @@ void MemScheduler::GenEvents() {
     auto free_event = std::make_shared<Event>(kFree, last_event->index);
     free_event->key = item.first;
     if (last_event->index < post_compute_events_.size()) {
-      post_compute_events_[last_event->index].emplace_back(free_event);
+      (void)post_compute_events_[last_event->index].emplace_back(free_event);
     }
   }
 }

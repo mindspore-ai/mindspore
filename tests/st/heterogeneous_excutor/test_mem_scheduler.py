@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import os
 import numpy as np
 import pytest
 
@@ -21,6 +26,7 @@ from mindspore import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
+from tests.st.tbe_networks.resnet import resnet50
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -36,14 +42,9 @@ class LeNet(nn.Cell):
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.reshape = P.Reshape()
         self.fc1 = nn.Dense(400, 120)
-        self.fc1.matmul.add_prim_attr("primitive_target", "CPU")
-        self.fc1.bias_add.add_prim_attr("primitive_target", "CPU")
         self.fc2 = nn.Dense(120, 84)
-        self.fc2.matmul.add_prim_attr("primitive_target", "CPU")
-        self.fc2.bias_add.add_prim_attr("primitive_target", "CPU")
         self.fc3 = nn.Dense(84, 10)
-        self.fc3.matmul.add_prim_attr("primitive_target", "CPU")
-        self.fc3.bias_add.add_prim_attr("primitive_target", "CPU")
+
 
     def construct(self, input_x):
         output = self.conv1(input_x)
@@ -61,7 +62,55 @@ class LeNet(nn.Cell):
         return output
 
 
-def train(net, data, label):
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_resnet():
+    '''
+    Feature: MemScheduler
+    Description: Test MemScheduler
+    Expectation: Run resnet success
+    '''
+    os.environ['ENABLE_MEM_SCHEDULER'] = '1'
+    num_classes = 10
+    epoch = 8
+    batch_size = 1
+    net = resnet50(batch_size, num_classes)
+    lr = 0.1
+    momentum = 0.9
+    optimizer = Momentum(filter(lambda x: x.requires_grad,
+                                net.get_parameters()), lr, momentum)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    net_with_criterion = WithLossCell(net, criterion)
+    train_network = TrainOneStepCell(
+        net_with_criterion, optimizer)  # optimizer
+    train_network.set_train()
+    losses = []
+    for _ in range(0, epoch):
+        data = Tensor(np.ones([batch_size, 3, 224, 224]
+                              ).astype(np.float32) * 0.01)
+        label = Tensor(np.ones([batch_size]).astype(np.int32))
+        loss = train_network(data, label)
+        losses.append(loss)
+    assert losses[-1].asnumpy() < 1
+    os.environ['ENABLE_MEM_SCHEDULER'] = '0'
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_lenet():
+    '''
+    Feature: MemScheduler
+    Description: Test MemScheduler
+    Expectation: Run lenet success
+    '''
+    os.environ['ENABLE_MEM_SCHEDULER'] = '1'
+    data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    label = Tensor(np.ones([32]).astype(np.int32))
+    net = LeNet()
     learning_rate = 0.01
     momentum = 0.9
 
@@ -71,19 +120,6 @@ def train(net, data, label):
     train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
     train_network.set_train()
     res = train_network(data, label)
-    print("+++++++++Loss+++++++++++++")
-    print(res)
-    print("+++++++++++++++++++++++++++")
     diff = res.asnumpy()[0] - 2.3025851
     assert np.all(diff < 1.e-6)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_lenet():
-    data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
-    label = Tensor(np.ones([32]).astype(np.int32))
-    net = LeNet()
-    train(net, data, label)
+    os.environ['ENABLE_MEM_SCHEDULER'] = '0'
