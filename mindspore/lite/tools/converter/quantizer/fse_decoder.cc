@@ -44,10 +44,8 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint16_t *symbol_frequency, int
     return RET_ERROR;
   }
   // defensive copy to not mutate frequency:
-  std::vector<uint16_t> frequency(symbol_frequency_count);
-  for (int i = 0; i < symbol_frequency_count; i++) {
-    frequency[i] = symbol_frequency[i];
-  }
+  std::vector<uint16_t> frequency(symbol_frequency, symbol_frequency + symbol_frequency_count);
+
   for (int i = 0; i < table_size; i++) {
     uint16_t sym = symbol_table[i];
     uint16_t x = frequency[sym];
