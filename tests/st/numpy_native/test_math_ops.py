@@ -2137,7 +2137,7 @@ def test_histogram():
             mnp_res = mnp.histogram(to_tensor(x), bins=bins, range=range,
                                     weights=to_tensor(weights), density=True)
             onp_res = onp.histogram(x, bins=bins, range=range, weights=weights, density=True)
-            match_all_arrays(mnp_res, onp_res, error=1)
+            match_all_arrays(mnp_res, onp_res, error=0)
 
 
 @pytest.mark.level0
@@ -2161,8 +2161,8 @@ def test_histogramdd():
             mnp_res = mnp.histogramdd(mnp_y, bins=bins, range=range, weights=to_tensor(weights),
                                       density=True)
             onp_res = onp.histogramdd(y, bins, range=range, weights=weights, density=True)
-            match_all_arrays(mnp_res[0], onp_res[0], error=1)
-            match_all_arrays(mnp_res[1], onp_res[1], error=1)
+            match_all_arrays(mnp_res[0], onp_res[0], error=0)
+            match_all_arrays(mnp_res[1], onp_res[1], error=0)
 
     bins = onp.arange(24).reshape(3, 8)
     mnp_res = mnp.histogramdd(to_tensor(x), bins=to_tensor(bins))
@@ -2189,7 +2189,7 @@ def test_histogram2d():
             mnp_res = mnp.histogram2d(to_tensor(x), to_tensor(y), bins=bins, range=range,
                                       weights=to_tensor(weights), density=True)
             onp_res = onp.histogram2d(x, y, bins=bins, range=range, weights=weights, density=True)
-            match_all_arrays(mnp_res, onp_res, error=1)
+            match_all_arrays(mnp_res, onp_res, error=0)
 
 
 @pytest.mark.level1
