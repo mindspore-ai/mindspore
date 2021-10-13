@@ -345,7 +345,7 @@ uint64_t AbstractNode::CollectiveSendAsync(const NodeRole &node_role, const uint
   message_meta->set_rank_id(node_info_.rank_id_);
   message_meta->set_role(node_info_.node_role_);
 
-  auto client = GetOrCreateTcpClient(rank_id);
+  auto client = GetOrCreateTcpClient(rank_id, node_role);
   MS_EXCEPTION_IF_NULL(client);
   return SendMessageAsync(client, message_meta, Protos::RAW, data, size);
 }
@@ -659,7 +659,7 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
   client_mutex_.lock();
   nodes_address_.clear();
   for (const auto &it : send_meta_message.servers_meta()) {
-    nodes_address_[std::make_pair(NodeRole::SERVER, it.rank_id())] = std::make_pair(it.ip(), it.port());
+    nodes_address_[std::make_pair(it.role(), it.rank_id())] = std::make_pair(it.ip(), it.port());
     MS_LOG(INFO) << "The server ip is:" << it.ip() << ", the port is:" << it.port() << ", the rank id:" << it.rank_id();
   }
   client_mutex_.unlock();
@@ -855,19 +855,22 @@ bool AbstractNode::InitClientToScheduler() {
   return wait_res;
 }
 
-const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint32_t &rank_id) {
+const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint32_t &rank_id, const NodeRole &role) {
   std::lock_guard<std::mutex> lock(client_mutex_);
-  if (connected_nodes_.find(rank_id) != connected_nodes_.end()) {
-    return connected_nodes_[rank_id];
+  auto key = std::make_pair(role, rank_id);
+  if (connected_nodes_.find(key) != connected_nodes_.end()) {
+    return connected_nodes_[key];
   } else {
-    if (nodes_address_.find(std::make_pair(NodeRole::SERVER, rank_id)) == nodes_address_.end()) {
+    if (nodes_address_.find(key) == nodes_address_.end()) {
       MS_LOG(EXCEPTION) << "Worker receive nodes info from scheduler failed!";
     }
     if (config_ == nullptr) {
       MS_LOG(EXCEPTION) << "The config is empty.";
     }
-    std::string ip = nodes_address_[std::make_pair(NodeRole::SERVER, rank_id)].first;
-    uint16_t port = nodes_address_[std::make_pair(NodeRole::SERVER, rank_id)].second;
+
+    MS_LOG(INFO) << "Create tcp client for role: " << role << ", rank: " << rank_id;
+    std::string ip = nodes_address_[key].first;
+    uint16_t port = nodes_address_[key].second;
     auto client = std::make_shared<TcpClient>(ip, port, config_.get());
     MS_EXCEPTION_IF_NULL(client);
     client->SetMessageCallback([&](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
@@ -886,8 +889,8 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
       NotifyMessageArrival(meta);
     });
     client->Init();
-    connected_nodes_[rank_id] = client;
-    return connected_nodes_[rank_id];
+    connected_nodes_[key] = client;
+    return connected_nodes_[key];
   }
 }
 

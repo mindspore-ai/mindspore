@@ -176,7 +176,8 @@ class AbstractNode : public Node {
   bool Disconnect(const std::shared_ptr<TcpClient> &client, const uint32_t &timeout);
   bool WaitForDisconnect(const uint32_t &timeout);
   bool InitClientToScheduler();
-  const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const uint32_t &rank_id);
+  const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const uint32_t &rank_id,
+                                                         const NodeRole &role = NodeRole::SERVER);
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
                        const uint32_t &timeout = kCommTimeoutInSeconds);
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
@@ -218,7 +219,7 @@ class AbstractNode : public Node {
   // the key is: <node_role,rank_id>, the value is: <ip, port>
   std::map<std::pair<NodeRole, uint32_t>, std::pair<std::string, uint16_t>> nodes_address_;
   // the map's key is: rank_id
-  std::unordered_map<uint32_t, std::shared_ptr<TcpClient>> connected_nodes_;
+  std::map<std::pair<NodeRole, uint32_t>, std::shared_ptr<TcpClient>> connected_nodes_;
 
   // the key is <rank_id, rank_request_id>
   std::map<std::pair<uint32_t, uint64_t>, std::shared_ptr<std::vector<unsigned char>>> received_data_;
