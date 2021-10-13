@@ -67,11 +67,11 @@ __global__ void ResizeBilinearGrad(const half *input, const int n, const int c, 
     const float w_beta = 1.0f - w_alpha;
     const float h_alpha = posh_scaled - h_low;
     const float h_beta = 1.0f - h_alpha;
-    const half grad = input[pos];
-    const half dp1 = static_cast<half>(h_beta * w_beta) * grad;
-    const half dp2 = static_cast<half>(h_beta * w_alpha) * grad;
-    const half dp3 = static_cast<half>(h_alpha * w_beta) * grad;
-    const half dp4 = static_cast<half>(h_alpha * w_alpha) * grad;
+    const float grad = static_cast<float>(input[pos]);
+    const float dp1 = h_beta * w_beta * grad;
+    const float dp2 = h_beta * w_alpha * grad;
+    const float dp3 = h_alpha * w_beta * grad;
+    const float dp4 = h_alpha * w_alpha * grad;
     const int output_start = output_h * output_w * (posn * c  + posc);
     atomicAdd(&interim[output_start + (h_low * output_w) + w_low], dp1);
     atomicAdd(&interim[output_start + (h_low * output_w) + w_high], dp2);
