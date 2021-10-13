@@ -1138,9 +1138,11 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   MS_LOG(INFO) << "VM loop size " << vm_loop << ", loopsink size " << vm_loop;
   py::object ret;
   MS_LOG(DEBUG) << "Eval run" << backend;
+  auto output = execute_info->func_graph->output()->abstract();
+  MS_EXCEPTION_IF_NULL(output);
   for (int64_t i = 0; i < vm_loop; i++) {
     BaseRef value = (*run)(execute_info->arg_list);
-    ret = BaseRefToPyData(value);
+    ret = BaseRefToPyData(value, output);
   }
   MS_LOG(DEBUG) << "Run end";
   return ret;

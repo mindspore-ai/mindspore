@@ -31,6 +31,7 @@ namespace py = pybind11;
 namespace mindspore {
 py::object AnyToPyData(const Any &value);
 py::object BaseRefToPyData(const BaseRef &value);
+py::object BaseRefToPyData(const BaseRef &value, const AbstractBasePtr &output);
 py::object ValueToPyData(const ValuePtr &value);
 
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,

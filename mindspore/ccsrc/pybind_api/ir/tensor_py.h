@@ -118,6 +118,12 @@ class TensorPy {
 
   static void FlushFromCache(const Tensor &tensor);
 };
+
+// CSRTensor python wrapper and adapter class.
+class CSRTensorPy {
+ public:
+  static py::tuple GetPyTupleShape(const CSRTensor &csr_tensor);
+};
 }  // namespace tensor
 }  // namespace mindspore
 

@@ -673,5 +673,31 @@ TypeId Tensor::set_data_type(const TypeId data_type) {
   }
   return data_type;
 }
+
+CSRTensor::CSRTensor(const TensorPtr indptr, const TensorPtr indices, const TensorPtr values, const ShapeVector &shape)
+    : indptr_(indptr), indices_(indices), values_(values), shape_(shape) {}
+
+bool CSRTensor::operator==(const CSRTensor &csr_tensor) const { return (&csr_tensor == this); }
+
+std::string CSRTensor::ToString() const {
+  std::ostringstream buf;
+  MS_EXCEPTION_IF_NULL(values_);
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(indptr_);
+  auto dtype = values_->Dtype();
+  buf << "CSRTensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ", indptr=";
+  buf << indptr_->ToString() << ", indices=" << indices_->ToString() << ", values=";
+  buf << values_->ToString() << ")";
+  return buf.str();
+}
+
+abstract::AbstractBasePtr CSRTensor::ToAbstract() {
+  auto dtype = values_->Dtype();
+  if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {
+    MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
+  }
+  auto abs_csr_tensor = std::make_shared<abstract::AbstractCSRTensor>(dtype, shape_);
+  return abs_csr_tensor;
+}
 }  // namespace tensor
 }  // namespace mindspore

@@ -215,11 +215,16 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSparseTensorGetDenseShape, {InferImplSparseTensorGetDenseShape, nullptr, true}},
     // RowTensor
     {prim::kPrimMakeRowTensor, {InferImplMakeRowTensor, nullptr, true}},
-
     {prim::kPrimRowTensorGetValues, {InferImplRowTensorGetValues, nullptr, true}},
     {prim::kPrimRowTensorGetIndices, {InferImplRowTensorGetIndices, nullptr, true}},
     {prim::kPrimRowTensorGetDenseShape, {InferImplRowTensorGetDenseShape, nullptr, true}},
     {prim::kPrimRowTensorAdd, {InferImplRowTensorAdd, nullptr, false}},
+    // CSRTensor
+    {prim::kPrimMakeCSRTensor, {InferImplMakeCSRTensor, nullptr, true}},
+    {prim::kPrimCSRTensorGetValues, {InferImplCSRTensorGetValues, nullptr, true}},
+    {prim::kPrimCSRTensorGetIndptr, {InferImplCSRTensorGetIndptr, nullptr, true}},
+    {prim::kPrimCSRTensorGetIndices, {InferImplCSRTensorGetIndices, nullptr, true}},
+    {prim::kPrimCSRTensorGetDenseShape, {InferImplCSRTensorGetDenseShape, nullptr, true}},
     // Comm Ops
     {prim::kPrimAllSwap, {InferImplAllSwap, nullptr, true}},
     {prim::kPrimMemCpyAsync, {InferImplMemCpyAsync, nullptr, true}},

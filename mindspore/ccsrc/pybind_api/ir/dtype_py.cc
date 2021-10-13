@@ -154,6 +154,7 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<RowTensorType, Type, std::shared_ptr<RowTensorType>>(m_sub, "RowTensorType").def(py::init());
     (void)py::class_<SparseTensorType, Type, std::shared_ptr<SparseTensorType>>(m_sub, "SparseTensorType")
       .def(py::init());
+    (void)py::class_<CSRTensorType, Type, std::shared_ptr<CSRTensorType>>(m_sub, "CSRTensorType").def(py::init());
     (void)py::class_<UndeterminedType, Type, std::shared_ptr<UndeterminedType>>(m_sub, "UndeterminedType")
       .def(py::init());
     (void)py::class_<Function, Type, std::shared_ptr<Function>>(m_sub, "Function")

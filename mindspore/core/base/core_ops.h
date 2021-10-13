@@ -474,6 +474,13 @@ inline const PrimitivePtr kPrimSparseTensorGetValues = std::make_shared<Primitiv
 inline const PrimitivePtr kPrimSparseTensorGetIndices = std::make_shared<Primitive>("SparseTensorGetIndices");
 inline const PrimitivePtr kPrimSparseTensorGetDenseShape = std::make_shared<Primitive>("SparseTensorGetDenseShape");
 
+// CSRTensor
+inline const PrimitivePtr kPrimMakeCSRTensor = std::make_shared<Primitive>("MakeCSRTensor");
+inline const PrimitivePtr kPrimCSRTensorGetValues = std::make_shared<Primitive>("CSRTensorGetValues");
+inline const PrimitivePtr kPrimCSRTensorGetIndptr = std::make_shared<Primitive>("CSRTensorGetIndptr");
+inline const PrimitivePtr kPrimCSRTensorGetIndices = std::make_shared<Primitive>("CSRTensorGetIndices");
+inline const PrimitivePtr kPrimCSRTensorGetDenseShape = std::make_shared<Primitive>("CSRTensorGetDenseShape");
+
 // TensorList
 inline const PrimitivePtr kPrimTensorListFromTensor = std::make_shared<Primitive>("TensorListFromTensor");
 inline const PrimitivePtr kPrimTensorListReserve = std::make_shared<Primitive>("TensorListReserve");

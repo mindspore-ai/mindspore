@@ -45,6 +45,7 @@ class ProtoExporter {
   std::string GetOpNodeInputId(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                const std::map<AnfNodePtr, size_t> &apply_map,
                                std::map<AnfNodePtr, size_t> *const_map_ptr);
+  void SetValueToProtoBasicTypes(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
   void SetValueToProto(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
   void SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto);
   void SetSequenceToProto(const ValueSequeuePtr &val, irpb::ValueProto *value_proto);
@@ -112,11 +113,12 @@ void CheckIfValidType(const TypePtr &type) {
   MS_EXCEPTION_IF_NULL(type);
   if (type->isa<Problem>()) {
     MS_LOG(WARNING) << "The type: " << type->type_name();
+    return;
   }
   if (!(type->isa<Number>() || type->isa<TensorType>() || type->isa<Tuple>() || type->isa<TypeType>() ||
         type->isa<List>() || type->isa<TypeAnything>() || type->isa<RefKeyType>() || type->isa<RefType>() ||
-        type->isa<Function>() || type->isa<TypeNone>() || type->isa<Problem>() || type->isa<String>() ||
-        type->isa<RowTensorType>() || type->isa<UndeterminedType>() || type->isa<SparseTensorType>() ||
+        type->isa<Function>() || type->isa<TypeNone>() || type->isa<String>() || type->isa<RowTensorType>() ||
+        type->isa<CSRTensorType>() || type->isa<UndeterminedType>() || type->isa<SparseTensorType>() ||
         type->isa<SymbolicKeyType>() || type->isa<MonadType>())) {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
   }
@@ -126,12 +128,12 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
   if (type_proto == nullptr) {
     return;
   }
-  if (type != nullptr) {
-    CheckIfValidType(type);
-  }
   if (type == nullptr) {
     type_proto->set_data_type(irpb::DT_UNDEFINED);
-  } else if (type->isa<Number>()) {
+    return;
+  }
+  CheckIfValidType(type);
+  if (type->isa<Number>()) {
     type_proto->set_data_type(GetNumberDataType(type));
   } else if (type->isa<TensorType>()) {
     TypePtr elem_type = dyn_cast<TensorType>(type)->element();
@@ -179,11 +181,7 @@ void ProtoExporter::SetNodeOutputType(const AnfNodePtr &node, irpb::TypeProto *t
   SetNodeOutputType(node->Type(), node->Shape(), type_proto);
 }
 
-void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value_proto) {
-  if (val == nullptr || value_proto == nullptr) {
-    return;
-  }
-
+void ProtoExporter::SetValueToProtoBasicTypes(const ValuePtr &val, irpb::ValueProto *value_proto) {
   if (val->isa<StringImm>()) {
     const StringImmPtr &value = dyn_cast<StringImm>(val);
     value_proto->set_dtype(irpb::DT_STRING);
@@ -202,7 +200,17 @@ void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value
   } else if (val->isa<Float>()) {
     value_proto->set_dtype(irpb::DT_TYPE);
     value_proto->mutable_type_val()->set_data_type(irpb::DT_BASE_FLOAT);
-  } else if (val->isa<ValueSequeue>()) {
+  }
+}
+
+void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value_proto) {
+  if (val == nullptr || value_proto == nullptr) {
+    return;
+  }
+
+  SetValueToProtoBasicTypes(val, value_proto);
+
+  if (val->isa<ValueSequeue>()) {
     SetSequenceToProto(dyn_cast<ValueSequeue>(val), value_proto);
   } else if (val->isa<None>()) {
     value_proto->set_dtype(irpb::DT_NONE);

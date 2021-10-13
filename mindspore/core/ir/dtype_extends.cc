@@ -191,6 +191,23 @@ TypePtr SparseTensorStrToType(const std::string &type_name) {
   return std::make_shared<SparseTensorType>(element_type);
 }
 
+TypePtr CSRTensorStrToType(const std::string &type_name) {
+  if (type_name == "CSRTensor") {
+    return std::make_shared<CSRTensorType>();
+  }
+  auto start = type_name.find_first_of('[') + 1;
+  auto end = type_name.find_last_of(']');
+  if (start >= type_name.size()) {
+    return nullptr;
+  }
+  auto element_str = type_name.substr(start, end - start);
+  auto element_type = StringToType(element_str);
+  if (element_type == nullptr) {
+    return nullptr;
+  }
+  return std::make_shared<CSRTensorType>(element_type);
+}
+
 TypePtr UndeterminedStrToType(const std::string &type_name) {
   if (type_name == "Undetermined") {
     return std::make_shared<UndeterminedType>();
@@ -330,6 +347,7 @@ TypePtr GetTypeByStringStarts(const std::string &type_name) {
     {"Undetermined", [](const std::string &type_name) -> TypePtr { return UndeterminedStrToType(type_name); }},
     {"RowTensor", [](const std::string &type_name) -> TypePtr { return RowTensorStrToType(type_name); }},
     {"SparseTensor", [](const std::string &type_name) -> TypePtr { return SparseTensorStrToType(type_name); }},
+    {"CSRTensor", [](const std::string &type_name) -> TypePtr { return CSRTensorStrToType(type_name); }},
     {"List", [](const std::string &type_name) -> TypePtr { return ListStrToType(type_name); }},
     {"Tuple", [](const std::string &type_name) -> TypePtr { return TupleStrToType(type_name); }},
     {"Function", [](const std::string &type_name) -> TypePtr { return FunctionStrToType(type_name); }}};

@@ -241,6 +241,13 @@ BuiltInTypeMap &GetAttrMap() {
        {"indices", prim::kPrimSparseTensorGetIndices},         // F.sparse_tensor_get_indices
        {"dense_shape", prim::kPrimSparseTensorGetDenseShape},  // F.sparse_tensor_get_dense_shape
      }},
+    {kObjectTypeCSRTensorType,
+     {
+       {"indptr", prim::kPrimCSRTensorGetIndptr},     // F.csr_tensor_get_indptr
+       {"values", prim::kPrimCSRTensorGetValues},     // F.csr_tensor_get_values
+       {"indices", prim::kPrimCSRTensorGetIndices},   // F.csr_tensor_get_indices
+       {"shape", prim::kPrimCSRTensorGetDenseShape},  // F.csr_tensor_get_shape
+     }},
   };
   return attr_map;
 }

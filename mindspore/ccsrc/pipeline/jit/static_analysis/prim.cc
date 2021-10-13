@@ -462,6 +462,11 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic[ATTR_SHAPE] = arg->shape()->shape();
     dic[ATTR_DTYPE] = arg->BuildType();
     dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
+  } else if (abs_base->isa<AbstractCSRTensor>()) {
+    auto arg = dyn_cast<AbstractCSRTensor>(abs_base);
+    dic[ATTR_SHAPE] = arg->shape()->shape();
+    dic[ATTR_DTYPE] = arg->BuildType();
+    dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
   } else if (abs_base->isa<AbstractScalar>() || abs_base->isa<AbstractType>() || abs_base->isa<AbstractRefKey>()) {
     ShapeVector shape;
     dic[ATTR_SHAPE] = shape;
