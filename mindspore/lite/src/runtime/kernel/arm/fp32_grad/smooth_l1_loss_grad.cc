@@ -24,30 +24,35 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SmoothL1LossGrad;
 
 namespace mindspore::kernel {
+constexpr static int kPredictIdx = 0;
+constexpr static int kTargetIdx = 1;
+constexpr static int kDlossIdx = 2;
+constexpr static int kOutputIdx = 0;
+
 int SmoothL1LossGradCPUKernel::ReSize() {
   CHECK_NULL_RETURN(smooth_l1_param_);
   CHECK_NULL_RETURN(op_parameter_);
-  CHECK_LESS_RETURN(in_tensors_.size(), 3);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(in_tensors_.at(2));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_3D);
+  CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
+  CHECK_NULL_RETURN(in_tensors_.at(kPredictIdx));
+  CHECK_NULL_RETURN(in_tensors_.at(kTargetIdx));
+  CHECK_NULL_RETURN(in_tensors_.at(kDlossIdx));
+  CHECK_NULL_RETURN(out_tensors_.at(kOutputIdx));
   return RET_OK;
 }
 
 int SmoothL1LossGradCPUKernel::Execute(int task_id) {
   SmoothL1LossParameter *smooth_l1_loss_param = reinterpret_cast<SmoothL1LossParameter *>(op_parameter_);
-  auto predict = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto predict = reinterpret_cast<float *>(in_tensors_.at(kPredictIdx)->MutableData());
   CHECK_NULL_RETURN(predict);
-  auto target = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto target = reinterpret_cast<float *>(in_tensors_.at(kTargetIdx)->MutableData());
   CHECK_NULL_RETURN(target);
-  auto d_loss = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+  auto d_loss = reinterpret_cast<float *>(in_tensors_.at(kDlossIdx)->MutableData());
   CHECK_NULL_RETURN(d_loss);
-  auto *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto *out = reinterpret_cast<float *>(out_tensors_.at(kOutputIdx)->MutableData());
   CHECK_NULL_RETURN(out);
 
-  int length = in_tensors_.at(0)->ElementsNum();
+  int length = in_tensors_.at(kPredictIdx)->ElementsNum();
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);

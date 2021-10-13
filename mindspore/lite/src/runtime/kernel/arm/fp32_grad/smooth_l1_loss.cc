@@ -24,18 +24,22 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_SmoothL1Loss;
 
 namespace mindspore::kernel {
+constexpr static int kPredictIdx = 0;
+constexpr static int kTargetIdx = 1;
+constexpr static int kOutputIdx = 0;
+
 int SmoothL1LossCPUKernel::ReSize() { return RET_OK; }
 
 int SmoothL1LossCPUKernel::Execute(int task_id) {
   SmoothL1LossParameter *smooth_l1_loss_param = reinterpret_cast<SmoothL1LossParameter *>(op_parameter_);
   CHECK_NULL_RETURN(smooth_l1_loss_param);
-  auto predict = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto target = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  auto *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto predict = reinterpret_cast<float *>(in_tensors_.at(kPredictIdx)->MutableData());
+  auto target = reinterpret_cast<float *>(in_tensors_.at(kTargetIdx)->MutableData());
+  auto *out = reinterpret_cast<float *>(out_tensors_.at(kOutputIdx)->MutableData());
   CHECK_NULL_RETURN(predict);
   CHECK_NULL_RETURN(target);
   CHECK_NULL_RETURN(out);
-  const size_t length = in_tensors_.at(0)->ElementsNum();
+  const size_t length = in_tensors_.at(kPredictIdx)->ElementsNum();
 
   size_t stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
@@ -83,11 +87,11 @@ int SmoothL1LossCPUKernel::Run() {
 }
 
 int SmoothL1LossCPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), THIRD_INPUT);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_2D);
+  CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
+  CHECK_NULL_RETURN(in_tensors_.at(kPredictIdx));
+  CHECK_NULL_RETURN(in_tensors_.at(kTargetIdx));
+  CHECK_NULL_RETURN(out_tensors_.at(kOutputIdx));
 
   CHECK_NULL_RETURN(op_parameter_);
   return RET_OK;

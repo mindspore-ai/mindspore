@@ -29,6 +29,16 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Adam;
 
 namespace mindspore::kernel {
+constexpr static int kWeightIdx = 0;
+constexpr static int kMomentVector1stIdx = 1;
+constexpr static int kMomentVector2stIdx = 2;
+constexpr static int kBeta1PowerIdx = 3;
+constexpr static int kBeta2PowerIdx = 4;
+constexpr static int kBeta1Idx = 6;
+constexpr static int kBeta2Idx = 7;
+constexpr static int kEpsilonIdx = 8;
+constexpr static int kGradientIdx = 9;
+
 int AdamCPUKernel::ReSize() { return RET_OK; }
 
 static int DoAdam(float *m, float *v, const float *gradient, float *weight, float beta1, float beta2, float beta1_power,
@@ -62,18 +72,18 @@ static int DoAdam(float *m, float *v, const float *gradient, float *weight, floa
 }
 
 int AdamCPUKernel::Execute(int task_id) {
-  CHECK_LESS_RETURN(in_tensors_.size(), INPUT_MAX_NUM);
-  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
-  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData())[0];
-  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_10D);
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIdx)->MutableData());
+  auto m = reinterpret_cast<float *>(in_tensors_.at(kMomentVector1stIdx)->MutableData());
+  auto v = reinterpret_cast<float *>(in_tensors_.at(kMomentVector2stIdx)->MutableData());
+  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(kBeta1PowerIdx)->MutableData())[0];
+  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(kBeta2PowerIdx)->MutableData())[0];
   auto learning_rate = lr_;
-  auto beta1 = reinterpret_cast<float *>(in_tensors_.at(6)->MutableData())[0];
-  auto beta2 = reinterpret_cast<float *>(in_tensors_.at(7)->MutableData())[0];
-  auto eps = reinterpret_cast<float *>(in_tensors_.at(8)->MutableData())[0];
-  auto gradient = reinterpret_cast<float *>(in_tensors_.at(9)->MutableData());
-  int length = in_tensors_.at(0)->ElementsNum();
+  auto beta1 = reinterpret_cast<float *>(in_tensors_.at(kBeta1Idx)->MutableData())[0];
+  auto beta2 = reinterpret_cast<float *>(in_tensors_.at(kBeta2Idx)->MutableData())[0];
+  auto eps = reinterpret_cast<float *>(in_tensors_.at(kEpsilonIdx)->MutableData())[0];
+  auto gradient = reinterpret_cast<float *>(in_tensors_.at(kGradientIdx)->MutableData());
+  int length = in_tensors_.at(kWeightIdx)->ElementsNum();
   CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(m);
   CHECK_NULL_RETURN(v);
@@ -133,17 +143,17 @@ std::vector<int> AdamCPUKernel::GetOptimizerParamsIdxs() const {
 }
 
 int AdamCPUKernel::OptimizerStep() {
-  CHECK_LESS_RETURN(in_tensors_.size(), INPUT_MAX_NUM - 1);
-  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
-  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData())[0];
-  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_10D - 1);
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIdx)->MutableData());
+  auto m = reinterpret_cast<float *>(in_tensors_.at(kMomentVector1stIdx)->MutableData());
+  auto v = reinterpret_cast<float *>(in_tensors_.at(kMomentVector2stIdx)->MutableData());
+  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(kBeta1PowerIdx)->MutableData())[0];
+  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(kBeta2PowerIdx)->MutableData())[0];
   auto learning_rate = lr_;
-  auto beta1 = reinterpret_cast<float *>(in_tensors_.at(6)->MutableData())[0];
-  auto beta2 = reinterpret_cast<float *>(in_tensors_.at(7)->MutableData())[0];
-  auto eps = reinterpret_cast<float *>(in_tensors_.at(8)->MutableData())[0];
-  size_t length = in_tensors_.at(0)->ElementsNum();
+  auto beta1 = reinterpret_cast<float *>(in_tensors_.at(kBeta1Idx)->MutableData())[0];
+  auto beta2 = reinterpret_cast<float *>(in_tensors_.at(kBeta2Idx)->MutableData())[0];
+  auto eps = reinterpret_cast<float *>(in_tensors_.at(kEpsilonIdx)->MutableData())[0];
+  size_t length = in_tensors_.at(kWeightIdx)->ElementsNum();
   CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(m);
   CHECK_NULL_RETURN(v);
