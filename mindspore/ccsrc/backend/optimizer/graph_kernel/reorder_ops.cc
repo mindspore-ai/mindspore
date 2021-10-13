@@ -24,6 +24,7 @@
 #include "utils/log_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/anf_ir_dump.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -325,12 +326,7 @@ bool ReorderOps::ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph) {
   // Limitation: Assuming the type insensitive node will not change the type of input nodes, otherwise it can be seen
   //   as another cast node in some sense, such as LessEqual operator, which performs on two inputs and output a
   //   a boolean result.
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto mng = func_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(func_graph, true);
-    func_graph->set_manager(mng);
-  }
+  auto mng = GetFuncGraphManager(func_graph);
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
   for (const auto &anf_node : todos) {
@@ -352,13 +348,7 @@ bool ReorderOps::ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph) {
 }
 
 bool ReorderOps::Run(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto mng = func_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(func_graph, true);
-    func_graph->set_manager(mng);
-  }
-
+  auto mng = GetFuncGraphManager(func_graph);
   bool changed = false;
   auto todos = TopoSort(func_graph->get_return());
   for (const auto &anf_node : todos) {

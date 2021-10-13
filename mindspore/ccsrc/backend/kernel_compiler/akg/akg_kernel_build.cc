@@ -241,11 +241,6 @@ int32_t AkgKernelPool::Release() const {
     }
   }
 
-  // Close key file
-  if (fd_ != -1) {
-    (void)close(fd_);
-  }
-
   return 0;
 }
 
