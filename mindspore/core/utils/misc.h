@@ -30,7 +30,11 @@ extern const int RET_FAILED;
 extern const int RET_CONTINUE;
 extern const int RET_BREAK;
 
-// demangle the name to make it human reablable.
+/// \brief Demangle the name to make it human reablable.
+///
+/// \param[in] name The name to be demangled.
+///
+/// \return The demangled name.
 MS_CORE_API extern std::string demangle(const char *name);
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_MISC_H_
