@@ -38,7 +38,7 @@ namespace {
 constexpr auto kGradients = "Gradients";
 constexpr auto kSpecifyParameter = "accu_status";
 size_t kNPUShape = 8;
-size_t kLastHandleDiff = 2;
+constexpr size_t kLastHandleDiff = 2;
 }  // namespace
 namespace mindspore {
 namespace device {
