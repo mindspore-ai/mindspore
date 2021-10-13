@@ -43,7 +43,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto max_shape = shape_map[kMaxShape];
   const int64_t x_min_rank = 2;
   const int64_t x_max_rank = 5;
-  CheckAndConvertUtils::CheckInRange("shape of input_x", input_shape.size(), kIncludeBoth, {x_min_rank, x_max_rank},
+  CheckAndConvertUtils::CheckInRange("dims of input_x", input_shape.size(), kIncludeBoth, {x_min_rank, x_max_rank},
                                      prim_name);
   auto bias_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   (void)CheckAndConvertUtils::CheckInteger("bias rank", SizeToLong(bias_shape.size()), kEqual, 1, prim_name);
