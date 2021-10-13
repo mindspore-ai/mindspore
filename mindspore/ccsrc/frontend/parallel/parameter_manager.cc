@@ -91,7 +91,7 @@ static ParameterUsersInfo FindRefKeyNodeUsers(const RefKeyPair &ref_key_pair, bo
     if ((c == nullptr) || !IsValueNode<Primitive>(c->input(0)) || !IsCareNode(c)) {
       continue;
     }
-    (void)parameter_user_info.second.second.insert(candidate);
+    parameter_user_info.second.second.insert(candidate);
   }
   return parameter_user_info;
 }
@@ -114,14 +114,14 @@ static ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node) {
         if (cnode == nullptr || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE)) {
           continue;
         }
-        (void)parameter_user_info.second.second.insert(node_user);
+        parameter_user_info.second.second.insert(node_user);
       }
     } else {
       auto c = candidate_node->cast<CNodePtr>();
       if (c == nullptr || !c->has_user_data<OperatorInfo>() || IsSomePrimitive(c, RECEIVE)) {
         continue;
       }
-      (void)parameter_user_info.second.second.insert(candidate);
+      parameter_user_info.second.second.insert(candidate);
     }
   }
   parameter_user_info.first = node->cast<ParameterPtr>()->name();
