@@ -1,17 +1,17 @@
 package:
   name: mindspore-gpu
-  version: "1.5.0"
+  version: "1.5.0rc1"
 
 build:
   number: 0
-  string: py37_cuda11.1
+  string: py39_cuda11.1
 
 requirements:
   build:
-    - python>=3.7, <3.8
+    - python>=3.9, <3.10
     - pip
   run:
-    - python>=3.7, <3.8
+    - python>=3.9, <3.10
     - numpy >=1.17.0
     - protobuf >=3.13.0
     - asttokens >=1.1.13
