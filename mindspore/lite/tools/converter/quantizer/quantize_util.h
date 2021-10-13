@@ -60,7 +60,7 @@ const char kMethodOutlier[] = "RemovalOutlier";
 
 struct PostQuantConfig {
   std::vector<std::string> image_paths;
-  uint32_t batch_count{100};
+  int batch_count{100};
   std::string method_x{kMethodKL};
   uint32_t thread_num{1};
   bool bias_correction{false};
@@ -241,7 +241,7 @@ STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_conf
 
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num);
 
-STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t count_limited,
+STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, int *count_limited,
                           std::vector<std::vector<std::string>> *inputs);
 
 STATUS CopyInputDataToTensor(size_t input_index, size_t image_index,

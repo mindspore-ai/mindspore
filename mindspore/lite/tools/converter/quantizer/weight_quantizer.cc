@@ -689,7 +689,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
 
 STATUS WeightQuantizer::DoMixedQuant(const FuncGraphPtr &func_graph) {
   // 0.2 Parse input calib files
-  auto status = CollectCalibInputs(config_param_.image_paths, config_param_.batch_count, &images_);
+  auto status = CollectCalibInputs(config_param_.image_paths, &config_param_.batch_count, &images_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CollectCalibInputs failed.";
     return RET_ERROR;

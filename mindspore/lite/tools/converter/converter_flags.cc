@@ -211,13 +211,19 @@ int Flags::InitTrainModel() {
 }
 
 int Flags::InitInTensorShape() {
+  if (this->inTensorShape.empty()) {
+    return RET_OK;
+  }
   std::string content = this->inTensorShape;
   std::vector<int64_t> shape;
   auto shape_strs = StrSplit(content, std::string(";"));
   for (const auto &shape_str : shape_strs) {
+    if (shape_str.empty()) {
+      continue;
+    }
     shape.clear();
-    auto string_split = StrSplit(shape_str, std::string(":"));
-    if (string_split.size() != kMinShapeSizeInStr) {
+    auto string_split = lite::StrSplit(shape_str, std::string(":"));
+    if (string_split.size() < kMinShapeSizeInStr) {
       std::cerr << "INPUT ILLEGAL: input_shape support format e.g. \"inTensor1:1,32,32,32;inTensor2:1,1,32,32,4\""
                 << std::endl;
       return RET_INPUT_PARAM_INVALID;
@@ -225,14 +231,17 @@ int Flags::InitInTensorShape() {
     auto name = string_split[0];
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
+      return RET_ERROR;
     }
     auto dim_strs = string_split[1];
     if (dim_strs.empty()) {
       MS_LOG(ERROR) << "input tensor dim string is empty";
+      return RET_ERROR;
     }
-    auto dims = StrSplit(dim_strs, std::string(","));
+    auto dims = lite::StrSplit(dim_strs, std::string(","));
     if (dims.empty()) {
       MS_LOG(ERROR) << "input tensor dim is empty";
+      return RET_ERROR;
     }
     for (const auto &dim : dims) {
       if (std::stoi(dim) < 0) {
