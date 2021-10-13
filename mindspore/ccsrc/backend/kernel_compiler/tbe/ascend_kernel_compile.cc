@@ -300,7 +300,7 @@ void AscendKernelCompileManager::PrintCompileResult(const nlohmann::json &json) 
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
   MS_LOG(DEBUG) << "Job: " << job_type << " post process";
   if (json.at(kStatus) == kFailed) {
-    if (job_type == kFusionCompile || job_type == kPreCompile) {
+    if (job_type == kFusionCompile || job_type == kPreCompile || job_type == kTune) {
       auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
       auto message = FilterExceptionMessage(all_logs);
       MS_LOG(INFO) << "Job " << job_type << " running failed, json name, " << json_name << "\n except_msg: " << message;
