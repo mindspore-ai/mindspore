@@ -29,18 +29,14 @@ abstract::ShapePtr MatMulInferShape(const PrimitivePtr &primitive, const std::ve
   auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
-  if (x_shp.size() != 2 || y_shp.size() != 2) {
-    MS_EXCEPTION(ValueError) << "For BatchMatMul, input x, y should have the same dimension size and should be greater"
+  constexpr size_t dim_limit = 2;
+  if (x_shp.size() != dim_limit || y_shp.size() != dim_limit) {
+    MS_EXCEPTION(ValueError) << "For MatMul, input x, y should have the same dimension size and should be greater"
                              << "or equal to 3, while x size = " << x_shp.size() << ", y size = " << y_shp.size();
   }
-  for (size_t i = 0; i < x_shp.size() - 2; ++i) {
-    if (x_shp[i] != y_shp[i]) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << " shapes in dim[" << i << "] are not the same"
-                               << "while x1 is " << x_shp[i] << ", x2 is " << y_shp[i];
-    }
-  }
-  std::vector<int> x_last(x_shp.end() - 2, x_shp.end());
-  std::vector<int> y_last(y_shp.end() - 2, y_shp.end());
+  constexpr size_t offset = 2;
+  std::vector<int> x_last(x_shp.end() - offset, x_shp.end());
+  std::vector<int> y_last(y_shp.end() - offset, y_shp.end());
   ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
   ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
   bool transpose_a = GetValue<bool>(transpose_a_ptr);

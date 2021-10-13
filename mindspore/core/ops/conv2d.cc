@@ -92,7 +92,8 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
     }
     output_hw->push_back(out_h);
     output_hw->push_back(out_w);
-    (void)pad_list->insert(pad_list->begin(), 4, 0);
+    constexpr size_t pad_size = 4;
+    (void)pad_list->insert(pad_list->begin(), pad_size, 0);
   } else if (pad_mode == PadMode::SAME) {
     if (x_h == Shape::SHP_ANY) {
       output_hw->push_back(Shape::SHP_ANY);
@@ -188,16 +189,21 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   if ((w_shape[n_axis] != Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {
     MS_LOG(EXCEPTION) << "w_shape[" << n_axis << "] = " << w_shape[n_axis] << " must equal to = " << out_channel;
   }
-  std::vector<int64_t> kernel_size = CheckAttrIntOrTuple(primitive->GetAttr("kernel_size"), 0, 2);
+  constexpr size_t kernel_size_num = 2;
+  constexpr size_t stride_num = 2;
+  constexpr size_t dilation_num = 2;
+  constexpr size_t padding_num = 4;
+  constexpr size_t start_index = 2;
+  std::vector<int64_t> kernel_size = CheckAttrIntOrTuple(primitive->GetAttr("kernel_size"), 0, kernel_size_num);
   if ((w_shape[h_axis] != Shape::SHP_ANY) && (w_shape[h_axis] != kernel_size[0])) {
     MS_LOG(EXCEPTION) << "weight height = " << w_shape[h_axis] << ", must equal to = " << kernel_size[0];
   }
   if ((w_shape[w_axis] != Shape::SHP_ANY) && (w_shape[w_axis] != kernel_size[1])) {
     MS_LOG(EXCEPTION) << "weight width = " << w_shape[w_axis] << ", must equal to = " << kernel_size[1];
   }
-  std::vector<int64_t> stride = CheckAttrIntOrTuple(primitive->GetAttr("stride"), 2, 2);
-  std::vector<int64_t> dilation = CheckAttrIntOrTuple(primitive->GetAttr("dilation"), 2, 2);
-  std::vector<int64_t> padding = CheckAttrIntOrTuple(primitive->GetAttr("pad"), 0, 4);
+  std::vector<int64_t> stride = CheckAttrIntOrTuple(primitive->GetAttr("stride"), start_index, stride_num);
+  std::vector<int64_t> dilation = CheckAttrIntOrTuple(primitive->GetAttr("dilation"), start_index, dilation_num);
+  std::vector<int64_t> padding = CheckAttrIntOrTuple(primitive->GetAttr("pad"), 0, padding_num);
   int64_t pad_mode;
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr("pad_mode"), &pad_mode);
   std::vector<int64_t> output_hw;
