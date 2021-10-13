@@ -40,7 +40,7 @@ void ClientListKernel::InitKernel(size_t) {
 }
 
 bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClientList *get_clients_req,
-                                  std::shared_ptr<server::FBBuilder> fbb) {
+                                  const std::shared_ptr<server::FBBuilder> &fbb) {
   std::vector<string> client_list;
   std::vector<string> empty_client_list;
   std::string fl_id = get_clients_req->fl_id()->str();
@@ -48,7 +48,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
   if (!LocalMetaStore::GetInstance().has_value(kCtxUpdateModelThld)) {
     MS_LOG(ERROR) << "update_model_client_threshold is not set.";
     BuildClientListRsp(fbb, schema::ResponseCode_SystemError, "update_model_client_threshold is not set.",
-                       empty_client_list, std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+                       empty_client_list, std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
     return false;
   }
   uint64_t update_model_client_needed = LocalMetaStore::GetInstance().value<uint64_t>(kCtxUpdateModelThld);
@@ -61,7 +61,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
     MS_LOG(INFO) << "The server is not ready. update_model_client_needed: " << update_model_client_needed;
     MS_LOG(INFO) << "now update_model_client_num: " << client_list_pb.fl_id_size();
     BuildClientListRsp(fbb, schema::ResponseCode_SucNotReady, "The server is not ready.", empty_client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
     return false;
   }
 
@@ -69,7 +69,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
     std::string reason = "fl_id: " + fl_id + " is not in the update_model_clients";
     MS_LOG(INFO) << reason;
     BuildClientListRsp(fbb, schema::ResponseCode_RequestError, reason, empty_client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
     return false;
   }
 
@@ -79,13 +79,13 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
     std::string reason = "update get update model clients failed";
     MS_LOG(ERROR) << reason;
     BuildClientListRsp(fbb, schema::ResponseCode_SucNotReady, reason, empty_client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
     return false;
   }
   if (!DistributedCountService::GetInstance().Count(name_, get_clients_req->fl_id()->str())) {
     std::string reason = "Counting for get user list request failed. Please retry later.";
     BuildClientListRsp(fbb, schema::ResponseCode_OutOfTime, reason, empty_client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
     MS_LOG(ERROR) << reason;
     return false;
   }
@@ -96,7 +96,7 @@ bool ClientListKernel::DealClient(const size_t iter_num, const schema::GetClient
   }
   MS_LOG(INFO) << "update_model_client_needed: " << update_model_client_needed;
   BuildClientListRsp(fbb, schema::ResponseCode_SUCCEED, "send clients_list succeed!", client_list,
-                     std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+                     std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
   return true;
 }
 
@@ -122,12 +122,12 @@ bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   }
   std::vector<string> client_list;
   const schema::GetClientList *get_clients_req = flatbuffers::GetRoot<schema::GetClientList>(req_data);
-  int32_t iter_client = (size_t)get_clients_req->iteration();
-  if (iter_num != (size_t)iter_client) {
+  size_t iter_client = IntToSize(get_clients_req->iteration());
+  if (iter_num != iter_client) {
     MS_LOG(ERROR) << "client list iteration number is invalid: server now iteration is " << iter_num
                   << ". client request iteration is " << iter_client;
     BuildClientListRsp(fbb, schema::ResponseCode_OutOfTime, "iter num is error.", client_list,
-                       std::to_string(CURRENT_TIME_MILLI.count()), iter_num);
+                       std::to_string(CURRENT_TIME_MILLI.count()), SizeToInt(iter_num));
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
@@ -136,7 +136,7 @@ bool ClientListKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     MS_LOG(ERROR) << "Current amount for GetClientList is enough.";
   }
 
-  DealClient(iter_num, get_clients_req, fbb);
+  (void)DealClient(iter_num, get_clients_req, fbb);
   GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
   clock_t end_time = clock();
   double duration = static_cast<double>((end_time - start_time) * 1.0 / CLOCKS_PER_SEC);
@@ -153,7 +153,7 @@ bool ClientListKernel::Reset() {
   return true;
 }
 
-void ClientListKernel::BuildClientListRsp(std::shared_ptr<server::FBBuilder> client_list_resp_builder,
+void ClientListKernel::BuildClientListRsp(const std::shared_ptr<server::FBBuilder> &client_list_resp_builder,
                                           const schema::ResponseCode retcode, const string &reason,
                                           std::vector<std::string> clients, const string &next_req_time,
                                           const int iteration) {
@@ -171,7 +171,7 @@ void ClientListKernel::BuildClientListRsp(std::shared_ptr<server::FBBuilder> cli
   rsp_builder.add_retcode(retcode);
   rsp_builder.add_reason(rsp_reason);
   rsp_builder.add_clients(clients_fb);
-  rsp_builder.add_iteration(SizeToInt(iteration));
+  rsp_builder.add_iteration(iteration);
   rsp_builder.add_next_req_time(rsp_next_req_time);
   auto rsp_exchange_keys = rsp_builder.Finish();
   client_list_resp_builder->Finish(rsp_exchange_keys);

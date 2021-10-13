@@ -139,7 +139,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
     return;
   }
 
-  Iteration::GetInstance().running_round_num_++;
+  ++Iteration::GetInstance().running_round_num_;
   AddressPtr input = std::make_shared<Address>();
   AddressPtr output = std::make_shared<Address>();
   MS_ERROR_IF_NULL_WO_RET_VAL(input);
@@ -167,7 +167,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
     reason = "Launching round kernel of round " + name_ + " failed.";
     Iteration::GetInstance().NotifyNext(false, reason);
   }
-  Iteration::GetInstance().running_round_num_--;
+  --Iteration::GetInstance().running_round_num_;
   return;
 }
 

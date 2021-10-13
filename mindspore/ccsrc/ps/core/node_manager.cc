@@ -63,7 +63,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
         rank_id = meta->rank_id();
         MS_LOG(INFO) << "Use the old rank id:" << rank_id;
       } else {
-        rank_id = IntToSize(++next_server_rank_id_);
+        rank_id = IntToUint(++next_server_rank_id_);
       }
     } else {
       registered_nodes_info_.erase((*rank_it).first);
@@ -102,7 +102,7 @@ uint32_t NodeManager::NextRankId(const RegisterMessage &register_message, const 
         rank_id = meta->rank_id();
         MS_LOG(INFO) << "Use the old rank id:" << rank_id;
       } else {
-        rank_id = IntToSize(++next_worker_rank_id_);
+        rank_id = IntToUint(++next_worker_rank_id_);
       }
     } else {
       registered_nodes_info_.erase((*worker_rank_it).first);

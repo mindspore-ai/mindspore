@@ -253,7 +253,7 @@ bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &cnode) {
 }
 
 template <typename K>
-bool ParameterAggregator::AssignMemory(K server_kernel, const CNodePtr &cnode,
+bool ParameterAggregator::AssignMemory(const K server_kernel, const CNodePtr &cnode,
                                        const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info,
                                        const std::shared_ptr<MemoryRegister> &memory_register) {
   MS_EXCEPTION_IF_NULL(server_kernel);

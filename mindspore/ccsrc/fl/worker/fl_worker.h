@@ -93,7 +93,8 @@ class FLWorker {
 
  private:
   FLWorker()
-      : server_num_(0),
+      : running_(false),
+        server_num_(0),
         worker_num_(0),
         scheduler_ip_(""),
         scheduler_port_(0),

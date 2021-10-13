@@ -222,8 +222,8 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
         }
         offset += LongToSize(rank_dims[i]);
       }
-      for (size_t i = 0; i < indices_size; i++) {
-        indices_data[i] -= SizeToInt(offset);
+      for (size_t j = 0; j < indices_size; j++) {
+        indices_data[j] -= SizeToInt(offset);
       }
     }
   }

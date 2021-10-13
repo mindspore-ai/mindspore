@@ -262,7 +262,7 @@ bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const P
     auto &client_keys = meta.pair_client_keys().client_keys();
     // Check whether the new item already exists.
     bool add_flag = true;
-    for (auto iter = client_keys_map.begin(); iter != client_keys_map.end(); iter++) {
+    for (auto iter = client_keys_map.begin(); iter != client_keys_map.end(); ++iter) {
       if (fl_id == iter->first) {
         add_flag = false;
         MS_LOG(ERROR) << "Leader server updating value for " << name
@@ -282,7 +282,7 @@ bool DistributedMetadataStore::DoUpdateMetadata(const std::string &name, const P
     // google::protobuf::Map< std::string, mindspore::fl::ps::core::SharesPb >::const_iterator iter;
     // Check whether the new item already exists.
     bool add_flag = true;
-    for (auto iter = client_shares_map.begin(); iter != client_shares_map.end(); iter++) {
+    for (auto iter = client_shares_map.begin(); iter != client_shares_map.end(); ++iter) {
       if (fl_id == iter->first) {
         add_flag = false;
         MS_LOG(ERROR) << "Leader server updating value for " << name
