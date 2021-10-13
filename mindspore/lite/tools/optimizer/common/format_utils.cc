@@ -179,7 +179,7 @@ STATUS GetTransposePerm(const CNodePtr &cnode, std::vector<int> *perm) {
   }
   perm->resize(data_info.shape_[0]);
   if (!data_info.data_.empty() &&
-      memcpy_s(perm->data(), data_info.data_.size(), data_info.data_.data(), data_info.data_.size()) != EOK) {
+      memcpy_s(perm->data(), perm->size() * sizeof(int), data_info.data_.data(), data_info.data_.size()) != EOK) {
     MS_LOG(ERROR) << "memcpy data failed.";
     return lite::RET_ERROR;
   }

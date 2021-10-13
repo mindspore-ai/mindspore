@@ -46,22 +46,18 @@ STATUS ToFormatBase::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr 
       trans_cnode->set_abstract(abstract->Clone());
     }
   }
-  auto trans_prim = GetValueNode<PrimitivePtr>(trans_cnode->cast<CNodePtr>()->input(0));
+  auto trans_prim = GetValueNode<PrimitivePtr>(trans_cnode->input(0));
   MS_ASSERT(trans_prim != nullptr);
   if (perm == kNC2NH) {
     trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NCHW));
   } else if (perm == kNH2NC) {
     trans_prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
   }
-  auto manager = func_graph->manager();
-  if (manager == nullptr) {
-    manager = Manage(func_graph, true);
-  }
-  MS_ASSERT(manager != nullptr);
+  MS_ASSERT(manager_ != nullptr);
   if (before) {
-    manager->SetEdge(cnode, index, trans_cnode);
+    manager_->SetEdge(cnode, index, trans_cnode);
   } else {
-    if (!func_graph->manager()->Replace(cnode, trans_cnode)) {
+    if (!manager_->Replace(cnode, trans_cnode)) {
       MS_LOG(ERROR) << "replace old node failed, please check.";
       return lite::RET_ERROR;
     }
@@ -81,7 +77,7 @@ STATUS ToFormatBase::ModifyCNode(const CNodePtr &cnode) {
     prim->AddAttr(ops::kFormat, MakeValue<int64_t>(format_));
   }
   auto abstract_base = cnode->abstract();
-  MS_ASSERT(tract_base != nullptr);
+  MS_ASSERT(abstract_base != nullptr);
   std::vector<AbstractBasePtr> abstracts;
   if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
     auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(abstract_base);
@@ -149,7 +145,7 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
       return lite::RET_ERROR;
     }
   } else {
-    auto node_users = func_graph->manager()->node_users()[cnode];
+    auto node_users = manager_->node_users()[cnode];
     for (auto &node_user : node_users) {
       auto post_node = node_user.first;
       CNodePtr tuple_get_item = nullptr;
@@ -160,10 +156,10 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
         } else {
           tuple_get_item = opt::GenTupleGetItemNode(func_graph, cnode, 0);
           post_node = tuple_get_item;
-          func_graph->manager()->Replace(cnode, tuple_get_item);
+          manager_->Replace(cnode, tuple_get_item);
         }
       }
-      if (func_graph->manager()->node_users()[post_node].empty()) {
+      if (manager_->node_users()[post_node].empty()) {
         continue;
       }
       auto post_cnode = post_node->cast<CNodePtr>();
@@ -172,7 +168,7 @@ STATUS ToFormatBase::InsertPostTransNode(const FuncGraphPtr &func_graph, const C
         return lite::RET_ERROR;
       }
       if (tuple_get_item != nullptr) {
-        if (!func_graph->manager()->Replace(tuple_get_item, tuple_get_item->input(1))) {
+        if (!manager_->Replace(tuple_get_item, tuple_get_item->input(1))) {
           MS_LOG(ERROR) << "replace old node failed. please check.";
           return lite::RET_ERROR;
         }
@@ -188,9 +184,8 @@ bool ToFormatBase::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_graph,
   if (shape.size() != kInputSizeFour) {
     return false;
   }
-  auto manager = func_graph->manager();
-  MS_ASSERT(anager != nullptr);
-  auto node_users = manager->node_users()[input];
+  MS_ASSERT(manager_ != nullptr);
+  auto node_users = manager_->node_users()[input];
   for (auto &node_user : node_users) {
     auto post_node = node_user.first;
     if (!utils::isa<CNode>(post_node)) {
@@ -251,7 +246,7 @@ STATUS ToFormatBase::HandleGraphInput(const FuncGraphPtr &func_graph) {
     }
     trans_cnode->set_abstract(abstract->Clone());
     abstract->set_shape(std::make_shared<abstract::Shape>(transfer_shape));
-    if (!func_graph->manager()->Replace(input, trans_cnode)) {
+    if (!manager_->Replace(input, trans_cnode)) {
       MS_LOG(ERROR) << "replace old node failed, please check.";
       return lite::RET_ERROR;
     }
@@ -291,6 +286,7 @@ STATUS ToFormatBase::HandleGraphNode(const FuncGraphPtr &func_graph, const CNode
 
 bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph) {
   MS_ASSERT(func_graph != nullptr);
+  manager_->AddFuncGraph(func_graph);
   auto node_list = TopoSort(func_graph->get_return());
   int status;
   for (auto &node : node_list) {
@@ -341,6 +337,7 @@ bool ToFormatBase::BasicProcess(const FuncGraphPtr &func_graph, bool main_graph)
 
 STATUS ToFormatBase::ConvWeightFormatTrans(const FuncGraphPtr &graph, std::set<AnfNodePtr> *has_visited) {
   MS_ASSERT(graph != nullptr && has_visited != nullptr);
+  manager_->AddFuncGraph(graph);
   auto node_list = TopoSort(graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNodePtr>(node)) {
@@ -396,8 +393,8 @@ bool ToFormatBase::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "format transferring only support nc2nh or nh2nc.";
     return false;
   }
-  auto manager = Manage(func_graph, true);
-  if (manager == nullptr) {
+  manager_ = Manage(func_graph, true);
+  if (manager_ == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr.";
     return false;
   }

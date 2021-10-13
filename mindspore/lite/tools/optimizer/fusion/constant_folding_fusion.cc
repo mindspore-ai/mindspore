@@ -58,7 +58,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   }
   if (tensor->MutableData() != nullptr) {
     auto tensor_data = static_cast<uint8_t *>(tensor_info->data_c());
-    auto ret = memcpy_s(tensor_data, tensor->Size(), tensor->MutableData(), tensor->Size());
+    auto ret = memcpy_s(tensor_data, tensor_info->Size(), tensor->data(), tensor->Size());
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return nullptr;
@@ -125,7 +125,7 @@ kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tens
 lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<Tensor *> output_tensors) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
+  MS_CHECK_TRUE_RET(manager != nullptr, lite::RET_NULL_PTR);
   if (output_tensors.size() != 1) {
     for (size_t k = 0; k < output_tensors.size(); k++) {
       auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, cnode, k);
@@ -207,7 +207,9 @@ lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> 
 
 bool ConstFoldPass::Run(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, false);
-  if (!Init(func_graph)) {
+  manager_ = Manage(func_graph);
+  MS_CHECK_TRUE_RET(manager_ != nullptr, false);
+  if (!Init()) {
     MS_LOG(ERROR) << "initial constant fold pass failed.";
     return false;
   }
@@ -223,7 +225,7 @@ bool ConstFoldPass::Run(const FuncGraphPtr &func_graph) {
   return true;
 }
 
-bool ConstFoldPass::Init(const FuncGraphPtr &func_graph) {
+bool ConstFoldPass::Init() {
   if (context_ == nullptr) {
     context_ = std::make_shared<lite::InnerContext>();
     MS_CHECK_TRUE_RET(context_ != nullptr, false);
@@ -245,8 +247,8 @@ int ConstFoldPass::HandleCommonFold(const FuncGraphPtr &func_graph, std::set<Fun
     return lite::RET_OK;
   }
   has_visited->insert(func_graph);
-  auto manager = Manage(func_graph);
-  MS_CHECK_TRUE_RET(manager != nullptr, lite::RET_ERROR);
+  MS_ASSERT(manager_ != nullptr);
+  manager_->AddFuncGraph(func_graph);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNode>(node)) {
@@ -298,8 +300,7 @@ int ConstFoldPass::HandleSpecialFold(const FuncGraphPtr &func_graph) {
     node_infershape_ = std::make_shared<NodeInferShape>(fmk_type_, train_flag_);
     MS_CHECK_TRUE_RET(node_infershape_ != nullptr, lite::RET_ERROR);
   }
-  auto manager = Manage(func_graph);
-  MS_CHECK_TRUE_RET(manager != nullptr, lite::RET_ERROR);
+  MS_ASSERT(manager_ != nullptr);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNode>(node)) {
@@ -397,19 +398,19 @@ int ConstFoldPass::DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr
     }
   }
   auto status = static_cast<mindspore::kernel::InnerKernel *>(lite_kernel->kernel())->Run();
+  delete (lite_kernel);
+  lite_kernel = nullptr;
   if (status != lite::RET_OK) {
-    delete (lite_kernel);
-    MS_LOG(ERROR) << "run kernel failed, name: " << lite_kernel->name();
+    MS_LOG(ERROR) << "run kernel failed, name: " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
   // replace cnode by new param
-  if (ReplaceCNode(func_graph, cnode, output_tensors) != lite::RET_OK) {
-    delete (lite_kernel);
+  status = ReplaceCNode(func_graph, cnode, output_tensors);
+  if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "constant_folding replace cnode failed";
-    return lite::RET_ERROR;
+  } else {
+    MS_LOG(DEBUG) << "fold node:" << cnode->fullname_with_scope() << " success ";
   }
-  MS_LOG(DEBUG) << "fold node:" << cnode->fullname_with_scope() << " success ";
-  delete (lite_kernel);
-  return lite::RET_OK;
+  return status;
 }
 }  // namespace mindspore::opt

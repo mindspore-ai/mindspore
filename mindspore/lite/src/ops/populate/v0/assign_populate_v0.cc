@@ -22,7 +22,6 @@ namespace lite {
 namespace {
 OpParameter *PopulateAssignParameter(const void *prim) {
   OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  MS_CHECK_TRUE_RET(param != nullptr, nullptr);
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc Assign Parameter failed.";
     return nullptr;

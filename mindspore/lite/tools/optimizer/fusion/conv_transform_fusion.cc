@@ -125,7 +125,12 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
     delete[] trans_scale;
     return nullptr;
   }
-  GenTransParam(transform_node, kernel_nums, trans_scale, trans_bias);
+  if (GenTransParam(transform_node, kernel_nums, trans_scale, trans_bias) != lite::RET_OK) {
+    MS_LOG(DEBUG) << "cannot do fusion.";
+    delete[] trans_bias;
+    delete[] trans_scale;
+    return nullptr;
+  }
   if (GenNewConvTensor(func_graph, conv_node, kernel_nums, trans_scale, trans_bias) != lite::RET_OK) {
     MS_LOG(WARNING) << "generate a new weight tensor failed.";
     delete[] trans_bias;
@@ -138,37 +143,39 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   return pre_node;
 }
 
-void ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, int kernel_nums, float *trans_scale,
-                                        float *trans_bias) const {
+int ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, int kernel_nums, float *trans_scale,
+                                       float *trans_bias) const {
   MS_ASSERT(transform_node != nullptr);
   if (trans_scale == nullptr) {
     MS_LOG(ERROR) << "new transScale failed";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return;
+    return lite::RET_NULL_PTR;
   }
   if (trans_bias == nullptr) {
     MS_LOG(ERROR) << "new transBias failed";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return;
+    return lite::RET_NULL_PTR;
   }
   if (memset_s(trans_scale, kernel_nums * sizeof(float), 0, kernel_nums * sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memset transScale failed";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
-    return;
+    return lite::RET_ERROR;
   }
   if (memset_s(trans_bias, kernel_nums * sizeof(float), 0, kernel_nums * sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memset transBias failed";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
-    return;
+    return lite::RET_ERROR;
   }
 
-  InitTransParam(transform_node, kernel_nums, trans_scale, trans_bias);
+  return InitTransParam(transform_node, kernel_nums, trans_scale, trans_bias);
 }
 
 int ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, int kernel_num,
                                           const float *trans_scale, const float *trans_bias) const {
   MS_ASSERT(func_graph != nullptr && conv_node != nullptr);
   MS_ASSERT(trans_scale != nullptr && trans_bias != nullptr);
+  auto manager = func_graph->manager();
+  MS_CHECK_TRUE_MSG(manager != nullptr, lite::RET_NULL_PTR, "manager is nullptr");
   AnfNodePtr conv_weight_node = nullptr;
   AnfNodePtr conv_bias_node = nullptr;
   if (conv_node->inputs().size() == kConvNoBiasLen) {
@@ -180,6 +187,7 @@ int ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const 
     MS_LOG(ERROR) << "conv node:" << conv_node->DebugString() << "inputs size must 3 or 4";
     return lite::RET_ERROR;
   }
+  MS_CHECK_TRUE_RET(conv_weight_node != nullptr, lite::RET_ERROR);
   if (!conv_weight_node->isa<Parameter>()) {
     MS_LOG(ERROR) << "scale weight node not parameter node";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
@@ -226,16 +234,23 @@ int ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const 
       return lite::RET_ERROR;
     }
   }
-  CalNewBiasTensor(bias_data, kernel_num, bias_flag, trans_scale, trans_bias);
+  if (CalNewBiasTensor(bias_data, kernel_num, bias_flag, trans_scale, trans_bias) != lite::RET_OK) {
+    MS_LOG(ERROR) << "generate a new bias failed.";
+    if (!bias_flag) {
+      delete[] bias_data;
+    }
+    return lite::RET_ERROR;
+  }
   if (!bias_flag) {
     auto bias_node = AddNewBiasNode(bias_data, func_graph, kernel_num, weight_tensor->data_type());
+    delete[] bias_data;
+    bias_data = nullptr;
     if (bias_node == nullptr) {
       MS_LOG(ERROR) << "generate a new bias node failed.";
       return lite::RET_ERROR;
     }
-    delete[] bias_data;
     bias_node->set_name(conv_node->fullname_with_scope() + "_bias");
-    conv_node->add_input(bias_node);
+    manager->AddEdge(conv_node, bias_node);
   }
   auto new_weight_paramter = func_graph->add_parameter();
   if (new_weight_paramter == nullptr) {
@@ -245,14 +260,14 @@ int ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const 
   new_weight_paramter->set_default_param(new_weight_tensor);
   new_weight_paramter->set_abstract(conv_weight_node->abstract());
   new_weight_paramter->set_name(conv_node->fullname_with_scope() + conv_weight_node->fullname_with_scope());
-  conv_node->set_input(kConvWeightIndex, new_weight_paramter);
+  manager->SetEdge(conv_node, kConvWeightIndex, new_weight_paramter);
   return lite::RET_OK;
 }
 
 int ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const tensor::TensorPtr &weight_tensor,
                                             int kernel_num, const float *trans_scale) const {
   MS_ASSERT(conv_node != nullptr);
-  MS_ASSERT(weight_data != nullptr);
+  MS_ASSERT(weight_tensor != nullptr);
   MS_ASSERT(trans_scale != nullptr);
   if (weight_tensor->shape().size() > kInputSizeFour) {
     MS_LOG(ERROR) << "weight tensor shape error";
@@ -285,7 +300,7 @@ int ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const ten
     auto group = conv_primc->GetAttr(ops::kGroup) == nullptr ? 1 : conv_primc->get_group();
     GenerateNewWeightConv2DTranspose(tmp_weight_data, trans_scale, weight_tensor, group, kernel_num);
   }
-  auto ret = memcpy_s(weight_data, data_size, tmp_weight_data, data_size);
+  auto ret = memcpy_s(weight_data, weight_tensor->Size(), tmp_weight_data, data_size);
   delete[] tmp_weight_data;
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy error: " << ret;
@@ -295,8 +310,8 @@ int ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const ten
   return lite::RET_OK;
 }
 
-void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, bool bias_flag, const float *trans_scale,
-                                           const float *trans_bias) {
+int ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, bool bias_flag, const float *trans_scale,
+                                          const float *trans_bias) const {
   MS_ASSERT(bias_data != nullptr);
   MS_ASSERT(trans_bias != nullptr);
   MS_ASSERT(trans_scale != nullptr);
@@ -304,13 +319,14 @@ void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, boo
     auto tmp_bias_data = new (std::nothrow) float[kernel_num];
     if (tmp_bias_data == nullptr) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
-      return;
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+      return lite::RET_NULL_PTR;
     }
     if (memset_s(tmp_bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float)) != EOK) {
       MS_LOG(ERROR) << "memset bias data failed";
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
       delete[] tmp_bias_data;
-      return;
+      return lite::RET_MEMORY_FAILED;
     }
     for (int i = 0; i < kernel_num; i++) {
       tmp_bias_data[i] = bias_data[i] * trans_scale[i] + trans_bias[i];
@@ -321,20 +337,22 @@ void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, boo
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
-      return;
+      return lite::RET_MEMORY_FAILED;
     }
   } else {
     if (memset_s(bias_data, kernel_num * sizeof(float), 0, kernel_num * sizeof(float)) != EOK) {
       MS_LOG(ERROR) << "memset bias data failed";
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
-      return;
+      return lite::RET_MEMORY_FAILED;
     }
     auto ret = memcpy_s(bias_data, kernel_num * sizeof(float), trans_bias, kernel_num * sizeof(float));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+      return lite::RET_MEMORY_FAILED;
     }
   }
+  return lite::RET_OK;
 }
 
 bool ConvTransformFusion::IsVariableWeightConv(const CNodePtr &conv_node) const {

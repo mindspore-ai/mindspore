@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace lite {
-schema::Tensor *AttrToTensor(void *data, int data_size, bool is_array, TypeId type_id,
+schema::Tensor *AttrToTensor(const void *data, int data_size, bool is_array, TypeId type_id,
                              std::vector<char *> *const tensor_bufs) {
   if (data == nullptr || tensor_bufs == nullptr) {
     MS_LOG(ERROR) << "the parameter of this function is nullptr.";

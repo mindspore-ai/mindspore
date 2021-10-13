@@ -39,8 +39,8 @@ const BaseRef ConvScaleFusion::DefinePattern() const {
   MS_CHECK_TRUE_RET(is_seq_var != nullptr, {});
   return VectorRef({is_scale, is_conv, is_param, is_seq_var});
 }
-void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num, float *trans_scale,
-                                     float *trans_bias) const {
+int ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num, float *trans_scale,
+                                    float *trans_bias) const {
   MS_ASSERT(scale_node != nullptr);
   MS_ASSERT(trans_bias != nullptr);
   MS_ASSERT(trans_scale != nullptr);
@@ -54,36 +54,41 @@ void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num,
   } else {
     MS_LOG(ERROR) << "Scale should has 2 or 3 input tensors, current inputs is" << scale_node->inputs().size();
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INPUT_TENSOR_ERROR);
-    return;
+    return lite::RET_ERROR;
   }
   if (!scale_weight_node->isa<Parameter>()) {
     MS_LOG(ERROR) << "scale weight node not parameter node";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
-    return;
+    return lite::RET_ERROR;
   }
-  if (scale_bias_node != nullptr && !scale_bias_node->isa<Parameter>()) {
-    MS_LOG(ERROR) << "scale bias node not parameter node";
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
-    return;
+  if (scale_bias_node != nullptr && !IsParamNode(scale_bias_node)) {
+    MS_LOG(DEBUG) << "scale bias input is dynamic.";
+    return lite::RET_NO_CHANGE;
   }
   auto scale_weight_param = scale_weight_node->cast<ParameterPtr>()->default_param();
+  MS_ASSERT(scale_weight_param != nullptr);
   auto weight_value = std::dynamic_pointer_cast<tensor::Tensor>(scale_weight_param);
+  MS_ASSERT(weight_value != nullptr);
   auto weight_data = reinterpret_cast<const float *>(weight_value->data_c());
 
-  if (EOK != memcpy_s(trans_scale, kernel_num * sizeof(float), weight_data, kernel_num * sizeof(float))) {
+  if (memcpy_s(trans_scale, kernel_num * sizeof(float), weight_data, weight_value->Size()) != EOK) {
     MS_LOG(ERROR) << "memcpy_s transScale failed";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
-    return;
+    return lite::RET_ERROR;
   }
 
   if (scale_bias_node != nullptr) {
     auto scale_bias_param = scale_bias_node->cast<ParameterPtr>()->default_param();
+    MS_ASSERT(scale_bias_param != nullptr);
     auto bias_value = std::dynamic_pointer_cast<tensor::Tensor>(scale_bias_param);
+    MS_ASSERT(bias_value != nullptr);
     auto bias_data = reinterpret_cast<const float *>(bias_value->data_c());
-    if (EOK != memcpy_s(trans_bias, kernel_num * sizeof(float), bias_data, kernel_num * sizeof(float))) {
+    if (memcpy_s(trans_bias, kernel_num * sizeof(float), bias_data, bias_value->Size()) != EOK) {
       MS_LOG(ERROR) << "memcpy_s transScale failed";
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
+      return lite::RET_ERROR;
     }
   }
+  return lite::RET_OK;
 }
 }  // namespace mindspore::opt

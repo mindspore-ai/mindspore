@@ -59,8 +59,7 @@ OpParameter *PopulateConvParameter(const void *prim) {
     return nullptr;
   }
   if (stride->size() < kMinShapeSizeTwo || dilation->size() < kMinShapeSizeTwo) {
-    MS_LOG(ERROR) << "Invalid shape size!kernel_size size: " << kernel_size->size()
-                  << ", stride size: " << stride->size() << ", dilation size: " << dilation->size();
+    MS_LOG(ERROR) << "stride size: " << stride->size() << ", dilation size: " << dilation->size();
     free(param);
     return nullptr;
   }

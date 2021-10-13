@@ -133,6 +133,7 @@ CNodePtr GenTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
   auto quant_params_holder = std::make_shared<lite::QuantParamHolder>(2, 1);
   MS_CHECK_TRUE_RET(quant_params_holder != nullptr, nullptr);
   auto trans_insert_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(trans_insert_prim != nullptr);
   trans_insert_prim->AddAttr("quant_params", quant_params_holder);
   return cnode;
 }
@@ -190,7 +191,7 @@ AnfNodePtr TransposeFusion::Process(const std::string &pattern_name, const minds
     return nullptr;
   }
   const auto transpose_node = any_cnode->input(1);
-  if (transpose_node->cast<CNodePtr>() == nullptr) {
+  if (transpose_node == nullptr || transpose_node->cast<CNodePtr>() == nullptr) {
     return nullptr;
   }
   const CNodePtr &transpose_cnode = transpose_node->cast<CNodePtr>();

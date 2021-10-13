@@ -36,7 +36,7 @@ class ConstFoldPass : public Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool Init(const FuncGraphPtr &func_graph);
+  bool Init();
   int HandleCommonFold(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *has_visited);
   bool CheckCanCommonFold(const CNodePtr &cnode) const;
   int HandleSpecialFold(const FuncGraphPtr &func_graph);
@@ -47,6 +47,7 @@ class ConstFoldPass : public Pass {
   std::shared_ptr<lite::InnerContext> context_{nullptr};
   std::shared_ptr<mindspore::Context> ms_context_{nullptr};
   std::shared_ptr<NodeInferShape> node_infershape_{nullptr};
+  FuncGraphManagerPtr manager_{nullptr};
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -265,7 +265,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
     MS_LOG(ERROR) << "init parameter from tensor info failed";
     return RET_ERROR;
   }
-  cnode->set_input(kNumResizeInputShape, new_shape_node);
+  manager_->SetEdge(cnode, kNumResizeInputShape, new_shape_node);
   return RET_OK;
 }
 
@@ -293,9 +293,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &
   auto shape_ptr = std::make_shared<abstract::Shape>(indices_shape);
   MS_CHECK_TRUE_MSG(shape_ptr != nullptr, RET_NULL_PTR, "shape_ptr is nullptr.");
   abstract->set_shape(shape_ptr);
-  auto tr = func_graph->manager()->Transact();
-  tr.SetEdge(cnode, kNumIndex_2, gather_cnode);
-  tr.Commit();
+  manager_->SetEdge(cnode, kNumIndex_2, gather_cnode);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
   return RET_OK;
@@ -325,6 +323,7 @@ STATUS UnifyFormatToNHWC::ResizeNodeProcess(const FuncGraphPtr &func_graph, cons
 
 bool UnifyFormatToNHWC::ProcessResizeAndFormat(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
+  manager_->AddFuncGraph(func_graph);
   auto node_list = TopoSort(func_graph->get_return());
   int status;
   for (auto &node : node_list) {
@@ -374,6 +373,11 @@ bool UnifyFormatToNHWC::ProcessResizeAndFormat(const FuncGraphPtr &func_graph) {
 
 bool UnifyFormatToNHWC::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
+  manager_ = Manage(func_graph, true);
+  if (manager_ == nullptr) {
+    MS_LOG(ERROR) << "manager is nullptr.";
+    return false;
+  }
   if (!ProcessResizeAndFormat(func_graph)) {
     MS_LOG(ERROR) << "ProcessResizeAndFormat failed.";
     return false;

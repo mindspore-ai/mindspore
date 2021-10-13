@@ -938,7 +938,7 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr
       MS_LOG(ERROR) << "new data failed";
       return nullptr;
     }
-    if (memcpy_s(tensor_data, tensor_info->Size(), tensor_info->data_c(), tensor_info->Size()) != lite::RET_OK) {
+    if (memcpy_s(tensor_data, tensor_info_new->Size(), tensor_info->data_c(), tensor_info->Size()) != lite::RET_OK) {
       MS_LOG(ERROR) << "memcpy data failed.";
       return nullptr;
     }
@@ -1177,6 +1177,9 @@ bool IsTrainOp(const CNodePtr &cnode) {
 }
 
 bool IsMarkedTrainOp(const CNodePtr &cnode) {
+  if (cnode == nullptr) {
+    return false;
+  }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_RET(prim != nullptr, false);
   if (prim->GetAttr("trainOp") != nullptr && GetValue<bool>(prim->GetAttr("trainOp"))) {

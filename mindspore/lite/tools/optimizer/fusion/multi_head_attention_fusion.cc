@@ -245,16 +245,16 @@ AnfNodePtr MultiHeadAttentionFusion::Process(const std::string &pattern_name, co
     return nullptr;
   }
   if (pattern_name == kMPAWithoutMaskPatternName) {
-    return CreateMultiHeadAttentionNode(func_graph, equiv, node->fullname_with_scope(), 0);
+    return CreateMultiHeadAttentionNode(func_graph, equiv, node->fullname_with_scope());
   } else if (pattern_name == kMPAWithMaskPatternName) {
-    return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node->fullname_with_scope(), 0);
+    return CreateMaskedMultiHeadAttentionNode(func_graph, equiv, node->fullname_with_scope());
   } else {
     return nullptr;
   }
 }
 
 CNodePtr MultiHeadAttentionFusion::CreateMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                                                const std::string &base_name, int var_offset) const {
+                                                                const std::string &base_name) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
   auto attention_prim = BuildAttentionPrim(equiv);
@@ -292,7 +292,7 @@ STATUS GetIntParameterData(const ParameterPtr &param_ptr, std::vector<int> *resu
     return RET_ERROR;
   }
   auto default_param = param_ptr->default_param();
-  if (!utils::isa<tensor::TensorPtr>(default_param)) {
+  if (default_param == nullptr || !utils::isa<tensor::TensorPtr>(default_param)) {
     MS_LOG(DEBUG) << "tensor_info is not tensor::TensorPtr";
     return RET_ERROR;
   }
@@ -349,8 +349,8 @@ std::shared_ptr<ops::Attention> MultiHeadAttentionFusion::BuildAttentionPrim(con
 }
 
 CNodePtr MultiHeadAttentionFusion::CreateMaskedMultiHeadAttentionNode(const FuncGraphPtr &func_graph,
-                                                                      const EquivPtr &equiv, const string &base_name,
-                                                                      int var_offset) const {
+                                                                      const EquivPtr &equiv,
+                                                                      const string &base_name) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
   auto attention_prim = std::make_shared<ops::Attention>();

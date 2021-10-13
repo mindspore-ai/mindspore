@@ -55,6 +55,7 @@ const AnfNodePtr SqueezeFusion::Process(const FuncGraphPtr &func_graph, const An
     return nullptr;
   }
   auto act_node = unsqueeze_cnode->input(1);
+  MS_CHECK_TRUE_RET(act_node != nullptr, nullptr);
   auto act_cnode = act_node->cast<CNodePtr>();
   if (act_cnode == nullptr) {
     return nullptr;
@@ -62,7 +63,8 @@ const AnfNodePtr SqueezeFusion::Process(const FuncGraphPtr &func_graph, const An
   if (IsMarkedTrainOp(act_cnode)) {
     return nullptr;
   }
-  auto bn_node = act_node->cast<CNodePtr>()->input(1);
+  auto bn_node = act_cnode->input(1);
+  MS_CHECK_TRUE_RET(bn_node != nullptr, nullptr);
   auto bn_cnode = bn_node->cast<CNodePtr>();
   if (bn_cnode == nullptr) {
     return nullptr;
@@ -70,7 +72,8 @@ const AnfNodePtr SqueezeFusion::Process(const FuncGraphPtr &func_graph, const An
   if (IsMarkedTrainOp(bn_cnode)) {
     return nullptr;
   }
-  auto squeeze_node = bn_node->cast<CNodePtr>()->input(1);
+  auto squeeze_node = bn_cnode->input(1);
+  MS_CHECK_TRUE_RET(squeeze_node != nullptr, nullptr);
   auto squeeze_cnode = squeeze_node->cast<CNodePtr>();
   if (squeeze_cnode == nullptr) {
     return nullptr;
@@ -78,7 +81,7 @@ const AnfNodePtr SqueezeFusion::Process(const FuncGraphPtr &func_graph, const An
   if (IsMarkedTrainOp(squeeze_cnode)) {
     return nullptr;
   }
-  auto pre_node = squeeze_node->cast<CNodePtr>()->input(1);
+  auto pre_node = squeeze_cnode->input(1);
 
   auto unsqueeze_primitive = GetCNodePrimitive(unsqueeze_node);
   auto squeeze_primitive = GetCNodePrimitive(squeeze_node);
