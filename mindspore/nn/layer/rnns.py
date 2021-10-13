@@ -199,7 +199,7 @@ class _DynamicRNN(Cell):
 class _RNNBase(Cell):
     '''Basic class for RNN operators'''
     def __init__(self, mode, input_size, hidden_size, num_layers=1, has_bias=True,
-                 batch_first=False, dropout=0, bidirectional=False):
+                 batch_first=False, dropout=0.0, bidirectional=False):
         super().__init__()
         validator.check_positive_int(hidden_size, "hidden_size", self.cls_name)
         validator.check_positive_int(input_size, "input_size", self.cls_name)
