@@ -22,7 +22,9 @@ from .inplace_sub import _inplace_sub_tbe
 from .abs_grad import _abs_grad_tbe
 from .abs_grad_ds import _abs_grad_ds_tbe
 from .acos import _acos_tbe
+from .acos_ds import _acos_ds_tbe
 from .acos_grad import _acos_grad_tbe
+from .acos_grad_ds import _acos_grad_ds_tbe
 from .acosh import _acosh_tbe
 from .acosh_grad import _acosh_grad_tbe
 from .adam_apply_one_with_decay import _adam_apply_one_with_decay_tbe

@@ -4326,7 +4326,7 @@ class Cos(Primitive):
         """Initialize Cos"""
 
 
-class ACos(PrimitiveWithInfer):
+class ACos(Primitive):
     r"""
     Computes arccosine of input tensors element-wise.
 
@@ -4336,13 +4336,15 @@ class ACos(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          The data type should be one of the following types: float16, float32.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4358,13 +4360,7 @@ class ACos(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize ACos"""
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type, self.name)
-        return x_dtype
+        self.init_prim_io_names(inputs=['x'], outputs='output')
 
 
 class Sin(PrimitiveWithInfer):
