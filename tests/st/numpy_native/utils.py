@@ -27,11 +27,8 @@ def match_array(actual, expected, error=0):
     if isinstance(expected, (int, tuple)):
         expected = onp.asarray(expected)
 
-    if error > 0:
-        onp.testing.assert_almost_equal(actual.tolist(), expected.tolist(),
-                                        decimal=error)
-    else:
-        onp.testing.assert_equal(actual.tolist(), expected.tolist())
+    onp.testing.assert_almost_equal(actual.tolist(), expected.tolist(),
+                                    decimal=error)
 
 
 def check_all_results(onp_results, mnp_results, error=0):
