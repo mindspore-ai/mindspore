@@ -44,6 +44,9 @@ Status RegisterKernel::RegKernel(const std::string &arch, const std::string &pro
 
 CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, KernelDesc *desc) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+  if (desc == nullptr || primitive == nullptr) {
+    return nullptr;
+  }
   return RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, desc);
 #else
   MS_LOG(ERROR) << unsupport_custom_kernel_register_log;

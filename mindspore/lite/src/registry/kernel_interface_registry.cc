@@ -27,7 +27,7 @@ using mindspore::schema::PrimitiveType_MIN;
 namespace mindspore {
 namespace registry {
 namespace {
-static const auto kMaxKernelNum = PrimitiveType_MAX - PrimitiveType_MIN;
+static const auto kMaxKernelNum = PrimitiveType_MAX - PrimitiveType_MIN + 1;
 std::string GetCustomType(const schema::Primitive *primitive) {
   auto param = primitive->value_as_Custom();
   MS_ASSERT(param != nullptr);
@@ -100,11 +100,14 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCustomKerne
 
 std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInterface(
   const std::string &provider, const schema::Primitive *primitive) {
-  MS_ASSERT(primitive != nullptr);
+  if (primitive == nullptr) {
+    return nullptr;
+  }
   int op_type = primitive->value_type();
   if (op_type == schema::PrimitiveType_Custom) {
     return GetCustomKernelInterface(primitive);
   }
+
   std::unique_lock<std::mutex> lock(mutex_);
   auto kernel = GetCacheInterface(provider, op_type);
   if (kernel != nullptr) {
@@ -115,6 +118,9 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInter
     return nullptr;
   }
 
+  if (op_type > PrimitiveType_MAX || op_type <= PrimitiveType_MIN) {
+    return nullptr;
+  }
   auto creator = iter->second[op_type];
   if (creator != nullptr) {
     kernel = creator();
@@ -125,11 +131,15 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInter
 }
 
 Status KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
-  if (op_type < PrimitiveType_MIN || op_type > kMaxKernelNum) {
-    MS_LOG(ERROR) << "reg op_type invalid!op_type: " << op_type << ", max value: " << kMaxKernelNum;
-    return kLiteError;
+  if (op_type <= PrimitiveType_MIN || op_type > PrimitiveType_MAX) {
+    MS_LOG(ERROR) << "reg op_type invalid!op_type: " << op_type << ", max value: " << PrimitiveType_MAX;
+    return kLiteParamInvalid;
   }
 
+  if (provider.empty()) {
+    MS_LOG(ERROR) << "Input provider is empty!";
+    return kLiteParamInvalid;
+  }
   std::unique_lock<std::mutex> lock(mutex_);
   auto iter = kernel_creators_.find(provider);
   if (iter == kernel_creators_.end()) {
