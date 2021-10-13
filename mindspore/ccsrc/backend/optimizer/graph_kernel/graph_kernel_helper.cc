@@ -967,5 +967,11 @@ std::vector<PrimitivePtr> GetValidOps(
   }
   return valid_ops;
 }
+
+void UpdateMng(FuncGraphManagerPtr mng, const FuncGraphPtr &func_graph) {
+  mng->RemoveRoots();
+  mng->KeepRoots({func_graph});
+}
+
 }  // namespace opt
 }  // namespace mindspore

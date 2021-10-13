@@ -401,6 +401,13 @@ class GraphSplitByPattern:
                         self.areas.remove(a)
                         return True
             return False
+
+        def _update_areas(areas, from_op):
+            for op in from_op.to_ops:
+                a = self.area_map[op]
+                if a in self.areas and a not in areas:
+                    areas.append(a)
+
         changed = False
         while True:
             for dom in self.areas:
@@ -413,10 +420,7 @@ class GraphSplitByPattern:
         while True:
             for t in inputs:
                 areas = []
-                for op in t.to_ops:
-                    a = self.area_map[op]
-                    if a in self.areas and a not in areas:
-                        areas.append(a)
+                _update_areas(areas, t)
                 if len(areas) > 1 and _do_fuse(areas):
                     changed = True
                     break
@@ -864,6 +868,26 @@ class GraphSplitGpu(GraphSplitByPattern):
                         count += 1
                 return count
 
+            def _bfs_visit(start_op, start_prims, end_prims, total_ops):
+                consisten_shape = start_op.output.shape
+                visited = []
+                op_queue = [start_op]
+                while op_queue:
+                    tmp_queue = []
+                    for op in op_queue:
+                        if op in visited:
+                            continue
+                        if op.prim in end_prims or not op in total_ops:
+                            continue
+                        if (op.prim in start_prims and op != start_op) or consisten_shape != op.output.shape:
+                            return False
+                        for to_op in op.output.to_ops:
+                            tmp_queue.append(to_op)
+                        visited.append(op)
+                    op_queue = tmp_queue
+
+                return True
+
             def _shape_consistent(start_prims, end_prims, source, target):
                 start_ops = []
                 for op in source.ops:
@@ -872,22 +896,9 @@ class GraphSplitGpu(GraphSplitByPattern):
 
                 total_ops = source.ops + target.ops
                 for start_op in start_ops:
-                    consisten_shape = start_op.output.shape
-                    visited = []
-                    op_queue = [start_op]
-                    while op_queue:
-                        tmp_queue = []
-                        for op in op_queue:
-                            if op in visited:
-                                continue
-                            if op.prim in end_prims or not op in total_ops:
-                                continue
-                            if (op.prim in start_prims and op != start_op) or consisten_shape != op.output.shape:
-                                return False
-                            for to_op in op.output.to_ops:
-                                tmp_queue.append(to_op)
-                            visited.append(op)
-                        op_queue = tmp_queue
+                    is_consistent = _bfs_visit(start_op, start_prims, end_prims, total_ops)
+                    if not is_consistent:
+                        return False
                 return True
 
             appected_areas = {"TensorScatterAdd", "UnsortedSegmentSum"}

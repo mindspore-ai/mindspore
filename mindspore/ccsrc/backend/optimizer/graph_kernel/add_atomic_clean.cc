@@ -228,7 +228,8 @@ bool AtomicAddCheckerAscend::SuitableForAtomicAdd(const AnfNodePtr &node) {
   return false;
 }
 
-void AtomicCleanInsertter::CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input) {
+void AtomicCleanInsertter::CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
+                                                  bool bypass) {
   // Change kernel build info.
   auto kernel_info = dynamic_cast<device::KernelInfo *>(composite_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -244,7 +245,7 @@ void AtomicCleanInsertter::CorrectKernelBuildInfo(const AnfNodePtr &composite_no
   std::vector<std::string> new_outputs_format;
   std::vector<TypeId> new_outputs_type;
   for (size_t i = 0; i < origin_outputs_format.size(); ++i) {
-    if (real_output_num_ > 1 && i == reduce_real_output_index_) {
+    if (bypass && real_output_num_ > 1 && i == reduce_real_output_index_) {
       continue;
     }
     new_outputs_format.push_back(origin_outputs_format[i]);

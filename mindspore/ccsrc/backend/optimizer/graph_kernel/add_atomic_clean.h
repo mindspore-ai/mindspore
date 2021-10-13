@@ -75,7 +75,8 @@ class AtomicCleanInsertter : public Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  protected:
-  virtual void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input);
+  virtual void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
+                                      bool bypass = true);
   virtual void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input);
   virtual CNodePtr CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type);
   void AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node, const AnfNodePtr &composite_node,
