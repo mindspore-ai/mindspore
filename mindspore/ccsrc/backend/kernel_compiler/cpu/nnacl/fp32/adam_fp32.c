@@ -173,10 +173,10 @@ int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, f
   float *v_ptr = v + start;
 
   for (; c1 < c16; c1 += C16NUM) {
-    __m512 g_r = _mm512_loadu_ps(gradient_ptr);
     __m512 var_r = _mm512_loadu_ps(var_ptr);
     __m512 m_r = _mm512_loadu_ps(m_ptr);
     __m512 v_r = _mm512_loadu_ps(v_ptr);
+    __m512 g_r = _mm512_loadu_ps(gradient_ptr);
 
     m_r = _mm512_mul_ps(m_r, beta1_r);
     v_r = _mm512_mul_ps(v_r, beta2_r);
@@ -187,9 +187,9 @@ int AdamWeightDecayFp32(float *var, float *m, float *v, float lr, float beta1, f
     avx_r0 = _mm512_div_ps(m_r, _mm512_add_ps(avx_r0, epsilon_r));
     avx_r0 = _mm512_fmadd_ps(var_r, decay_r, avx_r0);
     var_r = _mm512_fmadd_ps(avx_r0, lr_neg_r, var_r);
-    _mm512_storeu_ps(var_ptr, var_r);
     _mm512_storeu_ps(m_ptr, m_r);
     _mm512_storeu_ps(v_ptr, v_r);
+    _mm512_storeu_ps(var_ptr, var_r);
 
     gradient_ptr += C16NUM;
     var_ptr += C16NUM;
@@ -225,10 +225,10 @@ size_t FusedCastAdamFp32(float *var, float *m, float *v, float lr, float beta1, 
   float *v_ptr = v + start;
 
   for (; c1 < c16; c1 += C16NUM) {
-    __m512 g_r = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr)));
     __m512 var_r = _mm512_loadu_ps(var_ptr);
     __m512 m_r = _mm512_loadu_ps(m_ptr);
     __m512 v_r = _mm512_loadu_ps(v_ptr);
+    __m512 g_r = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr)));
 
     m_r = _mm512_mul_ps(m_r, beta1_r);
     v_r = _mm512_mul_ps(v_r, beta2_r);
@@ -271,10 +271,10 @@ size_t FusedCastAdamFp16(int16_t *var16, float *m, float *v, float lr, float bet
   float *v_ptr = v + start;
 
   for (; c1 < c16; c1 += C16NUM) {
-    __m512 g_r = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr)));
     __m512 var_r = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(var16_ptr)));
     __m512 m_r = _mm512_loadu_ps(m_ptr);
     __m512 v_r = _mm512_loadu_ps(v_ptr);
+    __m512 g_r = _mm512_cvtph_ps(_mm256_loadu_si256((__m256i *)(gradient16_ptr)));
 
     m_r = _mm512_mul_ps(m_r, beta1_r);
     v_r = _mm512_mul_ps(v_r, beta2_r);

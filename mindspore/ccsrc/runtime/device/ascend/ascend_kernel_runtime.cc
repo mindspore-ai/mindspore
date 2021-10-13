@@ -319,6 +319,7 @@ void AscendKernelRuntime::PreInit() {
   }
 }
 #endif
+
 bool AscendKernelRuntime::Init() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -369,7 +370,7 @@ bool AscendKernelRuntime::Init() {
   return true;
 }
 
-bool AscendKernelRuntime::LoadData(const session::KernelGraph & /*graph*/) {
+bool AscendKernelRuntime::LoadData(const session::KernelGraph & /* graph */) {
 #ifdef ENABLE_DEBUGGER
   MS_LOG(INFO) << "Start load step";
   MS_EXCEPTION_IF_NULL(debugger_);
@@ -672,7 +673,7 @@ std::string AscendKernelRuntime::GetDumpPath() {
 }
 
 #ifndef ENABLE_SECURITY
-void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph &graph) {
+void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph & /* graph */) {
   const std::string path = GetDumpPath();
   if (access(path.c_str(), F_OK) == 0) {
     if (!DeleteDumpDir(path)) {
@@ -824,7 +825,7 @@ void AscendKernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
           auto event = CreateDeviceEvent();
           event->set_wait_stream(wait_stream);
           event->set_record_stream(record_stream);
-          kernel_post_run_events[k].emplace_back([event]() { event->RecordEvent(); });
+          kernel_post_run_events[IntToSize(k)].emplace_back([event]() { event->RecordEvent(); });
           kernel_pre_run_events[i].emplace_back([event]() { event->WaitEvent(); });
         }
       }
