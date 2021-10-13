@@ -121,6 +121,10 @@ class ProfilingManager {
   // launched. This is the master off switch, once called, it won't start profiler even if env variable says so.
   void DisableProfiling() { enabled_ = false; }
 
+  // Record end of epoch information
+  // @param step_num - The number of steps
+  void RecordEndOfEpoch(uint32_t step_num);
+
   const std::unordered_map<std::string, std::shared_ptr<Sampling>> &GetSamplingNodes() { return sampling_nodes_; }
 
   // Launch monitoring thread.
@@ -137,6 +141,9 @@ class ProfilingManager {
   std::unordered_map<std::string, std::shared_ptr<Tracing>> tracing_nodes_;
 
   std::unordered_map<std::string, std::shared_ptr<Sampling>> sampling_nodes_;
+
+  std::vector<uint64_t> epoch_end_ts_;    // End of epoch timestamp
+  std::vector<uint32_t> epoch_end_step_;  // End of epoch step number
 
   // Register profile node to tree
   // @param node - Profiling node

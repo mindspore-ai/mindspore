@@ -277,6 +277,7 @@ Status DeviceQueueOp::SendDataToAscend() {
       connector_size = ChildOpConnectorSize();
       connector_capacity = ChildOpConnectorCapacity();
       tree_->SetEpochEnd();
+      tree_->GetProfilingManager()->RecordEndOfEpoch(send_batch);
     }
 #endif
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
@@ -571,8 +572,10 @@ Status DeviceQueueOp::SendDataToGPU() {
   first_fetch_flag_ = true;
   int64_t num_buf = 0;
   bool is_break_loop = false;
+  uint32_t batch_num = 0;
   while (!current_row.eof() && !is_break_loop && !GpuBufferMgr::GetInstance().IsClosed()) {
     while (!current_row.eoe() && !is_break_loop && !GpuBufferMgr::GetInstance().IsClosed()) {
+      batch_num++;
       RETURN_IF_NOT_OK(FilterMetadata(&current_row));
       RETURN_IF_NOT_OK(CheckExceptions(current_row));
       RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(current_row)));
@@ -590,6 +593,12 @@ Status DeviceQueueOp::SendDataToGPU() {
       }
     }
 
+#ifndef ENABLE_SECURITY
+    if (current_row.eoe() && tree_->GetProfilingManager()->IsProfilingEnable()) {
+      tree_->SetEpochEnd();
+      tree_->GetProfilingManager()->RecordEndOfEpoch(batch_num);
+    }
+#endif
     if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
     } else {

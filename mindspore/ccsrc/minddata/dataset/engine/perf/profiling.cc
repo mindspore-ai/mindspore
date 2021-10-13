@@ -240,6 +240,12 @@ Status ProfilingManager::ChangeFileMode() {
   return Status::OK();
 }
 
+void ProfilingManager::RecordEndOfEpoch(uint32_t step_num) {
+  MS_LOG(INFO) << "Record end of epoch. step_num: " << step_num;
+  (void)epoch_end_ts_.emplace_back(ProfilingTime::GetCurMilliSecond());
+  (void)epoch_end_step_.emplace_back(step_num);
+}
+
 uint64_t ProfilingTime::GetCurMilliSecond() {
   // because cpplint does not allow using namespace
   using std::chrono::duration_cast;

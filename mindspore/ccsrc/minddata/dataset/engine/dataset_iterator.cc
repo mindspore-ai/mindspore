@@ -129,10 +129,11 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   // An eoe row means we have iterated an epoch.
   // The next row in the pipeline might be an EOF or a TensorRow for next epoch
   if (out_row->eoe()) {
-    MS_LOG(INFO) << "End of data iteration.";
+    MS_LOG(INFO) << "End of data iteration.  cur_batch_num_: " << cur_batch_num_;
 #ifndef ENABLE_SECURITY
     if (is_profiling_enable) {
       root_->Tree()->SetEpochEnd();
+      root_->Tree()->GetProfilingManager()->RecordEndOfEpoch(cur_batch_num_);
     }
 #endif
     return Status::OK();
