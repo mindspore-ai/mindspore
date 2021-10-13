@@ -44,6 +44,7 @@ AnfNodePtr GetRealLstmWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
     return nullptr;
   }
   auto weight_node = cnode->input(weight_index);
+  MS_CHECK_TRUE_MSG(weight_node != nullptr, nullptr, "weight_node is nullptr.");
   bool is_real_weight =
     !opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) && !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
   while (!is_real_weight) {
@@ -54,6 +55,7 @@ AnfNodePtr GetRealLstmWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
     auto weight_cnode = weight_node->cast<CNodePtr>();
     MS_ASSERT(weight_cnode != nullptr);
     weight_node = weight_cnode->input(1);
+    MS_CHECK_TRUE_MSG(weight_node != nullptr, nullptr, "weight_node is nullptr.");
     is_real_weight = !opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) &&
                      !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
   }
@@ -66,6 +68,8 @@ AnfNodePtr GetRealLstmWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
 // split flatten weight to ih,hh weight
 int InitLstmWeight(const ParameterPtr &parameter, void *data, size_t data_size, const std::vector<int64_t> &shape,
                    TypeId data_type, bool is_bias = false, size_t num_directions = 1) {
+  MS_CHECK_TRUE_MSG(parameter != nullptr, RET_ERROR, "parameter is nullptr.");
+  MS_CHECK_TRUE_MSG(data != nullptr, RET_ERROR, "data is nullptr.");
   auto tensor_info = lite::CreateTensorInfo(nullptr, 0, shape, data_type);
   MS_CHECK_TRUE_MSG(tensor_info != nullptr, RET_ERROR, "Create tensor info failed.");
   // lite input weight order should wii,wio,wif,wig
@@ -73,6 +77,7 @@ int InitLstmWeight(const ParameterPtr &parameter, void *data, size_t data_size, 
   const auto &weight_order = kNH2NC;
   size_t weight_batch = num_directions * combined_num;
   MS_CHECK_TRUE_MSG(!INT_MUL_OVERFLOW_THRESHOLD(kGateNums, weight_batch, SIZE_MAX), RET_ERROR, "overflow.");
+  MS_CHECK_TRUE_MSG(weight_batch != 0, RET_ERROR, "div 0.");
   size_t weight_size = data_size / (kGateNums * weight_batch);
   for (size_t k = 0; k < num_directions; k++) {
     auto start_addr_x = static_cast<char *>(data) + data_size / num_directions * k;
@@ -98,6 +103,7 @@ int InitLstmWeight(const ParameterPtr &parameter, void *data, size_t data_size, 
 }
 
 int ConvertBiWeight(char *flatten_weight, int hh_weight_size, int ih_weight_size) {
+  MS_CHECK_TRUE_MSG(flatten_weight != nullptr, RET_ERROR, "flatten_weight is nullptr.");
   // convert weight
   if (hh_weight_size < 0) {
     return RET_ERROR;
@@ -127,10 +133,14 @@ int ConvertBiWeight(char *flatten_weight, int hh_weight_size, int ih_weight_size
   return RET_OK;
 }
 int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func_graph, const AnfNodePtr &lstm_node) {
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "manager is nullptr.");
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr.");
+  MS_CHECK_TRUE_MSG(lstm_node != nullptr, RET_ERROR, "lstm_node is nullptr.");
   auto lstm_cnode = lstm_node->cast<CNodePtr>();
   if (lstm_cnode == nullptr) {
     return RET_ERROR;
   }
+  MS_CHECK_TRUE_MSG(lstm_cnode->input(0) != nullptr, RET_ERROR, "lstm_cnode->input(0) is nullptr.");
   auto primitive_c = GetValueNode<std::shared_ptr<mindspore::ops::LSTM>>(lstm_cnode->input(0));
   if (primitive_c == nullptr) {
     return RET_ERROR;

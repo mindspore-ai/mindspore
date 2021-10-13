@@ -41,6 +41,7 @@ STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, Shap
     return RET_ERROR;
   }
   shape_vector->clear();
+  MS_CHECK_TRUE_MSG(tensor_info->data_c() != nullptr, RET_ERROR, "tensor_info->data_c() is nullptr");
   auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   std::string shape_str;
   std::string shape_size_str;
@@ -90,8 +91,8 @@ STATUS GetDataTypeAndShape(const ParameterPtr &param_node, TypeId *data_type, Sh
     return RET_INPUT_TENSOR_ERROR;
   }
   auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
-  auto typePtr = abstract_tensor->element()->GetTypeTrack();
   MS_CHECK_TRUE_MSG(abstract_tensor != nullptr, RET_ERROR, "cast ptr failed");
+  auto typePtr = abstract_tensor->element()->GetTypeTrack();
   MS_CHECK_TRUE_MSG(typePtr != nullptr, RET_ERROR, "typePtr is nullptr");
   *data_type = typePtr->type_id();
   if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
@@ -328,6 +329,7 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
 int SetFormatForCnode(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, bool train_flag,
                       DataInfo *data_info) {
   data_info->format_ = mindspore::NHWC;
+  MS_CHECK_TRUE_MSG(cnode->input(index) != nullptr, RET_ERROR, "input is nullptr");
   auto input_node_prim = GetValueNode<PrimitivePtr>((cnode->input(index)->cast<CNodePtr>()->input(0)));
   MS_CHECK_TRUE_MSG(input_node_prim != nullptr, RET_ERROR, "GetValueNode failed");
   if (input_node_prim->GetAttr(ops::kFormat) != nullptr) {
@@ -407,6 +409,7 @@ int FetchDataFromCNode(const CNodePtr &cnode, size_t index, converter::FmkType f
 }
 
 int RemoveIfDepend(const CNodePtr &cnode) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr");
   bool has_depend = false;
   std::vector<AnfNodePtr> inputs;
   inputs.clear();
@@ -447,6 +450,7 @@ int RemoveIfDepend(const CNodePtr &cnode) {
 }
 
 int RemoveIfMakeTuple(const CNodePtr &cnode) {
+  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr");
   bool has_make_tuple = false;
   std::vector<AnfNodePtr> inputs;
   inputs.clear();

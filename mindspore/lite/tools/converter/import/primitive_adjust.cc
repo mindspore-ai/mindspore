@@ -178,6 +178,7 @@ int AttrAdjust(const PrimitivePtr &prim, const std::string &name, const std::vec
   }
   auto value_ptr = prim->GetAttr(name);
   if (utils::isa<ValueSequeuePtr>(value_ptr)) {
+    MS_CHECK_TRUE_MSG(value_ptr->cast<ValueSequeuePtr>()->value().size() > 0, RET_ERROR, "value is empty.");
     if (value_ptr->cast<ValueSequeuePtr>()->value().front()->type()->number_type() != kNumberTypeInt64) {
       MS_LOG(ERROR) << "the func is to adjust attr which is array, please check the attr.";
       return lite::RET_ERROR;
@@ -345,7 +346,7 @@ int MoveAttrPool(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  PrimitivePtr dst_prim;
+  PrimitivePtr dst_prim = nullptr;
   if (src_prim->name() == kNameAvgPool) {
     dst_prim = std::make_shared<ops::AvgPoolFusion>();
     MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
@@ -381,7 +382,7 @@ int MoveAttrPoolGrad(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  PrimitivePtr dst_prim;
+  PrimitivePtr dst_prim = nullptr;
   if (src_prim->name() == kNameAvgPoolGrad || src_prim->name() == kNameAvgPoolGradGpu ||
       src_prim->name() == kNameAvgPoolGradCpu) {
     dst_prim = std::make_shared<ops::AvgPoolGrad>();
@@ -530,6 +531,8 @@ int MoveAttrMapResizeGrad(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Resize grad method " << src_prim->name() << "is not supported";
     return lite::RET_ERROR;
   }
+  MS_CHECK_TRUE_MSG(src_prim->GetAttr(ops::kAlignCorners) != nullptr, RET_NULL_PTR,
+                    "src_prim->GetAttr(ops::kAlignCorners) is nullptr.");
   auto align_corners = GetValue<bool>(src_prim->GetAttr(ops::kAlignCorners));
   dst_prim->set_align_corners(align_corners);
   value_node->set_value(dst_prim);
