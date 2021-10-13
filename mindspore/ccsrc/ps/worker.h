@@ -68,13 +68,13 @@ class Worker {
   void SetKeyOptimId(size_t key, const std::string &optimizer_name);
   void SetOptimInputShapes(size_t key, const ShapeVector &shape);
   void AddEmbeddingTable(const Key &key, const size_t &row_count);
-  void InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &input_shape,
+  bool InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &input_shape,
                             const std::vector<size_t> &indices_shape, const std::vector<size_t> &output_shape,
                             const ParamInitInfoMessage &info);
   void InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::TensorPtr &tensor);
-  void DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_ids, std::vector<float> *lookup_result,
+  bool DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_ids, std::vector<float> *lookup_result,
                            int64_t cmd);
-  void UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vector<int> &lookup_ids,
+  bool UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vector<int> &lookup_ids,
                             const std::vector<float> &vals);
 
   bool running() { return running_; }

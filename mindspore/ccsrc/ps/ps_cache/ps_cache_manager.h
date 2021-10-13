@@ -145,7 +145,7 @@ class PsCacheManager {
   void set_current_graph_step() { graph_running_step_ = graph_step_; }
   std::string channel_name();
   void set_channel_name(const std::string channel_name);
-  void InitParameterServer();
+  bool InitParameterServer();
   void InitDataChannel();
   void AllocMemForHashTable();
   void SetLocalIdRank();

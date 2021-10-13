@@ -68,8 +68,13 @@ class RandomOpGpuKernel : public GpuKernel {
     if (is_null_input_) {
       return true;
     }
-    void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
-    curandState *devStates = reinterpret_cast<curandState *>(workspace_addr);
+
+    curandState *devStates = nullptr;
+    // Operator CudnnUniformReal does not need workspace memory.
+    if (random_op_type_ != RANDOM_OP_CUDNN_UNIFORM_REAL) {
+      void *workspace_addr = GetDeviceAddress<void *>(workspace, 0);
+      devStates = reinterpret_cast<curandState *>(workspace_addr);
+    }
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
     switch (random_op_type_) {
@@ -162,6 +167,11 @@ class RandomOpGpuKernel : public GpuKernel {
       output_size_ *= output_shape[i];
       workspace_size_ *= output_shape[i];
     }
+    // Operator CudnnUniformReal does not need workspace memory.
+    if (random_op_type_ == RANDOM_OP_CUDNN_UNIFORM_REAL) {
+      workspace_size_ = 0;
+    }
+
     auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     seed_ = static_cast<int>(GetValue<int64_t>(prim->GetAttr("seed")));
