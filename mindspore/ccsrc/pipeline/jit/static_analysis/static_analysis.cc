@@ -786,7 +786,8 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
 
     // Broaden the result of switch(c,t,f)()
     auto broadAbstract = result->abstract()->Broaden();
-    // Notify the thread of waiting for branch value and the main thread to continue.
+    // Notify the thread of waiting for switch node and the main thread to continue.
+    AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf, broadAbstract);
     async_result_branch->SetResult(broadAbstract);
     async_result_main->SetResult(broadAbstract);
     // Thread number will be drop when thread exits.
@@ -869,18 +870,6 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
   size_t len = evaluators.size();
   if (NeedWaitForBranches(firstResult)) {
     for (size_t i = 0; i < len; ++i) {
-      // Run shortcircuit start;
-      if (firstResult->isa<AbstractTuple>() && branchAsyncResults[i]->TryGetResult() == nullptr) {
-        MS_LOG(DEBUG) << "Try to run shortcircuit abstract for evalator: " << evaluators[i]->ToString();
-        const auto &result = evaluators[i]->RunShortCircuit(shared_from_this(), args_conf_list, out_conf);
-        if (result != nullptr) {
-          out_specs.push_back(result->abstract());
-          MS_LOG(DEBUG) << "i: " << i << ", result: " << result->abstract()->ToString();
-          continue;
-        }
-      }
-      // Run shortcircuit end;
-
       MS_LOG(DEBUG) << GetInferThread() << "async waiting for " << evaluators[i]->ToString();
       auto async_branch = AsyncInferTask::MakeShared(branchAsyncResults[i]);
       MS_LOG(DEBUG) << " add to schedule: " << async_branch.get();
@@ -906,12 +895,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     }
   }
 
-  const auto &processed_result = ProcessEvalResults(out_specs, out_conf->node());
-  if (processed_result != nullptr) {
-    // This is the final switch()() value.
-    AnalysisResultCacheMgr::GetInstance().SetSwitchValue(out_conf, processed_result->abstract());
-  }
-  return processed_result;
+  return ProcessEvalResults(out_specs, out_conf->node());
 }
 
 EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<EvaluatorPtr> &evaluators,

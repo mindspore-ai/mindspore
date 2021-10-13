@@ -21,7 +21,6 @@
 #include "ir/manager.h"
 #include "ir/param_info.h"
 #include "base/core_ops.h"
-#include "abstract/abstract_function.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/profile.h"
@@ -372,27 +371,6 @@ void FilterMonadInput(const AnfNodePtrList &old_inputs, AnfNodePtrList *new_inpu
   *possible_u_monad = local_u_monad;
   *possible_io_monad = local_io_monad;
 }
-
-// After lift, func_graph will not refer any free variable except lift top func graph,
-// as this abstract will be reset in renormalization, so DummyContext is proper.
-AnfNodePtr BuildFuncGraphValueNode(const FuncGraphPtr &func_graph) {
-  const auto &new_node = NewValueNode(func_graph);
-  MS_EXCEPTION_IF_NULL(new_node);
-  const auto &abstract = std::make_shared<abstract::FuncGraphAbstractClosure>(
-    func_graph, abstract::AnalysisContext::DummyContext(), new_node);
-  MS_EXCEPTION_IF_NULL(abstract);
-  new_node->set_abstract(abstract);
-  return new_node;
-}
-
-AnfNodePtr BuildPrimitiveValueNode(const PrimitivePtr &primitive) {
-  const auto &new_node = NewValueNode(primitive);
-  MS_EXCEPTION_IF_NULL(new_node);
-  const auto &abstract = std::make_shared<abstract::PrimitiveAbstractClosure>(primitive, new_node);
-  MS_EXCEPTION_IF_NULL(abstract);
-  new_node->set_abstract(abstract);
-  return new_node;
-}
 }  // namespace
 
 void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
@@ -401,8 +379,7 @@ void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &
   auto &repl_func_graph = repl_map_func_graph_[func_graph_user];
   auto iter = repl_func_graph.find(func_graph);
   if (iter == repl_func_graph.end()) {
-    node =
-      func_graph_user->NewCNode({BuildPrimitiveValueNode(prim::kPrimPartial), BuildFuncGraphValueNode(func_graph)});
+    node = func_graph_user->NewCNode({NewValueNode(prim::kPrimPartial), NewValueNode(func_graph)});
     repl_func_graph[func_graph] = node;
   } else {
     node = iter->second;
