@@ -59,7 +59,7 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   auto matmul_prim = GetValueNode<std::shared_ptr<ops::MatMul>>(matmul_node->input(kAnfPrimitiveIndex));
-  MS_ASSERT(matmul_prim != nullptr);
+  MS_CHECK_TRUE_RET(matmul_prim != nullptr, nullptr);
   // splice
   AnfNodePtr pre_node = matmul_node->input(1);
   if (!CheckPrimitiveType(pre_node, prim::kPrimSplice)) {
@@ -77,7 +77,7 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
     return nullptr;
   }
   auto splice_prim = GetValueNode<std::shared_ptr<ops::Splice>>(splice_node->input(kAnfPrimitiveIndex));
-  MS_ASSERT(prim != nullptr);
+  MS_CHECK_TRUE_RET(splice_prim != nullptr, nullptr);
   /**
    * Affine attribute:
    * 1. context
@@ -89,17 +89,21 @@ const AnfNodePtr AffineFusion::Process(const FuncGraphPtr &func_graph, const Anf
   auto affine_prim = std::make_shared<ops::Affine>();
   MS_CHECK_TRUE_RET(affine_prim != nullptr, nullptr);
   // copy splice attr to affine
+  MS_CHECK_TRUE_RET(splice_prim->GetAttr(ops::kSpliceContext) != nullptr, nullptr);
   affine_prim->set_context(splice_prim->get_context());
+  MS_CHECK_TRUE_RET(splice_prim->GetAttr(ops::kSpliceOutputDims) != nullptr, nullptr);
   affine_prim->set_output_dim(splice_prim->get_output_dim());
   // copy matmul attribute to affine
-  if (matmul_prim->HasAttr(ops::kTransposeA)) {
+  if (matmul_prim->GetAttr(ops::kTransposeA) != nullptr) {
     affine_prim->set_transpose_a(matmul_prim->get_transpose_a());
   }
-  if (matmul_prim->HasAttr(ops::kTransposeB)) {
+  if (matmul_prim->GetAttr(ops::kTransposeB) != nullptr) {
     affine_prim->set_transpose_b(matmul_prim->get_transpose_b());
   }
   // construct affine node
-  std::vector<AnfNodePtr> affine_inputs = {NewValueNode(affine_prim), splice_node->input(1),
+  auto affine_value_node = NewValueNode(affine_prim);
+  MS_CHECK_TRUE_RET(affine_value_node != nullptr, nullptr);
+  std::vector<AnfNodePtr> affine_inputs = {affine_value_node, splice_node->input(1),
                                            matmul_node->input(kInputIndexTwo)};
   if (matmul_node->inputs().size() == kInputWithBiasNum) {
     affine_inputs.push_back(matmul_node->input(kInputBias));

@@ -34,11 +34,12 @@ CNodePtr GLUFusion::CreateGLUNode(const FuncGraphPtr &func_graph, const AnfNodeP
   }
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
   MS_ASSERT(input_node != nullptr);
-  auto glu_cnode = func_graph->NewCNode({NewValueNode(glu_prim), input_node});
+  auto glu_cnode = func_graph->NewCNode(glu_prim, {input_node});
   MS_CHECK_TRUE_RET(glu_cnode != nullptr, nullptr);
   glu_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_glu");
-  MS_CHECK_TRUE_RET(node->abstract() != nullptr, nullptr);
-  glu_cnode->set_abstract(node->abstract()->Clone());
+  if (node->abstract() != nullptr) {
+    glu_cnode->set_abstract(node->abstract()->Clone());
+  }
   return glu_cnode;
 }
 

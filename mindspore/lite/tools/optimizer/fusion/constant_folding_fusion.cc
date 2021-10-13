@@ -124,7 +124,7 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, converter::Fmk
       FreeTensors(&tensors, nullptr);
       return {};
     }
-    if (memcpy_s(tensor_data, data_info.data_.size(), data_info.data_.data(), data_info.data_.size()) != EOK) {
+    if (memcpy_s(tensor_data, tensor->Size(), data_info.data_.data(), data_info.data_.size()) != EOK) {
       MS_LOG(ERROR) << "memcpy data failed.";
       FreeTensors(&tensors, nullptr);
       return {};
@@ -151,7 +151,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   }
   if (tensor->MutableData() != nullptr) {
     auto tensor_data = static_cast<uint8_t *>(tensor_info->data_c());
-    auto ret = memcpy_s(tensor_data, tensor->Size(), tensor->MutableData(), tensor->Size());
+    auto ret = memcpy_s(tensor_data, tensor_info->Size(), tensor->data(), tensor->Size());
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return nullptr;
@@ -219,7 +219,7 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
                           std::vector<Tensor *> output_tensors) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
+  MS_CHECK_TRUE_RET(manager != nullptr, lite::RET_NULL_PTR);
   if (output_tensors.size() != 1) {
     for (size_t k = 0; k < output_tensors.size(); k++) {
       auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, input_node, k);
@@ -384,22 +384,21 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       }
     }
     auto status = static_cast<mindspore::kernel::InnerKernel *>(lite_kernel->kernel())->Run();
+    delete (lite_kernel);
+    lite_kernel = nullptr;
     if (status != lite::RET_OK) {
       FreeTensors(&input_tensors, &output_tensors);
-      delete (lite_kernel);
-      MS_LOG(ERROR) << "run kernel failed, name: " << lite_kernel->name();
+      MS_LOG(ERROR) << "run kernel failed, name: " << input_node->fullname_with_scope();
       return nullptr;
     }
     // replace cnode by new param
     if (ReplaceCNode(func_graph, any_node, input_node, output_tensors) != lite::RET_OK) {
       FreeTensors(&input_tensors, &output_tensors);
-      delete (lite_kernel);
       MS_LOG(ERROR) << "constant_folding replace cnode failed";
       return nullptr;
     }
     MS_LOG(DEBUG) << "fold node:" << input_node->fullname_with_scope() << " success ";
     FreeTensors(&input_tensors, &output_tensors);
-    delete (lite_kernel);
   }
   return changed ? any_node : nullptr;
 }

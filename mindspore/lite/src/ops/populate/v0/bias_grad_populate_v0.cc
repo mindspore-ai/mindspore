@@ -23,7 +23,6 @@ namespace lite {
 namespace {
 OpParameter *PopulateBiasGradParameter(const void *prim) {
   ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
-  MS_CHECK_TRUE_RET(arithmetic_param != nullptr, nullptr);
   if (arithmetic_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;

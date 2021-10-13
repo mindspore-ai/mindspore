@@ -67,10 +67,15 @@ OpParameter *PopulateSpaceToBatchParameter(const void *prim) {
     free(param);
     return nullptr;
   }
-  MS_CHECK_INT_MUL_NOT_OVERFLOW(fb_paddings->size(), (*(fb_paddings->begin()))->data()->size(), nullptr);
-  size_t num = static_cast<size_t>(fb_paddings->size() * (*(fb_paddings->begin()))->data()->size());
-  if (num > std::numeric_limits<size_t>::max() / sizeof(int64_t)) {
-    MS_LOG(ERROR) << "The value of paddings.size() is zero or too big";
+  if (fb_paddings->size() > static_cast<size_t>(INT_MAX) ||
+      (*(fb_paddings->begin()))->data()->size() > static_cast<size_t>(INT_MAX)) {
+    MS_LOG(ERROR) << "padding's size is too big.";
+    free(param);
+    return nullptr;
+  }
+  if (INT_MUL_OVERFLOW(static_cast<int>(fb_paddings->size()),
+                       static_cast<int>((*(fb_paddings->begin()))->data()->size()))) {
+    MS_LOG(ERROR) << "padding's data length is too big.";
     free(param);
     return nullptr;
   }

@@ -23,8 +23,8 @@ namespace mindspore {
 namespace opt {
 STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
-  auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
+  MS_ASSERT(manager_ != nullptr);
+  manager_->AddFuncGraph(func_graph);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     MS_CHECK_TRUE_RET(node != nullptr, lite::RET_NULL_PTR);
@@ -73,7 +73,7 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
         MS_LOG(ERROR) << "update cnode format failed.";
         return lite::RET_ERROR;
       }
-      if (!manager->Replace(node, cnode->input(1))) {
+      if (!manager_->Replace(node, cnode->input(1))) {
         MS_LOG(ERROR) << "replace old node failed, please check.";
         return lite::RET_ERROR;
       }
@@ -84,6 +84,8 @@ STATUS DeleteRedundantTranspose::DeleteNot4DTranspose(const FuncGraphPtr &func_g
 
 STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(manager_ != nullptr);
+  manager_->AddFuncGraph(func_graph);
   auto node_lite = TopoSort(func_graph->get_return());
   for (auto &node : node_lite) {
     MS_CHECK_TRUE_RET(node != nullptr, lite::RET_NULL_PTR);
@@ -129,7 +131,7 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
       return lite::RET_ERROR;
     }
     if ((pre_perm == kNH2NC && post_perm == kNC2NH) || (pre_perm == kNC2NH && post_perm == kNH2NC)) {
-      if (!func_graph->manager()->Replace(cnode, pre_cnode->input(1))) {
+      if (!manager_->Replace(cnode, pre_cnode->input(1))) {
         MS_LOG(ERROR) << "replace old node failed, please check.";
         return lite::RET_ERROR;
       }
@@ -140,15 +142,14 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
 
 STATUS DeleteRedundantTranspose::UpdateNodeFormat(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
+  MS_ASSERT(manager_ != nullptr);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_ASSERT(prim != nullptr);
   if (prim->GetAttr(ops::kFormat) == nullptr) {
     return lite::RET_OK;
   }
   auto format = GetValue<int64_t>(prim->GetAttr(ops::kFormat));
-  auto node_users = manager->node_users()[cnode];
+  auto node_users = manager_->node_users()[cnode];
   for (auto &node_user : node_users) {
     if (node_user.second != 1) {
       continue;
@@ -167,8 +168,8 @@ STATUS DeleteRedundantTranspose::UpdateNodeFormat(const FuncGraphPtr &func_graph
 
 bool DeleteRedundantTranspose::Run(const FuncGraphPtr &func_graph) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, false);
-  auto manager = Manage(func_graph, true);
-  if (manager == nullptr) {
+  manager_ = Manage(func_graph, true);
+  if (manager_ == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr.";
     return false;
   }

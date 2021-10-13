@@ -53,10 +53,6 @@ OpParameter *PopulateSplitParameter(const void *prim) {
     free(split_param);
     return nullptr;
   }
-  if (INT_MUL_OVERFLOW(static_cast<size_t>(split_param->num_split_), sizeof(int))) {
-    free(split_param);
-    return nullptr;
-  }
   int *split_sizes = reinterpret_cast<int *>(malloc(static_cast<size_t>(split_param->num_split_) * sizeof(int)));
   if (split_sizes == nullptr) {
     MS_LOG(ERROR) << "malloc split size of SplitParameter failed.";

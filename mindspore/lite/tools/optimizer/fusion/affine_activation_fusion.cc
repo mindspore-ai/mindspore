@@ -68,7 +68,7 @@ const AnfNodePtr AffineActivationFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
   auto affine_prim = GetValueNode<std::shared_ptr<ops::Affine>>(affine_node->input(kAnfPrimitiveIndex));
-  MS_ASSERT(prim != nullptr);
+  MS_ASSERT(affine_prim != nullptr);
 
   if (!activation_prim->HasAttr(ops::kActivationType)) {
     MS_LOG(ERROR) << "the kActivationType is null.";

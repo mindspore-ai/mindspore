@@ -32,6 +32,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr int kOffsetTwo = 2;
+constexpr int kReservedParamNodesNum = 13;
 constexpr size_t kCondNodesNum = 12;
 constexpr size_t kCondCNodesNum = 4;
 constexpr size_t kBodyNodesNum = 69;
@@ -304,7 +305,7 @@ AnfNodePtr TfBidirectionGruFusion::GetCondGraphPattern(const PrimitiveVarMapPtr 
 AnfNodePtr TfBidirectionGruFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
   MS_ASSERT(primitive_vars != nullptr);
   std::vector<CondVarPtr> placeholders;
-  for (int i = 0; i < 13; ++i) {
+  for (int i = 0; i < kReservedParamNodesNum; ++i) {
     auto is_param_placeholder = std::make_shared<CondVar>(IsParameterNode);
     MS_CHECK_TRUE_RET(is_param_placeholder != nullptr, nullptr);
     placeholders.emplace_back(is_param_placeholder);
@@ -455,7 +456,7 @@ void TfBidirectionGruFusion::CopyFlattenMatData(const float *mat, const int C, c
                                                 const int c1, float *data, bool t) {
   MS_ASSERT(mat != nullptr);
   MS_ASSERT(data != nullptr);
-  MS_ASSERT(r0 >= 0 && r0 < r1 && r1 <= R);
+  MS_ASSERT(r0 >= 0 && r0 < r1);
   MS_ASSERT(c0 >= 0 && c0 < c1 && c1 <= C);
   const int RT = r1 - r0;
   const int CT = c1 - c0;
@@ -617,7 +618,7 @@ CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &fu
     return nullptr;
   }
   auto input_length = utils::cast<AnfNodePtr>((*equiv)[input_length_]);
-  MS_ASSERT(hidden != nullptr);
+  MS_ASSERT(input_length != nullptr);
 
   int input_size = 0;
   int hidden_size = 0;
@@ -673,6 +674,7 @@ CNodePtr TfBidirectionGruFusion::CreateBiDirectionGruNode(const FuncGraphPtr &fu
   auto new_node = func_graph->NewCNode(new_node_inputs);
   MS_CHECK_TRUE_RET(new_node != nullptr, nullptr);
   auto prim = GetValueNode<PrimitivePtr>(new_node->input(0));
+  MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->AddAttr(ops::kFormat, MakeValue<int64_t>(Format::NHWC));
   new_node->set_fullname_with_scope(base_name);
   return new_node;

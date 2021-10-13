@@ -52,11 +52,11 @@ class MultiHeadAttentionFusion : public MultiplePatternProcessPass {
   VectorRef DefineMPWithoutMaskPattern() const;
 
   CNodePtr CreateMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                        const std::string &base_name, int var_offset) const;
+                                        const std::string &base_name) const;
 
   // create masked-multi-head-attention
   CNodePtr CreateMaskedMultiHeadAttentionNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                              const std::string &base_name, int var_offset) const;
+                                              const std::string &base_name) const;
 
  protected:
   const std::string kMPAWithoutMaskPatternName = "MPAWithoutMaskPattern";

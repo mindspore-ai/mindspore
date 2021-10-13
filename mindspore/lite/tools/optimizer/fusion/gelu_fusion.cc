@@ -41,7 +41,9 @@ CNodePtr GeLUFusion::CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNod
   auto gelu_cnode = func_graph->NewCNode(gelu_prim, {input_node});
   MS_CHECK_TRUE_RET(gelu_cnode != nullptr, nullptr);
   gelu_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_gelu");
-  gelu_cnode->set_abstract(node->abstract()->Clone());
+  if (node->abstract() != nullptr) {
+    gelu_cnode->set_abstract(node->abstract()->Clone());
+  }
   return gelu_cnode;
 }
 

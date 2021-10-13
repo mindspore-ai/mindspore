@@ -116,7 +116,7 @@ bool ConvBiasaddFusion::CheckCanFusion(const FuncGraphPtr &func_graph, const Anf
   }
   if (conv_cnode->size() == kInputSizeFour) {
     auto conv_bias = conv_cnode->input(kInputIndexThree);
-    if (conv_bias->isa<CNode>() || (conv_bias->isa<Parameter>() && !conv_bias->cast<ParameterPtr>()->has_default())) {
+    if (conv_bias == nullptr || conv_bias->isa<CNode>() || !IsParamNode(conv_bias)) {
       return false;
     }
   }
@@ -194,6 +194,7 @@ int ConvBiasaddFusion::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr
   }
   auto conv_new_bias =
     AddNewBiasNode(fusion_data.data(), func_graph, out_channel, static_cast<TypeId>(add_bias_info.data_type_));
+  MS_CHECK_TRUE_RET(conv_new_bias != nullptr, lite::RET_NULL_PTR);
   conv_new_bias->set_name(conv_cnode->fullname_with_scope() + "_bias");
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
