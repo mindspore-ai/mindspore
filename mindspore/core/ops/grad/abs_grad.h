@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 

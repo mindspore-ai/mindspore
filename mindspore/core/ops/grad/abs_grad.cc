@@ -15,10 +15,53 @@
  */
 
 #include "ops/grad/abs_grad.h"
-#include <memory>
+#include <algorithm>
+#include <set>
+#include "abstract/param_validator.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
-REGISTER_PRIMITIVE_C(kNameAbsGrad, AbsGrad);
+namespace {
+abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto x = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
+  auto shape_element = x->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  return shape_element;
+}
+
+TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_name = prim->name();
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto x_type = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  if (!x_type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "
+                            << " input must be tensor type but got " << x_type->ToString();
+  }
+  return x_type;
+}
+}  // namespace
+
+AbstractBasePtr AbsGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const std::vector<AbstractBasePtr> &input_args) {
+  auto type = InferType(primitive, input_args);
+  auto shape = InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+
+REGISTER_PRIMITIVE_EVAL_IMPL(AbsGrad, prim::kPrimAbsGrad, AbsGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
