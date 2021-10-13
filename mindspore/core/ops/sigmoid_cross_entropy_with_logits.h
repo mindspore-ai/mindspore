@@ -27,13 +27,18 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSigmoidCrossEntropyWithLogits = "SigmoidCrossEntropyWithLogits";
+/// \brief Uses the given logits to compute sigmoid cross entropy between the logits and the label.
+/// Refer to Python API @ref mindspore.ops.SigmoidCrossEntropyWithLogits for more details.
 class MS_CORE_API SigmoidCrossEntropyWithLogits : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SigmoidCrossEntropyWithLogits() : PrimitiveC(kNameSigmoidCrossEntropyWithLogits) {
     InitIOName({"predict", "target"}, {"loss"});
   }
+  /// \brief Destructor.
   ~SigmoidCrossEntropyWithLogits() = default;
   MS_DECLARE_PARENT(SigmoidCrossEntropyWithLogits, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr SigmoidCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -27,11 +27,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSin = "Sin";
+/// \brief Computes sine of the input element-wise. Refer to Python API @ref mindspore.ops.Sin for more details.
 class MS_CORE_API Sin : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Sin() : PrimitiveC(kNameSin) {}
+  /// \brief Destructor.
   ~Sin() = default;
   MS_DECLARE_PARENT(Sin, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr SinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

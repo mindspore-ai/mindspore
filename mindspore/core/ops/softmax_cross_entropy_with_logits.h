@@ -27,11 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftmaxCrossEntropyWithLogits = "SoftmaxCrossEntropyWithLogits";
+/// \brief Gets the softmax cross-entropy value between logits and labels with one-hot encoding.
+/// Refer to Python API @ref mindspore.ops.SoftmaxCrossEntropyWithLogits for more details.
 class MS_CORE_API SoftmaxCrossEntropyWithLogits : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SoftmaxCrossEntropyWithLogits() : PrimitiveC(kNameSoftmaxCrossEntropyWithLogits) {}
+  /// \brief Destructor.
   ~SoftmaxCrossEntropyWithLogits() = default;
   MS_DECLARE_PARENT(SoftmaxCrossEntropyWithLogits, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

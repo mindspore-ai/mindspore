@@ -25,13 +25,23 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseSoftmaxCrossEntropyWithLogits = "SparseSoftmaxCrossEntropyWithLogits";
+/// \brief Computes the softmax cross-entropy value between logits and sparse encoding labels.
+/// Refer to Python API @ref mindspore.ops.SparseSoftmaxCrossEntropyWithLogits for more details.
 class MS_CORE_API SparseSoftmaxCrossEntropyWithLogits : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SparseSoftmaxCrossEntropyWithLogits() : PrimitiveC(kNameSparseSoftmaxCrossEntropyWithLogits) {}
+  /// \brief Destructor.
   ~SparseSoftmaxCrossEntropyWithLogits() = default;
   MS_DECLARE_PARENT(SparseSoftmaxCrossEntropyWithLogits, PrimitiveC);
+  /// \brief Init.
+  /// Refer to the parameters of python API @ref mindspore.ops.SparseSoftmaxCrossEntropyWithLogits for the inputs.
   void Init(const bool is_grad = false);
+  /// \brief Set is_grad.
   void set_is_grad(const bool is_grad);
+  /// \brief Get is_grad.
+  ///
+  /// \return is_grad.
   bool get_is_grad() const;
 };
 AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &,

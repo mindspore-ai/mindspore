@@ -27,13 +27,22 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Outputs a tensor to a protocol buffer through a tensor summary operator.
+/// Refer to Python API @ref mindspore.ops.TensorSummary for more details.
 class MS_CORE_API TensorSummary : public PrimitiveC {
  public:
+  /// \brief Constructor.
   TensorSummary() : PrimitiveC(prim::kPrimTensorSummary->name()) {}
+  /// \brief Destructor.
   ~TensorSummary() = default;
   MS_DECLARE_PARENT(TensorSummary, PrimitiveC);
+  /// \brief Init.
   void Init();
+  /// \brief Set side_effect_io.
   void set_side_effect_io();
+  /// \brief Get side_effect_io.
+  ///
+  /// \return side_effect_io.
   bool get_side_effect_io() const;
 };
 }  // namespace ops

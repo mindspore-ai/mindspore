@@ -26,15 +26,28 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResizeNearestNeighbor = "ResizeNearestNeighbor";
+/// \brief Resizes the input tensor by using the nearest neighbor algorithm.
+/// Refer to Python API @ref mindspore.ops.ResizeNearestNeighbor for more details.
 class MS_CORE_API ResizeNearestNeighbor : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ResizeNearestNeighbor() : PrimitiveC(kNameResizeNearestNeighbor) {}
+  /// \brief Destructor.
   ~ResizeNearestNeighbor() = default;
   MS_DECLARE_PARENT(ResizeNearestNeighbor, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ResizeNearestNeighbor for the inputs.
   void Init(const std::vector<int64_t> &size, const bool align_corners = false);
+  /// \brief Set size.
   void set_size(const std::vector<int64_t> &size);
+  /// \brief Set align_corners.
   void set_align_corners(const bool align_corners);
+  /// \brief Get size.
+  ///
+  /// \return size.
   std::vector<int64_t> get_size() const;
+  /// \brief Get align_corners.
+  ///
+  /// \return align_corners.
   bool get_align_corners() const;
 };
 

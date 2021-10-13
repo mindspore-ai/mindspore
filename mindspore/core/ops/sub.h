@@ -27,12 +27,17 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSub = prim::kSub;
+/// \brief Subtracts the second input tensor from the first input tensor element-wise.
+/// Refer to Python API @ref mindspore.ops.Sub for more details.
 class MS_CORE_API Sub : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Sub() : PrimitiveC(kNameSub) { InitIOName({"x", "y"}, {"output"}); }
   explicit Sub(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~Sub() = default;
   MS_DECLARE_PARENT(Sub, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 

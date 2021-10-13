@@ -27,11 +27,15 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Softplus activation function. Refer to Python API @ref mindspore.ops.Softplus for more details.
 class MS_CORE_API Softplus : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Softplus() : PrimitiveC(prim::kPrimSoftplus->name()) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~Softplus() = default;
   MS_DECLARE_PARENT(Softplus, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 }  // namespace ops

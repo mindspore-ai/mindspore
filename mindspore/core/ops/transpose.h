@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTranspose = prim::kTranspose;
+/// \brief Permutes the dimensions of the input tensor according to input permutation.
+/// Refer to Python API @ref mindspore.ops.Transpose for more details.
 class MS_CORE_API Transpose : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Transpose() : PrimitiveC(prim::kTranspose) { InitIOName({"x", "perm"}, {"output"}); }
+  /// \brief Destructor.
   ~Transpose() = default;
   MS_DECLARE_PARENT(Transpose, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

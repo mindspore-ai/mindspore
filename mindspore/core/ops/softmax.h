@@ -28,13 +28,21 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftmax = "Softmax";
+/// \brief Softmax operation. Refer to Python API @ref mindspore.ops.Softmax for more details.
 class MS_CORE_API Softmax : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Softmax() : PrimitiveC(kNameSoftmax) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~Softmax() = default;
   MS_DECLARE_PARENT(Softmax, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Softmax for the inputs.
   void Init(const int64_t axis = -1);
+  /// \brief Set axis.
   void set_axis(const std::vector<int64_t> &axis);
+  /// \brief Get axis.
+  ///
+  /// \return axis.
   std::vector<int64_t> get_axis() const;
 };
 

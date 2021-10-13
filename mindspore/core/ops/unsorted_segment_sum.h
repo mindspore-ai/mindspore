@@ -28,13 +28,18 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnsortedSegmentSum = "UnsortedSegmentSum";
+/// \brief Computes the sum of a tensor along segments.
+/// Refer to Python API @ref mindspore.ops.UnsortedSegmentSum for more details.
 class MS_CORE_API UnsortedSegmentSum : public PrimitiveC {
  public:
+  /// \brief Constructor.
   UnsortedSegmentSum() : PrimitiveC(kNameUnsortedSegmentSum) {
     InitIOName({"x", "segment_ids", "num_segments"}, {"y"});
   }
+  /// \brief Destructor.
   ~UnsortedSegmentSum() = default;
   MS_DECLARE_PARENT(UnsortedSegmentSum, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 

@@ -27,15 +27,28 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSpaceToDepth = "SpaceToDepth";
+/// \brief Rearranges blocks of spatial data into depth.
+/// Refer to Python API @ref mindspore.ops.SpaceToDepth for more details.
 class MS_CORE_API SpaceToDepth : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SpaceToDepth() : PrimitiveC(kNameSpaceToDepth) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~SpaceToDepth() = default;
   MS_DECLARE_PARENT(SpaceToDepth, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SpaceToDepth for the inputs.
   void Init(const int64_t block_size, const Format &format = NCHW);
+  /// \brief Set block_size.
   void set_block_size(const int64_t block_size);
+  /// \brief Get block_size.
+  ///
+  /// \return block_size.
   int64_t get_block_size() const;
+  /// \brief Set format.
   void set_format(const Format &format);
+  /// \brief Get format.
+  ///
+  /// \return format.
   Format get_format() const;
 };
 AbstractBasePtr SpaceToDepthInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

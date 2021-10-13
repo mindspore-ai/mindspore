@@ -27,13 +27,22 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReverseV2 = "ReverseV2";
+/// \brief Reverses specific dimensions of a tensor.
+/// Refer to Python API @ref mindspore.ops.ReverseV2 for more details.
 class MS_CORE_API ReverseV2 : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ReverseV2() : PrimitiveC(kNameReverseV2) {}
+  /// \brief Destructor.
   ~ReverseV2() = default;
   MS_DECLARE_PARENT(ReverseV2, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ReverseV2 for the inputs.
   void Init(const std::vector<int64_t> &axis);
+  /// \brief Set axis.
   void set_axis(const std::vector<int64_t> &axis);
+  /// \brief Get axis.
+  ///
+  /// \return axis.
   std::vector<int64_t> get_axis() const;
 };
 
