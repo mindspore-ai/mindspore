@@ -193,11 +193,11 @@ void InitAccumParallel(float init_value, size_t total_len, float *embedding_data
   }
 }
 
-void CopyTensorData(void *dest_ptr, size_t tensor_size, void *src_ptr) {
+void CopyTensorData(void *dest_ptr, size_t tensor_size, const void *src_ptr) {
   MS_EXCEPTION_IF_NULL(dest_ptr);
   MS_EXCEPTION_IF_NULL(src_ptr);
   char *dest = reinterpret_cast<char *>(dest_ptr);
-  char *src = reinterpret_cast<char *>(src_ptr);
+  const char *src = reinterpret_cast<const char *>(src_ptr);
 
   // The security memcpy function 'memcpy_s' limits the value of the second parameter 'destMax' not to be greater than
   // SECUREC_MEM_MAX_LEN. If tensor size(buffer length) is greater than SECUREC_MEM_MAX_LEN, the tensor should be cut
