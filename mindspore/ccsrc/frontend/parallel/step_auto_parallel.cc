@@ -257,35 +257,40 @@ void SetStrategyToOperator(const OperatorInfoPtr &operator_info, const Primitive
   } else {
     strategyPtr = (*stra_map)[strategy_key_name];
   }
-  if (strategyPtr != nullptr) {
-    if (prim->name() == RESHAPE) {
-      MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
-    }
-    const auto fully_use_devices = CostModelContext::GetInstance()->fully_use_device();
-    // Set cost for this configured strategy
-    if (operator_info->SetCostUnderStrategy(strategyPtr) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Failure: operator " << prim->name() << " SetCostUnderStrategy failed";
-    } else if (fully_use_devices) {
-      // If configured to fully use devices, then checking for the user-specified strategy
-      int64_t used_devices = operator_info->used_devices();
-      MS_EXCEPTION_IF_NULL(g_device_manager);
-      auto total_device_num = g_device_manager->GetDeviceListByStageId(0).size();
-      // 'used_devices == 1' means that ALL-1 strategy, which is valid in auto-parallel
-      if (used_devices == 1) {
-        (void)configured_stra_ops_.emplace(operator_info, strategyPtr);
-        return;
-      }
-      // 'used_devices == -1' means that 'used_devices_' is not set
-      if ((used_devices == -1) || LongToSize(used_devices) != total_device_num) {
-        MS_LOG(EXCEPTION) << "In current configuration 'fully_use_devices' = True, "
-                          << "but the specified strategy uses device: " << used_devices
-                          << ", total devices: " << total_device_num
-                          << ", try to set 'set_algo_parameters(fully_use_devices=False)' "
-                             "in package 'mindspore.parallel'.";
-      }
-    }
-    (void)configured_stra_ops_.emplace(operator_info, strategyPtr);
+
+  if (strategyPtr == nullptr) {
+    return;
   }
+
+  if (prim->name() == RESHAPE) {
+    MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
+    return;
+  }
+
+  // Set cost for this configured strategy
+  if (operator_info->SetCostUnderStrategy(strategyPtr) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Failure: operator " << prim->name() << " SetCostUnderStrategy failed";
+    return;
+  }
+
+  const auto fully_use_devices = CostModelContext::GetInstance()->fully_use_device();
+  if (fully_use_devices) {
+    // If configured to fully use devices, then checking for the user-specified strategy
+    int64_t used_devices = operator_info->used_devices();
+    MS_EXCEPTION_IF_NULL(g_device_manager);
+    auto total_device_num = g_device_manager->GetDeviceListByStageId(0).size();
+
+    // 'used_devices == -1' means that 'used_devices_' is not set
+    // 'used_devices == 1' means that ALL-1 strategy, which is valid in auto-parallel
+    if (used_devices == -1 || (used_devices != 1 && LongToSize(used_devices) != total_device_num)) {
+      MS_LOG(EXCEPTION) << "In current configuration 'fully_use_devices' = True, "
+                        << "but the specified strategy uses device: " << used_devices
+                        << ", total devices: " << total_device_num
+                        << ", try to set 'set_algo_parameters(fully_use_devices=False)' "
+                           "in package 'mindspore.parallel'.";
+    }
+  }
+  (void)configured_stra_ops_.emplace(operator_info, strategyPtr);
 }
 
 OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode, bool is_last_nodes,
@@ -346,31 +351,43 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   // If no strategy has been configured for this operator, then candidate strategies are generated for
   // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy.
   // if strategy is set to load from checkpoint, it is prefer to load strategy from checkpoint .
-  if ((!StrategyFound(attrs) || prim->name() == CAST) && !load_strategy_from_ckpt) {
-    // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
-    // BatchParallelInfo operator
-    operator_info->ComputeBatchSplitFlagList();
-    if (operator_info->GenerateStrategies(0) != SUCCESS) {
-      MS_LOG(ERROR) << "Strategy search for Operator " << operator_info->name() << " failed.";
-      return nullptr;
-    }
-    if (ParallelContext::GetInstance()->sharding_propagation() &&
-        (operator_info->name().find(VIRTUAL_DATA_SET_INFO) != std::string::npos)) {
-      const auto &swc_vec = operator_info->GetStrategyCost();
-      if (swc_vec.empty()) {
-        MS_LOG(EXCEPTION) << "No available strategy for: " << operator_info->name();
-      }
-      MS_EXCEPTION_IF_NULL(swc_vec[0]->strategy_ptr);
-      (void)configured_stra_ops_.emplace(operator_info, swc_vec[0]->strategy_ptr);
-    }
-    // If 'approximation' is enabled, the 'strategy_cost' of each operator is approximated
-    auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
-    if (approximation) {
-      operator_info->ApproximateStrategies();
-      MS_LOG(INFO) << "Approximated StrategyCost for: " << operator_info->name();
-    }
-  } else {
+  if ((StrategyFound(attrs) && prim->name() != CAST) || load_strategy_from_ckpt) {
     SetStrategyToOperator(operator_info, prim, attrs, is_last_nodes, stra_map, strategy_key_name);
+    return operator_info;
+  }
+
+  // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
+  // BatchParallelInfo operator
+  operator_info->ComputeBatchSplitFlagList();
+  bool retGenStra;
+  if (AttrFound(attrs, STRATEGY_GEN_MODE) && GetValue<std::string>(attrs[STRATEGY_GEN_MODE]) == "batch") {
+    MS_LOG(INFO) << "generating batch parallel strategy...";
+    StrategyPtr strategyPtr = parallel::GenerateBatchParallelStrategy(operator_info, prim);
+    retGenStra = operator_info->SetCostUnderStrategy(strategyPtr);
+  } else {
+    MS_LOG(INFO) << "auto-searching strategy...";
+    retGenStra = operator_info->GenerateStrategies(0);
+  }
+
+  if (retGenStra != SUCCESS) {
+    MS_LOG(ERROR) << "Strategy search for Operator " << operator_info->name() << " failed.";
+    return nullptr;
+  }
+
+  if (ParallelContext::GetInstance()->sharding_propagation() &&
+      (operator_info->name().find(VIRTUAL_DATA_SET_INFO) != std::string::npos)) {
+    const auto &swc_vec = operator_info->GetStrategyCost();
+    if (swc_vec.empty()) {
+      MS_LOG(EXCEPTION) << "No available strategy for: " << operator_info->name();
+    }
+    MS_EXCEPTION_IF_NULL(swc_vec[0]->strategy_ptr);
+    (void)configured_stra_ops_.emplace(operator_info, swc_vec[0]->strategy_ptr);
+  }
+  // If 'approximation' is enabled, the 'strategy_cost' of each operator is approximated
+  auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+  if (approximation) {
+    operator_info->ApproximateStrategies();
+    MS_LOG(INFO) << "Approximated StrategyCost for: " << operator_info->name();
   }
   return operator_info;
 }

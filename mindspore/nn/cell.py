@@ -377,6 +377,33 @@ class Cell(Cell_):
                 f"The function construct needs {positional_args} positional argument and {default_args} default "
                 f"argument, but provided {len(inputs)}")
 
+    def _get_prims_recursively(self):
+        all_prims = list()
+        for _, value in self._primitives.items():
+            if value:
+                all_prims.append(value)
+
+        for cell in self.cells():
+            all_prims.extend(cell._get_prims_recursively())
+
+        return all_prims
+
+    def set_strategy_gen_mode(self, mode):
+        """
+        while using auto_parallel_context = ParallelMode.AUTO_PARALLEL, if this method is applied, then
+            1. mode = "batch":
+                for all primitive ops in this cell(including ops of cells that wrapped by this cell),
+                if parallel strategy is not specified, then instead of auto-searching,
+                batch parallel strategy will be generated for those primitive ops.
+        """
+        strategy_gen_modes = ["batch"]
+        if mode not in strategy_gen_modes:
+            raise AssertionError(f"unexpected input {mode}, must be one of {strategy_gen_modes}")
+
+        all_prims = self._get_prims_recursively()
+        for prim in all_prims:
+            prim.add_prim_attr("strategy_gen_mode", mode)
+
     class CellGuard:
         def __enter__(self):
             _pynative_executor.set_lazy_build(True)
