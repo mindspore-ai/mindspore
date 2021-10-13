@@ -182,6 +182,5 @@ bool ROIAlignGradCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
   CPUKernelUtils::ParallelFor(task2, IntToSize(elem_num));
   return true;
 }
-
 }  // namespace kernel
 }  // namespace mindspore
