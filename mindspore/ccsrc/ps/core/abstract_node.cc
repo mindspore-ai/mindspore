@@ -391,7 +391,7 @@ bool AbstractNode::CollectiveWait(const std::pair<uint32_t, uint64_t> &request_i
   bool res =
     receive_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] { return receive_messages_done_[request_id]; });
   if (receive_messages_done_.count(request_id) != 0) {
-    receive_messages_done_.erase(request_id);
+    (void)receive_messages_done_.erase(request_id);
   }
   return res;
 }

@@ -116,7 +116,7 @@ class Iteration {
   bool QueryInstance(std::string *result);
 
   // Need to wait all the rounds to finish before proceed to next iteration.
-  void WaitAllRoundsFinish();
+  void WaitAllRoundsFinish() const;
 
   // The round kernels whose Launch method has not returned yet.
   std::atomic_uint32_t running_round_num_;

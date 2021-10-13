@@ -43,7 +43,7 @@ bool GetKeysKernel::CountForGetKeys(const std::shared_ptr<FBBuilder> &fbb, const
   if (!DistributedCountService::GetInstance().Count(name_, get_keys_req->fl_id()->str())) {
     std::string reason = "Counting for getkeys kernel request failed. Please retry later.";
     cipher_key_->BuildGetKeysRsp(
-      fbb, schema::ResponseCode_OutOfTime, iter_num,
+      fbb, schema::ResponseCode_OutOfTime, IntToSize(iter_num),
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)), false);
     MS_LOG(ERROR) << reason;
     return false;
@@ -80,8 +80,8 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
   }
 
   const schema::GetExchangeKeys *get_exchange_keys_req = flatbuffers::GetRoot<schema::GetExchangeKeys>(req_data);
-  int32_t iter_client = (size_t)get_exchange_keys_req->iteration();
-  if (iter_num != (size_t)iter_client) {
+  size_t iter_client = IntToSize(get_exchange_keys_req->iteration());
+  if (iter_num != iter_client) {
     MS_LOG(ERROR) << "GetKeysKernel iteration invalid. server now iteration is " << iter_num
                   << ". client request iteration is " << iter_client;
     cipher_key_->BuildGetKeysRsp(fbb, schema::ResponseCode_OutOfTime, iter_num,
@@ -95,7 +95,7 @@ bool GetKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vec
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  if (!CountForGetKeys(fbb, get_exchange_keys_req, iter_num)) {
+  if (!CountForGetKeys(fbb, get_exchange_keys_req, SizeToInt(iter_num))) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }

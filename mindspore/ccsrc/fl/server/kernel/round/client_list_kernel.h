@@ -37,14 +37,14 @@ class ClientListKernel : public RoundKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
   bool Reset() override;
-  void BuildClientListRsp(std::shared_ptr<server::FBBuilder> client_list_resp_builder,
+  void BuildClientListRsp(const std::shared_ptr<server::FBBuilder> &client_list_resp_builder,
                           const schema::ResponseCode retcode, const string &reason, std::vector<std::string> clients,
                           const string &next_req_time, const int iteration);
 
  private:
   armour::CipherInit *cipher_init_;
   bool DealClient(const size_t iter_num, const schema::GetClientList *get_clients_req,
-                  std::shared_ptr<server::FBBuilder> fbb);
+                  const std::shared_ptr<server::FBBuilder> &fbb);
   Executor *executor_;
   size_t iteration_time_window_;
 };

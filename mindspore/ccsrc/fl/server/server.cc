@@ -64,7 +64,7 @@ void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const s
   use_http_ = use_http;
   http_port_ = http_port;
   executor_threshold_ = executor_threshold;
-  signal(SIGTERM, SignalHandler);
+  (void)signal(SIGTERM, SignalHandler);
   return;
 }
 
@@ -165,8 +165,8 @@ void Server::InitCluster() {
 bool Server::InitCommunicatorWithServer() {
   MS_EXCEPTION_IF_NULL(task_executor_);
   MS_EXCEPTION_IF_NULL(server_node_);
-  communicator_with_server_ =
-    server_node_->GetOrCreateTcpComm(scheduler_ip_, scheduler_port_, worker_num_, server_num_, task_executor_);
+  communicator_with_server_ = server_node_->GetOrCreateTcpComm(scheduler_ip_, static_cast<int16_t>(scheduler_port_),
+                                                               worker_num_, server_num_, task_executor_);
   MS_EXCEPTION_IF_NULL(communicator_with_server_);
   g_communicator_with_server = communicator_with_server_;
   return true;
@@ -282,9 +282,9 @@ void Server::InitCipher() {
     BN_clear_free(prim);
   }
 
-  cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
-                     cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_reconstruct_secrets_down_cnt_,
-                     cipher_reconstruct_secrets_up_cnt_);
+  (void)cipher_init_->Init(param, 0, cipher_exchange_keys_cnt_, cipher_get_keys_cnt_, cipher_share_secrets_cnt_,
+                           cipher_get_secrets_cnt_, cipher_get_clientlist_cnt_, cipher_reconstruct_secrets_down_cnt_,
+                           cipher_reconstruct_secrets_up_cnt_);
 #endif
 }
 
