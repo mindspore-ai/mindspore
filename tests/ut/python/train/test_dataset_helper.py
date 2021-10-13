@@ -89,10 +89,10 @@ def test_dataset_iter_ge():
 
 @pytest.mark.skipif('context.get_context("enable_ge")')
 def test_dataset_iter_ms_loop_sink():
+    context.set_context(device_target='Ascend', mode=context.GRAPH_MODE)
     GlobalComm.CHECK_ENVS = False
     init("hccl")
     GlobalComm.CHECK_ENVS = True
-    context.set_context(enable_loop_sink=True)
     dataset = get_dataset(32)
     dataset_helper = DatasetHelper(dataset, dataset_sink_mode=True, sink_size=10)
     count = 0
@@ -105,9 +105,9 @@ def test_dataset_iter_ms_loop_sink():
 
 @pytest.mark.skipif('context.get_context("enable_ge")')
 def test_dataset_iter_ms():
+    context.set_context(device_target='Ascend', mode=context.GRAPH_MODE)
     GlobalComm.CHECK_ENVS = False
     init("hccl")
     GlobalComm.CHECK_ENVS = True
-    context.set_context(enable_loop_sink=False)
     dataset = get_dataset(32)
     DatasetHelper(dataset, dataset_sink_mode=True, sink_size=10)

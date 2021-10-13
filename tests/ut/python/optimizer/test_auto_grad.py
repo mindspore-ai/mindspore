@@ -281,6 +281,7 @@ def test_same_primal_used_by_multi_j():
 
 
 def test_same_primal_used_by_multi_j_with_monad1():
+    context.set_context(mode=context.GRAPH_MODE)
     class AdamNet(nn.Cell):
         def __init__(self, var, m, v):
             super(AdamNet, self).__init__()
@@ -322,6 +323,7 @@ def test_same_primal_used_by_multi_j_with_monad1():
 
 
 def test_same_primal_used_by_multi_j_with_monad2():
+    context.set_context(mode=context.GRAPH_MODE)
     class AdamNet(nn.Cell):
         def __init__(self, var, m, v):
             super(AdamNet, self).__init__()

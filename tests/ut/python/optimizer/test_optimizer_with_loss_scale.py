@@ -194,6 +194,7 @@ def test_compile_f16_model_train():
 
 
 def test_compile_f16_model_train_fixed():
+    context.set_context(device_target='Ascend')
     dataset_types = (np.float32, np.float32)
     dataset_shapes = ((16, 16), (16, 16))
 

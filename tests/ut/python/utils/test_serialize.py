@@ -122,8 +122,23 @@ def test_save_checkpoint_for_list():
     save_checkpoint(parameter_list, ckpt_file_name)
 
 
-def test_save_checkpoint_for_list_append_info():
-    """ test save_checkpoint for list append info"""
+def test_load_checkpoint_error_filename():
+    """
+    Feature: Load checkpoint.
+    Description: Load checkpoint with error filename.
+    Expectation: Raise value error for error filename.
+    """
+    ckpt_file_name = 1
+    with pytest.raises(ValueError):
+        load_checkpoint(ckpt_file_name)
+
+
+def test_save_checkpoint_for_list_append_info_and_load_checkpoint():
+    """
+    Feature: Save checkpoint for list append info and load checkpoint.
+    Description: Save checkpoint for list append info and load checkpoint with list append info.
+    Expectation: Checkpoint for list append info can be saved and reloaded.
+    """
     parameter_list = []
     one_param = {}
     param1 = {}
@@ -144,16 +159,6 @@ def test_save_checkpoint_for_list_append_info():
 
     ckpt_file_name = os.path.join(_cur_dir, './parameters.ckpt')
     save_checkpoint(parameter_list, ckpt_file_name, append_dict=append_dict)
-
-
-def test_load_checkpoint_error_filename():
-    ckpt_file_name = 1
-    with pytest.raises(ValueError):
-        load_checkpoint(ckpt_file_name)
-
-
-def test_load_checkpoint():
-    ckpt_file_name = os.path.join(_cur_dir, './parameters.ckpt')
     par_dict = load_checkpoint(ckpt_file_name)
 
     assert len(par_dict) == 6
