@@ -1,0 +1,238 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "common/common.h"
+
+#include "minddata/dataset/include/dataset/datasets.h"
+
+using namespace mindspore::dataset;
+using mindspore::dataset::DataType;
+using mindspore::dataset::Tensor;
+using mindspore::dataset::TensorShape;
+
+class MindDataTestPipeline : public UT::DatasetOpTesting {
+ protected:
+};
+
+/// Feature: FakeIamge
+/// Description: test FakeImage 
+/// Expectation: get correct FakeImage dataset
+TEST_F(MindDataTestPipeline, TestFakeImageDataset) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDataset.";
+
+  // Create a FakeImage Dataset
+  std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
+
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  EXPECT_NE(row.find("image"), row.end());
+  EXPECT_NE(row.find("label"), row.end());
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: FakeIamge
+/// Description: test FakeImage in pipeline mode
+/// Expectation: get correct FakeImage dataset
+TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithPipeline.";
+
+  // Create two FakeImage Dataset
+  std::shared_ptr<Dataset> ds1 = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
+  std::shared_ptr<Dataset> ds2 = FakeImage(50, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds1, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create two Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds1 = ds1->Repeat(repeat_num);
+  EXPECT_NE(ds1, nullptr);
+  repeat_num = 2;
+  ds2 = ds2->Repeat(repeat_num);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create two Project operation on ds
+  std::vector<std::string> column_project = {"image", "label"};
+  ds1 = ds1->Project(column_project);
+  EXPECT_NE(ds1, nullptr);
+  ds2 = ds2->Project(column_project);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Concat operation on the ds
+  ds1 = ds1->Concat({ds2});
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  EXPECT_NE(row.find("image"), row.end());
+  EXPECT_NE(row.find("label"), row.end());
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 40);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: FakeIamge
+/// Description: test GetDataSize of FakeImage 
+/// Expectation: get the correct size of FakeImage
+TEST_F(MindDataTestPipeline, TestGetFakeImageDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetFakeImageDatasetSize.";
+
+  // Create a FakeImage Dataset
+  std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 50);
+}
+
+/// Feature: FakeIamge
+/// Description: test DatasetGetters of FakeImage 
+/// Expectation: getters of FakeImage get the correct value
+TEST_F(MindDataTestPipeline, TestFakeImageDatasetGetters) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetGetters.";
+
+  // Create a FakeImage Dataset
+  std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 50);
+  std::vector<DataType> types = ToDETypes(ds->GetOutputTypes());
+  std::vector<TensorShape> shapes = ToTensorShapeVec(ds->GetOutputShapes());
+  std::vector<std::string> column_names = {"image", "label"};
+  int64_t num_classes = ds->GetNumClasses();
+  EXPECT_EQ(types.size(), 2);
+  EXPECT_EQ(types[0].ToString(), "uint8");
+  EXPECT_EQ(types[1].ToString(), "uint32");
+  EXPECT_EQ(shapes.size(), 2);
+  EXPECT_EQ(shapes[0].ToString(), "<28,28,3>");
+  EXPECT_EQ(shapes[1].ToString(), "<>");
+  EXPECT_EQ(num_classes, -1);
+  EXPECT_EQ(ds->GetBatchSize(), 1);
+  EXPECT_EQ(ds->GetRepeatCount(), 1);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 50);
+  EXPECT_EQ(ToDETypes(ds->GetOutputTypes()), types);
+  EXPECT_EQ(ToTensorShapeVec(ds->GetOutputShapes()), shapes);
+  EXPECT_EQ(ds->GetNumClasses(), -1);
+
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
+  EXPECT_EQ(ds->GetDatasetSize(), 50);
+  EXPECT_EQ(ToDETypes(ds->GetOutputTypes()), types);
+  EXPECT_EQ(ToTensorShapeVec(ds->GetOutputShapes()), shapes);
+  EXPECT_EQ(ds->GetBatchSize(), 1);
+  EXPECT_EQ(ds->GetRepeatCount(), 1);
+  EXPECT_EQ(ds->GetNumClasses(), -1);
+  EXPECT_EQ(ds->GetDatasetSize(), 50);
+}
+
+/// Feature: FakeIamge
+/// Description: test invalid num_images of FakeImage 
+/// Expectation: throw exception correctly
+TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumImages) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithInvalidNumImages.";
+
+  // Create a FakeImage Dataset
+  std::shared_ptr<Dataset> ds = FakeImage(-1, {28, 28, 3}, 3, 0, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid FakeImage input
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: FakeIamge
+/// Description: test invalid image_size of FakeImage 
+/// Expectation: throw exception correctly
+TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidImageSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithInvalidImageSize.";
+
+  // Create a FakeImage Dataset
+  std::shared_ptr<Dataset> ds = FakeImage(50, {-1, -1, -1}, 3, 0);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid FakeImageD input, {-1,-1,-1} is not a valid imagesize
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: FakeIamge
+/// Description: test invalid num_classes of FakeImage 
+/// Expectation: throw exception correctly
+TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumClasses) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithInvalidNumClasses.";
+
+  // Create a FakeImage Dataset
+  std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, -1, 0);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid FakeImage input, -1 is not a valid num class
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: FakeIamge
+/// Description: test FakeImage dataset with null sampler
+/// Expectation: dataset is null
+TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithNullSampler) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithNullSampler.";
+
+  // Create a FakeImage Dataset
+  std::shared_ptr<Dataset> ds = FakeImage(50, {28, 28, 3}, 3, 0, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid FakeImage input, sampler cannot be nullptr
+  EXPECT_EQ(iter, nullptr);
+}

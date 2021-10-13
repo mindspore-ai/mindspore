@@ -1631,3 +1631,40 @@ def check_div2k_dataset(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_fake_image_dataset(method):
+    """A wrapper that wraps a parameter checker around the original Dataset(FakeImageDataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_images', 'num_classes', 'base_seed', 'num_samples',
+                          'num_parallel_workers', 'num_shards', 'shard_id']
+        nreq_param_bool = ['shuffle']
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+
+        num_images = param_dict.get("num_images")
+        check_pos_int32(num_images, "num_images")
+
+        image_size = param_dict.get("image_size")
+        type_check(image_size, (list, tuple), "image_size")
+        if len(image_size) != 3:
+            raise ValueError("image_size should be a list or tuple of length 3, but got {0}".format(len(image_size)))
+        for i, value in enumerate(image_size):
+            check_pos_int32(value, "image_size[{0}]".format(i))
+
+        num_classes = param_dict.get("num_classes")
+        check_pos_int32(num_classes, "num_classes")
+
+        check_sampler_shuffle_shard_options(param_dict)
+
+        cache = param_dict.get('cache')
+        check_cache_option(cache)
+
+        return method(self, *args, **kwargs)
+
+    return new_method

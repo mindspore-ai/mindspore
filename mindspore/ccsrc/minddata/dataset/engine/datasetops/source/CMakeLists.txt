@@ -23,6 +23,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
     flickr_op.cc
     qmnist_op.cc
     emnist_op.cc
+    fake_image_op.cc
     )
 
 set(DATASET_ENGINE_DATASETOPS_SOURCE_SRC_FILES
