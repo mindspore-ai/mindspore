@@ -166,7 +166,7 @@ namespace mindspore::transform {
     RegAdptDesc##name() { OpAdapterMap::get()[name_str] = adpt_desc; } \
                                                                        \
    private:                                                            \
-    char ph_;                                                          \
+    int ph_{0};                                                        \
   } g_reg_adpt_desc_##name;
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_MACRO_H_
