@@ -76,6 +76,7 @@ p = Parameter(x, name="weight")
 a = np.ones((2, 2))
 
 forward_net = FirstInputTupleNet()
+forward_net.set_grad()
 grad_all_inputs_net = GradNet(forward_net, get_all=True)
 
 
