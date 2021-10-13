@@ -68,7 +68,7 @@ bool HttpServer::InitServer() {
     return false;
   }
 
-  fd_ = ::socket(AF_INET, SOCK_STREAM, 0);
+  fd_ = ::socket(static_cast<int>(AF_INET), static_cast<int>(SOCK_STREAM), 0);
   if (fd_ < 0) {
     MS_LOG(ERROR) << "Socker error!";
     return false;

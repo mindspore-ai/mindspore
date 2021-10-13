@@ -214,12 +214,12 @@ kernel::KernelBuildInfoPtr Util::GenerateKernelBuildInfo(const std::vector<AnfNo
     MS_EXCEPTION_IF_NULL(cnode);
     size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
     for (size_t input_index = 0; input_index < input_num; ++input_index) {
-      inputs_device_format.push_back(kOpFormat_DEFAULT);
+      inputs_device_format.emplace_back(kOpFormat_DEFAULT);
       inputs_device_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index));
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
-      outputs_device_format.push_back(kOpFormat_DEFAULT);
+      outputs_device_format.emplace_back(kOpFormat_DEFAULT);
       outputs_device_type.push_back(AnfAlgo::GetOutputInferDataType(cnode, output_index));
       outputs_shape.push_back(AnfAlgo::GetOutputInferShape(cnode, output_index));
     }

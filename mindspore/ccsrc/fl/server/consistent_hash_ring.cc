@@ -39,7 +39,7 @@ bool ConsistentHashRing::Erase(uint32_t rank) {
     if (iterator->second == rank) {
       (void)ring_.erase(iterator++);
     } else {
-      iterator++;
+      ++iterator;
     }
   }
   return true;

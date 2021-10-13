@@ -46,7 +46,7 @@ bool GetSecretsKernel::CountForGetSecrets(const std::shared_ptr<FBBuilder> &fbb,
   MS_ERROR_IF_NULL_W_RET_VAL(get_secrets_req, false);
   if (!DistributedCountService::GetInstance().Count(name_, get_secrets_req->fl_id()->str())) {
     std::string reason = "Counting for get secrets kernel request failed. Please retry later.";
-    cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_OutOfTime, iter_num,
+    cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_OutOfTime, IntToSize(iter_num),
                                       std::to_string(CURRENT_TIME_MILLI.count()), nullptr);
     MS_LOG(ERROR) << reason;
     return false;
@@ -80,8 +80,8 @@ bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   }
 
   const schema::GetShareSecrets *get_secrets_req = flatbuffers::GetRoot<schema::GetShareSecrets>(req_data);
-  int32_t iter_client = (size_t)get_secrets_req->iteration();
-  if (iter_num != (size_t)iter_client) {
+  size_t iter_client = IntToSize(get_secrets_req->iteration());
+  if (iter_num != iter_client) {
     MS_LOG(ERROR) << "GetSecretsKernel iteration invalid. server now iteration is " << iter_num
                   << ". client request iteration is " << iter_client;
     cipher_share_->BuildGetSecretsRsp(fbb, schema::ResponseCode_OutOfTime, iter_num, next_timestamp, nullptr);
