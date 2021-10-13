@@ -332,7 +332,9 @@ from .sparse_apply_adagrad import _sparse_apply_adagrad_tbe
 from .unsorted_segment_min import _unsorted_segment_min_tbe
 from .unsorted_segment_max import _unsorted_segment_max_tbe
 from .asin import _asin_tbe
+from .asin_ds import _asin_ds_tbe
 from .asin_grad import _asin_grad_tbe
+from .asin_grad_ds import _asin_grad_ds_tbe
 from .asinh import _asinh_tbe
 from .asinh_grad import _asinh_grad_tbe
 from .div_no_nan import _div_no_nan_tbe

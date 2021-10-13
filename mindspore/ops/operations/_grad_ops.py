@@ -72,26 +72,12 @@ class AcoshGrad(PrimitiveWithInfer):
         return x
 
 
-class AsinGrad(PrimitiveWithInfer):
-    """
-    Computes AsinGrad of input element-wise.
-
-    Returns:
-        Tensor, has the same type as input.
-    """
+class AsinGrad(Primitive):
+    """Performs grad of Asin operation."""
 
     @prim_attr_register
     def __init__(self):
         """Initialize AsinGrad"""
-
-    def infer_shape(self, x, dout):
-        validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)
-        return x
-
-    def infer_dtype(self, x, dout):
-        args = {"x": x, "dout": dout}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return x
 
 
 class AsinhGrad(PrimitiveWithInfer):
