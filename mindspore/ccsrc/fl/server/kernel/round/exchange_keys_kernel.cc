@@ -43,7 +43,8 @@ bool ExchangeKeysKernel::ReachThresholdForExchangeKeys(const std::shared_ptr<FBB
     std::string reason = "Current amount for exchangeKey is enough. Please retry later.";
     cipher_key_->BuildExchangeKeysRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
-      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)), iter_num);
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
+      IntToSize(iter_num));
     MS_LOG(WARNING) << reason;
     return true;
   }
@@ -58,7 +59,8 @@ bool ExchangeKeysKernel::CountForExchangeKeys(const std::shared_ptr<FBBuilder> &
     std::string reason = "Counting for exchange kernel request failed. Please retry later.";
     cipher_key_->BuildExchangeKeysRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
-      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)), iter_num);
+      std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)),
+      IntToSize(iter_num));
     MS_LOG(ERROR) << reason;
     return false;
   }
@@ -89,13 +91,13 @@ bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std
     return false;
   }
 
-  if (ReachThresholdForExchangeKeys(fbb, iter_num)) {
+  if (ReachThresholdForExchangeKeys(fbb, SizeToInt(iter_num))) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
   const schema::RequestExchangeKeys *exchange_keys_req = flatbuffers::GetRoot<schema::RequestExchangeKeys>(req_data);
-  int32_t iter_client = (size_t)exchange_keys_req->iteration();
-  if (iter_num != (size_t)iter_client) {
+  size_t iter_client = IntToSize(exchange_keys_req->iteration());
+  if (iter_num != iter_client) {
     MS_LOG(ERROR) << "ExchangeKeys iteration number is invalid: server now iteration is " << iter_num
                   << ". client request iteration is " << iter_client;
     cipher_key_->BuildExchangeKeysRsp(fbb, schema::ResponseCode_OutOfTime, "iter num is error.",
@@ -109,7 +111,7 @@ bool ExchangeKeysKernel::Launch(const std::vector<AddressPtr> &inputs, const std
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  if (!CountForExchangeKeys(fbb, exchange_keys_req, iter_num)) {
+  if (!CountForExchangeKeys(fbb, exchange_keys_req, SizeToInt(iter_num))) {
     MS_LOG(ERROR) << "count for exchange keys failed.";
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;

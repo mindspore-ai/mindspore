@@ -58,8 +58,6 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
                        [](size_t dim) -> float { return SizeToFloat(dim); });
   MS_LOG(INFO) << "Init embedding lookup proxy kernel, input shape:" << input_shape
                << ", indices_shape:" << indices_shape << ", output_shape:" << output_shape;
-  std::vector<int64_t> lens{SizeToLong(input_shape.size()), SizeToLong(indices_shape.size()),
-                            SizeToLong(output_shape.size())};
   if (mindspore::ps::PSContext::instance()->is_worker()) {
     mindspore::ps::Worker::GetInstance().AddEmbeddingTable(key_, input_shape[axis]);
     mindspore::ps::ParamInitInfoMessage info;
@@ -79,7 +77,6 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
 
   size_t size = input_size / sizeof(int);
   std::vector<int> lookup_ids(size, 0);
-  std::vector<int> lengths{SizeToInt(size)};
   std::vector<float> lookup_result(output_size / sizeof(float), 0);
   auto ret = memcpy_s(lookup_ids.data(), lookup_ids.size() * sizeof(int), indices_addr, input_size);
   if (ret != EOK) {

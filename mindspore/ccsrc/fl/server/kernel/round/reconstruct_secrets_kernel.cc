@@ -23,7 +23,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-void ReconstructSecretsKernel::InitKernel(size_t required_cnt) {
+void ReconstructSecretsKernel::InitKernel(size_t) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
@@ -73,7 +73,7 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
     DistributedMetadataStore::GetInstance().GetMetadata(kCtxUpdateModelClientList);
   const UpdateModelClientList &update_model_clients_pb = update_model_clients_pb_out.client_list();
 
-  for (size_t i = 0; i < IntToSize(update_model_clients_pb.fl_id_size()); ++i) {
+  for (int i = 0; i < update_model_clients_pb.fl_id_size(); ++i) {
     update_model_clients.push_back(update_model_clients_pb.fl_id(i));
   }
 
@@ -86,21 +86,21 @@ bool ReconstructSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, con
     if (find(update_model_clients.begin(), update_model_clients.end(), fl_id) != update_model_clients.end()) {
       // client in get update model client list.
       cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_SUCCEED,
-                                                     "Current amount for ReconstructSecretsKernel is enough.", iter_num,
-                                                     std::to_string(CURRENT_TIME_MILLI.count()));
+                                                     "Current amount for ReconstructSecretsKernel is enough.",
+                                                     SizeToInt(iter_num), std::to_string(CURRENT_TIME_MILLI.count()));
     } else {
       cipher_reconstruct_.BuildReconstructSecretsRsp(fbb, schema::ResponseCode_OutOfTime,
-                                                     "Current amount for ReconstructSecretsKernel is enough.", iter_num,
-                                                     std::to_string(CURRENT_TIME_MILLI.count()));
+                                                     "Current amount for ReconstructSecretsKernel is enough.",
+                                                     SizeToInt(iter_num), std::to_string(CURRENT_TIME_MILLI.count()));
     }
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
 
-  response = cipher_reconstruct_.ReconstructSecrets(iter_num, std::to_string(CURRENT_TIME_MILLI.count()),
+  response = cipher_reconstruct_.ReconstructSecrets(SizeToInt(iter_num), std::to_string(CURRENT_TIME_MILLI.count()),
                                                     reconstruct_secret_req, fbb, update_model_clients);
   if (response) {
-    DistributedCountService::GetInstance().Count(name_, reconstruct_secret_req->fl_id()->str());
+    (void)DistributedCountService::GetInstance().Count(name_, reconstruct_secret_req->fl_id()->str());
   }
   if (DistributedCountService::GetInstance().CountReachThreshold(name_)) {
     MS_LOG(INFO) << "Current amount for ReconstructSecretsKernel is enough.";
@@ -129,7 +129,7 @@ void ReconstructSecretsKernel::OnLastCountEvent(const std::shared_ptr<ps::core::
     MS_LOG(INFO) << "end unmask";
     Executor::GetInstance().set_unmasked(true);
     std::string worker_id = std::to_string(DistributedCountService::GetInstance().local_rank());
-    DistributedCountService::GetInstance().Count(name_unmask_, worker_id);
+    (void)DistributedCountService::GetInstance().Count(name_unmask_, worker_id);
   }
 }
 

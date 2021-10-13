@@ -411,7 +411,7 @@ void TcpServer::TimerOnceCallback(evutil_socket_t, int16_t, void *arg) {
 
 void TcpServer::SetTcpNoDelay(const evutil_socket_t &fd) {
   const int one = 1;
-  int ret = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(int));
+  int ret = setsockopt(fd, static_cast<int>(IPPROTO_TCP), static_cast<int>(TCP_NODELAY), &one, sizeof(int));
   if (ret < 0) {
     MS_LOG(EXCEPTION) << "Set socket no delay failed!";
   }

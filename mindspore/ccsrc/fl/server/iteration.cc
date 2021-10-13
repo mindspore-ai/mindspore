@@ -311,7 +311,9 @@ bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   ModelStore::GetInstance().Reset();
   if (metrics_ != nullptr) {
-    metrics_->Clear();
+    if (!metrics_->Clear()) {
+      MS_LOG(WARNING) << "Clear metrics fil failed.";
+    }
   }
 
   // Update the hyper-parameters on server and reinitialize rounds.
@@ -332,7 +334,7 @@ bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string
   return true;
 }
 
-void Iteration::WaitAllRoundsFinish() {
+void Iteration::WaitAllRoundsFinish() const {
   while (running_round_num_.load() != 0) {
     std::this_thread::sleep_for(std::chrono::milliseconds(kThreadSleepTime));
   }
@@ -626,7 +628,9 @@ void Iteration::EndLastIter() {
   lock.unlock();
 
   SetIterationCompleted();
-  SummarizeIteration();
+  if (!SummarizeIteration()) {
+    MS_LOG(WARNING) << "Summarizing iteration data failed.";
+  }
   iteration_num_++;
   LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   Server::GetInstance().CancelSafeMode();
@@ -667,7 +671,10 @@ bool Iteration::SummarizeIteration() {
     metrics_->set_iteration_time_cost(complete_timestamp_ - start_timestamp_);
   }
 
-  metrics_->Summarize();
+  if (!metrics_->Summarize()) {
+    MS_LOG(ERROR) << "Summarizing metrics failed.";
+    return false;
+  }
   return true;
 }
 

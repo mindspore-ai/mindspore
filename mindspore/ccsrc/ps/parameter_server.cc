@@ -94,7 +94,7 @@ void ParameterServer::InitOptimInputsShape(const Keys &keys, const Values &value
   MS_EXCEPTION_IF_NULL(inputs_shape);
   InputsShapePtr original_inputs_shape = std::make_shared<InputsShape>();
   MS_EXCEPTION_IF_NULL(original_inputs_shape);
-  int64_t val_idx = 0;
+  size_t val_idx = 0;
   const Key &key = keys[0];
   MS_LOG(INFO) << "Initializing optimizer inputs shape for key:" << key;
   if (optim_inputs_shape_.count(key) == 0) {
