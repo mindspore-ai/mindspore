@@ -656,8 +656,8 @@ def set_context(**kwargs):
             Default: False.
             Indicates whether to enable image-computing convergence to optimize network execution performance.
             If enable_graph_kernel is set to True, acceleration can be enabled.
-            For details of sparsity and sparse tensor, please check
-            `Enabling Graph-Accounting Convergence <https://www.mindspore.cn/docs/programming_guide
+            For details of graph kernel fusion, please check
+            `Enabling Graph Kernel Fusion <https://www.mindspore.cn/docs/programming_guide
             /en/master/enable_graph_kernel_fusion.html>`_.
         graph_kernel_flags (str) –
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
