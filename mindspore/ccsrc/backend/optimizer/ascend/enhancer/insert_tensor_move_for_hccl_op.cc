@@ -67,37 +67,44 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
   if (IsPrimitiveCNode(cur_node, prim::kPrimReceive)) {
     return false;
   }
-
+  // visited nop node if exist.
+  auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(input, 0, false);
+  auto real_input = kernel_with_index.first;
   // when input is a parameter or is a value node
-  if (IsParameterOrValueNode(input)) {
+  if (IsParameterOrValueNode(real_input)) {
     return true;
   }
-
-  if (input->isa<CNode>()) {
-    auto manager = graph->manager();
-    MS_EXCEPTION_IF_NULL(manager);
-    auto &node_users = manager->node_users();
-
-    // when input is a Ref cnode
-    if (kernel_query_->IsTbeRef(input)) {
-      return true;
-    }
-    auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(input, 0, true);
-    auto real_node = kernel_with_index.first;
-    // when input is some special cnodes
-    if (kNeedInsertTensorMoveOpSet.find(AnfAlgo::GetCNodeName(real_node)) != kNeedInsertTensorMoveOpSet.end()) {
-      return true;
-    }
-
-    // when input is used by others
-    auto iter = node_users.find(input);
-    if (iter == node_users.end()) {
-      MS_LOG(EXCEPTION) << "node has no output in manager"
-                        << " trace: " << trace::DumpSourceLines(input);
-    }
-    if (IsNodeOutPutUsedByOtherRealKernel(iter->second)) {
-      return true;
-    }
+  // when input is a Ref cnode
+  if (kernel_query_->IsTbeRef(real_input)) {
+    return true;
+  }
+  // when input is some special cnodes: kLambNextMVOpName, kLambNextMVWithDecayOpName, kLambUpdateWithLROpName,
+  // kGetNextOpName
+  if (kNeedInsertTensorMoveOpSet.find(AnfAlgo::GetCNodeName(real_input)) != kNeedInsertTensorMoveOpSet.end()) {
+    return true;
+  }
+  // example1: NodeA --> Allreduce
+  //           NodeA --> other RealNode(!Allreude)
+  // example2: NodeA --> NopNode --> Allreduce
+  //           NodeA --> other RealNode(!Allreude)
+  // example3: NodeA --> NopNode --> Allreduce
+  //                             --> other RealNode(!Allreude)
+  // when input is used by others
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto &node_users = manager->node_users();
+  auto iter = node_users.find(real_input);
+  if (iter == node_users.end()) {
+    MS_LOG(EXCEPTION) << "node has no output in manager, trace: " << trace::DumpSourceLines(input);
+  }
+  auto ret = IsNodeOutPutUsedByOtherRealKernel(iter->second);
+  if (ret) {
+    return true;
+  }
+  if (opt::IsNopNode(real_input)) {
+    auto cnode = real_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    return NeedInsertTensorMove(graph, cnode->input(1), cur_node);
   }
   return false;
 }
