@@ -21,7 +21,7 @@
 
 namespace mindspore::ge::model_runner {
 ModelRunner &ModelRunner::Instance() {
-  static ModelRunner instance;  // Guaranteed to be destroyed.
+  static ModelRunner instance{};  // Guaranteed to be destroyed.
   return instance;
 }
 
