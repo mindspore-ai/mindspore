@@ -769,10 +769,10 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   return sm;
 }
 
-STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t count_limited,
+STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, int *count_limited,
                           std::vector<std::vector<std::string>> *inputs) {
-  if (inputs == nullptr) {
-    MS_LOG(ERROR) << "inputs is null";
+  if (inputs == nullptr || count_limited == nullptr) {
+    MS_LOG(ERROR) << "count_limited or inputs is null";
     return RET_ERROR;
   }
   auto AddImage = [&inputs](const std::string &file, size_t index) {
@@ -791,6 +791,7 @@ STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t cou
   inputs->resize(input_dirs.size());
   auto input_i = 0;
   bool multi_input = input_dirs.size() > 1;
+  int min_count = 65535;
   for (const auto &image_path : input_dirs) {
     DIR *root = opendir(image_path.c_str());
     if (root == nullptr) {
@@ -798,12 +799,12 @@ STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t cou
       return RET_PARAM_INVALID;
     }
     struct dirent *image_dir = readdir(root);
-    size_t count = 0;
+    int count = 0;
     while (image_dir != nullptr) {
       string file_name(image_dir->d_name);
       if (file_name != "." && file_name != "..") {
         const std::string file_path = image_path + "/" + file_name;
-        if (multi_input || count == 0 || count < count_limited) {
+        if (multi_input || count == 0 || count < *count_limited) {
           AddImage(file_path, input_i);
           count++;
         } else {
@@ -813,11 +814,16 @@ STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t cou
       image_dir = readdir(root);
     }
     std::sort(inputs->at(input_i).begin(), inputs->at(input_i).end());
-    if (count_limited != 0 && count_limited < inputs->at(input_i).size()) {
-      inputs->at(input_i).resize(count_limited);
+    if (count_limited != 0 && *count_limited < static_cast<int>(inputs->at(input_i).size())) {
+      inputs->at(input_i).resize(*count_limited);
     }
     closedir(root);
     input_i++;
+    min_count = std::min(min_count, count);
+  }
+  if (*count_limited > min_count) {
+    MS_LOG(WARNING) << "dir dataset size:" << min_count << " < batch_count " << *count_limited;
+    *count_limited = min_count;
   }
   return RET_OK;
 }

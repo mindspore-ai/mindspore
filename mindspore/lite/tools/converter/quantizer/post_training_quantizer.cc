@@ -468,7 +468,7 @@ STATUS Calibrator::GenerateInputData(size_t input_index, size_t image_index,
 }
 
 STATUS Calibrator::CollectImages() {
-  return CollectCalibInputs(config_param_.image_paths, config_param_.batch_count, &images_);
+  return CollectCalibInputs(config_param_.image_paths, &config_param_.batch_count, &images_);
 }
 
 STATUS Calibrator::ReadConfig() { return ParseConfigFile(config_path_, &config_param_); }
@@ -1278,7 +1278,10 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "read proto text failed!";
     return status;
   }
-
+  if (calibrator_->config_param_.batch_count <= 0) {
+    MS_LOG(ERROR) << "batch_count must > 0.";
+    return RET_ERROR;
+  }
   if (calibrator_->config_param_.mixed) {  // get opname_bit map
     auto weight_quant_func_graph = CopyFuncGraph(func_graph);
     if (weight_quant_func_graph == nullptr) {
