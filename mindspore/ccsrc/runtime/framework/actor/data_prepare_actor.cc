@@ -146,7 +146,7 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
   if (continuous_memory_alloc_list_list_.size() > 0) {
     SendMemoryAllocReq(context);
   } else {
-    SendOutput(context);
+    PostRun(context);
   }
 }
 
@@ -160,7 +160,7 @@ void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
   if (continuous_memory_alloc_list_list_.size() > 0) {
     SendMemoryAllocReq(context);
   } else {
-    SendOutput(context);
+    PostRun(context);
   }
 }
 
@@ -172,7 +172,7 @@ void DataPrepareActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
 
 void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-  SendOutput(context);
+  PostRun(context);
 }
 
 void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,

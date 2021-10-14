@@ -158,23 +158,11 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     return;
   }
 
-  EraseInput(context);
-
-  // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
-  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of
-  // the current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully,
-  // the other is to ensure the execution order and avoid the illegal memory timing problem.
-  SendMemoryFreeReq(context);
-  SendOutput(context);
+  PostRun(context);
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   Async(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context, &GetAID());
-}
-
-void DeviceQueueDataSourceActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
-  SendMemoryFreeReq(context);
-  SendOutput(context);
 }
 
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
@@ -259,14 +247,7 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
   }
   host_queue_->Pop();
 
-  EraseInput(context);
-
-  // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
-  // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of
-  // the current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully,
-  // the other is to ensure the execution order and avoid the illegal memory timing problem.
-  SendMemoryFreeReq(context);
-  SendOutput(context);
+  PostRun(context);
 }
 
 size_t HostQueueDataSourceActor::FetchNodePosition(const AnfNodePtr &data_node) const {

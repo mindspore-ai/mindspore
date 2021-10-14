@@ -123,6 +123,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                     std::vector<KernelGraphPtr> *all_out_graph);
 
+  void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager);
+
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
                           std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);

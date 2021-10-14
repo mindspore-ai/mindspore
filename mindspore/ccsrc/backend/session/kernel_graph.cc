@@ -1350,6 +1350,16 @@ void KernelGraph::SetInputNodes() {
   }
 }
 
+void KernelGraph::UpdateGraphAquireGilAttr() {
+  for (const auto &cnode : execution_order_) {
+    if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPyFunc)) {
+      MS_LOG(INFO) << "The Graph require GIL. Graph id: " << graph_id_;
+      is_need_gil_ = true;
+      return;
+    }
+  }
+}
+
 void KernelGraph::SetOptimizerFlag() {
   has_optimizer_ = false;
   for (const auto &cnode : execution_order_) {

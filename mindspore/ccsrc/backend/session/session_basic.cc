@@ -118,25 +118,6 @@ bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &no
   return false;
 }
 
-void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(manager);
-  auto input_nodes = graph->input_nodes();
-  for (auto &input_node : input_nodes) {
-    if (input_node->isa<Parameter>()) {
-      auto node_ptr = input_node->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(node_ptr);
-      if (!IsUsedByRealKernel(manager, input_node, graph->graph_id())) {
-        node_ptr->SetNotUsedByRealKernelInGraph(graph->graph_id());
-      }
-      auto shape = node_ptr->Shape();
-      if (IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
-        node_ptr->set_has_dynamic_shape(true);
-      }
-    }
-  }
-}
-
 ParamInfoPtr GetParamDefaultValue(const AnfNodePtr &node) {
   if (node == nullptr) {
     return nullptr;
@@ -452,17 +433,6 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
                         << "] of kernel: " << AnfAlgo::GetCNodeName(kernel);
     }
   }
-}
-
-void UpdateGraphAquireGilAttr(const NotNull<KernelGraphPtr> &root_graph) {
-  for (const auto &cnode : root_graph->execution_order()) {
-    if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPyFunc)) {
-      MS_LOG(INFO) << "The Graph require GIL. Graph id: " << root_graph->graph_id();
-      root_graph->set_is_need_gil(true);
-      return;
-    }
-  }
-  return;
 }
 
 bool ExistGraphCaller(const AnfNodePtr &partial_node) {
@@ -1165,15 +1135,38 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   }
 #endif
 
-  UnifyMindIR(graph);
-  UpdateGraphAquireGilAttr(NOT_NULL(graph));
-  if (common_opt) {
-    opt::BackendCommonOptimization(graph);
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+    UnifyMindIR(graph);
+    graph->UpdateGraphAquireGilAttr();
+    if (common_opt) {
+      opt::BackendCommonOptimization(graph);
+    }
+    graph->SetInputNodes();
+    SetInputNodeUsage(graph, manager);
+    graph->SetOptimizerFlag();
   }
-  graph->SetInputNodes();
-  SetInputNodeUsage(graph, manager);
-  graph->SetOptimizerFlag();
+
   return graph;
+}
+
+void SessionBasic::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(manager);
+  auto input_nodes = graph->input_nodes();
+  for (auto &input_node : input_nodes) {
+    if (input_node->isa<Parameter>()) {
+      auto node_ptr = input_node->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(node_ptr);
+      if (!IsUsedByRealKernel(manager, input_node, graph->graph_id())) {
+        node_ptr->SetNotUsedByRealKernelInGraph(graph->graph_id());
+      }
+      auto shape = node_ptr->Shape();
+      if (IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
+        node_ptr->set_has_dynamic_shape(true);
+      }
+    }
+  }
 }
 
 GraphInfo SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel,

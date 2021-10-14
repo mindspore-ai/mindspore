@@ -39,6 +39,20 @@ class MemoryAwareActor : public AbstractActor {
  protected:
   friend class GraphScheduler;
 
+  // The processing after actor run: 1.erase input, 2.free memory, 3.send output.
+  void PostRun(OpContext<DeviceTensor> *const context) {
+    // The input is invalid and needs to be erased when finish run.
+    EraseInput(context);
+
+    // Note that SendMemoryFreeReq must be in front of SendOutput, because SendOutput will trigger SendMemoryAllocReq of
+    // the next actor and the actor is asynchronous execution. So it is necessary to ensure that SendMemoryFreeReq of
+    // the current actor is in front of SendMemoryAllocReq of the next actor.  One is to reuse the memory more fully,
+    // the other is to ensure the execution order and avoid the illegal memory timing problem.
+    SendMemoryFreeReq(context);
+
+    SendOutput(context);
+  }
+
   // The id of memory manager actor. Send message to it for alloc and free memory.
   const AID memory_manager_aid_;
 };

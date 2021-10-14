@@ -878,6 +878,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   graph_compiler_->Summary(graph_compiler_info.graphs_);
 
   // Update device address for output node of graph.
+  // Summary processing will use the output device address, so must be after the summary processing.
   actor_set->output_actor_->UpdateOutputDeviceAddress();
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }

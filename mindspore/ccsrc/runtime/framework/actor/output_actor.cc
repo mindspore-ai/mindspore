@@ -16,11 +16,23 @@
 
 #include "runtime/framework/actor/output_actor.h"
 #include "utils/log_adapter.h"
+#include "common/trans.h"
 
 namespace mindspore {
 namespace runtime {
-namespace {
-TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
+void OutputActor::Init() {
+  // Check device contexts number.
+  if (device_contexts_.size() != output_nodes_.size()) {
+    MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
+  }
+
+  // Set the number of actor running dependent messages.
+  if (need_loop_count_) {
+    running_dependent_msg_num_ = SizeToInt(outputs_num_ - device_tensor_store_keys_.size());
+  }
+}
+
+TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index, size_t output_position) {
   MS_EXCEPTION_IF_NULL(output_node);
   MS_LOG(INFO) << "Create output tensor, output node: " << output_node->fullname_with_scope()
                << ", output index: " << output_index << ", output position: " << output_position;
@@ -34,19 +46,36 @@ TensorPtr CreateOutputTensor(const AnfNodePtr &output_node, size_t output_index,
   auto tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
 
-  // Put device tensor into host tensor.
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
-  tensor->set_device_address(device_tensor);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  auto new_device_tensor = device_tensor;
+  // If the output node whose output address can't be changed, then create the new device tensor and copy the data.
+  if (output_address_persisted_nodes_.count(output_node) > 0) {
+    const auto &device_context = device_contexts_[output_index];
+    MS_EXCEPTION_IF_NULL(device_context);
+    new_device_tensor = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(), device_tensor->format(),
+                                                            device_tensor->type_id());
+    MS_EXCEPTION_IF_NULL(new_device_tensor);
+    new_device_tensor->set_original_ref_count(device_tensor->original_ref_count());
+    new_device_tensor->ResetRefCount();
+    if (!device_context->AllocateMemory(new_device_tensor.get(), new_device_tensor->GetSize())) {
+      MS_LOG(ERROR) << "Device(id:" << device_context->device_context_key().device_id_
+                    << ") memory isn't enough and alloc failed, kernel name: " << output_node->fullname_with_scope()
+                    << ", alloc size: " << new_device_tensor->GetSize() << "B.";
+      return nullptr;
+    }
 
-  return tensor;
-}
-}  // namespace
-
-void OutputActor::Init() {
-  // Set the number of actor running dependent messages.
-  if ((!need_loop_count_)) {
-    running_dependent_msg_num_ = SizeToInt(outputs_num_ - device_tensor_store_keys_.size());
+    if (!new_device_tensor->SyncDeviceToDevice(trans::GetRuntimePaddingShape(output_node, output_index),
+                                               device_tensor->GetSize(), device_tensor->type_id(),
+                                               device_tensor->GetPtr(), device_tensor->format())) {
+      MS_LOG(ERROR) << "Sync device to device failed, device type: " << new_device_tensor->DeviceType();
+      return nullptr;
+    }
   }
+
+  // Put device tensor into host tensor.
+  tensor->set_device_address(new_device_tensor);
+  return tensor;
 }
 
 void OutputActor::CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *const context) {
@@ -68,6 +97,9 @@ void OutputActor::CollectLoopCount(size_t loop_count, OpContext<DeviceTensor> *c
       }
       outputs_[device_tensor_store_key.first] =
         CreateOutputTensor(device_tensor_store_key.second, 0, device_tensor_store_key.first);
+      if (outputs_[device_tensor_store_key.first] == nullptr) {
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Create output tensor failed.");
+      }
     }
 
     current_outputs_num_ = 0;
@@ -84,6 +116,11 @@ void OutputActor::UpdateOutputDeviceAddress() {
   for (size_t i = 0; i < output_nodes_.size(); ++i) {
     auto &output_node = output_nodes_[i].first;
     auto output_index = output_nodes_[i].second;
+    // The output node whose output address can't be changed needs to be skipped.
+    if (output_address_persisted_nodes_.count(output_node) > 0) {
+      continue;
+    }
+
     if ((output_node != nullptr) && (!IsPersistentDeviceTensor(output_node))) {
       const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
       // The outputs may have the same output node, so need skip when the node has been set to new device tensor.
@@ -119,7 +156,9 @@ void OutputActor::CollectOutput(const AnfNodePtr &output_node, size_t output_ind
   }
 
   auto tensor = CreateOutputTensor(output_node, output_index, output_position);
-  MS_EXCEPTION_IF_NULL(tensor);
+  if (tensor == nullptr) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Create output tensor failed.");
+  }
   tensor->set_need_release_device_mem(true);
   outputs_[output_position] = tensor;
   current_outputs_num_++;

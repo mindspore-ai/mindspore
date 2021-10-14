@@ -31,7 +31,7 @@ class DebugAwareActor : public MemoryAwareActor {
   virtual ~DebugAwareActor() = default;
 
   virtual void SendDebugReq(OpContext<DeviceTensor> *const context) {}
-  virtual void OnDebugFinish(OpContext<DeviceTensor> *const context) {}
+  virtual void OnDebugFinish(OpContext<DeviceTensor> *const context) { PostRun(context); }
 
  protected:
   // The id of debug actor. Send message to it for debug.
