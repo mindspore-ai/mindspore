@@ -246,7 +246,7 @@ void GPUSession::BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) c
   device::gpu::CreateGPUKernel(kernels);
 }
 
-void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
+void GPUSession::AllocateMemory(const KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
@@ -254,7 +254,7 @@ void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
 }
 
 void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors,
-                                     KernelGraph *kernel_graph) const {
+                                     const KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
@@ -268,7 +268,7 @@ void GPUSession::RunOpGenKernelEvent(const KernelGraph *graph) const {
   runtime_instance->GenKernelEvents(*graph);
 }
 
-void GPUSession::RunOpClearMemory(KernelGraph *kernel_graph) const {
+void GPUSession::RunOpClearMemory(const KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
@@ -398,7 +398,7 @@ GraphId GPUSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   return CompileGraphImpl(root_graph);
 }
 
-GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
+GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   // Prepare ms context info for dump .pb graph
   auto context_ptr = MsContext::GetInstance();
