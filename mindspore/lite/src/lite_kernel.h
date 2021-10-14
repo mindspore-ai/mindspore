@@ -130,8 +130,6 @@ class LiteKernel {
     return kernel_->ReSize();
   }
 
-  virtual void FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope_kernels);
-
   OpParameter *op_parameter() const {
     MS_ASSERT(kernel_ != nullptr);
     if (desc_.provider == kBuiltin) {
