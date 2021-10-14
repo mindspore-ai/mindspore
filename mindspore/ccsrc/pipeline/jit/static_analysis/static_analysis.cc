@@ -784,6 +784,8 @@ void ExecEvaluator(EvaluatorPtr eval, AnalysisEnginePtr engine, ConfigPtrList ar
     MS_EXCEPTION_IF_NULL(result);
     MS_EXCEPTION_IF_NULL(result->abstract());
 
+    // Check the branch value to be compatible with the other branch value.
+    AnalysisResultCacheMgr::GetInstance().CheckSwitchValueJoinable(out_conf, result->abstract());
     // Broaden the result of switch(c,t,f)()
     auto broadAbstract = result->abstract()->Broaden();
     // Notify the thread of waiting for branch value and the main thread to continue.

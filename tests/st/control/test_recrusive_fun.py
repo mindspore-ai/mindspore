@@ -15,6 +15,9 @@
 import mindspore.context as context
 from mindspore import Tensor, ms_function
 from mindspore.common import dtype as mstype
+from mindspore import ops
+import mindspore.nn as nn
+import numpy as np
 
 ZERO = Tensor([0], mstype.int32)
 ONE = Tensor([1], mstype.int32)
@@ -113,6 +116,38 @@ def test_recrusive_fun():
     expect = Tensor([3], mstype.int32)
     assert ret == expect
 
+def test_branch_value_compatible():
+    """
+    Feature: control flow
+    Description: test branch value must be compatible with the other branch.
+    Expectation: Join Failed
+    """
+    class IfInWhileNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.expand_dims = ops.ExpandDims()
+
+        def construct(self, x, y, i):
+            out = x
+            while i < 3:
+                if x + i < y:
+                    out = out + x
+                else:
+                    out = out + y
+                out = out + 1
+                out = self.expand_dims(out, -1)
+                i = i + 1
+            return out
+
+    forward_net = IfInWhileNet()
+    i = Tensor(np.array(0), dtype=mstype.int32)
+    x = Tensor(np.array(0), dtype=mstype.int32)
+    y = Tensor(np.array(1), dtype=mstype.int32)
+
+    try:
+        forward_net(x, y, i)
+    except ValueError as e:
+        assert 'Join Failed' in str(e)
 
 if __name__ == "__main__":
     test_endless()

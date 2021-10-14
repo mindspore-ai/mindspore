@@ -387,6 +387,7 @@ class AnalysisResultCacheMgr {
   void SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &vale);
   const_iterator begin() { return cache_.begin(); }
   const_iterator end() { return cache_.end(); }
+  void CheckSwitchValueJoinable(const AnfNodeConfigPtr &conf, const AbstractBasePtr &vale);
 
  private:
   using AnalysisConfigAsyncResultMap =
@@ -400,6 +401,7 @@ class AnalysisResultCacheMgr {
   std::list<AnfNodeConfigPtr> todo_;
   AnalysisConfigResultCache cache_;
   AnalysisConfigAsyncResultCache switch_cache_;
+  AnalysisConfigAsyncResultCache switch_cache_for_check_;
 };
 
 std::string ArgsToString(const AbstractBasePtrList &args_spec_list);
