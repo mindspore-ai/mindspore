@@ -56,14 +56,14 @@ def compile_net(net, x, y):
 
 def test_batch_parallel_matmul():
     """
-    Feature: strategy gen mode
+    Feature: shard at cell level
     Description: test batch matmul
     Expectation: using batch parallel mode to generate unspecified strategies in primitive ops
     """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetMatMul()
-    net.set_strategy_gen_mode("batch")
+    net.shard(strategy="data_parallel")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
@@ -73,14 +73,14 @@ def test_batch_parallel_matmul():
 
 def test_batch_parallel_mul():
     """
-    Feature: strategy gen mode
+    Feature: shard at cell level
     Description: test mul
     Expectation: using batch parallel mode to generate unspecified strategies in primitive ops
     """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetMatMul()
-    net.set_strategy_gen_mode("batch")
+    net.shard(strategy="data_parallel")
 
     x = Tensor(np.ones([128, 128]), dtype=ms.float32)
     y = Tensor(np.ones([128, 128]), dtype=ms.float32)
@@ -90,14 +90,14 @@ def test_batch_parallel_mul():
 
 def test_batch_parallel_recursive():
     """
-    Feature: strategy gen mode
+    Feature: shard at cell level
     Description: test primitive ops in cells wrapped by other cells
     Expectation: using batch parallel mode to generate unspecified strategies in primitive ops
     """
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetRecursive()
-    net.set_strategy_gen_mode("batch")
+    net.shard(strategy="data_parallel")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
@@ -107,7 +107,7 @@ def test_batch_parallel_recursive():
 
 def test_batch_parallel_with_user_strategy():
     """
-    Feature: strategy gen mode
+    Feature: shard at cell level
     Description: test strategy gen mode while users have specified strategies
     Expectation: for those primitive ops who have users specified strategies, using those strategies;
                  for those who do not, using batch parallel mode to generate strategies
@@ -115,7 +115,7 @@ def test_batch_parallel_with_user_strategy():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net = NetMatMul(strategy=((1, 8), (8, 1)))
-    net.set_strategy_gen_mode("batch")
+    net.shard(strategy="data_parallel")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)

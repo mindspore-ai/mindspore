@@ -360,7 +360,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   // BatchParallelInfo operator
   operator_info->ComputeBatchSplitFlagList();
   bool retGenStra;
-  if (AttrFound(attrs, STRATEGY_GEN_MODE) && GetValue<std::string>(attrs[STRATEGY_GEN_MODE]) == "batch") {
+  if (AttrFound(attrs, STRATEGY_GEN_MODE) && GetValue<std::string>(attrs[STRATEGY_GEN_MODE]) == DATA_PARALLEL) {
     MS_LOG(INFO) << "generating batch parallel strategy...";
     StrategyPtr strategyPtr = parallel::GenerateBatchParallelStrategy(operator_info, prim);
     retGenStra = operator_info->SetCostUnderStrategy(strategyPtr);
