@@ -257,7 +257,7 @@ class Model:
         if eval_network is not None:
             if eval_indexes is not None and not (isinstance(eval_indexes, list) and len(eval_indexes) == 3):
                 raise ValueError("The argument 'eval_indexes' must be a list or None. If 'eval_indexes' is a list, "
-                                 "length of it must be three. But got {}".format(len(eval_indexes)))
+                                 "length of it must be three. But got 'eval_indexes' {}".format(eval_indexes))
 
             self._eval_network = eval_network
             self._eval_indexes = eval_indexes
