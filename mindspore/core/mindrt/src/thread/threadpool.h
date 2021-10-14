@@ -30,7 +30,8 @@
 
 namespace mindspore {
 constexpr int kDefaultSpinCount = 300000;
-constexpr int kMinSpinCount = 3000;
+constexpr int kMaxCount = 30000;
+constexpr int kMinSpinCount = 1;
 constexpr int kDefaultFrequency = 1;
 constexpr float kMaxScale = 1.;
 
@@ -61,6 +62,8 @@ class Worker {
   void CreateThread();
   // assign task and then activate thread
   void Active(Task *task, int task_id);
+  // activate thread
+  void Active();
   // whether or not it is idle and marked as held
   bool available();
   // assigns task first before running
@@ -93,6 +96,7 @@ class Worker {
   cpu_set_t mask_;
 #endif
   std::atomic_int status_{kThreadBusy};
+  std::atomic_int active_num_{0};
 
   std::mutex mutex_;
   std::condition_variable cond_var_;
@@ -103,7 +107,7 @@ class Worker {
   float rhs_scale_{kMaxScale};
   int frequency_{kDefaultFrequency};
   int spin_count_{0};
-  int max_spin_count_{kDefaultSpinCount};
+  int max_spin_count_{kMinSpinCount};
 };
 
 class ThreadPool {
@@ -124,8 +128,9 @@ class ThreadPool {
   size_t GetKernelThreadNum() const { return kernel_thread_num_; }
   void SetSpinCountMaxValue();
   void SetSpinCountMinValue();
-  void SetMaxSpinCount(int spin_count) { max_spin_count_ = spin_count; }
-  void SetMinSpinCount(int spin_count) { min_spin_count_ = spin_count; }
+  void SetMaxSpinCount(int spin_count);
+  void SetMinSpinCount(int spin_count);
+  void ActiveWorkers() const;
 
  protected:
   ThreadPool() = default;
