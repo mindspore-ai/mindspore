@@ -100,5 +100,4 @@ if(ENABLE_TESTCASES OR ENABLE_CPP_ST)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/gtest.cmake)
 endif()
 
-include(${CMAKE_SOURCE_DIR}/cmake/external_libs/onnx.cmake)
 set(CMAKE_CXX_FLAGS ${_ms_tmp_CMAKE_CXX_FLAGS_F})

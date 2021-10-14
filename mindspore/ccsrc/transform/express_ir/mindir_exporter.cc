@@ -263,7 +263,7 @@ bool IrExportBuilder::BuildParameters(const FuncGraphPtr &func_graph, mind_ir::G
       }
       auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(param->default_param());
       if (tensor && save_tensor_data) {
-        parameter_proto->set_raw_data(tensor->data_c(), tensor->data().nbytes());
+        parameter_proto->set_raw_data(tensor->data_c(), static_cast<size_t>(tensor->data().nbytes()));
       }
     } else {
       mind_ir::ValueInfoProto *input_proto = graph_proto->add_input();

@@ -82,8 +82,8 @@ class Callback:
     Callback function will execute some operations in the current step or epoch.
 
     It holds the information of the model. Such as `network`, `train_network`, `epoch_num`, `batch_num`,
-        `loss_fn`, `optimizer`, `parallel_mode`, `device_number`, `list_callback`, `cur_epoch_num`,
-        `cur_step_num`, `dataset_sink_mode`, `net_outputs` and so on.
+    `loss_fn`, `optimizer`, `parallel_mode`, `device_number`, `list_callback`, `cur_epoch_num`,
+    `cur_step_num`, `dataset_sink_mode`, `net_outputs` and so on.
 
     Examples:
         >>> from mindspore import Model, nn
