@@ -398,7 +398,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
             and all inputs will pass by value, set `read_value` to True. Default: False.
 
     Raises:
-        ValueError: If failed to find find a matching function for the given arguments.
+        ValueError: If failed to find a matching function for the given arguments.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

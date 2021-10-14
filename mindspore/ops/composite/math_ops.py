@@ -548,6 +548,8 @@ def batch_dot(x1, x2, axes=None, prim_name=None):
           specified for `a` and `b` each. If single value `N` passed, automatically picks up last N dims from
           `a` input shape and last N dimensions from `b` input shape in order as axes for each respectively.
           Default: None.
+        - **prim_name** (Union[str, None]) - The name of primitive.
+          Default: None.
 
     Outputs:
         Tensor, batch dot product of `x1` and `x2`.For example: The Shape of output
@@ -752,6 +754,8 @@ def matmul(x1, x2, dtype=None, prim_name=None):
           And the shape of x1 and x2 could be broadcast.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
+        prim_name (Union[str, None]): The name of primitive.
+            Default: None.
 
     Returns:
         Tensor or scalar, the matrix product of the inputs. This is a scalar only
