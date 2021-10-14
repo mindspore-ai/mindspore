@@ -695,3 +695,40 @@ def test_side_effect_grad_control_flow_assign_depend_while_net():
         allclose_nparray(out1[1][0].asnumpy(), expect2, 0.001, 0.001)
     finally:
         context.set_context(mode=context.GRAPH_MODE)
+
+
+class AssignInZipLoop(Cell):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = ms.nn.Conv2d(3, 2, 1, weight_init="zero")
+        self.conv2 = ms.nn.Conv2d(3, 2, 1, weight_init="zero")
+        self.params1 = self.conv1.trainable_params()
+        self.params2 = self.conv2.trainable_params()
+
+    def construct(self, x):
+        for p1, p2 in zip(self.params1, self.params2):
+            P.Assign()(p2, p1 + x)
+
+        out = 0
+        for p1, p2 in zip(self.params1, self.params2):
+            out = p1 + p2
+            print(p1)
+            print(p2)
+
+        return out
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_in_zip_loop():
+    """
+    Feature: Auto-monad load grouping and merge.
+    Description: Assign/Load inside a zip loop.
+    Expectation: 'p1 + p2' should be executed after Assign, and out is 1.
+    """
+    x = Tensor.from_numpy(np.ones([1], np.float32))
+    net = AssignInZipLoop()
+    out = net(x)
+    assert np.all(out.asnumpy() == 1)
