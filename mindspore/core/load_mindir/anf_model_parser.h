@@ -34,6 +34,7 @@ class MSANFModelParser {
   MSANFModelParser() : producer_name_(""), model_version_(""), ir_version_("") {}
   ~MSANFModelParser() = default;
 
+  static void LoadTensorMapClear() { load_tensor_map_.clear(); }
   FuncGraphPtr Parse(const mind_ir::ModelProto &model_proto);
   bool MSANFParseModelConfigureInfo(const mind_ir::ModelProto &model_proto);
 
@@ -85,12 +86,12 @@ class MSANFModelParser {
   bool is_lite_ = false;
   bool inc_load_ = false;
   std::unordered_map<std::string, AnfNodePtr> anfnode_build_map_;
-  std::map<std::string, tensor::TensorPtr> load_tensor_map_;
   std::string mindir_path_;
   const unsigned char *mindir_dec_key_{nullptr};
   size_t mindir_key_size_;
   std::string mindir_dec_mode_;
   std::map<std::string, std::unique_ptr<Byte[]>> tenor_data_;
+  static std::map<std::string, tensor::TensorPtr> load_tensor_map_;
 };
 }  // namespace mindspore
 
