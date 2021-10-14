@@ -330,6 +330,7 @@ from .div_no_nan import _div_no_nan_tbe
 from .atan import _atan_tbe
 from .atan_grad import _atan_grad_tbe
 from .atanh import _atanh_tbe
+from .atanh_ds import _atanh_ds_tbe
 from .cosh import _cosh_tbe
 from .sinh import _sinh_tbe
 from .inv import _inv_tbe

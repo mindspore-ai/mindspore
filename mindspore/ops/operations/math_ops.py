@@ -4750,7 +4750,7 @@ class Atan(PrimitiveWithInfer):
         return x_type
 
 
-class Atanh(PrimitiveWithInfer):
+class Atanh(Primitive):
     r"""
     Computes inverse hyperbolic tangent of the input element-wise.
 
@@ -4761,12 +4761,14 @@ class Atanh(PrimitiveWithInfer):
     Inputs:
         - **x** (Tensor): The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+           The data type should be one of the following types: float16, float32.
 
     Outputs:
         A Tensor, has the same type as the input.
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4781,14 +4783,9 @@ class Atanh(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        pass
+        """Initialize Atanh"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_type):
-        validator.check_tensor_dtype_valid('x', x_type, mstype.number_type, self.name)
-        return x_type
 
 
 class Atan2(_MathBinaryOp):
