@@ -2167,6 +2167,7 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     param->set_name(name);
     param->debug_info()->set_name(name);
     param->debug_info()->set_location(param->debug_info()->location());
+    param->set_is_top_graph_param(true);
   }
   func_graph->set_has_vararg(current_graph->has_vararg());
   func_graph->set_has_kwarg(current_graph->has_kwarg());

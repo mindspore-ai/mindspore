@@ -403,6 +403,9 @@ class MS_CORE_API Parameter : public ANode {
   void DecreaseUsedGraphCount() { used_graph_count_--; }
   int used_graph_count() const { return used_graph_count_; }
 
+  bool is_top_graph_param() const { return is_top_graph_param_; }
+  void set_is_top_graph_param(bool flag) { is_top_graph_param_ = flag; }
+
   bool operator==(const AnfNode &other) const override {
     if (!other.isa<Parameter>()) {
       return false;
@@ -439,6 +442,7 @@ class MS_CORE_API Parameter : public ANode {
   int used_graph_count_;
   // groups attr in FracZ format
   int64_t fracz_group_ = 1;
+  bool is_top_graph_param_ = false;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
 
