@@ -424,22 +424,22 @@ class TensorData {
   }
 
  private:
-  char *data_ptr_;         // pointer to the pre-allocated memory
-  uint64_t size_;          // size_ in bytes
-  DbgDataType data_type_;  // internal debugger type
-  unsigned int data_type_size_;
+  char *data_ptr_{nullptr};                           // pointer to the pre-allocated memory
+  uint64_t size_{0};                                  // size_ in bytes
+  DbgDataType data_type_{DbgDataType::DT_UNDEFINED};  // internal debugger type
+  unsigned int data_type_size_{0};
   std::vector<int64_t> shape_;
   std::string name_;
   uint64_t slot_;
-  unsigned int iteration_;
-  unsigned int device_id_;
-  unsigned int root_graph_id_;
-  bool is_output_;
-  int execution_order_;
+  unsigned int iteration_{0};
+  unsigned int device_id_{0};
+  unsigned int root_graph_id_{0};
+  bool is_output_{true};
+  int execution_order_{-1};
   std::string time_stamp_;
 
 #ifdef ONLINE_DBG_MODE
-  mindspore::tensor::TensorPtr tensor_ptr_;
+  mindspore::tensor::TensorPtr tensor_ptr_{nullptr};
 #endif
 };
 #ifdef ONLINE_DBG_MODE

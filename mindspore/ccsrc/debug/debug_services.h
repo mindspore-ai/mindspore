@@ -247,6 +247,20 @@ class DebugServices {
 
   void RemoveWatchpoint(unsigned int id);
 
+#ifdef OFFLINE_DBG_MODE
+  void ProcessCheckpointsOutofMemory(
+    const bool no_mem_to_read, const std::vector<watchpoint_t> watchpoints_to_check, const int chunk_id,
+    partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
+    partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
+    partitioned_parameters *const chunk_parameters, partitioned_error_code *const chunk_error_codes,
+    partitioned_numbers *const chunk_exec_orders, partitioned_names *const chunk_time_stamp,
+    partitioned_id *const chunk_device_id, partitioned_id *const chunk_root_graph_id,
+    std::vector<unsigned int> *const device_id, std::vector<unsigned int> *const root_graph_id, const int exec_order,
+    const std::string time_stamp, const std::string &qualified_tensor_name, const std::string &tensor_slot,
+    const unsigned int device_id_val, const unsigned int root_graph_id_val,
+    const std::vector<parameter_t> &parameter_list);
+#endif
+
   void CheckWatchpointsForTensor(partitioned_names *chunk_names, partitioned_names *chunk_slots,
                                  partitioned_numbers *chunk_conditions, partitioned_id *const chunk_watchpoint_id,
                                  partitioned_parameters *chunk_parameters, partitioned_error_code *chunk_error_codes,
@@ -300,16 +314,21 @@ class DebugServices {
                        const unsigned int iteration, const unsigned int device_id, const unsigned int root_graph_id,
                        const bool is_output, const std::size_t data_size, const std::string &type_name,
                        const std::vector<int64_t> &shape, std::vector<char> *buffer,
-                       std::vector<std::shared_ptr<TensorData>> *result_list);
+                       std::vector<std::shared_ptr<TensorData>> *const result_list);
 
-  void SetPrefixToCheck(std::string *prefix_dump_file_name, std::string *slot_string_to_check,
-                        std::string *dump_style_kernel_name, size_t slot, bool is_output);
+  void SetPrefixToCheck(std::string *const prefix_dump_file_name, std::string *const slot_string_to_check,
+                        std::string *const dump_style_kernel_name, size_t slot, bool is_output);
 
   void ReadDumpedTensor(std::vector<std::string> backend_name, std::vector<size_t> slot,
                         std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                         std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
                         const std::vector<std::string> &async_file_pool,
-                        std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read = nullptr);
+                        std::vector<std::shared_ptr<TensorData>> *const result_list, bool *no_mem_to_read = nullptr);
+
+  void ProcessTensorDataSync(const std::vector<std::tuple<std::string, std::string>> &proto_to_dump,
+                             const std::string &abspath, const std::string &specific_dump_dir, unsigned int iteration,
+                             unsigned int device_id, unsigned int root_graph_id,
+                             std::vector<std::shared_ptr<TensorData>> *const tensor_list);
 
   void ReadDumpedTensorSync(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
                             const std::string &backend_name, size_t slot, unsigned int device_id,
@@ -323,29 +342,38 @@ class DebugServices {
                              std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read);
 
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,
-                                                                   std::vector<std::string> *async_file_pool);
+                                                                   std::vector<std::string> *const async_file_pool);
 
   void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
                       uint32_t *prev_num_elements);
 
-  void ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name, std::string *tensor_type,
-                         std::size_t *size, std::vector<int64_t> *shape, std::vector<char> **data_buffer,
-                         bool *no_mem_to_read);
+  void ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name, std::string *const tensor_type,
+                         std::size_t *const size, std::vector<int64_t> *const shape,
+                         std::vector<char> **const data_buffer, bool *no_mem_to_read);
 
   void ConvertToHostFormat(const std::map<std::string, std::vector<std::string>> &dir_to_files_map,
-                           std::vector<std::string> *result_list);
+                           std::vector<std::string> *const result_list);
+
+  void ProcessConvertToHostFormat(const std::vector<std::string> &files_after_convert_in_dir,
+                                  const std::string &dump_key, std::vector<std::string> *const result_list,
+                                  const std::string &file_format);
 
   void ConvertReadTensors(std::vector<std::string> backend_name, std::vector<size_t> slot,
                           std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
-                          std::vector<unsigned int> root_graph_id, std::vector<std::string> *result_list);
+                          std::vector<unsigned int> root_graph_id, std::vector<std::string> *const result_list);
 
   void ConvertWatchPointNodes(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
-                              const std::string &specific_dump_dir, std::vector<std::string> *result_list);
+                              const std::string &specific_dump_dir, std::vector<std::string> *const result_list);
+
+  void ProcessConvertList(const std::string &prefix_dump_file_name, const std::string &file_format,
+                          const std::string &specific_dump_dir,
+                          std::map<std::string, std::vector<std::string>> *dir_to_files_map,
+                          std::vector<std::string> *const result_list);
 
   void GetTensorDataInfoAsync(const std::vector<std::tuple<std::string, std::string>> &proto_dump,
                               const std::string &specific_dump_dir, uint32_t iteration, uint32_t device_id,
                               uint32_t root_graph_id, const std::vector<std::string> &async_file_pool,
-                              std::vector<std::shared_ptr<TensorData>> *tensor_list);
+                              std::vector<std::shared_ptr<TensorData>> *const tensor_list);
 
   std::string GetStrippedFilename(const std::string &file_name);
 
@@ -386,7 +414,7 @@ class DebugServices {
   bool CheckOpOverflow(std::string node_name_to_find, unsigned int device_id = 0, unsigned int root_graph_id = 0,
                        unsigned int iteration = 0);
 
-  bool GetAttrsFromAsyncFilename(const std::string &file_name, std::string *node_name, uint64_t *task_id,
+  bool GetAttrsFromAsyncFilename(const std::string &file_name, std::string *const node_name, uint64_t *task_id,
                                  uint64_t *stream_id);
 
   std::string RealPath(const std::string &input_path);
