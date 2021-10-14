@@ -19,6 +19,9 @@
 #ifdef _MSC_VER
 #define PATH_MAX 1024
 #endif
+namespace {
+constexpr size_t kLengthOfParentheses = 2;
+}
 
 namespace mindspore {
 namespace lite {
@@ -68,7 +71,7 @@ int GetSectionInfoFromConfigFile(const std::string &file, const std::string &sec
       if (find_section == true) {
         break;
       }
-      std::string section = line.substr(1, line.length() - 2);
+      std::string section = line.substr(1, line.length() - kLengthOfParentheses);
       if (section != section_name) {
         continue;
       }
@@ -98,7 +101,7 @@ void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
     std::string op_name = info.first;
     std::string value = info.second;
     if (value[0] == '"' && value[value.length() - 1] == '"') {
-      value = value.substr(1, value.length() - 2);
+      value = value.substr(1, value.length() - kLengthOfParentheses);
     }
     auto index = value.find(':');
     if (index == std::string::npos) {

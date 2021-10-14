@@ -230,7 +230,7 @@ int32_t Tensor::ElementsC4Num() const {
 
 int Tensor::DimensionSize(const size_t index) const {
   int dim_size = -1;
-  if (index < shape_.size() && index >= 0) {
+  if (index < shape_.size()) {
     dim_size = shape_[index];
   } else {
     MS_LOG(ERROR) << "Dimension index is wrong: " << index;

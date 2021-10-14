@@ -42,8 +42,8 @@ size_t WinogradConvMul() {
 }
 
 size_t CommConvdwMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
-  size_t cost = output_shape[NHWC_N] * output_shape[NHWC_H] * output_shape[NHWC_W] * output_shape[NHWC_C] *
-                weight_shape[NHWC_H] * weight_shape[NHWC_W];
+  size_t cost = static_cast<size_t>(output_shape[NHWC_N] * output_shape[NHWC_H] * output_shape[NHWC_W] *
+                                    output_shape[NHWC_C] * weight_shape[NHWC_H] * weight_shape[NHWC_W]);
   return cost;
 }
 
@@ -120,8 +120,8 @@ void SearchSubGraph::dfs(int i, int n, int current_sum, int except_value, int *m
                          std::vector<bool> *cor_group, std::vector<Subgraph> *sub_graphs) {
   if (i == n) {
     if (abs(except_value - current_sum) < *min_value) {
-      for (int i = 0; i < n; i++) {
-        cor_group->at(i) = tmp_group->at(i);
+      for (int j = 0; j < n; j++) {
+        cor_group->at(j) = tmp_group->at(j);
       }
     }
     *min_value = MSMIN(*min_value, abs(except_value - current_sum));
@@ -220,8 +220,8 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
 
     DeviceType device_type = subgraph.device_;
     size_t thread_num = subgraph.thread_;
-    int new_sub_index = model_->sub_graphs_.size();
-    int partial_index = model_->all_nodes_.size();
+    int new_sub_index = static_cast<int>(model_->sub_graphs_.size());
+    int partial_index = static_cast<int>(model_->all_nodes_.size());
     int particial_replace_index = partial_index;
 
     Model::SubGraph *new_sub_graph = new (std::nothrow) Model::SubGraph();
@@ -245,7 +245,7 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
       new_partial_node->name_ = "Npu" + new_partial_node->name_;
     }
 
-    new_partial_node->node_type_ = mindspore::lite::NodeType_ValueNode;
+    new_partial_node->node_type_ = static_cast<int>(mindspore::lite::NodeType_ValueNode);
     new_partial_node->primitive_ = CreatePartialPrimitive(new_sub_index);
 
     while (!subgraph.nodes_.empty()) {
@@ -259,8 +259,8 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
 
       VectorErase(&main_graphs->node_indices_, node_index);
       VectorErase(&subgraph.nodes_, node_index);
-      cur_node->device_type_ = device_type;
-      op_parameters_->at(cur_node->output_indices_.at(0))->thread_num_ = thread_num;
+      cur_node->device_type_ = static_cast<int>(device_type);
+      op_parameters_->at(static_cast<int>(cur_node->output_indices_.at(0)))->thread_num_ = thread_num;
     }
 
     for (uint32_t head_index : subgraph.heads_) {
@@ -434,7 +434,7 @@ void SearchSubGraph::OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint
     if (sub.nodes_.empty()) {
       return;
     }
-    int head_size = sub.heads_.size();
+    int head_size = static_cast<int>(sub.heads_.size());
     std::vector<uint32_t> used_heads;
     for (int i = 0; i < head_size; i++) {
       uint32_t head_node_index = sub.heads_.at(i);
@@ -461,7 +461,7 @@ void SearchSubGraph::OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint
         InsertHeadNode(input_node_index, &sub);
         used_heads.push_back(head_node_index); /* delete used head at end */
       }
-      head_size = sub.heads_.size();
+      head_size = static_cast<int>(sub.heads_.size());
     }
     for (auto head_index : used_heads) {
       VectorErase(&sub.heads_, head_index);
@@ -499,9 +499,7 @@ void SearchSubGraph::InsertHeadNode(uint32_t head_node_index, Subgraph *subgraph
 
 void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph, uint32_t last_index) {
   Model::Node *node = node_list_.at(node_index);
-  if (node == nullptr) {
-    return;
-  }
+  MS_CHECK_PTR_IF_NULL(node);
 
   auto subs_iter = node_sub_map_.find(node_index);
   if (subs_iter != node_sub_map_.end()) {
@@ -633,10 +631,10 @@ void SearchSubGraph::InitSearchSubGraphByOutput() {
   sub_graphs_.clear();
   node_list_ = model_->all_nodes_;
 
-  for (uint32_t out : *output_nodes_) {
+  for (auto out : *output_nodes_) {
     Subgraph subgraph;
 
-    InsertNode(out, &subgraph, out);
+    InsertNode(static_cast<uint32_t>(out), &subgraph, static_cast<uint32_t>(out));
 
     sub_graphs_.push_back(std::move(subgraph));
   }
@@ -683,10 +681,10 @@ void SearchSubGraph::InitSubgraphRuntimeInfo(std::vector<Subgraph> *sub_graphs) 
   tmp_group.resize(sub_graphs->size());
   cor_group.resize(sub_graphs->size());
 
-  int except_value = total_cost_ * kDefaultGpu; /* major device responsible for 50% calculation */
+  int except_value = static_cast<int>(total_cost_ * kDefaultGpu); /* major device responsible for 50% calculation */
   int min_value = INT32_MAX;
 
-  dfs(0, sub_graphs->size(), 0, except_value, &min_value, &tmp_group, &cor_group, sub_graphs);
+  dfs(0, static_cast<int>(sub_graphs->size()), 0, except_value, &min_value, &tmp_group, &cor_group, sub_graphs);
 
   /* make bigger half using major_dt_ */
   int true_value = 0;
@@ -778,7 +776,7 @@ void SearchSubGraph::CalculateCostModel(std::vector<Subgraph> *sub_graphs) {
       }
 
       subgraph.cost_ = subgraph.cost_ + cost;
-      total_cost_ += cost.cost();
+      total_cost_ += static_cast<size_t>(cost.cost());
     }
   }
 }
@@ -914,7 +912,7 @@ SearchSubGraph::SearchSubGraph(const InnerContext *context, Model *model, std::v
     minor_thread_ = context_->thread_num_ - 1;
   } else if (major_dt_ == DT_CPU) {
     major_thread_ = UP_DIV(context_->thread_num_, kDefaultSubGraphSize);
-    minor_thread_ = context_->thread_num_ - major_thread_;
+    minor_thread_ = static_cast<size_t>(context_->thread_num_ - major_thread_);
   }
   MS_ASSERT(major_thread_ > 0);
   MS_ASSERT(minor_thread_ > 0);
@@ -968,7 +966,8 @@ void SearchSubGraph::InsertParallelNode(uint32_t index, Subgraph *subgraph) {
   }
 
   // search to graph to graph input , terminate it.
-  if (std::any_of(input.begin(), input.end(), [&](int input_index) { return tensors_[input_index].type_ == INPUT; })) {
+  if (std::any_of(input.begin(), input.end(),
+                  [&](uint32_t input_index) { return tensors_[input_index].type_ == INPUT; })) {
     subgraph->search_terminate_ = true;
     return;
   }

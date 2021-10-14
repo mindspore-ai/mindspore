@@ -492,12 +492,21 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer, std::v
   }
   for (int i = 0; i < layer.blobs_size(); i++) {
     std::vector<int32_t> shape;
-    ConvertShape(layer.blobs(i), &shape);
+    auto ret = ConvertShape(layer.blobs(i), &shape);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ConvertShape failed.";
+      return ret;
+    }
 
-    FcSqueezeWeightBias(layer, i, &shape);
+    ret = FcSqueezeWeightBias(layer, i, &shape);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "FcSqueezeWeightBias failed.";
+      return ret;
+    }
 
     // cal Weight num
     auto parameter = res_graph_->add_parameter();
+    MSLITE_CHECK_PTR(parameter);
     auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
     std::vector<int64_t> shape_vector;
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
