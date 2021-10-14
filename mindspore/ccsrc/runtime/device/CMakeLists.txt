@@ -36,7 +36,7 @@ if(ENABLE_MPI)
         set_property(SOURCE ${MPI_SRC_LIST}
             PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
         add_library(mpi_adapter SHARED ${MPI_SRC_LIST})
-        target_link_libraries(mpi_adapter PRIVATE mindspore::ompi)
+        target_link_libraries(mpi_adapter PRIVATE mindspore::ompi mindspore::pybind11_module -ldl ${SECUREC_LIBRARY})
     endif()
 
     if(ENABLE_GPU)

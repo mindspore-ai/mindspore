@@ -15,9 +15,9 @@
  */
 #include "runtime/device/cpu/mpi/mpi_export.h"
 #include <vector>
-#include <string>
 #include "runtime/device/cpu/mpi/mpi_adapter.h"
 
+extern "C" {
 int GetMPIRankId() {
   auto inst = mindspore::device::cpu::MPIAdapter::Instance();
   if (inst == nullptr) {
@@ -58,4 +58,5 @@ bool MPIAllGather(const float *input, float *output, const std::vector<int> &ran
     return false;
   }
   return inst->AllGather(input, output, ranks_group, data_num);
+}
 }

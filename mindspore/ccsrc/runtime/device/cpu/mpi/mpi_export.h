@@ -22,14 +22,13 @@
 #define FUNC_EXPORT __attribute__((visibility("default")))
 #endif
 
-extern "C" FUNC_EXPORT FUNC_EXPORT int GetMPIRankId();
-extern "C" FUNC_EXPORT FUNC_EXPORT int GetMPIRankSize();
-extern "C" FUNC_EXPORT bool MPIReduceScatter(const float *input, float *output, const std::vector<int> &ranks_group,
-                                             size_t data_num, const std::string &op_type);
-extern "C" FUNC_EXPORT bool MPIReduceScatterOverwriteInput(float *input, const std::vector<int> &ranks_group,
-                                                           size_t in_data_num, size_t output_size,
-                                                           const std::string &op_type, float *output);
-extern "C" FUNC_EXPORT bool MPIAllGather(const float *input, float *output, const std::vector<int> &ranks_group,
-                                         size_t data_num);
-
+extern "C" {
+FUNC_EXPORT int GetMPIRankId();
+FUNC_EXPORT int GetMPIRankSize();
+FUNC_EXPORT bool MPIReduceScatter(const float *input, float *output, const std::vector<int> &ranks_group,
+                                  size_t data_num, const std::string &op_type);
+FUNC_EXPORT bool MPIReduceScatterOverwriteInput(float *input, const std::vector<int> &ranks_group, size_t in_data_num,
+                                                size_t output_size, const std::string &op_type, float *output);
+FUNC_EXPORT bool MPIAllGather(const float *input, float *output, const std::vector<int> &ranks_group, size_t data_num);
+}
 #endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_MPI_MPI_EXPORT_H_
