@@ -64,22 +64,57 @@ class Location {
 class TraceContext;
 using TraceContextPtr = std::shared_ptr<TraceContext>;
 
+/// \brief TraceManager defined interface for debug trace management.
 class MS_CORE_API TraceManager {
  public:
+  /// \brief Constructor of TraceManager.
   TraceManager() = default;
+
+  /// \brief Destructor of TraceManager.
   ~TraceManager() = default;
+
+  /// \brief Gets current trace context.
+  ///
+  /// \return The current trace context.
   static TraceContextPtr CurrentContextInfo();
+
+  /// \brief Debug trace with the given function name and location.
+  ///
+  /// \param[in] func_name The function name for debug trace.
+  /// \param[in] location The source code location for debug trace.
   static void DebugTrace(const std::string &func_name, const LocationPtr &location);
+
+  /// \brief Debug trace with the given location.
+  ///
+  /// \param[in] location The source code location for debug trace.
   static void DebugTrace(const LocationPtr &location);
+
+  /// \brief Debug trace with the given trace info.
+  ///
+  /// \param[in] trace_info The trace info for debug.
   static void DebugTrace(const TraceInfoPtr &trace_info);
-  // debug trace with a cloned trace info with debug_info
+
+  /// \brief Debug trace with a cloned trace info and debug info.
+  ///
+  /// \param[in] debug_info The debug info for debug trace.
+  /// \param[in] trace_info The trace info for debug trace.
   static void DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info);
+
+  /// \brief End current debug trace.
   static void EndTrace();
 
+  /// \brief Clear debug info for parse or resolve.
   static void ClearParseOrResolveDebugInfo();
+
+  /// \brief Gets debug info for parse or resolve.
+  ///
+  /// \return The debug info for parse or resolve.
   static DebugInfoPtr GetParseOrResolveDebugInfo();
 
+  /// \brief Trace context stack for current thread.
   thread_local static std::stack<TraceContextPtr> trace_context_stack_;
+
+  /// \brief Debug info for parse or resolve for current thread.
   thread_local static DebugInfoPtr parse_or_resolve_debug_info_;
 };
 
@@ -127,29 +162,85 @@ class TraceContext {
   std::string func_name_;
 };
 
+/// \brief DebugInfo defined information for debug trace.
 class MS_CORE_API DebugInfo : public Base {
  public:
+  /// \brief Construct a default DebugInfo.
   DebugInfo();
 
+  /// \brief Construct DebugInfo with the given name.
+  ///
+  /// \param[in] name The DebugInfo name.
   explicit DebugInfo(const std::string &name);
 
+  /// \brief Construct DebugInfo with the given location.
+  ///
+  /// \param[in] loc The location for DebugInfo.
   explicit DebugInfo(const LocationPtr &loc);
 
+  /// \brief Destructor of DebugInfo.
   ~DebugInfo() override = default;
+
   MS_DECLARE_PARENT(DebugInfo, Base);
+
+  /// \brief Gets the debug id.
+  ///
+  /// \return The debug id.
   int64_t debug_id();
+
+  /// \brief Gets the unique id.
+  ///
+  /// \return The unique id.
   int64_t unique_id() const { return unique_id_; }
+
+  /// \brief Gets the unique id through copy.
+  ///
+  /// \return The unique id through copy.
   int64_t unique_id_through_copy() const;
+
+  /// \brief Gets the id as a string.
+  ///
+  /// \return The string id.
   std::string get_id() { return std::to_string(debug_id()); }
 
+  /// \brief Sets the trace info.
+  ///
+  /// \param[in] trace_info The trace info to be set.
   void set_trace_info(const TraceInfoPtr &trace_info) { trace_info_ = trace_info; }
+
+  /// \brief Gets the trace info.
+  ///
+  /// \return The trace info.
   TraceInfoPtr trace_info() const { return trace_info_; }
+
+  /// \brief Sets the location.
+  ///
+  /// \param[in] loc The location to be set.
   void set_location(const LocationPtr &loc) { location_ = loc; }
+
+  /// \brief Gets the location.
+  ///
+  /// \return The location.
   virtual LocationPtr location() { return location_; }
+
+  /// \brief Gets the name.
+  ///
+  /// \return The name of the DebugInfo.
   std::string name() { return name_; }
+
+  /// \brief Sets the name.
+  ///
+  /// \param[in] name The name to be set.
   void set_name(const std::string &name) { name_ = name; }
+
+  /// \brief Gets the debug name.
+  ///
+  /// \return The debug name of the DebugInfo.
   virtual std::string debug_name();
 
+  /// \brief Gets the python function name that this DebugInfo belongs to.
+  ///
+  /// \return The python function name that this DebugInfo belongs to.
   virtual std::string get_python_func_belonged() { return ""; }
 
  protected:
@@ -179,26 +270,47 @@ class MS_CORE_API DebugInfo : public Base {
   std::string name_;
 };
 
+/// \brief NodeDebugInfo defined debug information for a node.
 class MS_CORE_API NodeDebugInfo : public DebugInfo {
  public:
+  /// \brief Construct a default NodeDebugInfo.
   NodeDebugInfo() {
     if (TraceManager::CurrentContextInfo() != nullptr) {
       auto context_info = TraceManager::CurrentContextInfo();
       py_func_belonged_ = context_info->func_name();
     }
   }
+
+  /// \brief Construct NodeDebugInfo with a given name.
+  ///
+  /// \param[in] name the name of the NodeDebugInfo.
   explicit NodeDebugInfo(const std::string &name) : DebugInfo(name) {
     if (TraceManager::CurrentContextInfo() != nullptr) {
       auto context_info = TraceManager::CurrentContextInfo();
       py_func_belonged_ = context_info->func_name();
     }
   }
+
+  /// \brief Destructor of the NodeDebugInfo.
   ~NodeDebugInfo() override = default;
 
   std::string debug_name() override;
+
+  /// \brief Sets the node.
+  ///
+  /// \param[in] node The node to be set.
   void set_node(const std::shared_ptr<AnfNode> &node) { node_ = AnfNodeWeakPtr(node); }
+
+  /// \brief Gets the node.
+  ///
+  /// \return The node.
   std::shared_ptr<AnfNode> get_node() const { return node_.lock(); }
+
+  /// \brief Set python function name that this NodeDebugInfo belongs to.
+  ///
+  /// \param[in] name The python function name to be set.
   void set_py_func_belonged(const std::string &name) { py_func_belonged_ = name; }
+
   std::string get_python_func_belonged() override { return py_func_belonged_; }
 
  private:

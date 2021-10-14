@@ -45,6 +45,7 @@ static constexpr size_t GetRelPathPos() noexcept {
 }
 
 namespace mindspore {
+/// \brief The handler map for ACL.
 MS_CORE_API extern std::map<void **, std::thread *> acl_handle_map;
 #define FILE_NAME                                                                             \
   (sizeof(__FILE__) > GetRelPathPos() ? static_cast<const char *>(__FILE__) + GetRelPathPos() \
@@ -147,16 +148,27 @@ enum SubModuleId : int {
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
 #endif
 
+/// \brief Gets sub-module name by the module id.
+///
+/// \param[in] module_id The module id.
+///
+/// \return The sub-module name.
 MS_EXPORT const std::string GetSubModuleName(SubModuleId module_id);
 
+/// \brief Gets current time as a string.
+///
+/// \return The string presents current time.
 MS_EXPORT std::string GetTimeString();
 
+/// \brief The log levels of mindspore sub-module.
 MS_EXPORT extern int g_ms_submodule_log_levels[];
 
 #if defined(_WIN32) || defined(_WIN64)
+/// \brief The max log level of current thread.
 MS_EXPORT extern enum MsLogLevel this_thread_max_log_level;
 #define MS_LOG_TRY_CATCH_SCOPE
 #else
+/// \brief The max log level of current thread.
 MS_EXPORT extern thread_local enum MsLogLevel this_thread_max_log_level;
 class TryCatchGuard {
  public:
@@ -173,6 +185,7 @@ class TryCatchGuard {
 #define MS_LOG_TRY_CATCH_SCOPE mindspore::TryCatchGuard mindspore_log_try_catch_guard
 #endif
 
+/// \brief LogWriter defined interface to write log.
 class LogWriter {
  public:
   using ExceptionHandler = std::function<void(ExceptionType, const std::string &msg)>;
@@ -183,7 +196,14 @@ class LogWriter {
       : location_(location), log_level_(log_level), submodule_(submodule), exception_type_(excp_type) {}
   ~LogWriter() = default;
 
+  /// \brief Output log message from the input log stream.
+  ///
+  /// \param[in] stream The input log stream.
   MS_CORE_API void operator<(const LogStream &stream) const noexcept;
+
+  /// \brief Output log message from the input log stream and then throw exception.
+  ///
+  /// \param[in] stream The input log stream.
   MS_CORE_API void operator^(const LogStream &stream) const __attribute__((noreturn));
 
   static void set_exception_handler(ExceptionHandler exception_handler) { exception_handler_ = exception_handler; }
