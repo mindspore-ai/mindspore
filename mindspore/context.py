@@ -141,7 +141,7 @@ class _Context:
 
     Note:
         Create a context through instantiating Context object is not recommended.
-        should use context() to get the context since Context is singleton.
+        should use context() to get the context since Context is a singleton.
     """
     _instance = None
     _instance_lock = threading.Lock()

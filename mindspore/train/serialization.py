@@ -96,7 +96,7 @@ def _update_param(param, new_param, strict_load):
         if param.data.shape != new_param.data.shape:
             if not _special_process_par(param, new_param):
                 logger.error("Failed to combine the net and the parameters for param %s.", param.name)
-                msg = ("Net parameters {} shape({}) different from parameter_dict's({})"
+                msg = ("Net parameters {} shape({}) are different from parameter_dict's({})"
                        .format(param.name, param.data.shape, new_param.data.shape))
                 raise RuntimeError(msg)
 
@@ -107,7 +107,7 @@ def _update_param(param, new_param, strict_load):
                 return
 
             logger.error("Failed to combine the net and the parameters for param %s.", param.name)
-            msg = ("Net parameters {} type({}) different from parameter_dict's({})"
+            msg = ("Net parameters {} type({}) are different from parameter_dict's({})"
                    .format(param.name, param.data.dtype, new_param.data.dtype))
             raise RuntimeError(msg)
 
@@ -124,7 +124,7 @@ def _update_param(param, new_param, strict_load):
 
     elif isinstance(new_param.data, Tensor) and not isinstance(param.data, Tensor):
         logger.error("Failed to combine the net and the parameters for param %s.", param.name)
-        msg = ("Net parameters {} type({}) different from parameter_dict's({})"
+        msg = ("Net parameters {} type({}) are different from parameter_dict's({})"
                .format(param.name, type(param.data), type(new_param.data)))
         raise RuntimeError(msg)
 
@@ -572,11 +572,11 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
 
 def _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_load):
-    """When some net parameter did not load, try to continue load."""
+    """When some net parameter did not load, try to continue loading."""
     prefix_name = ""
     longest_name = param_not_load[0]
     while prefix_name != longest_name and param_not_load:
-        logger.debug("Count: {} parameters has not been loaded, try to load continue.".format(len(param_not_load)))
+        logger.debug("Count: {} parameters has not been loaded, try to continue loading.".format(len(param_not_load)))
         prefix_name = longest_name
         for net_param_name in param_not_load:
             for dict_name in parameter_dict:
@@ -628,7 +628,7 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
     """
     layout = net.parameter_layout_dict[param_name]
     if len(layout) < 6:
-        logger.info("layout dict does not contain the key %s", param_name)
+        logger.info("The layout dict does not contain the key %s", param_name)
         return param_data
 
     dev_mat = layout[0]
@@ -645,7 +645,7 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
     if param_name in net.parallel_parameter_merge_net_dict:
         allgather_net = net.parallel_parameter_merge_net_dict[param_name]
     else:
-        logger.info("need to create allgather net for %s", param_name)
+        logger.info("Need to create allgather net for %s", param_name)
         if integrated_save:
             if context.get_auto_parallel_context("pipeline_stages") > 1:
                 raise RuntimeError("Pipeline Parallel don't support Integrated save checkpoint now.")
@@ -739,7 +739,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     if 'enc_key' in kwargs.keys():
         if file_format != 'MINDIR':
-            raise ValueError(f"enc_key can be passed in only when file_format=='MINDIR', but got {file_format}")
+            raise ValueError(f"The enc_key can be passed in only when file_format=='MINDIR', but got {file_format}")
 
         enc_key = Validator.check_isinstance('enc_key', kwargs['enc_key'], bytes)
         enc_mode = 'AES-GCM'
@@ -908,8 +908,8 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
             param_data = net_dict[param_name].data.asnumpy().tobytes()
             param_proto.raw_data = param_data
         else:
-            logger.error("The parameter %s in the graph are not in the network.", param_name)
-            raise ValueError("The parameter in the graph must in the network.")
+            logger.error("The parameter %s in the graph is not in the network.", param_name)
+            raise ValueError("The parameter in the graph must be in the network.")
     if not file_name.endswith('.mindir'):
         file_name += ".mindir"
     current_path = os.path.abspath(file_name)
@@ -968,7 +968,7 @@ def _quant_export(network, *inputs, file_format, **kwargs):
 
     quant_mode = kwargs['quant_mode']
     if quant_mode not in quant_mode_formats:
-        raise KeyError(f'Quant_mode input is wrong, Please choose the right mode of the quant_mode.')
+        raise KeyError(f'The quant_mode input is wrong, Please choose the right mode of the quant_mode.')
     if quant_mode == 'NONQUANT':
         return network
     quant_net = copy.deepcopy(network)
@@ -1049,7 +1049,7 @@ def parse_print(print_file_name):
             pb_content = f.read()
         print_list.ParseFromString(pb_content)
     except BaseException as e:
-        logger.error("Failed to read the print file %s, please check the correct of the file.", print_file_name)
+        logger.error("Failed to read the print file %s, please check the correctness of the file.", print_file_name)
         raise ValueError(e.__str__())
 
     tensor_list = []
