@@ -577,7 +577,7 @@ class RNNCell(_RNNCellBase):
     Here :math:`h_t` is the hidden state at time `t`, :math:`x_t` is
     the input at time `t`, and :math:`h_{(t-1)}` is the hidden state of the
     previous layer at time `t-1` or the initial hidden state at time `0`.
-    If :attr:`nonlinearity` is ``'relu'``, then :math:`\text{ReLU}` is used instead of :math:`\tanh`.
+    If `nonlinearity` is `relu`, then `relu` is used instead of `tanh`.
 
     Args:
         input_size (int): Number of features of input.
@@ -594,7 +594,7 @@ class RNNCell(_RNNCellBase):
         - **h'** (Tensor) - Tensor of shape (batch_size, `hidden_size`).
 
     Raises:
-        TypeError: If `input_size` or `hidden_size` is not an int or not great than 0.
+        TypeError: If `input_size` or `hidden_size` is not an int or not greater than 0.
         TypeError: If `has_bias` is not a bool.
         ValueError: If `nonlinearity` is not in ['tanh', 'relu'].
 
