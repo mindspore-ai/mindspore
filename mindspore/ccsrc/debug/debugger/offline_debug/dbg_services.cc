@@ -40,7 +40,7 @@ DbgServices &DbgServices::operator=(const DbgServices &other) {
   return *this;
 }
 
-DbgServices::~DbgServices() {
+DbgServices::~DbgServices() noexcept {
   MS_LOG(INFO) << "cpp DbgServices object is deleted";
   debug_services_ = nullptr;
 }
@@ -67,7 +67,7 @@ int32_t DbgServices::Initialize(const std::string net_name, const std::string du
   // Set the memory ratio used by tensor cache. Leave 50% for other debugger backend usage.
   const uint64_t kMegabytesToBytes = 1048576;  // max_mem_usage will be bytes in unit in debugger backend.
   auto cache_mem_ratio = 0.5;
-  const uint64_t memlimit = max_mem_usage * kMegabytesToBytes * cache_mem_ratio;
+  const uint64_t memlimit = max_mem_usage * kMegabytesToBytes * (uint64_t)cache_mem_ratio;
   debug_services_->SetMemLimit(memlimit);
   return 0;
 }
@@ -97,7 +97,6 @@ int32_t DbgServices::AddWatchpoint(
       MS_LOG(DEBUG) << i << " ";
     }
 
-    // std::vector<uint32_t> root_graph_id = std::get<std::vector<uint32_t>>(attr_map["root_graph_id"]);
     std::vector<std::string> root_graph_id_str = std::get<std::vector<std::string>>(attr_map["root_graph_id"]);
     std::vector<std::uint32_t> root_graph_id;
     (void)std::transform(

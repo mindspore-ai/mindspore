@@ -364,6 +364,7 @@ void DumpJsonParser::ParseNetName(const nlohmann::json &content) {
 void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
   CheckJsonStringType(content, kIteration);
   auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
   if (e2e_dump_enabled_ || async_dump_enabled_) {
     iteration_ = content;
     if (iteration_.empty() || (!std::all_of(iteration_.begin(), iteration_.end(), [](char c) {
@@ -383,11 +384,13 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   if (iteration_ == "all") {
     return true;
   }
+  const std::string vertical_bar = "|";
+  const std::string dash = "-";
   int start = 0;
-  int end = iteration_.find("|");
+  int end = iteration_.find(vertical_bar);
   while (end != -1) {
     std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
-    int range_idx = temp.find("-");
+    int range_idx = temp.find(dash);
     if (range_idx != -1) {
       uint32_t low_range = static_cast<uint32_t>(std::stoul(temp.substr(0, IntToSize(range_idx))));
       uint32_t high_range = static_cast<uint32_t>(std::stoul(temp.substr(IntToSize(range_idx + 1), -1)));
@@ -398,10 +401,10 @@ bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
       return true;
     }
     start = end + 1;
-    end = static_cast<int>(iteration_.find("|", start));
+    end = static_cast<int>(iteration_.find(vertical_bar, start));
   }
   std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
-  int range_idx = temp.find("-");
+  int range_idx = temp.find(dash);
   if (range_idx != -1) {
     uint32_t low_range = static_cast<uint32_t>(std::stoul(temp.substr(0, IntToSize(range_idx))));
     uint32_t high_range = static_cast<uint32_t>(std::stoul(temp.substr(IntToSize(range_idx + 1), -1)));
