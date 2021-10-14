@@ -70,7 +70,6 @@ def test_flanger_eager_triangular_linear_int():
     count_unequal_element(expect_waveform, output, 0.0001, 0.0001)
 
 
-
 def test_flanger_shape_221():
     """ mindspore eager mode normal testcase:flanger op"""
     # Original waveform
@@ -191,13 +190,13 @@ def test_invalid_flanger_input():
 
     test_invalid_input("invalid modulation parameter value", 44100, 0.0, 2.0, 0.0, 71.0, 0.5, 25.0, "test",
                        Interpolation.LINEAR, TypeError,
-                       "Argument modulation with value test is not of type [<Modulation.SINUSOIDAL: 'sinusoidal'>,"
-                       " <Modulation.TRIANGULAR: 'triangular'>], but got <class 'str'>.")
+                       "Argument modulation with value test is not of type [<enum 'Modulation'>], "
+                       "but got <class 'str'>.")
 
     test_invalid_input("invalid modulation parameter value", 44100, 0.0, 2.0, 0.0, 71.0, 0.5, 25.0,
                        Modulation.SINUSOIDAL, "test", TypeError,
-                       "Argument interpolation with value test is not of type [<Interpolation.LINEAR: 'linear'>,"
-                       " <Interpolation.QUADRATIC: 'quadratic'>], but got <class 'str'>.")
+                       "Argument interpolation with value test is not of type [<enum 'Interpolation'>], "
+                       "but got <class 'str'>.")
 
 
 if __name__ == '__main__':

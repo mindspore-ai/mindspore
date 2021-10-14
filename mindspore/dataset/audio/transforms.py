@@ -33,7 +33,7 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
 
 class AudioTensorOperation(TensorOperation):
     """
-    Base class of Audio Tensor Ops
+    Base class of Audio Tensor Ops.
     """
 
     def __call__(self, *input_tensor_list):
@@ -266,6 +266,7 @@ class Biquad(TensorOperation):
         >>> biquad_op = audio.Biquad(0.01, 0.02, 0.13, 1, 0.12, 0.3)
         >>> waveform_filtered = biquad_op(waveform)
     """
+
     @check_biquad
     def __init__(self, b0, b1, b2, a0, a1, a2):
         self.b0 = b0
@@ -294,6 +295,7 @@ class ComplexNorm(AudioTensorOperation):
         >>> transforms = [audio.ComplexNorm()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_complex_norm
     def __init__(self, power=1.0):
         self.power = power
@@ -360,7 +362,7 @@ class DeemphBiquad(AudioTensorOperation):
     Design two-pole deemph filter for audio waveform of dimension of (..., time).
 
     Args:
-        Sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
+        sample_rate (int): sampling rate of the waveform, e.g. 44100 (Hz),
             the value must be 44100 or 48000.
 
     Examples:
@@ -371,6 +373,7 @@ class DeemphBiquad(AudioTensorOperation):
         >>> transforms = [audio.DeemphBiquad(44100)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_deemph_biquad
     def __init__(self, sample_rate):
         self.sample_rate = sample_rate
@@ -501,7 +504,6 @@ class Fade(AudioTensorOperation):
 DE_C_MODULATION_TYPE = {Modulation.SINUSOIDAL: cde.Modulation.DE_MODULATION_SINUSOIDAL,
                         Modulation.TRIANGULAR: cde.Modulation.DE_MODULATION_TRIANGULAR}
 
-
 DE_C_INTERPOLATION_TYPE = {Interpolation.LINEAR: cde.Interpolation.DE_INTERPOLATION_LINEAR,
                            Interpolation.QUADRATIC: cde.Interpolation.DE_INTERPOLATION_QUADRATIC}
 
@@ -571,6 +573,7 @@ class FrequencyMasking(AudioTensorOperation):
         >>> transforms = [audio.FrequencyMasking(frequency_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_masking
     def __init__(self, iid_masks=False, frequency_mask_param=0, mask_start=0, mask_value=0.0):
         self.iid_masks = iid_masks
@@ -634,6 +637,7 @@ class LFilter(AudioTensorOperation):
         >>> transforms = [audio.LFilter(a_coeffs, b_coeffs)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_lfilter
     def __init__(self, a_coeffs, b_coeffs, clamp=True):
         self.a_coeffs = a_coeffs
@@ -662,6 +666,7 @@ class LowpassBiquad(AudioTensorOperation):
         >>> transforms = [audio.LowpassBiquad(4000, 1500, 0.7)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_lowpass_biquad
     def __init__(self, sample_rate, cutoff_freq, Q=0.707):
         self.sample_rate = sample_rate
@@ -846,6 +851,7 @@ class TimeStretch(AudioTensorOperation):
         >>> transforms = [audio.TimeStretch()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
+
     @check_time_stretch
     def __init__(self, hop_length=None, n_freq=201, fixed_rate=None):
         self.n_freq = n_freq
