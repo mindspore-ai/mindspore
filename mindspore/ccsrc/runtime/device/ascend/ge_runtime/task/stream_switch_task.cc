@@ -17,6 +17,7 @@
 #include "runtime/device/ascend/ge_runtime/task/stream_switch_task.h"
 #include "runtime/kernel.h"
 #include "runtime/device/ascend/ge_runtime/task/task_factory.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore::ge::model_runner {
 StreamSwitchTask::StreamSwitchTask(const ModelContext &model_context,
@@ -51,7 +52,7 @@ void StreamSwitchTask::Distribute() {
   void *input = reinterpret_cast<void *>(task_info_->input_addr());
   rtCondition_t cond = static_cast<rtCondition_t>(task_info_->cond());
   void *value = reinterpret_cast<void *>(task_info_->value_addr());
-  rtStream_t true_stream = stream_list_[task_info_->true_stream_id()];
+  rtStream_t true_stream = stream_list_[LongToSize(task_info_->true_stream_id())];
   rtSwitchDataType_t data_type = static_cast<rtSwitchDataType_t>(task_info_->data_type());
 
   MS_LOG(INFO) << "InitStreamSwitchTask, cond: " << cond << ", trueStream: " << true_stream
