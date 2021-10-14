@@ -22,38 +22,34 @@ namespace mindspore {
 namespace lite {
 Optimizer::~Optimizer() {
   for (auto pass : graph_passes_) {
-    if (pass != nullptr) {
-      delete (pass);
-    }
+    delete (pass);
   }
 
   for (auto pass : node_passes_) {
-    if (pass != nullptr) {
-      delete (pass);
-    }
+    delete (pass);
   }
 }
 
-void Optimizer::AddPass(GraphPass *graphPass) {
-  if (graphPass != nullptr) {
-    this->graph_passes_.emplace_back(graphPass);
+void Optimizer::AddPass(GraphPass *graph_pass) {
+  if (graph_pass != nullptr) {
+    this->graph_passes_.emplace_back(graph_pass);
   }
 }
 
-void Optimizer::AddPass(NodePass *nodePass) {
-  if (nodePass != nullptr) {
-    this->node_passes_.emplace_back(nodePass);
+void Optimizer::AddPass(NodePass *node_pass) {
+  if (node_pass != nullptr) {
+    this->node_passes_.emplace_back(node_pass);
   }
 }
 
-STATUS Optimizer::Run(schema::MetaGraphT *graphDefT) {
-  MS_ASSERT(graphDefT != nullptr);
+STATUS Optimizer::Run(schema::MetaGraphT *graph_defT) {
+  MS_ASSERT(graph_defT != nullptr);
   STATUS status;
   bool ifNotChanged = true;
   // each node should go through all node pass not each node pass go through all node
-  for (auto &opDef : graphDefT->nodes) {
+  for (auto &opDef : graph_defT->nodes) {
     for (auto pass : this->node_passes_) {
-      auto graph_node = new (std::nothrow) GraphNode(graphDefT, opDef.get());
+      auto graph_node = new (std::nothrow) GraphNode(graph_defT, opDef.get());
       if (graph_node == nullptr) {
         return RET_ERROR;
       }
@@ -73,7 +69,7 @@ STATUS Optimizer::Run(schema::MetaGraphT *graphDefT) {
 
   for (auto pass : this->graph_passes_) {
     CHECK_NULL_RETURN(pass);
-    status = pass->Run(graphDefT);
+    status = pass->Run(graph_defT);
     if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
       MS_LOG(ERROR) << "Run GraphPass failed";
       return status;

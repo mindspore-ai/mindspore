@@ -162,7 +162,6 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     MS_LOG(ERROR) << "MarkTrainOp failed.";
     return RET_ERROR;
   }
-  CHECK_NULL_RETURN(config);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
   auto fusion_pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
@@ -214,8 +213,6 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
 }
 
 int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  CHECK_NULL_RETURN(old_graph);
-  CHECK_NULL_RETURN(config);
   MS_LOG(DEBUG) << "Run ParallelPass start";
   if (config->trainModel || config->parallel_split_config_.parallel_split_type_ == converter::SplitNo) {
     return RET_OK;
@@ -274,8 +271,6 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
 }
 
 int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  CHECK_NULL_RETURN(old_graph);
-  CHECK_NULL_RETURN(config);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
@@ -298,6 +293,7 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
 
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   auto acl_pass = std::make_shared<opt::AclPass>(*config);
+  CHECK_NULL_RETURN(acl_pass);
   if (!acl_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Acl pass failed.";
     return RET_ERROR;
@@ -308,11 +304,8 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
   CHECK_NULL_RETURN(convert_pm);
   convert_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel));
-  auto infershape_pass = std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel);
-  CHECK_NULL_RETURN(infershape_pass);
-  convert_pm->AddPass(infershape_pass);
-  auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
-  convert_pm->AddPass(update_conv2d_param_pass);
+  convert_pm->AddPass(std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel));
+  convert_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run graph convert pass failed.";
@@ -322,7 +315,6 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
 }
 
 int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  CHECK_NULL_RETURN(config);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
   CHECK_NULL_RETURN(optimizer);
@@ -410,10 +402,7 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Fla
 
 FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   MS_ASSERT(old_graph != nullptr);
-  if (config == nullptr) {
-    MS_LOG(ERROR) << "config should be specified";
-    return nullptr;
-  }
+  MS_ASSERT(config != nullptr);
 
   auto status = RunConvertPass(old_graph, config);
   if (status != RET_OK) {
@@ -533,6 +522,8 @@ bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
 }
 
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {
+  MS_CHECK_TRUE_MSG(main_graph != nullptr, nullptr, "Input func_graph is nullptr");
+  MS_CHECK_TRUE_MSG(config != nullptr, nullptr, "Input converter config is nullptr");
   if (!StoreBuiltinPass(config)) {
     MS_LOG(ERROR) << "store pass failed.";
     return nullptr;

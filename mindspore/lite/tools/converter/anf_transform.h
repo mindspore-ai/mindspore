@@ -57,7 +57,7 @@ class AnfTransform {
 
   int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
-  bool StoreBuiltinPass(const converter::Flags *config);
+  static bool StoreBuiltinPass(const converter::Flags *config);
 
   static STATUS MarkTrainInputOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 

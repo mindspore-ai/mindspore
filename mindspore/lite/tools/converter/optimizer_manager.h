@@ -33,13 +33,13 @@ class PassStorage {
     if (registry::PassRegistry::GetPassFromStoreRoom(pass_name) != nullptr) {
       return RET_ERROR;
     }
-    pass_stroge_[pass_name] = pass;
+    pass_storage_[pass_name] = pass;
     return RET_OK;
   }
-  static opt::PassPtr GetPassFromStorage(const std::string &pass_name) { return pass_stroge_[pass_name]; }
+  static opt::PassPtr GetPassFromStorage(const std::string &pass_name) { return pass_storage_[pass_name]; }
 
  private:
-  static std::map<std::string, opt::PassPtr> pass_stroge_;
+  static std::map<std::string, opt::PassPtr> pass_storage_;
 };
 
 bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::string> &pass_names);

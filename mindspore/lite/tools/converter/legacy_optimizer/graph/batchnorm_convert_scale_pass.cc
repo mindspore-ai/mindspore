@@ -87,6 +87,7 @@ STATUS BatchNormConvertScalePass::ConvertBNToScale(MetaGraphT *graph, const std:
   } else {
     scaleParam->axis = 1;
   }
+  delete (reinterpret_cast<mindspore::schema::BatchNormT *>(bnNode->primitive->value.value));
   bnNode->primitive->value.value = scaleParam.release();
   bnNode->inputIndex.clear();
   bnNode->inputIndex.push_back(input0);

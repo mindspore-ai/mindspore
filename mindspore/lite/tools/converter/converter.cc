@@ -36,7 +36,7 @@ namespace mindspore {
 namespace lite {
 namespace {
 void InitConverterParameters(const converter::Flags &flag, converter::ConverterParameters *converter_parameters) {
-  MS_ASSERT(converter_parameters);
+  MS_ASSERT(converter_parameters != nullptr);
   converter_parameters->fmk = flag.fmk;
   converter_parameters->model_file = flag.modelFile;
   converter_parameters->weight_file = flag.weightFile;
@@ -82,6 +82,8 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     MS_LOG(ERROR) << "Input flag is nullptr";
     return nullptr;
   }
+  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
+  MS_CHECK_TRUE_MSG(metagraph_transform_ != nullptr, nullptr, "metagraph_transform_ init failed");
 
   // load plugin
   static std::vector<std::shared_ptr<DynamicLibraryLoader>> dl_loaders;
@@ -134,6 +136,7 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     MS_LOG(ERROR) << "the num of setting output_names is greater than actual, " << output_names.size() << " > "
                   << meta_graph->outputIndex.size() << ".";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    delete meta_graph;
     return nullptr;
   }
   for (size_t idx = 0; idx < output_names.size(); idx++) {

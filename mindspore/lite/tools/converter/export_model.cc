@@ -47,6 +47,8 @@ void CloneGraphInputs(const FuncGraphPtr &origin, const FuncGraphPtr &mirror, No
       mirror_input->set_abstract(input->abstract()->Clone());
     }
     mirror_input->set_name(input->fullname_with_scope());
+    MS_ASSERT(origin_map->find(input->fullname_with_scope()) != origin_map->end());
+    MS_ASSERT(mirror_map->find(input->fullname_with_scope()) != mirror_map->end());
     (*origin_map)[input->fullname_with_scope()].push_back(input);
     (*mirror_map)[input->fullname_with_scope()].push_back(mirror_input);
   }
@@ -195,7 +197,8 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
 }  // namespace
 
 STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
-  MS_ASSERT(graph != nullptr && flags != nullptr);
+  CHECK_NULL_RETURN(graph);
+  CHECK_NULL_RETURN(flags);
   auto mirror_graph = CloneFuncGraph(graph, flags);
   if (mirror_graph == nullptr) {
     MS_LOG(ERROR) << "Clone funcGraph failed.";
@@ -225,15 +228,21 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     return RET_ERROR;
   }
   auto metagraph_transform = std::make_unique<GraphDefTransform>();
-  CHECK_NULL_RETURN(metagraph_transform);
+  if (metagraph_transform == nullptr) {
+    MS_LOG(ERROR) << "Create metagraph_transform return nullptr";
+    delete meta_graph;
+    return RET_ERROR;
+  }
   metagraph_transform->SetGraphDef(meta_graph);
   auto status = metagraph_transform->Transform(*flags);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Transform meta graph failed " << status;
+    delete meta_graph;
     return RET_ERROR;
   }
   meta_graph->version = Version();
   status = Storage::Save(*meta_graph, "model");
+  delete meta_graph;
   std::ostringstream oss;
   if (status != RET_OK) {
     oss << "SAVE GRAPH FAILED:" << status << " " << lite::GetErrorInfo(status);
@@ -241,8 +250,6 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     std::cout << oss.str() << std::endl;
     return status;
   }
-
-  delete meta_graph;
   return status;
 }
 }  // namespace lite

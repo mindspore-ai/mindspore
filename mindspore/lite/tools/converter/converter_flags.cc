@@ -184,14 +184,17 @@ int Flags::InitInTensorShape() {
     auto name = string_split[0];
     if (name.empty()) {
       MS_LOG(ERROR) << "input tensor name is empty";
+      return lite::RET_ERROR;
     }
     auto dim_strs = string_split[1];
     if (dim_strs.empty()) {
       MS_LOG(ERROR) << "input tensor dim string is empty";
+      return lite::RET_ERROR;
     }
     auto dims = lite::StrSplit(dim_strs, std::string(","));
     if (dims.empty()) {
       MS_LOG(ERROR) << "input tensor dim is empty";
+      return lite::RET_ERROR;
     }
     for (const auto &dim : dims) {
       if (std::stoi(dim) < 0) {
@@ -227,8 +230,8 @@ int Flags::InitExtendedIntegrationInfo(const lite::ConfigFileParser &config_file
       MS_LOG(ERROR) << "extended plugin library's num is too big, which shouldn't be larger than 10.";
       return RET_INPUT_PARAM_INVALID;
     }
-    for (size_t i = 0; i < relative_path.size(); i++) {
-      this->pluginsPath.push_back(lite::RealPath(relative_path[i].c_str()));
+    for (auto &i : relative_path) {
+      this->pluginsPath.push_back(lite::RealPath(i.c_str()));
     }
   }
 
@@ -435,6 +438,9 @@ bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *pa
   // parall_split_type will extend by other user's attr
   parallel_split_config->parallel_split_type_ = SplitByUserRatio;
   // unsuitable rate
+  if (smaller_rate == 0) {
+    return false;
+  }
   return bigger_rate / smaller_rate <= kMaxSplitRatio;
 }
 
