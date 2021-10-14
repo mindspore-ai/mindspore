@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,13 @@
 
 namespace mindspore {
 // TypeRefKey type
+/// \brief RefKeyType defines an Object class whose type is RefKey.
 class MS_CORE_API RefKeyType : public Object {
  public:
+  /// \brief Default constructor for RefKeyType.
   RefKeyType() : Object(kObjectTypeRefKey) {}
+
+  /// \brief Destructor of RefKeyType.
   ~RefKeyType() override {}
   MS_DECLARE_PARENT(RefKeyType, Object)
 
@@ -40,10 +44,18 @@ class MS_CORE_API RefKeyType : public Object {
 };
 
 // TypeRef type
+/// \brief RefType defines a TensorType class whose type is Ref.
 class MS_CORE_API RefType : public TensorType {
  public:
+  /// \brief Default constructor for RefType.
   RefType() : TensorType() {}
+
+  /// \brief Constructor for RefType.
+  ///
+  /// \param[in] subtype Define the TensorType for RefType object to refer to.
   explicit RefType(const TensorTypePtr &subtype) : TensorType(subtype->element()) {}
+
+  /// \brief Destructor of RefType.
   ~RefType() override {}
   MS_DECLARE_PARENT(RefType, TensorType)
 
