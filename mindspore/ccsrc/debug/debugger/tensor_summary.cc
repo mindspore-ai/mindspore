@@ -83,9 +83,8 @@ double VarianceAndMeanCalculator::GetMean() const { return mean; }
 double VarianceAndMeanCalculator::GetVariance() const {
   if (count > 1) {
     return m2 / (count - 1);
-  } else {
-    return 0.0;
   }
+  return 0.0;
 }
 
 double VarianceAndMeanCalculator::GetStandardDeviation() { return sqrt(GetVariance()); }
@@ -189,7 +188,7 @@ void TensorSummary<T>::TensorStatistics(DbgDataType dtype_value) {
       sum_elements += current_value;
     }
   }
-  int value_count = zero_count_ + neg_zero_count_ + pos_zero_count_;
+  unsigned int value_count = zero_count_ + neg_zero_count_ + pos_zero_count_;
   avg_ = sum_elements / value_count;
 }
 
@@ -254,27 +253,35 @@ double_t TensorSummary<T>::StatLookup(const std::string &parameter_name, const D
 
   if (param_type == "max") {
     return max_;
-  } else if (param_type == "min") {
+  }
+  if (param_type == "min") {
     return min_;
-  } else if (param_type == "max_min") {
+  }
+  if (param_type == "max_min") {
     return max_ - min_;
-  } else if (param_type == "mean") {
+  }
+  if (param_type == "mean") {
     return current_mean_variance_.GetMean();
-  } else if (param_type == "sd") {
+  }
+  if (param_type == "sd") {
     return current_mean_variance_.GetStandardDeviation();
-  } else if (param_type == "abs_mean") {
+  }
+  if (param_type == "abs_mean") {
     if (means_.find("abs_current_mean") != means_.end()) {
       return means_["abs_current_mean"]->GetMean();
     }
-  } else if (param_type == "abs_mean_update_ratio" && prev_tensor_ptr_) {
+  }
+  if (param_type == "abs_mean_update_ratio" && prev_tensor_ptr_) {
     if (means_.find("curr_prev_diff_mean") != means_.end() && means_.find("abs_prev_mean") != means_.end()) {
       return means_["curr_prev_diff_mean"]->GetMean() / (means_["abs_prev_mean"]->GetMean() + epsilon_);
     }
-  } else if (param_type == "range_percentage") {
+  }
+  if (param_type == "range_percentage") {
     if (range_counts_.find(wp.id) != range_counts_.end()) {
       return range_counts_[wp.id]->GetPercentInRange();
     }
-  } else if (param_type == "zero_percentage") {
+  }
+  if (param_type == "zero_percentage") {
     return GetZeroValPercent();
   }
   return std::numeric_limits<double_t>::quiet_NaN();
@@ -285,13 +292,17 @@ double_t TensorSummary<T>::StatLookup(const DebugServices::watchpoint_t &wp) {
   CONDITION_TYPE type = wp.condition.type;
   if (type == CONDITION_TYPE::MAX_LT || type == CONDITION_TYPE::MAX_GT) {
     return max_;
-  } else if (type == CONDITION_TYPE::MIN_LT || type == CONDITION_TYPE::MIN_GT) {
+  }
+  if (type == CONDITION_TYPE::MIN_LT || type == CONDITION_TYPE::MIN_GT) {
     return min_;
-  } else if (type == CONDITION_TYPE::MEAN_LT || type == CONDITION_TYPE::MEAN_GT) {
+  }
+  if (type == CONDITION_TYPE::MEAN_LT || type == CONDITION_TYPE::MEAN_GT) {
     return current_mean_variance_.GetMean();
-  } else if (type == CONDITION_TYPE::SD_LT || type == CONDITION_TYPE::SD_GT) {
+  }
+  if (type == CONDITION_TYPE::SD_LT || type == CONDITION_TYPE::SD_GT) {
     return current_mean_variance_.GetStandardDeviation();
-  } else if (type == CONDITION_TYPE::MAX_MIN_GT || type == CONDITION_TYPE::MAX_MIN_LT) {
+  }
+  if (type == CONDITION_TYPE::MAX_MIN_GT || type == CONDITION_TYPE::MAX_MIN_LT) {
     return max_ - min_;
   }
   return std::numeric_limits<double_t>::quiet_NaN();

@@ -91,7 +91,6 @@ int32_t DbgServices::AddWatchpoint(
       MS_LOG(DEBUG) << i << " ";
     }
 
-    // std::vector<uint32_t> root_graph_id = std::get<std::vector<uint32_t>>(attr_map["root_graph_id"]);
     std::vector<std::string> root_graph_id_str = std::get<std::vector<std::string>>(attr_map["root_graph_id"]);
     std::vector<std::uint32_t> root_graph_id;
     (void)std::transform(

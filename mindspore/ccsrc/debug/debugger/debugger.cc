@@ -123,10 +123,9 @@ void Debugger::Init(const uint32_t device_id, const std::string device_target) {
 bool IsTypeDebuggerSupported(TypeId type) {
   if (type < TypeId::kNumberTypeEnd && type > TypeId::kNumberTypeBegin && type != kNumberTypeComplex64) {
     return true;
-  } else {
-    MS_LOG(INFO) << "Debugger does not support type: " << TypeIdLabel(type);
-    return false;
   }
+  MS_LOG(INFO) << "Debugger does not support type: " << TypeIdLabel(type);
+  return false;
 }
 
 void Debugger::EnableDebugger() {
@@ -949,9 +948,9 @@ void AddTensorStatInfo(const DebugServices::TensorStat &tensor_stat,
 
   Statistics *tensor_statistics = tensor_summary_item.mutable_statistics();
   tensor_statistics->set_is_bool(tensor_stat.is_bool);
-  tensor_statistics->set_max_value(tensor_stat.max_value);
-  tensor_statistics->set_min_value(tensor_stat.min_value);
-  tensor_statistics->set_avg_value(tensor_stat.avg_value);
+  tensor_statistics->set_max_value(static_cast<float>(tensor_stat.max_value));
+  tensor_statistics->set_min_value(static_cast<float>(tensor_stat.min_value));
+  tensor_statistics->set_avg_value(static_cast<float>(tensor_stat.avg_value));
   tensor_statistics->set_count(tensor_stat.count);
   tensor_statistics->set_neg_zero_count(tensor_stat.neg_zero_count);
   tensor_statistics->set_pos_zero_count(tensor_stat.pos_zero_count);
@@ -1058,7 +1057,7 @@ std::list<TensorBase> Debugger::LoadTensorsBase(const ProtoVector<TensorProto> &
     // tensor was found creating tensor base object.
     TensorBase tensor_base_item;
     tensor_base_item.set_data_size((int64_t)tensor->GetByteSize());
-    tensor_base_item.set_data_type((int64_t)tensor->GetType());
+    tensor_base_item.set_data_type((int32_t)tensor->GetType());
     for (auto elem : tensor->GetShape()) {
       tensor_base_item.add_shape(elem);
     }

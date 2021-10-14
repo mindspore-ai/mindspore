@@ -37,16 +37,12 @@ using debugger::WatchpointHit;
 namespace mindspore {
 class GrpcClient {
  public:
-  // constructor
   GrpcClient(const std::string &host, const std::string &port);
 
-  // deconstructor
   ~GrpcClient() = default;
 
-  // init
   void Init(const std::string &host, const std::string &port);
 
-  // reset
   void Reset();
 
   EventReply WaitForCommand(const Metadata &metadata);
