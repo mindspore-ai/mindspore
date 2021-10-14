@@ -844,14 +844,14 @@ def set_ps_context(**kwargs):
         Some other environment variables should also be set for parameter server training mode.
         These environment variables are listed below:
 
-    - MS_SERVER_NUM: Server number
-    - MS_WORKER_NUM: Worker number
-    - MS_SCHED_HOST: Scheduler IP address
-    - MS_SCHED_PORT: Scheduler port
-    - MS_ROLE: The role of this process:
-    - MS_SCHED: represents the scheduler,
-    - MS_WORKER: represents the worker,
-    - MS_PSERVER: represents the Server
+        MS_SERVER_NUM: Server number
+        MS_WORKER_NUM: Worker number
+        MS_SCHED_HOST: Scheduler IP address
+        MS_SCHED_PORT: Scheduler port
+        MS_ROLE: The role of this process:
+        MS_SCHED: represents the scheduler,
+        MS_WORKER: represents the worker,
+        MS_PSERVER: represents the Server
 
     Args:
         enable_ps (bool): Whether to enable parameter server training mode.
@@ -881,6 +881,9 @@ def get_ps_context(attr_key):
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
+
+    Examples:
+        >>> context.get_ps_context(enable_ps)
     """
     return _get_ps_context(attr_key)
 
