@@ -57,24 +57,55 @@ bool ResizeBilinearGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBilinearGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBilinearGradOutputNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
+    return LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    return LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+    return false;
   }
-  return true;
 }
 
 template <typename T>
-void ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
+bool ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                const std::vector<AddressPtr> &outputs) const {
-  const auto *dloss_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  if (memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size) != EOK) {
+    MS_LOG(EXCEPTION) << "Output buffer memset failed.";
+    return false;
+  }
+  float *float_dloss_addr;
+  float *float_output_addr;
+  if (dtype_ == kNumberTypeFloat16) {
+    auto *input_addr_T = reinterpret_cast<T *>(inputs[0]->addr);
+    size_t input_mem_size = inputs[0]->size / sizeof(T) * sizeof(float);
+    float_dloss_addr = reinterpret_cast<float *>(malloc(input_mem_size));
+    if (float_dloss_addr == NULL) {
+      MS_LOG(ERROR) << "Malloc memory failed.";
+      return false;
+    }
+    for (size_t i = 0; i < ((inputs[0]->size) / sizeof(T)); ++i) {
+      float_dloss_addr[i] = static_cast<float>(input_addr_T[i]);
+    }
 
-  auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "Output buffer memset failed, ret:" << ret;
+    size_t output_mem_size = outputs[0]->size / sizeof(T) * sizeof(float);
+    float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
+    if (float_output_addr == NULL) {
+      free(float_dloss_addr);
+      MS_LOG(ERROR) << "Malloc memory failed.";
+      return false;
+    }
+    size_t memset_size = outputs[0]->size / sizeof(T) * sizeof(float);
+    if (memset_s(float_output_addr, memset_size, 0, memset_size) != EOK) {
+      MS_LOG(EXCEPTION) << "Output buffer memset failed.";
+      return false;
+    }
+  } else if (dtype_ == kNumberTypeFloat32) {
+    float_dloss_addr = reinterpret_cast<float *>(inputs[0]->addr);
+    float_output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported datatype.";
+    return false;
   }
 
   size_t batch_size = shape_[0];
@@ -100,19 +131,31 @@ void ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
           const size_t right_x_index = std::min(static_cast<size_t>(ceilf(in_x)), out_width - 1);
           const float x_lerp = in_x - floorf(in_x);
           const float inverse_x_lerp = 1.0 - x_lerp;
-          output_addr[top_y_index * out_width + left_x_index] +=
-            dloss_addr[h * in_width + w] * T(inverse_y_lerp * inverse_x_lerp);
-          output_addr[top_y_index * out_width + right_x_index] +=
-            dloss_addr[h * in_width + w] * T(inverse_y_lerp * x_lerp);
-          output_addr[bottom_y_index * out_width + left_x_index] +=
-            dloss_addr[h * in_width + w] * T(y_lerp * inverse_x_lerp);
-          output_addr[bottom_y_index * out_width + right_x_index] += dloss_addr[h * in_width + w] * T(y_lerp * x_lerp);
+          float_output_addr[top_y_index * out_width + left_x_index] +=
+            float_dloss_addr[h * in_width + w] * static_cast<float>(inverse_y_lerp * inverse_x_lerp);
+          float_output_addr[top_y_index * out_width + right_x_index] +=
+            float_dloss_addr[h * in_width + w] * static_cast<float>(inverse_y_lerp * x_lerp);
+          float_output_addr[bottom_y_index * out_width + left_x_index] +=
+            float_dloss_addr[h * in_width + w] * static_cast<float>(y_lerp * inverse_x_lerp);
+          float_output_addr[bottom_y_index * out_width + right_x_index] +=
+            float_dloss_addr[h * in_width + w] * static_cast<float>(y_lerp * x_lerp);
+
+          output_addr[top_y_index * out_width + left_x_index] =
+            static_cast<T>(float_output_addr[top_y_index * out_width + left_x_index]);
+          output_addr[top_y_index * out_width + right_x_index] =
+            static_cast<T>(float_output_addr[top_y_index * out_width + right_x_index]);
+          output_addr[bottom_y_index * out_width + left_x_index] =
+            static_cast<T>(float_output_addr[bottom_y_index * out_width + left_x_index]);
+          output_addr[bottom_y_index * out_width + right_x_index] =
+            static_cast<T>(float_output_addr[bottom_y_index * out_width + right_x_index]);
         }
       }
       output_addr += out_hw_size;
-      dloss_addr += in_hw_size;
+      float_dloss_addr += in_hw_size;
+      float_output_addr += out_hw_size;
     }
   }
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore
