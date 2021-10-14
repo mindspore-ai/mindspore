@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ constexpr auto kNameElu = "Elu";
 class MS_CORE_API Elu : public PrimitiveC {
  public:
   /// \brief Constructor.
-  Elu() : PrimitiveC(kNameElu) {}
+  Elu() : PrimitiveC(kNameElu) { InitIOName({"x"}, {"output"}); }
   /// \brief Destructor.
   ~Elu() = default;
   MS_DECLARE_PARENT(Elu, PrimitiveC);

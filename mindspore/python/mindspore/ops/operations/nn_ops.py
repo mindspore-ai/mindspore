@@ -715,7 +715,7 @@ class ReLUV2(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
 
 
-class Elu(PrimitiveWithInfer):
+class Elu(Primitive):
     r"""
     Computes exponential linear:
 
@@ -762,13 +762,7 @@ class Elu(PrimitiveWithInfer):
         """Initialize Elu"""
         validator.check_value_type("alpha", alpha, [float], self.name)
         validator.check_number("alpha", alpha, 1.0, Rel.EQ, self.name)
-
-    def infer_shape(self, input_x):
-        return input_x
-
-    def infer_dtype(self, input_x):
-        validator.check_tensor_dtype_valid('input_x', input_x, mstype.float_type, self.name)
-        return input_x
+        self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
 
 
 class HSwish(PrimitiveWithInfer):

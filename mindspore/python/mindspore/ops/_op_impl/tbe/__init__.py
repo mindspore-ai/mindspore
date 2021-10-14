@@ -176,7 +176,9 @@ from .split_d import _split_d_tbe
 from .exp import _exp_tbe
 from .expm1 import _expm1_tbe
 from .elu import _elu_tbe
+from .elu_ds import _elu_ds_tbe
 from .elu_grad import _elu_grad_tbe
+from .elu_grad_ds import _elu_grad_ds_tbe
 from .div import _div_tbe
 from .div_ds import _div_ds_tbe
 from .log import _log_tbe
