@@ -607,7 +607,7 @@ class RandomResizedCrop(py_transforms.PyTensorOperation):
 
 class CenterCrop(py_transforms.PyTensorOperation):
     """
-    Crop the central reigion of the input PIL Image with the given size.
+    Crop the central region of the input PIL Image with the given size.
 
     Args:
         size (Union[int, sequence]): The output size of the cropped image.
@@ -807,6 +807,7 @@ class TenCrop(py_transforms.PyTensorOperation):
             otherwise horizontally (default=False).
 
     Examples:
+        >>> import numpy
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = Compose([py_vision.Decode(),
         ...                            py_vision.TenCrop(size=200),
