@@ -27,14 +27,33 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduce = "Reduce";
+/// \brief Reduce defined Reduce operator prototype of lite.
 class MS_CORE_API Reduce : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Reduce() : PrimitiveC(kNameReduce) { InitIOName({"input_x", "axis"}, {"y"}); }
+
+  /// \brief Constructor.
   explicit Reduce(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"input_x", "axis"}, {"y"}); }
+
+  /// \brief Destructor.
   ~Reduce() = default;
+
   MS_DECLARE_PARENT(Reduce, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] keep_dims Define whether keep the dims reduced, default false.
   void Init(const bool keep_dims = false);
+
+  /// \brief Method to set keep_dims attribute.
+  ///
+  /// \param[in] keep_dims Define whether keep the dims reduced, default false.
   void set_keep_dims(const bool keep_dims);
+
+  /// \brief Method to get keep_dims attribute.
+  ///
+  /// \return keep_dims attribute.
   bool get_keep_dims() const;
 };
 AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
