@@ -76,35 +76,6 @@ std::string LiteKernel::ToString() const {
   return oss.str();
 }
 
-void LiteKernel::FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope_kernels) {
-  // clean io kernels
-  this->in_kernels_.clear();
-  this->out_kernels_.clear();
-  // find io kernels, need optimize time
-  for (auto *tensor : this->in_tensors()) {
-    MS_ASSERT(tensor != nullptr);
-    for (auto *scope_kernel : scope_kernels) {
-      if (scope_kernel == this) {
-        continue;
-      }
-      if (lite::IsContain(scope_kernel->out_tensors(), tensor) && !lite::IsContain(this->in_kernels(), scope_kernel)) {
-        this->AddInKernel(scope_kernel);
-      }
-    }
-  }
-
-  for (auto *tensor : this->out_tensors()) {
-    MS_ASSERT(tensor != nullptr);
-    for (auto *scope_kernel : scope_kernels) {
-      if (scope_kernel == this) {
-        continue;
-      }
-      if (lite::IsContain(scope_kernel->in_tensors(), tensor) && !lite::IsContain(this->out_kernels(), scope_kernel)) {
-        this->AddOutKernel(scope_kernel);
-      }
-    }
-  }
-}
 int LiteKernel::DoExecute() {
   auto ret = kernel_->Execute();
   if ((ret == lite::RET_OK) && (desc_.provider != kBuiltin)) {

@@ -16,6 +16,7 @@
 
 #include "src/lite_kernel_util.h"
 #include <queue>
+#include <unordered_map>
 #include "src/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
@@ -237,4 +238,40 @@ bool LiteKernelUtil::InputsContainsSpecificNode(const kernel::LiteKernel *kernel
   }
   return false;
 }
+
+void LiteKernelUtil::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels) {
+  std::unordered_map<lite::Tensor *, kernel::LiteKernel *> tensor_pre_kernel;
+  std::unordered_map<lite::Tensor *, std::vector<kernel::LiteKernel *>> tensor_post_kernels;
+  for (auto *kernel : kernels) {
+    for (auto *tensor : kernel->out_tensors()) {
+      tensor_pre_kernel[tensor] = kernel;
+    }
+    for (auto *tensor : kernel->in_tensors()) {
+      (tensor_post_kernels[tensor]).push_back(kernel);
+    }
+  }
+
+  for (auto *kernel : kernels) {
+    kernel->set_in_kernels({});
+    for (auto *tensor : kernel->in_tensors()) {
+      auto iter = tensor_pre_kernel.find(tensor);
+      if (iter != tensor_pre_kernel.end() && kernel != iter->second) {
+        kernel->AddInKernel(iter->second);
+      }
+    }
+    kernel->set_out_kernels({});
+    for (auto *tensor : kernel->out_tensors()) {
+      auto iter = tensor_post_kernels.find(tensor);
+      if (iter != tensor_post_kernels.end()) {
+        for (auto *find_kernel : iter->second) {
+          if (kernel == find_kernel) {
+            continue;
+          }
+          kernel->AddOutKernel(find_kernel);
+        }
+      }
+    }
+  }
+}
+
 }  // namespace mindspore::kernel

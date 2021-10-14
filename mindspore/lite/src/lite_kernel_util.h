@@ -24,27 +24,20 @@ namespace mindspore::kernel {
 class LiteKernelUtil {
  public:
   static std::vector<kernel::LiteKernel *> SubgraphInputNodes(const std::vector<kernel::LiteKernel *> &kernels);
-
   static std::vector<kernel::LiteKernel *> SubgraphOutputNodes(const std::vector<kernel::LiteKernel *> &kernels);
-
   static std::vector<lite::Tensor *> SubgraphInputTensors(const std::vector<kernel::LiteKernel *> &kernels);
-
   static std::vector<lite::Tensor *> SubgraphOutputTensors(const std::vector<kernel::LiteKernel *> &kernels);
-
   static int TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels);
-
   static void InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels);
-
   static int SetInput(const LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
-
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   static bool IsSwitchCall(kernel::LiteKernel *kernel);
 #endif
-
   static kernel::LiteKernel *GetInputsSpecificNode(const kernel::LiteKernel *kernel,
                                                    const schema::PrimitiveType &primitive_type);
-
   static bool InputsContainsSpecificNode(const kernel::LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
+  // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph
+  static void FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels);
 };
 
 }  // namespace mindspore::kernel
