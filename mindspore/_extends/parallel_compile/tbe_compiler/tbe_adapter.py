@@ -27,7 +27,7 @@ from te_fusion.compile_task_manager import dispatch_prebuild_task, dispatch_sing
 from te_fusion.compile_task_manager import sync_syspath
 from te_fusion.fusion_manager import call_op_func, clear_fusion_params, check_op_impl_mode, \
     save_op_params, build_single_op_from_c, op_params_to_json
-from te_fusion.fusion_util import dump_fusion_json, fusion_op
+from te_fusion.fusion_util import dump_fusion_json
 from te_fusion.parallel_compilation import init_multi_process_env, start_ga_multi_process, deinit_multi_process_env, \
     get_finished_compilation_task
 
@@ -551,7 +551,8 @@ def rl_tune_fusion_op(job: TbeJob):
     set_current_op_name(op_kernel_name)
 
     try:
-        fusion_op(json.dumps(job.content))
+        from schedule_search.rl_online_tune import compile_op_by_mp
+        compile_op_by_mp(json.dumps(job.content))
     # pylint: disable=broad-except
     except Exception:
         job.error(
