@@ -123,6 +123,17 @@ void DumpJsonParser::Parse() {
   JudgeDumpEnabled();
 }
 
+void WriteJsonFile(const std::string &file_path, const std::ifstream &json_file) {
+  ChangeFileMode(file_path, S_IWUSR);
+  std::ofstream json_copy(file_path);
+  if (!json_copy.is_open()) {
+    MS_LOG(EXCEPTION) << "Json file " << file_path << "open failed!";
+  }
+  json_copy << json_file.rdbuf();
+  json_copy.close();
+  ChangeFileMode(file_path, S_IRUSR);
+}
+
 void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
   this->Parse();
   if (!IsDumpEnabled()) {
@@ -139,15 +150,7 @@ void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Get real path failed in CopyJsonDir.";
     } else {
-      const std::string file_path = realpath.value();
-      ChangeFileMode(file_path, S_IWUSR);
-      std::ofstream json_copy(file_path);
-      if (!json_copy.is_open()) {
-        MS_LOG(EXCEPTION) << "Json file " << file_path << "open failed!";
-      }
-      json_copy << json_file.rdbuf();
-      json_copy.close();
-      ChangeFileMode(file_path, S_IRUSR);
+      WriteJsonFile(realpath.value(), json_file);
     }
   }
 }
@@ -169,15 +172,7 @@ void DumpJsonParser::CopyHcclJsonToDir(uint32_t rank_id) {
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed in CopyHcclJsonToDir.";
   } else {
-    const std::string file_path = realpath.value();
-    ChangeFileMode(file_path, S_IWUSR);
-    std::ofstream json_copy(file_path);
-    if (!json_copy.is_open()) {
-      MS_LOG(EXCEPTION) << "Json file " << file_path << "open failed!";
-    }
-    json_copy << json_file.rdbuf();
-    json_copy.close();
-    ChangeFileMode(file_path, S_IRUSR);
+    WriteJsonFile(realpath.value(), json_file);
   }
 }
 
