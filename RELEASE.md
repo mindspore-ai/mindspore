@@ -51,6 +51,8 @@
 
 #### Federated Learning
 
+- [STABLE] Change the deployment environment of FL-Client.
+
 #### Running Data Recorder
 
 - [STABLE] RDR saves collected data files within directories named by Rank ID on distributed training on Ascend, GPU and CPU.
