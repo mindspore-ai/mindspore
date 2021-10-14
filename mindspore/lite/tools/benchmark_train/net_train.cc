@@ -411,7 +411,16 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
 
   TrainCfg train_cfg;
   if (flags_->loss_name_ != "") {
-    train_cfg.loss_name_ = flags_->loss_name_;
+    train_cfg.loss_name_.clear();
+    std::string delimiter = ",";
+    size_t pos = 0;
+    std::string token;
+    while ((pos = flags_->loss_name_.find(delimiter)) != std::string::npos) {
+      token = flags_->loss_name_.substr(0, pos);
+      flags_->loss_name_.erase(0, pos + delimiter.length());  // change to delim without deletion
+      train_cfg.loss_name_.emplace_back(token);
+    }
+    if (!(flags_->loss_name_.empty())) train_cfg.loss_name_.emplace_back(flags_->loss_name_);
   }
   train_cfg.mix_precision_cfg_.is_raw_mix_precision_ = flags_->is_raw_mix_precision_;
   std::unique_ptr<session::LiteSession> session;
@@ -447,6 +456,7 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
   auto status = LoadInput(&ms_inputs);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Load input data error";
+    std::cout << "Load input data error" << std::endl;
     return status;
   }
 
@@ -473,7 +483,8 @@ int NetTrain::CreateAndRunNetwork(const std::string &filename, const std::string
 }
 
 int NetTrain::RunNetTrain() {
-  auto status = CreateAndRunNetwork(flags_->model_file_, flags_->bb_model_file_, true, flags_->epochs_);
+  bool isTrain = (flags_->model_file_.find("train") != std::string::npos) || !flags_->bb_model_file_.empty();
+  auto status = CreateAndRunNetwork(flags_->model_file_, flags_->bb_model_file_, isTrain, flags_->epochs_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CreateAndRunNetwork failed for model " << flags_->model_file_ << ". Status is " << status;
     std::cout << "CreateAndRunNetwork failed for model " << flags_->model_file_ << ". Status is " << status
@@ -518,8 +529,8 @@ int NetTrain::SaveModels(const std::unique_ptr<session::LiteSession> &session) {
     auto tick = GetTimeUs();
     status = session->Export(flags_->inference_file_, lite::MT_INFERENCE, lite::QT_NONE);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Export non quantized inference model error " << flags_->inference_file_ + "_qt";
-      std::cout << "Export non quantized inference model error " << flags_->inference_file_ + "_qt" << std::endl;
+      MS_LOG(ERROR) << "Export non quantized inference model error " << flags_->inference_file_;
+      std::cout << "Export non quantized inference model error " << flags_->inference_file_ << std::endl;
       return status;
     }
     std::cout << "ExportInference() execution time is " << GetTimeUs() - tick << "us\n";
@@ -565,12 +576,16 @@ int NetTrain::CheckExecutionOfSavedModels() {
 void NetTrain::CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_type, int id, std::string in_out) {
   int tensor_size = tensor->ElementsNum();
   void *data = tensor->MutableData();
+  float *fdata = reinterpret_cast<float *>(tensor->MutableData());
   TypeId type = tensor->data_type();
   std::cout << node_type << " " << in_out << id << " shape=" << tensor->shape() << " sum=";
   switch (type) {
     case kNumberTypeFloat32:
       TensorNan(reinterpret_cast<float *>(data), tensor_size);
       std::cout << TensorSum<float>(data, tensor_size) << std::endl;
+      std::cout << "data: " << static_cast<float>(fdata[0]) << ", " << static_cast<float>(fdata[1]) << ", "
+                << static_cast<float>(fdata[2]) << ", " << static_cast<float>(fdata[3]) << ", "
+                << static_cast<float>(fdata[4]) << std::endl;
       break;
     case kNumberTypeInt32:
       std::cout << TensorSum<int>(data, tensor_size) << std::endl;

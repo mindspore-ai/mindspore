@@ -150,7 +150,8 @@ TEST_F(NetworkTest, noname) {
   context.thread_num_ = 1;
 
   lite::TrainCfg cfg;
-  cfg.loss_name_ = "nhwc";
+  cfg.loss_name_.clear();
+  cfg.loss_name_.emplace_back("nhwc");
   auto session = mindspore::session::TrainSession::CreateTrainSession(net, &context, true, &cfg);
   ASSERT_NE(session, nullptr);
   auto tensors_map = session->GetOutputs();
@@ -169,7 +170,8 @@ TEST_F(NetworkTest, setname) {
   context.thread_num_ = 1;
 
   lite::TrainCfg train_cfg;
-  train_cfg.loss_name_ = "nhwc";
+  train_cfg.loss_name_.clear();
+  train_cfg.loss_name_.emplace_back("nhwc");
 
   auto session = mindspore::session::TrainSession::CreateTrainSession(net, &context, true, &train_cfg);
   ASSERT_NE(session, nullptr);
