@@ -238,14 +238,14 @@ void UpdateDynamicKernelBuildInfoAndAttrs(const CNodePtr &kernel_node) {
   // Set kernel attrs
   KernelAttr attr;
   for (size_t i = 0; i < input_types.size(); i++) {
-    attr.AddInputAttr(input_types[i]);
+    (void)attr.AddInputAttr(input_types[i]);
   }
   for (size_t j = 0; j < output_types.size(); j++) {
-    attr.AddInputAttr(output_types[j]);
+    (void)attr.AddInputAttr(output_types[j]);
   }
   std::vector<KernelAttr> kernel_attrs =
     kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
-  kernel_attrs.emplace_back(attr);
+  (void)kernel_attrs.emplace_back(attr);
   kernel::CPUKernelFactory::GetInstance().UpdateKernelAttrs(op_name, kernel_attrs);
   return;
 }
@@ -349,7 +349,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
     UpdatePrevNotCNodeFormatDtype(selected_kernel_attr, input_not_cnode_indexes, kernel_node);
     for (size_t index = 0; index < selected_kernel_attr.GetInputSize(); index++) {
       input_types[index] = selected_kernel_attr.GetInputAttr(index).first;
-      input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).second);
+      (void)input_formats.emplace_back(selected_kernel_attr.GetInputAttr(index).second);
     }
   }
   SetKernelBuildInfo(input_formats, input_types, selected_output_formats, selected_output_types, kernel_node.get());
