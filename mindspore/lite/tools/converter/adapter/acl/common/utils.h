@@ -33,6 +33,8 @@ TypeId GetTypeFromNode(const AnfNodePtr &node);
 std::vector<int> GetIntParameterData(const ParameterPtr &param_ptr);
 
 std::string GetCNodeTargetFuncName(const CNodePtr &cnode);
+
+STATUS DelRedundantParameter(const FuncGraphPtr &func_graph);
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

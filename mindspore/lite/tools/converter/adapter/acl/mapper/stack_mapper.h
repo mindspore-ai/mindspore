@@ -31,9 +31,6 @@ class StackMapper : public PrimitiveMapper {
   ~StackMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
-
- private:
-  STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode);
 };
 }  // namespace lite
 }  // namespace mindspore

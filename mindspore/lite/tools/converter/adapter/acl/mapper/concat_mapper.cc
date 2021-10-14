@@ -31,27 +31,11 @@ STATUS ConcatMapper::Mapper(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "Concat rename failed.";
     return RET_ERROR;
   }
-  if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
+  if (AddAttrForDynInputPrimitive(cnode, kNameInputNums) != RET_OK) {
     MS_LOG(ERROR) << "Concat mapper failed.";
     return RET_ERROR;
   }
   return RET_OK;
-}
-
-STATUS ConcatMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode) {
-  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-  MS_ASSERT(value_node != nullptr);
-  auto prim = GetValueNode<PrimitivePtr>(value_node);
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "Value node is invalid.";
-    return lite::RET_ERROR;
-  }
-  // add attr input num for dynamic input op
-  int64_t num = static_cast<int64_t>(cnode->size());
-  if (num > 1) {
-    prim->AddAttr(kNameInputNums, MakeValue(num - 1));
-  }
-  return lite::RET_OK;
 }
 
 STATUS ConcatMapper::RenameNode(const CNodePtr &cnode) {

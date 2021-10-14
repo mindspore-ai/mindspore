@@ -30,6 +30,9 @@ class AvgPoolFusionMapper : public PrimitiveMapper {
   ~AvgPoolFusionMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
+
+ private:
+  void CreateTargetPrim(const PrimitivePtr &src_prim, PrimitivePtr *dst_prim, int fmk_type);
 };
 }  // namespace lite
 }  // namespace mindspore

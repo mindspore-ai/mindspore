@@ -14,24 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef ACL_MAPPER_PRIMITIVE_ELTWISE_MAPPER_H
-#define ACL_MAPPER_PRIMITIVE_ELTWISE_MAPPER_H
-
-#include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/eltwise.h"
-
-using mindspore::ops::kNameEltwise;
+#include "tools/converter/adapter/acl/mapper/sub_fusion_mapper.h"
+#include <memory>
+#include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
-class EltWiseMapper : public PrimitiveMapper {
- public:
-  EltWiseMapper() : PrimitiveMapper(kNameEltwise) {}
+STATUS SubFusionMapper::Mapper(const CNodePtr &cnode) {
+  auto dst_prim = std::make_shared<ops::Sub>();
+  if (MoveAttrMap(cnode, dst_prim) != RET_OK) {
+    MS_LOG(ERROR) << "SubFusion mapper failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 
-  ~EltWiseMapper() override = default;
-
-  STATUS Mapper(const CNodePtr &cnode) override;
-};
+REGISTER_PRIMITIVE_MAPPER(kNameSubFusion, SubFusionMapper)
 }  // namespace lite
 }  // namespace mindspore
-#endif  // ACL_MAPPER_PRIMITIVE_ELTWISE_MAPPER_H

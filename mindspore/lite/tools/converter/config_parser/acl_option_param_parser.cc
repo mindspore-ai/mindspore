@@ -123,7 +123,6 @@ STATUS AclOptionParamParser::ParseInputShapeVector(const std::string &input_shap
   int32_t idx = 0;
   std::map<int32_t, std::vector<int32_t>> input_shape_map;
   for (auto &item : intput_shape_str) {
-    idx++;
     if (item.size() < 2 || item[0] != '[' || item[item.size() - 1] != ']') {
       MS_LOG(ERROR) << "Input param valid, item size: " << item.size();
       return RET_ERROR;
@@ -138,6 +137,7 @@ STATUS AclOptionParamParser::ParseInputShapeVector(const std::string &input_shap
       }
     }
     input_shape_map[idx] = input_shape_int;
+    idx++;
   }
 
   acl_option_cfg->input_shape_map = input_shape_map;

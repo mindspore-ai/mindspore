@@ -23,6 +23,7 @@
 #include "abstract/abstract_value.h"
 #include "utils/utils.h"
 #include "src/common/log_util.h"
+#include "ir/func_graph.h"
 
 namespace mindspore {
 namespace lite {
@@ -177,6 +178,19 @@ std::string GetCNodeTargetFuncName(const CNodePtr &cnode) {
     name = "";
   }
   return name;
+}
+
+STATUS DelRedundantParameter(const FuncGraphPtr &func_graph) {
+  CHECK_NULL_RETURN(func_graph);
+  auto nodes = TopoSort(func_graph->get_return());
+  auto parameters = func_graph->parameters();
+  for (auto &parameter : parameters) {
+    CHECK_NULL_RETURN(parameter);
+    if (std::find(nodes.begin(), nodes.end(), parameter) == nodes.end()) {
+      func_graph->DropNode(parameter);
+    }
+  }
+  return lite::RET_OK;
 }
 }  // namespace acl
 }  // namespace lite

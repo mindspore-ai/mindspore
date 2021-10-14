@@ -21,28 +21,11 @@
 namespace mindspore {
 namespace lite {
 STATUS EltWiseMapper::Mapper(const CNodePtr &cnode) {
-  if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
+  if (AddAttrForDynInputPrimitive(cnode, ops::kN) != RET_OK) {
     MS_LOG(ERROR) << "EltWise mapper failed.";
     return RET_ERROR;
   }
   return RET_OK;
-}
-
-STATUS EltWiseMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-  MS_ASSERT(value_node != nullptr);
-  auto prim = GetValueNode<PrimitivePtr>(value_node);
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "Value node is invalid.";
-    return lite::RET_ERROR;
-  }
-  // add attr input num for dynamic input op
-  int64_t num = static_cast<int64_t>(cnode->size());
-  if (num > 1) {
-    prim->AddAttr(ops::kN, MakeValue(num - 1));
-  }
-  return lite::RET_OK;
 }
 
 REGISTER_PRIMITIVE_MAPPER(kNameEltwise, EltWiseMapper)
