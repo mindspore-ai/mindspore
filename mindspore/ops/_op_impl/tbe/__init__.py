@@ -282,6 +282,7 @@ from .arg_max import _arg_max_tbe
 from .nms_with_mask import _nms_with_mask_tbe
 from .sgd import _sgd_tbe
 from .lars_update import _lars_update_tbe
+from .lars_update_ds import _lars_update_ds_tbe
 from .arg_min import _arg_min_tbe
 from .bn_training_update_v2 import _bn_training_update_v2_tbe
 from .bn_training_update_v3 import _bn_training_update_v3_tbe
