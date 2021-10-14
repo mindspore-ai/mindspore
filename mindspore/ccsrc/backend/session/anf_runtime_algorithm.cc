@@ -273,7 +273,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, siz
 }
 
 KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr &anf_node, size_t index,
-                                                               bool visit_nop_node,
+                                                               bool skip_nop_node,
                                                                const std::vector<PrimitivePtr> &return_types) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (std::any_of(return_types.begin(), return_types.end(), [&anf_node](const PrimitivePtr &prim_type) -> bool {
@@ -288,7 +288,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(cnode);
   if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
     auto item_with_index_tmp = VisitKernelWithReturnType(GetTupleGetItemRealInput(cnode),
-                                                         GetTupleGetItemOutIndex(cnode), visit_nop_node, return_types);
+                                                         GetTupleGetItemOutIndex(cnode), skip_nop_node, return_types);
     if (CheckPrimitiveType(item_with_index_tmp.first, prim::kPrimMakeTuple)) {
       MS_EXCEPTION_IF_NULL(item_with_index_tmp.first);
       auto make_tuple = item_with_index_tmp.first->cast<CNodePtr>();
@@ -299,21 +299,21 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
         MS_LOG(EXCEPTION) << "Index[" << make_tuple_input_index << "] out of range[" << make_tuple_inputs.size()
                           << "].";
       }
-      return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], 0, visit_nop_node, return_types);
+      return VisitKernelWithReturnType(make_tuple_inputs[make_tuple_input_index], 0, skip_nop_node, return_types);
     }
     return item_with_index_tmp;
   }
   if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimUpdateState)) {
-    return VisitKernelWithReturnType(cnode->input(kUpdateStateStateInput), index, visit_nop_node, return_types);
+    return VisitKernelWithReturnType(cnode->input(kUpdateStateStateInput), index, skip_nop_node, return_types);
   }
   if (AnfAlgo::IsOneOfPrimitiveCNode(cnode, follow_first_input_prims)) {
-    return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), index, visit_nop_node, return_types);
+    return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), index, skip_nop_node, return_types);
   }
-  if (opt::IsNopNode(cnode) && visit_nop_node) {
+  if (opt::IsNopNode(cnode) && skip_nop_node) {
     if (cnode->size() != kNopNodeInputSize) {
       MS_LOG(EXCEPTION) << "Invalid nop node " << cnode->DebugString() << " trace: " << trace::DumpSourceLines(cnode);
     }
-    return VisitKernelWithReturnType(cnode->input(kNopNodeRealInputIndex), 0, visit_nop_node, return_types);
+    return VisitKernelWithReturnType(cnode->input(kNopNodeRealInputIndex), 0, skip_nop_node, return_types);
   }
   return KernelWithIndex(anf_node, index);
 }
