@@ -54,8 +54,14 @@ Status ProfilingManager::PluginInit() const {
     MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
     return PROF_FAILED;
   }
-  return prof_cb_.msprofReporterCallback(IntToUint(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
-                                         IntToUint(MsprofReporterCallbackType::MSPROF_REPORTER_INIT), nullptr, 0);
+  int32_t ret = prof_cb_.msprofReporterCallback(static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                                                static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_INIT),
+                                                nullptr, 0);
+  if (ret != UintToInt(PROF_SUCCESS)) {
+    MS_LOG(ERROR) << "MsprofReporter init failed, ret: " << ret;
+    return PROF_FAILED;
+  }
+  return PROF_SUCCESS;
 }
 
 void ProfilingManager::PluginUnInit() const {
@@ -168,7 +174,7 @@ bool ProfilingManager::ProfRegisterCtrlCallback() const {
   return true;
 }
 
-rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /*len*/) {
+rtError_t CtrlCallbackHandle(uint32_t rt_type, void *data, uint32_t /* len */) {
   if (rt_type == RT_PROF_CTRL_REPORTER) {
     ProfilingManager::GetInstance().SetMsprofReporterCallback(reinterpret_cast<MsprofReporterCallback>(data));
     MS_LOG(INFO) << "Set MsprofReporterCallback success.";
@@ -206,9 +212,16 @@ Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter
     MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
     return PROF_FAILED;
   }
-  return prof_cb_.msprofReporterCallback(IntToUint(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
-                                         IntToUint(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
-                                         static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
+  int32_t ret =
+    prof_cb_.msprofReporterCallback(static_cast<int32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                                    static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
+                                    static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
+
+  if (ret != UintToInt(PROF_SUCCESS)) {
+    MS_LOG(ERROR) << "Call MsprofReporterCallback failed. ret: " << ret;
+    return PROF_FAILED;
+  }
+  return PROF_SUCCESS;
 }
 
 Status ProfCtrlSwitchHandle(void *data) {
