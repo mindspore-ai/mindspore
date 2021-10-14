@@ -18,6 +18,10 @@ import mindspore.nn as nn
 import mindspore.nn.probability.bijector as msb
 from mindspore import Tensor
 from mindspore import dtype
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
+
 
 def test_init():
     """
@@ -32,6 +36,7 @@ def test_init():
     b = msb.GumbelCDF(3.0, 4.0)
     assert isinstance(b, msb.Bijector)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msb.GumbelCDF(scale='scale')
@@ -39,6 +44,7 @@ def test_type():
         msb.GumbelCDF(loc='loc')
     with pytest.raises(TypeError):
         msb.GumbelCDF(name=0.1)
+
 
 def test_invalid_scale():
     """
@@ -48,6 +54,7 @@ def test_invalid_scale():
         msb.GumbelCDF(scale=0.0)
     with pytest.raises(ValueError):
         msb.GumbelCDF(scale=-1.0)
+
 
 class ForwardBackward(nn.Cell):
     """
@@ -63,6 +70,8 @@ class ForwardBackward(nn.Cell):
         ans2 = self.b2.inverse(self.b2.forward(x_))
         return ans1 + ans2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_forward_and_backward_pass():
     """
     Test forward and backward pass of ScalarAffine bijector.
@@ -71,6 +80,7 @@ def test_forward_and_backward_pass():
     x = Tensor([-2.0, -1.0, 0.0, 1.0, 2.0], dtype=dtype.float32)
     ans = net(x)
     assert isinstance(ans, Tensor)
+
 
 class ForwardJacobian(nn.Cell):
     """
@@ -86,6 +96,8 @@ class ForwardJacobian(nn.Cell):
         ans2 = self.b2.forward_log_jacobian(x_)
         return ans1 + ans2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_forward_jacobian():
     """
     Test forward log jacobian of ScalarAffine bijector.
@@ -110,6 +122,8 @@ class BackwardJacobian(nn.Cell):
         ans2 = self.b2.inverse_log_jacobian(x_)
         return ans1 + ans2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_backward_jacobian():
     """
     Test backward log jacobian of ScalarAffine bijector.
@@ -136,8 +150,10 @@ class Net(nn.Cell):
         ans4 = self.b2('forward_log_jacobian', x_)
         ans5 = self.b1('inverse_log_jacobian', x_)
         ans6 = self.b2('inverse_log_jacobian', x_)
-        return ans1 - ans2 + ans3 -ans4 + ans5 - ans6
+        return ans1 - ans2 + ans3 - ans4 + ans5 - ans6
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_old_api():
     """
     Test old api which goes through construct.

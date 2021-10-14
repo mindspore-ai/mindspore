@@ -21,6 +21,9 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
 
 
 def test_arguments():
@@ -81,6 +84,7 @@ class BernoulliProb(nn.Cell):
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bernoulli_prob():
     """
     Test probability functions: passing value through construct.
@@ -110,6 +114,7 @@ class BernoulliProb1(nn.Cell):
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bernoulli_prob1():
     """
     Test probability functions: passing value/probs through construct.
@@ -137,6 +142,7 @@ class BernoulliKl(nn.Cell):
         return kl1 + kl2
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_kl():
     """
     Test kl_loss function.
@@ -164,6 +170,7 @@ class BernoulliCrossEntropy(nn.Cell):
         return h1 + h2
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_cross_entropy():
     """
     Test cross_entropy between Bernoulli distributions.
@@ -192,6 +199,7 @@ class BernoulliConstruct(nn.Cell):
         return prob + prob1 + prob2
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bernoulli_construct():
     """
     Test probability function going through construct.
@@ -217,6 +225,7 @@ class BernoulliMean(nn.Cell):
         return mean
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_mean():
     """
     Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
@@ -240,6 +249,7 @@ class BernoulliSd(nn.Cell):
         return sd
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_sd():
     """
     Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
@@ -263,6 +273,7 @@ class BernoulliVar(nn.Cell):
         return var
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_var():
     """
     Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
@@ -286,6 +297,7 @@ class BernoulliMode(nn.Cell):
         return mode
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_mode():
     """
     Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.
@@ -309,6 +321,7 @@ class BernoulliEntropy(nn.Cell):
         return entropy
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_entropy():
     """
     Test mean/sd/var/mode/entropy functionality of Bernoulli distribution.

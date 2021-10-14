@@ -22,6 +22,9 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
 
 
 def test_uniform_shape_errpr():
@@ -86,6 +89,7 @@ class UniformProb(nn.Cell):
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_uniform_prob():
     """
     Test probability functions: passing value through construct.
@@ -115,6 +119,7 @@ class UniformProb1(nn.Cell):
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_uniform_prob1():
     """
     Test probability functions: passing low/high, value through construct.
@@ -144,6 +149,7 @@ class UniformKl(nn.Cell):
         return kl1 + kl2
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_kl():
     """
     Test kl_loss.
@@ -174,6 +180,7 @@ class UniformCrossEntropy(nn.Cell):
         return h1 + h2
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_cross_entropy():
     """
     Test cross_entropy between Uniform distributions.
@@ -204,6 +211,7 @@ class UniformBasics(nn.Cell):
         return mean + sd + var + entropy
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bascis():
     """
     Test mean/sd/var/mode/entropy functionality of Uniform.
@@ -230,6 +238,7 @@ class UniConstruct(nn.Cell):
         return prob + prob1 + prob2
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_uniform_construct():
     """
     Test probability function going through construct.

@@ -21,6 +21,10 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") != "Ascend"
+
 
 def test_cauchy_shape_errpr():
     """
@@ -29,17 +33,21 @@ def test_cauchy_shape_errpr():
     with pytest.raises(ValueError):
         msd.Cauchy([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msd.Cauchy(0., 1., dtype=dtype.int32)
+
 
 def test_name():
     with pytest.raises(TypeError):
         msd.Cauchy(0., 1., name=1.0)
 
+
 def test_seed():
     with pytest.raises(TypeError):
         msd.Cauchy(0., 1., seed='seed')
+
 
 def test_scale():
     with pytest.raises(ValueError):
@@ -47,14 +55,15 @@ def test_scale():
     with pytest.raises(ValueError):
         msd.Cauchy(0., -1.)
 
+
 def test_arguments():
     """
     args passing during initialization.
     """
-    l = msd.Cauchy()
-    assert isinstance(l, msd.Distribution)
-    l = msd.Cauchy([3.0], [4.0], dtype=dtype.float32)
-    assert isinstance(l, msd.Distribution)
+    l1 = msd.Cauchy()
+    assert isinstance(l1, msd.Distribution)
+    l2 = msd.Cauchy([3.0], [4.0], dtype=dtype.float32)
+    assert isinstance(l2, msd.Distribution)
 
 
 class CauchyProb(nn.Cell):
@@ -74,6 +83,8 @@ class CauchyProb(nn.Cell):
         log_sf = self.cauchy.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_cauchy_prob():
     """
     Test probability functions: passing value through construct.
@@ -101,6 +112,8 @@ class CauchyProb1(nn.Cell):
         log_sf = self.cauchy.log_survival(value, mu, s)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_cauchy_prob1():
     """
     Test probability functions: passing loc/scale, value through construct.
@@ -111,6 +124,7 @@ def test_cauchy_prob1():
     s = Tensor([1.0], dtype=dtype.float32)
     ans = net(value, mu, s)
     assert isinstance(ans, Tensor)
+
 
 class KL(nn.Cell):
     """
@@ -128,6 +142,8 @@ class KL(nn.Cell):
         cross_entropy1 = self.cauchy.cross_entropy('Cauchy', mu, s, mu_a, s_a)
         return kl + kl1 + cross_entropy + cross_entropy1
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_kl_cross_entropy():
     """
     Test kl_loss and cross_entropy.
@@ -154,6 +170,7 @@ class CauchyBasics(nn.Cell):
         entropy = self.cauchy.entropy()
         return mode + entropy
 
+
 class CauchyMean(nn.Cell):
     """
     Test class: basic loc/scale function.
@@ -164,6 +181,7 @@ class CauchyMean(nn.Cell):
 
     def construct(self):
         return self.cauchy.mean()
+
 
 class CauchyVar(nn.Cell):
     """
@@ -176,6 +194,7 @@ class CauchyVar(nn.Cell):
     def construct(self):
         return self.cauchy.var()
 
+
 class CauchySd(nn.Cell):
     """
     Test class: basic loc/scale function.
@@ -187,6 +206,8 @@ class CauchySd(nn.Cell):
     def construct(self):
         return self.cauchy.sd()
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_bascis():
     """
     Test mean/sd/var/mode/entropy functionality of Cauchy.
@@ -204,6 +225,7 @@ def test_bascis():
         net = CauchySd()
         ans = net()
 
+
 class CauchyConstruct(nn.Cell):
     """
     Cauchy distribution: going through construct.
@@ -219,6 +241,8 @@ class CauchyConstruct(nn.Cell):
         prob2 = self.cauchy1('prob', value, mu, s)
         return prob + prob1 + prob2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_cauchy_construct():
     """
     Test probability function going through construct.

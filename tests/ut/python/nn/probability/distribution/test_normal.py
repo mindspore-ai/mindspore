@@ -22,6 +22,10 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
+
 
 def test_normal_shape_errpr():
     """
@@ -30,23 +34,28 @@ def test_normal_shape_errpr():
     with pytest.raises(ValueError):
         msd.Normal([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msd.Normal(0., 1., dtype=dtype.int32)
+
 
 def test_name():
     with pytest.raises(TypeError):
         msd.Normal(0., 1., name=1.0)
 
+
 def test_seed():
     with pytest.raises(TypeError):
         msd.Normal(0., 1., seed='seed')
+
 
 def test_sd():
     with pytest.raises(ValueError):
         msd.Normal(0., 0.)
     with pytest.raises(ValueError):
         msd.Normal(0., -1.)
+
 
 def test_arguments():
     """
@@ -62,6 +71,7 @@ class NormalProb(nn.Cell):
     """
     Normal distribution: initialize with mean/sd.
     """
+
     def __init__(self):
         super(NormalProb, self).__init__()
         self.normal = msd.Normal(3.0, 4.0, dtype=dtype.float32)
@@ -75,6 +85,8 @@ class NormalProb(nn.Cell):
         log_sf = self.normal.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_normal_prob():
     """
     Test probability functions: passing value through construct.
@@ -89,6 +101,7 @@ class NormalProb1(nn.Cell):
     """
     Normal distribution: initialize without mean/sd.
     """
+
     def __init__(self):
         super(NormalProb1, self).__init__()
         self.normal = msd.Normal()
@@ -102,6 +115,8 @@ class NormalProb1(nn.Cell):
         log_sf = self.normal.log_survival(value, mean, sd)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_normal_prob1():
     """
     Test probability functions: passing mean/sd, value through construct.
@@ -113,10 +128,12 @@ def test_normal_prob1():
     ans = net(value, mean, sd)
     assert isinstance(ans, Tensor)
 
+
 class NormalKl(nn.Cell):
     """
     Test class: kl_loss of Normal distribution.
     """
+
     def __init__(self):
         super(NormalKl, self).__init__()
         self.n1 = msd.Normal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
@@ -127,6 +144,8 @@ class NormalKl(nn.Cell):
         kl2 = self.n2.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
         return kl1 + kl2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_kl():
     """
     Test kl_loss.
@@ -139,10 +158,12 @@ def test_kl():
     ans = net(mean_b, sd_b, mean_a, sd_a)
     assert isinstance(ans, Tensor)
 
+
 class NormalCrossEntropy(nn.Cell):
     """
     Test class: cross_entropy of Normal distribution.
     """
+
     def __init__(self):
         super(NormalCrossEntropy, self).__init__()
         self.n1 = msd.Normal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
@@ -153,6 +174,8 @@ class NormalCrossEntropy(nn.Cell):
         h2 = self.n2.cross_entropy('Normal', mean_b, sd_b, mean_a, sd_a)
         return h1 + h2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_cross_entropy():
     """
     Test cross entropy between Normal distributions.
@@ -165,10 +188,12 @@ def test_cross_entropy():
     ans = net(mean_b, sd_b, mean_a, sd_a)
     assert isinstance(ans, Tensor)
 
+
 class NormalBasics(nn.Cell):
     """
     Test class: basic mean/sd function.
     """
+
     def __init__(self):
         super(NormalBasics, self).__init__()
         self.n = msd.Normal(3.0, 4.0, dtype=dtype.float32)
@@ -180,6 +205,8 @@ class NormalBasics(nn.Cell):
         entropy = self.n.entropy()
         return mean + sd + mode + entropy
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bascis():
     """
     Test mean/sd/mode/entropy functionality of Normal.
@@ -193,6 +220,7 @@ class NormalConstruct(nn.Cell):
     """
     Normal distribution: going through construct.
     """
+
     def __init__(self):
         super(NormalConstruct, self).__init__()
         self.normal = msd.Normal(3.0, 4.0)
@@ -204,6 +232,8 @@ class NormalConstruct(nn.Cell):
         prob2 = self.normal1('prob', value, mean, sd)
         return prob + prob1 + prob2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_normal_construct():
     """
     Test probability function going through construct.

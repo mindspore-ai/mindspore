@@ -21,6 +21,10 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
+
 
 def test_logistic_shape_errpr():
     """
@@ -29,23 +33,28 @@ def test_logistic_shape_errpr():
     with pytest.raises(ValueError):
         msd.Logistic([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msd.Logistic(0., 1., dtype=dtype.int32)
+
 
 def test_name():
     with pytest.raises(TypeError):
         msd.Logistic(0., 1., name=1.0)
 
+
 def test_seed():
     with pytest.raises(TypeError):
         msd.Logistic(0., 1., seed='seed')
+
 
 def test_scale():
     with pytest.raises(ValueError):
         msd.Logistic(0., 0.)
     with pytest.raises(ValueError):
         msd.Logistic(0., -1.)
+
 
 def test_arguments():
     """
@@ -61,6 +70,7 @@ class LogisticProb(nn.Cell):
     """
     logistic distribution: initialize with loc/scale.
     """
+
     def __init__(self):
         super(LogisticProb, self).__init__()
         self.logistic = msd.Logistic(3.0, 4.0, dtype=dtype.float32)
@@ -74,6 +84,8 @@ class LogisticProb(nn.Cell):
         log_sf = self.logistic.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_logistic_prob():
     """
     Test probability functions: passing value through construct.
@@ -88,6 +100,7 @@ class LogisticProb1(nn.Cell):
     """
     logistic distribution: initialize without loc/scale.
     """
+
     def __init__(self):
         super(LogisticProb1, self).__init__()
         self.logistic = msd.Logistic()
@@ -101,6 +114,8 @@ class LogisticProb1(nn.Cell):
         log_sf = self.logistic.log_survival(value, mu, s)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_logistic_prob1():
     """
     Test probability functions: passing loc/scale, value through construct.
@@ -112,10 +127,12 @@ def test_logistic_prob1():
     ans = net(value, mu, s)
     assert isinstance(ans, Tensor)
 
+
 class KL(nn.Cell):
     """
     Test kl_loss. Should raise NotImplementedError.
     """
+
     def __init__(self):
         super(KL, self).__init__()
         self.logistic = msd.Logistic(3.0, 4.0)
@@ -124,10 +141,12 @@ class KL(nn.Cell):
         kl = self.logistic.kl_loss('Logistic', mu, s)
         return kl
 
+
 class Crossentropy(nn.Cell):
     """
     Test cross entropy. Should raise NotImplementedError.
     """
+
     def __init__(self):
         super(Crossentropy, self).__init__()
         self.logistic = msd.Logistic(3.0, 4.0)
@@ -141,6 +160,7 @@ class LogisticBasics(nn.Cell):
     """
     Test class: basic loc/scale function.
     """
+
     def __init__(self):
         super(LogisticBasics, self).__init__()
         self.logistic = msd.Logistic(3.0, 4.0, dtype=dtype.float32)
@@ -152,6 +172,8 @@ class LogisticBasics(nn.Cell):
         entropy = self.logistic.entropy()
         return mean + sd + mode + entropy
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bascis():
     """
     Test mean/sd/mode/entropy functionality of logistic.
@@ -168,10 +190,12 @@ def test_bascis():
         crossentropy = Crossentropy()
         ans = crossentropy(mu, s)
 
+
 class LogisticConstruct(nn.Cell):
     """
     logistic distribution: going through construct.
     """
+
     def __init__(self):
         super(LogisticConstruct, self).__init__()
         self.logistic = msd.Logistic(3.0, 4.0)
@@ -183,6 +207,8 @@ class LogisticConstruct(nn.Cell):
         prob2 = self.logistic1('prob', value, mu, s)
         return prob + prob1 + prob2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_logistic_construct():
     """
     Test probability function going through construct.

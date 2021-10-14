@@ -22,6 +22,10 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
+
 
 def test_lognormal_shape_errpr():
     """
@@ -30,23 +34,28 @@ def test_lognormal_shape_errpr():
     with pytest.raises(ValueError):
         msd.LogNormal([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msd.LogNormal(0., 1., dtype=dtype.int32)
+
 
 def test_name():
     with pytest.raises(TypeError):
         msd.LogNormal(0., 1., name=1.0)
 
+
 def test_seed():
     with pytest.raises(TypeError):
         msd.LogNormal(0., 1., seed='seed')
+
 
 def test_sd():
     with pytest.raises(ValueError):
         msd.LogNormal(0., 0.)
     with pytest.raises(ValueError):
         msd.LogNormal(0., -1.)
+
 
 def test_arguments():
     """
@@ -62,6 +71,7 @@ class LogNormalProb(nn.Cell):
     """
     LogNormal distribution: initialize with mean/sd.
     """
+
     def __init__(self):
         super(LogNormalProb, self).__init__()
         self.lognormal = msd.LogNormal(3.0, 4.0, dtype=dtype.float32)
@@ -75,6 +85,8 @@ class LogNormalProb(nn.Cell):
         log_sf = self.lognormal.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_lognormal_prob():
     """
     Test probability functions: passing value through construct.
@@ -85,10 +97,12 @@ def test_lognormal_prob():
     assert isinstance(ans, Tensor)
 
 
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 class LogNormalProb1(nn.Cell):
     """
     LogNormal distribution: initialize without mean/sd.
     """
+
     def __init__(self):
         super(LogNormalProb1, self).__init__()
         self.lognormal = msd.LogNormal()
@@ -102,6 +116,8 @@ class LogNormalProb1(nn.Cell):
         log_sf = self.lognormal.log_survival(value, mean, sd)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_lognormal_prob1():
     """
     Test probability functions: passing mean/sd, value through construct.
@@ -113,10 +129,12 @@ def test_lognormal_prob1():
     ans = net(value, mean, sd)
     assert isinstance(ans, Tensor)
 
+
 class LogNormalKl(nn.Cell):
     """
     Test class: kl_loss of LogNormal distribution.
     """
+
     def __init__(self):
         super(LogNormalKl, self).__init__()
         self.n1 = msd.LogNormal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
@@ -127,6 +145,8 @@ class LogNormalKl(nn.Cell):
         kl2 = self.n2.kl_loss('LogNormal', mean_b, sd_b, mean_a, sd_a)
         return kl1 + kl2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_kl():
     """
     Test kl_loss.
@@ -139,10 +159,12 @@ def test_kl():
     ans = net(mean_b, sd_b, mean_a, sd_a)
     assert isinstance(ans, Tensor)
 
+
 class LogNormalCrossEntropy(nn.Cell):
     """
     Test class: cross_entropy of LogNormal distribution.
     """
+
     def __init__(self):
         super(LogNormalCrossEntropy, self).__init__()
         self.n1 = msd.LogNormal(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
@@ -153,6 +175,8 @@ class LogNormalCrossEntropy(nn.Cell):
         h2 = self.n2.cross_entropy('LogNormal', mean_b, sd_b, mean_a, sd_a)
         return h1 + h2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_cross_entropy():
     """
     Test cross entropy between LogNormal distributions.
@@ -165,10 +189,12 @@ def test_cross_entropy():
     ans = net(mean_b, sd_b, mean_a, sd_a)
     assert isinstance(ans, Tensor)
 
+
 class LogNormalBasics(nn.Cell):
     """
     Test class: basic mean/sd function.
     """
+
     def __init__(self):
         super(LogNormalBasics, self).__init__()
         self.n = msd.LogNormal(3.0, 4.0, dtype=dtype.float32)
@@ -179,11 +205,12 @@ class LogNormalBasics(nn.Cell):
         entropy = self.n.entropy()
         return mean + mode + entropy
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bascis():
     """
     Test mean/sd/mode/entropy functionality of LogNormal.
     """
-    from mindspore import context
     context.set_context(device_target="Ascend")
     net = LogNormalBasics()
     ans = net()
@@ -194,6 +221,7 @@ class LogNormalConstruct(nn.Cell):
     """
     LogNormal distribution: going through construct.
     """
+
     def __init__(self):
         super(LogNormalConstruct, self).__init__()
         self.lognormal = msd.LogNormal(3.0, 4.0)
@@ -205,6 +233,8 @@ class LogNormalConstruct(nn.Cell):
         prob2 = self.lognormal1('prob', value, mean, sd)
         return prob + prob1 + prob2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_lognormal_construct():
     """
     Test probability function going through construct.
