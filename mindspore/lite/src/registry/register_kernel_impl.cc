@@ -41,7 +41,11 @@ int RegistryKernelImpl::GetFuncIndex(const KernelDesc &desc) {
   if (data_type_index < 0) {
     return -1;
   }
-  return data_type_index * kOpTypeLen + desc.type;
+  int index = data_type_index * kOpTypeLen + desc.type;
+  if (index >= kKernelMaxNum) {
+    return -1;
+  }
+  return index;
 }
 
 Status RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
@@ -92,7 +96,7 @@ Status RegistryKernelImpl::RegKernel(const std::string &arch, const std::string 
 
   KernelDesc desc = {data_type, type, arch, provider};
   int index = GetFuncIndex(desc);
-  if (index >= kKernelMaxNum || index < 0) {
+  if (index < 0) {
     MS_LOG(ERROR) << "invalid kernel key, arch " << arch << ", data_type" << static_cast<int>(data_type) << ",op type "
                   << type;
     return kLiteError;
@@ -105,11 +109,13 @@ Status RegistryKernelImpl::RegKernel(const std::string &arch, const std::string 
 registry::CreateKernel RegistryKernelImpl::GetCustomKernelCreator(const schema::Primitive *primitive,
                                                                   KernelDesc *desc) {
   int data_type_index = static_cast<int>(desc->data_type) - static_cast<int>(DataType::kNumberTypeBegin) - 1;
-  if (data_type_index < 0) {
+  if (data_type_index < 0 || data_type_index >= kDataTypeLen) {
     return nullptr;
   }
   auto param = primitive->value_as_Custom();
-  MS_ASSERT(param != nullptr);
+  if (param == nullptr) {
+    return nullptr;
+  }
   auto custom_type = param->type()->str();
   if (!desc->provider.empty() && !desc->arch.empty()) {
     auto creator_buf = custom_kernel_creators_[desc->provider][desc->arch][custom_type];
@@ -140,7 +146,7 @@ registry::CreateKernel RegistryKernelImpl::GetProviderCreator(const schema::Prim
   }
 
   auto index = GetFuncIndex(*desc);
-  if (index >= kKernelMaxNum || index < 0) {
+  if (index < 0) {
     return nullptr;
   }
   for (auto &&item : kernel_creators_) {

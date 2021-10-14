@@ -143,7 +143,7 @@ Status RegisterKernel::RegCustomKernel(const std::string &arch, const std::strin
 }
 
 CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, KernelDesc *desc) {
-  if (desc == nullptr) {
+  if (desc == nullptr || primitive == nullptr) {
     return nullptr;
   }
   KernelDescHelper kernel_desc = {desc->data_type, desc->type, StringToChar(desc->arch), StringToChar(desc->provider)};
