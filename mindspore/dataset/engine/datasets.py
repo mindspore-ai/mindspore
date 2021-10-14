@@ -4326,11 +4326,12 @@ class GeneratorDataset(MappableDataset):
     def parse(self, children=None):
         if self.schema is None:
             return cde.GeneratorNode(self.prepared_source, self.column_names, self.column_types, self.source_len,
-                                     self.sampler)
+                                     self.sampler, self.num_parallel_workers)
         schema = self.schema
         if isinstance(schema, Schema):
             schema = self.schema.cpp_schema
-        return cde.GeneratorNode(self.prepared_source, schema, self.source_len, self.sampler)
+        return cde.GeneratorNode(self.prepared_source, schema, self.source_len, self.sampler,
+                                 self.num_parallel_workers)
 
 
 class TFRecordDataset(SourceDataset):

@@ -119,9 +119,17 @@ class DeviceQueueOp : public PipelineOp {
   // Description: Auto filter metadata column before sending to device.
   Status FilterMetadata(TensorRow *row);
 
-  //  Name: checkExceptions(TensorRow);
-  //  Description: Check whether the TensorRow meets the condition for performing DeviceQueueOp
+  // Name: CheckExceptions(TensorRow);
+  // Description: Check whether the TensorRow meets the condition for performing DeviceQueueOp
   Status CheckExceptions(const TensorRow &row) const;
+
+  // Name: PrintBeginInfoWhenFirstBatch(bool)
+  // Description: Print info when first batch begin to send in sink_mode
+  void PrintBeginInfoWhenFirstBatch(const bool &first_push_flag);
+
+  // Name: PrintEndInfoWhenFirstBatch(bool)
+  // Description: Print info when first batch send successful in sink_mode
+  void PrintEndInfoWhenFirstBatch(bool *first_push_flag);
 
  private:
 #ifdef ENABLE_TDTQUE

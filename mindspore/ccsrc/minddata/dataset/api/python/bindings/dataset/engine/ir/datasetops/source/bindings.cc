@@ -191,18 +191,19 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(GeneratorNode, 2, ([](const py::module *m) {
                   (void)py::class_<GeneratorNode, DatasetNode, std::shared_ptr<GeneratorNode>>(
                     *m, "GeneratorNode", "to create a GeneratorNode")
-                    .def(
-                      py::init([](py::function generator_function, const std::vector<std::string> &column_names,
-                                  const std::vector<DataType> &column_types, int64_t dataset_len, py::handle sampler) {
-                        auto gen = std::make_shared<GeneratorNode>(generator_function, column_names, column_types,
-                                                                   dataset_len, toSamplerObj(sampler));
-                        THROW_IF_ERROR(gen->ValidateParams());
-                        return gen;
-                      }))
-                    .def(py::init([](py::function generator_function, const std::shared_ptr<SchemaObj> schema,
-                                     int64_t dataset_len, py::handle sampler) {
+                    .def(py::init([](py::function generator_function, const std::vector<std::string> &column_names,
+                                     const std::vector<DataType> &column_types, int64_t dataset_len, py::handle sampler,
+                                     uint32_t num_parallel_workers) {
                       auto gen =
-                        std::make_shared<GeneratorNode>(generator_function, schema, dataset_len, toSamplerObj(sampler));
+                        std::make_shared<GeneratorNode>(generator_function, column_names, column_types, dataset_len,
+                                                        toSamplerObj(sampler), num_parallel_workers);
+                      THROW_IF_ERROR(gen->ValidateParams());
+                      return gen;
+                    }))
+                    .def(py::init([](py::function generator_function, const std::shared_ptr<SchemaObj> schema,
+                                     int64_t dataset_len, py::handle sampler, uint32_t num_parallel_workers) {
+                      auto gen = std::make_shared<GeneratorNode>(generator_function, schema, dataset_len,
+                                                                 toSamplerObj(sampler), num_parallel_workers);
                       THROW_IF_ERROR(gen->ValidateParams());
                       return gen;
                     }));

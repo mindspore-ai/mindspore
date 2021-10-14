@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/source/generator_op.h"
-#include <iomanip>
-#include "minddata/dataset/core/global_context.h"
 
+#include <iomanip>
+
+#include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/task_manager.h"
 
@@ -24,13 +25,14 @@ namespace mindspore {
 namespace dataset {
 GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::string> column_names,
                          std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
-                         std::shared_ptr<SamplerRT> sampler)
+                         std::shared_ptr<SamplerRT> sampler, uint32_t num_parallel_workers)
     : PipelineOp(connector_size, std::move(sampler)),
       generator_function_(generator_function),
       column_names_(column_names),
       column_types_(std::move(column_types)),
       prefetch_size_(prefetch_size),
-      generator_counter_(0) {}
+      generator_counter_(0),
+      num_parallel_workers_(num_parallel_workers) {}
 
 void GeneratorOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
@@ -174,7 +176,15 @@ Status GeneratorOp::operator()() {
         return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
       }
       try {
+        auto start = ProfilingTime::GetCurMilliSecond();
         RETURN_IF_NOT_OK(PyRowToTensorRow(generator_.attr("__next__")(), &new_row));
+        auto end = ProfilingTime::GetCurMilliSecond();
+        if ((end - start) / num_parallel_workers_ > kGetItemTimeOutMilliSeconds) {
+          MS_LOG(WARNING) << "Bad performance attention, it takes more than 25 seconds to generator.__next__ new row, "
+                             "which might cause `GetNext` timeout problem when sink_mode=True. You can increase the "
+                             "parameter num_parallel_workers in GeneratorDataset / optimize the efficiency of "
+                             "obtaining samples in the user-defined generator function.";
+        }
         generator_counter_++;
       } catch (py::error_already_set &e) {
         eoe = e.matches(PyExc_StopIteration);
