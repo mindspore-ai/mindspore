@@ -131,6 +131,7 @@ STATUS FunctionalizeCond::IdentifySubgraphInput(const FuncGraphPtr &graph, std::
 
         // replace switch
         auto manager = fg_->manager();
+        CHECK_NULL_RETURN(manager);
         auto node_users = manager->node_users()[cnode];
         for (auto &node_user : node_users) {
           if (graph->nodes().contains(node_user.first)) {
