@@ -42,6 +42,7 @@
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
@@ -319,10 +320,21 @@ PYBIND_REGISTER(
   MuLawDecodingOperation, 1, ([](const py::module *m) {
     (void)py::class_<audio::MuLawDecodingOperation, TensorOperation, std::shared_ptr<audio::MuLawDecodingOperation>>(
       *m, "MuLawDecodingOperation")
-      .def(py::init([](int quantization_channels) {
+      .def(py::init([](int32_t quantization_channels) {
         auto mu_law_decoding = std::make_shared<audio::MuLawDecodingOperation>(quantization_channels);
         THROW_IF_ERROR(mu_law_decoding->ValidateParams());
         return mu_law_decoding;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  MuLawEncodingOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::MuLawEncodingOperation, TensorOperation, std::shared_ptr<audio::MuLawEncodingOperation>>(
+      *m, "MuLawEncodingOperation")
+      .def(py::init([](int32_t quantization_channels) {
+        auto mu_law_encoding = std::make_shared<audio::MuLawEncodingOperation>(quantization_channels);
+        THROW_IF_ERROR(mu_law_encoding->ValidateParams());
+        return mu_law_encoding;
       }));
   }));
 

@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <complex>
 #include <limits>
 #include <memory>
 #include <random>
@@ -316,7 +317,16 @@ Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
 /// \param output Tensor of shape <..., time>.
 /// \param quantization_channels Number of channels.
 /// \return Status code.
-Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int quantization_channels);
+Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                     int32_t quantization_channels);
+
+/// \brief Encode signal based on mu-law companding.
+/// \param input Tensor of shape <..., time>.
+/// \param output Tensor of shape <..., time>.
+/// \param quantization_channels Number of channels.
+/// \return Status code.
+Status MuLawEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                     int32_t quantization_channels);
 
 /// \brief Apply a overdrive effect to the audio.
 /// \param input Tensor of shape <..., time>.

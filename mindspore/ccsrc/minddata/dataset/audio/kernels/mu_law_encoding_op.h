@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_MU_LAW_DECODING_OP_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_MU_LAW_DECODING_OP_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_MU_LAW_ENCODING_OP_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_MU_LAW_ENCODING_OP_H_
 
 #include <memory>
 #include <string>
@@ -22,21 +22,24 @@
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
 
-class MuLawDecodingOp : public TensorOp {
+class MuLawEncodingOp : public TensorOp {
  public:
-  explicit MuLawDecodingOp(int32_t quantization_channels = 256);
+  /// \brief Constructor for MuLawEncoding.
+  /// \param[in] quantization_channels Number of channels.
+  explicit MuLawEncodingOp(int32_t quantization_channels = 256);
 
-  ~MuLawDecodingOp() override = default;
+  ~MuLawEncodingOp() override = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
 
-  std::string Name() const override { return kMuLawDecodingOp; }
+  std::string Name() const override { return kMuLawEncodingOp; }
 
  private:
   int32_t quantization_channels_;
@@ -44,4 +47,4 @@ class MuLawDecodingOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_MU_LAW_DECODING_OP_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_MU_LAW_ENCODING_OP_H_

@@ -902,16 +902,16 @@ TEST_F(MindDataTestPipeline, TestMuLawDecodingBasic) {
 
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
-  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt64, {1, 100}));
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeInt32, {1, 100}));
   std::shared_ptr<Dataset> ds = RandomData(50, schema);
   EXPECT_NE(ds, nullptr);
 
   ds = ds->SetNumWorkers(4);
   EXPECT_NE(ds, nullptr);
 
-  auto MuLawDecodingOp = audio::MuLawDecoding();
+  auto mu_law_decoding_op = audio::MuLawDecoding();
 
-  ds = ds->Map({MuLawDecodingOp});
+  ds = ds->Map({mu_law_decoding_op});
   EXPECT_NE(ds, nullptr);
 
   // Filtered waveform by MuLawDecoding
@@ -925,7 +925,7 @@ TEST_F(MindDataTestPipeline, TestMuLawDecodingBasic) {
 
   int i = 0;
   while (row.size() != 0) {
-    auto col = row["inputData"];
+    auto col = row["waveform"];
     ASSERT_EQ(col.Shape(), expected);
     ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
     ASSERT_OK(iter->GetNextRow(&row));
@@ -941,17 +941,97 @@ TEST_F(MindDataTestPipeline, TestMuLawDecodingWrongArgs) {
 
   // Original waveform
   std::shared_ptr<SchemaObj> schema = Schema();
-  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeInt64, {1, 100}));
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeInt32, {1, 100}));
   std::shared_ptr<Dataset> ds = RandomData(50, schema);
   EXPECT_NE(ds, nullptr);
 
   ds = ds->SetNumWorkers(4);
   EXPECT_NE(ds, nullptr);
 
-  auto MuLawDecodingOp = audio::MuLawDecoding(-10);
+  // quantization_channels is negative
+  auto mu_law_decoding_op1 = audio::MuLawDecoding(-10);
 
-  ds = ds->Map({MuLawDecodingOp});
+  ds = ds->Map({mu_law_decoding_op1});
   std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
+  EXPECT_EQ(iter1, nullptr);
+
+  // quantization_channels is 0
+  auto mu_law_decoding_op2 = audio::MuLawDecoding(0);
+
+  ds = ds->Map({mu_law_decoding_op2});
+  std::shared_ptr<Iterator> iter2 = ds->CreateIterator();
+  EXPECT_EQ(iter1, nullptr);
+}
+
+/// Feature: MuLawEncoding
+/// Description: test MuLawEncoding in pipeline mode
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestPipeline, TestMuLawEncodingBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMuLawEncodingBasic.";
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 100}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto mu_law_encoding_op = audio::MuLawEncoding();
+
+  ds = ds->Map({mu_law_encoding_op});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by MuLawEncoding
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {1, 100};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeInt32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+/// Feature: MuLawEncoding
+/// Description: test invalid parameter of MuLawEncoding
+/// Expectation: throw exception correctly
+TEST_F(MindDataTestPipeline, TestMuLawEncodingWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMuLawEncodingWrongArgs.";
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {1, 100}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  // quantization_channels is negative
+  auto mu_law_encoding_op1 = audio::MuLawEncoding(-10);
+
+  ds = ds->Map({mu_law_encoding_op1});
+  std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
+  EXPECT_EQ(iter1, nullptr);
+
+  // quantization_channels is 0
+  auto mu_law_encoding_op2 = audio::MuLawEncoding(0);
+
+  ds = ds->Map({mu_law_encoding_op2});
+  std::shared_ptr<Iterator> iter2 = ds->CreateIterator();
   EXPECT_EQ(iter1, nullptr);
 }
 

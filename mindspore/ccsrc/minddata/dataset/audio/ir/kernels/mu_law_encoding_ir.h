@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_MU_LAW_DECODING_IR_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_MU_LAW_DECODING_IR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_MU_LAW_ENCODING_IR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_MU_LAW_ENCODING_IR_H_
 
 #include <memory>
 #include <string>
@@ -27,13 +27,13 @@ namespace mindspore {
 namespace dataset {
 namespace audio {
 
-constexpr char kMuLawDecodingOperation[] = "MuLawDecoding";
+constexpr char kMuLawEncodingOperation[] = "MuLawEncoding";
 
-class MuLawDecodingOperation : public TensorOperation {
+class MuLawEncodingOperation : public TensorOperation {
  public:
-  explicit MuLawDecodingOperation(int32_t quantization_channels);
+  explicit MuLawEncodingOperation(int32_t quantization_channels);
 
-  ~MuLawDecodingOperation();
+  ~MuLawEncodingOperation();
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -45,10 +45,9 @@ class MuLawDecodingOperation : public TensorOperation {
 
  private:
   int32_t quantization_channels_;
-};  // class MuLawDecodingOperation
-
+};  // class MuLawEncodingOperation
 }  // namespace audio
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_MU_LAW_DECODING_IR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_KERNELS_MU_LAW_ENCODING_IR_H_

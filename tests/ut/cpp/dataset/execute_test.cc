@@ -864,15 +864,33 @@ TEST_F(MindDataTestExecute, TestHighpassBiquadParamCheckSampleRate) {
 TEST_F(MindDataTestExecute, TestMuLawDecodingEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestMuLawDecodingEager.";
   // testing
-  std::shared_ptr<Tensor> input_tensor_;
-  Tensor::CreateFromVector(std::vector<float>({1, 254, 231, 155, 101, 77}), TensorShape({1, 6}), &input_tensor_);
+  std::shared_ptr<Tensor> input_tensor;
+  Tensor::CreateFromVector(std::vector<float>({1, 254, 231, 155, 101, 77}), TensorShape({1, 6}), &input_tensor);
 
-  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor_));
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
   std::shared_ptr<TensorTransform> mu_law_encoding_01 = std::make_shared<audio::MuLawDecoding>(255);
 
   // Filtered waveform by mulawencoding
   mindspore::dataset::Execute Transform01({mu_law_encoding_01});
-  Status s01 = Transform01(input_02, &input_02);
+  Status s01 = Transform01(input_01, &input_01);
+  EXPECT_TRUE(s01.IsOk());
+}
+
+/// Feature: MuLawEncoding
+/// Description: test MuLawEncoding in eager mode
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestExecute, TestMuLawEncodingEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestMuLawEncodingEager.";
+  // testing
+  std::shared_ptr<Tensor> input_tensor;
+  Tensor::CreateFromVector(std::vector<float>({0.1, 0.2, 0.3, 0.4, 0.5, 0.6}), TensorShape({1, 6}), &input_tensor);
+
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
+  std::shared_ptr<TensorTransform> mu_law_encoding_01 = std::make_shared<audio::MuLawEncoding>(255);
+
+  // Filtered waveform by mulawencoding
+  mindspore::dataset::Execute Transform01({mu_law_encoding_01});
+  Status s01 = Transform01(input_01, &input_01);
   EXPECT_TRUE(s01.IsOk());
 }
 

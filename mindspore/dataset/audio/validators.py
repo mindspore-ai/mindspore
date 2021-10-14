@@ -280,8 +280,8 @@ def check_lowpass_biquad(method):
     return new_method
 
 
-def check_mu_law_decoding(method):
-    """Wrapper method to check the parameters of MuLawDecoding"""
+def check_mu_law_coding(method):
+    """Wrapper method to check the parameters of MuLawDecoding and MuLawEncoding"""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
