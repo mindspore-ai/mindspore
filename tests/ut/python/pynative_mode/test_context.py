@@ -79,7 +79,6 @@ def test_device_target():
     assert context.get_context("device_target") == "GPU"
     context.set_context(device_target="Ascend")
     assert context.get_context("device_target") == "Ascend"
-    assert context.get_context("device_id") == 1
 
 
 def test_variable_memory_max_size():
@@ -103,6 +102,7 @@ def test_max_device_memory_size():
 def test_print_file_path():
     """test_print_file_path"""
     with pytest.raises(IOError):
+        context.set_context(device_target="Ascend")
         context.set_context(print_file_path="./")
 
 
