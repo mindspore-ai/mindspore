@@ -67,8 +67,33 @@ bool ResizeBilinearCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
 template <typename T1, typename T2>
 void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &outputs) const {
-  const auto *input_addr = reinterpret_cast<T1 *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T2 *>(outputs[0]->addr);
+  auto *output_addr_T2 = reinterpret_cast<T2 *>(outputs[0]->addr);
+  float *float_input_addr;
+  float *float_output_addr;
+  if (dtype_ == kNumberTypeFloat16) {
+    auto *input_addr_T1 = reinterpret_cast<T1 *>(inputs[0]->addr);
+    size_t input_mem_size = inputs[0]->size / sizeof(T1) * sizeof(float);
+    float_input_addr = reinterpret_cast<float *>(malloc(input_mem_size));
+    if (float_input_addr == NULL) {
+      MS_LOG(ERROR) << "Malloc memory failed.";
+    }
+    for (size_t i = 0; i < ((inputs[0]->size) / sizeof(T1)); ++i) {
+      float_input_addr[i] = static_cast<float>(input_addr_T1[i]);
+    }
+
+    size_t output_mem_size = outputs[0]->size / sizeof(T2) * sizeof(float);
+    float_output_addr = reinterpret_cast<float *>(malloc(output_mem_size));
+    if (float_output_addr == NULL) {
+      free(float_input_addr);
+      MS_LOG(ERROR) << "Malloc memory failed.";
+    }
+  } else if (dtype_ == kNumberTypeFloat32) {
+    float_input_addr = reinterpret_cast<float *>(inputs[0]->addr);
+    float_output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported datatype.";
+  }
+
   size_t batch_size = shape_[0];
   size_t channel = shape_[1];
   size_t in_height = shape_[2];
@@ -81,7 +106,7 @@ void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   if (out_height == in_height && out_width == in_width) {
     for (size_t i = 0; i < bhwc_size; ++i) {
-      output_addr[i] = static_cast<T2>(input_addr[i]);
+      float_output_addr[i] = static_cast<float>(float_input_addr[i]);
     }
   }
 
@@ -93,23 +118,25 @@ void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   for (size_t b = 0; b < batch_size; ++b) {
     for (size_t c = 0; c < channel; ++c) {
       for (size_t h = 0; h < out_height; ++h) {
-        const T1 *ys_input_lower_ptr = input_addr + ys[h].lower * in_width;
-        const T1 *ys_input_upper_ptr = input_addr + ys[h].upper * in_width;
-        const T2 ys_lerp = T2(ys[h].lerp);
+        const float *ys_input_lower_ptr = float_input_addr + ys[h].lower * in_width;
+        const float *ys_input_upper_ptr = float_input_addr + ys[h].upper * in_width;
+        const float ys_lerp = static_cast<float>(ys[h].lerp);
         for (size_t w = 0; w < out_width; ++w) {
           const size_t xs_lower = xs[w].lower;
           const size_t xs_upper = xs[w].upper;
-          const T2 xs_lerp = T2(xs[w].lerp);
-          const T2 top_left(ys_input_lower_ptr[xs_lower]);
-          const T2 top_right(ys_input_lower_ptr[xs_upper]);
-          const T2 bottom_left(ys_input_upper_ptr[xs_lower]);
-          const T2 bottom_right(ys_input_upper_ptr[xs_upper]);
-          output_addr[h * out_width + w] =
+          const float xs_lerp = static_cast<float>(xs[w].lerp);
+          const float top_left(ys_input_lower_ptr[xs_lower]);
+          const float top_right(ys_input_lower_ptr[xs_upper]);
+          const float bottom_left(ys_input_upper_ptr[xs_lower]);
+          const float bottom_right(ys_input_upper_ptr[xs_upper]);
+          float_output_addr[h * out_width + w] =
             ComputeLerp(top_left, top_right, bottom_left, bottom_right, xs_lerp, ys_lerp);
+          output_addr_T2[h * out_width + w] = static_cast<T2>(float_output_addr[h * out_width + w]);
         }
       }
-      output_addr += out_hw_size;
-      input_addr += in_hw_size;
+      output_addr_T2 += out_hw_size;
+      float_input_addr += in_hw_size;
+      float_output_addr += out_hw_size;
     }
   }
 }

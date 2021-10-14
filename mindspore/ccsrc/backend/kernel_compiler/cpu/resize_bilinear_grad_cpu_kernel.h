@@ -38,7 +38,7 @@ class ResizeBilinearGradCPUKernel : public CPUKernel {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
   TypeId dtype_{kTypeUnknown};
   bool align_corners_{false};

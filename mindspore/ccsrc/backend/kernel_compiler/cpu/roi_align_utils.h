@@ -82,6 +82,9 @@ void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const T spatial_s
              int roi_end_mode, const int channels, const int height, const int width, const int pooled_height,
              const int pooled_width, int *offset, int *n, int *c, int *ph, int *pw, int *roi_bin_grid_h,
              int *roi_bin_grid_w, T *bin_size_h, T *bin_size_w, T *roi_start_h, T *roi_start_w) {
+  MS_EXCEPTION_IF_ZERO("pooled_height", pooled_height);
+  MS_EXCEPTION_IF_ZERO("pooled_width", pooled_width);
+  MS_EXCEPTION_IF_ZERO("channels", channels);
   constexpr int START_W = 0;
   constexpr int START_H = 1;
   constexpr int END_W = 2;
