@@ -175,16 +175,13 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     auto addr = AnfAlgo::GetOutputAddr(input, index);
     MS_EXCEPTION_IF_NULL(addr);
 
-    std::string tensor_name;
-    size_t slot;
+    std::string tensor_name = GetKernelNodeName(node);
+    size_t slot = j;
     if (IsDeviceTargetGPU()) {
       auto input_kernel = node->input(j + 1);
       std::string input_kernel_name = GetKernelNodeName(input_kernel);
       tensor_name = input_kernel_name;
       slot = 0;
-    } else {
-      tensor_name = GetKernelNodeName(node);
-      slot = j;
     }
     ShapeVector int_shapes;
     GetDumpIntShape(input, index, NOT_NULL(&int_shapes), trans_flag);
@@ -395,7 +392,7 @@ bool E2eDump::MoveDumpFiles(const std::string &first_dir, const std::string &sec
   DIR *d_handle = opendir(first_dir.c_str());
   struct dirent *next_file;
 
-  while ((next_file = readdir(d_handle)) != NULL) {
+  while ((next_file = readdir(d_handle)) != nullptr) {
     if (next_file->d_type != DT_REG) {
       continue;
     }
@@ -420,7 +417,7 @@ bool E2eDump::DeleteDirContents(const std::string &dir_path) {
   DIR *d_handle = opendir(dir_path.c_str());
   struct dirent *next_file;
 
-  while ((next_file = readdir(d_handle)) != NULL) {
+  while ((next_file = readdir(d_handle)) != nullptr) {
     if (next_file->d_type != DT_REG) {
       continue;
     }
