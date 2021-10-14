@@ -104,7 +104,6 @@
 #define kDefaulLiteMaxSpinCount 300000
 #define kDefaulLiteMinSpinCount 1
 #define kDefaulLiteIosSpinCount 1
-#define INPUT_MAX_NUM 10
 
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)

@@ -30,12 +30,16 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DropoutGrad;
 
 namespace mindspore::kernel {
+constexpr static int kInputIdx = 0;
+constexpr static int kMaskIdx = 1;
+constexpr static int kOutputIdx = 0;
+
 int DropoutGradCPUKernel::Prepare() {
-  CHECK_LESS_RETURN(in_tensors_.size(), THIRD_INPUT);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_2D);
+  CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
+  CHECK_NULL_RETURN(in_tensors_.at(kInputIdx));
+  CHECK_NULL_RETURN(in_tensors_.at(kMaskIdx));
+  CHECK_NULL_RETURN(out_tensors_.at(kOutputIdx));
   CHECK_NULL_RETURN(op_parameter_);
   auto param = reinterpret_cast<DropoutParameter *>(op_parameter_);
   if (param == nullptr) {
@@ -62,13 +66,13 @@ int DropoutGradCPUKernel::Prepare() {
 int DropoutGradCPUKernel::ReSize() { return RET_OK; }
 
 int DropoutGradCPUKernel::Execute(int task_id) {
-  auto yt_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
-  auto mask_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  auto yt_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIdx)->MutableData());
+  auto mask_ptr = reinterpret_cast<float *>(in_tensors_.at(kMaskIdx)->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIdx)->MutableData());
   CHECK_NULL_RETURN(yt_ptr);
   CHECK_NULL_RETURN(mask_ptr);
   CHECK_NULL_RETURN(output_ptr);
-  auto length = in_tensors_.at(kInputIndex)->ElementsNum();
+  auto length = in_tensors_.at(kInputIdx)->ElementsNum();
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
   if (count > 0) {

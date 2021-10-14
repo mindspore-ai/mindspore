@@ -33,6 +33,10 @@ using mindspore::schema::PrimitiveType_SqrtGrad;
 
 namespace mindspore::kernel {
 namespace {
+constexpr static int kDyIdx = 0;
+constexpr static int kXIdx = 1;
+constexpr static int kDxIdx = 0;
+
 int ArithmeticSelfGradRun(void *cdata, int thread_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<ArithmeticSelfGradCPUKernel *>(cdata);
   CHECK_NULL_RETURN(kernel);
@@ -63,15 +67,15 @@ int ArithmeticSelfGradCPUKernel::Prepare() {
 }
 
 int ArithmeticSelfGradCPUKernel::DoArithmeticSelfGrad(int task_id) {
-  CHECK_LESS_RETURN(in_tensors_.size(), THIRD_INPUT);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(in_tensors_.at(0));
-  CHECK_NULL_RETURN(in_tensors_.at(1));
-  CHECK_NULL_RETURN(out_tensors_.at(0));
-  auto dy = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto in_x = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  auto dx = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  int length = in_tensors_.at(0)->ElementsNum();
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_2D);
+  CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
+  CHECK_NULL_RETURN(in_tensors_.at(kDyIdx));
+  CHECK_NULL_RETURN(in_tensors_.at(kXIdx));
+  CHECK_NULL_RETURN(out_tensors_.at(kDxIdx));
+  auto dy = reinterpret_cast<float *>(in_tensors_.at(kDyIdx)->MutableData());
+  auto in_x = reinterpret_cast<float *>(in_tensors_.at(kXIdx)->MutableData());
+  auto dx = reinterpret_cast<float *>(out_tensors_.at(kDxIdx)->MutableData());
+  int length = in_tensors_.at(kDyIdx)->ElementsNum();
   CHECK_NULL_RETURN(dy);
   CHECK_NULL_RETURN(in_x);
   CHECK_NULL_RETURN(dx);

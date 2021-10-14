@@ -30,17 +30,21 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2DBackpropFilterFusion;
 
 namespace mindspore::kernel {
+constexpr static int kDyIdx = 0;
+constexpr static int kXIdx = 1;
+constexpr static int kDwIdx = 0;
+
 int ConvolutionGradFilterCPUKernel::ReSize() {
   // dy is in input 0
   // x is in input 1
   // dw is output 0
 
-  CHECK_LESS_RETURN(in_tensors_.size(), THIRD_INPUT);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  CHECK_NULL_RETURN(out_tensors_.at(0));
-  auto *x_tensor = in_tensors_.at(1);
+  CHECK_LESS_RETURN(in_tensors_.size(), DIMENSION_2D);
+  CHECK_LESS_RETURN(out_tensors_.size(), DIMENSION_1D);
+  CHECK_NULL_RETURN(out_tensors_.at(kDwIdx));
+  auto *x_tensor = in_tensors_.at(kXIdx);
   CHECK_NULL_RETURN(x_tensor);
-  auto *dy_tensor = in_tensors_.at(0);
+  auto *dy_tensor = in_tensors_.at(kDyIdx);
   CHECK_NULL_RETURN(dy_tensor);
   CHECK_NULL_RETURN(op_parameter_);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
@@ -85,9 +89,9 @@ int ConvolutionGradFilterCPUKernel::Prepare() { return ReSize(); }
 int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
   CHECK_NULL_RETURN(conv_param);
-  auto *input_dy = in_tensors_.at(0);
-  auto *input_x = in_tensors_.at(1);
-  auto *out_dw = out_tensors_.at(0);
+  auto *input_dy = in_tensors_.at(kDyIdx);
+  auto *input_x = in_tensors_.at(kXIdx);
+  auto *out_dw = out_tensors_.at(kDwIdx);
   CHECK_NULL_RETURN(out_dw);
   auto x_addr = reinterpret_cast<float *>(input_x->MutableData());
   auto dy_addr = reinterpret_cast<float *>(input_dy->MutableData());
@@ -201,7 +205,7 @@ int ConvolutionGradFilterRun(void *cdata, int task_id, float lhs_scale, float rh
 }
 
 int ConvolutionGradFilterCPUKernel::Run() {
-  auto *out_dw = out_tensors_.at(0);
+  auto *out_dw = out_tensors_.at(kDwIdx);
   CHECK_NULL_RETURN(out_dw);
   auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
   CHECK_NULL_RETURN(dw_addr);
