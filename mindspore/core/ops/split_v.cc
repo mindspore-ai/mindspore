@@ -46,8 +46,8 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   if (default_idx == size_splits.end()) {
     int64_t sum_of_size_splits = 0;
     for (int64_t i = 0; i < num_split; i++) {
-      (void)CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
-                                               {0, shape_of_split_dim}, prim_name);
+      CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[LongToSize(i)], kIncludeBoth,
+                                         {0, shape_of_split_dim}, prim_name);
       sum_of_size_splits += size_splits[LongToSize(i)];
     }
     CheckAndConvertUtils::Check("sum of size_splits", sum_of_size_splits, kEqual, "dimension of value along split_dim",
@@ -60,8 +60,8 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
     } else {
       int64_t sum_of_size_splits = 0;
       for (int64_t i = 0; i < num_split - 1; i++) {
-        (void)CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[i], kIncludeBoth,
-                                                 {0, shape_of_split_dim}, prim_name);
+        CheckAndConvertUtils::CheckInRange("elements of size_splits", size_splits[LongToSize(i)], kIncludeBoth,
+                                           {0, shape_of_split_dim}, prim_name);
         sum_of_size_splits += size_splits[LongToSize(i)];
       }
       auto default_value = shape_of_split_dim - sum_of_size_splits;
@@ -71,7 +71,7 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   std::vector<abstract::BaseShapePtr> shape_tuple;
   for (int64_t i = 0; i < num_split; i++) {
     auto shape = x_shape;
-    shape[split_dim] = size_splits[LongToSize(i)];
+    shape[LongToSize(split_dim)] = size_splits[LongToSize(i)];
     abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
     shape_tuple.push_back(out_shape);
   }

@@ -34,7 +34,7 @@ abstract::ShapePtr MatMulInferShape(const PrimitivePtr &primitive, const std::ve
     MS_EXCEPTION(ValueError) << "For MatMul, input x, y should have the same dimension size and should be greater"
                              << "or equal to 3, while x size = " << x_shp.size() << ", y size = " << y_shp.size();
   }
-  constexpr size_t offset = 2;
+  constexpr int64_t offset = 2;
   std::vector<int> x_last(x_shp.end() - offset, x_shp.end());
   std::vector<int> y_last(y_shp.end() - offset, y_shp.end());
   ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
