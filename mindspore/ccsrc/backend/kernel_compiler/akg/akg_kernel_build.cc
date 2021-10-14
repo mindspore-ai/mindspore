@@ -211,7 +211,7 @@ int32_t AkgKernelPool::Init(const std::vector<JsonNodePair> &build_args) {
   return 0;
 }
 
-int32_t AkgKernelPool::Release() {
+int32_t AkgKernelPool::Release() const {
   {
     LockMng lock(fd_);
     if (!lock.locked_) {
@@ -248,11 +248,6 @@ int32_t AkgKernelPool::Release() {
         return -1;
       }
     }
-  }
-
-  // Close key file
-  if (fd_ != -1) {
-    (void)close(fd_);
   }
 
   return 0;

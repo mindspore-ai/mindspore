@@ -242,7 +242,7 @@ class TransformOp {
 };
 
 bool IsFlexibleOp(const NodePtr &node) {
-  static std::set<std::string> format_flexible_ops = {
+  static const std::set<std::string> format_flexible_ops = {
     "Abs",  "Add",     "Sub",     "Mul",   "Round",   "Cast",         "Neg",  "Exp",       "Log",
     "Pow",  "Minimum", "Maximum", "Rsqrt", "Sqrt",    "Reciprocal",   "Tanh", "Sin",       "Cos",
     "Asin", "ACos",    "RealDiv", "Equal", "Greater", "GreaterEqual", "Less", "LessEqual", "Sign"};
