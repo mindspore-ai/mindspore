@@ -100,7 +100,7 @@ class AllReduce(PrimitiveWithInfer):
     Args:
         op (str): Specifies an operation used for element-wise reductions,
                   like sum, max, and min. Default: ReduceOp.SUM.
-        group (str): The communication group to work on. Default: "hccl_world_group".
+        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -174,7 +174,7 @@ class AllGather(PrimitiveWithInfer):
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        group (str): The communication group to work on. Default: "hccl_world_group".
+        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -375,7 +375,7 @@ class ReduceScatter(PrimitiveWithInfer):
     Args:
         op (str): Specifies an operation used for element-wise reductions,
                   like SUM, MAX, AVG. Default: ReduceOp.SUM.
-        group (str): The communication group to work on. Default: "hccl_world_group".
+        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Raises:
         TypeError: If any of operation and group is not a string.
@@ -505,7 +505,7 @@ class Broadcast(PrimitiveWithInfer):
     Args:
         root_rank (int): Source rank. Required in all processes except the one
                    that is sending the data.
-        group (str): The communication group to work on. Default: "hccl_world_group".
+        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -671,7 +671,7 @@ class AlltoAll(PrimitiveWithInfer):
         split_count (int): On each process, divide blocks into split_count number.
         split_dim (int): On each process, split blocks along the split_dim.
         concat_dim (int): On each process, gather the received blocks along the concat_dimension.
-        group (str): The communication group to work on. Default: "hccl_world_group".
+        group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Raises:
         TypeError: If group is not a string.

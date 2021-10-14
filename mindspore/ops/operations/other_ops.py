@@ -31,12 +31,11 @@ class Assign(Primitive):
 
     Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
-    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+    the relatively highest priority data type.
 
     Inputs:
-        - **variable** (Parameter) - The `Parameter`.
-          :math:`(N,*)` where :math:`*` means ,any number of additional dimensions, its rank should less than 8.
+        - **variable** (Parameter) - The `Parameter`. :math:`(N,*)` where :math:`*` means,
+          any number of additional dimensions, its rank should less than 8.
         - **value** (Tensor) - The value to be assigned, has the same shape with `variable`.
 
     Outputs:
@@ -45,6 +44,8 @@ class Assign(Primitive):
     Raises:
         TypeError: If `variable` is not a Parameter.
         TypeError: If `value` is not a Tensor.
+        RuntimeError: If the data type of `variable` and `value` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -146,6 +147,9 @@ class BoundingBoxEncode(PrimitiveWithInfer):
     """
     Encodes bounding boxes locations.
 
+    This operator will calculate the offset between the predicted bounding boxes and the real bounding boxes,
+    and this offset will be used as a variable for the loss.
+
     Args:
         means (tuple): Means for encoding bounding boxes calculation. Default: (0.0, 0.0, 0.0, 0.0).
         stds (tuple): The standard deviations of deltas calculation. Default: (1.0, 1.0, 1.0, 1.0).
@@ -204,6 +208,9 @@ class BoundingBoxEncode(PrimitiveWithInfer):
 class BoundingBoxDecode(PrimitiveWithInfer):
     """
     Decodes bounding boxes locations.
+
+    The function of the a operator is to calculate the offset, and this operator converts the offset into a Bbox,
+    which is used to mark the target in the subsequent images, etc.
 
     Args:
         means (tuple): The means of deltas calculation. Default: (0.0, 0.0, 0.0, 0.0).

@@ -2698,7 +2698,7 @@ class ApplyMomentum(PrimitiveWithInfer):
     Inputs of `variable`, `accumulation` and `gradient` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Refer to :class:`mindspore.nn.Momentum` for more details about the formula and usage.
 
@@ -4950,7 +4950,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
@@ -5100,7 +5100,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
@@ -5230,9 +5230,9 @@ class FusedSparseFtrl(PrimitiveWithInfer):
     """
     Merges the duplicate value of the gradient and then updates relevant entries according to the FTRL-proximal scheme.
 
-    All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
+    All inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         lr (float): The learning rate value, must be positive.
@@ -5349,7 +5349,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): If true, the variable and accumulation tensors will be protected from being updated.
@@ -5637,7 +5637,7 @@ class ApplyAdaMax(PrimitiveWithInfer):
     Inputs of `var`, `m`, `v` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable to be updated. With float32 or float16 data type.
@@ -5783,7 +5783,7 @@ class ApplyAdadelta(PrimitiveWithInfer):
     Inputs of `var`, `accum`, `accum_update` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively to the highest priority data type.
+    the relatively highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Weights to be updated. With float32 or float16 data type.
@@ -5906,7 +5906,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         update_slots (bool): If `True`, `accum` will be updated. Default: True.
@@ -6002,7 +6002,7 @@ class ApplyAdagradV2(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Note:
         The difference is that `ApplyAdagradV2` has one more small constant value than `ApplyAdagrad`.
@@ -6101,7 +6101,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         lr (float): Learning rate.
@@ -6202,7 +6202,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         lr (float): Learning rate.
@@ -6304,7 +6304,7 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): If true, the var and accumulation tensors will be protected from being updated.
@@ -6424,7 +6424,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
     Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): If true, the `var` and `accum` tensors will be protected from being updated.
@@ -6539,7 +6539,7 @@ class ApplyAddSign(PrimitiveWithInfer):
     Inputs of `var`, `accum` and `grad`  comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -6664,7 +6664,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
     If `lr`, `logbase`, `sign_decay` or `beta` is a number, the number is automatically converted to Tensor,
     and the data type is consistent with the Tensor data type involved in the operation.
     If inputs are tensors and have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -6784,7 +6784,7 @@ class ApplyGradientDescent(PrimitiveWithInfer):
 
     Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -6864,7 +6864,7 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
     Inputs of `var` and `delta` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
@@ -7113,7 +7113,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         lr (float): The learning rate value, must be positive.
@@ -7218,7 +7218,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
 
     Args:
@@ -9120,7 +9120,7 @@ class ApplyAdagradDA(Primitive):
     Inputs of `var`, `gradient_accumulator`, `gradient_squared_accumulator` and `grad`
     comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         use_locking (bool): If `True`, updating of the `var` and `accum` tensors will be protected by a lock.
@@ -9231,7 +9231,7 @@ class SparseApplyRMSProp(Primitive):
     Inputs of `var`, `ms`, `mom` and `grad` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
-    relatively the highest priority data type.
+    the relatively highest priority data type.
 
     Args:
         rho (float): Decay rate. The value should between 0 and 1, otherwise the behavior is undefined.
