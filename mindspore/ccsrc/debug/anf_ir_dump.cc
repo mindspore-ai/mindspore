@@ -375,21 +375,9 @@ void DumpCNodePrimalAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRIn
     gsub->buffer << std::endl;
     return;
   }
-
   auto primal_attrs = op->primal_attrs();
   gsub->buffer << " cnode_primal_attrs: {";
-  int i = 0;
-  for (const auto &attr : primal_attrs) {
-    if (i++ != 0) {
-      gsub->buffer << ", ";
-    }
-    gsub->buffer << attr.first << ": ";
-    if (attr.second == nullptr) {
-      gsub->buffer << "null";
-    } else {
-      gsub->buffer << attr.second->ToString();
-    }
-  }
+  DumpAttrs(primal_attrs, gsub);
   gsub->buffer << "}";
   gsub->buffer << std::endl;
 }
