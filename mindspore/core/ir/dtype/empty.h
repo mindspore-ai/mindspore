@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,13 @@
 #include "ir/dtype/type.h"
 
 namespace mindspore {
+/// \brief TypeAnything defines a Type class whose type is Anything.
 class MS_CORE_API TypeAnything : public Type {
  public:
+  /// \brief Default constructor for TypeAnything.
   TypeAnything() : Type(kMetaTypeAnything) {}
+
+  /// \brief Destructor of TypeAnything.
   ~TypeAnything() override {}
   MS_DECLARE_PARENT(TypeAnything, Type)
 
@@ -46,9 +50,13 @@ class MS_CORE_API TypeAnything : public Type {
 };
 using TypeAnythingPtr = std::shared_ptr<TypeAnything>;
 
+/// \brief TypeNone defines a Type class whose type is None.
 class MS_CORE_API TypeNone : public Type {
  public:
+  /// \brief Default constructor for TypeNone.
   TypeNone() : Type(kMetaTypeNone) {}
+
+  /// \brief Destructor of TypeNone.
   ~TypeNone() override {}
   MS_DECLARE_PARENT(TypeNone, Type)
 
@@ -59,9 +67,13 @@ class MS_CORE_API TypeNone : public Type {
 };
 using TypeNonePtr = std::shared_ptr<TypeNone>;
 
+/// \brief TypeNull defines a Type class whose type is Null.
 class MS_CORE_API TypeNull : public Type {
  public:
+  /// \brief Default constructor for TypeNull.
   TypeNull() : Type(kMetaTypeNull) {}
+
+  /// \brief Destructor of TypeNull.
   ~TypeNull() override {}
   MS_DECLARE_PARENT(TypeNull, Type)
 
@@ -71,9 +83,13 @@ class MS_CORE_API TypeNull : public Type {
 };
 using TypeNullPtr = std::shared_ptr<TypeNull>;
 
+/// \brief TypeEllipsis defines a Type class whose type is Ellipsis.
 class MS_CORE_API TypeEllipsis : public Type {
  public:
+  /// \brief Default constructor for TypeEllipsis.
   TypeEllipsis() : Type(kMetaTypeEllipsis) {}
+
+  /// \brief Destructor of TypeEllipsis.
   ~TypeEllipsis() override {}
   MS_DECLARE_PARENT(TypeEllipsis, Type)
 
