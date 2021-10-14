@@ -2674,24 +2674,24 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
 
 
 class ApplyMomentum(PrimitiveWithInfer):
-    """
+    r"""
     Optimizer that implements the Momentum algorithm.
 
     Refer to the paper `On the importance of initialization and momentum in deep
     learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_  for more details.
 
     .. math::
-            v_{t+1} = v_{t} \ast u + gradients
+            v_{t+1} = v_{t} \times u + gradients
 
     If use_nesterov is True:
 
     .. math::
-            p_{t+1} =  p_{t} - (grad \ast lr + v_{t+1} \ast u \ast lr)
+            p_{t+1} =  p_{t} - (grad \times lr + v_{t+1} \times u \times lr)
 
     If use_nesterov is False:
 
     .. math::
-            p_{t+1} = p_{t} - lr \ast v_{t+1}
+            p_{t+1} = p_{t} - lr \times v_{t+1}
 
     Here: where grad, lr, p, v and u denote the gradients, learning_rate, params, moments, and momentum respectively.
 
