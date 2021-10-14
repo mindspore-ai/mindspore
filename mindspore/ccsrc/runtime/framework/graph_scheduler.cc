@@ -221,7 +221,10 @@ void GraphScheduler::Initialize() {
   ComputeThreadNums(&actor_thread_num, &OMP_thread_num, &max_thread_num);
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
-  actor_manager->Initialize(true, actor_thread_num, max_thread_num);
+  auto ret = actor_manager->Initialize(true, actor_thread_num, max_thread_num);
+  if (ret != MINDRT_OK) {
+    MS_LOG(EXCEPTION) << "Actor manager init failed.";
+  }
   std::string OMP_env = std::to_string(OMP_thread_num);
   (void)common::SetEnv("OMP_NUM_THREADS", OMP_env.c_str(), 0);
   auto OMP_thread_num_used = common::GetEnv("OMP_NUM_THREADS");

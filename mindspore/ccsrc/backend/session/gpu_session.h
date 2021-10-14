@@ -80,11 +80,11 @@ class GPUSession : public SessionBasic {
 
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
-  void AllocateMemory(KernelGraph *kernel_graph) const;
+  void AllocateMemory(const KernelGraph *kernel_graph) const;
 
-  void RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
+  void RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors, const KernelGraph *kernel_graph) const;
 
-  void RunOpClearMemory(KernelGraph *kernel_graph) const;
+  void RunOpClearMemory(const KernelGraph *kernel_graph) const;
 
   void RunOpGenKernelEvent(const KernelGraph *graph) const;
 
@@ -98,7 +98,7 @@ class GPUSession : public SessionBasic {
   bool DumpDataEnabledIteration() const;
 #endif
 
-  GraphId CompileGraphImpl(KernelGraphPtr kernel_graph);
+  GraphId CompileGraphImpl(const KernelGraphPtr &kernel_graph);
 };
 using GPUSessionPtr = std::shared_ptr<GPUSession>;
 MS_REG_SESSION(kGPUDevice, GPUSession);
