@@ -461,11 +461,11 @@ class GaussianBlur(ImageTensorOperation):
 
     Args:
         kernel_size (Union[int, sequence]): Size of the Gaussian kernel to use. The value must be positive and odd. If
-            only an integer is provied, the kernel size will be (size, size). If a sequence of integer is provied, it
+            only an integer is provided, the kernel size will be (size, size). If a sequence of integer is provided, it
             must be a sequence of 2 values which represents (width, height).
         sigma (Union[float, sequence], optional): Standard deviation of the Gaussian kernel to use (default=None). The
-            value must be positive. If only an float is provied, the sigma will be (sigma, sigma). If a sequence of
-            float is provied, it must be a sequence of 2 values which represents the sigma of width and height. If None
+            value must be positive. If only an float is provided, the sigma will be (sigma, sigma). If a sequence of
+            float is provided, it must be a sequence of 2 values which represents the sigma of width and height. If None
             is provided, the sigma will be calculated as ((kernel_size - 1) * 0.5 - 1) * 0.3 + 0.8.
 
 
@@ -653,7 +653,6 @@ class Pad(ImageTensorOperation):
               value of edge.
 
     Examples:
-        >>> from mindspore.dataset.vision import Border
         >>> transforms_list = [c_vision.Decode(), c_vision.Pad([100, 100, 100, 100])]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
@@ -892,10 +891,10 @@ class RandomColorAdjust(ImageTensorOperation):
 
     @check_random_color_adjust
     def __init__(self, brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0)):
-        brightness = self.expand_values(brightness)
-        contrast = self.expand_values(contrast)
-        saturation = self.expand_values(saturation)
-        hue = self.expand_values(
+        brightness = self.__expand_values(brightness)
+        contrast = self.__expand_values(contrast)
+        saturation = self.__expand_values(saturation)
+        hue = self.__expand_values(
             hue, center=0, bound=(-0.5, 0.5), non_negative=False)
 
         self.brightness = brightness
@@ -903,7 +902,7 @@ class RandomColorAdjust(ImageTensorOperation):
         self.saturation = saturation
         self.hue = hue
 
-    def expand_values(self, value, center=1, bound=(0, FLOAT_MAX_INTEGER), non_negative=True):
+    def __expand_values(self, value, center=1, bound=(0, FLOAT_MAX_INTEGER), non_negative=True):
         """Expand input value for vision adjustment factor."""
         if isinstance(value, numbers.Number):
             value = [center - value, center + value]
@@ -1779,7 +1778,7 @@ class SlicePatches(ImageTensorOperation):
     """
     Slice Tensor to multiple patches in horizontal and vertical directions.
 
-    The usage scenerio is suitable to large height and width Tensor. The Tensor
+    The usage scenario is suitable to large height and width Tensor. The Tensor
     will keep the same if set both num_height and num_width to 1. And the
     number of output tensors is equal to num_height*num_width.
 
@@ -1837,11 +1836,11 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
 
     Examples:
         >>> # decode, randomly crop and resize image, keeping aspect ratio
-        >>> transforms_list1 = [c_vision.Decode(), c_vision.SoftDvppDecodeRandomCropResizeJpeg(90)]
+        >>> transforms_list1 = [c_vision.SoftDvppDecodeRandomCropResizeJpeg(90)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
         >>> # decode, randomly crop and resize to landscape style
-        >>> transforms_list2 = [c_vision.Decode(), c_vision.SoftDvppDecodeRandomCropResizeJpeg((80, 100))]
+        >>> transforms_list2 = [c_vision.SoftDvppDecodeRandomCropResizeJpeg((80, 100))]
         >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
         ...                                                     input_columns=["image"])
     """
@@ -1879,11 +1878,11 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
 
     Examples:
         >>> # decode and resize image, keeping aspect ratio
-        >>> transforms_list1 = [c_vision.Decode(), c_vision.SoftDvppDecodeResizeJpeg(70)]
+        >>> transforms_list1 = [c_vision.SoftDvppDecodeResizeJpeg(70)]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
         ...                                                 input_columns=["image"])
         >>> # decode and resize to portrait style
-        >>> transforms_list2 = [c_vision.Decode(), c_vision.SoftDvppDecodeResizeJpeg((80, 60))]
+        >>> transforms_list2 = [c_vision.SoftDvppDecodeResizeJpeg((80, 60))]
         >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
         ...                                                     input_columns=["image"])
     """
@@ -1914,7 +1913,7 @@ class UniformAugment(ImageTensorOperation):
         ...                    c_vision.RandomRotation(degrees=45)]
         >>> uni_aug_op = c_vision.UniformAugment(transforms=transforms_list, num_ops=2)
         >>> transforms_all = [c_vision.Decode(), c_vision.Resize(size=[224, 224]),
-        ...                   uni_aug_op, py_vision.ToTensor()]
+        ...                   uni_aug_op]
         >>> image_folder_dataset_1 = image_folder_dataset.map(operations=transforms_all,
         ...                                                   input_columns="image",
         ...                                                   num_parallel_workers=1)
