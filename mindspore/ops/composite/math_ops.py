@@ -159,13 +159,13 @@ def _axes_int_check(x1_shape, x2_shape, axes, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if isinstance(axes, int):
         if axes < 0:
-            raise ValueError(f"{msg_prefix} axes must be at least 0, but got {axes}.")
+            raise ValueError(f"{msg_prefix} 'axes' must be at least 0, but got {axes}.")
         if axes == 0:
             # outer product, no input validation required
             return [], []
         if axes > len(x1_shape) or axes > len(x2_shape):
-            raise ValueError(f"{msg_prefix} axes cannot be greater than the length of x1_shape and x2_shape, "
-                             f"but got axes: {axes}, x1_shape: {x1_shape}, x2_shape: {x2_shape}.")
+            raise ValueError(f"{msg_prefix} 'axes' cannot be greater than the length of 'x1_shape' and 'x2_shape', "
+                             f"but got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
         x1_ind = tuple(range(len(x1_shape))[-1 * axes:])
         x2_ind = tuple(range(len(x2_shape))[:axes])
         axes = tuple((x1_ind, x2_ind))
@@ -188,8 +188,8 @@ def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
         axes_len = len(x_axes)
         shape_dim_len = len(shapes[ix_input])
         if axes_len > shape_dim_len:
-            raise ValueError(f"{msg_prefix} length of x_axes should be less than or equal to {shape_dim_len}, "
-                             f"but got 'len(x_axes)': {axes_len}.")
+            raise ValueError(f"{msg_prefix} length of element {x_axes} in 'axes' should be less than or equal to "
+                             f"{shape_dim_len}, but got {axes_len}.")
 
     # axis values range check
     for ix_input, x_axes in enumerate(axes):
@@ -198,7 +198,7 @@ def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
         min_val = -1 * len(comp_shape)
         for _, x_value in enumerate(x_axes):
             if not min_val <= x_value <= max_val:
-                raise ValueError(f"{msg_prefix} value in axes should be in range: [{min_val}, {max_val}], "
+                raise ValueError(f"{msg_prefix} value in 'axes' should be in range: [{min_val}, {max_val}], "
                                  f"but got {x_value}.")
 
     # check axis value with input shape - both ways for axis valid
@@ -212,7 +212,7 @@ def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
     if invalid_a and invalid_b:
         raise ValueError(f"{msg_prefix} 'i' should exist such that 'x1_shape[axes[0][i]]' is equal to "
                          f"'x2_shape[axes[1][i]]' or 'x2_shape[axes[1][len(axes[0])-1-i]]', but got "
-                         f"x1_shape: {x1_shape}, x2_shape: {x2_shape}, axes: {axes}.")
+                         f"'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}, 'axes': {axes}.")
 
 
 @constexpr
@@ -244,7 +244,7 @@ def tensor_dot(x1, x2, axes, prim_name='tensor_dot'):
 
     axes = 0 leads to outer product
     axes = 1 leads to normal matrix multiplication when inputs both 2D.
-    axes = 1 is the same as axes = ((1,),(0,) where both `a` and `b` are 2D.
+    axes = 1 is the same as axes = ((1,),(0,)) where both `a` and `b` are 2D.
     axes = 2 is the same as axes = ((1,2),(0,1)) where both `a` and `b` are 3D.
 
     Inputs:
@@ -457,9 +457,9 @@ def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
 
     if isinstance(axes, (list, tuple)):
         if 0 in axes:
-            raise ValueError(f"{msg_prefix} axes cannot contain 0, but got axes: {axes}.")
+            raise ValueError(f"{msg_prefix} 'axes' cannot contain 0, but got axes: {axes}.")
         if len(axes) != 2:
-            raise ValueError(f"{msg_prefix} length of axes must be equal to 2, but got {len(axes)}.")
+            raise ValueError(f"{msg_prefix} length of 'axes' must be equal to 2, but got {len(axes)}.")
         if isinstance(axes, tuple):
             axes = list(axes)
         validator.check_value_type('axes[0]', axes[0], [int], 'batch_dot')
@@ -474,20 +474,20 @@ def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
         if axes[0] > len(x1_shape) or axes[1] > len(x2_shape):
             raise ValueError(f"{msg_prefix} axes[0] must be less than or equal to len(x1_shape), "
                              f"and axes[1] must be less than or equal to len(x2_shape)."
-                             f"But got axes: {axes}, x1_shape: {x1_shape}, x2_shape: {x2_shape}.")
+                             f"But got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
     elif isinstance(axes, int):
         if axes == 0:
-            raise ValueError(f"{msg_prefix} axes should not equal to 0, but got {axes}.")
+            raise ValueError(f"{msg_prefix} 'axes' should not equal to 0, but got {axes}.")
         if axes < 0:
             axes = [axes + len(x1_shape), axes + len(x2_shape)]
             validator.check_non_negative_int(axes[0], 'reversed axes', 'batch_dot')
         elif axes > len(x1_shape) or axes > len(x2_shape):
-            raise ValueError(f"{msg_prefix} axes cannot be greater than the length of x1_shape and x2_shape, "
-                             f"but got axes: {axes}, x1_shape: {x1_shape}, x2_shape: {x2_shape}.")
+            raise ValueError(f"{msg_prefix} 'axes' cannot be greater than the length of 'x1_shape' and 'x2_shape', "
+                             f"but got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
         else:
             axes = [axes, axes]
     else:
-        raise ValueError(f"{msg_prefix} type of axes must be one of those: int, tuple(int), list(int), "
+        raise ValueError(f"{msg_prefix} type of 'axes' must be one of those: int, tuple(int), list(int), "
                          f"but got {type(axes).__name__}.")
     return axes
 
@@ -519,8 +519,8 @@ def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
     """
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if x1_batch_size != x2_batch_size:
-        raise ValueError(f"{msg_prefix} both inputs x1, x2 should have the same batch sizes, but got "
-                         f"x1_batch_size: {x1_batch_size} and x2_batch_size: {x2_batch_size}.")
+        raise ValueError(f"{msg_prefix} inputs 'x1', 'x2' should have the same batch sizes, but got "
+                         f"'x1_batch_size': {x1_batch_size} and 'x2_batch_size': {x2_batch_size}.")
 
 
 @constexpr

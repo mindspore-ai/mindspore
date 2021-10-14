@@ -29,8 +29,8 @@ from mindspore.ops.primitive import constexpr
 def _check_shape(input_shape, out_shape, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if input_shape != out_shape:
-        raise ValueError(f"{msg_prefix} input_shape should be equal to the out_shape, but got "
-                         f"input_shape {input_shape} and out_shape {out_shape}.")
+        raise ValueError(f"{msg_prefix} input 'x' shape should be equal to the output shape, but got "
+                         f"input 'x' shape {input_shape}, output shape {out_shape}.")
 
 
 def clip_by_value(x, clip_value_min, clip_value_max):
