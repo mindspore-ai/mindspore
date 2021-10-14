@@ -78,9 +78,7 @@ flatbuffers {
     String libPath = ''
     msLibTree.find {File file ->
         libPath = file.toString()
-        println('flatc Path: ' + libPath)
         String version = getFlatVersion(libPath)
-        println('version: ' + version)
         if ('2.0.0' == version) {
             msLibPath = libPath
             return true
@@ -116,21 +114,12 @@ task clearJar(type: Delete) {
 
 archivesBaseName ='mindspore-lite-java-flclient'
 
-task packFLJarAAR(type: Jar){
+task flReleaseJarAAR(type: Jar){
     manifest {
         attributes "Main-Class": "com.mindspore.flclient.SyncFLJob"
     }
     from('build/classes/java/main')
-    from {
-        configurations.compile.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
     destinationDirectory = file('build/libs/jarAAR')
-}
-
-task flReleaseJarAAR (type:Exec, dependsOn: ['packFLJarAAR']){
-    commandLine "zip", "-d", "./build/libs/jarAAR/mindspore-lite-java-flclient.jar",'META-INF/.SF',  'META-INF/.RSA',  'META-INF/*SF'
 }
 
 task packFLJarX86(type: Jar){
