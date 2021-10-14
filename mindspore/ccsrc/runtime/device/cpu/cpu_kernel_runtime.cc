@@ -213,7 +213,7 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
       size_t tensor_size = std::accumulate(temp_shape.begin(), temp_shape.end(), type_size, std::multiplies<size_t>());
       if (tensor_size < address->size_) {
         temp_shape.clear();
-        temp_shape.emplace_back(address->size_ / type_size);
+        (void)temp_shape.emplace_back(address->size_ / type_size);
       }
       tensor = std::make_shared<tensor::Tensor>(infer_type_id, temp_shape);
     }
@@ -234,7 +234,9 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
     }
     (void)bound_addresses_.insert(address);
   }
-  tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
+  if (address->ptr_ != nullptr) {
+    tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
+  }
   session::KernelWithIndex node_index(node, index);
   tensor->SetNeedWait(true);
   tensor->SetIsGraphOutput();

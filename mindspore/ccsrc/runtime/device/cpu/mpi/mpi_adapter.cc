@@ -150,7 +150,7 @@ MPI_Group MPIAdapter::AddGroup(const std::vector<int> &ranks) {
   }
 
   MPI_Group group = MPI_GROUP_NULL;
-  MPI_Group_incl(comm_group_world_, ranks.size(), ranks_input.data(), &group);
+  MPI_Group_incl(comm_group_world_, static_cast<int>(ranks.size()), ranks_input.data(), &group);
   if (group == MPI_GROUP_NULL) {
     RAISE_EXCEPTION_WITH_PARAM("create mpi group fail!rankid:", rank_id_);
   }
@@ -177,7 +177,7 @@ bool MPIAdapter::ReduceScatter(const float *input, float *output, const std::vec
   }
   std::vector<int> receive_count(ranks_group.size(), 0);
   for (size_t i = 0; i < ranks_group.size(); ++i) {
-    receive_count[i] = data_num;
+    receive_count[i] = static_cast<int>(data_num);
   }
 
   auto op = GetMpiOp(op_type);
@@ -209,7 +209,8 @@ bool MPIAdapter::ReduceScatterOverwriteInput(float *input, const std::vector<int
   }
 
   MPI_Win window;
-  auto ret = MPI_Win_create(input, input_data_num * sizeof(float), sizeof(float), MPI_INFO_NULL, comm, &window);
+  auto ret = MPI_Win_create(input, static_cast<int64_t>(input_data_num * sizeof(float)), sizeof(float), MPI_INFO_NULL,
+                            comm, &window);
   if (ret != MPI_SUCCESS) {
     RAISE_EXCEPTION_WITH_PARAM("mpi window create fail! ret = ", ret);
   }
@@ -220,8 +221,9 @@ bool MPIAdapter::ReduceScatterOverwriteInput(float *input, const std::vector<int
       continue;
     }
     auto op = GetMpiOp(op_type);
-    ret = MPI_Accumulate(input + i * input_data_num, input_data_num, MPI_FLOAT, remote_rank, i * input_data_num,
-                         input_data_num, MPI_FLOAT, op, window);
+    ret =
+      MPI_Accumulate(input + i * input_data_num, static_cast<int>(input_data_num), MPI_FLOAT, remote_rank,
+                     static_cast<int64_t>(i * input_data_num), static_cast<int>(input_data_num), MPI_FLOAT, op, window);
     if (ret != MPI_SUCCESS) {
       RAISE_EXCEPTION_WITH_PARAM("mpi accumulate fail!ret = ", ret);
     }
@@ -234,7 +236,8 @@ bool MPIAdapter::ReduceScatterOverwriteInput(float *input, const std::vector<int
       exception_msg << "output buffer size " << output_size << " < input size " << data_size;
       RAISE_EXCEPTION(exception_msg.str());
     }
-    auto copy_ret = memcpy_s(output, output_size, input + scatter_index * input_data_num, data_size);
+    auto copy_ret =
+      memcpy_s(output, output_size, input + static_cast<size_t>(scatter_index) * input_data_num, data_size);
     if (copy_ret != 0) {
       RAISE_EXCEPTION_WITH_PARAM("copy output memory fail!ret = ", copy_ret);
     }
@@ -258,7 +261,8 @@ bool MPIAdapter::AllGather(const float *input, float *output, const std::vector<
   if (comm == MPI_COMM_NULL) {
     RAISE_EXCEPTION_WITH_PARAM("create mpi comm fail! rankid:", rank_id_);
   }
-  auto ret = MPI_Allgather(input, data_num, MPI_FLOAT, output, data_num, MPI_FLOAT, comm);
+  auto ret =
+    MPI_Allgather(input, static_cast<int>(data_num), MPI_FLOAT, output, static_cast<int>(data_num), MPI_FLOAT, comm);
   if (ret != MPI_SUCCESS) {
     RAISE_EXCEPTION_WITH_PARAM("mpi allgater fail!ret = ", ret);
   }
