@@ -98,6 +98,11 @@ class FlopsParser:
                 result = [hex(i) for i in struct.unpack(self.RUNTIME_COMMON, log_struct)]
                 op_name = self._get_op_name(result)
 
+                if op_name == "":
+                    continue
+                if op_name not in op_avg_time_dict:
+                    logger.info(f"Op name {op_name} does not exist in op average time dict.")
+                    continue
                 # Convert the unit of task_fops to MFLOPs(1e6).
                 if op_name in op_compute_dict:
                     task_fops = op_compute_dict[op_name]
@@ -106,15 +111,13 @@ class FlopsParser:
                     op_compute_dict[op_name] = task_fops
 
                 # add the op FLOPS in current step.
-                op_idx, step_idx, op_start_time, op_all_step_time, op_all_step_comp = self._add_step_flops_time(
-                    op_name, task_fops, op_idx, step_idx, op_start_time, op_all_step_time, op_all_step_comp)
+                if len(op_start_time) >= 1 and len(op_all_step_time) >= 1:
+                    op_idx, step_idx, op_all_step_comp = self._add_step_flops_time(
+                        op_name, task_fops, op_idx, step_idx, op_start_time, op_all_step_time, op_all_step_comp)
                 logger.debug("calculate FLOPS: step_idx= %d, op_idx=%d.", step_idx, op_idx)
 
                 # calculate averge op FLOPS.
-                if op_name in op_name_set or op_name == "":
-                    continue
-                if op_name not in op_avg_time_dict:
-                    logger.warning("Op name {op_name} is not exist in op average time dict.")
+                if op_name in op_name_set:
                     continue
                 op_avg_time = op_avg_time_dict[op_name]
                 # Time unit of op_avg_time is ms.
@@ -148,7 +151,11 @@ class FlopsParser:
                 f.write(",")
                 f.write(str(current_utilization))
                 f.write("\n")
-        self._flops_summary['FLOPS_Utilization'] = sum_flops_utilization / len(op_all_step_comp)
+        if len(op_all_step_comp) >= 1:
+            self._flops_summary['FLOPS_Utilization'] = sum_flops_utilization / len(op_all_step_comp)
+        else:
+            logger.warning("The number of steps array is 0, please check it.")
+            self._flops_summary['FLOPS_Utilization'] = 0.0
         self._format_scope_flops()
         self._write_file(op_flops_list)
 
@@ -481,14 +488,15 @@ class FlopsParser:
         while((op_idx < len(op_start_time)) and (op_name != op_start_time[op_idx][0])):
             op_idx += 1
         if op_idx >= len(op_start_time):
-            logger.warning(f"Op name {op_name} is not exist in timeline dict.")
+            logger.info(f"Op name {op_name} does not exist in timeline dict.")
+            return op_idx, step_idx, op_all_step_comp
 
         # do not add the op FLOPS that not in fp_and_bp time.
         while((step_idx < len(op_all_step_time)) and
               (op_start_time[op_idx][1] >= op_all_step_time[step_idx][1])):
             step_idx += 1
         if step_idx >= len(op_all_step_time):
-            logger.warning(f"Op name {op_name} is not exist in timeline dict.")
+            logger.info(f"Op name {op_name} does not exist in timeline dict.")
 
         # add the op FLOPS that in fp_and_bp time.
         if ((step_idx < len(op_all_step_time)) and
@@ -497,4 +505,4 @@ class FlopsParser:
             op_all_step_comp[step_idx][0] += task_fops
         # next op.
         op_idx += 1
-        return op_idx, step_idx, op_start_time, op_all_step_time, op_all_step_comp
+        return op_idx, step_idx, op_all_step_comp
