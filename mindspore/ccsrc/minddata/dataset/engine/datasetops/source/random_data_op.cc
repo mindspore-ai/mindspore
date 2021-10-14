@@ -159,7 +159,11 @@ Status RandomDataOp::ComputeColMap() {
 
 Status RandomDataOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
   CHECK_FAIL_RETURN_UNEXPECTED(row_id < total_rows_, "Wrong index.");
-  *row = rows_[row_id];
+  for (const auto &tensor : rows_[row_id]) {
+    TensorPtr new_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(tensor, &new_tensor));
+    row->emplace_back(new_tensor);
+  }
   return Status::OK();
 }
 
