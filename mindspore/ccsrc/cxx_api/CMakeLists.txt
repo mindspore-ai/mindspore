@@ -4,7 +4,7 @@ if(MODE_ASCEND_ACL)
     get_filename_component(PYTHON_LIB_DIR ${PYTHON_LIB_REALPATH} PATH)
 
     execute_process(
-            COMMAND "${PYTHON_EXECUTABLE}" -c "import distutils.sysconfig as sysconfig; \
+            COMMAND "${Python3_EXECUTABLE}" -c "import distutils.sysconfig as sysconfig; \
                   print(sysconfig.get_config_var('PY3LIBRARY'))"
             RESULT_VARIABLE result
             OUTPUT_VARIABLE PY3LIBRARY)
