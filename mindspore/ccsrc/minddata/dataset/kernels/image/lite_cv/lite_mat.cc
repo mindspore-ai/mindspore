@@ -236,7 +236,7 @@ void LiteMat::Init(int width, int height, void *p_data, LDataType data_type) {
   steps_[0] = width_ * steps_[1];
 }
 
-void LiteMat::Init(int width, int height, int channel, LDataType data_type, bool align_memory) {
+void LiteMat::Init(int width, int height, int channel, const LDataType &data_type, bool align_memory) {
   Release();
   data_type_ = data_type;
   InitElemSize(data_type);

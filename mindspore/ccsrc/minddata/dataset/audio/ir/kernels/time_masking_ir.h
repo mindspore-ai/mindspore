@@ -44,9 +44,9 @@ class TimeMaskingOperation : public TensorOperation {
   Status to_json(nlohmann::json *out_json) override;
 
  private:
+  bool iid_masks_;
   int32_t time_mask_param_;
   int32_t mask_start_;
-  bool iid_masks_;
   float mask_value_;
 };  // class TimeMaskingOperation
 

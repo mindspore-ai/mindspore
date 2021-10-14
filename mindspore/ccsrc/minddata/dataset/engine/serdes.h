@@ -158,7 +158,7 @@ class Serdes {
   /// \param[in] json_filepath input path of json file
   /// \param[out] ds The deserialized dataset
   /// \return Status The status code returned
-  static Status Deserialize(std::string json_filepath, std::shared_ptr<DatasetNode> *ds);
+  static Status Deserialize(const std::string &json_filepath, std::shared_ptr<DatasetNode> *ds);
 
   /// \brief Helper function to construct IR tree, separate zip and other operations
   /// \param[in] json_obj The JSON object to be deserialized
@@ -198,7 +198,7 @@ class Serdes {
   /// \param[in] json_obj json object to read out type of the node
   /// \param[out] ds Shared pointer of a DatasetNode object containing the deserialized IR tree
   /// \return create new node based on the input dataset and type of the operation
-  static Status CreateNode(std::shared_ptr<DatasetNode> child_ds, nlohmann::json json_obj,
+  static Status CreateNode(const std::shared_ptr<DatasetNode> &child_ds, nlohmann::json json_obj,
                            std::shared_ptr<DatasetNode> *ds);
 
   /// \brief Helper functions for creating dataset nodes, separate different datasets and call the related function
@@ -206,15 +206,16 @@ class Serdes {
   /// \param[in] op_type type of dataset
   /// \param[out] ds Shared pointer of a DatasetNode object containing the deserialized IR tree
   /// \return Status The status code returned
-  static Status CreateDatasetNode(nlohmann::json json_obj, std::string op_type, std::shared_ptr<DatasetNode> *ds);
+  static Status CreateDatasetNode(const nlohmann::json &json_obj, const std::string &op_type,
+                                  std::shared_ptr<DatasetNode> *ds);
 
   /// \brief Helper functions for creating operation nodes, separate different operations and call the related function
   /// \param[in] json_obj The JSON object to be deserialized
   /// \param[in] op_type type of dataset
   /// \param[out] result Shared pointer of a DatasetNode object containing the deserialized IR tree
   /// \return Status The status code returned
-  static Status CreateDatasetOperationNode(std::shared_ptr<DatasetNode> ds, nlohmann::json json_obj,
-                                           std::string op_type, std::shared_ptr<DatasetNode> *result);
+  static Status CreateDatasetOperationNode(const std::shared_ptr<DatasetNode> &ds, const nlohmann::json &json_obj,
+                                           const std::string &op_type, std::shared_ptr<DatasetNode> *result);
 
   /// \brief Helper function to map the function pointers
   /// \return map of key to function pointer

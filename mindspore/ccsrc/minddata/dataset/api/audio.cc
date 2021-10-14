@@ -192,8 +192,8 @@ std::shared_ptr<TensorOperation> Contrast::Parse() {
 // DCShift Transform Operation.
 struct DCShift::Data {
   Data(float shift, float limiter_gain) : shift_(shift), limiter_gain_(limiter_gain) {}
-  float limiter_gain_;
   float shift_;
+  float limiter_gain_;
 };
 
 DCShift::DCShift(float shift) : data_(std::make_shared<Data>(shift, shift)) {}
@@ -256,9 +256,9 @@ struct FrequencyMasking::Data {
         frequency_mask_param_(frequency_mask_param),
         mask_start_(mask_start),
         mask_value_(mask_value) {}
+  bool iid_masks_;
   int32_t frequency_mask_param_;
   int32_t mask_start_;
-  bool iid_masks_;
   float mask_value_;
 };
 
@@ -328,11 +328,11 @@ std::shared_ptr<TensorOperation> Magphase::Parse() { return std::make_shared<Mag
 
 // MuLawDecoding Transform Operation.
 struct MuLawDecoding::Data {
-  explicit Data(int quantization_channels) : quantization_channels_(quantization_channels) {}
-  int quantization_channels_;
+  explicit Data(int32_t quantization_channels) : quantization_channels_(quantization_channels) {}
+  int32_t quantization_channels_;
 };
 
-MuLawDecoding::MuLawDecoding(int quantization_channels) : data_(std::make_shared<Data>(quantization_channels)) {}
+MuLawDecoding::MuLawDecoding(int32_t quantization_channels) : data_(std::make_shared<Data>(quantization_channels)) {}
 
 std::shared_ptr<TensorOperation> MuLawDecoding::Parse() {
   return std::make_shared<MuLawDecodingOperation>(data_->quantization_channels_);
@@ -342,9 +342,9 @@ std::shared_ptr<TensorOperation> MuLawDecoding::Parse() {
 struct TimeMasking::Data {
   Data(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value)
       : iid_masks_(iid_masks), time_mask_param_(time_mask_param), mask_start_(mask_start), mask_value_(mask_value) {}
+  bool iid_masks_;
   int32_t time_mask_param_;
   int32_t mask_start_;
-  bool iid_masks_;
   float mask_value_;
 };
 
@@ -358,14 +358,14 @@ std::shared_ptr<TensorOperation> TimeMasking::Parse() {
 
 // TimeStretch Transform Operation.
 struct TimeStretch::Data {
-  explicit Data(float hop_length, int n_freq, float fixed_rate)
+  explicit Data(float hop_length, int32_t n_freq, float fixed_rate)
       : hop_length_(hop_length), n_freq_(n_freq), fixed_rate_(fixed_rate) {}
   float hop_length_;
-  int n_freq_;
+  int32_t n_freq_;
   float fixed_rate_;
 };
 
-TimeStretch::TimeStretch(float hop_length, int n_freq, float fixed_rate)
+TimeStretch::TimeStretch(float hop_length, int32_t n_freq, float fixed_rate)
     : data_(std::make_shared<Data>(hop_length, n_freq, fixed_rate)) {}
 
 std::shared_ptr<TensorOperation> TimeStretch::Parse() {

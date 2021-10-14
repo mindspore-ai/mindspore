@@ -39,8 +39,8 @@ class RotateOperation : public TensorOperation {
  public:
   explicit RotateOperation(FixRotationAngle angle);
 
-  RotateOperation(float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
-                  std::vector<uint8_t> fill_value);
+  RotateOperation(float degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
+                  const std::vector<uint8_t> &fill_value);
 
   ~RotateOperation();
 
@@ -57,13 +57,13 @@ class RotateOperation : public TensorOperation {
   void setAngle(uint64_t angle_id);
 
  private:
-  std::shared_ptr<TensorOp> rotate_op_;
   uint64_t angle_id_;
   float degrees_;
   InterpolationMode interpolation_mode_;
-  std::vector<float> center_;
   bool expand_;
+  std::vector<float> center_;
   std::vector<uint8_t> fill_value_;
+  std::shared_ptr<TensorOp> rotate_op_;
 };
 
 }  // namespace vision

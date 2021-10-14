@@ -31,24 +31,17 @@ def check_amplitude_to_db(method):
     def new_method(self, *args, **kwargs):
         [stype, ref_value, amin, top_db], _ = parse_user_args(method, *args, **kwargs)
 
-        # type check stype
         type_check(stype, (ScaleType,), "stype")
 
-        # type check ref_value
         type_check(ref_value, (int, float), "ref_value")
-        # value check ref_value
         if ref_value is not None:
             check_pos_float32(ref_value, "ref_value")
 
-        # type check amin
         type_check(amin, (int, float), "amin")
-        # value check amin
         if amin is not None:
             check_pos_float32(amin, "amin")
 
-        # type check top_db
         type_check(top_db, (int, float), "top_db")
-        # value check top_db
         if top_db is not None:
             check_pos_float32(top_db, "top_db")
 
@@ -246,7 +239,7 @@ def check_equalizer_biquad(method):
 
 
 def check_lfilter(method):
-    """Wrapper method to check the parameters of lfilter."""
+    """Wrapper method to check the parameters of LFilter."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -315,7 +308,7 @@ def check_time_stretch(method):
 
 
 def check_masking(method):
-    """Wrapper method to check the parameters of time_masking and FrequencyMasking"""
+    """Wrapper method to check the parameters of TimeMasking and FrequencyMasking"""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -409,9 +402,7 @@ def check_vol(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [gain, gain_type], _ = parse_user_args(method, *args, **kwargs)
-        # type check gain
         type_check(gain, (int, float), "gain")
-        # type check gain_type and value check gain
         type_check(gain_type, (GainType,), "gain_type")
         if gain_type == GainType.AMPLITUDE:
             check_non_negative_float32(gain, "gain")
