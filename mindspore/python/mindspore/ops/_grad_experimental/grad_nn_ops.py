@@ -108,6 +108,18 @@ def get_bprop_celu(self):
     return bprop
 
 
+@bprop_getters.register(P.MultiMarginLoss)
+def get_bprop_multi_margin_loss(self):
+    """Grad definition for `MultiMarginLoss` operation."""
+    input_grad = G.MultiMarginLossGrad(p=self.p, margin=self.margin, reduction=self.reduction)
+
+    def bprop(x, target, weight, out, dout):
+        dx = input_grad(dout, x, target, weight)
+        return dx, zeros_like(target), zeros_like(weight)
+
+    return bprop
+
+
 @bprop_getters.register(GridSampler3D)
 def get_bprop_grid_sampler_3d(self):
     """Grad definition for `GridSampler3D` operation."""

@@ -2606,6 +2606,55 @@ class ParallelResizeBilinearGrad(PrimitiveWithInfer):
                 'value': None}
 
 
+class MultiMarginLossGrad(Primitive):
+    """
+    Compute the gradients of MultiMarginLoss operation
+
+    Args:
+        p (int): Optional. The norm degree for pairwise distance.Should be 1 or 2. Default: 1.
+        margin (float): Optional. A parameter to change pairwise distance. Default: 1.0.
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **y_grad** (Tensor) - If it's not a scalar, the shape of 'y_grad' :math:`(N, C)`.
+          Data type only support float32 or float16,float64.
+        - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+          value of target should be non-negative, less than C.
+        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+          support float32, float16 or float64. Default: None.
+
+    Outputs:
+        The shape of output :math:`(N, C)`. Data type only support float32 or float16, float64.
+        Has the same data type with 'x'.
+
+    Raises:
+        TypeError: If dtype of `p` and `target` is not int.
+        TypeError: If dtype of `margin` is not float.
+        TypeError: If dtype of `reduction` is not str.
+        TypeError: If dtype of `x` is not float16, float or float64.
+        TypeError: If dtype of `weight` and `x` is not the same.
+        ValueError: If 'p' is not 1 or 2.
+        ValueError: If 'reduction' is not one of {'none','sum','mean'}.
+        ValueError: If shape[0] of `x` is not equal to shape[0] of `target`.
+        ValueError: If shape[1] of `x` is not equal to shape[0] of `weight`.
+        ValueError: IF rank of `weight` is not 1.
+        ValueError: If rank of `x` is not 2 or rank of 'target' is not 1.
+
+    Supported Platforms:
+        ``Ascend``  ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, p=1, margin=1.0, reduction="mean"):
+        """Initialize MultiMarginLossGrad"""
+        self.p = validator.check_value_type('p', p, [int], self.name)
+        validator.check_int(p, {1, 2}, Rel.IN, 'p', self.name)
+        self.margin = validator.check_value_type('margin', margin, [float], self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.init_prim_io_names(inputs=['y_grad', 'x', 'target', 'weight'], outputs=['x_grad'])
+
+
 class GridSampler3DGrad(Primitive):
     """
     Computes gradients for GridSampler3D operation.

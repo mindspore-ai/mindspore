@@ -2751,6 +2751,19 @@ test_case_nn_ops = [
         'block': CTCGreedyDecoderNet(),
         'desc_inputs': [[2, 2, 3], Tensor(np.array([2, 2]).astype(np.int32))],
         'skip': ['backward']}),
+    ('MultiMarginLoss', {
+        'block': nn.MultiMarginLoss(reduction="mean"),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]).astype(np.float32)),
+                        Tensor(np.array([0, 0]).astype(np.int64))],
+        'desc_bprop': [[1]]}),
+    ('MultiMarginLossGrad', {
+        'block': G.MultiMarginLossGrad(),
+        'desc_inputs': [Tensor(np.array([1]).astype(np.float32)),
+                        Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]).astype(np.float32)),
+                        Tensor(np.array([1, 1]).astype(np.int64)),
+                        Tensor(np.array([1, 1]).astype(np.float32))],
+        'desc_bprop': [Tensor([1], mstype.float32)],
+        'skip': ['backward']}),
     ('L2Loss_1', {
         'block': P.L2Loss(),
         'desc_inputs': [Tensor(np.array([1, 2, 3, 4]), mstype.float32)],

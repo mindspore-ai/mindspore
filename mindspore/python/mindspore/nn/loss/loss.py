@@ -1064,6 +1064,85 @@ class SampledSoftmaxLoss(LossBase):
         return out_logits, out_labels
 
 
+class MultiMarginLoss(LossBase):
+    r"""
+    Creates a criterion that optimizes a multi-class classification hinge
+    loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`) and
+    output :math:`y` (which is a 1D tensor of target class indices,
+    :math:`0 \leq y \leq \text{x.size}(1)-1`):
+
+    For each mini-batch sample, the loss in terms of the 1D input :math:`x` and scalar
+    output :math:`y` is:
+
+    .. math::
+        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p)}{\text{x.size}(0)}
+
+    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
+    and :math:`i \neq y`.
+
+    Optionally, you can give non-equal weighting on the classes by passing
+    a 1D input `weight` tensor w into the constructor.
+
+    Args:
+        p (int): Optional. The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
+        margin (float): Optional. A parameter to change pairwise distance. Default: 1.0.
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+          value of target should be non-negative, less than C.
+        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+          support float32, float16 or float64. Default: None.
+
+    Outputs:
+        Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
+        Otherwise, it is a scalar. Has the same data type with `x`.
+
+    Raises:
+        TypeError: If dtype of `p` or `target` is not int.
+        TypeError: If dtype of `margin` is not float.
+        TypeError: If dtype of `reduction` is not str.
+        TypeError: If dtype of `x` is not float16, float or float64.
+        TypeError: If dtype of `weight` and `x` is not the same.
+        ValueError: If 'p' is not 1 or 2.
+        ValueError: If 'reduction' is not one of {'none','sum','mean'}.
+        ValueError: If shape[0] of `x` is not equal to shape[0] of `target`.
+        ValueError: If shape[1] of `x` is not equal to shape[0] of `weight`.
+        ValueError: IF rank of `weight` is not 1.
+        ValueError: If rank of `x` is not 2 or rank of 'target' is not 1.
+
+    Supported Platforms:
+        ``Ascend``  ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
+        >>> target = Tensor(np.array([1, 2, 1]), mindspore.int64)
+        >>> loss = nn.MultiMarginLoss()
+        >>> output = loss(x, target)
+        >>> print(output)
+        0.6666667
+    """
+
+    def __init__(self, p=1, margin=1.0, reduction='mean'):
+        """Initialize MultiMarginLoss."""
+        super(MultiMarginLoss, self).__init__()
+        self.multi_margin_loss = P.MultiMarginLoss(p=p, margin=margin, reduction=reduction)
+        self.ones = P.Ones()
+
+    def construct(self, x, target, weight=None):
+        _check_is_tensor('x', x, self.cls_name)
+        _check_is_tensor('target', target, self.cls_name)
+        weight_one = weight is None
+        if not weight_one:
+            weight = weight
+            _check_is_tensor('weight', weight, self.cls_name)
+        else:
+            weight = self.ones(x.shape[1], x.dtype)
+        loss = self.multi_margin_loss(x, target, weight)
+        return loss
+
+
 class BCELoss(LossBase):
     r"""
     BCELoss creates a criterion to measure the binary cross entropy between the true labels and predicted labels.
