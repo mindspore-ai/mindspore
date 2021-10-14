@@ -66,7 +66,10 @@ class Queue {
 
   bool empty() const { return head_ == tail_; }
 
-  void Reset() { ResetQue(); }
+  void Reset() {
+    std::unique_lock<std::mutex> _lock(mux_);
+    ResetQue();
+  }
 
   // Producer
   Status Add(const_reference ele) noexcept {
@@ -74,8 +77,7 @@ class Queue {
     // Block when full
     Status rc = full_cv_.Wait(&_lock, [this]() -> bool { return (size() != capacity()); });
     if (rc.IsOk()) {
-      auto k = tail_++ % sz_;
-      *(arr_[k]) = ele;
+      RETURN_IF_NOT_OK(AddWhileHoldingLock(ele));
       empty_cv_.NotifyAll();
       _lock.unlock();
     } else {
@@ -121,32 +123,13 @@ class Queue {
     // Block when empty
     Status rc = empty_cv_.Wait(&_lock, [this]() -> bool { return !empty(); });
     if (rc.IsOk()) {
-      auto k = head_++ % sz_;
-      *p = std::move(*(arr_[k]));
+      RETURN_IF_NOT_OK(PopFrontWhileHoldingLock(p));
       full_cv_.NotifyAll();
       _lock.unlock();
     } else {
       full_cv_.Interrupt();
     }
     return rc;
-  }
-
-  void ResetQue() noexcept {
-    std::unique_lock<std::mutex> _lock(mux_);
-    // If there are elements in the queue, drain them. We won't call PopFront directly
-    // because we have got the lock already. We will deadlock if we call PopFront
-    for (auto i = head_; i < tail_; ++i) {
-      auto k = i % sz_;
-      auto val = std::move(*(arr_[k]));
-      // Let val go out of scope and its destructor will be invoked automatically.
-      // But our compiler may complain val is not in use. So let's do some useless
-      // stuff.
-      MS_LOG(DEBUG) << "Address of val: " << &val;
-    }
-    empty_cv_.ResetIntrpState();
-    full_cv_.ResetIntrpState();
-    head_ = 0;
-    tail_ = 0;
   }
 
   Status Register(TaskGroup *vg) {
@@ -159,6 +142,28 @@ class Queue {
     }
   }
 
+  Status Resize(int32_t new_capacity) {
+    std::unique_lock<std::mutex> _lock(mux_);
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      new_capacity >= static_cast<int32_t>(size()),
+      "New capacity: " + std::to_string(new_capacity) + ", is smaller than queue size:" + std::to_string(size()));
+    std::vector<T> queue;
+    while (head_ < tail_) {
+      T temp;
+      RETURN_IF_NOT_OK(this->PopFrontWhileHoldingLock(&temp));
+      queue.push_back(temp);
+    }
+    this->ResetQue();
+    RETURN_IF_NOT_OK(arr_.allocate(new_capacity));
+    sz_ = new_capacity;
+    for (int i = 0; i < queue.size(); ++i) {
+      RETURN_IF_NOT_OK(this->AddWhileHoldingLock(queue[i]));
+    }
+    queue.clear();
+    _lock.unlock();
+    return Status::OK();
+  }
+
  private:
   size_t sz_;
   MemGuard<T, Allocator<T>> arr_;
@@ -168,6 +173,32 @@ class Queue {
   std::mutex mux_;
   CondVar empty_cv_;
   CondVar full_cv_;
+
+  // Helper function for Add, must be called when holding a lock
+  Status AddWhileHoldingLock(const_reference ele) {
+    auto k = tail_++ % sz_;
+    *(arr_[k]) = ele;
+    return Status::OK();
+  }
+
+  // Helper function for PopFront, must be called when holding a lock
+  Status PopFrontWhileHoldingLock(pointer p) {
+    auto k = head_++ % sz_;
+    *p = std::move(*(arr_[k]));
+    return Status::OK();
+  }
+
+  void ResetQue() noexcept {
+    while (head_ < tail_) {
+      T val;
+      this->PopFrontWhileHoldingLock(&val);
+      MS_LOG(DEBUG) << "Address of val: " << &val;
+    }
+    empty_cv_.ResetIntrpState();
+    full_cv_.ResetIntrpState();
+    head_ = 0;
+    tail_ = 0;
+  }
 };
 
 // A container of queues with [] operator accessors.  Basically this is a wrapper over of a vector of queues
