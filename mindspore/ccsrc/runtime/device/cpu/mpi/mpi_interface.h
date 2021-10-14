@@ -17,11 +17,8 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_CPU_MPI_MPI_INTERFACE_H_
 #include <vector>
 #include <string>
-#ifndef FUNC_EXPORT
-#define FUNC_EXPORT __attribute__((visibility("default")))
-#endif
-constexpr auto kMPIOpTypeSum = "sum";
 #ifdef ENABLE_MPI
+constexpr auto kMPIOpTypeSum = "sum";
 int GetMPIRankId();
 int GetMPIRankSize();
 bool MPIReduceScatter(const float *input, float *output, const std::vector<int> &ranks_group, size_t data_num,
