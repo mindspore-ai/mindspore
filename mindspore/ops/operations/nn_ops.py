@@ -9356,3 +9356,98 @@ class SparseApplyRMSProp(Primitive):
         self.epsilon = validator.check_number("epsilon", epsilon, 0.0, Rel.GT, self.name)
         self.momentum = validator.check_number("momentum", momentum, 0.0, Rel.GE, self.name)
         self.rho = validator.check_float_range(rho, 0.0, 1.0, Rel.INC_BOTH, "rho", self.name)
+
+
+class ApplyKerasMomentum(Primitive):
+    r"""
+    Update `var` according to the momentum scheme.
+
+    .. math::
+        \begin{array}{ll} \\
+            accum = accum * momentum - grad * lr \\
+            var =
+            \begin{cases}
+                var + accum * momentum - grad * lr, &\text{if use_nesterov} \\
+                var + accum, &\text{else}
+            \end{cases}
+        \end{array}
+
+    Refer to the paper `On the importance of initialization and momentum in deep
+    learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_  for more details.
+
+    Inputs of `var`, `accum` and `grad` comply with the implicit type conversion rules
+    to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to
+    relatively highest priority data type.
+    RuntimeError exception will be thrown when the data type conversion of Parameter is required.
+
+    Args:
+        use_locking (bool): If `True`, updating of the `var` and `accum` tensors will be protected by a lock;
+                            Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
+        use_nesterov (bool): If `True`, the tensor passed to compute grad will be var + momentum * accum,
+                            so in the end, the var you get is actually var + momentum * accum. Default: False.
+
+    Inputs:
+        - **var** (Parameter) - Variable to be updated. With float16 or float32 data type.
+        - **accum** (Parameter) - Must have the same shape and type as `var`. With float16 or float32 data type.
+        - **lr** (Union[Number, Tensor]) - Scaling factor. Must be a scalar. With float16 or float32 data type.
+        - **grad** (Tensor) - The gradient. Must have the same shape and type as `var`.
+          With float16 or float32 data type.
+        - **momentum** (Union[Number, Tensor]) - Momentum. Must be a scalar. With float16 or float32 data type.
+
+    Outputs:
+        Tuple of 2 Tensors, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **accum** (Tensor) - The same shape and data type as `accum`.
+
+    Raises:
+        TypeError: If the use_locking or use_nesterov is not a bool.
+        TypeError: If `var` or `accum` is not a Parameter.
+        TypeError: If `lr` is neither a Number nor a Tensor.
+        TypeError: If `grad` is not a Tensor.
+        TypeError: If `momentum` is neither a Number nor a Tensor.
+        TypeError: If dtype of `var`, `accum`, `lr`, `grad`, `momentum` is neither float16 nor float32.
+        ValueError: If `accum` or `grad` doesn't have the same shape as `var`.
+        ValueError: If the shape size of `lr`, `momentum` is not 0.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> class ApplyKerasMomentumNet(nn.Cell):
+        ...     def __init__(self, use_locking=False, use_nesterov=False):
+        ...         super(ApplyKerasMomentumNet, self).__init__()
+        ...         self.apply_keras_momentum = P.ApplyKerasMomentum(use_locking, use_nesterov)
+        ...         self.var = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="accum")
+        ...     def construct(self, lr, grad, momentum):
+        ...         out = self.apply_keras_momentum(self.var, self.accum, lr, grad, momentum)
+        ...         return out
+        ...
+        >>> net = ApplyKerasMomentumNet()
+        >>> lr = Tensor(0.001, mstype.float32)
+        >>> grad = Tensor(np.array([[0.3, 0.2], [0.4, 0.1]]).astype(np.float32))
+        >>> momentum = Tensor(0.99, mstype.float32)
+        >>> output = net(lr, grad, momentum)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 3.97700012e-01,  5.96800029e-01],
+        [ 1.98599994e-01,  7.95899987e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.97699994e-01,  2.96800017e-01],
+        [ 9.86000001e-02,  3.95900011e-01]]))
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T1),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('momentum', dtype=sig.sig_dtype.T2)
+    )
+
+    @prim_attr_register
+    def __init__(self, use_locking=False, use_nesterov=False):
+        """Initialize ApplyKerasMomentum"""
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)

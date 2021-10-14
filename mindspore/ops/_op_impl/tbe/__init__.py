@@ -31,6 +31,7 @@ from .add_n import _add_n_tbe
 from .add_n_ds import _add_n_ds_tbe
 from .accumulate_n_v2 import _accumulate_n_v2_tbe
 from .apply_ftrl import _apply_ftrl_tbe
+from .apply_keras_momentum import _apply_keras_momentum_tbe
 from .apply_momentum import _apply_momentum_tbe
 from .apply_adam import _apply_adam_tbe
 from .apply_ada_max import _apply_ada_max_tbe
