@@ -56,5 +56,7 @@ LRScheduler::~LRScheduler() {
   if (internal_call_back != nullptr) {
     delete internal_call_back;
   }
+  delete callback_impl_;
+  callback_impl_ = nullptr;
 }
 }  // namespace mindspore

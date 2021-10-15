@@ -38,6 +38,8 @@ LossMonitor::~LossMonitor() {
   if (internal_call_back != nullptr) {
     delete internal_call_back;
   }
+  delete callback_impl_;
+  callback_impl_ = nullptr;
 }
 
 const std::vector<GraphPoint> &LossMonitor::GetLossPoints() {
