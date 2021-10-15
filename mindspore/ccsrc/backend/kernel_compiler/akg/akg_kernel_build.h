@@ -83,7 +83,12 @@ class AkgKernelPool {
 
  public:
   AkgKernelPool() = default;
-  virtual ~AkgKernelPool() = default;
+  virtual ~AkgKernelPool() {
+    // Close key file
+    if (fd_ != -1) {
+      (void)close(fd_);
+    }
+  }
 
   int32_t Init(const std::vector<JsonNodePair> &build_args);
   int32_t Release() const;

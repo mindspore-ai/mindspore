@@ -86,7 +86,7 @@ class FlagRegister {
   ~FlagRegister() = default;
 
   template <typename T>
-  void AddFlag(const std::string &flag_name, T *flag_var, T default_value = T()) const {
+  void AddFlag(const std::string &flag_name, T *const flag_var, T default_value = T()) const {
     auto iter = flag_map_.find(flag_name);
     if (iter != flag_map_.end()) {
       T var;

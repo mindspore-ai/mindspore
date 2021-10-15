@@ -146,6 +146,9 @@ void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList
 std::vector<PrimitivePtr> GetValidOps(
   const std::vector<std::tuple<std::string, unsigned int, PrimitivePtr>> &ops_with_level, unsigned int level);
 
+// return a func_graph's manager
+FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph);
+
 void UpdateMng(FuncGraphManagerPtr mng, const FuncGraphPtr &func_graph);
 }  // namespace opt
 }  // namespace mindspore
