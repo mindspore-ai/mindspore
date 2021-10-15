@@ -43,7 +43,7 @@ Option<uuid> uuid::FromBytes(const std::string &s) {
     return Option<uuid>(MindrtNone());
   }
   uuid u;
-  memcpy(&u.uuidData, s.data(), s.size());
+  (void)memcpy(&u.uuidData, s.data(), s.size());
   return Option<uuid>(u);
 }
 
@@ -154,7 +154,7 @@ uuid RandomBasedGenerator::GenerateRandomUuid() {
   static std::atomic<uint64_t> ul(1);
   uint64_t lCount = ul.fetch_add(1);
   uint64_t offSet = distribution(gen) % RIGHT_SHIFT_BITS;
-  memcpy(tmpUUID.BeginAddress() + offSet, &lCount, sizeof(lCount));
+  (void)memcpy(tmpUUID.BeginAddress() + offSet, &lCount, sizeof(lCount));
 
   // set the variant
   *(tmpUUID.BeginAddress() + VARIANT_BIT_OFFSET) &= 0xBF;

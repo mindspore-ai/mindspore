@@ -49,7 +49,7 @@ class LstmCPUKernel : public InnerKernel {
   int LstmUnidirectional(float *output, const float *weight_i, const float *weight_h, const float *input_bias,
                          const float *state_bias, float *hidden_state, float *cell_state, bool is_backward);
   int InnerExecute(float *output, const float *input, float *hidden_state, float *cell_state);
-  void RecordStates(float *cell_state, int step);
+  void RecordStates(const float *cell_state, int step);
   const float *weight_loop_;
   const float *bias_loop_;
   float *gate_loop_;

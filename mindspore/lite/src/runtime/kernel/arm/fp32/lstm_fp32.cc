@@ -380,7 +380,7 @@ int LstmCPUKernel::LstmUnidirectional(float *output, const float *weight_i, cons
   return RET_OK;
 }
 
-void LstmCPUKernel::RecordStates(float *cell_state, int step) {
+void LstmCPUKernel::RecordStates(const float *cell_state, int step) {
   float *workspace = reinterpret_cast<float *>(out_tensors_[kWorkspaceOutIdx]->MutableData());
   workspace[step] = *cell_state;
 }
