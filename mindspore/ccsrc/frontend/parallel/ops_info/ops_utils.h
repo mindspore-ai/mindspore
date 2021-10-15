@@ -411,6 +411,7 @@ constexpr char PIPELINE_END[] = "pipeline_end";
 constexpr char PIPELINE_BEGIN[] = "pipeline_begin";
 constexpr char MAIN_GRAPH[] = "main_graph";
 constexpr char SR_TAG[] = "sr_tag";
+constexpr char NEED_GRAD[] = "need_grad";
 constexpr char GROUP_BACK[] = "group_back";
 constexpr char MIRROR_MICRO_STEP_OPERATOR[] = "_MirrorMicroStepOperator";
 constexpr char PARAMETER_MICRO[] = "parameter_micro";
