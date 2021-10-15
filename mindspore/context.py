@@ -678,7 +678,7 @@ def set_context(**kwargs):
               - 0: Disable graph kernel fusion;
               - 1: enable the basic fusion of operators;
               - 2: includes all optimizations of level 1,
-                and turns on more optimizations such as CSE, arithmetic simplication and so on;
+                and turns on more optimizations such as CSE, arithmetic simplification and so on;
               - 3: includes all optimizations of level 2, and turns on more optimizations such as SitchingFusion,
                 ParallelFusion and so on. Optimizations of this level are radical and unstable in some scenarios.
                 Be caution when using this level.
