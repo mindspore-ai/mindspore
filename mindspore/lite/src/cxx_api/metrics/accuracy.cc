@@ -40,6 +40,8 @@ AccuracyMetrics::~AccuracyMetrics() {
   if (internal_metrics != nullptr) {
     delete internal_metrics;
   }
+  delete metrics_impl_;
+  metrics_impl_ = nullptr;
 }
 
 void AccuracyMetrics::Clear() {
