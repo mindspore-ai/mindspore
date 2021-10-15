@@ -199,8 +199,8 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
 
   void LaunchBroadcast(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                        void *stream_ptr) {
-    T *input_addr;
-    T *output_addr;
+    T *input_addr = nullptr;
+    T *output_addr = nullptr;
     cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
     auto broadcast_funcptr = reinterpret_cast<Broadcast>(dlsym(const_cast<void *>(collective_handle_), "Broadcast"));
     MS_EXCEPTION_IF_NULL(broadcast_funcptr);
@@ -216,8 +216,8 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
 
   void LaunchAllToAllv(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                        void *stream_ptr) {
-    T *input_addr;
-    T *output_addr;
+    T *input_addr = nullptr;
+    T *output_addr = nullptr;
     cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
     auto nccl_recv_func = reinterpret_cast<Recv>(dlsym(const_cast<void *>(collective_handle_), "Recv"));
     auto nccl_send_func = reinterpret_cast<Send>(dlsym(const_cast<void *>(collective_handle_), "Send"));
