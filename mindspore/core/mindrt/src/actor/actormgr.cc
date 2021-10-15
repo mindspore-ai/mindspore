@@ -74,6 +74,10 @@ int ActorMgr::Initialize(bool use_inner_pool, size_t actor_thread_num, size_t ma
       inner_pool_->DisableOccupiedActorThread();
       inner_pool_->SetKernelThreadNum(max_thread_num - actor_thread_num);
     }
+    if (inner_pool_ != nullptr) {
+      inner_pool_->SetMaxSpinCount(kDefaultSpinCount);
+      inner_pool_->SetSpinCountMaxValue();
+    }
   }
   return MINDRT_OK;
 }
@@ -259,7 +263,6 @@ void ActorMgr::Terminate(const AID &id) {
     std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageBase("Terminate", MessageBase::Type::KTERMINATE));
     MINDRT_OOM_EXIT(msg);
     (void)actor->EnqueMessage(std::move(msg));
-    actor->SetRunningStatus(true);
 
     // Wait actor's thread to finish.
     actor->Await();
