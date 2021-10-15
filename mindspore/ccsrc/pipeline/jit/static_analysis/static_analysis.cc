@@ -516,8 +516,6 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const AbstractFunctionPtr &func) {
     MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFuncAtom";
   } else if (func->isa<AbstractFuncUnion>()) {
     MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFuncUnion";
-  } else if (func->isa<DummyAbstractClosure>()) {
-    MS_LOG(EXCEPTION) << "A dummy function cannot eval";
   } else {
     MS_LOG(EXCEPTION) << "Cannot GetEvaluator from AbstractFunction";
   }
