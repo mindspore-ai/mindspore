@@ -624,7 +624,14 @@ void Debugger::SendHeartbeat(int32_t period) {
         std::this_thread::sleep_for(std::chrono::milliseconds(retry_milliseconds));
       }
     } else {
-      std::this_thread::sleep_for(std::chrono::milliseconds(period * 1000));
+      int recheck_period_ms = 200;
+      for (int i = 0; i < (period * 1000 / recheck_period_ms); i++) {
+        if (enable_heartbeat_) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(recheck_period_ms));
+        } else {
+          break;
+        }
+      }
     }
   }
 }
