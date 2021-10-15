@@ -32,7 +32,7 @@ constexpr size_t kStridesDims = 3;
 constexpr size_t kPadDims = 6;
 
 void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, std::vector<int64_t> *strides,
-              int64_t *pad_mode, std::vector<int64_t> *pad_list, bool *ceil_mode, bool *count_include_pad) {
+              int64_t *pad_mode, std::vector<int64_t> *pad_list, bool *ceil_mode) {
   MS_EXCEPTION_IF_NULL(primitive);
   // attr kernel size
   *kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
@@ -49,8 +49,6 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, 
   }
   // sttr pad_list
   *pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPadList));
-  // attr count include pad
-  *count_include_pad = GetValue<bool>(primitive->GetAttr(kCountIncludePad));
   // attr pad_mode
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), pad_mode, true);
   // attr ceil mode
@@ -129,8 +127,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   std::vector<int64_t> pad_list;
   int64_t pad_mode = 0;
   bool ceil_mode = false;
-  bool count_include_pad = true;
-  GetAttrs(primitive, &kernel_size, &strides, &pad_mode, &pad_list, &ceil_mode, &count_include_pad);
+  GetAttrs(primitive, &kernel_size, &strides, &pad_mode, &pad_list, &ceil_mode);
   auto in_d = in_shape[2];
   auto in_h = in_shape[3];
   auto in_w = in_shape[4];

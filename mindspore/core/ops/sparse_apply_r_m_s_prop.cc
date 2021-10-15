@@ -44,12 +44,13 @@ abstract::TupleShapePtr InferShape(const PrimitivePtr &primitive, const std::vec
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
   // Args lr must be scalar
   const int64_t input_num_ = 0;
-  (void)CheckAndConvertUtils::CheckInteger("size of lr_shape", lr_shape.size(), kEqual, input_num_, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("size of lr_shape", SizeToLong(lr_shape.size()), kEqual, input_num_,
+                                           primitive->name());
   // Shape of var、ms、mom、grad must be same
   std::map<std::string, ShapeVector> same_shape_args_map;
-  (void)same_shape_args_map.insert({"shape of ms ", ms_shape});
-  (void)same_shape_args_map.insert({"shape of mom ", mom_shape});
-  (void)same_shape_args_map.insert({"shape of grad ", grad_shape});
+  (void)same_shape_args_map.insert(std::make_pair("shape of ms ", ms_shape));
+  (void)same_shape_args_map.insert(std::make_pair("shape of mom ", mom_shape));
+  (void)same_shape_args_map.insert(std::make_pair("shape of grad ", grad_shape));
   for (auto &elem : same_shape_args_map) {
     CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, "var shape", var_shape, prim_name);
   }
@@ -83,18 +84,18 @@ TuplePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // Args ms、mom、grad must have the same type as var
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var", var_type});
-  (void)args.insert({"ms", ms_type});
-  (void)args.insert({"mom", mom_type});
-  (void)args.insert({"grad", grad_type});
+  (void)args.insert(std::make_pair("var", var_type));
+  (void)args.insert(std::make_pair("ms", ms_type));
+  (void)args.insert(std::make_pair("mom", mom_type));
+  (void)args.insert(std::make_pair("grad", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // Args lr must be a scalar type
   std::map<std::string, TypePtr> args2;
-  (void)args2.insert({"lr", lr_type});
+  (void)args2.insert(std::make_pair("lr", lr_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args2, valid_types, prim_name);
   // Check indices type
   std::map<std::string, TypePtr> args3;
-  (void)args3.insert({"indices", indices_type});
+  (void)args3.insert(std::make_pair("indices", indices_type));
   const std::set<TypePtr> valid_types1 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args3, valid_types1, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, ms_type, mom_type});

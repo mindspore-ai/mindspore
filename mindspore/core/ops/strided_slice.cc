@@ -79,7 +79,7 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
   }
 
   size_t ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + num;
-  (void)infer_shape->insert(infer_shape->end(), x_shape.begin() + LongToSize(i),
+  (void)infer_shape->insert(infer_shape->end(), x_shape.begin() + SizeToInt(i),
                             x_shape.begin() + SizeToLong(i + ellipsis_occupied_dims));
   j += 1;
   i += ellipsis_occupied_dims;

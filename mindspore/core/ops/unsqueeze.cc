@@ -55,7 +55,7 @@ AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const Primit
       if (ax_itr < dim_rank && dims[ax_itr] == (int64_t)i) {
         (void)out_shape.emplace_back(1);
         ax_itr++;
-      } else if (ax_itr < dim_rank && dims[ax_itr] + sz == LongToSize(i)) {
+      } else if (ax_itr < dim_rank && dims[ax_itr] + SizeToLong(sz) == (int64_t)i) {
         (void)out_shape.emplace_back(1);
         ax_itr++;
       } else {

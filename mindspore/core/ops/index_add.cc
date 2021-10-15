@@ -45,11 +45,12 @@ abstract::ShapePtr IndexAddInferShape(const PrimitivePtr &primitive, const std::
   if (axis < 0) {
     axis_rank = axis + x_rank;
   }
-  (void)CheckAndConvertUtils::Check("size of indices", idx_shape[0], kEqual, "dimension of y[axis]", y_shape[axis_rank],
-                                    prim_name);
+  CheckAndConvertUtils::Check("size of indices", idx_shape[LongToSize(0)], kEqual, "dimension of y[axis]",
+                              y_shape[LongToSize(axis_rank)], prim_name);
   for (int dim = 0; dim < x_rank; dim = dim + 1) {
     if (dim != axis_rank) {
-      (void)CheckAndConvertUtils::Check("x dim", x_shape[dim], kEqual, "y dim", y_shape[dim], prim_name);
+      CheckAndConvertUtils::Check("x dim", x_shape[LongToSize(dim)], kEqual, "y dim", y_shape[LongToSize(dim)],
+                                  prim_name);
     }
   }
   return std::make_shared<abstract::Shape>(x_shape);

@@ -23,6 +23,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr CosInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }

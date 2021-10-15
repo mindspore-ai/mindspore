@@ -42,11 +42,11 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
   }
   for (int64_t i = -length; i < 0; i++) {
     if (x_shape[LongToSize(x_length + i)] == 1) {
-      (void)broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
+      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
     } else if (y_shape[LongToSize(y_length + i)] == 1) {
-      (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if (x_shape[x_length + i] == y_shape[LongToSize(y_length + i)]) {
-      (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
+      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
+    } else if (x_shape[LongToSize(x_length + i)] == y_shape[LongToSize(y_length + i)]) {
+      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
     } else {
       MS_EXCEPTION(ValueError) << "For op " << op_name << ", the two input '" << op_x_name << "' and '" << op_y_name
                                << "' can not broadcast";

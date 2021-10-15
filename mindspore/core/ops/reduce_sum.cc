@@ -186,7 +186,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input size", input_args.size(), kGreaterEqual, input_num,
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToInt(input_args.size()), kGreaterEqual, input_num,
                                            primitive->name());
   return abstract::MakeAbstract(InferShape(primitive, input_args), InferType(primitive, input_args));
 }

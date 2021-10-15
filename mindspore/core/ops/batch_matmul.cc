@@ -48,8 +48,8 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
                                << "while x1 is " << x_shp[i] << ", x2 is " << y_shp[i];
     }
   }
-  std::vector<int> x_last(x_shp.end() - offset, x_shp.end());
-  std::vector<int> y_last(y_shp.end() - offset, y_shp.end());
+  std::vector<int> x_last(x_shp.end() - SizeToInt(offset), x_shp.end());
+  std::vector<int> y_last(y_shp.end() - SizeToInt(offset), y_shp.end());
   ValuePtr transpose_a_ptr = primitive->GetAttr("transpose_a");
   ValuePtr transpose_b_ptr = primitive->GetAttr("transpose_b");
   bool transpose_a = GetValue<bool>(transpose_a_ptr);

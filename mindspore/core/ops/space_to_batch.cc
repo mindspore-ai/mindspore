@@ -39,7 +39,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   for (size_t i = 0; i < kDimsOffset; i++) {
     auto padded = output_shape[i + kDimsOffset] + paddings[i][0] + paddings[i][1];
     const int64_t input_num = 0;
-    (void)CheckAndConvertUtils::CheckInteger("padded shape", SizeToLong(padded % block_shape_vector.size()), kEqual,
+    (void)CheckAndConvertUtils::CheckInteger("padded shape", padded % SizeToLong(block_shape_vector.size()), kEqual,
                                              input_num, prim_name);
     output_shape[i + kDimsOffset] = padded / SizeToLong(block_shape_vector.size());
   }

@@ -37,7 +37,7 @@ AbstractBasePtr PrimitiveC::Infer(const AbstractBasePtrList &abstract_list) {
 }
 
 OpPrimCRegister &OpPrimCRegister::GetInstance() {
-  static OpPrimCRegister instance;
+  static OpPrimCRegister instance = OpPrimCRegister();
   return instance;
 }
 
