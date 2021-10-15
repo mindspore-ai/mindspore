@@ -361,9 +361,8 @@ bool AscendKernelRuntime::Init() {
   } catch (const std::exception &e) {
     const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
     if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
-      MS_LOG(EXCEPTION) << "Ascend error_manager got info:\n"
-                        << error_message << ".\n First error scene API: \n"
-                        << e.what();
+      MS_LOG(EXCEPTION) << "Ascend error occurred, error message: " << error_message
+                        << "\nFirst error scene API: " << e.what();
     }
     throw;
   }
