@@ -52,9 +52,9 @@ def test_mu_law_decoding_eager():
     logger.info("Test MuLawDecoding callable.")
 
     input_t = np.array([70, 170])
-    output_t = audio.MuLawDecoding()(input_t)
+    output_t = audio.MuLawDecoding(128)(input_t)
     assert output_t.shape == (2,)
-    excepted = np.array([-0.04388953000307083, 0.02097884565591812])
+    excepted = np.array([0.00506480922922492, 26.928272247314453])
     assert np.array_equal(output_t, excepted)
 
     logger.info("Finish testing MuLawDecoding.")

@@ -38,6 +38,7 @@
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
+#include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
@@ -399,6 +400,18 @@ MuLawDecoding::MuLawDecoding(int32_t quantization_channels) : data_(std::make_sh
 
 std::shared_ptr<TensorOperation> MuLawDecoding::Parse() {
   return std::make_shared<MuLawDecodingOperation>(data_->quantization_channels_);
+}
+
+// MuLawEncoding Transform Operation.
+struct MuLawEncoding::Data {
+  explicit Data(int32_t quantization_channels) : quantization_channels_(quantization_channels) {}
+  int32_t quantization_channels_;
+};
+
+MuLawEncoding::MuLawEncoding(int32_t quantization_channels) : data_(std::make_shared<Data>(quantization_channels)) {}
+
+std::shared_ptr<TensorOperation> MuLawEncoding::Parse() {
+  return std::make_shared<MuLawEncodingOperation>(data_->quantization_channels_);
 }
 
 // Overdrive Transform Operation.

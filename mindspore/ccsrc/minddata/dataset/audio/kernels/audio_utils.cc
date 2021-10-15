@@ -16,13 +16,10 @@
 
 #include "minddata/dataset/audio/kernels/audio_utils.h"
 
-#include <complex>
-
 #include "mindspore/core/base/float16.h"
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/util/random.h"
-#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -493,8 +490,10 @@ Status Decoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   return Status::OK();
 }
 
-Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int quantization_channels) {
-  if (input->type().value() >= DataType::DE_INT8 && input->type().value() <= DataType::DE_FLOAT32) {
+Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                     int32_t quantization_channels) {
+  if (input->type().IsInt() || input->type() == DataType(DataType::DE_FLOAT16) ||
+      input->type() == DataType(DataType::DE_FLOAT32)) {
     float f_mu = static_cast<float>(quantization_channels) - 1;
 
     // convert the data type to float
@@ -502,12 +501,55 @@ Status MuLawDecoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
 
     RETURN_IF_NOT_OK(Decoding<float>(input_tensor, output, f_mu));
-  } else if (input->type().value() == DataType::DE_FLOAT64) {
+  } else if (input->type() == DataType(DataType::DE_FLOAT64)) {
     double f_mu = static_cast<double>(quantization_channels) - 1;
 
     RETURN_IF_NOT_OK(Decoding<double>(input, output, f_mu));
   } else {
     RETURN_STATUS_UNEXPECTED("MuLawDecoding: input tensor type should be int, float or double, but got: " +
+                             input->type().ToString());
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status Encoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, T mu) {
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_INT32), output));
+  auto itr_out = (*output)->begin<int32_t>();
+  auto itr = input->begin<T>();
+  auto end = input->end<T>();
+
+  while (itr != end) {
+    auto x = *itr;
+    x = sgn(x) * log1p(mu * fabs(x)) / log1p(mu);
+    x = (x + 1) / 2 * mu + 0.5;
+    *itr_out = static_cast<int32_t>(x);
+    ++itr_out;
+    ++itr;
+  }
+  return Status::OK();
+}
+
+Status MuLawEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                     int32_t quantization_channels) {
+  if (input->type().IsInt() || input->type() == DataType(DataType::DE_FLOAT16)) {
+    float f_mu = static_cast<float>(quantization_channels) - 1;
+
+    // convert the data type to float
+    std::shared_ptr<Tensor> input_tensor;
+    RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+
+    RETURN_IF_NOT_OK(Encoding<float>(input_tensor, output, f_mu));
+  } else if (input->type() == DataType(DataType::DE_FLOAT32)) {
+    float f_mu = static_cast<float>(quantization_channels) - 1;
+
+    RETURN_IF_NOT_OK(Encoding<float>(input, output, f_mu));
+  } else if (input->type() == DataType(DataType::DE_FLOAT64)) {
+    double f_mu = static_cast<double>(quantization_channels) - 1;
+
+    RETURN_IF_NOT_OK(Encoding<double>(input, output, f_mu));
+  } else {
+    RETURN_STATUS_UNEXPECTED("MuLawEncoding: input tensor type should be int, float or double, but got: " +
                              input->type().ToString());
   }
   return Status::OK();

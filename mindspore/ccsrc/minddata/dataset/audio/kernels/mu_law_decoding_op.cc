@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace dataset {
 // constructor
-MuLawDecodingOp::MuLawDecodingOp(int quantization_channels) : quantization_channels_(quantization_channels) {}
+MuLawDecodingOp::MuLawDecodingOp(int32_t quantization_channels) : quantization_channels_(quantization_channels) {}
 
 // main function
 Status MuLawDecodingOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
@@ -28,7 +28,7 @@ Status MuLawDecodingOp::Compute(const std::shared_ptr<Tensor> &input, std::share
 
   CHECK_FAIL_RETURN_UNEXPECTED(input->Rank() >= 1, "MuLawDecoding: input tensor is not in shape of <..., time>.");
 
-  if (input->type().value() >= DataType::DE_INT8 && input->type().value() <= DataType::DE_FLOAT64) {
+  if (input->type().IsNumeric()) {
     return MuLawDecoding(input, output, quantization_channels_);
   } else {
     RETURN_STATUS_UNEXPECTED("MuLawDecoding: input tensor type should be int, float or double, but got: " +
@@ -40,7 +40,8 @@ Status MuLawDecodingOp::OutputType(const std::vector<DataType> &inputs, std::vec
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
   if (inputs[0] == DataType(DataType::DE_FLOAT64)) {
     outputs[0] = DataType(DataType::DE_FLOAT64);
-  } else if (inputs[0] >= DataType(DataType::DE_INT8) || inputs[0] <= DataType(DataType::DE_FLOAT32)) {
+  } else if (inputs[0].IsInt() || inputs[0] == DataType(DataType::DE_FLOAT16) ||
+             inputs[0] == DataType(DataType::DE_FLOAT32)) {
     outputs[0] = DataType(DataType::DE_FLOAT32);
   } else {
     RETURN_STATUS_UNEXPECTED("MuLawDecoding: input tensor type should be int, float or double, but got: " +

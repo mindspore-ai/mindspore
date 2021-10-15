@@ -27,7 +27,7 @@ from .utils import FadeShape, GainType, Interpolation, Modulation, ScaleType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
     check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, check_fade, check_flanger, \
-    check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_decoding, \
+    check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_coding, \
     check_overdrive, check_riaa_biquad, check_time_stretch, check_treble_biquad, check_vol
 
 
@@ -711,12 +711,37 @@ class MuLawDecoding(AudioTensorOperation):
         >>> transforms = [audio.MuLawDecoding()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
-    @check_mu_law_decoding
+
+    @check_mu_law_coding
     def __init__(self, quantization_channels=256):
         self.quantization_channels = quantization_channels
 
     def parse(self):
         return cde.MuLawDecodingOperation(self.quantization_channels)
+
+
+class MuLawEncoding(AudioTensorOperation):
+    """
+    Encode signal based on mu-law companding.
+
+    Args:
+        quantization_channels (int): Number of channels, which must be positive (Default: 256).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([0.1, 0.3, 0.4])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.MuLawEncoding()]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_mu_law_coding
+    def __init__(self, quantization_channels=256):
+        self.quantization_channels = quantization_channels
+
+    def parse(self):
+        return cde.MuLawEncodingOperation(self.quantization_channels)
 
 
 class Overdrive(AudioTensorOperation):

@@ -528,10 +528,31 @@ class MuLawDecoding final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] quantization_channels Number of channels, which must be positive (Default: 256).
-  explicit MuLawDecoding(int quantization_channels = 256);
+  explicit MuLawDecoding(int32_t quantization_channels = 256);
 
   /// \brief Destructor.
   ~MuLawDecoding() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief MuLawEncoding TensorTransform.
+/// \note Encode signal based on mu-law companding.
+class MuLawEncoding final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] quantization_channels Number of channels, which must be positive (Default: 256).
+  explicit MuLawEncoding(int32_t quantization_channels = 256);
+
+  /// \brief Destructor.
+  ~MuLawEncoding() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
