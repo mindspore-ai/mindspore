@@ -280,7 +280,7 @@ void AclCompileGraph::PushParameters(const FuncGraphPtr &func_graph) {
       continue;
     }
     Push(param);
-    MS_LOG(DEBUG) << "Push parameter " << (i - 1) << ": " << param->DebugString(true);
+    MS_LOG(DEBUG) << "Push parameter " << (i - 1) << ": " << param->DebugString();
   }
 }
 

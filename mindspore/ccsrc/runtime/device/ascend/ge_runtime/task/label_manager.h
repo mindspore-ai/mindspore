@@ -28,7 +28,7 @@ class LabelGuard {
  public:
   explicit LabelGuard(void *label_info) : label_info_(reinterpret_cast<uintptr_t>(label_info)) {}
   ~LabelGuard();
-  void *GetLabelInfo() { return reinterpret_cast<void *>(label_info_); }
+  void *GetLabelInfo() noexcept { return reinterpret_cast<void *>(label_info_); }
 
  private:
   uintptr_t label_info_;
