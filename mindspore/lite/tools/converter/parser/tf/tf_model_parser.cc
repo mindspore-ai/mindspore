@@ -420,7 +420,7 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::NodeDef &node_def, co
 
 STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
                                        std::unordered_map<std::string, AnfNodePtr> *anf_node_map, bool root_graph) {
-  MS_ASSERT(node != nullptr);
+  MS_ASSERT(anf_node_map != nullptr);
   MS_ASSERT(parameter != nullptr);
 
   tensorflow::AttrValue attr_value;
@@ -829,7 +829,8 @@ STATUS TFModelParser::ConvertInputNodes(const tensorflow::NodeDef &node_def,
                                         const std::unordered_map<std::string, AnfNodePtr> &anf_node_map,
                                         std::vector<AnfNodePtr> *inputs,
                                         std::vector<std::string> *input_name_not_found) {
-  MS_ASSERT(node_def != nullptr);
+  CHECK_NULL_RETURN(inputs);
+  CHECK_NULL_RETURN(input_name_not_found);
   // parse inputs
   for (size_t j = 0; j < input_names.size(); j++) {
     std::string input_name = input_names[j];  // input may be produced by multi-outputs node
@@ -852,7 +853,6 @@ STATUS TFModelParser::ConvertInputNodes(const tensorflow::NodeDef &node_def,
 STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const CNodePtr &anf_node,
                                           std::unordered_map<std::string, AnfNodePtr> *anf_node_map,
                                           const FuncGraphPtr &anf_graph, int output_size) {
-  MS_ASSERT(op != nullptr);
   MS_ASSERT(anf_node != nullptr);
   MS_ASSERT(anf_graph != nullptr);
   if (IsTensorListOp(anf_node) && output_size != 1) {
@@ -991,7 +991,11 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   }
 
   if (!input_name_not_found.empty()) {
-    RecordNullInput(anf_node, input_name_not_found);
+    status = RecordNullInput(anf_node, input_name_not_found);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "RecordNullInput for " << anf_node->fullname_with_scope() << " failed.";
+      return status;
+    }
   }
 
   status = ConvertOutputTensor(node_def, anf_node, anf_node_map, func_graph_ptr, output_size);
@@ -1145,8 +1149,10 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
       return RET_NULL_PTR;
     }
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
+    CHECK_NULL_RETURN(make_tuple_prim);
     make_tuple_inputs.insert(make_tuple_inputs.begin(), make_tuple_prim);
     auto make_tuple_cnode = anf_graph->NewCNode(make_tuple_inputs);
+    CHECK_NULL_RETURN(make_tuple_cnode);
     make_tuple_cnode->set_fullname_with_scope("return_tuple");
 
     auto return_prim_ptr = std::make_shared<lite::Return>();
@@ -1155,8 +1161,10 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
       return RET_NULL_PTR;
     }
     auto value_node = NewValueNode(return_prim_ptr);
+    CHECK_NULL_RETURN(value_node);
     std::vector<AnfNodePtr> op_inputs = {value_node, make_tuple_cnode};
     auto cnode = anf_graph->NewCNode(op_inputs);
+    CHECK_NULL_RETURN(cnode);
     cnode->set_fullname_with_scope("Return");
     anf_graph->set_return(cnode);
   } else {
@@ -1166,8 +1174,10 @@ STATUS TFModelParser::MakeAnfGraphOutputs(const std::vector<AnfNodePtr> &output_
       return RET_NULL_PTR;
     }
     auto value_node = NewValueNode(return_prim_ptr);
+    CHECK_NULL_RETURN(value_node);
     std::vector<AnfNodePtr> op_inputs{value_node, output_nodes.front()};
     auto return_cnode = anf_graph->NewCNode(op_inputs);
+    CHECK_NULL_RETURN(return_cnode);
     return_cnode->set_fullname_with_scope("Return");
     anf_graph->set_return(return_cnode);
   }

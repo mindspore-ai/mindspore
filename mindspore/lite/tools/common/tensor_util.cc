@@ -55,6 +55,10 @@ tensor::TensorPtr CreateTensorInfo(const void *data, size_t data_size, const std
   if (shape.empty() && data_size == mindspore::abstract::TypeIdSize(data_type)) {
     ShapeVector scalar_shape = {1};
     tensor_info = std::make_shared<tensor::Tensor>(data_type, scalar_shape);
+    if (tensor_info == nullptr) {
+      MS_LOG(ERROR) << "new tensor init failed";
+      return nullptr;
+    }
     tensor_info->set_shape({});
   } else {
     tensor_info = std::make_shared<tensor::Tensor>(data_type, shape);
