@@ -52,16 +52,20 @@ class FileWriter:
         >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
         >>> indexes = ["file_name", "label"]
         >>> data = [{"file_name": "1.jpg", "label": 0,
-        ...         "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff\xd9"},
+        ...          "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"},
         ...         {"file_name": "2.jpg", "label": 56,
-        ...         "data": b"\xe6\xda\xd1\xae\x07\xb8>\xd4\x00\xf8\x129\x15\xd9\xf2q\xc0\xa2\x91YFUO\x1dsE1\x1ep"},
+        ...          "data": b"\xe6\xda\xd1\xae\x07\xb8>\xd4\x00\xf8\x129\x15\xd9\xf2q\xc0\xa2\x91YFUO\x1dsE1"},
         ...         {"file_name": "3.jpg", "label": 99,
-        ...         "data": b"\xaf\xafU<\xb8|6\xbd}\xc1\x99[\xeaj+\x8f\x84\xd3\xcc\xa0,i\xbb\xb9-\xcdz\xecp{T\xb1\xdb"}]
+        ...          "data": b"\xaf\xafU<\xb8|6\xbd}\xc1\x99[\xeaj+\x8f\x84\xd3\xcc\xa0,i\xbb\xb9-\xcdz\xecp{T\xb1"}]
         >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
         >>> writer.add_schema(schema_json, "test_schema")
+        MSRStatus.SUCCESS
         >>> writer.add_index(indexes)
+        MSRStatus.SUCCESS
         >>> writer.write_raw_data(data)
+        MSRStatus.SUCCESS
         >>> writer.commit()
+        MSRStatus.SUCCESS
     """
 
     def __init__(self, file_name, shard_num=1):
@@ -114,7 +118,9 @@ class FileWriter:
         Examples:
             >>> write_append = FileWriter.open_for_append("test.mindrecord")
             >>> write_append.write_raw_data(data)
+            MSRStatus.SUCCESS
             >>> write_append.commit()
+            MSRStatus.SUCCESS
         """
 
         check_filename(file_name)
@@ -295,7 +301,7 @@ class FileWriter:
         Set the size of header which contains shard information, schema information, \
         page meta information, etc. The larger a header, the more data \
         the MindRecord file can store. If the size of header is larger than \
-        the default size(16MB), users need to call the API to set a proper size.
+        the default size (16MB), users need to call the API to set a proper size.
 
 
         Args:
@@ -313,7 +319,7 @@ class FileWriter:
             >>> from mindspore.mindrecord import FileWriter
             >>> # define writer
             >>> writer.set_header_size(1 << 25) # 32MB
-
+            MSRStatus.SUCCESS
         """
         return self._writer.set_header_size(header_size)
 
@@ -322,7 +328,7 @@ class FileWriter:
         Set the size of page that represents the area where data is stored, \
         and the areas are divided into two types: raw page and blob page. \
         The larger a page, the more data the page can store. If the size of \
-        a sample is larger than the default size(32MB), users need to call the API \
+        a sample is larger than the default size (32MB), users need to call the API \
         to set a proper size.
 
         Args:
@@ -339,6 +345,7 @@ class FileWriter:
             >>> from mindspore.mindrecord import FileWriter
             >>> # define writer
             >>> writer.set_page_size(1 << 26) # 128MB
+            MSRStatus.SUCCESS
         """
         return self._writer.set_page_size(page_size)
 
