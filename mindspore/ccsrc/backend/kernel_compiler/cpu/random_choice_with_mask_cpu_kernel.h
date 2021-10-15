@@ -49,8 +49,8 @@ class RandomChoiceWithMaskCPUKernel : public CPUKernel {
   int32_t count_{0};
   std::vector<int32_t> dims_;
   size_t input_shape_size_{0};
-  int seed_{0};
-  int seed2_{0};
+  size_t seed_{0};
+  size_t seed2_{0};
   int input_size_{1};
   std::mt19937 generator_;
 };
