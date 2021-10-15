@@ -157,7 +157,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
 
     if isinstance(arg_value, arg_type):
         if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
-            raise ValueError(f'{arg_name} {prim_name} must be legal value, but got `{arg_value}`.')
+            raise ValueError(f'{arg_name} {prim_name} must be a legal value, but got `{arg_value}`.')
     else:
         raise TypeError(f'{arg_name} {prim_name} must be {arg_type.__name__}, but got `{type(arg_value).__name__}`')
 
@@ -184,7 +184,7 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
     arg_name = f"\'{arg_name}\'" if arg_name else 'input value'
     if isinstance(arg_value, arg_type) and not isinstance(arg_value, bool):
         if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
-            raise ValueError(f'{prim_name} {arg_name} must be legal float, but got `{arg_value}`.')
+            raise ValueError(f'{prim_name} {arg_name} must be a legal float, but got `{arg_value}`.')
         return arg_value
     raise TypeError(f'{prim_name} type of {arg_name} must be {arg_type.__name__}, but got `{type(arg_value).__name__}`')
 
@@ -665,7 +665,7 @@ class Validator:
 
         # if multiple arguments provided, it must be `ndim` number of ints
         if len(axes) != ndim:
-            raise ValueError("The number of axes must equal to the dimension of tensor.")
+            raise ValueError("The number of axes must be equal to the dimension of tensor.")
         return axes
 
     @staticmethod
@@ -705,11 +705,11 @@ class Validator:
         if isinstance(axes, (tuple, list)):
             for axis in axes:
                 if not isinstance(axis, int):
-                    raise TypeError(f"axis argument should be integer, but got {type(axis)}.")
+                    raise TypeError(f"The axis argument should be integer, but got {type(axis)}.")
                 Validator.check_axis_in_range(axis, ndim)
             axes = tuple(map(lambda x: x % ndim, axes))
             return axes
-        raise TypeError(f"axes should be integer, list or tuple for check, but got {type(axes)}.")
+        raise TypeError(f"The axes should be integer, list or tuple for check, but got {type(axes)}.")
 
     @staticmethod
     def prepare_shape_for_squeeze(shape, axes):
@@ -730,33 +730,33 @@ class Validator:
         # Convert to set
         if isinstance(axes, int):
             if axes >= ndim or axes < -ndim:
-                raise ValueError(f"axis {axes} is out of bounds for tensor of dimension {ndim}")
+                raise ValueError(f"The axis {axes} is out of bounds for tensor of dimension {ndim}")
             axes = {axes}
 
         elif isinstance(axes, (list, tuple)):
             for axis in axes:
                 if axis >= ndim or axis < -ndim:
-                    raise ValueError(f"axis {axis} is out of bounds for tensor of dimension {ndim}")
+                    raise ValueError(f"The axis {axis} is out of bounds for tensor of dimension {ndim}")
             axes = set(axes)
 
         else:
-            raise TypeError(f"only int, tuple and list are allowed for axes, but got {type(axes)}")
+            raise TypeError(f"Only int, tuple and list are allowed for axes, but got {type(axes)}")
 
         for idx, s in enumerate(shape):
             if s != 1 or (idx not in axes) and (idx - ndim not in axes):
                 new_shape.append(s)
             # if an axis is selected with shape entry greater than one, an error is raised.
             if s != 1 and ((idx in axes) or (idx - ndim in axes)):
-                raise ValueError(f"axis {axes} has shape entry {s} > 1, cannot be squeezed.")
+                raise ValueError(f"The axis {axes} has shape entry {s} > 1, cannot be squeezed.")
         return tuple(new_shape)
 
     @staticmethod
     def check_axis_in_range(axis, ndim):
         """Checks axes are with the bounds of ndim"""
         if not isinstance(axis, int):
-            raise TypeError(f'axes should be integers, not {type(axis)}')
+            raise TypeError(f'The axes should be integers, not {type(axis)}')
         if not -ndim <= axis < ndim:
-            raise ValueError(f'axis {axis} is out of bounds for array of dimension {ndim}')
+            raise ValueError(f'The axis {axis} is out of bounds for array of dimension {ndim}')
         return axis % ndim
 
     @staticmethod
@@ -809,7 +809,7 @@ class Validator:
         for items in zip_longest(*reversed_shapes, fillvalue=1):
             max_size = 0 if 0 in items else max(items)
             if any(item not in (1, max_size) for item in items):
-                raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
+                raise ValueError(f'The operands could not be broadcast together with shapes {*shapes,}')
             shape_out.appendleft(max_size)
         return tuple(shape_out)
 
@@ -835,7 +835,7 @@ class Validator:
             type_str += "tuple, "
         if type_list:
             type_str += "list, "
-        raise TypeError(f"Axis should be {type_str}but got {type(axis)}.")
+        raise TypeError(f"The axis should be {type_str}but got {type(axis)}.")
 
     @staticmethod
     def check_and_canonicalize_axes(axes, ndim):
@@ -846,7 +846,7 @@ class Validator:
             if not isinstance(ax, int):
                 raise TypeError((f"Each axis should be integer, but got {type(ax)} in {axes}."))
             if not -ndim <= ax < ndim:
-                raise ValueError(f'axis {ax} is out of bounds for array of dimension {ndim}')
+                raise ValueError(f'The axis {ax} is out of bounds for array of dimension {ndim}')
             ax = ax if ax >= 0 else ax + ndim
             new_axes += (ax,)
         if any(new_axes.count(el) > 1 for el in new_axes):
@@ -956,7 +956,7 @@ def args_type_check(*type_args, **type_kwargs):
             for name, value in argument_dict.items():
                 if name in bound_types:
                     if value is not None and not isinstance(value, bound_types[name]):
-                        raise TypeError('Argument {} must be {}'.format(name, bound_types[name]))
+                        raise TypeError('The argument {} must be {}'.format(name, bound_types[name]))
             return func(*args, **kwargs)
 
         return wrapper
