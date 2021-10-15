@@ -3,7 +3,7 @@ set(projectq_CFLAGS "-fopenmp -O2 -ffast-mast -mavx -DINTRIN")
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/ProjectQ/repository/archive/v0.5.1.tar.gz")
-    set(MD5 "d874e93e56d3375f1c54c7dd1b731054")
+    set(MD5 "3756657d9acd712d0457c3fff13bab0a")
 else()
     set(REQ_URL "https://github.com/ProjectQ-Framework/ProjectQ/archive/v0.5.1.tar.gz ")
     set(MD5 "13430199c253284df8b3d840f11d3560")
