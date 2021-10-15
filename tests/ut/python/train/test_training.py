@@ -112,6 +112,7 @@ def test_multiple_argument():
 
 def test_train_feed_mode(test_with_simu):
     """ test_train_feed_mode """
+    context.set_context(mode=context.GRAPH_MODE)
     dataset = get_dataset()
     model = get_model()
     if test_with_simu:
@@ -162,6 +163,7 @@ class TestGraphMode:
 
     def test_train_minddata_graph_mode(self, test_with_simu):
         """ test_train_minddata_graph_mode """
+        context.set_context(mode=context.GRAPH_MODE)
         # pylint: disable=unused-argument
         dataset_types = (np.float32, np.float32)
         dataset_shapes = ((32, 3, 224, 224), (32, 3))
@@ -193,6 +195,7 @@ class CallbackTest(Callback):
 
 def test_train_callback(test_with_simu):
     """ test_train_callback """
+    context.set_context(mode=context.GRAPH_MODE)
     dataset = get_dataset()
     model = get_model()
     callback = CallbackTest()

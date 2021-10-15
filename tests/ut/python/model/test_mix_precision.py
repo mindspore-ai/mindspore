@@ -96,6 +96,7 @@ def test_on_momentum():
 
 def test_data_parallel_with_cast():
     """test_data_parallel_with_cast"""
+    context.set_context(device_target='Ascend')
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True, device_num=8)
     predict = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)

@@ -15,10 +15,10 @@
 """test_occlusion_sensitivity"""
 import pytest
 import numpy as np
-from mindspore import nn
+from mindspore import nn, context
 from mindspore.common.tensor import Tensor
 from mindspore.nn.metrics import OcclusionSensitivity
-
+context.set_context(mode=context.GRAPH_MODE)
 
 class DenseNet(nn.Cell):
     def __init__(self):

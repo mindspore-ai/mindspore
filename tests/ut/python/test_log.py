@@ -54,6 +54,7 @@ def test_log_setlevel():
     from mindspore import log as logger
     # logger_instance = logger._get_logger()
     # del logger_instance
+    _clear_logger(logger)
     loglevel = logger.get_level()
     log_str = 'print debug informations'
     logger.debug("5 test log message debug:%s", log_str)
