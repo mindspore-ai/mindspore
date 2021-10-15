@@ -24,7 +24,7 @@ histogram_fixed_width_op_info = TBERegOp("HistogramFixedWidth") \
     .kernel_name("histogram_fixed_width_d") \
     .partial_flag(True) \
     .attr("nbins", "required", "int", "all") \
-    .attr("dtype", "optional", "str", "all", "int32") \
+    .attr("dtype", "optional", "int", "all", "3") \
     .input(0, "x", False, "required", "all") \
     .input(1, "range", False, "required", "all") \
     .output(0, "y", False, "required", "all") \

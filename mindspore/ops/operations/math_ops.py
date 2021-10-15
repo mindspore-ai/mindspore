@@ -16,15 +16,16 @@
 """Operators for math."""
 
 import numpy as np
-from ... import context
+
 from .. import signature as sig
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ...common import dtype as mstype
-from ...common.tensor import Tensor
-from ...common._decorator import deprecated
 from .._utils import get_broadcast_shape
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
+from ... import context
+from ..._checkparam import Rel
+from ..._checkparam import Validator as validator
+from ...common import dtype as mstype
+from ...common._decorator import deprecated
+from ...common.tensor import Tensor
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
@@ -135,7 +136,6 @@ class _BitwiseBinaryOp(_MathBinaryOp):
 
     def infer_dtype(self, x1_type, x2_type):
         return _BitwiseBinaryOp._check_bitwise_op_input_type(x1_type, x2_type, self.name)
-
 
 
 class Add(_MathBinaryOp):
@@ -2187,8 +2187,9 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         """Initialize HistogramFixedWidth."""
         self.nbins = validator.check_value_type("nbins", nbins, [int], self.name)
         validator.check_int(nbins, 1, Rel.GE, "nbins", self.name)
-        valid_values = ['int32', 'int64']
+        valid_values = ['int32']
         self.dtype = validator.check_string(dtype, valid_values, "dtype", self.name)
+        self.add_prim_attr('dtype', 3)
         self.init_prim_io_names(inputs=['x', 'range'], outputs=['y'])
 
     def infer_shape(self, x_shape, range_shape):
@@ -5422,6 +5423,7 @@ class Real(PrimitiveWithInfer):
         elif input_dtype == mstype.tensor_type(mstype.complex128):
             output_dtype = mstype.float64
         return output_dtype
+
 
 class Imag(PrimitiveWithInfer):
     """
