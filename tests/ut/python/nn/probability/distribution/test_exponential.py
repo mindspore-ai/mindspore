@@ -21,6 +21,9 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
 
 
 def test_arguments():
@@ -32,17 +35,21 @@ def test_arguments():
     e = msd.Exponential([0.1, 0.3, 0.5, 1.0], dtype=dtype.float32)
     assert isinstance(e, msd.Distribution)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msd.Exponential([0.1], dtype=dtype.int32)
+
 
 def test_name():
     with pytest.raises(TypeError):
         msd.Exponential([0.1], name=1.0)
 
+
 def test_seed():
     with pytest.raises(TypeError):
         msd.Exponential([0.1], seed='seed')
+
 
 def test_rate():
     """
@@ -53,10 +60,12 @@ def test_rate():
     with pytest.raises(ValueError):
         msd.Exponential([0.0], dtype=dtype.float32)
 
+
 class ExponentialProb(nn.Cell):
     """
     Exponential distribution: initialize with rate.
     """
+
     def __init__(self):
         super(ExponentialProb, self).__init__()
         self.e = msd.Exponential(0.5, dtype=dtype.float32)
@@ -70,6 +79,8 @@ class ExponentialProb(nn.Cell):
         log_sf = self.e.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_exponential_prob():
     """
     Test probability functions: passing value through construct.
@@ -79,10 +90,12 @@ def test_exponential_prob():
     ans = net(value)
     assert isinstance(ans, Tensor)
 
+
 class ExponentialProb1(nn.Cell):
     """
     Exponential distribution: initialize without rate.
     """
+
     def __init__(self):
         super(ExponentialProb1, self).__init__()
         self.e = msd.Exponential(dtype=dtype.float32)
@@ -96,6 +109,8 @@ class ExponentialProb1(nn.Cell):
         log_sf = self.e.log_survival(value, rate)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_exponential_prob1():
     """
     Test probability functions: passing value/rate through construct.
@@ -106,10 +121,12 @@ def test_exponential_prob1():
     ans = net(value, rate)
     assert isinstance(ans, Tensor)
 
+
 class ExponentialKl(nn.Cell):
     """
     Test class: kl_loss between Exponential distributions.
     """
+
     def __init__(self):
         super(ExponentialKl, self).__init__()
         self.e1 = msd.Exponential(0.7, dtype=dtype.float32)
@@ -120,6 +137,8 @@ class ExponentialKl(nn.Cell):
         kl2 = self.e2.kl_loss('Exponential', rate_b, rate_a)
         return kl1 + kl2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_kl():
     """
     Test kl_loss function.
@@ -130,10 +149,12 @@ def test_kl():
     ans = net(rate_b, rate_a)
     assert isinstance(ans, Tensor)
 
+
 class ExponentialCrossEntropy(nn.Cell):
     """
     Test class: cross_entropy of Exponential distribution.
     """
+
     def __init__(self):
         super(ExponentialCrossEntropy, self).__init__()
         self.e1 = msd.Exponential(0.3, dtype=dtype.float32)
@@ -144,6 +165,8 @@ class ExponentialCrossEntropy(nn.Cell):
         h2 = self.e2.cross_entropy('Exponential', rate_b, rate_a)
         return h1 + h2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_cross_entropy():
     """
     Test cross_entropy between Exponential distributions.
@@ -154,10 +177,12 @@ def test_cross_entropy():
     ans = net(rate_b, rate_a)
     assert isinstance(ans, Tensor)
 
+
 class ExponentialBasics(nn.Cell):
     """
     Test class: basic mean/sd/mode/entropy function.
     """
+
     def __init__(self):
         super(ExponentialBasics, self).__init__()
         self.e = msd.Exponential([0.3, 0.5], dtype=dtype.float32)
@@ -170,6 +195,8 @@ class ExponentialBasics(nn.Cell):
         entropy = self.e.entropy()
         return mean + sd + var + mode + entropy
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bascis():
     """
     Test mean/sd/var/mode/entropy functionality of Exponential distribution.
@@ -183,6 +210,7 @@ class ExpConstruct(nn.Cell):
     """
     Exponential distribution: going through construct.
     """
+
     def __init__(self):
         super(ExpConstruct, self).__init__()
         self.e = msd.Exponential(0.5, dtype=dtype.float32)
@@ -194,6 +222,8 @@ class ExpConstruct(nn.Cell):
         prob2 = self.e1('prob', value, rate)
         return prob + prob1 + prob2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_exp_construct():
     """
     Test probability function going through construct.

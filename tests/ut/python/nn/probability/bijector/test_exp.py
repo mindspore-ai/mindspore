@@ -18,19 +18,26 @@ import mindspore.nn as nn
 import mindspore.nn.probability.bijector as msb
 from mindspore import Tensor
 from mindspore import dtype
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
+
 
 def test_init():
     b = msb.Exp()
     assert isinstance(b, msb.Bijector)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msb.Exp(name=0.1)
+
 
 class Net(nn.Cell):
     """
     Test class: forward and inverse pass of bijector.
     """
+
     def __init__(self):
         super(Net, self).__init__()
         self.b1 = msb.Exp()
@@ -41,6 +48,8 @@ class Net(nn.Cell):
         inverse = self.b1.inverse(forward)
         return x_ - inverse
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test1():
     """
     Test forward and inverse pass of exp bijector.
@@ -50,10 +59,12 @@ def test1():
     ans = net(x)
     assert isinstance(ans, Tensor)
 
+
 class Jacobian(nn.Cell):
     """
     Test class: forward and inverse pass of bijector.
     """
+
     def __init__(self):
         super(Jacobian, self).__init__()
         self.b1 = msb.Exp()
@@ -64,6 +75,8 @@ class Jacobian(nn.Cell):
         ans2 = self.b1.inverse_log_jacobian(x_)
         return ans1 + ans2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test2():
     """
     Test jacobians of exp bijector.

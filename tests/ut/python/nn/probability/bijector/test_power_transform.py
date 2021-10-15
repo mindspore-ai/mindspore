@@ -18,6 +18,10 @@ import mindspore.nn as nn
 import mindspore.nn.probability.bijector as msb
 from mindspore import Tensor
 from mindspore import dtype
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
+
 
 def test_init():
     b = msb.PowerTransform()
@@ -25,11 +29,13 @@ def test_init():
     b = msb.PowerTransform(1.)
     assert isinstance(b, msb.Bijector)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msb.PowerTransform(power='power')
     with pytest.raises(TypeError):
         msb.PowerTransform(name=0.1)
+
 
 class Net(nn.Cell):
     """
@@ -45,6 +51,8 @@ class Net(nn.Cell):
         ans2 = self.b2.inverse(self.b2.forward(x_))
         return ans1 - ans2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test1():
     """
     Test forward and inverse pass of powertransform bijector.
@@ -53,6 +61,7 @@ def test1():
     x = Tensor([2.0, 3.0, 4.0, 5.0], dtype=dtype.float32)
     ans = net(x)
     assert isinstance(ans, Tensor)
+
 
 class Jacobian(nn.Cell):
     """
@@ -70,6 +79,8 @@ class Jacobian(nn.Cell):
         ans4 = self.b2.inverse_log_jacobian(x_)
         return ans1 - ans2 + ans3 - ans4
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test2():
     """
     Test jacobians of powertransform bijector.

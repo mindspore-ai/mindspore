@@ -22,6 +22,10 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") != "Ascend"
+
 
 def test_gamma_shape_errpr():
     """
@@ -30,17 +34,21 @@ def test_gamma_shape_errpr():
     with pytest.raises(ValueError):
         msd.Gamma([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msd.Gamma([0.], [1.], dtype=dtype.int32)
+
 
 def test_name():
     with pytest.raises(TypeError):
         msd.Gamma([0.], [1.], name=1.0)
 
+
 def test_seed():
     with pytest.raises(TypeError):
         msd.Gamma([0.], [1.], seed='seed')
+
 
 def test_rate():
     with pytest.raises(ValueError):
@@ -48,11 +56,13 @@ def test_rate():
     with pytest.raises(ValueError):
         msd.Gamma([0.], [-1.])
 
+
 def test_scalar():
     with pytest.raises(TypeError):
         msd.Gamma(3., [4.])
     with pytest.raises(TypeError):
         msd.Gamma([3.], -4.)
+
 
 def test_arguments():
     """
@@ -68,6 +78,7 @@ class GammaProb(nn.Cell):
     """
     Gamma distribution: initialize with concentration/rate.
     """
+
     def __init__(self):
         super(GammaProb, self).__init__()
         self.gamma = msd.Gamma([3.0, 4.0], [1.0, 1.0], dtype=dtype.float32)
@@ -81,6 +92,8 @@ class GammaProb(nn.Cell):
         log_sf = self.gamma.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_gamma_prob():
     """
     Test probability functions: passing value through construct.
@@ -95,6 +108,7 @@ class GammaProb1(nn.Cell):
     """
     Gamma distribution: initialize without concentration/rate.
     """
+
     def __init__(self):
         super(GammaProb1, self).__init__()
         self.gamma = msd.Gamma()
@@ -108,6 +122,8 @@ class GammaProb1(nn.Cell):
         log_sf = self.gamma.log_survival(value, concentration, rate)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_gamma_prob1():
     """
     Test probability functions: passing concentration/rate, value through construct.
@@ -119,10 +135,12 @@ def test_gamma_prob1():
     ans = net(value, concentration, rate)
     assert isinstance(ans, Tensor)
 
+
 class GammaKl(nn.Cell):
     """
     Test class: kl_loss of Gamma distribution.
     """
+
     def __init__(self):
         super(GammaKl, self).__init__()
         self.g1 = msd.Gamma(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
@@ -133,6 +151,8 @@ class GammaKl(nn.Cell):
         kl2 = self.g2.kl_loss('Gamma', concentration_b, rate_b, concentration_a, rate_a)
         return kl1 + kl2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_kl():
     """
     Test kl_loss.
@@ -145,10 +165,12 @@ def test_kl():
     ans = net(concentration_b, rate_b, concentration_a, rate_a)
     assert isinstance(ans, Tensor)
 
+
 class GammaCrossEntropy(nn.Cell):
     """
     Test class: cross_entropy of Gamma distribution.
     """
+
     def __init__(self):
         super(GammaCrossEntropy, self).__init__()
         self.g1 = msd.Gamma(np.array([3.0]), np.array([4.0]), dtype=dtype.float32)
@@ -159,6 +181,8 @@ class GammaCrossEntropy(nn.Cell):
         h2 = self.g2.cross_entropy('Gamma', concentration_b, rate_b, concentration_a, rate_a)
         return h1 + h2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_cross_entropy():
     """
     Test cross entropy between Gamma distributions.
@@ -171,10 +195,12 @@ def test_cross_entropy():
     ans = net(concentration_b, rate_b, concentration_a, rate_a)
     assert isinstance(ans, Tensor)
 
+
 class GammaBasics(nn.Cell):
     """
     Test class: basic mean/sd function.
     """
+
     def __init__(self):
         super(GammaBasics, self).__init__()
         self.g = msd.Gamma(np.array([3.0, 4.0]), np.array([4.0, 6.0]), dtype=dtype.float32)
@@ -185,6 +211,8 @@ class GammaBasics(nn.Cell):
         mode = self.g.mode()
         return mean + sd + mode
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bascis():
     """
     Test mean/sd/mode/entropy functionality of Gamma.
@@ -193,10 +221,12 @@ def test_bascis():
     ans = net()
     assert isinstance(ans, Tensor)
 
+
 class GammaConstruct(nn.Cell):
     """
     Gamma distribution: going through construct.
     """
+
     def __init__(self):
         super(GammaConstruct, self).__init__()
         self.gamma = msd.Gamma([3.0], [4.0])
@@ -208,6 +238,8 @@ class GammaConstruct(nn.Cell):
         prob2 = self.gamma1('prob', value, concentration, rate)
         return prob + prob1 + prob2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_gamma_construct():
     """
     Test probability function going through construct.

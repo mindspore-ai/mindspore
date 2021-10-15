@@ -22,6 +22,10 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") != "Ascend"
+
 
 def test_gamma_shape_errpr():
     """
@@ -30,17 +34,21 @@ def test_gamma_shape_errpr():
     with pytest.raises(ValueError):
         msd.Gamma([[2.], [1.]], [[2.], [3.], [4.]], dtype=dtype.float32)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msd.Gamma([0.], [1.], dtype=dtype.int32)
+
 
 def test_name():
     with pytest.raises(TypeError):
         msd.Gamma([0.], [1.], name=1.0)
 
+
 def test_seed():
     with pytest.raises(TypeError):
         msd.Gamma([0.], [1.], seed='seed')
+
 
 def test_concentration1():
     with pytest.raises(ValueError):
@@ -48,17 +56,20 @@ def test_concentration1():
     with pytest.raises(ValueError):
         msd.Gamma([-1.], [1.])
 
+
 def test_concentration0():
     with pytest.raises(ValueError):
         msd.Gamma([1.], [0.])
     with pytest.raises(ValueError):
         msd.Gamma([1.], [-1.])
 
+
 def test_scalar():
     with pytest.raises(TypeError):
         msd.Gamma(3., [4.])
     with pytest.raises(TypeError):
         msd.Gamma([3.], -4.)
+
 
 def test_arguments():
     """
@@ -83,6 +94,8 @@ class GammaProb(nn.Cell):
         log_prob = self.gamma.log_prob(value)
         return prob + log_prob
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_gamma_prob():
     """
     Test probability functions: passing value through construct.
@@ -106,6 +119,8 @@ class GammaProb1(nn.Cell):
         log_prob = self.gamma.log_prob(value, concentration1, concentration0)
         return prob + log_prob
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_gamma_prob1():
     """
     Test probability functions: passing concentration1/concentration0, value through construct.
@@ -116,6 +131,7 @@ def test_gamma_prob1():
     concentration0 = Tensor([1.0], dtype=dtype.float32)
     ans = net(value, concentration1, concentration0)
     assert isinstance(ans, Tensor)
+
 
 class GammaKl(nn.Cell):
     """
@@ -131,6 +147,8 @@ class GammaKl(nn.Cell):
         kl2 = self.g2.kl_loss('Gamma', concentration1_b, concentration0_b, concentration1_a, concentration0_a)
         return kl1 + kl2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_kl():
     """
     Test kl_loss.
@@ -142,6 +160,7 @@ def test_kl():
     concentration0_a = Tensor(np.array([3.0]).astype(np.float32), dtype=dtype.float32)
     ans = net(concentration1_b, concentration0_b, concentration1_a, concentration0_a)
     assert isinstance(ans, Tensor)
+
 
 class GammaCrossEntropy(nn.Cell):
     """
@@ -157,6 +176,8 @@ class GammaCrossEntropy(nn.Cell):
         h2 = self.g2.cross_entropy('Gamma', concentration1_b, concentration0_b, concentration1_a, concentration0_a)
         return h1 + h2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_cross_entropy():
     """
     Test cross entropy between Gamma distributions.
@@ -168,6 +189,7 @@ def test_cross_entropy():
     concentration0_a = Tensor(np.array([3.0]).astype(np.float32), dtype=dtype.float32)
     ans = net(concentration1_b, concentration0_b, concentration1_a, concentration0_a)
     assert isinstance(ans, Tensor)
+
 
 class GammaBasics(nn.Cell):
     """
@@ -183,6 +205,8 @@ class GammaBasics(nn.Cell):
         mode = self.g.mode()
         return mean + sd + mode
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_bascis():
     """
     Test mean/sd/mode/entropy functionality of Gamma.
@@ -190,6 +214,7 @@ def test_bascis():
     net = GammaBasics()
     ans = net()
     assert isinstance(ans, Tensor)
+
 
 class GammaConstruct(nn.Cell):
     """
@@ -206,6 +231,8 @@ class GammaConstruct(nn.Cell):
         prob2 = self.gamma1('prob', value, concentration1, concentration0)
         return prob + prob1 + prob2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU and GPU")
 def test_gamma_construct():
     """
     Test probability function going through construct.

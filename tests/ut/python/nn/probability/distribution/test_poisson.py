@@ -21,6 +21,9 @@ import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import dtype
 from mindspore import Tensor
+from mindspore import context
+
+skip_flag = context.get_context("device_target") != "Ascend"
 
 
 def test_arguments():
@@ -32,17 +35,21 @@ def test_arguments():
     p = msd.Poisson([0.1, 0.3, 0.5, 1.0], dtype=dtype.float32)
     assert isinstance(p, msd.Distribution)
 
+
 def test_type():
     with pytest.raises(TypeError):
         msd.Poisson([0.1], dtype=dtype.bool_)
+
 
 def test_name():
     with pytest.raises(TypeError):
         msd.Poisson([0.1], name=1.0)
 
+
 def test_seed():
     with pytest.raises(TypeError):
         msd.Poisson([0.1], seed='seed')
+
 
 def test_rate():
     """
@@ -53,14 +60,17 @@ def test_rate():
     with pytest.raises(ValueError):
         msd.Poisson([0.0], dtype=dtype.float32)
 
+
 def test_scalar():
     with pytest.raises(TypeError):
         msd.Poisson(0.1, seed='seed')
+
 
 class PoissonProb(nn.Cell):
     """
     Poisson distribution: initialize with rate.
     """
+
     def __init__(self):
         super(PoissonProb, self).__init__()
         self.p = msd.Poisson([0.5, 0.5, 0.5, 0.5, 0.5], dtype=dtype.float32)
@@ -74,6 +84,8 @@ class PoissonProb(nn.Cell):
         log_sf = self.p.log_survival(value)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_poisson_prob():
     """
     Test probability functions: passing value through construct.
@@ -83,10 +95,12 @@ def test_poisson_prob():
     ans = net(value)
     assert isinstance(ans, Tensor)
 
+
 class PoissonProb1(nn.Cell):
     """
     Poisson distribution: initialize without rate.
     """
+
     def __init__(self):
         super(PoissonProb1, self).__init__()
         self.p = msd.Poisson(dtype=dtype.float32)
@@ -100,6 +114,8 @@ class PoissonProb1(nn.Cell):
         log_sf = self.p.log_survival(value, rate)
         return prob + log_prob + cdf + log_cdf + sf + log_sf
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_poisson_prob1():
     """
     Test probability functions: passing value/rate through construct.
@@ -110,10 +126,12 @@ def test_poisson_prob1():
     ans = net(value, rate)
     assert isinstance(ans, Tensor)
 
+
 class PoissonBasics(nn.Cell):
     """
     Test class: basic mean/sd/var/mode function.
     """
+
     def __init__(self):
         super(PoissonBasics, self).__init__()
         self.p = msd.Poisson([2.3, 2.5], dtype=dtype.float32)
@@ -124,6 +142,8 @@ class PoissonBasics(nn.Cell):
         var = self.p.var()
         return mean + sd + var
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_bascis():
     """
     Test mean/sd/var/mode functionality of Poisson distribution.
@@ -132,10 +152,12 @@ def test_bascis():
     ans = net()
     assert isinstance(ans, Tensor)
 
+
 class PoissonConstruct(nn.Cell):
     """
     Poisson distribution: going through construct.
     """
+
     def __init__(self):
         super(PoissonConstruct, self).__init__()
         self.p = msd.Poisson([0.5, 0.5, 0.5, 0.5, 0.5], dtype=dtype.float32)
@@ -147,6 +169,8 @@ class PoissonConstruct(nn.Cell):
         prob2 = self.p1('prob', value, rate)
         return prob + prob1 + prob2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_poisson_construct():
     """
     Test probability function going through construct.

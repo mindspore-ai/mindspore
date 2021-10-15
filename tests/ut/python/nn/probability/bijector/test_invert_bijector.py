@@ -18,6 +18,10 @@ import mindspore.nn as nn
 import mindspore.nn.probability.bijector as msb
 from mindspore import Tensor
 from mindspore import dtype
+from mindspore import context
+
+skip_flag = context.get_context("device_target") == "CPU"
+
 
 def test_init():
     """
@@ -35,9 +39,11 @@ def test_type():
     with pytest.raises(TypeError):
         msb.Invert(0.1)
 
+
 def test_name():
     b = msb.Invert(msb.ScalarAffine(scale=1.0))
     assert b.name == 'InvertScalarAffine'
+
 
 class ForwardBackward(nn.Cell):
     """
@@ -53,6 +59,8 @@ class ForwardBackward(nn.Cell):
         ans2 = self.inv2.inverse(x_) + self.inv2.forward(x_)
         return ans1 + ans2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_forward_and_backward_pass():
     """
     Test forward and backward pass of ScalarAffine bijector.
@@ -61,6 +69,7 @@ def test_forward_and_backward_pass():
     x = Tensor([2.0, 3.0, 4.0, 5.0], dtype=dtype.float32)
     ans = net(x)
     assert isinstance(ans, Tensor)
+
 
 class ForwardJacobian(nn.Cell):
     """
@@ -71,12 +80,13 @@ class ForwardJacobian(nn.Cell):
         self.inv1 = msb.Invert(msb.Exp())
         self.inv2 = msb.Invert(msb.ScalarAffine())
 
-
     def construct(self, x_):
         ans1 = self.inv1.forward_log_jacobian(x_)
         ans2 = self.inv2.forward_log_jacobian(x_)
         return ans1 + ans2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_forward_jacobian():
     """
     Test forward log jacobian of ScalarAffine bijector.
@@ -101,6 +111,8 @@ class BackwardJacobian(nn.Cell):
         ans2 = self.inv2.inverse_log_jacobian(x_)
         return ans1 + ans2
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_backward_jacobian():
     """
     Test backward log jacobian of ScalarAffine bijector.
@@ -126,6 +138,8 @@ class Net(nn.Cell):
         ans3 = self.inv('inverse_log_jacobian', x_)
         return ans1 + ans2 + ans3
 
+
+@pytest.mark.skipif(skip_flag, reason="not support running in CPU")
 def test_old_api():
     """
     Test old api which goes through construct.
