@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-const int kInputNum = 2;
+const size_t kInputNum = 2;
 
 std::vector<std::vector<int64_t>> GetGradientIndices(const std::vector<std::vector<int64_t>> &reverse_shape,
                                                      const size_t largest_rank) {
@@ -28,7 +28,7 @@ std::vector<std::vector<int64_t>> GetGradientIndices(const std::vector<std::vect
   // indices of j-th component of each input.
   bool prev_is_one[kInputNum];
   bool current_is_one[kInputNum];
-  for (int i = 0; i < kInputNum; ++i) {
+  for (size_t i = 0; i < kInputNum; ++i) {
     prev_is_one[i] = false;
     current_is_one[i] = false;
   }
@@ -39,14 +39,14 @@ std::vector<std::vector<int64_t>> GetGradientIndices(const std::vector<std::vect
     bool output_dim_set = false;
     bool none_is_one = true;
     // Find which indices are 1.
-    for (int i = 0; i < kInputNum; ++i) {
+    for (size_t i = 0; i < kInputNum; ++i) {
       if (reverse_shape[i][j] == 1) {
         current_is_one[i] = true;
         none_is_one = false;
       } else {
         current_is_one[i] = false;
         if (!output_dim_set || reverse_shape[i][j] == static_cast<int64_t>(output_dim)) {
-          output_dim = reverse_shape[i][j];
+          output_dim = static_cast<int>(reverse_shape[i][j]);
           output_dim_set = true;
         } else {
           MS_LOG(EXCEPTION) << "Input[0] and input[1] Cannot broadcast!";
@@ -56,25 +56,25 @@ std::vector<std::vector<int64_t>> GetGradientIndices(const std::vector<std::vect
 
     // All dimensions are 1.
     if (!output_dim_set) {
-      for (int i = 0; i < kInputNum; ++i) {
+      for (size_t i = 0; i < kInputNum; ++i) {
         (void)grad_reduce_idx[i].emplace_back(largest_rank - 1 - j);
       }
       continue;
     } else if (std::equal(current_is_one, current_is_one + kInputNum, prev_is_one) && set_one) {
-      for (int i = 0; i < kInputNum; ++i) {
+      for (size_t i = 0; i < kInputNum; ++i) {
         if (current_is_one[i] && !none_is_one) {
           (void)grad_reduce_idx[i].emplace_back(largest_rank - 1 - j);
         }
       }
     } else {
-      for (int i = 0; i < kInputNum; ++i) {
+      for (size_t i = 0; i < kInputNum; ++i) {
         if (current_is_one[i] && !none_is_one) {
           (void)grad_reduce_idx[i].emplace_back(largest_rank - 1 - j);
         }
       }
     }
     set_one = true;
-    for (int i = 0; i < kInputNum; ++i) {
+    for (size_t i = 0; i < kInputNum; ++i) {
       prev_is_one[i] = current_is_one[i];
     }
   }
@@ -85,7 +85,7 @@ std::vector<std::vector<int64_t>> CalculateOutput(const std::vector<std::vector<
   std::vector<std::vector<int64_t>> grad_reduce_idx(kInputNum);
   bool all_equal = true;
   size_t largest_rank = 0;
-  for (int i = 0; i < kInputNum; ++i) {
+  for (size_t i = 0; i < kInputNum; ++i) {
     if (x[i] != x[0]) {
       all_equal = false;
     }
@@ -99,13 +99,13 @@ std::vector<std::vector<int64_t>> CalculateOutput(const std::vector<std::vector<
 
   // Reverse input the shapes
   std::vector<std::vector<int64_t>> reverse_shape(kInputNum);
-  for (int i = 0; i < kInputNum; ++i) {
+  for (size_t i = 0; i < kInputNum; ++i) {
     reverse_shape[i] = x[i];
     std::reverse(reverse_shape[i].begin(), reverse_shape[i].end());
   }
 
   // 1-extend and align all vectors.
-  for (int i = 0; i < kInputNum; ++i) {
+  for (size_t i = 0; i < kInputNum; ++i) {
     if (reverse_shape[i].size() < largest_rank) {
       reverse_shape[i].resize(largest_rank, 1);
     }
@@ -172,8 +172,9 @@ size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64
     *(data_ptr + i) = output[i];
   }
 
-  out_addr->SyncHostToDevice(out_shape, LongToSize(tensor_for_sync->data().nbytes()), tensor_for_sync->data_type(),
-                             tensor_for_sync->data_c(), tensor_for_sync->device_info().host_format_);
+  (void)out_addr->SyncHostToDevice(out_shape, LongToSize(tensor_for_sync->data().nbytes()),
+                                   tensor_for_sync->data_type(), tensor_for_sync->data_c(),
+                                   tensor_for_sync->device_info().host_format_);
   return out_size;
 }
 }  // namespace
