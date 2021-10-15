@@ -41,14 +41,6 @@
 
 namespace mindspore {
 namespace kernel {
-#define INIT_SET_FROM_2D_ARRAY(set_var, list_idx) \
-  std::set<size_t> set_var(kernel_lists_[list_idx], kernel_lists_[list_idx] + kernel_lists_[list_idx][kMaxKernelNum_])
-
-#define LIST_BEGIN(list_idx) kernel_lists_[list_idx]
-#define LIST_END(list_idx) (kernel_lists_[list_idx] + kernel_lists_[list_idx][kMaxKernelNum_])
-#define RESET_LIST_SIZE(list_idx, val) kernel_lists_[list_idx][kMaxKernelNum_] = val
-
-#define INCREASE_LIST_SIZE(list_idx, val) kernel_lists_[list_idx][kMaxKernelNum_] += val
 
 constexpr int32_t MAX_ERROR_LEN = 1024;
 constexpr int32_t PROCESS_NUM = 16;
@@ -64,7 +56,7 @@ inline std::string GetErrorInfo() {
 
   return std::string(buf);
 #else
-  return std::string(ret);
+  return ret != nullptr ? std::string(ret) : "Failed to get error info";
 #endif
 }
 
@@ -260,9 +252,9 @@ int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
     return -1;
   }
 
-  INIT_SET_FROM_2D_ARRAY(todo_list, kToDoIdx_);
-  INIT_SET_FROM_2D_ARRAY(doing_list, kDoingIdx_);
-  INIT_SET_FROM_2D_ARRAY(done_list, kDoneIdx_);
+  std::set<size_t> todo_list(ListBegin(kToDoIdx_), ListEnd(kToDoIdx_));
+  std::set<size_t> doing_list(ListBegin(kDoingIdx_), ListEnd(kDoingIdx_));
+  std::set<size_t> done_list(ListBegin(kDoneIdx_), ListEnd(kDoneIdx_));
 
   for (const auto &[json_generator, anf_node] : build_args) {
     MS_EXCEPTION_IF_NULL(anf_node);
@@ -296,8 +288,8 @@ int32_t AkgKernelPool::AddKernels(const std::vector<JsonNodePair> &build_args) {
     return -1;
   }
 
-  (void)std::copy(diff_from_done.begin(), diff_from_done.end(), LIST_END(kToDoIdx_));
-  INCREASE_LIST_SIZE(kToDoIdx_, new_kernel_size);
+  (void)std::copy(diff_from_done.begin(), diff_from_done.end(), ListEnd(kToDoIdx_));
+  IncListSize(kToDoIdx_, new_kernel_size);
 
   return 0;
 }
@@ -320,13 +312,13 @@ int32_t AkgKernelPool::FetchKernels(std::set<size_t> *out) {
     }
   };
 
-  (void)std::for_each(LIST_BEGIN(kToDoIdx_), LIST_END(kToDoIdx_), FilterBySelfList);
+  (void)std::for_each(ListBegin(kToDoIdx_), ListEnd(kToDoIdx_), FilterBySelfList);
 
-  (void)std::copy(out->begin(), out->end(), LIST_END(kDoingIdx_));
-  INCREASE_LIST_SIZE(kDoingIdx_, out->size());
+  (void)std::copy(out->begin(), out->end(), ListEnd(kDoingIdx_));
+  IncListSize(kDoingIdx_, out->size());
 
-  (void)std::copy(left_in_todo_list.begin(), left_in_todo_list.end(), LIST_BEGIN(kToDoIdx_));
-  RESET_LIST_SIZE(kToDoIdx_, left_in_todo_list.size());
+  (void)std::copy(left_in_todo_list.begin(), left_in_todo_list.end(), ListBegin(kToDoIdx_));
+  ResetListSize(kToDoIdx_, left_in_todo_list.size());
 
   return 0;
 }
@@ -340,17 +332,17 @@ int32_t AkgKernelPool::UpdateAndWait(const std::set<size_t> &ids) {
     }
 
     // update the state of finished kernels to `done`
-    (void)std::copy(ids.begin(), ids.end(), LIST_END(kDoneIdx_));
-    INCREASE_LIST_SIZE(kDoneIdx_, ids.size());
+    (void)std::copy(ids.begin(), ids.end(), ListEnd(kDoneIdx_));
+    IncListSize(kDoneIdx_, ids.size());
 
     // delete the finished kernels from doing_list
     std::vector<size_t> left_in_doing_list;
-    INIT_SET_FROM_2D_ARRAY(doing_list, kDoingIdx_);
+    std::set<size_t> doing_list(ListBegin(kDoingIdx_), ListEnd(kDoingIdx_));
     (void)std::set_difference(doing_list.begin(), doing_list.end(), ids.begin(), ids.end(),
                               std::inserter(left_in_doing_list, left_in_doing_list.begin()));
 
-    (void)std::copy(left_in_doing_list.begin(), left_in_doing_list.end(), LIST_BEGIN(kDoingIdx_));
-    RESET_LIST_SIZE(kDoingIdx_, left_in_doing_list.size());
+    (void)std::copy(left_in_doing_list.begin(), left_in_doing_list.end(), ListBegin(kDoingIdx_));
+    ResetListSize(kDoingIdx_, left_in_doing_list.size());
   }
 
   auto ret = Wait();
@@ -374,7 +366,7 @@ int32_t AkgKernelPool::Wait() const {
         return -1;
       }
 
-      INIT_SET_FROM_2D_ARRAY(done_list, kDoneIdx_);
+      std::set<size_t> done_list(ListBegin(kDoneIdx_), ListEnd(kDoneIdx_));
 
       if (std::all_of(self_kernel_ids_.begin(), self_kernel_ids_.end(),
                       [&done_list](size_t id) { return done_list.count(id) != 0; })) {

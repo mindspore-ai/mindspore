@@ -18,11 +18,9 @@
 #include <vector>
 #include <set>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <queue>
 #include <map>
-#include <unordered_map>
 #include "frontend/optimizer/irpass.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
