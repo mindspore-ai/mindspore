@@ -462,7 +462,13 @@ bool AkgKernelJsonGenerator::GenerateSingleKernelJson(const AnfNodePtr &anf_node
   MS_EXCEPTION_IF_NULL(op_info);
 
   // get basic params from currentNodeOpDesc
-  (*node_json)[kJsonKeyName] = op_info->op_name();
+  if (IsPrimitiveCNode(anf_node, prim::kPrimCustom)) {
+    auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+    MS_EXCEPTION_IF_NULL(primitive);
+    (*node_json)[kJsonKeyName] = primitive->name();
+  } else {
+    (*node_json)[kJsonKeyName] = op_info->op_name();
+  }
   (*node_json)[kJsonKeyImplPath] = op_info->impl_path();
   SaveNodeAddress(anf_node, node_json);
 

@@ -141,6 +141,40 @@ bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBu
   return true;
 }
 
+bool SelectCustomKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBuildInfo> &selected_kernel_info,
+                        KernelType *kernel_type) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(selected_kernel_info);
+  MS_EXCEPTION_IF_NULL(kernel_type);
+  std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
+  std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
+  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kGPU);
+  if (op_info_ptr == nullptr) {
+    op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kAKG);
+    *kernel_type = AKG_KERNEL;
+  }
+  if (op_info_ptr == nullptr) {
+    MS_LOG(ERROR) << "Not find operator information for op[" << op_name << "]";
+    return false;
+  }
+  if (!ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list)) {
+    MS_LOG(EXCEPTION) << "Parsed metadata of op[" << op_name << "] failed.";
+  }
+  if (kernel_info_list.empty()) {
+    MS_LOG(EXCEPTION) << "Not find valid metadata of op[" << op_name << "].";
+  }
+
+  bool match = std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
+                           [&](const std::shared_ptr<KernelBuildInfo> &alternative_kernel_info) {
+                             return CheckKernelInfo(alternative_kernel_info, selected_kernel_info);
+                           });
+  if (!match) {
+    MS_LOG(ERROR) << "Not find op[" << op_name << "] which both match data type and format.";
+    return false;
+  }
+  return true;
+}
+
 void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -428,7 +462,10 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   builder->SetOutputsFormat(outputs_format);
   builder->SetOutputsDeviceType(outputs_type);
   bool result = false;
-  if (kernel_type == UNKNOWN_KERNEL_TYPE) {
+  if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
+    // Custom op select kernel from OpLib
+    result = SelectCustomKernel(kernel_node, builder->Build(), &kernel_type);
+  } else if (kernel_type == UNKNOWN_KERNEL_TYPE) {
     result =
       kernel::GpuKernelFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node), builder->Build());
     if (!result) {

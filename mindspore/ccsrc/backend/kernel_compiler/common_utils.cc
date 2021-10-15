@@ -426,6 +426,10 @@ void SetKernelBuildInfo(const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBu
 
   if (imply_type == kAKG) {
     builder->SetKernelType(AKG_KERNEL);
+  } else if (imply_type == kGPU) {
+    builder->SetKernelType(GPU_KERNEL);
+  } else if (imply_type == kCPU) {
+    builder->SetKernelType(CPU_KERNEL);
   } else if (imply_type == kAICPU) {
     builder->SetKernelType(AICPU_KERNEL);
   } else {

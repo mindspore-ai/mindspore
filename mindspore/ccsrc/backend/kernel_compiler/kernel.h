@@ -41,6 +41,7 @@ enum KernelType : int {
   TBE_KERNEL,
   HOST_KERNEL,
   CPU_KERNEL,
+  GPU_KERNEL,
 };
 
 namespace kernel {
