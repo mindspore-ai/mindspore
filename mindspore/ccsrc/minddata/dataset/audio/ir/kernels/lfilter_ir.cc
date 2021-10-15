@@ -23,7 +23,7 @@ namespace mindspore {
 namespace dataset {
 namespace audio {
 // LFilterOperation
-LFilterOperation::LFilterOperation(std::vector<float> a_coeffs, std::vector<float> b_coeffs, bool clamp)
+LFilterOperation::LFilterOperation(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp)
     : a_coeffs_(a_coeffs), b_coeffs_(b_coeffs), clamp_(clamp) {}
 
 Status LFilterOperation::ValidateParams() {

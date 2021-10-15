@@ -35,8 +35,9 @@ constexpr size_t size_two = 2;
 constexpr size_t size_three = 3;
 
 // Function to create RandomRotationOperation.
-RandomRotationOperation::RandomRotationOperation(std::vector<float> degrees, InterpolationMode resample, bool expand,
-                                                 std::vector<float> center, std::vector<uint8_t> fill_value)
+RandomRotationOperation::RandomRotationOperation(const std::vector<float> &degrees, InterpolationMode resample,
+                                                 bool expand, const std::vector<float> &center,
+                                                 const std::vector<uint8_t> &fill_value)
     : TensorOperation(true),
       degrees_(degrees),
       interpolation_mode_(resample),

@@ -30,8 +30,8 @@ RotateOperation::RotateOperation(FixRotationAngle angle)
       center_({}),
       fill_value_({}) {}
 
-RotateOperation::RotateOperation(float degrees, InterpolationMode resample, bool expand, std::vector<float> center,
-                                 std::vector<uint8_t> fill_value)
+RotateOperation::RotateOperation(float degrees, InterpolationMode resample, bool expand,
+                                 const std::vector<float> &center, const std::vector<uint8_t> &fill_value)
     : angle_id_(0),
       degrees_(degrees),
       interpolation_mode_(resample),

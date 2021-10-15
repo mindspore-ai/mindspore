@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-enum for audio ops
+Enum for audio ops.
 """
 
 from enum import Enum

@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace dataset {
-USPSNode::USPSNode(std::string dataset_dir, std::string usage, int32_t num_samples, ShuffleMode shuffle,
+USPSNode::USPSNode(const std::string &dataset_dir, const std::string &usage, int32_t num_samples, ShuffleMode shuffle,
                    int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache)
     : NonMappableSourceNode(std::move(cache)),
       dataset_dir_(dataset_dir),
