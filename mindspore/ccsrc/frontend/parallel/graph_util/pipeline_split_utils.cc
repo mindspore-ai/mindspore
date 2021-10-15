@@ -27,6 +27,7 @@
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/graph_util/node_info.h"
 #include "utils/parallel_node_check.h"
 
 namespace mindspore {
@@ -424,6 +425,28 @@ void BroadCastMicroBatch(const CNodePtr &node, NodeUsersMap *node_users_map, con
   }
 }
 
+void BroadCastNeedGrad(const AnfNodePtr &node, NodeUsersMap *node_user_map) {
+  auto node_users = (*node_user_map)[node];
+  for (auto &node_user : node_users) {
+    auto cnode = node_user.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    cnode->AddPrimalAttr(NEED_GRAD, MakeValue(1));
+    BroadCastNeedGrad(cnode, node_user_map);
+  }
+}
+
+// Label node that need backpropagation
+void LabelNeedGrad(const FuncGraphManagerPtr &manager, const FuncGraphPtr &root) {
+  auto parameters = root->parameters();
+  auto node_user_map = manager->node_users();
+  for (auto &parameter : parameters) {
+    if (!ParameterRequireGrad(parameter)) {
+      continue;
+    }
+    BroadCastNeedGrad(parameter, &node_user_map);
+  }
+}
+
 AnfNodePtr GetPreNode(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -435,7 +458,7 @@ AnfNodePtr GetPreNode(const AnfNodePtr &node) {
       continue;
     }
     node_queue.erase(node_queue.begin());
-    if (!IsInEndNodeBlackList(cur_node)) {
+    if (!IsInEndNodeBlackList(cur_node) && cur_node->HasPrimalAttr(NEED_GRAD)) {
       MS_LOG(INFO) << "Pipeline End node: " << cur_node->DebugString();
       return cur_node;
     }
@@ -444,10 +467,12 @@ AnfNodePtr GetPreNode(const AnfNodePtr &node) {
   MS_LOG(EXCEPTION) << "Get Pipeline End node failed.";
 }
 
-void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager) {
+void LastStageEndNode(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphManagerPtr &manager,
+                      const FuncGraphPtr &root) {
   if (!IsLastStage()) {
     return;
   }
+  LabelNeedGrad(manager, root);
   for (auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
       continue;
