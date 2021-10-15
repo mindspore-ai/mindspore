@@ -127,11 +127,11 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
     {"Sub", [](const std::vector<TM> &n) { return n[0] - n[1]; }},
     {"Mul", [](const std::vector<TM> &n) { return n[0] * n[1]; }},
     {"RealDiv", [](const std::vector<TM> &n) { return n[0] / n[1]; }},
-    {"Neg", [](const std::vector<TM> &n) { return -n[0]; }},
+    {"Neg", [](const std::vector<TM> &n) { return TM(0) - n[0]; }},
     {"Reciprocal", [](const std::vector<TM> &n) { return TM(1) / n[0]; }},
     {"Log", [](const std::vector<TM> &n) { return log(n[0]); }},
     {"Exp", [](const std::vector<TM> &n) { return exp(n[0]); }},
-    {"Abs", [](const std::vector<TM> &n) { return n[0] < TM(0) ? (-n[0]) : n[0]; }},
+    {"Abs", [](const std::vector<TM> &n) { return n[0] < TM(0) ? (TM(0) - n[0]) : n[0]; }},
     {"Sqrt", [](const std::vector<TM> &n) { return sqrt(n[0]); }},
     {"Rsqrt", [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); }},
   };
@@ -543,7 +543,7 @@ void ComplexOp::CheckType(const NodePtrList &inputs, const DAttrs &attrs) {
   }
 }
 
-DShape StandardNormalOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+DShape StandardNormalOp::InferShape(const NodePtrList &, const DAttrs &attrs) {
   CHECK_ATTR(attrs, "shape");
   return GetListInt(attrs.find("shape")->second);
 }

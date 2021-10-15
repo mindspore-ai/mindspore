@@ -517,6 +517,12 @@ void AtomicCleanInsertter::ProcessOriginCNodeUser(const KernelGraphPtr &main_gra
   }
 }
 
+void AtomicCleanInsertter::UpdateAtomicAddInfo(const AtomicAddInfo &atomic_add_info) {
+  atomic_add_node_ = atomic_add_info.atomic_add_node;
+  reduce_real_output_index_ = atomic_add_info.reduce_real_output_index;
+  real_output_num_ = atomic_add_info.real_output_num;
+}
+
 void AtomicCleanInsertter::InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
                                              const FuncGraphManagerPtr &mng) {
   auto origin_composite_node = anf_node->cast<CNodePtr>();
@@ -577,12 +583,10 @@ bool AtomicCleanInsertter::Run(const FuncGraphPtr &func_graph) {
     if (!atomic_add_checker->Check(node) || !IsExistStructuralObstacle(kernel_graph, node, mng)) {
       continue;
     }
-    auto atomic_add_info = atomic_add_checker->GetAtomicAddInfo();
-    atomic_add_node_ = atomic_add_info.atomic_add_node;
-    reduce_real_output_index_ = atomic_add_info.reduce_real_output_index;
-    real_output_num_ = atomic_add_info.real_output_num;
-    InsertAtomicClean(kernel_graph, node, mng);
     changed = true;
+    auto atomic_add_info = atomic_add_checker->GetAtomicAddInfo();
+    UpdateAtomicAddInfo(atomic_add_info);
+    InsertAtomicClean(kernel_graph, node, mng);
   }
 
   if (changed) {

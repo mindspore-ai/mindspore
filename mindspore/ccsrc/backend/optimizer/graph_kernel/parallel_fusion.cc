@@ -419,7 +419,7 @@ OrderedMap<AnfNodePtr, NodeRelation> ParallelOpFusion::GenAnalysisGraph(const An
   OrderedMap<AnfNodePtr, NodeRelation> node_rels;
   auto get_info = [&node_rels](const AnfNodePtr &node) {
     if (node_rels.count(node) == 0) {
-      node_rels.insert({node, NodeRelation()});
+      (void)node_rels.emplace(node, NodeRelation());
     }
     return &(node_rels[node]);
   };

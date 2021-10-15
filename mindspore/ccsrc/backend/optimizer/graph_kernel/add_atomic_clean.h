@@ -86,7 +86,7 @@ class AtomicCleanInsertter : public opt::Pass {
   void ProcessOriginCNodeUser(const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
                               const AnfNodePtr &broadcast_to_node, const AnfNodePtr &update_state_node,
                               const FuncGraphManagerPtr &mng);
-
+  void UpdateAtomicAddInfo(const AtomicAddInfo &info);
   CNodePtr atomic_add_node_{nullptr};
   size_t reduce_real_output_index_{0};
   size_t real_output_num_{0};

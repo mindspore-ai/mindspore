@@ -971,4 +971,19 @@ std::vector<PrimitivePtr> GetValidOps(
   }
   return valid_ops;
 }
+
+FuncGraphManagerPtr GetFuncGraphManager(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  FuncGraphManagerPtr manager = func_graph->manager();
+  if (manager == nullptr) {
+    manager = Manage(func_graph, true);
+    func_graph->set_manager(manager);
+  }
+  return manager;
+}
+
+void UpdateMng(FuncGraphManagerPtr mng, const FuncGraphPtr &func_graph) {
+  mng->RemoveRoots();
+  mng->KeepRoots({func_graph});
+}
 }  // namespace mindspore::graphkernel
