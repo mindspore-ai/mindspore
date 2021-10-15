@@ -27,9 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLerp = "Lerp";
+/// \brief Does a linear interpolation of two tensors start and end based on a float or tensor weight.
+/// Refer to Python API @ref mindspore.ops.Lerp for more details.
 class Lerp : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Lerp() : PrimitiveC(kNameLerp) { InitIOName({"start", "end", "weight"}, {"output"}); }
+  /// \brief Destructor.
   ~Lerp() = default;
   MS_DECLARE_PARENT(Lerp, PrimitiveC);
 };

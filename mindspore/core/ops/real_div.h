@@ -26,11 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRealDiv = prim::kRealDiv;
+/// \brief Divides the first input tensor by the second input tensor in floating-point type element-wise.
+/// Refer to Python API @ref mindspore.ops.RealDiv for more details.
 class MS_CORE_API RealDiv : public PrimitiveC {
  public:
+  /// \brief Constructor.
   RealDiv() : PrimitiveC(kNameRealDiv) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~RealDiv() = default;
   MS_DECLARE_PARENT(RealDiv, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.RealDiv for the inputs.
   void Init() {}
 };
 

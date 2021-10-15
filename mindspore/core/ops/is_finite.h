@@ -24,11 +24,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIsFinite = "IsFinite";
+/// \brief Determines which elements are finite for each position.
+/// Refer to Python API @ref mindspore.ops.IsFinite for more details.
 class MS_CORE_API IsFinite : public PrimitiveC {
  public:
+  /// \brief Constructor.
   IsFinite() : PrimitiveC(kNameIsFinite) {}
+  /// \brief Destructor.
   ~IsFinite() = default;
   MS_DECLARE_PARENT(IsFinite, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.IsFinite for the inputs.
   void Init() {}
 };
 }  // namespace ops

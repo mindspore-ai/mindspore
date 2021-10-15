@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIdentity = "Identity";
+/// \brief Returns a Tensor with the same shape and contents as input.
+/// Refer to Python API @ref mindspore.ops.Identity for more details.
 class MS_CORE_API Identity : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Identity() : PrimitiveC(kNameIdentity) {}
+  /// \brief Destructor.
   ~Identity() = default;
   MS_DECLARE_PARENT(Identity, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Identity for the inputs.
   void Init() {}
 };
 }  // namespace ops

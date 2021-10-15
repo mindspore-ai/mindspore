@@ -27,9 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceAny = "ReduceAny";
+/// \brief Reduces a dimension of a tensor by the “logical OR” of all elements in the dimension.
+/// Refer to Python API @ref mindspore.ops.ReduceAny for more details.
 class MS_CORE_API ReduceAny : public Reduce {
  public:
+  /// \brief Constructor.
   ReduceAny() : Reduce(kNameReduceAny) { InitIOName({"input_x", "axis"}, {"y"}); }
+  /// \brief Destructor.
   ~ReduceAny() = default;
   MS_DECLARE_PARENT(ReduceAny, Reduce);
 };

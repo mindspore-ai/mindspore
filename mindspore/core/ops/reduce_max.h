@@ -27,11 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceMax = "ReduceMax";
+/// \brief Reduces a dimension of a tensor by the maximum value in this dimension.
+/// Refer to Python API @ref mindspore.ops.ReduceMax for more details.
 class MS_CORE_API ReduceMax : public Reduce {
  public:
+  /// \brief Constructor.
   ReduceMax() : Reduce(kNameReduceMax) { InitIOName({"input_x", "axis"}, {"y"}); }
+  /// \brief Destructor.
   ~ReduceMax() = default;
   MS_DECLARE_PARENT(ReduceMax, Reduce);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ReduceMax for the inputs.
   void Init() {}
 };
 }  // namespace ops

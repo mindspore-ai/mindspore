@@ -27,9 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceMean = "ReduceMean";
+/// \brief Reduces a dimension of a tensor by averaging all elements in the dimension.
+/// Refer to Python API @ref mindspore.ops.ReduceMean for more details.
 class MS_CORE_API ReduceMean : public Reduce {
  public:
+  /// \brief Constructor.
   ReduceMean() : Reduce(kNameReduceMean) { InitIOName({"input_x", "axis"}, {"y"}); }
+  /// \brief Destructor.
   ~ReduceMean() = default;
   MS_DECLARE_PARENT(ReduceMean, Reduce);
 };

@@ -28,13 +28,21 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogSoftmax = "LogSoftmax";
+/// \brief Log Softmax activation function. Refer to Python API @ref mindspore.ops.LogSoftmax for more details.
 class MS_CORE_API LogSoftmax : public PrimitiveC {
  public:
+  /// \brief Constructor.
   LogSoftmax() : PrimitiveC(kNameLogSoftmax) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~LogSoftmax() = default;
   MS_DECLARE_PARENT(LogSoftmax, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogSoftmax for the inputs.
   void Init(const int64_t axis = -1);
+  /// \brief Set axis.
   void set_axis(const int64_t axis);
+  /// \brief Get axis.
+  ///
+  /// \return axis.
   int64_t get_axis() const;
 };
 }  // namespace ops
