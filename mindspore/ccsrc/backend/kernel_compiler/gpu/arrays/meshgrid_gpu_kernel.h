@@ -115,7 +115,8 @@ class MeshgridGpuKernel : public GpuKernel {
     }
 
     // need to pad output shape with ones for broadcast kernel
-    for (size_t i = 0; i < MAX_DIMS - output_shape_.size(); i++) {
+    int need_broadcast_size = MAX_DIMS - output_shape_.size();
+    for (int i = 0; i < need_broadcast_size; i++) {
       output_shape_.push_back(1);
     }
 
