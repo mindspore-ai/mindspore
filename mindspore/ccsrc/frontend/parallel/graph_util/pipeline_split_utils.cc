@@ -425,13 +425,19 @@ void BroadCastMicroBatch(const CNodePtr &node, NodeUsersMap *node_users_map, con
   }
 }
 
-void BroadCastNeedGrad(const AnfNodePtr &node, NodeUsersMap *node_user_map) {
+void BroadCastNeedGrad(const AnfNodePtr &node, NodeUsersMap *node_user_map, const FuncGraphPtr &root) {
   auto node_users = (*node_user_map)[node];
   for (auto &node_user : node_users) {
     auto cnode = node_user.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->HasPrimalAttr(NEED_GRAD)) {
+      continue;
+    }
+    if (cnode->func_graph() == root) {
+      continue;
+    }
     cnode->AddPrimalAttr(NEED_GRAD, MakeValue(1));
-    BroadCastNeedGrad(cnode, node_user_map);
+    BroadCastNeedGrad(cnode, node_user_map, root);
   }
 }
 
@@ -443,7 +449,12 @@ void LabelNeedGrad(const FuncGraphManagerPtr &manager, const FuncGraphPtr &root)
     if (!ParameterRequireGrad(parameter)) {
       continue;
     }
-    BroadCastNeedGrad(parameter, &node_user_map);
+    auto param_ptr = parameter->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param_ptr);
+    if (param_ptr->name().find(ACCU_GRADS) != std::string::npos) {
+      continue;
+    }
+    BroadCastNeedGrad(parameter, &node_user_map, root);
   }
 }
 
