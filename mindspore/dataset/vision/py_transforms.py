@@ -268,7 +268,7 @@ class Normalize(py_transforms.PyTensorOperation):
         TypeError: If the input is not numpy.ndarray.
         TypeError: If the dimension of input is not 3.
         NotImplementedError: If the dtype of input is a subdtype of np.integer.
-        ValueError: If the length of the mean and std are not equal.
+        ValueError: If the lengths of the mean and std are not equal.
         ValueError: If the length of the mean or std is neither equal to the channel length nor 1.
 
     Examples:
@@ -702,8 +702,8 @@ class RandomRotation(py_transforms.PyTensorOperation):
 
     Args:
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
-            If degrees is a number, the range will be converted to (-degrees, degrees).
-            If degrees is a sequence of length 2, it should be in shape of (min, max).
+            If `degrees` is a number, the range will be converted to (-degrees, degrees).
+            If `degrees` is a sequence of length 2, it should be in shape of (min, max).
         resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
             If the image is in mode of "1" or "P", it is set to Inter.NEAREST by default.
             It can be any of [Inter.NEAREST, Inter.ANTIALIAS, Inter.BILINEAR, Inter.BICUBIC].
@@ -1193,8 +1193,8 @@ class RandomAffine(py_transforms.PyTensorOperation):
 
     Args:
         degrees (Union[int, float, sequence]): Range of degrees to select from.
-            If degrees is a number, the range will be (-degrees, degrees).
-            If degrees is a sequence, it should be in shape of (min, max).
+            If `degrees` is a number, the range will be (-degrees, degrees).
+            If `degrees` is a sequence, it should be in shape of (min, max).
         translate (sequence, optional): Maximum absolute fraction sequence in shape of (tx, ty)
             for horizontal and vertical translations. The horizontal and vertical shifts are randomly
             selected in the range (-tx * width, tx * width) and (-ty * height, ty * height) respectively.
@@ -1224,11 +1224,11 @@ class RandomAffine(py_transforms.PyTensorOperation):
             Only supported with Pillow version > 5.0.0.
 
     Raises:
-        ValueError: If degrees is negative.
+        ValueError: If `degrees` is negative.
         ValueError: If translation is not between 0 and 1.
         ValueError: If scale is not positive.
         ValueError: If shear is a non positive number.
-        TypeError: If degrees is not a number or a sequence of length 2.
+        TypeError: If `degrees` is not a number or a sequence of length 2.
         TypeError: If translate is defined but not a sequence of length 2.
         TypeError: If scale is not a sequence of length 2.
         TypeError: If shear is not a sequence of length 2 or 4.

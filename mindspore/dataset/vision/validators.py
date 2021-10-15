@@ -140,7 +140,7 @@ def check_padding(padding):
 
 
 def check_degrees(degrees):
-    """Check if the degrees is legal."""
+    """Check if the `degrees` is legal."""
     type_check(degrees, (int, float, list, tuple), "degrees")
     if isinstance(degrees, (int, float)):
         check_non_negative_float32(degrees, "degrees")

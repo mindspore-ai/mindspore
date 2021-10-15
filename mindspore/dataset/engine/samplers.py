@@ -806,7 +806,7 @@ class WeightedRandomSampler(BuiltinSampler):
         TypeError: If type of weights element is not a number.
         TypeError: If num_samples is not an integer value.
         TypeError: If replacement is not a boolean value.
-        RuntimeError: If weights is empty or all zero.
+        RuntimeError: If `weights` is empty or all zero.
         ValueError: If num_samples is a negative value.
     """
 

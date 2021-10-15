@@ -401,7 +401,7 @@ class Dataset:
             BucketBatchByLengthDataset, dataset bucketed and batched by length.
 
         Examples:
-            >>> # Create a dataset where every 100 rows is combined into a batch
+            >>> # Create a dataset where every 100 rows are combined into a batch
             >>> # and drops the last incomplete batch if there is one.
             >>> import numpy as np
             >>> def generate_2_columns(n):
@@ -478,7 +478,7 @@ class Dataset:
             BatchDataset, dataset batched.
 
         Examples:
-            >>> # Create a dataset where every 100 rows is combined into a batch
+            >>> # Create a dataset where every 100 rows are combined into a batch
             >>> # and drops the last incomplete batch if there is one.
             >>> dataset = dataset.batch(100, True)
             >>> # resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
@@ -652,7 +652,7 @@ class Dataset:
             input_columns (Union[str, list[str]], optional): List of the names of the columns that will be passed to
                 the first operation as input. The size of this list must match the number of
                 input columns expected by the first operator. (default=None, the first
-                operation will be passed however many columns that is required, starting from
+                operation will be passed however many columns that are required, starting from
                 the first column).
             output_columns (Union[str, list[str]], optional): List of names assigned to the columns outputted by
                 the last operation. This parameter is mandatory if len(input_columns) !=
@@ -798,7 +798,7 @@ class Dataset:
 
         Note:
             The order of using repeat and batch reflects the number of batches. It is recommended that
-            the repeat operation be used after the batch operation.
+            the repeat operation is used after the batch operation.
 
         Args:
             count (int): Number of times the dataset is going to be repeated (default=None).
@@ -958,12 +958,12 @@ class Dataset:
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
-            RuntimeError: If sizes is list of integers and sum of all elements in sizes does not
+            RuntimeError: If `sizes` is list of integers and sum of all elements in sizes does not
                 equal the dataset size.
-            RuntimeError: If sizes is list of float and there is a split with size 0 after calculations.
+            RuntimeError: If `sizes` is list of float and there is a split with size 0 after calculations.
             RuntimeError: If the dataset is sharded prior to calling split.
-            ValueError: If sizes is list of float and not all floats are between 0 and 1, or if the
-                floats don’t sum to 1.
+            ValueError: If `sizes` is list of float and not all floats are between 0 and 1, or if the
+                floats don't sum to 1.
 
         Returns:
             tuple(Dataset), a tuple of datasets that have been split.
@@ -1029,8 +1029,8 @@ class Dataset:
     @check_concat
     def concat(self, datasets):
         """
-        Concatenate the datasets in the input list of datasets.
-        The "+" operator is overloaded to supported to concatenate.
+        Concatenate the dataset objects in the input list.
+        Performing "+" operation on dataset objects can achieve the same effect.
 
         Note:
             The column name, and rank and type of the column data must be the same in the input datasets.
@@ -1398,7 +1398,7 @@ class Dataset:
         Create an iterator over the dataset. The datatype retrieved back will be a list of ndarrays.
 
         To specify which columns to list and the order needed, use columns_list. If columns_list
-        is not provided, the order of the columns will remain unchange.
+        is not provided, the order of the columns will remain unchanged.
 
         Args:
             columns (list[str], optional): List of columns to be used to specify the order of columns
@@ -1985,12 +1985,12 @@ class MappableDataset(SourceDataset):
 
         Raises:
             RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
-            RuntimeError: If sizes is list of integers and sum of all elements in sizes does not
+            RuntimeError: If `sizes` is list of integers and sum of all elements in sizes does not
                 equal the dataset size.
-            RuntimeError: If sizes is list of float and there is a split with size 0 after calculations.
+            RuntimeError: If `sizes` is list of float and there is a split with size 0 after calculations.
             RuntimeError: If the dataset is sharded prior to calling split.
-            ValueError: If sizes is list of float and not all floats are between 0 and 1, or if the
-                floats don’t sum to 1.
+            ValueError: If `sizes` is list of float and not all floats are between 0 and 1, or if the
+                floats don't sum to 1.
 
         Returns:
             tuple(Dataset), a tuple of datasets that have been split.
@@ -4883,7 +4883,7 @@ class VOCDataset(MappableDataset):
             (default=`Segmentation`).
         usage (str, optional): Set the task type of ImageSets(default=`train`). If task is `Segmentation`, image and
             annotation list will be loaded in ./ImageSets/Segmentation/usage + ".txt"; If task is `Detection`, image and
-            annotation list will be loaded in ./ImageSets/Main/usage + ".txt"; if task and usage is not set, image and
+            annotation list will be loaded in ./ImageSets/Main/usage + ".txt"; if task and usage are not set, image and
             annotation list will be loaded in ./ImageSets/Segmentation/train.txt as default.
         class_indexing (dict, optional): A str-to-int mapping from label name to index, only valid in
             `Detection` task (default=None, the folder names will be sorted alphabetically and each
@@ -4957,7 +4957,7 @@ class VOCDataset(MappableDataset):
     Examples:
         >>> voc_dataset_dir = "/path/to/voc_dataset_directory"
         >>>
-        >>> # 1) Read VOC data for segmentatation training
+        >>> # 1) Read VOC data for segmentation training
         >>> dataset = ds.VOCDataset(dataset_dir=voc_dataset_dir, task="Segmentation", usage="train")
         >>>
         >>> # 2) Read VOC data for detection training

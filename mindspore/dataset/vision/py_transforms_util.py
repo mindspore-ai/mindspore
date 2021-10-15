@@ -408,7 +408,7 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
             If size is a sequence of length 2, it should be (height, width).
         padding (Union[int, sequence], optional): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
-            If a tuple or list of 2 values are provided, it pads the (left and top)
+            If a tuple or lists of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
@@ -687,8 +687,8 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
     Args:
         img (PIL image): Image to be rotated.
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
-            If degrees is a number, the range will be converted to (-degrees, degrees).
-            If degrees is a sequence, it should be (min, max).
+            If `degrees` is a number, the range will be converted to (-degrees, degrees).
+            If `degrees` is a sequence, it should be (min, max).
         resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
             If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
         expand (bool, optional):  Optional expansion flag. If set to True, expand the output
@@ -837,7 +837,7 @@ def pad(img, padding, fill_value, padding_mode):
         img (PIL image): Image to be padded.
         padding (Union[int, sequence], optional): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
-            If a tuple or list of 2 values are provided, it pads the (left and top)
+            If a tuple or lists of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
