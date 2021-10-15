@@ -472,7 +472,7 @@ class Norm(Cell):
 
     Outputs:
         Tensor, output tensor with dimensions in 'axis' reduced to 1 will be returned if 'keep_dims' is True;
-        otherwise a Tensor with dimensions in 'axis' removed is returned. The data type is the same with `x`
+        otherwise a Tensor with dimensions in 'axis' removed is returned. The data type is the same with `x`.
 
     Raises:
         TypeError: If `axis` is neither an int nor a tuple.
