@@ -99,7 +99,7 @@ bool GetSecretsKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  if (!CountForGetSecrets(fbb, get_secrets_req, iter_num)) {
+  if (!CountForGetSecrets(fbb, get_secrets_req, SizeToInt(iter_num))) {
     GenerateOutput(outputs, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
