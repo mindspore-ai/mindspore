@@ -37,6 +37,7 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter=TestFcFp32*
 ./lite-test --gtest_filter=TestConv1x1Fp32*
 ./lite-test --gtest_filter=TestDeConvolutionFp32*
+./lite-test --gtest_filter=TestLogicalOrFp32*
 
 # test cases of INT8 OP
 ## ./lite-test --gtest_filter=TestPadInt8.*
