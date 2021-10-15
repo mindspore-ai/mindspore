@@ -82,6 +82,7 @@ class ProfilingManager {
   uint32_t device_id_;
   MsprofCallback prof_cb_;
   bool hccl_enabled_bef_profiling_enabled_;
+  bool has_start;
 };
 
 Status ProfCommandHandle(ProfCommandHandleType type);
