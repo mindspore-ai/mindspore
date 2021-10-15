@@ -17,6 +17,7 @@ cp ${BUILD_DIR}/googletest/googlemock/gtest/libgmock.so ./
 ls -l *.so*
 export LD_LIBRARY_PATH=./:${TENSORRT_PATH}/lib:${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 
+cp -r ${CUR_DIR}/ut/test_data/* ./
 cp -r ${CUR_DIR}/ut/src/runtime/kernel/arm/test_data/* ./
 cp -r ${CUR_DIR}/ut/tools/converter/parser/tflite/test_data/* ./
 # prepare data for dataset
@@ -96,6 +97,9 @@ echo 'run custom delegate st test'
 
 echo 'runtime pass'
 ./lite-test --gtest_filter="RuntimePass.*"
+
+#echo 'runtime convert'
+#./lite-test --gtest_filter="RuntimeConvert.*"
 
 echo 'Optimize Allocator'
 ./lite-test --gtest_filter="OptAllocator.*"

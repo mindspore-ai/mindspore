@@ -21,6 +21,7 @@ file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/ut/src/registry/registry_test.cc
         ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
         ${TEST_DIR}/ut/src/runtime/runtime_pass_tests.cc
+        ${TEST_DIR}/ut/src/runtime/runtime_convert_tests.cc
         ${TEST_DIR}/st/multiple_device_test.cc
         ${TEST_DIR}/st/mindrt_parallel_runtime_test.cc
         ${TEST_DIR}/st/mix_data_type_test.cc

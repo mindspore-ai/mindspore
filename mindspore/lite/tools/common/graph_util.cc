@@ -461,5 +461,20 @@ STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph) {
   }
   return RET_OK;
 }
+
+STATUS UpdateGraphOutputName(schema::MetaGraphT *meta_graph) {
+  auto output_names = ConverterInnerContext::GetInstance()->GetGraphOutputTensorNames();
+  if (output_names.size() > meta_graph->outputIndex.size()) {
+    MS_LOG(ERROR) << "the num of setting output_names is greater than actual, " << output_names.size() << " > "
+                  << meta_graph->outputIndex.size() << ".";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
+  for (size_t idx = 0; idx < output_names.size(); idx++) {
+    auto &tensor = meta_graph->allTensors.at(meta_graph->outputIndex.at(idx));
+    tensor->name = output_names.at(idx);
+  }
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

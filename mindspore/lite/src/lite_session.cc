@@ -48,6 +48,7 @@
 #ifndef WEIGHT_DECODE_CLIP
 #include "tools/converter/quantizer/fse_decoder.h"
 #endif
+#include "src/runtime/runtime_convert.h"
 namespace mindspore {
 namespace lite {
 namespace {
@@ -1318,9 +1319,21 @@ int lite::LiteSession::CreateSessionByBuf(const char *model_buf, size_t size, se
   return RET_OK;
 }
 
+char *lite::LiteSession::LoadModelByPath(const char *file, size_t *size) {
+  if (IsCharEndWith(file, MINDIR_POSTFIX)) {
+#ifdef RUNTIME_CONVERT
+    return RuntimeConvert(file, size);
+#endif
+    MS_LOG(ERROR) << "Enable runtime convert.";
+    return nullptr;
+  }
+
+  return lite::ReadFile(file, size);
+}
+
 int lite::LiteSession::CreateSessionByPath(const std::string &model_path, session::LiteSession *session) {
   size_t model_size;
-  auto model_buf = lite::ReadFile(model_path.c_str(), &model_size);
+  auto model_buf = LoadModelByPath(model_path.c_str(), &model_size);
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "Read model file failed";
     return RET_ERROR;
