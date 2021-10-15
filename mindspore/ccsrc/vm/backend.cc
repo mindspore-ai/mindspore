@@ -445,7 +445,7 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
   }
   if (!segment->is_cut_) {
     MS_EXCEPTION_IF_NULL(segment->nodes_[0]);
-    MS_LOG(INFO) << "Compile normal segment, the first node: " << segment->nodes_[0]->fullname_with_scope();
+    MS_LOG(INFO) << "Compile normal segment, the first node: " << segment->nodes_[0]->DebugString();
 
     // Get the device context.
     const auto &cur_device_name = GetCNodeTarget(segment->nodes_[0]);
@@ -480,7 +480,7 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, bool contain_mu
     // Compile the cut node.
     auto cut_node = segment->nodes_[0];
     MS_EXCEPTION_IF_NULL(cut_node);
-    MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->fullname_with_scope();
+    MS_LOG(INFO) << "Compile cut segment, the cut node: " << cut_node->DebugString();
     control_nodes_.push_back(cut_node);
   }
 }
