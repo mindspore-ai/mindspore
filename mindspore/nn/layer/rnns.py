@@ -46,7 +46,7 @@ def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
 @constexpr
 def _check_batch_size_equal(batch_size_x, batch_size_hx, cls_name):
     if batch_size_x != batch_size_hx:
-        raise ValueError(f"For '{cls_name}' batch size of x and hx should be equal, but got {batch_size_x} of x"
+        raise ValueError(f"For '{cls_name}' batch size of x and hx should be equal, but got {batch_size_x} of x "
                          f"and {batch_size_hx} of hx.")
 
 @constexpr
