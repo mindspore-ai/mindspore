@@ -24,6 +24,7 @@ endif()
 if(ENABLE_CPU)
     file(GLOB CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "cpu/*.cc"
+        "cpu/eigen/*.cc"
         "cpu/mkldnn/*.cc"
         "cpu/fl/*.cc"
         "cpu/ps/*.cc"
