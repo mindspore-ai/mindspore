@@ -235,10 +235,11 @@ Status TreeAdapter::GetNext(TensorRow *row) {
 
   RETURN_IF_NOT_OK(tree_->root()->GetNextRow(row));  // first buf can't be eof or empty buf with none flag
   if (row->eoe()) {                                  // return empty tensor if 1st buf is a ctrl buf (no rows)
-    MS_LOG(INFO) << "End of data iteration.";
+    MS_LOG(INFO) << "End of data iteration.  cur_batch_num_: " << cur_batch_num_;
 #ifndef ENABLE_SECURITY
     if (is_profiling_enable) {
       tree_->SetEpochEnd();
+      tree_->GetProfilingManager()->RecordEndOfEpoch(cur_batch_num_);
     }
 #endif
     return Status::OK();
