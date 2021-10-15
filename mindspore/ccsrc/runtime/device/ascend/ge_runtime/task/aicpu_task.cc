@@ -20,6 +20,7 @@
 #include "runtime/kernel.h"
 #include "runtime/device/ascend/ge_runtime/task/task_factory.h"
 #include "aicpu/common/aicpu_task_struct.h"
+#include "mindspore/core/utils/convert_utils_base.h"
 
 namespace mindspore::ge::model_runner {
 AicpuTask::AicpuTask(const ModelContext &model_context, const std::shared_ptr<AicpuTaskInfo> &task_info)
@@ -104,7 +105,7 @@ void AicpuTask::SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num) {
   aicpu_param_head.ioAddrNum = io_addrs_num;
 
   const auto &ext_info = task_info_->ext_info();
-  uint32_t ext_size = ext_info.size();
+  uint32_t ext_size = SizeToUint(ext_info.size());
   if (ext_info.empty()) {
     aicpu_param_head.extInfoLength = 0;
     aicpu_param_head.extInfoAddr = 0;

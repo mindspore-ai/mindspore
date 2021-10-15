@@ -121,7 +121,11 @@ Status AclModelMulti::Predict(const std::vector<MSTensor> &inputs, std::vector<M
     return AclModel::Predict(inputs, outputs);
   }
 
-  Build();
+  auto ret = Build();
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Build multi-graph model as default options failed.";
+    return ret;
+  }
   MS_LOG(INFO) << "Start predict multi graph model.";
   MS_EXCEPTION_IF_NULL(vm_);
   MS_EXCEPTION_IF_NULL(outputs);
@@ -211,7 +215,7 @@ void AclModelMulti::SetOutput() {
       ato_size = kDtypeMap[type_id];
     }
     int64_t ele_num = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
-    size_t size = ato_size * ele_num;
+    size_t size = ato_size * LongToSize(ele_num);
     // create tensor
     auto output_tensor = MSTensor::CreateTensor("", type_id, shape, nullptr, size);
     outputs_.emplace_back(*output_tensor);

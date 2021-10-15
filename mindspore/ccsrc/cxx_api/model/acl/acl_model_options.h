@@ -37,7 +37,7 @@ class AclModelOptions {
 
   // return tuple<init_options, build_options>
   std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> GenAclOptions() const;
-  void SetFirstGraph(bool is_first_graph) { first_graph_flag_ = is_first_graph; }
+  void SetFirstGraph(bool is_first_graph) noexcept { first_graph_flag_ = is_first_graph; }
 
  private:
   std::string output_node_;  // todo: at convert.cc::BuildGraph(), no atc options
