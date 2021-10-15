@@ -535,7 +535,7 @@ def set_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
-        The mode is not recommended being changed after net was initialized because the implementations of some
+        The mode is not recommended to be changed after net was initialized because the implementations of some
         operations are different in graph mode and pynative mode. Default: GRAPH_MODE.
 
     Some configurations are device specific, see the below table for details:
@@ -663,8 +663,8 @@ def set_context(**kwargs):
             Default: False.
             Indicates whether to enable image-computing convergence to optimize network execution performance.
             If enable_graph_kernel is set to True, acceleration can be enabled.
-            For details of sparsity and sparse tensor, please check
-            `Enabling Graph-Accounting Convergence <https://www.mindspore.cn/docs/programming_guide
+            For details of graph kernel fusion, please check
+            `Enabling Graph Kernel Fusion <https://www.mindspore.cn/docs/programming_guide
             /en/master/enable_graph_kernel_fusion.html>`_.
         graph_kernel_flags (str) –
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
