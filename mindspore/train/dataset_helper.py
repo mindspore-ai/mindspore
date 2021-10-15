@@ -260,15 +260,36 @@ class DatasetHelper:
 
     # A temp solution for loop sink. Delete later
     def types_shapes(self):
-        """Get the types and shapes from dataset on the current configuration."""
+        """
+        Get the types and shapes from dataset on the current configuration.
+
+        Examples:
+            >>> from mindspore import DatasetHelper
+            >>>
+            >>> train_dataset = create_custom_dataset()
+            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
+            >>>
+            >>> types, shapes = dataset_helper.types_shapes()
+        """
         return self.iter.types_shapes()
 
     def sink_size(self):
-        """Get sink_size for each iteration."""
+        """
+        Get sink_size for each iteration.
+
+        Examples:
+            >>> from mindspore import DatasetHelper
+            >>>
+            >>> train_dataset = create_custom_dataset()
+            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True, sink_size=-1)
+            >>>
+            >>> # if sink_size==-1, then will return the full size of source dataset.
+            >>> sink_size = dataset_helper.sink_size()
+        """
         return self.iter.get_sink_size()
 
     def stop_send(self):
-        """stop send data about data sink."""
+        """Stop send data about data sink."""
         self.iter.stop_send()
 
     def release(self):
@@ -280,13 +301,34 @@ class DatasetHelper:
         self.iter.continue_send()
 
     def get_data_info(self):
-        """In sink mode, it returns the types and shapes of the current data.
-        Generally, it works in dynamic shape scenarios."""
+        """
+        In sink mode, it returns the types and shapes of the current data.
+        Generally, it works in dynamic shape scenarios.
+
+        Examples:
+            >>> from mindspore import DatasetHelper
+            >>>
+            >>> train_dataset = create_custom_dataset()
+            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
+            >>>
+            >>> types, shapes = dataset_helper.get_data_info()
+        """
         return self.iter.get_data_info()
 
     def dynamic_min_max_shapes(self):
-        """Return the types and shapes of the dataset.
-        The type and shape of each data in the dataset should be consistent"""
+        """
+        Return the minimum and maximum data length of dynamic source dataset.
+
+        Examples:
+            >>> from mindspore import DatasetHelper
+            >>>
+            >>> train_dataset = create_custom_dataset()
+            >>> # config dynamic shape
+            >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": [None]})
+            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
+            >>>
+            >>> min_shapes, max_shapes = dataset_helper.dynamic_min_max_shapes()
+        """
         return self.iter.dynamic_min_max_shapes()
 
 
