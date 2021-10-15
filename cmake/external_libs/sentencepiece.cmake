@@ -1,6 +1,6 @@
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/sentencepiece/repository/archive/v0.1.92.tar.gz")
-    set(MD5 "618f5590c99884866c01cb773096c523")
+    set(MD5 "0376a7ca1a70b187da8952449c3f7b71")
 else()
     set(REQ_URL "https://github.com/google/sentencepiece/archive/v0.1.92.tar.gz")
     set(MD5 "5dfd2241914b5598a68b2a8542ed8e91")
