@@ -304,7 +304,7 @@ int ArithmeticCPUKernel::BatchScalarCalc(int task_id) {
   if (break_pos_ < 1) {
     return RET_ERROR;
   }
-  if (break_pos_ > MAX_ARITHMETIC_DIMS_SIZE || param_->out_strides_[break_pos_ - 1] == 0) {
+  if (break_pos_ > ARITHMETIC_SUPPORT_DIMS_NUM || param_->out_strides_[break_pos_ - 1] == 0) {
     MS_LOG(ERROR) << "param_->out_strides_[break_pos_ - 1] is 0 or break_pos_ is > 10";
     return RET_ERROR;
   }
@@ -335,7 +335,7 @@ int ArithmeticCPUKernel::BatchScalarCalc(int task_id) {
 }
 
 int ArithmeticCPUKernel::BiasCalc(int task_id) {
-  if (param_->ndim_ > MAX_ARITHMETIC_DIMS_SIZE || param_->out_shape_[param_->ndim_ - 1] == 0) {
+  if (param_->ndim_ > ARITHMETIC_SUPPORT_DIMS_NUM || param_->out_shape_[param_->ndim_ - 1] == 0) {
     MS_LOG(ERROR) << "BiasCalc param is error!";
     return RET_ERROR;
   }
