@@ -28,14 +28,35 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScale = "Scale";
+/// \brief Scale defined Scale operator prototype of lite.
 class MS_CORE_API Scale : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Scale() : PrimitiveC(kNameScale) {}
+
+  /// \brief Constructor.
   explicit Scale(const std::string k_name) : PrimitiveC(k_name) {}
+
+  /// \brief Destructor.
   ~Scale() = default;
+
   MS_DECLARE_PARENT(Scale, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] axis Define the first axis of input[0] along which to apply input[1], can be negative to index from
+  ///            the end. Default -1.
   void Init(const int64_t axis = -1);
+
+  /// \brief Method to set axis attribute.
+  ///
+  /// \param[in] axis Define the first axis of input[0] along which to apply input[1], can be negative to index from
+  ///            the end. Default -1.
   void set_axis(const int64_t axis);
+
+  /// \brief Method to get axis attribute.
+  ///
+  /// \return axis attribute.
   int64_t get_axis() const;
 };
 }  // namespace ops
