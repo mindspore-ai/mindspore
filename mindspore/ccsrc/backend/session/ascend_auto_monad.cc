@@ -80,7 +80,7 @@ void DumpAllGraphs(NotNull<KernelGraphPtr> kg, std::set<KernelGraphPtr> *memo) {
   }
 }
 
-void DumpGraphForDebug(NotNull<KernelGraphPtr> kg) {
+void DumpGraphForDebug(const NotNull<KernelGraphPtr> kg) {
   if (IsSaveGraph()) {
     std::set<KernelGraphPtr> memo;
     DumpAllGraphs(kg, &memo);
@@ -89,7 +89,7 @@ void DumpGraphForDebug(NotNull<KernelGraphPtr> kg) {
 #endif
 
 #ifndef ENABLE_SECURITY
-void DumpExecuteOrder(NotNull<KernelGraphPtr> kg) {
+void DumpExecuteOrder(const NotNull<KernelGraphPtr> kg) {
   if (!IsSaveGraph()) {
     return;
   }
@@ -1201,7 +1201,7 @@ class AscendAutoMonadConverter {
       if (target == value) {
         continue;
       }
-      tuple_inputs.emplace_back(AssignAll(target, value, true, keep, false));
+      (void)tuple_inputs.emplace_back(AssignAll(target, value, true, keep, false));
     }
     auto new_tuple = kernel_graph_->NewCNode(tuple_inputs);
     // Set abstract for the MakeTuple node.
@@ -1263,7 +1263,7 @@ class AscendAutoMonadConverter {
     tuple_inputs.reserve(targets.size() + 1);
     tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t i = 0; i < targets.size(); ++i) {
-      tuple_inputs.emplace_back(Assign(targets[i], sources[i], link, keep, output));
+      (void)tuple_inputs.emplace_back(Assign(targets[i], sources[i], link, keep, output));
     }
     auto new_tuple = kernel_graph_->NewCNode(tuple_inputs);
     // Set abstract for the MakeTuple node.
