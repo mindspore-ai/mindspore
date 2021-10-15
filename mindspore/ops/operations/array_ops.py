@@ -494,7 +494,7 @@ class Reshape(PrimitiveWithInfer):
             validator.check_value_type("shape[%d]" % i, shp_i, [int], self.name)
             if shp_i == -1:
                 if neg_index != -1:
-                    raise ValueError(f"For '{self.name}', the 'input_shape' can only has one -1 at most, "
+                    raise ValueError(f"For '{self.name}', there can be at most one '-1' in 'input_shape', "
                                      f"but got {shape_v}.")
                 neg_index = i
             else:
