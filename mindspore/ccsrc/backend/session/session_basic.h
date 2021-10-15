@@ -57,6 +57,7 @@ using AnyList = std::vector<Any>;
 using AnyListPtr = std::shared_ptr<AnyList>;
 
 struct OpRunInfo {
+  bool is_gradient_out = false;
   std::string op_name;
   Primitive *primitive;
   AbstractBasePtr abstract;
@@ -193,7 +194,9 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                VectorRef *const outputs,
                                std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes);
   void GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count);
+  void GetForwardOutputRefCount(const KernelGraph *graph, std::map<AnfNodePtr, size_t> *forward_output_refcount);
   void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<KernelWithIndex, size_t> *ref_count,
+                      std::map<AnfNodePtr, size_t> *forward_output_refcount,
                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map);
 
   void HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
@@ -280,7 +283,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
   // Generate graph info for a single op graph
   GraphInfo GetSingleOpGraphInfo(const CNodePtr &kernel, const std::vector<tensor::TensorPtr> &input_tensors);
-  OpRunInfo GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info, const InputTensorInfo &tensor_info);
+  OpRunInfo GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info, const InputTensorInfo &tensor_info,
+                               GraphOutputInfo *const graph_output_info);
   tensor::TensorPtr GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index);
   tensor::TensorPtr GetParameterOutputTensor(const AnfNodePtr &node,
                                              const std::map<AnfNodePtr, size_t> &parameter_index,

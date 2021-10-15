@@ -101,6 +101,8 @@ class DeviceAddress : public mindspore::DeviceSync {
   bool is_ptr_persisted() const { return is_ptr_persisted_; }
   void set_is_ptr_persisted(bool is_ptr_persisted) { is_ptr_persisted_ = is_ptr_persisted; }
   void set_host_shape(const ShapeVector &shape) { host_shape_ = shape; }
+  bool from_persistent_mem() const { return from_persistent_mem_; }
+  void set_from_persistent_mem(bool from_persistent_mem) { from_persistent_mem_ = from_persistent_mem; }
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
@@ -145,6 +147,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   // The key of device context.
   std::string device_name_{""};
   uint32_t device_id_{0};
+  bool from_persistent_mem_{false};
 
   friend class KernelRuntime;
   friend class MemoryManager;

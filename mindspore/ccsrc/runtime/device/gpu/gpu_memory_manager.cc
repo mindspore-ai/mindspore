@@ -24,8 +24,8 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-void *GPUMemoryManager::MallocMemFromMemPool(size_t size) {
-  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size);
+void *GPUMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem) {
+  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size, from_persistent_mem);
 }
 
 void GPUMemoryManager::FreeMemFromMemPool(void *device_ptr) {
@@ -39,7 +39,7 @@ std::vector<void *> GPUMemoryManager::MallocContinuousMemFromMemPool(size_t tota
 bool GPUMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                                       std::vector<size_t> size_list) {
   auto device_ptr_list = MallocContinuousMemFromMemPool(total_size, size_list);
-  if (device_ptr_list.size() == 0) {
+  if (device_ptr_list.empty()) {
     return false;
   }
   if (addr_list.size() != device_ptr_list.size()) {
@@ -76,7 +76,7 @@ void GPUMemoryManager::MallocDeviceMemory() {
   if (ps::ps_cache_instance.initialized_ps_cache()) {
     return;
   }
-  auto device_addr = MallocMemFromMemPool(1);
+  auto device_addr = MallocMemFromMemPool(1, false);
   if (!device_addr) {
     MS_LOG(EXCEPTION) << "Dynamic memory pool init error.";
   }
@@ -87,7 +87,7 @@ void GPUMemoryManager::FreeDeviceMemory() { GPUMemoryAllocator::GetInstance().Re
 uint8_t *GPUMemoryManager::MallocStaticMem(size_t size, bool, uint32_t) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto device_ptr = MallocMemFromMemPool(size);
+  auto device_ptr = MallocMemFromMemPool(size, false);
   if (device_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << size;
   }

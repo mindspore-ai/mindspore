@@ -32,7 +32,7 @@ class AscendMemoryManager : public MemoryManager {
   void FreeDeviceMemory() override;
   void ResetDynamicMemory() override;
   void ClearGlobalIdleMem() override;
-  void *MallocMemFromMemPool(size_t size) override;
+  void *MallocMemFromMemPool(size_t size, bool from_persistent_mem) override;
   void *MallocDevice(size_t size) override;
   void FreeMemFromMemPool(void *device_ptr) override;
   uint64_t GetMsMaxMemSize();

@@ -100,6 +100,7 @@ class TopCellInfo {
   const std::string &grad_operation() const { return grad_operation_; }
   void set_grad_operation(const std::string &grad_operation) { grad_operation_ = grad_operation; }
   mindspore::HashSet<std::string> &sub_cell_list() { return sub_cell_list_; }
+  std::set<std::string> &outputs_id() { return outputs_id_; }
   bool IsSubCell(const std::string &cell_id) const;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
   OpInfoWithTensorId &op_info_with_tensor_id() { return op_info_with_tensor_id_; }
@@ -139,6 +140,8 @@ class TopCellInfo {
   std::string grad_operation_;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   mindspore::HashSet<std::string> sub_cell_list_;
+  // Record op output tensor id
+  std::set<std::string> outputs_id_;
   OpInfoWithTensorId op_info_with_tensor_id_;
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
   OpInfoWithMsFuncForwardTensors op_info_with_ms_func_forward_tensors_;
@@ -195,6 +198,7 @@ class GradExecutor {
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
   void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
   bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
+  std::set<std::string> &forward_outputs_id() const { return top_cell()->outputs_id(); }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   std::string GetCellId(const py::object &obj, const py::args &args);
   void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info, const ValuePtr &op_out);
@@ -347,6 +351,7 @@ class ForwardExecutor {
                            bool *prim_cache_hit);
   void GetOpOutput(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
                    const CNodePtr &cnode, bool prim_cache_hit, py::object *ret);
+  void DoNopOutput(const OpExecInfoPtr &op_exec_info, ValuePtr *out_real_value);
   // Mix precision and Implicit transform
   void SetCastForInputs(const OpExecInfoPtr &op_exec_info);
   void SetTensorMixPrecisionCast(const OpExecInfoPtr &op_exec_info);

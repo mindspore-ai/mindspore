@@ -36,7 +36,7 @@ enum DynamicMemBufStatus : int { kMemBufIdle, kMemBufUsed };
 static const size_t DYNAMIC_MEM_ALIGN_SIZE = 512;
 
 // The minimum unit size (1G) of memory block used for dynamic extend.
-static const size_t DYNAMIC_MEM_ALLOC_UNIT_SIZE = 1024 << 20;
+static const size_t DYNAMIC_MEM_ALLOC_UNIT_SIZE = 1073741824;
 
 // The Comparator of device address from small to large.
 struct DeviceAddrCmp {
@@ -77,16 +77,40 @@ class DynamicMemBlock {
 };
 using DynamicMemBlockPtr = std::shared_ptr<DynamicMemBlock>;
 
+struct DeviceState {
+  // Memory allocated from device
+  size_t total_mem_size_{0};
+  // Memory in use
+  size_t total_used_mem_size_{0};
+  // Maximum peak memory usage
+  size_t used_mem_peak_size_{0};
+};
+
+struct MemStatusManager {
+  size_t unit_size_{DYNAMIC_MEM_ALLOC_UNIT_SIZE};
+  // Mempool state
+  DeviceState mps_;
+  std::vector<DynamicMemBlockPtr> mem_block_list_;
+  // The map of all idle memory buf by size.
+  SizeMapMemBuf idle_mem_buf_map_;
+  void clear() {
+    mem_block_list_.clear();
+    idle_mem_buf_map_.clear();
+  }
+};
+using MemStatusManagerPtr = std::shared_ptr<MemStatusManager>;
+
 // The main class of dynamic memory pool.
 class DynamicMemPoolBestFit {
  public:
-  DynamicMemPoolBestFit() = default;
+  DynamicMemPoolBestFit()
+      : persistent_mem_(std::make_shared<MemStatusManager>()), common_mem_(std::make_shared<MemStatusManager>()) {}
   virtual ~DynamicMemPoolBestFit();
 
   // The main program entry of memory alloc.
-  DeviceMemPtr AllocTensorMem(size_t size);
+  DeviceMemPtr AllocTensorMem(size_t size, bool from_persistent_mem = false);
   // The main program entry of continuous memory alloc.
-  std::vector<DeviceMemPtr> AllocContinuousTensorMem(size_t total_size, std::vector<size_t> size_list);
+  std::vector<DeviceMemPtr> AllocContinuousTensorMem(size_t total_size, const std::vector<size_t> &size_list);
   // The main program entry of memory free.
   void FreeTensorMem(const DeviceMemPtr &device_addr);
 
@@ -94,21 +118,22 @@ class DynamicMemPoolBestFit {
   void ReleaseDeviceRes();
   // Display the information of memory block and memory buf.
   void DumpDynamicMemPoolInfo();
-  // Get the map of global idle mem buf and size.
-  SizeMapMemBuf global_idle_mem_buf_map() {
-    std::lock_guard<std::mutex> locker(mutex_);
-    return global_idle_mem_buf_map_;
-  }
 
   // Get the minimum memory unit size using for dynamic extend.
-  size_t mem_alloc_unit_size() const { return mem_alloc_unit_size_; }
+  size_t MemAllocUnitSize(bool from_persistent_mem = false) const;
   // Set the minimum memory unit size using for dynamic extend.
-  void set_mem_alloc_unit_size(const size_t &size) { mem_alloc_unit_size_ = size; }
-
-  // Get the related memory statistics information.
-  size_t total_mem_statistics() const { return total_mem_statistics_; }
-  size_t used_mem_statistics() const { return total_used_mem_statistics_; }
-  size_t used_mem_peak_statistics() const { return used_mem_peak_statistics_; }
+  void SetMemAllocUintSize(size_t size);
+  // Set mempool init percent in pynative mode
+  void SetMempoolBlockSize(size_t device_mem_size);
+  size_t TotalMemStatistics() const {
+    return common_mem_->mps_.total_mem_size_ + persistent_mem_->mps_.total_mem_size_;
+  }
+  size_t TotalUsedMemStatistics() const {
+    return common_mem_->mps_.total_used_mem_size_ + persistent_mem_->mps_.total_used_mem_size_;
+  }
+  size_t UsedMemPeakStatistics() const {
+    return common_mem_->mps_.used_mem_peak_size_ + persistent_mem_->mps_.used_mem_peak_size_;
+  }
 
   // The related interface of device memory real operation, needs override by device type.
   virtual size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) = 0;
@@ -116,43 +141,35 @@ class DynamicMemPoolBestFit {
   virtual size_t free_mem_size() = 0;
 
  protected:
+  MemStatusManagerPtr &common_mem() { return common_mem_; }
+  MemStatusManagerPtr &persistent_mem() { return persistent_mem_; }
   // The real size by memory alloc aligned.
   virtual size_t AlignMemorySize(size_t size) const;
   // Calculate memory block required alloc size when adding the memory block.
-  virtual size_t CalMemBlockAllocSize(size_t size);
+  virtual size_t CalMemBlockAllocSize(size_t size, bool from_persistent_mem);
 
  private:
   // Find the idle memory buf by aligned size when memory alloc.
-  DeviceMemPtr FindIdleMemBuf(size_t size);
+  DeviceMemPtr FindIdleMemBuf(size_t size, bool from_persistent_mem);
   // Add the memory block and memory buf when memory alloc not find the idle memory buf.
-  DeviceMemPtr AddMemBlockAndMemBuf(size_t size);
-  // Judge whether need divide the memory buf by alloc size and memory buf size.
-  bool IsDivide(size_t tensor_size, size_t mem_buf_size) const;
-  // Divide the memory buf by alloc size.
-  void DivideMemBuf(size_t size, const DynamicMemBufPtr &mem_buf);
+  DeviceMemPtr AddMemBlockAndMemBuf(size_t size, bool from_persistent_mem);
+  // Judge whether need split the memory buf by alloc size and memory buf size.
+  bool IsSplit(size_t tensor_size, size_t mem_buf_size) const;
+  // Split the memory buf by alloc size.
+  void SplitMemBuf(size_t size, const DynamicMemBufPtr &mem_buf, const MemStatusManagerPtr &mem_mng);
   // Find the memory block by device address.
-  DynamicMemBlockPtr FindMemBlock(const DeviceMemPtr &device_addr);
+  DynamicMemBlockPtr FindMemBlock(const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mgr);
   // The Comparator of memory block by device address, because memory blocks are arranged in order by device address.
   static bool CmpMemBlock(const DeviceMemPtr &device_addr, const DynamicMemBlockPtr &mem_block);
 
   // Combine the memory buf when memory free, to avoid the memory fragmentation.
-  void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr);
+  void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr,
+                     const MemStatusManagerPtr &mem_mng);
   // Erase the idle memory buf by size and device address when idle memory buf is combined.
-  void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr);
+  void EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr, const MemStatusManagerPtr &mem_mng);
 
-  // The global memory block list which is arranged in order by base device address of memory block.
-  std::vector<DynamicMemBlockPtr> global_mem_block_list_;
-  // The map of all idle memory buf by size.
-  SizeMapMemBuf global_idle_mem_buf_map_;
-
-  // The related memory statistics information.
-  size_t total_mem_statistics_{0};
-  size_t total_used_mem_statistics_{0};
-  size_t used_mem_peak_statistics_{0};
-
-  // The minimum memory unit size.
-  size_t mem_alloc_unit_size_{DYNAMIC_MEM_ALLOC_UNIT_SIZE};
-
+  MemStatusManagerPtr persistent_mem_{nullptr};
+  MemStatusManagerPtr common_mem_{nullptr};
   // Support multi-thread.
   std::mutex mutex_;
 };

@@ -46,7 +46,9 @@ class CPUMemoryManager : public MemoryManager {
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
 
-  void *MallocMemFromMemPool(size_t size) override { return CPUMemoryPool::GetInstance().AllocTensorMem(size); }
+  void *MallocMemFromMemPool(size_t size, bool from_persistent_mem) override {
+    return CPUMemoryPool::GetInstance().AllocTensorMem(size, from_persistent_mem);
+  }
   void FreeMemFromMemPool(void *device_ptr) override { CPUMemoryPool::GetInstance().FreeTensorMem(device_ptr); }
   std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) override {
     return CPUMemoryPool::GetInstance().AllocContinuousTensorMem(total_size, size_list);

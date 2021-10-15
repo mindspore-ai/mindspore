@@ -15,7 +15,6 @@
  */
 #include <string>
 #include "runtime/device/ascend/ascend_memory_manager.h"
-#include "runtime/device/ascend/ascend_memory_pool.h"
 #include "runtime/device/ascend/ascend_memory_adapter.h"
 #include "utils/ms_context.h"
 #include "runtime/mem.h"
@@ -49,9 +48,9 @@ void *AscendMemoryManager::MallocDevice(size_t size) {
   return AscendMemoryPool::GetInstance().AllocTensorMem(align_size);
 }
 
-void *AscendMemoryManager::MallocMemFromMemPool(size_t size) {
+void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem) {
   auto align_size = GetCommonAlignSize(size);
-  const auto device_addr = AscendMemoryPool::GetInstance().AllocTensorMem(align_size);
+  const auto device_addr = AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem);
   if (device_addr == nullptr) {
     MS_LOG(EXCEPTION) << "Fail to alloc memory, size: " << align_size
                       << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
@@ -132,8 +131,8 @@ uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
 
 size_t AscendMemoryManager::GetAvailableMemSize() {
   auto available_mem_size = AscendMemoryPool::GetInstance().free_mem_size() +
-                            AscendMemoryPool::GetInstance().total_mem_statistics() -
-                            AscendMemoryPool::GetInstance().used_mem_statistics();
+                            AscendMemoryPool::GetInstance().TotalMemStatistics() -
+                            AscendMemoryPool::GetInstance().TotalUsedMemStatistics();
   return available_mem_size;
 }
 

@@ -173,7 +173,7 @@ bool GPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size
   if (!BindDeviceToCurrentThread()) {
     return false;
   }
-  auto device_ptr = mem_manager_->MallocMemFromMemPool(size);
+  auto device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem_);
   if (!device_ptr) {
     return false;
   }

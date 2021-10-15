@@ -60,6 +60,8 @@ const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
 const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice, kDavinciDevice};
 // The default max available device memory is 1024GB.
 const float kDefaultMaxDeviceMemory = 1024;
+// The default memory pool init percent is 0.0.
+const float kDefaultMempoolBlockSize = 1.0;
 
 // enum definition for MindSpore Context Parameter
 enum MsCtxParam : unsigned {
@@ -109,6 +111,7 @@ enum MsCtxParam : unsigned {
   // parameter of type float
   MS_CTX_TYPE_FLOAT_BEGIN = MS_CTX_TYPE_UINT32_END,
   MS_CTX_MAX_DEVICE_MEMORY = MS_CTX_TYPE_FLOAT_BEGIN,
+  MS_CTX_MEMPOOL_BLOCK_SIZE,
   MS_CTX_TYPE_FLOAT_END,
 
   // parameter of type string

@@ -139,14 +139,16 @@ class GraphCompiler {
 
   // Get OpRunInfo and GraphInfo for single op compile and run.
   void GetSingleOpRunInfoAndGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info, OpRunInfo *run_info,
-                                      GraphInfo *graph_info);
+                                      GraphInfo *graph_info, GraphOutputInfo *const graph_output_info);
 
   // Calculate ref count of PyNative back propagation operators.
-  void CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count) const;
+  void CalculateRefCount(const KernelGraphPtr &graph, std::map<KernelWithIndex, size_t> *ref_count,
+                         std::map<AnfNodePtr, size_t> *forward_output_refcount) const;
 
   // Update ref count of PyNative back propagation operators.
   void UpdateRefCount(const std::set<KernelWithIndex> &input_kernels_with_index,
                       std::map<KernelWithIndex, size_t> *ref_count,
+                      std::map<AnfNodePtr, size_t> *forward_output_refcount,
                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map) const;
 
   // Handle single op output tensor and recover output of original complete kernel graph.
@@ -182,10 +184,12 @@ class GraphCompiler {
   GraphId CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   // Create device address for all anf nodes of graph.
-  void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
+  void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context,
+                           bool is_gradient_out) const;
 
   // Create device address for input and output of ops.
-  void CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
+  void CreateDeviceAddressWithoutWorkspace(const KernelGraphPtr &graph, const DeviceContext *device_context,
+                                           bool is_gradient_out) const;
 
   // Set Graph's dependencies for pre_graph and post_graph.
   void SetGraphDependency(const KernelGraphPtr &graph, const GraphSegmentPtr &segment) const;

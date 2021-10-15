@@ -880,6 +880,37 @@ py::object GetDstType(const TypeId &type_id) {
 bool IsPyObjTypeInvalid(const py::object &obj) {
   return !py::isinstance<tensor::Tensor>(obj) && !py::isinstance<py::int_>(obj) && !py::isinstance<py::float_>(obj);
 }
+
+inline bool IsNopPrim(const std::string &op_name) {
+  static std::set<std::string> nop_prim = {prim::kPrimReshape->name(), kExpandDimsOpName,  prim::kPrimSqueeze->name(),
+                                           prim::kPrimFlatten->name(), kFlattenGradOpName, prim::kPrimReformat->name()};
+  return nop_prim.find(op_name) != nop_prim.end();
+}
+
+// Shallow Copy Value and change shape
+ValuePtr ShallowCopyValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(op_exec_info);
+  MS_EXCEPTION_IF_NULL(value);
+  auto tensor_abs = op_exec_info->abstract;
+  if (tensor_abs->isa<abstract::AbstractRef>()) {
+    tensor_abs = tensor_abs->cast<abstract::AbstractRefPtr>()->CloneAsTensor();
+  }
+  auto new_shape = tensor_abs->BuildShape()->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(new_shape);
+  if (value->isa<mindspore::tensor::Tensor>()) {
+    auto tensor_value = value->cast<mindspore::tensor::TensorPtr>();
+    return std::make_shared<mindspore::tensor::Tensor>(tensor_value->data_type(), new_shape->shape(),
+                                                       tensor_value->data_c(), tensor_value->Size());
+  } else if (value->isa<ValueTuple>()) {
+    std::vector<ValuePtr> values;
+    auto value_tuple = value->cast<ValueTuplePtr>();
+    (void)std::transform(value_tuple->value().begin(), value_tuple->value().end(), std::back_inserter(values),
+                         [op_exec_info](const ValuePtr &elem) { return ShallowCopyValue(op_exec_info, elem); });
+    return std::make_shared<ValueTuple>(values);
+  } else {
+    return value;
+  }
+}
 }  // namespace
 
 py::object RealRunOp(const py::args &args) {
@@ -957,6 +988,7 @@ void TopCellInfo::Clear() {
   k_pynative_cell_ptr_ = nullptr;
   graph_info_map_.clear();
   sub_cell_list_.clear();
+  outputs_id_.clear();
   op_info_with_tensor_id_.clear();
   tensor_id_with_tensor_object_.clear();
   op_info_with_ms_func_forward_tensors_.clear();
@@ -992,6 +1024,7 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
   const auto &op_exec_info = std::make_shared<OpExecInfo>();
   const auto &op_name = py::cast<std::string>(args[PY_NAME]);
   op_exec_info->op_name = op_name;
+  op_exec_info->is_nop_prim = false;  // IsNopPrim(op_exec_info->op_name);
 
   const auto &adapter = py::cast<PrimitivePyAdapterPtr>(args[PY_PRIM]);
   MS_EXCEPTION_IF_NULL(adapter);
@@ -1013,7 +1046,7 @@ OpExecInfoPtr ForwardExecutor::GenerateOpExecInfo(const py::args &args) {
 void ForwardExecutor::SetCastForInputs(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   // No need cast self
-  if (op_exec_info->op_name == prim::kPrimCast->name()) {
+  if (op_exec_info->op_name == prim::kPrimCast->name() || op_exec_info->is_nop_prim) {
     return;
   }
 
@@ -1167,6 +1200,21 @@ void ForwardExecutor::GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info,
   }
 }
 
+void ForwardExecutor::DoNopOutput(const OpExecInfoPtr &op_exec_info, ValuePtr *out_real_value) {
+  MS_EXCEPTION_IF_NULL(op_exec_info);
+  // Get First input
+  if (op_exec_info->op_inputs.empty()) {
+    MS_LOG(EXCEPTION) << "Inputs of " << op_exec_info->op_name << " is empty";
+  }
+  const auto &obj = op_exec_info->op_inputs[0];
+  if (!py::isinstance<tensor::Tensor>(obj)) {
+    MS_LOG(EXCEPTION) << "First input of " << op_exec_info->op_name << " must be a tensor";
+  }
+  const auto &tensor_ptr = py::cast<tensor::TensorPtr>(obj);
+  *out_real_value = ShallowCopyValue(op_exec_info, tensor_ptr);
+  MS_LOG(DEBUG) << "New copy value is " << (*out_real_value)->ToString();
+}
+
 void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
                                   const abstract::AbstractBasePtrList &args_spec_list, const CNodePtr &cnode,
                                   bool prim_cache_hit, py::object *ret) {
@@ -1194,25 +1242,32 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
     out[args_spec_list].abs = op_exec_info->abstract;
     out[args_spec_list].attrs = prim->evaluate_added_attrs();
   }
-  // run op with selected backend
-  auto result = RunOpWithInitBackendPolicy(op_exec_info);
-  py::object out_real = result;
-  if (result.size() == 1 && op_exec_info->abstract != nullptr &&
-      !op_exec_info->abstract->isa<abstract::AbstractSequence>()) {
-    out_real = result[0];
-  }
-  // get output value
+
+  // Run op with selected backend, nop is no need run backend
   ValuePtr out_real_value = nullptr;
-  if (grad()->grad_flag()) {
-    out_real_value = PyObjToValue(out_real);
+  if (op_exec_info->is_nop_prim) {
+    DoNopOutput(op_exec_info, &out_real_value);
+    *ret = BaseRefToPyData(out_real_value);
+  } else {
+    auto result = RunOpWithInitBackendPolicy(op_exec_info);
+    py::object out_real = result;
+    if (result.size() == 1 && op_exec_info->abstract != nullptr &&
+        !op_exec_info->abstract->isa<abstract::AbstractSequence>()) {
+      out_real = result[0];
+    }
+    // get output value
+    if (grad()->grad_flag()) {
+      out_real_value = PyObjToValue(out_real);
+    }
+    *ret = out_real;
   }
-  // Save cnode info and build grad graph
+
   if (grad()->need_construct_graph() && !grad()->in_cell_with_custom_bprop_()) {
     MS_EXCEPTION_IF_NULL(cnode);
-    const auto &obj_id = GetId(out_real);
+    const auto &obj_id = GetId(*ret);
     cnode->set_abstract(op_exec_info->abstract);
     node_abs_map_[obj_id] = op_exec_info->abstract;
-    grad()->SaveOutputNodeMap(obj_id, out_real, cnode);
+    grad()->SaveOutputNodeMap(obj_id, *ret, cnode);
     grad()->DoOpGrad(op_exec_info, cnode, out_real_value);
   } else {
     node_abs_map_.clear();
@@ -1220,7 +1275,6 @@ void ForwardExecutor::GetOpOutput(const OpExecInfoPtr &op_exec_info,
   // Record op info for judge whether the construct of cell has been changed
   grad()->RecordGradOpInfo(op_exec_info, out_real_value);
   grad()->UpdateForwardTensorInfoInBpropGraph(op_exec_info, out_real_value);
-  *ret = out_real;
 }
 
 py::object ForwardExecutor::DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name,
@@ -1701,7 +1755,7 @@ void GradExecutor::SaveOutputNodeMap(const std::string &obj_id, const py::object
     return;
   }
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(DEBUG) << "Cnode is " << cnode->DebugString() << " id " << obj_id;
+  MS_LOG(DEBUG) << "Cnode is " << cnode->DebugString() << ", out value id " << obj_id;
   if (py::isinstance<py::tuple>(out_real)) {
     auto value = py::cast<py::tuple>(out_real);
     auto size = static_cast<int64_t>(value.size());
@@ -1925,6 +1979,7 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
       continue;
     }
     tensor_id_with_tensor_object[tensor->id()].emplace_back(tensor);
+    top_cell()->outputs_id().insert(tensor->id());
     MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
                   << " device address: " << tensor->device_address() << " shape and dtype "
                   << tensor->GetShapeAndDataTypeInfo();
@@ -2090,7 +2145,8 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
   // get graph info for checking it whether existing in the cache
   GetSingleOpGraphInfo(op_exec_info, input_tensors, tensors_mask, &graph_info);
 #if defined(__APPLE__)
-  session::OpRunInfo op_run_info = {op_exec_info->op_name,
+  session::OpRunInfo op_run_info = {false,
+                                    op_exec_info->op_name,
                                     op_exec_info->py_primitive.get(),
                                     op_exec_info->abstract,
                                     op_exec_info->is_dynamic_shape,
@@ -2102,7 +2158,8 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynativ
                                     tensors_mask,
                                     input_tensors};
 #else
-  session::OpRunInfo op_run_info = {op_exec_info->op_name,
+  session::OpRunInfo op_run_info = {false,
+                                    op_exec_info->op_name,
                                     op_exec_info->py_primitive.get(),
                                     op_exec_info->abstract,
                                     op_exec_info->is_dynamic_shape,

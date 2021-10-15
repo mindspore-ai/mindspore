@@ -234,7 +234,7 @@ void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, Vec
   }
 }
 
-void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context) {
+void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context, bool is_gradient_out) {
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &node : graph->execution_order()) {
     auto output_address_num = AnfAlgo::GetOutputAddressNum(node);
@@ -252,6 +252,9 @@ void ClearGraphDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
       MS_EXCEPTION_IF_NULL(new_device_address);
       new_device_address->set_original_ref_count(device_address->original_ref_count());
       new_device_address->ResetRefCount();
+      if (is_gradient_out) {
+        new_device_address->set_from_persistent_mem(true);
+      }
       AnfAlgo::SetOutputAddr(new_device_address, i, node.get());
     }
   }
@@ -800,9 +803,10 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
                                             &graph_output_info.output_indexes);
 
     std::map<KernelWithIndex, size_t> cnode_ref_count;
+    std::map<AnfNodePtr, size_t> forward_output_refcount;
     auto iter = cnode_ref_counts_.find(graph->graph_id());
     if (iter == cnode_ref_counts_.end()) {
-      graph_compiler_->CalculateRefCount(graph, &cnode_ref_count);
+      graph_compiler_->CalculateRefCount(graph, &cnode_ref_count, &forward_output_refcount);
       (void)cnode_ref_counts_.emplace(graph->graph_id(), cnode_ref_count);
     } else {
       cnode_ref_count = iter->second;
@@ -822,7 +826,8 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
         GraphInfo graph_info;
         graph_compiler_->GetSingleOpInputTensors(kernel, op_output_map, parameter_index, inputs[graph_index],
                                                  &input_tensor_info);
-        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, &op_run_info, &graph_info);
+        graph_compiler_->GetSingleOpRunInfoAndGraphInfo(kernel, input_tensor_info, &op_run_info, &graph_info,
+                                                        &graph_output_info);
 
         RunOp(&op_run_info, &op_outputs);
       } else {
@@ -832,7 +837,8 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
         runtime::OpLazyBuilder::GetInstance().ExecuteRemainingTasks();
       }
 
-      graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &op_output_map);
+      graph_compiler_->UpdateRefCount(input_tensor_info.input_kernel, &cnode_ref_count, &forward_output_refcount,
+                                      &op_output_map);
 
       graph_output_info.graph_output_tensors.clear();
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
@@ -1246,7 +1252,8 @@ void MindRTBackend::LazyExecuteTaskCallback() {
       const auto &context = op_run_task->context();
       RunSingleOpGraph(context->graph(), context->output_nodes(), context->op_run_info(),
                        context->graph_compiler_info(), context->device_context());
-      ClearGraphDeviceAddress(context->graph(), context->device_context());
+      ClearGraphDeviceAddress(context->graph(), context->device_context(), false);
+
       UpdateInputDeviceAddress(context->graph());
 
       op_lazy_builder.PopOpRunTask();
@@ -1304,7 +1311,7 @@ void MindRTBackend::RunOpInternal(bool single_op_cache_hit, GraphCompilerInfo *g
     }
     RunSingleOpGraph(graph, output_nodes, *op_run_info, graph_compiler_info, device_context);
     UpdateOutput(output_nodes, outputs);
-    ClearGraphDeviceAddress(graph, device_context);
+    ClearGraphDeviceAddress(graph, device_context, false);
     UpdateInputDeviceAddress(graph);
     if (op_run_info->is_dynamic_shape) {
       UpdateOutputAbstract(graph, op_run_info);

@@ -273,6 +273,14 @@ class _Context:
             raise ValueError("For 'context.set_context', the argument 'max_device_memory' should not be \"0GB\".")
         self.set_param(ms_ctx_param.max_device_memory, max_device_memory_value)
 
+    def set_mempool_block_size(self, mempool_block_size):
+        if not Validator.check_str_by_regular(mempool_block_size, _re_pattern):
+            raise ValueError("Context param mempool_block_size should be in correct format! Such as \"10GB\"")
+        mempool_block_size_value = float(mempool_block_size[:-2])
+        if mempool_block_size_value < 1.0:
+            raise ValueError("Context param mempool_block_size should be greater or equal to \"1GB\"")
+        self.set_param(ms_ctx_param.mempool_block_size, mempool_block_size_value)
+
     def set_print_file_path(self, file_path):
         """Add timestamp suffix to file name. Sets print file path."""
         print_file_path = os.path.realpath(file_path)
@@ -317,6 +325,7 @@ class _Context:
         'profiling_options': set_profiling_options,
         'variable_memory_max_size': set_variable_memory_max_size,
         'max_device_memory': set_max_device_memory,
+        'mempool_block_size': set_mempool_block_size,
         'print_file_path': set_print_file_path,
         'env_config_path': set_env_config_path
     }
@@ -570,7 +579,8 @@ def _check_target_specific_cfgs(device, arg_key):
         'print_file_path': ['Ascend'],
         'variable_memory_max_size': ['Ascend'],
         'auto_tune_mode': ['Ascend'],
-        'max_device_memory': ['GPU']
+        'max_device_memory': ['GPU'],
+        'mempool_block_size': ['GPU', 'Ascend']
     }
     # configs not in map device_cfgs are supposed to be suitable for all devices
     if not arg_key in device_cfgs:
@@ -583,15 +593,15 @@ def _check_target_specific_cfgs(device, arg_key):
     return False
 
 
-@args_unreset_check(device_id=int, variable_memory_max_size=str, max_device_memory=str)
+@args_unreset_check(device_id=int, variable_memory_max_size=str, max_device_memory=str, mempool_block_size=str)
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
                  save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, enable_sparse=bool, max_call_depth=int,
-                 env_config_path=str, graph_kernel_flags=str, enable_compile_cache=bool,
-                 compile_cache_path=str, grad_for_scalar=bool, pynative_synchronize=bool)
+                 env_config_path=str, graph_kernel_flags=str, save_compile_cache=bool,
+                 load_compile_cache=bool, grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -616,6 +626,8 @@ def set_context(**kwargs):
     |                         |  max_device_memory           |  GPU                       |
     |                         +------------------------------+----------------------------+
     |                         |  variable_memory_max_size    |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  mempool_block_size          |  GPU/Ascend                |
     +-------------------------+------------------------------+----------------------------+
     | Debug Configuration     |  save_graphs                 |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
@@ -672,6 +684,9 @@ def set_context(**kwargs):
             The actual used memory size is the minimum of the available memory of the device and max_device_memory.
         variable_memory_max_size (str): Set the maximum size of the variable memory max size. Default: "30GB".
             After this parameter is set, the maximum memory used by the framework is restricted to the configured value.
+        mempool_block_size (str): Set the size of the memory pool block in PyNative mode for devices.
+            The format is "xxGB". Default: "1GB". Minimum size is "1G". The actual used memory block size is the minimum
+            of the available memory of the device and mempool_block_size.
         save_graphs (bool): Whether to save graphs. Default: False.
             When the `save_graphs` attribute is set as True, attribute of `save_graphs_path` is used to set the
             intermediate compilation graph storage path. By default, the graphs are saved in the current directory.
@@ -813,6 +828,7 @@ def set_context(**kwargs):
         ...                     profiling_options='{"output":"/home/data/output","training_trace":"on"}')
         >>> context.set_context(check_bprop=True)
         >>> context.set_context(max_device_memory="3.5GB")
+        >>> context.set_context(mempool_block_size="1GB")
         >>> context.set_context(print_file_path="print.pb")
         >>> context.set_context(enable_sparse=True)
         >>> context.set_context(max_call_depth=80)

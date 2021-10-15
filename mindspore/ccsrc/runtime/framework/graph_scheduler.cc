@@ -1763,6 +1763,7 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
         auto other_type_device_tensor = device_context->CreateDeviceAddress(
           nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id());
         other_type_device_tensor->SetNodeIndex(input_node, 0);
+        other_type_device_tensor->set_from_persistent_mem(input_node->isa<Parameter>());
         AddDeviceTensorStore(front_node.get(), other_type_device_tensor);
       }
     }

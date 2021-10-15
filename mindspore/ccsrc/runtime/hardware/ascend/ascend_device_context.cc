@@ -511,7 +511,7 @@ bool AscendDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t s
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();
-  auto device_ptr = mem_manager_->MallocMemFromMemPool(size);
+  auto device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem_);
   if (!device_ptr) {
     return false;
   }

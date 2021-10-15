@@ -42,7 +42,7 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
 
  protected:
   // Calculate memory block required alloc size when adding the memory block.
-  size_t CalMemBlockAllocSize(size_t size) override;
+  size_t CalMemBlockAllocSize(size_t size, bool from_persistent_mem) override;
 
  private:
   AscendMemoryPool() = default;

@@ -255,11 +255,11 @@ void GPUSession::AllocateMemory(const KernelGraph *kernel_graph) const {
 }
 
 void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors,
-                                     const KernelGraph *kernel_graph) const {
+                                     const KernelGraph *kernel_graph, bool is_gradient_out) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(input_tensors, *kernel_graph);
+  runtime_instance->RunOpAssignMemory(input_tensors, *kernel_graph, is_gradient_out);
 }
 
 void GPUSession::RunOpGenKernelEvent(const KernelGraph *graph) const {
@@ -701,7 +701,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   // run op
   MS_EXCEPTION_IF_NULL(kernel_graph);
   RunOpRemoveNopNode(kernel_graph);
-  RunOpAllocateMemory(*input_tensors, kernel_graph.get());
+  RunOpAllocateMemory(*input_tensors, kernel_graph.get(), op_run_info->is_gradient_out);
   RunOpGenKernelEvent(kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, *input_tensors);

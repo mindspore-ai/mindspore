@@ -77,6 +77,7 @@ bool AscendMemAdapter::Initialize() {
   static_mem_offset_ = ms_used_hbm_size_;
   cur_dynamic_mem_offset_ = 0;
   max_dynamic_mem_offset_ = 0;
+  AscendMemoryPool::GetInstance().SetMempoolBlockSize(ms_used_hbm_size_);
   MS_LOG(INFO) << "Ascend Memory Adapter initialize success, Memory Statistics:" << DevMemStatistics();
   initialized_ = true;
   return true;
@@ -109,7 +110,7 @@ bool AscendMemAdapter::DeInitialize() {
   return ret;
 }
 
-uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, std::string tag) {
+uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
   auto new_static_offset = static_mem_offset_ - size;
   if (new_static_offset < max_dynamic_mem_offset_) {
@@ -122,11 +123,10 @@ uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, std::string tag) {
   auto memory_block_ptr = device_mem_base_addr_ + new_static_offset;
   static_mem_offset_ = new_static_offset;
   static_memory_block_list_.push_back(std::make_shared<MemoryBlock>(memory_block_ptr, size, tag));
-
   return memory_block_ptr;
 }
 
-uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, std::string tag) {
+uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
   auto new_dynamic_offset = cur_dynamic_mem_offset_ + size;
   if (new_dynamic_offset > static_mem_offset_) {

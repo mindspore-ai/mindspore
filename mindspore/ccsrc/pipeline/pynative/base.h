@@ -50,6 +50,7 @@ enum PynativeStatusCode {
 enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 struct OpExecInfo {
+  bool is_nop_prim = false;
   bool is_dynamic_shape = false;
   bool is_mixed_precision_cast = false;
   size_t next_input_index = 0;
