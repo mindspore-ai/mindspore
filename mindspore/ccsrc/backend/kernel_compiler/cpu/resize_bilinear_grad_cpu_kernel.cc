@@ -74,8 +74,8 @@ bool ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
     MS_LOG(EXCEPTION) << "Output buffer memset failed.";
     return false;
   }
-  float *float_dloss_addr;
-  float *float_output_addr;
+  float *float_dloss_addr = NULL;
+  float *float_output_addr = NULL;
   if (dtype_ == kNumberTypeFloat16) {
     auto *input_addr_T = reinterpret_cast<T *>(inputs[0]->addr);
     size_t input_mem_size = inputs[0]->size / sizeof(T) * sizeof(float);
@@ -97,6 +97,8 @@ bool ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
     }
     size_t memset_size = outputs[0]->size / sizeof(T) * sizeof(float);
     if (memset_s(float_output_addr, memset_size, 0, memset_size) != EOK) {
+      free(float_dloss_addr);
+      free(float_output_addr);
       MS_LOG(EXCEPTION) << "Output buffer memset failed.";
       return false;
     }
@@ -117,6 +119,8 @@ bool ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
   size_t out_hw_size = out_height * out_width;
   size_t in_hw_size = in_height * in_width;
 
+  float *cur_dloss_addr = float_dloss_addr;
+  float *cur_output_addr = float_output_addr;
   for (size_t b = 0; b < batch_size; ++b) {
     for (size_t c = 0; c < channel; ++c) {
       for (size_t h = 0; h < in_height; ++h) {
@@ -131,29 +135,33 @@ bool ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
           const size_t right_x_index = std::min(static_cast<size_t>(ceilf(in_x)), out_width - 1);
           const float x_lerp = in_x - floorf(in_x);
           const float inverse_x_lerp = 1.0 - x_lerp;
-          float_output_addr[top_y_index * out_width + left_x_index] +=
-            float_dloss_addr[h * in_width + w] * static_cast<float>(inverse_y_lerp * inverse_x_lerp);
-          float_output_addr[top_y_index * out_width + right_x_index] +=
-            float_dloss_addr[h * in_width + w] * static_cast<float>(inverse_y_lerp * x_lerp);
-          float_output_addr[bottom_y_index * out_width + left_x_index] +=
-            float_dloss_addr[h * in_width + w] * static_cast<float>(y_lerp * inverse_x_lerp);
-          float_output_addr[bottom_y_index * out_width + right_x_index] +=
-            float_dloss_addr[h * in_width + w] * static_cast<float>(y_lerp * x_lerp);
+          cur_output_addr[top_y_index * out_width + left_x_index] +=
+            cur_dloss_addr[h * in_width + w] * static_cast<float>(inverse_y_lerp * inverse_x_lerp);
+          cur_output_addr[top_y_index * out_width + right_x_index] +=
+            cur_dloss_addr[h * in_width + w] * static_cast<float>(inverse_y_lerp * x_lerp);
+          cur_output_addr[bottom_y_index * out_width + left_x_index] +=
+            cur_dloss_addr[h * in_width + w] * static_cast<float>(y_lerp * inverse_x_lerp);
+          cur_output_addr[bottom_y_index * out_width + right_x_index] +=
+            cur_dloss_addr[h * in_width + w] * static_cast<float>(y_lerp * x_lerp);
 
           output_addr[top_y_index * out_width + left_x_index] =
-            static_cast<T>(float_output_addr[top_y_index * out_width + left_x_index]);
+            static_cast<T>(cur_output_addr[top_y_index * out_width + left_x_index]);
           output_addr[top_y_index * out_width + right_x_index] =
-            static_cast<T>(float_output_addr[top_y_index * out_width + right_x_index]);
+            static_cast<T>(cur_output_addr[top_y_index * out_width + right_x_index]);
           output_addr[bottom_y_index * out_width + left_x_index] =
-            static_cast<T>(float_output_addr[bottom_y_index * out_width + left_x_index]);
+            static_cast<T>(cur_output_addr[bottom_y_index * out_width + left_x_index]);
           output_addr[bottom_y_index * out_width + right_x_index] =
-            static_cast<T>(float_output_addr[bottom_y_index * out_width + right_x_index]);
+            static_cast<T>(cur_output_addr[bottom_y_index * out_width + right_x_index]);
         }
       }
       output_addr += out_hw_size;
-      float_dloss_addr += in_hw_size;
-      float_output_addr += out_hw_size;
+      cur_dloss_addr += in_hw_size;
+      cur_output_addr += out_hw_size;
     }
+  }
+  if (dtype_ == kNumberTypeFloat16) {
+    free(float_dloss_addr);
+    free(float_output_addr);
   }
   return true;
 }

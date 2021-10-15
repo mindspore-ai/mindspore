@@ -55,27 +55,28 @@ bool ResizeBilinearCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBilinearInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBilinearOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16, float16>(inputs, outputs);
+    return LaunchKernel<float16, float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float, float>(inputs, outputs);
+    return LaunchKernel<float, float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported input data type: " << dtype_;
+    return false;
   }
-  return true;
 }
 
 template <typename T1, typename T2>
-void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
+bool ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &outputs) const {
   auto *output_addr_T2 = reinterpret_cast<T2 *>(outputs[0]->addr);
-  float *float_input_addr;
-  float *float_output_addr;
+  float *float_input_addr = NULL;
+  float *float_output_addr = NULL;
   if (dtype_ == kNumberTypeFloat16) {
     auto *input_addr_T1 = reinterpret_cast<T1 *>(inputs[0]->addr);
     size_t input_mem_size = inputs[0]->size / sizeof(T1) * sizeof(float);
     float_input_addr = reinterpret_cast<float *>(malloc(input_mem_size));
     if (float_input_addr == NULL) {
       MS_LOG(ERROR) << "Malloc memory failed.";
+      return false;
     }
     for (size_t i = 0; i < ((inputs[0]->size) / sizeof(T1)); ++i) {
       float_input_addr[i] = static_cast<float>(input_addr_T1[i]);
@@ -86,6 +87,7 @@ void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
     if (float_output_addr == NULL) {
       free(float_input_addr);
       MS_LOG(ERROR) << "Malloc memory failed.";
+      return false;
     }
   } else if (dtype_ == kNumberTypeFloat32) {
     float_input_addr = reinterpret_cast<float *>(inputs[0]->addr);
@@ -115,11 +117,13 @@ void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   ComputeInterpolationWeights(out_height, in_height, height_scale, ys.data());
   ComputeInterpolationWeights(out_width, in_width, width_scale, xs.data());
 
+  float *cur_input_addr = float_input_addr;
+  float *cur_output_addr = float_output_addr;
   for (size_t b = 0; b < batch_size; ++b) {
     for (size_t c = 0; c < channel; ++c) {
       for (size_t h = 0; h < out_height; ++h) {
-        const float *ys_input_lower_ptr = float_input_addr + ys[h].lower * in_width;
-        const float *ys_input_upper_ptr = float_input_addr + ys[h].upper * in_width;
+        const float *ys_input_lower_ptr = cur_input_addr + ys[h].lower * in_width;
+        const float *ys_input_upper_ptr = cur_input_addr + ys[h].upper * in_width;
         const float ys_lerp = static_cast<float>(ys[h].lerp);
         for (size_t w = 0; w < out_width; ++w) {
           const size_t xs_lower = xs[w].lower;
@@ -129,16 +133,21 @@ void ResizeBilinearCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
           const float top_right(ys_input_lower_ptr[xs_upper]);
           const float bottom_left(ys_input_upper_ptr[xs_lower]);
           const float bottom_right(ys_input_upper_ptr[xs_upper]);
-          float_output_addr[h * out_width + w] =
+          cur_output_addr[h * out_width + w] =
             ComputeLerp(top_left, top_right, bottom_left, bottom_right, xs_lerp, ys_lerp);
-          output_addr_T2[h * out_width + w] = static_cast<T2>(float_output_addr[h * out_width + w]);
+          output_addr_T2[h * out_width + w] = static_cast<T2>(cur_output_addr[h * out_width + w]);
         }
       }
       output_addr_T2 += out_hw_size;
-      float_input_addr += in_hw_size;
-      float_output_addr += out_hw_size;
+      cur_input_addr += in_hw_size;
+      cur_output_addr += out_hw_size;
     }
   }
+  if (dtype_ == kNumberTypeFloat16) {
+    free(float_input_addr);
+    free(float_output_addr);
+  }
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore
