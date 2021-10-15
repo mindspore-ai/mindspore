@@ -46,6 +46,7 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 
 set_property(SOURCE ${CORE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_CORE)
+set_property(SOURCE ${PROTO_SRCS} PROPERTY COMPILE_OPTIONS -Wno-array-bounds)
 add_library(mindspore_core STATIC ${CORE_SRC_LIST} ${PROTO_SRCS})
 target_link_libraries(mindspore_core PRIVATE mindspore_gvar)
 if(NOT(BUILD_LITE))
