@@ -28,15 +28,27 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatMul = "MatMul";
+/// \brief Multiplies matrix a and matrix b. Refer to Python API @ref mindspore.ops.MatMul for more details.
 class MS_CORE_API MatMul : public PrimitiveC {
  public:
+  /// \brief Constructor.
   MatMul() : PrimitiveC(kNameMatMul) { InitIOName({"x1", "x2"}, {"output"}); }
+  /// \brief Destructor.
   ~MatMul() = default;
   MS_DECLARE_PARENT(MatMul, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MatMul for the inputs.
   void Init(bool transpose_a = false, bool transpose_b = false);
+  /// \brief Set transpose_a.
   void set_transpose_a(bool transpose_a);
+  /// \brief Set transpose_b.
   void set_transpose_b(bool transpose_b);
+  /// \brief Get transpose_a.
+  ///
+  /// \return transpose_a.
   bool get_transpose_a() const;
+  /// \brief Get transpose_b.
+  ///
+  /// \return transpose_b.
   bool get_transpose_b() const;
 };
 using PrimMatMulPtr = std::shared_ptr<MatMul>;

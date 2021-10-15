@@ -27,11 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalAnd = "LogicalAnd";
+/// \brief Computes the “logical AND” of two tensors element-wise.
+/// Refer to Python API @ref mindspore.ops.LogicalAnd for more details.
 class MS_CORE_API LogicalAnd : public PrimitiveC {
  public:
+  /// \brief Constructor.
   LogicalAnd() : PrimitiveC(kNameLogicalAnd) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~LogicalAnd() = default;
   MS_DECLARE_PARENT(LogicalAnd, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogicalAnd for the inputs.
   void Init() {}
 };
 AbstractBasePtr LogicalAndInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

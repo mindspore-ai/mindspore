@@ -26,11 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNotEqual = prim::kNotEqual;
+/// \brief Computes the non-equivalence of two tensors element-wise.
+/// Refer to Python API @ref mindspore.ops.NotEqual for more details.
 class MS_CORE_API NotEqual : public PrimitiveC {
  public:
+  /// \brief Constructor.
   NotEqual() : PrimitiveC(prim::kPrimNotEqual->name()) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~NotEqual() = default;
   MS_DECLARE_PARENT(NotEqual, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.NotEqual for the inputs.
   void Init() {}
 };
 

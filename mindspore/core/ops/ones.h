@@ -27,11 +27,15 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Creates a tensor filled with value ones. Refer to Python API @ref mindspore.ops.Ones for more details.
 class Ones : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Ones() : PrimitiveC(prim::kPrimOnes->name()) {}
+  /// \brief Destructor.
   ~Ones() = default;
   MS_DECLARE_PARENT(Ones, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Ones for the inputs.
   void Init() {}
 };
 }  // namespace ops

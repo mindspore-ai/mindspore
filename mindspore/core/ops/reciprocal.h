@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReciprocal = prim::kReciprocal;
+/// \brief Returns reciprocal of a tensor element-wise.
+/// Refer to Python API @ref mindspore.ops.Reciprocal for more details.
 class MS_CORE_API Reciprocal : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Reciprocal() : PrimitiveC(prim::kPrimReciprocal->name()) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~Reciprocal() = default;
   MS_DECLARE_PARENT(Reciprocal, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Reciprocal for the inputs.
   void Init() {}
 };
 

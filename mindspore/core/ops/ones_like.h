@@ -24,11 +24,16 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Creates a new tensor. The values of all elements are 1.
+/// Refer to Python API @ref mindspore.ops.OnesLike for more details.
 class MS_CORE_API OnesLike : public PrimitiveC {
  public:
+  /// \brief Constructor.
   OnesLike() : PrimitiveC(prim::kPrimOnesLike->name()) {}
+  /// \brief Destructor.
   ~OnesLike() = default;
   MS_DECLARE_PARENT(OnesLike, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.OnesLike for the inputs.
   void Init() {}
 };
 AbstractBasePtr OnesLikeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

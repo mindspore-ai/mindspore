@@ -26,9 +26,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHShrink = "HShrink";
+/// \brief Applies the hard shrinkage function element-wise.
+/// Refer to Python API @ref mindspore.ops.HShrink for more details.
 class MS_CORE_API HShrink : public PrimitiveC {
  public:
+  /// \brief Constructor.
   HShrink() : PrimitiveC(kNameHShrink) { InitIOName({"input_x"}, {"output"}); }
+  /// \brief Destructor.
   ~HShrink() = default;
   MS_DECLARE_PARENT(HShrink, PrimitiveC);
 };
