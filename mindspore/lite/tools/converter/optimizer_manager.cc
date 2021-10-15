@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace lite {
-std::map<std::string, opt::PassPtr> PassStorage::pass_stroge_;
+std::map<std::string, opt::PassPtr> PassStorage::pass_storage_;
 bool RunOptimizerPass(const FuncGraphPtr &func_graph, const std::vector<std::string> &pass_names) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func graph is nullptr.";

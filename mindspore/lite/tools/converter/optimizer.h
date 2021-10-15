@@ -54,9 +54,6 @@ class NodePass : public Pass<GraphNode> {
   ~NodePass() override = default;
 
   STATUS Run(GraphNode *graphNode) override = 0;
-
-  // protected:
-  //  GraphNode *graphNode = nullptr;
 };
 
 class Optimizer {
@@ -65,11 +62,11 @@ class Optimizer {
 
   virtual ~Optimizer();
 
-  void AddPass(GraphPass *graphPass);
+  void AddPass(GraphPass *graph_pass);
 
-  void AddPass(NodePass *nodePass);
+  void AddPass(NodePass *node_pass);
 
-  STATUS Run(schema::MetaGraphT *graphDefT);
+  STATUS Run(schema::MetaGraphT *graph_defT);
 
  private:
   std::vector<GraphPass *> graph_passes_;
