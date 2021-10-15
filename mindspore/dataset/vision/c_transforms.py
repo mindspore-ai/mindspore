@@ -464,7 +464,7 @@ class GaussianBlur(ImageTensorOperation):
             only an integer is provided, the kernel size will be (size, size). If a sequence of integer is provided, it
             must be a sequence of 2 values which represents (width, height).
         sigma (Union[float, sequence], optional): Standard deviation of the Gaussian kernel to use (default=None). The
-            value must be positive. If only an float is provided, the sigma will be (sigma, sigma). If a sequence of
+            value must be positive. If only a float is provided, the sigma will be (sigma, sigma). If a sequence of
             float is provided, it must be a sequence of 2 values which represents the sigma of width and height. If None
             is provided, the sigma will be calculated as ((kernel_size - 1) * 0.5 - 1) * 0.3 + 0.8.
 
@@ -631,7 +631,7 @@ class Pad(ImageTensorOperation):
     Args:
         padding (Union[int, sequence]): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
-            If a tuple or list of 2 values are provided, it pads the (left and top)
+            If a tuple or lists of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
@@ -703,8 +703,8 @@ class RandomAffine(ImageTensorOperation):
 
     Args:
         degrees (int or float or sequence): Range of the rotation degrees.
-            If degrees is a number, the range will be (-degrees, degrees).
-            If degrees is a sequence, it should be (min, max).
+            If `degrees` is a number, the range will be (-degrees, degrees).
+            If `degrees` is a sequence, it should be (min, max).
         translate (sequence, optional): Sequence (tx_min, tx_max, ty_min, ty_max) of minimum/maximum translation in
             x(horizontal) and y(vertical) directions (default=None).
             The horizontal and vertical shift is selected randomly from the range:
@@ -737,12 +737,12 @@ class RandomAffine(ImageTensorOperation):
             (default=0, filling is performed).
 
     Raises:
-        ValueError: If degrees is negative.
+        ValueError: If `degrees` is negative.
         ValueError: If translation value is not between -1 and 1.
         ValueError: If scale is not positive.
         ValueError: If shear is a number but is not positive.
-        TypeError: If degrees is not a number or a list or a tuple.
-            If degrees is a list or tuple, its length is not 2.
+        TypeError: If `degrees` is not a number or a list or a tuple.
+            If `degrees` is a list or tuple, its length is not 2.
         TypeError: If translate is specified but is not list or a tuple of length 2 or 4.
         TypeError: If scale is not a list or tuple of length 2.
         TypeError: If shear is not a list or tuple of length 2 or 4.
@@ -928,9 +928,9 @@ class RandomCrop(ImageTensorOperation):
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
-            If padding is not None, pad image firstly with padding values.
+            If padding is not None, pad image first with padding values.
             If a single number is provided, pad all borders with this value.
-            If a tuple or list of 2 values are provided, pad the (left and top)
+            If a tuple or lists of 2 values are provided, pad the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             pad the left, top, right and bottom respectively.
@@ -1057,7 +1057,7 @@ class RandomCropWithBBox(ImageTensorOperation):
         padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
             If padding is not None, first pad image with padding values.
             If a single number is provided, pad all borders with this value.
-            If a tuple or list of 2 values are provided, pad the (left and top)
+            If a tuple or lists of 2 values are provided, pad the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple, pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
@@ -1403,8 +1403,8 @@ class RandomRotation(ImageTensorOperation):
 
     Args:
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
-            If degrees is a number, the range will be converted to (-degrees, degrees).
-            If degrees is a sequence, it should be (min, max).
+            If `degrees` is a number, the range will be converted to (-degrees, degrees).
+            If `degrees` is a sequence, it should be (min, max).
         resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
             It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
 
@@ -1509,9 +1509,9 @@ class RandomSharpness(ImageTensorOperation):
             (min, max) format. If min=max, then it is a single fixed magnitude operation (default = (0.1, 1.9)).
 
     Raises:
-        TypeError : If degrees is not a list or tuple.
-        ValueError: If degrees is negative.
-        ValueError: If degrees is in (max, min) format instead of (min, max).
+        TypeError : If `degrees` is not a list or tuple.
+        ValueError: If `degrees` is negative.
+        ValueError: If `degrees` is in (max, min) format instead of (min, max).
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.RandomSharpness(degrees=(0.2, 1.9))]
@@ -1785,7 +1785,7 @@ class SlicePatches(ImageTensorOperation):
     Args:
         num_height (int, optional): The number of patches in vertical direction (default=1).
         num_width (int, optional): The number of patches in horizontal direction (default=1).
-        slice_mode (Inter mode, optional): An mode represents pad or drop (default=SliceMode.PAD).
+        slice_mode (Inter mode, optional): A mode represents pad or drop (default=SliceMode.PAD).
             It can be any of [SliceMode.PAD, SliceMode.DROP].
         fill_value (int, optional): The border width in number of pixels in
             right and bottom direction if slice_mode is set to be SliceMode.PAD (default=0).

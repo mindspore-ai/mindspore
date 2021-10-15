@@ -45,7 +45,7 @@ def imshow_det_bbox(image,
             data should be ordered with (N, x, y, w, h).
         labels (ndarray): Labels of bboxes, shaped (N, 1).
         segm (ndarray): The segmentation masks of image in M classes, shaped (M, H, W) (Default=None).
-        class_names (list[str], tuple[str], dict): Names of each classes to map label to class name
+        class_names (list[str], tuple[str], dict): Names of each class to map label to class name
             (Default=None, only display label).
         score_threshold (float): Minimum score of bboxes to be shown (Default=0).
         bbox_color (tuple(int)): Color of bbox lines.

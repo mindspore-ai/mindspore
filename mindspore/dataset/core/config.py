@@ -132,7 +132,7 @@ def get_seed():
 
 def set_prefetch_size(size):
     """
-    Set the queue capacity of the thread in pipline.
+    Set the queue capacity of the thread in pipeline.
 
     Args:
         size (int): The length of the cache queue.
@@ -472,7 +472,7 @@ def set_sending_batches(batch_num):
     Set the default sending batches when training with sink_mode=True in Ascend device.
 
     Args:
-        batch_num (int): the total sending batches, when meet sending batch num, it will wait unless sending batches
+        batch_num (int): the total sending batches, when batch_num is set, it will wait unless sending batches
          increase, default is 0 which means will send all batches in dataset.
 
     Raises:

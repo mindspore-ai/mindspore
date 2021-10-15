@@ -14,7 +14,7 @@
 """
 This module is to support common augmentations. C_transforms is a high performance
 image augmentation module which is developed with C++ OpenCV. Py_transforms
-provide more kinds of image augmentations which is developed with Python PIL.
+provide more kinds of image augmentations which are developed with Python PIL.
 
 Common imported modules in corresponding API examples are as follows:
 
