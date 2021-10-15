@@ -332,12 +332,27 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> from mindspore.nn import thor
+        >>> from mindspore import Model
+        >>> from mindspore import FixedLossScaleManager
+        >>> from mindspore.train.callback import LossMonitor
+        >>> from mindspore.train.train_thor import ConvertModelUtils
+        >>> from mindspore import nn
+        >>> from mindspore import Tensor
+        >>>
         >>> net = Net()
-        >>> optim = thor(net, lr=Tensor(1e-3), damping=Tensor(1e-3), momentum=0.9)
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = ConvertModelUtils().convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
-        ... loss_scale_manager=loss_scale, metrics={'acc'}, amp_level="O2", keep_batchnorm_fp32=False)
-        >>> model.train(config.epoch_size, dataset, callbacks=cb, sink_size=100, dataset_sink_mode=True)
+        >>> dataset = create_dataset()
+        >>> temp = Tensor([4e-4, 1e-4, 1e-5, 1e-5], mstype.float32)
+        >>> optim = thor(net, learning_rate=temp, damping=temp, momentum=0.9, loss_scale=128, frequency=4)
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+        >>> loss_scale = FixedLossScaleManager(128, drop_overflow_update=False)
+        >>> model = Model(net, loss_fn=loss, optimizer=optim, loss_scale_manager=loss_scale, metrics={'acc'},
+        ...               amp_level="O2", keep_batchnorm_fp32=False)
+        >>> model = ConvertModelUtils.convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=optim,
+        ...                                                 loss_scale_manager=loss_scale, metrics={'acc'},
+        ...                                                 amp_level="O2", keep_batchnorm_fp32=False)
+        >>> loss_cb = LossMonitor()
+        >>> model.train(1, dataset, callbacks=loss_cb, sink_size=4, dataset_sink_mode=True)
 
     """
     context.set_context(max_call_depth=10000)
@@ -800,6 +815,28 @@ class ThorAscend(Optimizer):
             else:
                 self.weight_layertype_idx_map = self.weight_layertype_idx_map + (Other,)
 
+    def _get_fc_matrix(self, weight_shape):
+        """for Ascend, get fc matrix_a and matrix_g"""
+        out_channels = weight_shape[0]
+        in_channels = weight_shape[1]
+        if self.conv_layer_count > 0:
+            if out_channels == 1001:
+                fc_matrix_a = Parameter(Tensor(np.zeros([128, 128, 16, 16]).astype(np.float16)),
+                                        name='matrix_a_inv_' + str(self.thor_layer_count),
+                                        requires_grad=False)
+                fc_matrix_g = Parameter(Tensor(np.zeros([63, 63, 16, 16]).astype(np.float16)),
+                                        name="matrix_g_inv_" + str(self.thor_layer_count),
+                                        requires_grad=False)
+            else:
+                fc_matrix_a = Parameter(Tensor(np.eye(in_channels).astype(np.float16)),
+                                        name='matrix_a_inv_' + str(self.thor_layer_count),
+                                        requires_grad=False)
+                fc_matrix_g = Parameter(Tensor(np.eye(out_channels).astype(np.float16)),
+                                        name="matrix_g_inv_" + str(self.thor_layer_count),
+                                        requires_grad=False)
+            self.matrix_a = self.matrix_a + (fc_matrix_a,)
+            self.matrix_g = self.matrix_g + (fc_matrix_g,)
+
     def _process_matrix_init_and_weight_idx_map(self, net):
         """for Ascend, process matrix init shape, and get weight idx map"""
         layer_counter = 0
@@ -837,25 +874,7 @@ class ThorAscend(Optimizer):
                     device_shape_pad_flag = True
                 self.device_shape_pad_flag = self.device_shape_pad_flag + (device_shape_pad_flag,)
             elif layer_type == FC and "bias" not in self.params[idx].name.lower():
-                out_channels = weight_shape[0]
-                in_channels = weight_shape[1]
-                if self.conv_layer_count > 0:
-                    if out_channels == 1001:
-                        fc_matrix_a = Parameter(Tensor(np.zeros([128, 128, 16, 16]).astype(np.float16)),
-                                                name='matrix_a_inv_' + str(self.thor_layer_count),
-                                                requires_grad=False)
-                        fc_matrix_g = Parameter(Tensor(np.zeros([63, 63, 16, 16]).astype(np.float16)),
-                                                name="matrix_g_inv_" + str(self.thor_layer_count),
-                                                requires_grad=False)
-                    else:
-                        fc_matrix_a = Parameter(Tensor(np.eye(in_channels).astype(np.float16)),
-                                                name='matrix_a_inv_' + str(self.thor_layer_count),
-                                                requires_grad=False)
-                        fc_matrix_g = Parameter(Tensor(np.eye(out_channels).astype(np.float16)),
-                                                name="matrix_g_inv_" + str(self.thor_layer_count),
-                                                requires_grad=False)
-                    self.matrix_a = self.matrix_a + (fc_matrix_a,)
-                    self.matrix_g = self.matrix_g + (fc_matrix_g,)
+                self._get_fc_matrix(weight_shape)
             self._get_weight_idx_map(layer_type, idx, weight_shape)
             # bert.cls1.output_bias: not a network layer, only a trainable param
             if "output_bias" not in self.params[idx].name.lower():
