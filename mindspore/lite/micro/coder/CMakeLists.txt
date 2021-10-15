@@ -28,6 +28,7 @@ endif()
 
 if(MSLITE_ENABLE_CONVERTER)
     include(${MICRO_DIR}/cmake/file_list.cmake)
+    set_property(SOURCE ${FILE_SET} PROPERTY COMPILE_OPTIONS -Wno-error=stringop-overflow=)
     add_executable(codegen main.cc ${FILE_SET})
     add_dependencies(codegen fbs_src)
     add_dependencies(codegen fbs_inner_src)
