@@ -193,7 +193,11 @@ int PreprocessParser::CollectCalibInputs(const std::map<std::string, std::string
       }
       image_dir = readdir(root);
     }
-    closedir(root);
+    auto ret = closedir(root);
+    if (ret != 0) {
+      MS_LOG(ERROR) << " close dir failed.";
+      return RET_ERROR;
+    }
     auto &cur_inputs = inputs->at(image_path.first);
     std::sort(cur_inputs.begin(), cur_inputs.end());
     if (count != limited_count) {

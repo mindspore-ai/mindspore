@@ -134,7 +134,7 @@ class FullQuantQuantizer : public Quantizer {
 
   STATUS DoInference();
 
-  STATUS UpdateDivergInverval();
+  STATUS UpdateDivergeInterval();
 
   STATUS CollectDataFrequency();
 
@@ -184,7 +184,7 @@ class Calibrator {
 
   static STATUS RecordMaxMinValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
 
-  static STATUS UpdateDivergInverval(
+  static STATUS UpdateDivergInterval(
     std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
 
   static STATUS UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);

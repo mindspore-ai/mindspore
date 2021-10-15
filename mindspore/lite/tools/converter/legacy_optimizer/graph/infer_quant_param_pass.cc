@@ -39,7 +39,11 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
 
     auto quant_helper = QuantHelperRegister::GetInstance()->GetQuantHelper(node->primitive->value.type);
     MS_CHECK_TRUE_MSG(quant_helper != nullptr, RET_ERROR, "Find QuantHelper return nullptr");
-    quant_helper->NodeQuantPreprocess(graph, node.get());
+    auto ret = quant_helper->NodeQuantPreprocess(graph, node.get());
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Node quant preprocess failed.";
+      return ret;
+    }
   }
 
   // backward infer nodes' quant params
@@ -56,7 +60,11 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
 
     auto quant_helper = QuantHelperRegister::GetInstance()->GetQuantHelper(node->primitive->value.type);
     MS_CHECK_TRUE_MSG(quant_helper != nullptr, RET_ERROR, "Find QuantHelper return nullptr");
-    quant_helper->NodeQuantPreprocess(graph, node.get());
+    auto ret = quant_helper->NodeQuantPreprocess(graph, node.get());
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Node quant preprocess failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }
