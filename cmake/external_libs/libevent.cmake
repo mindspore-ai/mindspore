@@ -5,7 +5,7 @@ endif()
 
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/libevent/repository/archive/release-2.1.12-stable.tar.gz")
-    set(MD5 "c9036513dd9e5b4fa1c81ade23b7ead2")
+    set(MD5 "e8ee33779cf8695ab372bbcc1b8e9ddb")
 else()
     set(REQ_URL
       "https://github.com/libevent/libevent/releases/download/release-2.1.12-stable/libevent-2.1.12-stable.tar.gz")
