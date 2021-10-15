@@ -22,8 +22,9 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "backend/kernel_compiler/oplib/opinfo.h"
 #include "nlohmann/json.hpp"
+#include "backend/kernel_compiler/oplib/opinfo.h"
+#include "backend/optimizer/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
 using kernel::OpAttrPtr;
@@ -89,8 +90,8 @@ class ComputeCapability {
 
 class AkgKernelJsonGenerator {
  public:
-  AkgKernelJsonGenerator() = default;
-  explicit AkgKernelJsonGenerator(DumpOption dump_option) : dump_option_(std::move(dump_option)) {}
+  explicit AkgKernelJsonGenerator(DumpOption dump_option)
+      : dump_option_(std::move(dump_option)), cb_(Callback::Instance()) {}
   ~AkgKernelJsonGenerator() = default;
 
   bool CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json);
@@ -99,19 +100,19 @@ class AkgKernelJsonGenerator {
   bool CollectJson(const AnfNodePtr &anf_node);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
                         const std::vector<AnfNodePtr> &output_list);
-  bool GenerateSingleKernelJson(const AnfNodePtr &anf_node, nlohmann::json *node_json);
+
   std::string kernel_name() const { return kernel_name_; }
   nlohmann::json kernel_json() const { return kernel_json_; }
   std::string kernel_json_str() const { return kernel_json_.dump(); }
   const std::vector<size_t> &input_size_list() const { return input_size_list_; }
   const std::vector<size_t> &output_size_list() const { return output_size_list_; }
-  void set_dump_option(DumpOption dump_option) { dump_option_ = dump_option; }
   std::map<std::string, AnfNodePtr> address_node_map() { return address_node_map_; }
 
  private:
+  bool GenerateSingleKernelJson(const AnfNodePtr &anf_node, nlohmann::json *node_json);
   bool CreateInputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *inputs_json);
   bool CreateOutputDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *outputs_json);
-  void GetAttrJson(const AnfNodePtr &anf_node, const std::vector<int> &dyn_input_sizes, const OpAttrPtr &op_attr,
+  void GetAttrJson(const AnfNodePtr &anf_node, const std::vector<int64_t> &dyn_input_sizes, const OpAttrPtr &op_attr,
                    nlohmann::json *attr_json, const ValuePtr &attr_value);
   bool CreateAttrDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *attrs_json);
   void GenStitchJson(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map,
@@ -131,12 +132,6 @@ class AkgKernelJsonGenerator {
                      nlohmann::json *node_json) const;
   std::string GetTensorName(const nlohmann::json &node_json, const std::string &tag,
                             const std::pair<size_t, size_t> &position) const;
-  TypeId GetInputDataType(const AnfNodePtr &anf_node, size_t real_index) const;
-  std::vector<size_t> GetInputShape(const AnfNodePtr &anf_node, size_t real_index) const;
-  std::string GetInputFormat(const AnfNodePtr &anf_node, size_t real_index) const;
-  TypeId GetOutputDataType(const AnfNodePtr &anf_node, size_t index) const;
-  std::vector<size_t> GetOutputShape(const AnfNodePtr &anf_node, size_t index) const;
-  std::string GetOutputFormat(const AnfNodePtr &anf_node, size_t index) const;
   void SaveNodeAddress(const AnfNodePtr &anf_node, nlohmann::json *node_json);
   OpInfoPtr ExtractOpInfo(const AnfNodePtr &anf_node) const;
   void CollectParallelDimInfo(const AnfNodePtr &anf_node);
@@ -155,6 +150,7 @@ class AkgKernelJsonGenerator {
   std::vector<size_t> output_size_list_;
   std::map<std::string, AnfNodePtr> address_node_map_;
   bool is_basic_op_{false};
+  Callback *cb_{nullptr};
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_JSON_GENERATOR_H_

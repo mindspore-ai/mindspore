@@ -231,8 +231,8 @@ bool ReorderOps::ReorderTypeInsensitiveCastDown(const FuncGraphPtr &func_graph, 
 
   std::vector<AnfNodePtr> new_cast_nodes;
   for (const auto &index : op_input_indexes) {
-    auto new_cast_node =
-      func_graph->NewCNode({NewValueNode(prim::kPrimCast), AnfAlgo::GetInputNode(type_insens_node, index)});
+    auto new_cast_node = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())),
+                                               AnfAlgo::GetInputNode(type_insens_node, index)});
     NodeIOInfo cast_io_info;
     cast_io_info.inputs_format.push_back(AnfAlgo::GetInputFormat(type_insens_node, index));
     cast_io_info.outputs_format = cast_io_info.inputs_format;
@@ -307,7 +307,8 @@ bool ReorderOps::ReorderCastUpTypeInsensitive(const FuncGraphPtr &func_graph, co
   SetTypeInsensitiveNodeInputsInfo(node, op_input_indexes, cast_nodes, &type_insens_io_info, true);
   SetNodeInfo(node, new_type_insens_node, type_insens_io_info);
 
-  auto new_cast_node = func_graph->NewCNode({NewValueNode(prim::kPrimCast), new_type_insens_node});
+  auto new_cast_node =
+    func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), new_type_insens_node});
   NodeIOInfo cast_io_info;
   cast_io_info.inputs_format.push_back(pattern_output_format);
   cast_io_info.outputs_format = cast_io_info.inputs_format;
