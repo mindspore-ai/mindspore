@@ -53,7 +53,7 @@ eval_interval: 1
 enable_cache: False
 cache_session_id: ""
 mode_name: "GRAPH"
-acc_mode: "O0"
+boost_mode: "O0"
 conv_init: "XavierUniform"
 dense_init: "TruncatedNormal"
 all_reduce_fusion_config:
