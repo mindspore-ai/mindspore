@@ -216,10 +216,12 @@ int ConvolutionCPUKernel::MallocWeightBiasData() {
     memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   }
 
-  bias_data_ = malloc(oc_block_num * sizeof(float));
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc bias failed.";
-    return RET_ERROR;
+    bias_data_ = malloc(oc_block_num * sizeof(float));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc bias failed.";
+      return RET_ERROR;
+    }
   }
   memset(bias_data_, 0, oc_block_num * sizeof(float));
   return RET_OK;
