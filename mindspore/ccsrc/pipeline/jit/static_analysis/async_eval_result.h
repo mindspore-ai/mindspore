@@ -342,7 +342,7 @@ class AsyncInferTask {
   AsyncAbstractPtr abstract_ptr_;
   std::mutex lock_;
   std::condition_variable condition_var_;
-  int ready_{0};  // 0: not ready, bit 1 = 1: ready, bit 2 = 1: exception, bit 3 = 1: endless loop
+  size_t ready_{0};  // 0: not ready, bit 1 = 1: ready, bit 2 = 1: exception, bit 3 = 1: endless loop
 };
 
 using EvaluatorCacheMap =
