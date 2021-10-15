@@ -247,7 +247,7 @@ void SchedulerNode::ProcessFetchMetadata(const std::shared_ptr<TcpServer> &serve
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   FetchServersRespMessage fetch_servers_message;
-  std::vector<ServersMeta> servers_meta_list = node_manager_.FetchServersMeta();
+  std::vector<ServersMeta> servers_meta_list = node_manager_.FetchAllNodesMeta();
 
   *fetch_servers_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 
@@ -344,7 +344,7 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint3
   message_meta->set_cmd(NodeCommand::SEND_METADATA);
 
   SendMetadataMessage send_metadata_message;
-  std::vector<ServersMeta> servers_meta_list = node_manager_.FetchServersMeta();
+  std::vector<ServersMeta> servers_meta_list = node_manager_.FetchAllNodesMeta();
   send_metadata_message.set_worker_num(node_manager_.worker_num());
   send_metadata_message.set_server_num(node_manager_.server_num());
   send_metadata_message.set_cluster_state(node_manager_.GetClusterState());
