@@ -2154,7 +2154,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     width and determined by the arguments range and nbins.
 
     Args:
-        dtype (str): An optional attribute. Must be one of the following types: "int32", "int64". Default: "int32".
+        dtype (str): An optional attribute. The dtype must be "int32". Default: "int32".
         nbins (int): The number of histogram bins, the type is a positive integer.
 
     Inputs:
