@@ -102,7 +102,7 @@ void GPUDeviceContext::Initialize() {
   auto rank_id = GetRankID();
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
-  json_parser.CopyJsonToDir(rank_id);
+  json_parser.CopyDumpJsonToDir(rank_id);
   json_parser.CopyMSCfgJsonToDir(rank_id);
 #endif
   initialized_ = true;

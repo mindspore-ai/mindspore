@@ -329,6 +329,12 @@ class DebugServices {
                              unsigned int device_id, unsigned int root_graph_id,
                              std::vector<std::shared_ptr<TensorData>> *const tensor_list);
 
+  void ReadFileAndAddToTensor(const bool found, const std::vector<std::string> &matched_paths,
+                              const std::string &backend_name, const unsigned int device_id,
+                              const unsigned int root_graph_id, const bool &is_output, size_t slot,
+                              bool *no_mem_to_read, unsigned int iteration,
+                              std::vector<std::shared_ptr<TensorData>> *result_list);
+
   void ReadDumpedTensorSync(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
                             const std::string &backend_name, size_t slot, unsigned int device_id,
                             unsigned int iteration, unsigned int root_graph_id, const bool &is_output,
@@ -343,8 +349,8 @@ class DebugServices {
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,
                                                                    std::vector<std::string> *const async_file_pool);
 
-  void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
-                      uint32_t *prev_num_elements);
+  const void *GetPrevTensor(const std::shared_ptr<TensorData> &tensor, bool previous_iter_tensor_needed,
+                            uint32_t *prev_num_elements);
 
   void ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name, std::string *const tensor_type,
                          std::size_t *const size, std::vector<int64_t> *const shape,
@@ -379,7 +385,7 @@ class DebugServices {
   std::string IterationString(unsigned int iteration);
 #endif
   void ReadNodesTensors(const std::vector<std::string> &name, std::vector<std::string> *ret_name,
-                        std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size,
+                        std::vector<const char *> *data_ptr, std::vector<ssize_t> *data_size,
                         std::vector<unsigned int> *dtype, std::vector<std::vector<int64_t>> *const shape);
 
   void SearchNodesTensors(const std::vector<std::string> &name,
