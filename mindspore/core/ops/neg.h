@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNeg = prim::kNeg;
+/// \brief Returns a tensor with negative values of the input tensor element-wise.
+/// Refer to Python API @ref mindspore.ops.Neg for more details.
 class MS_CORE_API Neg : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Neg() : PrimitiveC(prim::kPrimNeg->name()) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~Neg() = default;
   MS_DECLARE_PARENT(Neg, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Neg for the inputs.
   void Init() {}
 };
 

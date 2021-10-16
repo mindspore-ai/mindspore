@@ -28,9 +28,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGer = "Ger";
+/// \brief Ger product of `x1` and `x2`. Calculate the outer product of two one-dimensional arrays.
+/// Refer to Python API @ref mindspore.ops.Ger for more details.
 class MS_CORE_API Ger : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Ger() : PrimitiveC(kNameGer) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~Ger() = default;
   MS_DECLARE_PARENT(Ger, PrimitiveC);
 };

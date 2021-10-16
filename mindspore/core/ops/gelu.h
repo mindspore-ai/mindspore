@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGeLU = prim::kGeLU;
+/// \brief Gaussian Error Linear Units activation function.
+/// Refer to Python API @ref mindspore.ops.GeLU for more details.
 class MS_CORE_API GeLU : public PrimitiveC {
  public:
+  /// \brief Constructor.
   GeLU() : PrimitiveC(kNameGeLU) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~GeLU() = default;
   MS_DECLARE_PARENT(GeLU, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GeLU for the inputs.
   void Init() {}
 };
 

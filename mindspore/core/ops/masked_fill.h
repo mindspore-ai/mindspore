@@ -27,9 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaskedFill = "MaskedFill";
+/// \brief Fills elements of self tensor with value where mask is True.
+/// Refer to Python API @ref mindspore.ops.MaskedFill for more details.
 class MaskedFill : public PrimitiveC {
  public:
+  /// \brief Constructor.
   MaskedFill() : PrimitiveC(kNameMaskedFill) { InitIOName({"input", "mask", "value"}, {"output"}); }
+  /// \brief Destructor.
   ~MaskedFill() = default;
   MS_DECLARE_PARENT(MaskedFill, PrimitiveC);
 };

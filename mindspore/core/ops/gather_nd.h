@@ -25,11 +25,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGatherNd = "GatherNd";
+/// \brief Gathers slices from a tensor by indices. Refer to Python API @ref mindspore.ops.GatherNd for more details.
 class MS_CORE_API GatherNd : public PrimitiveC {
  public:
+  /// \brief Constructor.
   GatherNd() : PrimitiveC(kNameGatherNd) { InitIOName({"input_x", "indices"}, {"y"}); }
+  /// \brief Destructor.
   ~GatherNd() = default;
   MS_DECLARE_PARENT(GatherNd, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GatherNd for the inputs.
   void Init() {}
 };
 AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

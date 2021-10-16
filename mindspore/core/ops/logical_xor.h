@@ -23,11 +23,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalXor = "LogicalXor";
+/// \brief Computes the truth value of x1 XOR x2, element-wise.
+/// Refer to Python API @ref mindspore.numpy.logical_xor for more details.
 class MS_CORE_API LogicalXor : public PrimitiveC {
  public:
+  /// \brief Constructor.
   LogicalXor() : PrimitiveC(kNameLogicalXor) {}
+  /// \brief Destructor.
   ~LogicalXor() = default;
   MS_DECLARE_PARENT(LogicalXor, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.numpy.logical_xor for the inputs.
   void Init() {}
 };
 }  // namespace ops

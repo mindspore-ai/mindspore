@@ -26,9 +26,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGreaterEqual = "GreaterEqual";
+/// \brief Computes the boolean value of \f$x>=y\f$ element-wise.
+/// Refer to Python API @ref mindspore.ops.GreaterEqual for more details.
 class MS_CORE_API GreaterEqual : public PrimitiveC {
  public:
+  /// \brief Constructor.
   GreaterEqual() : PrimitiveC(kNameGreaterEqual) {}
+  /// \brief Destructor.
   ~GreaterEqual() = default;
   MS_DECLARE_PARENT(GreaterEqual, PrimitiveC);
 };

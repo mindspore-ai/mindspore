@@ -27,11 +27,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRank = "Rank";
+/// \brief Returns the rank of a tensor. Refer to Python API @ref mindspore.ops.Rank for more details.
 class MS_CORE_API Rank : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Rank() : PrimitiveC(kNameRank) { auto prim_name = name(); }
+  /// \brief Destructor.
   ~Rank() = default;
   MS_DECLARE_PARENT(Rank, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Rank for the inputs.
   void Init() {}
 };
 AbstractBasePtr RankInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

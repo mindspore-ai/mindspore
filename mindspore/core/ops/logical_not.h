@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalNot = "LogicalNot";
+/// \brief Computes the “logical NOT” of a tensor element-wise.
+/// Refer to Python API @ref mindspore.ops.LogicalNot for more details.
 class MS_CORE_API LogicalNot : public PrimitiveC {
  public:
+  /// \brief Constructor.
   LogicalNot() : PrimitiveC(kNameLogicalNot) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~LogicalNot() = default;
   MS_DECLARE_PARENT(LogicalNot, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogicalNot for the inputs.
   void Init() {}
 };
 
