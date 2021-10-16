@@ -66,6 +66,13 @@ class Vocab(cde.Vocab):
 
         Returns:
             Vocab, vocab built from the dataset.
+
+        Examples:
+            >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
+            >>> vocab = text.Vocab.from_dataset(dataset, "text", freq_range=None, top_k=None,
+            ...                                 special_tokens=["<pad>", "<unk>"],
+            ...                                 special_first=True)
+            >>> dataset = dataset.map(operations=text.Lookup(vocab, "<unk>"), input_columns=["text"])
         """
         return dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
 
@@ -84,6 +91,9 @@ class Vocab(cde.Vocab):
 
         Returns:
             Vocab, vocab built from the `list`.
+
+        Examples:
+            >>> vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
         """
         if special_tokens is None:
             special_tokens = []
@@ -108,6 +118,9 @@ class Vocab(cde.Vocab):
 
         Returns:
             Vocab, vocab built from the file.
+
+        Examples:
+            >>> vocab = text.Vocab.from_file("/path/to/wordpiece/vocab/file", ",", None, ["<pad>", "<unk>"], True)
         """
         if vocab_size is None:
             vocab_size = -1
@@ -127,6 +140,9 @@ class Vocab(cde.Vocab):
 
         Returns:
             Vocab, vocab built from the `dict`.
+
+        Examples:
+            >>> vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
         """
 
         return super().from_dict(word_dict)
@@ -165,6 +181,11 @@ class SentencePieceVocab(cde.SentencePieceVocab):
 
         Returns:
             SentencePieceVocab, vocab built from the dataset.
+
+        Examples:
+            >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
+            >>> vocab = text.SentencePieceVocab.from_dataset(dataset, ["text"], 5000, 0.9995,
+            ...                                              SentencePieceModel.UNIGRAM, {})
         """
 
         return dataset.build_sentencepiece_vocab(col_names, vocab_size, character_coverage,
@@ -203,6 +224,10 @@ class SentencePieceVocab(cde.SentencePieceVocab):
 
         Returns:
             SentencePieceVocab, vocab built from the file.
+
+        Examples:
+            >>> vocab = text.SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
+            ...                                           SentencePieceModel.UNIGRAM, {})
         """
         return super().from_file(file_path, vocab_size, character_coverage,
                                  DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
@@ -217,6 +242,11 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             vocab(SentencePieceVocab): A SentencePiece object.
             path(str): Path to store model.
             filename(str): The name of the file.
+
+        Examples:
+            >>> vocab = text.SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
+            ...                                           SentencePieceModel.UNIGRAM, {})
+            >>> text.SentencePieceVocab.save_model(vocab, "./", "m.model")
         """
         super().save_model(vocab, path, filename)
 
@@ -231,6 +261,11 @@ def to_str(array, encoding='utf8'):
 
     Returns:
         numpy.ndarray, NumPy array of `str`.
+
+    Examples:
+        >>> dataset = ds.TextFileDataset("/path/to/text_file_dataset_file", shuffle=False)
+        >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        >>>     print(text.to_str(item["text"]))
     """
 
     if not isinstance(array, np.ndarray):
