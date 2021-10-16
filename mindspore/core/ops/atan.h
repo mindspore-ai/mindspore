@@ -27,11 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAtan = "Atan";
+/// \brief Computes the trigonometric inverse tangent of the input element-wise.
+/// Refer to Python API @ref mindspore.ops.Atan for more details.
 class MS_CORE_API Atan : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Atan() : PrimitiveC(kNameAtan) {}
+  /// \brief Destructor.
   ~Atan() = default;
   MS_DECLARE_PARENT(Atan, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Atan for the inputs.
   void Init() {}
 };
 AbstractBasePtr ATanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

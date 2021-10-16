@@ -27,9 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCast = "Cast";
+/// \brief Returns a tensor with the new specified data type.
+/// Refer to Python API @ref mindspore.ops.Cast for more details.
 class MS_CORE_API Cast : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Cast() : PrimitiveC(kNameCast) { InitIOName({"x", "dst_type"}, {"output"}); }
+  /// \brief Destructor.
   ~Cast() = default;
   MS_DECLARE_PARENT(Cast, PrimitiveC);
 };

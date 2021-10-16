@@ -26,13 +26,21 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameElu = "Elu";
+/// \brief Calculate exponential linearity. Refer to Python API @ref mindspore.ops.Elu for more details.
 class MS_CORE_API Elu : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Elu() : PrimitiveC(kNameElu) {}
+  /// \brief Destructor.
   ~Elu() = default;
   MS_DECLARE_PARENT(Elu, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Elu for the inputs.
   void Init(const float alpha = 0.0);
+  /// \brief Set alpha.
   void set_alpha(const float alpha);
+  /// \brief Get alpha.
+  ///
+  /// \return alpha.
   float get_alpha() const;
 };
 AbstractBasePtr EluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

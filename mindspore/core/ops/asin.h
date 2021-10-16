@@ -26,11 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAsin = "Asin";
+/// \brief Computes arcsine of input tensors element-wise.
+/// Refer to Python API @ref mindspore.ops.Asin for more details.
 class MS_CORE_API Asin : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Asin() : PrimitiveC(kNameAsin) {}
+  /// \brief Destructor.
   ~Asin() = default;
   MS_DECLARE_PARENT(Asin, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Asin for the inputs.
   void Init() {}
 };
 AbstractBasePtr ASinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -25,11 +25,16 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Generates the mask value for the input shape.
+/// Refer to Python API @ref mindspore.ops.DropoutGenMask for more details.
 class MS_CORE_API DropoutGenMask : public PrimitiveC {
  public:
+  /// \brief Constructor.
   DropoutGenMask() : PrimitiveC(prim::kPrimDropoutGenMask->name()) {}
+  /// \brief Destructor.
   ~DropoutGenMask() = default;
   MS_DECLARE_PARENT(DropoutGenMask, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DropoutGenMask for the inputs.
   void Init() {}
 };
 AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -26,19 +26,36 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyMomentum = "ApplyMomentum";
+/// \brief Optimizer that implements the Momentum algorithm.
+/// Refer to Python API @ref mindspore.ops.ApplyMomentum for more details.
 class MS_CORE_API ApplyMomentum : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ApplyMomentum() : PrimitiveC(kNameApplyMomentum) {
     InitIOName({"variable", "accumulation", "learning_rate", "gradient", "momentum"}, {"output"});
   }
+  /// \brief Destructor.
   ~ApplyMomentum() = default;
   MS_DECLARE_PARENT(ApplyMomentum, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ApplyMomentum for the inputs.
   void Init(const bool use_nesterov = false, const bool use_locking = false, const float gradient_scale = 1.0);
+  /// \brief Set use_nesterov.
   void set_use_nesterov(const bool use_nesterov);
+  /// \brief Set use_locking.
   void set_use_locking(const bool use_locking);
+  /// \brief Set gradient_scale.
   void set_gradient_scale(const float gradient_scale);
+  /// \brief Get use_nesterov.
+  ///
+  /// \return use_nesterov.
   bool get_use_nesterov() const;
+  /// \brief Get use_locking.
+  ///
+  /// \return use_locking.
   bool get_use_locking() const;
+  /// \brief Get gradient_scale.
+  ///
+  /// \return gradient_scale.
   float get_gradient_scale() const;
 };
 AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

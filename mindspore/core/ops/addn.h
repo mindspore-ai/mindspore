@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAddN = "AddN";
+/// \brief Computes addition of all input tensors element-wise.
+/// Refer to Python API @ref mindspore.ops.AddN for more details.
 class MS_CORE_API AddN : public PrimitiveC {
  public:
+  /// \brief Constructor.
   AddN() : PrimitiveC(kNameAddN) { InitIOName({"inputs"}, {"sum"}); }
+  /// \brief Destructor.
   ~AddN() = default;
   MS_DECLARE_PARENT(AddN, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.AddN for the inputs.
   void Init() {}
 };
 AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

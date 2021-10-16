@@ -27,13 +27,18 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCTCLossV2 = "CTCLossV2";
+/// \brief Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
+/// Refer to Python API @ref mindspore.ops.CTCLossV2 for more details.
 class MS_CORE_API CTCLossV2 : public PrimitiveC {
  public:
+  /// \brief Constructor.
   CTCLossV2() : PrimitiveC(kNameCTCLossV2) {
     InitIOName({"log_probs", "targets", "input_lengths", "target_lengths"}, {"neg_log_likelihood", "log_alpha"});
   }
+  /// \brief Destructor.
   ~CTCLossV2() = default;
   MS_DECLARE_PARENT(CTCLossV2, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CTCLossV2 for the inputs.
   void Init() {}
 };
 

@@ -27,15 +27,29 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFakeQuantWithMinMaxVarsPerChannel = "FakeQuantWithMinMaxVarsPerChannel";
+/// \brief Fake-quantize the input and one of shape: [d], [b, d], [b, h, w, d] by per-channel minimum and maximum.
+/// Refer to Python API @ref mindspore.ops.FakeQuantWithMinMaxVarsPerChannel for more details.
 class MS_CORE_API FakeQuantWithMinMaxVarsPerChannel : public PrimitiveC {
  public:
+  /// \brief Constructor.
   FakeQuantWithMinMaxVarsPerChannel() : PrimitiveC(kNameFakeQuantWithMinMaxVarsPerChannel) {}
+  /// \brief Destructor.
   ~FakeQuantWithMinMaxVarsPerChannel() = default;
   MS_DECLARE_PARENT(FakeQuantWithMinMaxVarsPerChannel, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FakeQuantWithMinMaxVarsPerChannel
+  /// for the inputs.
   void Init(const int64_t num_bits = 8, const bool narrow_range = false);
+  /// \brief Set num_bits.
   void set_num_bits(const int64_t num_bits);
+  /// \brief Set narrow_range.
   void set_narrow_range(const bool narrow_range);
+  /// \brief Get num_bits.
+  ///
+  /// \return num_bits.
   int64_t get_num_bits() const;
+  /// \brief Get narrow_range.
+  ///
+  /// \return narrow_range.
   bool get_narrow_range() const;
 };
 

@@ -26,13 +26,22 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDropout = "Dropout";
+/// \brief During training, randomly zeroes some of the elements of the input tensor with probability 1-keep_prob
+//// from a Bernoulli distribution. Refer to Python API @ref mindspore.ops.Dropout for more details.
 class MS_CORE_API Dropout : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Dropout() : PrimitiveC(kNameDropout) {}
+  /// \brief Destructor.
   ~Dropout() = default;
   MS_DECLARE_PARENT(Dropout, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Dropout for the inputs.
   void Init(const float keep_prob = 0.5);
+  /// \brief Set keep_prob.
   void set_keep_prob(const float keep_prob);
+  /// \brief Get keep_prob.
+  ///
+  /// \return keep_prob.
   float get_keep_prob() const;
 };
 AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

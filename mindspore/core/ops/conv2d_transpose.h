@@ -28,42 +28,90 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DTranspose = "Conv2DTranspose";
+/// \brief 2D transposed convolution layer. Refer to Python API @ref mindspore.nn.Conv2dTranspose for more details.
 class MS_CORE_API Conv2DTranspose : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Conv2DTranspose() : PrimitiveC(kNameConv2DTranspose) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});
   }
   explicit Conv2DTranspose(const std::string k_name) : PrimitiveC(k_name) {
     InitIOName({"out_backprop", "filter", "input_sizes"}, {"output"});
   }
+  /// \brief Destructor.
   ~Conv2DTranspose() = default;
   MS_DECLARE_PARENT(Conv2DTranspose, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.nn.Conv2dTranspose for the inputs.
   void Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0},
             const std::vector<int64_t> &stride = {1, 1}, const std::vector<int64_t> &dilation = {1, 1},
             int64_t group = 1, const Format &format = NCHW, const std::vector<int64_t> &pad_list = {0, 0, 0, 0});
+  /// \brief Set in_channel.
   void set_in_channel(int64_t in_channel);
+  /// \brief Set out_channel.
   void set_out_channel(int64_t out_channel);
+  /// \brief Set kernel_size.
   virtual void set_kernel_size(const std::vector<int64_t> &kernel_size);
+  /// \brief Set stride.
   void set_stride(const std::vector<int64_t> &stride);
+  /// \brief Set dilation.
   virtual void set_dilation(const std::vector<int64_t> &dilation);
+  /// \brief Set pad_mode.
   void set_pad_mode(const PadMode &pad_mode);
+  /// \brief Set pad.
   void set_pad(const std::vector<int64_t> &pad);
+  /// \brief Set mode.
   void set_mode(int64_t mode);
+  /// \brief Set group.
   void set_group(int64_t group);
+  /// \brief Set format.
   void set_format(const Format &format);
+  /// \brief Set pad_list.
   void set_pad_list(const std::vector<int64_t> &pad_list);
 
+  /// \brief Get in_channel.
+  ///
+  /// \return in_channel.
   int64_t get_in_channel() const;
+  /// \brief Get out_channel.
+  ///
+  /// \return out_channel.
   int64_t get_out_channel() const;
+  /// \brief Get kernel_size.
+  ///
+  /// \return kernel_size.
   std::vector<int64_t> get_kernel_size() const;
+  /// \brief Get stride.
+  ///
+  /// \return stride.
   std::vector<int64_t> get_stride() const;
+  /// \brief Get dilation.
+  ///
+  /// \return dilation.
   std::vector<int64_t> get_dilation() const;
+  /// \brief Get pad_mode.
+  ///
+  /// \return pad_mode.
   PadMode get_pad_mode() const;
+  /// \brief Get pad.
+  ///
+  /// \return pad.
   std::vector<int64_t> get_pad() const;
+  /// \brief Get mode.
+  ///
+  /// \return mode.
   int64_t get_mode() const;
+  /// \brief Get group.
+  ///
+  /// \return group.
   int64_t get_group() const;
+  /// \brief Get format.
+  ///
+  /// \return format.
   Format get_format() const;
+  /// \brief Get pad_list.
+  ///
+  /// \return pad_list.
   std::vector<int64_t> get_pad_list() const;
 };
 AbstractBasePtr Conv2DTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -27,15 +27,27 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBroadcast = "Broadcast";
+/// \brief Broadcasts the tensor to the whole group. Refer to Python API @ref mindspore.ops.Broadcast for more details.
 class MS_CORE_API Broadcast : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Broadcast() : PrimitiveC(kNameBroadcast) {}
+  /// \brief Destructor.
   ~Broadcast() = default;
   MS_DECLARE_PARENT(Broadcast, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Broadcast for the inputs.
   void Init(const int64_t root_rank, const std::string &group = "hccl_world_group");
+  /// \brief Set root_rank.
   void set_root_rank(const int64_t root_rank);
+  /// \brief Set group.
   void set_group(const std::string &group);
+  /// \brief Get root_rank.
+  ///
+  /// \return root_rank.
   int64_t get_root_rank() const;
+  /// \brief Get group.
+  ///
+  /// \return group.
   std::string get_group() const;
 };
 AbstractBasePtr BroadcastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

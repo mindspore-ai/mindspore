@@ -25,9 +25,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameErf = "Erf";
+/// \brief Computes the Gauss error function of x element-wise.
+/// Refer to Python API @ref mindspore.ops.Erf for more details.
 class MS_CORE_API Erf : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Erf() : PrimitiveC(kNameErf) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~Erf() = default;
   MS_DECLARE_PARENT(Erf, PrimitiveC);
 };

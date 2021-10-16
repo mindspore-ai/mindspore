@@ -23,11 +23,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFloorDiv = "FloorDiv";
+/// \brief Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
+/// Refer to Python API @ref mindspore.ops.FloorDiv for more details.
 class MS_CORE_API FloorDiv : public PrimitiveC {
  public:
+  /// \brief Constructor.
   FloorDiv() : PrimitiveC(kNameFloorDiv) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~FloorDiv() = default;
   MS_DECLARE_PARENT(FloorDiv, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FloorDiv for the inputs.
   void Init() {}
 };
 }  // namespace ops
