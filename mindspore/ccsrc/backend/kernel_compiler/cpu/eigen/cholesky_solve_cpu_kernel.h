@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN3_LU_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN3_LU_CPU_KERNEL_H_
-
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_KERNEL_H_
 #include <vector>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
@@ -24,42 +23,35 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LUCPUKernel : public CPUKernel {
+class CholeskySolverCPUKernel : public CPUKernel {
  public:
-  LUCPUKernel() = default;
-  ~LUCPUKernel() override = default;
+  CholeskySolverCPUKernel() = default;
+  ~CholeskySolverCPUKernel() override = default;
+
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
  private:
   void InitMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
-  size_t a_row_{1};
-  size_t a_col_{1};
-  size_t lu_row_{1};
-  size_t lu_col_{1};
-  size_t pivots_row_{1};
-  size_t pivots_col_{1};
-  size_t permutation_row_{1};
-  size_t permutation_col_{1};
+
+  size_t input_a_row_{1};
+  size_t input_a_col_{1};
+  size_t input_b_row_{1};
+  size_t input_b_col_{1};
+  size_t output_row_{1};
+  size_t output_col_{1};
   TypeId dtype_{kNumberTypeFloat32};
 };
 
-MS_REG_CPU_KERNEL_T(LU,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeFloat32)
-                      .AddOutputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeInt32),
-                    LUCPUKernel, float);
-MS_REG_CPU_KERNEL_T(LU,
-                    KernelAttr()
-                      .AddInputAttr(kNumberTypeFloat64)
-                      .AddOutputAttr(kNumberTypeFloat64)
-                      .AddOutputAttr(kNumberTypeInt32)
-                      .AddOutputAttr(kNumberTypeInt32),
-                    LUCPUKernel, double);
+MS_REG_CPU_KERNEL_T(
+  CholeskySolver,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  CholeskySolverCPUKernel, float)
+MS_REG_CPU_KERNEL_T(
+  CholeskySolver,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  CholeskySolverCPUKernel, double)
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN3_LU_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_KERNEL_H_

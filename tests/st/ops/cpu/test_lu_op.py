@@ -36,16 +36,48 @@ class LU(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         super().__init__(name="LU")
-        self.init_prim_io_names(inputs=['x', 'b'], outputs=['lu', 'pivots', 'permutation'])
+        self.init_prim_io_names(inputs=['x'], outputs=['lu', 'pivots', 'permutation'])
+
+    def __infer__(self, x):
+        x_shape = list(x['shape'])
+        x_dtype = x['dtype']
+        pivots_shape = []
+        permutation_shape = []
+        ndim = len(x_shape)
+        if ndim == 0:
+            pivots_shape = x_shape
+            permutation_shape = x_shape
+        elif ndim == 1:
+            pivots_shape = x_shape[:-1]
+            permutation_shape = x_shape[:-1]
+        else:
+            pivots_shape = x_shape[-2:-1]
+            permutation_shape = x_shape[-2:-1]
+
+        output = {
+            'shape': (x_shape, pivots_shape, permutation_shape),
+            'dtype': (x_dtype, mstype.int32, mstype.int32),
+            'value': None
+        }
+        return output
+
+
+class LUSolver(PrimitiveWithInfer):
+    """
+    LUSolver for Ax = b
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        super().__init__(name="LUSolver")
+        self.init_prim_io_names(inputs=['x', 'b'], outputs=['output'])
 
     def __infer__(self, x, b):
         b_shape = list(b['shape'])
         x_dtype = x['dtype']
-        pivots_shape = []
-        permutation_shape = []
         output = {
-            'shape': (b_shape, pivots_shape, permutation_shape),
-            'dtype': (x_dtype, mstype.int32, mstype.int32),
+            'shape': tuple(b_shape),
+            'dtype': x_dtype,
             'value': None
         }
         return output
@@ -56,8 +88,17 @@ class LuNet(nn.Cell):
         super(LuNet, self).__init__()
         self.lu = LU()
 
+    def construct(self, a):
+        return self.lu(a)
+
+
+class LUSolverNet(nn.Cell):
+    def __init__(self):
+        super(LUSolverNet, self).__init__()
+        self.lu_solver = LUSolver()
+
     def construct(self, a, b):
-        return self.lu(a, b)
+        return self.lu_solver(a, b)
 
 
 def _match_array(actual, expected, error=0):
@@ -75,7 +116,24 @@ def _match_array(actual, expected, error=0):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('n', [10, 20])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_net(n: int, dtype: Generic):
+def test_lu_net(n: int, dtype: Generic):
+    """
+    Feature: ALL To ALL
+    Description: test cases for lu decomposition test cases for A[N,N]x = b[N,1]
+    Expectation: the result match to scipy
+    """
+    a = (np.random.random((n, n)) + np.eye(n)).astype(dtype)
+    s_lu, _ = lu_factor(a)
+    mscp_lu_net = LuNet()
+    tensor_a = Tensor(a)
+    mscp_lu, _, _ = mscp_lu_net(tensor_a)
+    _match_array(mscp_lu.asnumpy(), s_lu, error=4)
+
+
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('n', [10, 20])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_lu_solver_net(n: int, dtype: Generic):
     """
     Feature: ALL To ALL
     Description: test cases for lu_solve test cases for A[N,N]x = b[N,1]
@@ -86,8 +144,8 @@ def test_net(n: int, dtype: Generic):
     s_lu, s_piv = lu_factor(a)
     lu_factor_x = (s_lu, s_piv)
     scp_x = lu_solve(lu_factor_x, b)
-    mscp_lu_net = LuNet()
+    mscp_lu_net = LUSolverNet()
     tensor_a = Tensor(a)
     tensor_b = Tensor(b)
-    mscp_x, _, _ = mscp_lu_net(tensor_a, tensor_b)
+    mscp_x = mscp_lu_net(tensor_a, tensor_b)
     _match_array(mscp_x.asnumpy(), scp_x, error=4)

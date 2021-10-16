@@ -94,6 +94,8 @@ constexpr char CLOSED[] = "closed";
 constexpr char NA_OPTION[] = "na_option";
 constexpr char ASCENDING[] = "ascending";
 constexpr char PCT[] = "pct";
+constexpr char LOWER[] = "lower";
+constexpr char CLEAN[] = "clean";
 
 struct ParallelSearchInfo {
   double min_cost_time{DBL_MAX};
