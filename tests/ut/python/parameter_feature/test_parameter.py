@@ -17,6 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.ops.composite as C
 from mindspore import Tensor, Parameter
+from mindspore import nn
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
@@ -312,3 +313,23 @@ def test_pass_args_by_key_ward_way():
     grad_net = GradNet(net)
     sens = Tensor(np.ones((3, 3, 4), np.float32))
     grad_net(x, y=y, z=z, sens=sens)
+
+
+def test_none_input():
+    """
+    Feature: Net's inputs
+    Description: Support none input for the outermost net
+    Expectation: no error
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.op = nn.ResizeBilinear()
+
+        def construct(self, a, b, c, d):
+            return self.op(a, b, c, d)
+
+    x = Tensor(np.array([1, 2, 3, 4]).astype(np.float32).reshape((1, 1, 2, 2,)))
+    net = Net()
+    net(x, (4, 4), None, True)
