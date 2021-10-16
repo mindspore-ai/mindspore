@@ -60,7 +60,7 @@ class RegistryKernelImpl {
   std::mutex lock_;
 
   registry::CreateKernel GetCustomKernelCreator(const schema::Primitive *primitive, registry::KernelDesc *desc);
-  int GetFuncIndex(const registry::KernelDesc &desc);
+  int GetFuncIndex(const registry::KernelDesc &desc) const;
 };
 }  // namespace mindspore::registry
 

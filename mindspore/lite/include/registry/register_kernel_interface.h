@@ -39,7 +39,8 @@ class MS_API RegisterKernelInterface {
   /// \param[in] creator Define the KernelInterface create function.
   ///
   /// \return Status as a status identification of registering.
-  static Status CustomReg(const std::string &provider, const std::string &op_type, KernelInterfaceCreator creator);
+  static Status CustomReg(const std::string &provider, const std::string &op_type,
+                          const KernelInterfaceCreator creator);
 
   /// \brief Static method to register op whose primitive type is ordinary.
   ///
@@ -48,7 +49,7 @@ class MS_API RegisterKernelInterface {
   /// \param[in] creator Define the KernelInterface create function.
   ///
   /// \return Status as a status identification of registering.
-  static Status Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator);
+  static Status Reg(const std::string &provider, int op_type, const KernelInterfaceCreator creator);
 
   /// \brief Static method to get registration of a certain op.
   ///
@@ -68,7 +69,7 @@ class MS_API KernelInterfaceReg {
   /// \param[in] provider Define the identification of user.
   /// \param[in] op_type Define the ordinary op type.
   /// \param[in] creator Define the KernelInterface create function.
-  KernelInterfaceReg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
+  KernelInterfaceReg(const std::string &provider, int op_type, const KernelInterfaceCreator creator) {
     RegisterKernelInterface::Reg(provider, op_type, creator);
   }
 
@@ -77,7 +78,7 @@ class MS_API KernelInterfaceReg {
   /// \param[in] provider Define the identification of user.
   /// \param[in] op_type Define the concrete type of a custom op.
   /// \param[in] creator Define the KernelInterface create function.
-  KernelInterfaceReg(const std::string &provider, const std::string &op_type, KernelInterfaceCreator creator) {
+  KernelInterfaceReg(const std::string &provider, const std::string &op_type, const KernelInterfaceCreator creator) {
     RegisterKernelInterface::CustomReg(provider, op_type, creator);
   }
 };

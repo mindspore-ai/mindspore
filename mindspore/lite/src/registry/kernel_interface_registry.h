@@ -36,8 +36,9 @@ class KernelInterfaceRegistry {
 
   std::shared_ptr<kernel::KernelInterface> GetKernelInterface(const std::string &provider,
                                                               const schema::Primitive *primitive);
-  Status CustomReg(const std::string &provider, const std::string &op_type, registry::KernelInterfaceCreator creator);
-  Status Reg(const std::string &provider, int op_type, registry::KernelInterfaceCreator creator);
+  Status CustomReg(const std::string &provider, const std::string &op_type,
+                   const registry::KernelInterfaceCreator creator);
+  Status Reg(const std::string &provider, int op_type, const registry::KernelInterfaceCreator creator);
   virtual ~KernelInterfaceRegistry();
 
  private:

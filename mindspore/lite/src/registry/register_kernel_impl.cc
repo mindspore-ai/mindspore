@@ -33,7 +33,7 @@ static const auto kDataTypeLen =
 static const auto kOpTypeLen = PrimitiveType_MAX - PrimitiveType_MIN;
 }  // namespace
 
-int RegistryKernelImpl::GetFuncIndex(const KernelDesc &desc) {
+int RegistryKernelImpl::GetFuncIndex(const KernelDesc &desc) const {
   if (desc.data_type >= DataType::kNumberTypeEnd) {
     return -1;
   }
@@ -49,7 +49,7 @@ int RegistryKernelImpl::GetFuncIndex(const KernelDesc &desc) {
 }
 
 Status RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::string &provider, DataType data_type,
-                                           const std::string &type, CreateKernel creator) {
+                                           const std::string &type, const CreateKernel creator) {
   if (data_type >= DataType::kNumberTypeEnd) {
     MS_LOG(ERROR) << "invalid data_type: " << static_cast<int>(data_type) << "!provider: " << provider;
     return kLiteError;
@@ -74,7 +74,7 @@ Status RegistryKernelImpl::RegCustomKernel(const std::string &arch, const std::s
 }
 
 Status RegistryKernelImpl::RegKernel(const std::string &arch, const std::string &provider, DataType data_type, int type,
-                                     registry::CreateKernel creator) {
+                                     const registry::CreateKernel creator) {
   std::unique_lock<std::mutex> lock(lock_);
   auto iter = kernel_creators_.find(provider);
   if (iter == kernel_creators_.end()) {
