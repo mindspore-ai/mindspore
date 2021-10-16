@@ -28,13 +28,21 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLeakyRelu = "LeakyRelu";
+/// \brief Leaky ReLU activation function. Refer to Python API @ref mindspore.nn.LeakyReLU for more details.
 class MS_CORE_API LeakyRelu : public PrimitiveC {
  public:
+  /// \brief Constructor.
   LeakyRelu() : PrimitiveC(kNameLeakyRelu) {}
+  /// \brief Destructor.
   ~LeakyRelu() = default;
   MS_DECLARE_PARENT(LeakyRelu, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.nn.LeakyReLU for the inputs.
   void Init(const float negative_slope);
+  /// \brief Set negative_slope.
   void set_negative_slope(const float negative_slope);
+  /// \brief Get negative_slope.
+  ///
+  /// \return negative_slope.
   float get_negative_slope() const;
 };
 

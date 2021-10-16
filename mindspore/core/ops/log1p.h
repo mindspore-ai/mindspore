@@ -27,11 +27,16 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Returns the natural logarithm of one plus the input tensor element-wise.
+/// Refer to Python API @ref mindspore.ops.Log1p for more details.
 class MS_CORE_API Log1p : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Log1p() : PrimitiveC(prim::kPrimLog1p->name()) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~Log1p() = default;
   MS_DECLARE_PARENT(Log1p, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Log1p for the inputs.
   void Init() {}
 };
 }  // namespace ops

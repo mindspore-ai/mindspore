@@ -27,9 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLess = "Less";
+/// \brief Computes the boolean value of \f$x<y\f$ element-wise.
+/// Refer to Python API @ref mindspore.ops.Less for more details.
 class MS_CORE_API Less : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Less() : PrimitiveC(kNameLess) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~Less() = default;
   MS_DECLARE_PARENT(Less, PrimitiveC);
 };

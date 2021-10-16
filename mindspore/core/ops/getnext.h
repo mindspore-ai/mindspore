@@ -28,11 +28,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGetNext = prim::kGetNext;
+/// \brief Returns the next element in the dataset queue.
+/// Refer to Python API @ref mindspore.ops.GetNext for more details.
 class MS_CORE_API GetNext : public PrimitiveC {
  public:
+  /// \brief Constructor.
   GetNext() : PrimitiveC(prim::kPrimGetNext->name()) {}
+  /// \brief Destructor.
   ~GetNext() = default;
   MS_DECLARE_PARENT(GetNext, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GetNext for the inputs.
   void Init() {}
 };
 AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

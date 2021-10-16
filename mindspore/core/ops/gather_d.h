@@ -27,11 +27,16 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Gathers values along an axis specified by dimension.
+/// Refer to Python API @ref mindspore.ops.GatherD for more details.
 class MS_CORE_API GatherD : public PrimitiveC {
  public:
+  /// \brief Constructor.
   GatherD() : PrimitiveC(prim::kPrimGatherD->name()) { InitIOName({"x", "dim", "index"}, {"output"}); }
+  /// \brief Destructor.
   ~GatherD() = default;
   MS_DECLARE_PARENT(GatherD, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GatherD for the inputs.
   void Init() {}
 };
 }  // namespace ops

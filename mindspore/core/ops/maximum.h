@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaximum = "Maximum";
+/// \brief Computes the maximum of input tensors element-wise.
+/// Refer to Python API @ref mindspore.ops.Maximum for more details.
 class MS_CORE_API Maximum : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Maximum() : PrimitiveC(kNameMaximum) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~Maximum() = default;
   MS_DECLARE_PARENT(Maximum, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Maximum for the inputs.
   void Init() {}
 };
 AbstractBasePtr MaximumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

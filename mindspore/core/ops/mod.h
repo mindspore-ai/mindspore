@@ -23,11 +23,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMod = "Mod";
+/// \brief Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
+/// Refer to Python API @ref mindspore.ops.Mod for more details.
 class MS_CORE_API Mod : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Mod() : PrimitiveC(kNameMod) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~Mod() = default;
   MS_DECLARE_PARENT(Mod, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Mod for the inputs.
   void Init() {}
 };
 }  // namespace ops

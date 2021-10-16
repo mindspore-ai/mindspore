@@ -27,11 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGather = "Gather";
+/// \brief Returns a slice of the input tensor based on the specified indices and axis.
+/// Refer to Python API @ref mindspore.ops.Gather for more details.
 class MS_CORE_API Gather : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Gather() : PrimitiveC(kNameGather) { InitIOName({"param", "indices", "axis"}, {"output"}); }
+  /// \brief Destructor.
   ~Gather() = default;
   MS_DECLARE_PARENT(Gather, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Gather for the inputs.
   void Init() {}
 };
 using PrimGatherPtr = std::shared_ptr<Gather>;

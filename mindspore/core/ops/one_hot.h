@@ -25,15 +25,23 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Computes a one-hot tensor. Refer to Python API @ref mindspore.ops.OneHot for more details.
 class MS_CORE_API OneHot : public PrimitiveC {
  public:
+  /// \brief Constructor.
   OneHot() : PrimitiveC(prim::kPrimOneHot->name()) {
     InitIOName({"indices", "depth", "on_value", "off_value"}, {"output"});
   }
+  /// \brief Destructor.
   ~OneHot() = default;
   MS_DECLARE_PARENT(OneHot, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.OneHot for the inputs.
   void Init(const int64_t axis);
+  /// \brief Set axis.
   void set_axis(const int64_t axis);
+  /// \brief Get axis.
+  ///
+  /// \return axis.
   int64_t get_axis() const;
 };
 using PrimOneHotPtr = std::shared_ptr<OneHot>;

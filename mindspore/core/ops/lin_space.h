@@ -26,9 +26,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLinSpace = "LinSpace";
+/// \brief Returns a Tensor whose value is evenly spaced in the interval start and stop (including start and stop).
+/// Refer to Python API @ref mindspore.ops.LinSpace for more details.
 class MS_CORE_API LinSpace : public PrimitiveC {
  public:
+  /// \brief Constructor.
   LinSpace() : PrimitiveC(kNameLinSpace) { InitIOName({"start", "stop", "num"}, {"output"}); }
+  /// \brief Destructor.
   ~LinSpace() = default;
   MS_DECLARE_PARENT(LinSpace, PrimitiveC);
 };

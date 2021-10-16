@@ -27,18 +27,35 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLayerNorm = prim::kLayerNorm;
+/// \brief Applies the Layer Normalization to the input tensor.
+/// Refer to Python API @ref mindspore.ops.LayerNorm for more details.
 class MS_CORE_API LayerNorm : public PrimitiveC {
  public:
+  /// \brief Constructor.
   LayerNorm() : PrimitiveC(kNameLayerNorm) {}
   explicit LayerNorm(const std::string k_name) : PrimitiveC(k_name) {}
+  /// \brief Destructor.
   ~LayerNorm() = default;
   MS_DECLARE_PARENT(LayerNorm, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LayerNorm for the inputs.
   void Init(const int64_t begin_norm_axis = 1, const int64_t begin_params_axis = 1, const float epsilon = 1e-7);
+  /// \brief Set begin_norm_axis.
   void set_begin_norm_axis(const int64_t begin_norm_axis);
+  /// \brief Set begin_params_axis.
   void set_begin_params_axis(const int64_t begin_params_axis);
+  /// \brief Set epsilon.
   void set_epsilon(const float epsilon);
+  /// \brief Get begin_norm_axis.
+  ///
+  /// \return begin_norm_axis.
   int64_t get_begin_norm_axis() const;
+  /// \brief Get begin_params_axis.
+  ///
+  /// \return begin_params_axis.
   int64_t get_begin_params_axis() const;
+  /// \brief Get epsilon.
+  ///
+  /// \return epsilon.
   float get_epsilon() const;
 };
 

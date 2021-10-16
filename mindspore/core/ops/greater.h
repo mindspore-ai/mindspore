@@ -27,11 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGreater = "Greater";
+/// \brief Computes the boolean value of \f$x>y\f$ element-wise.
+/// Refer to Python API @ref mindspore.ops.Greater for more details.
 class MS_CORE_API Greater : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Greater() : PrimitiveC(kNameGreater) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~Greater() = default;
   MS_DECLARE_PARENT(Greater, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Greater for the inputs.
   void Init() {}
 };
 }  // namespace ops
