@@ -29,13 +29,21 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBiasAdd = prim::kBiasAdd;
+/// \brief Returns sum of input and bias tensor. Refer to Python API @ref mindspore.ops.BiasAdd for more details.
 class MS_CORE_API BiasAdd : public PrimitiveC {
  public:
+  /// \brief Constructor.
   BiasAdd() : PrimitiveC(prim::kPrimBiasAdd->name()) { InitIOName({"x", "b"}, {"output"}); }
+  /// \brief Destructor.
   ~BiasAdd() = default;
   MS_DECLARE_PARENT(BiasAdd, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BiasAdd for the inputs.
   void Init(const Format &format = NCHW);
+  /// \brief Set format.
   void set_format(const Format &format);
+  /// \brief Get format.
+  ///
+  /// \return format.
   Format get_format() const;
 };
 AbstractBasePtr BiasAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

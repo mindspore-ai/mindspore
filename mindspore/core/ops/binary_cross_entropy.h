@@ -28,13 +28,22 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBinaryCrossEntropy = "BinaryCrossEntropy";
+/// \brief Computes the binary cross entropy between the logits and the labels.
+/// Refer to Python API @ref mindspore.ops.BinaryCrossEntropy for more details.
 class MS_CORE_API BinaryCrossEntropy : public PrimitiveC {
  public:
+  /// \brief Constructor.
   BinaryCrossEntropy() : PrimitiveC(kNameBinaryCrossEntropy) {}
+  /// \brief Destructor.
   ~BinaryCrossEntropy() = default;
   MS_DECLARE_PARENT(BinaryCrossEntropy, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BinaryCrossEntropy for the inputs.
   void Init(const Reduction &reduction = MEAN);
+  /// \brief Set reduction.
   void set_reduction(const Reduction &reduction);
+  /// \brief Get reduction.
+  ///
+  /// \return reduction.
   Reduction get_reduction() const;
 };
 AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -27,13 +27,22 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Broadcasts input tensor to a given shape.
+/// Refer to Python API @ref mindspore.ops.BroadcastTo for more details.
 class MS_CORE_API BroadcastTo : public PrimitiveC {
  public:
+  /// \brief Constructor.
   BroadcastTo() : PrimitiveC(prim::kPrimBroadcastTo->name()) {}
+  /// \brief Destructor.
   ~BroadcastTo() = default;
   MS_DECLARE_PARENT(BroadcastTo, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BroadcastTo for the inputs.
   void Init(const std::vector<int64_t> &shape);
+  /// \brief Set shape.
   void set_shape(const std::vector<int64_t> &shape);
+  /// \brief Get shape.
+  ///
+  /// \return shape.
   std::vector<int64_t> get_shape() const;
 };
 

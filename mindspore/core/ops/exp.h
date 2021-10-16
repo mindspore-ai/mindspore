@@ -27,12 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExp = prim::kExp;
+/// \brief Returns exponential of a tensor element-wise. Refer to Python API @ref mindspore.ops.Exp for more details.
 class MS_CORE_API Exp : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Exp() : PrimitiveC(prim::kPrimExp->name()) { InitIOName({"x"}, {"y"}); }
   explicit Exp(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~Exp() = default;
   MS_DECLARE_PARENT(Exp, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Exp for the inputs.
   void Init() {}
 };
 

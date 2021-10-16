@@ -26,12 +26,17 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDiv = "Div";
+/// \brief Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
+/// Refer to Python API @ref mindspore.ops.Div for more details.
 class MS_CORE_API Div : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Div() : PrimitiveC(kNameDiv) { InitIOName({"x", "y"}, {"output"}); }
   explicit Div(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~Div() = default;
   MS_DECLARE_PARENT(Div, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Div for the inputs.
   void Init() {}
 };
 AbstractBasePtr DivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

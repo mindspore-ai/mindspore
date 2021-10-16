@@ -25,16 +25,29 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCropAndResize = "CropAndResize";
+/// \brief Extracts crops from the input image tensor and resizes them.
+/// Refer to Python API @ref mindspore.ops.CropAndResize for more details.
 class MS_CORE_API CropAndResize : public PrimitiveC {
  public:
+  /// \brief Constructor.
   CropAndResize() : PrimitiveC(kNameCropAndResize) { InitIOName({"x", "boxes", "box_index", "crop_size"}, {"y"}); }
+  /// \brief Destructor.
   ~CropAndResize() = default;
   MS_DECLARE_PARENT(CropAndResize, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CropAndResize for the inputs.
   void Init(ResizeMethod method, float extrapolation_value);
 
+  /// \brief Set method.
   void set_method(ResizeMethod method);
+  /// \brief Set extrapolation_value.
   void set_extrapolation_value(float extrapolation_value);
+  /// \brief Get method.
+  ///
+  /// \return method.
   ResizeMethod get_method() const;
+  /// \brief Get extrapolation_value.
+  ///
+  /// \return extrapolation_value.
   float get_extrapolation_value() const;
 };
 using PrimCropAndResizePtr = std::shared_ptr<CropAndResize>;
