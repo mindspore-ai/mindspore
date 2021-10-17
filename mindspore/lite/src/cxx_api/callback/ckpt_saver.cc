@@ -33,6 +33,7 @@ CkptSaver::CkptSaver(int save_every_n, const std::string &filename_prefix) {
 CkptSaver::~CkptSaver() {
   if (callback_impl_ == nullptr) {
     MS_LOG(ERROR) << "Callback implement is null.";
+    return;
   }
   auto internal_call_back = callback_impl_->GetInternalCallback();
   if (internal_call_back != nullptr) {
