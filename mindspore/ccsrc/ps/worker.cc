@@ -738,8 +738,8 @@ void Worker::SparsePartitioner(const KVMessage &send, PartitionKVMessages *parti
   iter = attrs.find(kOutDimSize);
   size_t outer_dim_size = static_cast<size_t>(iter->second);
 
-  size_t grad_size = send.len()[grad_index];
-  size_t indice_size = send.len()[indice_index];
+  size_t grad_size = send.len()[SizeToInt(grad_index)];
+  size_t indice_size = send.len()[SizeToInt(indice_index)];
   size_t segment_size = grad_size / indice_size;
 
   size_t grad_offset = 0;
