@@ -23,11 +23,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFloorMod = "FloorMod";
+/// \brief Computes the remainder of division element-wise.
+/// Refer to Python API @ref mindspore.ops.FloorMod for more details.
 class MS_CORE_API FloorMod : public PrimitiveC {
  public:
+  /// \brief Constructor.
   FloorMod() : PrimitiveC(kNameFloorMod) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~FloorMod() = default;
   MS_DECLARE_PARENT(FloorMod, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FloorMod for the inputs.
   void Init() {}
 };
 }  // namespace ops

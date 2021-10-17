@@ -27,23 +27,44 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchNorm = "BatchNorm";
+/// \brief Batch Normalization for input data and updated parameters.
+/// Refer to Python API @ref mindspore.ops.BatchNorm for more details.
 class MS_CORE_API BatchNorm : public PrimitiveC {
  public:
+  /// \brief Constructor.
   BatchNorm() : PrimitiveC(kNameBatchNorm) {
     InitIOName({"x", "scale", "offset", "mean", "variance"},
                {"y", "batch_mean", "batch_variance", "reserve_space_1", "reserve_space_2"});
   }
+  /// \brief Destructor.
   ~BatchNorm() = default;
   MS_DECLARE_PARENT(BatchNorm, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BatchNorm for the inputs.
   void Init(const bool is_training = false, const float epsilon = 1e-5, const float momentun = 0.1,
             const Format &format = NCHW);
+  /// \brief Set is_training.
   void set_is_training(const bool is_training);
+  /// \brief Set epsilon.
   void set_epsilon(const float epsilon);
+  /// \brief Set format.
   void set_format(const Format &format);
+  /// \brief Set momentum.
   void set_momentum(const float momentum);
+  /// \brief Get is_training.
+  ///
+  /// \return is_training.
   bool get_is_training() const;
+  /// \brief Get epsilon.
+  ///
+  /// \return epsilon.
   float get_epsilon() const;
+  /// \brief Get format.
+  ///
+  /// \return format.
   Format get_format() const;
+  /// \brief Get momentum.
+  ///
+  /// \return momentum.
   float get_momentum() const;
 };
 

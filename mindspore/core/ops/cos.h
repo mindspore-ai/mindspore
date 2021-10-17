@@ -25,11 +25,15 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Computes cosine of input element-wise. Refer to Python API @ref mindspore.ops.Cos for more details.
 class MS_CORE_API Cos : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Cos() : PrimitiveC(prim::kPrimCos->name()) {}
+  /// \brief Destructor.
   ~Cos() = default;
   MS_DECLARE_PARENT(Cos, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Cos for the inputs.
   void Init(float alpha = 0.0);
 };
 }  // namespace ops

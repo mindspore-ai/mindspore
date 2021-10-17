@@ -29,9 +29,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCdist = "Cdist";
+/// \brief Computes batched the p norm distance between each pair of the two collections of row vectors.
+/// Refer to Python API @ref mindspore.ops.Cdist for more details.
 class MS_CORE_API Cdist : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Cdist() : PrimitiveC(kNameCdist) { InitIOName({"input_x", "input_y"}, {"output"}); }
+  /// \brief Destructor.
   ~Cdist() = default;
   MS_DECLARE_PARENT(Cdist, PrimitiveC);
 };

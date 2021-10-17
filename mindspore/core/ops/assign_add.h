@@ -26,11 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAssignAdd = "AssignAdd";
+/// \brief Updates a Parameter by adding a value to it.
+/// Refer to Python API @ref mindspore.ops.AssignAdd for more details.
 class MS_CORE_API AssignAdd : public PrimitiveC {
  public:
+  /// \brief Constructor.
   AssignAdd() : PrimitiveC(kNameAssignAdd) { InitIOName({"ref", "value"}, {"output"}); }
+  /// \brief Destructor.
   ~AssignAdd() = default;
   MS_DECLARE_PARENT(AssignAdd, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.AssignAdd for the inputs.
   void Init() {}
 };
 AbstractBasePtr AssignAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

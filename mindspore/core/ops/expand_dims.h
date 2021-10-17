@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExpandDims = "ExpandDims";
+/// \brief Adds an additional dimension to ‘input_x` at the given axis.
+/// Refer to Python API @ref mindspore.ops.ExpandDims for more details.
 class MS_CORE_API ExpandDims : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ExpandDims() : PrimitiveC(kNameExpandDims) { InitIOName({"x", "axis"}, {"output"}); }
+  /// \brief Destructor.
   ~ExpandDims() = default;
   MS_DECLARE_PARENT(ExpandDims, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ExpandDims for the inputs.
   void Init() {}
 };
 AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

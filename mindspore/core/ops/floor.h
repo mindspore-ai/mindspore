@@ -27,11 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFloor = "Floor";
+/// \brief Rounds a tensor down to the closest integer element-wise.
+/// Refer to Python API @ref mindspore.ops.Floor for more details.
 class MS_CORE_API Floor : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Floor() : PrimitiveC(kNameFloor) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~Floor() = default;
   MS_DECLARE_PARENT(Floor, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Floor for the inputs.
   void Init() {}
 };
 AbstractBasePtr FloorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
