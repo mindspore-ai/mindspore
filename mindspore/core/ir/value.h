@@ -34,10 +34,10 @@
 #include "utils/ms_utils.h"
 
 namespace mindspore {
-/// \brief ValueSequeue defined a Value class whose type is Sequeue.
+/// \brief ValueSequeue defines a Value class whose type is Sequeue.
 class MS_CORE_API ValueSequeue : public Value {
  public:
-  /// \brief ValueSequeue display defined a Value class whose type is Sequeue, such as Tuple.
+  /// \brief ValueSequeue display defines a Value class whose type is Sequeue, such as Tuple.
   ///
   /// \param[in] elements Define the vector of elements of value.
   explicit ValueSequeue(const ValuePtrList &elements) : elements_(elements) {
@@ -50,7 +50,7 @@ class MS_CORE_API ValueSequeue : public Value {
     type_ = t;
   }
 
-  /// \brief ValueSequeue defined a ValueNode whose type is Sequeue.
+  /// \brief ValueSequeue defines a ValueNode whose type is Sequeue.
   ///
   /// \param[in] elements Define the elements of value.
   ValueSequeue(const std::initializer_list<ValuePtr> &elements) : elements_(elements.begin(), elements.end()) {
@@ -73,14 +73,14 @@ class MS_CORE_API ValueSequeue : public Value {
   ///
   /// \return The size of elements_.
   std::size_t size() const { return elements_.size(); }
-  /// \brief erase elements in elements_ between 0 and idx.
+  /// \brief Erase the elements in elements_ between 0 and idx.
   ///
   /// \param[in] idx Define the subscript of vector.
-  /// \return Whether the erase operation was successful.
+  /// \return Whether the erase operation is successful.
   bool erase(size_t idx);
   /// \brief Access elements by subscript.
   ///
-  /// \param[in] dim Defined the subscript of vector.
+  /// \param[in] dim Define the subscript of vector.
   /// \return The element whose subscript is dim.
   const ValuePtr operator[](const std::size_t &dim) const;
   /// \brief The value of ValueSequeue object.
@@ -111,7 +111,7 @@ class MS_CORE_API ValueSequeue : public Value {
 };
 using ValueSequeuePtr = std::shared_ptr<ValueSequeue>;
 
-/// \brief ValueTuple defined a Value class whose type is Tuple.
+/// \brief ValueTuple defines a Value class whose type is Tuple.
 class MS_CORE_API ValueTuple : public ValueSequeue {
  public:
   /// \brief Constructor of ValueTuple.
@@ -140,7 +140,7 @@ class MS_CORE_API ValueTuple : public ValueSequeue {
 };
 using ValueTuplePtr = std::shared_ptr<ValueTuple>;
 
-/// \brief ValueList defined a Value class whose type is List.
+/// \brief ValueList defines a Value class whose type is List.
 class MS_CORE_API ValueList : public ValueSequeue {
  public:
   /// \brief Constructor of ValueList.
@@ -178,7 +178,7 @@ struct is_vector<std::vector<T, A>> : public std::true_type {};
 
 /// \brief Convert other type to ValueTuple.
 ///
-/// \param[in] vec Define need convert object.
+/// \param[in] vec Define the object to be converted.
 /// \return ValuePtr a ValueTuple object.
 template <typename T, typename U = typename std::enable_if<is_vector<T>::value, typename T::value_type>::type>
 ValuePtr MakeValue(const T &vec) {
@@ -187,7 +187,7 @@ ValuePtr MakeValue(const T &vec) {
   return std::make_shared<ValueTuple>(list);
 }
 
-/// \brief ValueSlice defined a Value class whose type is Slice.
+/// \brief ValueSlice defines a Value class whose type is Slice.
 class MS_CORE_API ValueSlice : public Value {
  public:
   /// \brief Constructor of ValueSlice.
@@ -246,7 +246,7 @@ class MS_CORE_API ValueSlice : public Value {
 };
 using ValueSlicePtr = std::shared_ptr<ValueSlice>;
 
-/// \brief KeywordArg defined a Value class which has keyword.
+/// \brief KeywordArg defines a Value class which has keyword.
 class MS_CORE_API KeywordArg : public Value {
  public:
   /// \brief Constructor of KeywordArg.
@@ -294,7 +294,7 @@ class MS_CORE_API KeywordArg : public Value {
 };
 using KeywordArgPtr = std::shared_ptr<KeywordArg>;
 
-/// \brief ValueDictionary defined a Value class whose type is Dictionary.
+/// \brief ValueDictionary defines a Value class whose type is Dictionary.
 class MS_CORE_API ValueDictionary : public Value {
  public:
   /// \brief Constructor of ValueDictionary.
@@ -315,16 +315,16 @@ class MS_CORE_API ValueDictionary : public Value {
   /// \brief 'operator[]' which can access value by key.
   ///
   /// \param[in] key Define the keyword.
-  /// \return the value associated with the keyword.
+  /// \return The value associated with the keyword.
   const ValuePtr operator[](const std::string &key) const;
-  /// \brief the value of ValueDictionary object.
+  /// \brief The value of ValueDictionary object.
   ///
-  /// \return the value of ValueDictionary object.
+  /// \return The value of ValueDictionary object.
   const std::vector<std::pair<std::string, ValuePtr>> &value() const { return key_values_; }
   /// \brief Check whether the input is the current ValueDictionary object.
   ///
   /// \param[in] other Define a Value object.
-  /// \return whether the input is the current ValueDictionary object.
+  /// \return Whether the input is the current ValueDictionary object.
   bool operator==(const Value &other) const override;
   /// \brief Compares two ValueDictionary objects.
   ///
@@ -375,7 +375,7 @@ class MS_CORE_API ValueDictionary : public Value {
 };
 using ValueDictionaryPtr = std::shared_ptr<ValueDictionary>;
 
-/// \brief StringImm defined a Value class whose type is String.
+/// \brief StringImm defines a Value class whose type is String.
 class MS_CORE_API StringImm : public Value {
  public:
   /// \brief Constructor of StringImm.
@@ -396,7 +396,7 @@ class MS_CORE_API StringImm : public Value {
   /// \brief Check whether the input is the current StringImm object.
   ///
   /// \param[in] other Define a Value object.
-  /// \return whether the input is the current StringImm object.
+  /// \return Whether the input is the current StringImm object.
   bool operator==(const Value &other) const override;
   /// \brief Compares two StringImm objects.
   ///
@@ -428,7 +428,7 @@ using StringImmPtr = std::shared_ptr<StringImm>;
 IMM_TRAITS(StringImmPtr, std::string)
 IMM_TRAITS(StringImmPtr, const char *)
 
-/// \brief RefKey defined a Named class whose type is Ref.
+/// \brief RefKey defines a Named class whose type is Ref.
 class MS_CORE_API RefKey : public Named {
  public:
   /// \brief Constructor of RefKey.
@@ -461,7 +461,7 @@ class MS_CORE_API RefKey : public Named {
 };
 using RefKeyPtr = std::shared_ptr<RefKey>;
 
-/// \brief AnyValue defined a Value class which can be any Value type.
+/// \brief AnyValue defines a Value class which can be any Value type.
 class MS_CORE_API AnyValue : public Value {
  public:
   /// \brief Constructor of AnyValue.
@@ -476,7 +476,7 @@ class MS_CORE_API AnyValue : public Value {
   /// \brief Check whether the input is the current AnyValue object.
   ///
   /// \param[in] other Define a Value object.
-  /// \return whether the input is the current AnyValue object.
+  /// \return Whether the input is the current AnyValue object.
   bool operator==(const Value &other) const override;
   /// \brief Get abstract of the AnyValue object.
   ///
@@ -486,7 +486,7 @@ class MS_CORE_API AnyValue : public Value {
 
 inline const ValuePtr kAnyValue = std::make_shared<AnyValue>();
 
-/// \brief Monad defined a Value class which is used in side effect.
+/// \brief Monad defines a Value class which is used in side effect.
 class MS_CORE_API Monad : public Value {
  public:
   /// \brief Destructor of Monad.
@@ -504,7 +504,7 @@ class MS_CORE_API Monad : public Value {
   explicit Monad(TypePtr type) : Value(type) {}
 };
 
-/// \brief UMonad defined a Value class which related to memory side effect.
+/// \brief UMonad defines a Value class which related to memory side effect.
 class MS_CORE_API UMonad : public Monad {
  public:
   /// \brief Constructor of UMonad.
@@ -519,7 +519,7 @@ class MS_CORE_API UMonad : public Monad {
   /// \brief Check whether the input is UMonad object.
   ///
   /// \param[in] other Define a Value object.
-  /// \return whether the input is UMonad object.
+  /// \return Whether the input is UMonad object.
   bool operator==(const Value &other) const override;
   /// \brief Get abstract of the UMonad object.
   ///
@@ -533,7 +533,7 @@ class MS_CORE_API UMonad : public Monad {
 using UMonadPtr = std::shared_ptr<UMonad>;
 extern const ValuePtr kUMonad;
 
-/// \brief IOMonad defined a Value class which related to IO side effect.
+/// \brief IOMonad defines a Value class which related to IO side effect.
 class MS_CORE_API IOMonad : public Monad {
  public:
   /// \brief Constructor of IOMonad.
@@ -548,7 +548,7 @@ class MS_CORE_API IOMonad : public Monad {
   /// \brief Check whether the input is IOMonad object.
   ///
   /// \param[in] other Define a Value object.
-  /// \return whether the input is IOMonad object.
+  /// \return Whether the input is IOMonad object.
   bool operator==(const Value &other) const override;
   /// \brief Get abstract of the IOMonad object.
   ///
