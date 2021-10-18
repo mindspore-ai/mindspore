@@ -27,6 +27,7 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const converter::Flags &con
   if (this->bit_num_ == 0) {
     type_id_ = kNumberTypeInt16;
     this->is_mixed_bit_ = true;
+    mixed_bit_init_scale_ = flags.mixedBitWeightQuantParam.init_scale;
   }
   quant_strategy_ = std::make_unique<QuantStrategy>(config.commonQuantParam.min_quant_weight_size,
                                                     config.commonQuantParam.min_quant_weight_channel);
@@ -80,7 +81,7 @@ STATUS WeightQuantizer::SetAbstract(const tensor::TensorPtr &tensor_info, const 
   return RET_OK;
 }
 
-STATUS WeightQuantizer::DoOptimizerQuantize(const CNodePtr &cnode) {
+STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
   MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
@@ -119,7 +120,7 @@ STATUS WeightQuantizer::DoOptimizerQuantize(const CNodePtr &cnode) {
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
       status = MixedBitQuantFilter(tensor_info, primitive, QuantType_QUANT_WEIGHT, WeightQuantType::MIXED_BIT_PER_LAYER,
-                                   type_id_, flags.mixedBitWeightQuantParam.init_scale, idx - 1);
+                                   type_id_, mixed_bit_init_scale_, idx - 1);
     } else if (type_id_ == kNumberTypeInt8) {
       status = FixedBitQuantFilter<int8_t>(tensor_info, primitive, QuantType_QUANT_WEIGHT, quant_max_, quant_min_,
                                            bit_num_, weight_quant_type, type_id_, idx - 1);
@@ -189,6 +190,11 @@ STATUS WeightQuantizer::MarkWeightQuantizationInNodes(const FuncGraphPtr &func_g
   return RET_OK;
 }
 
+STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph, double init_scale) {
+  mixed_bit_init_scale_ = init_scale;
+  return DoQuantize(std::move(func_graph));
+}
+
 STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, RET_NULL_PTR);
   weight_quantized_tensors_.clear();
@@ -206,9 +212,9 @@ STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
                                                       prim::kPrimAdam,         prim::kPrimSGD,
                                                       prim::kPrimApplyMomentum};
     if (CheckNodeInSet(cnode, support_primitive_types)) {
-      auto status = DoOptimizerQuantize(cnode);
+      auto status = DoWeightQuantize(cnode);
       if (status != RET_OK) {
-        MS_LOG(ERROR) << "DoOptimizerQuantize error";
+        MS_LOG(ERROR) << "DoWeightQuantize error";
         return RET_ERROR;
       }
     } else {

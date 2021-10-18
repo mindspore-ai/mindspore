@@ -55,11 +55,11 @@ inline int QuantMin(int bits, TypeId type) {
   return 0;
 }
 
-STATUS GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
+STATUS GetMaxMinPerChannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
                            bool channel_at_first, float *desired_max, float *desired_min);
 
-STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
-                             int quant_min, int num_bits);
+STATUS CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, bool narrow_range,
+                             int quant_max, int quant_min, int num_bits);
 
 template <typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
@@ -164,9 +164,9 @@ STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema
     float min = FLT_MAX;
     float max = -FLT_MAX;
     STATUS status =
-      GetMaxMinPerchannel(channels, one_filter_size, i, elem_count, raw_datas, channel_at_first, &max, &min);
+      GetMaxMinPerChannel(channels, one_filter_size, i, elem_count, raw_datas, channel_at_first, &max, &min);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "GetMaxMinPerchannel failed" << status;
+      MS_LOG(ERROR) << "GetMaxMinPerChannel failed" << status;
       return status;
     }
     schema::QuantParamT quant_param;

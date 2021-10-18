@@ -24,11 +24,14 @@
 #include <utility>
 #include <string>
 #include <vector>
+#include <random>
+#include <cfloat>
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "ir/dtype/type_id.h"
 #include "ir/tensor.h"
 #include "src/common/utils.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -76,6 +79,134 @@ std::unique_ptr<schema::QuantParamT> CopyQuantParamArrayT(
   const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);
 
 enum Category { CONSTANT = 0, GRAPH_INPUT = 1, OP_OUTPUT = 2, TF_CONST = 3 };
+
+int GenerateRandomData(mindspore::tensor::MSTensor *tensors);
+
+int GenerateRandomData(size_t size, void *data, int data_type);
+
+template <typename T, typename Distribution>
+void FillInputData(size_t size, void *data, Distribution distribution) {
+  std::mt19937 random_engine;
+  MS_ASSERT(data != nullptr);
+  size_t elements_num = size / sizeof(T);
+  (void)std::generate_n(static_cast<T *>(data), elements_num,
+                        [&]() { return static_cast<T>(distribution(random_engine)); });
+}
+
+struct CheckTensor {
+  CheckTensor(const std::string &tensor_name, const std::vector<size_t> &shape, const std::vector<float> &data,
+              const std::vector<std::string> &strings_data = {""}) {
+    this->tensor_name = tensor_name;
+    this->shape = shape;
+    this->data = data;
+    this->strings_data = strings_data;
+  }
+  std::string tensor_name;
+  std::vector<size_t> shape;
+  std::vector<float> data;
+  std::vector<std::string> strings_data;
+};
+
+// tensorData need to be converter first
+template <typename T>
+float CompareDataByCosineDistance(const std::unordered_map<String, mindspore::tensor::MSTensor *> &calib_tensors,
+                                  const std::unordered_map<String, mindspore::tensor::MSTensor *> &out_tensors) {
+  if (calib_tensors.empty() || out_tensors.empty()) {
+    MS_LOG(ERROR) << "calib or out tenor is empty.";
+    return RET_ERROR;
+  }
+  float total_meam_error = 0;
+  for (const auto &calib : calib_tensors) {
+    size_t error_count = 0;
+    float mean_error = 0;
+    auto calib_tensor = calib.second;
+    auto calib_data = static_cast<const T *>(calib_tensor->data());
+    auto out_tensor_iter = out_tensors.find(calib_tensor->tensor_name());
+    if (out_tensor_iter == out_tensors.end()) {
+      MS_LOG(ERROR) << "Cant find " << calib_tensor->tensor_name() << " in out_tensors";
+      return RET_ERROR;
+    }
+    auto out_tensor = out_tensor_iter->second;
+    auto out_data = static_cast<const T *>(out_tensor->data());
+    float dot_sum = 0;
+    float sum_a = 0;
+    float sum_b = 0;
+    for (int j = 0; j < calib_tensor->ElementsNum(); j++) {
+      if (std::is_same<T, float>::value && (std::isnan(out_data[j]) || std::isinf(out_data[j]))) {
+        MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
+        return RET_ERROR;
+      }
+      dot_sum += out_data[j] * calib_data[j];
+      sum_a += out_data[j] * out_data[j];
+      sum_b += calib_data[j] * calib_data[j];
+    }
+    if (fabs(sum_a) < 0.0000001 && fabs(sum_b) < 0.0000001) {
+      return 1;
+    }
+    if (fabs(sum_a) * fabs(sum_b) < 0.0000001) {
+      return 0;
+    }
+    mean_error = dot_sum / (sqrt(sum_a) * sqrt(sum_b));
+    total_meam_error += std::abs(mean_error);
+    MS_LOG(INFO) << "tensor_name:" << calib_tensor->tensor_name() << " cos_sim: " << mean_error
+                 << " error_count:" << error_count;
+  }
+  return total_meam_error / calib_tensors.size();
+}
+
+template <typename T>
+float CompareData(const std::unordered_map<String, mindspore::tensor::MSTensor *> &calib_tensors,
+                  const std::unordered_map<String, mindspore::tensor::MSTensor *> &out_tensors) {
+  if (calib_tensors.empty() || out_tensors.empty()) {
+    MS_LOG(ERROR) << "calib or out tenor is empty.";
+    return RET_ERROR;
+  }
+  float total_meam_error = 0;
+  for (const auto &calib : calib_tensors) {
+    size_t error_count = 0;
+    float mean_error = 0;
+    auto calib_tensor = calib.second;
+    auto calib_data = static_cast<const T *>(calib_tensor->data());
+    auto out_tensor_iter = out_tensors.find(calib_tensor->tensor_name());
+    if (out_tensor_iter == out_tensors.end()) {
+      MS_LOG(ERROR) << "Cant find " << calib_tensor->tensor_name() << " in out_tensors";
+      return RET_ERROR;
+    }
+    auto out_tensor = out_tensor_iter->second;
+    auto out_data = static_cast<const T *>(out_tensor->data());
+    for (int j = 0; j < calib_tensor->ElementsNum(); j++) {
+      if (std::is_same<T, float>::value && (std::isnan(out_data[j]) || std::isinf(out_data[j]))) {
+        MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
+        return RET_ERROR;
+      }
+      constexpr float relativeTolerance = 1e-5;
+      constexpr float absoluteTolerance = 1e-8;
+      auto tolerance = absoluteTolerance + relativeTolerance * fabs(calib_data[j]);
+      auto absolute_error = std::fabs(out_data[j] - calib_data[j]);
+      if (absolute_error > tolerance) {
+        if (fabs(calib_data[j] - 0.0f) < FLT_EPSILON) {
+          if (absolute_error > 1e-5) {
+            mean_error += absolute_error;
+            error_count++;
+          } else {
+            continue;
+          }
+        } else {
+          // just assume that atol = rtol
+          mean_error += absolute_error / (fabs(calib_data[j]) + FLT_MIN);
+          error_count++;
+        }
+      }
+    }
+    if (mean_error > 0.0f) {
+      mean_error /= error_count;
+    }
+    total_meam_error += std::abs(mean_error);
+    MS_LOG(INFO) << "tensor_name:" << calib_tensor->tensor_name() << " mean_error: " << mean_error
+                 << " error_count:" << error_count;
+  }
+  return total_meam_error / calib_tensors.size();
+}
 
 class TensorCache {
  public:

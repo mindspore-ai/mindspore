@@ -42,11 +42,8 @@ class WeightQuantizer : public Quantizer {
   ~WeightQuantizer() override;
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
-  STATUS DoOptimizerQuantize(const CNodePtr &cnode);
-
-  int quant_max_{127};
-  int quant_min_{-128};
-  TypeId type_id_{kNumberTypeInt8};
+  STATUS DoQuantize(FuncGraphPtr func_graph, double init_scale);
+  STATUS DoWeightQuantize(const CNodePtr &cnode);
 
  private:
   std::unique_ptr<QuantStrategy> quant_strategy_;
@@ -54,11 +51,16 @@ class WeightQuantizer : public Quantizer {
   std::map<tensor::TensorPtr, ParameterPtr> weight_quantized_tensors_;
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
   bool is_mixed_bit_ = false;
+  double mixed_bit_init_scale_ = 0.02;
 
   STATUS SetAbstract(const tensor::TensorPtr &tensor_info, const ParameterPtr &param_node,
                      const PrimitivePtr &primitive);
   STATUS MarkWeightQuantizationInNodes(const FuncGraphPtr &);
   STATUS DoMarkWeightQuantizeIfQuantized(const CNodePtr &);
+
+  int quant_max_{127};
+  int quant_min_{-128};
+  TypeId type_id_{kNumberTypeInt8};
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_WEIGHT_QUANTIZER_H_

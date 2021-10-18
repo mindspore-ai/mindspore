@@ -43,7 +43,6 @@
 #include "src/common/log_util.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
 #include "tools/converter/quantizer/fse_encoder.h"
 #include "nnacl/op_base.h"
 

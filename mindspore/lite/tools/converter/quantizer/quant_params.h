@@ -36,6 +36,7 @@ struct CommonQuantParam {
 
 struct MixedBitWeightQuantParam {
   double init_scale = 0.02;
+  bool auto_tune = false;
 };
 
 struct FullQuantParam {

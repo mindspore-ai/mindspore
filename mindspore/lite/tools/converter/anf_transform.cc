@@ -77,6 +77,7 @@
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include "tools/converter/adapter/acl_pass.h"
+#include "tools/converter/quantizer/parameter_optimizer.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -162,6 +163,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
     MS_LOG(ERROR) << "MarkTrainOp failed.";
     return RET_ERROR;
   }
+  CHECK_NULL_RETURN(config);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
   auto fusion_pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
@@ -360,6 +362,7 @@ void AnfTransform::GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGr
 
 int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   // quant
+  int status;
   if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {
     this->m_quantizer_ = std::make_unique<quant::FullQuantQuantizer>(old_graph, config->commonQuantParam.bit_num);
     if (m_quantizer_ == nullptr) {
@@ -367,21 +370,50 @@ int AnfTransform::DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const con
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
-  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
-    this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(old_graph, *config);
-    if (m_quantizer_ == nullptr) {
-      MS_LOG(ERROR) << "New WeightQuantizer failed";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
-      return RET_ERROR;
-    }
-  }
-  if (m_quantizer_ != nullptr) {
     m_quantizer_->flags = *config;
-    auto status = m_quantizer_->DoQuantize(old_graph);
+    status = m_quantizer_->DoQuantize(old_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "DoQuantization failed " << status;
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       return RET_ERROR;
+    }
+  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
+    double init_scale = config->mixedBitWeightQuantParam.init_scale;
+    if (config->mixedBitWeightQuantParam.auto_tune) {
+      quant::ParameterOptimizer optimizer;
+      status = optimizer.GridSearchForScale(old_graph, const_cast<converter::Flags *>(config), &init_scale);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "Grid search with scale failed.";
+        return status;
+      }
+      this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(old_graph, *config);
+      if (m_quantizer_ == nullptr) {
+        MS_LOG(ERROR) << "New WeightQuantizer failed";
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
+        return RET_ERROR;
+      }
+      status = static_cast<quant::WeightQuantizer *>(m_quantizer_.get())->DoQuantize(old_graph, init_scale);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "DoQuantization failed " << status;
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+        return RET_ERROR;
+      }
+    } else {
+      this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(old_graph, *config);
+      if (m_quantizer_ == nullptr) {
+        MS_LOG(ERROR) << "New WeightQuantizer failed";
+        ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
+        return RET_ERROR;
+      }
+      if (m_quantizer_ != nullptr) {
+        m_quantizer_->flags = *config;
+        status = m_quantizer_->DoQuantize(old_graph);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "DoQuantization failed " << status;
+          ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+          return RET_ERROR;
+        }
+      }
     }
   }
   return RET_OK;
