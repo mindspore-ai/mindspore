@@ -381,6 +381,7 @@ class TupleListGetitemDependReorder : public AnfVisitor {
       auto inputs = node->cast<CNodePtr>()->inputs();
       inputs[1] = depend_cnode->input(1);
       auto new_node = fg->NewCNode(inputs);
+      new_node->set_abstract(node->abstract());
       return new_node;
     }
 
