@@ -189,7 +189,7 @@ bool UnifyFormatToNHWC::DecideWhetherHandleGraphInput(const FuncGraphPtr &func_g
     return false;
   }
   if (func_graph->get_inputs().size() == 1 && fmk_type_ == converter::kFmkTypeOnnx &&
-      shape[opt::kInputIndexThree] == kInputChannal && shape[1] == -1) {
+      shape[opt::kInputIndexThree] == kInputChannal) {
     return false;
   }
   return true;
@@ -346,9 +346,6 @@ bool UnifyFormatToNHWC::ProcessResizeAndFormat(const FuncGraphPtr &func_graph) {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     if (prim == nullptr) {
       continue;
-    }
-    if (prim->GetAttr(ops::kFormat) == nullptr && prim->GetAttr(ops::kOriginalFormat) != nullptr) {
-      prim->AddAttr(mindspore::ops::kFormat, prim->GetAttr(ops::kOriginalFormat));
     }
     if (opt::CheckPrimitiveType(node, prim::kPrimIf) || opt::CheckPrimitiveType(node, prim::kPrimWhile)) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(kNumIndex_1));

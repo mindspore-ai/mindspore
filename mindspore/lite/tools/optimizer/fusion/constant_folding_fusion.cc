@@ -33,6 +33,7 @@
 #include "src/tensor.h"
 #include "src/ops/ops_utils.h"
 #include "src/runtime/infer_manager.h"
+#include "tools/optimizer/graph/lite_tensor_extractor.h"
 
 using mindspore::lite::KernelRegistry;
 using mindspore::lite::Tensor;
@@ -40,79 +41,6 @@ namespace mindspore::opt {
 namespace {
 constexpr size_t INITIAL_SIZE = 1024;
 constexpr auto kIsLinkWithControlFlow = "link_with_control_flow";
-void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *output_tensor) {
-  if (input_tensor != nullptr) {
-    for (auto &i : *input_tensor) {
-      delete i;
-      i = nullptr;
-    }
-  }
-  if (output_tensor != nullptr) {
-    for (auto &i : *output_tensor) {
-      delete i;
-      i = nullptr;
-    }
-  }
-}
-
-std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &cnode, converter::FmkType fmk_type) {
-  MS_ASSERT(cnode != nullptr);
-  std::vector<Tensor *> tensors;
-  for (size_t i = 1; i < cnode->size(); ++i) {
-    int status = 0;
-    lite::DataInfo data_info;
-    if (utils::isa<ParameterPtr>(cnode->input(i))) {
-      status = lite::FetchDataFromParameterNode(cnode, i, fmk_type, false, &data_info);
-    } else if (utils::isa<ValueNodePtr>(cnode->input(i))) {
-      status = lite::FetchDataFromValueNode(cnode, i, fmk_type, false, &data_info);
-    } else if (utils::isa<CNode>(cnode->input(i))) {
-      status = lite::FetchDataFromCNode(cnode, i, fmk_type, false, &data_info);
-    } else {
-      MS_LOG(ERROR) << "input node is not const node.";
-      FreeTensors(&tensors, nullptr);
-      return {};
-    }
-    if (status == lite::RET_NO_CHANGE) {
-      continue;
-    }
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "parser const data failed.";
-      FreeTensors(&tensors, nullptr);
-      return {};
-    }
-    if (data_info.shape_.empty() && data_info.data_.empty()) {
-      FreeTensors(&tensors, nullptr);
-      MS_LOG(DEBUG) << "input node is graph input.";
-      return {};
-    }
-    auto tensor = new (std::nothrow)
-      Tensor(TypeId(data_info.data_type_), data_info.shape_, static_cast<mindspore::Format>(data_info.format_),
-             lite::TensorCategory(0, data_info.shape_.size(), TypeId(data_info.data_type_), data_info.data_.size()));
-    if (tensor == nullptr) {
-      MS_LOG(ERROR) << "new a tensor is nullptr.";
-      FreeTensors(&tensors, nullptr);
-      return {};
-    }
-    if (data_info.data_.empty()) {
-      tensors.emplace_back(tensor);
-      continue;
-    }
-    auto tensor_data = tensor->MutableData();
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "malloc data failed.";
-      FreeTensors(&tensors, nullptr);
-      return {};
-    }
-    if (memcpy_s(tensor_data, data_info.data_.size(), data_info.data_.data(), data_info.data_.size()) != EOK) {
-      MS_LOG(ERROR) << "memcpy data failed.";
-      FreeTensors(&tensors, nullptr);
-      return {};
-    }
-    tensors.emplace_back(tensor);
-  }
-  return tensors;
-}
-
 ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(tensor != nullptr);
@@ -425,30 +353,38 @@ bool ConstFoldPass::CheckCanSpecialFold(const CNodePtr &cnode) const {
 
 int ConstFoldPass::DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
-  auto input_tensors = GetCNodeInputTensors(cnode, fmk_type_);
-  if (input_tensors.empty()) {
-    MS_LOG(ERROR) << "current node don't have inputs, please check, " << cnode->fullname_with_scope();
+  std::vector<TensorPtr> inputs_ptr;
+  if (LiteTensorExtractor::GetCNodeInputTensors(cnode, &inputs_ptr, fmk_type_, train_flag_) != lite::RET_OK) {
+    MS_LOG(ERROR) << "extract input tensor from cnode failed. " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
   }
-  auto output_nums = GetOutputTensorNum(cnode);
-  std::vector<Tensor *> output_tensors;
-  for (size_t j = 0; j < output_nums; j++) {
-    auto out_tensor = new (std::nothrow) Tensor();
-    if (out_tensor == nullptr) {
-      MS_LOG(ERROR) << "new a tensor failed.";
-      FreeTensors(&input_tensors, &output_tensors);
-      return lite::RET_ERROR;
-    }
-    output_tensors.push_back(out_tensor);
+  if (std::any_of(inputs_ptr.begin(), inputs_ptr.end(),
+                  [](TensorPtr input) { return input->data_type() == kObjectTypeTensorType; })) {
+    MS_LOG(DEBUG) << "this op is control flow op, which is not supported now.";
+    return lite::RET_OK;
   }
+  std::vector<TensorPtr> outputs_ptr;
+  if (LiteTensorExtractor::GetCNodeOutputTensors(cnode, &outputs_ptr, train_flag_) != lite::RET_OK) {
+    MS_LOG(ERROR) << "extract output tensor from cnode failed. " << cnode->fullname_with_scope();
+    return lite::RET_ERROR;
+  }
+  if (std::any_of(outputs_ptr.begin(), outputs_ptr.end(),
+                  [](TensorPtr output) { return output->data_type() == kObjectTypeTensorType; })) {
+    MS_LOG(DEBUG) << "this op is control flow op, which is not supported now.";
+    return lite::RET_OK;
+  }
+  std::vector<Tensor *> input_tensors;
+  std::transform(inputs_ptr.begin(), inputs_ptr.end(), std::back_inserter(input_tensors),
+                 [](TensorPtr input) { return input.get(); });
+  std::vector<Tensor *> output_tensors;
+  std::transform(outputs_ptr.begin(), outputs_ptr.end(), std::back_inserter(output_tensors),
+                 [](TensorPtr output) { return output.get(); });
   if (CopyQuantParams(cnode, input_tensors, output_tensors) != lite::RET_OK) {
     MS_LOG(ERROR) << "copy quant params failed.";
-    FreeTensors(&input_tensors, &output_tensors);
     return lite::RET_ERROR;
   }
   auto lite_kernel = GetLiteKernel(input_tensors, &output_tensors, cnode, context_.get(), ms_context_.get());
   if (lite_kernel == nullptr) {
-    FreeTensors(&input_tensors, &output_tensors);
     MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
     return lite::RET_ERROR;
   }
@@ -456,27 +392,23 @@ int ConstFoldPass::DoConstantFold(const FuncGraphPtr &func_graph, const CNodePtr
     auto status = output_tensor->MallocData();
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "MallocData failed";
-      FreeTensors(&input_tensors, &output_tensors);
       delete (lite_kernel);
       return lite::RET_ERROR;
     }
   }
   auto status = static_cast<mindspore::kernel::InnerKernel *>(lite_kernel->kernel())->Run();
   if (status != lite::RET_OK) {
-    FreeTensors(&input_tensors, &output_tensors);
     delete (lite_kernel);
     MS_LOG(ERROR) << "run kernel failed, name: " << lite_kernel->name();
     return lite::RET_ERROR;
   }
   // replace cnode by new param
   if (ReplaceCNode(func_graph, cnode, output_tensors) != lite::RET_OK) {
-    FreeTensors(&input_tensors, &output_tensors);
     delete (lite_kernel);
     MS_LOG(ERROR) << "constant_folding replace cnode failed";
     return lite::RET_ERROR;
   }
   MS_LOG(DEBUG) << "fold node:" << cnode->fullname_with_scope() << " success ";
-  FreeTensors(&input_tensors, &output_tensors);
   delete (lite_kernel);
   return lite::RET_OK;
 }

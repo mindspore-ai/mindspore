@@ -576,56 +576,6 @@ int DecreaseTransposeAlgo::SetSubGraphOutput(const CNodePtr &cnode, const FuncGr
   return lite::RET_OK;
 }
 
-int DecreaseTransposeAlgo::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
-  MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
-  auto return_node = sub_graph->get_return();
-  MS_CHECK_TRUE_MSG(return_node != nullptr, lite::RET_ERROR, "return_node is nullptr");
-  auto origin_inputs = return_node->inputs();
-  lite::RemoveIfDepend(return_node);
-  lite::RemoveIfMakeTuple(return_node);
-  AbstractBasePtrList abstract_list;
-  bool infer_done = true;
-  for (size_t i = 1; i < return_node->size(); ++i) {
-    auto abstract_base = GetCNodeInputAbstract(return_node, i);
-    MS_CHECK_TRUE_MSG(abstract_base != nullptr, lite::RET_ERROR, "GetCNodeInputAbstract failed");
-    abstract_list.emplace_back(abstract_base->Clone());
-    auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
-    MS_ASSERT(abstract_tensor != nullptr);
-    auto shape_ptr = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape());
-    MS_ASSERT(shape_ptr != nullptr);
-    auto shape = shape_ptr->shape();
-    if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-      infer_done = false;
-    }
-    if (utils::isa<CNodePtr>(return_node->input(i))) {
-      auto input_cnode = return_node->input(i)->cast<CNodePtr>();
-      MS_CHECK_TRUE_MSG(input_cnode != nullptr, lite::RET_ERROR, "input_cnode is nullptr");
-      if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
-        input_cnode = input_cnode->input(1)->cast<CNodePtr>();
-      }
-      auto input_prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-      MS_CHECK_TRUE_MSG(input_prim != nullptr, lite::RET_ERROR, "GetValueNode failed");
-      if (input_prim->GetAttr(kInferDone) == nullptr || !GetValue<bool>(input_prim->GetAttr(kInferDone))) {
-        infer_done = false;
-      }
-    }
-  }
-  return_node->set_inputs(origin_inputs);
-  if (utils::isa<abstract::AbstractTuplePtr>(cnode->abstract())) {
-    cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
-  } else {
-    if (abstract_list.size() != 1) {
-      MS_LOG(ERROR) << "cnode output is invalid.";
-    }
-    cnode->set_abstract(abstract_list.front());
-  }
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_CHECK_TRUE_MSG(prim != nullptr, lite::RET_ERROR, "GetValueNode Failed");
-  prim->AddAttr(kInferDone, MakeValue<bool>(infer_done));
-
-  return lite::RET_OK;
-}
-
 int DecreaseTransposeAlgo::ModifyCNodeFormat(const CNodePtr &cnode, FormatTransNodeType pre_trans_type) {
   MS_ASSERT(cnode != nullptr);
   if (pre_trans_type == kNONE) {
@@ -692,11 +642,6 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForSingleOp(const FuncGraphPtr &fun
         MS_LOG(ERROR) << "SetSubGraphOutput failed";
         return false;
       }
-      ret = SetSubGraphAbstract(cnode, sub_func_graph);
-      if (ret != lite::RET_OK) {
-        MS_LOG(ERROR) << "SetSubGraphAbstract failed";
-        return false;
-      }
       continue;
     }
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -753,7 +698,7 @@ bool DecreaseTransposeAlgo::DecreaseTransposeForMultiOp(const FuncGraphPtr &func
     }
     std::vector<int> perm{};
     if (!CheckPrimitiveType(cnode, prim::kPrimTranspose) || GetTransposePerm(cnode, &perm) != lite::RET_OK ||
-        perm != kNH2NC) {
+        (perm != kNH2NC && perm != kNC2NH)) {
       continue;
     }
     auto status = HandleGraphMultiNode(func_graph, cnode, &visit_transposes);

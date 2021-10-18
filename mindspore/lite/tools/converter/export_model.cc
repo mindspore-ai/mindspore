@@ -27,6 +27,7 @@
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/optimizer_manager.h"
+#include "tools/converter/parser/parser_utils.h"
 #include "tools/optimizer/graph/control_flow_pass.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
@@ -102,6 +103,9 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
     return NewValueNode(MakeValue<int>(*reinterpret_cast<int *>(data_info.data_.data())));
   }
   ShapeVector shape_vec(data_info.shape_.begin(), data_info.shape_.end());
+  if (data_info.data_type_ == kObjectTypeTensorType) {
+    shape_vec = ShapeVector{static_cast<int64_t>(data_info.data_.size() / sizeof(int))};
+  }
   auto tensor_info = std::make_shared<tensor::Tensor>(static_cast<TypeId>(data_info.data_type_), shape_vec);
   MS_CHECK_TRUE_RET(tensor_info != nullptr, nullptr);
   if (!data_info.data_.empty()) {
@@ -204,7 +208,13 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     MS_LOG(ERROR) << "Clone funcGraph failed.";
     return RET_ERROR;
   }
-  (void)Manage(mirror_graph, true);
+  auto manager = Manage(mirror_graph, true);
+  MS_CHECK_TRUE_RET(manager != nullptr, RET_ERROR);
+  std::set<FuncGraphPtr> all_func_graphs;
+  GetAllFuncGraph(mirror_graph, &all_func_graphs);
+  for (auto &func_graph : all_func_graphs) {
+    manager->AddFuncGraph(func_graph);
+  }
   if (!RunOptimizerPass(mirror_graph, {"ToNHWCFormat", "InferShapePass", "SpecialNodePostProcess"})) {
     MS_LOG(ERROR) << "Run transpose opt pass failed.";
     return RET_ERROR;
@@ -239,6 +249,18 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     MS_LOG(ERROR) << "Transform meta graph failed " << status;
     delete meta_graph;
     return RET_ERROR;
+  }
+  // set output tensor names to the original names, the output_names is null in nnie converter.
+  auto output_names = ConverterInnerContext::GetInstance()->GetGraphOutputTensorNames();
+  if (output_names.size() > meta_graph->outputIndex.size()) {
+    MS_LOG(ERROR) << "the num of setting output_names is greater than actual, " << output_names.size() << " > "
+                  << meta_graph->outputIndex.size() << ".";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
+  for (size_t idx = 0; idx < output_names.size(); idx++) {
+    auto &tensor = meta_graph->allTensors.at(meta_graph->outputIndex.at(idx));
+    tensor->name = output_names.at(idx);
   }
   meta_graph->version = Version();
   status = Storage::Save(*meta_graph, "model");

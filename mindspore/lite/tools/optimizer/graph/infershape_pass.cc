@@ -103,6 +103,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "create NodeInferShape object failed.";
     return false;
   }
+  sub_inputs_map_ = {};
   if (!JudgeAllOpsCanInfer(func_graph)) {
     MS_LOG(WARNING) << "exist op cannot support infer shape.";
     return false;
@@ -331,7 +332,7 @@ STATUS InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGrap
   bool infer_done = true;
   for (size_t i = 1; i < return_node->size(); ++i) {
     auto abstract_base = opt::GetCNodeInputAbstract(return_node, i);
-    MS_ASSERT(abstract_base != nullptr);
+    MS_CHECK_TRUE_RET(abstract_base != nullptr, lite::RET_ERROR);
     abstract_list.emplace_back(abstract_base->Clone());
     auto abstract_tensor = abstract_base->cast<abstract::AbstractTensorPtr>();
     MS_ASSERT(abstract_tensor != nullptr);
@@ -367,6 +368,7 @@ STATUS InferShapePass::SetSubGraphAbstract(const CNodePtr &cnode, const FuncGrap
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(prim);
+  infer_done = CheckPrimitiveType(cnode, prim::kPrimWhile) ? false : infer_done;
   prim->AddAttr(opt::kInferDone, MakeValue<bool>(infer_done));
   return RET_OK;
 }

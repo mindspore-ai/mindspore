@@ -84,28 +84,55 @@ void ConvertTensorList(MetaGraphT *graph, uint32_t index, bool *convert_succ, st
   TypeId type = kTypeUnknown;
   std::vector<int> element_shape;
   if (!tensorT->data.empty()) {
-    auto data_len = tensorT->data.size();
     int *data = reinterpret_cast<int *>(tensorT->data.data());
     type = TypeId(data[kTypeIndex]);
-    if (data_len < kTensorDataSize ||
-        (data[kElementShapeIndex] != 0 && static_cast<int>((data[kElementShapeIndex] + kTensorListDatasize) *
-                                                           sizeof(int)) != static_cast<int>(tensorT->data.size()))) {
-      MS_LOG(ERROR) << "tensorlist data length illegal, tensorT name: " << tensorT->name;
-      MS_LOG(ERROR) << "(data[1] + 3) * sizeof(int): "
-                    << ((data[kElementShapeIndex] + kTensorListDatasize) * sizeof(int));
-      MS_LOG(ERROR) << "static_cast<int>(tensorT->data.size()): " << static_cast<int>(tensorT->data.size());
+    auto basic_data_size = tensorT->data.size() / sizeof(int);
+    if (basic_data_size < static_cast<size_t>(kTensorListDatasize)) {
+      MS_LOG(ERROR) << "tensorlist data length illegal, which should be at least 3, now is " << basic_data_size;
+      *convert_succ = false;
+      return;
+    }
+    if (data[kElementShapeIndex] < 0 || INT_ADD_OVERFLOW(data[kElementShapeIndex], kTensorListDatasize)) {
+      MS_LOG(ERROR) << "int add overflow.";
+      *convert_succ = false;
+      return;
+    }
+    if (static_cast<size_t>((data[kElementShapeIndex] + kTensorListDatasize)) > basic_data_size) {
+      MS_LOG(ERROR) << "tensorlist data length illegal. current tensorlist data length should be at least "
+                    << (data[kElementShapeIndex] + kTensorListDatasize) << ", but now is " << basic_data_size;
+      *convert_succ = false;
+      return;
+    }
+    auto element_num = data[data[kElementShapeIndex] + kFirstElementShapeIndex];
+    if (element_num > 0 && INT_ADD_OVERFLOW(element_num, 1)) {
+      MS_LOG(ERROR) << "int add overflow.";
+      *convert_succ = false;
+      return;
+    }
+    auto shape_once = data[kElementShapeIndex] + 1;
+    auto shape_group_num = element_num < 0 ? 1 : element_num + 1;
+    if (INT_MUL_OVERFLOW(shape_once, shape_group_num)) {
+      MS_LOG(ERROR) << "int mul overflow.";
+      *convert_succ = false;
+      return;
+    }
+    tensor_shape = {element_num};
+    auto shape_info_size = shape_once * shape_group_num;
+    if (INT_ADD_OVERFLOW(shape_info_size, kFirstElementShapeIndex)) {
+      MS_LOG(ERROR) << "int add overflow.";
+      *convert_succ = false;
+      return;
+    }
+    size_t real_data_size = shape_info_size + kFirstElementShapeIndex;
+    if (real_data_size != basic_data_size) {
+      MS_LOG(ERROR) << "current tensorlist data length should be " << real_data_size << ", but now is "
+                    << basic_data_size;
       *convert_succ = false;
       return;
     }
     for (int j = 0; j < data[kElementShapeIndex]; ++j) {
       element_shape.push_back(data[j + kFirstElementShapeIndex]);
     }
-    if (INT_ADD_OVERFLOW(data[kElementShapeIndex], kFirstElementShapeIndex)) {
-      MS_LOG(ERROR) << "int add overflow";
-      *convert_succ = false;
-      return;
-    }
-    tensor_shape = {data[data[kElementShapeIndex] + kFirstElementShapeIndex]};
   }
   lite_tensor = std::make_unique<TensorList>(tensor_shape, element_shape);
   if (lite_tensor == nullptr) {
@@ -279,24 +306,34 @@ int SetDataType(MetaGraphT *graph, const std::vector<Tensor *> &output_tensors, 
     }
     MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW((tensor_shape_dims + kTensorListDatasize), static_cast<int>(sizeof(int))),
                        RET_ERROR, "int mul overflow");
-    auto total_size = (tensor_shape_dims + kTensorListDatasize) * sizeof(int);
-    output_tensor->data.resize(total_size, 0);
-    auto output_tensor_data = reinterpret_cast<int *>(output_tensor->data.data());
     if (tensor_list->tensors_data_type() == kTypeUnknown) {
       if (!tensor_list->tensors().empty()) {
         tensor_list->set_tensors_data_type(tensor_list->tensors().front()->data_type());
       }
     }
-    output_tensor_data[kTypeIndex] = tensor_list->tensors_data_type();
+    std::vector<int> basic_data;
+    basic_data.push_back(tensor_list->tensors_data_type());
     if (tensor_list->element_shape().empty() && !tensor_list->tensors().empty()) {
       tensor_list->set_element_shape(tensor_list->tensors().front()->shape());
     }
-    output_tensor_data[kElementShapeIndex] = static_cast<int>(tensor_list->element_shape().size());
+    basic_data.push_back(tensor_list->element_shape().size());
     for (size_t j = 0; j < tensor_list->element_shape().size(); ++j) {
-      output_tensor_data[j + kFirstElementShapeIndex] = tensor_list->element_shape().at(j);
+      basic_data.push_back(tensor_list->element_shape().at(j));
     }
-    output_tensor_data[kFirstElementShapeIndex + output_tensor_data[kElementShapeIndex]] =
-      static_cast<int>(tensor_list->tensors().size());
+    basic_data.push_back(tensor_list->tensors().size());
+    for (size_t index = 0; index < tensor_list->tensors().size(); ++index) {
+      auto tensor_shape = tensor_list->GetTensor(index)->shape();
+      basic_data.push_back(tensor_shape.size());
+      for (size_t j = 0; j < tensor_shape.size(); ++j) {
+        basic_data.push_back(tensor_shape[j]);
+      }
+    }
+    output_tensor->data.resize(basic_data.size() * sizeof(int));
+    if (memcpy_s(output_tensor->data.data(), output_tensor->data.size(), basic_data.data(),
+                 basic_data.size() * sizeof(int)) != EOK) {
+      MS_LOG(ERROR) << "memcpy data failed.";
+      return RET_ERROR;
+    }
   } else if (output_tensors[i]->data_type() == kTypeUnknown) {
     tensors->at(node->outputIndex[i]).is_inferred_ = false;
     return RET_OK;
@@ -526,7 +563,11 @@ int InferShapePass::InferSubgraph(const int &subgraph_index, MetaGraphT *graph) 
         auto output_dims = output_tensors[i]->shape();
         auto &output_tensorT = graph->allTensors.at(node->outputIndex[i]);
         output_tensorT->dims.swap(output_dims);
-        SetDataType(graph, output_tensors, &tensors_, i, infer_node_index);
+        if (SetDataType(graph, output_tensors, &tensors_, i, infer_node_index) != RET_OK) {
+          FreeTensors(&input_tensors, &output_tensors);
+          MS_LOG(ERROR) << "set tensor's basic attribute failed.";
+          return RET_ERROR;
+        }
       }
     } else {
       MS_LOG(WARNING) << "InferShape failed, name: " << node->name

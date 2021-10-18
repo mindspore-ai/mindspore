@@ -30,7 +30,7 @@ using mindspore::converter::kFmkTypeTf;
 using mindspore::schema::TensorT;
 namespace mindspore {
 namespace lite {
-const constexpr int kTensorDataSize = 8;
+const constexpr int kTensorDataSize = 12;
 const constexpr int kSwitchTrueIndex = 1;
 const constexpr int kSwitchFalseIndex = 2;
 struct InferTensor {
