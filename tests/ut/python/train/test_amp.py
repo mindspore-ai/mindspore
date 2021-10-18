@@ -144,7 +144,7 @@ def test_compile_model_train_O2():
         model.eval(dataset)
 
 
-def test_compile_model_train_O2_parallel():
+def compile_model_train_O2_parallel():
     dataset_types = (np.float32, np.float32)
     dataset_shapes = ((16, 16), (16, 16))
     context.set_context(device_target='Ascend')

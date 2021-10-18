@@ -93,7 +93,7 @@ def test_six_matmul_save():
 
 
 # remove matmul2, add matmul7
-def test_six_matmul_load():
+def six_matmul_load():
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
             super(NetWithLoss, self).__init__()
@@ -214,7 +214,7 @@ def test_six_matmul_save_auto():
 
 
 # remove matmul2, add matmul7
-def test_six_matmul_load_auto():
+def six_matmul_load_auto():
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
             super(NetWithLoss, self).__init__()
