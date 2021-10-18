@@ -146,7 +146,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
       for (size_t i = 0; i < pad_region.size(); ++i) {
         int di = size_offset + i;
         int si = remain_dim_offset + i;
-        if (di > DEFAULT_PAD_NDIMS) {
+        if (di >= DEFAULT_PAD_NDIMS) {
           continue;
         }
         switch (pad_cord[i]) {
