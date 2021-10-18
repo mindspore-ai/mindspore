@@ -451,6 +451,9 @@ class Reshape(PrimitiveWithInfer):
     """
     Reshapes the input tensor with the same values based on a given shape tuple.
 
+    The 'input_shape' can only have one -1 at most, in which case it’s inferred from the remaining dimensions and
+    the number of elements in the input.
+
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         - **input_shape** (tuple[int]) - The input tuple is constructed by multiple
@@ -700,6 +703,13 @@ class Squeeze(PrimitiveWithInfer):
 class Transpose(Primitive):
     """
     Permutes the dimensions of the input tensor according to input permutation.
+
+    For a 1-D array this has no effect, as a transposed vector is simply the same vector.
+    To convert a 1-D array into a 2D column vecto please refer the class: mindspore.ops.ExpandDims.
+    For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
+    their order indicates how the axes are permuted (see Examples).
+    If axes are not provided and a.shape = (i[0], i[1], ... i[n-2], i[n-1]),
+    then a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.

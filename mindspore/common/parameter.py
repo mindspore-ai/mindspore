@@ -466,7 +466,13 @@ class Parameter(Tensor_):
 
     @property
     def requires_grad(self):
-        """Return whether the parameter requires gradient."""
+        """
+        Return whether the parameter requires gradient.
+
+        The main function of requires_grad is to tell auto grad to start recording operations on a Tensor.
+        If a Tensor has requires_grad=False, then Tensor requires_grad will make auto grad start recording
+        operations on the tensor.
+        """
         return self.param_info.requires_grad
 
     @requires_grad.setter

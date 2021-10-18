@@ -74,8 +74,8 @@ class LSTM(Cell):
             f_t = \sigma(W_{fx} x_t + b_{fx} + W_{fh} h_{(t-1)} + b_{fh}) \\
             \tilde{c}_t = \tanh(W_{cx} x_t + b_{cx} + W_{ch} h_{(t-1)} + b_{ch}) \\
             o_t = \sigma(W_{ox} x_t + b_{ox} + W_{oh} h_{(t-1)} + b_{oh}) \\
-            c_t = f_t * c_{(t-1)} + i_t * \tilde{c}_t \\
-            h_t = o_t * \tanh(c_t) \\
+            c_t = f_t \odot c_{(t-1)} + i_t \odot \tilde{c}_t \\
+            h_t = o_t \odot \tanh(c_t) \\
         \end{array}
 
     Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product. :math:`W, b`

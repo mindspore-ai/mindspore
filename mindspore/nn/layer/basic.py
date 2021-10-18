@@ -679,9 +679,9 @@ class Pad(Cell):
                 x = [[1,2,3], [4,5,6], [7,8,9]].
                 # The above can be seen: 1st dimension of `x` is 3, 2nd dimension of `x` is 3.
                 # Substitute into the formula to get:
-                # 1st dimension of output is paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 4.
+                # 1st dimension of output is paddings[0][0] + 3 + paddings[0][1] = 1 + 3 + 1 = 5.
                 # 2nd dimension of output is paddings[1][0] + 3 + paddings[1][1] = 2 + 3 + 2 = 7.
-                # So the shape of output is (4, 7).
+                # So the shape of output is (5, 7).
 
         mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
             Default: "CONSTANT".
@@ -1007,6 +1007,13 @@ class Tril(Cell):
     """
     Returns a tensor with elements above the kth diagonal zeroed.
 
+    The lower triangular part of the matrix is defined as the elements on and below the diagonal.
+
+    The parameter `k` controls the diagonal to be considered.
+    If diagonal = 0, all elements on and below the main diagonal are retained.
+    Positive values include as many diagonals above the main diagonal, and similarly,
+    negative values exclude as many diagonals below the main diagonal.
+
     Inputs:
         - **x** (Tensor) - The input tensor. The data type is Number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
@@ -1093,6 +1100,12 @@ def triu(x_shape, x_dtype, k):
 class Triu(Cell):
     """
     Returns a tensor with elements below the kth diagonal zeroed.
+
+    The upper triangular part of the matrix is defined as the elements on and above the diagonal.
+
+    The parameter `k` controls the diagonal to be considered. If `k` = 0, all elements on and above the main diagonal
+    are retained. Positive values do not include as many diagonals above the main diagonal, and similarly,
+    negative values include as many diagonals below the main diagonal.
 
     Inputs:
         - **x** (Tensor) - The input tensor. The data type is Number.
