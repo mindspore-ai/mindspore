@@ -922,8 +922,8 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     }
     CHECK_FAIL_RETURN_UNEXPECTED(
       input_cv->shape().Size() > CHANNEL_INDEX,
-      "AdjustBrightness: image rank should not bigger than:" + std::to_string(CHANNEL_INDEX) + ", but got" +
-        std::to_string(input_cv->shape().Size()));
+      "AdjustBrightness: image rank should not bigger than:" + std::to_string(CHANNEL_INDEX) +
+        ", but got: " + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     // Rank of the image represents how many dimensions, image is expected to be HWC
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels != DEFAULT_IMAGE_CHANNELS) {
@@ -949,7 +949,7 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     }
     CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > CHANNEL_INDEX,
                                  "AdjustContrast: image rank should not bigger than:" + std::to_string(CHANNEL_INDEX) +
-                                   ", but got" + std::to_string(input_cv->shape().Size()));
+                                   ", but got: " + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[CHANNEL_INDEX];
     if (input_cv->Rank() != DEFAULT_IMAGE_CHANNELS || num_channels != DEFAULT_IMAGE_CHANNELS) {
       RETURN_STATUS_UNEXPECTED("AdjustContrast: image shape is not <H,W,C> or channel is not 3, got image rank: " +

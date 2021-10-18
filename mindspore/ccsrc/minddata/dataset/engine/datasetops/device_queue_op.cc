@@ -512,8 +512,10 @@ Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataI
     BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (ret) {
       if (ret == BlockQueueStatus_T::ERROR_INPUT) {
-        return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                      "Invalid data, check the output of dataset with creating iterator and print data item.");
+        return Status(
+          StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+          "Invalid data, the types or shapes of current row is different with previous row(i.e. do batch operation but "
+          "drop_reminder is False, or without resize image into the same size, these will cause shapes differs).");
       } else {
         if (!stop_send_) {
           if (!flag_log) {
