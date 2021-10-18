@@ -235,7 +235,7 @@ bool TensorList::IsCompatibleShape(const std::vector<int> &shape) {
 }
 
 bool TensorList::IsCompatibleShape(const Tensor *src) {
-  MS_CHECK_TRUE_MSG(src != nullptr, RET_ERROR, "src tensor cannot null");
+  MS_CHECK_TRUE_MSG(src != nullptr, false, "src tensor cannot null");
   // shape is store in Tensor.
   if (static_cast<size_t>(src->ElementsNum()) != this->element_shape_.size()) {
     return false;
