@@ -20,6 +20,7 @@
 #include <set>
 #include <vector>
 #include <regex>
+#include <queue>
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/import/primitive_adjust.h"
 #include "tools/converter/import/mindir_adjust.h"
@@ -164,8 +165,41 @@ STATUS MindsporeImporter::GetFuncGraphOutputName(const CNodePtr &return_node) {
   return RET_OK;
 }
 
-STATUS MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
-  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr");
+namespace {
+bool IsEmptyOp(const AnfNodePtr &node) {
+  MS_ASSERT(node != nullptr);
+  return (opt::CheckPrimitiveType(node, prim::kPrimMakeTuple) || opt::CheckPrimitiveType(node, prim::kPrimReturn) ||
+          opt::CheckPrimitiveType(node, prim::kPrimTupleGetItem) || opt::CheckPrimitiveType(node, prim::kPrimDepend) ||
+          opt::CheckPrimitiveType(node, prim::kPrimUpdateState));
+}
+
+void RemovePostEdgeOfParameter(const AnfNodePtr &parameter) {
+  MS_ASSERT(parameter != nullptr);
+  auto func_graph = parameter->func_graph();
+  MS_ASSERT(func_graph != nullptr);
+  auto manager = Manage(func_graph);
+  MS_ASSERT(maneger != nullptr);
+  auto nodes_users = manager->node_users();
+  auto node_users_iter = nodes_users.find(parameter);
+  MS_ASSERT(node_users_iter != nodes_users.end());
+  for (const auto &node_user_iter : node_users_iter->second) {
+    MS_ASSERT(utils::isa<CNodePtr>(node_user_iter.first));
+    auto node_user_cnode = utils::cast<CNodePtr>(node_user_iter.first);
+    auto &node_user_cnode_inputs = node_user_cnode->inputs();
+    std::vector<AnfNodePtr> new_node_user_cnode_inputs;
+    for (size_t i = 0; i < node_user_cnode_inputs.size(); i++) {
+      if (static_cast<int>(i) == node_user_iter.second) {
+        continue;
+      }
+      new_node_user_cnode_inputs.emplace_back(node_user_cnode_inputs.at(i));
+    }
+    node_user_cnode->set_inputs(new_node_user_cnode_inputs);
+  }
+}
+}  // namespace
+
+void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
+  MS_ASSERT(func_graph != nullptr);
   std::map<AnfNodePtr, bool> graph_input_map;
   for (auto &input : func_graph->get_inputs()) {
     graph_input_map[input] = false;
@@ -184,17 +218,37 @@ STATUS MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph)
       }
     }
   }
+  // drop unused input_parameter and disconnect edge
+  std::queue<AnfNodePtr> q;
+  q.push(func_graph->get_return());
+  while (!q.empty()) {
+    auto cur_node = q.front();
+    q.pop();
+    if (IsEmptyOp(cur_node)) {
+      auto cur_cnode = utils::cast<CNodePtr>(cur_node);
+      for (size_t i = 1; i < cur_cnode->inputs().size(); i++) {
+        const auto &input = cur_cnode->input(i);
+        q.push(input);
+      }
+    }
+    if (utils::isa<ParameterPtr>(cur_node)) {
+      auto iter = graph_input_map.find(cur_node);
+      if (iter != graph_input_map.end()) {
+        RemovePostEdgeOfParameter(cur_node);
+        iter->second = false;
+      }
+    }
+  }
   for (auto &item : graph_input_map) {
-    if (item.second == false) {
+    if (!item.second) {
       func_graph->DropNode(item.first);
     }
   }
-  return RET_OK;
 }
 
 FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   FuncGraphPtr func_graph;
-  if (flag.dec_key.size() != 0) {
+  if (!flag.dec_key.empty()) {
     unsigned char key[32];
     const size_t key_len = Hex2ByteArray(flag.dec_key, key, 32);
     if (key_len == 0) {
@@ -217,12 +271,8 @@ FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
   }
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
   func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeMs)));
-  auto status = RemoveUnusedGraphInput(func_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "RemoveUnusedGraphInput failed.";
-    return nullptr;
-  }
-  status = GetFuncGraphOutputName(func_graph->get_return());
+  RemoveUnusedGraphInput(func_graph);
+  auto status = GetFuncGraphOutputName(func_graph->get_return());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "GetFuncGraphOutputName failed.";
     return nullptr;

@@ -31,7 +31,7 @@ class MindsporeImporter {
   FuncGraphPtr ImportMindIR(const converter::Flags &flag);
 
  private:
-  STATUS RemoveUnusedGraphInput(const FuncGraphPtr &func_graph);
+  static void RemoveUnusedGraphInput(const FuncGraphPtr &func_graph);
   STATUS ProcessDependCnode(const CNodePtr &cnode);
   STATUS GetFuncGraphOutputName(const CNodePtr &cnode);
   STATUS Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const converter::Flags &flag);
