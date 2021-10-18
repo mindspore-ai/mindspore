@@ -534,8 +534,10 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
     AkgKernelJsonGenerator akg_kernel_json_generator(option);
     auto cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (AnfAlgo::IsGraphKernel(cnode)) {
-      auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(cnode);
+    bool is_custom_node = IsPrimitiveCNode(cnode, prim::kPrimCustom);
+    // Graph kernel node and Custom node need to generate composite json
+    if (AnfAlgo::IsGraphKernel(cnode) || is_custom_node) {
+      FuncGraphPtr func_graph = is_custom_node ? cnode->func_graph() : AnfAlgo::GetCNodeFuncGraphPtr(cnode);
       MS_EXCEPTION_IF_NULL(func_graph);
       auto mng = func_graph->manager();
       if (mng == nullptr) {
@@ -543,7 +545,13 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
         func_graph->set_manager(mng);
       }
       std::vector<AnfNodePtr> node_list, input_list, output_list;
-      GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
+      if (is_custom_node) {
+        node_list.push_back(cnode);
+        (void)input_list.insert(input_list.begin(), cnode->inputs().begin() + 1, cnode->inputs().end());
+        output_list.push_back(cnode);
+      } else {
+        GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
+      }
       if (!akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
         MS_EXCEPTION(UnknownError) << "Collect op info failed. op[" << anf_node->fullname_with_scope() << "].";
       }

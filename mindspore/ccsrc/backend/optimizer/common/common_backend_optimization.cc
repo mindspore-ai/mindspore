@@ -18,6 +18,7 @@
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/pass/convert_const_input_to_attr.h"
+#include "backend/optimizer/pass/custom_op_const_input_to_attr.h"
 #include "backend/optimizer/pass/convert_tuple_output_to_maketuple.h"
 #include "backend/optimizer/pass/convert_const_input_to_tensor_input.h"
 #include "backend/optimizer/pass/convert_tuple_input_to_dynamic_input.h"
@@ -51,6 +52,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
   common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
+  common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
   common_pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
   common_pm->AddPass(std::make_shared<ConstToAttrStridedSliceGradPass>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());

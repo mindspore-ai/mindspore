@@ -648,6 +648,9 @@ inline const PrimitivePtr kPrimMakeDict = std::make_shared<Primitive>("make_dict
 // GraphKernel ops
 inline const PrimitivePtr kPrimInplaceAssign = std::make_shared<Primitive>("InplaceAssign");
 
+// Custom
+inline const PrimitivePtr kPrimCustom = std::make_shared<Primitive>("Custom");
+
 // Only used in lite
 inline const PrimitivePtr kPrimLeakyRelu = std::make_shared<Primitive>("LeakyRelu");
 inline const PrimitivePtr kPrimConstant = std::make_shared<Primitive>("Constant");
@@ -684,7 +687,6 @@ inline const PrimitivePtr kPrimAvgPoolFusion = std::make_shared<Primitive>("AvgP
 inline const PrimitivePtr kPrimMaxPoolFusion = std::make_shared<Primitive>("MaxPoolFusion");
 inline const PrimitivePtr kPrimActivation = std::make_shared<Primitive>("Activation");
 inline const PrimitivePtr kPrimPReLUFusion = std::make_shared<Primitive>("PReLUFusion");
-inline const PrimitivePtr kPrimCustom = std::make_shared<Primitive>("Custom");
 inline const PrimitivePtr kPrimTopKFusion = std::make_shared<Primitive>("TopKFusion");
 inline const PrimitivePtr kPrimTileFusion = std::make_shared<Primitive>("TileFusion");
 inline const PrimitivePtr kPrimReduceFusion = std::make_shared<Primitive>("ReduceFusion");
