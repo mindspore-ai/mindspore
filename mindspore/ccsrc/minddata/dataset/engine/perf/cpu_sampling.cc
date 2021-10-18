@@ -185,8 +185,13 @@ Status DeviceCpu::SaveToFile(const std::string &file_path) {
   json output;
   if (path.Exists()) {
     MS_LOG(DEBUG) << file_path << " exists already";
-    std::ifstream file(file_path);
-    file >> output;
+    try {
+      std::ifstream file(file_path);
+      file >> output;
+    } catch (const std::exception &err) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path +
+                               ", please delete it and try again!");
+    }
   } else {
     output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
   }
@@ -396,8 +401,13 @@ Status OperatorCpu::SaveToFile(const std::string &file_path) {
   json output;
   if (path.Exists()) {
     MS_LOG(DEBUG) << file_path << "already exist.";
-    std::ifstream file(file_path);
-    file >> output;
+    try {
+      std::ifstream file(file_path);
+      file >> output;
+    } catch (const std::exception &err) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path +
+                               ", please delete it and try again!");
+    }
   }
 
   uint8_t index = 0;
@@ -529,8 +539,13 @@ Status ProcessCpu::SaveToFile(const std::string &file_path) {
   json output;
   if (path.Exists()) {
     MS_LOG(DEBUG) << file_path << "already exist.";
-    std::ifstream file(file_path);
-    file >> output;
+    try {
+      std::ifstream file(file_path);
+      file >> output;
+    } catch (const std::exception &err) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path +
+                               ", please delete it and try again!");
+    }
   } else {
     output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
   }
@@ -577,8 +592,13 @@ Status CpuSampling::SaveTimeStampToFile() {
   Path path = Path(file_path_);
   json output;
   if (path.Exists()) {
-    std::ifstream file(file_path_);
-    file >> output;
+    try {
+      std::ifstream file(file_path_);
+      file >> output;
+    } catch (const std::exception &err) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path_ +
+                               ", please delete it and try again!");
+    }
   }
   output["time_stamp"] = time_stamp_;
   std::ofstream os(file_path_, std::ios::trunc);
@@ -593,8 +613,13 @@ Status CpuSampling::SaveSamplingItervalToFile() {
   Path path = Path(file_path_);
   json output;
   if (path.Exists()) {
-    std::ifstream file(file_path_);
-    file >> output;
+    try {
+      std::ifstream file(file_path_);
+      file >> output;
+    } catch (const std::exception &err) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path_ +
+                               ", please delete it and try again!");
+    }
   }
   output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
   std::ofstream os(file_path_, std::ios::trunc);
