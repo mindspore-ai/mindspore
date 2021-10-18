@@ -96,8 +96,13 @@ using ParamInfoPtr = std::shared_ptr<ParamInfo>;
 // input of other CNodes, you can get the related info by this method.
 // debug_info: return the information retrieved from parser. Set it using set_debug_info.
 // fullname_with_scope: return the detailed debug info.
+
+/// \brief AnfNode is the basic class of the IR definition derived from Base.
 class MS_CORE_API AnfNode : public Base {
  public:
+  /// \brief Constructor.
+  ///
+  /// \param[in] func_graph The FuncGraph to which this AnfNode belongs.
   explicit AnfNode(const FuncGraphPtr &func_graph)
       : func_graph_(FuncGraphWeakPtr(func_graph)),
         abstract_(nullptr),
@@ -111,28 +116,76 @@ class MS_CORE_API AnfNode : public Base {
     scope_ = ScopeManager::GetInstance().GetCurrentScope();
   }
 
+  /// \brief Destructor.
   ~AnfNode() override = default;
   MS_DECLARE_PARENT(AnfNode, Base);
 
+  /// \brief Use the method of the AnfIrVisitor class to process the node.
   virtual void accept(AnfIrVisitor *) {}
+
+  /// \brief Obtain the FuncGraph to which this AnfNode belongs.
+  ///
+  /// \return The FuncGraph to which this AnfNode belongs.
   FuncGraphPtr func_graph() const { return func_graph_.lock(); }
 
+  /// \brief Set the FuncGraph to which this AnfNode belongs.
+  ///
+  /// \param[in] func_graph The input FuncGraph.
   virtual void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
 
+  /// \brief Obtain the scope namespace of this AnfNode.
+  ///
+  /// \return The scope namespace.
   ScopePtr scope() { return scope_; }
+
+  /// \brief Set the scope namespace of this AnfNode.
+  ///
+  /// \param[in] scope New scope namespace.
   void set_scope(const ScopePtr &scope) { scope_ = scope; }
 
+  /// \brief Obtain device kernel program information.
+  ///
+  /// \return Device kernel program information.
   const KernelInfoDevice *kernel_info() const { return kernel_info_.get(); }
+
+  /// \brief Obtain device kernel program information.
+  ///
+  /// \return Device kernel program information.
   KernelInfoDevice *kernel_info() { return kernel_info_.get(); }
+
+  /// \brief Obtain the pointer of KernelInfoDevice.
+  ///
+  /// \return The pointer of KernelInfoDevice.
   const KernelInfoDevicePtr &kernel_info_ptr() { return kernel_info_; }
+
+  /// \brief Set device kernel program information.
+  ///
+  /// \param[in] kernel_info New device kernel program information.
   void set_kernel_info(const KernelInfoDevicePtr &kernel_info) { kernel_info_ = kernel_info; }
 
+  /// \brief Obtain the inferred abstract value of this AnfNode.
+  ///
+  /// \return The inferred abstract value.
   const AbstractBasePtr &abstract() const { return abstract_; }
+
+  /// \brief Set the abstract value of this AnfNode.
+  ///
+  /// \param[in] abs New abstract value.
   void set_abstract(const AbstractBasePtr &abs) { abstract_ = abs; }
 
+  /// \brief Obtain the intermediate abstract value of this AnfNode.
+  ///
+  /// \return The intermediate abstract value.
   AbstractBasePtr intermediate_abstract() { return intermediate_abstract_; }
+
+  /// \brief Set the intermediate abstract value of this AnfNode.
+  ///
+  /// \param[in] abs New intermediate abstract value.
   void set_intermediate_abstract(const AbstractBasePtr &abs) { intermediate_abstract_ = abs; }
 
+  /// \brief Obtain the debugging information of this AnfNode.
+  ///
+  /// \return The debugging information of this AnfNode.
   NodeDebugInfoPtr debug_info() {
     MS_EXCEPTION_IF_NULL(debug_info_);
     if (debug_info_->get_node() == nullptr) {
@@ -140,6 +193,10 @@ class MS_CORE_API AnfNode : public Base {
     }
     return debug_info_;
   }
+
+  /// \brief Set the debugging information of this AnfNode.
+  ///
+  /// \return New debugging information.
   void set_debug_info(const NodeDebugInfoPtr &debug_info) {
     MS_EXCEPTION_IF_NULL(debug_info);
     debug_info_ = debug_info;
@@ -148,60 +205,144 @@ class MS_CORE_API AnfNode : public Base {
     }
   }
 
+  /// \brief Obtain the type of the element in this AnfNode.
+  ///
+  /// \return The type of the element.
   TypePtr Type() const;
+
+  /// \brief Obtain the shape of the element in this AnfNode.
+  ///
+  /// \return The shape of the element.
   BaseShapePtr Shape() const;
 
   std::size_t hash() const override { return this->hash_(this); }
+
+  /// \brief Obtain detailed information about scope namespace.
+  ///
+  /// \return Detailed information about scope namespace.
   virtual std::string fullname_with_scope() { return ""; }
+
+  /// \brief Obtain the unique name of this AnfNode.
+  ///
+  /// \return The unique name of this AnfNode.
   std::string UniqueName() { return fullname_with_scope() + "_" + UniqueId(); }
 
+  /// \brief Obtain the display information of this AnfNode.
+  ///
+  /// \param[in] recursive_level Recursion level when displayed.
+  /// \return Information to be displayed.
   virtual std::string DebugString(int recursive_level = 1) const { return ToString(); }
+
+  /// \brief Obtain the display information of this AnfNode.
+  ///
+  /// \param[in] recursive Whether to display AnfNode recursively.
+  /// \return Information to be displayed.
   virtual std::string DebugString(bool recursive) const { return DebugString(recursive ? 1 : 0); }
+
   std::string ToString() const override;
+
   void dump() const override { std::cout << DebugString() << std::endl; }
+
+  /// \brief Obtain the unique id of the debug information of this AnfNode.
+  ///
+  /// \return Unique id.
   std::string UniqueId() { return std::to_string(debug_info()->unique_id()); }
+
+  /// \brief Obtain the unique id through copied traced information.
+  ///
+  /// \return Unique id.
   std::string UniqueIdThroughCopy() { return std::to_string(debug_info()->unique_id_through_copy()); }
+
+  /// \brief Determine whether two AnfNodes are the same.
+  ///
+  /// \param[in] other Another ANfNode.
+  /// \return True if the same, otherwise False.
   virtual bool operator==(const AnfNode &other) const { return &other == this; }
+
+  /// \brief Obtain the display information of this AnfNode.
+  ///
+  /// \param[in] os Output stream.
+  /// \param[in] node AnfNode to be displayed.
+  /// \return Output stream.
   friend std::ostream &operator<<(std::ostream &os, const AnfNode &node) {
     os << node.ToString();
     return os;
   }
+
   size_t seen_{0};
   size_t extra_seen_{0};
 
+  /// \brief Set user data.
+  ///
+  /// \param[in] key The key of user data.
+  /// \param[in] value The value of user data.
   template <typename T>
   void set_user_data(const std::string &key, const std::shared_ptr<T> &value) {
     user_data_.set<T>(key, value);
   }
 
+  /// \brief Set user data.
+  ///
+  /// \param[in] value The value of user data.
   template <typename T>
   void set_user_data(const std::shared_ptr<T> &value) {
     user_data_.set<T>(T::key, value);
   }
 
+  /// \brief Set user data.
+  ///
+  /// \param[in] key The key of user data.
+  /// \return Pointer to user data.
   template <typename T>
   std::shared_ptr<T> user_data(const std::string &key) const {
     return user_data_.get<T>(key);
   }
 
+  /// \brief Set user data.
+  ///
+  /// \return Pointer to user data.
   template <typename T>
   std::shared_ptr<T> user_data() const {
     return user_data_.get<T>(T::key);
   }
 
+  /// \brief Check whether there is corresponding user data by the given key.
+  ///
+  /// \param[in] key The key of user data.
+  /// \return True if it exists, otherwise false.
   bool has_user_data(const std::string &key) const { return user_data_.has(key); }
 
+  /// \brief Check if there is user data.
+  ///
+  /// \return True if it exists, otherwise false.
   template <typename T>
   bool has_user_data() const {
     return user_data_.has(T::key);
   }
 
+  /// \brief Clone user data.
+  ///
+  /// \param[in] node Node used to copy user data.
   void CloneUserData(const AnfNodePtr &node) { user_data_ = node->user_data_; }
 
+  /// \brief Check if there is an interpret node.
+  ///
+  /// \return True if there is an interpret node, otherwise false.
   bool interpret() { return interpret_; }
+
+  /// \brief Whether to use interpretation
+  ///
+  /// \param[in] interpret Boolean.
   void set_interpret(const bool &interpret) { interpret_ = interpret; }
 
+  /// \brief Get interpreted node.
+  ///
+  /// \return Interpreted node.
   AnfNodePtr interpreted_node() { return interpreted_node_; }
+
+  /// \brief Set interpreted node.
+  ///
+  /// \param[in] Interpreted node.
   void set_interpreted_node(const AnfNodePtr &node) { interpreted_node_ = node; }
 
  protected:
@@ -236,8 +377,22 @@ class MS_CORE_API AnfNode : public Base {
 // Using set_stop_gradient() to set this flag.
 class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
  public:
+  /// \brief Constructor.
+  ///
+  /// \param[in] inputs Input nodes of this Cnode.
+  /// \param[in] func_graph The FuncGraph to which this CNode belongs.
   CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph);
+
+  /// \brief Constructor.
+  ///
+  /// \param[in] inputs Input nodes of this Cnode.
+  /// \param[in] func_graph The FuncGraph to which this CNode belongs.
   CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph);
+
+  /// \brief Constructor.
+  ///
+  /// \param[in] inputs Input nodes of this Cnode.
+  /// \param[in] func_graph_as_var The FuncGraph of type VarPtr to which this CNode belongs,
   CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var)
       : AnfNode(nullptr),
         inputs_(inputs),
@@ -248,78 +403,216 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
     primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
   }
 
+  /// \brief Destructor.
   ~CNode() override = default;
   MS_DECLARE_PARENT(CNode, AnfNode);
 
   void accept(AnfIrVisitor *v) override;
-  // check whether this cnode has some primitive value as the first input.
+
+  /// \brief Check whether this cnode has the same primitive value as the first input.
+  ///
+  /// \return True if they have the same primitive value, otherwise false.
   bool IsApply(const PrimitivePtr &) const;
 
+  /// \brief Obtain the size of input nodes of this CNode.
+  ///
+  /// \return Size of input nodes.
   const size_t size() const { return inputs_.size(); }
+
+  /// \brief Get the input node of the given index.
+  ///
+  /// \param[in] i The given index.
+  /// \return The input node of the given index.
   const AnfNodePtr &input(size_t i) const;
+
+  /// \brief Get the input nodes.
+  ///
+  /// \return The input nodes of this CNode.
   const std::vector<AnfNodePtr> &inputs() const { return inputs_; }
+
+  /// \brief Add the input node to this CNode.
+  ///
+  /// \param[in] input Node.
   void add_input(const AnfNodePtr &input);
+
+  /// \brief Set the input node of the given index.
+  ///
+  /// \param[in] i The given index.
+  /// \param[in] input Node.
   void set_input(size_t i, const AnfNodePtr &input);
+
+  /// \brief Set the input nodes for this CNode.
+  ///
+  /// \param[in] inputs Input nodes.
   void set_inputs(const std::vector<AnfNodePtr> &inputs);
 
+  /// \brief Record the cnode input value and id to inputs_value_.
+  ///
+  /// \param[in] input_value Input value.
+  /// \param[in] id The id.
   void add_input_value(const ValuePtr &input_value, const std::string &id) {
     inputs_value_.push_back(std::make_pair(input_value, id));
   }
+
+  /// \brief Clear the record of cnode input value in inputs_value_.
   void clear_inputs_value() { inputs_value_.clear(); }
+
+  /// \brief Set the record of cnode input value.
+  ///
+  /// \param[in] values New record.
   void set_inputs_value(const std::vector<std::pair<ValuePtr, std::string>> &values) { inputs_value_ = values; }
+
+  /// \brief Get the record of input value of this CNode.
+  ///
+  /// \return The input values of this CNode.
   const std::vector<std::pair<ValuePtr, std::string>> &inputs_value() const { return inputs_value_; }
 
+  /// \brief Record the cnode value and id to output_value_.
+  ///
+  /// \param[in] forward The cnode value.
+  /// \param[in] id The id.
   void set_forward(const ValueNodePtr &forward, const std::string &id) { output_value_ = std::make_pair(forward, id); }
+
+  /// \brief Get the record of output value of this CNode.
+  ///
+  /// \return The output value of this CNode.
   const std::pair<ValueNodePtr, std::string> &forward() const { return output_value_; }
 
+  /// \brief Check if stop_gradient is set.
+  ///
+  /// \return True if stop_gradient is set, otherwise false.
   bool stop_gradient() const { return stop_gradient_; }
+
+  /// \brief Set stop_gradient.
+  ///
+  /// \param[in] stop_gradient Boolean.
   void set_stop_gradient(bool stop_gradient) { stop_gradient_ = stop_gradient; }
 
   std::string fullname_with_scope() override;
+
+  /// \brief Set fullname_with_scope for this CNode.
+  ///
+  /// \param[in] full_name The fullname_with_scope.
   void set_fullname_with_scope(const std::string full_name) { fullname_with_scope_ = full_name; }
+
   std::string DebugString(int recursive_level = 1) const override;
   std::string DebugString(bool recursive) const override { return DebugString(recursive ? 1 : 0); }
 
+  /// \brief Set in_forward_flag for this CNode.
+  ///
+  /// \param[in] flag Boolean.
   void set_in_forward_flag(bool flag) { in_forward_flag_ = flag; }
+  /// \brief Check if in_forward_flag is set.
+  ///
+  /// \return True if in_forward_flag is set, otherwise false.
   bool in_forward_flag() const { return in_forward_flag_; }
 
+  /// \brief Check if the primitive of this CNode is load.
+  ///
+  /// \param[in] is_load Boolean.
   void set_load_flag(bool is_load) { is_load_ = is_load; }
+  /// \brief Check if is_load_ is set.
+  ///
+  /// \return True if is_load_ is set, otherwise false.
   bool get_load_flag() { return is_load_; }
 
+  /// \brief Get func_graph_as_var of this CNode.
+  ///
+  /// \return func_graph_as_var.
   VarPtr func_graph_as_var() const { return func_graph_as_var_; }
 
+  /// \brief Get all attributes of this CNode.
+  ///
+  /// \return Attributes of this CNode.
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
   void set_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
     attrs_.insert(attrs.cbegin(), attrs.cend());
   }
 
+  /// \brief Add a new attribute to this CNode.
+  ///
+  /// \param[in] name The name of the new attribute.
+  /// \param[in] attr The value of the new attribute.
   void AddAttr(const std::string &name, const ValuePtr &attr) { attrs_[name] = attr; }
+
+  /// \brief Erase the attribute with the given name.
+  ///
+  /// \param[in] name The name of attribute.
   void EraseAttr(const std::string &name) { (void)attrs_.erase(name); }
+
+  /// \brief Get the attribute with the given name.
+  ///
+  /// \param[in] name The name of attribute.
+  /// \return Attribute.
   ValuePtr GetAttr(const std::string &name) const {
     auto iter = attrs_.find(name);
     return iter == attrs_.cend() ? nullptr : iter->second;
   }
+
+  /// \brief Check whether this CNode has an attribute with the given name.
+  ///
+  /// \param[in] name The name of attribute.
+  /// \return Boolean.
   bool HasAttr(const std::string &name) const { return attrs_.find(name) != attrs_.cend(); }
+
+  /// \brief Get the number of input tensors.
+  ///
+  /// \return The number of input tensors.
   ssize_t input_tensor_num() const { return input_tensor_num_; }
 
+  /// \brief Get the primal attributes of this CNode.
+  ///
+  /// \return The primal attributes.
   const std::unordered_map<std::string, ValuePtr> &primal_attrs() const { return primal_attrs_; }
+
+  /// \brief Set the primal attributes of this CNode.
+  ///
+  /// \param[in] attrs The primal attributes.
   void set_primal_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
     primal_attrs_.insert(attrs.cbegin(), attrs.cend());
   }
+
+  /// \brief Add the primal attribute to this CNode.
+  ///
+  /// \param[in] name The name of the attribute.
+  /// \param[in] attr The attribute.
   void AddPrimalAttr(const std::string &name, const ValuePtr &attr) { primal_attrs_[name] = attr; }
+
+  /// \brief Erase the primal attribute with the given name.
+  ///
+  /// \param[in] name The name of the attribute.
   void ErasePrimalAttr(const std::string &name) { (void)primal_attrs_.erase(name); }
+
+  /// \brief Get the primal attribute with the given name.
+  ///
+  /// \param[in] name The name of the attribute.
+  /// \return The primal attribute with the given name.
   ValuePtr GetPrimalAttr(const std::string &name) const {
     auto iter = primal_attrs_.find(name);
     return iter == primal_attrs_.cend() ? nullptr : iter->second;
   }
+
+  /// \brief Check whether this CNode has an attribute with the given name.
+  ///
+  /// \param[in] name The name of the attribute.
+  /// \return True if it exists, otherwise false.
   bool HasPrimalAttr(const std::string &name) const { return primal_attrs_.find(name) != attrs_.cend(); }
 
+  /// \brief Get primal debug information.
+  ///
+  /// \return The primal debug information.
   std::vector<NodeDebugInfoPtr> primal_debug_infos() { return primal_debug_infos_; }
 
+  /// \brief Set primal debug information.
+  ///
+  /// \param[in] debug_infos Debug information of this CNode.
   void set_primal_debug_infos(const std::vector<NodeDebugInfoPtr> &debug_infos) {
     primal_debug_infos_.insert(primal_debug_infos_.end(), debug_infos.begin(), debug_infos.end());
   }
 
+  /// \brief Add primal debug information to this CNode.
+  ///
+  /// \param[in] debug_infos The primal debug information.
   void AddPrimalDebugInfo(const NodeDebugInfoPtr debug_info) {
     if (std::find(primal_debug_infos_.begin(), primal_debug_infos_.end(), debug_info) != primal_debug_infos_.end()) {
       MS_LOG(EXCEPTION) << "Debug_info already in primal_debug_infos_ vector";
@@ -327,6 +620,9 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
     primal_debug_infos_.push_back(debug_info);
   }
 
+  /// \brief Clone node information from a given Cnode.
+  ///
+  /// \param[in] node Another node.
   void CloneCNodeInfo(const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     set_abstract(node->abstract());
@@ -340,12 +636,19 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
     set_primal_debug_infos(node->primal_debug_infos());
   }
 
+  /// \brief Set the number of input tensors.
+  ///
+  /// \param[in] The number of input tensors.
   void set_input_tensor_num(ssize_t input_tensor_num) { input_tensor_num_ = input_tensor_num; }
 
-  // Is effect have been handled.
+  /// \brief Is effect have been handled.
+  ///
+  /// \return True if effect have been handled, otherwise false.
   bool IsEffectHandled() const { return effect_handled_; }
 
-  // Set effect handled or not.
+  /// \brief Set effect handled or not.
+  ///
+  /// \param[in] handled Boolean.
   void SetEffectHandled(bool handled) { effect_handled_ = handled; }
 
  private:
@@ -369,7 +672,12 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
 class MS_CORE_API ANode : public AnfNode {
  public:
   ANode() : AnfNode(nullptr) {}
+
+  /// \brief Constructor.
+  ///
+  /// \param[in] func_graph The FuncGraph to which this ANode belongs.
   explicit ANode(const FuncGraphPtr &func_graph) : AnfNode(func_graph) {}
+  /// \brief Destructor.
   virtual ~ANode() = default;
 
   MS_DECLARE_PARENT(ANode, AnfNode);
@@ -380,27 +688,60 @@ class MS_CORE_API ANode : public AnfNode {
 // default_param_value_: used to hold the inputting tensor of the model.
 class MS_CORE_API Parameter : public ANode {
  public:
+  /// \brief Constructor.
+  ///
+  /// \param[in] func_graph The FuncGraph to which this Parameter belongs.
   explicit Parameter(const FuncGraphPtr &func_graph)
       : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr), used_graph_count_(0) {}
+  /// \brief Destructor.
   ~Parameter() override = default;
   MS_DECLARE_PARENT(Parameter, ANode);
 
   void accept(AnfIrVisitor *v) override;
   std::string DebugString(int recursive_level = 1) const override;
+
+  /// \brief Get the name of this Parameter.
+  ///
+  /// \return The name.
   std::string name() const { return name_; }
+
+  /// \brief Set the name of this Parameter.
+  ///
+  /// \param[in] The name.
   void set_name(const std::string &name) { name_ = name; }
+
   std::string fullname_with_scope() override { return name(); }
 
+  /// \brief Check if there is a default parameter.
+  ///
+  /// \return True if this Parameter has a default parameter, otherwise false.
   bool has_default() const { return has_default_; }
+
+  /// \brief Set the default parameter.
+  ///
+  /// \param[in] param The default parameter.
   void set_default_param(ValuePtr param) {
     default_param_ = param;
     has_default_ = true;
   }
+
+  /// \brief Get the default parameter.
+  ///
+  /// \return The default parameter.
   ValuePtr default_param() const { return default_param_; }
+
+  /// \brief Get the parameter information.
+  ///
+  /// \return The parameter information.
   ParamInfoPtr param_info() const;
 
+  /// \brief Increase used_graph_count_.
   void IncreaseUsedGraphCount() { used_graph_count_++; }
+  /// \brief Decrease used_graph_count_.
   void DecreaseUsedGraphCount() { used_graph_count_--; }
+  /// \brief Get used_graph_count_.
+  ///
+  /// \return used_graph_count_.
   int used_graph_count() const { return used_graph_count_; }
 
   bool is_top_graph_param() const { return is_top_graph_param_; }
@@ -417,8 +758,14 @@ class MS_CORE_API Parameter : public ANode {
     return shared_from_this() == other.shared_from_this();
   }
 
+  /// \brief This parameter is not used in graph with id.
+  ///
+  /// \param[in] graph_id The graph id.
   void SetNotUsedByRealKernelInGraph(uint32_t graph_id) { (void)not_used_in_graphs_.insert(graph_id); }
 
+  /// \brief Check if this Parameter is used in graph with id.
+  ///
+  /// \param[in] graph_id True if used, otherwise false.
   bool IsUsedByRealKernelInGraph(uint32_t graph_id) const {
     if (not_used_in_graphs_.find(graph_id) != not_used_in_graphs_.end()) {
       return false;
@@ -426,10 +773,24 @@ class MS_CORE_API Parameter : public ANode {
     return true;
   }
 
+  /// \brief Set whether this Parameter has a dynamic shape.
+  ///
+  /// \param[in] flag Boolean.
   void set_has_dynamic_shape(bool flag) { has_dynamic_shape_ = flag; }
+
+  /// \brief Check whether this Parameter has a dynamic shape.
+  ///
+  /// \return True if this Parameter has a dynamic shape, otherwise false.
   bool has_dynamic_shape() const { return has_dynamic_shape_; }
 
+  /// \brief Set groups attr in FracZ format.
+  ///
+  /// \param[in] fracz_group Groups attr in FracZ format.
   void set_fracz_group(int64_t fracz_group) { fracz_group_ = fracz_group; }
+
+  /// \brief Get groups attr in FracZ format.
+  ///
+  /// \return Groups attr in FracZ format.
   int64_t fracz_group() { return fracz_group_; }
 
  private:
@@ -450,20 +811,47 @@ using ParameterPtr = std::shared_ptr<Parameter>;
 // It mainly be stored in ValueNode. Value and ValueNode is related definition.
 class MS_CORE_API Value : public Base {
  public:
+  /// \brief Default constructor.
   Value() = default;
+
+  /// \brief Constructor of Value.
+  ///
+  /// \param[in] t The type of this Value.
   explicit Value(const TypePtr t) : type_(t) {}
+
+  /// \brief Constructor of Value.
+  ///
+  /// \param[in] other Another Value.
   Value(const Value &other) : Base(other) { this->type_ = other.type_; }
+
+  /// \brief Destructor.
   ~Value() override = default;
   MS_DECLARE_PARENT(Value, Base)
 
+  /// \brief Get the type of this Value.
+  ///
+  /// \return The type.
   TypePtr type() const { return type_; }
+
+  /// \brief Get the abstract value of Value.
+  ///
+  /// \return Abstract value of Value.
   virtual abstract::AbstractBasePtr ToAbstract() {
     MS_LOG(EXCEPTION) << "ToAbstract error";
     abstract::AbstractBasePtr result;
     return result;
   }
 
+  /// \brief Check whether the input is the current Value object.
+  ///
+  /// \param[in] rhs The Value object to be compared.
+  /// \return Whether the input is the current Value object.
   virtual bool operator==(const Value &rhs) const = 0;
+
+  /// \brief Check whether the input is the current Value object.
+  ///
+  /// \param[in] other The Value object to be compared.
+  /// \return Whether the input is the current Value object.
   virtual Value &operator=(const Value &other) {
     if (&other == this) {
       return *this;
@@ -480,7 +868,11 @@ class MS_CORE_API Value : public Base {
 // does not belong to any particular function graph.
 class MS_CORE_API ValueNode : public ANode {
  public:
+  /// \brief Constructor of ValueNode.
+  ///
+  /// \param[in] value The value of this ValueNode.
   explicit ValueNode(const ValuePtr &value) : value_(value) {}
+  /// \brief Destructor.
   ~ValueNode() override = default;
   MS_DECLARE_PARENT(ValueNode, ANode);
 
@@ -489,14 +881,37 @@ class MS_CORE_API ValueNode : public ANode {
   }
 
   void accept(AnfIrVisitor *v) override;
+
+  /// \brief Set the value of this ValueNode.
+  ///
+  /// \param[in] value The value.
   void set_value(const ValuePtr &value) { value_ = value; }
+
+  /// \brief Get the value of this ValueNode.
+  ///
+  /// \return The value.
   const ValuePtr &value() const { return value_; }
+
   std::string fullname_with_scope() override;
 
+  /// \brief Set whether this ValueNode has a new value.
+  ///
+  /// \param[in] flag Whether this ValueNode has a new value.
   void set_has_new_value(bool flag) { has_new_value_ = flag; }
+
+  /// \brief Check whether this ValueNode has a new value.
+  ///
+  /// \return Whether this ValueNode has a new value.
   bool has_new_value() const { return has_new_value_; }
 
+  /// \brief Get the count of graphs using this ValueNode.
+  ///
+  /// \return The count of graphs using this ValueNode.
   size_t used_graph_count() const { return used_graph_count_; }
+
+  /// \brief Set the count of graphs using this ValueNode.
+  ///
+  /// \param[in] used_graph_count The count of graphs using this ValueNode.
   void set_used_graph_count(size_t used_graph_count) { used_graph_count_ = used_graph_count; }
 
   std::string ToString() const override;
@@ -571,7 +986,11 @@ bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value = nullpt
 // used to get PrimitivePtr from a cnode first input
 PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
 
-// used to check whether an AnfNode is a valuenode having some Primitive value
+/// \brief Used to check whether the given node is a ValueNode with some Primitive value.
+///
+/// \param[in] node The input node.
+/// \param[in] value Primitive value.
+/// \return Whether the given node is a ValueNode with some Primitive value.
 MS_CORE_API bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value);
 
 // Check whether two primitives are same.

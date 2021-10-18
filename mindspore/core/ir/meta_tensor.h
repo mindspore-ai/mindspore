@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,96 +57,120 @@ struct DeviceInfo {
 // and so on. But it does not contain values of a tensor.
 class MS_CORE_API MetaTensor : public Value {
  public:
-  // Construction
+  /// \brief Construction
   MetaTensor();
 
-  // brief Constructs a meta tensor of a tensor having data_type data and shape.
-  //
-  // The constructed MetaTensor is not a Tensor, but it has the data type and shape
-  // information of a Tensor. The following codes will create a 2x3 float
-  // param data_type The data type of the tensor.
-  // param shape The shape of the tensor.
+  /// \brief Constructs a meta tensor of a tensor having data_type data and shape.
+  /// The constructed MetaTensor is not a Tensor, but it has the data type and shape
+  /// information of a Tensor.
+  ///
+  /// \param[in] data_type The data type of the tensor.
+  /// \param[in] shape The shape of the tensor.
   MetaTensor(const TypeId data_type, const ShapeVector &shape);
 
   MetaTensor(const TypePtr &type_ptr, const ShapeVector &shape);
-  // brief Constructs a MetaTensor object from an existing MetaTensor instance.
-  //
-  // The constructed MetaTensor object will have the same data type and shape as the
-  // meta_tensor.
-  //
-  // param meta_tensor An existing MetaTensor object.
+  /// \brief Copy constructor.
+  /// The constructed MetaTensor object will have the same data type and shape as the
+  /// meta_tensor.
+  ///
+  /// \param[in] meta_tensor An existing MetaTensor object.
   MetaTensor(const MetaTensor &meta_tensor);
+
+  /// \brief Destrustor of MetaTensor.
   ~MetaTensor() override = default;
   MS_DECLARE_PARENT(MetaTensor, Value)
 
-  // brief Overloads operator = for MetaTensor.
-  //
-  // The constructed MetaTensor object has the same type and shape with meta_tensor.
-  //
-  // param meta_tensor An existing MetaTensor object.
+  /// \brief Overloads operator = for MetaTensor.
+  /// The constructed MetaTensor object has the same type and shape with meta_tensor.
+  ///
+  /// \param[in] meta_tensor An existing MetaTensor object.
+  /// \return A MetaTensor object.
   virtual MetaTensor &operator=(const MetaTensor &meta_tensor);
 
-  // brief Compares two MetaTensor objects.
-  //
-  // The constructed MetaTensor object has the same type and shape with meta_tensor.
-  //
-  // param meta_tensor The MetaTensor object to be compared.
-  // return true: If having same type and shape, return true, or return false.
+  /// \brief Compares two MetaTensor objects.
+  /// The constructed MetaTensor object has the same type and shape with meta_tensor.
+  ///
+  /// \param[in] meta_tensor The MetaTensor object to be compared.
+  /// \return Return true if having same type and shape, otherwise return false.
   virtual bool operator==(const MetaTensor &meta_tensor) const;
 
-  // brief Returns the data type of the tensor in its MetaTensor.
-  //
-  // All the types are defined in "ir/dtype.h".
+  /// \brief Get the data type of the tensor in its MetaTensor.
+  /// All the types are defined in "ir/dtype.h".
+  ///
+  /// \return The data type of the tensor in its MetaTensor.
   TypePtr Dtype() const;
+
   abstract::AbstractBasePtr ToAbstract() override;
+
+  /// \brief Get the data type of a tensor in its MetaTensor.
+  ///
+  /// \return The data type.
   TypeId data_type() const { return data_type_; }
+
   std::string ToString() const override;
   std::string DumpText() const override;
-  // brief Sets the data type of a tensor in its MetaTensor.
-  //
-  // param data_type The data type of the tensor to be set.
+
+  /// \brief Set the data type of a tensor in its MetaTensor.
+  ///
+  /// \param[in] data_type The data type of the tensor to be set.
   virtual TypeId set_data_type(const TypeId data_type) {
     data_type_ = data_type;
     return data_type_;
   }
+
+  /// \brief Set the dtype of a tensor in its MetaTensor.
+  ///
+  /// \param[in] type_ptr The dtype of the tensor to be set.
   virtual TypePtr SetDtype(const TypePtr type_ptr);
-  // brief Get tensor's shape.
-  //
-  // The shape of a tensor is stored in a vector<int>. Each
-  // element of the vector represents the size of a dimension of the tensor.
-  // The order of each element in the vector is as same as the the dimension's
-  // order it represents.
-  //
-  // return A const vector<int> which represents the shape of the tensor.
+
+  /// \brief Get tensor's shape.
+  /// The shape of a tensor is stored in a vector<int>. Each
+  /// element of the vector represents the size of a dimension of the tensor.
+  /// The order of each element in the vector is the same as the the dimension's
+  /// order it represents.
+  ///
+  /// \return A const vector<int> which represents the shape of the tensor.
   const ShapeVector &shape() const { return shape_; }
 
-  // brief Sets the shape of a tensor.
-  //
-  // The shape of a tensor is stored in a vector<int>. Each
-  // element of the vector represents the size of a dimension of the tensor.
-  // The order of each element in the vector is as same as the the dimension's
-  // order it represents.
-  //
-  // param shape The shape of the tensor.
-  // return The shape's size.
+  /// \brief Sets the shape of a tensor.
+  /// The shape of a tensor is stored in a vector<int>. Each
+  /// element of the vector represents the size of a dimension of the tensor.
+  /// The order of each element in the vector is the same as the the dimension's
+  /// order it represents.
+  ///
+  /// \param[in] shape The shape of the tensor.
+  /// \return The shape's size.
   size_t set_shape(const ShapeVector &shape) {
     this->shape_ = shape;
     return shape_.size();
   }
 
-  // Get tensor's device info.
+  /// \brief Get tensor's device info.
+  ///
+  /// \return The device info of this tensor.
   DeviceInfo device_info() const { return device_info_; }
 
-  // Set tensor's device info.
+  /// \brief Set tensor's device info.
+  ///
+  /// \param[in] device_info The tensor's device info.
   void set_device_info(const DeviceInfo &device_info) { device_info_ = device_info; }
 
+  /// \brief Set tensor's device info.
+  ///
+  /// \param[in] format The input format.
+  /// \param[in] data_type The input data type.
+  /// \param[in] host_format The input host format.
   void SetDeviceInfo(const std::string &format, const TypePtr &data_type,
                      const std::string &host_format = "DefaultFormat");
 
-  // Get the size of a given dimension by its index number.
+  /// \brief Get the size of a given dimension by its index number.
+  ///
+  /// \return The size of a given dimension by its index number.
   int64_t DimensionSize(size_t index) const;
 
-  // Get total number of elements in a tensor.
+  /// \brief Get total number of elements in a tensor.
+  ///
+  /// \return The total number of elements in a tensor.
   int ElementsNum() const;
 
   std::size_t hash() const override {
@@ -167,10 +191,19 @@ class MS_CORE_API MetaTensor : public Value {
       return false;
     }
   }
-  // Get tensor's param_info info.
+  /// \brief Get tensor's param_info info.
+  ///
+  /// \return The tensor's param_info info.
   ParamInfoPtr param_info() const { return param_info_; }
+
+  /// \brief Check whether this Tensor is a parameter.
+  ///
+  /// \return Whether this Tensor is a parameter.
   bool is_parameter() const { return is_parameter_; }
-  // Set tensor's param_info info.
+
+  /// \brief Set tensor's param_info info.
+  ///
+  /// \param[in] param_info The input param_info.
   void set_param_info(const ParamInfoPtr &param_info) {
     is_parameter_ = true;
     param_info_ = param_info;
