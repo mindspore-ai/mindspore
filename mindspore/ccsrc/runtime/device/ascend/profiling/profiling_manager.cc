@@ -39,7 +39,8 @@ ProfilingManager &ProfilingManager::GetInstance() {
   return inst;
 }
 
-ProfilingManager::ProfilingManager() : device_id_(0), prof_cb_({0}), hccl_enabled_bef_profiling_enabled_(false) {}
+ProfilingManager::ProfilingManager()
+    : device_id_(0), prof_cb_({0}), hccl_enabled_bef_profiling_enabled_(false), has_start(false) {}
 
 uint64_t ProfilingManager::GetJobId() const { return 0; }
 
@@ -111,6 +112,10 @@ Status ProfilingManager::GetProfConf(const NotNull<MsprofGeOptions *> prof) {
 }
 
 bool ProfilingManager::StartupProfiling(uint32_t device_id) {
+  if (has_start) {
+    return true;
+  }
+
   auto is_profiling = IsProfiling();
   if (!is_profiling) {
     int32_t cb_ret = MsprofInit(0XFF, nullptr, 0);
@@ -141,6 +146,9 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
     MS_LOG(ERROR) << "ProfMgrStartUp failed.";
     return false;
   }
+
+  has_start = true;
+
   return true;
 }
 
