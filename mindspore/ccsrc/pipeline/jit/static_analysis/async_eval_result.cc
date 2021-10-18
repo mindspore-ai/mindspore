@@ -28,17 +28,10 @@ void AnalysisSchedule::Schedule() {
   const auto checkPeriod = std::chrono::seconds(3);
   while (notExit_ || infer_thread_count_.load() > 0) {
     std::unique_lock<std::mutex> lock(activate_thread_lock_);
-    if (activate_threads_.size() > 1) {
-      MS_LOG(ERROR) << "There is something wrong."
-                    << " The active thread count: " << activate_threads_.size()
-                    << " The infer_thread_count: " << infer_thread_count_
-                    << " schedule list size: " << scheduleList_.size();
-    }
-
-    auto ok = activate_thread_cv_.wait_for(lock, checkPeriod, [this] { return activate_threads_.empty(); });
-    if (ok && (!SetNextReady())) {
-      // If schedule list is empty, wait.
-      (void)activate_thread_cv_.wait_for(lock, checkPeriod, [this] { return !scheduleList_.empty(); });
+    auto ok = activate_thread_cv_.wait_for(lock, checkPeriod,
+                                           [this] { return activate_threads_.empty() && !scheduleList_.empty(); });
+    if (ok) {
+      SetNextReady();
     }
   }
   MS_LOG(DEBUG) << "Success to exit. The active thread count: " << activate_threads_.size()
@@ -117,9 +110,9 @@ void AnalysisSchedule::Add2Schedule(const AsyncInferTaskPtr &async_infer_task_pt
                 << " The infer_thread_count: " << infer_thread_count_
                 << " schedule list size: " << scheduleList_.size();
 }
-bool AnalysisSchedule::SetNextReady() {
+void AnalysisSchedule::SetNextReady() {
   if (scheduleList_.empty()) {
-    return false;
+    return;
   }
   // Check if enter endless loop
   auto it = std::find_if(scheduleList_.begin(), scheduleList_.end(), [](const auto &item) {
@@ -129,11 +122,8 @@ bool AnalysisSchedule::SetNextReady() {
   if (it == scheduleList_.end()) {
     if (IntToSize(infer_thread_count_.load()) >= scheduleList_.size()) {
       MS_LOG(DEBUG) << "There is some task to be added. Please wait.";
-      return false;
+      return;
     }
-    MS_LOG(WARNING) << "Enter endless loop. The active thread count: " << activate_threads_.size()
-                    << " The infer_thread_count: " << infer_thread_count_
-                    << " schedule list size: " << scheduleList_.size();
     // Enter endless loop if there is not ready result.
     (void)activate_threads_.insert(scheduleList_.front()->ThreadID());
     // Let the first thread to trigger endless loop exception.
@@ -141,7 +131,7 @@ bool AnalysisSchedule::SetNextReady() {
                   << scheduleList_.front().get() << " The active thread count: " << activate_threads_.size();
     scheduleList_.front()->SetEndLessLoopException();
     scheduleList_.pop_front();
-    return true;
+    return;
   }
   auto async_task = *it;
   (void)activate_threads_.insert(async_task->ThreadID());
@@ -150,8 +140,6 @@ bool AnalysisSchedule::SetNextReady() {
   MS_LOG(DEBUG) << " Success to SetReady. The active thread count: " << activate_threads_.size()
                 << " The infer_thread_count: " << infer_thread_count_ << " schedule list size: " << scheduleList_.size()
                 << " async: " << async_task->ThreadID() << "  address: " << async_task.get();
-
-  return true;
 }
 // The thread id format is XXXX.YYYY.ZZZZ
 thread_local std::string localThreadID = "1";
@@ -192,26 +180,23 @@ AbstractBasePtr AnalysisResultCacheMgr::TryGetSwitchValue(const AnfNodeConfigPtr
 }
 
 AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &conf) {
-  StaticAnalysisException::Instance().CheckException();
   // don't call lock_.lock(). switch_cache is protected. and it waits for result.
   AsyncAbstractPtr async_eval_result = switch_cache_.get(conf);
+  if (async_eval_result == nullptr) {
+    return nullptr;
+  }
   // Conf has been visited and set value.
-  if (async_eval_result != nullptr) {
-    // Add to schedule
-    auto async_infer_task = AsyncInferTask::MakeShared(async_eval_result);
-    MS_LOG(DEBUG) << " add to schedule: " << async_infer_task.get();
-    AnalysisSchedule::GetInstance().Add2Schedule(async_infer_task);
-    // Maybe blocked for waiting. AsyncAbstract maybe null, if time out.
-    auto result = async_infer_task->GetResult();
-    if (result == nullptr) {
-      result = std::make_shared<AbstractTimeOut>();
-      MS_LOG(ERROR) << "AsyncAbstract of NodeConfig " << conf->node()->ToString()
-                    << " is nullptr. There is something wrong.";
-      StaticAnalysisException::Instance().CheckException();
-    }
+  auto result = async_eval_result->TryGetResult();
+  if (result != nullptr) {
     return result;
   }
-  return nullptr;
+
+  // Add to schedule
+  auto async_infer_task = AsyncInferTask::MakeShared(async_eval_result);
+  MS_LOG(DEBUG) << " add to schedule: " << async_infer_task.get();
+  AnalysisSchedule::GetInstance().Add2Schedule(async_infer_task);
+  // Maybe blocked for waiting.
+  return async_infer_task->GetResult();
 }
 
 void AnalysisResultCacheMgr::SetCacheValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg,
