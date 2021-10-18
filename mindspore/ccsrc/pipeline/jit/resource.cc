@@ -143,6 +143,7 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"__setitem__", prim::kPrimDictSetItem},  // P.dict_setitem,
                                          {"keys", prim::kPrimDictGetKeys},         // P.dict_getkeys,
                                          {"values", prim::kPrimDictGetValues},     // P.dict_getvalues,
+                                         {"items", prim::kPrimDictItems},          // P.dict_items
                                          {"__bool__", std::string("dict_bool")}    // C.dict_bool
                                        }},
                                       {kObjectTypeTensorType,
