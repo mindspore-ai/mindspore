@@ -685,6 +685,10 @@ const std::set<std::string> DynamicShapeConstInputToAttr = {
   kCastOpName,       kExpandDimsOpName, kReshapeOpName,   kEmbeddingLookupOpName, kReduceMinOpName,
   kReduceMeanOpName, kReduceMaxOpName,  kReduceAllOpName, kReduceAnyOpName,       kConcatOpName};
 
+const std::set<std::string> DynamicShapeConstInputToAttrCPU = {
+  kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName,
+  kReduceMaxOpName, kReduceAllOpName,  kReduceAnyOpName,       kConcatOpName,    kReduceSumOpName};
+
 const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
   kCastOpName,      kExpandDimsOpName, kReshapeOpName,   kEmbeddingLookupOpName, kTransposeOpName, kReduceSumOpName,
   kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName, kReduceAllOpName,       kReduceAnyOpName, kConcatOpName};

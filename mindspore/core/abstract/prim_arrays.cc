@@ -820,14 +820,23 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
   if (x_min_shape.empty()) {
     x_min_shape = x_shape;
   }
-  ValuePtr sh = primitive->GetAttr("shape");
-  MS_EXCEPTION_IF_NULL(sh);
-  auto reshape_value_tuple = sh->cast<ValueTuplePtr>();
-  MS_EXCEPTION_IF_NULL(reshape_value_tuple);
-  auto reshape_tuple = reshape_value_tuple->value();
+  if (args_spec_list.size() == 2) {
+    auto input_value = args_spec_list[1]->BuildValue();
+    if (input_value->isa<tensor::Tensor>()) {
+      shape = CheckAndConvertUtils::CheckTensorIntValue("reshape args value", input_value, op_name);
+    } else {
+      shape = CheckAndConvertUtils::CheckAttrTupleInt("reshape args value", input_value, op_name);
+    }
+  } else {
+    ValuePtr sh = primitive->GetAttr("shape");
+    MS_EXCEPTION_IF_NULL(sh);
+    auto reshape_value_tuple = sh->cast<ValueTuplePtr>();
+    MS_EXCEPTION_IF_NULL(reshape_value_tuple);
+    auto reshape_tuple = reshape_value_tuple->value();
 
-  (void)std::transform(std::begin(reshape_tuple), std::end(reshape_tuple), std::back_inserter(shape),
-                       [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+    (void)std::transform(std::begin(reshape_tuple), std::end(reshape_tuple), std::back_inserter(shape),
+                         [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+  }
 
   auto max_shape = shape;
   auto min_shape = shape;
@@ -865,6 +874,15 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
     shape[index] = infer_value;
     min_shape[index] = infer_min_value;
     max_shape[index] = infer_max_value;
+  }
+
+  int64_t shape_num = 1;
+  for (int64_t value : shape) {
+    shape_num = LongMulWithOverflowCheck(value, shape_num);
+  }
+  if (shape_num != x_num) {
+    MS_LOG(EXCEPTION) << "The accumulate of x_shape must equal to out_shape, but got x_shape: " << x_shape
+                      << ", and out_shape: " << shape;
   }
 
   AbstractTensorPtr ret =
@@ -978,6 +996,36 @@ AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const Primitive
 
   ShapePtr output_shape = std::make_shared<Shape>(lengths_shape, lengths_shape_min, lengths_shape_max);
   return std::make_shared<AbstractTensor>(kBool, output_shape);
+}
+
+AbstractBasePtr InferImplConcatOffset(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string op_name = primitive->name();
+  if (args_spec_list.empty()) {
+    MS_LOG(EXCEPTION) << "args_spec_list is empty.";
+  }
+
+  AbstractTuplePtr arg = nullptr;
+  AbstractTensorPtr tensor_base = nullptr;
+  size_t tuple_len = 0;
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  if (args_spec_list[0]->isa<AbstractTuple>()) {
+    CheckArgsSize(op_name, args_spec_list, 1);
+    arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+    tuple_len = arg->elements().size();
+    tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
+  } else if (args_spec_list[0]->isa<AbstractTensor>()) {
+    tuple_len = args_spec_list.size();
+    tensor_base = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  }
+
+  MS_EXCEPTION_IF_NULL(tensor_base);
+  ShapeVector shape_base = tensor_base->shape()->shape();
+  size_t rank = shape_base.size();
+  ShapeVector out_shape{SizeToLong(tuple_len), SizeToLong(rank)};
+  TypePtr out_type = kInt64;
+  return std::make_shared<AbstractTensor>(out_type, std::make_shared<Shape>(out_shape));
 }
 
 AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

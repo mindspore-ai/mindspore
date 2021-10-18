@@ -38,6 +38,9 @@ class MS_CORE_API Slice : public PrimitiveC {
   /// \brief Init.
   void Init() {}
 };
+AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                           const std::vector<AbstractBasePtr> &input_args);
+using PrimSlicePtr = std::shared_ptr<Slice>;
 }  // namespace ops
 }  // namespace mindspore
 

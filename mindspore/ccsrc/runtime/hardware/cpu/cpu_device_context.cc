@@ -215,12 +215,35 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 #endif
 
     cpu_kernel->Init(node);
+    cpu_kernel->InitDynamicKernel(node);
+    auto cpu_dynamic_kernel = cpu_kernel->DynamicKernel();
+    MS_EXCEPTION_IF_NULL(cpu_dynamic_kernel);
+    cpu_dynamic_kernel->Initialize();
     AnfAlgo::SetKernelMod(cpu_kernel, node.get());
   }
 #ifdef ENABLE_AKG
   kernel::AkgCpuKernelBuilder akg_cpu_kernel_builder;
   (void)akg_cpu_kernel_builder.AkgKernelParallelBuild(akg_nodes);
 #endif
+}
+
+void CPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+
+  if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
+    MS_LOG(EXCEPTION) << "Akg kernels do not support dynamic shape by now.";
+  }
+
+  kernel::CPUKernel *cpu_kernel = dynamic_cast<kernel::CPUKernel *>(kernel_mod);
+  MS_EXCEPTION_IF_NULL(cpu_kernel);
+  device::DynamicKernelPtr dynamic_kernel = cpu_kernel->DynamicKernel();
+  MS_EXCEPTION_IF_NULL(dynamic_kernel);
+  dynamic_kernel->InferShape();
+  dynamic_kernel->UpdateArgs();
 }
 
 void CPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {

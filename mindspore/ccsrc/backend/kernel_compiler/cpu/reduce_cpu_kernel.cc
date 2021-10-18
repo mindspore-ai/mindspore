@@ -33,6 +33,7 @@ template <typename T>
 void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
+  axis_.clear();
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
@@ -80,6 +81,9 @@ void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
     } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
       reduce_type_ = kReduceMean;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
+    } else if (kernel_name == "ReduceProd") {
+      reduce_type_ = kReduceProd;
+      reduce_func_ = [](const T *input, size_t pos, T *out) { *out *= input[pos]; };
     } else {
       MS_LOG(EXCEPTION) << "Unsupported reduce operation:  " << kernel_name_;
     }

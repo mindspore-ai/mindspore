@@ -182,6 +182,8 @@ def get_bprop_reshape(self):
 
     def bprop(x, shp, out, dout):
         shapex = shape_op(x)
+        if -1 in shapex:
+            shapex = dyn_shape_op(x)
         return reshape(dout, shapex), zeros_like(shp)
 
     return bprop
@@ -252,10 +254,29 @@ def _tile_shape(multiples, shapex):
 @bprop_getters.register(P.Tile)
 def get_bprop_tile(self):
     """Generate bprop for Tile"""
+    tuple_to_array = P.TupleToArray()
+    cast = P.Cast()
+    stack_op = P.Stack(1)
+    ones = P.Ones()
+    concat = P.Concat()
 
     def bprop(x, multiples, out, dout):
         shapex = shape_op(x)
-        r_shape = _tile_shape(multiples, shapex)
+        if isinstance(multiples, tuple):
+            r_shape = _tile_shape(multiples, shapex)
+        else:
+            len_multi = size_op(multiples)
+            rank = len(shapex)
+            shape_tensor = cast(tuple_to_array(shapex), mstype.int64)
+            if len_multi > rank:
+                one_tensor = ones((len_multi - rank,), mstype.int64)
+                shape_tensor = concat((shape_tensor, one_tensor))
+            elif len_multi < rank:
+                one_tensor = ones((rank - len_multi,), mstype.int64)
+                multiples = concat((multiples, one_tensor))
+            tile_shape = stack_op((multiples, shape_tensor))
+            r_shape = reshape(tile_shape, (-1,))
+
         # 0 represents the start index, and 2 represents the step
         axis = F.make_range(0, len(r_shape), 2)
         dx = reduce_sum(reshape(dout, r_shape), axis)
@@ -340,9 +361,16 @@ def get_bprop_concat(self):
         out_offset = G.ConcatOffset(len(x), axis)(x)
         input_nums = len(x)
         input_shapes = ()
-        for i in range(input_nums):
-            input_shapes = input_shapes + (shape_op(x[i]),)
-        is_uniform = _concat_grad_uniform(input_shapes, input_nums)
+        if isinstance(out_offset, tuple):
+            for i in range(input_nums):
+                input_shapes = input_shapes + (shape_op(x[i]),)
+            is_uniform = _concat_grad_uniform(input_shapes, input_nums)
+        else:
+            # for dynamic shape
+            for i in range(input_nums):
+                input_shapes = input_shapes + (dyn_shape_op(x[i]),)
+            is_uniform = False
+
         if isinstance(x, list):
             dx = []
             if is_uniform:

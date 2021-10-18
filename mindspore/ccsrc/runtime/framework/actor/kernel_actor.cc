@@ -107,6 +107,10 @@ void KernelActor::RunOpControlWithInputTensor(AID *const input_control, OpContex
   PushInputDeviceTensor(input_tensors);
   // When all the inputs are collected, then allocate memory and callback launch.
   if (CheckRunningCondition(context)) {
+    if (is_dynamic_shape_) {
+      device_contexts_[0]->UpdateDynamicShape(kernel_);
+    }
+
     FetchOutputDeviceTensor();
     if (memory_alloc_list_.size() > 0) {
       SendMemoryAllocReq(context);
@@ -365,6 +369,11 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
+  // The size of output address may be changed in dynamic shape scenario.
+  if (is_dynamic_shape_) {
+    UpdateOutputAddrSize();
+  }
+
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
 
   // The input is invalid and needs to be erased when finish kernel launch.
@@ -380,6 +389,18 @@ void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
 
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
     SendOutput(context);
+  }
+}
+
+void KernelActor::UpdateOutputAddrSize() {
+  auto &output_addresses = kernel_info_->output_address_list();
+  for (size_t i = 0; i < output_addresses.size(); ++i) {
+    auto output_address = output_addresses[i].get();
+    MS_EXCEPTION_IF_NULL(output_address);
+    auto output_addr_size = AnfAlgo::GetOutputTensorMemSize(kernel_, i);
+    if (output_addr_size != output_address->GetSize()) {
+      output_address->SetSize(output_addr_size);
+    }
   }
 }
 

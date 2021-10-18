@@ -104,14 +104,16 @@ class TwoReshapeEliminater : public AnfVisitor {
   }
 
   void Visit(const AnfNodePtr &node) override {
-    if (IsPrimitiveCNode(node, prim::kPrimReshape)) {
-      auto &inputs = node->cast<CNodePtr>()->inputs();
-      // {PrimReshape, X, Y}
-      if (inputs.size() != 3) {
-        return;
+    if (prim_ == nullptr && x_ == nullptr) {
+      if (IsPrimitiveCNode(node, prim::kPrimReshape)) {
+        auto &inputs = node->cast<CNodePtr>()->inputs();
+        // {PrimReshape, X, Y}
+        if (inputs.size() != 3) {
+          return;
+        }
+        prim_ = GetValueNode<PrimitivePtr>(inputs[0]);
+        x_ = inputs[1];
       }
-      prim_ = GetValueNode<PrimitivePtr>(inputs[0]);
-      x_ = inputs[1];
     } else {
       shape_ = node;
     }

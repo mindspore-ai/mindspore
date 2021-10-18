@@ -66,6 +66,39 @@ MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat32).Ad
                   StridedSliceCPUKernel);
 MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
                   StridedSliceCPUKernel);
+
+MS_REG_CPU_KERNEL(StridedSlice,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeBool)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddOutputAttr(kNumberTypeBool),
+                  StridedSliceCPUKernel);
+MS_REG_CPU_KERNEL(StridedSlice,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeInt32)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddOutputAttr(kNumberTypeInt32),
+                  StridedSliceCPUKernel);
+MS_REG_CPU_KERNEL(StridedSlice,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddOutputAttr(kNumberTypeFloat32),
+                  StridedSliceCPUKernel);
+MS_REG_CPU_KERNEL(StridedSlice,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddInputAttr(kNumberTypeInt64)
+                    .AddOutputAttr(kNumberTypeFloat64),
+                  StridedSliceCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

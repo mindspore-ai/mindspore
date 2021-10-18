@@ -61,9 +61,14 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   auto input_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
-  auto get_cast_temp = input_args[1]->cast<abstract::AbstractTuplePtr>();
-  MS_EXCEPTION_IF_NULL(get_cast_temp);
-  auto multiples_v = GetValue<std::vector<int64_t>>(get_cast_temp->BuildValue());
+  std::vector<int64_t> multiples_v;
+  auto multiple_value = input_args[1]->BuildValue();
+  if (multiple_value->isa<tensor::Tensor>()) {
+    multiples_v = CheckAndConvertUtils::CheckTensorIntValue("tile multiples value", multiple_value, prim_name);
+  } else {
+    multiples_v = CheckAndConvertUtils::CheckAttrTupleInt("tile multiples value", multiple_value, prim_name);
+  }
+
   auto infer_shape = GetInferShape(input_shape, multiples_v);
   if (max_shape.empty() && min_shape.empty()) {
     return std::make_shared<abstract::Shape>(infer_shape);

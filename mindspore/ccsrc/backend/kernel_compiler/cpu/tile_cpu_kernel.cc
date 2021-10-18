@@ -22,10 +22,38 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kTileInputsNum = 1;
+constexpr size_t kTileDynamicInputsNum = 2;
 constexpr size_t kTileOutputsNum = 1;
 }  // namespace
 
 void TileCPUKernel::TileMultipleCompute() {
+  size_t ones = multiples_.size() - x_shape_.size();
+  if (ones > 0) {
+    for (size_t i = 0; i < ones; ++i) {
+      x_shape_.insert(x_shape_.begin(), 1);
+    }
+  }
+  if (x_shape_.size() > MAX_TILE_DIM_SIZE || x_shape_.size() > y_shape_.size()) {
+    MS_LOG(EXCEPTION) << "Tile input shape should not be greater than default max size :" << MAX_TILE_DIM_SIZE
+                      << " and output shape : " << y_shape_.size() << ", but got input shape " << x_shape_.size();
+  }
+  input_size_ = 1;
+  tile_parameter_.in_dim_ = x_shape_.size();
+  for (int i = 0; i < tile_parameter_.in_dim_; i++) {
+    input_size_ *= x_shape_[i];
+    tile_parameter_.in_shape_[i] = x_shape_[i];
+    tile_parameter_.out_shape_[i] = y_shape_[i];
+  }
+
+  int stridex = 1;
+  int stridey = 1;
+  for (int i = tile_parameter_.in_dim_ - 1; i >= 0; i--) {
+    tile_parameter_.in_strides_[i] = stridex;
+    tile_parameter_.out_strides_[i] = stridey;
+    stridex *= x_shape_[i];
+    stridey *= y_shape_[i];
+  }
+
   int large_one_multiple_count_ = 0;
   int multiple = 0;
   size_t mul_index = 0;
@@ -52,45 +80,22 @@ void TileCPUKernel::TileMultipleCompute() {
 void TileCPUKernel::TileTensorParamrInit(const CNodePtr &kernel_node) {
   x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   y_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (x_shape_.size() > MAX_TILE_DIM_SIZE || x_shape_.size() > y_shape_.size()) {
-    MS_LOG(EXCEPTION) << "Tile input shape should not be greater than default max size :" << MAX_TILE_DIM_SIZE
-                      << " and output shape : " << y_shape_.size() << ", but got input shape " << x_shape_.size();
-  }
-  std::vector<int64_t> multiples_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
-  (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
-                       [](const int64_t &value) { return LongToInt(value); });
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  size_t ones = multiples_.size() - x_shape_.size();
-  if (ones > 0) {
-    for (size_t i = 0; i < ones; ++i) {
-      (void)x_shape_.insert(x_shape_.begin(), 1);
-    }
+  multiples_.clear();
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  if (input_num == kTileInputsNum) {
+    std::vector<int64_t> multiples_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
+    (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    TileMultipleCompute();
   }
-
-  input_size_ = 1;
-  tile_parameter_.in_dim_ = x_shape_.size();
-  for (int i = 0; i < tile_parameter_.in_dim_; i++) {
-    input_size_ *= x_shape_[i];
-    tile_parameter_.in_shape_[i] = x_shape_[i];
-    tile_parameter_.out_shape_[i] = y_shape_[i];
-  }
-
-  int stridex = 1;
-  int stridey = 1;
-  for (int i = tile_parameter_.in_dim_ - 1; i >= 0; i--) {
-    tile_parameter_.in_strides_[i] = stridex;
-    tile_parameter_.out_strides_[i] = stridey;
-    stridex *= x_shape_[i];
-    stridey *= y_shape_[i];
-  }
-
-  TileMultipleCompute();
 }
 
 void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   TileTensorParamrInit(kernel_node);
+  cnode_ptr_ = kernel_node;
 
   launch_map_[kNumberTypeInt8] = &TileCPUKernel::LaunchKernel<int8_t>;
   launch_map_[kNumberTypeInt16] = &TileCPUKernel::LaunchKernel<int16_t>;
@@ -113,7 +118,10 @@ void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
 bool TileCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                            const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTileInputsNum, kernel_name_);
+  if (inputs.size() != kTileInputsNum && inputs.size() != kTileDynamicInputsNum) {
+    MS_LOG(EXCEPTION) << "Input num should be " << kTileInputsNum << " or " << kTileDynamicInputsNum << ", but got "
+                      << inputs.size();
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTileOutputsNum, kernel_name_);
   launch_func_(this, inputs, outputs);
   return true;
@@ -123,8 +131,23 @@ template <typename T>
 void TileCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  tile_parameter_.data_size_ = sizeof(T);
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  if (input_num == kTileDynamicInputsNum) {
+    auto multiples_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
+    auto multiple_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
+    size_t multiple_nums = 1;
+    for (size_t i = 0; i < multiple_shape.size(); ++i) {
+      multiple_nums *= multiple_shape[i];
+    }
+    for (size_t i = 0; i < multiple_nums; ++i) {
+      multiples_.emplace_back(multiples_addr[i]);
+    }
+    TileMultipleCompute();
+  }
 
+  tile_parameter_.data_size_ = sizeof(T);
   if (one_dim_tile_) {
     auto task = [&x_addr, &y_addr, this](size_t start, size_t end) {
       TileSimple(x_addr, y_addr, start, end, &tile_parameter_);

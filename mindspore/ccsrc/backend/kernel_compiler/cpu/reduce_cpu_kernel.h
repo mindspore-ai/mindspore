@@ -38,7 +38,7 @@ class ReduceCPUKernel : public CPUKernel {
  private:
   void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
 
-  enum ReduceType { kReduceAll, kReduceAny, kReduceMax, kReduceMin, kReduceSum, kReduceMean };
+  enum ReduceType { kReduceAll, kReduceAny, kReduceMax, kReduceMin, kReduceSum, kReduceMean, kReduceProd };
   std::vector<size_t> input_shape_;
   std::vector<int64_t> axis_;
   ReduceType reduce_type_{kReduceAll};
@@ -65,6 +65,11 @@ MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCPUKernel, float);
 MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCPUKernel, double);
 MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCPUKernel, int32_t);
 MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr(), ReduceCPUKernel, int64_t);
+
+MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCPUKernel, float);
+MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCPUKernel, double);
+MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceProd, KernelAttr(), ReduceCPUKernel, int64_t);
 
 MS_REG_CPU_KERNEL_T(ReduceAll, KernelAttr(), ReduceCPUKernel, bool);
 

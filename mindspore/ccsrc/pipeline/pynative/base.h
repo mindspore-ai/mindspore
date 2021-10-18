@@ -69,8 +69,7 @@ using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
 
 const std::set<std::string> ignore_infer_prim = {"mixed_precision_cast"};
 const std::set<std::string> force_infer_prim = {"TopK", "DropoutGenMask"};
-const std::set<std::string> dynamic_shape_const_input_to_attr = {"Cast", "ExpandDims", "Reshape", "EmbeddingLookup",
-                                                                 "Transpose"};
+const std::set<std::string> dynamic_shape_const_input_to_attr = {"Cast", "ExpandDims", "EmbeddingLookup", "Transpose"};
 }  // namespace pynative
 }  // namespace mindspore
 
