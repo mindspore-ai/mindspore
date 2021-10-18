@@ -58,6 +58,41 @@ static inline void ActBlock4(__m128 *v1, __m128 *v2, __m128 *v3, __m128 *v4, siz
   }
 }
 
+static inline void ActBlock12(__m128 *v1, __m128 *v2, __m128 *v3, __m128 *v4, __m128 *v5, __m128 *v6, __m128 *v7,
+                              __m128 *v8, __m128 *v9, __m128 *v10, __m128 *v11, __m128 *v12, size_t relu,
+                              size_t relu6) {
+  if (relu || relu6) {
+    __m128 zero_ma = _mm_setzero_ps();
+    *v1 = _mm_max_ps(zero_ma, *v1);
+    *v2 = _mm_max_ps(zero_ma, *v2);
+    *v3 = _mm_max_ps(zero_ma, *v3);
+    *v4 = _mm_max_ps(zero_ma, *v4);
+    *v5 = _mm_max_ps(zero_ma, *v5);
+    *v6 = _mm_max_ps(zero_ma, *v6);
+    *v7 = _mm_max_ps(zero_ma, *v7);
+    *v8 = _mm_max_ps(zero_ma, *v8);
+    *v9 = _mm_max_ps(zero_ma, *v9);
+    *v10 = _mm_max_ps(zero_ma, *v10);
+    *v11 = _mm_max_ps(zero_ma, *v11);
+    *v12 = _mm_max_ps(zero_ma, *v12);
+  }
+  if (relu6) {
+    __m128 relu6_ma = _mm_set_ps(6.0f, 6.0f, 6.0f, 6.0f);
+    *v1 = _mm_min_ps(relu6_ma, *v1);
+    *v2 = _mm_min_ps(relu6_ma, *v2);
+    *v3 = _mm_min_ps(relu6_ma, *v3);
+    *v4 = _mm_min_ps(relu6_ma, *v4);
+    *v5 = _mm_min_ps(relu6_ma, *v5);
+    *v6 = _mm_min_ps(relu6_ma, *v6);
+    *v7 = _mm_min_ps(relu6_ma, *v7);
+    *v8 = _mm_min_ps(relu6_ma, *v8);
+    *v9 = _mm_min_ps(relu6_ma, *v9);
+    *v10 = _mm_min_ps(relu6_ma, *v10);
+    *v11 = _mm_min_ps(relu6_ma, *v11);
+    *v12 = _mm_min_ps(relu6_ma, *v12);
+  }
+}
+
 static inline void ActBlock8(__m128 *v1, __m128 *v2, __m128 *v3, __m128 *v4, __m128 *v5, __m128 *v6, __m128 *v7,
                              __m128 *v8, size_t relu_type) {
   __m128 relu6 = _mm_set_ps1(6.0);
