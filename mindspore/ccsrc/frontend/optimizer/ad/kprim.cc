@@ -75,7 +75,7 @@ bool BpropMindirDirExists() {
     }
     return true;
   }
-  MS_LOG(INFO) << "The bprop mindir dir \"" << bprop_mindir_dir << "\" doesn't exists.";
+  MS_LOG(ERROR) << "Open bprop mindir dir \"" << bprop_mindir_dir << "\" failed." << ErrnoToString(errno);
   return false;
 }
 
@@ -112,17 +112,65 @@ bool IsSerializableBprop(const std::string &prim_name) {
                      });
 }
 
-std::string GetBpropHash() {
-  static std::string bprop_hash = std::string();
-  if (bprop_hash.empty()) {
-    auto bprop_dir = GetBpropDir();
-    auto realpath = FileUtils::GetRealPath(common::SafeCStr(bprop_dir));
-    if (!realpath.has_value()) {
-      MS_LOG(EXCEPTION) << "Get real path of bprop dir failed. path=" << bprop_dir;
-    }
-    bprop_hash = system::sha256::GetHashFromDir(realpath.value());
+void GetFilesHash(const std::string &dir, std::unordered_map<std::string, std::string> *bprop_hash_to_file) {
+  if (dir.empty()) {
+    MS_LOG(ERROR) << "The directory path is empty.";
+    return;
   }
-  return bprop_hash;
+  struct stat s {};
+  int ret = stat(dir.c_str(), &s);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "stat dir \"" << dir << "\" failed, ret is : " << ret;
+    return;
+  }
+  if (!S_ISDIR(s.st_mode)) {
+    MS_LOG(ERROR) << "The path \"" << dir << "\" is not a directory.";
+    return;
+  }
+  DIR *open_dir = opendir(dir.c_str());
+  if (open_dir == nullptr) {
+    MS_LOG(ERROR) << "open dir " << dir.c_str() << " failed";
+    return;
+  }
+  struct dirent *filename;
+  while ((filename = readdir(open_dir)) != nullptr) {
+    std::string d_name = std::string(filename->d_name);
+    if (d_name == "." || d_name == ".." || filename->d_type != DT_REG) {
+      continue;
+    }
+    auto real_path = std::string(dir) + "/" + filename->d_name;
+    bprop_hash_to_file->insert(std::make_pair(system::sha256::GetHashFromFile(real_path), real_path));
+  }
+  closedir(open_dir);
+}
+
+std::unordered_map<std::string, std::string> GetAllBpropFileHash() {
+  std::unordered_map<std::string, std::string> bprop_hash_to_file;
+  auto bprop_dir = GetBpropDir();
+  auto realpath = FileUtils::GetRealPath(common::SafeCStr(bprop_dir));
+  if (!realpath.has_value()) {
+    MS_LOG(EXCEPTION) << "Get real path of bprop dir failed. path=" << bprop_dir;
+  }
+  GetFilesHash(realpath.value(), &bprop_hash_to_file);
+  return bprop_hash_to_file;
+}
+
+bool CheckBpropHash(const std::string &hash) {
+  // Get every hash of all the bprop files.
+  static auto bprop_hash_to_file = GetAllBpropFileHash();
+  if (bprop_hash_to_file.find(hash) != bprop_hash_to_file.end()) {
+    return true;
+  }
+  std::string bprop_dir = GetBpropDir();
+  auto bprop_mindir_path = bprop_dir + kBpropMindIRDir;
+  MS_LOG(ERROR) << "The bprop mindir files are not up to date. Please run the " << bprop_mindir_path
+                << "generate_mindir.py to generate new mindir files.\n"
+                << "bprop_fg hash: " << hash << "\n"
+                << "bprop hash list: \n";
+  for (const auto &iter : bprop_hash_to_file) {
+    MS_LOG(ERROR) << iter.first;
+  }
+  return false;
 }
 
 FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
@@ -136,11 +184,8 @@ FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
     return nullptr;
   }
   auto bprop_fg = LoadMindIR(bprop_mindir_realpath.value());
-  if (bprop_fg != nullptr && bprop_fg->bprop_hash() != GetBpropHash()) {
-    MS_LOG(EXCEPTION) << "The bprop mindir files are not up to date. Please run the " << bprop_mindir_path
-                      << "generate_mindir.py to generate new mindir files.\n"
-                      << "bprop_fg hash: " << bprop_fg->bprop_hash() << "\n"
-                      << "bprop hash: " << GetBpropHash();
+  if (!CheckBpropHash(bprop_fg->bprop_hash())) {
+    MS_LOG(EXCEPTION) << "The bprop mindir files are not up to date.";
   }
   return bprop_fg;
 }
@@ -148,7 +193,6 @@ FuncGraphPtr ImportBpropFromMindIR(const PrimitivePtr &prim) {
 void ExportBpropToMindIR(const PrimitivePtr &prim, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(prim);
   std::string bprop_dir = GetBpropDir();
-  func_graph->set_bprop_hash(GetBpropHash());
   auto bprop_mindir_path = bprop_dir + kBpropMindIRDir;
   std::optional<std::string> bprop_mindir_realpath =
     Common::CreatePrefixPath(bprop_mindir_path + prim->name() + kBpropMindIRSuffix, true);
@@ -228,6 +272,19 @@ void ReplacePythonOps(const FuncGraphPtr &fg) {
     }
   }
 }
+
+std::string GetBpropFileHash(const py::function &fn) {
+  static auto bprop_hash_to_file = GetAllBpropFileHash();
+  // Get the file where the bprop function is defined.
+  auto filename = fn.attr("__code__").attr("co_filename").cast<std::string>();
+  // Get the hash of the file.
+  auto it = std::find_if(bprop_hash_to_file.begin(), bprop_hash_to_file.end(),
+                         [&filename](const auto &item) { return item.second == filename; });
+  if (it != bprop_hash_to_file.end()) {
+    return it->first;
+  }
+  return "";
+}
 #endif
 }  // namespace
 
@@ -253,12 +310,19 @@ void KPrim::ExportBpropMindir(const py::object &obj) {
   if (!fn || py::isinstance<py::none>(fn)) {
     MS_LOG(EXCEPTION) << "Fail to find bprop function for " << prim->name() << ".";
   }
+  std::string bprop_hash = GetBpropFileHash(fn);
+  if (bprop_hash.empty()) {
+    MS_LOG(EXCEPTION) << "Fail to get the file hash for " << prim->name();
+  }
+  // Parse and resolve.
   auto func_graph = parse::ParsePythonCode(fn);
   if (func_graph == nullptr) {
     MS_LOG(EXCEPTION) << "Fail to parse bprop function for " << prim->name() << ".";
   }
   auto res = std::make_shared<pipeline::Resource>();
   (void)parse::ResolveFuncGraph(func_graph, res);
+
+  func_graph->set_bprop_hash(bprop_hash);
   ExportBpropToMindIR(prim, func_graph);
 }
 #endif
@@ -281,6 +345,9 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceB
     func_graph = ImportBpropFromMindIR(prim);
     if (func_graph != nullptr) {
       ReplacePythonOps(func_graph);
+      if (GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP)) {
+        func_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
+      }
       return func_graph;
     }
   }
@@ -312,7 +379,11 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim, const pipeline::ResourceB
 #ifndef _WIN32
   // Check whether the bprop needs to be exported.
   if (serializable) {
-    ExportBpropToMindIR(prim, func_graph);
+    std::string bprop_hash = GetBpropFileHash(fn);
+    if (!bprop_hash.empty()) {
+      func_graph->set_bprop_hash(bprop_hash);
+      ExportBpropToMindIR(prim, func_graph);
+    }
   }
 #endif
   return func_graph;
