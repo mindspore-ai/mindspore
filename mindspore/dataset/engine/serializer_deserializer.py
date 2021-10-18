@@ -54,7 +54,7 @@ def serialize(dataset, json_filepath=""):
 
 def deserialize(input_dict=None, json_filepath=None):
     """
-    Construct a de pipeline from a JSON file produced by de.serialize().
+    Construct dataset pipeline from a JSON file produced by de.serialize().
 
     Note:
         Currently Python function deserialization of map operator are not supported.
