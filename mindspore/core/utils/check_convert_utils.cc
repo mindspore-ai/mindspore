@@ -378,28 +378,6 @@ void CheckAndConvertUtils::CheckInputArgs(const std::vector<AbstractBasePtr> &in
   }
 }
 
-TypePtr CheckAndConvertUtils::GetInputTensorType(const std::vector<AbstractBasePtr> &input_args, const size_t index,
-                                                 const std::string &prim_name) {
-  if (input_args.size() <= index) {
-    MS_EXCEPTION(ValueError) << "The primitive[" << prim_name << "]'s input index[" << index
-                             << "] is out of the input number " << input_args.size();
-  }
-  auto input_arg = input_args[index];
-  if (input_arg == nullptr) {
-    MS_EXCEPTION(ValueError) << "The primitive[" << prim_name << "]'s input index[" << index << "] is nullptr.";
-  }
-  auto base_type = input_arg->BuildType();
-  MS_EXCEPTION_IF_NULL(base_type);
-  if (!base_type->isa<TensorType>()) {
-    MS_EXCEPTION(ValueError) << "The primitive[" << prim_name << "]'s input index[" << index << "] is not a tensor.";
-  }
-  auto tensor_type = base_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto type = tensor_type->element();
-  MS_EXCEPTION_IF_NULL(type);
-  return type;
-}
-
 ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   if (!shape->isa<abstract::Shape>()) {
@@ -416,8 +394,8 @@ ShapeMap CheckAndConvertUtils::ConvertShapePtrToShapeMap(const BaseShapePtr &sha
 
 abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::string &prim_name,
                                                              const std::vector<AbstractBasePtr> &input_args,
-                                                             int64_t index) {
-  auto abstract = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, LongToSize(index));
+                                                             size_t index) {
+  auto abstract = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, index);
   MS_EXCEPTION_IF_NULL(abstract);
   auto base_shape = abstract->BuildShape();
   MS_EXCEPTION_IF_NULL(base_shape);
@@ -427,6 +405,28 @@ abstract::ShapePtr CheckAndConvertUtils::GetTensorInputShape(const std::string &
   auto shape = base_shape->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape);
   return shape;
+}
+
+TypePtr CheckAndConvertUtils::GetTensorInputType(const std::string &prim_name,
+                                                 const std::vector<AbstractBasePtr> &input_args, size_t index) {
+  if (input_args.size() <= index) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the index " << index << " is out of the input number "
+                             << input_args.size();
+  }
+  auto input_arg = input_args[index];
+  if (input_arg == nullptr) {
+    MS_EXCEPTION(ValueError) << "The " << index << "'s input of " << prim_name << " is nullptr.";
+  }
+  auto base_type = input_arg->BuildType();
+  MS_EXCEPTION_IF_NULL(base_type);
+  if (!base_type->isa<TensorType>()) {
+    MS_EXCEPTION(ValueError) << "The " << index << "'s input type of " << prim_name << " is not Tensor.";
+  }
+  auto tensor_type = base_type->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(tensor_type);
+  auto type = tensor_type->element();
+  MS_EXCEPTION_IF_NULL(type);
+  return type;
 }
 
 void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type, const string &,

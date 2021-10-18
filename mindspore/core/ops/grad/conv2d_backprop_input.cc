@@ -27,7 +27,7 @@ namespace ops {
 namespace {
 constexpr size_t kDoutIndex = 0;
 constexpr size_t kInputIndex = 1;
-constexpr int64_t kSizeIndex = 2;
+constexpr size_t kSizeIndex = 2;
 
 void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_shape_norm,
                 const std::vector<int64_t> &x_size_v) {

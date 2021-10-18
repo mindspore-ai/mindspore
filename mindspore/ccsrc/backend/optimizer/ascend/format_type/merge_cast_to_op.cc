@@ -122,10 +122,9 @@ bool CheckIndexOutput(const CNodePtr &node, const std::shared_ptr<kernel::Kernel
 void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size_t cast_index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(cast);
-  using Shape = std::vector<size_t>;
   auto cast_dtype = AnfAlgo::GetOutputInferDataType(cast, 0);
-  auto cast_shape = AnfAlgo::GetOutputInferShape(cast, 0);
-  std::vector<Shape> shapes;
+  auto cast_shape = AnfAlgo::GetOutputDetailShape(cast, 0);
+  std::vector<abstract::BaseShapePtr> shapes;
   std::vector<TypeId> types;
   size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t index = 0; index < output_num; ++index) {
@@ -134,10 +133,10 @@ void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size
       (void)types.emplace_back(cast_dtype);
       continue;
     }
-    (void)shapes.emplace_back(AnfAlgo::GetOutputInferShape(cnode, index));
+    (void)shapes.emplace_back(AnfAlgo::GetOutputDetailShape(cnode, index));
     (void)types.emplace_back(AnfAlgo::GetOutputInferDataType(cnode, index));
   }
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, cnode.get());
+  AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, cnode.get());
   auto prim_op = AnfAlgo::GetCNodePrimitive(cnode);
   if (prim_op != nullptr) {
     (void)prim_op->AddAttr("cast_type", TypeIdToType(cast_dtype));

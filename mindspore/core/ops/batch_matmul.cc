@@ -115,7 +115,20 @@ TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("w", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
+  TypePtr x_type = input_args[0]->BuildType();
+  if (x_type->type_id() == TypeId::kNumberTypeInt8) {
+    x_type = kInt32;
+  }
+  if (prim->HasAttr("cast_type")) {
+    auto out_type = prim->GetAttr("cast_type");
+    MS_EXCEPTION_IF_NULL(out_type);
+    if (!out_type->isa<Type>()) {
+      MS_EXCEPTION(ValueError) << "MatMul cast_type must be a `Type`";
+    }
+    x_type = out_type->cast<TypePtr>();
+  }
+  return x_type;
 }
 }  // namespace
 

@@ -48,8 +48,8 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
   (void)out_shape.insert(out_shape.begin() + dim_val, 1, 1);
 
   // Infer type
-  const int64_t x_index = 0;
-  auto x_type = CheckAndConvertUtils::GetInputTensorType(input_args, x_index, prim_name);
+  const size_t x_index = 0;
+  auto x_type = CheckAndConvertUtils::GetTensorInputType(prim_name, input_args, x_index);
   std::set<TypePtr> valid_x_type = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("x_type", x_type, valid_x_type, prim_name);
   return std::make_shared<abstract::AbstractTensor>(x_type, out_shape);

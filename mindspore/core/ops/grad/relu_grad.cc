@@ -37,7 +37,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   }
   auto dout = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto out = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
-  (void)abstract::CheckShapeSame(prim_name, out, dout);
+  abstract::CheckShapeSame(prim_name, out, dout);
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();

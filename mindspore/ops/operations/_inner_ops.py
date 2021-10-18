@@ -1403,3 +1403,29 @@ class SliceGetItem(Primitive):
         if value == "step":
             return slice_value.step
         raise AttributeError("\'slice\' object has no attribute {}".format(value))
+
+
+class DynamicBroadcastTo(Primitive):
+    """
+    Broadcasts input tensor to a given shape.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor. The data type should be one of the following types:
+          float16, float32, int32, int8, uint8.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        - **shape** (Tensor): The target shape to broadcast.
+
+    Outputs:
+        Tensor, with the given `shape` and the same data type as `input_x`.
+
+    Raises:
+        ValueError: if the target and input shapes are incompatible.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize DynamicBroadcastTo"""
+        self.init_prim_io_names(inputs=['x', 'shape'], outputs=['y'])

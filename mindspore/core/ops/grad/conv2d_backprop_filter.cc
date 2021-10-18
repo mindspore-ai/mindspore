@@ -24,9 +24,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t kDoutIndex = 0;
-constexpr int64_t kInputIndex = 1;
-constexpr int64_t kFilterSizeIdex = 2;
+constexpr size_t kDoutIndex = 0;
+constexpr size_t kInputIndex = 1;
+constexpr size_t kFilterSizeIdex = 2;
 constexpr size_t kStride2dSize = 2;
 constexpr size_t kStride4dSize = 4;
 

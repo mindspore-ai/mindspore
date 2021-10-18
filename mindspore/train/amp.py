@@ -160,8 +160,8 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     validator.check_value_type('network', network, nn.Cell)
     validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt))
     if not isinstance(level, str):
-        raise TypeError("The argument `level` must be a string in ['O0', 'O2', 'O3', 'auto'], \
-                         but got type {}.".format(type(level)))
+        raise TypeError(f"The argument `level` must be a string in ['O0', 'O2', 'O3', 'auto'], "
+                        f"but got type {str(type(level))}.")
     validator.check('level', level, "", ['O0', 'O2', 'O3', 'auto'], Rel.IN)
     validator.check('boost_level', boost_level, "", ['O0', 'O1', 'O2'], Rel.IN)
 

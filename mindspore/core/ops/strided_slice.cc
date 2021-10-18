@@ -321,7 +321,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t x_index = 0;
+  const size_t x_index = 0;
   auto x_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, x_index);
   if (x_shape->IsDynamic()) {
     MS_EXCEPTION(ValueError) << "input x dynamic shape is currently not supported.";
@@ -363,12 +363,12 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr StridedSliceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const int64_t x_index = 0;
-  return CheckAndConvertUtils::GetInputTensorType(input_args, x_index, primitive->name());
+  const size_t x_index = 0;
+  return CheckAndConvertUtils::GetTensorInputType(primitive->name(), input_args, x_index);
 }
 }  // namespace
 
-void StridedSlice::set_begin_mask(const int64_t begin_mask) {
+void StridedSlice::set_begin_mask(int64_t begin_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kBeginMask, begin_mask, kGreaterEqual, 0, this->name());
   (void)this->AddAttr(kBeginMask, MakeValue(begin_mask));
 }
@@ -376,7 +376,7 @@ int64_t StridedSlice::get_begin_mask() const {
   auto value_ptr = GetAttr(kBeginMask);
   return GetValue<int64_t>(value_ptr);
 }
-void StridedSlice::set_end_mask(const int64_t end_mask) {
+void StridedSlice::set_end_mask(int64_t end_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kEndMask, end_mask, kGreaterEqual, 0, this->name());
   (void)this->AddAttr(kEndMask, MakeValue(end_mask));
 }
@@ -384,7 +384,7 @@ int64_t StridedSlice::get_end_mask() const {
   auto value_ptr = GetAttr(kEndMask);
   return GetValue<int64_t>(value_ptr);
 }
-void StridedSlice::set_ellipsis_mask(const int64_t ellipsis_mask) {
+void StridedSlice::set_ellipsis_mask(int64_t ellipsis_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kEllipsisMask, ellipsis_mask, kGreaterEqual, 0, this->name());
   std::bitset<sizeof(int64_t) * 8> bs(ellipsis_mask);
   std::ostringstream buffer;
@@ -398,7 +398,7 @@ int64_t StridedSlice::get_ellipsis_mask() const {
   auto value_ptr = GetAttr(kEllipsisMask);
   return GetValue<int64_t>(value_ptr);
 }
-void StridedSlice::set_new_axis_mask(const int64_t new_axis_mask) {
+void StridedSlice::set_new_axis_mask(int64_t new_axis_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kNewAxisMask, new_axis_mask, kGreaterEqual, 0, this->name());
   (void)this->AddAttr(kNewAxisMask, MakeValue(new_axis_mask));
 }
@@ -406,7 +406,7 @@ int64_t StridedSlice::get_new_axis_mask() const {
   auto value_ptr = GetAttr(kNewAxisMask);
   return GetValue<int64_t>(value_ptr);
 }
-void StridedSlice::set_shrink_axis_mask(const int64_t shrink_axis_mask) {
+void StridedSlice::set_shrink_axis_mask(int64_t shrink_axis_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kShrinkAxisMask, shrink_axis_mask, kGreaterEqual, 0, this->name());
   (void)this->AddAttr(kShrinkAxisMask, MakeValue(shrink_axis_mask));
 }
@@ -414,8 +414,8 @@ int64_t StridedSlice::get_shrink_axis_mask() const {
   auto value_ptr = GetAttr(kShrinkAxisMask);
   return GetValue<int64_t>(value_ptr);
 }
-void StridedSlice::Init(const int64_t begin_mask, const int64_t end_mask, const int64_t ellipsis_mask,
-                        const int64_t new_axis_mask, const int64_t shrink_axis_mask) {
+void StridedSlice::Init(int64_t begin_mask, int64_t end_mask, int64_t ellipsis_mask, int64_t new_axis_mask,
+                        int64_t shrink_axis_mask) {
   this->set_begin_mask(begin_mask);
   this->set_end_mask(end_mask);
   this->set_ellipsis_mask(ellipsis_mask);

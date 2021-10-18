@@ -48,17 +48,19 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto x_shape_vector = x_shape->shape();
   auto mask_shape_vector = mask_shape->shape();
 
-  int64_t x_size = 1;
-  for (size_t i = 0; i < x_shape_vector.size(); i++) {
-    x_size *= x_shape_vector[i];
-  }
-  if (mask_shape_vector.size() != 1) {
-    MS_EXCEPTION(ValueError) << "DropoutDoMask input mask must be 1-dimension.";
-  }
-  auto mask_size = mask_shape_vector[0] * 8;
-  if (x_size > mask_size) {
-    MS_EXCEPTION(ValueError) << "DropoutDoMask input mask do not match input,  input_x shape: " << x_shape->ToString()
-                             << ", mask shape: " << mask_shape->ToString();
+  if (!x_shape->IsDynamic() && !mask_shape->IsDynamic()) {
+    int64_t x_size = 1;
+    for (size_t i = 0; i < x_shape_vector.size(); i++) {
+      x_size *= x_shape_vector[i];
+    }
+    if (mask_shape_vector.size() != 1) {
+      MS_EXCEPTION(ValueError) << "DropoutDoMask input mask must be 1-dimension.";
+    }
+    auto mask_size = mask_shape_vector[0] * 8;
+    if (x_size > mask_size) {
+      MS_EXCEPTION(ValueError) << "DropoutDoMask input mask do not match input,  input_x shape: " << x_shape->ToString()
+                               << ", mask shape: " << mask_shape->ToString();
+    }
   }
   auto keep_prop = input_args[kInputIndex2];
   if (keep_prop->isa<abstract::AbstractTensor>()) {

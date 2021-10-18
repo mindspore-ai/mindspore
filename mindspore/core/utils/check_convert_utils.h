@@ -219,7 +219,9 @@ class CheckAndConvertUtils {
 
   static ShapeMap ConvertShapePtrToShapeMap(const BaseShapePtr &shape);
   static abstract::ShapePtr GetTensorInputShape(const std::string &prim_name,
-                                                const std::vector<AbstractBasePtr> &input_args, int64_t index);
+                                                const std::vector<AbstractBasePtr> &input_args, size_t index);
+  static TypePtr GetTensorInputType(const std::string &prim_name, const std::vector<AbstractBasePtr> &input_args,
+                                    size_t index);
   static void Check(const std::string &arg_name, int64_t arg_value, CompareEnum compare_type,
                     const std::string &value_name, int64_t value, const std::string &prim_name = "",
                     ExceptionType exception_type = ValueError);
@@ -313,8 +315,6 @@ class CheckAndConvertUtils {
   static size_t GetRemoveMonadAbsNum(const AbstractBasePtrList &abs_list);
   static void CheckInputArgs(const std::vector<AbstractBasePtr> &input_args, const CompareEnum compare_operator,
                              const int64_t match_value, const std::string &prim_name);
-  static TypePtr GetInputTensorType(const std::vector<AbstractBasePtr> &input_args, const size_t index,
-                                    const std::string &prim_name);
   static bool HasDynamicShapeInput(const AbstractBasePtrList &abs_list);
 
  private:

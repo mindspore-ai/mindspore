@@ -48,6 +48,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"Softmax", "SoftmaxV2"},
     {"DropoutDoMask", "DropOutDoMask"},
     {"IOU", "Iou"},
+    {"DynamicBroadcastTo", "BroadcastTo"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {

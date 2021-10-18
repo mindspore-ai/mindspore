@@ -30,7 +30,7 @@ namespace kernel {
 
 void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *input_size_list, size_t *size_i) {
   if (input_json[kJShape].size() == 1 && input_json[kJShape][0] == -2) {
-    auto input_max_shape = input_json[kJShape];
+    auto input_max_shape = input_json[kJRange];
     for (auto &max_shape : input_max_shape) {
       (*size_i) *= LongToSize(max_shape[1]);
     }
@@ -77,7 +77,7 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
 
 void GetRealOutputSize(const nlohmann::json &output_json, std::vector<size_t> *output_size_list, size_t *size_i) {
   if (output_json[kJShape].size() == 1 && output_json[kJShape][0] == -2) {
-    auto output_max_shape = output_json[kJShape];
+    auto output_max_shape = output_json[kJRange];
     for (auto &max_shape : output_max_shape) {
       (*size_i) *= LongToSize(max_shape[1]);
     }

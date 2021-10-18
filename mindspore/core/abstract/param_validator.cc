@@ -110,18 +110,34 @@ TypePtr CheckScalarType(const AbstractScalarPtr &scalar, const TypePtrList &acce
   return CheckType(type, accepts, error_message_prefix);
 }
 
-ShapePtr CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor) {
+void CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor_base);
   ShapePtr shape_base = tensor_base->shape();
   MS_EXCEPTION_IF_NULL(shape_base);
   MS_EXCEPTION_IF_NULL(tensor);
   ShapePtr shape = tensor->shape();
   MS_EXCEPTION_IF_NULL(shape);
-  if (*shape != *shape_base) {
+  if (shape_base->IsDimUnknown() || shape->IsDimUnknown()) {
+    return;
+  }
+
+  auto shape_vector = shape->shape();
+  auto shape_base_vector = shape_base->shape();
+  if (shape_vector.size() != shape_base_vector.size()) {
     MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << shape->ToString()
                       << " are not consistent with second arg shape " << shape_base->ToString();
   }
-  return shape_base;
+
+  for (size_t i = 0; i < shape_vector.size(); i++) {
+    if (shape_vector[i] == Shape::SHP_ANY || shape_base_vector[i] == Shape::SHP_ANY) {
+      continue;
+    }
+    if (shape_vector[i] != shape_base_vector[i]) {
+      MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << shape->ToString()
+                        << " are not consistent with second arg shape " << shape_base->ToString();
+    }
+  }
+  return;
 }
 
 TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_base, const AbstractTensorPtr &tensor) {

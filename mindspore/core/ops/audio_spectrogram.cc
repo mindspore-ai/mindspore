@@ -73,8 +73,8 @@ abstract::ShapePtr AudioSpectrogramInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr AudioSpectrogramInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const int64_t x_index = 0;
-  return CheckAndConvertUtils::GetInputTensorType(input_args, x_index, prim->name());
+  const size_t x_index = 0;
+  return CheckAndConvertUtils::GetTensorInputType(prim->name(), input_args, x_index);
 }
 }  // namespace
 
