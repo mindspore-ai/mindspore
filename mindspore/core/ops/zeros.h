@@ -27,11 +27,15 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Creates a tensor filled with value zeros. Refer to Python API @ref mindspore.ops.Zeros for more details.
 class MS_CORE_API Zeros : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Zeros() : PrimitiveC(prim::kPrimZeros->name()) {}
+  /// \brief Destructor.
   ~Zeros() = default;
   MS_DECLARE_PARENT(Zeros, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 }  // namespace ops

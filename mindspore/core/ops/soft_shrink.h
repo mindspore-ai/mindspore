@@ -26,9 +26,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftShrink = "SoftShrink";
+/// \brief Applies the soft shrinkage function elementwise.
+/// Refer to Python API @ref mindspore.ops.SoftShrink for more details.
 class MS_CORE_API SoftShrink : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SoftShrink() : PrimitiveC(kNameSoftShrink) { InitIOName({"input_x"}, {"output"}); }
+  /// \brief Destructor.
   ~SoftShrink() = default;
   MS_DECLARE_PARENT(SoftShrink, PrimitiveC);
 };

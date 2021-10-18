@@ -26,11 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScatterNd = "ScatterNd";
+/// \brief Scatters a tensor into a new tensor depending on the specified indices.
+/// Refer to Python API @ref mindspore.ops.ScatterNd for more details.
 class MS_CORE_API ScatterNd : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ScatterNd() : PrimitiveC(kNameScatterNd) { InitIOName({"indices", "update", "shape"}, {"output"}); }
+  /// \brief Destructor.
   ~ScatterNd() = default;
   MS_DECLARE_PARENT(ScatterNd, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

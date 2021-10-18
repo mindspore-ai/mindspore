@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseToDense = "SparseToDense";
+/// \brief Converts a sparse representation into a dense tensor.
+/// Refer to Python API @ref mindspore.ops.SparseToDense for more details.
 class MS_CORE_API SparseToDense : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SparseToDense() : PrimitiveC(kNameSparseToDense) { InitIOName({"indices", "values", "dense_shape"}, {"output"}); }
+  /// \brief Destructor.
   ~SparseToDense() = default;
   MS_DECLARE_PARENT(SparseToDense, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

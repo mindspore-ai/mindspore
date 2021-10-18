@@ -25,15 +25,28 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReverseSequence = "ReverseSequence";
+/// \brief Reverses variable length slices.
+/// Refer to Python API @ref mindspore.ops.ReverseSequence for more details.
 class MS_CORE_API ReverseSequence : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ReverseSequence() : PrimitiveC(kNameReverseSequence) { InitIOName({"x", "seq_lengths"}, {"y"}); }
+  /// \brief Destructor.
   ~ReverseSequence() = default;
   MS_DECLARE_PARENT(ReverseSequence, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ReverseSequence for the inputs.
   void Init(const int64_t seq_dim, const int64_t batch_dim = 0);
+  /// \brief Set seq_dim.
   void set_seq_dim(const int64_t seq_dim);
+  /// \brief Set batch_dim.
   void set_batch_dim(const int64_t batch_dim);
+  /// \brief Get seq_dim.
+  ///
+  /// \return seq_dim.
   int64_t get_seq_dim() const;
+  /// \brief Get batch_dim.
+  ///
+  /// \return batch_dim.
   int64_t get_batch_dim() const;
 };
 AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

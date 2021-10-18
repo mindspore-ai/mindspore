@@ -27,16 +27,29 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUniformReal = "UniformReal";
+/// \brief Produces random floating-point values i, uniformly distributed to the interval [0, 1).
+/// Refer to Python API @ref mindspore.ops.UniformReal for more details.
+
 class MS_CORE_API UniformReal : public PrimitiveC {
  public:
+  /// \brief Constructor.
   UniformReal() : PrimitiveC(kNameUniformReal) {}
+  /// \brief Destructor.
   ~UniformReal() = default;
   MS_DECLARE_PARENT(UniformReal, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.UniformReal for the inputs.
   void Init(int64_t seed, int64_t seed2);
-
+  /// \brief Set seed.
   void set_seed(int64_t seed);
+  /// \brief Set seed2.
   void set_seed2(int64_t seed2);
+  /// \brief Get seed.
+  ///
+  /// \return seed.
   int64_t get_seed() const;
+  /// \brief Get seed2.
+  ///
+  /// \return seed2.
   int64_t get_seed2() const;
 };
 }  // namespace ops

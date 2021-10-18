@@ -26,17 +26,34 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSplit = "Split";
+/// \brief Splits the input tensor into output_num of tensors along the given axis and output numbers.
+/// Refer to Python API @ref mindspore.ops.Split for more details.
 class MS_CORE_API Split : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Split() : PrimitiveC(kNameSplit) {}
+  /// \brief Destructor.
   ~Split() = default;
   MS_DECLARE_PARENT(Split, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Split for the inputs.
   void Init(const int64_t axis, const int64_t output_num);
+  /// \brief Set size_splits.
   void set_size_splits(const std::vector<int64_t> &size_splits);
+  /// \brief Set axis.
   void set_axis(const int64_t axis);
+  /// \brief Set output_num.
   void set_output_num(const int64_t output_num);
+  /// \brief Get size_splits.
+  ///
+  /// \return size_splits.
   std::vector<int64_t> get_size_splits() const;
+  /// \brief Get size_splits.
+  ///
+  /// \return size_splits.
   int64_t get_axis() const;
+  /// \brief Get output_num.
+  ///
+  /// \return output_num.
   int64_t get_output_num() const;
 };
 AbstractBasePtr SplitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

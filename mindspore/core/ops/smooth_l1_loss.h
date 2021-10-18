@@ -25,13 +25,22 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSmoothL1Loss = "SmoothL1Loss";
+/// \brief Computes smooth L1 loss, a robust L1 loss.
+/// Refer to Python API @ref mindspore.ops.SmoothL1Loss for more details.
 class MS_CORE_API SmoothL1Loss : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SmoothL1Loss() : PrimitiveC(kNameSmoothL1Loss) { InitIOName({"prediction", "target"}, {"output"}); }
+  /// \brief Destructor.
   ~SmoothL1Loss() = default;
   MS_DECLARE_PARENT(SmoothL1Loss, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SmoothL1Loss for the inputs.
   void Init(const float beta);
+  /// \brief Set beta.
   void set_beta(const float beta);
+  /// \brief Get beta.
+  ///
+  /// \return beta.
   float get_beta() const;
 };
 AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

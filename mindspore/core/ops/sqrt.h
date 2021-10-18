@@ -23,11 +23,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSqrt = "Sqrt";
+/// \brief Returns square root of a tensor element-wise. Refer to Python API @ref mindspore.ops.Sqrt for more details.
 class MS_CORE_API Sqrt : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Sqrt() : PrimitiveC(kNameSqrt) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~Sqrt() = default;
   MS_DECLARE_PARENT(Sqrt, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 }  // namespace ops

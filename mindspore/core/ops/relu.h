@@ -27,11 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReLU = prim::kReLU;
+/// \brief Computes ReLU (Rectified Linear Unit activation function) of input tensors element-wise.
+/// Refer to Python API @ref mindspore.ops.ReLU for more details.
 class MS_CORE_API ReLU : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ReLU() : PrimitiveC(kNameReLU) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~ReLU() = default;
   MS_DECLARE_PARENT(ReLU, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 }  // namespace ops

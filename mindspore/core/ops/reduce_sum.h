@@ -27,11 +27,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceSum = "ReduceSum";
+/// \brief Reduces a dimension of a tensor by summing all elements in the dimension, by default.
+/// Refer to Python API @ref mindspore.ops.ReduceSum for more details.
 class MS_CORE_API ReduceSum : public Reduce {
  public:
+  /// \brief Constructor.
   ReduceSum() : Reduce(kNameReduceSum) { InitIOName({"x", "axis"}, {"y"}); }
+  /// \brief Destructor.
   ~ReduceSum() = default;
   MS_DECLARE_PARENT(ReduceSum, Reduce);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

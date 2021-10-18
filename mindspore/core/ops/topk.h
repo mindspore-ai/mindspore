@@ -26,15 +26,24 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTopK = "TopK";
+/// \brief Finds values and indices of the k largest entries along the last dimension.
+/// Refer to Python API @ref mindspore.ops.TopK for more details.
 class MS_CORE_API TopK : public PrimitiveC {
  public:
+  /// \brief Constructor.
   explicit TopK(const std::string &k_name = kNameTopK) : PrimitiveC(k_name) {
     InitIOName({"input", "k"}, {"values", "indices"});
   }
+  /// \brief Destructor.
   ~TopK() = default;
   MS_DECLARE_PARENT(TopK, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.TopK for the inputs.
   void Init(const bool sorted = false);
+  /// \brief Set sorted.
   void set_sorted(const bool sorted);
+  /// \brief Get sorted.
+  ///
+  /// \return sorted.
   bool get_sorted() const;
 };
 AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
