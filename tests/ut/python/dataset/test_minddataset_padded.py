@@ -28,26 +28,22 @@ from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
 
 FILES_NUM = 4
-CV_FILE_NAME = "../data/mindrecord/imagenet.mindrecord"
-CV1_FILE_NAME = "../data/mindrecord/imagenet1.mindrecord"
-CV2_FILE_NAME = "../data/mindrecord/imagenet2.mindrecord"
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
-NLP_FILE_NAME = "../data/mindrecord/aclImdb.mindrecord"
 NLP_FILE_POS = "../data/mindrecord/testAclImdbData/pos"
 NLP_FILE_VOCAB = "../data/mindrecord/testAclImdbData/vocab.txt"
-
 
 @pytest.fixture
 def add_and_remove_cv_file():
     """add/remove cv file"""
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
             os.remove("{}".format(x)) if os.path.exists("{}".format(x)) else None
             os.remove("{}.db".format(x)) if os.path.exists(
                 "{}.db".format(x)) else None
-        writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+        writer = FileWriter(file_name, FILES_NUM)
         data = get_data(CV_DIR_NAME)
         cv_schema_json = {"id": {"type": "int32"},
                           "file_name": {"type": "string"},
@@ -72,7 +68,8 @@ def add_and_remove_cv_file():
 @pytest.fixture
 def add_and_remove_nlp_file():
     """add/remove nlp file"""
-    paths = ["{}{}".format(NLP_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
@@ -80,7 +77,7 @@ def add_and_remove_nlp_file():
                 os.remove("{}".format(x))
             if os.path.exists("{}.db".format(x)):
                 os.remove("{}.db".format(x))
-        writer = FileWriter(NLP_FILE_NAME, FILES_NUM)
+        writer = FileWriter(file_name, FILES_NUM)
         data = [x for x in get_nlp_data(NLP_FILE_POS, NLP_FILE_VOCAB, 10)]
         nlp_schema_json = {"id": {"type": "string"}, "label": {"type": "int32"},
                            "rating": {"type": "float32"},
@@ -118,7 +115,8 @@ def test_cv_minddataset_reader_basic_padded_samples(add_and_remove_cv_file):
     padded_sample['label'] = -1
     padded_sample['file_name'] = 'dummy.jpg'
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers, padded_sample=padded_sample, num_padded=5)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers, padded_sample=padded_sample, num_padded=5)
     assert data_set.get_dataset_size() == 15
     num_iter = 0
     num_padded_iter = 0
@@ -145,7 +143,8 @@ def test_cv_minddataset_reader_basic_padded_samples_type_cast(add_and_remove_cv_
     padded_sample['label'] = -1
     padded_sample['file_name'] = 99999
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers, padded_sample=padded_sample, num_padded=5)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers, padded_sample=padded_sample, num_padded=5)
     assert data_set.get_dataset_size() == 15
     num_iter = 0
     num_padded_iter = 0
@@ -173,12 +172,13 @@ def test_cv_minddataset_partition_padded_samples(add_and_remove_cv_file):
     padded_sample['label'] = -2
     padded_sample['file_name'] = 'dummy.jpg'
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded, dataset_size):
         num_padded_iter = 0
         num_iter = 0
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
@@ -213,6 +213,7 @@ def test_cv_minddataset_partition_padded_samples_multi_epoch(add_and_remove_cv_f
     padded_sample['label'] = -2
     padded_sample['file_name'] = 'dummy.jpg'
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded, dataset_size):
         repeat_size = 5
@@ -224,7 +225,7 @@ def test_cv_minddataset_partition_padded_samples_multi_epoch(add_and_remove_cv_f
             epoch3_shuffle_result = []
             epoch4_shuffle_result = []
             epoch5_shuffle_result = []
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
@@ -285,10 +286,11 @@ def test_cv_minddataset_partition_padded_samples_no_dividsible(add_and_remove_cv
     padded_sample['label'] = -2
     padded_sample['file_name'] = 'dummy.jpg'
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
@@ -310,10 +312,11 @@ def test_cv_minddataset_partition_padded_samples_dataset_size_no_divisible(add_a
     padded_sample['label'] = -2
     padded_sample['file_name'] = 'dummy.jpg'
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
@@ -332,10 +335,11 @@ def test_cv_minddataset_partition_padded_samples_no_equal_column_list(add_and_re
     padded_sample.pop('label', None)
     padded_sample['file_name'] = 'dummy.jpg'
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
@@ -356,10 +360,11 @@ def test_cv_minddataset_partition_padded_samples_no_column_list(add_and_remove_c
     padded_sample['label'] = -2
     padded_sample['file_name'] = 'dummy.jpg'
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", None, num_readers,
+            data_set = ds.MindDataset(file_name + "0", None, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
@@ -380,10 +385,11 @@ def test_cv_minddataset_partition_padded_samples_no_num_padded(add_and_remove_cv
     padded_sample = data[0]
     padded_sample['file_name'] = 'dummy.jpg'
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", None, num_readers,
+            data_set = ds.MindDataset(file_name + "0", None, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample)
@@ -403,10 +409,11 @@ def test_cv_minddataset_partition_padded_samples_no_padded_samples(add_and_remov
     padded_sample = data[0]
     padded_sample['file_name'] = 'dummy.jpg'
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", None, num_readers,
+            data_set = ds.MindDataset(file_name + "0", None, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       num_padded=num_padded)
@@ -429,12 +436,13 @@ def test_nlp_minddataset_reader_basic_padded_samples(add_and_remove_nlp_file):
     padded_sample['input_ids'] = np.array([-1, -1, -1, -1], dtype=np.int64)
     padded_sample['rating'] = 1.0
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded, dataset_size):
         num_padded_iter = 0
         num_iter = 0
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(NLP_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
@@ -470,6 +478,7 @@ def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_
     padded_sample['rating'] = 1.0
     num_readers = 4
     repeat_size = 3
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded, dataset_size):
         num_padded_iter = 0
@@ -479,7 +488,7 @@ def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_
             epoch1_shuffle_result = []
             epoch2_shuffle_result = []
             epoch3_shuffle_result = []
-            data_set = ds.MindDataset(NLP_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,
@@ -534,6 +543,7 @@ def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_resul
     padded_sample['rating'] = 1.0
     num_readers = 4
     repeat_size = 3
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, num_padded, dataset_size):
         num_padded_iter = 0
@@ -542,7 +552,7 @@ def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_resul
         epoch_result = [[["" for i in range(dataset_size)] for i in range(repeat_size)] for i in range(num_shards)]
 
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(NLP_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id,
                                       padded_sample=padded_sample,

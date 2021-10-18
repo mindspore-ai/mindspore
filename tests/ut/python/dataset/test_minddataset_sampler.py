@@ -25,14 +25,13 @@ from mindspore.dataset.text import to_str
 from mindspore.mindrecord import FileWriter
 
 FILES_NUM = 4
-CV_FILE_NAME = "../data/mindrecord/imagenet.mindrecord"
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
-
 
 @pytest.fixture
 def add_and_remove_cv_file():
     """add/remove cv file"""
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
@@ -40,7 +39,7 @@ def add_and_remove_cv_file():
                 os.remove("{}".format(x))
             if os.path.exists("{}.db".format(x)):
                 os.remove("{}.db".format(x))
-        writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+        writer = FileWriter(file_name, FILES_NUM)
         data = get_data(CV_DIR_NAME, True)
         cv_schema_json = {"id": {"type": "int32"},
                           "file_name": {"type": "string"},
@@ -66,7 +65,8 @@ def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     num_readers = 4
     sampler = ds.PKSampler(2)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", None, num_readers,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", None, num_readers,
                               sampler=sampler)
 
     assert data_set.get_dataset_size() == 6
@@ -86,7 +86,8 @@ def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(2)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
 
     assert data_set.get_dataset_size() == 6
@@ -108,7 +109,8 @@ def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(3, None, True)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
 
     assert data_set.get_dataset_size() == 9
@@ -129,7 +131,8 @@ def test_cv_minddataset_pk_sample_shuffle_1(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(3, None, True, 'label', 5)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
 
     assert data_set.get_dataset_size() == 5
@@ -150,7 +153,8 @@ def test_cv_minddataset_pk_sample_shuffle_2(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(3, None, True, 'label', 10)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
 
     assert data_set.get_dataset_size() == 9
@@ -171,7 +175,8 @@ def test_cv_minddataset_pk_sample_out_of_range_0(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(5, None, True)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     assert data_set.get_dataset_size() == 15
     num_iter = 0
@@ -191,7 +196,8 @@ def test_cv_minddataset_pk_sample_out_of_range_1(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(5, None, True, 'label', 20)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     assert data_set.get_dataset_size() == 15
     num_iter = 0
@@ -211,7 +217,8 @@ def test_cv_minddataset_pk_sample_out_of_range_2(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(5, None, True, 'label', 10)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
@@ -230,10 +237,11 @@ def test_cv_minddataset_subset_random_sample_basic(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     indices = [1, 2, 3, 5, 7]
     samplers = (ds.SubsetRandomSampler(indices), ds.SubsetSampler(indices))
     for sampler in samplers:
-        data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+        data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                   sampler=sampler)
         assert data_set.get_dataset_size() == 5
         num_iter = 0
@@ -255,9 +263,10 @@ def test_cv_minddataset_subset_random_sample_replica(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     indices = [1, 2, 2, 5, 7, 9]
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     samplers = ds.SubsetRandomSampler(indices), ds.SubsetSampler(indices)
     for sampler in samplers:
-        data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+        data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                   sampler=sampler)
         assert data_set.get_dataset_size() == 6
         num_iter = 0
@@ -279,9 +288,10 @@ def test_cv_minddataset_subset_random_sample_empty(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     indices = []
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     samplers = ds.SubsetRandomSampler(indices), ds.SubsetSampler(indices)
     for sampler in samplers:
-        data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+        data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                   sampler=sampler)
         assert data_set.get_dataset_size() == 0
         num_iter = 0
@@ -304,8 +314,9 @@ def test_cv_minddataset_subset_random_sample_out_of_range(add_and_remove_cv_file
     num_readers = 4
     indices = [1, 2, 4, 11, 13]
     samplers = ds.SubsetRandomSampler(indices), ds.SubsetSampler(indices)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     for sampler in samplers:
-        data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+        data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                   sampler=sampler)
         assert data_set.get_dataset_size() == 5
         num_iter = 0
@@ -327,8 +338,9 @@ def test_cv_minddataset_subset_random_sample_negative(add_and_remove_cv_file):
     num_readers = 4
     indices = [1, 2, 4, -1, -2]
     samplers = ds.SubsetRandomSampler(indices), ds.SubsetSampler(indices)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     for sampler in samplers:
-        data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+        data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                   sampler=sampler)
         assert data_set.get_dataset_size() == 5
         num_iter = 0
@@ -350,7 +362,8 @@ def test_cv_minddataset_random_sampler_basic(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.RandomSampler()
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
@@ -373,8 +386,9 @@ def test_cv_minddataset_random_sampler_basic(add_and_remove_cv_file):
 def test_cv_minddataset_random_sampler_repeat(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     sampler = ds.RandomSampler()
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     assert data_set.get_dataset_size() == 10
     ds1 = data_set.repeat(3)
@@ -407,8 +421,9 @@ def test_cv_minddataset_random_sampler_repeat(add_and_remove_cv_file):
 def test_cv_minddataset_random_sampler_replacement(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     sampler = ds.RandomSampler(replacement=True, num_samples=5)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     assert data_set.get_dataset_size() == 5
     num_iter = 0
@@ -428,8 +443,9 @@ def test_cv_minddataset_random_sampler_replacement(add_and_remove_cv_file):
 def test_cv_minddataset_random_sampler_replacement_false_1(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     sampler = ds.RandomSampler(replacement=False, num_samples=2)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     assert data_set.get_dataset_size() == 2
     num_iter = 0
@@ -449,8 +465,9 @@ def test_cv_minddataset_random_sampler_replacement_false_1(add_and_remove_cv_fil
 def test_cv_minddataset_random_sampler_replacement_false_2(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     sampler = ds.RandomSampler(replacement=False, num_samples=20)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
@@ -471,8 +488,9 @@ def test_cv_minddataset_sequential_sampler_basic(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     sampler = ds.SequentialSampler(1, 4)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     assert data_set.get_dataset_size() == 4
     num_iter = 0
@@ -495,8 +513,9 @@ def test_cv_minddataset_sequential_sampler_offeset(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     sampler = ds.SequentialSampler(2, 10)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     dataset_size = data_set.get_dataset_size()
     assert dataset_size == 10
@@ -520,8 +539,9 @@ def test_cv_minddataset_sequential_sampler_exceed_size(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     sampler = ds.SequentialSampler(2, 20)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               sampler=sampler)
     dataset_size = data_set.get_dataset_size()
     assert dataset_size == 10
@@ -545,7 +565,8 @@ def test_cv_minddataset_split_basic(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    d = ds.MindDataset(CV_FILE_NAME + "0", columns_list,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    d = ds.MindDataset(file_name + "0", columns_list,
                        num_readers, shuffle=False)
     d1, d2 = d.split([8, 2], randomize=False)
     assert d.get_dataset_size() == 10
@@ -581,7 +602,8 @@ def test_cv_minddataset_split_exact_percent(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    d = ds.MindDataset(CV_FILE_NAME + "0", columns_list,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    d = ds.MindDataset(file_name + "0", columns_list,
                        num_readers, shuffle=False)
     d1, d2 = d.split([0.8, 0.2], randomize=False)
     assert d.get_dataset_size() == 10
@@ -617,7 +639,8 @@ def test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    d = ds.MindDataset(CV_FILE_NAME + "0", columns_list,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    d = ds.MindDataset(file_name + "0", columns_list,
                        num_readers, shuffle=False)
     d1, d2 = d.split([0.41, 0.59], randomize=False)
     assert d.get_dataset_size() == 10
@@ -652,7 +675,8 @@ def test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file):
 def test_cv_minddataset_split_deterministic(add_and_remove_cv_file):
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    d = ds.MindDataset(CV_FILE_NAME + "0", columns_list,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    d = ds.MindDataset(file_name + "0", columns_list,
                        num_readers, shuffle=False)
     # should set seed to avoid data overlap
     ds.config.set_seed(111)
@@ -693,7 +717,8 @@ def test_cv_minddataset_split_sharding(add_and_remove_cv_file):
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    d = ds.MindDataset(CV_FILE_NAME + "0", columns_list,
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    d = ds.MindDataset(file_name + "0", columns_list,
                        num_readers, shuffle=False)
     # should set seed to avoid data overlap
     ds.config.set_seed(111)
