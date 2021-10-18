@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace abstract {
-AnalysisSchedule AnalysisSchedule::instance_;
 
 void AnalysisSchedule::Schedule() {
   const auto checkPeriod = std::chrono::seconds(3);
@@ -160,8 +159,6 @@ void AnalysisSchedule::SetThreadID(const std::string &threadID) { localThreadID 
 
 std::string &AnalysisSchedule::GetThreadID() { return localThreadID; }
 
-AnalysisResultCacheMgr AnalysisResultCacheMgr::instance_;
-
 void AnalysisResultCacheMgr::Clear() {
   std::lock_guard<std::mutex> lock(lock_);
   cache_.clear();
@@ -217,17 +214,19 @@ AbstractBasePtr AnalysisResultCacheMgr::GetSwitchValue(const AnfNodeConfigPtr &c
   return nullptr;
 }
 
-void AnalysisResultCacheMgr::CheckSwitchValueJoinable(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
+void AnalysisResultCacheMgr::SetCacheValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg,
+                                           AnalysisConfigAsyncResultCache *cache) {
   MS_EXCEPTION_IF_NULL(conf);
+  MS_EXCEPTION_IF_NULL(cache);
   if (arg == nullptr) {
     MS_LOG(EXCEPTION) << conf->ToString() << " value is nullptr";
   }
   std::lock_guard<std::mutex> lock(lock_);
-  AsyncAbstractPtr async_eval_result = switch_cache_for_check_.get(conf);
+  AsyncAbstractPtr async_eval_result = cache->get(conf);
   if (async_eval_result == nullptr) {
     async_eval_result = std::make_shared<AsyncAbstract>();
     async_eval_result->SetResult(arg);
-    switch_cache_for_check_.set(conf, async_eval_result);
+    cache->set(conf, async_eval_result);
   } else {
     auto ab1 = async_eval_result->TryGetResult();
     AbstractBasePtrList absList;
@@ -246,33 +245,12 @@ void AnalysisResultCacheMgr::CheckSwitchValueJoinable(const AnfNodeConfigPtr &co
   }
 }
 
+void AnalysisResultCacheMgr::CheckSwitchValueJoinable(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
+  SetCacheValue(conf, arg, &switch_cache_for_check_);
+}
+
 void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
-  MS_EXCEPTION_IF_NULL(conf);
-  if (arg == nullptr) {
-    MS_LOG(EXCEPTION) << conf->ToString() << " value is nullptr";
-  }
-  std::lock_guard<std::mutex> lock(lock_);
-  AsyncAbstractPtr async_eval_result = switch_cache_.get(conf);
-  if (async_eval_result == nullptr) {
-    async_eval_result = std::make_shared<AsyncAbstract>();
-    async_eval_result->SetResult(arg);
-    switch_cache_.set(conf, async_eval_result);
-  } else {
-    auto ab1 = async_eval_result->TryGetResult();
-    AbstractBasePtrList absList;
-    if (ab1 != nullptr) {
-      absList.push_back(arg);
-      absList.push_back(ab1);
-      // Join two branches's result
-      auto joined_result = AnalysisEngine::ProcessEvalResults(absList, conf->node());
-      async_eval_result->SetResult(joined_result->abstract());
-      if (!(*joined_result == *ab1)) {
-        PushTodo(conf);
-      }
-    } else {
-      async_eval_result->SetResult(arg);
-    }
-  }
+  SetCacheValue(conf, arg, &switch_cache_);
 }
 
 void AnalysisResultCacheMgr::Todo() {
