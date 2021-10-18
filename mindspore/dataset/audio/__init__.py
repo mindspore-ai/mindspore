@@ -23,7 +23,7 @@ Common imported modules in corresponding API examples are as follows:
 .. code-block::
 
     import mindspore.dataset as ds
-    from mindspore.dataset import audio
+    import mindspore.dataset.audio.transforms as audio
 """
 from . import transforms
 from . import utils
