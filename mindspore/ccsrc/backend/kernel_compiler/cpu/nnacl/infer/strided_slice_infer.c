@@ -441,7 +441,7 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
     return ret;
   }
   for (int i = 0; i < transfer_buffer.ndim_; i++) {
-    if (transfer_buffer.strides_[i] == 0) {
+    if (transfer_buffer.strides_[i] == 0 || in_shape[i] < transfer_buffer.ends_[i]) {
       return NNACL_ERR;
     }
     output_shape[i] = (transfer_buffer.ends_[i] - transfer_buffer.begins_[i] + transfer_buffer.strides_[i] +
