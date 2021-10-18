@@ -27,24 +27,48 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameStridedSlice = prim::kStridedSlice;
+/// \brief Extracts a strided slice of a tensor. Refer to Python API @ref mindspore.ops.StridedSlice for more details.
 class MS_CORE_API StridedSlice : public PrimitiveC {
  public:
+  /// \brief Constructor.
   StridedSlice() : PrimitiveC(prim::kPrimStridedSlice->name()) {
     InitIOName({"x", "begin", "end", "strides"}, {"output"});
   }
+  /// \brief Destructor.
   ~StridedSlice() = default;
   MS_DECLARE_PARENT(StridedSlice, PrimitiveC);
+  /// \brief Init. Refer to the parameters of python API @ref mindspore.ops.StridedSlice for the inputs.
   void Init(const int64_t begin_mask = 0, const int64_t end_mask = 0, const int64_t ellipsis_mask = 0,
             const int64_t new_axis_mask = 0, const int64_t shrink_axis_mask = 0);
+  /// \brief Set begin_mask.
   void set_begin_mask(const int64_t begin_mask);
+  /// \brief Set end_mask.
   void set_end_mask(const int64_t end_mask);
+  /// \brief Set ellipsis_mask.
   void set_ellipsis_mask(const int64_t ellipsis_mask);
+  /// \brief Set new_axis_mask.
   void set_new_axis_mask(const int64_t new_axis_mask);
+  /// \brief Set shrink_axis_mask.
   void set_shrink_axis_mask(const int64_t shrink_axis_mask);
+  /// \brief Get begin_mask.
+  ///
+  /// \return begin_mask.
   int64_t get_begin_mask() const;
+  /// \brief Get end_mask.
+  ///
+  /// \return end_mask.
   int64_t get_end_mask() const;
+  /// \brief Get ellipsis_mask.
+  ///
+  /// \return ellipsis_mask.
   int64_t get_ellipsis_mask() const;
+  /// \brief Get new_axis_mask.
+  ///
+  /// \return new_axis_mask.
   int64_t get_new_axis_mask() const;
+  /// \brief Get shrink_axis_mask.
+  ///
+  /// \return shrink_axis_mask.
   int64_t get_shrink_axis_mask() const;
   std::vector<int64_t> TenToTwo(int64_t num);
   int64_t compute_slicing_length(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) const;

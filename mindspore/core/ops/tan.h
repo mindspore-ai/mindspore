@@ -27,11 +27,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTan = "Tan";
+/// \brief Computes tangent of x element-wise. Refer to Python API @ref mindspore.ops.Tan for more details.
 class MS_CORE_API Tan : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Tan() : PrimitiveC(kNameTan) {}
+  /// \brief Destructor.
   ~Tan() = default;
   MS_DECLARE_PARENT(Tan, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

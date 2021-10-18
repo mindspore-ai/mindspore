@@ -26,11 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScatterNdUpdate = "ScatterNdUpdate";
+/// \brief Updates tensor values by using input indices and value.
+/// Refer to Python API @ref mindspore.ops.ScatterNdUpdate for more details.
 class MS_CORE_API ScatterNdUpdate : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ScatterNdUpdate() : PrimitiveC(kNameScatterNdUpdate) { InitIOName({"input_x", "indices", "update"}, {"output"}); }
+  /// \brief Destructor.
   ~ScatterNdUpdate() = default;
   MS_DECLARE_PARENT(ScatterNdUpdate, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr ScatterNdUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

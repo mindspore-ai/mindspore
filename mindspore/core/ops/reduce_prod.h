@@ -27,9 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceProd = "ReduceProd";
+/// \brief Reduces a dimension of a tensor by multiplying all elements in the dimension, by default.
+/// Refer to Python API @ref mindspore.ops.ReduceProd for more details.
 class MS_CORE_API ReduceProd : public Reduce {
  public:
+  /// \brief Constructor.
   ReduceProd() : Reduce(kNameReduceProd) { InitIOName({"input_x", "axis"}, {"y"}); }
+  /// \brief Destructor.
   ~ReduceProd() = default;
   MS_DECLARE_PARENT(ReduceProd, Reduce);
 };

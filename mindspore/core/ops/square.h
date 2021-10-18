@@ -25,11 +25,15 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Returns square of a tensor element-wise. Refer to Python API @ref mindspore.ops.Square for more details.
 class MS_CORE_API Square : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Square() : PrimitiveC(prim::kPrimSquare->name()) { InitIOName({"input_x"}, {"output"}); }
+  /// \brief Destructor.
   ~Square() = default;
   MS_DECLARE_PARENT(Square, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 }  // namespace ops

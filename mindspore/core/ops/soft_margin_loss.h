@@ -28,9 +28,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftMarginLoss = "SoftMarginLoss";
+/// \brief SoftMarginLoss operation.
+/// Refer to Python API @ref mindspore.ops.SoftMarginLoss for more details.
 class MS_CORE_API SoftMarginLoss : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SoftMarginLoss() : PrimitiveC(kNameSoftMarginLoss) { InitIOName({"predict", "label"}, {"loss"}); }
+  /// \brief Destructor.
   ~SoftMarginLoss() = default;
   MS_DECLARE_PARENT(SoftMarginLoss, PrimitiveC);
 };

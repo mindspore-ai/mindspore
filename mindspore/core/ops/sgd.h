@@ -25,17 +25,34 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSGD = "SGD";
+/// \brief Computes the stochastic gradient descent.
+/// Refer to Python API @ref mindspore.ops.SGD for more details.
 class MS_CORE_API SGD : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SGD() : PrimitiveC(kNameSGD) {}
+  /// \brief Destructor.
   ~SGD() = default;
   MS_DECLARE_PARENT(SGD, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SGD for the inputs.
   void Init(const float dampening = 0.0, const float weight_decay = 0.0, const bool nesterov = false);
+  /// \brief Set dampening.
   void set_dampening(const float dampening);
+  /// \brief Set weight_decay.
   void set_weight_decay(const float weight_decay);
+  /// \brief Set nesterov.
   void set_nesterov(const bool nesterov);
+  /// \brief Get dampening.
+  ///
+  /// \return dampening.
   float get_dampening() const;
+  /// \brief Get weight_decay.
+  ///
+  /// \return weight_decay.
   float get_weight_decay() const;
+  /// \brief Get nesterov.
+  ///
+  /// \return nesterov.
   bool get_nesterov() const;
 };
 AbstractBasePtr SGDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

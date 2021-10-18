@@ -25,11 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSquaredDifference = "SquaredDifference";
+/// \brief Subtracts the second input tensor from the first input tensor element-wise and returns square of it.
+/// Refer to Python API @ref mindspore.ops.SquaredDifference for more details.
 class MS_CORE_API SquaredDifference : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SquaredDifference() : PrimitiveC(kNameSquaredDifference) { InitIOName({"x", "y"}, {"output"}); }
+  /// \brief Destructor.
   ~SquaredDifference() = default;
   MS_DECLARE_PARENT(SquaredDifference, PrimitiveC);
+  /// \brief Init.
   void Init() {}
 };
 AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
