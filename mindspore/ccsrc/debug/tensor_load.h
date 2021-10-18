@@ -219,7 +219,7 @@ class TensorLoader {
       return DumpJsonParser::DumpToFile(path, node->GetDataPtr(), host_size, host_shape, host_type);
     }
     MS_LOG(INFO) << "Tensor name:" << tensor_name << " not found in tensor_list_map_";
-    return true;
+    return false;
   }
 #endif
 
