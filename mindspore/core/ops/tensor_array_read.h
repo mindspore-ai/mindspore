@@ -25,11 +25,15 @@ namespace ops {
 
 constexpr auto kNameTensorArrayRead = "TensorArrayRead";
 
+/// \brief Assert defined TensorArrayRead operator prototype of lite.
 class MS_CORE_API TensorArrayRead : public PrimitiveC {
  public:
+  /// \brief Constructor.
   TensorArrayRead() : PrimitiveC(kNameTensorArrayRead) { InitIOName({"handle", "index", "flow_in"}, {"tensor"}); }
+  /// \brief Destructor.
   ~TensorArrayRead() = default;
   MS_DECLARE_PARENT(TensorArrayRead, PrimitiveC);
+  /// \brief Method to init the op's attributes.
   void Init() {}
 };
 }  // namespace ops
