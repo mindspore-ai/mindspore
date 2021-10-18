@@ -145,7 +145,7 @@ class GraphScheduler {
                      const KernelWithIndex &to_kernel_with_input_idx);
   void LinkDataArrowForBaseActor(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                  const KernelWithIndex &from_kernel_with_output_idx,
-                                 const KernelWithIndex &to_kernel_with_input_idx);
+                                 const KernelWithIndex &to_kernel_with_input_idx, const KernelGraphPtr &graph);
   // Link data arrows for internal parameter, convert internal parameter to actor by internal parameter cache to link.
   void LinkDataArrowForInternalParameter(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                          const KernelWithIndex &from_kernel_with_output_idx,
@@ -153,9 +153,6 @@ class GraphScheduler {
   void LinkDataArrowForDeviceTensorStore(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                          const KernelWithIndex &from_kernel_with_output_idx,
                                          const KernelWithIndex &to_kernel_with_input_idx, const KernelGraphPtr &graph);
-  void LinkDataArrowForDeviceDSActor(AbstractActor *const from_actor, AbstractActor *const to_actor,
-                                     const KernelWithIndex &from_kernel_with_output_idx,
-                                     const KernelWithIndex &to_kernel_with_input_idx, const KernelGraphPtr &graph);
   void LinkDataArrowForHostDSActor(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                    const KernelWithIndex &from_kernel_with_output_idx,
                                    const KernelWithIndex &to_kernel_with_input_idx, const KernelGraphPtr &graph);
@@ -197,6 +194,14 @@ class GraphScheduler {
   void LinkDataArrowForSwitchActor(SwitchActor *const from_actor, const size_t from_index,
                                    OpActor<DeviceTensor> *const to_actor, const size_t to_index,
                                    const size_t branch_index = SIZE_MAX);
+
+  void AddDeviceTensorStore(const AnfNode *anf_node, const DeviceTensorPtr &device_tensor);
+  // Add the arrow between from actor and to actor.
+  void AddDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor, const AnfNodePtr &from_kernel,
+                    size_t from_output_index, size_t to_input_index);
+  void AddResultArrow(AbstractActor *const from_actor, OutputActor *const to_actor, const AnfNodePtr &from_kernel,
+                      size_t from_output_index, size_t output_position);
+  void AddControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor);
 
   // Check whether the actor set is valid.
   void CheckActorValid(const ActorSet *actor_set) const;

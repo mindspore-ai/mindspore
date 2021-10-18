@@ -107,14 +107,17 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
 
   // 2.Send output data.
-  if (output_data_arrows_.size() != output_data_.size()) {
+  if ((output_data_arrows_.size() != output_data_.size()) ||
+      (output_data_arrows_.size() != output_data_nodes_.size())) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output data arrows is not equal to the output data.");
   }
   size_t output_data_arrow_index = 0;
   for (auto &output_data : output_data_) {
     MS_EXCEPTION_IF_NULL(output_data);
-    UpdateOutputData(output_data.get(), output_data_arrows_[output_data_arrow_index++].get(), context);
+    UpdateOutputData(output_data.get(), output_data_arrows_[output_data_arrow_index],
+                     output_data_nodes_[output_data_arrow_index], context);
     Async(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
+    ++output_data_arrow_index;
   }
 
   // 3.Send output control.

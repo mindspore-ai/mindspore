@@ -59,8 +59,8 @@ class DataSourceActor : public DebugAwareActor {
   // Construct the device tensors and fill to device tensor buffer from the member nodes during the data fetching.
   virtual void FillDataBuffer() = 0;
 
-  void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *data_arrow,
-                        OpContext<DeviceTensor> *const context) override;
+  void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
+                        const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) override;
 
   // The buffers store the device tensors.
   std::queue<std::vector<DeviceTensor *>> buffers_;

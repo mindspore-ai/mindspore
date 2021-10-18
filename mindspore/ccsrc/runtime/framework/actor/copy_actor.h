@@ -52,8 +52,8 @@ class CopyActor : public MemoryAwareActor {
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
-  void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *data_arrow,
-                        OpContext<DeviceTensor> *const context) override;
+  void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
+                        const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) override;
 
  private:
   friend class GraphScheduler;

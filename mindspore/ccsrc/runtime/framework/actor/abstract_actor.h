@@ -56,6 +56,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Get the member.
   KernelTransformType type() const { return type_; }
   const std::vector<const DeviceContext *> &device_contexts() const { return device_contexts_; }
+  const std::vector<AnfNodePtr> &output_data_nodes() const { return output_data_nodes_; }
   const std::vector<AnfNodePtr> &output_result_nodes() const { return output_result_nodes_; }
   const std::vector<DataArrowPtr> &output_result_arrows() const { return output_result_arrows_; }
   const std::vector<std::pair<size_t, AnfNodePtr>> &device_tensor_store_keys() const {
@@ -76,8 +77,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
   void EraseInput(const OpContext<DeviceTensor> *context);
 
   // Update the output data before send output data.
-  virtual void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *data_arrow,
-                                OpContext<DeviceTensor> *const context) {}
+  virtual void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
+                                const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) {}
   // Send output to downstream actors to trigger running.
   virtual void SendOutput(OpContext<DeviceTensor> *const context);
   // Send recorder info to recorder actor.
@@ -91,10 +92,11 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // The id of recorder actor. Send message to it for recording info.
   const AID *recorder_aid_;
 
-  // The output_data_ corresponds to the output_data_arrows_ one by one.
+  // The output_data_nodes_ and output_data_ corresponds to the output_data_arrows_ one by one.
+  std::vector<AnfNodePtr> output_data_nodes_;
   std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
 
-  // The output nodes and output result arrows of graph output.
+  // The output result nodes and output result arrows of graph output.
   std::vector<AnfNodePtr> output_result_nodes_;
   std::vector<DataArrowPtr> output_result_arrows_;
 

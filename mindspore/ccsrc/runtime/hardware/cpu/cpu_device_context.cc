@@ -82,6 +82,10 @@ void CPUDeviceContext::Destroy() {
 bool CPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  if (address->DeviceType() != DeviceAddressType::kCPU) {
+    MS_LOG(EXCEPTION) << "The device address type is wrong: " << address->DeviceType();
+  }
+
   auto device_ptr = mem_manager_->MallocMemFromMemPool(size);
   if (!device_ptr) {
     return false;
@@ -96,6 +100,10 @@ void CPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(address->ptr_);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  if (address->DeviceType() != DeviceAddressType::kCPU) {
+    MS_LOG(EXCEPTION) << "The device address type is wrong: " << address->DeviceType();
+  }
+
   if (!address->from_mem_pool()) {
     return;
   }

@@ -122,7 +122,7 @@ void CopyActor::FetchDeviceTensor(OpContext<DeviceTensor> *const context) {
   }
 }
 
-void CopyActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrow *,
+void CopyActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &, const AnfNodePtr &,
                                  OpContext<DeviceTensor> *const) {
   MS_EXCEPTION_IF_NULL(output_data);
   output_data->data_ = output_device_tensor_[0];

@@ -19,6 +19,14 @@
 namespace mindspore {
 namespace runtime {
 namespace {
+std::string GetSplitName(const std::string &name) {
+  auto index = name.rfind('/');
+  if ((index != std::string::npos) && (index < name.size() - 1)) {
+    return name.substr(index + 1);
+  }
+  return name;
+}
+
 void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
   if (actor->device_contexts().size() > 0) {
@@ -55,12 +63,17 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
     }
   }
 
-  const auto &output_data_arrows = actor->output_data_arrows();
-  if (output_data_arrows.size() > 0) {
-    ofs << "\t\toutput_data_arrows:" << output_data_arrows.size() << "\n ";
-    for (const auto &data_arrow : output_data_arrows) {
+  if (actor->output_data_arrows().size() != actor->output_data_nodes().size()) {
+    MS_LOG(EXCEPTION) << "The size of output data arrows is not equal to the output nodes.";
+  }
+  if (actor->output_data_arrows().size() > 0) {
+    ofs << "\t\toutput_data_arrows:" << actor->output_data_arrows().size() << "\n ";
+    for (size_t i = 0; i < actor->output_data_arrows().size(); ++i) {
+      auto data_arrow = actor->output_data_arrows()[i];
+      auto output_node = actor->output_data_nodes()[i];
       MS_EXCEPTION_IF_NULL(data_arrow);
-      ofs << "\t\t\tfrom_output_index:" << data_arrow->from_output_index_
+      std::string node_name = (output_node != nullptr) ? GetSplitName(output_node->fullname_with_scope()) : "";
+      ofs << "\t\t\tfrom_output_node:" << node_name << "\tfrom_output_index:" << data_arrow->from_output_index_
           << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
           << "\n";
     }
@@ -84,7 +97,7 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
       auto output_node = actor->output_result_nodes()[i];
       MS_EXCEPTION_IF_NULL(result_arrow);
       MS_EXCEPTION_IF_NULL(output_node);
-      ofs << "\t\t\tfrom_output_node:" << output_node->fullname_with_scope()
+      ofs << "\t\t\tfrom_output_node:" << GetSplitName(output_node->fullname_with_scope())
           << "\tfrom_output_index:" << result_arrow->from_output_index_
           << "\tto_actor_name:" << result_arrow->to_op_id_.Name()
           << "\toutput_node_position:" << result_arrow->to_input_index_ << "\n";

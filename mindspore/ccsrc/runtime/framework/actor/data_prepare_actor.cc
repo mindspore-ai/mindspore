@@ -398,10 +398,18 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   MS_EXCEPTION_IF_NULL(device_tensor);
   auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
   // Use the device address of host tensor to set device tensor.
+  bool is_need_sync = false;
   if (host_tensor_address != device_tensor) {
     if (host_tensor_address == nullptr) {
-      host_tensor_address = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
-                                                                device_tensor->format(), device_tensor->type_id());
+      // The step mode can't reuse the device tensor, because other actors may use the device tensor in step mode.
+      if ((strategy_ == GraphExecutionStrategy::kStep) ||
+          (device_tensor->DeviceType() != device_context->GetDeviceAddressType())) {
+        host_tensor_address = device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(),
+                                                                  device_tensor->format(), device_tensor->type_id());
+      } else {
+        host_tensor_address = device_tensor;
+      }
+      is_need_sync = true;
       tensor->set_device_address(host_tensor_address);
       UpdateRefCount(host_tensor_address.get(), true);
     }
@@ -419,7 +427,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
   MS_EXCEPTION_IF_NULL(host_tensor_address);
-  if (host_tensor_address->GetPtr() == nullptr) {
+  if (is_need_sync || (host_tensor_address->GetPtr() == nullptr)) {
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->fullname_with_scope()
                  << ", device type:" << host_tensor_address->DeviceType();
     SyncTensorData(tensor, host_tensor_address, backend_node, device_context, context, strategy_);

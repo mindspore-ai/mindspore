@@ -168,6 +168,10 @@ void GPUDeviceContext::Destroy() {
 
 bool GPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
+  if (address->DeviceType() != DeviceAddressType::kGPU) {
+    MS_LOG(EXCEPTION) << "The device address type is wrong: " << address->DeviceType();
+  }
+
   if (!BindDeviceToCurrentThread()) {
     return false;
   }
@@ -184,6 +188,10 @@ bool GPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size
 void GPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(address->ptr_);
+  if (address->DeviceType() != DeviceAddressType::kGPU) {
+    MS_LOG(EXCEPTION) << "The device address type is wrong: " << address->DeviceType();
+  }
+
   if (!address->from_mem_pool()) {
     return;
   }
