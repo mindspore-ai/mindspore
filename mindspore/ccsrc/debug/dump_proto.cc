@@ -232,7 +232,7 @@ void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value
   } else if (val->isa<Monad>() || val->isa<MonadType>()) {
     value_proto->set_str_val(val->ToString());
   } else {
-    MS_LOG(WARNING) << "Unsupported type " << val->type_name();
+    MS_LOG(DEBUG) << "Unsupported type " << val->type_name();
   }
 }
 
@@ -468,7 +468,7 @@ void ProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &
 
   // CNode/ConstGraph/Const/Parameter
   if (op->isa<CNode>() || IsValueNode<FuncGraph>(op) || op->isa<Parameter>()) {
-    MS_LOG(WARNING) << "Operator must be a primitive";
+    MS_LOG(DEBUG) << "Operator must be a primitive";
   } else {
     GetOpNodeTypeAndAttrs(func_graph, op, node_proto);
     node_proto->set_name(std::to_string(apply_idx));
