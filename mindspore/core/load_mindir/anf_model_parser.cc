@@ -600,6 +600,16 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
         if (!IsLite()) {
           (void)CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &res);
         }
+        if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && res->isa<StringImm>()) {
+          auto str_dtype = GetValue<std::string>(res);
+          if (str_dtype == "int32") {
+            prim->AddAttr(attr_name, MakeValue<int64_t>(3));
+            break;
+          }
+          MS_EXCEPTION(NotSupportError)
+            << "The primtive[HistogramFixedWidth] not supported only support attribute[dtype] is 'int32',but got"
+            << res->ToString();
+        }
         prim->AddAttr(attr_name, res);
         break;
       }
