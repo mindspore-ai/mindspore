@@ -186,7 +186,7 @@ class GraphData:
             node_list (Union[list[tuple], numpy.ndarray]): The given list of pair nodes ID.
 
         Returns:
-            numpy.ndarray, array of edgs ID.
+            numpy.ndarray, array of edges ID.
 
         Examples:
             >>> edges = graph_dataset.get_edges_from_nodes(node_list=[(101, 201), (103, 207)])

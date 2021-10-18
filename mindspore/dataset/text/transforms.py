@@ -100,7 +100,7 @@ class JiebaTokenizer(TextTensorOperation):
             JiebaMode.MIX](default=JiebaMode.MIX).
 
             - JiebaMode.MP, tokenize with MPSegment algorithm.
-            - JiebaMode.HMM, tokenize with Hiddel Markov Model Segment algorithm.
+            - JiebaMode.HMM, tokenize with Hidden Markov Model Segment algorithm.
             - JiebaMode.MIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
         with_offsets (bool, optional): Whether or not output offsets of tokens (default=False).
 
@@ -525,7 +525,7 @@ class WordpieceTokenizer(TextTensorOperation):
 
 class PythonTokenizer:
     """
-    Class that apply user-defined string tokenizer into input string.
+    Class that applies user-defined string tokenizer into input string.
 
     Args:
         tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.

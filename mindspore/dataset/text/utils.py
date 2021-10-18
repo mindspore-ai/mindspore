@@ -300,7 +300,7 @@ class JiebaMode(IntEnum):
 
     - JiebaMode.MIX: tokenize with a mix of MPSegment and HMMSegment algorithm.
     - JiebaMode.MP: tokenize with MPSegment algorithm.
-    - JiebaMode.HMM: tokenize with Hiddel Markov Model Segment algorithm.
+    - JiebaMode.HMM: tokenize with Hidden Markov Model Segment algorithm.
     """
     MIX = 0
     MP = 1

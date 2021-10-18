@@ -120,7 +120,7 @@ class DSCallback:
 
 class WaitedDSCallback(Callback, DSCallback):
     """
-    Abstract base class used to build a dataset callback class that are synchronized with the training callback.
+    Abstract base class used to build a dataset callback class that is synchronized with the training callback.
 
     This class can be used to execute a user defined logic right after the previous step or epoch.
     For example, one augmentation needs the loss from the previous trained epoch to update some of its parameters.
