@@ -41,12 +41,20 @@ bool IsParameterOrValueNode(const AnfNodePtr &node) {
 }
 
 // NodeUsersMap, for node B input i use node A, it will be one item in map with key: A, and value: (B, i)
-bool IsNodeOutPutUsedByOtherRealKernel(const AnfNodeIndexSet &node_users) {
-  if (node_users.size() == 1) {
+bool IsNodeOutPutUsedByOtherRealKernel(const FuncGraphPtr &graph, const AnfNodePtr &input) {
+  auto manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto &node_users = manager->node_users();
+  auto iter = node_users.find(input);
+  if (iter == node_users.end()) {
+    MS_LOG(EXCEPTION) << "node has no output in manager, trace: " << trace::DumpSourceLines(input);
+  }
+  auto user_items = iter->second;
+  if (user_items.size() == 1) {
     MS_LOG(INFO) << "This node only used once, no need to insert tensormove node.";
     return false;
   }
-  for (const auto &node_pair : node_users) {
+  for (const auto &node_pair : user_items) {
     auto node = node_pair.first;
     MS_EXCEPTION_IF_NULL(node);
     if (AnfAlgo::IsRealKernel(node) && !AnfAlgo::IsCommunicationOp(node)) {
@@ -90,15 +98,7 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
   // example3: NodeA --> NopNode --> Allreduce
   //                             --> other RealNode(!Allreude)
   // when input is used by others
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto &node_users = manager->node_users();
-  auto iter = node_users.find(real_input);
-  if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager, trace: " << trace::DumpSourceLines(input);
-  }
-  auto ret = IsNodeOutPutUsedByOtherRealKernel(iter->second);
-  if (ret) {
+  if (IsNodeOutPutUsedByOtherRealKernel(graph, input)) {
     return true;
   }
   if (opt::IsNopNode(real_input)) {
