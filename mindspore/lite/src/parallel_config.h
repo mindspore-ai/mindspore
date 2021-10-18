@@ -29,8 +29,5 @@
 // whether to enable count time and data printer in parallel_executor.cc or not
 #define PROFILE 0
 
-// typical bind mode for parallel_executor
-// #define BASE 6
-
 #define CPU16SUB_INSERT_CAST 0
 #endif  // MINDSPORE_LITE_SRC_PARALLEL_CONFIG_H_

@@ -189,7 +189,6 @@ STATUS SetInt64TensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::T
   auto tensor_data = reinterpret_cast<int *>((*tensor_info)->data_c());
   if (tensor_data == nullptr) {
     MS_LOG(ERROR) << "new data failed";
-    delete[] tensor_data;
     return RET_ERROR;
   }
   if (tensor_proto.tensor_shape().dim_size() == 0) {  // scalar
@@ -233,7 +232,6 @@ STATUS SetBoolTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::Te
   auto tensor_data = reinterpret_cast<bool *>((*tensor_info)->data_c());
   if (tensor_data == nullptr) {
     MS_LOG(ERROR) << "new data failed";
-    delete[] tensor_data;
     return RET_ERROR;
   }
 
@@ -283,17 +281,20 @@ STATUS SetStringTensorInfo(const tensorflow::TensorProto &tensor_proto, tensor::
   *tensor_info = CreateTensorInfo(nullptr, 0, shape_vector, kObjectTypeString);
   if (*tensor_info == nullptr) {
     MS_LOG(ERROR) << "create tensor info failed.";
+    delete tensor_data;
     return RET_ERROR;
   }
   auto tensor_info_data = reinterpret_cast<uint8_t *>((*tensor_info)->data_c());
   if (memcpy_s(tensor_info_data, (*tensor_info)->Size(), shape_str.data(), shape_str.size()) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";
+    delete tensor_data;
     return RET_ERROR;
   }
   MS_CHECK_TRUE_RET((*tensor_info)->Size() >= (*tensor_data).size(), RET_ERROR);
   if (memcpy_s(tensor_info_data + shape_str.size(), (*tensor_info)->Size() - (*tensor_data).size(),
                (*tensor_data).data(), (*tensor_data).size()) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";
+    delete tensor_data;
     return RET_ERROR;
   }
 
