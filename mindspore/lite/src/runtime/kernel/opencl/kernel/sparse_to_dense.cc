@@ -59,7 +59,7 @@ int SparseToDenseOpenCLKernel::InitWeights() {
   MS_CHECK_GE(in_tensors_.size(), DIMENSION_3D, RET_ERROR);
   auto weight_tensor = in_tensors_[2];
   size_t size = 1;
-  for (int i = 0; i < weight_tensor->shape().size(); ++i) {
+  for (size_t i = 0; i < weight_tensor->shape().size(); ++i) {
     size *= weight_tensor->shape()[i];
   }
   MS_ASSERT(weight_tensor->data());
@@ -88,7 +88,7 @@ int SparseToDenseOpenCLKernel::InitWeights() {
       } else {
         auto weight_fp32 = reinterpret_cast<float *>(weight_vector_);
         auto origin_bias_fp16 = reinterpret_cast<float16_t *>(weight_tensor->data());
-        for (int i = 0; i < size; ++i) {
+        for (size_t i = 0; i < size; ++i) {
           weight_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
         }
       }
@@ -96,7 +96,7 @@ int SparseToDenseOpenCLKernel::InitWeights() {
       if (enable_fp16_) {
         auto weight_fp16 = reinterpret_cast<float16_t *>(weight_vector_);
         auto origin_bias_fp32 = reinterpret_cast<float *>(weight_tensor->data());
-        for (int i = 0; i < size; ++i) {
+        for (size_t i = 0; i < size; ++i) {
           weight_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
         }
       } else {
