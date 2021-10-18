@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalAnd = "LogicalAnd";
-/// \brief Computes the “logical AND” of two tensors element-wise.
+/// \brief Computes the "logical AND" of two tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.LogicalAnd for more details.
 class MS_CORE_API LogicalAnd : public PrimitiveC {
  public:

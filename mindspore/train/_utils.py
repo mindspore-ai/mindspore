@@ -128,7 +128,7 @@ def _construct_tensor_list(types, shapes, batch_expand_num=1):
         List, list of Tensors.
     """
     if len(types) != len(shapes):
-        raise ValueError("The length of dataset types must equal to dataset shapes, "
+        raise ValueError("The length of dataset types must be equal to dataset shapes, "
                          "but got dataset types={} and dataset shapes={}".format(types, shapes))
     tensor_list = []
     for type_, shape in zip(types, shapes):

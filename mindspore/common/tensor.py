@@ -380,7 +380,7 @@ class Tensor(Tensor_):
 
     def itemset(self, *args):
         r"""
-        Insert scalar into a tensor (scalar is cast to tensor’s dtype, if possible).
+        Insert scalar into a tensor (scalar is cast to tensor's dtype, if possible).
 
         There must be at least 1 argument, and define the last argument as item.
         Then, tensor.itemset(\*args) is equivalent to :math:`tensor[args] = item`.
@@ -1093,7 +1093,7 @@ class Tensor(Tensor_):
 
     def ptp(self, axis=None, keepdims=False):
         """
-        The name of the function comes from the acronym for ‘peak to peak’.
+        The name of the function comes from the acronym for "peak to peak".
 
         Note:
             Numpy arguments `dtype` and `out` are not supported.
@@ -1477,22 +1477,22 @@ class Tensor(Tensor_):
             indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
             axis (int, optional): The axis over which to select values. By default,
                 the flattened input array is used. Default: `None`.
-            mode (‘raise’, ‘wrap’, ‘clip’, optional):
+            mode ('raise', 'wrap', 'clip', optional):
 
                 - edge: Pads with the edge values of `arr`.
                 - raise: Raises an error;
                 - wrap: Wraps around;
-                - clip: Clips to the range. `clip` mode means that all indices that are
+                - clip: Clips to the range. 'clip' mode means that all indices that are
                   too large are replaced by the index that addresses the last element
                   along that axis. Note that this disables indexing with negative numbers.
 
-                Default: `clip`.
+                Default: 'clip'.
 
         Returns:
             Tensor, the indexed result.
 
         Raises:
-            ValueError: if `axis` is out of range, or `mode` has values other than (‘raise’, ‘wrap’, ‘clip’)
+            ValueError: if `axis` is out of range, or `mode` has values other than ('raise', 'wrap', 'clip')
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1542,15 +1542,15 @@ class Tensor(Tensor_):
             choices (Union[tuple, list, Tensor]): Choice arrays. `a` and all of the `choices` must
                 be broadcasted to the same shape. If `choices` is itself an array, then
                 its outermost dimension (i.e., the one corresponding to ``choices.shape[0]``)
-                is taken as defining the “sequence”.
-            mode (‘raise’, ‘wrap’, ‘clip’, optional): Specifies how indices outside
+                is taken as defining the "sequence".
+            mode ('raise', 'wrap', 'clip', optional): Specifies how indices outside
                 ``[0, n-1]`` will be treated:
 
-                ‘raise’ – raise an error (default);
+                'raise' – raise an error (default);
 
-                ‘wrap’ – wrap around;
+                'wrap' – wrap around;
 
-                ‘clip’ – clip to the range. ‘clip’ mode means that all indices that are
+                'clip' – clip to the range. 'clip' mode means that all indices that are
                 too large are replaced by the index that addresses the last element
                 along that axis. Note that this disables indexing with negative numbers.
 
@@ -1615,10 +1615,10 @@ class Tensor(Tensor_):
 
         Args:
             v (Union[int, float, bool, list, tuple, Tensor]): Values to insert into `a`.
-            side ('left', 'right', optional): If ‘left’, the index of the first suitable
-                location found is given. If ‘right’, return the last such index. If there is
+            side ('left', 'right', optional): If 'left', the index of the first suitable
+                location found is given. If 'right', return the last such index. If there is
                 no suitable index, return either 0 or N (where N is the length of `a`).
-                Default: `left`.
+                Default: 'left'.
             sorter (Union[int, float, bool, list, tuple, Tensor]): 1-D optional array of
                 integer indices that sort array `a` into ascending order. They are typically
                 the result of argsort.
@@ -1778,7 +1778,7 @@ class Tensor(Tensor_):
             keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
                 dimensions with size one. With this option, the result will broadcast correctly against the input array.
                 If the default value is passed, then keepdims will not be passed through to the sum method of
-                sub-classes of ndarray, however any non-default value will be. If the sub-class’ method does not
+                sub-classes of ndarray, however any non-default value will be. If the sub-class method does not
                 implement keepdims any exceptions will be raised. Default: `False`.
             initial (scalar): Starting value for the sum. Default: `None`.
 

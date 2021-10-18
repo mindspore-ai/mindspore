@@ -183,7 +183,7 @@ int SgdCPUKernel::Prepare() {
   }
 
   if (sgd_param_->use_nesterov_ && sgd_param_->dampening_ > 0.0f) {
-    MS_LOG(ERROR) << "If use nesterov, dampening must equal to 0.0";
+    MS_LOG(ERROR) << "If use nesterov, dampening must be equal to 0.0";
     return RET_ERROR;
   }
   auto ret = OptimizerKernel::Prepare();

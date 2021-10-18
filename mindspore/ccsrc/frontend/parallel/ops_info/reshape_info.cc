@@ -95,7 +95,7 @@ Status ReshapeInfo::GetParameterInput() {
   }
   elements = dim_tuple->value();
   if (elements.size() != outputs_shape_[0].size()) {
-    MS_LOG(ERROR) << name_ << ": Elements size must equal to outputs shape[0] size.";
+    MS_LOG(ERROR) << name_ << ": Elements size must be equal to outputs shape[0] size.";
     return FAILED;
   }
 

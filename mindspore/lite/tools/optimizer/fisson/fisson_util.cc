@@ -89,8 +89,8 @@ bool CalSplitOutputShape(int64_t splited_axis_value, const SplitInfo *split_info
   }
   // out-shape after splited
   int64_t tmp_value = 0;
-  MS_CHECK_TRUE_MSG(split_num > 0, false, "out_num of split_info should greater than zero");
-  MS_CHECK_TRUE_MSG(split_len > 0, false, "split_len should greater than zero");
+  MS_CHECK_TRUE_MSG(split_num > 0, false, "out_num of split_info should be greater than zero");
+  MS_CHECK_TRUE_MSG(split_len > 0, false, "split_len should be greater than zero");
   for (int64_t i = 0; i < split_num - 1; i++) {
     if (INT_MUL_OVERFLOW_THRESHOLD(split_info->size_splits[i], splited_axis_value, INT64_MAX)) {
       MS_LOG(ERROR) << "int mul overflow";

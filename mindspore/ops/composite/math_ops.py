@@ -477,7 +477,7 @@ def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
                              f"But got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
     elif isinstance(axes, int):
         if axes == 0:
-            raise ValueError(f"{msg_prefix} 'axes' should not equal to 0, but got {axes}.")
+            raise ValueError(f"{msg_prefix} 'axes' should not be equal to 0, but got {axes}.")
         if axes < 0:
             axes = [axes + len(x1_shape), axes + len(x2_shape)]
             validator.check_non_negative_int(axes[0], 'reversed axes', 'batch_dot')

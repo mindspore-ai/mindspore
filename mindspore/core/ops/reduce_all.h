@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceAll = "ReduceAll";
-/// \brief Reduces a dimension of a tensor by the “logicalAND” of all elements in the dimension.
+/// \brief Reduces a dimension of a tensor by the "logical AND" of all elements in the dimension.
 /// Refer to Python API @ref mindspore.ops.ReduceAll for more details.
 class MS_CORE_API ReduceAll : public Reduce {
  public:

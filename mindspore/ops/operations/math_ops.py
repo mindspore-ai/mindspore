@@ -94,7 +94,7 @@ class _MathBinaryOp(_BinaryOp):
         args_type = {"x": x_dtype, "y": y_dtype}
         complex_types = [mstype.tensor_type(mstype.complex64), mstype.tensor_type(mstype.complex128)]
         if x_dtype in complex_types or y_dtype in complex_types:
-            tpye_infer_dict = {
+            type_infer_dict = {
                 (mstype.complex64, mstype.complex64): mstype.tensor_type(mstype.complex64),
                 (mstype.complex64, mstype.float32): mstype.tensor_type(mstype.complex64),
                 (mstype.float32, mstype.complex64): mstype.tensor_type(mstype.complex64),
@@ -102,12 +102,12 @@ class _MathBinaryOp(_BinaryOp):
                 (mstype.complex128, mstype.float64): mstype.tensor_type(mstype.complex128),
                 (mstype.float64, mstype.complex128): mstype.tensor_type(mstype.complex128),
             }
-            if (x_dtype.element_type(), y_dtype.element_type()) not in tpye_infer_dict.keys():
+            if (x_dtype.element_type(), y_dtype.element_type()) not in type_infer_dict.keys():
                 raise TypeError('Complex math binary op expecting Tensor [complex64, complex64],'
                                 + '[complex64, float32], [float32, complex64], [complex128, complex128],'
                                 + '[complex128, float64], [float64, complex128],'
                                 + f'but got : [{format(x_dtype)},{format(y_dtype)}].')
-            return tpye_infer_dict.get((x_dtype.element_type(), y_dtype.element_type()))
+            return type_infer_dict.get((x_dtype.element_type(), y_dtype.element_type()))
 
         validator.check_tensors_dtypes_same_and_valid(args_type, valid_dtype, prim_name)
         return x_dtype
@@ -225,7 +225,7 @@ class Add(_MathBinaryOp):
         >>> print(output)
         [5. 6. 7.]
         >>> # the data type of x is int32, the data type of y is float32,
-        >>> # and the output is the data format of higher precision flost32.
+        >>> # and the output is the data format of higher precision float32.
         >>> print(output.dtype)
         Float32
     """
@@ -280,7 +280,7 @@ class AssignAdd(PrimitiveWithInfer):
 
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **value** (Union[numbers.Number, Tensor]) - The value to be added to the `variable`.
           It must have the same shape as `variable` if it is a Tensor.
           it is recommended to use the same data type when using this operator.
@@ -351,7 +351,7 @@ class AssignSub(PrimitiveWithInfer):
 
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank be should be less than 8.
         - **value** (Union[numbers.Number, Tensor]) - The value to be subtracted from the `variable`.
           It must have the same shape as `variable` if it is a Tensor.
           it is recommended to use the same data type when using this operator.
@@ -516,7 +516,7 @@ class ReduceMean(_Reduce):
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
 
@@ -593,7 +593,7 @@ class ReduceSum(_Reduce):
 
     Inputs:
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
          - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
            Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
 
@@ -676,7 +676,7 @@ class ReduceAll(_Reduce):
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
 
@@ -735,7 +735,7 @@ class ReduceAny(_Reduce):
 
     Inputs:
         - **x** (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
 
@@ -794,7 +794,7 @@ class ReduceMax(_Reduce):
 
     Inputs:
          - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
          - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
            Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
 
@@ -881,7 +881,7 @@ class ReduceMin(_Reduce):
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
 
@@ -959,7 +959,7 @@ class ReduceProd(_Reduce):
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
 
@@ -1038,7 +1038,7 @@ class CumProd(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor[Number]) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (int) - The dimensions to compute the cumulative product.
           Only constant value is allowed.
 
@@ -1438,7 +1438,7 @@ class AddN(Primitive):
             return True, inputs[0]
         raise TypeError(f"For '{self.name}', the type of 'inputs[0]' should be a tensor, but "
                         f"got {type(inputs[0]).__name__}, "
-                        f"or the length of 'inputs' should not equal to 1, but got ({len(inputs)}).")
+                        f"or the length of 'inputs' should not be equal to 1, but got ({len(inputs)}).")
 
 
 class AccumulateNV2(PrimitiveWithInfer):
@@ -1494,7 +1494,7 @@ class AccumulateNV2(PrimitiveWithInfer):
             return True, inputs[0]
         raise TypeError(f"For '{self.name}', the type of 'inputs[0]' should be a tensor, "
                         f"but got {type(inputs[0]).__name__}, "
-                        f"or the length of 'inputs' should not equal to 1, but got ({len(inputs)}).")
+                        f"or the length of 'inputs' should not be equal to 1, but got ({len(inputs)}).")
 
     def infer_shape(self, inputs):
         cls_name = self.name
@@ -1526,7 +1526,7 @@ class Neg(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape and dtype as input.
@@ -1576,7 +1576,7 @@ class InplaceAdd(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **input_v** (Tensor) - The second input is a tensor that has the same dimension sizes as x except
           the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
@@ -1645,7 +1645,7 @@ class InplaceSub(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as x except
           the first dimension, which must be the same as indices' size. It has the same data type with `x`.
 
@@ -1860,7 +1860,7 @@ class Square(Primitive):
 
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -1895,7 +1895,7 @@ class Rsqrt(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input of Rsqrt. Each element must be a non-negative number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same type and shape as `x`.
@@ -1947,7 +1947,7 @@ class Sqrt(PrimitiveWithCheck):
 
     Inputs:
         - **x** (Tensor) - The input tensor whose dtype is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape and data type as the `x`.
@@ -1994,7 +1994,7 @@ class Reciprocal(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as the `x`.
@@ -2106,7 +2106,7 @@ class Exp(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -2156,7 +2156,7 @@ class Expm1(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor. With float16 or float32 data type.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as the `x`.
@@ -2256,7 +2256,7 @@ class Log(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor. The value must be greater than 0.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as the `x`.
@@ -2306,7 +2306,7 @@ class Log1p(Primitive):
     Inputs:
         - **x** (Tensor) - The input tensor. With float16 or float32 data type.
           The value must be greater than -1.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as the `x`.
@@ -2341,7 +2341,7 @@ class Erf(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor. The data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -2383,7 +2383,7 @@ class Erfc(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor. The data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shap dtype as the `x`.
@@ -2720,9 +2720,9 @@ class MulNoNan(_MathBinaryOp):
 
     Inputs:
         - **x** (Union[Tensor]) - The first input is a tensor whose data type is one of
-          flota16, float32, int32, int64 currently or scalar.
+          float16, float32, int32, int64 currently or scalar.
         - **y** (Union[Tensor]) - The second input is a tensor whose data type is one of
-          flota16, float32, int32, int64 currently or scalar.
+          float16, float32, int32, int64 currently or scalar.
 
     Outputs:
         Tensor, the shape is the same as the shape after broadcasting,
@@ -2969,7 +2969,7 @@ class Floor(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor. Its element data type must be float.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -3062,7 +3062,7 @@ class Ceil(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor. It's element data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -3194,7 +3194,7 @@ class Acosh(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The data type should be one of the following types: float16, float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape and type as `x`.
@@ -3238,7 +3238,7 @@ class Cosh(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -3279,7 +3279,7 @@ class Asinh(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
           The data type should be one of the following types: float16, float32.
 
     Outputs:
@@ -3321,7 +3321,7 @@ class Sinh(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -3451,7 +3451,7 @@ class ApproximateEqual(_LogicBinaryOp):
 
     Inputs:
         - **x** (Tensor) - A tensor. Must be one of the following types: float32, float16.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **y** (Tensor) - A tensor of the same type and shape as 'x'.
 
     Outputs:
@@ -4219,7 +4219,7 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
     Inputs:
         - **x** (Tensor) - The output tensor of `NPUAllocFloatStatus`.
           The data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
     Outputs:
         Tensor, has the same shape as `x`. All the elements in the tensor will be zero.

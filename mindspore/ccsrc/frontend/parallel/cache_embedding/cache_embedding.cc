@@ -667,7 +667,7 @@ void CacheEmbeddingForTrain(const FuncGraphPtr &graph, bool is_pipe, const CNode
     MS_LOG(EXCEPTION) << "The last cnode after sorting, not return cnode.";
   }
   if (return_node->inputs().size() < 2) {
-    MS_LOG(EXCEPTION) << "Number of return node inputs should be great than or equal to 2.";
+    MS_LOG(EXCEPTION) << "Number of return node inputs should be greater than or equal to 2.";
   }
 
   auto depend_node = CreateDepend(graph, invalid_nodes, return_node->input(1));

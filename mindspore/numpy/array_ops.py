@@ -1187,7 +1187,7 @@ def tile(a, reps):
     So a shape (3,) array is promoted to (1, 3) for 2-D replication, or
     shape (1, 1, 3) for 3-D replication. If this is not the desired behavior,
     promote `a` to d-dimensions manually before calling this function.
-    If ``a.ndim > d``, `reps` is promoted to ``a.ndim`` by pre-pending 1’s to it. Thus
+    If ``a.ndim > d``, `reps` is promoted to ``a.ndim`` by pre-pending 1's to it. Thus
     for an `a` of shape (2, 3, 4, 5), a `reps` of (2, 2) is treated as (1, 1, 2, 2).
 
     Args:
@@ -1839,7 +1839,7 @@ def take(a, indices, axis=None, mode='clip'):
     """
     Takes elements from an array along an axis.
 
-    When axis is not None, this function does the same thing as “fancy” indexing
+    When axis is not None, this function does the same thing as "fancy" indexing
     (indexing arrays using arrays); however, it can be easier to use if you need
     elements along a given axis. A call such as ``np.take(arr, indices, axis=3)`` is
     equivalent to ``arr[:,:,:,indices,...]``.
@@ -1853,14 +1853,14 @@ def take(a, indices, axis=None, mode='clip'):
         indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
         axis (int, optional): The axis over which to select values. By default,
             the flattened input array is used.
-        mode (‘raise’, ‘wrap’, ‘clip’, optional): Specifies how out-of-bounds
+        mode ('raise', 'wrap', 'clip', optional): Specifies how out-of-bounds
             indices will behave.
 
-            ‘raise’ – raise an error;
+            'raise' – raise an error;
 
-            ‘wrap’ – wrap around;
+            'wrap' – wrap around;
 
-            ‘clip’ – clip to the range. ‘clip’ mode means that all indices that are
+            'clip' – clip to the range. 'clip' mode means that all indices that are
             too large are replaced by the index that addresses the last element
             along that axis. Note that this disables indexing with negative numbers.
 
@@ -2097,7 +2097,7 @@ def _get_grid(shape):
 def choose(a, choices, mode='clip'):
     """
     Construct an array from an index array and a list of arrays to choose from.
-    Given an “index” array `a` of integers and a sequence of n arrays (choices),
+    Given an "index" array `a` of integers and a sequence of n arrays (choices),
     `a` and each choice array are first broadcast, as necessary, to arrays of a
     common shape; calling these `Ba` and `Bchoices[i], i = 0,…,n-1` we have that,
     necessarily, ``Ba.shape == Bchoices[i].shape`` for each `i`. Then, a new array
@@ -2129,15 +2129,15 @@ def choose(a, choices, mode='clip'):
         choices (sequence of arrays): Choice arrays. `a` and all of the `choices` must
             be broadcastable to the same shape. If `choices` is itself an array, then
             its outermost dimension (i.e., the one corresponding to ``choices.shape[0]``)
-            is taken as defining the “sequence”.
-        mode (‘raise’, ‘wrap’, ‘clip’, optional): Specifies how indices outside
+            is taken as defining the "sequence".
+        mode ('raise', 'wrap', 'clip', optional): Specifies how indices outside
             ``[0, n-1]`` will be treated:
 
-            ‘raise’ – raise an error;
+            'raise' – raise an error;
 
-            ‘wrap’ – wrap around;
+            'wrap' – wrap around;
 
-            ‘clip’ – clip to the range. ‘clip’ mode means that all indices that are
+            'clip' – clip to the range. 'clip' mode means that all indices that are
             too large are replaced by the index that addresses the last element
             along that axis. Note that this disables indexing with negative numbers.
 

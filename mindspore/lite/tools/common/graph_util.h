@@ -113,7 +113,8 @@ bool IndexingCompress(const std::set<T> &quant_data_set, const std::map<T, size_
     }
   }
   if (index > pack_repetition_size_in_byte * 8) {
-    MS_LOG(ERROR) << "unexpected index: " << index << " should not greater than " << pack_repetition_size_in_byte * 8;
+    MS_LOG(ERROR) << "unexpected index: " << index << " should not be greater than "
+                  << pack_repetition_size_in_byte * 8;
     return false;
   }
   // update tensor data
@@ -186,7 +187,7 @@ bool SparsityCompress(const std::set<T> &quant_data_set, const std::map<T, size_
     }
   }
   if ((unsigned int)index > pack_sparsity_size_in_byte * 8) {
-    MS_LOG(ERROR) << "unexpected index: " << index << " should not greater than " << pack_sparsity_size_in_byte * 8;
+    MS_LOG(ERROR) << "unexpected index: " << index << " should not be greater than " << pack_sparsity_size_in_byte * 8;
     return false;
   }
   auto new_data_str = BoolVectorToString(bits);

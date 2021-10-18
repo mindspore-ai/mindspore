@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalNot = "LogicalNot";
-/// \brief Computes the “logical NOT” of a tensor element-wise.
+/// \brief Computes the "logical NOT" of a tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.LogicalNot for more details.
 class MS_CORE_API LogicalNot : public PrimitiveC {
  public:

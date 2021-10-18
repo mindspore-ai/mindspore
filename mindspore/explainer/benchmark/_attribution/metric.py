@@ -140,7 +140,7 @@ class LabelSensitiveMetric(AttributionMetric):
         """Checks whether num_labels is valid."""
         check_value_type("num_labels", num_labels, int)
         if num_labels < 1:
-            raise ValueError("Argument num_labels must be parsed with a integer > 0.")
+            raise ValueError("Argument num_labels must be parsed with an integer > 0.")
 
     def aggregate(self, result, targets):
         """Aggregates single result to global_results."""

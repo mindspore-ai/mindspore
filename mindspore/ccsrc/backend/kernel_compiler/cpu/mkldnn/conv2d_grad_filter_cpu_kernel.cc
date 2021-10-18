@@ -67,7 +67,7 @@ void Conv2dGradFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Conv2dGradFilterCPUKernel dilation only support 1 in N axis and C axis!";
   }
   if (stride_ori.size() < kShapeSize2D) {
-    MS_LOG(EXCEPTION) << "Conv2dGradFilterCPUKernel stride_ori should not less than 2d!";
+    MS_LOG(EXCEPTION) << "Conv2dGradFilterCPUKernel stride_ori should not be less than 2d!";
   }
   std::vector<int> stride{stride_ori[0], stride_ori[1]};
   std::vector<int> dilation{dilation_ori[2], dilation_ori[3]};

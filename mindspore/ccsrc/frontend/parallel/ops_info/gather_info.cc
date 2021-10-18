@@ -92,8 +92,8 @@ Status GatherInfo::GetManualSplitAttr() {
       int64_t param_split_row = (GetValue<int64_t>(value_vector[0]));
       int64_t offset = (GetValue<int64_t>(value_vector[1]));
       if ((param_split_row <= 0) || (offset < 0)) {
-        MS_LOG(ERROR) << name_
-                      << ": The value of param split shape must be positive, and the offset must larger or equal to 0";
+        MS_LOG(ERROR) << name_ << ": The value of param split shape must be positive, "
+                      << "and the offset must be greater than or equal to 0";
         return FAILED;
       }
       param_split_shapes_.push_back(param_split_row);
@@ -105,7 +105,7 @@ Status GatherInfo::GetManualSplitAttr() {
       return FAILED;
     }
     if (std::any_of(index_offsets_.begin(), index_offsets_.end(), [](const int64_t &offset) { return offset < 0; })) {
-      MS_LOG(ERROR) << name_ << ": Index offset must not less than 0";
+      MS_LOG(ERROR) << name_ << ": Index offset must not be less than 0";
       return FAILED;
     }
     return SUCCESS;

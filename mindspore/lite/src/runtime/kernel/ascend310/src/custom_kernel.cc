@@ -67,7 +67,7 @@ AclModelOptions CustomAscend310Kernel::GetAclModelOptions(const mindspore::Conte
 
 STATUS CustomAscend310Kernel::PrepareModelInfer() {
   if (inputs_.size() < 1) {
-    MS_LOG(ERROR) << "Inputs size should not less than 1.";
+    MS_LOG(ERROR) << "Inputs size should not be less than 1.";
     return lite::RET_ERROR;
   }
   // last input is om data tensor

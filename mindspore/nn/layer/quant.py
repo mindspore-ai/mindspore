@@ -335,7 +335,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         symmetric (bool): Whether the quantization algorithm is symmetric or not. Default: False.
         narrow_range (bool): Whether the quantization algorithm uses narrow range or not. Default: False.
         quant_delay (int): Quantization delay parameters according to the global step. Default: 0.
-        neg_trunc (bool): Whether the quantization algorithm uses nagetive truncation or not. Default: False.
+        neg_trunc (bool): Whether the quantization algorithm uses negative truncation or not. Default: False.
         mode (str): Optional quantization mode, currently only `DEFAULT`(QAT) and `LEARNED_SCALE` are supported.
             Default: ("DEFAULT")
     Inputs:

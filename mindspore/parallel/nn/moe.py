@@ -76,7 +76,7 @@ class MoE(Cell):
         param_init_type (dtype.Number): The parameter initialization type. Can be dtype.float32 or dtype.float16.
         moe_config(MoEConfig): The configuration of MoE (Mixture of Expert).
         parallel_config(OpParallelConfig): The config of parallel setting, see `OpParallelConfig`.
-                                           Default `default_dpmp_config`, a instance of `OpParallelConfig` with default
+                                           Default `default_dpmp_config`, an instance of `OpParallelConfig` with default
                                            args.
 
     Inputs:

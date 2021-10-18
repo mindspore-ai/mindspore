@@ -68,6 +68,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
 
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     GetOpType(kernel_node);
     auto shape1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
@@ -93,7 +94,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
         if (i < MAX_DIMS) {
           output_shape_[i] = shape3[i];
         } else {
-          MS_LOG(EXCEPTION) << "Output index: " << i << " should less than " << MAX_DIMS;
+          MS_LOG(EXCEPTION) << "Output index: " << i << " should be less than " << MAX_DIMS;
         }
       }
       output_num_ *= shape3[i];

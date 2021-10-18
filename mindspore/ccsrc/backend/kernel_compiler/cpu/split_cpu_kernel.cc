@@ -38,8 +38,8 @@ void SplitCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
                        [](const size_t &value) { return SizeToInt(value); });
   if (input_shape_.size() < 1 || input_shape_.size() > SPLIT_STRIDES_SIZE) {
-    MS_LOG(EXCEPTION) << "Inpu shape size should not less than 1 or greater than " << SPLIT_STRIDES_SIZE << ", but got "
-                      << input_shape_.size();
+    MS_LOG(EXCEPTION) << "Inpu shape size should not be less than 1 or greater than " << SPLIT_STRIDES_SIZE
+                      << ", but got " << input_shape_.size();
   }
   CheckParam(kernel_node);
 }
@@ -114,7 +114,7 @@ void SplitCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
     axis_ += SizeToLong(input_shape_.size());
   }
   if (output_num_ > IntToSize(input_shape_[LongToUlong(axis_)])) {
-    MS_LOG(EXCEPTION) << "Attr output_num " << output_num_ << " must less than " << input_shape_[axis_];
+    MS_LOG(EXCEPTION) << "Attr output_num " << output_num_ << " must be less than " << input_shape_[axis_];
   }
 }
 }  // namespace kernel

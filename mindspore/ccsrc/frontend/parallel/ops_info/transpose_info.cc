@@ -62,7 +62,7 @@ Status TransposeInfo::ComputeAxis() {
   }
   elements = dim_tuple->value();
   if (elements.size() != inputs_shape_[0].size()) {
-    MS_LOG(ERROR) << name_ << ": elements size must equal to inputs shape 0 size.";
+    MS_LOG(ERROR) << name_ << ": elements size must be equal to inputs shape[0] size.";
     return FAILED;
   }
   axis_v_.clear();

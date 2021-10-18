@@ -55,4 +55,4 @@ def test_lenet5_exception():
     net = train_step_with_loss_warp(LeNet5())
     with pytest.raises(RuntimeError) as info:
         _cell_graph_executor.compile(net, predict, label)
-    assert "x_shape[C_in] / group must equal to w_shape[C_in] = " in str(info.value)
+    assert "x_shape[C_in] / group must be equal to w_shape[C_in]: " in str(info.value)

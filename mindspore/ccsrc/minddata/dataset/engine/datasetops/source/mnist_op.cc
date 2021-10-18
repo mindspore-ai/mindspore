@@ -245,7 +245,7 @@ Status MnistOp::WalkAllFiles() {
   std::sort(label_names_.begin(), label_names_.end());
 
   CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(),
-                               "Invalid data, num of images does not equal to num of labels.");
+                               "Invalid data, num of images is not equal to num of labels.");
 
   return Status::OK();
 }

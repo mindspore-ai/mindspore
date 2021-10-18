@@ -2254,7 +2254,7 @@ In Ascend platform, if group > 1, the weight shape of Conv2D change from [in_cha
 6. Support Model(.ms) visualization on Netron.
 7. Support Tensorflow model in MindSpore Lite Converter
 8. Add 86 converter parsers.
-9. Convert aware training model without user’s awareness
+9. Convert aware training model without user's awareness
 10. Support scalar tensor in MindSpore Lite Converter and Runtime
 11. Support NPU backend on HUAWEI Kirin SoC.[BETA]
 12. Merge timeprofiler into benchmark

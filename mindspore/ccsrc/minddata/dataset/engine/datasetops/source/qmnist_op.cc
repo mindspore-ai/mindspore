@@ -163,7 +163,7 @@ Status QMnistOp::WalkAllFiles() {
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(image_names_.size() == label_names_.size(),
-                               "Invalid data, num of images does not equal to num of labels.");
+                               "Invalid data, num of images is not equal to num of labels.");
 
   for (size_t i = 0; i < image_names_.size(); i++) {
     Path file_path(image_names_[i]);

@@ -368,7 +368,7 @@ def divide(x1, x2, dtype=None):
     """
     Returns a true division of the inputs, element-wise.
 
-    Instead of the Python traditional ‘floor division’, this returns a true
+    Instead of the Python traditional "floor division", this returns a true
     division.
 
     Note:
@@ -408,7 +408,7 @@ def true_divide(x1, x2, dtype=None):
     """
     Returns a true division of the inputs, element-wise.
 
-    Instead of the Python traditional ‘floor division’, this returns a true
+    Instead of the Python traditional "floor division", this returns a true
     division.
 
     Note:
@@ -814,7 +814,7 @@ def tensordot(a, b, axes=2):
     Computes tensor dot product along specified axes.
 
     Given two tensors, `a` and `b`, and an array_like object containing two array_like
-    objects, `(a_axes, b_axes)`, sum the products of `a`’s and `b`’s elements (components)
+    objects, `(a_axes, b_axes)`, sum the products of `a`'s and `b`'s elements (components)
     over the axes specified by `a_axes` and `b_axes`. The third argument can be a single
     non-negative integer_like scalar, `N`; if it is such, then the last `N` dimensions of
     `a` and the first `N` dimensions of `b` are summed over.
@@ -841,7 +841,7 @@ def tensordot(a, b, axes=2):
 
     Args:
         a (Tensor): Tensor to "dot".
-        b (Tensor): Tensor to “dot”.
+        b (Tensor): Tensor to "dot".
         axes (int or sequence of ints):
 
             integer_like: If an int `N`, sum over the last `N` axes of `a` and the first `N`
@@ -930,7 +930,7 @@ def var(x, axis=None, ddof=0, keepdims=False):
         keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
             dimensions with size one. With this option, the result will broadcast correctly against the input array.
             If the default value is passed, then keepdims will not be passed through to the var method of
-            sub-classes of tensor, however any non-default value will be. If the sub-class’ method does not
+            sub-classes of tensor, however any non-default value will be. If the sub-class method does not
             implement keepdims any exceptions will be raised. Default: `False`.
 
     Supported Platforms:
@@ -953,7 +953,7 @@ def var(x, axis=None, ddof=0, keepdims=False):
 def ptp(x, axis=None, keepdims=False):
     """
     Range of values (maximum - minimum) along an axis.
-    The name of the function comes from the acronym for ‘peak to peak’.
+    The name of the function comes from the acronym for "peak to peak".
 
     Note:
         Numpy arguments `dtype` and `out` are not supported.
@@ -1487,7 +1487,7 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
 
 def hypot(x1, x2, dtype=None):
     """
-    Given the “legs” of a right triangle, returns its hypotenuse.
+    Given the "legs" of a right triangle, returns its hypotenuse.
 
     Equivalent to ``sqrt(x1**2 + x2**2)``, element-wise. If `x1` or `x2` is scalar_like
     (i.e., unambiguously cast-able to a scalar type), it is broadcast for use
@@ -2706,7 +2706,7 @@ def nanvar(a, axis=None, dtype=None, ddof=0, keepdims=False):
             computed. The default is to compute the variance of the flattened array.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
-        ddof (int, optional): “Delta Degrees of Freedom”: the divisor used in the calculation is
+        ddof (int, optional): "Delta Degrees of Freedom": the divisor used in the calculation is
             ``N - ddof``, where `N` represents the number of non-NaN elements. By default `ddof`
             is zero.
         keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
@@ -2761,7 +2761,7 @@ def nanstd(a, axis=None, dtype=None, ddof=0, keepdims=False):
             flattened array.
         dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
             output Tensor.
-        ddof (int, optional): “Delta Degrees of Freedom”: the divisor used in the calculation is
+        ddof (int, optional): "Delta Degrees of Freedom": the divisor used in the calculation is
             ``N - ddof``, where `N` represents the number of non-NaN elements. By default `ddof`
             is zero.
         keepdims (boolean, optional): defaults to False. If this is set to True, the axes which
@@ -4043,7 +4043,7 @@ def sum_(a, axis=None, dtype=None, keepdims=False, initial=None):
         keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
             dimensions with size one. With this option, the result will broadcast correctly against the input array.
             If the default value is passed, then keepdims will not be passed through to the sum method of
-            sub-classes of ndarray, however any non-default value will be. If the sub-class’ method does not
+            sub-classes of ndarray, however any non-default value will be. If the sub-class method does not
             implement keepdims any exceptions will be raised. Default: `False`.
         initial (scalar): Starting value for the sum.
 
@@ -4286,8 +4286,8 @@ def searchsorted(a, v, side='left', sorter=None):
             None, then it must be sorted in ascending order, otherwise `sorter` must be
             an array of indices that sort it.
         v (Union[int, float, bool, list, tuple, Tensor]): Values to insert into `a`.
-        side ('left', 'right', optional): If ‘left’, the index of the first suitable
-            location found is given. If ‘right’, return the last such index. If there is
+        side ('left', 'right', optional): If 'left', the index of the first suitable
+            location found is given. If 'right', return the last such index. If there is
             no suitable index, return either 0 or N (where N is the length of `a`).
         sorter (Union[int, float, bool, list, tuple, Tensor]): 1-D optional array of
             integer indices that sort array `a` into ascending order. They are typically
@@ -5554,7 +5554,7 @@ def norm(x, ord=None, axis=None, keepdims=False): # pylint: disable=redefined-bu
             `x` must be 1-D or 2-D, unless `ord` is None. If both `axis` and `ord` are None,
             the 2-norm of ``x.ravel`` will be returned.
         ord (Union[None, 'fro', 'nuc', inf, -inf, int, float], optional): Order of the norm.
-            inf means numpy’s inf object. The default is None.
+            inf means numpy's inf object. The default is None.
         axis (Union[None, int, 2-tuple of ints], optional): If `axis` is an integer, it
             specifies the axis of `x` along which to compute the vector norms. If `axis` is
             a 2-tuple, it specifies the axes that hold 2-D matrices, and the matrix norms of
@@ -5703,10 +5703,10 @@ def invert(x, dtype=None):
     Computes bit-wise inversion, or bit-wise NOT, element-wise.
     Computes the bit-wise NOT of the underlying binary representation of the integers in
     the input arrays. This ufunc implements the C/Python operator ~.
-    For signed integer inputs, the two’s complement is returned. In a two’s-complement system
-    negative numbers are represented by the two’s complement of the absolute value. This is
+    For signed integer inputs, the two's complement is returned. In a two's-complement system
+    negative numbers are represented by the two's complement of the absolute value. This is
     the most common method of representing signed integers on computers
-    `[1] <https://en.wikipedia.org/wiki/Two’s_complement>`_. A N-bit two’s-complement system
+    `[1] <https://en.wikipedia.org/wiki/Two's_complement>`_. A N-bit two's-complement system
     can represent every integer in the range ``-2^{N-1}`` to ``+2^{N-1}-1``.
 
     Note:

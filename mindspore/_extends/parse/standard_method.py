@@ -852,12 +852,12 @@ def take(x, indices, axis=None, mode='clip'):
         indices (Tensor): The indices with shape `(Nj...)` of the values to extract.
         axis (int, optional): The axis over which to select values. By default,
             the flattened input array is used.
-        mode (‘raise’, ‘wrap’, ‘clip’, optional):
+        mode ('raise', 'wrap', 'clip', optional):
 
             - edge: Pads with the edge values of `arr`.
             - raise: Raises an error;
             - wrap: Wraps around;
-            - clip: Clips to the range. `clip` mode means that all indices that are
+            - clip: Clips to the range. 'clip' mode means that all indices that are
               too large are replaced by the index that addresses the last element
               along that axis. Note that this disables indexing with negative numbers.
 
@@ -915,15 +915,15 @@ def choose(x, choices, mode='clip'):
         choices (sequence of arrays): Choice arrays. `a` and all of the `choices` must
             be broadcastable to the same shape. If `choices` is itself an array, then
             its outermost dimension (i.e., the one corresponding to ``choices.shape[0]``)
-            is taken as defining the “sequence”.
-        mode (‘raise’, ‘wrap’, ‘clip’, optional): Specifies how indices outside
+            is taken as defining the "sequence".
+        mode ('raise', 'wrap', 'clip', optional): Specifies how indices outside
             ``[0, n-1]`` will be treated:
 
-            ‘raise’ – raise an error (default);
+            'raise' – raise an error (default);
 
-            ‘wrap’ – wrap around;
+            'wrap' – wrap around;
 
-            ‘clip’ – clip to the range. ‘clip’ mode means that all indices that are
+            'clip' – clip to the range. 'clip' mode means that all indices that are
             too large are replaced by the index that addresses the last element
             along that axis. Note that this disables indexing with negative numbers.
 
@@ -988,8 +988,8 @@ def searchsorted(x, v, side='left', sorter=None):
 
     Args:
         v (Union[int, float, bool, list, tuple, Tensor]): Values to insert into `a`.
-        side ('left', 'right', optional): If ‘left’, the index of the first suitable
-            location found is given. If ‘right’, return the last such index. If there is
+        side ('left', 'right', optional): If 'left', the index of the first suitable
+            location found is given. If 'right', return the last such index. If there is
             no suitable index, return either 0 or N (where N is the length of `a`).
         sorter (Union[int, float, bool, list, tuple, Tensor]): 1-D optional array of
             integer indices that sort array `a` into ascending order. They are typically
@@ -1076,7 +1076,7 @@ def fill(x, value):
 
 def ptp(x, axis=None, keepdims=False):
     """
-    The name of the function comes from the acronym for ‘peak to peak’.
+    The name of the function comes from the acronym for "peak to peak".
 
     Note:
         Numpy arguments `dtype` and `out` are not supported.
@@ -1288,7 +1288,7 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None): # pylint: disab
         keepdims (bool): If this is set to True, the axes which are reduced are left in the result as
             dimensions with size one. With this option, the result will broadcast correctly against the input array.
             If the default value is passed, then keepdims will not be passed through to the sum method of
-            sub-classes of ndarray, however any non-default value will be. If the sub-class’ method does not
+            sub-classes of ndarray, however any non-default value will be. If the sub-class method does not
             implement keepdims any exceptions will be raised.
         initial (scalar): Starting value for the sum.
 

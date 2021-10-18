@@ -341,7 +341,7 @@ int MatMulOpenCLKernel::InitBias() {
 #endif
 
 void MatMulOpenCLKernel::SetGlobalLocal() {
-  // local size should less than MAX_GROUP_SIZE
+  // local size should be less than MAX_GROUP_SIZE
   local_size_ = {32, 4, 1};
   global_size_ = {1, 1, 1};
   global_size_ = {UP_DIV(static_cast<size_t>(outShape[3]), C4NUM),

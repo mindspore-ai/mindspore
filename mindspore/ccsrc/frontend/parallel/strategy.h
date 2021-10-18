@@ -83,7 +83,7 @@ class Strategy {
  private:
   const int64_t stage_;
 
-  // The size of Dimensions must equal to inputs_ tensor dimension.
+  // The size of Dimensions must be equal to inputs_ tensor dimension.
   Strategys inputs_;
   size_t internal_size_ = 0;
   std::vector<StrategyPtr> internal_stragies_;

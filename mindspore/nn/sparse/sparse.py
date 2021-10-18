@@ -70,7 +70,7 @@ class SparseToDense(Cell):
 class SparseTensorDenseMatmul(Cell):
     """
     Multiplies sparse matrix `a` and dense matrix `b`.
-    The rank of sparse matrix and dense matrix must equal to `2`.
+    The rank of sparse matrix and dense matrix must be equal to `2`.
 
     Args:
         adjoint_st (bool): If true, sparse tensor is transposed before multiplication. Default: False.

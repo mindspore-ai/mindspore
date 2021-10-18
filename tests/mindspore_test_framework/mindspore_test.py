@@ -60,7 +60,7 @@ def mindspore_test(verification_pipeline):
             elif issubclass(component, IERPolicyComponent):
                 er_policy_components.append(component)
             else:
-                raise Exception(f'{component} is not a instance of {IComponent}')
+                raise Exception(f'{component} is not an instance of {IComponent}')
 
         for component in facade_components:
             fc = component(verification_set)

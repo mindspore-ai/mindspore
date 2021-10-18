@@ -203,7 +203,7 @@ AbstractBasePtr ShrinkAbstract(const AbstractBasePtr &original_abstract,
                    std::back_inserter(shrunk_abstract_elements),
                    [abs_tuple_elements, before_shrink_tuple_size](const auto &node_and_index) {
                      if (node_and_index.index >= before_shrink_tuple_size) {
-                       MS_LOG(EXCEPTION) << "index should less than inputs size, index: " << node_and_index.index
+                       MS_LOG(EXCEPTION) << "index should be less than inputs size, index: " << node_and_index.index
                                          << ", abstract tuple size: " << before_shrink_tuple_size;
                      }
                      return abs_tuple_elements[node_and_index.index];
@@ -227,7 +227,7 @@ FuncGraphPtr ShrinkUnsedOutput(const FuncGraphPtr &fg, const std::vector<TpCNode
     const auto &new_fg_output_inputs = new_fg_output_cnode->inputs();
     constexpr auto kMinimalSize = 2;
     if (new_fg_output_inputs.size() <= kMinimalSize) {
-      MS_LOG(EXCEPTION) << "New fg output should at least 2 elements, but: " << new_fg_output->DebugString();
+      MS_LOG(EXCEPTION) << "New fg output should have at least 2 elements, but: " << new_fg_output->DebugString();
     }
     before_shrink_inputs_size = SizeToLong(new_fg_output_inputs.size() - 1);
     AnfNodePtrList shrunk_inputs{NewValueNode({prim::kPrimMakeTuple})};
@@ -235,7 +235,7 @@ FuncGraphPtr ShrinkUnsedOutput(const FuncGraphPtr &fg, const std::vector<TpCNode
     std::transform(tp_cnodes_and_index.cbegin(), tp_cnodes_and_index.cend(), std::back_inserter(shrunk_inputs),
                    [new_fg_output, new_fg_output_inputs, before_shrink_inputs_size](const auto &node_and_index) {
                      if (node_and_index.index >= before_shrink_inputs_size) {
-                       MS_LOG(EXCEPTION) << "index should less than inputs size, index: " << node_and_index.index
+                       MS_LOG(EXCEPTION) << "index should be less than inputs size, index: " << node_and_index.index
                                          << ", output: " << new_fg_output->DebugString();
                      }
                      return new_fg_output_inputs[node_and_index.index + 1];
@@ -251,7 +251,7 @@ FuncGraphPtr ShrinkUnsedOutput(const FuncGraphPtr &fg, const std::vector<TpCNode
     std::transform(tp_cnodes_and_index.cbegin(), tp_cnodes_and_index.cend(), std::back_inserter(shrunk_inputs),
                    [new_fg_output, value_tuple, before_shrink_inputs_size](const auto &node_and_index) {
                      if (node_and_index.index >= before_shrink_inputs_size) {
-                       MS_LOG(EXCEPTION) << "index should less than inputs size, index: " << node_and_index.index
+                       MS_LOG(EXCEPTION) << "index should be less than inputs size, index: " << node_and_index.index
                                          << ", output: " << new_fg_output->DebugString();
                      }
                      return (*value_tuple)[node_and_index.index];

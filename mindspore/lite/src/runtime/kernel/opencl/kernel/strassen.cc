@@ -226,7 +226,7 @@ int StrassenOpenCLKernel::StrassenSetGlobalLocal(size_t strassen_size, int type_
 }
 
 void StrassenOpenCLKernel::SetGlobalLocal() {
-  // local size should less than MAX_GROUP_SIZE
+  // local size should be less than MAX_GROUP_SIZE
   local_size_ = {32, 4, 1};
   global_size_ = {1, 1, 1};
   size_t strassen_size = outShape[3] / 2;

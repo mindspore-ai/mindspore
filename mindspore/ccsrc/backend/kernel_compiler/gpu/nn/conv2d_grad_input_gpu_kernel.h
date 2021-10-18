@@ -362,7 +362,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     }
     size_t h_index = iter->second;
     if (stride_me.size() < h_index + 2) {
-      MS_LOG(EXCEPTION) << "Strides should greater than " << h_index + 1 << ", but got " << stride_me.size();
+      MS_LOG(EXCEPTION) << "Strides should be greater than " << h_index + 1 << ", but got " << stride_me.size();
     }
     (void)std::transform(stride_me.begin() + h_index, stride_me.begin() + h_index + 2, std::back_inserter(stride_),
                          [](const int64_t &value) { return static_cast<int>(value); });

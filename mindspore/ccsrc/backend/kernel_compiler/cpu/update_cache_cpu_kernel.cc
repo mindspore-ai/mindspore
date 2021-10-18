@@ -65,7 +65,7 @@ void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
   auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 2);
   if (update_shape.size() < kMinUpdateShapeSize) {
-    MS_LOG(EXCEPTION) << "Updata shape should not less than " << kMinUpdateShapeSize;
+    MS_LOG(EXCEPTION) << "Update shape should not be less than " << kMinUpdateShapeSize;
   }
   batch_size_ = 1;
   for (size_t i = 0; i < indices_shape.size(); ++i) {
