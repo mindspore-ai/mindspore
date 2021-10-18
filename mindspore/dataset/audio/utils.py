@@ -17,6 +17,7 @@ enum for audio ops
 """
 
 from enum import Enum
+import mindspore._c_dataengine as cde
 
 
 class FadeShape(str, Enum):
@@ -91,3 +92,52 @@ class ScaleType(str, Enum):
     """
     POWER: str = "power"
     MAGNITUDE: str = "magnitude"
+
+
+class NormMode(str, Enum):
+    """
+    Norm Types.
+
+    Possible enumeration values are: NormMode.NONE, NormMode.ORTHO.
+
+    - NormMode.NONE: means the mode of input audio is none.
+    - NormMode.ORTHO: means the mode of input audio is ortho.
+    """
+    NONE: str = "none"
+    ORTHO: str = "ortho"
+
+
+DE_C_NORMMODE_TYPE = {NormMode.NONE: cde.NormMode.DE_NORMMODE_NONE,
+                      NormMode.ORTHO: cde.NormMode.DE_NORMMODE_ORTHO}
+
+
+def CreateDct(n_mfcc, n_mels, norm=NormMode.NONE):
+    """
+    Create a DCT transformation matrix with shape (n_mels, n_mfcc), normalized depending on norm.
+
+    Args:
+        n_mfcc (int): Number of mfc coefficients to retain, the value must be greater than 0.
+        n_mels (int): Number of mel filterbanks, the value must be greater than 0.
+        norm (NormMode): Normalization mode, can be NormMode.NONE or NormMode.ORTHO (default=NormMode.NONE).
+
+    Returns:
+        numpy.ndarray, the transformation matrix, to be right-multiplied to row-wise data of size (n_mels, n_mfcc).
+
+    Examples:
+        >>> dct = audio.CreateDct(100, 200, audio.NormMode.NONE)
+    """
+
+    if not isinstance(n_mfcc, int):
+        raise TypeError("n_mfcc with value {0} is not of type {1}, but got {2}.".format(
+            n_mfcc, int, type(n_mfcc)))
+    if not isinstance(n_mels, int):
+        raise TypeError("n_mels with value {0} is not of type {1}, but got {2}.".format(
+            n_mels, int, type(n_mels)))
+    if not isinstance(norm, NormMode):
+        raise TypeError("norm with value {0} is not of type {1}, but got {2}.".format(
+            norm, NormMode, type(norm)))
+    if n_mfcc <= 0:
+        raise ValueError("n_mfcc must be greater than 0, but got {0}.".format(n_mfcc))
+    if n_mels <= 0:
+        raise ValueError("n_mels must be greater than 0, but got {0}.".format(n_mels))
+    return cde.CreateDct(n_mfcc, n_mels, DE_C_NORMMODE_TYPE[norm]).as_array()

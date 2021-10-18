@@ -25,8 +25,9 @@
 
 #include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
-#include "minddata/dataset/include/dataset/constants.h"
-#include "minddata/dataset/include/dataset/transforms.h"
+#include "include/api/types.h"
+#include "include/dataset/constants.h"
+#include "include/dataset/transforms.h"
 
 namespace mindspore {
 namespace dataset {
@@ -280,6 +281,12 @@ class DCShift : public TensorTransform {
   struct Data;
   std::shared_ptr<Data> data_;
 };
+
+/// \param[in] n_mfcc Number of mfc coefficients to retain, the value must be greater than 0.
+/// \param[in] n_mels Number of mel filterbanks, the value must be greater than 0.
+/// \param[in] norm Norm to use, can be NormMode::kNone or NormMode::kOrtho.
+/// \return Status error code, returns OK if no error encountered.
+Status CreateDct(mindspore::MSTensor *output, int32_t n_mfcc, int32_t n_mels, NormMode norm = NormMode::kNone);
 
 /// \brief Design two-pole deemph filter. Similar to SoX implementation.
 class DeemphBiquad final : public TensorTransform {

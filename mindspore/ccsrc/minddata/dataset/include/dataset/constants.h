@@ -62,6 +62,12 @@ enum class ConvertMode {
   COLOR_RGBA2GRAY = 11                ///< Convert RGBA image to GRAY image.
 };
 
+/// \brief Values of norm in CreateDct.
+enum class NormMode {
+  kNone = 0,  ///< None type norm.
+  kOrtho = 1  ///< Ortho type norm.
+};
+
 /// \brief Target devices to perform map operation.
 enum class MapTargetDevice {
   kCpu,       ///< CPU Device.

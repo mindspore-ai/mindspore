@@ -1662,3 +1662,39 @@ TEST_F(MindDataTestPipeline, TestFlangerParamCheck) {
   std::shared_ptr<Iterator> iterPhase = dsPhase->CreateIterator();
   EXPECT_EQ(iterPhase, nullptr);
 }
+
+/// Feature: CreateDct
+/// Description: test CreateDct in eager mode
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestCreateDctNone) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCreateDctNone.";
+  mindspore::MSTensor output;
+  Status s01 = audio::CreateDct(&output, 200, 400, NormMode::kNone);
+  EXPECT_TRUE(s01.IsOk());
+}
+
+/// Feature: CreateDct
+/// Description: test CreateDct in eager mode
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestCreateDctOrtho) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCreateDctOrtho.";
+  mindspore::MSTensor output;
+  Status s02 = audio::CreateDct(&output, 200, 400, NormMode::kOrtho);
+  EXPECT_TRUE(s02.IsOk());
+}
+
+/// Feature: CreateDct
+/// Description: test WrongArg of CreateDct
+/// Expectation: return error
+TEST_F(MindDataTestPipeline, TestCreateDctWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCreateDctWrongArg.";
+  mindspore::MSTensor output;
+  // Check n_mfcc
+  MS_LOG(INFO) << "n_mfcc is negative.";
+  Status s03 = audio::CreateDct(&output, -200, 400, NormMode::kNone);
+  EXPECT_FALSE(s03.IsOk());
+  // Check n_mels
+  MS_LOG(INFO) << "n_mels is negative.";
+  Status s04 = audio::CreateDct(&output, 200, -400, NormMode::kOrtho);
+  EXPECT_FALSE(s04.IsOk());
+}
