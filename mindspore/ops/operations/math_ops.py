@@ -2778,7 +2778,7 @@ class MulNoNan(_MathBinaryOp):
         return None
 
 
-class FloorDiv(_MathBinaryOp):
+class FloorDiv(Primitive):
     """
     Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
 
@@ -2819,7 +2819,12 @@ class FloorDiv(_MathBinaryOp):
         >>> print(output)
         [ 0  1 -1]
     """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
 
+    @prim_attr_register
+    def __init__(self):
+        """Initialize FloorDiv."""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 class TruncateDiv(_MathBinaryOp):
     """

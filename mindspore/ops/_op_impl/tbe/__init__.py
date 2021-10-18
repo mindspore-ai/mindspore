@@ -143,6 +143,7 @@ from .log import _log_tbe
 from .xdivy import _xdivy_tbe
 from .xlogy import _xlogy_tbe
 from .floor_div import _floor_div_tbe
+from .floor_div_ds import _floor_div_ds_tbe
 from .zeros_like import _zeros_like_tbe
 from .zeros_like_ds import _zeros_like_ds_tbe
 from .neg import _neg_tbe
