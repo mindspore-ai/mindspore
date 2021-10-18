@@ -113,7 +113,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   AnfNodePtr para_node = nullptr;
   for (auto const &param : top_func_graph->parameters()) {
     auto param_node = dyn_cast<Parameter>(param);
-    if (param_node != nullptr && param_node->name() == param_name) {
+    if (param_node != nullptr && param_node->name() == param_name && !param_node->is_top_graph_param()) {
       para_node = param;
       MS_LOG(DEBUG) << "Found existing parameter for " << func_graph->ToString()
                     << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
