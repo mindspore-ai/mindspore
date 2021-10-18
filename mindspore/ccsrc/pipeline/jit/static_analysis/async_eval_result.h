@@ -45,7 +45,10 @@ class AnalysisSchedule {
   ~AnalysisSchedule() { Stop(); }
   AnalysisSchedule(const AnalysisSchedule &) = delete;
   AnalysisSchedule &operator=(const AnalysisSchedule &) = delete;
-  static AnalysisSchedule &GetInstance() { return instance_; }
+  static AnalysisSchedule &GetInstance() {
+    static AnalysisSchedule instance;
+    return instance;
+  }
   static void SetThreadID(const std::string &caller);
   static std::string &GetThreadID();
   void HandleException(const std::exception &ex);
@@ -61,9 +64,6 @@ class AnalysisSchedule {
 
   void EnterWaiting() {
     {
-      MS_LOG(DEBUG) << " Require activate_thread_lock. The active thread count: " << activate_threads_.size()
-                    << " The infer_thread_count: " << infer_thread_count_
-                    << " schedule list size: " << scheduleList_.size();
       std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
       activate_threads_.clear();
       MS_LOG(DEBUG) << " Get activate_thread_lock. The active thread count: " << activate_threads_.size()
@@ -107,7 +107,6 @@ class AnalysisSchedule {
     thread.detach();
   }
   AnalysisSchedule() { Start(); }
-  static AnalysisSchedule instance_;
   std::atomic<int> infer_thread_count_{0};
   bool notExit_{true};
   std::mutex infer_thread_lock_;
@@ -269,13 +268,11 @@ class AsyncInferTask {
       ProcessResult();
       return abstract_ptr_->TryGetResult();
     }
-    // Avoid to dead lock between AsyncAbstract::lock and AnalysisSchedule::activate_thread_lock_
+    // Avoid to dead lock between AsyncInferTask::lock and AnalysisSchedule::activate_thread_lock_
     lock.unlock();
     AnalysisSchedule::GetInstance().Yield(this);
 
     lock.lock();
-    MS_LOG(DEBUG) << this << " after enter waiting ready: " << ready_ << " thread id:" << threadId_
-                  << " GetThreadId: " << AnalysisSchedule::GetInstance().GetThreadID();
     condition_var_.wait(lock, [this] { return ready_; });
     MS_LOG(DEBUG) << this << " received notify and wake up: " << ready_ << " thread id:" << threadId_
                   << " GetThreadId: " << AnalysisSchedule::GetInstance().GetThreadID();
@@ -286,7 +283,6 @@ class AsyncInferTask {
   }
 
   void SetReady() {
-    MS_LOG(DEBUG) << this << " want to set ready.";
     {
       std::lock_guard<std::mutex> lock(lock_);
       ready_ = ready_ | 1;  // Set the first bit = 1
@@ -297,7 +293,6 @@ class AsyncInferTask {
   }
 
   void SetException() {
-    MS_LOG(DEBUG) << this << " want to set ready.";
     {
       std::lock_guard<std::mutex> lock(lock_);
       ready_ = ready_ | 2;  // Set the second bit = 1
@@ -307,7 +302,6 @@ class AsyncInferTask {
   }
 
   void SetEndLessLoopException() {
-    MS_LOG(DEBUG) << this << " want to set ready.";
     {
       std::lock_guard<std::mutex> lock(lock_);
       ready_ = ready_ | 4;  // Set the third bit = 1
@@ -317,10 +311,6 @@ class AsyncInferTask {
   }
 
  private:
-  void ClearReady() {
-    ready_ = ready_ & 6;  // Set first bit = 0
-    MS_LOG(DEBUG) << this << " ready: " << ready_ << " result: " << abstract_ptr_->TryGetResult().get();
-  }
   void HandleEndLessLoopException() {
     // Get third bit
     if (ready_ & 4) {
@@ -331,7 +321,6 @@ class AsyncInferTask {
     }
   }
   void ProcessResult() {
-    ClearReady();  // Clear nomal ready flag
     HandleEndLessLoopException();
     StaticAnalysisException::Instance().CheckException();
     MS_LOG(DEBUG) << this << " Success to GetResult. ready: " << ready_ << " threadId: " << threadId_
@@ -375,7 +364,10 @@ class AnalysisResultCacheMgr {
   ~AnalysisResultCacheMgr() = default;
   AnalysisResultCacheMgr(const AnalysisResultCacheMgr &) = delete;
   AnalysisResultCacheMgr &operator=(const AnalysisResultCacheMgr &) = delete;
-  static AnalysisResultCacheMgr &GetInstance() { return instance_; }
+  static AnalysisResultCacheMgr &GetInstance() {
+    static AnalysisResultCacheMgr instance;
+    return instance;
+  }
   void Clear();
   inline void SetValue(const AnfNodeConfigPtr &conf, const EvalResultPtr &arg) { cache_.set(conf, arg); }
   inline EvalResultPtr GetValue(const AnfNodeConfigPtr &conf) { return cache_.get(conf); }
@@ -395,7 +387,8 @@ class AnalysisResultCacheMgr {
   using AnalysisConfigAsyncResultCache =
     MultiThreadCache<AnfNodeConfigPtr, AsyncAbstractPtr, AnalysisConfigAsyncResultMap>;
   AnalysisResultCacheMgr() = default;
-  static AnalysisResultCacheMgr instance_;
+  void SetCacheValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &vale, AnalysisConfigAsyncResultCache *cache);
+
   std::mutex lock_;
   std::mutex todo_lock_;
   std::list<AnfNodeConfigPtr> todo_;
