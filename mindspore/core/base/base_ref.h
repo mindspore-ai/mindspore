@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,35 +85,78 @@ inline std::shared_ptr<VectorRef> MakeNode(const AnfNodePtrList &a) {
 inline std::shared_ptr<SetRef> MakeNode(const SetRef &a) { return std::make_shared<SetRef>(std::move(a)); }
 inline std::shared_ptr<RunFunctionRef> MakeNode(const RunFuncPtr &a) { return std::make_shared<RunFunctionRef>(a); }
 
+/// \brief BaseRef is a base class which store a Base pointer to some real data.
 class MS_CORE_API BaseRef : public Base {
  public:
+  /// \brief The Constructor of BaseRef.
+  ///
+  /// \return The instance of BaseRef.
   BaseRef() : m_ptr(nullptr) {}
+
+  /// \brief The copy constructor of BaseRef.
+  ///
+  /// \param[in] other Define another instance of BaseRef.
+  ///
+  /// \return The instance of BaseRef.
   BaseRef(const BaseRef &other);
+
+  /// \brief Get the Base pointer to some real data.
+  ///
+  /// \return The Base pointer.
   virtual std::shared_ptr<Base> copy() const { return m_ptr; }
 
+  /// \brief The move constructor of BaseRef.
+  ///
+  /// \param[in] other Define another instance of BaseRef.
+  ///
+  /// \return The instance of BaseRef.
   BaseRef(BaseRef &&other) : Base(other) {
     m_ptr = other.m_ptr;
     other.m_ptr = nullptr;
   }
 
-  // right reference constructor
+  /// \brief The move constructor of BaseRef with template.
+  ///
+  /// \param[in] t Define an instance of T.
+  ///
+  /// \return The instance of BaseRef.
   template <class T,
             class = typename std::enable_if<!std::is_same<typename std::decay<T>::type, BaseRef>::value, T>::type>
   BaseRef(T &&t) {  // NOLINT
     m_ptr = MakeNode(t);
   }
 
+  /// \brief The destructor of BaseRef.
   ~BaseRef() override { m_ptr = nullptr; }
 
   MS_DECLARE_PARENT(BaseRef, Base)
 
+  /// \brief The operator overloading for "!=".
+  ///
+  /// \param[in] other Define the right operand of "!=".
+  ///
+  /// \return The comparison result.
   bool operator!=(const BaseRef &other) const { return !(operator==(other)); }
 
+  /// \brief The operator overloading for "==".
+  ///
+  /// \param[in] other Define the right operand of "==".
+  ///
+  /// \return The comparison result.
   virtual bool operator==(const BaseRef &other) const;
 
-  // left reference
+  /// \brief The copy assignment operator of BaseRef.
+  ///
+  /// \param[in] other Define another instance of BaseRef.
+  ///
+  /// \return The instance of BaseRef.
   virtual BaseRef &operator=(const BaseRef &other);
-  // right reference
+
+  /// \brief The move assignment operator of BaseRef.
+  ///
+  /// \param[in] other Define another instance of BaseRef.
+  ///
+  /// \return The instance of BaseRef.
   virtual BaseRef &operator=(BaseRef &&other);
 
   std::size_t hash() const override {
@@ -126,11 +169,17 @@ class MS_CORE_API BaseRef : public Base {
 
   std::string ToString() const override;
 
+  /// \brief Judge whether the real data is null.
+  ///
+  /// \return The result of the judgment.
   bool is_null() const { return m_ptr == nullptr; }
 
+  /// \brief Get the type id of the real data.
+  ///
+  /// \return The type id of the real data.
   virtual uint32_t type() const;
 
-  BasePtr m_ptr;  // point to real data
+  BasePtr m_ptr; /**< pointer to the real data */
 };
 using BaseRefPtr = std::shared_ptr<BaseRef>;
 
