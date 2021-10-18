@@ -87,13 +87,22 @@ bool QuantTypeDeterminer::DetermineQuantWeight(const schema::MetaGraphT &graph, 
   return node->quantType == schema::QuantType_QUANT_WEIGHT;
 }
 
-void QuantNodeHelper::NodeQuantPreprocess(schema::MetaGraphT *graph, schema::CNodeT *node) {
+int QuantNodeHelper::NodeQuantPreprocess(schema::MetaGraphT *graph, schema::CNodeT *node) {
   MS_ASSERT(node != nullptr);
   if (quant_type_determiner_->DetermineQuantWeight(*graph, node)) {
-    return;
+    return RET_OK;
   }
-  quant_param_propogator_->PropogateQuantParams(graph, *node);
-  quant_type_determiner_->DetermineQuantAll(*graph, node);
+  auto ret = quant_param_propogator_->PropogateQuantParams(graph, *node);
+  if (ret != RET_OK && ret != RET_NO_CHANGE) {
+    MS_LOG(ERROR) << node->name << " propagate Quant Params failed.";
+    return ret;
+  }
+  ret = quant_type_determiner_->DetermineQuantAll(*graph, node);
+  if (!ret) {
+    MS_LOG(DEBUG) << node->name << " dont need quant.";
+    return RET_OK;
+  }
+  return RET_OK;
 }
 
 QuantHelperRegister *QuantHelperRegister::GetInstance() {

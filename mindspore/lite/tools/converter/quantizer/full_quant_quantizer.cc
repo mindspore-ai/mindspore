@@ -362,7 +362,11 @@ STATUS Calibrator::ComputeThreshold() {
   for (auto &kv : this->outputs_diverg_info_) {
     auto &outputs_diverg_info = kv.second;
     for (auto &diverg_info : outputs_diverg_info) {
-      diverg_info->ComputeThreshold();
+      auto ret = diverg_info->ComputeThreshold();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Compute threshold failed.";
+        return ret;
+      }
     }
   }
   // node A's input may be node B's output, no need to re-compute the node A's input quant param which is the same as
@@ -399,7 +403,7 @@ STATUS Calibrator::ComputeThreshold() {
   return RET_OK;
 }
 
-STATUS Calibrator::UpdateDivergInverval(
+STATUS Calibrator::UpdateDivergInterval(
   std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info) {
   MS_ASSERT(diverg_info != nullptr);
   for (auto &kv : *diverg_info) {
@@ -412,8 +416,7 @@ STATUS Calibrator::UpdateDivergInverval(
 
 STATUS Calibrator::UpdateDataFrequency(const vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info) {
   MS_ASSERT(diverg_info != nullptr);
-  diverg_info->UpdateHistogram(data);
-  return RET_OK;
+  return diverg_info->UpdateHistogram(data);
 }
 
 STATUS Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
@@ -844,9 +847,17 @@ STATUS FullQuantQuantizer::QuantNode() {
   return RET_OK;
 }
 
-STATUS FullQuantQuantizer::UpdateDivergInverval() {
-  this->calibrator_->UpdateDivergInverval(this->calibrator_->GetInputDivergInfo());
-  this->calibrator_->UpdateDivergInverval(this->calibrator_->GetOutputDivergInfo());
+STATUS FullQuantQuantizer::UpdateDivergeInterval() {
+  auto ret = this->calibrator_->UpdateDivergInterval(this->calibrator_->GetInputDivergInfo());
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Update input diverge interval failed.";
+    return ret;
+  }
+  ret = this->calibrator_->UpdateDivergInterval(this->calibrator_->GetOutputDivergInfo());
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Update output diverge interval failed.";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -862,7 +873,11 @@ STATUS FullQuantQuantizer::PreProcess() {
       return RET_NULL_PTR;
     }
     if (mindspore::lite::quant::QuantStrategy::CanOpFullQuantized(anf)) {
-      calibrator_->AddQuantizedOp(cnode);
+      auto ret = calibrator_->AddQuantizedOp(cnode);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Add Quantized Op failed.";
+        return ret;
+      }
     }
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     if (primitive == nullptr) {
@@ -935,7 +950,7 @@ STATUS FullQuantQuantizer::DoInference() {
             continue;
           }
           auto input_diverg = std::make_unique<DivergInfo>();
-          MS_CHECK_TRUE_MSG(input_diverg != nullptr, RET_NULL_PTR, "input_diverg is nullptr.");
+          MS_CHECK_TRUE_MSG(input_diverg != nullptr, false, "input_diverg is nullptr.");
           *input_diverg = *((*diverg_info_map)[callParam.node_name][0]);
           (*diverg_info_map)[callParam.node_name].push_back(std::move(input_diverg));
         }
@@ -944,10 +959,11 @@ STATUS FullQuantQuantizer::DoInference() {
         auto tensor = beforeInputs[i];
         MS_ASSERT(tensor != nullptr);
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
-        MS_CHECK_TRUE_MSG(tensor_data != nullptr, RET_NULL_PTR, "tensor_data is nullptr.");
+        MS_CHECK_TRUE_MSG(tensor_data != nullptr, false, "tensor_data is nullptr.");
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
-        this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][i]);
+        auto ret = this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][i]);
+        MS_CHECK_TRUE_MSG(ret == RET_OK, false, "Record MaxMinValue failed!");
       }
       return true;
     };
@@ -966,7 +982,7 @@ STATUS FullQuantQuantizer::DoInference() {
       if (is_init) {
         for (size_t i = 1; i < afterOutputs.size(); i++) {
           auto output_diverg = std::make_unique<DivergInfo>();
-          MS_CHECK_TRUE_MSG(output_diverg != nullptr, RET_NULL_PTR, "output_diverg is nullptr.");
+          CHECK_NULL_RETURN(output_diverg);
           *output_diverg = *((*diverg_info_map)[callParam.node_name][0]);
           (*diverg_info_map)[callParam.node_name].push_back(std::move(output_diverg));
         }
@@ -974,10 +990,11 @@ STATUS FullQuantQuantizer::DoInference() {
       size_t output_i = 0;
       for (const auto &tensor : afterOutputs) {
         const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
-        MS_CHECK_TRUE_MSG(tensor_data != nullptr, RET_NULL_PTR, "tensor_data is nullptr.");
+        CHECK_NULL_RETURN(tensor_data);
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
-        this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][output_i]);
+        auto ret = this->calibrator_->RecordMaxMinValue(data, (*diverg_info_map)[callParam.node_name][output_i]);
+        MS_CHECK_TRUE_MSG(ret == RET_OK, false, "Record MaxMinValue failed!");
         output_i++;
       }
       return true;
@@ -1152,7 +1169,11 @@ STATUS FullQuantQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const 
     }
     parameter->set_name("added_" + op_name + "_bias");
     cnode->add_input(parameter);
-    DoBiasQuant(parameter, primitive);
+    status = DoBiasQuant(parameter, primitive);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Do bias quant failed.";
+      return RET_ERROR;
+    }
   } else {
     MS_LOG(ERROR) << "unexpected get_input_quant_params size: " << input_quant_params.size();
   }
@@ -1196,7 +1217,10 @@ STATUS FullQuantQuantizer::CollectDataFrequency() {
         MS_ASSERT(tensor_data != nullptr);
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
-        this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[callParam.node_name][input_i++]);
+        auto ret = this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[callParam.node_name][input_i++]);
+        if (ret != RET_OK) {
+          return false;
+        }
       }
       return true;
     };
@@ -1218,7 +1242,10 @@ STATUS FullQuantQuantizer::CollectDataFrequency() {
         MS_ASSERT(tensor_data != nullptr);
         size_t elem_count = tensor->ElementsNum();
         vector<float> data(tensor_data, tensor_data + elem_count);
-        this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[call_param.node_name][output_i++]);
+        auto ret = this->calibrator_->UpdateDataFrequency(data, (*diverg_info_map)[call_param.node_name][output_i++]);
+        if (ret != RET_OK) {
+          return false;
+        }
       }
       return true;
     };
@@ -1276,7 +1303,7 @@ STATUS FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     return status;
   }
   MS_LOG(INFO) << "start to update divergence's interval";
-  status = UpdateDivergInverval();
+  status = UpdateDivergeInterval();
   if (status != RET_OK) {
     return status;
   }

@@ -193,7 +193,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
     MS_LOG(ERROR) << "cal error while min" << mMin << ">" << mMax;
     return RET_PARAM_INVALID;
   }
-  if (mMin == mMax) {
+  if (mMax - mMin <= 0.0f) {
     if (mMin != 0.0f) {
       MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
       return RET_ERROR;
@@ -234,7 +234,7 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   } else {
     zeroPoint = static_cast<int32_t>(std::round(zpDouble));
   }
-  if (std::abs(mMin) == std::abs(mMax)) {
+  if (std::abs(mMax) - std::abs(mMin) <= 0) {
     zeroPoint = 0;
   }
   // The zero point should always be in the range of quantized value,
