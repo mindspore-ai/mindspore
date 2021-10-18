@@ -22,6 +22,7 @@ Common imported modules in corresponding API examples are as follows:
 
     import mindspore.dataset as ds
     import mindspore.dataset.vision.c_transforms as c_vision
+    import mindspore.dataset.vision.py_transforms as py_vision
     from mindspore.dataset.transforms import c_transforms
     from mindspore.dataset.transforms import py_transforms
 """

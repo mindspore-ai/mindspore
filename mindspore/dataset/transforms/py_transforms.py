@@ -270,7 +270,7 @@ class RandomChoice(PyTensorOperation):
          transforms (list): List of transformations to be chosen from to apply.
 
     Examples:
-        >>> from mindspore.dataset.transforms.py_transforms import Compose, RandomChoice
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> transforms_list = [py_vision.RandomHorizontalFlip(0.5),
         ...                    py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    py_vision.RandomErasing()]
