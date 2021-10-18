@@ -141,7 +141,7 @@ class TrainSession : virtual public lite::LiteSession {
   TrainCfg cfg_;
 
  private:
-  std::string get_loss_name() const { return cfg_.loss_name_; }
+  std::vector<std::string> get_loss_name() const { return cfg_.loss_name_; }
   void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
   int AdminSetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum);
   int OptimizerStep();

@@ -35,26 +35,12 @@ using mindspore::schema::PrimitiveType_BatchNormGrad;
 
 namespace mindspore::kernel {
 namespace {
-constexpr int kWsMultiplier = 2;
-constexpr int kMaxTaskNum = 4;
+constexpr int kMaxTaskNum = 3;
 constexpr int kNumInputDim2 = 2;
 constexpr int kNumInputDim4 = 4;
 }  // namespace
 
-int BNGradCPUKernel::ReSize() {
-  auto *input_x = in_tensors_.at(1);
-  if (input_x->shape().size() == kNumInputDim4) {
-    int channels = input_x->shape().at(kNHWC_C);
-    ws_size_ = kWsMultiplier * channels;
-  } else if (input_x->shape().size() == kNumInputDim2) {
-    int channels = input_x->shape().at(1);
-    ws_size_ = kWsMultiplier * channels;
-  } else {
-    MS_LOG(ERROR) << "not support input dims: " << input_x->shape().size();
-  }
-  set_workspace_size(ws_size_ * sizeof(float));
-  return RET_OK;
-}
+int BNGradCPUKernel::ReSize() { return RET_OK; }
 
 int BNGradCPUKernel::Prepare() {
   CHECK_NULL_RETURN(op_parameter_);
@@ -98,11 +84,6 @@ int BNGradCPUKernel::Execute(int task_id) {
   int32_t batch = input_x->Batch();
   int32_t channels = input_x->Channel();
   int32_t spatial = input_x->Height() * input_x->Width();
-
-  float *workspace_temp = static_cast<float *>(workspace());
-  CHECK_NULL_RETURN(workspace_temp);
-  float *dxhat_sum = workspace_temp;
-  float *dxhathat_sum = dxhat_sum + channels;
   float *x = reinterpret_cast<float *>(input_x->MutableData());
   CHECK_NULL_RETURN(x);
   float *yt = reinterpret_cast<float *>(input_yt->MutableData());
@@ -134,28 +115,25 @@ int BNGradCPUKernel::Execute(int task_id) {
             var2Invar(save_var, input_var->ElementsNum(), bn_param->epsilon_);
             break;
           case 1:
-            std::fill(workspace_temp, workspace_temp + ws_size_, 0.f);
-            break;
-          case 2:
             std::fill(dbias, dbias + channels, 0.f);
             break;
-          case 3:
+          case 2:
             std::fill(dscale, dscale + channels, 0.f);
             break;
         }
       }
       if (thread_num == 1) {
-        backwardAll(x, yt, save_mean, save_var, scale, total, channels, dxhat_sum, dxhathat_sum, dbias, dscale, dx);
+        backwardAll(x, yt, save_mean, save_var, scale, total, channels, dbias, dscale, dx);
       }
       break;
     }
     case 1: {
-      backwardP1(x, yt, save_mean, save_var, scale, total, channels, dxhat_sum, dxhathat_sum, dbias, dscale);
+      backwardP1(x, yt, save_mean, save_var, scale, total, channels, dbias, dscale);
       break;
     }
     case 2: {
-      backwardP2(x + task_id * stride * channels, yt + task_id * stride * channels, save_mean, save_var, scale, count,
-                 total, channels, dxhat_sum, dxhathat_sum, dx + task_id * stride * channels);
+      backwardP2(x + task_id * stride * channels, yt + task_id * stride * channels, save_mean, save_var, dscale, dbias,
+                 scale, count, total, channels, dx + task_id * stride * channels);
       break;
     }
   }

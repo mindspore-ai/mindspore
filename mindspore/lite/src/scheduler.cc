@@ -997,8 +997,16 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
                                                  TypeId prefer_data_type) {
   MS_ASSERT(node != nullptr);
   // why we need this
-  TypeId data_type =
-    (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) ? kNumberTypeFloat32 : GetFirstFp32Fp16OrInt8Type(in_tensors);
+  TypeId data_type;
+  if (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) {
+    if (in_tensors.front()->data_type() == kNumberTypeBool) {
+      data_type = kNumberTypeBool;
+    } else {
+      data_type = kNumberTypeFloat32;
+    }
+  } else {
+    data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
+  }
   kernel::LiteKernel *kernel = nullptr;
   int status;
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP

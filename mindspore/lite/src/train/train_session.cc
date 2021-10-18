@@ -156,8 +156,12 @@ int TrainSession::InitCallBack() {
         is_fp16 = false;
       }
       // loss function runs in fp32
-      if ((node_name.find(get_loss_name()) != std::string::npos)) {
-        is_fp16 = false;
+      auto v = get_loss_name();
+      for (auto &s : v) {
+        if (node_name.find(s) != std::string::npos) {
+          is_fp16 = false;
+          break;
+        }
       }
       // run bn according to user configuration
       if ((cfg_.mix_precision_cfg_.keep_batchnorm_fp32_) &&
@@ -320,8 +324,16 @@ void TrainSession::FreeRestoreTensors() {
 
 bool TrainSession::IsLossTensor(Tensor *tensor) {
   MS_ASSERT(tensor != nullptr);
+  bool isLoss = false;
   auto t_n = tensor->tensor_name();
-  return (t_n.find(get_loss_name()) != std::string::npos);
+  auto v = get_loss_name();
+  for (auto &s : v) {
+    if (t_n.find(s) != std::string::npos) {
+      isLoss = true;
+      break;
+    }
+  }
+  return isLoss;
 }
 
 bool TrainSession::AllInputsNeedScale(kernel::LiteKernel *kernel) {
@@ -880,13 +892,14 @@ int TrainSession::OptimizerStep() {
 }
 
 bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
-  return (kernel->type() == schema::PrimitiveType_SoftmaxCrossEntropyWithLogits ||
-          kernel->type() == schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits ||
-          kernel->type() == schema::PrimitiveType_SmoothL1Loss ||
-          kernel->type() == schema::PrimitiveType_SmoothL1LossGrad ||
-          kernel->type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogits ||
-          kernel->type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad) ||
-         kernel->name().find(cfg_.loss_name_) != std::string::npos;
+  bool isLoss = false;
+  for (auto &s : cfg_.loss_name_) {
+    if (kernel->name().find(s) != std::string::npos) {
+      isLoss = true;
+      break;
+    }
+  }
+  return isLoss;
 }
 
 bool TrainSession::IsGradKernel(const kernel::LiteKernel *kernel) const {
