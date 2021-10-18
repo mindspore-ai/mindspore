@@ -121,7 +121,17 @@ class BuiltinSampler:
         self.child_sampler = sampler
 
     def get_child(self):
-        """ Get the child sampler. """
+        """
+        Get the child sampler of given sampler.
+
+        Returns:
+            Sampler, The child sampler of given sampler.
+
+        Examples:
+            >>> sampler = ds.SequentialSampler(start_index=0, num_samples=3)
+            >>> sampler.add_child(ds.RandomSampler(num_samples=2))
+            >>> child_sampler = sampler.get_child()
+        """
         return self.child_sampler
 
     def parse_child(self):
@@ -189,6 +199,10 @@ class BuiltinSampler:
 
         Returns:
             int, the number of samples, or None.
+
+        Examples:
+            >>> sampler = ds.SequentialSampler(start_index=0, num_samples=3)
+            >>> num_samplers = sampler.get_num_samples()
         """
         if self.child_sampler is not None:
             child_samples = self.child_sampler.get_num_samples()
@@ -306,7 +320,7 @@ class Sampler(BuiltinSampler):
 
 class DistributedSampler(BuiltinSampler):
     """
-    A sampler that accesses a shard of the dataset.
+    A sampler that accesses a shard of the dataset, it helps divide dataset into multi-subset for distributed training.
 
     Args:
         num_shards (int): Number of shards to divide the dataset into.
