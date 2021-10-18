@@ -116,7 +116,6 @@ if(ENABLE_AKG AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         "akg/akg_kernel_build.cc"
         "akg/akg_kernel_json_generator.cc"
         "akg/akg_kernel_json_decoder.cc"
-        "akg/akg_kernel_attrs_process.cc"
     )
     if(ENABLE_GPU)
         file(GLOB_RECURSE AKG_GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}

@@ -21,7 +21,6 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_mod.h"
-#include "backend/kernel_compiler/akg/akg_kernel_attrs_process.h"
 #include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {

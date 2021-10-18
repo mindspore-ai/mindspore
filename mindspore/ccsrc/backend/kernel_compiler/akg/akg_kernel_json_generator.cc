@@ -19,7 +19,6 @@
 #ifdef ENABLE_GPU
 #include <cuda.h>
 #endif
-#include "backend/kernel_compiler/akg/akg_kernel_attrs_process.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -107,6 +106,9 @@ class OpInfoExtractor {
       } else if (v->isa<BoolImm>()) {
         op_attr->set_type("bool");
       } else if (v->isa<StringImm>()) {
+        op_attr->set_type("str");
+      } else if (v->isa<Type>()) {
+        // convert the TypeId to string
         op_attr->set_type("str");
       } else if (v->isa<ValueSequeue>()) {
         const auto &vec = v->cast<ValueSequeuePtr>()->value();
@@ -268,7 +270,11 @@ void AkgKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::
   if (type == "int") {
     (*attr_json)[kJsonKeyValue] = get_int_value(attr_value);
   } else if (type == "str") {
-    (*attr_json)[kJsonKeyValue] = GetValue<std::string>(attr_value);
+    if (attr_value->isa<Type>()) {
+      (*attr_json)[kJsonKeyValue] = TypeId2String(attr_value->cast<TypePtr>()->type_id());
+    } else {
+      (*attr_json)[kJsonKeyValue] = GetValue<std::string>(attr_value);
+    }
   } else if (type == "bool") {
     (*attr_json)[kJsonKeyValue] = GetValue<bool>(attr_value);
   } else if (type == "float") {
@@ -537,7 +543,6 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   MS_EXCEPTION_IF_NULL(kernel_json);
   std::string op_name = AnfAlgo::GetCNodeName(anf_node);
   MS_LOG(DEBUG) << "Akg start generate kernel json desc, full scope name is : " << anf_node->fullname_with_scope();
-  SetAkgKernelAttrs(anf_node);
   is_basic_op_ = true;
   if (!GenerateSingleKernelJson(anf_node, kernel_json)) {
     MS_LOG(ERROR) << "Op[" << anf_node->fullname_with_scope() << "] create single kernel json failed.";
@@ -591,6 +596,7 @@ void AkgKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_no
     (*kernel_json)[kJsonKeyBufferStitch] = stitch_json;
   }
 }
+
 bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
                                               const std::vector<AnfNodePtr> &input_list,
                                               const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json) {
@@ -666,8 +672,6 @@ bool AkgKernelJsonGenerator::GenSingleJsons(const std::vector<AnfNodePtr> &anf_n
       MS_LOG(ERROR) << "Invalid anf node to build [" << anf_node->fullname_with_scope() << "].";
       return false;
     }
-    SetAkgKernelAttrs(anf_node);
-
     nlohmann::json node_json;
     if (!GenerateSingleKernelJson(anf_node, &node_json)) {
       MS_LOG(ERROR) << "Op [" << anf_node->fullname_with_scope() << "] create single kernel json failed.";
