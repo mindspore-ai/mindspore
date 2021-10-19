@@ -111,6 +111,7 @@ STATUS FunctionalizeControlOpPass::BuildIfSubgraph(const FuncGraphPtr &func_grap
   int ret = RET_OK;
   auto nodes = func_graph->nodes();
   for (auto &node : nodes) {
+    CHECK_NULL_RETURN(node);
     if (!IsMerge(node)) {
       continue;
     }

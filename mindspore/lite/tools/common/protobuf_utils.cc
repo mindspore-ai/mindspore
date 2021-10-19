@@ -91,7 +91,7 @@ STATUS ReadProtoFromBinaryFile(const std::string &file, google::protobuf::Messag
   fs.close();
 
   if (!success) {
-    MS_LOG(DEBUG) << "Parse " << file << " failed.";
+    MS_LOG(WARNING) << "Parse " << file << " failed.";
     return RET_ERROR;
   }
 

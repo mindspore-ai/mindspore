@@ -29,7 +29,12 @@ ops::PrimitiveC *TFArgMaxParser::Parse(const tensorflow::NodeDef &tf_op,
   auto prim = std::make_unique<ops::ArgMaxFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   tensorflow::AttrValue attr_value;
-  auto axis_node = tf_node_map.at(tf_op.input(tf_op.input_size() - 1));
+  auto tf_axis_input_name = tf_op.input(tf_op.input_size() - 1);
+  if (tf_node_map.find(tf_axis_input_name) == tf_node_map.end()) {
+    MS_LOG(ERROR) << "not find axis node.";
+    return nullptr;
+  }
+  auto axis_node = tf_node_map.at(tf_axis_input_name);
   MS_CHECK_TRUE_RET(axis_node != nullptr, nullptr);
   if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The attr value should be specified.";

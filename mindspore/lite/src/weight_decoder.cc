@@ -26,7 +26,7 @@ std::vector<bool> StringToBitVector(const std::string &str) {
   size_t index = 0;
   for (auto ch : str) {
     for (size_t shift = kBit8; shift > 0; shift--) {
-      vec[index++] = (ch >> (shift - 1)) & 0x1;
+      vec[index++] = (ch >> static_cast<size_t>(shift - 1)) & 0x1;
     }
   }
   return vec;
@@ -46,7 +46,7 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) 
   size_t unique_value_cnt = 0;
   for (int i = 0; i < bit_num; i++) {
     bool bit = bit_vec[index++];
-    unique_value_cnt |= bit << (bit_num - i - 1);
+    unique_value_cnt |= bit << static_cast<size_t>((bit_num - i - 1));
   }
   if (unique_value_cnt == 0) {
     unique_value_cnt = 1 << bit_num;
@@ -57,10 +57,10 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) 
     int unique_value = 0;
     for (int j = 0; j < bit_num; j++) {
       bool bit = bit_vec[index++];
-      unique_value |= bit << (bit_num - j - 1);
+      unique_value |= bit << static_cast<size_t>((bit_num - j - 1));
     }
     // unsigned to signed
-    unique_values.push_back(unique_value - (1 << (bit_num - 1)));
+    unique_values.push_back(unique_value - (1 << static_cast<size_t>((bit_num - 1))));
   }
   // parse index
   std::vector<size_t> unique_value_index_vec;
@@ -70,7 +70,7 @@ STATUS IndexingDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) 
     size_t unique_value_index = 0;
     for (size_t j = 0; j < unique_value_bit; j++) {
       bool bit = bit_vec[index++];
-      unique_value_index |= bit << (unique_value_bit - j - 1);
+      unique_value_index |= bit << (static_cast<size_t>(unique_value_bit - j - 1));
     }
     unique_value_index_vec.push_back(unique_value_index);
   }
@@ -111,19 +111,19 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   size_t coor_best_bit = 0;
   for (size_t i = 0; i < kBit8; i++) {
     bool bit = bit_vec[index++];
-    coor_best_bit |= bit << (kBit8 - i - 1);
+    coor_best_bit |= bit << static_cast<size_t>((kBit8 - i - 1));
   }
   // parse nz_cnt
   size_t nz_cnt = 0;
   for (size_t i = 0; i < kBit32; i++) {
     bool bit = bit_vec[index++];
-    nz_cnt |= bit << (kBit32 - i - 1);
+    nz_cnt |= bit << static_cast<size_t>((kBit32 - i - 1));
   }
   // parse unique_value cnt
   size_t unique_value_cnt = 0;
   for (size_t i = 0; i < bit_num; i++) {
     bool bit = bit_vec[index++];
-    unique_value_cnt |= bit << (bit_num - i - 1);
+    unique_value_cnt |= bit << static_cast<size_t>((bit_num - i - 1));
   }
   if (unique_value_cnt == 0) {
     unique_value_cnt = 1 << bit_num;
@@ -134,15 +134,15 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
     int unique_value = 0;
     for (size_t j = 0; j < bit_num; j++) {
       bool bit = bit_vec[index++];
-      unique_value |= bit << (bit_num - j - 1);
+      unique_value |= bit << static_cast<size_t>((bit_num - j - 1));
     }
     // unsigned to signed
-    unique_values.push_back(unique_value - (1 << (bit_num - 1)));
+    unique_values.push_back(unique_value - (1 << static_cast<size_t>((bit_num - 1))));
   }
   // parse index
   std::vector<size_t> unique_value_index_vec;
   auto elem_cnt = dst_tensor->ElementsNum();
-  size_t unique_value_bit = ceil(log2(unique_value_cnt));
+  size_t unique_value_bit = static_cast<size_t>(ceil(log2(unique_value_cnt)));
   for (size_t i = 0; i < nz_cnt; i++) {
     size_t unique_value_index = 0;
     for (size_t j = 0; j < unique_value_bit; j++) {
@@ -158,7 +158,7 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
     size_t coor = 0;
     for (size_t j = 0; j < coor_best_bit; j++) {
       bool bit = bit_vec[index++];
-      coor |= bit << (coor_best_bit - j - 1);
+      coor |= bit << static_cast<size_t>((coor_best_bit - j - 1));
     }
     coor_vec.push_back(coor);
   }
