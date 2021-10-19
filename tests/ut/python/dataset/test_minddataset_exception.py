@@ -18,20 +18,16 @@ import os
 import pytest
 
 import mindspore.dataset as ds
-
 from mindspore.mindrecord import FileWriter
 
-CV_FILE_NAME = "./imagenet.mindrecord"
-CV1_FILE_NAME = "./imagenet1.mindrecord"
 
-
-def create_cv_mindrecord(files_num):
+def create_cv_mindrecord(file_name, files_num):
     """tutorial for cv dataset writer."""
-    if os.path.exists(CV_FILE_NAME):
-        os.remove(CV_FILE_NAME)
-    if os.path.exists("{}.db".format(CV_FILE_NAME)):
-        os.remove("{}.db".format(CV_FILE_NAME))
-    writer = FileWriter(CV_FILE_NAME, files_num)
+    if os.path.exists(file_name):
+        os.remove(file_name)
+    if os.path.exists("{}.db".format(file_name)):
+        os.remove("{}.db".format(file_name))
+    writer = FileWriter(file_name, files_num)
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int32"}, "data": {"type": "bytes"}}
     data = [{"file_name": "001.jpg", "label": 43,
@@ -42,13 +38,13 @@ def create_cv_mindrecord(files_num):
     writer.commit()
 
 
-def create_diff_schema_cv_mindrecord(files_num):
+def create_diff_schema_cv_mindrecord(file_name, files_num):
     """tutorial for cv dataset writer."""
-    if os.path.exists(CV1_FILE_NAME):
-        os.remove(CV1_FILE_NAME)
-    if os.path.exists("{}.db".format(CV1_FILE_NAME)):
-        os.remove("{}.db".format(CV1_FILE_NAME))
-    writer = FileWriter(CV1_FILE_NAME, files_num)
+    if os.path.exists(file_name):
+        os.remove(file_name)
+    if os.path.exists("{}.db".format(file_name)):
+        os.remove("{}.db".format(file_name))
+    writer = FileWriter(file_name, files_num)
     cv_schema_json = {"file_name_1": {"type": "string"},
                       "label": {"type": "int32"}, "data": {"type": "bytes"}}
     data = [{"file_name_1": "001.jpg", "label": 43,
@@ -59,13 +55,13 @@ def create_diff_schema_cv_mindrecord(files_num):
     writer.commit()
 
 
-def create_diff_page_size_cv_mindrecord(files_num):
+def create_diff_page_size_cv_mindrecord(file_name, files_num):
     """tutorial for cv dataset writer."""
-    if os.path.exists(CV1_FILE_NAME):
-        os.remove(CV1_FILE_NAME)
-    if os.path.exists("{}.db".format(CV1_FILE_NAME)):
-        os.remove("{}.db".format(CV1_FILE_NAME))
-    writer = FileWriter(CV1_FILE_NAME, files_num)
+    if os.path.exists(file_name):
+        os.remove(file_name)
+    if os.path.exists("{}.db".format(file_name)):
+        os.remove("{}.db".format(file_name))
+    writer = FileWriter(file_name, files_num)
     writer.set_page_size(1 << 26)  # 64MB
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int32"}, "data": {"type": "bytes"}}
@@ -79,14 +75,15 @@ def create_diff_page_size_cv_mindrecord(files_num):
 
 def test_cv_lack_json():
     """tutorial for cv minderdataset."""
-    create_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     with pytest.raises(Exception):
-        ds.MindDataset(CV_FILE_NAME, "no_exist.json",
+        ds.MindDataset(file_name, "no_exist.json",
                        columns_list, num_readers)
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
 
 
 def test_cv_lack_mindrecord():
@@ -98,111 +95,113 @@ def test_cv_lack_mindrecord():
 
 
 def test_invalid_mindrecord():
-    with open('dummy.mindrecord', 'w') as f:
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    with open(file_name, 'w') as f:
         f.write('just for test')
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     with pytest.raises(RuntimeError, match="Unexpected error. Invalid file "
                        "content, incorrect file or file header is exceeds the upper limit."):
-        data_set = ds.MindDataset(
-            'dummy.mindrecord', columns_list, num_readers)
+        data_set = ds.MindDataset(file_name, columns_list, num_readers)
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
-    os.remove('dummy.mindrecord')
+    os.remove(file_name)
 
 
 def test_minddataset_lack_db():
-    create_cv_mindrecord(1)
-    os.remove("{}.db".format(CV_FILE_NAME))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
+    os.remove("{}.db".format(file_name))
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     with pytest.raises(RuntimeError, match="Unexpected error. Invalid database file, path:"):
-        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)
+        data_set = ds.MindDataset(file_name, columns_list, num_readers)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
-        try:
-            assert num_iter == 0
-        except Exception as error:
-            os.remove(CV_FILE_NAME)
-            raise error
-        else:
-            os.remove(CV_FILE_NAME)
+    os.remove(file_name)
 
 
 def test_cv_minddataset_pk_sample_error_class_column():
-    create_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(5, None, True, 'no_exist_column')
     with pytest.raises(RuntimeError, match="Unexpected error. Failed to launch read threads."):
         data_set = ds.MindDataset(
-            CV_FILE_NAME, columns_list, num_readers, sampler=sampler)
+            file_name, columns_list, num_readers, sampler=sampler)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
 
 
 def test_cv_minddataset_pk_sample_exclusive_shuffle():
-    create_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(2)
     with pytest.raises(Exception, match="sampler and shuffle cannot be specified at the same time."):
-        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers,
+        data_set = ds.MindDataset(file_name, columns_list, num_readers,
                                   sampler=sampler, shuffle=False)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
 
 
 def test_cv_minddataset_reader_different_schema():
-    create_cv_mindrecord(1)
-    create_diff_schema_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_1 = file_name + '_1'
+    create_cv_mindrecord(file_name, 1)
+    create_diff_schema_cv_mindrecord(file_name_1, 1)
     columns_list = ["data", "label"]
     num_readers = 4
     with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, "
                        "MindRecord files meta data is not consistent."):
-        data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
+        data_set = ds.MindDataset([file_name, file_name_1], columns_list,
                                   num_readers)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
-    os.remove(CV1_FILE_NAME)
-    os.remove("{}.db".format(CV1_FILE_NAME))
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
+    os.remove(file_name_1)
+    os.remove("{}.db".format(file_name_1))
 
 
 def test_cv_minddataset_reader_different_page_size():
-    create_cv_mindrecord(1)
-    create_diff_page_size_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_1 = file_name + '_1'
+    create_cv_mindrecord(file_name, 1)
+    create_diff_page_size_cv_mindrecord(file_name_1, 1)
     columns_list = ["data", "label"]
     num_readers = 4
     with pytest.raises(RuntimeError, match="Unexpected error. Invalid data, "
                        "MindRecord files meta data is not consistent."):
-        data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
+        data_set = ds.MindDataset([file_name, file_name_1], columns_list,
                                   num_readers)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
-    os.remove(CV1_FILE_NAME)
-    os.remove("{}.db".format(CV1_FILE_NAME))
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
+    os.remove(file_name_1)
+    os.remove("{}.db".format(file_name_1))
 
 
 def test_minddataset_invalidate_num_shards():
-    create_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "label"]
     num_readers = 4
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(
-            CV_FILE_NAME, columns_list, num_readers, True, 1, 2)
+            file_name, columns_list, num_readers, True, 1, 2)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
@@ -210,21 +209,22 @@ def test_minddataset_invalidate_num_shards():
         assert 'Input shard_id is not within the required interval of [0, 0].' in str(
             error_info.value)
     except Exception as error:
-        os.remove(CV_FILE_NAME)
-        os.remove("{}.db".format(CV_FILE_NAME))
+        os.remove(file_name)
+        os.remove("{}.db".format(file_name))
         raise error
     else:
-        os.remove(CV_FILE_NAME)
-        os.remove("{}.db".format(CV_FILE_NAME))
+        os.remove(file_name)
+        os.remove("{}.db".format(file_name))
 
 
 def test_minddataset_invalidate_shard_id():
-    create_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "label"]
     num_readers = 4
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(
-            CV_FILE_NAME, columns_list, num_readers, True, 1, -1)
+            file_name, columns_list, num_readers, True, 1, -1)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
@@ -232,21 +232,22 @@ def test_minddataset_invalidate_shard_id():
         assert 'Input shard_id is not within the required interval of [0, 0].' in str(
             error_info.value)
     except Exception as error:
-        os.remove(CV_FILE_NAME)
-        os.remove("{}.db".format(CV_FILE_NAME))
+        os.remove(file_name)
+        os.remove("{}.db".format(file_name))
         raise error
     else:
-        os.remove(CV_FILE_NAME)
-        os.remove("{}.db".format(CV_FILE_NAME))
+        os.remove(file_name)
+        os.remove("{}.db".format(file_name))
 
 
 def test_minddataset_shard_id_bigger_than_num_shard():
-    create_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "label"]
     num_readers = 4
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(
-            CV_FILE_NAME, columns_list, num_readers, True, 2, 2)
+            file_name, columns_list, num_readers, True, 2, 2)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
@@ -254,13 +255,13 @@ def test_minddataset_shard_id_bigger_than_num_shard():
         assert 'Input shard_id is not within the required interval of [0, 1].' in str(
             error_info.value)
     except Exception as error:
-        os.remove(CV_FILE_NAME)
-        os.remove("{}.db".format(CV_FILE_NAME))
+        os.remove(file_name)
+        os.remove("{}.db".format(file_name))
         raise error
 
     with pytest.raises(Exception) as error_info:
         data_set = ds.MindDataset(
-            CV_FILE_NAME, columns_list, num_readers, True, 2, 5)
+            file_name, columns_list, num_readers, True, 2, 5)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
@@ -268,23 +269,24 @@ def test_minddataset_shard_id_bigger_than_num_shard():
         assert 'Input shard_id is not within the required interval of [0, 1].' in str(
             error_info.value)
     except Exception as error:
-        os.remove(CV_FILE_NAME)
-        os.remove("{}.db".format(CV_FILE_NAME))
+        os.remove(file_name)
+        os.remove("{}.db".format(file_name))
         raise error
     else:
-        os.remove(CV_FILE_NAME)
-        os.remove("{}.db".format(CV_FILE_NAME))
+        os.remove(file_name)
+        os.remove("{}.db".format(file_name))
 
 
 def test_cv_minddataset_partition_num_samples_equals_0():
     """tutorial for cv minddataset."""
-    create_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "label"]
     num_readers = 4
 
     def partitions(num_shards):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers,
+            data_set = ds.MindDataset(file_name, columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id, num_samples=-1)
             num_iter = 0
@@ -297,12 +299,12 @@ def test_cv_minddataset_partition_num_samples_equals_0():
         assert 'num_samples exceeds the boundary between 0 and 9223372036854775807(INT64_MAX)' in str(
             error_info.value)
     except Exception as error:
-        os.remove(CV_FILE_NAME)
-        os.remove("{}.db".format(CV_FILE_NAME))
+        os.remove(file_name)
+        os.remove("{}.db".format(file_name))
         raise error
     else:
-        os.remove(CV_FILE_NAME)
-        os.remove("{}.db".format(CV_FILE_NAME))
+        os.remove(file_name)
+        os.remove("{}.db".format(file_name))
 
 
 def test_mindrecord_exception():
@@ -311,31 +313,32 @@ def test_mindrecord_exception():
     def exception_func(item):
         raise Exception("Error occur!")
 
-    create_cv_mindrecord(1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "file_name", "label"]
     with pytest.raises(RuntimeError, match="The corresponding data files"):
-        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, shuffle=False)
+        data_set = ds.MindDataset(file_name, columns_list, shuffle=False)
         data_set = data_set.map(operations=exception_func, input_columns=["data"],
                                 num_parallel_workers=1)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
     with pytest.raises(RuntimeError, match="The corresponding data files"):
-        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, shuffle=False)
+        data_set = ds.MindDataset(file_name, columns_list, shuffle=False)
         data_set = data_set.map(operations=exception_func, input_columns=["file_name"],
                                 num_parallel_workers=1)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
     with pytest.raises(RuntimeError, match="The corresponding data files"):
-        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, shuffle=False)
+        data_set = ds.MindDataset(file_name, columns_list, shuffle=False)
         data_set = data_set.map(operations=exception_func, input_columns=["label"],
                                 num_parallel_workers=1)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
-    os.remove(CV_FILE_NAME)
-    os.remove("{}.db".format(CV_FILE_NAME))
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
 
 
 if __name__ == '__main__':
