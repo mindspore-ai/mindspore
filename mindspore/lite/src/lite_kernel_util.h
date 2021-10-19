@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_LITE_KERNEL_UTIL_H_
 #define MINDSPORE_LITE_SRC_LITE_KERNEL_UTIL_H_
 #include <vector>
+#include <set>
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
@@ -38,6 +39,9 @@ class LiteKernelUtil {
   static bool InputsContainsSpecificNode(const kernel::LiteKernel *kernel, const schema::PrimitiveType &primitive_type);
   // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph
   static void FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels);
+
+ private:
+  static std::set<lite::Tensor *> AllOutTensor(const std::vector<kernel::LiteKernel *> &kernels);
 };
 
 }  // namespace mindspore::kernel
