@@ -27,20 +27,55 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFusedBatchNorm = "FusedBatchNorm";
+/// \brief FusedBatchNorm defined Enhanced BatchNorm operator prototype.
 class MS_CORE_API FusedBatchNorm : public PrimitiveC {
  public:
+  /// \brief Constructor.
   FusedBatchNorm() : PrimitiveC(kNameFusedBatchNorm) {
     InitIOName({"x", "scale", "b", "mean", "variance"},
                {"y", "running_mean", "running_variance", "save_mean", "save_inv_variance"});
   }
+
+  /// \brief Destructor.
   ~FusedBatchNorm() = default;
+
   MS_DECLARE_PARENT(FusedBatchNorm, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] mode Define the mode of batchnorm, which is useless.
+  /// \param[in] epsilon Define a small value added for numerical stability, which is used to avoid that divisor is
+  ///            zero.
+  /// \param[in] momentum Define the hyper parameter to compute moving average for running_mean and running_var.
   void Init(const int64_t mode = 0, const float epsilon = 1e-5, const float momentum = 0.1);
+
+  /// \brief Method to set mode attribute, which has been abandoned.
+  ///
+  /// \param[in] mode Define the mode of batchnorm, which is useless.
   void set_mode(const int64_t mode);
+
+  /// \brief Method to set epsilon attribute.
+  ///
+  /// \param[in] epsilon Define a small value added for numerical stability, which is used to avoid that divisor is
+  ///            zero.
   void set_epsilon(const float epsilon);
+
+  /// \brief Method to set momentum attribute.
+  ///
+  /// \param[in] momentum Define the hyper parameter to compute moving average for running_mean and running_var.
   void set_momentum(const float momentum);
+
+  /// \brief Method to get mode attribute, which has been abandoned.
   int64_t get_mode() const;
+
+  /// \brief Method to get epsilon attribute.
+  ///
+  /// \return a small float value.
   float get_epsilon() const;
+
+  /// \brief Method to get momentum attribute.
+  ///
+  /// \return the hyper parameter .
   float get_momentum() const;
 };
 }  // namespace ops

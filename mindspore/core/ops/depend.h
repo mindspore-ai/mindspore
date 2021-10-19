@@ -26,12 +26,19 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDepend = "Depend";
+/// \brief Depend defined Depend operator prototype.
 class MS_CORE_API Depend : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Depend() : PrimitiveC(kNameDepend) {}
+
+  /// \brief Destructor.
   ~Depend() = default;
+
   MS_DECLARE_PARENT(Depend, PrimitiveC);
-  void Init();
+
+  /// \brief Method to init the op's attributes.
+  void Init() {}
 };
 AbstractBasePtr DependInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);

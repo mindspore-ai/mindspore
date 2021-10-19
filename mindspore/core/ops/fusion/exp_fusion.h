@@ -23,17 +23,54 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExpFusion = "ExpFusion";
+/// \brief ExpFusion defined Exp operator prototype of lite.
 class MS_CORE_API ExpFusion : public Exp {
  public:
+  /// \brief Constructor.
   ExpFusion() : Exp(kNameExpFusion) { InitIOName({"x"}, {"y"}); }
+
+  /// \brief Destructor.
   ~ExpFusion() = default;
+
   MS_DECLARE_PARENT(ExpFusion, Exp);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] base Define a base number. If base is -1, it represents e. In addition to this, base must be larger
+  ///            than 0.
+  /// \param[in] scale Define a size factor of input.
+  /// \param[in] shift Define a bias of input.
   void Init(const float base = -1.0, const float scale = 1.0, const float shift = 0.0);
+
+  /// \brief Method to set base attribute.
+  ///
+  /// \param[in] base Define a base number. If base is -1, it represents e. In addition to this, base must be larger
+  ///            than 0. Default is -1.
   void set_base(const float base);
+
+  /// \brief Method to set scale attribute. Default is 1.0.
+  ///
+  /// \param[in] scale Define a size factor of input.
   void set_scale(const float scale);
+
+  /// \brief Method to set shift attribute. Default is 0.0.
+  ///
+  /// \param[in] shift Define a bias of input.
   void set_shift(const float shift);
+
+  /// \brief Method to get base attribute.
+  ///
+  /// \return base number.
   float get_base() const;
+
+  /// \brief Method to get scale attribute.
+  ///
+  /// \return a size factor of input.
   float get_scale() const;
+
+  /// \brief Method to get shift attribute.
+  ///
+  /// \return a bias of input.
   float get_shift() const;
 };
 }  // namespace ops

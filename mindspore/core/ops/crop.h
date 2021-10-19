@@ -26,15 +26,41 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCrop = "Crop";
+/// \brief Crop defined the Crop operator prototype of lite, which can be replaced by slice operator.
 class MS_CORE_API Crop : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Crop() : PrimitiveC(kNameCrop) {}
+
+  /// \brief Destructor.
   ~Crop() = default;
+
   MS_DECLARE_PARENT(Crop, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] axis Define a dim which is the first dimension to slice.
+  /// \param[in] offsets Define a vector to indicate the start index to slice on the corresponding axis.
   void Init(const int64_t axis, const std::vector<int64_t> &offsets);
+
+  /// \brief Method to set axis attribute.
+  ///
+  /// \param[in] axis Define a dim which is the first dimension to slice.
   void set_axis(const int64_t axis);
+
+  /// \brief Method to set offsets attribute.
+  ///
+  /// \param[in] offsets Define a vector to indicate the start index to slice on the corresponding axis.
   void set_offsets(const std::vector<int64_t> &offsets);
+
+  /// \brief Method to get axis attribute.
+  ///
+  /// \return a dim which indicates the first dimension to slice.
   int64_t get_axis() const;
+
+  /// \brief Method to get offsets attribute.
+  ///
+  /// \return a vector which indicates the start index to slice on the corresponding axis.
   std::vector<int64_t> get_offsets() const;
 };
 AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
