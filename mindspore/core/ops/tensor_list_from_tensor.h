@@ -25,15 +25,37 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListFromTensor = "TensorListFromTensor";
+/// \brief TensorListFromTensor defined TensorListFromTensor operator prototype of lite.
 class MS_CORE_API TensorListFromTensor : public PrimitiveC {
  public:
+  /// \brief Constructor.
   TensorListFromTensor() : PrimitiveC(kNameTensorListFromTensor) {}
+
+  /// \brief Destructor.
   ~TensorListFromTensor() = default;
+
   MS_DECLARE_PARENT(TensorListFromTensor, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] element_dtype Define the element data type in op;
+  /// \param[in] shape_type Define the shape type in op;
   void Init(const int64_t element_dtype, const int64_t shape_type);
+
+  /// \brief Method to set the op's element_dtype attributes.
+  ///
+  /// \param[in] element_dtype Define the element data type in op;
   void set_element_dtype(const int64_t element_dtype);
+
+  /// \brief Method to set the op's shape_type attributes.
+  ///
+  /// \param[in] shape_type Define the shape type in op;
   void set_shape_type(const int64_t shape_type);
+
+  /// \brief Method to get the op's element_dtype attributes.
   int64_t get_element_dtype() const;
+
+  /// \brief Method to get the op's shape_type attributes.
   int64_t get_shape_type() const;
 };
 AbstractBasePtr TensorListFromTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

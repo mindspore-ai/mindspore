@@ -24,15 +24,37 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListReserve = "TensorListReserve";
+/// \brief TensorListReserve defined TensorListReserve operator prototype of lite.
 class MS_CORE_API TensorListReserve : public PrimitiveC {
  public:
+  /// \brief Constructor.
   TensorListReserve() : PrimitiveC(kNameTensorListReserve) {}
+
+  /// \brief Destructor.
   ~TensorListReserve() = default;
+
   MS_DECLARE_PARENT(TensorListReserve, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] element_dtype Define the element data type in op;
+  /// \param[in] shape_type Define the shape type in op;
   void Init(const int64_t element_dtype, const int64_t shape_type);
+
+  /// \brief Method to set the op's element_dtype attributes.
+  ///
+  /// \param[in] element_dtype Define the element data type in op;
   void set_element_dtype(const int64_t element_dtype);
+
+  /// \brief Method to set the op's shape_type attributes.
+  ///
+  /// \param[in] shape_type Define the shape type in op;
   void set_shape_type(const int64_t shape_type);
+
+  /// \brief Method to get the op's element_dtype attributes.
   int64_t get_element_dtype() const;
+
+  /// \brief Method to get the op's shape_type attributes.
   int64_t get_shape_type() const;
 };
 }  // namespace ops

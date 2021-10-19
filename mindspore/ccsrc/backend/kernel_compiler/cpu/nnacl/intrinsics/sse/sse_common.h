@@ -116,6 +116,7 @@ static inline void ActBlock8(__m128 *v1, __m128 *v2, __m128 *v3, __m128 *v4, __m
       *v6 = _mm_max_ps(*v6, zero);
       *v7 = _mm_max_ps(*v7, zero);
       *v8 = _mm_max_ps(*v8, zero);
+    default:
       break;
   }
 }
