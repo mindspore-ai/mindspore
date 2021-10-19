@@ -148,14 +148,14 @@ enum SubModuleId : int {
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
 #endif
 
-/// \brief Gets sub-module name by the module id.
+/// \brief Get sub-module name by the module id.
 ///
 /// \param[in] module_id The module id.
 ///
 /// \return The sub-module name.
 MS_EXPORT const std::string GetSubModuleName(SubModuleId module_id);
 
-/// \brief Gets current time as a string.
+/// \brief Get current time as a string.
 ///
 /// \return The string presents current time.
 MS_EXPORT std::string GetTimeString();
@@ -185,7 +185,7 @@ class TryCatchGuard {
 #define MS_LOG_TRY_CATCH_SCOPE mindspore::TryCatchGuard mindspore_log_try_catch_guard
 #endif
 
-/// \brief LogWriter defined interface to write log.
+/// \brief LogWriter defines interface to write log.
 class LogWriter {
  public:
   using ExceptionHandler = std::function<void(ExceptionType, const std::string &msg)>;
