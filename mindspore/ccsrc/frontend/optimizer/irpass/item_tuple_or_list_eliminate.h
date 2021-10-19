@@ -20,12 +20,14 @@
 #include <algorithm>
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -90,6 +92,51 @@ class TupleListConvertItemIndexToPositive : public AnfVisitor {
   bool is_match_{false};
   int64_t id_{0};
   CNodePtr sequeue_{nullptr};
+};
+
+// {prim::kPrimSliceGetItem, {prim::kPrimMakeSlice (a,b,c)}} => a
+class MakeSliceSliceGetItemEliminator : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    Reset();
+    AnfVisitor::Match(prim::kPrimSliceGetItem, {IsCNode, IsVNode})(node);
+    if (is_match_) {
+      return make_slice_->input(idx_);
+    }
+    return nullptr;
+  }
+
+  void Visit(const CNodePtr &cnode) override {
+    if (IsPrimitiveCNode(cnode, prim::kPrimMakeSlice)) {
+      make_slice_ = cnode;
+    }
+  }
+
+  void Visit(const ValueNodePtr &vnode) override {
+    if (make_slice_ != nullptr && IsValueNode<StringImm>(vnode)) {
+      auto slice_attr_ = GetValue<std::string>(vnode->value());
+      auto iter = kSliceAttrToIndex.find(slice_attr_);
+      if (iter == kSliceAttrToIndex.end()) {
+        MS_EXCEPTION(ValueError) << "The slice must be [start, stop, step], but got " << slice_attr_;
+      }
+      idx_ = iter->second;
+      if (idx_ > make_slice_->inputs().size()) {
+        MS_EXCEPTION(IndexError) << "The node make_slice should has 3 inputs but got " << make_slice_->DebugString();
+      }
+      is_match_ = true;
+    }
+  }
+
+  void Reset() {
+    idx_ = 0;
+    make_slice_ = nullptr;
+    is_match_ = false;
+  }
+
+ private:
+  CNodePtr make_slice_ = nullptr;
+  size_t idx_ = 0;
+  bool is_match_{false};
 };
 
 // (a, b, c, ...)[0] => a

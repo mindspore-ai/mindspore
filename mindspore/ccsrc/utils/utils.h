@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 
 #include "utils/log_adapter.h"
 #include "ir/dtype/type.h"
@@ -615,6 +616,11 @@ const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT,
                                              kOpFormat_FRACTAL_Z_3D,
                                              kOpFormat_DHWNC,
                                              kOpFormat_DHWCN};
+
+constexpr auto kSliceStart = "start";
+constexpr auto kSliceStop = "stop";
+constexpr auto kSliceStep = "step";
+const std::map<std::string, size_t> kSliceAttrToIndex = {{kSliceStart, 1}, {kSliceStop, 2}, {kSliceStep, 3}};
 
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN,
                                                         kOpFormat_NCDHW};

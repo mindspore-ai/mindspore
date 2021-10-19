@@ -734,25 +734,6 @@ AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const Primit
   return ret;
 }
 
-AbstractBasePtr InferImplShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_spec_list) {
-  const std::string &op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto shape = input->shape()->shape();
-
-  AbstractBasePtrList elements;
-  for (const auto &dim : shape) {
-    if (dim == Shape::SHP_ANY) {
-      elements.push_back(std::make_shared<AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(64)));
-    } else {
-      elements.push_back(std::make_shared<AbstractScalar>(dim));
-    }
-  }
-
-  return std::make_shared<AbstractTuple>(elements);
-}
-
 AbstractBasePtr InferImplDynamicShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();

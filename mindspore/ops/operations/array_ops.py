@@ -17,20 +17,21 @@
 # ============================================================================
 
 """Operators for array."""
-from collections import Counter
 import copy
 import functools
 import itertools
 import numbers
+from collections import Counter
+
 import numpy as np
 
 from mindspore import log as logger
 from mindspore.common.initializer import Zero
+from .. import signature as sig
 from .._utils import get_broadcast_shape
 from .._utils import get_concat_offset
 from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
-from .. import signature as sig
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
 from ..._checkparam import _check_3d_int_or_tuple
@@ -921,7 +922,6 @@ class SparseGatherV2(PrimitiveWithCheck):
         """Initialize SparseGatherV2"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
-
     def __check__(self, params, indices, axis):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
         validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
@@ -930,7 +930,6 @@ class SparseGatherV2(PrimitiveWithCheck):
         validator.check_value_type('axis', axis_v, [int], self.name)
         rank = len(params['shape'])
         validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
-
 
 
 class Padding(PrimitiveWithInfer):
@@ -2660,9 +2659,17 @@ class Stack(PrimitiveWithInfer):
         x_type = value['dtype']
         self.add_prim_attr('num', len(x_shape))
         all_shape = _get_stack_shape(x_shape, x_type, self.axis, self.name)
+        tuple_value = value['value']
+        input_array = []
+        infered_value = None
+        if tuple_value is not None:
+            for item in tuple_value:
+                npy_item = item.asnumpy()
+                input_array.append(npy_item)
+            infered_value = Tensor(np.stack(input_array, axis=self.axis))
         out = {'shape': all_shape,
                'dtype': x_type[0],
-               'value': None}
+               'value': infered_value}
         return out
 
 
@@ -2915,7 +2922,6 @@ class ReverseV2(PrimitiveWithInfer):
             validator.check_value_type(f'axis[{i}]', each, [int], self.name)
         self.axis = axis
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
 
     def infer_shape(self, x_shape):
         dim = len(x_shape)
@@ -6295,6 +6301,7 @@ class SearchSorted(PrimitiveWithInfer):
         [[2, 4, 5]
          [1, 2, 4]]
     """
+
     @prim_attr_register
     def __init__(self, out_int32=False, right=False):
         """Initialize SearchSorted"""
@@ -6697,6 +6704,7 @@ class ScatterElements(Primitive):
         >>> print(output)
         [[ 1  2  8  4  8]]
     """
+
     @prim_attr_register
     def __init__(self, axis=0):
         """Initialize ScatterElements"""

@@ -255,6 +255,7 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
 
     // Miscellaneous
     irpass.tuple_list_get_item_eliminator_,
+    irpass.make_slice_get_slice_eliminator_,
     irpass.tuple_list_get_item_const_eliminator_,
     irpass.tuple_list_set_item_eliminator_,
     irpass.tuple_list_get_set_item_eliminator_,
@@ -397,11 +398,15 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
 }
 
 OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig d_1 =
-    opt::OptPassConfig({irpass.call_graph_tuple_transform_, irpass.tuple_list_get_item_eliminator_,
-                        irpass.tuple_list_get_item_const_eliminator_, irpass.tuple_list_set_item_eliminator_,
-                        irpass.tuple_list_get_set_item_eliminator_, irpass.tuple_list_get_item_depend_reorder_,
-                        irpass.tuple_list_convert_item_index_to_positive_});
+  opt::OptPassConfig d_1 = opt::OptPassConfig({
+    irpass.call_graph_tuple_transform_,
+    irpass.tuple_list_get_item_eliminator_,
+    irpass.tuple_list_get_item_const_eliminator_,
+    irpass.tuple_list_set_item_eliminator_,
+    irpass.tuple_list_get_set_item_eliminator_,
+    irpass.tuple_list_get_item_depend_reorder_,
+    irpass.tuple_list_convert_item_index_to_positive_,
+  });
 
   OptPassGroupMap map_a({{"d_1", d_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
 
@@ -416,6 +421,7 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.tuple_list_get_set_item_eliminator_,
                                                irpass.tuple_list_get_item_depend_reorder_,
                                                irpass.tuple_list_convert_item_index_to_positive_,
+                                               irpass.make_slice_get_slice_eliminator_,
                                                irpass.float_tuple_getitem_switch_,
                                                irpass.reset_defer_inline_,
                                                irpass.inline_,

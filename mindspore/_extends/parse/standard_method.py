@@ -1537,7 +1537,8 @@ def check_type_same(x_type, base_type):
         tuple: mstype.Tuple,
         dict: mstype.Dict,
         Tensor: mstype.tensor_type,
-        Parameter: mstype.ref_type
+        Parameter: mstype.ref_type,
+        slice: mstype.Slice,
     }
 
     has_int = False

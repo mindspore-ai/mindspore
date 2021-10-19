@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <map>
 
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/static_analysis/prim.h"
@@ -28,6 +29,7 @@
 #include "frontend/operator/ops.h"
 #include "abstract/infer_functions.h"
 #include "utils/convert_utils_py.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -479,6 +481,85 @@ AbstractBasePtr InferImplShapeMul(const AnalysisEnginePtr &, const PrimitivePtr 
   return std::make_shared<AbstractScalar>(result_v, result_v->type());
 }
 
+AbstractBasePtr InferImplSliceGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  auto op_name = primitive->name();
+  constexpr auto slice_getitem_input_size = 2;
+  CheckArgsSize(op_name, args_spec_list, slice_getitem_input_size);
+  AbstractSlicePtr slice_abs = CheckArg<AbstractSlice>(op_name, args_spec_list, 0);
+  const std::map<std::string, AbstractBasePtr> result_map = {
+    {kSliceStart, slice_abs->start()}, {kSliceStop, slice_abs->stop()}, {kSliceStep, slice_abs->step()}};
+  auto slice_attr = args_spec_list[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(slice_attr);
+  if (!slice_attr->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << "The node of " << op_name << "'s input 2 should be converted to a string but got "
+                      << slice_attr->ToString();
+  }
+  auto slice_str = GetValue<std::string>(slice_attr);
+  auto iter = result_map.find(slice_str);
+  if (iter == result_map.end()) {
+    MS_EXCEPTION(AttributeError) << "'slice' object has no attribute " << iter->second;
+  }
+  return iter->second;
+}
+
+AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  // Inputs: three scalars whose value is an int32 number.
+  constexpr auto make_slice_input_size = 3;
+  CheckArgsSize(primitive->name(), args_spec_list, make_slice_input_size);
+  size_t args_size = args_spec_list.size();
+  AbstractBasePtrList slice_args;
+  for (size_t index = 0; index < args_size; index++) {
+    MS_EXCEPTION_IF_NULL(args_spec_list[index]);
+    if (args_spec_list[index]->isa<AbstractNone>()) {
+      slice_args.push_back(args_spec_list[index]);
+    } else if (args_spec_list[index]->isa<AbstractScalar>()) {
+      ValuePtr scalar_value = args_spec_list[index]->cast<AbstractScalarPtr>()->BuildValue();
+      MS_EXCEPTION_IF_NULL(scalar_value);
+      if (scalar_value->isa<IntergerImm>()) {
+        slice_args.push_back(args_spec_list[index]);
+      } else if (scalar_value->isa<BoolImm>()) {
+        ValuePtr scalar_index = MakeValue(static_cast<int64_t>(scalar_value->cast<BoolImmPtr>()->value()));
+        slice_args.push_back(scalar_index->ToAbstract());
+      } else {
+        MS_EXCEPTION(TypeError) << "MakeSlice eval " << index
+                                << " the input scalar type should be int or bool, but got " << scalar_value->ToString();
+      }
+    } else if (args_spec_list[index]->isa<AbstractTensor>()) {
+      auto arg = args_spec_list[index]->cast<AbstractTensorPtr>();
+      TypePtr tensor_dtype = arg->element()->BuildType();
+      auto build_value = arg->BuildValue();
+      MS_EXCEPTION_IF_NULL(build_value);
+      auto value = build_value->cast<tensor::TensorPtr>();
+      if (value != nullptr) {
+        if (value->DataSize() != 1) {
+          MS_EXCEPTION(TypeError) << "MakeSlice eval the input tensor must contain only one element, but got "
+                                  << value->ToString() << " has " << value->DataSize() << " elements.";
+        }
+
+        if (tensor_dtype->isa<Bool>()) {
+          auto *bool_value = static_cast<bool *>(value->data_c());
+          slice_args.push_back(MakeValue((static_cast<int64_t>(*bool_value)))->ToAbstract());
+        } else if (tensor_dtype->isa<Int>()) {
+          auto *int_value = static_cast<int64_t *>(value->data_c());
+          slice_args.push_back(MakeValue((*int_value))->ToAbstract());
+        } else {
+          MS_EXCEPTION(TypeError) << "MakeSlice eval the input tensor type must be int or bool, but got "
+                                  << tensor_dtype->ToString();
+        }
+      } else {
+        slice_args.push_back(args_spec_list[index]);
+      }
+    } else {
+      MS_EXCEPTION(TypeError) << "MakeSlice eval " << index << " inputs should scalar, None or Tensor, but got"
+                              << args_spec_list[index]->ToString();
+    }
+  }
+  // Slice: start, end, step
+  return std::make_shared<AbstractSlice>(slice_args[0], slice_args[1], slice_args[2]);
+}
+
 AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr &,
                                    const AbstractBasePtrList &args_spec_list) {
   if (args_spec_list.empty()) {
@@ -652,6 +733,7 @@ AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePt
 
   return std::make_shared<AbstractClass>(cls->tag(), abs_attributes, cls->methods());
 }
+
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TypeOf, prim::kPrimTypeOf, InferImplTypeof, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(HasType, prim::kPrimHasType, InferImplHasType, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeRecord, prim::kPrimMakeRecord, InferImplMakeRecord, nullptr);
@@ -673,5 +755,7 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(FakeBprop, prim::kPrimFakeBprop, InferImplFak
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(J, prim::kPrimJ, InferImplJ, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGradientArgs,
                                    InferImplBroadcastGradientArgs, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeSiice, prim::kPrimMakeSlice, InferImplMakeSlice, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(SliceGetItem, prim::kPrimSliceGetItem, InferImplSliceGetItem, nullptr);
 }  // namespace abstract
 }  // namespace mindspore

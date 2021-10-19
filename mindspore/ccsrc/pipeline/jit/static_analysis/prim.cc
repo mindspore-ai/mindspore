@@ -42,6 +42,7 @@
 #include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
 #include "utils/parallel_node_check.h"
+#include "frontend/operator/ops_front_infer_function.h"
 
 namespace mindspore {
 namespace abstract {
