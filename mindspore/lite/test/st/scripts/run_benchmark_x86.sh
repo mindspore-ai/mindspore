@@ -67,7 +67,7 @@ function Run_x86() {
     # $1:framework;
     echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-x64' >> "${run_x86_log_file}"
     cd ${x86_path}/mindspore-lite-${version}-linux-x64 || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib:./runtime/third_party/glog
     cp tools/benchmark/benchmark ./ || exit 1
     # Run converted models:
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
@@ -144,7 +144,7 @@ function Run_x86_parallel_split() {
     rm -rf parallel_split
     mkdir parallel_split
     cd parallel_split || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../runtime/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../runtime/lib::../runtime/third_party/glog
     cp ../tools/benchmark/benchmark ./ || exit 1
 
     # Run tflite parallel split converted models:

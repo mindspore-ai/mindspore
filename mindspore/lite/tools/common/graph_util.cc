@@ -476,5 +476,39 @@ STATUS UpdateGraphOutputName(schema::MetaGraphT *meta_graph) {
   }
   return RET_OK;
 }
+
+int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t *size) {
+  if (model_buf == nullptr) {
+    MS_LOG(ERROR) << "input model_buf invalid";
+    return RET_ERROR;
+  }
+  if (size == nullptr) {
+    MS_LOG(ERROR) << "input size invalid";
+    return RET_ERROR;
+  }
+
+  /* model_buf malloc here, free outside */
+  if (*model_buf != nullptr) {
+    MS_LOG(ERROR) << "input model_buf must be nullptr";
+    return RET_ERROR;
+  }
+  flatbuffers::FlatBufferBuilder builder(MAX_GRAPH_SIZE);
+  auto offset = schema::MetaGraph::Pack(builder, &graph);
+  builder.Finish(offset);
+  schema::FinishMetaGraphBuffer(builder, offset);
+  *size = builder.GetSize();
+  auto content = builder.GetBufferPointer();
+  if (content == nullptr) {
+    MS_LOG(ERROR) << "GetBufferPointer nullptr";
+    return RET_ERROR;
+  }
+  *model_buf = malloc(*size);
+  if (*model_buf == nullptr) {
+    MS_LOG(ERROR) << "malloc model_buf failed";
+    return RET_ERROR;
+  }
+  (void)memcpy(*model_buf, content, *size);
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

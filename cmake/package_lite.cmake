@@ -473,7 +473,22 @@ else()
         if(MSLITE_ENABLE_RUNTIME_GLOG)
             install(DIRECTORY ${glog_LIBPATH}/../include/glog/ DESTINATION ${RUNTIME_INC_DIR}/third_party/glog
                     COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-            install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${GLOG_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${GLOG_DIR} RENAME libglog.so.0
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+        if(MSLITE_ENABLE_RUNTIME_CONVERT)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+
+            install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.1
+                    DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_core.so.4.5
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.1
+                    DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.1
+                    DESTINATION ${RUNTIME_LIB_DIR} RENAME libopencv_imgproc.so.4.5
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
         endif()
         __install_micro_wrapper()
         __install_micro_codegen()

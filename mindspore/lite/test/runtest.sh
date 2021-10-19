@@ -100,8 +100,8 @@ echo 'run custom delegate st test'
 echo 'runtime pass'
 ./lite-test --gtest_filter="RuntimePass.*"
 
-#echo 'runtime convert'
-#./lite-test --gtest_filter="RuntimeConvert.*"
+echo 'runtime convert'
+./lite-test --gtest_filter="RuntimeConvert.*"
 
 echo 'Optimize Allocator'
 ./lite-test --gtest_filter="OptAllocator.*"
