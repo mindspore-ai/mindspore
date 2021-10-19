@@ -543,7 +543,7 @@ class Parser:
         self.global_namespace = CellNamespace(fn.__module__)
         self.function_module = fn.__module__
         # Used to resolve the function's nonlocals.
-        self.closure_namespace = ClosureNamespace(fn)
+        self.closure_namespace = ClosureNamespace(inspect.unwrap(self.fn))
         self.function_name = fn.__name__
         self.col_offset = 0
 
@@ -598,12 +598,7 @@ class Parser:
                 return None, var, error_info
             return self.global_namespace, var
 
-        # For ms_function the function_name not equals to __code__.co_name
-        if self.function_name != self.fn.__code__.co_name:
-            raise TypeError(f"Not support nested calling of local ms_function, "
-                            f"please delete decorator of '{self.function_name}'.")
-
-        error_info = f"The name '{var}' is not defined."
+        error_info = f"The symbol '{var}' is not defined in function '{self.function_name}'."
         return None, var, error_info
 
     def is_unsupported_builtin_type(self, value_type):
