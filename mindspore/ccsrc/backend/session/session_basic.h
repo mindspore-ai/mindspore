@@ -249,13 +249,14 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 #endif
 
   void LoadInputs(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs_const) {
+    MS_LOG(INFO) << "Status record: start load input. graph id: " << graph_id;
     auto kernel_graph = GetGraph(graph_id);
     MS_EXCEPTION_IF_NULL(kernel_graph);
     if (!kernel_graph->executable()) {
       return;
     }
-    MS_LOG(INFO) << "Load inputs";
     LoadInputData(kernel_graph, inputs_const);
+    MS_LOG(INFO) << "Status record: end load input. graph id: " << graph_id;
   }
 
   virtual void ExecuteAllTaskInQueue() {}
