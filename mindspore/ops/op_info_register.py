@@ -568,7 +568,7 @@ class TBERegOp(RegOp):
             need_compile (bool): Whether the input needs to be compiled or not. Default: None.
             param_type (str): Type of the input. Default: None.
             shape (str): Shape of the input. Default: None.
-            value_depend (str): Whether the input is const value depend. Default: None.
+            value_depend (str): Whether the input is constant value depend. Default: None.
             kwargs (dict): Other information of the input.
         """
         param_list = [index, name, need_compile, param_type, shape, value_depend]
@@ -611,7 +611,6 @@ class DataType:
     Please add it if necessary.
 
     current support:
-    .. code-block::
 
         None_None = ("", "")
         None_Default = ("", "DefaultFormat")
