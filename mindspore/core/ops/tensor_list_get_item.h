@@ -24,13 +24,27 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListGetItem = "TensorListGetItem";
+/// \brief TensorListGetItem defined TensorListGetItem operator prototype of lite.
 class MS_CORE_API TensorListGetItem : public PrimitiveC {
  public:
+  /// \brief Constructor.
   TensorListGetItem() : PrimitiveC(kNameTensorListGetItem) {}
+  /// \brief Destructor.
   ~TensorListGetItem() = default;
+
   MS_DECLARE_PARENT(TensorListGetItem, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] element_dtype Define the element data type in op;
   void Init(const int64_t element_dtype);
+
+  /// \brief Method to set the op's element_dtype attributes.
+  ///
+  /// \param[in] element_dtype Define the element data type in op;
   void set_element_dtype(const int64_t element_dtype);
+
+  /// \brief Method to get the op's element_dtype attributes.
   int64_t get_element_dtype() const;
 };
 }  // namespace ops
