@@ -94,7 +94,7 @@ def test_on_momentum():
     net(predict, label)
 
 
-def test_data_parallel_with_cast():
+def data_parallel_with_cast():
     """test_data_parallel_with_cast"""
     context.set_context(device_target='Ascend')
     context.reset_auto_parallel_context()

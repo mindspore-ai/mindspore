@@ -88,22 +88,6 @@ def test_dataset_iter_ge():
 
 
 @pytest.mark.skipif('context.get_context("enable_ge")')
-def test_dataset_iter_ms_loop_sink():
-    context.set_context(device_target='Ascend', mode=context.GRAPH_MODE)
-    GlobalComm.CHECK_ENVS = False
-    init("hccl")
-    GlobalComm.CHECK_ENVS = True
-    dataset = get_dataset(32)
-    dataset_helper = DatasetHelper(dataset, dataset_sink_mode=True, sink_size=10)
-    count = 0
-    for _ in range(2):
-        for inputs in dataset_helper:
-            count += 1
-            assert inputs == tuple()
-    assert count == 2
-
-
-@pytest.mark.skipif('context.get_context("enable_ge")')
 def test_dataset_iter_ms():
     context.set_context(device_target='Ascend', mode=context.GRAPH_MODE)
     GlobalComm.CHECK_ENVS = False

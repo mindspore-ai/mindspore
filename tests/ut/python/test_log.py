@@ -211,6 +211,8 @@ def test_log_verify_envconfig():
             logger._verify_config(verify_dict)
         except ValueError as ve:
             print(ve)
+            # avoid c++ glog error causing ut failed
+            os.environ['GLOG_log_dir'] = '/tmp/log/'
             assert True
         except TypeError as te:
             print(te)
