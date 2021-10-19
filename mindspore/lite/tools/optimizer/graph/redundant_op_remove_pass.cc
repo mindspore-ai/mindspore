@@ -34,11 +34,13 @@ int ProcessInputIsMonad(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(first_input != nullptr);
   if (CheckPrimitiveType(first_input, prim::kPrimTranspose)) {
     first_input = cnode->input(1)->cast<CNodePtr>()->input(1);
+    MS_CHECK_TRUE_MSG(first_input != nullptr, RET_ERROR, "first_input is nullptr");
   }
   auto second_input = cnode->input(kInputIndexTwo);
   MS_ASSERT(seconde_input != nullptr);
   if (CheckPrimitiveType(second_input, prim::kPrimTranspose)) {
     second_input = cnode->input(kInputIndexTwo)->cast<CNodePtr>()->input(1);
+    MS_CHECK_TRUE_MSG(second_input != nullptr, RET_ERROR, "second_input is nullptr");
   }
   AnfNodePtr must_monad = nullptr;
   AnfNodePtr not_must_monad = nullptr;
@@ -83,9 +85,11 @@ int ProcessDependencyWithTwoNodes(const FuncGraphPtr &func_graph, const CNodePtr
   }
   if (CheckPrimitiveType(pre_node, prim::kPrimTranspose)) {
     pre_node = cnode->input(1)->cast<CNodePtr>()->input(1);
+    MS_CHECK_TRUE_MSG(pre_node != nullptr, RET_ERROR, "pre_node is nullptr");
   }
   if (CheckPrimitiveType(post_node, prim::kPrimTranspose)) {
     post_node = cnode->input(kInputIndexTwo)->cast<CNodePtr>()->input(1);
+    MS_CHECK_TRUE_MSG(post_node != nullptr, RET_ERROR, "post_node is nullptr");
   }
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
@@ -130,6 +134,8 @@ int ProcessInputHaveDependency(const FuncGraphPtr &func_graph, const CNodePtr &c
 }  // namespace
 
 int RemoveRedundantOpPass::ReplaceOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
+  MS_CHECK_TRUE_MSG(anf_node != nullptr, RET_ERROR, "anf_node is nullptr");
+  MS_CHECK_TRUE_MSG(manager != nullptr, RET_ERROR, "manager is nullptr");
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(DEBUG) << "anf node is node a cnode.";
     return lite::RET_NO_CHANGE;
@@ -203,6 +209,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
     MS_LOG(ERROR) << "TupleGetItem's input 2 is not valuenode";
     return lite::RET_ERROR;
   }
+  MS_CHECK_TRUE_MSG(!CastToInt(index_vnode->cast<ValueNodePtr>()->value()).empty(), RET_ERROR, "value is empty");
   int index = CastToInt(index_vnode->cast<ValueNodePtr>()->value()).front();
   int input_cnode_inputs_size = get_item_input_cnode->inputs().size();
   if ((index + 1) >= input_cnode_inputs_size) {

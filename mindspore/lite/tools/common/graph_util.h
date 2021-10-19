@@ -34,6 +34,7 @@
 #include "src/common/graph_util.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -168,6 +169,7 @@ bool SparsityCompress(const std::set<T> &quant_data_set, const std::map<T, size_
   auto &quant_params = tensor->quantParams;
   auto elem_cnt = quant_data.size();
   auto channel_cnt = quant_params.size();
+  MS_CHECK_TRUE_MSG(channel_cnt != 0, false, "div zero.");
   auto elem_perchannel = elem_cnt / channel_cnt;
 
   std::vector<bool> bits(pack_sparsity_size_in_byte * 8);
@@ -269,7 +271,7 @@ bool PackRepetition(size_t bit_num, schema::TensorT *tensor) {
   auto dims = tensor->dims;
   size_t elem_cnt_by_dims = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<>());
   if (elem_cnt != elem_cnt_by_dims) {
-    MS_LOG(ERROR) << "elem_cnt: " << elem_cnt << " not equal: " << elem_cnt_by_dims;
+    MS_LOG(ERROR) << "elem_cnt: " << elem_cnt << " not equal elem_cnt_by_dims: " << elem_cnt_by_dims;
     return false;
   }
 

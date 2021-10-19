@@ -42,6 +42,8 @@ std::unordered_map<std::string, size_t> weight_indexs = {{ops::kNameConv2DFusion
 }  // namespace
 
 void GetAllFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
+  MS_ASSERT(all_func_graphs);
+  MS_ASSERT(func_graph);
   if (all_func_graphs->find(func_graph) == all_func_graphs->end()) {
     all_func_graphs->insert(func_graph);
   } else {
@@ -152,6 +154,7 @@ AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
   MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "graph is nullptr.");
   MS_CHECK_TRUE_MSG(cnode != nullptr, nullptr, "cnode is nullptr.");
   auto weight_node = cnode->input(index);
+  MS_CHECK_TRUE_MSG(weight_node != nullptr, nullptr, "weight_node is nullptr.");
   bool is_real_weight =
     !opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) && !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
   while (!is_real_weight) {
@@ -161,6 +164,7 @@ AnfNodePtr GetRealConvWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnod
     }
     auto weight_cnode = weight_node->cast<CNodePtr>();
     weight_node = weight_cnode->input(1);
+    MS_CHECK_TRUE_MSG(weight_node != nullptr, nullptr, "weight_node is nullptr.");
     is_real_weight = !opt::CheckPrimitiveType(weight_node, opt::kPrimIdentity) &&
                      !opt::CheckPrimitiveType(weight_node, prim::kPrimLoad);
   }
@@ -191,6 +195,7 @@ int UnifyConvWeightFormat(const FuncGraphPtr &graph, const CNodePtr &cnode, sche
   }
   bool is_const_weight = true;
   auto weight_node = cnode->input(index);
+  MS_CHECK_TRUE_MSG(weight_node != nullptr, RET_NULL_PTR, "weight_node is nullptr.");
   if (utils::isa<CNode>(weight_node)) {
     is_const_weight = false;
   } else if (utils::isa<Parameter>(weight_node)) {

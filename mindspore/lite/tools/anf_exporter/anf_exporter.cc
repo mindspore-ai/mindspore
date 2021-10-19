@@ -53,6 +53,7 @@ namespace {
 constexpr int kIndexOfValueInputOfGetTupleItem = 2;
 constexpr int kMaxDepth = 2048;
 std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
+  MS_CHECK_TRUE_MSG(fg != nullptr, {}, "fg is nullptr.");
   auto BelongSameGraph = std::bind(IncludeBelongGraph, fg, std::placeholders::_1);
   auto succ_include_fv = [&fg](const AnfNodePtr &node) -> std::vector<AnfNodePtr> {
     std::vector<AnfNodePtr> vecs{};
@@ -94,7 +95,9 @@ std::list<CNodePtr> GetOrderedCNodes(const FuncGraphPtr fg) {
 int AnfExporter::SetPostTrainOutputTensorType(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                               const std::shared_ptr<mindspore::Primitive> &primitive,
                                               const std::unique_ptr<schema::CNodeT> &dst_node) {
+  MS_CHECK_TRUE_MSG(dst_node->outputIndex.size() > 0, RET_ERROR, "dst_node->outputIndex is empty.");
   auto first_output_index = dst_node->outputIndex[0];
+  MS_CHECK_TRUE_MSG(meta_graph->allTensors.size() > first_output_index, RET_ERROR, "allTensors size is wrong.");
   auto first_tensor_output = meta_graph->allTensors[first_output_index].get();
   if (dst_node->quantType == schema::QuantType_QUANT_ALL) {
     if (primitive->name() != mindspore::ops::kNameQuantDTypeCast) {
@@ -177,7 +180,9 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
       break;
     }
     auto activate_index = dst_node->inputIndex[i];
+    MS_CHECK_TRUE_MSG(meta_graph->allTensors.size() > activate_index, RET_ERROR, "allTensors size is wrong.");
     auto tensor_input = meta_graph->allTensors[activate_index].get();
+    CHECK_NULL_RETURN(tensor_input);
     if (!quant::TensorQuantParamsInited(*tensor_input)) {
       tensor_input->quantParams.clear();
       for (auto input_quant_param : input_quant_params[i]) {
