@@ -31,20 +31,15 @@ from mindspore.dataset.vision import Inter
 from mindspore.mindrecord import FileWriter
 
 FILES_NUM = 4
-CV_FILE_NAME = "../data/mindrecord/imagenet.mindrecord"
-CV1_FILE_NAME = "../data/mindrecord/imagenet1.mindrecord"
-CV2_FILE_NAME = "../data/mindrecord/imagenet2.mindrecord"
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
-NLP_FILE_NAME = "../data/mindrecord/aclImdb.mindrecord"
-OLD_NLP_FILE_NAME = "../data/mindrecord/testOldVersion/aclImdb.mindrecord"
 NLP_FILE_POS = "../data/mindrecord/testAclImdbData/pos"
 NLP_FILE_VOCAB = "../data/mindrecord/testAclImdbData/vocab.txt"
-
 
 @pytest.fixture
 def add_and_remove_cv_file():
     """add/remove cv file"""
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
@@ -52,7 +47,7 @@ def add_and_remove_cv_file():
                 os.remove("{}".format(x))
             if os.path.exists("{}.db".format(x)):
                 os.remove("{}.db".format(x))
-        writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+        writer = FileWriter(file_name, FILES_NUM)
         data = get_data(CV_DIR_NAME)
         cv_schema_json = {"id": {"type": "int32"},
                           "file_name": {"type": "string"},
@@ -77,7 +72,8 @@ def add_and_remove_cv_file():
 @pytest.fixture
 def add_and_remove_nlp_file():
     """add/remove nlp file"""
-    paths = ["{}{}".format(NLP_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
@@ -85,7 +81,7 @@ def add_and_remove_nlp_file():
                 os.remove("{}".format(x))
             if os.path.exists("{}.db".format(x)):
                 os.remove("{}.db".format(x))
-        writer = FileWriter(NLP_FILE_NAME, FILES_NUM)
+        writer = FileWriter(file_name, FILES_NUM)
         data = [x for x in get_nlp_data(NLP_FILE_POS, NLP_FILE_VOCAB, 10)]
         nlp_schema_json = {"id": {"type": "string"}, "label": {"type": "int32"},
                            "rating": {"type": "float32"},
@@ -117,7 +113,8 @@ def add_and_remove_nlp_file():
 @pytest.fixture
 def add_and_remove_nlp_compress_file():
     """add/remove nlp file"""
-    paths = ["{}{}".format(NLP_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
@@ -125,7 +122,7 @@ def add_and_remove_nlp_compress_file():
                 os.remove("{}".format(x))
             if os.path.exists("{}.db".format(x)):
                 os.remove("{}.db".format(x))
-        writer = FileWriter(NLP_FILE_NAME, FILES_NUM)
+        writer = FileWriter(file_name, FILES_NUM)
         data = []
         for row_id in range(16):
             data.append({
@@ -183,8 +180,9 @@ def test_nlp_compress_data(add_and_remove_nlp_compress_file):
             "array_d": np.reshape(np.array([[-10, -127], [10, 127]]), [2, -1])
         })
     num_readers = 1
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data_set = ds.MindDataset(
-        NLP_FILE_NAME + "0", None, num_readers, shuffle=False)
+        file_name + "0", None, num_readers, shuffle=False)
     assert data_set.get_dataset_size() == 16
     num_iter = 0
     for x, item in zip(data, data_set.create_dict_iterator(num_epochs=1, output_numpy=True)):
@@ -197,29 +195,10 @@ def test_nlp_compress_data(add_and_remove_nlp_compress_file):
     assert num_iter == 16
 
 
-def test_nlp_compress_data_old_version(add_and_remove_nlp_compress_file):
-    """tutorial for nlp minderdataset."""
-    num_readers = 1
-    data_set = ds.MindDataset(
-        NLP_FILE_NAME + "0", None, num_readers, shuffle=False)
-    old_data_set = ds.MindDataset(
-        OLD_NLP_FILE_NAME + "0", None, num_readers, shuffle=False)
-    assert old_data_set.get_dataset_size() == 16
-    num_iter = 0
-    for x, item in zip(old_data_set.create_dict_iterator(num_epochs=1, output_numpy=True),
-                       data_set.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        assert (item["array_a"] == x["array_a"]).all()
-        assert (item["array_b"] == x["array_b"]).all()
-        assert (item["array_c"] == x["array_c"]).all()
-        assert (item["array_d"] == x["array_d"]).all()
-        assert item["label"] == x["label"]
-        num_iter += 1
-    assert num_iter == 16
-
-
 def test_cv_minddataset_writer_tutorial():
     """tutorial for cv dataset writer."""
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
@@ -227,7 +206,7 @@ def test_cv_minddataset_writer_tutorial():
                 os.remove("{}".format(x))
             if os.path.exists("{}.db".format(x)):
                 os.remove("{}.db".format(x))
-        writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+        writer = FileWriter(file_name, FILES_NUM)
         data = get_data(CV_DIR_NAME)
         cv_schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"},
                           "data": {"type": "bytes"}}
@@ -250,10 +229,11 @@ def test_cv_minddataset_partition_tutorial(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards, shard_id=partition_id)
             num_iter = 0
             for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -272,10 +252,11 @@ def test_cv_minddataset_partition_num_samples_0(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id, num_samples=1)
 
@@ -297,10 +278,11 @@ def test_cv_minddataset_partition_num_samples_1(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id, num_samples=2)
 
@@ -322,10 +304,11 @@ def test_cv_minddataset_partition_num_samples_2(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     def partitions(num_shards, expect):
         for partition_id in range(num_shards):
-            data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+            data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                       num_shards=num_shards,
                                       shard_id=partition_id, num_samples=3)
 
@@ -346,8 +329,9 @@ def test_cv_minddataset_partition_num_samples_3(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers, num_shards=1, shard_id=0, num_samples=5)
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers, num_shards=1, shard_id=0, num_samples=5)
 
     assert data_set.get_dataset_size() == 5
     num_iter = 0
@@ -366,9 +350,10 @@ def test_cv_minddataset_partition_tutorial_check_shuffle_result(add_and_remove_c
     epoch1 = []
     epoch2 = []
     epoch3 = []
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     for partition_id in range(num_shards):
-        data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+        data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                   num_shards=num_shards, shard_id=partition_id)
 
         data_set = data_set.repeat(3)
@@ -401,13 +386,14 @@ def test_cv_minddataset_partition_tutorial_check_whole_reshuffle_result_per_epoc
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     num_shards = 3
     epoch_result = [[["", "", "", ""], ["", "", "", ""], ["", "", "", ""]],  # save partition 0 result
                     [["", "", "", ""], ["", "", "", ""], ["", "", "", ""]],  # save partition 1 result
                     [["", "", "", ""], ["", "", "", ""], ["", "", "", ""]]]  # svae partition 2 result
 
     for partition_id in range(num_shards):
-        data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+        data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                                   num_shards=num_shards, shard_id=partition_id)
 
         data_set = data_set.repeat(3)
@@ -436,13 +422,14 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     ds.config.set_seed(54321)
     epoch1 = []
     epoch2 = []
     epoch3 = []
 
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers)
     data_set = data_set.repeat(3)
 
     num_iter = 0
@@ -468,7 +455,7 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     epoch2_new_dataset = []
     epoch3_new_dataset = []
 
-    data_set2 = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    data_set2 = ds.MindDataset(file_name + "0", columns_list, num_readers)
     data_set2 = data_set2.repeat(3)
 
     num_iter = 0
@@ -499,7 +486,7 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
     epoch2_new_dataset2 = []
     epoch3_new_dataset2 = []
 
-    data_set3 = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    data_set3 = ds.MindDataset(file_name + "0", columns_list, num_readers)
     data_set3 = data_set3.repeat(3)
 
     num_iter = 0
@@ -530,7 +517,8 @@ def test_cv_minddataset_dataset_size(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers)
     assert data_set.get_dataset_size() == 10
     repeat_num = 2
     data_set = data_set.repeat(repeat_num)
@@ -544,7 +532,7 @@ def test_cv_minddataset_dataset_size(add_and_remove_cv_file):
             "-------------- item[data]: {} ----------------------".format(item["data"]))
         num_iter += 1
     assert num_iter == 20
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers,
                               num_shards=4, shard_id=3)
     assert data_set.get_dataset_size() == 3
 
@@ -553,7 +541,8 @@ def test_cv_minddataset_repeat_reshuffle(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "label"]
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers)
     decode_op = vision.Decode()
     data_set = data_set.map(
         input_columns=["data"], operations=decode_op, num_parallel_workers=2)
@@ -584,7 +573,8 @@ def test_cv_minddataset_batch_size_larger_than_records(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "label"]
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers)
     decode_op = vision.Decode()
     data_set = data_set.map(
         input_columns=["data"], operations=decode_op, num_parallel_workers=2)
@@ -608,7 +598,8 @@ def test_cv_minddataset_issue_888(add_and_remove_cv_file):
     """issue 888 test."""
     columns_list = ["data", "label"]
     num_readers = 2
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers, shuffle=False, num_shards=5, shard_id=1)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers, shuffle=False, num_shards=5, shard_id=1)
     data_set = data_set.shuffle(2)
     data_set = data_set.repeat(9)
     num_iter = 0
@@ -621,7 +612,8 @@ def test_cv_minddataset_reader_file_list(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    data_set = ds.MindDataset([CV_FILE_NAME + str(x)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset([file_name + str(x)
                                for x in range(FILES_NUM)], columns_list, num_readers)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
@@ -644,7 +636,8 @@ def test_cv_minddataset_reader_one_partition(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    data_set = ds.MindDataset([CV_FILE_NAME + "0"], columns_list, num_readers)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset([file_name + "0"], columns_list, num_readers)
     assert data_set.get_dataset_size() < 10
     num_iter = 0
     for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -664,6 +657,8 @@ def test_cv_minddataset_reader_one_partition(add_and_remove_cv_file):
 
 def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
+    CV1_FILE_NAME = "../data/mindrecord/test_cv_minddataset_reader_two_dataset_1.mindrecord"
+    CV2_FILE_NAME = "../data/mindrecord/test_cv_minddataset_reader_two_dataset_2.mindrecord"
     try:
         if os.path.exists(CV1_FILE_NAME):
             os.remove(CV1_FILE_NAME)
@@ -696,7 +691,8 @@ def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
         writer.commit()
         columns_list = ["data", "file_name", "label"]
         num_readers = 4
-        data_set = ds.MindDataset([CV_FILE_NAME + str(x) for x in range(FILES_NUM)] + [CV1_FILE_NAME, CV2_FILE_NAME],
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        data_set = ds.MindDataset([file_name + str(x) for x in range(FILES_NUM)] + [CV1_FILE_NAME, CV2_FILE_NAME],
                                   columns_list, num_readers)
         assert data_set.get_dataset_size() == 30
         num_iter = 0
@@ -735,6 +731,7 @@ def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
+    CV1_FILE_NAME = "../data/mindrecord/test_cv_minddataset_reader_two_dataset_partition_1"
     paths = ["{}{}".format(CV1_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
@@ -756,7 +753,8 @@ def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
 
         columns_list = ["data", "file_name", "label"]
         num_readers = 4
-        data_set = ds.MindDataset([CV_FILE_NAME + str(x) for x in range(2)] +
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        data_set = ds.MindDataset([file_name + str(x) for x in range(2)] +
                                   [CV1_FILE_NAME + str(x) for x in range(2, 4)],
                                   columns_list, num_readers)
         assert data_set.get_dataset_size() < 20
@@ -789,7 +787,8 @@ def test_cv_minddataset_reader_basic_tutorial(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
     for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -810,7 +809,8 @@ def test_cv_minddataset_reader_basic_tutorial(add_and_remove_cv_file):
 def test_nlp_minddataset_reader_basic_tutorial(add_and_remove_nlp_file):
     """tutorial for nlp minderdataset."""
     num_readers = 4
-    data_set = ds.MindDataset(NLP_FILE_NAME + "0", None, num_readers)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", None, num_readers)
     assert data_set.get_dataset_size() == 10
     num_iter = 0
     for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -839,7 +839,8 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers)
     assert data_set.get_dataset_size() == 10
     for _ in range(5):
         num_iter = 0
@@ -855,7 +856,8 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch_with_batch(add_and_remove_
     """tutorial for cv minderdataset."""
     columns_list = ["data", "label"]
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers)
 
     resize_height = 32
     resize_width = 32
@@ -881,7 +883,8 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch_with_batch(add_and_remove_
 
 def test_cv_minddataset_reader_no_columns(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
-    data_set = ds.MindDataset(CV_FILE_NAME + "0")
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0")
     assert data_set.get_dataset_size() == 10
     num_iter = 0
     for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -903,7 +906,8 @@ def test_cv_minddataset_reader_repeat_tutorial(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", columns_list, num_readers)
     repeat_num = 2
     data_set = data_set.repeat(repeat_num)
     num_iter = 0
@@ -1753,7 +1757,8 @@ def test_write_with_multi_array_and_MindDataset():
 
 
 def test_numpy_generic():
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
@@ -1761,7 +1766,7 @@ def test_numpy_generic():
                 os.remove("{}".format(x))
             if os.path.exists("{}.db".format(x)):
                 os.remove("{}.db".format(x))
-        writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+        writer = FileWriter(file_name, FILES_NUM)
         cv_schema_json = {"label1": {"type": "int32"}, "label2": {"type": "int64"},
                           "label3": {"type": "float32"}, "label4": {"type": "float64"}}
         data = []
@@ -1777,7 +1782,7 @@ def test_numpy_generic():
         writer.commit()
 
         num_readers = 4
-        data_set = ds.MindDataset(CV_FILE_NAME + "0", None, num_readers, shuffle=False)
+        data_set = ds.MindDataset(file_name + "0", None, num_readers, shuffle=False)
         assert data_set.get_dataset_size() == 10
         idx = 0
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -1799,7 +1804,7 @@ def test_numpy_generic():
 
 
 def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = "test_write_with_float32_float64_float32_array_float64_array_and_MindDataset.mindrecord"
     try:
         data = [{"float32_array": np.array([1.2, 2.78, 3.1234, 4.9871, 5.12341], dtype=np.float32),
                  "float64_array": np.array([48.1234556789, 49.3251241431, 50.13514312414, 51.8971298471,
@@ -2570,7 +2575,8 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
 
 def test_field_is_null_numpy():
     """add/remove nlp file"""
-    paths = ["{}{}".format(NLP_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     for x in paths:
         if os.path.exists("{}".format(x)):
@@ -2578,7 +2584,7 @@ def test_field_is_null_numpy():
         if os.path.exists("{}.db".format(x)):
             os.remove("{}.db".format(x))
 
-    writer = FileWriter(NLP_FILE_NAME, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
     data = []
     # field array_d is null
     for row_id in range(16):
@@ -2607,7 +2613,7 @@ def test_field_is_null_numpy():
     writer.write_raw_data(data)
     writer.commit()
 
-    data_set = ds.MindDataset(dataset_file=NLP_FILE_NAME + "0",
+    data_set = ds.MindDataset(dataset_file=file_name + "0",
                               columns_list=["label", "array_a", "array_b", "array_d"],
                               num_parallel_workers=2,
                               shuffle=False)
@@ -2639,8 +2645,9 @@ def test_for_loop_dataset_iterator(add_and_remove_nlp_compress_file):
             "array_d": np.reshape(np.array([[-10, -127], [10, 127]]), [2, -1])
         })
     num_readers = 1
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data_set = ds.MindDataset(
-        NLP_FILE_NAME + "0", None, num_readers, shuffle=False)
+        file_name + "0", None, num_readers, shuffle=False)
     assert data_set.get_dataset_size() == 16
 
     # create_dict_iterator in for loop

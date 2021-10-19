@@ -22,7 +22,6 @@ import os
 import pytest
 
 import numpy as np
-from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME
 from util import config_get_set_num_parallel_workers, config_get_set_seed
 
 import mindspore.common.dtype as mstype
@@ -509,38 +508,6 @@ def delete_json_files():
         except IOError:
             logger.info("Error while deleting: {}".format(f))
 
-
-# Test save load minddataset
-def skip_test_minddataset(add_and_remove_cv_file=True):
-    """tutorial for cv minderdataset."""
-    columns_list = ["data", "file_name", "label"]
-    num_readers = 4
-    indices = [1, 2, 3, 5, 7]
-    sampler = ds.SubsetRandomSampler(indices)
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
-                              sampler=sampler)
-
-    # Serializing into python dictionary
-    ds1_dict = ds.serialize(data_set)
-    # Serializing into json object
-    ds1_json = json.dumps(ds1_dict, sort_keys=True)
-
-    # Reconstruct dataset pipeline from its serialized form
-    data_set = ds.deserialize(input_dict=ds1_dict)
-    ds2_dict = ds.serialize(data_set)
-    # Serializing into json object
-    ds2_json = json.dumps(ds2_dict, sort_keys=True)
-
-    assert ds1_json == ds2_json
-
-    _ = get_data(CV_DIR_NAME)
-    assert data_set.get_dataset_size() == 5
-    num_iter = 0
-    for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
-        num_iter += 1
-    assert num_iter == 5
-
-
 if __name__ == '__main__':
     test_serdes_imagefolder_dataset()
     test_serdes_mnist_dataset()
@@ -555,4 +522,3 @@ if __name__ == '__main__':
     test_serdes_uniform_augment()
     skip_test_serdes_fill()
     test_serdes_exception()
-    skip_test_minddataset()

@@ -23,38 +23,25 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
 
-TEMP_FILE = "../data/mindrecord/testMindDataSet/temp.mindrecord"
-AUTO_FILE = "../data/mindrecord/testMindDataSet/auto.mindrecord"
 TFRECORD_FILES = "../data/mindrecord/testTFRecordData/dummy.tfrecord"
 FILES_NUM = 1
 num_readers = 1
 
 
-@pytest.fixture(name="add_remove_file")
-def fixture_remove():
+def remove_file(file_name):
     """add/remove cv file"""
-    if os.path.exists("{}".format(TEMP_FILE)):
-        os.remove("{}".format(TEMP_FILE))
-    if os.path.exists("{}.db".format(TEMP_FILE)):
-        os.remove("{}.db".format(TEMP_FILE))
+    if os.path.exists("{}".format(file_name)):
+        os.remove("{}".format(file_name))
+    if os.path.exists("{}.db".format(file_name)):
+        os.remove("{}.db".format(file_name))
 
-    if os.path.exists("{}".format(AUTO_FILE)):
-        os.remove("{}".format(AUTO_FILE))
-    if os.path.exists("{}.db".format(AUTO_FILE)):
-        os.remove("{}.db".format(AUTO_FILE))
-    yield "yield_cv_data"
-    if os.path.exists("{}".format(TEMP_FILE)):
-        os.remove("{}".format(TEMP_FILE))
-    if os.path.exists("{}.db".format(TEMP_FILE)):
-        os.remove("{}.db".format(TEMP_FILE))
-
-    if os.path.exists("{}".format(AUTO_FILE)):
-        os.remove("{}".format(AUTO_FILE))
-    if os.path.exists("{}.db".format(AUTO_FILE)):
-        os.remove("{}.db".format(AUTO_FILE))
-
-
-def test_case_00(add_remove_file):  # only bin data
+def test_case_00():
+    """
+    Feature: save op
+    Description: all bin data
+    Expectation: generated mindrecord file
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data = [{"image1": bytes("image1 bytes abc", encoding='UTF-8'),
              "image2": bytes("image1 bytes def", encoding='UTF-8'),
              "image3": bytes("image1 bytes ghi", encoding='UTF-8'),
@@ -86,13 +73,16 @@ def test_case_00(add_remove_file):  # only bin data
         "image3": {"type": "bytes"},
         "image4": {"type": "bytes"},
         "image5": {"type": "bytes"}}
-    writer = FileWriter(TEMP_FILE, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
     writer.add_schema(schema, "schema")
     writer.write_raw_data(data)
     writer.commit()
 
-    d1 = ds.MindDataset(TEMP_FILE, None, num_readers, shuffle=False)
-    d1.save(AUTO_FILE, FILES_NUM)
+    file_name_auto = './'
+    file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_auto += '_auto'
+    d1 = ds.MindDataset(file_name, None, num_readers, shuffle=False)
+    d1.save(file_name_auto, FILES_NUM)
     data_value_to_list = []
 
     for item in data:
@@ -104,7 +94,7 @@ def test_case_00(add_remove_file):  # only bin data
         new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
         data_value_to_list.append(new_data)
 
-    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+    d2 = ds.MindDataset(dataset_file=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     assert d2.get_dataset_size() == 5
@@ -119,9 +109,12 @@ def test_case_00(add_remove_file):  # only bin data
                 assert item[field] == data_value_to_list[num_iter][field]
         num_iter += 1
     assert num_iter == 5
+    remove_file(file_name)
+    remove_file(file_name_auto)
 
 
-def test_case_01(add_remove_file):  # only raw data
+    file_name_auto = './'
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data = [{"file_name": "001.jpg", "label": 43},
             {"file_name": "002.jpg", "label": 91},
             {"file_name": "003.jpg", "label": 61},
@@ -132,13 +125,16 @@ def test_case_01(add_remove_file):  # only raw data
               "label": {"type": "int32"}
               }
 
-    writer = FileWriter(TEMP_FILE, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
     writer.add_schema(schema, "schema")
     writer.write_raw_data(data)
     writer.commit()
 
-    d1 = ds.MindDataset(TEMP_FILE, None, num_readers, shuffle=False)
-    d1.save(AUTO_FILE, FILES_NUM)
+    file_name_auto = './'
+    file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_auto += '_auto'
+    d1 = ds.MindDataset(file_name, None, num_readers, shuffle=False)
+    d1.save(file_name_auto, FILES_NUM)
 
     data_value_to_list = []
     for item in data:
@@ -147,7 +143,7 @@ def test_case_01(add_remove_file):  # only raw data
         new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
         data_value_to_list.append(new_data)
 
-    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+    d2 = ds.MindDataset(dataset_file=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     assert d2.get_dataset_size() == 6
@@ -163,9 +159,17 @@ def test_case_01(add_remove_file):  # only raw data
                 assert item[field] == data_value_to_list[num_iter][field]
         num_iter += 1
     assert num_iter == 6
+    remove_file(file_name)
+    remove_file(file_name_auto)
 
 
-def test_case_02(add_remove_file):  # muti-bytes
+def test_case_02():  # muti-bytes
+    """
+    Feature: save op
+    Description: multiple byte fields
+    Expectation: generated mindrecord file
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data = [{"file_name": "001.jpg", "label": 43,
              "float32_array": np.array([1.2, 2.78, 3.1234, 4.9871, 5.12341], dtype=np.float32),
              "float64_array": np.array([48.1234556789, 49.3251241431, 50.13514312414, 51.8971298471,
@@ -258,13 +262,16 @@ def test_case_02(add_remove_file):  # muti-bytes
               "label": {"type": "int32"},
               "image4": {"type": "bytes"},
               "image5": {"type": "bytes"}}
-    writer = FileWriter(TEMP_FILE, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
     writer.add_schema(schema, "schema")
     writer.write_raw_data(data)
     writer.commit()
 
-    d1 = ds.MindDataset(TEMP_FILE, None, num_readers, shuffle=False)
-    d1.save(AUTO_FILE, FILES_NUM)
+    file_name_auto = './'
+    file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_auto += '_auto'
+    d1 = ds.MindDataset(file_name, None, num_readers, shuffle=False)
+    d1.save(file_name_auto, FILES_NUM)
     data_value_to_list = []
 
     for item in data:
@@ -284,7 +291,7 @@ def test_case_02(add_remove_file):  # muti-bytes
         new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
         data_value_to_list.append(new_data)
 
-    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+    d2 = ds.MindDataset(dataset_file=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     assert d2.get_dataset_size() == 6
@@ -303,6 +310,8 @@ def test_case_02(add_remove_file):  # muti-bytes
                 assert item[field] == data_value_to_list[num_iter][field]
         num_iter += 1
     assert num_iter == 6
+    remove_file(file_name)
+    remove_file(file_name_auto)
 
 
 def generator_1d():
@@ -310,14 +319,21 @@ def generator_1d():
         yield (np.array([i]),)
 
 
-def test_case_03(add_remove_file):
-
+def test_case_03():
+    """
+    Feature: save op
+    Description: 1D numpy array
+    Expectation: generated mindrecord file
+    """
+    file_name_auto = './'
+    file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_auto += '_auto'
     # apply dataset operations
     d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
 
-    d1.save(AUTO_FILE)
+    d1.save(file_name_auto)
 
-    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+    d2 = ds.MindDataset(dataset_file=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
@@ -327,6 +343,7 @@ def test_case_03(add_remove_file):
         golden = np.array([i])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
+    remove_file(file_name_auto)
 
 
 def generator_with_type(t):
@@ -335,6 +352,9 @@ def generator_with_type(t):
 
 
 def type_tester(t):
+    file_name_auto = './'
+    file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_auto += '_auto'
     logger.info("Test with Type {}".format(t.__name__))
 
     # apply dataset operations
@@ -344,9 +364,9 @@ def type_tester(t):
 
     data1 = data1.repeat(3)
 
-    data1.save(AUTO_FILE)
+    data1.save(file_name_auto)
 
-    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+    d2 = ds.MindDataset(dataset_file=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
@@ -362,10 +382,7 @@ def type_tester(t):
             i = 0
             num_repeat += 1
     assert num_repeat == 3
-    if os.path.exists("{}".format(AUTO_FILE)):
-        os.remove("{}".format(AUTO_FILE))
-    if os.path.exists("{}.db".format(AUTO_FILE)):
-        os.remove("{}.db".format(AUTO_FILE))
+    remove_file(file_name_auto)
 
 
 def test_case_04():
@@ -377,20 +394,31 @@ def test_case_04():
         type_tester(t)
 
 
-def test_case_05(add_remove_file):
+def test_case_05():
+    """
+    Feature: save op
+    Description: Exception Test
+    Expectation: exception
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
     d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
 
     with pytest.raises(Exception, match="num_files should between 0 and 1000."):
-        d1.save(AUTO_FILE, 0)
+        d1.save(file_name, 0)
 
 
-def test_case_06(add_remove_file):
-
+def test_case_06():
+    """
+    Feature: save op
+    Description: Exception Test
+    Expectation: exception
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
 
     with pytest.raises(Exception, match="tfrecord dataset format is not supported."):
-        d1.save(AUTO_FILE, 1, "tfrecord")
+        d1.save(file_name, 1, "tfrecord")
 
 
 def cast_name(key):
@@ -405,16 +433,20 @@ def cast_name(key):
 
 
 def test_case_07():
-    if os.path.exists("{}".format(AUTO_FILE)):
-        os.remove("{}".format(AUTO_FILE))
-    if os.path.exists("{}.db".format(AUTO_FILE)):
-        os.remove("{}.db".format(AUTO_FILE))
+    """
+    Feature: save op
+    Description: save tfrecord files
+    Expectation: generated mindrecord file
+    """
+    file_name_auto = './'
+    file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_auto += '_auto'
     d1 = ds.TFRecordDataset(TFRECORD_FILES, shuffle=False)
     tf_data = []
     for x in d1.create_dict_iterator(num_epochs=1, output_numpy=True):
         tf_data.append(x)
-    d1.save(AUTO_FILE, FILES_NUM)
-    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+    d1.save(file_name_auto, FILES_NUM)
+    d2 = ds.MindDataset(dataset_file=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
     mr_data = []
@@ -429,11 +461,7 @@ def test_case_07():
                 assert v == mr_data[count][cast_name(k)]
         count += 1
     assert count == 10
-
-    if os.path.exists("{}".format(AUTO_FILE)):
-        os.remove("{}".format(AUTO_FILE))
-    if os.path.exists("{}.db".format(AUTO_FILE)):
-        os.remove("{}.db".format(AUTO_FILE))
+    remove_file(file_name_auto)
 
 
 def generator_dynamic_1d():
@@ -461,14 +489,21 @@ def generator_dynamic_2d_1():
             yield (np.arange(10).reshape([5, 2]),)
 
 
-def test_case_08(add_remove_file):
-
+def test_case_08():
+    """
+    Feature: save op
+    Description: save dynamic 1D numpy array
+    Expectation: generated mindrecord file
+    """
+    file_name_auto = './'
+    file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_auto += '_auto'
     # apply dataset operations
     d1 = ds.GeneratorDataset(generator_dynamic_1d, ["data"], shuffle=False)
 
-    d1.save(AUTO_FILE)
+    d1.save(file_name_auto)
 
-    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+    d2 = ds.MindDataset(dataset_file=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
@@ -481,16 +516,23 @@ def test_case_08(add_remove_file):
         golden = np.array(arr)
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
+    remove_file(file_name_auto)
 
-
-def test_case_09(add_remove_file):
-
+def test_case_09():
+    """
+    Feature: save op
+    Description: save dynamic 2D numpy array
+    Expectation: generated mindrecord file
+    """
+    file_name_auto = './'
+    file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_auto += '_auto'
     # apply dataset operations
     d1 = ds.GeneratorDataset(generator_dynamic_2d_0, ["data"], shuffle=False)
 
-    d1.save(AUTO_FILE)
+    d1.save(file_name_auto)
 
-    d2 = ds.MindDataset(dataset_file=AUTO_FILE,
+    d2 = ds.MindDataset(dataset_file=file_name_auto,
                         num_parallel_workers=num_readers,
                         shuffle=False)
 
@@ -502,13 +544,23 @@ def test_case_09(add_remove_file):
             golden = np.arange(10).reshape([2, 5])
         np.testing.assert_array_equal(item["data"], golden)
         i = i + 1
+    remove_file(file_name_auto)
 
 
-def test_case_10(add_remove_file):
+def test_case_10():
+    """
+    Feature: save op
+    Description: save 2D Tensor of different shape
+    Expectation: Exception
+    """
+    file_name_auto = './'
+    file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_name_auto += '_auto'
 
     # apply dataset operations
     d1 = ds.GeneratorDataset(generator_dynamic_2d_1, ["data"], shuffle=False)
 
     with pytest.raises(Exception, match=
                        "Error: besides dimension 0, other dimension shape is different from the previous's"):
-        d1.save(AUTO_FILE)
+        d1.save(file_name_auto)
+    remove_file(file_name_auto)
