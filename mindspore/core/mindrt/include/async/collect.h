@@ -88,19 +88,14 @@ class Collected {
 
 template <typename T>
 inline Future<std::list<T>> Collect(const std::list<Future<T>> &futures) {
-  if (futures.empty()) {
-    return Future<std::list<T>>(std::list<T>());
-  }
+  if (futures.empty()) return Future<std::list<T>>(std::list<T>());
 
   Promise<std::list<T>> *promise = new (std::nothrow) Promise<std::list<T>>();
   MINDRT_OOM_EXIT(promise);
-  using CollectType = Collected<T>;
-  std::shared_ptr<CollectType> collect = std::make_shared<CollectType>(futures, promise);
+  std::shared_ptr<Collected<T>> collect = std::make_shared<Collected<T>>(futures, promise);
 
-  //
-  auto iter = futures.begin();
-  for (; iter != futures.end(); ++iter) {
-    iter->OnComplete(Defer(collect, &CollectType::Waited, std::placeholders::_1));
+  for (auto iter = futures.begin(); iter != futures.end(); ++iter) {
+    iter->OnComplete(Defer(collect, &Collected<T>::Waited, std::placeholders::_1));
   }
 
   Future<std::list<T>> future = promise->GetFuture();

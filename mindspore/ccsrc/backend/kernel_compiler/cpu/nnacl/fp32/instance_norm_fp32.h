@@ -23,6 +23,18 @@
 extern "C" {
 #endif
 
+#define MS_ADDQ_F32_VEC(in1, in2, in3, in4, v1, v2, v3, v4) \
+  in1 = MS_ADDQ_F32(in1, v1);                               \
+  in2 = MS_ADDQ_F32(in2, v2);                               \
+  in3 = MS_ADDQ_F32(in3, v3);                               \
+  in4 = MS_ADDQ_F32(in4, v4);
+
+#define MS_DIVQ_F32_VEC(in1, in2, in3, in4, v) \
+  in1 = MS_DIVQ_F32(in1, v);                   \
+  in2 = MS_DIVQ_F32(in2, v);                   \
+  in3 = MS_DIVQ_F32(in3, v);                   \
+  in4 = MS_DIVQ_F32(in4, v);
+
 int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data, const float *beta_data,
                  const InstanceNormParameter *param, size_t task_id);
 int InstanceNormNC4HW4(const float *src_data, float *dst_data, const float *gamma_data, const float *beta_data,

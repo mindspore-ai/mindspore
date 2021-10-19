@@ -138,16 +138,16 @@ int NonMaxSuppressionCPUKernel::Run_Selecte(bool simple_out, int box_num, int ba
         auto cand = sorted_candidates.top();
         bool selected = true;
         auto IoUSuppressed = [this, &cand](const NMSBox &box) {
-          float intersec_x1 = std::max(cand.x1_, box.x1_);
-          float intersec_x2 = std::min(cand.x2_, box.x2_);
-          float intersec_y1 = std::max(cand.y1_, box.y1_);
-          float intersec_y2 = std::min(cand.y2_, box.y2_);
+          float intersec_x1 = std::max(cand.get_x1(), box.get_x1());
+          float intersec_x2 = std::min(cand.get_x2(), box.get_x2());
+          float intersec_y1 = std::max(cand.get_y1(), box.get_y1());
+          float intersec_y2 = std::min(cand.get_y2(), box.get_y2());
           const float intersec_area =
             std::max(intersec_x2 - intersec_x1, 0.0f) * std::max(intersec_y2 - intersec_y1, 0.0f);
           if (intersec_area <= 0.0f) {
             return false;
           }
-          const float intersec_over_union = intersec_area / (cand.area_ + box.area_ - intersec_area);
+          const float intersec_over_union = intersec_area / (cand.get_area() + box.get_area() - intersec_area);
           return intersec_over_union > this->iou_threshold_;
         };
         if (std::any_of(selected_box_per_class.begin(), selected_box_per_class.end(), IoUSuppressed)) {
@@ -156,7 +156,7 @@ int NonMaxSuppressionCPUKernel::Run_Selecte(bool simple_out, int box_num, int ba
         if (selected) {
           selected_box_per_class.push_back(cand);
           selected_index.emplace_back(
-            NMSIndex{static_cast<int32_t>(i), static_cast<int32_t>(j), static_cast<int32_t>(cand.index_)});
+            NMSIndex{static_cast<int32_t>(i), static_cast<int32_t>(j), static_cast<int32_t>(cand.get_index())});
         }
         sorted_candidates.pop();
       }

@@ -79,8 +79,13 @@ int GroupConvolutionFp32CPUKernel::Init() {
       MS_LOG(ERROR) << "GetSingleConv for fp32 group conv failed.";
       return lite::RET_ERROR;
     }
-    group_convs_.emplace_back(new (std::nothrow) ConvolutionDelegateCPUKernel(
-      reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx_));
+    auto new_conv = new (std::nothrow)
+      ConvolutionDelegateCPUKernel(reinterpret_cast<OpParameter *>(new_conv_param), new_inputs, new_outputs, ctx_);
+    if (new_conv == nullptr) {
+      MS_LOG(ERROR) << "malloc new conv error.";
+      return lite::RET_ERROR;
+    }
+    (void)group_convs_.emplace_back(new_conv);
   }
   return GroupConvolutionBaseCPUKernel::Init();
 }

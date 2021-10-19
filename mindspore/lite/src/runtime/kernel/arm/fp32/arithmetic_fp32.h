@@ -39,7 +39,6 @@ using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_RealDiv;
 using mindspore::schema::PrimitiveType_SquaredDifference;
 using mindspore::schema::PrimitiveType_SubFusion;
-#define MAX_ARITHMETIC_DIMS_SIZE 20
 
 namespace mindspore::kernel {
 class ArithmeticCPUKernel : public InnerKernel {
