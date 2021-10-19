@@ -1164,6 +1164,9 @@ void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kern
 void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   opt::HideNopNode(kernel_graph.get());
+  auto execution_order = kernel_graph->execution_order();
+  AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
+  kernel_graph->set_execution_order(execution_order);
   // Insert CLearZero op
   // prepare for next step from json get atomic info
   BuildKernel(kernel_graph);
@@ -1177,9 +1180,6 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
     DumpIR("after_adjust_kernel.ir", kernel_graph);
   }
 #endif
-  auto execution_order = kernel_graph->execution_order();
-  AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
-  kernel_graph->set_execution_order(execution_order);
   MS_LOG(INFO) << "Finish!";
 }
 
