@@ -190,7 +190,7 @@ class Lamb(Optimizer):
         m_t = \frac{m_t}{\beta_1^t}\\
         v_t = \frac{v_t}{\beta_2^t}\\
         r_t = \frac{m_t}{\sqrt{v_t}+\epsilon}\\
-        w_t = w_{t-1} -\eta_t \frac{\left \| w_{t-1}\right \|}{\left \| r_t + \lambda w_{t-1}\right \|} (r_t + \lambda w_{t-1})
+        w_t = w_{t-1} -\eta_t \frac{\| w_{t-1} \|}{\| r_t + \lambda w_{t-1} \|} (r_t + \lambda w_{t-1})
         \end{gather*}
 
     where :math:`m` is the 1st moment, and :math:`v` the 2nd moment, :math:`\eta` the
