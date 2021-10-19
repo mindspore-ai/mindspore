@@ -13,13 +13,6 @@ function Run_Converter() {
 
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
-    # Prepare the config file list
-    local fp32_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
-                              "$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_fp16_config" \
-                              "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
-                              "$models_weightquant_9bit_config" "$models_process_only_config")
-
-    local fp16_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config")
     # Convert models:
     if [[ $1 == "all" || $1 == "arm64_cpu" || $1 == "arm64_fp32" ]]; then
         # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
@@ -32,22 +25,18 @@ function Run_Converter() {
 
 # Run on arm64 platform:
 function Run_arm64() {
-    # Prepare the config file list
-    local arm64_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
-                              "$models_mindspore_train_config" "$models_posttraining_config" "$models_compatibility_config" \
-                              "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
-                              "$models_weightquant_9bit_config" "$models_process_only_config" "$models_process_only_fp16_config")
     # Run converted models:
+    if [[ $backend == "arm64_mindir" ]]; then
+      fp32_cfg_file_list+=("$models_compatibility_config")
+    fi
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${arm64_cfg_file_list[*]}" . '/data/local/tmp' $run_arm64_fp32_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id $arm64_fail_not_return
+    Run_Benchmark "${fp32_cfg_file_list[*]}" . '/data/local/tmp' $run_arm64_fp32_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id $arm64_fail_not_return
 }
 
 # Run on arm64-fp16 platform:
 function Run_arm64_fp16() {
-    local arm64_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config" \
-                               "$models_process_only_fp16_config")
     # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${arm64_cfg_file_list[*]}" . '/data/local/tmp' $run_arm64_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id $arm64_fail_not_return
+    Run_Benchmark "${fp16_cfg_file_list[*]}" . '/data/local/tmp' $run_arm64_fp16_log_file $run_benchmark_result_file 'arm64' 'CPU' $device_id $arm64_fail_not_return
 }
 
 basepath=$(pwd)
@@ -110,6 +99,35 @@ models_compatibility_config=${basepath}/../config/models_compatibility.cfg
 models_process_only_config=${basepath}/../config/models_process_only.cfg
 models_process_only_fp16_config=${basepath}/../config/models_process_only_fp16.cfg
 
+# Prepare the config file list
+fp32_cfg_file_list=()
+fp16_cfg_file_list=()
+if [[ $backend == "arm64-tflite" ]]; then
+  fp32_cfg_file_list=("$models_tflite_config")
+  fp16_cfg_file_list=("$models_tflite_fp16_config")
+elif [[ $backend == "arm64-tf" ]]; then
+  fp32_cfg_file_list=("$models_tf_config")
+  fp16_cfg_file_list=("$models_tf_fp16_config")
+elif [[ $backend == "arm64-caffe" ]]; then
+  fp32_cfg_file_list=("$models_caffe_config")
+  fp16_cfg_file_list=("$models_caffe_fp16_config")
+elif [[ $backend == "arm64-onnx" ]]; then
+  fp32_cfg_file_list=("$models_onnx_config")
+  fp16_cfg_file_list=("$models_onnx_fp16_config")
+elif [[ $backend == "arm64-mindir" ]]; then
+  fp32_cfg_file_list=("$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_config"\
+                       "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
+                       "$models_weightquant_9bit_config")
+  fp16_cfg_file_list=("$models_process_only_fp16_config")
+else
+  fp32_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
+                       "$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_config"\
+                       "$models_tflite_awaretraining_config" "$models_weightquant_config" "$models_weightquant_7bit_config" \
+                       "$models_weightquant_9bit_config")
+  fp16_cfg_file_list=("$models_onnx_fp16_config" "$models_caffe_fp16_config" "$models_tflite_fp16_config" "$models_tf_fp16_config" \
+                      "$models_process_only_fp16_config")
+fi
+
 ms_models_path=${basepath}/ms_models
 
 # Write converter result to temp file
@@ -158,37 +176,41 @@ Push_Files $arm64_path "aarch64" $version $benchmark_test_path "adb_push_log.txt
 
 backend=${backend:-"all"}
 isFailed=0
-if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" ]]; then
+if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_tflite" || \
+      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" ]]; then
     # Run on arm64
-    echo "start Run arm64 ..."
+    echo "start Run ${backend} ..."
     Run_arm64
     Run_arm64_fp32_status=$?
 #    Run_arm64_fp32_PID=$!
 #    sleep 1
 fi
-if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" ]]; then
+if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" || $backend == "arm64_tflite" || \
+      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" ]]; then
     # Run on arm64-fp16
-    echo "start Run arm64-fp16 ..."
+    echo "start Run ${backend}_fp16 ..."
     Run_arm64_fp16
     Run_arm64_fp16_status=$?
 #    Run_arm64_fp16_PID=$!
 #    sleep 1
 fi
 
-if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" ]]; then
+if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp32" || $backend == "arm64_tflite" || \
+      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" ]]; then
 #    wait ${Run_arm64_fp32_PID}
 #    Run_arm64_fp32_status=$?
     if [[ ${Run_arm64_fp32_status} != 0 ]];then
-        echo "Run_arm64_fp32 failed"
+        echo "Run ${backend}_fp32 failed"
         cat ${run_arm64_fp32_log_file}
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" ]]; then
+if [[ $backend == "all" || $backend == "arm64_cpu" || $backend == "arm64_fp16" || $backend == "arm64_tflite" || \
+      $backend == "arm64_tf" || $backend == "arm64_caffe" || $backend == "arm64_onnx" || $backend == "arm64_mindir" ]]; then
 #    wait ${Run_arm64_fp16_PID}
 #    Run_arm64_fp16_status=$?
     if [[ ${Run_arm64_fp16_status} != 0 ]];then
-        echo "Run_arm64_fp16 failed"
+        echo "Run ${backend}_fp16 failed"
         cat ${run_arm64_fp16_log_file}
         isFailed=1
     fi
