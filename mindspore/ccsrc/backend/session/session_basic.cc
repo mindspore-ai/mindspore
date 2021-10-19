@@ -2243,7 +2243,7 @@ void SessionBasic::RunGraphAsync(const GraphId &graph_id, const std::vector<tens
 
 void SessionBasic::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                 VectorRef *const outputs) {
-  MS_LOG(INFO) << "Run graph start, graph id: " << graph_id;
+  MS_LOG(INFO) << "Status record: start run graph. graph id: " << graph_id;
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // if none of child graph and no anf output exists
@@ -2254,7 +2254,7 @@ void SessionBasic::RunGraphImpl(const GraphId &graph_id, const std::vector<tenso
   PreExecuteGraph(kernel_graph, inputs, outputs);
   ExecuteGraph(kernel_graph);
   PostExecuteGraph(kernel_graph, inputs, outputs);
-  MS_LOG(INFO) << "Run graph end, graph id: " << graph_id;
+  MS_LOG(INFO) << "Status record: end run graph. graph id: " << graph_id;
 }
 
 void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,

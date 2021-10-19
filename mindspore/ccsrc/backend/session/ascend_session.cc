@@ -140,8 +140,10 @@ bool IsVMGraphTaskSink() {
 
 // Handle control flow by auto-monad.
 void HandleControlFlow(NotNull<KernelGraphPtr> graph) {
+  MS_LOG(INFO) << "Status record: start handle control flow. graph id: " << graph->graph_id();
   AscendAutoMonad auto_monad(graph);
   auto_monad.Run();
+  MS_LOG(INFO) << "Status record: end handle control flow. graph id: " << graph->graph_id();
 }
 
 void SetStreamDistinctionLabel(const KernelGraphPtr &graph, uint32_t label, bool is_override) {
@@ -367,8 +369,10 @@ void AddGraphToManager(const NotNull<KernelGraphPtr> graph, NotNull<FuncGraphMan
 void AscendSession::Init(uint32_t device_id) { InitExecutor(kAscendDevice, device_id); }
 
 void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
+  MS_LOG(INFO) << "Status record: start unify mindir. graph id: " << graph->graph_id();
   SessionBasic::UnifyMindIR(graph);
   opt::AscendUnifyMindIR(graph);
+  MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
 }
 
 void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
@@ -456,17 +460,17 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
 }
 
 GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
-  MS_LOG(INFO) << "Start";
+  MS_LOG(INFO) << "Status record: start compile graph.";
   // construct graph, if successfully, graph_sum_ + 1
   auto graph = ConstructKernelGraph(lst, outputs);
   auto graph_id = graph->graph_id();
   InitAllBucket(graph);
-  MS_LOG(INFO) << "Compile graph " << graph_id << " success";
+  MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
 }
 
 GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
-  MS_LOG(INFO) << "Start";
+  MS_LOG(INFO) << "Status record: start compile graph.";
   std::vector<KernelGraphPtr> all_graphs;
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   for (const auto &graph : all_graphs) {
@@ -480,6 +484,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
     AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(root_graph));
     root_graph->set_executable(false);
     InitRuntimeResource();
+    MS_LOG(INFO) << "Status record: end compile graph. graph id: " << root_graph->graph_id();
     return root_graph->graph_id();
   }
 
@@ -565,6 +570,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 #endif
   // return the root_graph id to backend
   auto graph_id = root_graph->graph_id();
+  MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
 }
 
@@ -1124,7 +1130,7 @@ void DumpInit(uint32_t device_id) {
 #endif
 
 void AscendSession::InitRuntimeResource() {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(INFO) << "Status record: start init runtime resource.";
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   if (!runtime_instance->Init()) {
@@ -1140,17 +1146,15 @@ void AscendSession::InitRuntimeResource() {
 #ifndef ENABLE_SECURITY
   DumpInit(rank_id_);
 #endif
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(INFO) << "Status record: end init runtime resource.";
 }
 
 void AscendSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(INFO) << "HardwareOptimize start!";
+  MS_EXCEPTION_IF_NULL(kernel_graph);
   opt::AscendBackendOptimization(kernel_graph);
   FinalOptimize(kernel_graph);
   GraphKernelOptimize(kernel_graph);
-  MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
-  MS_LOG(INFO) << "HardwareOptimize Finish!";
 }
 
 void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -1162,7 +1166,7 @@ void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kern
 }
 
 void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(INFO) << "Status record: start adjust kernel. graph id: " << kernel_graph->graph_id();
   opt::HideNopNode(kernel_graph.get());
   auto execution_order = kernel_graph->execution_order();
   AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
@@ -1180,7 +1184,7 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
     DumpIR("after_adjust_kernel.ir", kernel_graph);
   }
 #endif
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(INFO) << "Status record: end adjust kernel. graph id: " << kernel_graph->graph_id();
 }
 
 void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -1194,18 +1198,20 @@ void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel
 }
 
 void AscendSession::AssignStream(NotNull<KernelGraphPtr> kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(INFO) << "Status record: start assign stream, graph id: " << kernel_graph->graph_id();
   device::ascend::AscendStreamAssign::GetInstance().AssignStream(kernel_graph);
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(INFO) << "Status record: end assign stream, graph id: " << kernel_graph->graph_id();
 }
 
 void AscendSession::BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  MS_LOG(INFO) << "Status record: start build kernel, graph id: " << kernel_graph->graph_id();
   BuildKernel(kernel_graph->execution_order());
+  MS_LOG(INFO) << "Status record: end build kernel, graph id: " << kernel_graph->graph_id();
 }
 
 void AscendSession::BuildKernel(const std::vector<CNodePtr> &kernels) {
-  MS_LOG(INFO) << "Start!";
-  struct timeval start_time, end_time;
+  struct timeval start_time {};
+  struct timeval end_time {};
   (void)gettimeofday(&start_time, nullptr);
   auto ret = device::ascend::KernelBuild(kernels);
   if (!ret) {
@@ -1216,7 +1222,6 @@ void AscendSession::BuildKernel(const std::vector<CNodePtr> &kernels) {
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "KernelBuild run in  " << PRIu64 << " us " << cost;
-  MS_LOG(INFO) << "Finish!";
 }
 
 void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -1366,13 +1371,13 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
 }
 
 void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(INFO) << "Status record: start memory alloc. graph id: " << kernel_graph->graph_id();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   InitMemReuseExecOrder(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->AssignMemory(*kernel_graph);
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(INFO) << "Status record: end memory alloc. graph id: " << kernel_graph->graph_id();
 }
 
 void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors,
@@ -1406,7 +1411,7 @@ void AscendSession::RunOpMemoryClear(const KernelGraph *kernel_graph) const {
 }
 
 void AscendSession::Load(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(INFO) << "Start!";
+  MS_LOG(INFO) << "Status record: start load task. graph id: " << kernel_graph->graph_id();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
@@ -1417,7 +1422,7 @@ void AscendSession::Load(const std::shared_ptr<KernelGraph> &kernel_graph) const
   if (!ret_ok) {
     MS_LOG(EXCEPTION) << "Load task error!";
   }
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(INFO) << "Status record: end load task. graph id: " << kernel_graph->graph_id();
 }
 
 void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bool is_task) const {
@@ -1670,16 +1675,6 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
   memo->insert(graph.get());
   opt::AscendBackendIRFusionOptimization(graph);
   graph->SetExecOrderByDefault();
-#ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    std::string file_name = "select_kernel_before_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph.get());
-  }
-#endif
-
   for (auto &child_graph : graph->child_graph_order()) {
     IrFusionPass(NOT_NULL(child_graph.lock()), memo);
   }
@@ -1725,7 +1720,7 @@ void AscendSession::RecurseSelectKernelInfo(const KernelGraphPtr &graph, std::se
 }
 
 void AscendSession::SelectKernel(const KernelGraphPtr &graph) const {
-  MS_LOG(INFO) << "Start Select Kernel";
+  MS_LOG(INFO) << "Status record: start select kernel. graph id: " << graph->graph_id();
   raise_precision_count_ = 0;
   reduce_precision_count_ = 0;
   std::set<KernelGraphPtr> memo;
@@ -1742,7 +1737,7 @@ void AscendSession::SelectKernel(const KernelGraphPtr &graph) const {
                       << " node/nodes used reduce precision to selected the kernel!";
     }
   }
-  MS_LOG(INFO) << "Finish!";
+  MS_LOG(INFO) << "Status record: end select kernel. graph id: " << graph->graph_id();
 }
 
 void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
@@ -1751,14 +1746,10 @@ void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
     return;
   }
   memo->insert(graph.get());
-
-  MS_LOG(INFO) << "Start to do HardwareOptimize in graph: " << graph->graph_id();
-
   HardwareOptimize(graph.get());
   for (auto &child_graph : graph->child_graph_order()) {
     HardwareOptimize(NOT_NULL(child_graph.lock()), memo);
   }
-  MS_LOG(INFO) << "Finish doing HardwareOptimize in graph: " << graph->graph_id();
 }
 
 #ifdef ENABLE_DEBUGGER
@@ -1787,8 +1778,7 @@ void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,
     return;
   }
   memo->insert(graph.get());
-
-  MS_LOG(INFO) << "Start to assign static memory for parameter in graph: " << graph->graph_id();
+  MS_LOG(INFO) << "Status record: start assign static memory for parameter in graph. graph id: " << graph->graph_id();
   // assign static memory for parameters
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
@@ -1798,7 +1788,7 @@ void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,
   for (auto &child_graph : graph->child_graph_order()) {
     AssignStaticMemory(NOT_NULL(child_graph.lock()), memo);
   }
-  MS_LOG(INFO) << "Finish assigning static memory for parameter in graph: " << graph->graph_id();
+  MS_LOG(INFO) << "Status record: end assign static memory for parameter in graph. graph id: " << graph->graph_id();
 }
 
 void AscendSession::UpdateRefOutputMap(NotNull<KernelGraphPtr> graph,
