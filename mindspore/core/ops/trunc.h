@@ -26,12 +26,13 @@
 
 namespace mindspore {
 namespace ops {
-
 constexpr auto kNameTrunc = "Trunc";
-
+/// \brief Returns a new tensor with the truncated integer values of the elements of input.
 class Trunc : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Trunc() : PrimitiveC(kNameTrunc) { InitIOName({"input_x"}, {"output_y"}); }
+  /// \brief Destructor.
   ~Trunc() = default;
   MS_DECLARE_PARENT(Trunc, PrimitiveC);
 };

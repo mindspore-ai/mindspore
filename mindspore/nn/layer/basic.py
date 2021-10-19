@@ -975,10 +975,10 @@ class Unfold(Cell):
         def _check_tuple_or_list(arg_name, arg_val, prim_name):
             Validator.check_value_type(f"{arg_name}s", ksizes, [tuple, list], self.cls_name)
             if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[3] != 1:
-                raise ValueError(f"For '{prim_name}' the format of {arg_name}s should be [1, {arg_name}_row, "
+                raise ValueError(f"For '{prim_name}' the format of '{arg_name}s' should be [1, {arg_name}_row, "
                                  f"{arg_name}_col, 1], but got {arg_val}.")
             if not isinstance(arg_val[1], int) or not isinstance(arg_val[2], int) or arg_val[1] < 1 or arg_val[2] < 1:
-                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s should be "
+                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in '{arg_name}s' should be "
                                  f"an positive integer number, but got {arg_name}_row is {arg_val[1]}, "
                                  f"{arg_name}_col is {arg_val[2]}")
 
