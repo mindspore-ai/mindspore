@@ -120,7 +120,7 @@ class Vocab(cde.Vocab):
             Vocab, vocab built from the file.
 
         Examples:
-            >>> vocab = text.Vocab.from_file("/path/to/wordpiece/vocab/file", ",", None, ["<pad>", "<unk>"], True)
+            >>> vocab = text.Vocab.from_file("/path/to/simple/vocab/file", ",", None, ["<pad>", "<unk>"], True)
         """
         if vocab_size is None:
             vocab_size = -1
@@ -183,6 +183,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             SentencePieceVocab, vocab built from the dataset.
 
         Examples:
+            >>> from mindspore.dataset.text import SentencePieceModel
             >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
             >>> vocab = text.SentencePieceVocab.from_dataset(dataset, ["text"], 5000, 0.9995,
             ...                                              SentencePieceModel.UNIGRAM, {})
@@ -226,6 +227,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             SentencePieceVocab, vocab built from the file.
 
         Examples:
+            >>> from mindspore.dataset.text import SentencePieceModel
             >>> vocab = text.SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
             ...                                           SentencePieceModel.UNIGRAM, {})
         """
@@ -244,6 +246,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             filename(str): The name of the file.
 
         Examples:
+            >>> from mindspore.dataset.text import SentencePieceModel
             >>> vocab = text.SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
             ...                                           SentencePieceModel.UNIGRAM, {})
             >>> text.SentencePieceVocab.save_model(vocab, "./", "m.model")
@@ -263,9 +266,10 @@ def to_str(array, encoding='utf8'):
         numpy.ndarray, NumPy array of `str`.
 
     Examples:
-        >>> dataset = ds.TextFileDataset("/path/to/text_file_dataset_file", shuffle=False)
+        >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"]
+        >>> dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir, shuffle=False)
         >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        >>>     print(text.to_str(item["text"]))
+        ...     print(text.to_str(item["text"]))
     """
 
     if not isinstance(array, np.ndarray):

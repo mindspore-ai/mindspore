@@ -35,7 +35,8 @@ Status SharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
     }
 
     if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
-      RETURN_STATUS_UNEXPECTED("Sharpness: shape of input is not <H,W,C> or <H,W>, but got rank: " + input_cv->Rank());
+      RETURN_STATUS_UNEXPECTED("Sharpness: shape of input is not <H,W,C> or <H,W>, but got rank: " +
+                               std::to_string(input_cv->Rank()));
     }
 
     /// creating a smoothing filter. 1, 1, 1,

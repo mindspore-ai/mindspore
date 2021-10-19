@@ -417,22 +417,21 @@ class Dataset:
             BucketBatchByLengthDataset, dataset bucketed and batched by length.
 
         Examples:
-            >>> # Create a dataset where every 100 rows are combined into a batch
+            >>> # Create a dataset where certain counts rows are combined into a batch
             >>> # and drops the last incomplete batch if there is one.
             >>> import numpy as np
             >>> def generate_2_columns(n):
             ...     for i in range(n):
             ...         yield (np.array([i]), np.array([j for j in range(i + 1)]))
+            >>>
             >>> column_names = ["col1", "col2"]
-            >>> dataset = ds.GeneratorDataset(generate_2_columns(202), column_names)
+            >>> dataset = ds.GeneratorDataset(generate_2_columns(8), column_names)
             >>> bucket_boundaries = [5, 10]
-            >>> bucket_batch_sizes = [5, 1, 1]
+            >>> bucket_batch_sizes = [2, 1, 1]
             >>> element_length_function = (lambda col1, col2: max(len(col1), len(col2)))
-            >>> # Will pad col1 to shape [2, bucket_boundaries[i]] where i is the
+            >>> # Will pad col2 to shape [bucket_boundaries[i]] where i is the
             >>> # index of the bucket that is currently being batched.
-            >>> # Will pad col2 to a shape where each dimension is the longest in all
-            >>> # the elements currently being batched.
-            >>> pad_info = {"col1": ([2, None], -1)}
+            >>> pad_info = {"col2": ([None], -1)}
             >>> pad_to_bucket_boundary = True
             >>> dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
             ...                                          bucket_batch_sizes,
@@ -1145,7 +1144,7 @@ class Dataset:
         Returns:
             Vocab, vocab built from the dataset.
 
-        Example:
+        Examples:
             >>> import numpy as np
             >>>
             >>> def gen_corpus():
@@ -1213,7 +1212,7 @@ class Dataset:
         Returns:
             SentencePieceVocab, vocab built from the dataset.
 
-        Example:
+        Examples:
             >>> from mindspore.dataset.text import SentencePieceModel
             >>>
             >>> def gen_corpus():
@@ -1549,6 +1548,10 @@ class Dataset:
 
         Returns:
             list, list of column names in the dataset.
+
+        Examples:
+            >>> # dataset is an instance object of Dataset
+            >>> col_names = dataset.get_col_names()
         """
         if self._col_names is None:
             runtime_getter = self._init_tree_getters()
@@ -1563,6 +1566,10 @@ class Dataset:
 
         Returns:
             list, list of shapes of each column.
+
+        Examples:
+            >>> # dataset is an instance object of Dataset
+            >>> output_shapes = dataset.output_shapes()
         """
         if self.saved_output_shapes is None:
             runtime_getter = self._init_tree_getters()
@@ -1580,6 +1587,10 @@ class Dataset:
 
         Returns:
             list, list of data types.
+
+        Examples:
+            >>> # dataset is an instance object of Dataset
+            >>> output_types = dataset.output_types()
         """
         if self.saved_output_types is None:
             runtime_getter = self._init_tree_getters()
@@ -1597,6 +1608,10 @@ class Dataset:
 
         Returns:
             int, number of batches.
+
+        Examples:
+            >>> # dataset is an instance object of Dataset
+            >>> dataset_size = dataset.get_dataset_size()
         """
         if self.dataset_size is None:
             runtime_getter = self.__init_size_getter()
@@ -1612,6 +1627,16 @@ class Dataset:
         Args:
             columns (dict): A dict contains shape information of each column in dataset.
                 The value of shape[i] is :py:obj:`None` indicates that the data length of shape[i] is dynamic.
+
+        Examples:
+            >>> import numpy as np
+            >>>
+            >>> def generator1():
+            >>>     for i in range(1, 100):
+            >>>         yield np.ones((16, i, 83)), np.array(i)
+            >>>
+            >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
+            >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
         """
         if not isinstance(columns, dict):
             raise TypeError("Pass a dict to set dynamic shape, example: {\"data1\": [16, None, 256]}")
@@ -1624,6 +1649,17 @@ class Dataset:
 
         Returns:
             lists, min_shapes, max_shapes of source data.
+
+        Examples:
+            >>> import numpy as np
+            >>>
+            >>> def generator1():
+            >>>     for i in range(1, 100):
+            >>>         yield np.ones((16, i, 83)), np.array(i)
+            >>>
+            >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
+            >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
+            >>> min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
         """
         if self.saved_min_shapes is None or self.saved_max_shapes is None:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
@@ -1712,6 +1748,10 @@ class Dataset:
 
         Returns:
             int, number of classes.
+
+        Examples:
+            >>> # dataset is an instance object of Dataset
+            >>> num_classes = dataset.num_classes()
         """
         if self._num_classes is None:
             runtime_getter = self._init_tree_getters()
@@ -1771,6 +1811,10 @@ class Dataset:
 
         Returns:
             int, the number of data in a batch.
+
+        Examples:
+            >>> # dataset is an instance object of Dataset
+            >>> batch_size = dataset.get_batch_size()
         """
         if self._batch_size is None:
             runtime_getter = self._init_tree_getters()
@@ -1785,6 +1829,10 @@ class Dataset:
 
         Returns:
             int, the count of repeat.
+
+        Examples:
+            >>> # dataset is an instance object of Dataset
+            >>> repeat_count = dataset.get_repeat_count()
         """
         if self._repeat_count is None:
             runtime_getter = self._init_tree_getters()
@@ -1801,6 +1849,10 @@ class Dataset:
             dict, a str-to-int mapping from label name to index.
             dict, a str-to-list<int> mapping from label name to index for Coco ONLY. The second number
             in the list is used to indicate the super category.
+
+        Examples:
+            >>> # dataset is an instance object of Dataset
+            >>> class_indexing = dataset.get_class_indexing()
         """
         if self.children:
             return self.children[0].get_class_indexing()
@@ -1927,7 +1979,18 @@ class MappableDataset(SourceDataset):
         self.sampler = samplers.select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
 
     def add_sampler(self, new_sampler):
-        """ add a sampler """
+        """
+        Add a sampler for current dataset,.
+
+        Args:
+            new_sampler (Sampler): The sampler to be added as the parent sampler for current dataset.
+
+        Examples:
+            >>> # dataset is an instance object of Dataset
+            >>> # use a DistributedSampler instead
+            >>> new_sampler = ds.DistributedSampler(10, 2)
+            >>> dataset.add_sampler(new_sampler)
+        """
         # note: By adding a sampler, the sampled IDs will flow to new_sampler
         # after first passing through the current samplers attached to this dataset.
         self.dataset_size = None
@@ -4664,6 +4727,12 @@ class ManifestDataset(MappableDataset):
 
         Returns:
             dict, a str-to-int mapping from label name to index.
+
+        Examples:
+            >>> manifest_dataset_dir = "/path/to/manifest_dataset_file"
+            >>>
+            >>> dataset = ds.ManifestDataset(dataset_file=manifest_dataset_dir)
+            >>> class_indexing = dataset.get_class_indexing()
         """
         if self.class_indexing is None or not self.class_indexing:
             if self._class_indexing is None:
@@ -4984,7 +5053,7 @@ class Schema:
     Raises:
         RuntimeError: If schema file failed to load.
 
-    Example:
+    Examples:
         >>> from mindspore import dtype as mstype
         >>>
         >>> # Create schema; specify column name, mindspore.dtype and shape of the column
@@ -5037,7 +5106,7 @@ class Schema:
             RuntimeError: If column's name field is missing.
             RuntimeError: If column's type field is missing.
 
-        Example:
+        Examples:
             >>> schema = Schema()
             >>> columns1 = [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
             >>>             {'name': 'label', 'type': 'int8', 'shape': [1]}]
@@ -5361,6 +5430,12 @@ class VOCDataset(MappableDataset):
 
         Returns:
             dict, a str-to-int mapping from label name to index.
+
+        Examples:
+            >>> voc_dataset_dir = "/path/to/voc_dataset_directory"
+            >>>
+            >>> dataset = ds.VOCDataset(dataset_dir=voc_dataset_dir)
+            >>> class_indexing = dataset.get_class_indexing()
         """
         if self.task != "Detection":
             raise NotImplementedError("Only 'Detection' support get_class_indexing.")
@@ -5564,7 +5639,18 @@ class CocoDataset(MappableDataset):
         Get the class index.
 
         Returns:
-            dict, a str-to-list<int> mapping from label name to index
+            dict, a str-to-list<int> mapping from label name to index.
+
+        Examples:
+            >>> coco_dataset_dir = "/path/to/coco_dataset_directory/images"
+            >>> coco_annotation_file = "/path/to/coco_dataset_directory/annotation_file"
+            >>>
+            >>> # Read COCO data for Detection task
+            >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
+            ...                          annotation_file=coco_annotation_file,
+            ...                          task='Detection')
+            >>>
+            >>> class_indexing = dataset.get_class_indexing()
         """
         if self.task not in {"Detection", "Panoptic"}:
             raise NotImplementedError("Only 'Detection' and 'Panoptic' support get_class_indexing.")
