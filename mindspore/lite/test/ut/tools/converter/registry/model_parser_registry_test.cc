@@ -16,7 +16,7 @@
 
 #include <vector>
 #include "common/common_test.h"
-#include "ut/tools/converter/registry/model_parser_test.h"
+#include "ut/tools/converter/registry/parser/model_parser_test.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::converter::ConverterParameters;

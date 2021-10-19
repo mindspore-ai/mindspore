@@ -20,6 +20,7 @@ export LD_LIBRARY_PATH=./:${TENSORRT_PATH}/lib:${CUDA_HOME}/lib64:${LD_LIBRARY_P
 cp -r ${CUR_DIR}/ut/test_data/* ./
 cp -r ${CUR_DIR}/ut/src/runtime/kernel/arm/test_data/* ./
 cp -r ${CUR_DIR}/ut/tools/converter/parser/tflite/test_data/* ./
+cp -r ${CUR_DIR}/ut/tools/converter/registry/test_data/* ./
 # prepare data for dataset
 TEST_DATA_DIR=${CUR_DIR}/../../../tests/ut/data/dataset/
 cp -fr $TEST_DATA_DIR/testPK ./data
@@ -64,6 +65,7 @@ echo 'run common ut tests'
 ./lite-test --gtest_filter="TestResizeOpenCL*"
 ./lite-test --gtest_filter="TestSwishOpenCLCI.Fp32CI"
 ./lite-test --gtest_filter="ModelParserRegistryTest.TestRegistry"
+./lite-test --gtest_filter="NodeParserRegistryTest.TestRegistry"
 ./lite-test --gtest_filter="PassRegistryTest.TestRegistry"
 ./lite-test --gtest_filter="TestRegistry.TestAdd"
 ./lite-test --gtest_filter="TestRegistryCustomOp.TestCustomAdd"
