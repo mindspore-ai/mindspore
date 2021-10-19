@@ -71,7 +71,11 @@ class DeviceAddress : public mindspore::DeviceSync {
   explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
                          const KernelWithIndex &node_index)
       : ptr_(ptr), size_(size), format_(format), type_id_(type_id), node_index_(node_index) {}
+  explicit DeviceAddress(void *ptr, size_t size, const std::string &format, TypeId type_id,
+                         const std::string &device_name, uint32_t device_id)
+      : ptr_(ptr), size_(size), format_(format), type_id_(type_id), device_name_(device_name), device_id_(device_id) {}
   virtual ~DeviceAddress() { ptr_ = nullptr; }
+
   const void *GetPtr() const { return ptr_; }
   size_t GetSize() const { return size_; }
   void SetSize(size_t size) { size_ = size; }
@@ -112,6 +116,11 @@ class DeviceAddress : public mindspore::DeviceSync {
   ShapeVector host_shape_{};
   // {node, out_index}
   std::pair<AnfNodeWeakPtr, size_t> node_index_{AnfNodePtr(nullptr), 0};
+
+  // The key of device context.
+  std::string device_name_{""};
+  uint32_t device_id_{0};
+
   friend class KernelRuntime;
   friend class MemoryManager;
   friend class mindspore::device::ascend::tasksink::TaskGenerator;

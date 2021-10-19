@@ -17,11 +17,12 @@
 #include "runtime/device/gpu/gpu_device_address.h"
 #include <vector>
 #include <memory>
-#include "runtime/device/gpu/gpu_device_manager.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
-#include "runtime/device/gpu/gpu_memory_allocator.h"
 #include "ir/tensor.h"
+#include "runtime/device/gpu/gpu_device_manager.h"
+#include "runtime/device/gpu/gpu_memory_allocator.h"
+#include "runtime/hardware/gpu/gpu_device_context.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
@@ -80,6 +81,17 @@ bool GPUDeviceAddress::SyncHostToDevice(size_t size, const void *host_ptr) const
   if (size != size_) {
     // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
     MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
+  }
+
+  // Bind device by device name and device id on the current thread.
+  if (device_name_ != "") {
+    auto device_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+    auto gpu_device_context = dynamic_cast<GPUDeviceContext *>(device_context);
+    MS_EXCEPTION_IF_NULL(gpu_device_context);
+    if (!gpu_device_context->BindDeviceToCurrentThread()) {
+      MS_LOG(EXCEPTION) << "BindDeviceToCurrentThread failed.";
+    }
   }
 
   auto &stream = GPUDeviceManager::GetInstance().default_stream();
