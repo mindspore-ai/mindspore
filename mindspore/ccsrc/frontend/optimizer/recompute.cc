@@ -33,8 +33,8 @@ namespace {
 constexpr auto kGradientsFlag = "Gradients";
 const int64_t fusion_id_increasement_size = 2000;
 bool CanNotRecomputed(const CNodePtr &node) {
-  static std::unordered_set<PrimitivePtr> not_recomputed_op_list{prim::kPrimDropoutGenMask, prim::kPrimLoad,
-                                                                 prim::kPrimTupleGetItem};
+  static std::unordered_set<PrimitivePtr> not_recomputed_op_list{
+    prim::kPrimDropoutGenMask, prim::kPrimLoad, prim::kPrimTupleGetItem, prim::kPrimSend, prim::kPrimReceive};
 
   return std::any_of(not_recomputed_op_list.begin(), not_recomputed_op_list.end(),
                      [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
