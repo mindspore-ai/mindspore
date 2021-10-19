@@ -269,8 +269,8 @@ def get_algo_parameters(attr_key):
 
     Args:
         attr_key (str): The key of the attribute. The keys include: "fully_use_devices",
-        "elementwise_op_strategy_follow", "enable_algo_approxi", "algo_approxi_epsilon", "tensor_slice_align_enable",
-        "tensor_slice_align_size".
+            "elementwise_op_strategy_follow", "enable_algo_approxi", "algo_approxi_epsilon",
+            "tensor_slice_align_enable","tensor_slice_align_size".
 
     Returns:
         Return attribute value according to the key.
