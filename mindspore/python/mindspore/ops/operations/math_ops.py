@@ -3196,7 +3196,7 @@ class Xdivy(Primitive):
         """Initialize Xdivy."""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
-class Xlogy(_MathBinaryOp):
+class Xlogy(Primitive):
     r"""
     Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
     Returns zero when `x` is zero.
@@ -3237,9 +3237,12 @@ class Xlogy(_MathBinaryOp):
         >>> print(output)
         [-3.465736   0.        2.7725887]
     """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
 
-    def infer_dtype(self, x_dtype, y_dtype):
-        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, [mstype.float16, mstype.float32], self.name)
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Xlogy."""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 
 class Acosh(Primitive):
