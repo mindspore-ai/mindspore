@@ -22,12 +22,6 @@ from mindspore import log as logger
 from mindspore.mindrecord import FileWriter, FileReader, MindPage, SUCCESS
 
 FILES_NUM = 4
-CV_FILE_NAME = "./imagenet.mindrecord"
-CV2_FILE_NAME = "./imagenet_loop.mindrecord"
-CV3_FILE_NAME = "./imagenet_append.mindrecord"
-CV4_FILE_NAME = "/tmp/imagenet_append.mindrecord"
-NLP_FILE_NAME = "./aclImdb.mindrecord"
-
 
 def remove_one_file(file):
     if os.path.exists(file):
@@ -43,7 +37,7 @@ def remove_multi_files(file_name, file_num):
 
 
 def test_write_read_process():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     remove_one_file(mindrecord_file_name)
     remove_one_file(mindrecord_file_name + ".db")
 
@@ -96,7 +90,7 @@ def test_write_read_process():
 
 
 def test_write_read_process_with_define_index_field():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     remove_one_file(mindrecord_file_name)
     remove_one_file(mindrecord_file_name + ".db")
 
@@ -149,10 +143,16 @@ def test_write_read_process_with_define_index_field():
     remove_one_file("{}.db".format(mindrecord_file_name))
 
 
-def test_cv_file_writer_tutorial(remove_file=True):
-    """tutorial for cv dataset writer."""
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
-    writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+def test_cv_file_writer_tutorial(file_name=None, remove_file=True):
+    """
+    Feature: FileWriter
+    Description: tutorial for cv dataset writer
+    Expectation: generated mindrecord file
+    """
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(file_name, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
     data = get_data("../data/mindrecord/testImageNetData/")
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
@@ -161,13 +161,14 @@ def test_cv_file_writer_tutorial(remove_file=True):
     writer.write_raw_data(data)
     writer.commit()
     if remove_file:
-        remove_multi_files(CV_FILE_NAME, FILES_NUM)
+        remove_multi_files(file_name, FILES_NUM)
 
 
 def test_cv_file_append_writer():
     """tutorial for cv dataset append writer."""
-    remove_multi_files(CV3_FILE_NAME, 4)
-    writer = FileWriter(CV3_FILE_NAME, 4)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, 4)
+    writer = FileWriter(mindrecord_file_name, 4)
     data = get_data("../data/mindrecord/testImageNetData/")
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
@@ -175,10 +176,10 @@ def test_cv_file_append_writer():
     writer.add_index(["file_name", "label"])
     writer.write_raw_data(data[0:5])
     writer.commit()
-    write_append = FileWriter.open_for_append(CV3_FILE_NAME + "0")
+    write_append = FileWriter.open_for_append(mindrecord_file_name + "0")
     write_append.write_raw_data(data[5:10])
     write_append.commit()
-    reader = FileReader(CV3_FILE_NAME + "0")
+    reader = FileReader(mindrecord_file_name + "0")
     count = 0
     for index, x in enumerate(reader.get_next()):
         assert len(x) == 3
@@ -187,13 +188,14 @@ def test_cv_file_append_writer():
     assert count == 10
     reader.close()
 
-    remove_multi_files(CV3_FILE_NAME, 4)
+    remove_multi_files(mindrecord_file_name, 4)
 
 
 def test_cv_file_append_writer_absolute_path():
     """tutorial for cv dataset append writer."""
-    remove_multi_files(CV4_FILE_NAME, 4)
-    writer = FileWriter(CV4_FILE_NAME, 4)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, 4)
+    writer = FileWriter(mindrecord_file_name, 4)
     data = get_data("../data/mindrecord/testImageNetData/")
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
@@ -201,10 +203,10 @@ def test_cv_file_append_writer_absolute_path():
     writer.add_index(["file_name", "label"])
     writer.write_raw_data(data[0:5])
     writer.commit()
-    write_append = FileWriter.open_for_append(CV4_FILE_NAME + "0")
+    write_append = FileWriter.open_for_append(mindrecord_file_name + "0")
     write_append.write_raw_data(data[5:10])
     write_append.commit()
-    reader = FileReader(CV4_FILE_NAME + "0")
+    reader = FileReader(mindrecord_file_name + "0")
     count = 0
     for index, x in enumerate(reader.get_next()):
         assert len(x) == 3
@@ -213,13 +215,14 @@ def test_cv_file_append_writer_absolute_path():
     assert count == 10
     reader.close()
 
-    remove_multi_files(CV4_FILE_NAME, 4)
+    remove_multi_files(mindrecord_file_name, 4)
 
 
 def test_cv_file_writer_loop_and_read():
     """tutorial for cv dataset loop writer."""
-    remove_multi_files(CV2_FILE_NAME, FILES_NUM)
-    writer = FileWriter(CV2_FILE_NAME, FILES_NUM)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    writer = FileWriter(mindrecord_file_name, FILES_NUM)
     data = get_data("../data/mindrecord/testImageNetData/")
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
@@ -229,7 +232,7 @@ def test_cv_file_writer_loop_and_read():
         writer.write_raw_data([row])
     writer.commit()
 
-    reader = FileReader(CV2_FILE_NAME + "0")
+    reader = FileReader(mindrecord_file_name + "0")
     count = 0
     for index, x in enumerate(reader.get_next()):
         assert len(x) == 3
@@ -238,15 +241,16 @@ def test_cv_file_writer_loop_and_read():
     assert count == 10
     reader.close()
 
-    remove_multi_files(CV2_FILE_NAME, FILES_NUM)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 
 def test_cv_file_reader_tutorial():
     """tutorial for cv file reader."""
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
-    test_cv_file_writer_tutorial(remove_file=False)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
-    reader = FileReader(CV_FILE_NAME + "0")
+    reader = FileReader(mindrecord_file_name + "0")
     count = 0
     for index, x in enumerate(reader.get_next()):
         assert len(x) == 3
@@ -255,15 +259,16 @@ def test_cv_file_reader_tutorial():
     assert count == 10
     reader.close()
 
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 
 def test_cv_file_reader_file_list():
     """tutorial for cv file partial reader."""
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
-    test_cv_file_writer_tutorial(remove_file=False)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
-    reader = FileReader([CV_FILE_NAME + str(x) for x in range(FILES_NUM)])
+    reader = FileReader([mindrecord_file_name + str(x) for x in range(FILES_NUM)])
     count = 0
     for index, x in enumerate(reader.get_next()):
         assert len(x) == 3
@@ -271,15 +276,16 @@ def test_cv_file_reader_file_list():
         logger.info("#item{}: {}".format(index, x))
     assert count == 10
 
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 
 def test_cv_file_reader_partial_tutorial():
     """tutorial for cv file partial reader."""
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
-    test_cv_file_writer_tutorial(remove_file=False)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
-    reader = FileReader(CV_FILE_NAME + "0")
+    reader = FileReader(mindrecord_file_name + "0")
     count = 0
     for index, x in enumerate(reader.get_next()):
         assert len(x) == 3
@@ -289,15 +295,16 @@ def test_cv_file_reader_partial_tutorial():
             reader.close()
     assert count == 5
 
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 
 def test_cv_page_reader_tutorial():
     """tutorial for cv page reader."""
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
-    test_cv_file_writer_tutorial(remove_file=False)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
-    reader = MindPage(CV_FILE_NAME + "0")
+    reader = MindPage(mindrecord_file_name + "0")
     fields = reader.get_category_fields()
     assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
@@ -318,15 +325,16 @@ def test_cv_page_reader_tutorial():
     assert len(row1[0]) == 3
     assert row1[0]['label'] == 822
 
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 
 def test_cv_page_reader_tutorial_by_file_name():
     """tutorial for cv page reader."""
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
-    test_cv_file_writer_tutorial(remove_file=False)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
-    reader = MindPage(CV_FILE_NAME + "0")
+    reader = MindPage(mindrecord_file_name + "0")
     fields = reader.get_category_fields()
     assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
@@ -347,15 +355,16 @@ def test_cv_page_reader_tutorial_by_file_name():
     assert len(row1[0]) == 3
     assert row1[0]['label'] == 13
 
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 
 def test_cv_page_reader_tutorial_new_api():
     """tutorial for cv page reader."""
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
-    test_cv_file_writer_tutorial(remove_file=False)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_cv_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
-    reader = MindPage(CV_FILE_NAME + "0")
+    reader = MindPage(mindrecord_file_name + "0")
     fields = reader.candidate_fields
     assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
@@ -375,13 +384,19 @@ def test_cv_page_reader_tutorial_new_api():
     assert len(row1[0]) == 3
     assert row1[0]['label'] == 13
 
-    remove_multi_files(CV_FILE_NAME, FILES_NUM)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 
-def test_nlp_file_writer_tutorial(remove_file=True):
-    """tutorial for nlp file writer."""
-    remove_multi_files(NLP_FILE_NAME, FILES_NUM)
-    writer = FileWriter(NLP_FILE_NAME, FILES_NUM)
+def test_nlp_file_writer_tutorial(file_name=None, remove_file=True):
+    """
+    Feature: FileWriter
+    Description: tutorial for nlp file writer
+    Expectation: generated mindrecord file
+    """
+    if not file_name:
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(file_name, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
     data = list(get_nlp_data("../data/mindrecord/testAclImdbData/pos",
                              "../data/mindrecord/testAclImdbData/vocab.txt",
                              10))
@@ -399,14 +414,15 @@ def test_nlp_file_writer_tutorial(remove_file=True):
     writer.write_raw_data(data)
     writer.commit()
     if remove_file:
-        remove_multi_files(NLP_FILE_NAME, FILES_NUM)
+        remove_multi_files(file_name, FILES_NUM)
 
 
 def test_nlp_file_reader_tutorial():
     """tutorial for nlp file reader."""
-    remove_multi_files(NLP_FILE_NAME, FILES_NUM)
-    test_nlp_file_writer_tutorial(remove_file=False)
-    reader = FileReader(NLP_FILE_NAME + "0")
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_nlp_file_writer_tutorial(mindrecord_file_name, remove_file=False)
+    reader = FileReader(mindrecord_file_name + "0")
     count = 0
     for index, x in enumerate(reader.get_next()):
         assert len(x) == 6
@@ -414,15 +430,16 @@ def test_nlp_file_reader_tutorial():
         logger.info("#item{}: {}".format(index, x))
     assert count == 10
     reader.close()
-    remove_multi_files(NLP_FILE_NAME, FILES_NUM)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 
 def test_nlp_page_reader_tutorial():
     """tutorial for nlp page reader."""
-    remove_multi_files(NLP_FILE_NAME, FILES_NUM)
-    test_nlp_file_writer_tutorial(remove_file=False)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
+    test_nlp_file_writer_tutorial(mindrecord_file_name, remove_file=False)
 
-    reader = MindPage(NLP_FILE_NAME + "0")
+    reader = MindPage(mindrecord_file_name + "0")
     fields = reader.get_category_fields()
     assert fields == ['id', 'rating'], \
         'failed on getting candidate category fields.'
@@ -443,13 +460,14 @@ def test_nlp_page_reader_tutorial():
     assert len(row1[0]) == 6
     logger.info("row1[0]: {}".format(row1[0]))
 
-    remove_multi_files(NLP_FILE_NAME, FILES_NUM)
+    remove_multi_files(mindrecord_file_name, FILES_NUM)
 
 
 def test_cv_file_writer_shard_num_10():
     """test file writer when shard num equals 10."""
-    remove_multi_files(CV_FILE_NAME, 10)
-    writer = FileWriter(CV_FILE_NAME, 10)
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_multi_files(mindrecord_file_name, 10)
+    writer = FileWriter(mindrecord_file_name, 10)
     data = get_data("../data/mindrecord/testImageNetData/")
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
@@ -458,7 +476,7 @@ def test_cv_file_writer_shard_num_10():
     writer.write_raw_data(data)
     writer.commit()
 
-    remove_multi_files(CV_FILE_NAME, 10)
+    remove_multi_files(mindrecord_file_name, 10)
 
 
 def test_cv_file_writer_absolute_path():
@@ -479,32 +497,34 @@ def test_cv_file_writer_absolute_path():
 
 def test_cv_file_writer_without_data():
     """test cv file writer without data."""
-    remove_one_file(CV_FILE_NAME)
-    remove_one_file(CV_FILE_NAME + ".db")
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_one_file(mindrecord_file_name)
+    remove_one_file(mindrecord_file_name + ".db")
 
-    writer = FileWriter(CV_FILE_NAME, 1)
+    writer = FileWriter(mindrecord_file_name, 1)
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
     writer.add_schema(cv_schema_json, "img_schema")
     writer.add_index(["file_name", "label"])
     writer.commit()
-    reader = FileReader(CV_FILE_NAME)
+    reader = FileReader(mindrecord_file_name)
     count = 0
     for index, x in enumerate(reader.get_next()):
         count = count + 1
         logger.info("#item{}: {}".format(index, x))
     assert count == 0
     reader.close()
-    remove_one_file(CV_FILE_NAME)
-    remove_one_file(CV_FILE_NAME + ".db")
+    remove_one_file(mindrecord_file_name)
+    remove_one_file(mindrecord_file_name + ".db")
 
 
 def test_cv_file_writer_no_blob():
     """test cv file writer without blob data."""
-    remove_one_file(CV_FILE_NAME)
-    remove_one_file(CV_FILE_NAME + ".db")
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_one_file(mindrecord_file_name)
+    remove_one_file(mindrecord_file_name + ".db")
 
-    writer = FileWriter(CV_FILE_NAME, 1)
+    writer = FileWriter(mindrecord_file_name, 1)
     data = get_data("../data/mindrecord/testImageNetData/")
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}}
@@ -512,7 +532,7 @@ def test_cv_file_writer_no_blob():
     writer.add_index(["file_name", "label"])
     writer.write_raw_data(data)
     writer.commit()
-    reader = FileReader(CV_FILE_NAME)
+    reader = FileReader(mindrecord_file_name)
     count = 0
     for index, x in enumerate(reader.get_next()):
         count += 1
@@ -520,16 +540,17 @@ def test_cv_file_writer_no_blob():
         logger.info("#item{}: {}".format(index, x))
     assert count == 10
     reader.close()
-    remove_one_file(CV_FILE_NAME)
-    remove_one_file(CV_FILE_NAME + ".db")
+    remove_one_file(mindrecord_file_name)
+    remove_one_file(mindrecord_file_name + ".db")
 
 
 def test_cv_file_writer_no_raw():
     """test cv file writer without raw data."""
-    remove_one_file(NLP_FILE_NAME)
-    remove_one_file(NLP_FILE_NAME + ".db")
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_one_file(mindrecord_file_name)
+    remove_one_file(mindrecord_file_name + ".db")
 
-    writer = FileWriter(NLP_FILE_NAME)
+    writer = FileWriter(mindrecord_file_name)
     data = list(get_nlp_data("../data/mindrecord/testAclImdbData/pos",
                              "../data/mindrecord/testAclImdbData/vocab.txt",
                              10))
@@ -543,7 +564,7 @@ def test_cv_file_writer_no_raw():
     writer.add_schema(nlp_schema_json, "no_raw_schema")
     writer.write_raw_data(data)
     writer.commit()
-    reader = FileReader(NLP_FILE_NAME)
+    reader = FileReader(mindrecord_file_name)
     count = 0
     for index, x in enumerate(reader.get_next()):
         count += 1
@@ -551,12 +572,12 @@ def test_cv_file_writer_no_raw():
         logger.info("#item{}: {}".format(index, x))
     assert count == 10
     reader.close()
-    remove_one_file(NLP_FILE_NAME)
-    remove_one_file(NLP_FILE_NAME + ".db")
+    remove_one_file(mindrecord_file_name)
+    remove_one_file(mindrecord_file_name + ".db")
 
 
 def test_write_read_process_with_multi_bytes():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     remove_one_file(mindrecord_file_name)
     remove_one_file(mindrecord_file_name + ".db")
 
@@ -684,7 +705,7 @@ def test_write_read_process_with_multi_bytes():
 
 
 def test_write_read_process_with_multi_array():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     remove_one_file(mindrecord_file_name)
     remove_one_file(mindrecord_file_name + ".db")
 
@@ -831,7 +852,7 @@ def test_write_read_process_with_multi_array():
 
 
 def test_write_read_process_with_multi_bytes_and_array():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     remove_one_file(mindrecord_file_name)
     remove_one_file(mindrecord_file_name + ".db")
 
@@ -1021,7 +1042,7 @@ def test_write_read_process_with_multi_bytes_and_array():
 
 
 def test_write_read_process_without_ndarray_type():
-    mindrecord_file_name = "test.mindrecord"
+    mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     remove_one_file(mindrecord_file_name)
     remove_one_file(mindrecord_file_name + ".db")
 

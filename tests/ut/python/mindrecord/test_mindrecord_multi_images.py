@@ -22,7 +22,6 @@ from mindspore.mindrecord import FileReader, FileWriter
 MAP_FILE_NAME = "../data/mindrecord/testTwoImageData/cityscapes_train_19.txt"
 MAP_FILE_FAKE_NAME = "../data/mindrecord/testTwoImageData/cityscapes_train_19_fake.txt"
 DIFF_SHAPE_FILE_NAME = "../data/mindrecord/testImageNetData/cityscapes_train_19_fake.txt"
-CV_FILE_NAME = "../data/mindrecord/testTwoImageData/two_bytes.mindrecord"
 FILES_NUM = 1
 
 
@@ -39,33 +38,35 @@ def read(filename, fields_num=5):
 
 def test_write_two_images_mindrecord():
     """test two images to mindrecord"""
-    if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-        os.remove(CV_FILE_NAME + ".db")
-    if os.path.exists("{}".format(CV_FILE_NAME)):
-        os.remove(CV_FILE_NAME)
-    writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
+    writer = FileWriter(file_name, FILES_NUM)
     data = get_two_bytes_data(MAP_FILE_NAME)
     cv_schema_json = {"img_data": {"type": "bytes"}, "label_data": {"type": "bytes"}}
     writer.add_schema(cv_schema_json, "two_images_schema")
     writer.write_raw_data(data)
     writer.commit()
-    assert os.path.exists(CV_FILE_NAME)
-    assert os.path.exists(CV_FILE_NAME + ".db")
-    read(CV_FILE_NAME, 2)
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + ".db")
+    read(file_name, 2)
 
-    if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-        os.remove(CV_FILE_NAME + ".db")
-    if os.path.exists("{}".format(CV_FILE_NAME)):
-        os.remove(CV_FILE_NAME)
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
 
 
 def test_write_two_images_mindrecord_whole_field():
     """test two images to mindrecord"""
-    if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-        os.remove(CV_FILE_NAME + ".db")
-    if os.path.exists("{}".format(CV_FILE_NAME)):
-        os.remove(CV_FILE_NAME)
-    writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
+    writer = FileWriter(file_name, FILES_NUM)
     data = get_two_bytes_data(MAP_FILE_NAME)
     cv_schema_json = {"id": {"type": "int32"}, "file_name": {"type": "string"},
                       "label_name": {"type": "string"}, "img_data": {"type": "bytes"},
@@ -73,63 +74,66 @@ def test_write_two_images_mindrecord_whole_field():
     writer.add_schema(cv_schema_json, "two_images_schema")
     writer.write_raw_data(data)
     writer.commit()
-    assert os.path.exists(CV_FILE_NAME)
-    assert os.path.exists(CV_FILE_NAME + ".db")
-    read(CV_FILE_NAME, 5)
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + ".db")
+    read(file_name, 5)
 
-    if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-        os.remove(CV_FILE_NAME + ".db")
-    if os.path.exists("{}".format(CV_FILE_NAME)):
-        os.remove(CV_FILE_NAME)
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
 
 
 def test_write_two_diff_shape_images_mindrecord():
     """test two different shape images to mindrecord"""
-    if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-        os.remove(CV_FILE_NAME + ".db")
-    if os.path.exists("{}".format(CV_FILE_NAME)):
-        os.remove(CV_FILE_NAME)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
     bytes_num = 2
-    writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
     data = get_multi_bytes_data(DIFF_SHAPE_FILE_NAME, bytes_num)
     cv_schema_json = {"image_{}".format(i): {"type": "bytes"}
                       for i in range(bytes_num)}
     writer.add_schema(cv_schema_json, "two_images_schema")
     writer.write_raw_data(data)
     writer.commit()
-    assert os.path.exists(CV_FILE_NAME)
-    assert os.path.exists(CV_FILE_NAME + ".db")
-    read(CV_FILE_NAME, bytes_num)
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + ".db")
+    read(file_name, bytes_num)
 
 
 def test_write_multi_images_mindrecord():
     """test multiple images to mindrecord"""
-    if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-        os.remove(CV_FILE_NAME + ".db")
-    if os.path.exists("{}".format(CV_FILE_NAME)):
-        os.remove(CV_FILE_NAME)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
     bytes_num = 10
-    writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
     data = get_multi_bytes_data(MAP_FILE_FAKE_NAME, bytes_num)
     cv_schema_json = {"image_{}".format(i): {"type": "bytes"}
                       for i in range(bytes_num)}
     writer.add_schema(cv_schema_json, "multi_images_schema")
     writer.write_raw_data(data)
     writer.commit()
-    assert os.path.exists(CV_FILE_NAME)
-    assert os.path.exists(CV_FILE_NAME + ".db")
-    read(CV_FILE_NAME, bytes_num)
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + ".db")
+    read(file_name, bytes_num)
 
 
 def test_write_two_images_and_array_mindrecord():
     """test two image images and array to mindrecord"""
-    if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-        os.remove(CV_FILE_NAME + ".db")
-    if os.path.exists("{}".format(CV_FILE_NAME)):
-        os.remove(CV_FILE_NAME)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
 
     bytes_num = 2
-    writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+    writer = FileWriter(file_name, FILES_NUM)
     data = get_multi_bytes_data(DIFF_SHAPE_FILE_NAME, bytes_num)
 
     for index, _ in enumerate(data):
@@ -143,11 +147,11 @@ def test_write_two_images_and_array_mindrecord():
     writer.add_schema(cv_schema_json, "two_images_schema")
     writer.write_raw_data(data)
     writer.commit()
-    assert os.path.exists(CV_FILE_NAME)
-    assert os.path.exists(CV_FILE_NAME + ".db")
-    read(CV_FILE_NAME, bytes_num + 2)
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + ".db")
+    read(file_name, bytes_num + 2)
 
-    if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-        os.remove(CV_FILE_NAME + ".db")
-    if os.path.exists("{}".format(CV_FILE_NAME)):
-        os.remove(CV_FILE_NAME)
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
