@@ -17,6 +17,7 @@
 #include <string>
 #include <memory>
 #include "ops/primitive_c.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::lite {
 namespace {
@@ -28,11 +29,14 @@ constexpr int kBuildInputFlagFive = 5;
 STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
                                    const std::string &attr_name, int flag) {
   MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr");
   if (!opt::CheckInputs(cnode)) {
     MS_LOG(ERROR) << "input is invalid.";
     return lite::RET_INPUT_TENSOR_ERROR;
   }
+  MS_CHECK_TRUE_MSG(cnode->input(0) != nullptr, RET_ERROR, "cnode->input(0) is nullptr");
   auto primitive_c = GetValueNode<PrimitiveCPtr>(cnode->input(0));
+  MS_CHECK_TRUE_MSG(primitive_c != nullptr, RET_ERROR, "primitive_c is nullptr");
   auto value_ptr = primitive_c->GetAttr(attr_name);
   if (value_ptr == nullptr) {
     MS_LOG(DEBUG) << "there is no attr :" << attr_name;
@@ -46,9 +50,10 @@ STATUS InputAdjust::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePt
     MS_LOG(ERROR) << "input num is invalid.";
     return lite::RET_ERROR;
   }
-  AnfNodePtr param_node;
+  AnfNodePtr param_node = nullptr;
   switch (flag) {
     case 1: {
+      MS_CHECK_TRUE_MSG(!opt::CastToInt(value_ptr).empty(), RET_ERROR, "value is empty");
       auto value_data = opt::CastToInt(value_ptr).front();
       param_node =
         opt::BuildIntValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);

@@ -42,6 +42,8 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bo
     MS_ASSERT(input_min_ptr != nullptr);
     auto input_max_ptr = input_max->cast<tensor::TensorPtr>();
     MS_ASSERT(input_max_ptr != nullptr);
+    MS_CHECK_TRUE_MSG(input_min_ptr->data_c() != nullptr, RET_ERROR, "input_min_ptr->data_c() is nullptr");
+    MS_CHECK_TRUE_MSG(input_max_ptr->data_c() != nullptr, RET_ERROR, "input_max_ptr->data_c() is nullptr");
     auto *min_buf = static_cast<float *>(input_min_ptr->data_c());
     auto *max_buf = static_cast<float *>(input_max_ptr->data_c());
     quant_param.min = *min_buf;
@@ -61,6 +63,8 @@ int ConvertInputQuantParam(const PrimitivePtr &prim, bool input_narrow_range, bo
     MS_ASSERT(filter_min_ptr != nullptr);
     auto filter_max_ptr = filter_max->cast<tensor::TensorPtr>();
     MS_ASSERT(filter_max_ptr != nullptr);
+    MS_CHECK_TRUE_MSG(filter_min_ptr->data_c() != nullptr, RET_ERROR, "filter_min_ptr->data_c() is nullptr");
+    MS_CHECK_TRUE_MSG(filter_max_ptr->data_c() != nullptr, RET_ERROR, "filter_max_ptr->data_c() is nullptr");
     auto *min_buf = static_cast<float *>(filter_min_ptr->data_c());
     auto *max_buf = static_cast<float *>(filter_max_ptr->data_c());
     quant_param.min = FLT_MAX;
@@ -94,6 +98,8 @@ int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t
     auto outputMaxPtr = outputMax->cast<tensor::TensorPtr>();
     MS_ASSERT(outputMinPtr != nullptr);
     MS_ASSERT(outputMaxPtr != nullptr);
+    MS_CHECK_TRUE_MSG(outputMinPtr->data_c() != nullptr, RET_ERROR, "outputMinPtr->data_c() is nullptr");
+    MS_CHECK_TRUE_MSG(outputMaxPtr->data_c() != nullptr, RET_ERROR, "outputMaxPtr->data_c() is nullptr");
     auto *minBuf = static_cast<float *>(outputMinPtr->data_c());
     auto *maxBuf = static_cast<float *>(outputMaxPtr->data_c());
     quant_param.min = *minBuf;
@@ -108,11 +114,14 @@ int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t
 }
 
 int GetNarrowRange(const PrimitivePtr &prim, const std::string &narrow_range_str, bool *const narrow_range_param) {
+  MS_CHECK_TRUE_MSG(narrow_range_param != nullptr, RET_ERROR, "narrow_range_param is nullptr");
   auto narrow_range = prim->GetAttr(narrow_range_str);
   if (narrow_range != nullptr) {
     if (utils::isa<tensor::TensorPtr>(narrow_range)) {
       auto narrow_range_tensor = narrow_range->cast<tensor::TensorPtr>();
       MS_ASSERT(narrow_range_tensor != nullptr);
+      MS_CHECK_TRUE_MSG(narrow_range_tensor->data_c() != nullptr, RET_ERROR,
+                        "narrow_range_tensor->data_c() is nullptr");
       *narrow_range_param = *reinterpret_cast<bool *>(narrow_range_tensor->data_c());
     } else if (utils::isa<ImmTraits<bool>::type>(narrow_range)) {
       *narrow_range_param = GetValue<bool>(narrow_range);
@@ -125,11 +134,13 @@ int GetNarrowRange(const PrimitivePtr &prim, const std::string &narrow_range_str
 }
 
 int GetNumBits(const PrimitivePtr &prim, const std::string &num_bits_str, int *const num_bits_param) {
+  MS_CHECK_TRUE_MSG(num_bits_param != nullptr, RET_ERROR, "num_bits_param is nullptr");
   auto num_bits = prim->GetAttr(num_bits_str);
   if (num_bits != nullptr) {
     if (utils::isa<tensor::TensorPtr>(num_bits)) {
       auto num_bits_tensor = num_bits->cast<tensor::TensorPtr>();
       MS_ASSERT(num_bits_tensor != nullptr);
+      MS_CHECK_TRUE_MSG(num_bits_tensor->data_c() != nullptr, RET_ERROR, "num_bits_tensor->data_c() is nullptr");
       *num_bits_param = *reinterpret_cast<int64_t *>(num_bits_tensor->data_c());
     } else if (utils::isa<ImmTraits<int64_t>::type>(num_bits)) {
       *num_bits_param = GetValue<int64_t>(num_bits);
@@ -167,6 +178,7 @@ int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &i
 }  // namespace
 
 int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
+  MS_CHECK_TRUE_MSG(anf_node != nullptr, RET_ERROR, "anf_node is nullptr");
   if (!utils::isa<ValueNodePtr>(anf_node)) {
     return lite::RET_NO_CHANGE;
   }
@@ -192,10 +204,12 @@ int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
       auto shape_vector = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
       auto dest_tensor_info = std::make_shared<tensor::Tensor>(kNumberTypeInt32, shape_vector);
       MS_CHECK_TRUE_MSG(dest_tensor_info != nullptr, RET_NULL_PTR, "dest_tensor_info is nullptr.");
+      MS_CHECK_TRUE_MSG(dest_tensor_info->data_c() != nullptr, RET_ERROR, "dest_tensor_info->data_c() is nullptr");
       auto *dest_data_buf = reinterpret_cast<int32_t *>(dest_tensor_info->data_c());
       MS_CHECK_TRUE_MSG(dest_data_buf != nullptr, RET_NULL_PTR, "dest_data_buf is nullptr.");
       auto src_tensor_info = value->cast<tensor::TensorPtr>();
       MS_CHECK_TRUE_MSG(src_tensor_info != nullptr, RET_NULL_PTR, "src_tensor_info is nullptr.");
+      MS_CHECK_TRUE_MSG(src_tensor_info->data_c() != nullptr, RET_ERROR, "src_tensor_info->data_c() is nullptr");
       auto *src_data_buf = reinterpret_cast<int64_t *>(src_tensor_info->data_c());
       MS_CHECK_TRUE_MSG(dest_tensor_info->ElementsNum() == src_tensor_info->ElementsNum(), RET_ERROR,
                         "Sizes don't match.");
@@ -212,6 +226,7 @@ int MindirAdjust::ValueNodeInt64Convert(AnfNodePtr anf_node) {
 }
 
 int MindirAdjust::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
+  MS_CHECK_TRUE_MSG(anf_node != nullptr, RET_ERROR, "anf_node is nullptr");
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(INFO) << "only cnode need to convert primitive.";
     return lite::RET_NO_CHANGE;

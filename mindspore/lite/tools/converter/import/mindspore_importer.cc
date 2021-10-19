@@ -108,6 +108,7 @@ STATUS MindsporeImporter::ProcessDependCnode(const CNodePtr &cnode) {
     return RET_NO_CHANGE;
   }
   auto depend_input = cnode->input(1);
+  MS_CHECK_TRUE_MSG(depend_input != nullptr, RET_ERROR, "depend_input is nullptr");
   if (utils::isa<CNodePtr>(depend_input)) {
     auto depend_input_cnode = utils::cast<CNodePtr>(depend_input);
     auto status = ProcessDependCnode(depend_input_cnode);
@@ -136,6 +137,7 @@ STATUS MindsporeImporter::GetFuncGraphOutputName(const CNodePtr &return_node) {
       if (opt::CheckPrimitiveType(output_node, prim::kPrimMakeTuple)) {
         for (size_t j = 0; j < output_cnode->inputs().size(); j++) {
           auto tuple_input = output_cnode->input(j);
+          MS_CHECK_TRUE_MSG(tuple_input != nullptr, RET_ERROR, "tuple_input is nullptr");
           if (!utils::isa<CNodePtr>(tuple_input)) {
             continue;
           }
@@ -163,6 +165,7 @@ STATUS MindsporeImporter::GetFuncGraphOutputName(const CNodePtr &return_node) {
 }
 
 STATUS MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr");
   std::map<AnfNodePtr, bool> graph_input_map;
   for (auto &input : func_graph->get_inputs()) {
     graph_input_map[input] = false;

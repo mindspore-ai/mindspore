@@ -27,16 +27,41 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRandomStandardNormal = "RandomStandardNormal";
+/// \brief RandomStandardNormal defined RandomStandardNormal operator prototype of lite.
 class MS_CORE_API RandomStandardNormal : public PrimitiveC {
  public:
+  /// \brief Constructor.
   RandomStandardNormal() : PrimitiveC(kNameRandomStandardNormal) {}
+
+  /// \brief Destructor.
   ~RandomStandardNormal() = default;
+
   MS_DECLARE_PARENT(RandomStandardNormal, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] seed Define random seed.
+  /// \param[in] seed2 Define random seed2.
   void Init(int64_t seed, int64_t seed2);
 
+  /// \brief Method to set seed attributes.
+  ///
+  /// \param[in] seed Define random seed.
   void set_seed(int64_t seed);
+
+  /// \brief Method to set seed2 attributes.
+  ///
+  /// \param[in] seed2 Define random seed2.
   void set_seed2(int64_t seed2);
+
+  /// \brief Method to get seed attributes.
+  ///
+  /// \return seed attributes.
   int64_t get_seed() const;
+
+  /// \brief Method to get seed2 attributes.
+  ///
+  /// \return seed2 attributes.
   int64_t get_seed2() const;
 };
 using PrimRandomStandardNormalPtr = std::shared_ptr<RandomStandardNormal>;

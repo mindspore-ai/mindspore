@@ -228,6 +228,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
     MS_LOG(ERROR) << " shape tensor is nullptr.";
     return RET_ERROR;
   }
+  MS_CHECK_TRUE_MSG(shape_tensor->data_c() != nullptr, RET_ERROR, "shape_tensor->data_c() is nullptr.");
   auto shape_data = static_cast<float *>(shape_tensor->data_c());
   std::vector<float> new_shape;
   MS_CHECK_TRUE_MSG(!shape_tensor->shape().empty(), RET_NULL_PTR, "out of range.");
@@ -265,9 +266,13 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
 }
 
 STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr.");
+  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr.");
   auto gather_name = cnode->fullname_with_scope() + "_gather";
   auto gather_input = cnode->input(kNumResizeInputShape);
+  MS_CHECK_TRUE_MSG(gather_input != nullptr, RET_ERROR, "gather_input is nullptr.");
   auto abstract = cnode->input(kNumResizeInputShape)->abstract();
+  MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "abstract is nullptr.");
   std::vector<int> gather_indices = {0, 2, 3, 1};  // NCHW to NHWC
   auto gather_cnode = opt::GenGatherNode(func_graph, gather_input, gather_indices, gather_name);
   if (gather_cnode == nullptr) {
@@ -293,6 +298,8 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &
 }
 
 STATUS UnifyFormatToNHWC::ResizeNodeProcess(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, RET_ERROR, "func_graph is nullptr.");
+  MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr.");
   if (fmk_type_ != converter::kFmkTypeOnnx) {
     return RET_OK;
   }

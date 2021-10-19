@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include "src/common/log_adapter.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace registry {
@@ -40,11 +41,17 @@ void RegPass(const std::string &pass_name, const PassBasePtr &pass) {
 PassRegistry::PassRegistry(const std::string &pass_name, const PassBasePtr &pass) { RegPass(pass_name, pass); }
 
 PassRegistry::PassRegistry(PassPosition position, const std::vector<std::string> &names) {
+  if (position != POSITION_END && position != POSITION_BEGIN) {
+    MS_LOG(ERROR) << "position must be POSITION_END or POSITION_BEGIN";
+    return;
+  }
   std::unique_lock<std::mutex> lock(pass_mutex);
   external_assigned_passes[position] = names;
 }
 
 std::vector<std::string> PassRegistry::GetOuterScheduleTask(PassPosition position) {
+  MS_CHECK_TRUE_MSG(position == POSITION_END || position == POSITION_BEGIN, {},
+                    "position must be POSITION_END or POSITION_BEGIN.");
   return external_assigned_passes[position];
 }
 

@@ -34,6 +34,9 @@ constexpr int64_t kNumDim2 = 2;
 }  // namespace
 CNodePtr Conv1DInOutAdjust::NewUnsqueezeOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr input_node,
                                                const std::vector<int64_t> &axis) {
+  MS_CHECK_TRUE_MSG(func_graph != nullptr, nullptr, "func_graph is nullptr");
+  MS_CHECK_TRUE_MSG(input_node != nullptr, nullptr, "input_node is nullptr");
+  MS_CHECK_TRUE_MSG(!axis.empty(), nullptr, "axis is empty");
   auto unsqueeze_prim = std::make_shared<ops::Unsqueeze>();
   MS_CHECK_TRUE_MSG(unsqueeze_prim != nullptr, nullptr, "create unsqueeze failed.");
   unsqueeze_prim->set_attr("axis", MakeValue(axis));
@@ -143,7 +146,7 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
       auto unsqueeze_weight = NewUnsqueezeOpNode(func_graph, weight_node, axis);
       MS_CHECK_TRUE_MSG(unsqueeze_weight != nullptr, false, "New unsqueeze node failed.");
       manager->Replace(input_node, unsqueeze_weight);
-      return RET_OK;
+      return true;
     } else {
       auto status = ExpandFilterShape(weight_node, schema_format);
       MS_CHECK_TRUE_MSG(status == RET_OK, false, "Expand filter shape failed.");
