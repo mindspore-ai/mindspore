@@ -110,11 +110,18 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_def.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_utils.cc
         )
 
-if(MSLITE_ENABLE_RUNTIME_CONVERT)
+if(MSLITE_ENABLE_RUNTIME_GLOG)
     add_definitions(-DPRIMITIVE_WRITEABLE)
     add_definitions(-DUSE_GLOG)
+    string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+    string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif()
+
+if(MSLITE_ENABLE_RUNTIME_CONVERT)
     add_definitions(-DRUNTIME_CONVERT)
 
     file(GLOB RUNTIME_CONVERT_SRC
@@ -294,6 +301,9 @@ if(MSVC)
     set_target_properties(mindspore-lite_static PROPERTIES PREFIX lib)
 endif()
 
+target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
+target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
+
 if(MSLITE_ENABLE_MINDRT)
     target_link_libraries(mindspore-lite mindrt_mid)
     target_link_libraries(mindspore-lite_static mindrt_mid)
@@ -314,16 +324,14 @@ endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     add_subdirectory(runtime/kernel/opencl)
-    target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite opencl_kernel_mid)
+    target_link_libraries(mindspore-lite_static opencl_kernel_mid)
 elseif(MSLITE_GPU_BACKEND STREQUAL cuda)
     add_subdirectory(runtime/kernel/cuda)
-    target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
-else()
-    target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite cuda_kernel_mid)
+    target_link_libraries(mindspore-lite_static cuda_kernel_mid)
 endif()
+
 if(SUPPORT_NPU)
     add_subdirectory(delegate/npu)
     target_link_libraries(mindspore-lite npu_kernel_mid)
@@ -365,19 +373,22 @@ if(PLATFORM_ARM)
     endif()
 endif()
 
+if(MSLITE_ENABLE_RUNTIME_GLOG)
+    target_link_libraries(mindspore-lite mindspore::glog mindspore_core)
+    target_link_libraries(mindspore-lite_static mindspore::glog mindspore_core)
+endif()
+
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
     target_link_libraries(mindspore-lite
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            mindspore_core config_parser_mid mslite_converter_plugin
-            -Wl,--whole-archive -Wl,--no-whole-archive ${SECUREC_LIBRARY}
-            mindspore::json mindspore::eigen mindspore::protobuf mindspore::glog)
+            config_parser_mid mslite_converter_plugin
+            mindspore::protobuf ${SECUREC_LIBRARY})
     target_link_libraries(mindspore-lite_static
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
-            mindspore_core config_parser_mid mslite_converter_plugin
-            -Wl,--whole-archive -Wl,--no-whole-archive ${SECUREC_LIBRARY}
-            mindspore::json mindspore::eigen mindspore::protobuf mindspore::glog)
+            config_parser_mid mslite_converter_plugin
+            mindspore::protobuf ${SECUREC_LIBRARY})
 endif()
 
 if(DEFINED ARCHS)
