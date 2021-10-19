@@ -66,7 +66,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
-    check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset
+    check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -3462,6 +3462,147 @@ class MnistDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.MnistNode(self.dataset_dir, self.usage, self.sampler)
+
+
+class Places365Dataset(MappableDataset):
+    """
+    A source dataset for reading and parsing the Places365 dataset.
+
+    The generated dataset has two columns :py:obj:`[image, label]`.
+    The tensor of column :py:obj:`image` is of the uint8 type.
+    The tensor of column :py:obj:`label` is a scalar of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        usage (str, optional): Usage of this dataset, can be `train-standard`, `train-challenge` or `val`
+            (default=None, will be set to 'train-standard').
+        small (bool, optional): Use 256 * 256 images (True) or high resolution images (False) (default=False).
+        decode (bool, optional): Decode the images after reading (default=True).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+        ValueError: If usage is not in ["train-standard", "train-challenge", "val"].
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive.
+          The table below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> place365_dataset_dir = "/path/to/place365_dataset_directory"
+        >>>
+        >>> # Read 3 samples from Places365 dataset
+        >>> dataset = ds.Places365Dataset(dataset_dir=place365_dataset_dir, usage='train-standard',
+        ...                               small=True, decode=True, num_samples=3)
+        >>>
+        >>> # In places365 dataset, each dictionary has keys "image" and "label".
+
+    About Places365 dataset:
+
+    Convolutional neural networks (CNNs) trained on the Places2 Database can be used for scene recognition as well as
+    generic deep scene features for visual recognition.
+
+    The author releases the data of Places365-Standard and the data of Places365-Challenge to the public.
+    Places365-Standard is the core set of Places2 Database, which has been used to train the Places365-CNNs. The author
+    will add other kinds of annotation on the Places365-Standard in the future. Places365-Challenge is the competition
+    set of Places2 Database, which has 6.2 million extra images compared to the Places365-Standard.
+    The Places365-Challenge will be used for the Places Challenge 2016.
+
+    You can unzip the original Places365 dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └─├── categories_places365.txt
+            ├── places365_train-standard.txt
+            ├── places365_train-challenge.txt
+            ├── val_large/
+            │    ├── Places365_val_00000001.jpg
+            │    ├── Places365_val_00000002.jpg
+            │    ├── Places365_val_00000003.jpg
+            │    ├── ...
+            ├── val_256/
+            │    ├── ...
+            ├── data_large_standard/
+            │    ├── ...
+            ├── data_256_standard/
+            │    ├── ...
+            ├── data_large_challenge/
+            │    ├── ...
+            ├── data_256_challenge /
+            │    ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        article{zhou2017places,
+            title={Places: A 10 million Image Database for Scene Recognition},
+            author={Zhou, Bolei and Lapedriza, Agata and Khosla, Aditya and Oliva, Aude and Torralba, Antonio},
+            journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+            year={2017},
+            publisher={IEEE}
+        }
+    """
+
+    @check_places365_dataset
+    def __init__(self, dataset_dir, usage=None, small=True, decode=False, num_samples=None, num_parallel_workers=None,
+                 shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = os.path.abspath(dataset_dir)
+        self.usage = replace_none(usage, "train-standard")
+        self.small = small
+        self.decode = decode
+
+    def parse(self, children=None):
+        return cde.Places365Node(self.dataset_dir, self.usage, self.small, self.decode, self.sampler)
 
 
 class QMnistDataset(MappableDataset):

@@ -46,6 +46,7 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/qmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/sbu_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
@@ -275,9 +276,21 @@ PYBIND_REGISTER(MnistNode, 2, ([](const py::module *m) {
                     }));
                 }));
 
+PYBIND_REGISTER(Places365Node, 2, ([](const py::module *m) {
+                  (void)py::class_<Places365Node, DatasetNode, std::shared_ptr<Places365Node>>(
+                    *m, "Places365Node", "to create a Places365Node")
+                    .def(py::init(
+                      [](std::string dataset_dir, std::string usage, bool small, bool decode, py::handle sampler) {
+                        auto places365 = std::make_shared<Places365Node>(dataset_dir, usage, small, decode,
+                                                                         toSamplerObj(sampler), nullptr);
+                        THROW_IF_ERROR(places365->ValidateParams());
+                        return places365;
+                      }));
+                }));
+
 PYBIND_REGISTER(QMnistNode, 2, ([](const py::module *m) {
                   (void)py::class_<QMnistNode, DatasetNode, std::shared_ptr<QMnistNode>>(*m, "QMnistNode",
-                                                                                         "to create an QMnistNode")
+                                                                                         "to create a QMnistNode")
                     .def(py::init([](std::string dataset_dir, std::string usage, bool compat, py::handle sampler) {
                       auto qmnist =
                         std::make_shared<QMnistNode>(dataset_dir, usage, compat, toSamplerObj(sampler), nullptr);

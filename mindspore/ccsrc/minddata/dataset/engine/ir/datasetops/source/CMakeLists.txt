@@ -19,6 +19,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         manifest_node.cc
         minddata_node.cc
         mnist_node.cc
+        places365_node.cc
         qmnist_node.cc
         random_node.cc
         sbu_node.cc
