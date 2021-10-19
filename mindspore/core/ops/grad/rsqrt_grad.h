@@ -16,7 +16,11 @@
 
 #ifndef MINDSPORE_CORE_OPS_GRAD_RSQRT_GRAD_H_
 #define MINDSPORE_CORE_OPS_GRAD_RSQRT_GRAD_H_
+#include <vector>
+#include <memory>
+#include <string>
 #include "ops/primitive_c.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
@@ -30,6 +34,9 @@ class MS_CORE_API RsqrtGrad : public PrimitiveC {
   MS_DECLARE_PARENT(RsqrtGrad, PrimitiveC);
   void Init() const {}
 };
+AbstractBasePtr RsqrtGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const std::vector<AbstractBasePtr> &input_args);
+using PrimRsqrtGradPtr = std::shared_ptr<RsqrtGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
