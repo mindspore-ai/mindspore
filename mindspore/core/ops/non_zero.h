@@ -24,9 +24,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNonZero = "NonZero";
+/// \brief Calculate tensor not zero index, by default.
+/// Refer to Python API @ref mindspore.ops.NonZero for more details.
 class MS_CORE_API NonZero : public PrimitiveC {
  public:
+  /// \brief Constructor.
   NonZero() : PrimitiveC(kNameNonZero) {}
+  /// \brief Destructor.
   ~NonZero() = default;
   MS_DECLARE_PARENT(NonZero, PrimitiveC);
 };
