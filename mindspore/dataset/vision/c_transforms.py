@@ -50,7 +50,7 @@ import mindspore._c_dataengine as cde
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode
 from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, \
     check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
-    check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, \
+    check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, check_alpha, \
     check_uniform_augment_cpp, check_convert_color, check_random_resize_crop, check_random_auto_contrast, \
     check_random_adjust_sharpness, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
@@ -1194,6 +1194,28 @@ class RandomInvert(ImageTensorOperation):
 
     def parse(self):
         return cde.RandomInvertOperation(self.prob)
+
+
+class RandomLighting(ImageTensorOperation):
+    """
+    Add AlexNet-style PCA-based noise to an image. The eigenvalue and eigenvectors for Alexnet's PCA noise is
+    calculated from the imagenet dataset.
+
+    Args:
+        alpha (float, optional): Intensity of the image (default=0.05).
+
+    Examples:
+        >>> transforms_list = [c_vision.Decode(), c_vision.RandomLighting(0.1)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_alpha
+    def __init__(self, alpha=0.05):
+        self.alpha = alpha
+
+    def parse(self):
+        return cde.RandomLightingOperation(self.alpha)
 
 
 class RandomPosterize(ImageTensorOperation):

@@ -208,6 +208,23 @@ TEST_F(MindDataTestExecute, TestFrequencyMasking) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: RandomLighting
+/// Description: test RandomLighting Op when alpha=0.1
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestExecute, TestRandomLighting) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomLighting.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto random_lighting_op = vision::RandomLighting(0.1);
+
+  auto transform = Execute({decode, random_lighting_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}
+
 TEST_F(MindDataTestExecute, TestTimeMasking) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTimeMasking.";
   std::shared_ptr<Tensor> input_tensor_;

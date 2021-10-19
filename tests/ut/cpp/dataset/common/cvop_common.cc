@@ -158,6 +158,10 @@ void CVOpCommon::CheckImageShapeAndData(const std::shared_ptr<Tensor> &output_te
       expect_image_path = dir_path + "imagefolder/apple_expect_random_sharpness.jpg";
       actual_image_path = dir_path + "imagefolder/apple_actual_random_sharpness.jpg";
       break;
+    case kRandomLighting:
+      expect_image_path = dir_path + "imagefolder/apple_expect_random_lighting.jpg";
+      actual_image_path = dir_path + "imagefolder/apple_actual_random_lighting.jpg";
+      break;
     case kRandomPosterize:
       expect_image_path = dir_path + "imagefolder/apple_expect_random_posterize.jpg";
       actual_image_path = dir_path + "imagefolder/apple_actual_random_posterize.jpg";

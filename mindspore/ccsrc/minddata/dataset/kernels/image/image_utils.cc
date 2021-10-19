@@ -1327,6 +1327,54 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
   }
 }
 
+Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rnd_r, float rnd_g,
+                      float rnd_b) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    cv::Mat input_img = input_cv->mat();
+
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] RandomLighting: load image failed.");
+    }
+
+    if (input_cv->Rank() != DEFAULT_IMAGE_RANK || input_cv->shape()[CHANNEL_INDEX] != DEFAULT_IMAGE_CHANNELS) {
+      RETURN_STATUS_UNEXPECTED(
+        "RandomLighting: input tensor is not in shape of <H,W,C> or channel is not 3, got rank: " +
+        std::to_string(input_cv->Rank()) + ", and channel: " + std::to_string(input_cv->shape()[CHANNEL_INDEX]));
+    }
+    auto input_type = input->type();
+    CHECK_FAIL_RETURN_UNEXPECTED(input_type != DataType::DE_UINT32 && input_type != DataType::DE_UINT64 &&
+                                   input_type != DataType::DE_INT64 && input_type != DataType::DE_STRING,
+                                 "RandomLighting: invalid tensor type of uint32, int64, uint64 or string.");
+
+    std::vector<std::vector<float>> eig = {{55.46 * -0.5675, 4.794 * 0.7192, 1.148 * 0.4009},
+                                           {55.46 * -0.5808, 4.794 * -0.0045, 1.148 * -0.8140},
+                                           {55.46 * -0.5836, 4.794 * -0.6948, 1.148 * 0.4203}};
+
+    float pca_r = eig[0][0] * rnd_r + eig[0][1] * rnd_g + eig[0][2] * rnd_b;
+    float pca_g = eig[1][0] * rnd_r + eig[1][1] * rnd_g + eig[1][2] * rnd_b;
+    float pca_b = eig[2][0] * rnd_r + eig[2][1] * rnd_g + eig[2][2] * rnd_b;
+    for (int row = 0; row < input_img.rows; row++) {
+      for (int col = 0; col < input_img.cols; col++) {
+        float r = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[0]);
+        float g = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[1]);
+        float b = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[2]);
+        input_img.at<cv::Vec3b>(row, col)[0] = cv::saturate_cast<uchar>(r + pca_r);
+        input_img.at<cv::Vec3b>(row, col)[1] = cv::saturate_cast<uchar>(g + pca_g);
+        input_img.at<cv::Vec3b>(row, col)[2] = cv::saturate_cast<uchar>(b + pca_b);
+      }
+    }
+
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_img, input_cv->Rank(), &output_cv));
+
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("RandomLighting: " + std::string(e.what()));
+  }
+}
+
 Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));

@@ -26,6 +26,74 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 // Tests for vision C++ API R to Z TensorTransform Operations (in alphabetical order)
 
+/// Feature: RandomLighting
+/// Description: test RandomLighting Op on pipeline when alpha=0.1
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestPipeline, TestRandomLightingPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomLightingPipeline.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(0, 1));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  auto image = row["image"];
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> randomlighting(new mindspore::dataset::vision::RandomLighting(0.1));
+  // Note: No need to check for output after calling API class constructor
+
+  // Convert to the same type
+  std::shared_ptr<TensorTransform> type_cast(new transforms::TypeCast(mindspore::DataType::kNumberTypeUInt8));
+  // Note: No need to check for output after calling API class constructor
+
+  ds = ds->Map({randomlighting, type_cast}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
+  EXPECT_NE(iter1, nullptr);
+
+  // Iterate the dataset and get each row1
+  std::unordered_map<std::string, mindspore::MSTensor> row1;
+  ASSERT_OK(iter1->GetNextRow(&row1));
+
+  auto image1 = row1["image"];
+
+  // Manually terminate the pipeline
+  iter1->Stop();
+}
+
+/// Feature: RandomLighting
+/// Description: test param check for RandomLighting Op
+/// Expectation: get nullptr when params are invalid
+TEST_F(MindDataTestPipeline, TestRandomLightingParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomLightingParamCheck.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: negative alpha
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_lighting_op(new mindspore::dataset::vision::RandomLighting(-0.1));
+  auto ds2 = ds->Map({random_lighting_op});
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid value of alpha
+  EXPECT_EQ(iter2, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestRescaleSucess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleSucess1.";
   // Create an ImageFolder Dataset
@@ -341,7 +409,7 @@ TEST_F(MindDataTestPipeline, TestRGB2BGR) {
   uint64_t i = 0;
   while (row1.size() != 0) {
     i++;
-    auto image =row1["image"];
+    auto image = row1["image"];
     iter1->GetNextRow(&row1);
     iter2->GetNextRow(&row2);
   }

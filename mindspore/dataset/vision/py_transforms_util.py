@@ -680,6 +680,42 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
     return img
 
 
+def random_lighting(img, alpha):
+    """
+    Add AlexNet-style PCA-based noise to an image.
+
+    Args:
+        img (PIL Image): Image to be added AlexNet-style PCA-based noise.
+        alpha (float, optional): Intensity of the image.
+
+    Returns:
+        PIL Image, image with noise added.
+    """
+    if not is_pil(img):
+        raise TypeError(augment_error_message.format(type(img)))
+    if img.mode != 'RGB':
+        img = img.convert("RGB")
+
+    alpha_r = np.random.normal(loc=0.0, scale=alpha)
+    alpha_g = np.random.normal(loc=0.0, scale=alpha)
+    alpha_b = np.random.normal(loc=0.0, scale=alpha)
+    table = np.array([
+        [55.46*-0.5675, 4.794*0.7192, 1.148 * 0.4009],
+        [55.46*-0.5808, 4.794*-0.0045, 1.148 * -0.8140],
+        [55.46*-0.5836, 4.794*-0.6948, 1.148 * 0.4203]
+    ])
+    pca_r = table[0][0] * alpha_r + table[0][1] * alpha_g + table[0][2] * alpha_b
+    pca_g = table[1][0] * alpha_r + table[1][1] * alpha_g + table[1][2] * alpha_b
+    pca_b = table[2][0] * alpha_r + table[2][1] * alpha_g + table[2][2] * alpha_b
+    img_arr = np.array(img).astype(np.float64)
+    img_arr[:, :, 0] += pca_r
+    img_arr[:, :, 1] += pca_g
+    img_arr[:, :, 2] += pca_b
+    img_arr = np.uint8(np.minimum(np.maximum(img_arr, 0), 255))
+    img = Image.fromarray(img_arr)
+    return img
+
+
 def random_rotation(img, degrees, resample, expand, center, fill_value):
     """
     Rotate the input PIL image by a random angle.

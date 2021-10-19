@@ -48,6 +48,7 @@
 #include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_with_bbox_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_invert_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_lighting_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_posterize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_resized_crop_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_resized_crop_with_bbox_ir.h"
@@ -421,6 +422,16 @@ PYBIND_REGISTER(
         return random_invert;
       }));
   }));
+
+PYBIND_REGISTER(RandomLightingOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::RandomLightingOperation, TensorOperation,
+                                   std::shared_ptr<vision::RandomLightingOperation>>(*m, "RandomLightingOperation")
+                    .def(py::init([](float alpha) {
+                      auto random_lighting = std::make_shared<vision::RandomLightingOperation>(alpha);
+                      THROW_IF_ERROR(random_lighting->ValidateParams());
+                      return random_lighting;
+                    }));
+                }));
 
 PYBIND_REGISTER(RandomPosterizeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomPosterizeOperation, TensorOperation,

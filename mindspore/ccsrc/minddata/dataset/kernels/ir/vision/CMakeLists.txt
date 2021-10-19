@@ -33,6 +33,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         random_horizontal_flip_ir.cc
         random_horizontal_flip_with_bbox_ir.cc
         random_invert_ir.cc
+        random_lighting_ir.cc
         random_posterize_ir.cc
         random_resized_crop_ir.cc
         random_resized_crop_with_bbox_ir.cc
