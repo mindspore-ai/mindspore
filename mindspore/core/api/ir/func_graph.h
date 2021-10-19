@@ -26,7 +26,7 @@
 
 namespace mindspore::api {
 
-/// \brief FuncGraph defined interface for a function graph.
+/// \brief FuncGraph defines interface for a function graph.
 class MS_CORE_API FuncGraph {
  public:
   /// \brief Constructor of FuncGraph.
@@ -35,12 +35,12 @@ class MS_CORE_API FuncGraph {
   /// \brief Destructor of FuncGraph.
   virtual ~FuncGraph() = default;
 
-  /// \brief Gets the input parameters.
+  /// \brief Get the input parameters.
   ///
   /// \return Input parameters of this graph.
   virtual const std::vector<AnfNodePtr> get_inputs() const = 0;
 
-  /// \brief Gets all parameters.
+  /// \brief Get all parameters.
   ///
   /// \return All parameters of this graph.
   virtual const std::vector<AnfNodePtr> &parameters() const = 0;
@@ -55,23 +55,23 @@ class MS_CORE_API FuncGraph {
   /// \return The new added parameter.
   virtual ParameterPtr add_parameter() = 0;
 
-  /// \brief Gets the output node.
+  /// \brief Get the output node.
   ///
   /// \return The output node, nullptr if output not set.
   virtual AnfNodePtr output() const = 0;
 
-  /// \brief Gets the return CNode.
+  /// \brief Get the return CNode.
   ///
   /// \return The return CNode, nullptr if no return node.
   virtual CNodePtr get_return() const = 0;
 
-  /// \brief Sets the output node.
+  /// \brief Set the output node.
   ///
   /// \param[in] value The output node to be set.
   /// \param[in] force_new_ret If true, a new return node is always created.
   virtual void set_output(const AnfNodePtr &value, bool force_new_ret = false) = 0;
 
-  /// \brief Sets the return node.
+  /// \brief Set the return node.
   ///
   /// \param[in] cnode The return CNode to be set.
   virtual void set_return(const CNodePtr &cnode) = 0;
@@ -91,7 +91,7 @@ class MS_CORE_API FuncGraph {
   /// \return The created primitive CNode.
   virtual CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs) = 0;
 
-  /// \brief Gets all nodes in this graph.
+  /// \brief Get all nodes in this graph.
   ///
   /// \return All nodes in this graph.
   virtual const AnfNodeSet &nodes() const = 0;
@@ -103,20 +103,20 @@ class MS_CORE_API FuncGraph {
   /// \return True if the attribute with the given key is set, false otherwise.
   virtual bool has_attr(const std::string &key) const = 0;
 
-  /// \brief Gets an attribute value by its key.
+  /// \brief Get an attribute value by its key.
   ///
   /// \param[in] key The attribute key (name).
   ///
   /// \return The attribute value for the given key, nullptr if attribute not found.
   virtual ValuePtr get_attr(const std::string &key) const = 0;
 
-  /// \brief Sets an attribute value.
+  /// \brief Set an attribute value.
   ///
   /// \param[in] key The attribute key (name).
   /// \param[in] value The attribute value.
   virtual void set_attr(const std::string &key, const ValuePtr &value) = 0;
 
-  /// \brief Gets the manager for this graph.
+  /// \brief Get the manager for this graph.
   ///
   /// \return The manager of this graph, nullptr if not set.
   virtual FuncGraphManagerPtr get_manager() const = 0;
@@ -140,7 +140,7 @@ class MS_CORE_API FuncGraph {
   /// \return The created value node that holds the given function graph.
   static AnfNodePtr MakeValueNode(const FuncGraphPtr &func_graph);
 
-  /// \brief Gets the function graph from the input node.
+  /// \brief Get the function graph from the input node.
   ///
   /// \param[in] input The input node.
   //

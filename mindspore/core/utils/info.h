@@ -64,7 +64,7 @@ class Location {
 class TraceContext;
 using TraceContextPtr = std::shared_ptr<TraceContext>;
 
-/// \brief TraceManager defined interface for debug trace management.
+/// \brief TraceManager defines interface for debug trace management.
 class MS_CORE_API TraceManager {
  public:
   /// \brief Constructor of TraceManager.
@@ -73,7 +73,7 @@ class MS_CORE_API TraceManager {
   /// \brief Destructor of TraceManager.
   ~TraceManager() = default;
 
-  /// \brief Gets current trace context.
+  /// \brief Get current trace context.
   ///
   /// \return The current trace context.
   static TraceContextPtr CurrentContextInfo();
@@ -106,7 +106,7 @@ class MS_CORE_API TraceManager {
   /// \brief Clear debug info for parse or resolve.
   static void ClearParseOrResolveDebugInfo();
 
-  /// \brief Gets debug info for parse or resolve.
+  /// \brief Get debug info for parse or resolve.
   ///
   /// \return The debug info for parse or resolve.
   static DebugInfoPtr GetParseOrResolveDebugInfo();
@@ -162,7 +162,7 @@ class TraceContext {
   std::string func_name_;
 };
 
-/// \brief DebugInfo defined information for debug trace.
+/// \brief DebugInfo defines information for debug trace.
 class MS_CORE_API DebugInfo : public Base {
  public:
   /// \brief Construct a default DebugInfo.
@@ -183,62 +183,62 @@ class MS_CORE_API DebugInfo : public Base {
 
   MS_DECLARE_PARENT(DebugInfo, Base);
 
-  /// \brief Gets the debug id.
+  /// \brief Get the debug id.
   ///
   /// \return The debug id.
   int64_t debug_id();
 
-  /// \brief Gets the unique id.
+  /// \brief Get the unique id.
   ///
   /// \return The unique id.
   int64_t unique_id() const { return unique_id_; }
 
-  /// \brief Gets the unique id through copy.
+  /// \brief Get the unique id through copy.
   ///
   /// \return The unique id through copy.
   int64_t unique_id_through_copy() const;
 
-  /// \brief Gets the id as a string.
+  /// \brief Get the id as a string.
   ///
   /// \return The string id.
   std::string get_id() { return std::to_string(debug_id()); }
 
-  /// \brief Sets the trace info.
+  /// \brief Set the trace info.
   ///
   /// \param[in] trace_info The trace info to be set.
   void set_trace_info(const TraceInfoPtr &trace_info) { trace_info_ = trace_info; }
 
-  /// \brief Gets the trace info.
+  /// \brief Get the trace info.
   ///
   /// \return The trace info.
   TraceInfoPtr trace_info() const { return trace_info_; }
 
-  /// \brief Sets the location.
+  /// \brief Set the location.
   ///
   /// \param[in] loc The location to be set.
   void set_location(const LocationPtr &loc) { location_ = loc; }
 
-  /// \brief Gets the location.
+  /// \brief Get the location.
   ///
   /// \return The location.
   virtual LocationPtr location() { return location_; }
 
-  /// \brief Gets the name.
+  /// \brief Get the name.
   ///
   /// \return The name of the DebugInfo.
   std::string name() { return name_; }
 
-  /// \brief Sets the name.
+  /// \brief Set the name.
   ///
   /// \param[in] name The name to be set.
   void set_name(const std::string &name) { name_ = name; }
 
-  /// \brief Gets the debug name.
+  /// \brief Get the debug name.
   ///
   /// \return The debug name of the DebugInfo.
   virtual std::string debug_name();
 
-  /// \brief Gets the python function name that this DebugInfo belongs to.
+  /// \brief Get the python function name that this DebugInfo belongs to.
   ///
   /// \return The python function name that this DebugInfo belongs to.
   virtual std::string get_python_func_belonged() { return ""; }
@@ -270,7 +270,7 @@ class MS_CORE_API DebugInfo : public Base {
   std::string name_;
 };
 
-/// \brief NodeDebugInfo defined debug information for a node.
+/// \brief NodeDebugInfo defines debug information for a node.
 class MS_CORE_API NodeDebugInfo : public DebugInfo {
  public:
   /// \brief Construct a default NodeDebugInfo.
@@ -296,12 +296,12 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
 
   std::string debug_name() override;
 
-  /// \brief Sets the node.
+  /// \brief Set the node.
   ///
   /// \param[in] node The node to be set.
   void set_node(const std::shared_ptr<AnfNode> &node) { node_ = AnfNodeWeakPtr(node); }
 
-  /// \brief Gets the node.
+  /// \brief Get the node.
   ///
   /// \return The node.
   std::shared_ptr<AnfNode> get_node() const { return node_.lock(); }

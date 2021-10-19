@@ -37,7 +37,7 @@ using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 using AnfNodeIndexSet = CompactSet<std::pair<AnfNodePtr, int>>;
 using NodeUsersMap = std::unordered_map<AnfNodePtr, AnfNodeIndexSet, PointerHash<AnfNodePtr>>;
 
-/// \brief FuncGraphManager defined interface for function graph management.
+/// \brief FuncGraphManager defines interface for function graph management.
 class MS_CORE_API FuncGraphManager {
  public:
   /// \brief Constructor of FuncGraphManager.
@@ -67,7 +67,7 @@ class MS_CORE_API FuncGraphManager {
   /// \param[in] value The input node of the edge.
   virtual void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value) = 0;
 
-  /// \brief Gets the node to users map.
+  /// \brief Get the node to users map.
   ///
   /// \return The node to users map.
   virtual const NodeUsersMap &node_users() const = 0;
