@@ -345,6 +345,34 @@ Status TimeStretch(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
   return Status::OK();
 }
 
+Status Dct(std::shared_ptr<Tensor> *output, int n_mfcc, int n_mels, NormMode norm) {
+  TensorShape dct_shape({n_mels, n_mfcc});
+  Tensor::CreateEmpty(dct_shape, DataType(DataType::DE_FLOAT32), output);
+  auto iter = (*output)->begin<float>();
+  float sqrt_2 = 1 / sqrt(2);
+  float sqrt_2_n_mels = sqrt(2.0 / n_mels);
+  for (int i = 0; i < n_mels; i++) {
+    for (int j = 0; j < n_mfcc; j++) {
+      // calculate temp:
+      // 1. while norm = None, use 2*cos(PI*(i+0.5)*j/n_mels)
+      // 2. while norm = Ortho, divide the first row by sqrt(2),
+      //    then using sqrt(2.0 / n_mels)*cos(PI*(i+0.5)*j/n_mels)
+      float temp = PI / n_mels * (i + 0.5) * j;
+      temp = cos(temp);
+      if (norm == NormMode::kOrtho) {
+        if (j == 0) {
+          temp *= sqrt_2;
+        }
+        temp *= sqrt_2_n_mels;
+      } else {
+        temp *= 2;
+      }
+      (*iter++) = temp;
+    }
+  }
+  return Status::OK();
+}
+
 Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_param,
                            float mask_value, int axis, std::mt19937 rnd) {
   std::uniform_int_distribution<int32_t> mask_width_value(0, mask_param);

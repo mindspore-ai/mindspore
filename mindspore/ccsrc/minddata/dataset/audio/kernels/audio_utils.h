@@ -305,6 +305,13 @@ Status RandomMaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr
 Status MaskAlongAxis(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t mask_width,
                      int32_t mask_start, float mask_value, int32_t axis);
 
+/// \brief Create a DCT transformation matrix with shape (n_mels, n_mfcc), normalized depending on norm.
+/// \param n_mfcc: Number of mfc coefficients to retain, the value must be greater than 0.
+/// \param n_mels: Number of mel filterbanks, the value must be greater than 0.
+/// \param norm: Norm to use, can be NormMode::kNone or NormMode::kOrtho.
+/// \return Status code.
+Status Dct(std::shared_ptr<Tensor> *output, int32_t n_mfcc, int32_t n_mels, NormMode norm);
+
 /// \brief Compute the norm of complex tensor input.
 /// \param power Power of the norm description (optional).
 /// \param input Tensor shape of <..., complex=2>.
