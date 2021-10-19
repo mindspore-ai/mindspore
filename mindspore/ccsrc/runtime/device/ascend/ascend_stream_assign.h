@@ -68,6 +68,7 @@ class AscendStreamAssign {
   void Reset();
   CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
   CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
+  void AssignStreamForNonTaskSink(const NotNull<KernelGraphPtr> &graph_ptr);
   void CheckResourceAssign(const NotNull<KernelGraphPtr> &graph_ptr);
   void CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_ptr);
   void CheckEventAssign(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -164,6 +165,7 @@ class AscendStreamAssign {
   std::set<uint32_t> processed_streams_{};
   std::vector<uint32_t> need_first_active_streams_{};
   std::set<CNodeKey> independent_targets_;
+  std::map<std::string, uint32_t> group_stream_id_map_;
 
   // key:group name, value:key1:graph id, value1:stream id
   std::map<std::string, std::map<uint32_t, std::set<uint32_t>>> group_hcom_graph_map_;
