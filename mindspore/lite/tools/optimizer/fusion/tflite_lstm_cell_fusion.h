@@ -36,9 +36,8 @@ class TfliteLstmCellFusion : public PatternProcessPass {
   static EquivPtr MatchGraph(const FuncGraphPtr &func_graph, const PrimitiveVarMapPtr &primitive_vars,
                              const AnfNodePtr &pattern);
 
-  static EquivPtr CheckSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &pattern,
-                                const PrimitiveVarMapPtr &primitive_vars, const AnfNodePtr &anf_sub_graph,
-                                size_t cnode_num, size_t all_node_num);
+  static EquivPtr CheckSubGraph(const AnfNodePtr &pattern, const PrimitiveVarMapPtr &primitive_vars,
+                                const AnfNodePtr &anf_sub_graph, size_t cnode_num, size_t all_node_num);
 
   static lite::STATUS SetAbstractTuple(const CNodePtr &cnode, int output_num);
 
@@ -68,8 +67,7 @@ class TfliteLstmCellFusion : public PatternProcessPass {
 
  private:
   CNodePtr GetWhileCnode(const AnfNodePtr &cnode) const;
-  bool CheckBodyGraph(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const CNodePtr &while_cnode,
-                      float *zoneout_cell, float *zoneout_hidden) const;
+  bool CheckBodyGraph(const EquivPtr &equiv, float *zoneout_cell, float *zoneout_hidden) const;
 
   static bool CheckReferencedOutputs(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode);
 

@@ -65,11 +65,11 @@ class OperatorInfo {
   int CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t output_num, std::vector<AnfNodePtr> *outputs);
 
   AnfNodePtr CreateConcateNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
-                               int32_t concat_dim, size_t input_nodes_num, bool trans_format);
+                               int32_t concat_dim, size_t input_nodes_num);
   AnfNodePtr CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes, int32_t reduce_dim,
-                              size_t input_nodes_num, bool trans_format);
+                              size_t input_nodes_num);
 
-  std::shared_ptr<abstract::AbstractTensor> CreateFakeAbstractTensor();
+  std::shared_ptr<abstract::AbstractTensor> CreateFakeAbstractTensor() const;
 
   virtual AnfNodePtr CreateOutputsOfSplit(const CNodePtr &input_node, size_t input_index,
                                           std::vector<AnfNodePtr> *split_outputs, size_t split_dim, size_t split_num,

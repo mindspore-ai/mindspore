@@ -64,7 +64,7 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
     Spliter::GetInstance()->graph_node_outputs();
   auto finder = graph_node_outputs.find(pre_cnode->fullname_with_scope());
   if (finder == graph_node_outputs.end()) {
-    return RET_OK;
+    return RET_ERROR;
   }
   if (finder->second.size() > 1) {
     return RET_OK;
@@ -89,7 +89,7 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
   // get inputs node
   auto it = graph_node_outputs.find(cnode->fullname_with_scope());
   if (it == graph_node_outputs.end()) {
-    return RET_OK;
+    return RET_ERROR;
   }
   int out_num = it->second.size();
   if (out_num != prim->get_number_split()) {
@@ -101,14 +101,14 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
     auto tmp = it->second[i];
     auto tmp_cnode = tmp->cast<CNodePtr>();
     if (tmp_cnode == nullptr) {
-      return RET_OK;
+      return RET_ERROR;
     }
     if (!CheckPrimitiveType(tmp_cnode, prim::kPrimTupleGetItem)) {
       return RET_OK;
     }
     auto tmp_it = graph_node_outputs.find(tmp_cnode->fullname_with_scope());
     if (tmp_it == graph_node_outputs.end()) {
-      return RET_OK;
+      return RET_ERROR;
     }
     if (tmp_it->second.size() != 1) {
       return RET_OK;
@@ -116,7 +116,7 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
 
     auto next = tmp_it->second[0];
     auto next_cnode = next->cast<CNodePtr>();
-
+    MS_ASSERT(next_cnode != nullptr);
     inputs_node.push_back(next_cnode);
   }
   // replace inputs

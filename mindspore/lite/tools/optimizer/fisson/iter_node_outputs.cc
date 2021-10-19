@@ -30,6 +30,7 @@ AnfNodePtr IterNodeOutputs::Run(const FuncGraphPtr &func_graph, const AnfNodePtr
   auto inputs = cnode->inputs();
 
   for (const auto &input_node : inputs) {
+    MS_ASSERT(input_node != nullptr);
     if (!utils::isa<CNodePtr>(input_node)) {
       continue;
     }

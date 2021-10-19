@@ -329,7 +329,7 @@ bool TfliteLstmCellFusion::CheckReferencedOutputs(const FuncGraphPtr &func_graph
   auto manager = func_graph->manager();
   if (manager == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr";
-    return RET_ERROR;
+    return false;
   }
   auto while_node_users = manager->node_users()[while_cnode];
   std::vector<size_t> valid_indexes{3, 4, 5};
@@ -352,9 +352,9 @@ bool TfliteLstmCellFusion::CheckReferencedOutputs(const FuncGraphPtr &func_graph
   return true;
 }
 
-EquivPtr TfliteLstmCellFusion::CheckSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &pattern,
-                                             const PrimitiveVarMapPtr &primitive_vars, const AnfNodePtr &anf_sub_graph,
-                                             const size_t cnode_num, const size_t all_node_num) {
+EquivPtr TfliteLstmCellFusion::CheckSubGraph(const AnfNodePtr &pattern, const PrimitiveVarMapPtr &primitive_vars,
+                                             const AnfNodePtr &anf_sub_graph, const size_t cnode_num,
+                                             const size_t all_node_num) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(pattern != nullptr);
   MS_ASSERT(primitive_vars != nullptr);
@@ -370,9 +370,7 @@ EquivPtr TfliteLstmCellFusion::CheckSubGraph(const FuncGraphPtr &func_graph, con
   return MatchGraph(sub_graph, primitive_vars, pattern);
 }
 
-bool TfliteLstmCellFusion::CheckBodyGraph(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                          const CNodePtr &while_cnode, float *zoneout_cell,
-                                          float *zoneout_hidden) const {
+bool TfliteLstmCellFusion::CheckBodyGraph(const EquivPtr &equiv, float *zoneout_cell, float *zoneout_hidden) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
   MS_ASSERT(while_cnode != nullptr);
@@ -465,8 +463,9 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
       MS_LOG(ERROR) << "bias data shape error";
       return RET_ERROR;
     }
-    step = data_shapes[0][0];
-    data_size = 8 * step;
+    step = static_cast<int>(data_shapes[0][0]);
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(C8NUM, step, RET_ERROR);
+    data_size = C8NUM * step;
     new_shape = std::vector<int64_t>({1, data_size});
 
   } else {
@@ -475,8 +474,10 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
       return RET_ERROR;
     }
     new_shape = std::vector<int64_t>({1, data_shapes[0][0] * kUnidirectionalGateNum, data_shapes[0][1]});
-    step = data_shapes[0][0] * data_shapes[0][1];
-    data_size = 4 * step;
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(data_shapes[0][0], data_shapes[0][1], RET_ERROR);
+    step = static_cast<int>(data_shapes[0][0] * data_shapes[0][1]);
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(C4NUM, step, RET_ERROR);
+    data_size = C4NUM * step;
   }
 
   auto tensor_info = lite::CreateTensorInfo(nullptr, 0, new_shape, kNumberTypeFloat32);
@@ -528,12 +529,6 @@ CNodePtr TfliteLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, co
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
 
   auto &vars = while_input_vars_;
-
-  auto limit1 = utils::cast<AnfNodePtr>((*equiv)[vars[3]]);
-  MS_ASSERT(limit1);
-  auto limit2 = utils::cast<AnfNodePtr>((*equiv)[vars[7]]);
-  MS_ASSERT(limit2);
-
   auto i2i_weight = utils::cast<AnfNodePtr>((*equiv)[vars[9]]);
   MS_ASSERT(i2i_weight);
   auto i2f_weight = utils::cast<AnfNodePtr>((*equiv)[vars[10]]);
@@ -764,8 +759,8 @@ const AnfNodePtr TfliteLstmCellFusion::Process(const FuncGraphPtr &func_graph, c
   MS_CHECK_TRUE_RET(primitive_vars_cond != nullptr, nullptr);
   auto cond_graph_pattern = GetCondGraphPattern(primitive_vars_cond);
   MS_CHECK_TRUE_RET(cond_graph_pattern != nullptr, nullptr);
-  auto cond_equiv = CheckSubGraph(func_graph, cond_graph_pattern, primitive_vars_cond, while_cnode->input(1),
-                                  cond_cnodes_num_, cond_nodes_num_);
+  auto cond_equiv =
+    CheckSubGraph(cond_graph_pattern, primitive_vars_cond, while_cnode->input(1), cond_cnodes_num_, cond_nodes_num_);
   if (cond_equiv == nullptr || cond_equiv->empty()) {
     return nullptr;
   }
@@ -773,14 +768,14 @@ const AnfNodePtr TfliteLstmCellFusion::Process(const FuncGraphPtr &func_graph, c
   MS_CHECK_TRUE_RET(primitive_vars_body != nullptr, nullptr);
   auto body_graph_pattern = GetBodyGraphPattern(primitive_vars_body);
   MS_CHECK_TRUE_RET(body_graph_pattern != nullptr, nullptr);
-  auto body_equiv = CheckSubGraph(func_graph, body_graph_pattern, primitive_vars_body, while_cnode->input(2),
-                                  body_cnodes_num_, body_nodes_num_);
+  auto body_equiv =
+    CheckSubGraph(body_graph_pattern, primitive_vars_body, while_cnode->input(2), body_cnodes_num_, body_nodes_num_);
   if (body_equiv == nullptr || body_equiv->empty()) {
     return nullptr;
   }
   float zoneout_cell = 0.0f;
   float zoneout_hidden = 0.0f;
-  if (!CheckBodyGraph(func_graph, body_equiv, while_cnode, &zoneout_cell, &zoneout_hidden)) {
+  if (!CheckBodyGraph(body_equiv, &zoneout_cell, &zoneout_hidden)) {
     return nullptr;
   }
   const std::string lstm_name = "lstm_" + while_cnode->fullname_with_scope();

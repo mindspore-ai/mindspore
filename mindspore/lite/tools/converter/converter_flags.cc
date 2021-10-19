@@ -197,11 +197,18 @@ int Flags::InitInTensorShape() {
       return lite::RET_ERROR;
     }
     for (const auto &dim : dims) {
-      if (std::stoi(dim) < 0) {
+      auto dim_value = -1;
+      try {
+        dim_value = std::stoi(dim);
+      } catch (const std::exception &e) {
+        MS_LOG(ERROR) << "Get dim failed: " << e.what();
+        return lite::RET_ERROR;
+      }
+      if (dim_value < 0) {
         MS_LOG(ERROR) << "Unsupported dim < 0.";
         return lite::RET_ERROR;
       } else {
-        shape.push_back(std::stoi(dim));
+        shape.push_back(dim_value);
       }
     }
     lite::ConverterInnerContext::GetInstance()->UpdateGraphInputTensorShape(name, shape);
@@ -419,7 +426,12 @@ bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *pa
   const char *colon = ":";
   for (const auto &device : device_rates) {
     std::vector<std::string> rate = lite::SplitStringToVector(device, *colon);
-    parallel_split_config->parallel_compute_rates_.push_back(std::stoi(rate.back()));
+    auto compute_rate = std::atoi(rate.back().c_str());
+    if (compute_rate == 0) {
+      MS_LOG(ERROR) << "The compute rate is invalid.";
+      return false;
+    }
+    parallel_split_config->parallel_compute_rates_.push_back(compute_rate);
   }
   if (parallel_split_config->parallel_compute_rates_.size() != 2) {
     return false;

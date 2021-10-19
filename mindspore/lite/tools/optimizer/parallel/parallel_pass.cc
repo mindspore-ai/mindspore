@@ -104,6 +104,7 @@ AnfNodePtr ParallelPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   }
   // if current conv2d node has two output nodes ,we do not split it;
   auto manager = func_graph->manager();
+  MS_CHECK_TRUE_MSG(manager != nullptr, nullptr, "manager is nullptr.");
   auto iter = manager->node_users().find(node);
   if (iter == manager->node_users().end()) {
     MS_LOG(ERROR) << "node : " << node->fullname_with_scope() << "has no output";

@@ -19,6 +19,7 @@
 #include "ops/transpose.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/errorcode.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore::opt {
 constexpr size_t kTransposeInput = 1;
@@ -60,7 +61,7 @@ std::vector<int> GetTransposePerm(const CNodePtr &node) {
 bool RemoveUnusedTransposeOpPass::Run(const FuncGraphPtr &func_graph) {
   if (this->fmk_type != converter::kFmkTypeOnnx) {
     MS_LOG(ERROR) << "The framework type of model should be onnx.";
-    return RET_ERROR;
+    return false;
   }
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();

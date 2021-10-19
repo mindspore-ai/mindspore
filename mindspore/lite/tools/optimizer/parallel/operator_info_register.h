@@ -56,8 +56,8 @@ class OperatorInfoFactory {
 
   OperatorInfoFactory &operator=(const OperatorInfoFactory &) = delete;
 
-  int RegisterOperatorInfo(schema::PrimitiveType operator_type, TypeId type_id, bool is_depth_wise,
-                           const OperatorInfoCreatorFunc &creator_func);
+  void RegisterOperatorInfo(schema::PrimitiveType operator_type, TypeId type_id, bool is_depth_wise,
+                            const OperatorInfoCreatorFunc &creator_func);
 
   OperatorInfoCreatorFunc FindOperatorInfo(const SplitOpKey &split_op_key);
 

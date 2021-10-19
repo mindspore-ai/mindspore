@@ -62,7 +62,9 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       MS_LOG(ERROR) << "the node input is invalid.";
       return false;
     }
-    auto data_shape = utils::cast<abstract::ShapePtr>(data_node->GetShapeTrack())->shape();
+    auto data_shape_ptr = utils::cast<abstract::ShapePtr>(data_node->GetShapeTrack());
+    MS_ASSERT(data_shape_ptr != nullptr);
+    auto data_shape = data_shape_ptr->shape();
     if (data_shape.empty()) {
       MS_LOG(DEBUG) << "the tensor's shape is dynamic.";
       return true;
@@ -72,11 +74,15 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       MS_LOG(ERROR) << "the weight node input is invalid.";
       return false;
     }
-    auto weight_shape = utils::cast<abstract::ShapePtr>(weight_data_node->GetShapeTrack())->shape();
+    auto weight_shape_ptr = utils::cast<abstract::ShapePtr>(weight_data_node->GetShapeTrack());
+    MS_ASSERT(weight_shape_ptr != nullptr);
+    auto weight_shape = weight_shape_ptr->shape();
     if (weight_shape.empty()) {
       MS_LOG(DEBUG) << "the weight's shape is dynamic.";
       return true;
     }
+    MS_CHECK_TRUE_RET(data_shape.size() == DIMENSION_4D, false);
+    MS_CHECK_TRUE_RET(weight_shape.size() == DIMENSION_4D, false);
     if (data_shape[3] == 1 || data_shape[3] != weight_shape[3]) {
       conv2d_fusion->EraseAttr(ops::kIsDepthWise);
       conv2d_fusion->set_group(static_cast<int64_t>(data_shape[3]));

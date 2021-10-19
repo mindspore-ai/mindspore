@@ -35,6 +35,7 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto node_list = TopoSort(graph->get_return());
   for (auto &node : node_list) {
+    MS_ASSERT(node != nullptr);
     if (!utils::isa<CNode>(node)) {
       continue;
     }
@@ -57,10 +58,12 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     if ((min == -1) && (max == -1)) {
       if (clip_cnode->size() > kClipMinIndex) {
         auto min_tensor_info = GetTensorInfo(clip_cnode->input(kClipMinIndex));
+        MS_CHECK_TRUE_MSG(min_tensor_info != nullptr, false, "min_tensor_info is nullptr");
         if (min_tensor_info->data_type() != mindspore::kNumberTypeFloat32) {
           MS_LOG(ERROR) << "Clip param type invalid";
           return false;
         }
+        MS_CHECK_TRUE_MSG(min_tensor_info->data_c() != nullptr, false, "tensor data is nullptr");
         min = *reinterpret_cast<float *>(min_tensor_info->data_c());
       } else {
         min = FLT_MIN;
@@ -68,17 +71,19 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
 
       if (clip_cnode->size() > kClipMaxIndex) {
         auto max_tensor_info = GetTensorInfo(clip_cnode->input(kClipMaxIndex));
+        MS_CHECK_TRUE_MSG(max_tensor_info != nullptr, false, "max_tensor_info is nullptr");
         if (max_tensor_info->data_type() != mindspore::kNumberTypeFloat32) {
           MS_LOG(ERROR) << "Clip param type invalid";
           return false;
         }
+        MS_CHECK_TRUE_MSG(max_tensor_info->data_c() != nullptr, false, "tensor data is nullptr");
         max = *reinterpret_cast<float *>(max_tensor_info->data_c());
       } else {
         max = FLT_MAX;
       }
     }
     auto manager = graph->manager();
-
+    MS_ASSERT(manager != nullptr);
     auto primitive_c = std::make_shared<mindspore::ops::Activation>();
     MS_CHECK_TRUE_MSG(primitive_c != nullptr, false, "primitive_c is nullptr");
     primitive_c->Init(0, min, max, mindspore::RELU6);

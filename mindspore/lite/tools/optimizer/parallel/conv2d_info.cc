@@ -92,6 +92,7 @@ int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
 
 int Conv2DInfo::CheckIfSplit() {
   auto conv_prim = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(cnode_->input(kAnfPrimitiveIndex));
+  MS_ASSERT(conv_prim != nullptr);
   auto strides = conv_prim->get_stride();
   std::vector<int64_t> weight_shape;
   std::vector<int64_t> input_shape;
@@ -99,7 +100,9 @@ int Conv2DInfo::CheckIfSplit() {
   // for n, h, cin, we should checkout it's input whether bigger than split total ratio
   if (split_mode_ != SplitCOUT) {
     auto input_node_abstract = GetCNodeInputAbstract(cnode_, 1);
+    MS_CHECK_TRUE_RET(input_node_abstract != nullptr, RET_ERROR);
     auto weight_node_abstract = GetCNodeInputAbstract(cnode_, 2);
+    MS_CHECK_TRUE_RET(weight_node_abstract != nullptr, RET_ERROR);
     if (!utils::isa<abstract::AbstractTensorPtr>(input_node_abstract)) {
       MS_LOG(ERROR) << "conv_input_abstract of should be abstract tensor";
       return RET_ERROR;
@@ -163,8 +166,11 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
     MS_CHECK_GE(conv_prim->get_stride().size(), 1, nullptr);
     auto extend_bottom = conv_prim->get_kernel_size().at(kIndexH) - conv_prim->get_stride().at(kIndexH);
     auto bottom_vector = std::vector<int64_t>(split_num, extend_bottom);
+    MS_CHECK_GE(split_num, 1, nullptr);
     bottom_vector[split_num - 1] = 0;
     split_prim->set_extend_bottom(bottom_vector);
+    MS_CHECK_GE(conv_prim->get_pad_list().size(), 1, nullptr);
+    MS_CHECK_TRUE_RET(input_shape.size() == DIMENSION_4D, nullptr);
     if (!UpdateRatioWithPadStride(new_splits.data(), new_splits.size(), split_num, input_shape[split_dim],
                                   conv_prim->get_pad_list().at(kPadUp), conv_prim->get_stride().at(kIndexH))) {
       MS_LOG(ERROR) << "UpdateRatioWithPadStride failed";
@@ -178,7 +184,9 @@ AnfNodePtr Conv2DInfo::CreateOutputsOfSplit(const CNodePtr &orig_node, size_t in
   split_prim->set_number_split(split_num);
   split_prim->set_ratio(new_splits);
 
-  std::vector<AnfNodePtr> split_inputs = {NewValueNode(split_prim)};
+  auto split_primitive = NewValueNode(split_prim);
+  MS_CHECK_TRUE_MSG(split_primitive != nullptr, nullptr, "create SplitWithOverlap return nullptr");
+  std::vector<AnfNodePtr> split_inputs = {split_primitive};
   // ori_conv_node must only have one input
   split_inputs.push_back(orig_node->input(input_index + 1));
   auto split_cnode = func_graph_->NewCNode(split_inputs);
@@ -225,7 +233,6 @@ int Conv2DInfo::InferParallelCNodes() {
   if (CheckIfSplit() != RET_OK) {
     return RET_ERROR;
   }
-  Strategys strategys = strategy_.strategys;
   size_t dev_num = strategy_.dev_num;
   std::vector<AnfNodePtr> feature_split_outputs;
   std::vector<AnfNodePtr> kernel_split_outputs;
@@ -361,7 +368,7 @@ int Conv2DInfo::InferReplaceOp() {
   size_t dev_num = strategy_.dev_num;
   if (split_mode_ == SplitCIN) {
     MS_LOG(DEBUG) << name_ << " : Split Cin, infer Forward op.";
-    replace_op_ = CreateReduceNode(cnode_, parallel_output_nodes_, kAxisCIn, dev_num, true);
+    replace_op_ = CreateReduceNode(cnode_, parallel_output_nodes_, kAxisCIn, dev_num);
   } else {
     int32_t concat_dim;
     if (split_mode_ == SplitN) {
@@ -372,7 +379,7 @@ int Conv2DInfo::InferReplaceOp() {
     } else {
       concat_dim = kAxisH;
     }
-    replace_op_ = CreateConcateNode(cnode_, parallel_output_nodes_, concat_dim, dev_num, true);
+    replace_op_ = CreateConcateNode(cnode_, parallel_output_nodes_, concat_dim, dev_num);
   }
 
   if (replace_op_ == nullptr) {

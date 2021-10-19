@@ -264,6 +264,27 @@ int RemoveRedundantOpPass::RemoveDropoutOp(const AnfNodePtr &anf_node, const Fun
   return lite::RET_OK;
 }
 
+int RemoveRedundantOpPass::GetConstDataFromInputNode(const CNodePtr &cnode, lite::DataInfo *data_info) {
+  MS_ASSERT(cnode != nullptr);
+  MS_ASSERT(data_info != nullptr);
+  auto padding_node = cnode->input(kInputIndexTwo);
+  MS_ASSERT(padding_node != nullptr);
+  if (utils::isa<Parameter>(padding_node)) {
+    auto status = lite::FetchDataFromParameterNode(cnode, 2, converter::kFmkTypeMs, false, data_info);
+    if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "fetch data from parameter node failed.";
+      return lite::RET_ERROR;
+    }
+  } else if (utils::isa<ValueNode>(padding_node)) {
+    auto status = lite::FetchDataFromValueNode(cnode, 2, converter::kFmkTypeMs, false, data_info);
+    if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "fetch data from value node failed.";
+      return lite::RET_ERROR;
+    }
+  }
+  return lite::RET_OK;
+}
+
 int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(DEBUG) << "anf node is node a cnode.";
@@ -278,20 +299,10 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
   }
   auto is_invalid = true;
   if (cnode->size() > kInputSizeTwo) {
-    auto padding_node = cnode->input(kInputIndexTwo);
     lite::DataInfo data_info;
-    if (utils::isa<Parameter>(padding_node)) {
-      auto status = lite::FetchDataFromParameterNode(cnode, 2, converter::kFmkTypeMs, false, &data_info);
-      if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-        MS_LOG(ERROR) << "fetch data from parameter node failed.";
-        return lite::RET_ERROR;
-      }
-    } else if (utils::isa<ValueNode>(padding_node)) {
-      auto status = lite::FetchDataFromValueNode(cnode, 2, converter::kFmkTypeMs, false, &data_info);
-      if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-        MS_LOG(ERROR) << "fetch data from value node failed.";
-        return lite::RET_ERROR;
-      }
+    if (GetConstDataFromInputNode(cnode, &data_info) != RET_OK) {
+      MS_LOG(ERROR) << "Get pad data failed.";
+      return lite::RET_ERROR;
     }
     if (!data_info.data_.empty()) {
       auto pad_data = reinterpret_cast<int *>(data_info.data_.data());
@@ -308,18 +319,17 @@ int RemoveRedundantOpPass::RemoveInvalidPadOp(const AnfNodePtr &anf_node, const 
   } else {
     auto pad_prim = utils::cast<std::shared_ptr<mindspore::ops::PadFusion>>(primitive);
     MS_ASSERT(pad_prim != nullptr);
-    if (pad_prim->GetAttr(ops::kPadding) != nullptr) {
-      auto pad_data = pad_prim->get_paddings();
-      for (size_t i = 0; i < pad_data.size(); i++) {
-        for (size_t j = 0; j < pad_data[i].size(); j++) {
-          if (pad_data[i][j] != 0) {
-            is_invalid = false;
-            break;
-          }
-        }
-        if (is_invalid == false) {
+    MS_CHECK_TRUE_RET(pad_prim->GetAttr(ops::kPadding) != nullptr, lite::RET_ERROR);
+    auto pad_data = pad_prim->get_paddings();
+    for (size_t i = 0; i < pad_data.size(); i++) {
+      for (size_t j = 0; j < pad_data[i].size(); j++) {
+        if (pad_data[i][j] != 0) {
+          is_invalid = false;
           break;
         }
+      }
+      if (is_invalid == false) {
+        break;
       }
     }
   }
