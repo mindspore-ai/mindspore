@@ -69,6 +69,7 @@ class Queue {
   void Reset() {
     std::unique_lock<std::mutex> _lock(mux_);
     ResetQue();
+    extra_arr_.clear();
   }
 
   // Producer
@@ -91,8 +92,7 @@ class Queue {
     // Block when full
     Status rc = full_cv_.Wait(&_lock, [this]() -> bool { return (size() != capacity()); });
     if (rc.IsOk()) {
-      auto k = tail_++ % sz_;
-      *(arr_[k]) = std::forward<T>(ele);
+      RETURN_IF_NOT_OK(AddWhileHoldingLock(std::forward<T>(ele)));
       empty_cv_.NotifyAll();
       _lock.unlock();
     } else {
@@ -123,7 +123,7 @@ class Queue {
     // Block when empty
     Status rc = empty_cv_.Wait(&_lock, [this]() -> bool { return !empty(); });
     if (rc.IsOk()) {
-      RETURN_IF_NOT_OK(PopFrontWhileHoldingLock(p));
+      RETURN_IF_NOT_OK(PopFrontWhileHoldingLock(p, true));
       full_cv_.NotifyAll();
       _lock.unlock();
     } else {
@@ -144,19 +144,39 @@ class Queue {
 
   Status Resize(int32_t new_capacity) {
     std::unique_lock<std::mutex> _lock(mux_);
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      new_capacity >= static_cast<int32_t>(size()),
-      "New capacity: " + std::to_string(new_capacity) + ", is smaller than queue size:" + std::to_string(size()));
+    CHECK_FAIL_RETURN_UNEXPECTED(new_capacity > 0,
+                                 "New capacity: " + std::to_string(new_capacity) + ", should be larger than 0");
+    RETURN_OK_IF_TRUE(new_capacity == capacity());
     std::vector<T> queue;
+    // pop from the original queue until the new_capacity is full
+    for (int32_t i = 0; i < new_capacity; ++i) {
+      if (head_ < tail_) {
+        // if there are elements left in queue, pop out
+        T temp;
+        RETURN_IF_NOT_OK(this->PopFrontWhileHoldingLock(&temp, true));
+        queue.push_back(temp);
+      } else {
+        // if there is nothing left in queue, check extra_arr_
+        if (!extra_arr_.empty()) {
+          // if extra_arr_ is not empty, push to fill the new_capacity
+          queue.push_back(extra_arr_[0]);
+          extra_arr_.erase(extra_arr_.begin());
+        } else {
+          // if everything in the queue and extra_arr_ is popped out, break the loop
+          break;
+        }
+      }
+    }
+    // if there are extra elements in queue, put them to extra_arr_
     while (head_ < tail_) {
       T temp;
-      RETURN_IF_NOT_OK(this->PopFrontWhileHoldingLock(&temp));
-      queue.push_back(temp);
+      RETURN_IF_NOT_OK(this->PopFrontWhileHoldingLock(&temp, false));
+      extra_arr_.push_back(temp);
     }
     this->ResetQue();
     RETURN_IF_NOT_OK(arr_.allocate(new_capacity));
     sz_ = new_capacity;
-    for (int i = 0; i < queue.size(); ++i) {
+    for (int32_t i = 0; i < queue.size(); ++i) {
       RETURN_IF_NOT_OK(this->AddWhileHoldingLock(queue[i]));
     }
     queue.clear();
@@ -167,6 +187,8 @@ class Queue {
  private:
   size_t sz_;
   MemGuard<T, Allocator<T>> arr_;
+  std::vector<T> extra_arr_;  // used to store extra elements after reducing capacity, will not be changed by Add,
+                              // will pop when there is a space in queue (by PopFront or Resize)
   size_t head_;
   size_t tail_;
   std::string my_name_;
@@ -181,17 +203,28 @@ class Queue {
     return Status::OK();
   }
 
+  // Helper function for Add, must be called when holding a lock
+  Status AddWhileHoldingLock(T &&ele) {
+    auto k = tail_++ % sz_;
+    *(arr_[k]) = std::forward<T>(ele);
+    return Status::OK();
+  }
+
   // Helper function for PopFront, must be called when holding a lock
-  Status PopFrontWhileHoldingLock(pointer p) {
+  Status PopFrontWhileHoldingLock(pointer p, bool clean_extra) {
     auto k = head_++ % sz_;
     *p = std::move(*(arr_[k]));
+    if (!extra_arr_.empty() && clean_extra) {
+      RETURN_IF_NOT_OK(this->AddWhileHoldingLock(std::forward<T>(extra_arr_[0])));
+      extra_arr_.erase(extra_arr_.begin());
+    }
     return Status::OK();
   }
 
   void ResetQue() noexcept {
     while (head_ < tail_) {
       T val;
-      this->PopFrontWhileHoldingLock(&val);
+      this->PopFrontWhileHoldingLock(&val, false);
       MS_LOG(DEBUG) << "Address of val: " << &val;
     }
     empty_cv_.ResetIntrpState();

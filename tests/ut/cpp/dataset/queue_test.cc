@@ -178,10 +178,10 @@ TEST_F(MindDataTestQueue, Test6) {
   ASSERT_EQ(*pepped_value, 99);
 }
 
-// Feature: Check resize is finished without changing elements and influencing operations.
-// Description: Compare elements in queue before and after resize, and test add/pop/reset.
-// Expectation: Elements in queue after resize are the same as the original queue.
-TEST_F(MindDataTestQueue, TestResize) {
+// Feature: Test basic check in the resize.
+// Description: Check false input for resize function.
+// Expectation: Return false when the input is unexpected, and true when the new capacity is the same as original.
+TEST_F(MindDataTestQueue, TestResize1) {
   // Create a list of queues with capacity = 3
   Queue<TensorRow> queue(3);
   ASSERT_EQ(3, queue.capacity());
@@ -189,38 +189,77 @@ TEST_F(MindDataTestQueue, TestResize) {
   TensorRow a;
   std::shared_ptr<Tensor> test_tensor1;
   std::vector<float> input = {1.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1.2, 0.7, 0.8, 0.9, 1.0, 2.0, 1.3, 3.0, 4.0};
-  ASSERT_OK(Tensor::CreateFromVector(input, TensorShape{3, 5}, &test_tensor1));
+  EXPECT_OK(Tensor::CreateFromVector(input, TensorShape{3, 5}, &test_tensor1));
   a.push_back(test_tensor1);
   EXPECT_OK(queue.Add(a));
 
   TensorRow b;
   std::shared_ptr<Tensor> test_tensor2;
-  ASSERT_OK(Tensor::CreateScalar(true, &test_tensor2));
+  EXPECT_OK(Tensor::CreateScalar(true, &test_tensor2));
   b.push_back(test_tensor2);
   EXPECT_OK(queue.Add(b));
 
   TensorRow c;
   std::shared_ptr<Tensor> test_tensor3;
-  ASSERT_OK(Tensor::CreateFromVector(input, &test_tensor3));
+  EXPECT_OK(Tensor::CreateFromVector(input, &test_tensor3));
   c.push_back(test_tensor3);
   EXPECT_OK(queue.Add(c));
   ASSERT_EQ(3, queue.size());
-  // Check false if the resize is smaller than current size
-  EXPECT_ERROR(queue.Resize(2));
+
+  // Check false if input is equal to or smaller than 0
+  EXPECT_ERROR(queue.Resize(0));
+  EXPECT_ERROR(queue.Resize(-1));
+  // Check true if the new capacity is the same as original
+  EXPECT_OK(queue.Resize(3));
+}
+
+// Feature: Check resize is finished without changing elements and influencing operations.
+// Description: Compare elements in queue before and after resize, and test add/pop/reset.
+// Expectation: Elements in queue after resize are the same as the original queue.
+TEST_F(MindDataTestQueue, TestResize2) {
+  // Create a list of queues with capacity = 3
+  Queue<TensorRow> queue(3);
+  ASSERT_EQ(3, queue.capacity());
+  // Add 3 rows into the queue
+  TensorRow a;
+  std::shared_ptr<Tensor> test_tensor1;
+  std::vector<float> input = {1.1, 0.2, 0.3, 0.4, 0.5, 0.6, 1.2, 0.7, 0.8, 0.9, 1.0, 2.0, 1.3, 3.0, 4.0};
+  EXPECT_OK(Tensor::CreateFromVector(input, TensorShape{3, 5}, &test_tensor1));
+  a.push_back(test_tensor1);
+  EXPECT_OK(queue.Add(a));
+
+  TensorRow b;
+  std::shared_ptr<Tensor> test_tensor2;
+  EXPECT_OK(Tensor::CreateScalar(true, &test_tensor2));
+  b.push_back(test_tensor2);
+  EXPECT_OK(queue.Add(b));
+
+  TensorRow c;
+  std::shared_ptr<Tensor> test_tensor3;
+  EXPECT_OK(Tensor::CreateFromVector(input, &test_tensor3));
+  c.push_back(test_tensor3);
+  EXPECT_OK(queue.Add(c));
+  ASSERT_EQ(3, queue.size());
+
+  // Check true if the resize is smaller than current size
+  EXPECT_OK(queue.Resize(1));
+  ASSERT_EQ(1, queue.capacity());
+  // Expect the rows after resize are the same as original input, there should be still 1 element in the queue
+  TensorRow d;
+  EXPECT_OK(queue.PopFront(&d));
+  EXPECT_EQ(a.getRow(), d.getRow());
+  ASSERT_EQ(1, queue.size());
   // Check true if the resize is larger than current size, and capacity is changed
   EXPECT_OK(queue.Resize(12));
   ASSERT_EQ(12, queue.capacity());
-  TensorRow d = a;
-  EXPECT_OK(queue.Add(d));
-  ASSERT_EQ(4, queue.size());
-  // Expect the rows after resize are the same as original input
-  TensorRow e;
-  EXPECT_OK(queue.PopFront(&e));
-  EXPECT_EQ(a.getRow(), e.getRow());
-  EXPECT_OK(queue.PopFront(&e));
-  EXPECT_EQ(b.getRow(), e.getRow());
-  EXPECT_OK(queue.PopFront(&e));
-  EXPECT_EQ(c.getRow(), e.getRow());
+  // Check add operation after resize
+  EXPECT_OK(queue.Add(a));
+  ASSERT_EQ(3, queue.size());
+  // Check pop operation after resize
+  EXPECT_OK(queue.PopFront(&d));
+  EXPECT_EQ(b.getRow(), d.getRow());
+  EXPECT_OK(queue.PopFront(&d));
+  EXPECT_EQ(c.getRow(), d.getRow());
   ASSERT_EQ(1, queue.size());
   queue.Reset();
   ASSERT_EQ(0, queue.size());
