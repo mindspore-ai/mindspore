@@ -306,11 +306,14 @@ bool ReplaceUpdateStateForLoad(const FuncGraphPtr &fg, const std::vector<AnfNode
       continue;
     }
     auto update_state = load_node->cast<CNodePtr>()->input(second_input_index);
-    if (!IsPrimitiveCNode(update_state, prim::kPrimUpdateState)) {
-      continue;
-    }
     auto mgr = fg->manager();
     MS_EXCEPTION_IF_NULL(mgr);
+    // If the u1 only used by Load and one other updatestate, no need to replace u1 by u'.
+    auto &node_users = mgr->node_users()[update_state];
+    constexpr size_t kUserSize = 2;
+    if (!IsPrimitiveCNode(update_state, prim::kPrimUpdateState) || node_users.size() == kUserSize) {
+      continue;
+    }
     mgr->SetEdge(load_node, second_input_index, monad);
     change = true;
   }
