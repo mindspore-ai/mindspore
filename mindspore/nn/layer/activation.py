@@ -456,6 +456,13 @@ class GELU(Cell):
     The picture about GELU looks like this `GELU <https://en.wikipedia.org/wiki/
     Activation_function#/media/File:Activation_gelu.png>`_.
 
+    Args:
+        approximate (bool): Whether to enable approximation. Default: True.
+        If approximate is True, The gaussian error linear activation is:
+            :math:`0.5 * x * (1 + tanh(sqrt(2 / pi) * (x + 0.044715 * x^3)))`
+        else, it is
+            :math:`x * P(X <= x) = 0.5 * x * (1 + erf(x / sqrt(2)))`, where P(X) ~ N(0, 1).
+
     Inputs:
         - **x** (Tensor) - The input of GELU with data type of float16 or float32.
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
@@ -476,15 +483,31 @@ class GELU(Cell):
         >>> print(output)
         [[-1.5880802e-01  3.9999299e+00 -3.1077917e-21]
          [ 1.9545976e+00 -2.2918017e-07  9.0000000e+00]]
+        >>> gelu = nn.GELU(approximate=False)
+        >>> output = gelu(x)
+        >>> print(output)
+        [[-1.5865526e-01  3.9998732e+00 -0.0000000e+00]
+         [ 1.9544997e+00 -1.4901161e-06  9.0000000e+00]]
     """
 
-    def __init__(self):
+    def __init__(self, approximate=True):
         """Initialize GELU."""
         super(GELU, self).__init__()
-        self.gelu = P.GeLU()
+        self.approximate = approximate
+        if self.approximate:
+            self.gelu = P.GeLU()
+        else:
+            self.erf = P.Erf()
+            self.sqrt = P.Sqrt()
+            self.const0 = Tensor(0.5, mstype.float32)
+            self.const1 = Tensor(1.0, mstype.float32)
+            self.const2 = Tensor(2.0, mstype.float32)
 
     def construct(self, x):
-        return self.gelu(x)
+        if self.approximate:
+            return self.gelu(x)
+        return x * F.cast(self.const0, x.dtype) * (F.cast(self.const1, x.dtype) + \
+            self.erf(x / self.sqrt(F.cast(self.const2, x.dtype))))
 
 
 class FastGelu(Cell):
