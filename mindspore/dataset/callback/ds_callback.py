@@ -33,9 +33,9 @@ class DSCallback:
         >>> from mindspore.dataset import DSCallback
         >>>
         >>> class PrintInfo(DSCallback):
-        >>>     def ds_epoch_end(self, ds_run_context):
-        >>>         print(cb_params.cur_epoch_num)
-        >>>         print(cb_params.cur_step_num)
+        ...     def ds_epoch_end(self, ds_run_context):
+        ...         print(cb_params.cur_epoch_num)
+        ...         print(cb_params.cur_step_num)
         >>>
         >>> # dataset is an instance of Dataset object
         >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
@@ -71,7 +71,7 @@ class DSCallback:
 
     def ds_step_begin(self, ds_run_context):
         """
-        Called before n steps are started.
+        Called before each step start.
 
         Args:
             ds_run_context (RunContext): Include some information of the pipeline.
@@ -79,7 +79,7 @@ class DSCallback:
 
     def ds_step_end(self, ds_run_context):
         """
-        Called after n steps are finished.
+        Called after each step finished.
 
         Args:
             ds_run_context (RunContext): Include some information of the pipeline.
@@ -89,7 +89,8 @@ class DSCallback:
         """
         Creates a runtime (C++) object from the callback methods defined by the user.
 
-        Returns: _c_dataengine.PyDSCallback
+        Returns:
+            _c_dataengine.PyDSCallback.
         """
         c_cb = PyDSCallback(self.step_size)
         at_least_one = False
@@ -225,7 +226,8 @@ class WaitedDSCallback(Callback, DSCallback):
         """
         Creates a runtime (C++) object from the callback methods defined by the user. This method is internal.
 
-        Returns: _c_dataengine.PyDSCallback
+        Returns:
+            _c_dataengine.PyDSCallback.
         """
         c_cb = PyDSCallback(self.step_size)
         at_least_one = False
