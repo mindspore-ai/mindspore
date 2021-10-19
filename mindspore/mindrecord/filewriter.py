@@ -59,7 +59,7 @@ class FileWriter:
         ...          "data": b"\xaf\xafU<\xb8|6\xbd}\xc1\x99[\xeaj+\x8f\x84\xd3\xcc\xa0,i\xbb\xb9-\xcdz\xecp{T\xb1"}]
         >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
         >>> writer.add_schema(schema_json, "test_schema")
-        MSRStatus.SUCCESS
+        0
         >>> writer.add_index(indexes)
         MSRStatus.SUCCESS
         >>> writer.write_raw_data(data)
@@ -100,7 +100,7 @@ class FileWriter:
 
     @classmethod
     def open_for_append(cls, file_name):
-        """
+        r"""
         Open MindRecord file and get ready to append data.
 
         Args:
@@ -116,6 +116,17 @@ class FileWriter:
             MRMOpenForAppendError: If failed to open file for appending data.
 
         Examples:
+            >>> from mindspore.mindrecord import FileWriter
+            >>> schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
+            >>> data = [{"file_name": "1.jpg", "label": 0,
+            ...          "data": b"\x10c\xb3w\xa8\xee$o&<q\x8c\x8e(\xa2\x90\x90\x96\xbc\xb1\x1e\xd4QER\x13?\xff"}]
+            >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
+            >>> writer.add_schema(schema_json, "test_schema")
+            0
+            >>> writer.write_raw_data(data)
+            MSRStatus.SUCCESS
+            >>> writer.commit()
+            MSRStatus.SUCCESS
             >>> write_append = FileWriter.open_for_append("test.mindrecord")
             >>> write_append.write_raw_data(data)
             MSRStatus.SUCCESS
@@ -317,7 +328,7 @@ class FileWriter:
 
         Examples:
             >>> from mindspore.mindrecord import FileWriter
-            >>> # define writer
+            >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
             >>> writer.set_header_size(1 << 25) # 32MB
             MSRStatus.SUCCESS
         """
@@ -343,7 +354,7 @@ class FileWriter:
 
         Examples:
             >>> from mindspore.mindrecord import FileWriter
-            >>> # define writer
+            >>> writer = FileWriter(file_name="test.mindrecord", shard_num=1)
             >>> writer.set_page_size(1 << 26) # 128MB
             MSRStatus.SUCCESS
         """

@@ -38,6 +38,10 @@ class Cifar100ToMR:
     """
     A class to transform from cifar100 to MindRecord.
 
+    Note:
+        For details about Examples, please refer to `Converting the CIFAR-10 Dataset <https://
+        www.mindspore.cn/docs/programming_guide/en/master/dataset_conversion.html#converting-the-cifar-10-dataset>`_.
+
     Args:
         source (str): the cifar100 directory to be transformed.
         destination (str): the MindRecord file path to transform into.
