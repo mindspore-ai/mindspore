@@ -92,7 +92,7 @@ STATUS GenNewConvBias(const ParameterPtr &down_bias_node, const ParameterPtr &do
   }
   MS_ASSERT(tensor_info->data_c() != nullptr);
   auto new_bias_data = static_cast<float *>(tensor_info->data_c());
-  if (memset_s(new_bias_data, new_bias_size * sizeof(float), 0, new_bias_size * sizeof(float)) != EOK) {
+  if (memset_s(new_bias_data, tensor_info->Size(), 0, new_bias_size * sizeof(float)) != EOK) {
     MS_LOG(ERROR) << "memset_s failed";
     return RET_ERROR;
   }
@@ -119,11 +119,13 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
   MS_ASSERT(down_weight_node != nullptr && up_weight_node != nullptr && new_weight_node != nullptr);
   auto down_weight_param = std::dynamic_pointer_cast<tensor::Tensor>(down_weight_node->default_param());
   MS_ASSERT(down_weight_param != nullptr);
+  MS_ASSERT(down_weight_param->data_c() != nullptr);
   auto down_weight_shape = down_weight_param->shape();
   auto up_weight_param = std::dynamic_pointer_cast<tensor::Tensor>(up_weight_node->default_param());
   MS_ASSERT(up_weight_param != nullptr);
+  MS_ASSERT(up_weight_param->data_c() != nullptr);
   auto up_weight_shape = up_weight_param->shape();
-  MS_ASSERT(up_weight_param->data_c() != nullptr && down_weight_param->data_c() != nullptr);
+  MS_CHECK_TRUE_RET(up_weight_shape.size() == kInputSizeFour, lite::RET_ERROR);
   auto up_weight_data = static_cast<float *>(up_weight_param->data_c());
   auto down_weight_data = static_cast<float *>(down_weight_param->data_c());
   int cout0 = up_weight_shape[0];
@@ -165,39 +167,42 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
   return RET_OK;
 }
 
-void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &up_conv_cnode,
-                               const CNodePtr &down_conv_cnode) {
+STATUS ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &up_conv_cnode,
+                                 const CNodePtr &down_conv_cnode) {
   MS_ASSERT(func_graph != nullptr && up_conv_cnode != nullptr && down_conv_cnode != nullptr);
   auto down_weight_parameter = down_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
   auto up_weight_parameter = up_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
   auto new_weight_paramter = func_graph->add_parameter();
-  MS_ASSERT(new_weight_paramter != nullptr);
+  MS_CHECK_TRUE_RET(new_weight_paramter != nullptr, lite::RET_ERROR);
   if (GenNewConvWeight(down_weight_parameter, up_weight_parameter, new_weight_paramter) != RET_OK) {
     MS_LOG(ERROR) << "GenNewConvWeight failed.";
-    return;
+    return lite::RET_ERROR;
   }
 
-  auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
-  down_conv_cnode->set_input(kConvWeightIndex, new_weight_paramter);
-
   // whether up conv node has bias
+  ParameterPtr new_bias_parameter{nullptr};
   if (up_conv_cnode->inputs().size() == kConvWithBiasLen) {
     ParameterPtr down_bias_parameter;
     if (down_conv_cnode->inputs().size() == kConvWithBiasLen) {
       down_bias_parameter = down_conv_cnode->input(kConvBiasIndex)->cast<ParameterPtr>();
     }
     auto up_bias_parameter = up_conv_cnode->input(kConvBiasIndex)->cast<ParameterPtr>();
-    auto new_bias_parameter = func_graph->add_parameter();
-    MS_ASSERT(new_bias_parameter != nullptr);
+    new_bias_parameter = func_graph->add_parameter();
+    MS_CHECK_TRUE_RET(new_bias_parameter != nullptr, lite::RET_ERROR);
     if (GenNewConvBias(down_bias_parameter, down_weight_parameter, up_bias_parameter, new_bias_parameter) != RET_OK) {
       MS_LOG(ERROR) << "GenNewConvBias failed.";
-      return;
+      return lite::RET_ERROR;
     }
+  }
+
+  auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
+  manager->SetEdge(down_conv_cnode, kConvWeightIndex, new_weight_paramter);
+  if (new_bias_parameter != nullptr) {
     if (down_conv_cnode->inputs().size() == kConvWithBiasLen) {
-      down_conv_cnode->set_input(kConvBiasIndex, new_bias_parameter);
+      manager->SetEdge(down_conv_cnode, kConvBiasIndex, new_bias_parameter);
     } else {
-      down_conv_cnode->add_input(new_bias_parameter);
+      manager->AddEdge(down_conv_cnode, new_bias_parameter);
     }
   } else {
     MS_LOG(INFO) << "up conv node has no bias,no need to replace bias.";
@@ -205,6 +210,7 @@ void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &u
   MS_LOG(INFO) << "fusion node success:" << down_conv_cnode->fullname_with_scope();
   // delete up conv node
   (void)manager->Replace(up_conv_cnode, up_conv_cnode->input(1));
+  return lite::RET_OK;
 }
 
 bool IsPrimitiveProper(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_cnode) {
@@ -213,12 +219,14 @@ bool IsPrimitiveProper(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_
   MS_ASSERT(down_conv_primitive != nullptr);
   auto up_conv_primitive = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(up_conv_cnode->input(0));
   MS_ASSERT(up_conv_primitive != nullptr);
+  int64_t up_conv_group = up_conv_primitive->GetAttr(ops::kGroup) == nullptr ? 1 : up_conv_primitive->get_group();
+  int64_t down_conv_group = down_conv_primitive->GetAttr(ops::kGroup) == nullptr ? 1 : down_conv_primitive->get_group();
   int64_t up_pad_mode = up_conv_primitive->GetAttr(ops::kPadMode) == nullptr ? 0 : up_conv_primitive->get_pad_mode();
   int64_t down_pad_mode =
     down_conv_primitive->GetAttr(ops::kPadMode) == nullptr ? 0 : down_conv_primitive->get_pad_mode();
   return (up_conv_primitive->GetAttr(ops::kActivationType) == nullptr ||
           up_conv_primitive->get_activation_type() == mindspore::NO_ACTIVATION) &&
-         up_conv_primitive->get_group() == 1 && down_conv_primitive->get_group() == 1 && up_pad_mode == down_pad_mode;
+         up_conv_group == 1 && down_conv_group == 1 && up_pad_mode == down_pad_mode;
 }
 }  // namespace
 
@@ -239,7 +247,9 @@ bool ConvConvFusion::CheckCanFusion(const CNodePtr &up_conv_cnode, const CNodePt
     return false;
   }
   auto down_weight_parameter = down_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
+  MS_ASSERT(down_weight_parameter != nullptr);
   auto down_weight_value = std::dynamic_pointer_cast<tensor::Tensor>(down_weight_parameter->default_param());
+  MS_ASSERT(down_weight_value != nullptr);
   auto down_weight_shape = down_weight_value->shape();
   auto down_weight_type = down_weight_value->data_type();
   // down conv node filter must 1x1,only support float32
@@ -251,7 +261,9 @@ bool ConvConvFusion::CheckCanFusion(const CNodePtr &up_conv_cnode, const CNodePt
     return false;
   }
   auto up_weight_parameter = up_conv_cnode->input(kConvWeightIndex)->cast<ParameterPtr>();
+  MS_ASSERT(up_weight_parameter != nullptr);
   auto up_weight_value = std::dynamic_pointer_cast<tensor::Tensor>(up_weight_parameter->default_param());
+  MS_ASSERT(up_weight_value != nullptr);
   auto up_weight_shape = up_weight_value->shape();
   auto up_weight_type = up_weight_value->data_type();
   if (up_weight_shape.size() != kNHWC_DIMS || up_weight_type != kNumberTypeFloat32 ||
@@ -301,7 +313,7 @@ const AnfNodePtr ConvConvFusion::Process(const FuncGraphPtr &func_graph, const A
   if (!IsPrimitiveProper(up_conv_cnode, down_conv_cnode)) {
     return nullptr;
   }
-  ReplaceParametersAndNodes(func_graph, up_conv_cnode, down_conv_cnode);
+  (void)ReplaceParametersAndNodes(func_graph, up_conv_cnode, down_conv_cnode);
   return nullptr;
 }
 }  // namespace mindspore::opt

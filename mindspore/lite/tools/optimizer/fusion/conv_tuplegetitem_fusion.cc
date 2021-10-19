@@ -60,7 +60,7 @@ const AnfNodePtr ConvTupleGetItemFusion::Process(const FuncGraphPtr &func_graph,
     return nullptr;
   }
   auto abstr = conv_cnode->abstract();
-  if (utils::isa<abstract::AbstractTuplePtr>(abstr)) {
+  if (abstr != nullptr && utils::isa<abstract::AbstractTuplePtr>(abstr)) {
     auto elements = utils::cast<abstract::AbstractTuplePtr>(abstr)->elements();
     if (elements.empty()) {
       MS_LOG(ERROR) << "AbstractTuple is empty";

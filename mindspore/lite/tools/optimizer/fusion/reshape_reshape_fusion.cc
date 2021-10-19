@@ -60,10 +60,6 @@ const AnfNodePtr ReshapeReshapeFusion::Process(const FuncGraphPtr &func_graph, c
   }
   // create scale op
   auto new_reshape = func_graph->NewCNode({value_node, input, shape});
-  if (new_reshape == nullptr) {
-    MS_LOG(ERROR) << "Create new reshape cnode failed.";
-    return nullptr;
-  }
   return new_reshape;
 }
 }  // namespace mindspore::opt

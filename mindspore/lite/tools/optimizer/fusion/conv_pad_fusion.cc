@@ -106,6 +106,7 @@ void ReplaceParamsAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &conv_
 
   // delete padFusion
   auto manager = func_graph->manager();
+  MS_ASSERT(manager != nullptr);
   (void)manager->Replace(pad_cnode, pad_cnode->input(1));
 }
 

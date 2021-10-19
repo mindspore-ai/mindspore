@@ -124,7 +124,7 @@ STATUS TfliteLstmCellFusion::GetFloatScalarFromTensorInfo(const AnfNodePtr &tens
     return RET_ERROR;
   }
   auto param_ptr = utils::cast<ParameterPtr>(tensor_info);
-  if (!param_ptr->has_default()) {
+  if (!param_ptr->has_default() || param_ptr->default_param() == nullptr) {
     MS_LOG(DEBUG) << "param not have default";
     return RET_ERROR;
   }
@@ -431,7 +431,7 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
       return RET_FAILED;
     }
     auto param_t = utils::cast<ParameterPtr>(param);
-    if (!param_t->has_default()) {
+    if (!param_t->has_default() || param_t->default_param() == nullptr) {
       MS_LOG(DEBUG) << "param not have default value";
       return RET_FAILED;
     }
@@ -459,6 +459,7 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
   std::vector<int64_t> new_shape;
   int step = 0;
   int data_size = 0;
+  MS_ASSERT(!data_shapes.empty());
   if (is_bias) {
     if (data_shapes[0].size() != 1) {
       MS_LOG(ERROR) << "bias data shape error";

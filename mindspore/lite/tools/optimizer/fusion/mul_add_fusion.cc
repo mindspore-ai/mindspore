@@ -68,7 +68,7 @@ bool MulAddFusion::CheckMulNode(const FuncGraphPtr &func_graph) const {
   }
   auto mul_primitive = GetValueNode<std::shared_ptr<ops::MulFusion>>(mul_node->input(0));
   MS_ASSERT(mul_primitive != nullptr);
-  MS_CHECK_TRUE_RET(mul_primitive->HasAttr(ops::kActivationType), false);
+  MS_CHECK_TRUE_RET(mul_primitive->GetAttr(ops::kActivationType) != nullptr, false);
   auto mul_act_type = mul_primitive->get_activation_type();
   if (mul_act_type != ActivationType::NO_ACTIVATION) {
     MS_LOG(DEBUG) << "Only support mul node with no activation";
@@ -147,7 +147,7 @@ bool MulAddFusion::CheckAddNode() const {
   }
   auto add_primitive = GetValueNode<std::shared_ptr<ops::AddFusion>>(add_cnode->input(0));
   MS_ASSERT(add_primitive != nullptr);
-  MS_CHECK_TRUE_RET(add_primitive->HasAttr(ops::kActivationType), false);
+  MS_CHECK_TRUE_RET(add_primitive->GetAttr(ops::kActivationType) != nullptr, false);
   auto add_act_type = add_primitive->get_activation_type();
   if (add_act_type != ActivationType::RELU && add_act_type != ActivationType::RELU6 &&
       add_act_type != ActivationType::NO_ACTIVATION) {
@@ -211,7 +211,6 @@ bool MulAddFusion::CheckAddNode() const {
 
 bool MulAddFusion::GetMulInputShape() const {
   MS_ASSERT(mul_input_anode_ != nullptr);
-  ShapeVector mul_input_shape;
   auto mul_input_abstract = mul_input_anode_->abstract();
   if (mul_input_abstract == nullptr) {
     MS_LOG(DEBUG) << "Mul input node has no abstract";

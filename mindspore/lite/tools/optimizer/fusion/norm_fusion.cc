@@ -53,7 +53,7 @@ STATUS GetReduceAxes(const BaseRef &n, std::vector<int> *axes) {
     if (!axes_value->shape().empty()) {
       axes->resize(axes_value->shape()[0]);
     }
-    if (memcpy_s(axes->data(), axes_value->Size(), axes_value->data_c(), axes_value->Size()) == EOK) {
+    if (memcpy_s(axes->data(), axes->size() * sizeof(int), axes_value->data_c(), axes_value->Size()) == EOK) {
       return lite::RET_OK;
     }
   }
@@ -140,7 +140,7 @@ bool NormFusion::GetNormTypeAndAxis(const FuncGraphPtr &func_graph, const CNodeP
                                     const std::vector<int> &mean_axes, const std::vector<int> &params_shape,
                                     schema::PrimitiveType *type, int *begin_norm_axis, int *begin_params_axis) const {
   MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(input_node != nullptr);
+  MS_ASSERT(input_cnode != nullptr);
   MS_ASSERT(type != nullptr);
   MS_ASSERT(begin_norm_axis != nullptr);
   MS_ASSERT(begin_params_axis != nullptr);
@@ -149,17 +149,11 @@ bool NormFusion::GetNormTypeAndAxis(const FuncGraphPtr &func_graph, const CNodeP
     MS_LOG(DEBUG) << "abstract of input is nullptr";
     return false;
   }
-  if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
-    MS_LOG(DEBUG) << "Abstract should be abstract tensor";
+  ShapeVector shape;
+  if (FetchShapeFromAbstract(abstract, &shape) != lite::RET_OK) {
+    MS_LOG(ERROR) << "fetch shape failed.";
     return false;
   }
-  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
-  MS_CHECK_TRUE_RET(abstract_tensor->BuildShape() != nullptr, false);
-  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
-    MS_LOG(DEBUG) << "Shape of Abstract should be ShapePtr";
-    return false;
-  }
-  auto shape = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
   int shape_size = static_cast<int>(shape.size());
   if (shape.empty()) {
     auto shape_size_map = ShapeSizeInfer(func_graph);
@@ -356,7 +350,7 @@ std::map<string, int> NormFusion::ShapeSizeInfer(const FuncGraphPtr &func_graph)
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    auto origin_primc = GetValueNode<PrimitiveCPtr>(cnode->input(0));
+    MS_ASSERT(cnode != nullptr);
     auto prim_t = lite::GetPrimitiveT(cnode->input(0));
     if (prim_t == nullptr) {
       continue;
