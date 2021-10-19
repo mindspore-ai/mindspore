@@ -16,54 +16,47 @@ function Run_Converter() {
     mkdir -p ${ms_models_path}
 
     # Convert TFLite parallel_split models:
-    while read line; do
-        parallel_split_line_info=${line}
-        if [[ $parallel_split_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${parallel_split_line_info}|awk -F ' ' '{print $1}'`
-        echo ${model_name} >> "${run_converter_log_file}"
-        echo 'convert mode name: '${model_name}' begin.'
-        echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_1_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_1_parallel_split.config' >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_1_parallel_split --configFile=${models_path}/offline_parallel_split/1_1_parallel_split.config
-        if [ $? = 0 ]; then
-            converter_result='converter 1_1_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter 1_1_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
-            if [[ $x86_fail_not_return != "ON" ]]; then
-                return 1
-            fi
-        fi
-
-        echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_2_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_2_parallel_split.config' >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_2_parallel_split --configFile=${models_path}/offline_parallel_split/1_2_parallel_split.config
-        if [ $? = 0 ]; then
-            converter_result='converter 1_2_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter 1_2_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
-            if [[ $x86_fail_not_return != "ON" ]]; then
-                return 1
-            fi
-        fi
-
-        echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_3_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_3_parallel_split.config' >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_3_parallel_split --configFile=${models_path}/offline_parallel_split/1_3_parallel_split.config
-        if [ $? = 0 ]; then
-            converter_result='converter 1_3_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
-        else
-            converter_result='converter 1_3_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
-            if [[ $x86_fail_not_return != "ON" ]]; then
-                return 1
-            fi
-        fi
-
-    done < ${models_tflite_parallel_split_config}
-
-    # Prepare the config file list
-    local x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
-                             "$models_mindspore_train_config" "$models_posttraining_config" "$models_process_only_config" \
-                             "$models_tflite_awaretraining_config" "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
-                             "$models_weightquant_9bit_config")
+    if [[ $backend == "x86-all" || $backend == "x86_tflite" ]]; then
+      while read line; do
+          parallel_split_line_info=${line}
+          if [[ $parallel_split_line_info == \#* ]]; then
+            continue
+          fi
+          model_name=`echo ${parallel_split_line_info}|awk -F ' ' '{print $1}'`
+          echo ${model_name} >> "${run_converter_log_file}"
+          echo 'convert mode name: '${model_name}' begin.'
+          echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_1_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_1_parallel_split.config' >> "${run_converter_log_file}"
+          ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_1_parallel_split --configFile=${models_path}/offline_parallel_split/1_1_parallel_split.config
+          if [ $? = 0 ]; then
+              converter_result='converter 1_1_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+          else
+              converter_result='converter 1_1_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+              if [[ $x86_fail_not_return != "ON" ]]; then
+                  return 1
+              fi
+          fi
+          echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_2_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_2_parallel_split.config' >> "${run_converter_log_file}"
+          ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_2_parallel_split --configFile=${models_path}/offline_parallel_split/1_2_parallel_split.config
+          if [ $? = 0 ]; then
+              converter_result='converter 1_2_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+          else
+              converter_result='converter 1_2_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+              if [[ $x86_fail_not_return != "ON" ]]; then
+                  return 1
+              fi
+          fi
+          echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_1_3_parallel_split' --config_file='${models_path}'/offline_parallel_split/1_3_parallel_split.config' >> "${run_converter_log_file}"
+          ./converter_lite  --fmk=TFLITE --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_1_3_parallel_split --configFile=${models_path}/offline_parallel_split/1_3_parallel_split.config
+          if [ $? = 0 ]; then
+              converter_result='converter 1_3_parallel_split '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+          else
+              converter_result='converter 1_3_parallel_split '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+              if [[ $x86_fail_not_return != "ON" ]]; then
+                  return 1
+              fi
+          fi
+      done < ${models_tflite_parallel_split_config}
+    fi
     # Convert models:
     # $1:cfgFileList; $2:inModelPath; $3:outModelPath; $4:logFile; $5:resultFile;
     Convert "${x86_cfg_file_list[*]}" $models_path $ms_models_path $run_converter_log_file $run_converter_result_file $x86_fail_not_return
@@ -71,10 +64,88 @@ function Run_Converter() {
 
 # Run on x86 platform:
 function Run_x86() {
+    # $1:framework;
     echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-x64' >> "${run_x86_log_file}"
     cd ${x86_path}/mindspore-lite-${version}-linux-x64 || exit 1
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
     cp tools/benchmark/benchmark ./ || exit 1
+    # Run converted models:
+    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
+    Run_Benchmark "${x86_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_log_file $run_benchmark_result_file 'x86' 'CPU' '' $x86_fail_not_return
+}
+
+# Run on x86 sse platform:
+function Run_x86_sse() {
+    cd ${x86_path}/sse || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/sse/mindspore-lite-${version}-linux-x64 || exit 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+    cp tools/benchmark/benchmark ./ || exit 1
+
+    # Run converted models:
+    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
+    Run_Benchmark "${x86_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_sse_log_file $run_benchmark_result_file 'x86_sse' 'CPU' '' $x86_fail_not_return
+}
+
+# Run on x86 avx platform:
+function Run_x86_avx() {
+    cd ${x86_path}/avx || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/avx/mindspore-lite-${version}-linux-x64 || exit 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
+    cp tools/benchmark/benchmark ./ || exit 1
+
+    # Run converted models:
+    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:benchmark_mode
+    Run_Benchmark "${x86_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_avx_log_file $run_benchmark_result_file 'x86_avx' 'CPU' '' $x86_fail_not_return
+}
+
+# Run on x86 java platform:
+function Run_x86_java() {
+    cd ${x86_path} || exit 1
+    mkdir java || exit 1
+    cp ${x86_path}/avx/mindspore-lite-${version}-linux-x64.tar.gz ./java/ || exit 1
+    cd ./java || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/third_party/libjpeg-turbo/lib
+    # compile benchmark
+    echo "javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
+    javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
+
+    count=0
+    # Run tflite converted models:
+    while read line; do
+        # only run top5.
+        count=`expr ${count}+1`
+        if [[ ${count} -gt 5 ]]; then
+            break
+        fi
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_x86_java_log_file}"
+        echo "java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
+        java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1
+        if [ $? = 0 ]; then
+            run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
+            if [[ $x86_fail_not_return != "ON" ]]; then
+                return 1
+            fi
+        fi
+    done < ${models_tflite_config}
+}
+
+function Run_x86_parallel_split() {
+    echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-linux-x64' >> "${run_x86_log_file}"
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64 || exit 1
+    rm -rf parallel_split
+    mkdir parallel_split
+    cd parallel_split || exit 1
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../runtime/lib
+    cp ../tools/benchmark/benchmark ./ || exit 1
 
     # Run tflite parallel split converted models:
     while read line; do
@@ -118,89 +189,6 @@ function Run_x86() {
             fi
         fi
     done < ${models_tflite_parallel_split_config}
-
-    # Prepare the config file list
-    local x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
-                             "$models_mindspore_train_config" "$models_posttraining_config" "$models_tflite_awaretraining_config" \
-                             "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
-                             "$models_weightquant_9bit_config" "$models_process_only_config")
-    # Run converted models:
-    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${x86_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_log_file $run_benchmark_result_file 'x86' 'CPU' '' $x86_fail_not_return
-}
-
-# Run on x86 sse platform:
-function Run_x86_sse() {
-    cd ${x86_path}/sse || exit 1
-    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/sse/mindspore-lite-${version}-linux-x64 || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
-    cp tools/benchmark/benchmark ./ || exit 1
-
-    # Prepare the config file list
-    local sse_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
-                             "$models_mindspore_train_config" "$models_posttraining_config" "$models_tflite_awaretraining_config" \
-                             "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
-                             "$models_weightquant_9bit_config" "$models_process_only_config")
-    # Run converted models:
-    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId;
-    Run_Benchmark "${sse_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_sse_log_file $run_benchmark_result_file 'x86_sse' 'CPU' '' $x86_fail_not_return
-}
-
-# Run on x86 avx platform:
-function Run_x86_avx() {
-    cd ${x86_path}/avx || exit 1
-    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/avx/mindspore-lite-${version}-linux-x64 || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./runtime/lib
-    cp tools/benchmark/benchmark ./ || exit 1
-
-    # Prepare the config file list
-    local avx_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
-                             "$models_mindspore_train_config" "$models_posttraining_config" "$models_tflite_awaretraining_config" \
-                             "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
-                             "$models_weightquant_9bit_config" "$models_process_only_config")
-    # Run converted models:
-    # $1:cfgFileList; $2:modelPath; $3:dataPath; $4:logFile; $5:resultFile; $6:platform; $7:processor; $8:phoneId; $9:benchmark_mode
-    Run_Benchmark "${avx_cfg_file_list[*]}" $ms_models_path $models_path $run_x86_avx_log_file $run_benchmark_result_file 'x86_avx' 'CPU' '' $x86_fail_not_return
-}
-
-# Run on x86 java platform:
-function Run_x86_java() {
-    cd ${x86_path} || exit 1
-    mkdir java || exit 1
-    cp ${x86_path}/avx/mindspore-lite-${version}-linux-x64.tar.gz ./java/ || exit 1
-    cd ./java || exit 1
-    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/third_party/libjpeg-turbo/lib
-    # compile benchmark
-    echo "javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
-    javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
-
-    count=0
-    # Run tflite converted models:
-    while read line; do
-        # only run top5.
-        count=`expr ${count}+1`
-        if [[ ${count} -gt 5 ]]; then
-            break
-        fi
-        model_name=`echo ${line} | awk -F ';' '{print $1}'`
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name} >> "${run_x86_java_log_file}"
-        echo "java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms '${models_path}'/input_output/input/${model_name}.ms.bin '${models_path}'/input_output/output/${model_name}.ms.out 1" >> "${run_x86_java_log_file}"
-        java -classpath .:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar Benchmark ${ms_models_path}/${model_name}.ms ${models_path}/input_output/input/${model_name}.ms.bin ${models_path}/input_output/output/${model_name}.ms.out 1
-        if [ $? = 0 ]; then
-            run_result='x86_java: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86_java: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}
-            if [[ $x86_fail_not_return != "ON" ]]; then
-                return 1
-            fi
-        fi
-    done < ${models_tflite_config}
 }
 
 basepath=$(pwd)
@@ -252,6 +240,27 @@ models_weightquant_9bit_config=${basepath}/../config/models_weightquant_9bit.cfg
 models_weightquant_8bit_config=${basepath}/../config/models_weightquant_8bit.cfg
 models_process_only_config=${basepath}/../config/models_process_only.cfg
 
+# Prepare the config file list
+x86_cfg_file_list=()
+if [[ $backend == "x86_tflite" ]]; then
+  x86_cfg_file_list=("$models_tflite_config")
+elif [[ $backend == "x86_tf" ]]; then
+  x86_cfg_file_list=("$models_tf_config")
+elif [[ $backend == "x86_caffe" ]]; then
+  x86_cfg_file_list=("$models_caffe_config")
+elif [[ $backend == "x86_onnx" ]]; then
+  x86_cfg_file_list=("$models_onnx_config")
+elif [[ $backend == "x86_mindir" ]]; then
+  x86_cfg_file_list=("$models_mindspore_train_config" "$models_posttraining_config" "$models_tflite_awaretraining_config" \
+                     "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
+                     "$models_weightquant_9bit_config" "$models_process_only_config" "$models_mindspore_config")
+else
+  x86_cfg_file_list=("$models_tf_config" "$models_tflite_config" "$models_caffe_config" "$models_onnx_config" "$models_mindspore_config" \
+                     "$models_mindspore_train_config" "$models_posttraining_config" "$models_tflite_awaretraining_config" \
+                     "$models_weightquant_0bit_config" "$models_weightquant_8bit_config" "$models_weightquant_7bit_config" \
+                     "$models_weightquant_9bit_config" "$models_process_only_config")
+fi
+
 ms_models_path=${basepath}/ms_models
 
 # Write converter result to temp file
@@ -292,63 +301,55 @@ run_x86_avx_log_file=${basepath}/run_x86_avx_log.txt
 echo 'run x86 avx logs: ' > ${run_x86_avx_log_file}
 run_x86_java_log_file=${basepath}/run_x86_java_log.txt
 echo 'run x86 java logs: ' > ${run_x86_java_log_file}
+run_x86_parallel_split_log_file=${basepath}/run_x86_parallel_split_log.txt
+echo 'run x86 java logs: ' > ${run_x86_parallel_split_log_file}
 
 backend=${backend:-"all"}
 isFailed=0
 
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" ]]; then
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" || $backend == "x86_onnx" || $backend == "x86_tf" || \
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
     # Run on x86
-    echo "start Run x86 ..."
+    echo "start Run x86 $backend..."
     Run_x86 &
     Run_x86_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; then
-    # Run on x86-avx
-    echo "start Run x86 avx ..."
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_avx" || $backend == "x86_onnx" || $backend == "x86_tf" || \
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
+    # Run on x86_avx
+    echo "start Run avx $backend..."
     Run_x86_avx &
     Run_x86_avx_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-sse" ]]; then
-    # Run on x86-sse
-    echo "start Run x86 sse ..."
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_sse" || $backend == "x86_onnx" || $backend == "x86_tf" || \
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
+    # Run on x86_sse
+    echo "start Run sse $backend..."
     Run_x86_sse &
     Run_x86_sse_PID=$!
     sleep 1
 fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; then
-    # Run on x86-java
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_java" || $backend == "x86_tflite" ]]; then
+    # Run on x86_java
     echo "start Run x86 java ..."
     Run_x86_java &
     Run_x86_java_PID=$!
     sleep 1
 fi
-
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-avx" ]]; then
-    wait ${Run_x86_avx_PID}
-    Run_x86_avx_status=$?
-
-    if [[ ${Run_x86_avx_status} != 0 ]];then
-        echo "Run_x86 avx failed"
-        cat ${run_x86_avx_log_file}
-        isFailed=1
-    fi
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_parallel_split" || $backend == "x86_tflite" ]]; then
+    # Run on x86_parallel_split
+    echo "start Run x86 parallel_split ..."
+    Run_x86_parallel_split &
+    Run_x86_parallel_split_PID=$!
+    sleep 1
 fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-sse" ]]; then
-    wait ${Run_x86_sse_PID}
-    Run_x86_sse_status=$?
 
-    if [[ ${Run_x86_sse_status} != 0 ]];then
-        echo "Run_x86 sse failed"
-        cat ${run_x86_sse_log_file}
-        isFailed=1
-    fi
-fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" ]]; then
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" || $backend == "x86_onnx" || $backend == "x86_tf" || \
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
     wait ${Run_x86_PID}
     Run_x86_status=$?
-
     # Check benchmark result and return value
     if [[ ${Run_x86_status} != 0 ]];then
         echo "Run_x86 failed"
@@ -356,13 +357,41 @@ if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86" ]]; then
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86-java" ]]; then
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_avx" || $backend == "x86_onnx" || $backend == "x86_tf" || \
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
+    wait ${Run_x86_avx_PID}
+    Run_x86_avx_status=$?
+    if [[ ${Run_x86_avx_status} != 0 ]];then
+        echo "Run_x86 avx failed"
+        cat ${run_x86_avx_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_sse" || $backend == "x86_onnx" || $backend == "x86_tf" || \
+      $backend == "x86_tflite" || $backend == "x86_caffe" || $backend == "x86_mindir" ]]; then
+    wait ${Run_x86_sse_PID}
+    Run_x86_sse_status=$?
+    if [[ ${Run_x86_sse_status} != 0 ]];then
+        echo "Run_x86 sse failed"
+        cat ${run_x86_sse_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_java" || $backend == "x86_tflite" ]]; then
     wait ${Run_x86_java_PID}
     Run_x86_java_status=$?
-
     if [[ ${Run_x86_java_status} != 0 ]];then
         echo "Run_x86 java failed"
         cat ${run_x86_java_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "all" || $backend == "x86-all" || $backend == "x86_parallel_split" || $backend == "x86_tflite" ]]; then
+    wait ${Run_x86_parallel_split_PID}
+    Run_x86_parallel_split_status=$?
+    if [[ ${Run_x86_parallel_split_status} != 0 ]];then
+        echo "Run_x86 parallel_split failed"
+        cat ${run_x86_parallel_split_log_file}
         isFailed=1
     fi
 fi
