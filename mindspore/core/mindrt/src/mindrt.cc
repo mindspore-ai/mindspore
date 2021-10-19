@@ -79,7 +79,7 @@ int Initialize(const std::string &tcpUrl, const std::string &tcpUrlAdv, const st
   return result;
 }
 
-AID Spawn(const ActorReference actor, bool sharedThread, bool start) {
+AID Spawn(ActorReference actor, bool sharedThread) {
   if (actor == nullptr) {
     MS_LOG(ERROR) << "Actor is nullptr.";
     MINDRT_EXIT("Actor is nullptr.");
@@ -88,17 +88,16 @@ AID Spawn(const ActorReference actor, bool sharedThread, bool start) {
   if (local::g_finalizeMindrtStatus.load() == true) {
     return actor->GetAID();
   } else {
-    return ActorMgr::GetActorMgrRef()->Spawn(actor, sharedThread, start);
+    return ActorMgr::GetActorMgrRef()->Spawn(actor, sharedThread);
   }
 }
-void SetActorStatus(const AID &actor, bool start) { ActorMgr::GetActorMgrRef()->SetActorStatus(actor, start); }
 
 void Await(const ActorReference &actor) { ActorMgr::GetActorMgrRef()->Wait(actor->GetAID()); }
 
 void Await(const AID &actor) { ActorMgr::GetActorMgrRef()->Wait(actor); }
 
 // brief get actor with aid
-ActorBase *GetActor(const AID &actor) { return ActorMgr::GetActorMgrRef()->GetActor(actor); }
+ActorReference GetActor(const AID &actor) { return ActorMgr::GetActorMgrRef()->GetActor(actor); }
 
 void Terminate(const AID &actor) { ActorMgr::GetActorMgrRef()->Terminate(actor); }
 

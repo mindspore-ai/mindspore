@@ -24,14 +24,13 @@
 #include <string>
 #include <utility>
 #include "thread/hqueue.h"
-
 #include "actor/msg.h"
+#include "actor/mailbox.h"
 
 namespace mindspore {
 
 class ActorBase;
 class ActorMgr;
-class ActorPolicy;
 class ActorWorker;
 class ActorThreadPool;
 
@@ -40,7 +39,7 @@ using ActorReference = std::shared_ptr<ActorBase>;
 // should be at least greater than 1
 constexpr uint32_t MAX_ACTOR_RECORD_SIZE = 3;
 
-class ActorBase : std::enable_shared_from_this<ActorBase> {
+class ActorBase {
  public:
   inline const AID &GetAID() const { return id; }
 
@@ -58,6 +57,7 @@ class ActorBase : std::enable_shared_from_this<ActorBase> {
       startPoint = (startPoint + MAX_ACTOR_RECORD_SIZE - 1) % MAX_ACTOR_RECORD_SIZE;
     }
   }
+
   ActorBase();
   explicit ActorBase(const std::string &name);
   explicit ActorBase(const std::string &name, ActorThreadPool *pool);
@@ -97,12 +97,12 @@ class ActorBase : std::enable_shared_from_this<ActorBase> {
   virtual void Finalize() {}
 
   // KHTTPMsg handler
-  virtual void HandleHttp(std::unique_ptr<MessageBase> msg) {
+  virtual void HandleHttp(const std::unique_ptr<MessageBase> &msg) {
     MS_LOG(ERROR) << "ACTOR (" << id.Name().c_str() << ") HandleHttp() is not implemented";
   }
 
   // KLOCALMsg handler
-  virtual void HandleLocalMsg(std::unique_ptr<MessageBase> msg) {
+  virtual void HandleLocalMsg(const std::unique_ptr<MessageBase> &msg) {
     MS_LOG(ERROR) << "ACTOR (" << id.Name().c_str() << ") HandleLocalMsg() is not implemented.";
   }
 
@@ -200,12 +200,12 @@ class ActorBase : std::enable_shared_from_this<ActorBase> {
 
   void Run();
   void Quit();
-  int EnqueMessage(std::unique_ptr<MessageBase> &&msg);
+  int EnqueMessage(std::unique_ptr<MessageBase> msg);
 
-  void Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<ActorPolicy> actorThread);
-  void SetRunningStatus(bool start);
+  void Spawn(const std::shared_ptr<ActorBase> &actor, std::unique_ptr<MailBox> mailbox);
 
-  std::unique_ptr<ActorPolicy> actorPolicy;
+  std::unique_ptr<MailBox> mailbox;
+  std::atomic_bool terminating_ = false;
 
   AID id;
   std::map<std::string, ActorFunction> actionFunctions;

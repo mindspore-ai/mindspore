@@ -33,8 +33,8 @@ using MessageHandler = std::function<void(ActorBase *)>;
 
 class MessageAsync : public MessageBase {
  public:
-  explicit MessageAsync(MessageHandler &h) : MessageBase("Async", Type::KASYNC), handler(h) {}
-  ~MessageAsync() override {}
+  explicit MessageAsync(MessageHandler &&h) : MessageBase("Async", Type::KASYNC), handler(h) {}
+  virtual ~MessageAsync() = default;
   void Run(ActorBase *actor) override { (handler)(actor); }
 
  private:
@@ -52,7 +52,7 @@ struct AsyncHelper<void> {
   template <typename F>
   void operator()(const AID &aid, F &&f) {
     std::function<void(ActorBase *)> handler = [=](ActorBase *) { f(); };
-    std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+    std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
     MINDRT_OOM_EXIT(msg);
     (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
   }
@@ -68,7 +68,7 @@ struct AsyncHelper<Future<R>> {
 
     MessageHandler handler = [=](ActorBase *) { promise->Associate(f()); };
 
-    std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+    std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
     MINDRT_OOM_EXIT(msg);
     (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
     return future;
@@ -84,7 +84,7 @@ struct AsyncHelper {
     Future<R> future = promise->GetFuture();
 
     std::function<void(ActorBase *)> handler = [=](ActorBase *) { promise->SetValue(f()); };
-    std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+    std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
     MINDRT_OOM_EXIT(msg);
     (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
     return future;
@@ -102,7 +102,7 @@ void Async(const AID &aid, void (T::*method)()) {
     MINDRT_ASSERT(t != nullptr);
     (t->*method)();
   };
-  std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
 }
@@ -115,7 +115,7 @@ void Async(const AID &aid, void (T::*method)(Arg0), Arg1 &&arg) {
     MINDRT_ASSERT(t != nullptr);
     (t->*method)(arg);
   };
-  std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
 }
@@ -128,7 +128,7 @@ void Async(const AID &aid, void (T::*method)(Args0...), std::tuple<Args1...> &&t
     MINDRT_ASSERT(t != nullptr);
     Apply(t, method, tuple);
   };
-  std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
 }
@@ -152,7 +152,7 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)()) {
     MINDRT_ASSERT(t != nullptr);
     promise->Associate((t->*method)());
   };
-  std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
   return future;
@@ -171,7 +171,7 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)(Arg0), Arg1 &&arg) {
     promise->Associate((t->*method)(arg));
   };
 
-  std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
   return future;
@@ -190,7 +190,7 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)(Args0...), std::tuple<Arg
     promise->Associate(Apply(t, method, tuple));
   };
 
-  std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
   return future;
@@ -217,7 +217,7 @@ Future<R> Async(const AID &aid, R (T::*method)()) {
     promise->SetValue((t->*method)());
   };
 
-  std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
   return future;
@@ -237,7 +237,7 @@ Future<R> Async(const AID &aid, R (T::*method)(Arg0), Arg1 &&arg) {
     MINDRT_ASSERT(t != nullptr);
     promise->SetValue((t->*method)(arg));
   };
-  std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
   return future;
@@ -257,7 +257,7 @@ Future<R> Async(const AID &aid, R (T::*method)(Args0...), std::tuple<Args1...> &
     MINDRT_ASSERT(t != nullptr);
     promise->SetValue(Apply(t, method, tuple));
   };
-  std::unique_ptr<MessageAsync> msg(new (std::nothrow) MessageAsync(handler));
+  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
   return future;

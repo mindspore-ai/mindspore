@@ -118,9 +118,9 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // The position of the branch output in the input_nodes_.
   std::vector<std::vector<size_t>> branch_inputs_pos_;
 
-  std::unordered_map<uuids::uuid *, std::unordered_map<size_t, std::stack<DeviceTensor *>>> input_data_;
+  std::unordered_map<int, std::unordered_map<size_t, std::stack<DeviceTensor *>>> input_data_;
 
-  std::unordered_map<uuids::uuid *, std::unordered_map<AID *, size_t>> input_controls_;
+  std::unordered_map<int, std::unordered_map<AID *, size_t>> input_controls_;
 
   // Branch ids is used to record the id corresponding to the switch output branch.
   // In control flow, sub funcgraph may be called in multiple places, and the output must be return to different
@@ -129,7 +129,7 @@ class SwitchActor : public SwitchActorBase<DeviceTensor> {
   // actor connected to the output.
   // In a recursive scenario, the switch will sequentially receive the branch ids sent by the caller, and the switch
   // actor needs to store the branch ids in the stack, and pop up in turn when returning.
-  std::unordered_map<uuids::uuid *, std::stack<int>> input_branch_ids_;
+  std::unordered_map<int, std::stack<int>> input_branch_ids_;
 
   // Control arrows of different branches.
   std::vector<std::vector<AID>> output_branch_control_arrows_;

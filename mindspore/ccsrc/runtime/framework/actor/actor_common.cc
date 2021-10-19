@@ -31,13 +31,8 @@ void ComputeThreadNums(size_t *actor_thread_num, size_t *OMP_thread_num, size_t 
   const size_t kActorThreadMinNum = 2;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  // The pyNative mode is the step execution strategy, so only need the kActorThreadMinNum.
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    *actor_thread_num = kActorThreadMinNum;
-  } else {
-    *actor_thread_num = cpu_core_num < kActorThreadMinNum ? kActorThreadMinNum : cpu_core_num;
-    *actor_thread_num = *actor_thread_num > kActorThreadMaxNum ? kActorThreadMaxNum : *actor_thread_num;
-  }
+  *actor_thread_num = cpu_core_num < kActorThreadMinNum ? kActorThreadMinNum : cpu_core_num;
+  *actor_thread_num = *actor_thread_num > kActorThreadMaxNum ? kActorThreadMaxNum : *actor_thread_num;
 
   const size_t kOMPThreadMaxNum = 8;
   *OMP_thread_num = cpu_core_num < kOMPThreadMaxNum ? cpu_core_num : kOMPThreadMaxNum;

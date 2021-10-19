@@ -70,7 +70,7 @@ class MemoryManagerActor : public ActorBase {
   // MemoryManagerActor object is used like a single instance, if one actor allocates memory failed in one batch, which
   // will set fail message info OpContext, major thread will destroy the OpContext object, subsequent actor can not set
   // fail message again, so we record allocating memory fail event by the uuid of the batch, which is key of the set.
-  std::set<std::string> mem_alloc_failed_step_ids_;
+  std::set<int> mem_alloc_failed_step_ids_;
 };
 }  // namespace runtime
 }  // namespace mindspore
