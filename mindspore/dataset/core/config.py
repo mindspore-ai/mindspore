@@ -142,8 +142,8 @@ def set_prefetch_size(size):
 
     Note:
         Since total memory used for prefetch can grow very large with high number of workers,
-        when number of workers is greater than 4, the per worker prefetch size will be reduced.
-        The actual prefetch size at runtime per worker will be prefetchsize * (4 / num_parallel_workers).
+        when the number of workers is greater than 4, the per worker prefetch size will be reduced.
+        The actual prefetch size at runtime per-worker will be prefetchsize * (4 / num_parallel_workers).
 
     Examples:
         >>> # Set a new global configuration value for the prefetch size.
@@ -388,7 +388,7 @@ def __str__():
 
 def load(file):
     """
-    Load the project configuration form the file format.
+    Load the project configuration from the file format.
 
     Args:
         file (str): Path of the configuration file to be loaded.
