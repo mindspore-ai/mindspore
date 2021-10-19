@@ -864,7 +864,7 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   MS_EXCEPTION_IF_NULL(data_v);
   if (!data_v->isa<parse::NameSpace>()) {
     MS_LOG(EXCEPTION) << "Not supported to get attribute for " << data_v->ToString()
-                      << "\nThe data should be a NameSpace.";
+                      << "\nThe first argument should be a NameSpace, but got " << args_spec_list[0]->ToString();
   }
 
   auto item_value = args_spec_list[1]->BuildValue();
@@ -1318,7 +1318,8 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_LOG(DEBUG) << "arg_1, global_dict: " << global_dict->ToString() << ", [" << global_dict->type_name() << "]";
     ValuePtr global_dict_value = global_dict->BuildValue();
     py::object global_params_dict = ValueToPyData(global_dict_value);
-    MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << py::str(global_params_dict);
+    MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << global_dict_value->ToString() << " -> "
+                  << py::str(global_params_dict);
     params[0] = global_params_dict;
 
     // Make the local parameters.
@@ -1327,7 +1328,8 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString() << ", [" << local_dict->type_name() << "]";
     ValuePtr local_dict_value = local_dict->BuildValue();
     py::object local_params_dict = ValueToPyData(local_dict_value);
-    MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << py::str(local_params_dict);
+    MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
+                  << py::str(local_params_dict);
     params[1] = local_params_dict;
     return params;
   }
