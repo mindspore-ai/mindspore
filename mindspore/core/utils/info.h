@@ -120,7 +120,7 @@ class MS_CORE_API TraceManager {
 
 class TraceGuard {
  public:
-  TraceGuard(const std::string func_name, const LocationPtr &location) {
+  TraceGuard(const std::string &func_name, const LocationPtr &location) {
     TraceManager::DebugTrace(func_name, location);
   }
   explicit TraceGuard(const LocationPtr &location) { TraceManager::DebugTrace(location); }
@@ -177,6 +177,12 @@ class MS_CORE_API DebugInfo : public Base {
   ///
   /// \param[in] loc The location for DebugInfo.
   explicit DebugInfo(const LocationPtr &loc);
+
+  /// \brief Construct DebugInfo with the given trace info.
+  ///
+  /// \param[in] trace_info The trace info for DebugInfo.
+  explicit DebugInfo(TraceInfoPtr &&trace_info)
+      : unique_id_(gen_unique_id()), debug_id_(-1), trace_info_(std::move(trace_info)) {}
 
   /// \brief Destructor of DebugInfo.
   ~DebugInfo() override = default;
@@ -291,6 +297,11 @@ class MS_CORE_API NodeDebugInfo : public DebugInfo {
     }
   }
 
+  /// \brief Construct NodeDebugInfo with the given trace info.
+  ///
+  /// \param[in] trace_info The trace info for NodeDebugInfo.
+  explicit NodeDebugInfo(TraceInfoPtr &&trace_info) : DebugInfo(std::move(trace_info)) {}
+
   /// \brief Destructor of the NodeDebugInfo.
   ~NodeDebugInfo() override = default;
 
@@ -336,7 +347,11 @@ class GraphDebugInfo : public DebugInfo {
       deco_loc_ = nullptr;
     }
   }
+
+  explicit GraphDebugInfo(TraceInfoPtr &&trace_info) : DebugInfo(std::move(trace_info)) {}
+
   ~GraphDebugInfo() override = default;
+
   std::string debug_name() override;
   LocationPtr location() override;
   LocationPtr deco_location() { return deco_loc_; }

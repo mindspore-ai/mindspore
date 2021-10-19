@@ -33,7 +33,9 @@ namespace mindspore {
 /*
  * Methods of Graph
  */
-FuncGraph::FuncGraph()
+FuncGraph::FuncGraph() : FuncGraph(std::make_shared<GraphDebugInfo>()) {}
+
+FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
     : attrs_(),
       transforms_(),
       parameter_default_value_(),
@@ -46,13 +48,12 @@ FuncGraph::FuncGraph()
       is_generated_(false),
       is_bprop_(false),
       return_(nullptr),
-      manager_(std::weak_ptr<FuncGraphManager>()),
+      manager_(),
+      debug_info_(std::move(debug_info)),
       stub_(false),
-      stage_(-1) {
-  debug_info_ = std::make_shared<GraphDebugInfo>();
-  switch_input_ = std::make_shared<bool>(false);
-  switch_layer_input_ = std::make_shared<bool>(false);
-}
+      switch_input_(std::make_shared<bool>(false)),
+      switch_layer_input_(std::make_shared<bool>(false)),
+      stage_(-1) {}
 
 abstract::AbstractBasePtr FuncGraph::ToAbstract() {
   auto temp_context = abstract::AnalysisContext::DummyContext();
@@ -86,6 +87,13 @@ const std::vector<AnfNodePtr> FuncGraph::get_inputs() const {
 ParameterPtr FuncGraph::add_parameter() {
   FuncGraphPtr this_func_graph = shared_from_base<FuncGraph>();
   ParameterPtr p = std::make_shared<Parameter>(this_func_graph);
+  add_parameter(p);
+  return p;
+}
+
+ParameterPtr FuncGraph::add_parameter(NodeDebugInfoPtr &&debug_info) {
+  FuncGraphPtr this_func_graph = shared_from_base<FuncGraph>();
+  ParameterPtr p = std::make_shared<Parameter>(this_func_graph, std::move(debug_info));
   add_parameter(p);
   return p;
 }

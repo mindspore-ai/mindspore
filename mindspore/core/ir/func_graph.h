@@ -154,9 +154,10 @@ class FuncGraphBase : public Value {
 
 class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfoHolder {
  public:
-  FuncGraph();
   using Drawer = std::function<void(const std::string &, const FuncGraphPtr &)>;
 
+  FuncGraph();
+  explicit FuncGraph(GraphDebugInfoPtr &&debug_info);
   ~FuncGraph() override = default;
   MS_DECLARE_PARENT(FuncGraph, FuncGraphBase);
 
@@ -173,6 +174,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   const std::vector<AnfNodePtr> &parameters() const final { return parameters_; }
   // Append
   ParameterPtr add_parameter() override;
+  ParameterPtr add_parameter(NodeDebugInfoPtr &&debug_info);
   void add_parameter(const ParameterPtr &p) final;
   void append_parameter(const ParameterPtr &p) { parameters_.push_back(p); }
   // Prepend
@@ -180,6 +182,7 @@ class FuncGraph : public api::FuncGraph, public FuncGraphBase, public EffectInfo
   void InsertFrontParameter(const ParameterPtr &p);
   void PrependParameter(const ParameterPtr &p) { parameters_.insert(parameters_.begin(), p); }
   void set_parameters(const std::vector<AnfNodePtr> &params) { parameters_ = params; }
+  void set_parameters(std::vector<AnfNodePtr> &&params) { parameters_ = std::move(params); }
   // Add a weight parameter with specific name.
   ParameterPtr AddWeightParameter(const std::string &name);
 

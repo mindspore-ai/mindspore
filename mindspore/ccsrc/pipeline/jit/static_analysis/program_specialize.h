@@ -75,10 +75,7 @@ class ProgramSpecializer {
 class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecializer> {
  public:
   FuncGraphSpecializer(ProgramSpecializer *const s, const FuncGraphPtr &fg, const AnalysisContextPtr &context);
-  virtual ~FuncGraphSpecializer() {
-    specializer_ = nullptr;
-    repl_node_ = nullptr;
-  }
+  virtual ~FuncGraphSpecializer() { specializer_ = nullptr; }
   void Run();
   FuncGraphPtr specialized_func_graph() { return specialized_func_graph_; }
 
@@ -92,9 +89,6 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   std::shared_ptr<FuncGraphSpecializer> parent_;
   std::shared_ptr<AnalysisEngine> engine_;
   ClonerPtr cloner_;
-  // ProcessNode-> [cloner_->CloneDisconnected] will clone AnfNode again.
-  // So, repl_node_ should pointer to GraphCloner->repl_node_ other than a copy of that.
-  std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_node_;
   std::vector<AnfNodePtr> todo_;
   std::unordered_set<AnfNodePtr> marked_;
   std::unordered_map<EvaluatorPtr, EvaluatorCacheMgrPtr> evalcaches_;
@@ -103,6 +97,8 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   void SecondPass();
   void ProcessNode(const AnfNodePtr &node);
   void ProcessCNode(const CNodePtr &new_node);
+
+  const NodeToNodeMap &cloned_nodes() const { return cloner_->cloned_nodes(); }
 
   inline AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node);
   inline AnalysisContextPtr MakeContext(const AnalysisEnginePtr &engine, const BaseFuncGraphEvaluatorPtr &evaluator,
