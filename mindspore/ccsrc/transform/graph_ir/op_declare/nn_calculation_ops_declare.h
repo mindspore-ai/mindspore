@@ -72,5 +72,8 @@ DECLARE_OP_USE_OUTPUT(DepthwiseConv2DBackpropInputD)
 
 DECLARE_OP_ADAPTER(Deconvolution)
 DECLARE_OP_USE_OUTPUT(Deconvolution)
+
+DECLARE_OP_ADAPTER(Conv2DTransposeD)
+DECLARE_OP_USE_OUTPUT(Conv2DTransposeD)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_CALCULATION_OPS_DECLARE_H_

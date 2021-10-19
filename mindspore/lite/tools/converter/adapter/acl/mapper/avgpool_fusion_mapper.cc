@@ -19,6 +19,7 @@
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 #include "include/registry/parser_context.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -33,22 +34,8 @@ STATUS AvgPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   auto attr_val = src_prim->GetAttr(ops::kFmkType);
   int fmk_type = attr_val != nullptr ? GetValue<int>(attr_val) : converter::kFmkTypeTf;
   PrimitivePtr dst_prim = nullptr;
-  if (fmk_type == converter::kFmkTypeCaffe) {
-    dst_prim = std::make_shared<acl::Pooling>();
-  } else if (fmk_type == converter::kFmkTypeOnnx) {
-    ValuePtr val_ptr = src_prim->GetAttr(ops::kKernelSize);
-    if (val_ptr == nullptr) {
-      dst_prim = std::make_shared<acl::GlobalAveragePool>();
-    } else {
-      dst_prim = std::make_shared<acl::AvgPoolV2>();
-    }
-  } else {
-    dst_prim = std::make_shared<ops::AvgPool>();
-  }
-  if (dst_prim == nullptr) {
-    MS_LOG(ERROR) << "Get primitive by fmk type failed.";
-    return lite::RET_ERROR;
-  }
+  CreateTargetPrim(src_prim, &dst_prim, fmk_type);
+  CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
   if (AdjustPoolAttr(fmk_type, kNameAvgPoolFusion, dst_prim) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adjust pool attr failed.";
@@ -56,6 +43,21 @@ STATUS AvgPoolFusionMapper::Mapper(const CNodePtr &cnode) {
   }
   value_node->set_value(dst_prim);
   return lite::RET_OK;
+}
+
+void AvgPoolFusionMapper::CreateTargetPrim(const PrimitivePtr &src_prim, PrimitivePtr *dst_prim, int fmk_type) {
+  if (fmk_type == converter::kFmkTypeCaffe) {
+    *dst_prim = std::make_shared<acl::Pooling>();
+  } else if (fmk_type == converter::kFmkTypeOnnx) {
+    ValuePtr val_ptr = src_prim->GetAttr(ops::kKernelSize);
+    if (val_ptr == nullptr) {
+      *dst_prim = std::make_shared<acl::GlobalAveragePool>();
+    } else {
+      *dst_prim = std::make_shared<acl::AvgPoolV2>();
+    }
+  } else {
+    *dst_prim = std::make_shared<ops::AvgPool>();
+  }
 }
 
 REGISTER_PRIMITIVE_MAPPER(kNameAvgPoolFusion, AvgPoolFusionMapper)

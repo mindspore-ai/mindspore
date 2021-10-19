@@ -196,5 +196,20 @@ STATUS PrimitiveMapper::AddAttrToInput(const FuncGraphPtr &func_graph, const CNo
   cnode->set_inputs(inputs);
   return lite::RET_OK;
 }
+
+STATUS PrimitiveMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name) {
+  CHECK_NULL_RETURN(cnode);
+  CHECK_NULL_RETURN(cnode->input(0));
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+  CHECK_NULL_RETURN(value_node);
+  auto prim = GetValueNode<PrimitivePtr>(value_node);
+  CHECK_NULL_RETURN(prim);
+  // add attr input num for dynamic input op
+  int64_t num = static_cast<int64_t>(cnode->size());
+  if (num > 1) {
+    prim->AddAttr(attr_name, MakeValue(num - 1));
+  }
+  return lite::RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

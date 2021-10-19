@@ -32,22 +32,16 @@ namespace acl {
   };
 
 ADD_CONVERTER_TBE_OP(Pooling)
-
 ADD_CONVERTER_TBE_OP(AvgPoolV2)
-
 ADD_CONVERTER_TBE_OP(MaxPoolV3)
-
 ADD_CONVERTER_TBE_OP(PadV3)
-
 ADD_CONVERTER_TBE_OP(StridedSliceV2)
-
 ADD_CONVERTER_TBE_OP(GlobalAveragePool)
-
 ADD_CONVERTER_TBE_OP(BNInference)
-
 ADD_CONVERTER_TBE_OP(Deconvolution)
-
 ADD_CONVERTER_TBE_OP(Upsample)
+ADD_CONVERTER_TBE_OP(Conv2DTransposeD)
+
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore

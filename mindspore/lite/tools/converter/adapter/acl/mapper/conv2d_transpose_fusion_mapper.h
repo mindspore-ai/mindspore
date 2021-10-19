@@ -30,6 +30,10 @@ class Conv2dTransposeMapper : public PrimitiveMapper {
   ~Conv2dTransposeMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
+
+ private:
+  STATUS AdjustGeAttr(const CNodePtr &cnode, const PrimitivePtr &dst_prim);
+  STATUS AdjustOutputPadding(const PrimitivePtr &dst_prim);
 };
 }  // namespace lite
 }  // namespace mindspore

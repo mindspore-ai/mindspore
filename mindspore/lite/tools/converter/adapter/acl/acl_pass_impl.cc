@@ -146,10 +146,13 @@ STATUS AclPassImpl::DeparseGraph(const FuncGraphPtr &func_graph, const FuncGraph
     MS_LOG(ERROR) << "Run mapper primitive failed.";
     return lite::RET_ERROR;
   }
-
   if (lite::AdapteSpatialNode(func_graph, manager) != lite::RET_OK) {
     MS_LOG(ERROR) << "Adapter spatial node failed.";
     return lite::RET_ERROR;
+  }
+  if (lite::acl::DelRedundantParameter(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Delete redundant parameter failed.";
+    return lite::RET_OK;
   }
   return lite::RET_OK;
 }
@@ -167,6 +170,10 @@ STATUS AclPassImpl::CommonPass(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
+  if (CommonPass(func_graph) != lite::RET_OK) {
+    MS_LOG(ERROR) << "Common pass failed.";
+    return lite::RET_ERROR;
+  }
   if (fmk_type_ == converter::kFmkTypeMs) {
     MS_LOG(DEBUG) << "MindIr no need to change format.";
     return lite::RET_OK;

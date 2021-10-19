@@ -45,6 +45,8 @@ class PrimitiveMapper {
   STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const PrimitivePtr &dst_prim,
                         const std::string &attr_name, size_t flag);
 
+  STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode, const std::string &attr_name);
+
  private:
   void AdjustCaffePoolAttr(const std::string &src_prim_name, const PrimitivePtr &dst_prim);
 

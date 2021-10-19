@@ -332,6 +332,7 @@ constexpr const char kNameStridedSliceV2[] = "StridedSliceV2";
 constexpr const char kNameBNInference[] = "BNInference";
 constexpr const char kNameDeconvolution[] = "Deconvolution";
 constexpr const char kNameUpsample[] = "Upsample";
+constexpr const char kNameConv2DTransposeD[] = "Conv2DTransposeD";
 
 class OpAdapterMap {
  public:

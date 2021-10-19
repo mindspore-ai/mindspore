@@ -24,28 +24,11 @@ constexpr auto kNameNum = "num";
 }
 
 STATUS StackMapper::Mapper(const CNodePtr &cnode) {
-  if (AddAttrForDynInputPrimitive(cnode) != RET_OK) {
+  if (AddAttrForDynInputPrimitive(cnode, kNameNum) != RET_OK) {
     MS_LOG(ERROR) << "Stack mapper failed.";
     return RET_ERROR;
   }
   return RET_OK;
-}
-
-STATUS StackMapper::AddAttrForDynInputPrimitive(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-  MS_ASSERT(value_node != nullptr);
-  auto prim = GetValueNode<PrimitivePtr>(value_node);
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "Value node is invalid.";
-    return lite::RET_ERROR;
-  }
-  // add attr input num for dynamic input op
-  int64_t num = static_cast<int64_t>(cnode->size());
-  if (num > 1) {
-    prim->AddAttr(kNameNum, MakeValue(num - 1));
-  }
-  return lite::RET_OK;
 }
 
 REGISTER_PRIMITIVE_MAPPER(kNameStack, StackMapper)

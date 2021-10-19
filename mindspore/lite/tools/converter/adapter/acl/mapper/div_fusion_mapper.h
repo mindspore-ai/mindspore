@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef ACL_MAPPER_PRIMITIVE_ELTWISE_MAPPER_H
-#define ACL_MAPPER_PRIMITIVE_ELTWISE_MAPPER_H
+#ifndef ACL_MAPPER_PRIMITIVE_DIV_FUSION_MAPPER_H
+#define ACL_MAPPER_PRIMITIVE_DIV_FUSION_MAPPER_H
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
-#include "ops/eltwise.h"
-
-using mindspore::ops::kNameEltwise;
+#include "ops/fusion/div_fusion.h"
 
 namespace mindspore {
 namespace lite {
-class EltWiseMapper : public PrimitiveMapper {
- public:
-  EltWiseMapper() : PrimitiveMapper(kNameEltwise) {}
+using mindspore::ops::kNameDivFusion;
 
-  ~EltWiseMapper() override = default;
+class DivFusionMapper : public PrimitiveMapper {
+ public:
+  DivFusionMapper() : PrimitiveMapper(kNameDivFusion) {}
+
+  ~DivFusionMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // ACL_MAPPER_PRIMITIVE_ELTWISE_MAPPER_H
+#endif  // ACL_MAPPER_PRIMITIVE_DIV_FUSION_MAPPER_H

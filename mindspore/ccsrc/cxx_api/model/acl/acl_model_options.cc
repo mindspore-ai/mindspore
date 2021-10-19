@@ -71,6 +71,10 @@ void AclModelOptions::RenameInput(const std::vector<std::string> &input_names) {
   }
   input_shape_ = "";
   for (size_t i = 0; i < input_shape_map_.size(); i++) {
+    if (input_shape_map_.find(i) == input_shape_map_.end()) {
+      MS_LOG(WARNING) << "Not find the key: " << i;
+      return;
+    }
     std::string s;
     for (size_t j = 0; j < input_shape_map_[i].size(); j++) {
       s += std::to_string(input_shape_map_[i][j]) + ",";

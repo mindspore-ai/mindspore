@@ -33,7 +33,6 @@ class ConcatMapper : public PrimitiveMapper {
   STATUS Mapper(const CNodePtr &cnode) override;
 
  private:
-  STATUS AddAttrForDynInputPrimitive(const CNodePtr &cnode);
   STATUS RenameNode(const CNodePtr &cnode);
 };
 }  // namespace lite
