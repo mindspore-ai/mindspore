@@ -26,15 +26,28 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCumSum = "CumSum";
+/// \brief Computes the cumulative sum of input tensor along axis.
+/// Refer to Python API @ref mindspore.ops.CumSum for more details.
 class MS_CORE_API CumSum : public PrimitiveC {
  public:
+  /// \brief Constructor.
   CumSum() : PrimitiveC(kNameCumSum) {}
+  /// \brief Destructor.
   ~CumSum() = default;
   MS_DECLARE_PARENT(CumSum, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CumSum for the inputs.
   void Init(const bool exclusive, const bool reverse);
+  /// \brief Set exclusive.
   void set_exclusive(const bool exclusive);
+  /// \brief Set reverse.
   void set_reverse(const bool reverse);
+  /// \brief Get exclusive.
+  ///
+  /// \return exclusive.
   bool get_exclusive() const;
+  /// \brief Get reverse.
+  ///
+  /// \return reverse.
   bool get_reverse() const;
 };
 AbstractBasePtr CumSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

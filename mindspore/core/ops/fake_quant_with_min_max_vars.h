@@ -25,15 +25,28 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFakeQuantWithMinMaxVars = "FakeQuantWithMinMaxVars";
+/// \brief Fake-quantize the input by minimum and maximum.
+/// Refer to Python API @ref mindspore.ops.FakeQuantWithMinMaxVars for more details.
 class MS_CORE_API FakeQuantWithMinMaxVars : public PrimitiveC {
  public:
+  /// \brief Constructor.
   FakeQuantWithMinMaxVars() : PrimitiveC(kNameFakeQuantWithMinMaxVars) {}
+  /// \brief Destructor.
   ~FakeQuantWithMinMaxVars() = default;
   MS_DECLARE_PARENT(FakeQuantWithMinMaxVars, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FakeQuantWithMinMaxVars for the inputs.
   void Init(const bool narrow_range = false, const int64_t num_bits = 8);
+  /// \brief Set narrow_range.
   void set_narrow_range(const bool narrow_range);
+  /// \brief Set num_bits.
   void set_num_bits(const int64_t num_bits);
+  /// \brief Get narrow_range.
+  ///
+  /// \return narrow_range.
   bool get_narrow_range() const;
+  /// \brief Get num_bits.
+  ///
+  /// \return num_bits.
   int64_t get_num_bits() const;
 };
 AbstractBasePtr FakeQuantWithMinMaxVarsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

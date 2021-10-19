@@ -27,9 +27,12 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief 3D Average pooling operation. Refer to Python API @ref mindspore.ops.AvgPool3D for more details.
 class MS_CORE_API AvgPool3D : public PrimitiveC {
  public:
+  /// \brief Constructor.
   AvgPool3D() : PrimitiveC(prim::kPrimAvgPool3D->name()) { InitIOName({"input"}, {"output"}); }
+  /// \brief Destructor.
   ~AvgPool3D() = default;
   MS_DECLARE_PARENT(AvgPool3D, PrimitiveC);
 };

@@ -27,13 +27,22 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEmbeddingLookup = "EmbeddingLookup";
+/// \brief Returns a slice of input tensor based on the specified indices.
+/// Refer to Python API @ref mindspore.ops.EmbeddingLookup for more details.
 class MS_CORE_API EmbeddingLookup : public PrimitiveC {
  public:
+  /// \brief Constructor.
   EmbeddingLookup() : PrimitiveC(kNameEmbeddingLookup) { InitIOName({"params", "indices", "offset"}, {"output"}); }
+  /// \brief Destructor.
   ~EmbeddingLookup() = default;
   MS_DECLARE_PARENT(EmbeddingLookup, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.EmbeddingLookup for the inputs.
   void Init(const bool setattr_flag = true);
+  /// \brief Set setattr_flag.
   void set_setattr_flag(const bool setattr_flag);
+  /// \brief Get setattr_flag.
+  ///
+  /// \return setattr_flag.
   bool get_setattr_flag() const;
 };
 AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

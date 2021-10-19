@@ -28,17 +28,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMin = "ArgMin";
+/// \brief Returns the indices of the minimum value of a tensor across the axis.
+/// Refer to Python API @ref mindspore.ops.Argmin for more details.
 class MS_CORE_API ArgMin : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ArgMin() : PrimitiveC(kNameArgMin) { InitIOName({"x"}, {"output"}); }
   explicit ArgMin(const std::string k_name) : PrimitiveC(k_name) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~ArgMin() = default;
   MS_DECLARE_PARENT(ArgMin, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Argmin for the inputs.
   void Init(const int64_t axis = -1, const TypeId output_type = kNumberTypeInt32);
+  /// \brief Set axis.
   void set_axis(const int64_t axis);
+  /// \brief Set output_type.
   void set_output_type(const TypeId output_type);
 
+  /// \brief Get axis.
+  ///
+  /// \return axis.
   int64_t get_axis() const;
+  /// \brief Get output_type.
+  ///
+  /// \return output_type.
   TypeId get_output_type() const;
 };
 AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

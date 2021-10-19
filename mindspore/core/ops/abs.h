@@ -25,11 +25,16 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Returns absolute value of a tensor element-wise.
+/// Refer to Python API @ref mindspore.ops.Abs for more details.
 class MS_CORE_API Abs : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Abs() : PrimitiveC(prim::kPrimAbs->name()) { InitIOName({"input_x"}, {"output"}); }
+  /// \brief Destructor.
   ~Abs() = default;
   MS_DECLARE_PARENT(Abs, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Abs for the inputs.
   void Init() {}
 };
 }  // namespace ops

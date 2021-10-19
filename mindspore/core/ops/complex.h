@@ -25,11 +25,16 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Returns a complex Tensor from the real and imaginary part.
+/// Refer to Python API @ref mindspore.ops.Complex for more details.
 class MS_CORE_API Complex : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Complex() : PrimitiveC(prim::kPrimSquare->name()) { InitIOName({"s", "input_imag"}, {"output"}); }
+  /// \brief Destructor.
   ~Complex() = default;
   MS_DECLARE_PARENT(Complex, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Complex for the inputs.
   void Init() {}
 };
 }  // namespace ops

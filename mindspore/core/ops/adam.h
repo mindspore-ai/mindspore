@@ -27,15 +27,28 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdam = "Adam";
+/// \brief Updates gradients by the Adaptive Moment Estimation (Adam) algorithm.
+/// Refer to Python API @ref mindspore.ops.Adam for more details.
 class MS_CORE_API Adam : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Adam() : PrimitiveC(kNameAdam) {}
+  /// \brief Destructor.
   ~Adam() = default;
   MS_DECLARE_PARENT(Adam, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Adam for the inputs.
   void Init(const bool use_locking = false, const bool use_nesterov = false);
+  /// \brief Set use_locking.
   void set_use_locking(const bool use_locking);
+  /// \brief Set use_nesterov.
   void set_use_nesterov(const bool use_nesterov);
+  /// \brief Get use_locking.
+  ///
+  /// \return use_locking.
   bool get_use_locking() const;
+  /// \brief Get use_nesterov.
+  ///
+  /// \return use_nesterov.
   bool get_use_nesterov() const;
 };
 AbstractBasePtr AdamInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

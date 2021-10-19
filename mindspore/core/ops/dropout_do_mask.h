@@ -25,11 +25,16 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Applies dropout mask on the input tensor.
+/// Refer to Python API @ref mindspore.ops.DropoutDoMask for more details.
 class MS_CORE_API DropoutDoMask : public PrimitiveC {
  public:
+  /// \brief Constructor.
   DropoutDoMask() : PrimitiveC(prim::kPrimDropoutDoMask->name()) {}
+  /// \brief Destructor.
   ~DropoutDoMask() = default;
   MS_DECLARE_PARENT(DropoutDoMask, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DropoutDoMask for the inputs.
   void Init() {}
 };
 AbstractBasePtr DropoutDoMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

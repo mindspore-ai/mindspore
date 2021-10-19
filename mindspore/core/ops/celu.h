@@ -28,11 +28,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCeLU = "CeLU";
+/// \brief Computes CeLU (Continuously differentiable exponential linear units) of input tensors element-wise.
+/// Refer to Python API @ref mindspore.ops.CeLU for more details.
 class CeLU : public PrimitiveC {
  public:
+  /// \brief Constructor.
   CeLU() : PrimitiveC(kNameCeLU) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~CeLU() = default;
   MS_DECLARE_PARENT(CeLU, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CeLU for the inputs.
   void Init() {}
 };
 

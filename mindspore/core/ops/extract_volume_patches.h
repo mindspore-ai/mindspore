@@ -28,9 +28,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameExtractVolumePatches = "ExtractVolumePatches";
+/// \brief Extract patches from input and put them in the "depth" output dimension.
+/// Refer to Python API @ref mindspore.ops.ExtractVolumePatches for more details.
 class MS_CORE_API ExtractVolumePatches : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ExtractVolumePatches() : PrimitiveC(kNameExtractVolumePatches) { InitIOName({"x"}, {"y"}); }
+  /// \brief Destructor.
   ~ExtractVolumePatches() = default;
   MS_DECLARE_PARENT(ExtractVolumePatches, PrimitiveC);
 };

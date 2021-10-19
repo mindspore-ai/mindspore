@@ -26,11 +26,16 @@
 
 namespace mindspore {
 namespace ops {
+/// \brief Returns the data type of the input tensor as mindspore.dtype.
+/// Refer to Python API @ref mindspore.ops.DType for more details.
 class MS_CORE_API DType : public PrimitiveC {
  public:
+  /// \brief Constructor.
   DType() : PrimitiveC(prim::kPrimDType->name()) { InitIOName({"x"}, {"output"}); }
+  /// \brief Destructor.
   ~DType() = default;
   MS_DECLARE_PARENT(DType, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.DType for the inputs.
   void Init() {}
 };
 }  // namespace ops

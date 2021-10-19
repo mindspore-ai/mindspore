@@ -26,11 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFlatten = "Flatten";
+/// \brief Flattens a tensor without changing its batch size on the 0-th axis.
+/// Refer to Python API @ref mindspore.ops.Flatten for more details.
 class MS_CORE_API Flatten : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Flatten() : PrimitiveC(kNameFlatten) {}
+  /// \brief Destructor.
   ~Flatten() = default;
   MS_DECLARE_PARENT(Flatten, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Flatten for the inputs.
   void Init() {}
 };
 AbstractBasePtr FlattenInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

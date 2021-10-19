@@ -28,15 +28,28 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchToSpaceND = "BatchToSpaceND";
+/// \brief Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
+/// Refer to Python API @ref mindspore.ops.BatchToSpaceND for more details.
 class MS_CORE_API BatchToSpaceND : public PrimitiveC {
  public:
+  /// \brief Constructor.
   BatchToSpaceND() : PrimitiveC(kNameBatchToSpaceND) {}
+  /// \brief Destructor.
   ~BatchToSpaceND() = default;
   MS_DECLARE_PARENT(BatchToSpaceND, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BatchToSpaceND for the inputs.
   void Init(const std::vector<int64_t> block_shape, const std::vector<std::vector<int64_t>> crops);
+  /// \brief Set crops.
   void set_crops(std::vector<std::vector<int64_t>> crops);
+  /// \brief Set block_shape.
   void set_block_shape(std::vector<int64_t> block_shape);
+  /// \brief Get block_shape.
+  ///
+  /// \return block_shape.
   std::vector<int64_t> get_block_shape() const;
+  /// \brief Get crops.
+  ///
+  /// \return crops.
   std::vector<std::vector<int64_t>> get_crops() const;
 };
 AbstractBasePtr BatchToSpaceNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
