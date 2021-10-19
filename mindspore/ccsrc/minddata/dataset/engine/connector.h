@@ -138,7 +138,7 @@ class Connector {
   // starting from the beginning.
   void Reset() {
     for (int i = 0; i < queues_.size(); ++i) {
-      queues_[i]->ResetQue();
+      queues_[i]->Reset();
     }
     expect_consumer_ = 0;
     pop_from_ = 0;
