@@ -42,10 +42,7 @@ int MultiNodeSplitProxy::InitResource() {
   return RET_OK;
 }
 
-int MultiNodeSplitProxy::FreeResource() {
-  multi_node_split_ = nullptr;
-  return RET_OK;
-}
+void MultiNodeSplitProxy::FreeResource() { multi_node_split_ = nullptr; }
 
 AnfNodePtr MultiNodeSplitProxy::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_CHECK_TRUE_RET(func_graph != nullptr, nullptr);
@@ -55,10 +52,7 @@ AnfNodePtr MultiNodeSplitProxy::DoSplit(const FuncGraphPtr &func_graph, const An
     return node;
   }
   auto res_node = multi_node_split_->DoSplit(func_graph, node);
-  ret = FreeResource();
-  if (ret != RET_OK) {
-    return node;
-  }
+  FreeResource();
   return res_node;
 }
 

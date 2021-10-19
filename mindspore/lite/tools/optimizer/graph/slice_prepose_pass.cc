@@ -222,7 +222,7 @@ STATUS SlicePreposePass::SwapSliceWithPreceed(const FuncGraphPtr &graph, const C
   return RET_OK;
 }
 
-ValueNodePtr SlicePreposePass::CreateSliceValueNode(const FuncGraphPtr &graph, const std::vector<int64_t> &axes) {
+ValueNodePtr SlicePreposePass::CreateSliceValueNode(const std::vector<int64_t> &axes) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(slice_cnode != nullptr);
   auto new_slice = std::make_shared<mindspore::ops::SliceFusion>();
@@ -233,7 +233,7 @@ ValueNodePtr SlicePreposePass::CreateSliceValueNode(const FuncGraphPtr &graph, c
   return value_node;
 }
 
-ValueNodePtr SlicePreposePass::CopySliceValueNode(const FuncGraphPtr &graph, const CNodePtr &slice_cnode) {
+ValueNodePtr SlicePreposePass::CopySliceValueNode(const CNodePtr &slice_cnode) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(slice_cnode != nullptr);
   auto slice_c = GetValueNode<std::shared_ptr<mindspore::ops::SliceFusion>>(slice_cnode->input(0));
@@ -400,7 +400,7 @@ CNodePtr SlicePreposePass::CreateReshapeCNode(const FuncGraphPtr &graph, const s
   return reshape_cnode;
 }
 
-bool SlicePreposePass::SiblingsAreSameSlice(const FuncGraphPtr &graph, const NodeUsedListPtr &output_node_list,
+bool SlicePreposePass::SiblingsAreSameSlice(const NodeUsedListPtr &output_node_list,
                                             const std::vector<int64_t> &ref_shape) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(output_node_list != nullptr);
@@ -512,15 +512,15 @@ int64_t SlicePreposePass::GetReshapeAbnormalIndexOut(const CNodePtr &slice_cnode
   MS_ASSERT(shape_out_copy != nullptr);
   MS_ASSERT(is_normal_mode != nullptr);
   MS_ASSERT(support_abnormal_mode != nullptr);
+  int64_t abnormal_index_out = -1;
   auto slice_node = GetSlice(slice_cnode);
   if (slice_node == nullptr) {
     MS_LOG(ERROR) << "slice is nullptr";
-    return false;
+    return abnormal_index_out;
   }
   auto slice_axes = slice_node->get_axes();
   auto slice_begin = GetSliceBeginAndSize(slice_cnode, SliceBeginIndex);
   auto slice_size = GetSliceBeginAndSize(slice_cnode, SliceSizeIndex);
-  int64_t abnormal_index_out = -1;
   for (size_t j = 0; j < shape_out.size(); ++j) {
     int index = -1;
     for (size_t i = 0; i < slice_axes.size(); ++i) {
@@ -634,7 +634,7 @@ CNodePtr SlicePreposePass::CreateSlice1ForReshapePrepose(const FuncGraphPtr &gra
   } else {
     new_size1[abnormal_axe_in] = static_cast<int>(shape_in[abnormal_axe_in] - count_sliced_axe_in);
   }
-  auto new_slice1 = CreateSliceValueNode(graph, new_axes1);
+  auto new_slice1 = CreateSliceValueNode(new_axes1);
   if (new_slice1 == nullptr) {
     MS_LOG(ERROR) << "CreateSliceValueNode failed";
     return nullptr;
@@ -660,8 +660,7 @@ CNodePtr SlicePreposePass::CreateSlice1ForReshapePrepose(const FuncGraphPtr &gra
 CNodePtr SlicePreposePass::CreateSlice2ForReshapePrepose(const FuncGraphPtr &graph, const CNodePtr &slice_cnode,
                                                          const CNodePtr &new_reshape1_cnode,
                                                          const std::vector<int64_t> &new_shape1,
-                                                         const int64_t abnormal_axe_in,
-                                                         const int64_t count_sliced_axe_in, const int64_t count_sliced2,
+                                                         const int64_t abnormal_axe_in, const int64_t count_sliced2,
                                                          const bool slice_at_front) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(slice_cnode != nullptr);
@@ -679,7 +678,7 @@ CNodePtr SlicePreposePass::CreateSlice2ForReshapePrepose(const FuncGraphPtr &gra
   } else {
     new_size2[abnormal_axe_in] = static_cast<int>(count_sliced2);
   }
-  auto new_slice2 = CreateSliceValueNode(graph, new_axes2);
+  auto new_slice2 = CreateSliceValueNode(new_axes2);
   if (new_slice2 == nullptr) {
     MS_LOG(ERROR) << "CreateSliceValueNode failed";
     return nullptr;
@@ -782,9 +781,8 @@ bool SlicePreposePass::PreposeWithAbnormalReshape(const FuncGraphPtr &graph, con
   const int64_t count_sliced_abnormal_axe =
     shape_out[abnormal_axe_out] - (count_sliced_axe_front + count_sliced_axe_rear);
   const int64_t count_sliced2 = count_sliced_abnormal_axe * outer_size_out;
-  auto new_slice2_cnode =
-    CreateSlice2ForReshapePrepose(graph, slice_cnode, new_reshape1_cnode, new_shape1, abnormal_axe_in,
-                                  count_sliced_axe_in, count_sliced2, slice_at_front);
+  auto new_slice2_cnode = CreateSlice2ForReshapePrepose(graph, slice_cnode, new_reshape1_cnode, new_shape1,
+                                                        abnormal_axe_in, count_sliced2, slice_at_front);
   if (new_slice2_cnode == nullptr) {
     return false;
   }
@@ -977,7 +975,7 @@ bool SlicePreposePass::PreposeWithMatmul(const FuncGraphPtr &graph, const CNodeP
     return false;
   }
   auto slice_node = GetSlice(slice_cnode);
-  MS_CHECK_TRUE_MSG(slice_node != nullptr, RET_ERROR, "slice is nullptr");
+  MS_CHECK_TRUE_MSG(slice_node != nullptr, false, "slice is nullptr");
   auto axes = slice_node->get_axes();
   auto begin = GetSliceBeginAndSize(slice_cnode, SliceBeginIndex);
   auto size = GetSliceBeginAndSize(slice_cnode, SliceSizeIndex);
@@ -1012,7 +1010,7 @@ bool SlicePreposePass::PreposeWithMatmul(const FuncGraphPtr &graph, const CNodeP
         left_size[i] = -1;
       }
     }
-    auto left_slice_vnode = CreateSliceValueNode(graph, left_axes);
+    auto left_slice_vnode = CreateSliceValueNode(left_axes);
     MS_CHECK_TRUE_MSG(left_slice_vnode != nullptr, false, "CreateSliceValueNode failed");
     auto begin_parameter = BuildIntVecParameterNode(
       graph, left_begin, slice_cnode->fullname_with_scope() + "_begin_" + std::to_string(node_name_index));
@@ -1050,7 +1048,7 @@ bool SlicePreposePass::PreposeWithMatmul(const FuncGraphPtr &graph, const CNodeP
     MS_CHECK_TRUE_MSG(begin_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
     MS_CHECK_TRUE_MSG(size_parameter != nullptr, false, "BuildIntVecParameterNode Failed");
     node_name_index += 1;
-    auto right_slice_vnode = CreateSliceValueNode(graph, right_axes);
+    auto right_slice_vnode = CreateSliceValueNode(right_axes);
     MS_CHECK_TRUE_MSG(right_slice_vnode != nullptr, false, "CreateSliceValueNode failed");
     const std::vector<AnfNodePtr> inputs = {right_slice_vnode, matmul_cnode->input(2), begin_parameter, size_parameter};
     auto new_slice_cnode = InsertSlice(graph, inputs, matmul_cnode, 2, tr);
@@ -1094,7 +1092,7 @@ bool SlicePreposePass::PreposeWithFullConnection(const FuncGraphPtr &graph, cons
   auto slice_node = GetSlice(slice_cnode);
   if (slice_node == nullptr) {
     MS_LOG(ERROR) << "slice is nullptr";
-    return RET_ERROR;
+    return false;
   }
   auto axes = slice_node->get_axes();
   auto begin = GetSliceBeginAndSize(slice_cnode, SliceBeginIndex);
@@ -1134,7 +1132,7 @@ bool SlicePreposePass::PreposeWithFullConnection(const FuncGraphPtr &graph, cons
   std::vector<int> new_size(shape_in.size(), -1);
   new_begin[mapped_axe[0]] = begin[0];
   new_size[mapped_axe[0]] = size[0];
-  auto new_slice_vnode = CreateSliceValueNode(graph, new_axes);
+  auto new_slice_vnode = CreateSliceValueNode(new_axes);
   if (new_slice_vnode == nullptr) {
     MS_LOG(ERROR) << "CreateSliceValueNode failed";
     return false;
@@ -1267,7 +1265,7 @@ bool SlicePreposePass::PreposeWithArithmetic(const FuncGraphPtr &graph, const CN
       continue;
     } else if (shape.empty()) {           // infershape failed at this input
       if (IsScalarNode(another_input)) {  // if another input is scalar, we can process this one
-        auto new_slice_vnode = CopySliceValueNode(graph, slice_cnode);
+        auto new_slice_vnode = CopySliceValueNode(slice_cnode);
         if (new_slice_vnode == nullptr) {
           changed = false;
           break;
@@ -1299,7 +1297,7 @@ bool SlicePreposePass::PreposeWithArithmetic(const FuncGraphPtr &graph, const CN
           changed = false;
           break;
         }
-        auto new_slice_vnode = CreateSliceValueNode(graph, new_axes);
+        auto new_slice_vnode = CreateSliceValueNode(new_axes);
         if (new_slice_vnode == nullptr) {
           changed = false;
           break;
@@ -1525,7 +1523,7 @@ bool SlicePreposePass::Run(const FuncGraphPtr &graph) {
       }
       auto output_node_list = GetRealNodeUsedList(graph, utils::cast<AnfNodePtr>(preceed_node));
       if (output_node_list->size() > 1) {  // referenced by multi nodes
-        if (SiblingsAreSameSlice(graph, output_node_list) && MergeParallelSlice(graph, output_node_list)) {
+        if (SiblingsAreSameSlice(output_node_list) && MergeParallelSlice(graph, output_node_list)) {
           this_time_changed = true;
           break;
         }

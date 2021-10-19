@@ -67,7 +67,7 @@ AbstractBasePtr WhileInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto while_prim = primitive->cast<PrimWhilePtr>();
   MS_CHECK_TRUE_RET(while_prim != nullptr, nullptr);
   AbstractBasePtrList output;
-  for (int64_t i = 0; i < (int64_t)input_args.size(); i++) {
+  for (size_t i = 0; i < input_args.size(); i++) {
     auto build_shape_ptr = input_args[i]->BuildShape();
     MS_CHECK_TRUE_RET(build_shape_ptr != nullptr, nullptr);
     auto shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(build_shape_ptr)[kShape];

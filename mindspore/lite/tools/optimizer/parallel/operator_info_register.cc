@@ -37,16 +37,15 @@ OperatorInfoFactory *OperatorInfoFactory::GeInstance() {
   return &factory;
 }
 
-int OperatorInfoFactory::RegisterOperatorInfo(schema::PrimitiveType operator_type, TypeId type_id, bool is_depth_wise,
-                                              const OperatorInfoCreatorFunc &creator_func) {
+void OperatorInfoFactory::RegisterOperatorInfo(schema::PrimitiveType operator_type, TypeId type_id, bool is_depth_wise,
+                                               const OperatorInfoCreatorFunc &creator_func) {
   // create a key to find the only create function
   SplitOpKey op_key(operator_type, type_id, is_depth_wise);
   if (operator_info_map_.find(op_key) != operator_info_map_.end()) {
     MS_LOG(ERROR) << " Operator already exist " << op_key.ToString();
-    return lite::RET_ERROR;
+    return;
   }
   this->operator_info_map_.insert(std::pair<SplitOpKey, OperatorInfoCreatorFunc>(op_key, creator_func));
-  return lite::RET_OK;
 }
 
 OperatorInfoCreatorFunc OperatorInfoFactory::FindOperatorInfo(const SplitOpKey &op_key) {

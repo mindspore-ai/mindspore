@@ -35,7 +35,7 @@ bool is_any_not_none(const std::vector<int64_t> &split) {
   return std::any_of(split.begin(), split.end(), [](int64_t v) { return v != static_cast<int64_t>(NoSplit); });
 }
 
-std::shared_ptr<abstract::AbstractTensor> OperatorInfo::CreateFakeAbstractTensor() {
+std::shared_ptr<abstract::AbstractTensor> OperatorInfo::CreateFakeAbstractTensor() const {
   auto type_ptr = TypeIdToType(operator_type_id_);
   std::vector<int64_t> shape_vector;
   return std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
@@ -135,7 +135,7 @@ int OperatorInfo::CreateMultipleOutputsOfAnfNode(const AnfNodePtr &node, size_t 
 }
 
 AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
-                                           int32_t concat_dim, size_t input_nodes_num, bool trans_format) {
+                                           int32_t concat_dim, size_t input_nodes_num) {
   MS_EXCEPTION_IF_NULL(orig_node);
   if (input_nodes.size() != input_nodes_num) {
     MS_LOG(ERROR) << name_ << " : Input nodes size of concat is not equal to input nodes number.";
@@ -162,7 +162,7 @@ AnfNodePtr OperatorInfo::CreateConcateNode(const CNodePtr &orig_node, const std:
 }
 
 AnfNodePtr OperatorInfo::CreateReduceNode(const CNodePtr &orig_node, const std::vector<AnfNodePtr> &input_nodes,
-                                          int32_t reduce_dim, size_t input_nodes_num, bool trans_format) {
+                                          int32_t reduce_dim, size_t input_nodes_num) {
   MS_EXCEPTION_IF_NULL(orig_node);
   if (input_nodes.size() != input_nodes_num) {
     MS_LOG(ERROR) << name_ << " : Input nodes size of reduce is not equal to input nodes number.";

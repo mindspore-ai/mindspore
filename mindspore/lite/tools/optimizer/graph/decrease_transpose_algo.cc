@@ -232,8 +232,8 @@ STATUS DecreaseTransposeAlgo::PostTransposeFusion(const FuncGraphPtr &func_graph
   return lite::RET_OK;
 }
 
-STATUS DecreaseTransposeAlgo::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, std::vector<int> perm,
-                                          bool before, size_t index) {
+STATUS DecreaseTransposeAlgo::GenNewInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                          const std::vector<int> perm, bool before, size_t index) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   AnfNodePtr new_input = nullptr;
   new_input = transpose_strategy_.TransposePairFuseWhenInsert(func_graph, cnode, perm, before, index);
@@ -383,6 +383,7 @@ STATUS DecreaseTransposeAlgo::InsertPostTransNode(const FuncGraphPtr &func_graph
           return lite::RET_ERROR;
         } else {
           tuple_get_item = GenTupleGetItemNode(func_graph, cnode, 0);
+          MS_CHECK_TRUE_RET(tuple_get_item != nullptr, lite::RET_ERROR);
           post_node = tuple_get_item;
           func_graph->manager()->Replace(cnode, tuple_get_item);
         }
@@ -484,7 +485,13 @@ int DecreaseTransposeAlgo::SetSubGraphInput(const CNodePtr &cnode, const FuncGra
     auto last_underline = node_name.find_last_of("_");
     node_name = node_name.substr(0, last_underline);
     last_underline = node_name.find_last_of("_");
-    auto index = std::stoi(node_name.substr(last_underline + 1)) + static_cast<int>(kInputSizeThree);
+    auto index = 0;
+    try {
+      index = std::stoi(node_name.substr(last_underline + 1)) + static_cast<int>(kInputSizeThree);
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Get index failed: " << e.what();
+      return lite::RET_ERROR;
+    }
     param_node->set_abstract(GetCNodeInputAbstract(cnode, index)->Clone());
     if (utils::isa<CNodePtr>(cnode->input(index))) {
       ShapeVector shape_vec = {-1};

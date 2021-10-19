@@ -110,8 +110,7 @@ void ReplaceParamsAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &conv_
   (void)manager->Replace(pad_cnode, pad_cnode->input(1));
 }
 
-bool IsPrimitiveProper(const CNodePtr &conv_cnode, const CNodePtr &pad_cnode) {
-  MS_ASSERT(conv_cnode != nullptr);
+bool IsPrimitiveProper(const CNodePtr &pad_cnode) {
   MS_ASSERT(pad_cnode != nullptr);
   if (!utils::isa<Parameter>(pad_cnode->input(kInputIndexTwo))) {
     return false;
@@ -240,7 +239,7 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
     return nullptr;
   }
 
-  if (!IsPrimitiveProper(conv_cnode, pad_cnode)) {
+  if (!IsPrimitiveProper(pad_cnode)) {
     MS_LOG(WARNING) << conv_cnode->fullname_with_scope() << " is not match with previous "
                     << pad_cnode->fullname_with_scope() << " op. Fusion failed!";
     return nullptr;

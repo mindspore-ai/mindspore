@@ -56,10 +56,10 @@ bool FuseBias(const lite::DataInfo &add_bias, const lite::DataInfo &conv_bias, s
                add_bias.data_.size()) != EOK) {
     return false;
   }
-  fusion_bias->resize(out_channel, 0);
+  fusion_bias->resize(static_cast<size_t>(out_channel), 0);
   if (!conv_bias.data_.empty()) {
     if (conv_bias.data_type_ != TypeId::kNumberTypeFloat32 && conv_bias.data_type_ != TypeId::kNumberTypeFloat &&
-        conv_bias.data_.size() != out_channel * sizeof(float)) {
+        conv_bias.data_.size() != static_cast<size_t>(out_channel) * sizeof(float)) {
       return false;
     }
     if (memcpy_s(fusion_bias->data(), fusion_bias->size() * sizeof(float), conv_bias.data_.data(),

@@ -43,7 +43,7 @@ void FreeTensors(std::vector<lite::Tensor *> *tensors) {
   tensors->resize(0);
 }
 
-void RectifyFormat(const CNodePtr &cnode, const std::vector<lite::Tensor *> &inputs, FmkType fmk_type) {
+void RectifyFormat(const std::vector<lite::Tensor *> &inputs, FmkType fmk_type) {
   MS_ASSERT(cnode != nullptr);
   if (fmk_type != converter::kFmkTypeOnnx) {
     return;
@@ -141,7 +141,7 @@ STATUS NodeInferShape::InferShape(const CNodePtr &cnode) {
       fbb.Clear();
       return lite::RET_ERROR;
     }
-    RectifyFormat(cnode, inputs, fmk_type_);
+    RectifyFormat(inputs, fmk_type_);
     ret = KernelInferShape(inputs, outputs, parameter);
     if (parameter->destroy_func_ != nullptr) {
       parameter->destroy_func_(parameter);
@@ -227,7 +227,8 @@ std::vector<int> NodeInferShape::GetIntVecInput(const CNodePtr &cnode, size_t in
     FreeTensors(&specify_tensors);
     return {};
   }
-  tensor_data.resize(specify_tensors.front()->shape()[0]);
+  MS_CHECK_GE(specify_tensors.front()->shape()[0], 0, {});
+  tensor_data.resize(static_cast<size_t>(specify_tensors.front()->shape()[0]));
   if (memcpy_s(tensor_data.data(), tensor_data.size() * sizeof(int), specify_tensors.front()->data(),
                tensor_data.size() * sizeof(int)) != EOK) {
     FreeTensors(&specify_tensors);

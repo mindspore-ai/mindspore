@@ -24,7 +24,7 @@ void RemoveUnusedCastOpPass::SetFmkType(FmkType type) { this->fmk_type = type; }
 bool RemoveUnusedCastOpPass::Run(const FuncGraphPtr &func_graph) {
   if (this->fmk_type != converter::kFmkTypeMs) {
     MS_LOG(ERROR) << "The framework type of model should be mindspore.";
-    return RET_ERROR;
+    return false;
   }
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
@@ -42,12 +42,12 @@ bool RemoveUnusedCastOpPass::Run(const FuncGraphPtr &func_graph) {
     auto abstract_base = cast_cnode->input(1)->abstract();
     if (abstract_base == nullptr) {
       MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << cast_cnode->input(1)->fullname_with_scope();
-      return RET_ERROR;
+      return false;
     }
     if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
       MS_LOG(ERROR) << "Abstract of parameter should be abstract tensor, "
                     << cast_cnode->input(1)->fullname_with_scope();
-      return RET_ERROR;
+      return false;
     }
     auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
     auto input_type = abstract_tensor->element()->GetTypeTrack();
@@ -56,12 +56,12 @@ bool RemoveUnusedCastOpPass::Run(const FuncGraphPtr &func_graph) {
 
     if (cast_cnode->inputs().size() != kCastInputNum || !utils::isa<ValueNodePtr>(cast_cnode->input(2))) {
       MS_LOG(ERROR) << "Second input of cast should be a ValueNode";
-      return RET_ERROR;
+      return false;
     }
     auto output_type = GetValueNode<NumberPtr>(cast_cnode->input(2));
     if (output_type == nullptr) {
       MS_LOG(ERROR) << "Second input of cast is nullptr";
-      return RET_ERROR;
+      return false;
     }
     auto output_type_value = output_type->type_id();
     if ((input_type_value == kNumberTypeFloat32 && output_type_value == kNumberTypeFloat16) ||

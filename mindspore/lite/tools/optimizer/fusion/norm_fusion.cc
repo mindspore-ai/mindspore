@@ -51,7 +51,8 @@ STATUS GetReduceAxes(const BaseRef &n, std::vector<int> *axes) {
     }
     axes->resize(1);
     if (!axes_value->shape().empty()) {
-      axes->resize(axes_value->shape()[0]);
+      MS_CHECK_GE(axes_value->shape()[0], 0, lite::RET_ERROR);
+      axes->resize(static_cast<size_t>(axes_value->shape()[0]));
     }
     if (memcpy_s(axes->data(), axes->size() * sizeof(int), axes_value->data_c(), axes_value->Size()) == EOK) {
       return lite::RET_OK;
@@ -285,7 +286,8 @@ int ExpandDimsShapeSizeInfer(const std::vector<int> &in_shape_size, const schema
 
 int StridedSliceShapeSizeInfer(const std::vector<int> &in_shape_size, const schema::PrimitiveT &primitive) {
   MS_ASSERT(in_shape_size.size() > 0);
-  auto new_axis_mask = primitive.value.AsStridedSlice()->new_axis_mask;
+  MS_ASSERT(primitive.value.AsStridedSlice() != nullptr);
+  auto new_axis_mask = static_cast<size_t>(primitive.value.AsStridedSlice()->new_axis_mask);
   auto add_dims = 0;
   while (new_axis_mask != 0) {
     new_axis_mask = (new_axis_mask - 1) & new_axis_mask;
@@ -403,7 +405,7 @@ std::map<string, int> NormFusion::ShapeSizeInfer(const FuncGraphPtr &func_graph)
     }
     // Cal shape size infer function
     auto shape_size_infer_func = shape_size_infer_iter->second;
-    auto shape_size = shape_size_infer_iter->second(in_shape_sizes, *prim_t);
+    auto shape_size = shape_size_infer_func(in_shape_sizes, *prim_t);
     // Update node shape size map
     node_shape_size[cnode->fullname_with_scope()] = shape_size;
   }
