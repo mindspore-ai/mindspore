@@ -121,7 +121,7 @@ bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
   return true;
 }
 
-int endsWith(string s, string sub) { return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0; }
+int endsWith(const string s, const string sub) { return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0; }
 
 bool ParseModelProto(mind_ir::ModelProto *model, const std::string &path, const unsigned char *dec_key,
                      const size_t key_len, const std::string &dec_mode) {
@@ -175,13 +175,12 @@ std::string LoadPreprocess(const std::string &file_name) {
     MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
     return nullptr;
   }
-  const char *file_path = file_name.c_str();
   char abs_path_buff[PATH_MAX];
 
 #ifdef _WIN32
-  _fullpath(abs_path_buff, file_path, PATH_MAX);
+  _fullpath(abs_path_buff, file_name.c_str(), PATH_MAX);
 #else
-  if (!realpath(file_path, abs_path_buff)) {
+  if (!realpath(file_name.c_str(), abs_path_buff)) {
     MS_LOG(ERROR) << "Load MindIR get absolute path failed";
   }
 #endif
@@ -215,14 +214,13 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
     MS_LOG(ERROR) << "The length of the file name exceeds the limit.";
     return nullptr;
   }
-  const char *file_path = file_name.c_str();
   char abs_path_buff[PATH_MAX];
   vector<string> files;
 
 #ifdef _WIN32
-  _fullpath(abs_path_buff, file_path, PATH_MAX);
+  _fullpath(abs_path_buff, file_name.c_str(), PATH_MAX);
 #else
-  if (!realpath(file_path, abs_path_buff)) {
+  if (!realpath(file_name.c_str(), abs_path_buff)) {
     MS_LOG(ERROR) << "Load MindIR get absolute path failed";
   }
 #endif
@@ -283,12 +281,11 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
 
   if (!inc_load) {
     MSANFModelParser::LoadTensorMapClear();
+  } else {
+    model_parser.SetIncLoad();
   }
   if (is_lite) {
     model_parser.SetLite();
-  }
-  if (inc_load) {
-    model_parser.SetIncLoad();
   }
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model);
   return dstgraph_ptr;
@@ -296,7 +293,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
 
 std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite) {
   MS_EXCEPTION_IF_NULL(buf);
-  std::string str((const char *)buf, buf_size);
+  std::string str(buf, buf_size);
   mind_ir::ModelProto model_;
   if (!model_.ParseFromString(str)) {
     MS_LOG(ERROR) << "Parse model from buffer fail!";

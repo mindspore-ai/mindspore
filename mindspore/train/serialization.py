@@ -482,7 +482,7 @@ def _check_checkpoint_param(ckpt_file_name, filter_prefix=None):
         raise ValueError("The ckpt_file_name must be string.")
 
     if not os.path.exists(ckpt_file_name):
-        raise ValueError("The checkpoint file does not exist.")
+        raise ValueError("The checkpoint file: {} does not exist.".format(ckpt_file_name))
 
     if ckpt_file_name[-5:] != ".ckpt":
         raise ValueError("Please input the correct checkpoint file name.")
@@ -547,7 +547,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     param_not_load = []
     for _, param in net.parameters_and_names():
         if param.name in parameter_dict:
-            new_param = parameter_dict[param.name]
+            new_param = copy.deepcopy(parameter_dict[param.name])
             if not isinstance(new_param, Parameter):
                 logger.error("Failed to combine the net and the parameters.")
                 msg = ("Argument parameter_dict element should be a Parameter, but got {}.".format(type(new_param)))
@@ -705,6 +705,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         inputs (Tensor): Inputs of the `net`, if the network has multiple inputs, incoming tuple(Tensor).
         file_name (str): File name of the model to be exported.
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
+            Default: 'AIR'.
 
             - AIR: Ascend Intermediate Representation. An intermediate representation format of Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
@@ -713,14 +714,14 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
 
         kwargs (dict): Configuration options dictionary.
 
-            - quant_mode (str): If the network is quantization aware training network, the quant_mode should
+            - quant_mode (str): If the network is a quantization aware training network, the quant_mode should
               be set to "QUANT", else the quant_mode should be set to "NONQUANT".
             - mean (float): The mean of input data after preprocessing, used for quantizing the first layer of network.
               Default: 127.5.
             - std_dev (float): The variance of input data after preprocessing,
-              used for quantizing the first layer of network. Default: 127.5.
-            - enc_key (byte): Byte type key used for encryption. Tha valid length is 16, 24, or 32.
-            - enc_mode (str): Specifies the encryption mode, take effect when enc_key is set.
+              used for quantizing the first layer of the network. Default: 127.5.
+            - enc_key (byte): Byte type key used for encryption. The valid length is 16, 24, or 32.
+            - enc_mode (str): Specifies the encryption mode, to take effect when enc_key is set.
               Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
             - dataset (Dataset): Specifies the preprocess methods of network.
 

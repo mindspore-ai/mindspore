@@ -81,7 +81,7 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const std::unordered_map<s
   int count = 0;
   for (size_t i = 0; i < str.length(); i++) {
     if (str[i] == '[') {
-      rules.push("[");
+      rules.push(std::string("["));
     } else if (str[i] == ']') {
       // rules
       std::vector<P> vec;
@@ -107,7 +107,7 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const std::unordered_map<s
     } else {
       count++;
       if (str[i + 1] == '[' || str[i + 1] == ']' || str[i + 1] == ',') {
-        auto value_name = str.substr(i - count + 1, count);
+        auto value_name = str.substr(static_cast<int>(i) - count + 1, count);
         if (kv.find(value_name) == kv.end()) {
           MS_LOG(ERROR) << "Node's attributes and shape do not match.";
           return nullptr;
@@ -290,7 +290,8 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
     std::string initial_data = parameter_proto.raw_data();
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
     MS_EXCEPTION_IF_NULL(tensor_data_buf);
-    auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), initial_data.data(), initial_data.size());
+    auto ret = memcpy_s(tensor_data_buf, static_cast<size_t>(tensor_info->data().nbytes()), initial_data.data(),
+                        initial_data.size());
     if (ret != 0) {
       MS_LOG(ERROR) << "Build parameter occur memcpy_s error.";
       return false;
@@ -560,7 +561,8 @@ bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
   MS_EXCEPTION_IF_NULL(tensor_info);
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  auto ret = memcpy_s(tensor_data_buf, tensor_info->data().nbytes(), tensor_buf.data(), tensor_buf.size());
+  auto ret =
+    memcpy_s(tensor_data_buf, static_cast<size_t>(tensor_info->data().nbytes()), tensor_buf.data(), tensor_buf.size());
   if (ret != 0) {
     MS_LOG(ERROR) << "Obtain CNode in TensorForm occur memcpy_s error.";
     return false;

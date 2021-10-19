@@ -30,7 +30,7 @@ class LossMonitor(Callback):
         If per_print_times is 0, do not print loss.
 
     Args:
-        per_print_times (int): Print the loss every seconds. Default: 1.
+        per_print_times (int): How many steps to print once loss. Default: 1.
 
     Raises:
         ValueError: If per_print_times is not an integer or less than zero.
