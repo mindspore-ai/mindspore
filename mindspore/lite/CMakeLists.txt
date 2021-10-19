@@ -30,6 +30,7 @@ option(MSLITE_ENABLE_FP16 "Whether to compile Fp16 operator" off)
 option(MSLITE_ENABLE_ACL "enable ACL" off)
 option(MSLITE_ENABLE_MODEL_ENCRYPTION "enable model encryption, only converter support" on)
 option(MSLITE_ENABLE_SPARSE_COMPUTE "enable sparse kernel" off)
+option(MSLITE_ENABLE_RUNTIME_CONVERT "enable runtime convert" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -102,6 +103,9 @@ endif()
 if(DEFINED ENV{MSLITE_ENABLE_MODEL_ENCRYPTION})
     set(MSLITE_ENABLE_MODEL_ENCRYPTION $ENV{MSLITE_ENABLE_MODEL_ENCRYPTION})
 endif()
+if(DEFINED ENV{MSLITE_ENABLE_RUNTIME_CONVERT})
+    set(MSLITE_ENABLE_RUNTIME_CONVERT $ENV{MSLITE_ENABLE_RUNTIME_CONVERT})
+endif()
 
 if(TOOLCHAIN_NAME STREQUAL "himix200")
     set(TARGET_HIMIX on)
@@ -156,12 +160,19 @@ if(PLATFORM_ARM64 OR PLATFORM_ARM32)
     set(MSLITE_ENABLE_SSE off)
     set(MSLITE_ENABLE_AVX off)
     set(MSLITE_ENABLE_CONVERTER off)
+    set(MSLITE_ENABLE_RUNTIME_CONVERT off)
 #set for cross - compiling toolchain
     set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
     set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 else()
     set(MSLITE_ENABLE_NPU off)
+endif()
+
+if(MSLITE_ENABLE_RUNTIME_CONVERT)
+    set(MSLITE_ENABLE_CONVERTER on)
+    set(MSLITE_ENABLE_V0 off)
+    set(MSLITE_ENABLE_TRAIN off)
 endif()
 
 if(MSLITE_ENABLE_TRAIN)
@@ -213,6 +224,7 @@ message(STATUS "\tMSLITE_ENABLE_ACL                 = \t${MSLITE_ENABLE_ACL}")
 message(STATUS "\tMSLITE_ENABLE_FP16                = \t${MSLITE_ENABLE_FP16}")
 message(STATUS "\tMSLITE_ENABLE_MODEL_ENCRYPTION    = \t${MSLITE_ENABLE_MODEL_ENCRYPTION}")
 message(STATUS "\tMSLITE_ENABLE_SPARSE_COMPUTE      = \t${MSLITE_ENABLE_SPARSE_COMPUTE}")
+message(STATUS "\tMSLITE_ENABLE_RUNTIME_CONVERT     = \t${MSLITE_ENABLE_RUNTIME_CONVERT}")
 
 if((MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_TESTCASES) AND (
         NOT MSLITE_ENABLE_MINDRT
@@ -473,10 +485,12 @@ if(BUILD_MINDDATA STREQUAL "lite_cv")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/minddata)
 endif()
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/ops)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/micro/coder)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_subdirectory(${CCSRC_DIR}/backend/kernel_compiler/cpu/nnacl build)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/micro/coder)
 
 if(MSLITE_ENABLE_TOOLS)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark)

@@ -123,6 +123,8 @@ class LiteSession : public session::LiteSession {
 
   static void FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kernels);
 
+  static char *LoadModelByPath(const char *file, size_t *size);
+
  private:
   int PreCheck(Model *model);
 

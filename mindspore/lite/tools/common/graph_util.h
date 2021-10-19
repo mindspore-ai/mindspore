@@ -87,6 +87,8 @@ TypeId GetParameterDtype(const ParameterPtr &param_node);
 
 STATUS UpdateFuncGraphInputsAndOutputsDtype(const FuncGraphPtr &func_graph);
 
+STATUS UpdateGraphOutputName(schema::MetaGraphT *meta_graph);
+
 template <typename T>
 bool IndexingCompress(const std::set<T> &quant_data_set, const std::map<T, size_t> &unique_value_index_map,
                       size_t unique_value_bit, size_t unique_value_cnt, size_t pack_repetition_size_in_byte,

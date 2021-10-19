@@ -62,6 +62,16 @@ inline int Mkdir(const std::string &file_path) {
 }
 }  // namespace
 
+bool IsCharEndWith(const char *src, const char *end) {
+  if (strlen(src) > strlen(end)) {
+    const char *src_end = src + (strlen(src) - strlen(end));
+    if (strcmp(src_end, end) == 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
     MS_LOG(ERROR) << "file is nullptr";

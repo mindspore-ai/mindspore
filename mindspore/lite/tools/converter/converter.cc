@@ -130,19 +130,14 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     return nullptr;
   }
 
-  // set output tensor names to the original names, the output_names is null in nnie converter.
-  auto output_names = ConverterInnerContext::GetInstance()->GetGraphOutputTensorNames();
-  if (output_names.size() > meta_graph->outputIndex.size()) {
-    MS_LOG(ERROR) << "the num of setting output_names is greater than actual, " << output_names.size() << " > "
-                  << meta_graph->outputIndex.size() << ".";
+  status = UpdateGraphOutputName(meta_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "UpdateGraphOutputName failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     delete meta_graph;
     return nullptr;
   }
-  for (size_t idx = 0; idx < output_names.size(); idx++) {
-    auto &tensor = meta_graph->allTensors.at(meta_graph->outputIndex.at(idx));
-    tensor->name = output_names.at(idx);
-  }
+
   return meta_graph;
 }
 

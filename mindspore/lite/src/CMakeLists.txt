@@ -4,6 +4,8 @@ if(MSLITE_ENABLE_V0)
 endif()
 include_directories(${CCSRC_DIR}/backend/kernel_compiler/cpu)
 
+set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../tools)
+
 if(NOT MSLITE_ENABLE_STRING_KERNEL)
     add_compile_definitions(STRING_KERNEL_CLIP)
 endif()
@@ -110,6 +112,17 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         )
 
+if(MSLITE_ENABLE_RUNTIME_CONVERT)
+    add_definitions(-DPRIMITIVE_WRITEABLE)
+    add_definitions(-DUSE_GLOG)
+    add_definitions(-DRUNTIME_CONVERT)
+
+    file(GLOB RUNTIME_CONVERT_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_convert.cc)
+
+    set(LITE_SRC ${LITE_SRC} ${RUNTIME_CONVERT_SRC})
+endif()
+
 if(MSLITE_ENABLE_STRING_KERNEL)
     set(LITE_SRC
         ${LITE_SRC}
@@ -131,13 +144,14 @@ if(MSLITE_ENABLE_CONTROLFLOW)
 endif()
 
 if(MSLITE_ENABLE_WEIGHT_DECODE)
-    set(LITE_SRC
-        ${LITE_SRC}
+    set(LITE_SRC ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/quantizer/fse_decoder.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/quantizer/fse_bit_stream.cc
-        )
+        ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc)
+    if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
+        set(LITE_SRC ${LITE_SRC}
+            ${TOOLS_DIR}/converter/quantizer/fse_decoder.cc
+            ${TOOLS_DIR}/converter/quantizer/fse_bit_stream.cc)
+    endif()
 endif()
 
 if(MSLITE_ENABLE_AUTO_PARALLEL)
@@ -202,13 +216,14 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/opt_allocator.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/storage.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/optimizer.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/legacy_optimizer/fusion/fusion_pass.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/legacy_optimizer/fusion/fusion_pattern.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/common/meta_graph_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.cc
+        ${TOOLS_DIR}/common/storage.cc
+        ${TOOLS_DIR}/converter/optimizer.cc
+        ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pass.cc
+        ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pattern.cc
+        ${TOOLS_DIR}/common/meta_graph_utils.cc
+        ${TOOLS_DIR}/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.cc
         )
+
 if(MSLITE_ENABLE_V0)
     set(TRAIN_SRC
             ${TRAIN_SRC}
@@ -229,7 +244,6 @@ else()
         )
 endif()
 
-add_subdirectory(ops)
 add_subdirectory(runtime/kernel/arm)
 
 add_library(lite_src_mid OBJECT ${LITE_SRC})
@@ -349,6 +363,21 @@ if(PLATFORM_ARM)
         target_link_libraries(mindspore-lite cpu_fp16_kernel_mid nnacl_fp16_mid)
         target_link_libraries(mindspore-lite_static cpu_fp16_kernel_mid nnacl_fp16_mid)
     endif()
+endif()
+
+if(MSLITE_ENABLE_RUNTIME_CONVERT)
+    target_link_libraries(mindspore-lite
+            quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
+            cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
+            mindspore_core config_parser_mid mslite_converter_plugin
+            -Wl,--whole-archive -Wl,--no-whole-archive ${SECUREC_LIBRARY}
+            mindspore::json mindspore::eigen mindspore::protobuf mindspore::glog)
+    target_link_libraries(mindspore-lite_static
+            quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
+            cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
+            mindspore_core config_parser_mid mslite_converter_plugin
+            -Wl,--whole-archive -Wl,--no-whole-archive ${SECUREC_LIBRARY}
+            mindspore::json mindspore::eigen mindspore::protobuf mindspore::glog)
 endif()
 
 if(DEFINED ARCHS)

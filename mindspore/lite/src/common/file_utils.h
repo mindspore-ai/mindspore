@@ -29,6 +29,10 @@
 
 namespace mindspore {
 namespace lite {
+constexpr const char MINDIR_POSTFIX[] = ".mindir";
+
+bool IsCharEndWith(const char *src, const char *end);
+
 char *ReadFile(const char *file, size_t *size);
 
 std::string RealPath(const char *path);
