@@ -52,11 +52,14 @@ void *GetInputAddr(const AnfNodePtr &node, size_t input_index) {
 }
 STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPtr &rmatmul_input) {
   MS_ASSERT(stack_node != nullptr);
-  MS_ASSERT(right_matmul_input != nullptr);
+  MS_ASSERT(rmatmul_input != nullptr);
   auto joint_fullconnect_size = stack_node->inputs().size() - 1;
   auto fc = stack_node->input(1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(fc != nullptr, lite::RET_NULL_PTR);
   auto fc_weight = fc->input(kInputIndexTwo)->cast<ParameterPtr>();
+  MS_CHECK_TRUE_RET(fc_weight != nullptr, lite::RET_NULL_PTR);
   auto fc_weight_param = std::dynamic_pointer_cast<tensor::Tensor>(fc_weight->default_param());
+  MS_CHECK_TRUE_RET(fc_weight_param != nullptr, lite::RET_NULL_PTR);
   auto tensor_size = fc_weight_param->Size();
   auto rmatmul_input_shape = fc_weight_param->shape();
 
@@ -73,8 +76,8 @@ STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPt
       MS_LOG(ERROR) << "input tensor addr nullptr";
       return RET_ERROR;
     }
-    if (EOK != memcpy_s(static_cast<int8_t *>(tensor_info->data_c()) + (i - 1) * tensor_size, tensor_size, tensor_addr,
-                        tensor_size)) {
+    if (EOK != memcpy_s(static_cast<int8_t *>(tensor_info->data_c()) + (i - 1) * tensor_size,
+                        tensor_info->Size() - (i - 1) * tensor_size, tensor_addr, tensor_size)) {
       MS_LOG(ERROR) << "memcpy_s data failed";
       return RET_ERROR;
     }
@@ -101,7 +104,7 @@ std::shared_ptr<ops::MatMul> BuildMatMulPrim(const CNodePtr &stack_cnode) {
     auto fullconnect_node2 = stack_cnode->input(i)->cast<CNodePtr>();
     MS_CHECK_TRUE_RET(fullconnect_node2 != nullptr, nullptr);
     auto fc_prim = GetValueNode<PrimitiveCPtr>(fullconnect_node2->input(0));
-    MS_ASSERT(fc_prim != nullptr);
+    MS_CHECK_TRUE_RET(fc_prim != nullptr, nullptr);
     auto fc_input_quantParams_valueptr = fc_prim->GetAttr("quant_params");
     if (fc_input_quantParams_valueptr == nullptr) {
       continue;
@@ -173,7 +176,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
     }
   }
   auto fullconnect_node = stack_cnode->input(1);
-  MS_ASSERT(fullconnnect_node != nullptr);
+  MS_ASSERT(fullconnect_node != nullptr);
   auto fullconnect_cnode = fullconnect_node->cast<CNodePtr>();
   if (IsMarkedTrainOp(fullconnect_cnode)) {
     return nullptr;
@@ -181,6 +184,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   MS_CHECK_TRUE_RET(fullconnect_cnode->inputs().size() == kInputSizeThree, nullptr);
   auto left_slice_node = fullconnect_cnode->input(1);
   auto left_slice_cnode = left_slice_node->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(left_slice_cnode != nullptr, nullptr);
   if (IsMarkedTrainOp(left_slice_cnode)) {
     return nullptr;
   }
@@ -200,6 +204,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   }
   auto left_matmul_input = left_slice_cnode->input(1);
   auto right_reshape_node = fullconnect_cnode->input(kInputIndexTwo);
+  MS_ASSERT(right_reshape_node != nullptr);
   auto matmul_cvalue = BuildMatMulPrim(stack_cnode);
   if (matmul_cvalue == nullptr) {
     MS_LOG(ERROR) << "new MatMul failed";
@@ -213,12 +218,13 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   // batchmatmul right node may be const
   if (right_reshape_node->isa<Parameter>()) {
     auto rmatmul_paramter = func_graph->add_parameter();
+    MS_CHECK_TRUE_RET(rmatmul_paramter != nullptr, nullptr);
     if (GetRightMatmulInputParamter(stack_cnode, rmatmul_paramter) != RET_OK) {
       MS_LOG(ERROR) << "GetRightMatmulInputParamter failed";
       return node;
     }
     auto prim_matmul = GetValueNode<std::shared_ptr<mindspore::ops::MatMul>>(matmul_value_node);
-    MS_ASSERT(prim_matmul != nullptr);
+    MS_CHECK_TRUE_RET(prim_matmul != nullptr, nullptr);
     prim_matmul->set_transpose_b(true);
     matmul_inputs.push_back(rmatmul_paramter);
   } else {
@@ -229,9 +235,11 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
     }
     MS_ASSERT(right_reshape_cnode->inputs().size() > 1);
     auto right_transpose_node = right_reshape_cnode->input(1);
+    MS_CHECK_TRUE_RET(right_transpose_node != nullptr, nullptr);
     auto right_transpose_cnode = right_transpose_node->cast<CNodePtr>();
     MS_CHECK_TRUE_RET(right_transpose_cnode != nullptr, nullptr);
     auto right_slice_node = right_transpose_cnode->input(1);
+    MS_CHECK_TRUE_RET(right_slice_node != nullptr, nullptr);
     auto right_slice_cnode = right_slice_node->cast<CNodePtr>();
     MS_CHECK_TRUE_RET(right_slice_cnode != nullptr, nullptr);
     auto right_matmul_input = right_slice_cnode->input(1);

@@ -30,6 +30,7 @@ bool CheckAndGetMatMulIndex(const CNodePtr &cnode, size_t *index) {
   for (size_t i = 1; i < cnode->size(); ++i) {
     if (CheckPrimitiveType(cnode->input(i), prim::kPrimMatMul)) {
       auto matmul_cnode = cnode->input(i)->cast<CNodePtr>();
+      MS_CHECK_TRUE_RET(matmul_cnode != nullptr, false);
       if (matmul_cnode->size() > kInputSizeThree) {
         continue;
       }
@@ -46,7 +47,7 @@ bool CheckAndGetMatMulIndex(const CNodePtr &cnode, size_t *index) {
 }  // namespace
 
 bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
-  MS_ASSERT(func_graph != nulltr);
+  MS_ASSERT(func_graph != nullptr);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     MS_CHECK_TRUE_RET(node != nullptr, false);
@@ -65,6 +66,7 @@ bool MatMulAddFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto matmul_cnode = cnode->input(index)->cast<CNodePtr>();
+    MS_ASSERT(matmul_cnode != nullptr);
     auto bias_node = cnode->input(kInputSizeThree - index);
     if (!utils::isa<ValueNode>(bias_node) &&
         (!utils::isa<Parameter>(bias_node) || !bias_node->cast<ParameterPtr>()->default_param())) {

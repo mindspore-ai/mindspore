@@ -223,13 +223,13 @@ STATUS TfLstmCellFusion::SplitWeights(const AnfNodePtr &weight, const ParameterP
   // split input_size and hidden_size at dim 0
   // transform i,c,f,o to i,o,f,c at dim 1
   MS_ASSERT(weight != nullptr);
-  MS_ASSERT(wiehgt_i != nullptr);
-  MS_ASSERT(wiehgt_c != nullptr);
+  MS_ASSERT(weight_i != nullptr);
+  MS_ASSERT(weight_c != nullptr);
   if (!utils::isa<ParameterPtr>(weight)) {
     return RET_ERROR;
   }
   auto weight_param = utils::cast<ParameterPtr>(weight);
-  if (!weight_param->has_default()) {
+  if (!weight_param->has_default() || weight_param->default_param() == nullptr) {
     MS_LOG(DEBUG) << "weight not have default value";
     return RET_ERROR;
   }
@@ -244,7 +244,7 @@ STATUS TfLstmCellFusion::SplitWeights(const AnfNodePtr &weight, const ParameterP
   }
   auto data_ptr = reinterpret_cast<float *>(origin_tensor->data_c());
   auto data_shape = origin_tensor->shape();
-  if (data_shape.size() != 2) {
+  if (data_shape.size() != kInputSizeTwo) {
     MS_LOG(ERROR) << "weight data shape invalid";
     return RET_ERROR;
   }
@@ -282,7 +282,7 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
     return RET_ERROR;
   }
   auto old_bias_param = utils::cast<ParameterPtr>(old_bias);
-  if (!old_bias_param->has_default()) {
+  if (!old_bias_param->has_default() || old_bias_param->default_param() == nullptr) {
     MS_LOG(DEBUG) << "bias not have default value";
     return RET_ERROR;
   }
@@ -303,8 +303,8 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
   }
 
   std::vector<int64_t> shape{1, kBidirectionalGateNum * hidden_size};
-  std::unique_ptr<float[]> tensor_data(new (std::nothrow) float[hidden_size * 8]);
-
+  auto tensor_data = std::make_unique<float[]>(hidden_size * 8);
+  MS_CHECK_TRUE_RET(tensor_data != nullptr, lite::RET_ERROR);
   auto forget_bias_node = utils::cast<AnfNodePtr>((*body_equiv)[forget_bias_]);
   if (forget_bias_node == nullptr) {
     MS_LOG(ERROR) << "forget bias node is nullptr";

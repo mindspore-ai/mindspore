@@ -77,6 +77,7 @@ class ToFormatBase : public Pass {
   mindspore::Format format_{mindspore::NHWC};
   std::shared_ptr<NodeInferShape> node_infer_shape_{nullptr};
   std::unordered_map<std::string, std::vector<size_t>> sensitive_ops_;
+  FuncGraphManagerPtr manager_;
 };
 }  // namespace opt
 }  // namespace mindspore

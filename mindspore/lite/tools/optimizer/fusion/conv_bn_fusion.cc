@@ -43,19 +43,19 @@ bool IsBatchNode(const BaseRef &n) {
   }
   return false;
 }
-void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node, float *trans_scale, float eps,
-                 int kernel_num) {
-  MS_ASSERT(bn_scale_node != nullptr && bn_var_node != nullptr && trans_scale != nullptr);
+int CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node, float *trans_scale, float eps,
+                int kernel_num) {
+  MS_ASSERT(bn_var_node != nullptr && trans_scale != nullptr);
   auto bn_var_param = bn_var_node->cast<ParameterPtr>()->default_param();
   MS_ASSERT(bn_var_param != nullptr);
   auto bn_var_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_var_param);
   MS_ASSERT(bn_var_tensor != nullptr);
   auto bn_var_data = reinterpret_cast<float *>(bn_var_tensor->data_c());
   // cal transScale, tf : scale/sqrt(variance + eps); caffe : 1/sqrt(variance + eps)
-  if (memcpy_s(trans_scale, kernel_num * sizeof(float), bn_var_data, kernel_num * sizeof(float)) != EOK) {
+  if (memcpy_s(trans_scale, kernel_num * sizeof(float), bn_var_data, bn_var_tensor->Size()) != EOK) {
     MS_LOG(ERROR) << "memcpy_s transScale error";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
-    return;
+    return lite::RET_ERROR;
   }
   // 1/sqrt(variance + eps)
   for (int32_t i = 0; i < kernel_num; i++) {
@@ -64,7 +64,7 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
     if (tmp <= 0.0f) {
       MS_LOG(ERROR) << "divisor cannot be 0";
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
-      return;
+      return lite::RET_ERROR;
     }
     trans_scale[i] = 1 / tmp;
   }
@@ -79,10 +79,12 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
       trans_scale[i] *= bn_scale_data[i];
     }
   }
+  return lite::RET_OK;
 }
+
 void CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node, const float *trans_scale,
                   float *trans_bias, int kernel_num) {
-  MS_ASSERT(bn_mean_node != nullptr && bn_bias_node != nullptr && trans_scale != nullptr && trans_bias != nullptr);
+  MS_ASSERT(bn_mean_node != nullptr && trans_scale != nullptr && trans_bias != nullptr);
   auto bn_mean_param = bn_mean_node->cast<ParameterPtr>()->default_param();
   MS_ASSERT(bn_mean_param != nullptr);
   auto bn_mean_tensor = std::dynamic_pointer_cast<tensor::Tensor>(bn_mean_param);
@@ -127,7 +129,7 @@ STATUS CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_f
   MS_CHECK_TRUE_RET(scale_factor_param != nullptr, RET_ERROR);
   auto scale_factor_tensor = std::dynamic_pointer_cast<tensor::Tensor>(scale_factor_param);
   MS_CHECK_TRUE_RET(scale_factor_tensor != nullptr, RET_ERROR);
-  if (scale_factor_tensor->DataSize() < 1) {
+  if (scale_factor_tensor->DataSize() != 1) {
     MS_LOG(ERROR) << "scale factor data size is not equal to 1";
     return RET_ERROR;
   }
@@ -153,8 +155,8 @@ const BaseRef ConvBatchNormFusion::DefinePattern() const {
   return VectorRef({is_bn, is_conv, is_param_bn_mean, is_param_bn_var, is_seq_var});
 }
 
-void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num, float *trans_scale,
-                                         float *trans_bias) const {
+int ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num, float *trans_scale,
+                                        float *trans_bias) const {
   /*
   BatchNorm weight Tensor definition:
    caffe
@@ -174,51 +176,47 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
   AnfNodePtr bn_variance_node = nullptr;
   AnfNodePtr bn_scale_node = nullptr;
   AnfNodePtr bn_bias_node = nullptr;
-  float eps = 0;
   auto primitive_c = GetValueNode<PrimitiveCPtr>(bn_node->input(0));
   MS_ASSERT(primitive_c != nullptr);
+  float eps = kDefaultEps;
+  if (primitive_c->GetAttr(ops::kEpsilon) != nullptr) {
+    eps = GetValue<float>(primitive_c->GetAttr(ops::kEpsilon));
+  }
   if (CheckPrimitiveType(bn_node, prim::kPrimBatchNorm)) {
     bn_mean_node = bn_node->input(kCaffeBNMeanIndex);
+    MS_ASSERT(bn_mean_node != nullptr);
     bn_variance_node = bn_node->input(kCaffeBNVarIndex);
+    MS_ASSERT(bn_variance_node != nullptr);
     AnfNodePtr bn_scale_factor_node = bn_node->input(kCaffeBNScaleFactorIndex);
-    if (!bn_mean_node->isa<Parameter>() || !bn_variance_node->isa<Parameter>() ||
-        !bn_scale_factor_node->isa<Parameter>()) {
-      return;
+    if (!bn_mean_node->isa<Parameter>() || !bn_variance_node->isa<Parameter>() || !IsParamNode(bn_scale_factor_node)) {
+      MS_LOG(DEBUG) << "bn op's input is dynamic.";
+      return lite::RET_NO_CHANGE;
     }
-    auto primc = utils::cast<std::shared_ptr<mindspore::ops::BatchNorm>>(primitive_c);
-    MS_ASSERT(primc != nullptr);
-    if (primc->GetAttr("epsilon") != nullptr) {
-      eps = primc->get_epsilon();
-    } else {
-      eps = kDefaultEps;
-    }
-    CalEstimatedData(bn_mean_node, bn_scale_factor_node);
-    CalEstimatedData(bn_variance_node, bn_scale_factor_node);
+    auto status = CalEstimatedData(bn_mean_node, bn_scale_factor_node);
+    MS_CHECK_TRUE_RET(status == lite::RET_OK, status);
+    status = CalEstimatedData(bn_variance_node, bn_scale_factor_node);
+    MS_CHECK_TRUE_RET(status == lite::RET_OK, status);
   } else if (CheckPrimitiveType(bn_node, prim::kPrimFusedBatchNorm)) {
     bn_scale_node = bn_node->input(kTFBNScaleIndex);
     bn_bias_node = bn_node->input(kTFBNBiasIndex);
     bn_mean_node = bn_node->input(kTFBNMeanIndex);
     bn_variance_node = bn_node->input(kTFBNVarIndex);
-    auto primc = utils::cast<std::shared_ptr<mindspore::ops::FusedBatchNorm>>(primitive_c);
-    MS_ASSERT(primc != nullptr);
-    if (primc->GetAttr("epsilon") != nullptr) {
-      eps = primc->get_epsilon();
-    } else {
-      eps = kDefaultEps;
-    }
   } else {
     MS_LOG(ERROR) << "not caffe or tf batchnorm op.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
-    return;
+    return lite::RET_NOT_SUPPORT;
   }
-  if (!bn_mean_node->isa<Parameter>() || !bn_variance_node->isa<Parameter>()) {
-    return;
+  if (!IsParamNode(bn_mean_node) || !IsParamNode(bn_variance_node)) {
+    return lite::RET_NO_CHANGE;
   }
   if (eps < kEps) {
     eps = kEps;
   }
 
-  CalTransale(bn_scale_node, bn_variance_node, trans_scale, eps, kernel_num);
+  if (CalTransale(bn_scale_node, bn_variance_node, trans_scale, eps, kernel_num) != lite::RET_OK) {
+    return lite::RET_NO_CHANGE;
+  }
   CalTransBias(bn_mean_node, bn_bias_node, trans_scale, trans_bias, kernel_num);
+  return lite::RET_OK;
 }
 }  // namespace mindspore::opt

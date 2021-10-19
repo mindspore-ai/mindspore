@@ -30,7 +30,7 @@ class ConvScaleFusion : public ConvTransformFusion {
 
  private:
   const BaseRef DefinePattern() const override;
-  void InitTransParam(const CNodePtr &, int, float *, float *) const override;
+  int InitTransParam(const CNodePtr &, int, float *, float *) const override;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV_SCALE_FUSION_H_
