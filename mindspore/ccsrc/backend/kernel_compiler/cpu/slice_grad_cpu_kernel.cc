@@ -41,8 +41,8 @@ void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   input_shape_.clear();
   output_shape_.clear();
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.empty() || input_shape.size() > kSliceGradMaxInputShapeSize) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but SliceGradGpuKernel only support 1-4D.";
+  if (input_shape.size() > kSliceGradMaxInputShapeSize) {
+    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but SliceGradCpuKernel only support 4d or lower.";
   }
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
