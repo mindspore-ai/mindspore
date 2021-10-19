@@ -116,6 +116,12 @@ class Tensor(Tensor_):
         self.init = init
         self.init_finished = True
 
+        # if cur Tensor is a index value of another Tensor,
+        # parent_tensor_ set to another Tensor
+        # index_of_parent_ will set to the index
+        self.parent_tensor_ = None
+        self.index_of_parent_ = None
+
     def __deepcopy__(self, memodict):
         new_obj = Tensor(self)
         new_obj.init = self.init
@@ -246,11 +252,15 @@ class Tensor(Tensor_):
 
     def __getitem__(self, index):
         out = tensor_operator_registry.get('__getitem__')(self, index)
+        out.parent_tensor_ = self
+        out.index_of_parent_ = index
         return out
 
     def __setitem__(self, index, value):
         out = tensor_operator_registry.get('__setitem__')(self, index, value)
         self.assign_value(out)
+        if self.parent_tensor_ is not None and self.index_of_parent_ is not None:
+            self.parent_tensor_.__setitem__(self.index_of_parent_, self)
         return self
 
     def __gt__(self, other):
