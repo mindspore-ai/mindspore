@@ -101,7 +101,7 @@ class AnalysisSchedule {
 
  private:
   void Schedule();
-  bool SetNextReady();
+  void SetNextReady();
   void Start() {
     auto thread = std::thread([this] { Schedule(); });
     thread.detach();
@@ -263,6 +263,7 @@ class AsyncInferTask {
   std::string ThreadID() const { return threadId_; }
 
   AbstractBasePtr GetResult() {
+    StaticAnalysisException::Instance().CheckException();
     std::unique_lock<std::mutex> lock(lock_);
     if (ready_) {
       ProcessResult();
