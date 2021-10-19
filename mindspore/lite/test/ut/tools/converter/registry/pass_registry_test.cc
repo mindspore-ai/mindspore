@@ -26,7 +26,7 @@
 #include "ops/custom.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "ut/tools/converter/registry/model_parser_test.h"
+#include "ut/tools/converter/registry/parser/model_parser_test.h"
 
 using mindspore::converter::ConverterParameters;
 using mindspore::converter::kFmkTypeCaffe;
