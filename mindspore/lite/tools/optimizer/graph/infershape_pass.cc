@@ -192,7 +192,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "subgraph infer shape failed.";
         return lite::RET_ERROR;
       }
-      if (SetSubGraphOutput(cnode, sub_func_graph)) {
+      if (SetSubGraphOutput(sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphOutput failed.";
         return lite::RET_ERROR;
       }
@@ -210,7 +210,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "subgraph infer shape failed.";
         return lite::RET_ERROR;
       }
-      if (SetSubGraphOutput(cnode, sub_func_graph) != lite::RET_OK) {
+      if (SetSubGraphOutput(sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphOutput failed.";
         return lite::RET_ERROR;
       }
@@ -289,8 +289,8 @@ STATUS InferShapePass::SetSubGraphInput(const CNodePtr &cnode, const FuncGraphPt
   return RET_OK;
 }
 
-STATUS InferShapePass::SetSubGraphOutput(const CNodePtr &cnode, const FuncGraphPtr &sub_graph) {
-  MS_ASSERT(cnode != nullptr && sub_graph != nullptr);
+STATUS InferShapePass::SetSubGraphOutput(const FuncGraphPtr &sub_graph) {
+  MS_ASSERT(sub_graph != nullptr);
   auto return_node = sub_graph->get_return();
   MS_ASSERT(return_node != nullptr);
   auto origin_input = return_node->inputs();

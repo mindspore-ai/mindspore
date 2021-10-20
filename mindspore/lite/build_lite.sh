@@ -254,7 +254,7 @@ build_lite() {
         local compile_nnie_script=${BASEPATH}/mindspore/lite/tools/providers/NNIE/Hi3516D/compile_nnie.sh
         if [[ "${MSLITE_ENABLE_NNIE}" == "on" && "${local_lite_platform}" == "x86_64" ]]; then
           cd ${BASEPATH}/../
-          sh ${compile_nnie_script} -I x86_64 -b nnie_3516_master -j $THREAD_NUM
+          sh ${compile_nnie_script} -I x86_64 -b nnie_3516_master_dev -j $THREAD_NUM
           if [[ $? -ne 0 ]]; then
             echo "compile x86_64 for nnie failed."
             exit 1
@@ -262,7 +262,7 @@ build_lite() {
         fi
         if [[ "${TOOLCHAIN_NAME}" == "himix200" && "${local_lite_platform}" == "arm32" ]]; then
           cd ${BASEPATH}/../
-          sh ${compile_nnie_script} -I arm32 -b nnie_3516_master -j $THREAD_NUM
+          sh ${compile_nnie_script} -I arm32 -b nnie_3516_master_dev -j $THREAD_NUM
           if [[ $? -ne 0 ]]; then
             echo "compile arm32 for nnie failed."
             exit 1

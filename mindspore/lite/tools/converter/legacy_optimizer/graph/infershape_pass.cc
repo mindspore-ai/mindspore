@@ -246,7 +246,8 @@ STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::ve
 
   auto ret = KernelInferShape(inputs, *outputs, prim, {}, SCHEMA_CUR);
   if (ret == lite::RET_NOT_SUPPORT) {
-    auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), SCHEMA_CUR);
+    auto parameter_gen =
+      lite::PopulateRegistry::GetInstance()->GetParameterCreator(static_cast<int>(prim->value_type()), SCHEMA_CUR);
     if (parameter_gen == nullptr) {
       fbb.Clear();
       MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
@@ -258,7 +259,7 @@ STATUS NodeInferShape(const std::unique_ptr<schema::CNodeT> &node, const std::ve
       MS_LOG(ERROR) << "parameter is nullptr.";
       return RET_ERROR;
     }
-    parameter->quant_type_ = node->quantType;
+    parameter->quant_type_ = static_cast<int>(node->quantType);
     ret = KernelInferShape(inputs, *outputs, parameter);
     if (parameter->destroy_func_ != nullptr) {
       parameter->destroy_func_(parameter);

@@ -22,7 +22,7 @@
 #include <memory>
 #include "backend/optimizer/common/pass.h"
 #include "include/api/context.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 #include "src/inner_context.h"
 #include "tools/optimizer/graph/node_infershape.h"
 

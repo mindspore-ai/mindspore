@@ -19,7 +19,7 @@
 #include <vector>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/common/utils.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
 
 namespace mindspore {

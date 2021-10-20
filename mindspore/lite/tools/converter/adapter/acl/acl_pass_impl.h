@@ -24,7 +24,7 @@
 #include "backend/optimizer/common/pass.h"
 #include "include/errorcode.h"
 #include "include/api/types.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 #include "cxx_api/model/acl/acl_model_options.h"
 #include "tools/converter/adapter/acl/common/acl_types.h"
 #include "tools/converter/converter_flags.h"
