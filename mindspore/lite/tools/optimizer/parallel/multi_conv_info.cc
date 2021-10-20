@@ -80,10 +80,8 @@ bool MultiConvSplit::CheckSplitValid() {
     if (i >= static_cast<int64_t>(final_ratios.size()) || final_ratios.at(i) <= 0) {
       return false;
     }
-    MS_CHECK_INT_ADD_NOT_OVERFLOW(total_block_count, final_ratios.at(i), false);
     total_block_count += final_ratios.at(i);
     if (i == 0) {
-      MS_CHECK_INT_ADD_NOT_OVERFLOW(visited_block, final_ratios.at(i), false);
       visited_block += final_ratios.at(i);
     }
   }
@@ -122,7 +120,8 @@ int MultiConvSplit::GetMultiConvNodes(const AnfNodePtr &conv_node) {
   while (index < split_info_.in_num_conv - 1) {
     MS_CHECK_LT(index, static_cast<int32_t>(conv_nodes_.size()), RET_ERROR);
     auto curr_node = conv_nodes_[index];
-    auto curr_cnode = conv_nodes_[index]->cast<CNodePtr>();
+    MS_ASSERT(curr_node != nullptr);
+    auto curr_cnode = curr_node->cast<CNodePtr>();
     MS_CHECK_TRUE_RET(curr_cnode != nullptr, RET_ERROR);
     auto tmp_node = curr_cnode->input(1);
     if (!IsConv2D(tmp_node)) {
@@ -198,7 +197,7 @@ bool MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vect
     // node inputs
     std::vector<AnfNodePtr> conv_inputs;
     conv_inputs.push_back(NewValueNode(conv_prim));
-    AdJustInputs(ori_node, inputs_node, weight_nodes, bias_nodes, output_conv_index, &conv_inputs);
+    AdJustInputs(ori_node, inputs_node, output_conv_index, &conv_inputs);
     // create new conv node
     if (!CreateNewConvNode(ori_node, conv_inputs, output_conv_index, outputs_node)) {
       return false;
@@ -208,7 +207,6 @@ bool MultiConvSplit::SplitSingleConv(const AnfNodePtr &ori_node, const std::vect
 }
 
 void MultiConvSplit::AdJustInputs(const AnfNodePtr &ori_conv_node, const std::vector<AnfNodePtr> &new_inputs_node,
-                                  const std::vector<AnfNodePtr> &weight_node, const std::vector<AnfNodePtr> &bias_nodes,
                                   int output_conv_index, std::vector<AnfNodePtr> *conv_inputs) {
   MS_ASSERT(ori_conv_node != nullptr && conv_inputs != nullptr);
   auto ori_conv_cnode = ori_conv_node->cast<CNodePtr>();

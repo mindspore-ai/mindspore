@@ -21,6 +21,7 @@
 #include "backend/optimizer/common/pass.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/anf_exporter/fetch_content.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore::opt {
@@ -38,6 +39,7 @@ class RemoveRedundantOpPass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
+  int GetConstDataFromInputNode(const CNodePtr &cnode, lite::DataInfo *data_info);
   bool is_train_model_ = false;
   std::set<AnfNodePtr> remove_cnode_;
 };

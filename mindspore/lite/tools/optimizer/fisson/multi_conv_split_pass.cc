@@ -29,6 +29,7 @@ using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore {
 namespace opt {
 std::string MultiConvSplitPass::IsMultiParallelConvNode(const AnfNodePtr &node) const {
+  MS_ASSERT(node != nullptr);
   for (const auto &parallel_prim : kParallelOpNames) {
     if (CheckPrimitiveType(node, parallel_prim.first.first)) {
       return parallel_prim.second;

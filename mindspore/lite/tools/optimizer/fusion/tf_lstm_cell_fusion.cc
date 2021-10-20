@@ -191,7 +191,7 @@ STATUS TfLstmCellFusion::SetWeightAbstractAndDefault(const ParameterPtr &weight,
     return RET_ERROR;
   }
   const auto param_num = shape[0] * shape[1] * shape[kInputIndexTwo];
-  auto tensor_data = new (std::nothrow) float[param_num * sizeof(float)];
+  auto tensor_data = new (std::nothrow) float[static_cast<size_t>(param_num) * sizeof(float)];
   std::vector<int> data_diff{0, 3, 2, 1};
   if (tensor_data == nullptr) {
     MS_LOG(DEBUG) << "new data failed";
@@ -204,7 +204,8 @@ STATUS TfLstmCellFusion::SetWeightAbstractAndDefault(const ParameterPtr &weight,
       }
     }
   }
-  auto tensor_info = lite::CreateTensorInfo(tensor_data, param_num * sizeof(float), shape, kNumberTypeFloat32);
+  auto tensor_info =
+    lite::CreateTensorInfo(tensor_data, static_cast<size_t>(param_num) * sizeof(float), shape, kNumberTypeFloat32);
   delete[] tensor_data;
   if (tensor_info == nullptr) {
     MS_LOG(ERROR) << "create tensor info failed.";
@@ -359,11 +360,6 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
   MS_CHECK_TRUE_RET(value_node != nullptr, nullptr);
 
   auto &vars = while_input_vars_;
-
-  auto limit1 = utils::cast<AnfNodePtr>((*equiv)[vars[3]]);
-  MS_ASSERT(limit1);
-  auto limit2 = utils::cast<AnfNodePtr>((*equiv)[vars[7]]);
-  MS_ASSERT(limit2);
   auto weight = utils::cast<AnfNodePtr>((*equiv)[vars[9]]);
   MS_ASSERT(weight);
   auto bias = utils::cast<AnfNodePtr>((*equiv)[vars[10]]);

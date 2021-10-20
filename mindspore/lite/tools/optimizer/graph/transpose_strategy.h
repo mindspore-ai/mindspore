@@ -50,7 +50,7 @@ class TransposeStrategy {
   STATUS TransposeInsertDependOnShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode, bool before, size_t index);
   bool IsInOutCanFuison(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &nodes, size_t *trans_count,
                         FormatTransNodeType *trans_type);
-  void DecidePreAndPostTransType(TransTypePair *trans_info, TransTypePair *trans_insert_info);
+  void DecidePreAndPostTransType(TransTypePair *trans_info, TransTypePair *trans_insert_info) const;
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
   NodeInferShape node_infer_shape_;

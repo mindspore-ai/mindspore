@@ -67,6 +67,11 @@ void CreateSplitConstantTensors(const tensor::TensorPtr &constant_tensor, const 
   for (int64_t i = 0; i < split_num; i++) {
     // init shape for [split_dim]
     visited_block += splits[i];
+    if (total_block_count == 0) {
+      MS_LOG(ERROR) << "divisor is zero";
+      split_constant_tensors->clear();
+      return;
+    }
     auto cur_shape = UP_DIV(split_dim_size * visited_block, total_block_count);
     split_constant_shapes.at(i).at(split_dim) = cur_shape;
     auto tensor = std::make_shared<tensor::Tensor>(weight_type_id, split_constant_shapes.at(i));
@@ -491,7 +496,7 @@ int DepthwiseConv2DInfo::InferParallelCNodes() {
 
 int DepthwiseConv2DInfo::InferReplaceOp() {
   size_t dev_num = strategy_.dev_num;
-  replace_op_ = CreateConcateNode(cnode_, parallel_output_nodes_, split_dim_, dev_num, true);
+  replace_op_ = CreateConcateNode(cnode_, parallel_output_nodes_, split_dim_, dev_num);
   if (replace_op_ == nullptr) {
     return RET_ERROR;
   }

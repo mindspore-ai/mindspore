@@ -67,6 +67,7 @@ STATUS UpdateConv2DParamPass::UpdateConv2DAttr(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_ASSERT(prim != nullptr);
   if (prim->GetAttr(ops::kFormat) == nullptr) {
     MS_LOG(ERROR) << "current conv2d's format is undefined.";
     return lite::RET_ERROR;
@@ -85,6 +86,7 @@ STATUS UpdateConv2DParamPass::UpdateConv2DAttr(const CNodePtr &cnode) {
       prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
     prim->AddAttr(ops::kGroup, MakeValue(is_depth_wise ? out_channel : 1));
   }
+  MS_ASSERT(prim->GetAttr(ops::kGroup) != nullptr);
   auto group = GetValue<int64_t>(prim->GetAttr(ops::kGroup));
   if (CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
     std::swap(in_channel, out_channel);
@@ -101,8 +103,6 @@ STATUS UpdateConv2DParamPass::UpdateConv2DAttr(const CNodePtr &cnode) {
 
 bool UpdateConv2DParamPass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
-  auto manager = func_graph->manager();
-  MS_ASSERT(manager != nullptr);
   auto node_list = TopoSort(func_graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNodePtr>(node)) {

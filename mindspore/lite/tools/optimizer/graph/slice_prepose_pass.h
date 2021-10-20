@@ -43,8 +43,8 @@ class SlicePreposePass : public Pass {
   static void ClearCNodeAbstractValue(const CNodePtr &cnode);
   static STATUS SwapSliceWithPreceed(const FuncGraphPtr &graph, const CNodePtr &slice_cnode,
                                      const CNodePtr &preceed_cnode, int index, const TransactionPtr &tr = nullptr);
-  static ValueNodePtr CreateSliceValueNode(const FuncGraphPtr &graph, const std::vector<int64_t> &axes);
-  static ValueNodePtr CopySliceValueNode(const FuncGraphPtr &graph, const CNodePtr &slice_cnode);
+  static ValueNodePtr CreateSliceValueNode(const std::vector<int64_t> &axes);
+  static ValueNodePtr CopySliceValueNode(const CNodePtr &slice_cnode);
   static CNodePtr InsertSlice(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &inputs,
                               const CNodePtr &preceed_cnode, int index, const TransactionPtr &tr);
   static STATUS VerifySliceAttrs(const CNodePtr &slice_cnode, int dim = -1);
@@ -52,8 +52,7 @@ class SlicePreposePass : public Pass {
                                       std::vector<int64_t> *axes, std::vector<int> *begin, std::vector<int> *size);
   static CNodePtr CreateReshapeCNode(const FuncGraphPtr &graph, const std::vector<int64_t> &shape,
                                      const AbstractBasePtr &abstract, const CNodePtr &preceed_cnode);
-  static bool SiblingsAreSameSlice(const FuncGraphPtr &graph, const NodeUsedListPtr &output_node_list,
-                                   const std::vector<int64_t> &ref_shape = {});
+  static bool SiblingsAreSameSlice(const NodeUsedListPtr &output_node_list, const std::vector<int64_t> &ref_shape = {});
   static int64_t GetReshapeAbnormalAxeIn(const std::vector<int64_t> &shape_in, const std::vector<int64_t> &shape_out,
                                          std::vector<int64_t> *mapped_axe);
   static int64_t GetReshapeAbnormalIndexOut(const CNodePtr &slice_cnode, const std::vector<int64_t> &mapped_axe,
@@ -70,8 +69,7 @@ class SlicePreposePass : public Pass {
   static CNodePtr CreateSlice2ForReshapePrepose(const FuncGraphPtr &graph, const CNodePtr &slice_cnode,
                                                 const CNodePtr &new_reshape1_cnode,
                                                 const std::vector<int64_t> &new_shape1, int64_t abnormal_axe_in,
-                                                int64_t count_sliced_axe_in, int64_t count_sliced2,
-                                                bool slice_at_front);
+                                                int64_t count_sliced2, bool slice_at_front);
   static bool PreposeWithAbnormalReshape(const FuncGraphPtr &graph, const CNodePtr &slice_cnode,
                                          const CNodePtr &reshape_cnode, const CNodePtr &matmul_cnode,
                                          const std::vector<int64_t> &shape_in, const std::vector<int64_t> &shape_out,

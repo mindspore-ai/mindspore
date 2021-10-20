@@ -79,7 +79,7 @@ bool Conv1DWeightExpandingPass::Run(const FuncGraphPtr &func_graph) {
     MS_ASSERT(weight_node != nullptr);
 
     auto prim = GetValueNode<PrimitivePtr>(conv_cnode->input(0));
-    MS_CHECK_TRUE_MSG(prim != nullptr, RET_FAILED, "GetValueNode failed");
+    MS_CHECK_TRUE_MSG(prim != nullptr, false, "GetValueNode failed");
     schema::Format schema_format = schema::Format::Format_KCHW;
     if (prim->GetAttr(ops::kFormat) != nullptr) {
       schema_format = static_cast<schema::Format>(GetValue<int64_t>(prim->GetAttr(ops::kFormat)));
@@ -91,6 +91,6 @@ bool Conv1DWeightExpandingPass::Run(const FuncGraphPtr &func_graph) {
       return false;
     }
   }
-  return RET_OK;
+  return true;
 }
 }  // namespace mindspore::opt
