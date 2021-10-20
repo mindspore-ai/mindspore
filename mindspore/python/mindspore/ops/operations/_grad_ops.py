@@ -1692,7 +1692,7 @@ class ResizeBilinearGrad(PrimitiveWithInfer):
 
 class ResizeNearestNeighborGrad(Primitive):
     """
-    Compute gradient of `ResizeNearestNeighbor` operator.
+    Compute gradient of `ResizeNearestNeighbor` operator.
 
     Note:
         The shape of input parameter `size` must be (height, width).
@@ -1932,21 +1932,12 @@ class StridedSliceGrad(Primitive):
         self.init_prim_io_names(inputs=['dy', 'shapex', 'begin', 'end', 'strides'], outputs=['output'])
 
 
-class SoftplusGrad(PrimitiveWithInfer):
+class SoftplusGrad(Primitive):
     """Computes gradient for the Softplus activation."""
 
     @prim_attr_register
     def __init__(self):
-        self.init_prim_io_names(inputs=['dout', 'x'], outputs=['output'])
-
-    def infer_shape(self, dout_shape, x_shape):
-        validator.check("x_shape", x_shape, "dout_shape", dout_shape, Rel.EQ, self.name)
-        return x_shape
-
-    def infer_dtype(self, dout_dtype, x_dtype):
-        args = {"x_dtype": x_dtype, "dout_dtype": dout_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.float_type, self.name)
-        return x_dtype
+        self.init_prim_io_names(inputs=['gradients', 'features'], outputs=['backprops'])
 
 
 class TanhGrad(Primitive):
