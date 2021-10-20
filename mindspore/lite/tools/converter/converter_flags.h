@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include "include/api/format.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 #include "tools/common/flag_parser.h"
 #include "ir/dtype/type_id.h"
 #include "schema/inner/model_generated.h"

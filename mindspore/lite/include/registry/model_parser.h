@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_H_
 
 #include "api/ir/func_graph.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 
 namespace mindspore {
 namespace converter {
