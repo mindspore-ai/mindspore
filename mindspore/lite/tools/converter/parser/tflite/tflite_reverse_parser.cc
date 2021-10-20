@@ -28,10 +28,11 @@ ops::PrimitiveC *TfliteReverseParser::Parse(const std::unique_ptr<tflite::Operat
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
+  MS_CHECK_GE(tflite_op->inputs.size(), kInputSize1, nullptr);
   auto prim = std::make_unique<ops::ReverseV2>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   std::vector<int64_t> axis;
-  if (GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, axis)) {
+  if (GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, &axis)) {
     MS_LOG(ERROR) << "get reverse -> axis failed";
     return nullptr;
   }

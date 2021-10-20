@@ -175,6 +175,7 @@ size_t OnnxNodeParser::GetOnnxElementNum(const onnx::TensorProto &onnx_tensor, b
 
 const void *OnnxNodeParser::GetOnnxRawData(const onnx::TensorProto &onnx_const_tensor, TypeId data_type,
                                            size_t data_count, size_t *data_size) {
+  MS_ASSERT(data_size != nullptr);
   const void *onnx_data = nullptr;
   switch (data_type) {
     case kNumberTypeFloat32:

@@ -29,15 +29,15 @@ namespace opt {
 namespace {
 constexpr size_t kMindLstmInputs = 5;
 constexpr size_t kLSTMWeightIndex = 4;
-constexpr int kGateNums = 4;  // it,ft,gt,ot
-constexpr int kBiasNums = 2;  // b_ih,b_hh
+constexpr size_t kGateNums = 4;  // it,ft,gt,ot
+constexpr size_t kBiasNums = 2;  // b_ih,b_hh
 constexpr int kWeightInputIndex = 2;
 constexpr int kBirectionalNums = 2;
 constexpr int kHiddenIndex = 2;
 constexpr int kCellIndex = 3;
 constexpr int kOutputBatchIndex = 2;
 constexpr int kOutputHiddenIndex = 3;
-AnfNodePtr GetRealLstmWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode, int weight_index) {
+AnfNodePtr GetRealLstmWeightNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t weight_index) {
   MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "graph is nullptr.");
   MS_CHECK_TRUE_MSG(cnode != nullptr, nullptr, "cnode is nullptr.");
   if (!opt::CheckPrimitiveType(cnode, prim::kPrimLstm)) {
@@ -76,8 +76,6 @@ int InitLstmWeight(const ParameterPtr &parameter, void *data, size_t data_size, 
   size_t combined_num = is_bias ? static_cast<size_t>(kBiasNums) : 1;  // ih_bias and hh_bias are combined
   const auto &weight_order = kNH2NC;
   size_t weight_batch = num_directions * combined_num;
-  MS_CHECK_TRUE_MSG(!INT_MUL_OVERFLOW_THRESHOLD(kGateNums, weight_batch, SIZE_MAX), RET_ERROR, "overflow.");
-  MS_CHECK_TRUE_MSG(weight_batch != 0, RET_ERROR, "div 0.");
   size_t weight_size = data_size / (kGateNums * weight_batch);
   for (size_t k = 0; k < num_directions; k++) {
     auto start_addr_x = static_cast<char *>(data) + data_size / num_directions * k;
@@ -86,8 +84,8 @@ int InitLstmWeight(const ParameterPtr &parameter, void *data, size_t data_size, 
       start_addr_x = start_addr_x + data_size / weight_batch * i;
       start_addr_y = start_addr_y + data_size / weight_batch * i;
       for (size_t j = 0; j < kGateNums; j++) {
-        if (EOK != memcpy_s(start_addr_y + j * weight_size, weight_size, start_addr_x + weight_order[j] * weight_size,
-                            weight_size)) {
+        if (EOK != memcpy_s(start_addr_y + j * weight_size, weight_size,
+                            start_addr_x + static_cast<size_t>(weight_order[j]) * weight_size, weight_size)) {
           MS_LOG(ERROR) << "memcpy_s data failed";
           return RET_ERROR;
         }
@@ -102,10 +100,10 @@ int InitLstmWeight(const ParameterPtr &parameter, void *data, size_t data_size, 
   return RET_OK;
 }
 
-int ConvertBiWeight(char *flatten_weight, int hh_weight_size, int ih_weight_size) {
+int ConvertBiWeight(char *flatten_weight, size_t hh_weight_size, size_t ih_weight_size) {
   MS_CHECK_TRUE_MSG(flatten_weight != nullptr, RET_ERROR, "flatten_weight is nullptr.");
   // convert weight
-  if (hh_weight_size < 0) {
+  if (hh_weight_size == 0) {
     return RET_ERROR;
   }
   auto hh_temp_ptr = reinterpret_cast<char *>(malloc(hh_weight_size));
@@ -150,17 +148,22 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
   if (inputs.size() != kMindLstmInputs) {
     return RET_ERROR;
   }
-  int input_size = primitive_c->get_input_size();
-  int hidden_size = primitive_c->get_hidden_size();
-  int num_directions = primitive_c->get_bidirectional() ? kBirectionalNums : 1;
-  int byte_num = static_cast<int>(sizeof(float));
-  int ih_weight_size = kGateNums * hidden_size * input_size * byte_num;
-  int hh_weight_size = kGateNums * hidden_size * hidden_size * byte_num;
-  int bias_size = kGateNums * hidden_size * kBiasNums * byte_num;
-  std::vector<int64_t> ih_weight_shape = {num_directions, kGateNums * hidden_size, input_size};
-  std::vector<int64_t> hh_weight_shape = {num_directions, kGateNums * hidden_size, hidden_size};
+  size_t input_size = static_cast<size_t>(primitive_c->get_input_size());
+  size_t hidden_size = static_cast<size_t>(primitive_c->get_hidden_size());
+  size_t num_directions = primitive_c->get_bidirectional() ? kBirectionalNums : 1;
+  size_t byte_num = sizeof(float);
+  size_t ih_weight_size = kGateNums * hidden_size * input_size * byte_num;
+  size_t hh_weight_size = kGateNums * hidden_size * hidden_size * byte_num;
+  size_t bias_size = kGateNums * hidden_size * kBiasNums * byte_num;
+  std::vector<int64_t> ih_weight_shape = {static_cast<int64_t>(num_directions),
+                                          static_cast<int64_t>(kGateNums * hidden_size),
+                                          static_cast<int64_t>(input_size)};
+  std::vector<int64_t> hh_weight_shape = {static_cast<int64_t>(num_directions),
+                                          static_cast<int64_t>(kGateNums * hidden_size),
+                                          static_cast<int64_t>(hidden_size)};
   // bias include ih bias and hh bias
-  std::vector<int64_t> bias_shape = {num_directions, kGateNums * kBiasNums * hidden_size};
+  std::vector<int64_t> bias_shape = {static_cast<int64_t>(num_directions),
+                                     static_cast<int64_t>(kGateNums * kBiasNums * hidden_size)};
 
   auto lstm_weight_node = GetRealLstmWeightNode(func_graph, lstm_cnode, kLSTMWeightIndex);
   MS_CHECK_TRUE_MSG(lstm_weight_node != nullptr, RET_ERROR, "lstm_weight_node is nullptr.");
@@ -227,7 +230,7 @@ int ReplaceLstmNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func
                                              hh_weight_paramter,   bias_paramter, inputs.at(kHiddenIndex),
                                              inputs.at(kCellIndex)};
   auto new_lstm_cnode = func_graph->NewCNode(new_lstm_inputs);
-  MS_CHECK_TRUE_MSG(new_lstm_cnode != nullptr, false, "New lstm cnode failed.");
+  MS_CHECK_TRUE_MSG(new_lstm_cnode != nullptr, lite::RET_NULL_PTR, "New lstm cnode failed.");
   new_lstm_cnode->set_fullname_with_scope(lstm_name);
   new_lstm_cnode->set_abstract(lstm_cnode->abstract()->Clone());
   (void)manager->Replace(lstm_cnode, new_lstm_cnode);

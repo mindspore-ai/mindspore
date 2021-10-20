@@ -73,17 +73,17 @@ lite::STATUS Conv1DInOutAdjust::ExpandFilterShape(const AnfNodePtr &weight_node,
   switch (format) {
     case schema::Format_NCHW:
     case schema::Format_KCHW:
-      new_shape.insert(new_shape.begin() + kNumDim2, 1);
+      (void)new_shape.insert(new_shape.begin() + kNumDim2, 1);
       break;
     case schema::Format_NHWC:
     case schema::Format_KHWC:
-      new_shape.insert(new_shape.begin() + 1, 1);
+      (void)new_shape.insert(new_shape.begin() + 1, 1);
       break;
     default:
       MS_LOG(ERROR) << "Unsupported format.";
       return RET_ERROR;
   }
-  weight_tensor->set_shape(new_shape);
+  (void)weight_tensor->set_shape(new_shape);
   if (!utils::isa<ParameterPtr>(weight_node)) {
     return lite::RET_OK;
   }
@@ -114,11 +114,11 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     std::vector<int64_t> axis;
     switch (Format(GetValue<int64_t>(conv2d_node->GetAttr(ops::kOriginalFormat)))) {
       case mindspore::Format::NWC:
-        conv2d_node->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NHWC));
+        (void)conv2d_node->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NHWC));
         axis = {1};
         break;
       case mindspore::Format::NCW:
-        conv2d_node->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NCHW));
+        (void)conv2d_node->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(mindspore::NCHW));
         axis = {2};
         break;
       default:
@@ -128,10 +128,10 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     auto input_node = cnode->input(1);
     auto unsqueeze = NewUnsqueezeOpNode(func_graph, input_node, axis);
     MS_CHECK_TRUE_MSG(unsqueeze != nullptr, false, "New unsqueeze node failed.");
-    manager->Replace(input_node, unsqueeze);
+    (void)manager->Replace(input_node, unsqueeze);
     auto squeeze = NewSqueezeOpNode(func_graph, cnode, axis);
     MS_CHECK_TRUE_MSG(squeeze != nullptr, false, "New squeeze node failed.");
-    manager->Replace(cnode, squeeze);
+    (void)manager->Replace(cnode, squeeze);
     auto conv_cnode = cnode->cast<CNodePtr>();
     MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
     auto weight_node = conv_cnode->input(kConvWeightIndex);
@@ -145,7 +145,7 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(DEBUG) << "weight node is not param value, insert not for weight.";
       auto unsqueeze_weight = NewUnsqueezeOpNode(func_graph, weight_node, axis);
       MS_CHECK_TRUE_MSG(unsqueeze_weight != nullptr, false, "New unsqueeze node failed.");
-      manager->Replace(input_node, unsqueeze_weight);
+      (void)manager->Replace(input_node, unsqueeze_weight);
       return true;
     } else {
       auto status = ExpandFilterShape(weight_node, schema_format);

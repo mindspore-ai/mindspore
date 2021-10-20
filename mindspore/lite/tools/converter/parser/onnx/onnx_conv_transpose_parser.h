@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_DECONV_PARSER_H
 
 #include <memory>
+#include <vector>
 #include "tools/converter/parser/onnx/onnx_conv_base_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
@@ -29,6 +30,10 @@ class OnnxDeConvParser : public OnnxConvBaseParser {
   ~OnnxDeConvParser() override = default;
 
   ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+
+ private:
+  STATUS ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t *group, mindspore::PadMode *pad_mode,
+                       std::vector<int64_t> *output_paddings);
 };
 }  // namespace lite
 }  // namespace mindspore

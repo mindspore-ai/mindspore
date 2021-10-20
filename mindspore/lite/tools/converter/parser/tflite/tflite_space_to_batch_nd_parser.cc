@@ -29,17 +29,18 @@ ops::PrimitiveC *TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite:
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
+  MS_CHECK_GE(tflite_op->inputs.size(), kInputSize2, nullptr);
   auto prim = std::make_unique<ops::SpaceToBatchND>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   std::vector<int64_t> blockShape;
-  if (GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, blockShape)) {
+  if (GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, &blockShape)) {
     MS_LOG(ERROR) << "get spaceToBatchND -> blockShape failed";
     return nullptr;
   }
   prim->set_block_shape(blockShape);
   std::vector<std::vector<int64_t>> paddings;
-  if (TransTfliteDataToVec2D(tflite_op->inputs.at(2), tflite_subgraph->tensors, tflite_model->buffers, paddings)) {
+  if (TransTfliteDataToVec2D(tflite_op->inputs.at(2), tflite_subgraph->tensors, tflite_model->buffers, &paddings)) {
     MS_LOG(ERROR) << "get spaceToBatchND -> paddings failed";
     return nullptr;
   }

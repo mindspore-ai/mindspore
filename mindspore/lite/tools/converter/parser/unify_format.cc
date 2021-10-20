@@ -288,7 +288,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &
   MS_CHECK_TRUE_MSG(gather_prim != nullptr, RET_NULL_PTR, "gather_prim is nullptr.");
   auto value_ptr = MakeValue<int64_t>(NHWC);
   MS_CHECK_TRUE_MSG(value_ptr != nullptr, RET_NULL_PTR, "value_ptr is nullptr.");
-  gather_prim->AddAttr(ops::kFormat, value_ptr);
+  (void)gather_prim->AddAttr(ops::kFormat, value_ptr);
   gather_cnode->set_abstract(abstract->Clone());
   auto shape_ptr = std::make_shared<abstract::Shape>(indices_shape);
   MS_CHECK_TRUE_MSG(shape_ptr != nullptr, RET_NULL_PTR, "shape_ptr is nullptr.");
@@ -297,7 +297,7 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForVariableShape(const FuncGraphPtr &
   tr.SetEdge(cnode, kNumIndex_2, gather_cnode);
   tr.Commit();
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
+  (void)prim->AddAttr(ops::kFormat, MakeValue<int64_t>(NHWC));
   return RET_OK;
 }
 

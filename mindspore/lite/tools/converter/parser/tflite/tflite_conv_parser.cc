@@ -22,6 +22,12 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+constexpr int kWeightChannelOut = 0;
+constexpr int kWeightKernelH = 1;
+constexpr int kWeightKernelW = 2;
+constexpr int kWeightChannelIn = 3;
+}  // namespace
 ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
@@ -47,7 +53,7 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
   // get weight tensor
-  if (tflite_op->inputs.size() < THIRD_INPUT) {
+  if (tflite_op->inputs.size() < kInputSize1) {
     MS_LOG(ERROR) << "the tflite_op shape is illegal";
     return nullptr;
   }
@@ -57,19 +63,19 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
     return nullptr;
   }
   auto weight_shape = weight_tensor->shape;
-  if (weight_shape.empty() || weight_shape.size() < FIFTH_INPUT) {
+  if (weight_shape.empty() || weight_shape.size() < DIMENSION_4D) {
     MS_LOG(ERROR) << "the weight shape is illegal";
     return nullptr;
   }
-  prim->set_in_channel(weight_shape[3]);
-  prim->set_out_channel(weight_shape[0]);
-  prim->set_kernel_size({weight_shape[1], weight_shape[2]});
+  prim->set_in_channel(weight_shape[kWeightChannelIn]);
+  prim->set_out_channel(weight_shape[kWeightChannelOut]);
+  prim->set_kernel_size({weight_shape[kWeightKernelH], weight_shape[kWeightKernelW]});
 
   // calculate pad params
   const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs[0]);
   std::vector<int64_t> params;
-  int status = getPaddingParam(dataTensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w, weight_shape[1],
-                               weight_shape[2], &params);
+  int status = getPaddingParam(dataTensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
+                               weight_shape[kWeightKernelH], weight_shape[kWeightKernelW], &params);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get padding params failed";
     return nullptr;
@@ -104,7 +110,7 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
   // get weight tensor
-  if (tflite_op->inputs.size() < THIRD_INPUT) {
+  if (tflite_op->inputs.size() < kInputSize1) {
     MS_LOG(ERROR) << "the tflite_op shape is illegal";
     return nullptr;
   }
@@ -114,17 +120,17 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
     return nullptr;
   }
   auto weight_shape = weight_tensor->shape;
-  if (weight_shape.empty() || weight_shape.size() < FIFTH_INPUT) {
+  if (weight_shape.empty() || weight_shape.size() < DIMENSION_4D) {
     MS_LOG(ERROR) << "the weight shape is illegal";
     return nullptr;
   }
-  prim->set_kernel_size({weight_shape[1], weight_shape[2]});
-  prim->set_in_channel(weight_shape[3]);
+  prim->set_kernel_size({weight_shape[kWeightKernelH], weight_shape[kWeightKernelW]});
+  prim->set_in_channel(weight_shape[kWeightChannelIn]);
   if (tflite_attr->depth_multiplier == 0) {
     MS_LOG(ERROR) << "depth_multiplier must not be zero!";
     return nullptr;
   }
-  prim->set_group(weight_shape[3] / tflite_attr->depth_multiplier);
+  prim->set_group(weight_shape[kWeightChannelIn] / tflite_attr->depth_multiplier);
 
   // get data tensor
   const auto &data_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(0));
@@ -134,13 +140,19 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
   }
   auto data_shape = data_tensor->shape;
   if (!data_shape.empty()) {
-    prim->set_out_channel(data_shape[3] * tflite_attr->depth_multiplier);
+    MS_CHECK_GE(static_cast<int>(data_shape.size()), DIMENSION_4D, nullptr);
+    auto multiplier = tflite_attr->depth_multiplier;
+    if (INT_MUL_OVERFLOW_THRESHOLD(data_shape[kNHWC_C], static_cast<size_t>(multiplier), SIZE_MAX)) {
+      MS_LOG(ERROR) << "data_size overflow";
+      return nullptr;
+    }
+    prim->set_out_channel(data_shape[kNHWC_C] * multiplier);
   }
 
   // calculate pad params
   std::vector<int64_t> params;
-  int status = getPaddingParam(data_tensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w, weight_shape[1],
-                               weight_shape[2], &params);
+  int status = getPaddingParam(data_tensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
+                               weight_shape[kWeightKernelH], weight_shape[kWeightKernelW], &params);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get padding params failed";
     return nullptr;
