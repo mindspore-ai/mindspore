@@ -25,7 +25,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/lite_session.h"
-#include "tools/common/storage.h"
+#include "tools/common/meta_graph_serializer.h"
 #include "include/version.h"
 
 namespace mindspore {
@@ -313,8 +313,8 @@ TEST_F(SubGraphTest, RecursiveSubGraphTest) {
   meta_graph->name = "graph";
   meta_graph->version = lite::Version();
   //  -----------------------------------------------------------------------
-  lite::Storage::Save(*meta_graph,
-                      "/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/my_test/models/recursive_subgraph");
+  lite::MetaGraphSerializer::Save(
+    *meta_graph, "/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/my_test/models/recursive_subgraph");
   //  -----------------------------------------------------------------------
   size_t size = 0;
   char *graph_buf = lite::ReadFile(

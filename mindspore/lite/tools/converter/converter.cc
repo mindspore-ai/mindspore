@@ -20,7 +20,7 @@
 #include <set>
 #include "tools/converter/converter_flags.h"
 #include "src/common/log_adapter.h"
-#include "tools/common/storage.h"
+#include "tools/common/meta_graph_serializer.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "include/version.h"
 #ifdef SUPPORT_TRAIN
@@ -178,7 +178,7 @@ int RunConverter(int argc, const char **argv) {
 
   //   save graph to file
   meta_graph->version = Version();
-  status = Storage::Save(*meta_graph, flags->outputFile);
+  status = MetaGraphSerializer::Save(*meta_graph, flags->outputFile);
   if (status != RET_OK) {
     oss.clear();
     oss << "SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status);

@@ -25,45 +25,6 @@
 
 namespace mindspore {
 namespace lite {
-int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath) {
-  flatbuffers::FlatBufferBuilder builder(1024);
-  auto offset = schema::MetaGraph::Pack(builder, &graph);
-  builder.Finish(offset);
-  schema::FinishMetaGraphBuffer(builder, offset);
-  int size = builder.GetSize();
-  auto content = builder.GetBufferPointer();
-  if (content == nullptr) {
-    MS_LOG(ERROR) << "GetBufferPointer nullptr";
-    return RET_ERROR;
-  }
-  std::string filename = outputPath;
-  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
-    filename = filename + ".ms";
-  }
-#ifndef _MSC_VER
-  if (access(filename.c_str(), F_OK) == 0) {
-    chmod(filename.c_str(), S_IWUSR);
-  }
-#endif
-  std::ofstream output(filename, std::ofstream::binary);
-  if (!output.is_open()) {
-    MS_LOG(ERROR) << "Can not open output file: " << filename;
-    return RET_ERROR;
-  }
-
-  output.write((const char *)content, size);
-  if (output.bad()) {
-    output.close();
-    MS_LOG(ERROR) << "Write output file : " << filename << " failed";
-    return RET_ERROR;
-  }
-  output.close();
-#ifndef _MSC_VER
-  chmod(filename.c_str(), S_IRUSR);
-#endif
-  return RET_OK;
-}
-
 schema::MetaGraphT *Storage::Load(const std::string &inputPath) {
   size_t size = 0;
   std::string filename = inputPath;

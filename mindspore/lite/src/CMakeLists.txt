@@ -230,6 +230,7 @@ set(TRAIN_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_export.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/opt_allocator.cc
         ${TOOLS_DIR}/common/storage.cc
+        ${TOOLS_DIR}/common/meta_graph_serializer.cc
         ${TOOLS_DIR}/converter/optimizer.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pass.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/fusion/fusion_pattern.cc
