@@ -84,7 +84,7 @@ class Model:
             - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
             - O3: Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
             - auto: Set to level to recommended level in different devices. Set level to O2 on GPU, Set
-              level to O3 Ascend. The recommended level is choose by the export experience, cannot
+              level to O3 Ascend. The recommended level is chosen by the export experience, cannot
               always general. User should specify the level for special network.
 
             O2 is recommended on GPU, O3 is recommended on Ascend.The more detailed explanation of `amp_level` setting
@@ -736,7 +736,7 @@ class Model:
             Pre-build process only supports `GRAPH_MODE` and `Ascend` target currently.
             The interface builds the computational graphs, when the interface is executed first,
             'model.train' only performs the graphs execution.
-            It only support dataset sink mode.
+            It only supports dataset sink mode.
 
         Args:
             train_dataset (Dataset): A training dataset iterator. If `train_dataset` is defined, training graphs will be
@@ -912,7 +912,7 @@ class Model:
         Data could be a single tensor, a list of tensor, or a tuple of tensor.
 
         Note:
-            This is a pre-compile function. The arguments should be the same with model.predict() function.
+            This is a pre-compile function. The arguments should be the same as with model.predict() function.
 
         Args:
             predict_data (Optional[Tensor, list[Tensor], tuple[Tensor]]): The predict data, can be a single tensor,
@@ -975,7 +975,7 @@ class Model:
             This is an experimental prototype that is subject to change and/or deletion.
 
         Note:
-            This is a pre-compile function. The arguments should be the same with model.train() function.
+            This is a pre-compile function. The arguments should be the same as with model.train() function.
 
         Args:
             train_dataset (Dataset): A training dataset iterator. If there is no

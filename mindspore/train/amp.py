@@ -127,7 +127,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
               using dynamic loss scale.
             - O3: Cast network to float16, with additional property `keep_batchnorm_fp32=False` .
             - auto: Set to level to recommended level in different devices. Set level to O2 on GPU, Set
-              level to O3 Ascend. The recommended level is choose by the export experience, cannot
+              level to O3 Ascend. The recommended level is chosen by the export experience, cannot
               always general. User should specify the level for special network.
 
             O2 is recommended on GPU, O3 is recommended on Ascend.Property of `keep_batchnorm_fp32` , `cast_model_type`
