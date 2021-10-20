@@ -316,7 +316,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
 
-  FindAllInoutKernels(*dst_kernels);
+  kernel::LiteKernelUtil::FindAllInoutKernels(*dst_kernels);
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (IsControlFlowParttern(*dst_kernels)) {
@@ -350,7 +350,6 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
   }
 
   MS_LOG(DEBUG) << "schedule kernels success.";
-
   for (auto subgraph : *dst_kernels) {
     MS_LOG(DEBUG) << "[subgraph] : " << subgraph->name() << ",  type:" << subgraph->subgraph_type();
     if (subgraph->desc().arch == kernel::KERNEL_ARCH::kDelegate) {
@@ -1310,7 +1309,7 @@ kernel::LiteKernel *Scheduler::SchedulePartialToSubGraphKernel(const int &subgra
     MS_LOG(ERROR) << "Schedule subgraph failed, index: " << subgraph_index;
     return nullptr;
   }
-  FindAllInoutKernels(kernels);
+  kernel::LiteKernelUtil::FindAllInoutKernels(kernels);
   kernel::SubGraphType cur_sub_graph_type = kernel::kCpuFP32SubGraph;
   if (!kernels.empty()) {
     cur_sub_graph_type = GetKernelSubGraphType(kernels.front(), *context_, true);
@@ -1614,38 +1613,6 @@ void Scheduler::SetKernelTensorDataType(kernel::LiteKernel *kernel) {
     for (auto tensor : kernel->out_tensors()) {
       if (tensor->data_type() == kNumberTypeFloat16) {
         tensor->set_data_type(kNumberTypeFloat32);
-      }
-    }
-  }
-}
-
-void Scheduler::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels) {
-  std::unordered_map<lite::Tensor *, kernel::LiteKernel *> tensorPreKernel;
-  std::unordered_map<lite::Tensor *, std::vector<kernel::LiteKernel *>> tensorPostKernels;
-  for (auto *kernel : kernels) {
-    for (auto *tensor : kernel->out_tensors()) {
-      tensorPreKernel[tensor] = kernel;
-    }
-    for (auto *tensor : kernel->in_tensors()) {
-      (tensorPostKernels[tensor]).push_back(kernel);
-    }
-  }
-
-  for (auto *kernel : kernels) {
-    kernel->set_in_kernels({});
-    for (auto *tensor : kernel->in_tensors()) {
-      auto iter = tensorPreKernel.find(tensor);
-      if (iter != tensorPreKernel.end()) {
-        kernel->AddInKernel(iter->second);
-      }
-    }
-    kernel->set_out_kernels({});
-    for (auto *tensor : kernel->out_tensors()) {
-      auto iter = tensorPostKernels.find(tensor);
-      if (iter != tensorPostKernels.end()) {
-        for (auto *find_kernel : iter->second) {
-          kernel->AddOutKernel(find_kernel);
-        }
       }
     }
   }

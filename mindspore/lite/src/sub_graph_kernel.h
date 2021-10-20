@@ -76,17 +76,6 @@ class SubGraphKernel : public LiteKernel {
     nodes_.clear();
   }
 
-  void FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope_kernels) override {
-    LiteKernel::FindInoutKernels(scope_kernels);
-    std::vector<kernel::LiteKernel *> new_scope_kernels = {};
-    new_scope_kernels.insert(new_scope_kernels.end(), this->in_kernels().begin(), this->in_kernels().end());
-    new_scope_kernels.insert(new_scope_kernels.end(), this->out_kernels().begin(), this->out_kernels().end());
-    new_scope_kernels.insert(new_scope_kernels.end(), nodes_.begin(), nodes_.end());
-    for (auto *node : nodes_) {
-      node->FindInoutKernels(new_scope_kernels);
-    }
-  }
-
   bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override {
     return std::all_of(this->in_nodes_.begin(), this->in_nodes_.end(),
                        [&](LiteKernel *kernel) { return kernel->IsReady(scope_tensors); });

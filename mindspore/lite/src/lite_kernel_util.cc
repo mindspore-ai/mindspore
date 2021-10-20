@@ -16,45 +16,43 @@
 
 #include "src/lite_kernel_util.h"
 #include <queue>
+#include <unordered_map>
+#include <set>
 #include "src/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+
+std::set<lite::Tensor *> LiteKernelUtil::AllOutTensor(const std::vector<kernel::LiteKernel *> &kernels) {
+  std::set<lite::Tensor *> all_out_tensors{};
+  for (const auto &kernel_in_subgraph : kernels) {
+    for (auto *tensor : kernel_in_subgraph->out_tensors()) {
+      all_out_tensors.insert(tensor);
+    }
+  }
+  return all_out_tensors;
+}
+
 std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputNodes(const std::vector<kernel::LiteKernel *> &kernels) {
   std::vector<kernel::LiteKernel *> input_nodes;
+  std::set<lite::Tensor *> all_out_tensors = AllOutTensor(kernels);
   for (const auto &kernel : kernels) {
     MS_ASSERT(kernel != nullptr);
-    // if kernel has no pre-kernel, kernel is a graph input, it must be a subgraph input
-    if (kernel->in_kernels().empty() && !kernel->in_tensors().empty()) {
-      if (!lite::IsContain(input_nodes, kernel)) {
-        input_nodes.push_back(kernel);
-      }
-      continue;
-    }
+    bool kernel_is_input = false;
     auto all_input_tensors = kernel->in_tensors();
-    // remove all const tensor from input tensors
-    for (auto iter = all_input_tensors.begin(); iter != all_input_tensors.end();) {
-      if ((*iter)->IsConst()) {
-        iter = all_input_tensors.erase(iter);
-      } else {
-        iter++;
+    for (auto input : kernel->in_tensors()) {
+      if (input->IsConst()) {
+        continue;
       }
+      if (all_out_tensors.find(input) != all_out_tensors.end()) {
+        continue;
+      }
+      kernel_is_input = true;
+      break;
     }
-    for (const auto &kernel_in_subgraph : kernels) {
-      // remove input tensors from kernel in subgraph
-      for (const auto *tensor : kernel_in_subgraph->out_tensors()) {
-        auto ret = std::find(all_input_tensors.begin(), all_input_tensors.end(), tensor);
-        if (ret != all_input_tensors.end()) {
-          all_input_tensors.erase(ret);
-        }
-      }
-    }
-    // if some input tensor is not from kernel in subgraph
-    if (!all_input_tensors.empty()) {
-      if (!lite::IsContain(input_nodes, kernel)) {
-        input_nodes.push_back(kernel);
-      }
+    if (kernel_is_input && !lite::IsContain(input_nodes, kernel)) {
+      input_nodes.push_back(kernel);
     }
   }
   return input_nodes;
@@ -62,6 +60,10 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputNodes(const std::
 
 std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputNodes(
   const std::vector<kernel::LiteKernel *> &kernels) {
+  std::set<kernel::LiteKernel *> all_kernels{};
+  for (const auto &kernel : kernels) {
+    all_kernels.insert(kernel);
+  }
   std::vector<kernel::LiteKernel *> output_nodes;
   // if kernel has no post-kernel, kernel is a graph output, it must be a subgraph output
   for (const auto &kernel : kernels) {
@@ -72,14 +74,10 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputNodes(
       }
       continue;
     }
-    for (const auto &output : kernel->out_kernels()) {
-      auto out_kernel_in_graph = std::find(kernels.begin(), kernels.end(), output);
-      if (out_kernel_in_graph == kernels.end()) {
-        if (!lite::IsContain(output_nodes, kernel)) {
-          output_nodes.push_back(kernel);
-        }
-        break;
-      }
+    if (std::any_of(kernel->out_kernels().begin(), kernel->out_kernels().end(),
+                    [&all_kernels](kernel::LiteKernel *tmp) { return all_kernels.find(tmp) == all_kernels.end(); }) &&
+        !lite::IsContain(output_nodes, kernel)) {
+      output_nodes.push_back(kernel);
     }
   }
   return output_nodes;
@@ -237,4 +235,40 @@ bool LiteKernelUtil::InputsContainsSpecificNode(const kernel::LiteKernel *kernel
   }
   return false;
 }
+
+void LiteKernelUtil::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels) {
+  std::unordered_map<lite::Tensor *, kernel::LiteKernel *> tensor_pre_kernel;
+  std::unordered_map<lite::Tensor *, std::vector<kernel::LiteKernel *>> tensor_post_kernels;
+  for (auto *kernel : kernels) {
+    for (auto *tensor : kernel->out_tensors()) {
+      tensor_pre_kernel[tensor] = kernel;
+    }
+    for (auto *tensor : kernel->in_tensors()) {
+      (tensor_post_kernels[tensor]).push_back(kernel);
+    }
+  }
+
+  for (auto *kernel : kernels) {
+    kernel->set_in_kernels({});
+    for (auto *tensor : kernel->in_tensors()) {
+      auto iter = tensor_pre_kernel.find(tensor);
+      if (iter != tensor_pre_kernel.end() && kernel != iter->second) {
+        kernel->AddInKernel(iter->second);
+      }
+    }
+    kernel->set_out_kernels({});
+    for (auto *tensor : kernel->out_tensors()) {
+      auto iter = tensor_post_kernels.find(tensor);
+      if (iter != tensor_post_kernels.end()) {
+        for (auto *find_kernel : iter->second) {
+          if (kernel == find_kernel) {
+            continue;
+          }
+          kernel->AddOutKernel(find_kernel);
+        }
+      }
+    }
+  }
+}
+
 }  // namespace mindspore::kernel

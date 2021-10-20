@@ -99,8 +99,6 @@ class Scheduler {
   int ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kernel::LiteKernel *> *dst_kernels,
                                 std::vector<lite::Tensor *> *in_tensors, std::vector<lite::Tensor *> *out_tensors,
                                 TypeId prefer_data_type = kTypeUnknown);
-  // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph
-  static void FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels);
   // vector<LiteKernel/SubGraphKernel> --> vector<SubGraphKernel>
   int ConstructSubGraphs(std::vector<kernel::LiteKernel *> src_kernel, std::vector<kernel::LiteKernel *> *dst_kernel,
                          std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);

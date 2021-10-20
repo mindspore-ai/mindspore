@@ -31,6 +31,7 @@
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
 #include "src/weight_decoder.h"
+#include "src/lite_kernel_util.h"
 #ifdef ENABLE_MINDRT
 #include "src/mindrt_executor.h"
 #endif
@@ -629,20 +630,11 @@ int LiteSession::PrepareKernels(Model *model) {
     all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
   }
 
-  // find in_sub and out_sub for subgraph
-  for (auto kernel : this->kernels_) {
-    kernel->FindInoutKernels(this->kernels_);
-  }
-
   // find in_kernels and out_kernels for kernels
-  for (auto *kernel : all_kernels) {
-#ifndef DELEGATE_CLIP
-    if (kernel->desc().arch == kernel::kDelegate) {
-      continue;
-    }
-#endif
-    kernel->FindInoutKernels(all_kernels);
-  }
+  kernel::LiteKernelUtil::FindAllInoutKernels(all_kernels);
+
+  // find in_sub and out_sub for subgraph
+  kernel::LiteKernelUtil::FindAllInoutKernels(this->kernels_);
 
   // init init_ref_count for subgraphs and kernels
   for (auto *kernel : this->kernels_) {
