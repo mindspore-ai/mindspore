@@ -222,21 +222,33 @@ get_algo_parameters_config_func_map = {
                  enable_algo_approxi=bool, algo_approxi_epsilon=float)
 def set_algo_parameters(**kwargs):
     """
-    Set algo parameter config.
+    Set parameters in the algorithm for parallel strategy searching. See a typical use in
+    mindspore/tests/ut/python/parallel/test_auto_parallel_resnet.py.
 
     Note:
-        The attribute name is required.
+        The attribute name is required. This interface works ONLY in AUTO_PARALLEL mode.
 
     Args:
-        tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: False
+        fully_use_devices (bool): Whether ONLY searching strategies that fully use all available devices.
+            Default: True. For example with 8 devices available, if set true, strategy (4, 1) will not be included
+            in ReLU's candidate strategies, because strategy (4, 1) only utilizes 4 devices.
+        elementwise_op_strategy_follow (bool): Whether the elementwise operator has the consistent strategies as its
+            subsequent operators. Default: False. For the example of ReLU followed by Add, where ReLU is elementwise
+            operator, if this flag is set true, then the searched strategy by the algorithm guarantees that strategies
+            of these two operators are consistent, e.g., ReLU's strategy (8, 1) and Add's strategy ((8, 1), (8, 1)).
+        enable_algo_approxi (bool): Whether to enable the approximation in the algorithms. Default: False. Due to large
+            solution space in searching parallel strategy for large DNN model, the algorithm takes fairly long time in
+            this case. To mitigate it, if this flag is set true, an approximation is made to discard some candidate
+            strategies, so that the solution space is shrunken.
+        algo_approxi_epsilon (float): The epsilon value used in the approximation algorithm. Default: 0.1. This value
+            describes the extent of approximation. For example, the number of candidate strategies of an operator is S,
+            if `enable_algo_approxi' is true, then the remaining strategies is of size: min{S, 1/epsilon}.
+        tensor_slice_align_enable (bool): Whether to check the shape of tensor slice of MatMul. Default: False. Due to
+            properties of some hardware, MatMul kernel only with large shapes can show advantages. If this flag is true,
+            then the slice shape of MatMul is checked to prevent irregular shapes.
         tensor_slice_align_size (int): The minimum tensor slice shape of MatMul, the value must be in [1, 1024].
-            Default: 16
-        fully_use_devices (bool): Whether ONLY generating strategies that fully use all available devices.
-            Default: True
-        elementwise_op_strategy_follow (bool): Whether the elementwise operator has the same strategies as its
-            subsequent operators. Default: False
-        enable_algo_approxi (bool): Whether to enable the approximation in the DP algorithms. Default: False.
-        algo_approxi_epsilon (float): The epsilon value used in the approximation DP algorithm. Default: 0.1.
+            Default: 16. If `tensor_slice_align_enable' is set true, then the slice size of last dimension of MatMul
+            tensors should be multiple of this value.
 
     Raises:
         ValueError: If context keyword is not recognized.
@@ -250,13 +262,18 @@ def set_algo_parameters(**kwargs):
 
 def get_algo_parameters(attr_key):
     """
-    Get algo parameter config attributes.
+    Get the algorithm parameter config attributes.
 
     Note:
-        Returns the specified attribute value.
+        The attribute name is required. This interface works ONLY in AUTO_PARALLEL mode.
 
     Args:
-        attr_key (str): The key of the attribute.
+        attr_key (str): The key of the attribute. The keys include: "fully_use_devices",
+            "elementwise_op_strategy_follow", "enable_algo_approxi", "algo_approxi_epsilon",
+            "tensor_slice_align_enable", "tensor_slice_align_size".
+
+    Returns:
+        Return attribute value according to the key.
 
     Raises:
         ValueError: If context keyword is not recognized.
@@ -268,5 +285,17 @@ def get_algo_parameters(attr_key):
 
 
 def reset_algo_parameters():
-    """Reset algo parameter attributes."""
+    """Reset the algorithm parameter attributes.
+
+    Note:
+        This interface works ONLY in AUTO_PARALLEL mode.
+
+    After reset, the values of the attributes are:
+    --fully_use_devices: True.
+    --elementwise_op_strategy_follow: False.
+    --enable_algo_approxi: False.
+    --algo_approxi_epsilon: 0.1.
+    --tensor_slice_align_enable: False.
+    --tensor_slice_align_size: 16.
+    """
     _algo_parameter_config().reset_algo_parameters()
