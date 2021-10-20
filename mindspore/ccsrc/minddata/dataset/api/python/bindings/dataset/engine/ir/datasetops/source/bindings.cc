@@ -35,6 +35,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/div2k_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/emnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/fake_image_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/fashion_mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/flickr_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
@@ -176,6 +177,17 @@ PYBIND_REGISTER(FakeImageNode, 2, ([](const py::module *m) {
                                                                         toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(fake_image->ValidateParams());
                       return fake_image;
+                    }));
+                }));
+
+PYBIND_REGISTER(FashionMnistNode, 2, ([](const py::module *m) {
+                  (void)py::class_<FashionMnistNode, DatasetNode, std::shared_ptr<FashionMnistNode>>(
+                    *m, "FashionMnistNode", "to create a FashionMnistNode")
+                    .def(py::init([](std::string dataset_dir, std::string usage, py::handle sampler) {
+                      auto fashion_mnist =
+                        std::make_shared<FashionMnistNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(fashion_mnist->ValidateParams());
+                      return fashion_mnist;
                     }));
                 }));
 

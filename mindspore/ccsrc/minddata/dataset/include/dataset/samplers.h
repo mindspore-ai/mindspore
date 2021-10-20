@@ -41,6 +41,7 @@ class Sampler : std::enable_shared_from_this<Sampler> {
   friend class DIV2KDataset;
   friend class EMnistDataset;
   friend class FakeImageDataset;
+  friend class FashionMnistDataset;
   friend class FlickrDataset;
   friend class ImageFolderDataset;
   friend class ManifestDataset;
