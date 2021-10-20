@@ -115,6 +115,29 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/weight_decoder.cc
         ${SRC_DIR}/huffman_decode.cc
         )
+
+if(MSLITE_ENABLE_MINDRT)
+    add_compile_definitions(ENABLE_MINDRT)
+    include_directories(${CORE_DIR}/mindrt)
+    include_directories(${CORE_DIR}/mindrt/include)
+    include_directories(${CORE_DIR}/mindrt/src/)
+    file(GLOB MINDRT_SRC
+            ${CORE_DIR}/mindrt/src/*.cc
+            ${CORE_DIR}/mindrt/src/actor/*.cc
+            ${CORE_DIR}/mindrt/src/async/*.cc
+            ${CORE_DIR}/mindrt/src/evloop/*.cc
+            ${CORE_DIR}/mindrt/src/timer/*.cc
+            ${CORE_DIR}/mindrt/src/thread/*.cc
+            )
+
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${MINDRT_SRC}
+            ${SRC_DIR}/lite_mindrt.cc
+            ${SRC_DIR}/mindrt_executor.cc
+            )
+endif()
+
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
             ${SRC_DIR}/runtime/gpu/opencl/*.cc
@@ -165,7 +188,6 @@ endif()
 target_link_libraries(converter_lite PRIVATE
         ccsrc_src_mid
         converter_src_mid
-        mindrt_mid
         cpu_ops_mid
         nnacl_mid
         cpu_kernel_mid

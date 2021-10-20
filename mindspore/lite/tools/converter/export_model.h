@@ -17,11 +17,14 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_EXPORT_MODEL_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_EXPORT_MODEL_H
 
+#include <map>
 #include "tools/converter/converter_flags.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {
 namespace lite {
+FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *flags,
+                            std::map<FuncGraphPtr, FuncGraphPtr> *cloned_func_graph);
 STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags);
 }  // namespace lite
 }  // namespace mindspore

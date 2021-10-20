@@ -1536,7 +1536,7 @@ KernelCallBack FullQuantQuantizer::GetInt8AfterCallBack() {
           auto index = j * channels + i;
           if (index >= elem_count) {
             MS_LOG(ERROR) << "over flow!";
-            return RET_ERROR;
+            return false;
           }
           // deuqant activation
           auto float_data = scale * (tensor_data[index] - zp);
@@ -1544,7 +1544,7 @@ KernelCallBack FullQuantQuantizer::GetInt8AfterCallBack() {
         }
         if (one_filter_size == 0) {
           MS_LOG(ERROR) << "divisor 'one_filter_size' cannot be 0.";
-          return RET_ERROR;
+          return false;
         }
         sum = sum / one_filter_size;
         dequant_op_output_ch_mean[i] = sum;
@@ -1596,7 +1596,7 @@ KernelCallBack FullQuantQuantizer::GetFloatAfterCallBack() {
           auto index = j * channels + i;
           if (index >= elem_count) {
             MS_LOG(ERROR) << "over flow!";
-            return RET_ERROR;
+            return false;
           }
           sum += tensor_data[index];
         }

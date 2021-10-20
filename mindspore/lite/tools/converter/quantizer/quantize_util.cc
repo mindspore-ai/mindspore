@@ -54,6 +54,21 @@ const int kSingleDirBiasTensorSize = 4;
 const int kLstmBiasShapeSize = 2;
 const int kLstmBiasIndex = 3;
 
+constexpr float kInputDataFloatMin = 0.1f;
+constexpr float kInputDataFloatMax = 1.0f;
+constexpr double kInputDataDoubleMin = 0.1;
+constexpr double kInputDataDoubleMax = 1.0;
+constexpr int64_t kInputDataInt64Min = 0;
+constexpr int64_t kInputDataInt64Max = 1;
+constexpr int32_t kInputDataInt32Min = 0;
+constexpr int32_t kInputDataInt32Max = 1;
+constexpr int16_t kInputDataInt16Min = 0;
+constexpr int16_t kInputDataInt16Max = 1;
+constexpr int16_t kInputDataInt8Min = -127;
+constexpr int16_t kInputDataInt8Max = 127;
+constexpr int16_t kInputDataUint8Min = 0;
+constexpr int16_t kInputDataUint8Max = 254;
+
 bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   MS_CHECK_TRUE_RET(node != nullptr, false);
   if (!node->isa<mindspore::CNode>()) {
@@ -91,7 +106,7 @@ bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node) {
   auto ret = opt::GetDataTypeFromAnfNode(cnode, &type_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Fetch DataType from cnode failed.";
-    return ret;
+    return false;
   }
 
   bool is_data_type_fp32 = type_id == kNumberTypeFloat32;
@@ -428,7 +443,8 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
   return primitive_c->name();
 }
 
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num) {
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
+                                      int *size) {
   SessionModel sm;
   auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
@@ -450,13 +466,13 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   auto offset = schema::MetaGraph::Pack(builder, meta_graph);
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
-  auto size = builder.GetSize();
+  *size = builder.GetSize();
   auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
   if (content == nullptr) {
     MS_LOG(ERROR) << "GetBufferPointer return null";
     return sm;
   }
-  auto model = lite::Model::Import(content, size);
+  auto model = lite::Model::Import(content, *size);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return sm;
@@ -468,6 +484,7 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
     MS_LOG(ERROR) << "create session failed.";
     model->Free();
     delete meta_graph;
+    delete model;
     return sm;
   }
 
@@ -477,6 +494,7 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
     model->Free();
     delete meta_graph;
     delete session;
+    delete model;
     return sm;
   }
   model->Free();
@@ -484,6 +502,10 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   sm.session = session;
   sm.model = model;
   return sm;
+}
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num) {
+  int size = 0;
+  return CreateSessionByFuncGraph(func_graph, flags, thread_num, &size);
 }
 
 FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &func_graph) {
@@ -678,7 +700,11 @@ STATUS MixedBitQuantFilter(const tensor::TensorPtr &weight, const PrimitivePtr &
   int ret = RET_OK;
   if (weight_quant_type == MIXED_BIT_PER_LAYER) {
     MixedBitWeightQuantizer quantizer(init_scale);
-    quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params, &quant_data);
+    ret = quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params,
+                                   &quant_data);
+    if (ret != RET_OK) {
+      return ret;
+    }
   } else {
     MS_LOG(ERROR) << "Unsupported weight quant type:" << weight_quant_type;
   }

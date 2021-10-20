@@ -18,6 +18,7 @@
 #include <fstream>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include "backend/optimizer/common/optimizer.h"
@@ -128,7 +129,9 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
 PrimitivePtr ClonePrimitive(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   auto origin_prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_ASSERT(origin_prim != nullptr);
+  if (origin_prim == nullptr) {
+    return nullptr;
+  }
   PrimitivePtr prim;
   auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   if (op_primc_fns.find(origin_prim->name()) != op_primc_fns.end()) {
@@ -141,11 +144,18 @@ PrimitivePtr ClonePrimitive(const CNodePtr &cnode) {
   prim->SetAttrs(origin_prim->attrs());
   return prim;
 }
+}  // namespace
 
-FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *flags) {
+FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *flags,
+                            std::map<FuncGraphPtr, FuncGraphPtr> *cloned_func_graph) {
   MS_ASSERT(graph != nullptr);
+  auto cloned_func_graph_iter = cloned_func_graph->find(graph);
+  if (cloned_func_graph_iter != cloned_func_graph->end()) {
+    return cloned_func_graph_iter->second;
+  }
   auto mirror_graph = std::make_shared<FuncGraph>();
   MS_CHECK_TRUE_RET(mirror_graph != nullptr, nullptr);
+  cloned_func_graph->insert({graph, mirror_graph});
   mirror_graph->set_attrs(graph->attrs());
   NodesMap origin_nodes;
   NodesMap mirror_nodes;
@@ -156,9 +166,13 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    auto mirrro_prim = ClonePrimitive(cnode);
     std::vector<AnfNodePtr> node_inputs;
-    for (size_t i = 1; i < cnode->size(); ++i) {
+    size_t begin_index = 1;
+    auto mirror_prim = ClonePrimitive(cnode);
+    if (mirror_prim == nullptr) {
+      begin_index = 0;
+    }
+    for (size_t i = begin_index; i < cnode->size(); ++i) {
       auto origin_input = cnode->input(i);
       MS_CHECK_TRUE_RET(origin_input != nullptr, nullptr);
       AnfNodePtr mirror_input = nullptr;
@@ -170,7 +184,7 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
       if (mirror_input == nullptr) {
         if (IsValueNode<FuncGraph>(origin_input)) {
           auto sub_func_graph = GetValueNode<FuncGraphPtr>(origin_input);
-          auto mirror_sub_graph = CloneFuncGraph(sub_func_graph, flags);
+          auto mirror_sub_graph = CloneFuncGraph(sub_func_graph, flags, cloned_func_graph);
           mirror_input = NewValueNode(mirror_sub_graph);
         } else {
           mirror_input = CloneParameterAndValueNode(cnode, i, mirror_graph, flags);
@@ -184,7 +198,8 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
       }
       node_inputs.push_back(mirror_input);
     }
-    auto mirror_cnode = mirror_graph->NewCNode(mirrro_prim, node_inputs);
+    auto mirror_cnode =
+      mirror_prim == nullptr ? mirror_graph->NewCNode(node_inputs) : mirror_graph->NewCNode(mirror_prim, node_inputs);
     MS_CHECK_TRUE_RET(mirror_cnode != nullptr, nullptr);
     mirror_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
     if (cnode->abstract() != nullptr) {
@@ -198,12 +213,12 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
   }
   return mirror_graph;
 }
-}  // namespace
 
 STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
   CHECK_NULL_RETURN(graph);
   CHECK_NULL_RETURN(flags);
-  auto mirror_graph = CloneFuncGraph(graph, flags);
+  std::map<FuncGraphPtr, FuncGraphPtr> cloned_func_graph;
+  auto mirror_graph = CloneFuncGraph(graph, flags, &cloned_func_graph);
   if (mirror_graph == nullptr) {
     MS_LOG(ERROR) << "Clone funcGraph failed.";
     return RET_ERROR;
