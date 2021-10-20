@@ -66,7 +66,8 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, check_paddeddataset, \
     check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_flickr_dataset, \
     check_sb_dataset, check_flowers102dataset, check_cityscapes_dataset, check_usps_dataset, check_div2k_dataset, \
-    check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset
+    check_sbu_dataset, check_qmnist_dataset, check_emnist_dataset, check_fake_image_dataset, check_places365_dataset, \
+    check_photo_tour_dataset
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
     get_prefetch_size
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -3525,6 +3526,159 @@ class MnistDataset(MappableDataset):
 
     def parse(self, children=None):
         return cde.MnistNode(self.dataset_dir, self.usage, self.sampler)
+
+
+class PhotoTourDataset(MappableDataset):
+    """
+    A source dataset for reading and parsing the PhotoTour dataset.
+
+    The generated dataset with different usage has different output columns.
+    If train, the generated dataset has one column :py:obj:`[image]`,
+    else three columns :py:obj:`[image1, image2, matches]`.
+    The tensor of column :py:obj:`image`, :py:obj:`image1` and :py:obj:`image2` is of the uint8 type.
+    The tensor of column :py:obj:`matches` is a scalar of the uint32 type.
+
+    Args:
+        dataset_dir (str): Path to the root directory that contains the dataset.
+        name (str): Name of the dataset to load,
+            should be one of 'notredame', 'yosemite', 'liberty', 'notredame_harris',
+            'yosemite_harris' or 'liberty_harris'.
+        usage (str, optional): Usage of the dataset, can be `train` or `test` (Default=None, will be set to 'train').
+            When usage is `train`, number of samples for each `name` is
+            {'notredame': 468159, 'yosemite': 633587, 'liberty': 450092, 'liberty_harris': 379587,
+             'yosemite_harris': 450912, 'notredame_harris': 325295}.
+            When usage is `test`, will read 100,000 samples for testing.
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will read all images).
+        num_parallel_workers (int, optional): Number of workers to read the data
+            (default=None, will use value set in the config).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
+        cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
+            (default=None, which means no cache is used).
+
+    Raises:
+        RuntimeError: If dataset_dir does not contain data files.
+        RuntimeError: If num_parallel_workers exceeds the max thread numbers.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If dataset_dir is not exist.
+        ValueError: If usage is not in ["train", "test"].
+        ValueError: If name is not in ["notredame", "yosemite", "liberty",
+            "notredame_harris", "yosemite_harris", "liberty_harris"].
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
+
+    Note:
+        - This dataset can take in a sampler. `sampler` and `shuffle` are mutually exclusive. The table
+          below shows what input arguments are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 64 64 1
+       :header-rows: 1
+
+       * - Parameter `sampler`
+         - Parameter `shuffle`
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
+
+    Examples:
+        >>> # Read 3 samples from PhotoTour dataset.
+        >>> dataset = ds.PhotoTourDataset(dataset_dir="/path/to/photo_tour_dataset_directory",
+        ...                               name='liberty', usage='train', num_samples=3)
+        >>>
+        >>> # In PhotoTourDataset dataset, if usage is 'train', each dictionary has key "image",
+        >>> # else has keys "image1" "image2" and "matches".
+
+    About PhotoTour dataset:
+
+    The data is taken from Photo Tourism reconstructions from Trevi Fountain (Rome), Notre Dame (Paris) and Half
+    Dome (Yosemite). Each dataset consists of a series of corresponding patches, which are obtained by projecting
+    3D points from Photo Tourism reconstructions back into the original images.
+
+    The dataset consists of 1024 x 1024 bitmap (.bmp) images, each containing a 16 x 16 array of image patches.
+    Each patch is sampled as 64 x 64 grayscale, with a canonical scale and orientation. For details of how the scale
+    and orientation is established, please see the paper. An associated metadata file info.txt contains the match
+    information. Each row of info.txt corresponds to a separate patch, with the patches ordered from left to right and
+    top to bottom in each bitmap image. The first number on each row of info.txt is the 3D point ID from which that
+    patch was sampled -- patches with the same 3D point ID are projected from the same 3D point (into different images).
+    The second number in info.txt corresponds to the image from which the patch was sampled, and is not used at present.
+
+    You can unzip the original PhotoTour dataset files into this directory structure and read by MindSpore's API.
+
+    .. code-block::
+        .
+        └── photo_tour_dataset_directory
+            ├── liberty/
+            │    ├── info.txt                 // two columns: 3D_point_ID, unused
+            │    ├── m50_100000_100000_0.txt  // seven columns: patch_ID1, 3D_point_ID1, unused1,
+            │    │                            // patch_ID2, 3D_point_ID2, unused2, unused3
+            │    ├── patches0000.bmp          // 1024*1024 pixels, with 16 * 16 patches.
+            │    ├── patches0001.bmp
+            │    ├── ...
+            ├── yosemite/
+            │    ├── ...
+            ├── notredame/
+            │    ├── ...
+            ├── liberty_harris/
+            │    ├── ...
+            ├── yosemite_harris/
+            │    ├── ...
+            ├── notredame_harris/
+            │    ├── ...
+
+    Citation:
+
+    .. code-block::
+
+        @INPROCEEDINGS{4269996,
+            author={Winder, Simon A. J. and Brown, Matthew},
+            booktitle={2007 IEEE Conference on Computer Vision and Pattern Recognition},
+            title={Learning Local Image Descriptors},
+            year={2007},
+            volume={},
+            number={},
+            pages={1-8},
+            doi={10.1109/CVPR.2007.382971}
+        }
+    """
+
+    @check_photo_tour_dataset
+    def __init__(self, dataset_dir, name, usage=None, num_samples=None, num_parallel_workers=None,
+                 shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
+                         shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
+
+        self.dataset_dir = dataset_dir
+        self.name = name
+        self.usage = replace_none(usage, "train")
+
+    def parse(self, children=None):
+        return cde.PhotoTourNode(self.dataset_dir, self.name, self.usage, self.sampler)
 
 
 class Places365Dataset(MappableDataset):

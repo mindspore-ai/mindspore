@@ -1,0 +1,260 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "common/common.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+
+using namespace mindspore::dataset;
+using mindspore::dataset::DataType;
+using mindspore::dataset::Tensor;
+using mindspore::dataset::TensorShape;
+
+class MindDataTestPipeline : public UT::DatasetOpTesting {
+ protected:
+};
+
+/// Feature: PhotoTourTrainDataset.
+/// Description: test basic usage of PhotoTourTrainDataset.
+/// Expectation: get correct number of data.
+TEST_F(MindDataTestPipeline, TestPhotoTourTrainDataset) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourTrainDataset.";
+
+  // Create a PhotoTour Train Dataset
+  std::string folder_path = datasets_root_path_ + "/testPhotoTourData";
+  std::shared_ptr<Dataset> ds = PhotoTour(folder_path, "liberty", "train", std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  EXPECT_NE(row.find("image"), row.end());
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: PhotoTourTestDataset.
+/// Description: test basic usage of PhotoTourTestDataset.
+/// Expectation: get correct number of data.
+TEST_F(MindDataTestPipeline, TestPhotoTourTestDataset) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourTestDataset.";
+
+  // Create a PhotoTour Test Dataset
+  std::string folder_path = datasets_root_path_ + "/testPhotoTourData";
+  std::shared_ptr<Dataset> ds = PhotoTour(folder_path, "liberty", "test", std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  EXPECT_NE(row.find("image1"), row.end());
+  EXPECT_NE(row.find("image2"), row.end());
+  EXPECT_NE(row.find("matches"), row.end());
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image1"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: PhotoTourTrainDatasetWithPipeline.
+/// Description: test usage of PhotoTourTrainDataset with pipeline.
+/// Expectation: get correct number of data.
+TEST_F(MindDataTestPipeline, TestPhotoTourTrainDatasetWithPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourTrainDatasetWithPipeline.";
+
+  // Create two PhotoTour Train Dataset
+  std::string folder_path = datasets_root_path_ + "/testPhotoTourData";
+  std::shared_ptr<Dataset> ds1 = PhotoTour(folder_path, "liberty", "train", std::make_shared<RandomSampler>(false, 10));
+  std::shared_ptr<Dataset> ds2 = PhotoTour(folder_path, "liberty", "train", std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds1, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create two Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds1 = ds1->Repeat(repeat_num);
+  EXPECT_NE(ds1, nullptr);
+  repeat_num = 2;
+  ds2 = ds2->Repeat(repeat_num);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create two Project operation on ds
+  std::vector<std::string> column_project = {"image"};
+  ds1 = ds1->Project(column_project);
+  EXPECT_NE(ds1, nullptr);
+  ds2 = ds2->Project(column_project);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Concat operation on the ds
+  ds1 = ds1->Concat({ds2});
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  EXPECT_NE(row.find("image"), row.end());
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 40);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: PhotoTourTrainDatasetSize.
+/// Description: test usage of get the size of PhotoTourTrainDataset.
+/// Expectation: get correct number of data.
+TEST_F(MindDataTestPipeline, TestGetPhotoTourTrainDatasetSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetPhotoTourTrainDatasetSize.";
+
+  // Create a PhotoTour Train Dataset
+  std::string folder_path = datasets_root_path_ + "/testPhotoTourData";
+  std::shared_ptr<Dataset> ds = PhotoTour(folder_path, "liberty", "train");
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 100);
+}
+
+/// Feature: PhotoTourTrainDatasetGetters.
+/// Description: test usage of getters PhotoTourTrainDataset.
+/// Expectation: get correct number of data and correct tensor shape.
+TEST_F(MindDataTestPipeline, TestPhotoTourTrainDatasetGetters) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourTrainDatasetGetters.";
+
+  // Create a PhotoTour Train Dataset
+  std::string folder_path = datasets_root_path_ + "/testPhotoTourData";
+  std::shared_ptr<Dataset> ds = PhotoTour(folder_path, "liberty", "train");
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 100);
+  std::vector<DataType> types = ToDETypes(ds->GetOutputTypes());
+  std::vector<TensorShape> shapes = ToTensorShapeVec(ds->GetOutputShapes());
+  std::vector<std::string> column_names = {"image"};
+  int64_t num_classes = ds->GetNumClasses();
+  EXPECT_EQ(types.size(), 1);
+  EXPECT_EQ(types[0].ToString(), "uint8");
+  EXPECT_EQ(shapes.size(), 1);
+  EXPECT_EQ(shapes[0].ToString(), "<64,64,1>");
+  EXPECT_EQ(num_classes, -1);
+  EXPECT_EQ(ds->GetBatchSize(), 1);
+  EXPECT_EQ(ds->GetRepeatCount(), 1);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 100);
+  EXPECT_EQ(ToDETypes(ds->GetOutputTypes()), types);
+  EXPECT_EQ(ToTensorShapeVec(ds->GetOutputShapes()), shapes);
+  EXPECT_EQ(ds->GetNumClasses(), -1);
+
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
+  EXPECT_EQ(ds->GetDatasetSize(), 100);
+  EXPECT_EQ(ToDETypes(ds->GetOutputTypes()), types);
+  EXPECT_EQ(ToTensorShapeVec(ds->GetOutputShapes()), shapes);
+  EXPECT_EQ(ds->GetBatchSize(), 1);
+  EXPECT_EQ(ds->GetRepeatCount(), 1);
+  EXPECT_EQ(ds->GetNumClasses(), -1);
+  EXPECT_EQ(ds->GetDatasetSize(), 100);
+}
+
+/// Feature: PhotoTourDatasetFail.
+/// Description: test failure of PhotoTourDataset.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestPhotoTourDatasetFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourDatasetFail.";
+
+  // Create a PhotoTour Dataset
+  std::shared_ptr<Dataset> ds = PhotoTour("", "", "train", std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid PhotoTour input
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: PhotoTourDatasetWithInvalidUsageFail.
+/// Description: test failure of PhotoTourDataset with invalid usage.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestPhotoTourDatasetWithInvalidUsageFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourDatasetWithInvalidUsageFail.";
+
+  // Create a PhotoTour Dataset
+  std::string folder_path = datasets_root_path_ + "/testPhotoTourData";
+  std::shared_ptr<Dataset> ds = PhotoTour(folder_path, "liberty", "validation");
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid PhotoTour input, validation is not a valid usage
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: PhotoTourDatasetWithNullSamplerFail.
+/// Description: test failure of PhotoTourDataset with null sampler.
+/// Expectation: get none piece of data.
+TEST_F(MindDataTestPipeline, TestPhotoTourDatasetWithNullSamplerFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourDatasetWithNullSamplerFail.";
+
+  // Create a PhotoTour Dataset
+  std::string folder_path = datasets_root_path_ + "/testPhotoTourData";
+  std::shared_ptr<Dataset> ds = PhotoTour(folder_path, "liberty", "train", nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid PhotoTour input, sampler cannot be nullptr
+  EXPECT_EQ(iter, nullptr);
+}

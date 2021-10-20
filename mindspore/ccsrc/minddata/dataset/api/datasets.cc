@@ -104,6 +104,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/photo_tour_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/qmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/sbu_node.h"
@@ -1305,6 +1306,33 @@ MnistDataset::MnistDataset(const std::vector<char> &dataset_dir, const std::vect
 }
 
 #ifndef ENABLE_ANDROID
+PhotoTourDataset::PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                                   const std::vector<char> &usage, const std::shared_ptr<Sampler> &sampler,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<PhotoTourNode>(CharToString(dataset_dir), CharToString(name), CharToString(usage),
+                                            sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+PhotoTourDataset::PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                                   const std::vector<char> &usage, const Sampler *sampler,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<PhotoTourNode>(CharToString(dataset_dir), CharToString(name), CharToString(usage),
+                                            sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+PhotoTourDataset::PhotoTourDataset(const std::vector<char> &dataset_dir, const std::vector<char> &name,
+                                   const std::vector<char> &usage, const std::reference_wrapper<Sampler> sampler,
+                                   const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<PhotoTourNode>(CharToString(dataset_dir), CharToString(name), CharToString(usage),
+                                            sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
 Places365Dataset::Places365Dataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
                                    const bool small, const bool decode, const std::shared_ptr<Sampler> &sampler,
                                    const std::shared_ptr<DatasetCache> &cache) {

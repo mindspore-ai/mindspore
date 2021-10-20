@@ -91,6 +91,7 @@ constexpr char kImageFolderNode[] = "ImageFolderDataset";
 constexpr char kManifestNode[] = "ManifestDataset";
 constexpr char kMindDataNode[] = "MindDataDataset";
 constexpr char kMnistNode[] = "MnistDataset";
+constexpr char kPhotoTourNode[] = "PhotoTourDataset";
 constexpr char kPlaces365Node[] = "Places365Dataset";
 constexpr char kQMnistNode[] = "QMnistDataset";
 constexpr char kRandomNode[] = "RandomDataset";

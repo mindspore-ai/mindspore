@@ -46,6 +46,7 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/photo_tour_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/places365_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/qmnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/sbu_node.h"
@@ -273,6 +274,17 @@ PYBIND_REGISTER(MnistNode, 2, ([](const py::module *m) {
                       auto mnist = std::make_shared<MnistNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(mnist->ValidateParams());
                       return mnist;
+                    }));
+                }));
+
+PYBIND_REGISTER(PhotoTourNode, 2, ([](const py::module *m) {
+                  (void)py::class_<PhotoTourNode, DatasetNode, std::shared_ptr<PhotoTourNode>>(
+                    *m, "PhotoTourNode", "to create a PhotoTourNode")
+                    .def(py::init([](std::string dataset_dir, std::string name, std::string usage, py::handle sampler) {
+                      auto photo_tour =
+                        std::make_shared<PhotoTourNode>(dataset_dir, name, usage, toSamplerObj(sampler), nullptr);
+                      THROW_IF_ERROR(photo_tour->ValidateParams());
+                      return photo_tour;
                     }));
                 }));
 
