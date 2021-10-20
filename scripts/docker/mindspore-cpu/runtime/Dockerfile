@@ -33,7 +33,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     autoconf \
     libtool \
     automake \
-    flex
+    flex \
+    libjpeg8-dev
 
 # Install the rest dependent tools
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
