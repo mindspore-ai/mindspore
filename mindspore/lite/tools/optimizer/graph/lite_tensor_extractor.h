@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_LITE_TENSOR_EXTRACTOR_H_
 
 #include <vector>
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 #include "ir/anf.h"
 #include "src/tensor.h"
 #include "tools/anf_exporter/fetch_content.h"

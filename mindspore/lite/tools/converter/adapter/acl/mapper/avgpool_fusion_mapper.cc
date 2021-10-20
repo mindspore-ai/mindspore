@@ -18,7 +18,7 @@
 #include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 #include "src/common/log_util.h"
 
 namespace mindspore {

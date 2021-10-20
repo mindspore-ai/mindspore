@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 
 namespace onnx {
 class GraphProto;

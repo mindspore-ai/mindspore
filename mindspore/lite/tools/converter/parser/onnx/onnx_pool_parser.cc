@@ -19,7 +19,7 @@
 #include <vector>
 #include "ops/fusion/avg_pool_fusion.h"
 #include "ops/fusion/max_pool_fusion.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

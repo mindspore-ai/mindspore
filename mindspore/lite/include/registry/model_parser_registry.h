@@ -19,7 +19,7 @@
 
 #include <memory>
 #include "include/lite_utils.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore {
