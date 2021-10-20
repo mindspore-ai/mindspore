@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/cpu/eigen/solve_triangular_cpu_kernel.h"
+#define EIGEN_NO_MALLOC
 #include <Eigen/Dense>
 #include <vector>
 #include <string>
@@ -22,14 +23,15 @@
 
 namespace mindspore {
 namespace kernel {
+using Eigen::ColMajor;
 using Eigen::Dynamic;
 using Eigen::Lower;
 using Eigen::Map;
 using Eigen::MatrixBase;
 using Eigen::RowMajor;
 using Eigen::Upper;
-template <typename T>
-using Matrix = Eigen::Matrix<T, Dynamic, Dynamic, RowMajor>;
+template <typename T, int Major>
+using Matrix = Eigen::Matrix<T, Dynamic, Dynamic, Major>;
 constexpr auto kSolveTriangularInputsNum = 2;
 constexpr auto kSolveTriangularOutputsNum = 1;
 constexpr auto kAVectorxDimNum = 1;
@@ -69,6 +71,17 @@ void SolveTriangularCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
+template <typename Derived_A, typename Derived_b, typename T>
+inline void solve(const MatrixBase<Derived_A> &A, const MatrixBase<Derived_b> &b, T *output_addr, size_t m, size_t n,
+                  bool lower) {
+  Map<Matrix<T, RowMajor>> output(output_addr, m, n);
+  if (lower) {
+    output.noalias() = A.template triangularView<Lower>().solve(b);
+  } else {
+    output.noalias() = A.template triangularView<Upper>().solve(b);
+  }
+}
+
 template <typename T>
 bool SolveTriangularCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspace,
@@ -80,22 +93,15 @@ bool SolveTriangularCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs,
   auto b_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  Map<Matrix<T>> A(A_addr, m, m);
-  Map<Matrix<T>> b(b_addr, m, n);
-  Map<Matrix<T>> output(output_addr, m, n);
+  Map<Matrix<T, RowMajor>> b(b_addr, m, n);
 
   if (trans_) {
-    A.transposeInPlace();
-    lower_ = !lower_;
-  }
-
-  if (lower_) {
-    output = A.template triangularView<Lower>().solve(b);
+    Map<Matrix<T, ColMajor>> A(A_addr, m, m);
+    solve(A, b, output_addr, m, n, !lower_);
   } else {
-    output = A.template triangularView<Upper>().solve(b);
+    Map<Matrix<T, RowMajor>> A(A_addr, m, m);
+    solve(A, b, output_addr, m, n, lower_);
   }
-  // bypass the unused variable rule
-  (void)(output);
 
   return true;
 }
