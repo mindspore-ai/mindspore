@@ -21,7 +21,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ir/graph_utils.h"
 #include "include/errorcode.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 #include "ops/op_utils.h"
 #include "ops/fusion/avg_pool_fusion.h"
 #include "backend/kernel_compiler/cpu/nnacl/op_base.h"

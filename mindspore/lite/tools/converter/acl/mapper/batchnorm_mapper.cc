@@ -18,7 +18,7 @@
 #include <memory>
 #include "tools/converter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/acl/mapper/tbe_op_def.h"
-#include "include/registry/parser_context.h"
+#include "include/registry/converter_context.h"
 
 namespace mindspore {
 namespace lite {

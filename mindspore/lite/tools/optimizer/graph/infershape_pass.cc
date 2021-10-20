@@ -193,7 +193,7 @@ STATUS InferShapePass::InferProcess(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "subgraph infer shape failed.";
         return lite::RET_ERROR;
       }
-      if (SetSubGraphOutput(sub_func_graph)) {
+      if (SetSubGraphOutput(sub_func_graph) != lite::RET_OK) {
         MS_LOG(ERROR) << "SetSubGraphOutput failed.";
         return lite::RET_ERROR;
       }
