@@ -30,7 +30,7 @@ from . import py_transforms_util as util
 from .c_transforms import parse_padding
 from .validators import check_prob, check_center_crop, check_five_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_py, check_normalizepad_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
-    check_ten_crop, check_num_channels, check_pad, check_rgb_to_hsv, check_hsv_to_rgb, \
+    check_ten_crop, check_num_channels, check_pad, check_rgb_to_hsv, check_hsv_to_rgb, check_alpha, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
     check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast, check_rgb_to_bgr, \
     check_adjust_gamma
@@ -1480,6 +1480,42 @@ class RandomColor(py_transforms.PyTensorOperation):
         """
 
         return util.random_color(img, self.degrees)
+
+
+class RandomLighting:
+    """
+    Add AlexNet-style PCA-based noise to an image.
+
+    Args:
+        alpha (float, optional): Intensity of the image (default=0.05).
+
+    Examples:
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomLighting(0.1),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_alpha
+    def __init__(self, alpha=0.05):
+        self.alpha = alpha
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL Image): Image to be added AlexNet-style PCA-based noise.
+
+        Returns:
+            PIL Image, image with noise added.
+        """
+
+        return util.random_lighting(img, self.alpha)
 
 
 class RandomSharpness(py_transforms.PyTensorOperation):

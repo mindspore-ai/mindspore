@@ -365,6 +365,20 @@ def check_prob(method):
     return new_method
 
 
+def check_alpha(method):
+    """A wrapper method to check alpha parameter in RandomLighting."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [alpha], _ = parse_user_args(method, *args, **kwargs)
+        type_check(alpha, (float, int,), "alpha")
+        check_non_negative_float32(alpha, "alpha")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_normalize_c(method):
     """A wrapper that wraps a parameter checker around the original function(normalize operation written in C++)."""
 

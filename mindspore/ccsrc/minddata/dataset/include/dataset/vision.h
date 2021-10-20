@@ -625,6 +625,26 @@ class RandomInvert final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Add AlexNet-style PCA-based noise to an image.
+class RandomLighting final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] alpha A float representing the intensity of the image (default=0.05).
+  explicit RandomLighting(float alpha = 0.05);
+
+  /// \brief Destructor.
+  ~RandomLighting() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Reduce the number of bits for each color channel randomly.
 class RandomPosterize final : public TensorTransform {
  public:

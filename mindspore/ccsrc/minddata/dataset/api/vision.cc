@@ -52,11 +52,12 @@
 #include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_horizontal_flip_with_bbox_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_invert_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_lighting_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_posterize_ir.h"
-#include "minddata/dataset/kernels/ir/vision/random_resized_crop_ir.h"
-#include "minddata/dataset/kernels/ir/vision/random_resized_crop_with_bbox_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_resize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_resize_with_bbox_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_resized_crop_ir.h"
+#include "minddata/dataset/kernels/ir/vision/random_resized_crop_with_bbox_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_rotation_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_select_subpolicy_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_sharpness_ir.h"
@@ -663,6 +664,18 @@ RandomInvert::RandomInvert(float prob) : data_(std::make_shared<Data>(prob)) {}
 
 std::shared_ptr<TensorOperation> RandomInvert::Parse() {
   return std::make_shared<RandomInvertOperation>(data_->probability_);
+}
+
+// RandomLighting Transform Operation.
+struct RandomLighting::Data {
+  explicit Data(float alpha) : alpha_(alpha) {}
+  float alpha_;
+};
+
+RandomLighting::RandomLighting(float alpha) : data_(std::make_shared<Data>(alpha)) {}
+
+std::shared_ptr<TensorOperation> RandomLighting::Parse() {
+  return std::make_shared<RandomLightingOperation>(data_->alpha_);
 }
 
 // RandomPosterize Transform Operation.

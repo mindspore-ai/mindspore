@@ -40,6 +40,7 @@ class CVOpCommon : public Common {
     kTemplate,
     kCrop,
     kRandomSharpness,
+    kRandomLighting,
     kInvert,
     kRandomAffine,
     kRandomPosterize,

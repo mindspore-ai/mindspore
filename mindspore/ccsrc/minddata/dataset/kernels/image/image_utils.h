@@ -304,6 +304,16 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
            const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
            uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
+/// \brief Add AlexNet-style PCA-based noise to an image.
+/// \param[in] input The input image.
+/// \param[out] output The output image.
+/// \param[in] rnd_r Random weight for red channel.
+/// \param[in] rnd_g Random weight for green channel.
+/// \param[in] rnd_b Random weight for blue channel.
+/// \return Status code.
+Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float rnd_r, float rnd_g,
+                      float rnd_b);
+
 /// \brief Take in a 4 channel image in RBGA to RGB
 /// \param[in] input The input image
 /// \param[out] output The output image

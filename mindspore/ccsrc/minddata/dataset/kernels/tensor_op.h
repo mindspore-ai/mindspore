@@ -93,6 +93,7 @@ constexpr char kRandomEqualizeOp[] = "RandomEqualizeOp";
 constexpr char kRandomHorizontalFlipWithBBoxOp[] = "RandomHorizontalFlipWithBBoxOp";
 constexpr char kRandomHorizontalFlipOp[] = "RandomHorizontalFlipOp";
 constexpr char kRandomInvertOp[] = "RandomInvertOp";
+constexpr char kRandomLightingOp[] = "RandomLightingOp";
 constexpr char kRandomResizeOp[] = "RandomResizeOp";
 constexpr char kRandomResizeWithBBoxOp[] = "RandomResizeWithBBoxOp";
 constexpr char kRandomRotationOp[] = "RandomRotationOp";

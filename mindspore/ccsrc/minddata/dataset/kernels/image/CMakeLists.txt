@@ -41,6 +41,7 @@ add_library(kernels-image OBJECT
     random_horizontal_flip_op.cc
     random_horizontal_flip_with_bbox_op.cc
     random_invert_op.cc
+    random_lighting_op.cc
     bounding_box_augment_op.cc
     random_posterize_op.cc
     random_resize_op.cc
