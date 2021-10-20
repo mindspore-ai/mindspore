@@ -96,6 +96,7 @@ constexpr char ASCENDING[] = "ascending";
 constexpr char PCT[] = "pct";
 constexpr char LOWER[] = "lower";
 constexpr char CLEAN[] = "clean";
+constexpr char TRANS[] = "trans";
 
 struct ParallelSearchInfo {
   double min_cost_time{DBL_MAX};
