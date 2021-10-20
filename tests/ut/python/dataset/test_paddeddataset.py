@@ -10,7 +10,6 @@ from mindspore.mindrecord import FileWriter
 import mindspore.dataset.vision.c_transforms as V_C
 
 FILES_NUM = 4
-CV_FILE_NAME = "../data/mindrecord/imagenet.mindrecord"
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
 
 
@@ -398,7 +397,8 @@ def get_data(dir_name):
 @pytest.fixture(name="remove_mindrecord_file")
 def add_and_remove_cv_file():
     """add/remove cv file"""
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
@@ -406,7 +406,7 @@ def add_and_remove_cv_file():
                 os.remove("{}".format(x))
             if os.path.exists("{}.db".format(x)):
                 os.remove("{}.db".format(x))
-        writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+        writer = FileWriter(file_name, FILES_NUM)
         data = get_data(CV_DIR_NAME)
         cv_schema_json = {"id": {"type": "int32"},
                           "file_name": {"type": "string"},
@@ -432,7 +432,8 @@ def test_Mindrecord_Padded(remove_mindrecord_file):
     result_list = []
     verify_list = [[1, 2], [3, 4], [5, 11], [6, 12], [7, 13], [8, 14], [9], [10]]
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", ['file_name'], num_readers, shuffle=False)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    data_set = ds.MindDataset(file_name + "0", ['file_name'], num_readers, shuffle=False)
     data1 = [{'file_name': np.array(b'image_00011.jpg', dtype='|S15')},
              {'file_name': np.array(b'image_00012.jpg', dtype='|S15')},
              {'file_name': np.array(b'image_00013.jpg', dtype='|S15')},

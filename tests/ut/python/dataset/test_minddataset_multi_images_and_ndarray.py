@@ -23,12 +23,12 @@ from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
 
 FILES_NUM = 1
-CV_FILE_NAME = "./complex.mindrecord"
 
 
 def test_cv_minddataset_reader_multi_image_and_ndarray_tutorial():
     try:
-        writer = FileWriter(CV_FILE_NAME, FILES_NUM)
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        writer = FileWriter(file_name, FILES_NUM)
         cv_schema_json = {"id": {"type": "int32"},
                           "image_0": {"type": "bytes"},
                           "image_2": {"type": "bytes"},
@@ -48,13 +48,13 @@ def test_cv_minddataset_reader_multi_image_and_ndarray_tutorial():
             data.append(item)
         writer.write_raw_data(data)
         writer.commit()
-        assert os.path.exists(CV_FILE_NAME)
-        assert os.path.exists(CV_FILE_NAME + ".db")
+        assert os.path.exists(file_name)
+        assert os.path.exists(file_name + ".db")
 
         # tutorial for minderdataset.
         columns_list = ["id", "image_0", "image_2", "image_3", "image_4", "input_mask", "segments"]
         num_readers = 1
-        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)
+        data_set = ds.MindDataset(file_name, columns_list, num_readers)
         assert data_set.get_dataset_size() == 5
         num_iter = 0
         for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -75,16 +75,16 @@ def test_cv_minddataset_reader_multi_image_and_ndarray_tutorial():
             num_iter += 1
         assert num_iter == 5
     except Exception as error:
-        if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-            os.remove(CV_FILE_NAME + ".db")
-        if os.path.exists("{}".format(CV_FILE_NAME)):
-            os.remove(CV_FILE_NAME)
+        if os.path.exists("{}".format(file_name + ".db")):
+            os.remove(file_name + ".db")
+        if os.path.exists("{}".format(file_name)):
+            os.remove(file_name)
         raise error
     else:
-        if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
-            os.remove(CV_FILE_NAME + ".db")
-        if os.path.exists("{}".format(CV_FILE_NAME)):
-            os.remove(CV_FILE_NAME)
+        if os.path.exists("{}".format(file_name + ".db")):
+            os.remove(file_name + ".db")
+        if os.path.exists("{}".format(file_name)):
+            os.remove(file_name)
 
 if __name__ == '__main__':
     test_cv_minddataset_reader_multi_image_and_ndarray_tutorial()
