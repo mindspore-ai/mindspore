@@ -61,11 +61,7 @@ STATUS Conv2dTransposeMapper::Mapper(const CNodePtr &cnode) {
 }
 
 STATUS Conv2dTransposeMapper::AdjustGeAttr(const CNodePtr &cnode, const PrimitivePtr &dst_prim) {
-  std::vector<int64_t> shape;
-  if (acl::GetShapeVectorFromCNode(cnode, &shape) != lite::RET_OK) {
-    MS_LOG(ERROR) << "Get shape failed from conv2d transpose.";
-    return lite::RET_ERROR;
-  }
+  std::vector<int64_t> shape = {0, 0, 0, 0};
   dst_prim->AddAttr("input_size", MakeValue(shape));
   dst_prim->AddAttr("format", MakeValue("NCHW"));
 

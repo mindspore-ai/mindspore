@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ASCEND310_KERNEL_CUSTOM_H_
 
 #include <vector>
+#include <string>
 #include <memory>
 #include "src/runtime/kernel/ascend310/src/acl_model_options.h"
 #include "src/runtime/kernel/ascend310/src/model_infer.h"
@@ -42,9 +43,12 @@ class CustomAscend310Kernel : public kernel::Kernel {
 
  private:
   STATUS PrepareModelInfer();
-  AclModelOptions GetAclModelOptions(const mindspore::Context *ctx) const;
+  AclModelOptions GetAclModelOptions(const mindspore::Context *ctx);
+  STATUS ProcDynamicBatchSizeInput(std::vector<mindspore::MSTensor> *input);
+  STATUS ParseBatchSize(const std::string &batch_size, AclModelOptions *options);
 
   bool load_model_;
+  AclModelOptions acl_options_;
   std::shared_ptr<ModelInfer> model_infer_;
 };
 }  // namespace acl

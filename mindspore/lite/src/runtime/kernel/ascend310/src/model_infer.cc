@@ -27,7 +27,7 @@ ModelInfer::ModelInfer(const Buffer &om_data, const AclModelOptions &options)
       context_(nullptr),
       om_data_(om_data),
       options_(options),
-      model_process_(),
+      model_process_(options),
       acl_env_(nullptr) {}
 
 STATUS ModelInfer::Init() {
