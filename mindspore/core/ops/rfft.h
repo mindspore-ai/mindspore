@@ -25,13 +25,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRfft = "Rfft";
+/// \brief Rfft defined the operator prototype of computing discrete fourier transform of a real-valued signal.
 class MS_CORE_API Rfft : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Rfft() : PrimitiveC(kNameRfft) {}
+
+  /// \brief Destructor.
   ~Rfft() = default;
+
   MS_DECLARE_PARENT(Rfft, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] fft_length Define the FFT length to compute discrete fourier transform.
   void Init(const int64_t fft_length);
+
+  /// \brief Method to set fft_length attribute.
+  ///
+  /// \param[in] fft_length Define the FFT length to compute discrete fourier transform.
   void set_fft_length(const int64_t fft_length);
+
+  /// \brief Method to get fft_length attribute.
+  ///
+  /// \return the FFT length.
   int64_t get_fft_length() const;
 };
 AbstractBasePtr RfftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

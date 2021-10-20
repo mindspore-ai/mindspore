@@ -27,17 +27,54 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameROIPooling = "ROIPooling";
+/// \brief ROIPooling defined the ROIPooling operator prototype.
 class MS_CORE_API ROIPooling : public PrimitiveC {
  public:
+  /// \brief Constructor.
   ROIPooling() : PrimitiveC(kNameROIPooling) {}
+
+  /// \brief Destructor.
   ~ROIPooling() = default;
+
   MS_DECLARE_PARENT(ROIPooling, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] pooled_h Define the height of the output.
+  /// \param[in] pooled_w Define the width of the output.
+  /// \param[in] scale Define the size factor to translate ROI coordinates from the input coordinate to the actual
+  ///            coordinate.
   void Init(const int64_t pooled_h, const int64_t pooled_w, const float scale);
+
+  /// \brief Method to set pooled_h attribute.
+  ///
+  /// \param[in] pooled_h Define the height of the output.
   void set_pooled_h(const int64_t pooled_h);
+
+  /// \brief Method to set pooled_w attribute.
+  ///
+  /// \param[in] pooled_w Define the width of the output.
   void set_pooled_w(const int64_t pooled_w);
+
+  /// \brief Method to set scale attribute.
+  ///
+  /// \param[in] scale Define the size factor to translate ROI coordinates from the input coordinate to the actual
+  ///            coordinate.
   void set_scale(const float scale);
+
+  /// \brief Method to get pooled_h attribute.
+  ///
+  /// \return the height of the output.
   int64_t get_pooled_h() const;
+
+  /// \brief Method to get pooled_w attribute.
+  ///
+  /// \return the width of the output.
   int64_t get_pooled_w() const;
+
+  /// \brief Method to get scale attribute.
+  ///
+  /// \return the size factor.
   float get_scale() const;
 };
 AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

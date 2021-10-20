@@ -23,13 +23,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMulFusion = "MulFusion";
+/// \brief MulFusion defined Mul operator prototype of lite.
 class MS_CORE_API MulFusion : public Mul {
  public:
+  /// \brief Constructor.
   MulFusion() : Mul(kNameMulFusion) { InitIOName({"x", "y"}, {"output"}); }
+
+  /// \brief Destructor.
   ~MulFusion() = default;
+
   MS_DECLARE_PARENT(MulFusion, Mul);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void Init(const ActivationType &activation_type);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType &activation_type);
+
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
 };
 }  // namespace ops

@@ -25,20 +25,64 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMfcc = "Mfcc";
+/// \brief Mfcc defined the operator prototype of extracting Mel-Frequency Cepstral Coefficients.
 class MS_CORE_API Mfcc : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Mfcc() : PrimitiveC(kNameMfcc) {}
+
+  /// \brief Destructor.
   ~Mfcc() = default;
+
   MS_DECLARE_PARENT(Mfcc, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] freq_upper_limit Define the highest frequency to use when computing the cepstrum.
+  /// \param[in] freq_lower_limit Define the lowest frequency to use when computing the cepstrum.
+  /// \param[in] filter_bank_channel_num Define the count of mel bank to use internally.
+  /// \param[in] dct_coeff_num Define the output channels to generate per time slice.
   void Init(const float freq_upper_limit, const float freq_lower_limit, const int64_t filter_bank_channel_num,
             const int64_t dct_coeff_num);
+
+  /// \brief Method to set freq_upper_limit attribute.
+  ///
+  /// \param[in] freq_upper_limit Define the highest frequency to use when computing the cepstrum.
   void set_freq_upper_limit(const float freq_upper_limit);
+
+  /// \brief Method to set freq_lower_limit attribute.
+  ///
+  /// \param[in] freq_lower_limit Define the lowest frequency to use when computing the cepstrum.
   void set_freq_lower_limit(const float freq_lower_limit);
+
+  /// \brief Method to set filter_bank_channel_num attribute.
+  ///
+  /// \param[in] filter_bank_channel_num Define the count of mel bank to use internally.
   void set_filter_bank_channel_num(const int64_t filter_bank_channel_num);
+
+  /// \brief Method to set dct_coeff_num attribute.
+  ///
+  /// \param[in] dct_coeff_num Define the output channels to generate per time slice.
   void set_dct_coeff_num(const int64_t dct_coeff_num);
+
+  /// \brief Method to get freq_upper_limit attribute.
+  ///
+  /// \return the highest frequency.
   float get_freq_upper_limit() const;
+
+  /// \brief Method to get freq_lower_limit attribute.
+  ///
+  /// \return the lowest frequency.
   float get_freq_lower_limit() const;
+
+  /// \brief Method to get filter_bank_channel_num attribute.
+  ///
+  /// \return  the count of mel bank to use internally.
   int64_t get_filter_bank_channel_num() const;
+
+  /// \brief Method to get dct_coeff_num attribute.
+  ///
+  /// \return the output channels to generate per time slice.
   int64_t get_dct_coeff_num() const;
 };
 AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

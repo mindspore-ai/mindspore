@@ -27,13 +27,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameInstanceNorm = "InstanceNorm";
+/// \brief InstanceNorm defined the InstanceNorm operator prototype.
 class MS_CORE_API InstanceNorm : public PrimitiveC {
  public:
+  /// \brief Constructor.
   InstanceNorm() : PrimitiveC(kNameInstanceNorm) {}
+
+  /// \brief Destructor.
   ~InstanceNorm() = default;
+
   MS_DECLARE_PARENT(InstanceNorm, PrimitiveC);
+
+  /// \brief Method to init the op's attributes
+  ///
+  /// \param[in] epsilon Define a value added to the denominator for numerical stability.
   void Init(const float epsilon = 0.00001);
+
+  /// \brief Method to set epsilon attribute.
+  ///
+  /// \param[in] epsilon Define a value added to the denominator for numerical stability.
   void set_epsilon(const float epsilon);
+
+  /// \brief Method to get epsilon attribute.
+  ///
+  /// \return a value.
   float get_epsilon() const;
 };
 }  // namespace ops

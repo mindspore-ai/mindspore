@@ -27,11 +27,18 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFftImag = "FftImag";
+/// \brief FftImag defined Imaginary-part acquisition operator prototype.
 class MS_CORE_API FftImag : public PrimitiveC {
  public:
+  /// \brief Constructor.
   FftImag() : PrimitiveC(kNameFftImag) {}
+
+  /// \brief Destructor.
   ~FftImag() = default;
+
   MS_DECLARE_PARENT(FftImag, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
   void Init() {}
 };
 AbstractBasePtr FftImagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -23,13 +23,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEltwise = "Eltwise";
+/// \brief Eltwise defined Element-wise operator prototype.
 class MS_CORE_API Eltwise : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Eltwise() : PrimitiveC(kNameEltwise) {}
+
+  /// \brief Destructor.
   ~Eltwise() = default;
+
   MS_DECLARE_PARENT(Eltwise, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] mode Define the concrete computation operator.
   void Init(const EltwiseMode &mode);
+
+  /// \brief Method to set mode attribute.
+  ///
+  /// \param[in] mode Define the concrete computation operator.
   void set_mode(const EltwiseMode &mode);
+
+  /// \brief Method to get mode attribute.
+  ///
+  /// \return an enumerated value to indicate the concrete computation operator.
   EltwiseMode get_mode() const;
 };
 }  // namespace ops

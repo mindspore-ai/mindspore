@@ -24,19 +24,53 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMaxFusion = "ArgMaxFusion";
+/// \brief ArgMaxFusion defined ArgMax operator prototype of lite.
 class MS_CORE_API ArgMaxFusion : public ArgMax {
  public:
+  /// \brief Constructor.
   ArgMaxFusion() : ArgMax(kNameArgMaxFusion) { InitIOName({"x"}, {"output"}); }
+
+  /// \brief Destructor.
   ~ArgMaxFusion() = default;
+
   MS_DECLARE_PARENT(ArgMaxFusion, ArgMax);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] keep_dims Define a boolean value to indicate the dimension of output is equal to that of input or not.
+  /// \param[in] out_max_value Define a boolean value to indicate whether to output maximum value.
+  /// \param[in] top_k Define the number of maximum value along with axis.
+  /// \param[in] axis Define where the argmax operation applies to.
   void Init(const bool keep_dims, const bool out_max_value, const int64_t top_k, const int64_t axis = -1);
 
+  /// \brief Method to set keep_dims attribute.
+  ///
+  /// \param[in] keep_dims Define a boolean value to indicate the dimension of output is equal to that of input or not.
   void set_keep_dims(const bool keep_dims);
+
+  /// \brief Method to set out_max_value attribute.
+  ///
+  /// \param[in] out_max_value Define a boolean value to indicate whether to output maximum value.
   void set_out_max_value(const bool out_max_value);
+
+  /// \brief Method to set top_k attribute, default is 1.
+  ///
+  /// \param[in] top_k Define the number of maximum value along with axis.
   void set_top_k(const int64_t top_k);
 
+  /// \brief Method to get keep_dims attribute.
+  ///
+  /// \return a boolean value to indicate the dimension of output is equal to that of input or not.
   bool get_keep_dims() const;
+
+  /// \brief Method to get out_max_value attribute.
+  ///
+  /// \return a boolean value to indicate whether to output maximum value.
   bool get_out_max_value() const;
+
+  /// \brief Method to get top_k attribute.
+  ///
+  /// \return the number of maximum value along with axis.
   int64_t get_top_k() const;
 };
 AbstractBasePtr ArgMaxFusionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
