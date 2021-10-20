@@ -31,13 +31,21 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnpack = "Unpack";
+/// \brief Unstacks tensor in specified axis. Refer to Python API @ref mindspore.ops.Unstack for more details.
 class MS_CORE_API Unpack : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Unpack() : PrimitiveC(kNameUnpack) {}
+  /// \brief Destructor.
   ~Unpack() = default;
   MS_DECLARE_PARENT(Unpack, PrimitiveC);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Unstack for the inputs.
   void Init(const int64_t axis = 0);
+  /// \brief Set axis.
   void set_axis(const int64_t axis);
+  /// \brief Get axis.
+  ///
+  /// \return axis.
   int64_t get_axis() const;
 };
 AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

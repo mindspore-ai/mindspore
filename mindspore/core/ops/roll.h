@@ -26,9 +26,12 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRoll = "Roll";
+/// \brief Rolls the elements of a tensor along an axis.
 class Roll : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Roll() : PrimitiveC(kNameRoll) { InitIOName({"input_x"}, {"output"}); }
+  /// \brief Destructor.
   ~Roll() = default;
   MS_DECLARE_PARENT(Roll, PrimitiveC);
 };

@@ -3747,9 +3747,9 @@ class GeLU(Primitive):
     GeLU is defined as follows:
 
     .. math::
-        \text{output} = 0.5 * x * (1 + erf(x / \sqrt{2})),
+        \text{output} = 0.5 * x * (1 + tanh(x / \sqrt{2})),
 
-    where :math:`erf` is the "Gauss error function" .
+    where :math:`tanh` is the hyperbolic tangent.
 
     Inputs:
         - **x** (Tensor) - Input to compute the GeLU with data type of float16 or float32.
