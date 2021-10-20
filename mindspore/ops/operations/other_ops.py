@@ -408,13 +408,31 @@ class IOU(PrimitiveWithInfer):
 
 class Partial(Primitive):
     """
-    Makes a partial function instance, used for pynative mode.
+    Makes a partial function instance. Partial function can be used to derived specialized
+    functions from general functions by fixing the value of certain number of arguments.
 
     Inputs:
         - **args** (Union[FunctionType, Tensor]) - The function and bind arguments.
 
     Outputs:
         FunctionType, partial function binded with arguments.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> def show_input(x, y, z):
+        ...     return x, y, z
+        >>> partial = P.Partial()
+        >>> partial_show_input = partial(show_input, Tensor(1))
+        >>> output1 = partial_show_input(Tensor(2), Tensor(3))
+        >>> print(output1)
+        (1, 2, 3)
+        >>> output2 = partial_show_input(Tensor(3), Tensor(4))
+        >>> print(output2)
+        (1, 3, 4)
     """
 
     # Side effect will propagated from the first argument to return value.
