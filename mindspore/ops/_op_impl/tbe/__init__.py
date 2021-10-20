@@ -166,7 +166,9 @@ from .reduce_sum import _reduce_sum_tbe
 from .reduce_sum_ds import _reduce_sum_ds_tbe
 from .round import _round_tbe
 from .tanh import _tanh_tbe
+from .tanh_ds import _tanh_ds_tbe
 from .tanh_grad import _tanh_grad_tbe
+from .tanh_grad_ds import _tanh_grad_ds_tbe
 from .softmax import _softmax_tbe
 from .softmax_ds import _softmax_ds_tbe
 from .softsign import _softsign_tbe

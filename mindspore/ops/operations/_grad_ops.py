@@ -1926,20 +1926,13 @@ class SoftplusGrad(PrimitiveWithInfer):
         return x_dtype
 
 
-class TanhGrad(PrimitiveWithInfer):
+class TanhGrad(Primitive):
     """Computes gradient of hyperbolic tangent of input element-wise."""
 
     @prim_attr_register
     def __init__(self):
-        pass
-
-    def infer_shape(self, out, dout):
-        return out
-
-    def infer_dtype(self, out, dout):
-        args = {"out": out, "dout": dout}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return out
+        """Initialize TanhGrad"""
+        self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 
 class MirrorPadGrad(PrimitiveWithInfer):
