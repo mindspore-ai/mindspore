@@ -36,7 +36,7 @@ std::string GetCustomType(const schema::Primitive *primitive) {
 }  // namespace
 
 Status KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::string &type,
-                                          KernelInterfaceCreator creator) {
+                                          const KernelInterfaceCreator creator) {
   custom_creators_[provider][type] = creator;
   return kSuccess;
 }
@@ -103,7 +103,7 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInter
   if (primitive == nullptr) {
     return nullptr;
   }
-  int op_type = primitive->value_type();
+  int op_type = static_cast<int>(primitive->value_type());
   if (op_type == schema::PrimitiveType_Custom) {
     return GetCustomKernelInterface(primitive);
   }
@@ -130,7 +130,7 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInter
   return nullptr;
 }
 
-Status KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
+Status KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, const KernelInterfaceCreator creator) {
   if (op_type <= PrimitiveType_MIN || op_type > PrimitiveType_MAX) {
     MS_LOG(ERROR) << "reg op_type invalid!op_type: " << op_type << ", max value: " << PrimitiveType_MAX;
     return kLiteParamInvalid;

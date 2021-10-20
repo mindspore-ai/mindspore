@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace registry {
-Status RegisterKernelInterface::Reg(const std::string &provider, int op_type, KernelInterfaceCreator creator) {
+Status RegisterKernelInterface::Reg(const std::string &provider, int op_type, const KernelInterfaceCreator creator) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   return KernelInterfaceRegistry::Instance()->Reg(provider, op_type, creator);
 #else
@@ -32,7 +32,7 @@ Status RegisterKernelInterface::Reg(const std::string &provider, int op_type, Ke
 }
 
 Status RegisterKernelInterface::CustomReg(const std::string &provider, const std::string &op_type,
-                                          KernelInterfaceCreator creator) {
+                                          const KernelInterfaceCreator creator) {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   return KernelInterfaceRegistry::Instance()->CustomReg(provider, op_type, creator);
 #else
