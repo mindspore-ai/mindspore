@@ -1955,22 +1955,22 @@ def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset(
         os.remove("{}".format(mindrecord_file_name))
         os.remove("{}.db".format(mindrecord_file_name))
 
-FILES = ["0.mindrecord", "1.mindrecord", "2.mindrecord", "3.mindrecord"]
-ITEMS = [10, 14, 8, 20]
-FILES_ITEMS = {FILES[0]: ITEMS[0], FILES[1]: ITEMS[1], FILES[2]: ITEMS[2], FILES[3]: ITEMS[3]}
-
 @pytest.fixture
 def create_multi_mindrecord_files():
     """files: {0.mindrecord : 10, 1.mindrecord : 14, 2.mindrecord : 8, 3.mindrecord : 20}"""
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    files = [file_name + str(idx) for idx in range(4)]
+    items = [10, 14, 8, 20]
+    file_items = {files[0]: items[0], files[1]: items[1], files[2]: items[2], files[3]: items[3]}
+
     try:
         index = 0
-        for filename in FILES_ITEMS:
-            key = filename
+        for key in file_items:
             if os.path.exists(key):
                 os.remove("{}".format(key))
                 os.remove("{}.db".format(key))
 
-            value = FILES_ITEMS[key]
+            value = file_items[key]
             data_list = []
             for i in range(value):
                 data = {}
@@ -1985,13 +1985,13 @@ def create_multi_mindrecord_files():
             writer.commit()
         yield "yield_create_multi_mindrecord_files"
     except Exception as error:
-        for filename in FILES_ITMES:
+        for filename in file_items:
             if os.path.exists(filename):
                 os.remove("{}".format(filename))
                 os.remove("{}.db".format(filename))
         raise error
     else:
-        for filename in FILES_ITEMS:
+        for filename in file_items:
             if os.path.exists(filename):
                 os.remove("{}".format(filename))
                 os.remove("{}.db".format(filename))
@@ -1999,8 +1999,12 @@ def create_multi_mindrecord_files():
 def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
     datas_all = []
     index = 0
-    for filename in FILES_ITEMS:
-        value = FILES_ITEMS[filename]
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    files = [file_name + str(idx) for idx in range(4)]
+    items = [10, 14, 8, 20]
+    file_items = {files[0]: items[0], files[1]: items[1], files[2]: items[2], files[3]: items[3]}
+    for filename in file_items:
+        value = file_items[filename]
         data_list = []
         for i in range(value):
             data = {}
@@ -2011,7 +2015,7 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
 
     # no shuffle parameter
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers)
     assert data_set.get_dataset_size() == 52
     num_iter = 0
@@ -2042,7 +2046,7 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
 
     # shuffle=False
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers,
                               shuffle=False)
     assert data_set.get_dataset_size() == 52
@@ -2074,7 +2078,7 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
 
     # shuffle=True
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers,
                               shuffle=True)
     assert data_set.get_dataset_size() == 52
@@ -2106,7 +2110,7 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
 
     # shuffle=Shuffle.GLOBAL
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers,
                               shuffle=ds.Shuffle.GLOBAL)
     assert data_set.get_dataset_size() == 52
@@ -2138,7 +2142,7 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
 
     # shuffle=Shuffle.INFILE
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers,
                               shuffle=ds.Shuffle.INFILE)
     assert data_set.get_dataset_size() == 52
@@ -2186,7 +2190,7 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
 
     # shuffle=Shuffle.FILES
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers,
                               shuffle=ds.Shuffle.FILES)
     assert data_set.get_dataset_size() == 52
@@ -2204,9 +2208,9 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
     current_shard_index = 0
     shard_count = 0
     datas_index = 0
-    origin_index = [i for i in range(len(ITEMS))]
+    origin_index = [i for i in range(len(items))]
     current_index = []
-    while shard_count < len(ITEMS):
+    while shard_count < len(items):
         if data_list[datas_index]['id'] < 10:
             current_shard_index = 0
         elif data_list[datas_index]['id'] < 24:
@@ -2217,7 +2221,7 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
             current_shard_index = 3
         else:
             raise ValueError("Index out of range")
-        current_shard_size = ITEMS[current_shard_index]
+        current_shard_size = items[current_shard_index]
 
         tmp_datas = data_list[datas_index:datas_index + current_shard_size]
         current_index.append(current_shard_index)
@@ -2232,8 +2236,12 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
     datas_all = []
     datas_all_samples = []
     index = 0
-    for filename in FILES_ITEMS:
-        value = FILES_ITEMS[filename]
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    files = [file_name + str(idx) for idx in range(4)]
+    items = [10, 14, 8, 20]
+    file_items = {files[0]: items[0], files[1]: items[1], files[2]: items[2], files[3]: items[3]}
+    for filename in file_items:
+        value = file_items[filename]
         data_list = []
         for i in range(value):
             data = {}
@@ -2245,7 +2253,7 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
 
     # no shuffle parameter
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers,
                               num_shards=4,
                               shard_id=3)
@@ -2261,7 +2269,7 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
 
     # shuffle=False
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers,
                               shuffle=False,
                               num_shards=4,
@@ -2278,7 +2286,7 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
 
     # shuffle=True
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers,
                               shuffle=True,
                               num_shards=4,
@@ -2295,7 +2303,7 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
 
     # shuffle=Shuffle.GLOBAL
     num_readers = 2
-    data_set = ds.MindDataset(dataset_file=FILES,
+    data_set = ds.MindDataset(dataset_file=files,
                               num_parallel_workers=num_readers,
                               shuffle=ds.Shuffle.GLOBAL,
                               num_shards=4,
@@ -2314,7 +2322,7 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
     output_datas = []
     for shard_id in range(4):
         num_readers = 2
-        data_set = ds.MindDataset(dataset_file=FILES,
+        data_set = ds.MindDataset(dataset_file=files,
                                   num_parallel_workers=num_readers,
                                   shuffle=ds.Shuffle.INFILE,
                                   num_shards=4,
@@ -2369,11 +2377,11 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
         new_datas_all_minddataset = sort_list_with_dict(datas_all_minddataset[i])
         assert datas_all[i] == new_datas_all_minddataset
 
-    # shuffle=Shuffle.FILES
+    # shuffle=Shuffle.Files
     data_list = []
     for shard_id in range(4):
         num_readers = 2
-        data_set = ds.MindDataset(dataset_file=FILES,
+        data_set = ds.MindDataset(dataset_file=files,
                                   num_parallel_workers=num_readers,
                                   shuffle=ds.Shuffle.FILES,
                                   num_shards=4,
@@ -2391,9 +2399,9 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
     current_shard_index = 0
     shard_count = 0
     datas_index = 0
-    origin_index = [i for i in range(len(ITEMS))]
+    origin_index = [i for i in range(len(items))]
     current_index = []
-    while shard_count < len(ITEMS):
+    while shard_count < len(items):
         if data_list[datas_index]['id'] < 10:
             current_shard_index = 0
         elif data_list[datas_index]['id'] < 24:
@@ -2404,7 +2412,7 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
             current_shard_index = 3
         else:
             raise ValueError("Index out of range")
-        current_shard_size = ITEMS[current_shard_index]
+        current_shard_size = items[current_shard_index]
 
         tmp_datas = data_list[datas_index:datas_index + current_shard_size]
         current_index.append(current_shard_index)
@@ -2419,8 +2427,12 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     datas_all = []
     datas_all_samples = []
     index = 0
-    for filename in FILES_ITEMS:
-        value = FILES_ITEMS[filename]
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    files = [file_name + str(idx) for idx in range(4)]
+    items = [10, 14, 8, 20]
+    file_items = {files[0]: items[0], files[1]: items[1], files[2]: items[2], files[3]: items[3]}
+    for filename in file_items:
+        value = file_items[filename]
         data_list = []
         for i in range(value):
             data = {}
@@ -2435,7 +2447,7 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     # no shuffle parameter
     for shard_id in range(4):
         num_readers = 2
-        data_set = ds.MindDataset(dataset_file=FILES,
+        data_set = ds.MindDataset(dataset_file=files,
                                   num_parallel_workers=num_readers,
                                   num_shards=4,
                                   shard_id=shard_id)
@@ -2457,7 +2469,7 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     # shuffle=False
     for shard_id in range(4):
         num_readers = 2
-        data_set = ds.MindDataset(dataset_file=FILES,
+        data_set = ds.MindDataset(dataset_file=files,
                                   num_parallel_workers=num_readers,
                                   shuffle=False,
                                   num_shards=4,
@@ -2478,7 +2490,7 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     # shuffle=True
     for shard_id in range(4):
         num_readers = 2
-        data_set = ds.MindDataset(dataset_file=FILES,
+        data_set = ds.MindDataset(dataset_file=files,
                                   num_parallel_workers=num_readers,
                                   shuffle=True,
                                   num_shards=4,
@@ -2501,7 +2513,7 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     # shuffle=Shuffle.GLOBAL
     for shard_id in range(4):
         num_readers = 2
-        data_set = ds.MindDataset(dataset_file=FILES,
+        data_set = ds.MindDataset(dataset_file=files,
                                   num_parallel_workers=num_readers,
                                   shuffle=ds.Shuffle.GLOBAL,
                                   num_shards=4,
@@ -2524,7 +2536,7 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     # shuffle=Shuffle.INFILE
     for shard_id in range(4):
         num_readers = 2
-        data_set = ds.MindDataset(dataset_file=FILES,
+        data_set = ds.MindDataset(dataset_file=files,
                                   num_parallel_workers=num_readers,
                                   shuffle=ds.Shuffle.INFILE,
                                   num_shards=4,
@@ -2550,7 +2562,7 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     datas_epoch3 = []
     for shard_id in range(4):
         num_readers = 2
-        data_set = ds.MindDataset(dataset_file=FILES,
+        data_set = ds.MindDataset(dataset_file=files,
                                   num_parallel_workers=num_readers,
                                   shuffle=ds.Shuffle.FILES,
                                   num_shards=4,
