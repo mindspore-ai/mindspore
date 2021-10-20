@@ -23,13 +23,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDivFusion = "DivFusion";
+/// \brief DivFusion defined Div operator prototype of lite.
 class MS_CORE_API DivFusion : public Div {
  public:
+  /// \brief Constructor.
   DivFusion() : Div(kNameDivFusion) {}
+
+  /// \brief Destructor.
   ~DivFusion() = default;
+
   MS_DECLARE_PARENT(DivFusion, Div);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void Init(const ActivationType &activation_type = NO_ACTIVATION);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType &activation_type);
+
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
 };
 }  // namespace ops

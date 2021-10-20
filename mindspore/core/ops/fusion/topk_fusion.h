@@ -25,15 +25,44 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTopKFusion = "TopKFusion";
+/// \brief TopKFusion defined TopK operator prototype of lite.
 class MS_CORE_API TopKFusion : public TopK {
  public:
+  /// \brief Constructor.
   TopKFusion() : TopK(kNameTopKFusion) {}
+
+  /// \brief Destructor.
   ~TopKFusion() = default;
+
   MS_DECLARE_PARENT(TopKFusion, TopK);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] sorted Define a boolean value indicate whether the output should be sorted.
+  /// \param[in] axis Define the operation axis, which is no use now, but the default is the last dimension.
+  /// \param[in] largest Define the number of largest value along with the axis, which is not attribute now, but the
+  ///            second input of this operation.
   void Init(const bool sorted, const int64_t axis, const int64_t largest);
+
+  /// \brief Method to set axis attribute. Do not use.
+  ///
+  /// \param[in] axis Define the operation axis, which is no use now, but the default is the last dimension.
   void set_axis(const int64_t axis);
+
+  /// \brief Method to set largest attribute, which is no use and needs to be converted to the second input.
+  ///
+  /// \param[in] largest Define the number of largest value along with the axis, which is not attribute now, but the
+  ///            second input of this operation.
   void set_largest(const int64_t largest);
+
+  /// \brief Method to get axis attribute.
+  ///
+  /// \return axis value.
   int64_t get_axis() const;
+
+  /// \brief Method to get largest attribute.
+  ///
+  /// \return the number of largest value
   int64_t get_largest() const;
 };
 }  // namespace ops

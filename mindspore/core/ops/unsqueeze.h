@@ -27,13 +27,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnsqueeze = "Unsqueeze";
+/// \brief Unsqueeze defined the Unsqueeze operator prototype of lite.
 class MS_CORE_API Unsqueeze : public PrimitiveC {
  public:
+  /// \brief Constructor.
   Unsqueeze() : PrimitiveC(kNameUnsqueeze) {}
+
+  /// \brief Destructor.
   ~Unsqueeze() = default;
+
   MS_DECLARE_PARENT(Unsqueeze, PrimitiveC);
+
+  /// \brief Method to init the op's attributes
+  ///
+  /// \param[in] axis Define a vector to indicate on which dimensions to expand.
   void Init(const std::vector<int64_t> axis);
+
+  /// \brief Method to set axis attribute.
+  ///
+  /// \param[in] axis Define a vector to indicate on which dimensions to expand.
   void set_axis(const std::vector<int64_t> axis);
+
+  /// \brief Method to get axis attribute.
+  ///
+  /// \return dimensions info of expanding.
   std::vector<int64_t> get_axis() const;
 };
 AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

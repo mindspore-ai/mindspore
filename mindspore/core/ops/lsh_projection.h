@@ -27,13 +27,30 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLshProjection = "LshProjection";
+/// \brief LshProjection defined LshProjection operator prototype of lite, which is to project an input to a bit vector.
 class MS_CORE_API LshProjection : public PrimitiveC {
  public:
+  /// \brief Constructor.
   LshProjection() : PrimitiveC(kNameLshProjection) {}
+
+  /// \brief Destructor.
   ~LshProjection() = default;
+
   MS_DECLARE_PARENT(LshProjection, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] type Define the type of the output.
   void Init(const LshProjectionType &type);
+
+  /// \brief Method to set type attribute.
+  ///
+  /// \param[in] type Define the type of the output.
   void set_type(const LshProjectionType &type);
+
+  /// \brief Method to get type attribute.
+  ///
+  /// \return the type of the output.
   LshProjectionType get_type() const;
 };
 

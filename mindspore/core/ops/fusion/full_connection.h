@@ -27,19 +27,63 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFullConnection = "FullConnection";
+/// \brief FullConnection defined FullConnection operator prototype of lite.
 class MS_CORE_API FullConnection : public PrimitiveC {
  public:
+  /// \brief Constructor.
   FullConnection() : PrimitiveC(kNameFullConnection) { InitIOName({"x1", "x2", "b"}, {"output"}); }
+
+  /// \brief Destructor.
   ~FullConnection() = default;
+
   MS_DECLARE_PARENT(FullConnection, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] has_bias Define a boolean value to indicate the op has bias or not.
+  /// \param[in] axis Define a axis that the inner product is done along with
+  /// \param[in] use_axis Define a boolean value to indicate the op uses a axis or not.
+  /// \param[in] activation_type Define the activation type.
   void Init(const bool has_bias, const int64_t axis, const bool use_axis, const ActivationType &activation_type);
+
+  /// \brief Method to set has_axis attribute.
+  ///
+  /// \param[in] has_bias Define a boolean value to indicate the op has bias or not.
   void set_has_bias(const bool has_bias);
+
+  /// \brief Method to set axis attribute.
+  ///
+  /// \param[in] axis Define a axis the inner product should be along with
   void set_axis(const int64_t axis);
+
+  /// \brief Method to set use_axis attribute.
+  ///
+  /// \param[in] use_axis Define a boolean value to indicate the op uses a axis or not.
   void set_use_axis(const bool use_axis);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType &activation_type);
+
+  /// \brief Method to get has_bias attribute.
+  ///
+  /// \return a boolean value
   bool get_has_bias() const;
+
+  /// \brief Method to get axis attribute.
+  ///
+  /// \return axis
   int64_t get_axis() const;
+
+  /// \brief Method to get use_axis attribute.
+  ///
+  /// \return a boolean value.
   bool get_use_axis() const;
+
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
 };
 AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

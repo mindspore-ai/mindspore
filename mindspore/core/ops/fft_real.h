@@ -26,11 +26,17 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFftReal = "FftReal";
+/// \brief FftReal defined Real-part acquisition operator prototype.
 class MS_CORE_API FftReal : public PrimitiveC {
  public:
+  /// \brief Constructor.
   FftReal() : PrimitiveC(kNameFftReal) {}
+
+  /// \brief Destructor.
   ~FftReal() = default;
   MS_DECLARE_PARENT(FftReal, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
   void Init() {}
 };
 

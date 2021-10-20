@@ -31,17 +31,54 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSkipGram = "SkipGram";
+/// \brief SkipGram defined the SkipGram operator prototype.
 class MS_CORE_API SkipGram : public PrimitiveC {
  public:
+  /// \brief Constructor.
   SkipGram() : PrimitiveC(kNameSkipGram) {}
+
+  /// \brief Destructor.
   ~SkipGram() = default;
+
   MS_DECLARE_PARENT(SkipGram, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] include_all_grams Define a boolean value to indicate whether to include ngram with size lower than
+  ///            ngram_size.
+  /// \param[in] max_skip_size Define the maximum number of word to skip.
+  /// \param[in] ngram_size Define the the number of word each output item.
   void Init(const bool include_all_grams, const int64_t max_skip_size, const int64_t ngram_size);
+
+  /// \brief Method to set include_all_grams attribute.
+  ///
+  /// \param[in] include_all_grams Define a boolean value to indicate whether to include ngram with size lower than
+  ///            ngram_size.
   void set_include_all_grams(const bool include_all_grams);
+
+  /// \brief Method to get include_all_grams attribute.
+  ///
+  /// \return a boolean value.
   bool get_include_all_grams() const;
+
+  /// \brief Method to set max_skip_size attribute.
+  ///
+  /// \param[in] max_skip_size Define the maximum number of word to skip.
   void set_max_skip_size(const int64_t max_skip_size);
+
+  /// \brief Method to get max_skip_size attribute.
+  ///
+  /// \return an integer value.
   int64_t get_max_skip_size() const;
+
+  /// \brief Method to set ngram_size attribute.
+  ///
+  /// \param[in] ngram_size Define the the number of word each output item.
   void set_ngram_size(const int64_t ngram_size);
+
+  /// \brief Method to get ngram_size attribute.
+  ///
+  /// \return an integer value.
   int64_t get_ngram_size() const;
 };
 AbstractBasePtr SkipGramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

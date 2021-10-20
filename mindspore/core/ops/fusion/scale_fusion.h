@@ -23,13 +23,31 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScaleFusion = "ScaleFusion";
+/// \brief ScaleFusion defined Scale operator prototype of lite.
 class MS_CORE_API ScaleFusion : public Scale {
  public:
+  /// \brief Constructor.
   ScaleFusion() : Scale(kNameScaleFusion) {}
+
+  /// \brief Destructor.
   ~ScaleFusion() = default;
+
   MS_DECLARE_PARENT(ScaleFusion, Scale);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] axis Define the first axis to do this operation.
+  /// \param[in] activation_type Define the activation type.
   void Init(const int64_t axis = -1, const ActivationType &activation_type = NO_ACTIVATION);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType &activation_type);
+
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
 };
 }  // namespace ops

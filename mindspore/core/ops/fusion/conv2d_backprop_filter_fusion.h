@@ -26,21 +26,55 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropFilterFusion = "Conv2DBackpropFilterFusion";
+/// \brief Conv2DBackpropFilterFusion defined Conv2DBackpropFilter operator prototype of lite.
 class MS_CORE_API Conv2DBackpropFilterFusion : public Conv2DBackpropFilter {
  public:
+  /// \brief Constructor.
   Conv2DBackpropFilterFusion() : Conv2DBackpropFilter(kNameConv2DBackpropFilterFusion) {
     InitIOName({"out_backprop", "input", "filter_sizes"}, {"output"});
   }
+
+  /// \brief Destructor.
   ~Conv2DBackpropFilterFusion() = default;
+
   MS_DECLARE_PARENT(Conv2DBackpropFilterFusion, Conv2DBackpropFilter);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] out_channel Define the number of output channel.
+  /// \param[in] kernel_size Define the size of the filter kernel.
+  /// \param[in] pad_mode Define the padding method.
+  /// \param[in] pad_list Define the concrete padding value on H and W dimension.
+  /// \param[in] mode Define the category of conv, which is useless on lite.
+  /// \param[in] stride Define the moving size of the filter kernel.
+  /// \param[in] dilation Define the coefficient of expansion of the filter kernel, which is useful for dilated
+  ///            convolution.
+  /// \param[in] group Define the number of group.
+  /// \param[in] format Define the format of input tensor.
+  /// \param[in] activation_type Define the activation type.
   void Init(const int64_t out_channel, const std::vector<int64_t> &kernel_size, const PadMode &pad_mode = VALID,
             const std::vector<int64_t> &pad_list = {0, 0, 0, 0}, const int64_t mode = 1,
             const std::vector<int64_t> &stride = {1, 1}, const std::vector<int64_t> &dilation = {1, 1, 1, 1},
             const int64_t group = 1, const Format &format = NCHW, const ActivationType activation_type = NO_ACTIVATION);
+
+  /// \brief Method to set activation type.
+  ///
+  /// \param[in] activation_type Define the activation type.
   void set_activation_type(const ActivationType activation_type);
+
+  /// \brief Method to set in_channel attribute.
+  ///
+  /// \param[in] in_channel Define the number of input channel.
   void set_in_channel(const int64_t in_channel);
 
+  /// \brief Method to get activation type.
+  ///
+  /// \return activation type.
   ActivationType get_activation_type() const;
+
+  /// \brief Method to get in_channel attribute.
+  ///
+  /// \return the number of input channel.
   int64_t get_in_channel() const;
 };
 }  // namespace ops

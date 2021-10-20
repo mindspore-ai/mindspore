@@ -31,15 +31,41 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameQuantDTypeCast = "QuantDTypeCast";
+/// \brief QuantDTypeCast QuantDTypeCast the QuantDTypeCast operator prototype.
 class MS_CORE_API QuantDTypeCast : public PrimitiveC {
  public:
+  /// \brief Constructor.
   QuantDTypeCast() : PrimitiveC(kNameQuantDTypeCast) {}
+
+  /// \brief Destructor.
   ~QuantDTypeCast() = default;
+
   MS_DECLARE_PARENT(QuantDTypeCast, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] src_t Define the data type of input.
+  /// \param[in] dst_t Define the data type of output.
   void Init(const int64_t src_t, const int64_t dst_t);
+
+  /// \brief Method to set src_t attribute.
+  ///
+  /// \param[in] src_t Define the data type of input.
   void set_src_t(const int64_t src_t);
+
+  /// \brief Method to get src_t attribute.
+  ///
+  /// \return the data type of input.
   int64_t get_src_t() const;
+
+  /// \brief Method to set dst_t attribute.
+  ///
+  /// \param[in] dst_t Define the data type of output.
   void set_dst_t(const int64_t dst_t);
+
+  /// \brief Method to get dst_t attribute.
+  ///
+  /// \return the data type of output.
   int64_t get_dst_t() const;
 };
 AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

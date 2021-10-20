@@ -27,19 +27,52 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAudioSpectrogram = "AudioSpectrogram";
-int64_t Log2Ceil(int64_t length);
-int64_t GetFftLength(int64_t length);
+/// \brief AudioSpectrogram defined AudioSpectrogram operator prototype.
 class MS_CORE_API AudioSpectrogram : public PrimitiveC {
  public:
+  /// \brief Constructor.
   AudioSpectrogram() : PrimitiveC(kNameAudioSpectrogram) {}
+
+  /// \brief Destructor.
   ~AudioSpectrogram() = default;
+
   MS_DECLARE_PARENT(AudioSpectrogram, PrimitiveC);
+
+  /// \brief Method to init the op's attributes.
+  ///
+  /// \param[in] window_size Define the size of window.
+  /// \param[in] stride Define the step size of window to move.
+  /// \param[in] mag_square Define a boolean value to indicate the output is the magnitude or the square of magnitude.
   void Init(const int64_t window_size, const int64_t stride, const bool mag_square);
+
+  /// \brief Method to set window_size attribute.
+  ///
+  /// \param[in] window_size Define the size of window.
   void set_window_size(const int64_t window_size);
+
+  /// \brief Method to set stride attribute.
+  ///
+  /// \param[in] stride Define the step size of window to move.
   void set_stride(const int64_t stride);
+
+  /// \brief Method to set mag_square attribute.
+  ///
+  /// \param[in] mag_square Define a boolean to indicate the output is the magnitude or the square of magnitude.
   void set_mag_square(const bool mag_square);
+
+  /// \brief Method to get  window_size attribute.
+  ///
+  /// \return the size of window.
   int64_t get_window_size() const;
+
+  /// \brief Method to get stride attribute.
+  ///
+  /// \return the step size.
   int64_t get_stride() const;
+
+  /// \brief Method to get mag_square attribute.
+  ///
+  /// \return a boolean value.
   bool get_mag_square() const;
 };
 AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
