@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-This interface is ONLY used in Auto-parallel procedure.
-"""
+"""Interfaces for parallel-related functionality"""
 from .algo_parameter_config import get_algo_parameters, reset_algo_parameters, \
     set_algo_parameters
 
-__all__ = ["get_algo_parameters", "reset_algo_parameters", "set_algo_parameters"]
+__all__ = ["set_algo_parameters", "reset_algo_parameters", "get_algo_parameters"]
