@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Generate the mindir for bprop"""
-import os
+
 import numpy as np
 
 import mindspore.nn as nn
@@ -23,7 +23,6 @@ import mindspore.ops as ops
 from mindspore.ops.operations import _inner_ops as inner
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import initializer
-import mindspore.ops._grad as g
 
 
 class Net(nn.Cell):
@@ -31,9 +30,8 @@ class Net(nn.Cell):
         super(Net, self).__init__()
         self.op = op
 
-    def construct(self, *inputs, a=0, b=1):
-        c = a + b
-        return c, self.op(*inputs)
+    def construct(self, *inputs):
+        return self.op(*inputs)
 
 
 class TupleInputNet(nn.Cell):
@@ -54,20 +52,6 @@ class GradNet(nn.Cell):
     def construct(self, *inputs):
         gout = self.grad(self.network)(*inputs)
         return gout
-
-
-def test_remove_mindir_dir():
-    bprop_path = g.__file__
-    bprop_installed_dir = bprop_path[: bprop_path.rindex('/')]
-    bprop_mindir_export_dir = bprop_installed_dir + "/../bprop_mindir"
-    os.rename(bprop_mindir_export_dir, bprop_mindir_export_dir + "_bak")
-    x = Tensor(np.array([[[[-1, 1, 10],
-                           [1, -1, 1],
-                           [10, 1, -1]]]]).astype(np.float32))
-    relu = Net(P.ReLU())
-    grad = GradNet(relu)
-    grad.compile(x)
-    os.rename(bprop_mindir_export_dir + "_bak", bprop_mindir_export_dir)
 
 
 def test_relu():
