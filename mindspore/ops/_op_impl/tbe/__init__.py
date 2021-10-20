@@ -246,6 +246,7 @@ from .fill import _fill_op_tbe
 from .fill_ds import _fill_ds_op_tbe
 from .erf import _erf_op_tbe
 from .erfc import _erfc_op_tbe
+from .erfc_ds import _erfc_ds_op_tbe
 from .depthwise_conv2d import _depthwise_conv2d_tbe
 from .depthwise_conv2d_backprop_filter import _depthwise_conv2d_backprop_filter_tbe
 from .depthwise_conv2d_backprop_input import _depthwise_conv2d_backprop_input_tbe
