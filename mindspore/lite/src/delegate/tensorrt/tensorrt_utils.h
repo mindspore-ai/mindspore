@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_UTILS_H_
+#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_UTILS_H_
 #include <vector>
 #include <NvInfer.h>
 #include <memory>
@@ -83,6 +83,8 @@ void PackNHWCToNCHWFp16(const void *src, void *dst, size_t batch, size_t plane, 
                         size_t thread_count);
 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format format);
+
+nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode);
 
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {

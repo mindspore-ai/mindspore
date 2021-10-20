@@ -82,17 +82,19 @@ nvinfer1::IShuffleLayer *SetTranspose(nvinfer1::INetworkDefinition *network, con
 }
 
 nvinfer1::DataType ConvertDataType(DataType type_id) {
-  std::map<DataType, nvinfer1::DataType> data_type_map = {{DataType::kNumberTypeInt8, nvinfer1::DataType::kINT8},
-                                                          {DataType::kNumberTypeInt32, nvinfer1::DataType::kINT32},
-                                                          {DataType::kNumberTypeFloat32, nvinfer1::DataType::kFLOAT},
-                                                          {DataType::kNumberTypeFloat16, nvinfer1::DataType::kHALF}};
+  std::map<DataType, nvinfer1::DataType> data_type_map = {
+    {DataType::kNumberTypeInt8, nvinfer1::DataType::kINT8},
+    {DataType::kNumberTypeInt32, nvinfer1::DataType::kINT32},
+    {DataType::kNumberTypeFloat32, nvinfer1::DataType::kFLOAT},
+    {DataType::kNumberTypeFloat16, nvinfer1::DataType::kHALF},
+  };
   auto iter = data_type_map.find(type_id);
   nvinfer1::DataType data_type;
   if (iter != data_type_map.end()) {
     data_type = iter->second;
   } else {
     data_type = nvinfer1::DataType::kFLOAT;
-    MS_LOG(WARNING) << "invalid data_type for TensorRT, need check";
+    MS_LOG(WARNING) << "invalid data_type for TensorRT, need check: " << static_cast<int>(type_id);
   }
   return data_type;
 }
@@ -387,5 +389,23 @@ std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor, mindspore::Format for
   dim_string += "]";
   out_string += dim_string;
   return out_string;
+}
+nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode) {
+  std::map<schema::ReduceMode, nvinfer1::ReduceOperation> reduce_ops_ = {
+    {schema::ReduceMode::ReduceMode_ReduceMean, nvinfer1::ReduceOperation::kAVG},
+    {schema::ReduceMode::ReduceMode_ReduceMax, nvinfer1::ReduceOperation::kMAX},
+    {schema::ReduceMode::ReduceMode_ReduceMin, nvinfer1::ReduceOperation::kMIN},
+    {schema::ReduceMode::ReduceMode_ReduceProd, nvinfer1::ReduceOperation::kPROD},
+    {schema::ReduceMode::ReduceMode_ReduceSum, nvinfer1::ReduceOperation::kSUM},
+  };
+  auto iter = reduce_ops_.find(mode);
+  nvinfer1::ReduceOperation trt_mode;
+  if (iter != reduce_ops_.end()) {
+    trt_mode = iter->second;
+  } else {
+    trt_mode = nvinfer1::ReduceOperation::kAVG;
+    MS_LOG(WARNING) << "invalid reduce for TensorRT, need check: " << static_cast<int>(mode);
+  }
+  return trt_mode;
 }
 }  // namespace mindspore::lite

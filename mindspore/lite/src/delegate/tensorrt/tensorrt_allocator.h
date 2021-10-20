@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_ALLOCATOR_H
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_ALLOCATOR_H
+#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_ALLOCATOR_H_
+#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_ALLOCATOR_H_
 #include "src/delegate/tensorrt/tensorrt_allocator.h"
 #include <map>
 #include <string>
@@ -57,4 +57,4 @@ class TensorRTAllocator {
   std::map<std::string, CudaTensorParam> cuda_tensor_map_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_ALLOCATOR_H
+#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_ALLOCATOR_H_

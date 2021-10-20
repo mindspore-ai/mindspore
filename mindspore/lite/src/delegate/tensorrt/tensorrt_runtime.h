@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_BUILDER_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_BUILDER_
+#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_
+#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_
 #include <NvInfer.h>
 #include "include/errorcode.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
@@ -63,4 +63,4 @@ class TensorRTRuntime {
   int batch_size_{0};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_BUILDER_
+#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_

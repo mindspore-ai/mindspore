@@ -31,6 +31,7 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     {schema::PrimitiveType_DivFusion, nvinfer1::ElementWiseOperation::kDIV},
     {schema::PrimitiveType_SubFusion, nvinfer1::ElementWiseOperation::kSUB},
     {schema::PrimitiveType_MulFusion, nvinfer1::ElementWiseOperation::kPROD},
+    {schema::PrimitiveType_Minimum, nvinfer1::ElementWiseOperation::kMIN},
   };
   auto iter_op = element_wise_ops.find(this->type_);
   if (iter_op != element_wise_ops.end()) {

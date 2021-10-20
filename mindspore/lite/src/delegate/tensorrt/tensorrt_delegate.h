@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_
+#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
+#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
 #include <string>
 #include <vector>
 #include <map>
@@ -51,6 +51,8 @@ class TensorRTDelegate : public Delegate {
 
   std::vector<schema::PrimitiveType> unsupport_hw_op_lists_;
 
+  std::vector<schema::PrimitiveType> unsupport_resize_op_list_;
+
   mindspore::Context *context_;
 
   std::shared_ptr<GPUDeviceInfo> device_info_{nullptr};
@@ -58,6 +60,8 @@ class TensorRTDelegate : public Delegate {
   TensorRTRuntime *runtime_{nullptr};
 
   bool support_hw_resize_{true};
+
+  bool support_resize_{true};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_
