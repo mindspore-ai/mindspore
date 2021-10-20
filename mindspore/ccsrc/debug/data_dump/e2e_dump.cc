@@ -299,7 +299,7 @@ void E2eDump::UpdateIterDumpSetup(const session::KernelGraph *graph, bool sink_m
   }
 }
 
-void E2eDump::DumpSetup(const session::KernelGraph *graph, uint32_t rank_id) {
+void E2eDump::DumpSetup(const session::KernelGraph *graph) {
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   bool sink_mode = (ConfigManager::GetInstance().dataset_mode() || E2eDump::isDatasetGraph(graph));
 

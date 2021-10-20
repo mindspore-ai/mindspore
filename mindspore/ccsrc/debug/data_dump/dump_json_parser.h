@@ -36,15 +36,14 @@ class DumpJsonParser {
   void Parse();
   static bool DumpToFile(const std::string &filename, const void *data, size_t len, const ShapeVector &shape,
                          TypeId type);
-  void CopyJsonToDir(uint32_t device_id);
-  void CopyHcclJsonToDir(uint32_t device_id);
-  void CopyMSCfgJsonToDir(uint32_t device_id);
+  void CopyDumpJsonToDir(uint32_t rank_id);
+  void CopyHcclJsonToDir(uint32_t rank_id);
+  void CopyMSCfgJsonToDir(uint32_t rank_id);
   bool NeedDump(const std::string &op_full_name) const;
   void MatchKernel(const std::string &kernel_name);
   void PrintUnusedKernel();
   bool IsDumpIter(uint32_t iteration) const;
   bool DumpAllIter();
-  bool IsSingleIter();
 
   bool async_dump_enabled() const { return async_dump_enabled_; }
   bool e2e_dump_enabled() const { return e2e_dump_enabled_; }

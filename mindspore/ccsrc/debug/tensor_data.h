@@ -211,7 +211,7 @@ class TensorData {
 
   void SetSlot(size_t slot) { this->slot_ = slot; }
 
-  char *GetDataPtr() const { return this->data_ptr_; }
+  const char *GetDataPtr() const { return this->data_ptr_; }
 
   void SetDataPtr(char *data_ptr) { this->data_ptr_ = data_ptr; }
 

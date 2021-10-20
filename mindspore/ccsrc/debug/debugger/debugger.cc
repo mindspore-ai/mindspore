@@ -407,9 +407,8 @@ void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
 
 void Debugger::DumpSetup(const KernelGraphPtr &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
-  uint32_t rank_id = GetRankID();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  E2eDump::DumpSetup(kernel_graph.get(), rank_id);
+  E2eDump::DumpSetup(kernel_graph.get());
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -992,7 +991,7 @@ void Debugger::RemoveWatchpoint(const int32_t id) { debug_services_->RemoveWatch
 std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &tensors) const {
   std::vector<std::string> name;
   std::vector<std::string> ret_name;
-  std::vector<char *> data_ptr;
+  std::vector<const char *> data_ptr;
   std::vector<ssize_t> data_size;
   std::vector<unsigned int> dtype;
   std::vector<std::vector<int64_t>> shape;

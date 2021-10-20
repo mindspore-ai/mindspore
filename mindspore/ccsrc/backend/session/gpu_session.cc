@@ -128,7 +128,7 @@ void GPUSession::Init(uint32_t device_id) {
 #ifndef ENABLE_SECURITY
   auto &json_parser = DumpJsonParser::GetInstance();
   // Dump json config file if dump is enabled
-  json_parser.CopyJsonToDir(rank_id_);
+  json_parser.CopyDumpJsonToDir(rank_id_);
   json_parser.CopyMSCfgJsonToDir(rank_id_);
 #endif
   MS_LOG(INFO) << "Set device id " << device_id << " for gpu session.";
@@ -713,7 +713,7 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
 void GPUSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  E2eDump::DumpSetup(kernel_graph.get(), rank_id_);
+  E2eDump::DumpSetup(kernel_graph.get());
   MS_LOG(INFO) << "Finish!";
 }
 
