@@ -23,7 +23,9 @@ from .abs_grad import _abs_grad_tbe
 from .acos import _acos_tbe
 from .acos_grad import _acos_grad_tbe
 from .acosh import _acosh_tbe
+from .acosh_ds import _acosh_ds_tbe
 from .acosh_grad import _acosh_grad_tbe
+from .acosh_grad_ds import _acosh_grad_ds_tbe
 from .adam_apply_one_with_decay import _adam_apply_one_with_decay_tbe
 from .apply_centered_rms_prop import _apply_centered_rms_prop_tbe
 from .add_n import _add_n_tbe

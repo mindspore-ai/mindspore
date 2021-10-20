@@ -3178,7 +3178,7 @@ class Xlogy(_MathBinaryOp):
         return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, [mstype.float16, mstype.float32], self.name)
 
 
-class Acosh(PrimitiveWithInfer):
+class Acosh(Primitive):
     r"""
     Computes inverse hyperbolic cosine of the inputs element-wise.
 
@@ -3199,6 +3199,7 @@ class Acosh(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3217,13 +3218,7 @@ class Acosh(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Acosh"""
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type, self.name)
-        return x_dtype
+        self.init_prim_io_names(inputs=['x'], outputs='output')
 
 
 class Cosh(PrimitiveWithInfer):
