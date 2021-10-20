@@ -94,7 +94,7 @@ class SGD(Optimizer):
         dampening (float): A floating point value of dampening for momentum. must be at least 0.0. Default: 0.0.
         weight_decay (float): Weight decay (L2 penalty). It must be equal to or greater than 0. Default: 0.0.
         nesterov (bool): Enables the Nesterov momentum. If use nesterov, momentum must be positive,
-                         and dampening must equal to 0.0. Default: False.
+                         and dampening must be equal to 0.0. Default: False.
         loss_scale (float): A floating point value for the loss scale, which must be larger than 0.0. In general, use
             the default value. Only when `FixedLossScaleManager` is used for training and the `drop_overflow_update` in
             `FixedLossScaleManager` is set to False, then this value needs to be the same as the `loss_scale` in
@@ -164,7 +164,7 @@ class SGD(Optimizer):
         validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
 
         if nesterov and (momentum <= 0.0 or dampening != 0.0):
-            raise ValueError("If use nesterov, momentum must be positive and dampening must equal to 0.0,"
+            raise ValueError("If use nesterov, momentum must be positive and dampening must be equal to 0.0,"
                              "but got momentum {}, dampening {}".format(momentum, dampening))
         self.nesterov = nesterov
 

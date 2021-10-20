@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogicalOr = "LogicalOr";
-/// \brief Computes the “logical OR” of two tensors element-wise.
+/// \brief Computes the "logical OR" of two tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.LogicalOr for more details.
 class MS_CORE_API LogicalOr : public PrimitiveC {
  public:

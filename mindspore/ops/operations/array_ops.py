@@ -667,7 +667,7 @@ class Squeeze(PrimitiveWithInfer):
     Raises:
         TypeError: If `axis` is neither an int nor tuple.
         TypeError: If `axis` is a tuple whose elements are not all int.
-        ValueError: If the corresponding dimension of the specified axis does not equal to 1.
+        ValueError: If the corresponding dimension of the specified axis isn't equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5522,12 +5522,12 @@ class Meshgrid(PrimitiveWithInfer):
     coordinate tensors for evaluating expressions on an N-D grid.
 
     Args:
-        indexing (‘xy’, ‘ij’, optional): Cartesian (‘xy’, default) or
-            matrix (‘ij’) indexing of output. In the 2-D case with
+        indexing ('xy', 'ij', optional): Cartesian ('xy', default) or
+            matrix ('ij') indexing of output. In the 2-D case with
             inputs of length `M` and `N`, the outputs are of shape `(N, M)`
-            for ‘xy’ indexing and `(M, N)` for ‘ij’ indexing. In the 3-D
+            for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
-            `(N, M, P)` for ‘xy’ indexing and `(M, N, P)` for ‘ij’ indexing.
+            `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.
 
     Inputs:
         - **input** (Union[tuple]) - A Tuple of N 1-D Tensor objects.
@@ -6229,7 +6229,7 @@ class MaskedFill(Primitive):
 class MaskedSelect(PrimitiveWithCheck):
     """
     Returns a new 1-D Tensor which indexes the input tensor according to the boolean mask.
-    The shapes of the mask tensor and the input tensor don’t need to match, but they must be broadcastable.
+    The shapes of the mask tensor and the input tensor don't need to match, but they must be broadcastable.
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -6749,7 +6749,7 @@ class ExtractVolumePatches(Primitive):
         ValueError: If one of kernel_size or strides' first two numbers is not 1.
         ValueError: If padding = "VALID" and input - kernel_size is less than 0 in d, h or w dimension.
         ValueError: If padding = "SAME" and :math:`padding_needed = ((input_x + strides - 1) / strides - 1) *
-                    strides + kernelz_size - input` is less than 0 in d, h or w dimension.
+                    strides + kernel_size - input` is less than 0 in d, h or w dimension.
         ValueError: If x_h is not 1 or x_w is not 1 and x_w + padding_needed - k_w - s_w is less than 0.
         ValueError: If x_d * x_h * x_w is greater than 2048.
 

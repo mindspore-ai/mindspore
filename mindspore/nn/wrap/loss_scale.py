@@ -364,7 +364,7 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
               cleared before executing the computation.
 
         Outputs:
-            Tuple[object, object], the first value is False for GPU backend, while it is a instance of
+            Tuple[object, object], the first value is False for GPU backend, while it is an instance of
             NPUAllocFloatStatus for other backend. The status is used to detect overflow during overflow detection.
             The second value is the same as the input of `compute_input`, but contains some information about the
             execution order.

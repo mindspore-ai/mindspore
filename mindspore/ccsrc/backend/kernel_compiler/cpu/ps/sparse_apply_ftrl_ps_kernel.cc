@@ -101,7 +101,7 @@ void SparseApplyFtrlPSKernel::ReInit(const std::vector<std::vector<size_t>> &sha
 
 void SparseApplyFtrlPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
   if (inputs.size() < kSparseApplyFtrlPSInputSize) {
-    MS_LOG(EXCEPTION) << "Input numbers should not less than " << kSparseApplyFtrlPSInputSize << ", but got "
+    MS_LOG(EXCEPTION) << "Input numbers should not be less than " << kSparseApplyFtrlPSInputSize << ", but got "
                       << inputs.size();
   }
   const auto &indices_addr = inputs[4];

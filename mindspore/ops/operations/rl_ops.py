@@ -30,7 +30,7 @@ class BufferSample(PrimitiveWithInfer):
     Returns the tuple tensor with the given shape, decided by the given batchsize.
 
     .. warning::
-            This is an experiental prototype that is subject to change and/or deletion.
+            This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         capacity (int64): Capacity of the buffer, must be non-negative.
@@ -45,7 +45,7 @@ class BufferSample(PrimitiveWithInfer):
     Inputs:
         - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
          each tensor is described by the `buffer_shape` and `buffer_type`.
-        - **count** (Parameter) - The count mean the real available size of the buffer,
+        - **count** (Parameter) - The count means the real available size of the buffer,
          data type: int32.
         - **head** (Parameter) - The position of the first data in buffer, data type: int32.
 
@@ -142,7 +142,7 @@ class BufferAppend(PrimitiveWithInfer):
     push data to the bottom of buffer under the First-In-First-Out rule.
 
     .. warning::
-        This is an experiental prototype that is subject to change and/or deletion.
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         capacity (int64): Capacity of the buffer, must be non-negative.
@@ -152,9 +152,9 @@ class BufferAppend(PrimitiveWithInfer):
     Inputs:
         - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
          each tensor is described by the `buffer_shape` and `buffer_type`.
-        - **exp** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents one list of experince data,
+        - **exp** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents one list of experience data,
          each tensor is described by the `buffer_shape` and `buffer_type`.
-        - **count** (Parameter) - The count mean the real available size of the buffer,
+        - **count** (Parameter) - The count means the real available size of the buffer,
          data type: int32.
         - **head** (Parameter) - The position of the first data in buffer, data type: int32.
 
@@ -162,11 +162,11 @@ class BufferAppend(PrimitiveWithInfer):
         None.
 
     Raises:
-        ValueError: If `count` and `head` is not a integer.
+        ValueError: If `count` and `head` is not an integer.
         ValueError: If `capacity` is not a positive integer.
-        ValueError: If length of `data` not equal to length of `exp`.
-        ValueError: If dim of data euqals to dim of exp, but `data[1:]` not equal to the shape in `exp`.
-        ValueError: If the shape of `data[1:]` not equal to the shape in `exp`.
+        ValueError: If length of `data` is not equal to length of `exp`.
+        ValueError: If dim of data is equal to dim of exp, but `data[1:]` is not equal to the shape in `exp`.
+        ValueError: If the shape of `data[1:]` is not equal to the shape in `exp`.
         TypeError: If the type in `exp` is not the same with `data`.
 
     Supported Platforms:
@@ -211,7 +211,7 @@ class BufferAppend(PrimitiveWithInfer):
             exp_batch = exp_shape[0][0]
             for i in range(len(data_shape)):
                 if len(data_shape[i]) != len(exp_shape[i]):
-                    raise ValueError(f"For '{self.name}', the dimension of {i}th 'exp_shape' must equal to "
+                    raise ValueError(f"For '{self.name}', the dimension of {i}th 'exp_shape' must be equal to "
                                      f"the dimension of {i}th 'data_shape', but got the {i}th 'exp_shape': "
                                      f"{exp_shape[i]}, the {i}th 'data_shape': {data_shape[i]}.")
                 if data_shape[i][0] < exp_shape[i][0]:
@@ -221,7 +221,7 @@ class BufferAppend(PrimitiveWithInfer):
         else:
             for i in range(len(data_shape)):
                 if data_shape[i][1:] != exp_shape[i]:
-                    raise ValueError(f"For '{self.name}', the {i}th 'exp_shape' must equal to the {i}th 'data_shape'"
+                    raise ValueError(f"For '{self.name}', the {i}th 'exp_shape' must be equal to the {i}th 'data_shape'"
                                      f"which excepts the first dimension. but got the {i}th 'exp_shape': "
                                      f"{exp_shape[i]}, the {i}th 'data_shape': {data_shape[i]}.")
         self.add_prim_attr('exp_batch', exp_batch)
@@ -239,10 +239,10 @@ class BufferAppend(PrimitiveWithInfer):
 
 class BufferGetItem(PrimitiveWithInfer):
     r"""
-    Get the data from buffer in the position of input inedx.
+    Get the data from buffer in the position of input index.
 
     .. warning::
-        This is an experiental prototype that is subject to change and/or deletion.
+        This is an experimental prototype that is subject to change and/or deletion.
 
     Args:
         capacity (int64): Capacity of the buffer, must be non-negative.
@@ -252,7 +252,7 @@ class BufferGetItem(PrimitiveWithInfer):
     Inputs:
         - **data** (tuple(Parameter(Tensor))) - The tuple(Tensor) represents replaybuffer,
          each tensor is described by the `buffer_shape` and `buffer_type`.
-        - **count** (Parameter) - The count mean the real available size of the buffer,
+        - **count** (Parameter) - The count means the real available size of the buffer,
          data type: int32.
         - **head** (Parameter) - The position of the first data in buffer, data type: int32.
         - **index** (int64) - The position of the data in buffer.
@@ -261,7 +261,7 @@ class BufferGetItem(PrimitiveWithInfer):
         tuple(Tensor). The shape is `buffer_shape`. The dtype is `buffer_dtype`.
 
     Raises:
-        ValueError: If `count` and `head` is not a integer.
+        ValueError: If `count` and `head` is not an integer.
         ValueError: If `capacity` is not a positive integer.
         TypeError: If `buffer_shape` is not a tuple.
 

@@ -1018,7 +1018,7 @@ Status Tensor::GetSliceOption(const SliceOption &slice_option, const int32_t &sl
     RETURN_STATUS_UNEXPECTED("Both indices and slices can not be given.");
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(shape_.Size() > slice_index, "Invalid shape, should greater than slices index.");
+  CHECK_FAIL_RETURN_UNEXPECTED(shape_.Size() > slice_index, "Invalid shape, should be greater than slices index.");
   // if slice object was provided, indices should be empty. Generate indices from the slice object.
   if (slice_option.indices_.empty()) {
     // check if slice is valid

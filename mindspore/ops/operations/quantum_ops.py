@@ -116,7 +116,7 @@ class Evolution(PrimitiveWithInfer):
                  gate_obj_qubits, gate_ctrl_qubits, gate_params_names,
                  gate_coeff, gate_requires_grad, hams_pauli_coeff,
                  hams_pauli_word, hams_pauli_qubit):
-        """Initialize Evolutino"""
+        """Initialize Evolution"""
         self.init_prim_io_names(inputs=['param_data'], outputs=['state'])
         self.n_qubits = n_qubits
 

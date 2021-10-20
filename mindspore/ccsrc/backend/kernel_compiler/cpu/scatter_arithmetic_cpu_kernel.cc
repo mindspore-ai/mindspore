@@ -48,7 +48,7 @@ void ScatterArithmeticCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() < 1) {
-    MS_LOG(EXCEPTION) << "Input shape size should not less than 1";
+    MS_LOG(EXCEPTION) << "Input shape size should not be less than 1";
   }
   input_size_ = 1;
   inner_size_ = 1;

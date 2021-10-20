@@ -755,7 +755,7 @@ def array_equal(a1, a2, equal_nan=False):
 
     Args:
         a1/a2 (Union[int, float, bool, list, tuple, Tensor]): Input arrays.
-        equal_nan (bool): Whether to compare NaN’s as equal.
+        equal_nan (bool): Whether to compare NaN's as equal.
 
     Returns:
         Scalar bool tensor, value is `True` if inputs are equal, `False` otherwise.
@@ -878,7 +878,7 @@ def sometrue(a, axis=None, keepdims=False):
             If True, the axes which are reduced are left in the result as dimensions with size one.
             With this option, the result will broadcast correctly against the input array.
             If the default value is passed, then keepdims will not be passed through to the any method of
-            sub-classes of ndarray, however any non-default value will be. If the sub-class’ method does not
+            sub-classes of ndarray, however any non-default value will be. If the sub-class method does not
             implement keepdims any exceptions will be raised.
 
     Returns:

@@ -52,7 +52,7 @@ class FusedPullWeightKernel : public CPUKernel {
     total_iteration_++;
     uint64_t step_num_per_iteration = fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration();
     if (step_num_per_iteration == 0) {
-      MS_LOG(EXCEPTION) << "Step numbers of per iteration should not equal to 0";
+      MS_LOG(EXCEPTION) << "Step numbers of per iteration should not be equal to 0";
     }
     // The worker has to train kWorkerTrainStepNum standalone iterations before it communicates with server.
     MS_LOG(INFO) << "Try to pull weights. Local step number: " << total_iteration_

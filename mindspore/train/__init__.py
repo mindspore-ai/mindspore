@@ -15,7 +15,7 @@
 """
 High-Level training interfaces.
 
-Helper functions in train piplines.
+Helper functions in train pipelines.
 """
 from .model import Model
 from .dataset_helper import DatasetHelper, connect_network_with_dataset

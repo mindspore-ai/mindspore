@@ -39,12 +39,12 @@ void RollingCpuKernel<T, S>::InitKernel(const CNodePtr &kernel_node) {
   method_ = kValidMethods.at(method);
   auto window = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, WINDOW);
   if (window <= 0) {
-    MS_LOG(EXCEPTION) << "window size should not less than 0, but got " << window;
+    MS_LOG(EXCEPTION) << "window size should not be less than 0, but got " << window;
   }
   window_ = LongToInt(window);
   min_periods_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, MIN_PERIODS);
   if (min_periods_ <= 0) {
-    MS_LOG(EXCEPTION) << "min_periods should not less than 0, but got " << min_periods_;
+    MS_LOG(EXCEPTION) << "min_periods should not be less than 0, but got " << min_periods_;
   }
   center_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, CENTER);
   auto axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);

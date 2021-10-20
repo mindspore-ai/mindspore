@@ -188,7 +188,7 @@ class FakeLearnedScaleQuantPerLayer(PrimitiveWithInfer):
         quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
             simulate quantization aware function. After delay step in training time begin simulate the aware
             quantize function. Default: 0.
-        neg_trunc (bool): Whether the quantization algorithm uses nagetive truncation or not. Default: False.
+        neg_trunc (bool): Whether the quantization algorithm uses negative truncation or not. Default: False.
         training (bool): Training the network or not. Default: True.
 
     Inputs:

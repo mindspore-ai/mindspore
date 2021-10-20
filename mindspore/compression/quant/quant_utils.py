@@ -46,11 +46,11 @@ def cal_quantization_params(input_min,
     input_min = np.minimum(0.0, input_min)
 
     if input_min.shape != input_max.shape:
-        raise ValueError("input min shape should equal to input max.")
+        raise ValueError("input min shape should be equal to input max.")
     if len(input_min.shape) > 1:
         raise ValueError("input min and max shape should be one dim.")
     if (input_min > input_max).all():
-        raise ValueError("input_min min should less than input max.")
+        raise ValueError("input_min min should be less than input max.")
     if (input_max == input_min).all():
         return np.ones(input_min.shape), np.zeros(input_min.shape)
 
@@ -105,7 +105,7 @@ def weight2int(data, scale, zero_point, quant_min, quant_max):
     if scale.shape != zero_point.shape:
         raise ValueError("`scale` and `zero_point` should have the same shape.")
     if scale.shape[0] < 0:
-        raise ValueError("`scale` and `zero_point` shape should greater than zero.")
+        raise ValueError("`scale` and `zero_point` shape should be greater than zero.")
     if len(scale.shape) >= 1 and scale.shape[0] > 1:
         # for perchannel
         if scale.shape[0] == data.shape[0]:

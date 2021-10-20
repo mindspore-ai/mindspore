@@ -862,7 +862,7 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
     shape_num = LongMulWithOverflowCheck(value, shape_num);
   }
   if (shape_num != x_num) {
-    MS_LOG(EXCEPTION) << "The accumulate of x_shape must equal to out_shape, but got x_shape: " << x_shape
+    MS_LOG(EXCEPTION) << "The accumulate of x_shape must be equal to out_shape, but got x_shape: " << x_shape
                       << ", and out_shape: " << shape;
   }
 

@@ -1226,20 +1226,20 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
     Args:
         *xi (Tensor): 1-D arrays representing the coordinates
             of a grid.
-        indexing (‘xy’, ‘ij’, optional): Cartesian (‘xy’, default) or
-            matrix (‘ij’) indexing of output. In the 2-D case with
+        indexing ('xy', 'ij', optional): Cartesian ('xy', default) or
+            matrix ('ij') indexing of output. In the 2-D case with
             inputs of length `M` and `N`, the outputs are of shape `(N, M)`
-            for ‘xy’ indexing and `(M, N)` for ‘ij’ indexing. In the 3-D
+            for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
             case with inputs of length `M`, `N` and `P`, outputs are of shape
-            `(N, M, P)` for ‘xy’ indexing and `(M, N, P)` for ‘ij’ indexing.
+            `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.
         sparse (bool, optional): If True a sparse grid is returned in
             order to conserve memory. Default is False.
 
     Returns:
         Tuple of tensors, for vectors `x1, x2,…, xn` with lengths
         ``Ni=len(xi)``, return `(N1, N2, N3,...Nn)` shaped arrays if
-        ``indexing=’ij’`` or `(N2, N1, N3,...Nn)` shaped arrays if
-        ``indexing=’xy’`` with the elements of `xi` repeated to fill the matrix
+        ``indexing='ij'`` or `(N2, N1, N3,...Nn)` shaped arrays if
+        ``indexing='xy'`` with the elements of `xi` repeated to fill the matrix
         along the first dimension for `x1`, the second for `x2` and so on.
 
     Raises:
@@ -1530,7 +1530,7 @@ def diagflat(v, k=0):
         v (Tensor): Input data, which is flattened and set as the `k-th` diagonal
             of the output.
         k (int, optional): Diagonal to set; 0, the default, corresponds to the
-            “main” diagonal, a positive (negative) `k` giving the number of the
+            "main" diagonal, a positive (negative) `k` giving the number of the
             diagonal above (below) the main.
 
     Returns:

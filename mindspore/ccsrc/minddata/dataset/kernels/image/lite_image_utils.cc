@@ -420,7 +420,7 @@ Status ResizePreserve(const TensorRow &inputs, int32_t height, int32_t width, in
                       TensorRow *outputs) {
   outputs->resize(3);
   CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() > 0,
-                               "Invalid input, should greater than 0, but got " + std::to_string(inputs.size()));
+                               "Invalid input, should be greater than 0, but got " + std::to_string(inputs.size()));
   std::shared_ptr<Tensor> input = inputs[0];
   CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 3, "Invalid input shape, should be greater than 3 dimensions.");
   LiteMat lite_mat_src(input->shape()[1], input->shape()[0], input->shape()[2],

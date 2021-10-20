@@ -288,8 +288,8 @@ class MatrixDiag(PrimitiveWithInfer):
     Inputs:
         - **x** (Tensor) - A tensor which to be element-wise multi by `assist`. It can be one of the following data
           types: float32, float16, int32, int8, and uint8.
-        - **assist** (Tensor) - A eye tensor of the same type as `x`. It's rank must greater than or equal to 2 and
-          it's last dimension must equal to the second to last dimension.
+        - **assist** (Tensor) - A eye tensor of the same type as `x`. It's rank must be greater than or equal to 2 and
+          it's last dimension must be equal to the second to last dimension.
 
     Outputs:
         Tensor, has the same type and shape as input `assist`.
@@ -383,7 +383,7 @@ class Send(PrimitiveWithInfer):
     Send tensors from src_rank to the specified dest_rank.
 
     Note:
-        Send and Recveive must be used in combination and have same sr_tag.
+        Send and Receive must be used in combination and have same sr_tag.
         Send must be used between servers.
 
     Args:

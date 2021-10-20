@@ -182,12 +182,13 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   int64_t group = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("group"), "group");
   if ((x_shape[c_axis] != Shape::SHP_ANY) && (w_shape[c_axis] != Shape::SHP_ANY) &&
       ((x_shape[c_axis] / group) != w_shape[c_axis])) {
-    MS_LOG(EXCEPTION) << "x_shape[C_in] / group must equal to w_shape[C_in] = " << w_shape[c_axis] << ", but got "
+    MS_LOG(EXCEPTION) << "x_shape[C_in] / group must be equal to w_shape[C_in]: " << w_shape[c_axis] << ", but got "
                       << (x_shape[c_axis] / group);
   }
   int64_t out_channel = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("out_channel"), "out_channel");
   if ((w_shape[n_axis] != Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {
-    MS_LOG(EXCEPTION) << "w_shape[" << n_axis << "] = " << w_shape[n_axis] << " must equal to = " << out_channel;
+    MS_LOG(EXCEPTION) << "w_shape[" << n_axis << "] = " << w_shape[n_axis]
+                      << " must be equal to out_channel: " << out_channel;
   }
   constexpr size_t kernel_size_num = 2;
   constexpr size_t stride_num = 2;
@@ -196,10 +197,12 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   constexpr size_t start_index = 2;
   std::vector<int64_t> kernel_size = CheckAttrIntOrTuple(primitive->GetAttr("kernel_size"), 0, kernel_size_num);
   if ((w_shape[h_axis] != Shape::SHP_ANY) && (w_shape[h_axis] != kernel_size[0])) {
-    MS_LOG(EXCEPTION) << "weight height = " << w_shape[h_axis] << ", must equal to = " << kernel_size[0];
+    MS_LOG(EXCEPTION) << "weight height = " << w_shape[h_axis]
+                      << ", must be equal to kernel_size[0]: " << kernel_size[0];
   }
   if ((w_shape[w_axis] != Shape::SHP_ANY) && (w_shape[w_axis] != kernel_size[1])) {
-    MS_LOG(EXCEPTION) << "weight width = " << w_shape[w_axis] << ", must equal to = " << kernel_size[1];
+    MS_LOG(EXCEPTION) << "weight width = " << w_shape[w_axis]
+                      << ", must be equal to kernel_size[1]: " << kernel_size[1];
   }
   std::vector<int64_t> stride = CheckAttrIntOrTuple(primitive->GetAttr("stride"), start_index, stride_num);
   std::vector<int64_t> dilation = CheckAttrIntOrTuple(primitive->GetAttr("dilation"), start_index, dilation_num);

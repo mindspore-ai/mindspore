@@ -42,7 +42,7 @@ int AffineFP32Coder::PrepareSpliceOp() {
   // init splice param
   splice_param_ = new SpliceWrapperParam();
   if (affine_param_->context_size_ > MAX_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "Context size should less than MAX_SHAPE_SIZE.";
+    MS_LOG(ERROR) << "Context size should be less than MAX_SHAPE_SIZE.";
     return RET_ERROR;
   }
   for (int i = 0; i < affine_param_->context_size_; i++) {

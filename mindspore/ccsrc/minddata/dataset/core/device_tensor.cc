@@ -163,7 +163,7 @@ Status DeviceTensor::DataPop_(std::shared_ptr<Tensor> *host_tensor) {
   const mindspore::dataset::TensorShape dvpp_shape({dvppDataSize, 1, 1});
 
   CHECK_FAIL_RETURN_UNEXPECTED(this->GetYuvStrideShape().size() >= kYuvDefaultChannels,
-                               "Invalid YuvShape, should greater than 4");
+                               "Invalid YuvShape, should be greater than 4");
 
   uint32_t _output_width_ = this->GetYuvStrideShape()[0];
   uint32_t _output_widthStride_ = this->GetYuvStrideShape()[1];

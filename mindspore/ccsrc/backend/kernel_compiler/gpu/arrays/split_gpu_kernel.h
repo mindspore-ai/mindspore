@@ -157,7 +157,7 @@ class SplitGpuFwdKernel : public GpuKernel {
       return false;
     }
     if (output_num_ > SizeToInt(input_shape[axis_])) {
-      MS_LOG(ERROR) << "Attr output_num " << output_num_ << "must less than" << input_shape[axis_];
+      MS_LOG(ERROR) << "Attr output_num " << output_num_ << "must be less than" << input_shape[axis_];
       return false;
     }
     if (output_num_ != output_num) {

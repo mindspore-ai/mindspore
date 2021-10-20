@@ -284,7 +284,7 @@ const FuncGraphPtr GetLoadedGraph(const ResourcePtr &res) {
   if (loaded_graph_num == 1) {
     return loaded_graph;
   }
-  MS_LOG(EXCEPTION) << "The loaded sub graph currently should less than 2, but got " << loaded_graph_num;
+  MS_LOG(EXCEPTION) << "The loaded sub graph currently should be less than 2, but got " << loaded_graph_num;
 }
 
 void CheckRootInputShapeAndType(const ResourcePtr &res, const FuncGraphPtr &loaded_graph) {
@@ -302,6 +302,7 @@ void CheckRootInputShapeAndType(const ResourcePtr &res, const FuncGraphPtr &load
     MS_LOG(EXCEPTION) << "The inputs number " << root_inputs_num << " not equal to the inputs number of loaded graph "
                       << loaded_inputs_num;
   }
+
   for (size_t index = 0; index < root_inputs_num; index++) {
     auto root_input = root_inputs[index];
     auto loaded_input = loaded_inputs[index];

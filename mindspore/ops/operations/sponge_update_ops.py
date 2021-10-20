@@ -179,7 +179,7 @@ class ConstrainForceCycleWithVirial(PrimitiveWithInfer):
 
 class LastCrdToDr(PrimitiveWithInfer):
     """
-    Calculate the diplacement vector of each constrained atom pair.
+    Calculate the displacement vector of each constrained atom pair.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
@@ -279,7 +279,7 @@ class RefreshCrdVel(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(n, 3)`.
         - **vel** (Tensor) - The velocity of each atom.
           The data type is float32 and the shape is :math:`(n, 3)`.
-        - **test_frc** (Tensor) - The constraint force calculated in the last oteration.
+        - **test_frc** (Tensor) - The constraint force calculated in the last iteration.
           The data type is float32 and the shape is :math:`(n, 3)`.
         - **mass_inverse** (Tensor) - The inverse value of mass of each atom.
           The data type is float32 and the shape is :math:`(n,)`.
@@ -1903,7 +1903,7 @@ class Dihedral14ForceWithAtomEnergyVirial(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(m,)`.
         - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
           The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
-        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones scheme of each atom pair type.
           The number of atom pair is q. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:

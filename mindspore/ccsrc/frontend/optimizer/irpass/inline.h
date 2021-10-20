@@ -327,7 +327,7 @@ class InlinerBase : public AnfVisitor {
       } else if (IsCNodeGraph(item)) {
         auto cinputs = item->cast<CNodePtr>()->inputs();
         if (cinputs.size() < 1) {
-          MS_LOG(EXCEPTION) << "graph call inputs should greater than 1";
+          MS_LOG(EXCEPTION) << "graph call inputs should be greater than 1";
         }
         FuncGraphPtr call_fg = GetValueNode<FuncGraphPtr>(cinputs[0]);
         bool call_fg_has_branch = GraphHasBranch(call_fg);
@@ -338,7 +338,7 @@ class InlinerBase : public AnfVisitor {
       } else if (IsPrimitiveCNode(item, prim::kPrimPartial)) {
         auto cinputs = item->cast<CNodePtr>()->inputs();
         if (cinputs.size() < 2) {
-          MS_LOG(EXCEPTION) << "partial call inputs should greater than 2";
+          MS_LOG(EXCEPTION) << "partial call inputs should be greater than 2";
         }
         FuncGraphPtr call_fg = GetValueNode<FuncGraphPtr>(cinputs[1]);
         if (call_fg == nullptr) {

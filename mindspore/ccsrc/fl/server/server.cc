@@ -371,7 +371,7 @@ void Server::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunic
 void Server::InitExecutor() {
   MS_EXCEPTION_IF_NULL(func_graph_);
   if (executor_threshold_ == 0) {
-    MS_LOG(EXCEPTION) << "The executor's threshold should greater than 0.";
+    MS_LOG(EXCEPTION) << "The executor's threshold should be greater than 0.";
     return;
   }
   // The train engine instance is used in both push-type and pull-type kernels,

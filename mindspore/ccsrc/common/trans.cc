@@ -1985,7 +1985,7 @@ bool NchwFracZTransWithGroups(const FormatArgs &args, void *result, bool to_devi
   auto cin_ori = c_dim;
   auto cout_ori = n_dim / group_size;
   if (cin_ori == 0 || cout_ori == 0) {
-    MS_LOG(ERROR) << "cin_ori, cout_ori must not equal to 0";
+    MS_LOG(ERROR) << "cin_ori, cout_ori must not be equal to 0";
     return false;
   }
   size_t e_mult = std::min(Lcm(Lcm(cin_ori, kCubeSize) / cin_ori, Lcm(cout_ori, kCubeSize) / cout_ori), group_size);

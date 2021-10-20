@@ -241,7 +241,7 @@ void CTCLossCPUKernel::GenLabelWithBlank(const uint32_t *seq_len, const std::vec
       }
     }
     if (!ignore_longer_outputs_than_inputs_ && l.size() > seq_len[b]) {
-      MS_LOG(EXCEPTION) << "Input time(sequence length) should greater than output size(label length), but gets "
+      MS_LOG(EXCEPTION) << "Input time(sequence length) should be greater than output size(label length), but gets "
                         << seq_len[b] << "< " << l.size();
     }
 

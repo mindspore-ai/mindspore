@@ -207,7 +207,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                       be parameter or Tensor).
         ckpt_file_name (str): Checkpoint file name. If the file name already exists, it will be overwritten.
         integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True
-        async_save (bool): Whether to open a independent thread to save the checkpoint file. Default: False
+        async_save (bool): Whether to open an independent thread to save the checkpoint file. Default: False
         append_dict (dict): Additional information that needs to be saved.  The key of dict must be str,
             the value of dict must be one of int float and bool. Default: None
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption

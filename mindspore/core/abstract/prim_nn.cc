@@ -264,6 +264,7 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   uint64_t c_axis = 1;
   uint64_t h_axis = 2;
   uint64_t w_axis = 3;
+
   int64_t data_format = GetAndCheckFormat(primitive->GetAttr("format"));
   if (data_format == Format::NHWC) {
     c_axis = 3;
@@ -273,22 +274,25 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   int64_t group = CheckAttrPositiveInt64(op_name, primitive->GetAttr("group"), "group");
   if ((x_shape[c_axis] != Shape::SHP_ANY) && (w_shape[c_axis] != Shape::SHP_ANY) &&
       ((x_shape[c_axis] / group) != w_shape[c_axis])) {
-    MS_LOG(EXCEPTION) << "x_shape[C_in] / group must equal to w_shape[C_in] = " << w_shape[c_axis] << ", but got "
+    MS_LOG(EXCEPTION) << "x_shape[C_in] / group must be equal to w_shape[C_in]: " << w_shape[c_axis] << ", but got "
                       << (x_shape[c_axis] / group);
   }
+
   int64_t out_channel = CheckAttrPositiveInt64(op_name, primitive->GetAttr("out_channel"), "out_channel");
   if ((w_shape[n_axis] != Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {
-    MS_LOG(EXCEPTION) << "w_shape[" << n_axis << "] = " << w_shape[n_axis] << " must equal to = " << out_channel;
+    MS_LOG(EXCEPTION) << "w_shape[" << n_axis << "] = " << w_shape[n_axis] << " must be equal to " << out_channel;
   }
+
   const size_t kernel_size_num_element = 2;
   std::vector<int64_t> kernel_size =
     CheckAttrIntOrTuple(op_name, primitive->GetAttr("kernel_size"), 0, kernel_size_num_element);
   if ((w_shape[h_axis] != Shape::SHP_ANY) && (w_shape[h_axis] != kernel_size[0])) {
-    MS_LOG(EXCEPTION) << "weight height = " << w_shape[h_axis] << ", must equal to = " << kernel_size[0];
+    MS_LOG(EXCEPTION) << "weight height: " << w_shape[h_axis] << " must be equal to " << kernel_size[0];
   }
   if ((w_shape[w_axis] != Shape::SHP_ANY) && (w_shape[w_axis] != kernel_size[1])) {
-    MS_LOG(EXCEPTION) << "weight width = " << w_shape[w_axis] << ", must equal to = " << kernel_size[1];
+    MS_LOG(EXCEPTION) << "weight width: " << w_shape[w_axis] << " must be equal to " << kernel_size[1];
   }
+
   std::vector<int64_t> stride =
     CheckAttrIntOrTuple(op_name, primitive->GetAttr("stride"), stride_start_idx, stride_num_element);
   std::vector<int64_t> dilation =
@@ -318,6 +322,7 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   std::vector<ValuePtr> pad_list_val = {MakeValue(pad_list[0]), MakeValue(pad_list[1]), MakeValue(pad_list[2]),
                                         MakeValue(pad_list[3])};
   primitive->set_attr("pad_list", MakeValue(pad_list_val));
+
   ShapeVector output_shape;
   ShapeVector output_shape_min;
   ShapeVector output_shape_max;
@@ -333,6 +338,7 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   CheckShapeAnyAndPositive(op_name + " output_shape", output_shape);
   CheckShapeAllPositive(op_name + " output_shape_min", output_shape_min);
   CheckShapeAllPositive(op_name + " output_shape_max", output_shape_max);
+
   TypePtr x_type = input_x->element()->GetTypeTrack();
   if (x_type->type_id() == TypeId::kNumberTypeInt8) {
     x_type = kInt32;

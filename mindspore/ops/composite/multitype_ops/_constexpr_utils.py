@@ -576,7 +576,7 @@ def get_stride_info_from_slice(data_shape, slice_index):
 
 @constexpr
 def get_stride_info_from_integer(data_shape, number):
-    """Get stride info from a integer"""
+    """Get stride info from an integer"""
     begin_strides = [number]
     end_strides = [number + 1]
     step_strides = [1]

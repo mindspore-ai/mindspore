@@ -91,7 +91,7 @@ void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<std::vector<size_t>> 
 
 void SparseApplyLazyAdamPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
   if (inputs.size() < kSparseApplyLazyAdamPSInputsSize) {
-    MS_LOG(EXCEPTION) << "Input shape size should not less than " << kSparseApplyLazyAdamPSInputsSize << ", but got "
+    MS_LOG(EXCEPTION) << "Input shape size should not be less than " << kSparseApplyLazyAdamPSInputsSize << ", but got "
                       << inputs.size();
   }
   const auto &indices_addr = inputs[10];

@@ -73,7 +73,7 @@ bool ConcatOffsetCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
                       << ", but got:" << output_shape.size();
   }
   if (output_shape[0] != input_num) {
-    MS_LOG(EXCEPTION) << "ConcatOffset output_shape[0] must equal to input_num, but got " << output_shape[0];
+    MS_LOG(EXCEPTION) << "ConcatOffset output_shape[0] must be equal to input_num, but got " << output_shape[0];
   }
   size_t rank = output_shape[1];
   size_t idx = 0;

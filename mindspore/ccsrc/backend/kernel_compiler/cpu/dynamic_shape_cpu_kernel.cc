@@ -50,7 +50,7 @@ bool DynamicShapeCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inp
     MS_LOG(EXCEPTION) << "The length of output_shape must be 1, but got:" << output_shape.size();
   }
   if (output_shape[0] != input_shape.size()) {
-    MS_LOG(EXCEPTION) << "DynamicShape output_shape[0] must equal to the size of input_shape, but got "
+    MS_LOG(EXCEPTION) << "DynamicShape output_shape[0] must be equal to the size of input_shape, but got "
                       << output_shape[0];
   }
   for (size_t i = 0; i < output_shape[0]; ++i) {

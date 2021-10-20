@@ -459,7 +459,7 @@ EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
 EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                            const AnfNodeConfigPtr &out_conf) {
   if (args_conf_list.empty()) {
-    MS_LOG(EXCEPTION) << "Size should greater than 0";
+    MS_LOG(EXCEPTION) << "Size should be greater than 0";
   }
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),

@@ -683,7 +683,7 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
           The data type is int32 and the shape is :math:`(m,)`.
         - **atom_b** (Tensor) - The 2nd atom index of each dihedral.
           The data type is int32 and the shape is :math:`(m,)`.
-        - **atom_c** (Tenso) - The 3rd atom index of each dihedral.
+        - **atom_c** (Tensor) - The 3rd atom index of each dihedral.
           The data type is int32 and the shape is :math:`(m,)`.
         - **atom_d** (Tensor) - The 4th atom index of each dihedral.
           4 atoms are connected in the form a-b-c-d. The data type is int32 and the shape is :math:`(m,)`.
@@ -786,7 +786,7 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
           The data type is int32 and the shape is :math:`(m,)`.
         - **atom_b** (Tensor) - The 2nd atom index of each dihedral.
           The data type is int32 and the shape is :math:`(m,)`.
-        - **atom_c** (Tenso) - The 3rd atom index of each dihedral.
+        - **atom_c** (Tensor) - The 3rd atom index of each dihedral.
           The data type is int32 and the shape is :math:`(m,)`.
         - **atom_d** (Tensor) - The 4th atom index of each dihedral.
           4 atoms are connected in the form a-b-c-d. The data type is int32 and the shape is :math:`(m,)`.
@@ -1263,7 +1263,7 @@ class Dihedral14LJForce(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(m,)`.
         - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
-        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
@@ -1366,7 +1366,7 @@ class Dihedral14LJEnergy(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(m,)`.
         - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
-        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
@@ -1585,7 +1585,7 @@ class Dihedral14LJCFForceWithAtomEnergy(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(m,)`.
         - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
-        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
@@ -1694,7 +1694,7 @@ class Dihedral14LJAtomEnergy(PrimitiveWithInfer):
           The data type is float32 and the shape is :math:`(m,)`.
         - **LJ_type_A** (Tensor) - The A parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
-        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones shceme of each atom pair type.
+        - **LJ_type_B** (Tensor) - The B parameter in Lennard-Jones scheme of each atom pair type.
           q is the number of atom pair. The data type is float32 and the shape is :math:`(q,)`.
 
     Outputs:
@@ -2640,7 +2640,7 @@ class MDIterationLeapFrogWithRF(PrimitiveWithInfer):
           exp(-gamma_ln * dt), where gamma_ln is the firction factor in Langvin
           dynamics. The data type is float32.
         - **max_velocity** (Scalar) - The upper limit of velocity, when the
-          veclocity overflows, scale it to the upper limit. The data type is float32.
+          velocity overflows, scale it to the upper limit. The data type is float32.
         - **is_max_velocity** (Scalar) - whether the max velocity control is
           open or not. The data type is int32.
         - **mass_inverse** (Tensor) - The inverse value of
@@ -3077,7 +3077,7 @@ class NeighborListUpdate(PrimitiveWithInfer):
         excluded_atom_numbers(int32): the total atom numbers in the excluded list.
         cutoff(float32): the cutoff distance for short-range force calculation.
         skin(float32): the overflow value of cutoff to maintain a neighbor list.
-        cutoff_square(float32): the suqare value of cutoff.
+        cutoff_square(float32): the square value of cutoff.
         half_skin_square(float32): skin*skin/4, indicates the maximum
           square value of the distance atom allowed to move between two updates.
         cutoff_with_skin(float32): cutoff + skin, indicates the
