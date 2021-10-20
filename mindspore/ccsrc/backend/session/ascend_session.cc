@@ -1213,7 +1213,7 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
 void DumpInit(uint32_t device_id) {
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
-  json_parser.CopyJsonToDir(device_id);
+  json_parser.CopyDumpJsonToDir(device_id);
   json_parser.CopyHcclJsonToDir(device_id);
   json_parser.CopyMSCfgJsonToDir(device_id);
   if (json_parser.async_dump_enabled()) {
@@ -1555,7 +1555,7 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
 void AscendSession::DumpSetup(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(DEBUG) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  E2eDump::DumpSetup(kernel_graph.get(), rank_id_);
+  E2eDump::DumpSetup(kernel_graph.get());
   MS_LOG(DEBUG) << "Finish!";
 }
 

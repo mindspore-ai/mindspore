@@ -134,7 +134,7 @@ void WriteJsonFile(const std::string &file_path, const std::ifstream &json_file)
   ChangeFileMode(file_path, S_IRUSR);
 }
 
-void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
+void DumpJsonParser::CopyDumpJsonToDir(uint32_t rank_id) {
   this->Parse();
   if (!IsDumpEnabled()) {
     return;
@@ -148,7 +148,7 @@ void DumpJsonParser::CopyJsonToDir(uint32_t rank_id) {
     auto realpath =
       Common::CreatePrefixPath(path_ + "/rank_" + std::to_string(rank_id) + "/.dump_metadata/data_dump.json");
     if (!realpath.has_value()) {
-      MS_LOG(ERROR) << "Get real path failed in CopyJsonDir.";
+      MS_LOG(ERROR) << "Get real path failed in CopyDumpJsonToDir.";
     } else {
       WriteJsonFile(realpath.value(), json_file);
     }
@@ -374,50 +374,49 @@ void DumpJsonParser::ParseIteration(const nlohmann::json &content) {
   }
 }
 
+bool IsIterInRange(uint32_t iteration, const std::string &range) {
+  if (range.empty()) {
+    return false;
+  }
+  const std::string dash = "-";
+  std::size_t range_idx = range.find(dash);
+  // no dash in range, compare the value directly
+  if (range_idx == std::string::npos) {
+    return iteration == std::stoul(range);
+  }
+  // make sure there is only one dash in range
+  if (range.find(dash, range_idx + 1) != std::string::npos) {
+    return false;
+  }
+  auto low_range_str = range.substr(0, range_idx);
+  auto high_range_str = range.substr(range_idx + 1);
+  if (low_range_str.empty() || high_range_str.empty()) {
+    return false;
+  }
+  uint32_t low_range = std::stoul(low_range_str);
+  uint32_t high_range = std::stoul(high_range_str);
+  return (low_range <= iteration) && (iteration <= high_range);
+}
+
 bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   // bool DumpJsonParser::IsDumpIter(uint32_t iteration) --> checks if iteration should be dumped or not.
   if (iteration_ == "all") {
     return true;
   }
   const std::string vertical_bar = "|";
-  const std::string dash = "-";
-  int start = 0;
-  int end = iteration_.find(vertical_bar);
-  while (end != -1) {
-    std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
-    int range_idx = temp.find(dash);
-    if (range_idx != -1) {
-      uint32_t low_range = static_cast<uint32_t>(std::stoul(temp.substr(0, IntToSize(range_idx))));
-      uint32_t high_range = static_cast<uint32_t>(std::stoul(temp.substr(IntToSize(range_idx + 1), -1)));
-      if ((low_range <= iteration) && (iteration <= high_range)) {
-        return true;
-      }
-    } else if (iteration == std::stoul(temp)) {
+  std::size_t start = 0;
+  std::size_t end = iteration_.find(vertical_bar);
+  while (end != std::string::npos) {
+    std::string temp = iteration_.substr(start, end - start);
+    auto found = IsIterInRange(iteration, temp);
+    if (found) {
       return true;
     }
     start = end + 1;
-    end = static_cast<int>(iteration_.find(vertical_bar, start));
+    end = iteration_.find(vertical_bar, start);
   }
-  std::string temp = iteration_.substr(IntToSize(start), IntToSize(end - start));
-  int range_idx = temp.find(dash);
-  if (range_idx != -1) {
-    uint32_t low_range = static_cast<uint32_t>(std::stoul(temp.substr(0, IntToSize(range_idx))));
-    uint32_t high_range = static_cast<uint32_t>(std::stoul(temp.substr(IntToSize(range_idx + 1), -1)));
-    if ((low_range <= iteration) && (iteration <= high_range)) {
-      return true;
-    }
-  } else if (iteration == std::stoul(temp)) {
-    return true;
-  }
-  return false;
-}
-
-bool DumpJsonParser::IsSingleIter() {
-  // bool DumpJsonParser::IsSingleIter() --> checks if iteration in json dump file is single or not.
-  if (iteration_ != "all" && iteration_.find("-") == std::string::npos && iteration_.find("|") == std::string::npos) {
-    return true;
-  }
-  return false;
+  std::string temp = iteration_.substr(start);
+  return IsIterInRange(iteration, temp);
 }
 
 void DumpJsonParser::ParseInputOutput(const nlohmann::json &content) {

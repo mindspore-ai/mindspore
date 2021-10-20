@@ -101,7 +101,7 @@ struct tensor_info_t {
 };
 
 struct tensor_data_t {
-  tensor_data_t(char *data_ptr, uint64_t data_size, int dtype, const std::vector<int64_t> &shape)
+  tensor_data_t(const char *data_ptr, uint64_t data_size, int dtype, const std::vector<int64_t> &shape)
       : data_size(data_size), dtype(dtype), shape(shape) {
     if (data_ptr != nullptr) {
       this->data_ptr = py::bytes(data_ptr, data_size);
@@ -183,7 +183,7 @@ struct TensorStatData {
 
 class DbgServices {
  public:
-  explicit DbgServices(bool verbose = false);
+  DbgServices();
 
   DbgServices(const DbgServices &other);
 

@@ -18,14 +18,7 @@
 #include <algorithm>
 #include <chrono>
 
-DbgServices::DbgServices(bool verbose) {
-  DbgLogger::verbose = verbose;
-  std::string dbg_log_path = common::GetEnv("OFFLINE_DBG_LOG");
-  if (!dbg_log_path.empty()) {
-    DbgLogger::verbose = true;
-  }
-  debug_services_ = std::make_shared<DebugServices>();
-}
+DbgServices::DbgServices() { debug_services_ = std::make_shared<DebugServices>(); }
 
 DbgServices::DbgServices(const DbgServices &other) {
   MS_LOG(INFO) << "cpp DbgServices object is created via copy";

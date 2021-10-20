@@ -21,11 +21,9 @@
 #include <string>
 #include <cstring>
 #include <iostream>
-#ifdef OFFLINE_DBG_MODE
-#include "debugger/offline_debug/offline_logger.h"
-#else
-#include "ir/tensor.h"
 #include "mindspore/core/utils/log_adapter.h"
+#ifdef ONLINE_DBG_MODE
+#include "ir/tensor.h"
 #endif
 
 #ifdef ONLINE_DBG_MODE
@@ -213,7 +211,7 @@ class TensorData {
 
   void SetSlot(size_t slot) { this->slot_ = slot; }
 
-  char *GetDataPtr() const { return this->data_ptr_; }
+  const char *GetDataPtr() const { return this->data_ptr_; }
 
   void SetDataPtr(char *data_ptr) { this->data_ptr_ = data_ptr; }
 

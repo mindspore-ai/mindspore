@@ -35,7 +35,7 @@ class E2eDump {
  public:
   E2eDump() = default;
   ~E2eDump() = default;
-  static void DumpSetup(const session::KernelGraph *graph, uint32_t rank_id);
+  static void DumpSetup(const session::KernelGraph *graph);
 
   static void UpdateIterGPUDump();
 
