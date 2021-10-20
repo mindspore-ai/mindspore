@@ -5866,7 +5866,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
         return var_dtype, accum_dtype
 
 
-class ApplyAdagradV2(PrimitiveWithInfer):
+class ApplyAdagradV2(Primitive):
     r"""
     Updates relevant entries according to the adagradv2 scheme.
 
@@ -5951,20 +5951,6 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
 
-    def infer_shape(self, var_shape, accum_shape, lr_shape, grad_shape):
-        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
-        validator.check('var shape', var_shape, 'grad shape', grad_shape, Rel.EQ, self.name)
-        lr_shp_len = len(lr_shape)
-        validator.check_int(lr_shp_len, 1, Rel.LE, "lr's rank", self.name)
-        if lr_shp_len == 1:
-            validator.check_int(lr_shape[0], 1, Rel.EQ, "lr_shape[0]", self.name)
-        return var_shape, accum_shape
-
-    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, grad_dtype):
-        args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        validator.check_scalar_or_tensor_types_same({'lr': lr_dtype}, [mstype.float16, mstype.float32], self.name)
-        return var_dtype, accum_dtype
 
 
 class SparseApplyAdagrad(PrimitiveWithInfer):
