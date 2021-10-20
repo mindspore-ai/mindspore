@@ -29,6 +29,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
+namespace {
+const int SOFTMAX1x1_32_MAX_C4_NUM = 8;
+}
 std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
   std::vector<float> mask{0.0f, 0.0f, 0.0f, 0.0f};
   const int reminder = channels % 4 == 0 ? 4 : channels % 4;
@@ -70,6 +73,9 @@ int SoftmaxOpenCLKernel::Prepare() {
     // support 4d tensor
     onexone_flag_ = true;
     kernel_name += "1x1";
+    if (out_shape_.Slice <= SOFTMAX1x1_32_MAX_C4_NUM) {
+      kernel_name += "_32";
+    }
   } else {
     onexone_flag_ = false;
     kernel_name += "Axis" + std::to_string(axis_);
@@ -104,8 +110,13 @@ int SoftmaxOpenCLKernel::Prepare() {
 
 void SoftmaxOpenCLKernel::SetGlobalLocal() {
   if (onexone_flag_) {
-    local_size_ = {32, 1};
-    global_size_ = {32, out_shape_.N};
+    if (out_shape_.Slice <= SOFTMAX1x1_32_MAX_C4_NUM) {
+      local_size_ = {1, 1};
+      global_size_ = {1, out_shape_.N};
+    } else {
+      local_size_ = {32, 1};
+      global_size_ = {32, out_shape_.N};
+    }
   } else {
     size_t global_x, global_y;
     if (axis_ == 1) {
