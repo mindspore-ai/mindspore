@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 """SigmoidGrad op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-sigmoid_grad_op_info = TBERegOp("SigmoidGrad") \
-    .fusion_type("OPAQUE") \
+sigmoid_grad_ds_op_info = TBERegOp("SigmoidGrad") \
+    .fusion_type("ELEMWISE") \
     .async_flag(False) \
     .binfile_name("sigmoid_grad.so") \
     .compute_cost(10) \
     .kernel_name("sigmoid_grad") \
     .partial_flag(True) \
-    .input(0, "x", False, "required", "all") \
-    .input(1, "y", False, "required", "all") \
-    .output(0, "z", False, "required", "all") \
+    .dynamic_shape(True) \
+    .input(0, "y", False, "required", "all") \
+    .input(1, "dy", False, "required", "all") \
+    .output(0, "output", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
@@ -33,7 +34,7 @@ sigmoid_grad_op_info = TBERegOp("SigmoidGrad") \
     .get_op_info()
 
 
-@op_info_register(sigmoid_grad_op_info)
-def _sigmoid_grad_tbe():
+@op_info_register(sigmoid_grad_ds_op_info)
+def _sigmoid_grad_ds_tbe():
     """SigmoidGrad TBE register"""
     return
