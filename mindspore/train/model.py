@@ -912,7 +912,7 @@ class Model:
         Data could be a single tensor, a list of tensor, or a tuple of tensor.
 
         Note:
-            This is a pre-compile function. The arguments should be the same as with model.predict() function.
+            This is a pre-compile function. The arguments should be the same as model.predict() function.
 
         Args:
             predict_data (Optional[Tensor, list[Tensor], tuple[Tensor]]): The predict data, can be a single tensor,
@@ -975,7 +975,7 @@ class Model:
             This is an experimental prototype that is subject to change and/or deletion.
 
         Note:
-            This is a pre-compile function. The arguments should be the same as with model.train() function.
+            This is a pre-compile function. The arguments should be the same as model.train() function.
 
         Args:
             train_dataset (Dataset): A training dataset iterator. If there is no
