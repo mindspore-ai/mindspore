@@ -214,8 +214,8 @@ void Parser::GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py
     para_node->debug_info()->set_name(arg_name);
     block_fg->add_parameter(para_node);
     AnfNodePtr para_after_cast = GetMixedPrecisionCastHelp(block_fg, para_node);
-    block->WriteVariable(arg_name, para_after_cast);
     MS_LOG(DEBUG) << "The arg[" << i << "] is " << arg_name;
+    block->WriteVariable(arg_name, para_after_cast);
   }
 }
 
