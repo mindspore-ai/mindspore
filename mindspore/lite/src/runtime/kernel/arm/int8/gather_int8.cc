@@ -32,7 +32,16 @@ namespace mindspore::kernel {
 int GatherInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
+  if (in_tensors_.size() == kInputSize2) {
+    auto axis_data = reinterpret_cast<int *>(in_tensors_.at(C2NUM)->data());
+    if (axis_data == nullptr) {
+      MS_LOG(ERROR) << "GatherInt8CPUkernel input[2] data nullptr.";
+      return RET_ERROR;
+    }
+    axis_ = *axis_data;
+  } else {
+    axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
+  }
   auto in_quant_args = in_tensors_.at(0)->quant_params();
   CHECK_LESS_RETURN(in_quant_args.size(), 1);
   auto out_quant_args = out_tensors_.at(0)->quant_params();

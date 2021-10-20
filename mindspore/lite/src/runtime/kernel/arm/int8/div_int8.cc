@@ -71,6 +71,7 @@ int DivInt8CPUKernel::ReSize() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
   broadcast_ = input0->ElementsNum() != input1->ElementsNum();
+  div_scalar_ = input1->ElementsNum() == 1;
   return RET_OK;
 }
 
@@ -108,7 +109,43 @@ int DivInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   return ret;
 }
 
+int DivInt8CPUKernel::DivScalarDoExecute(int task_id) {
+  auto input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  auto input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->MutableData());
+  auto output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->MutableData());
+  auto element_num = out_tensors_[0]->ElementsNum();
+
+  MS_ASSERT(op_parameter_->thread_num_ != 0);
+  int stride = UP_DIV(element_num, op_parameter_->thread_num_);
+  int count = MSMIN(stride, element_num - stride * task_id);
+
+  auto ret = RET_OK;
+  ret =
+    DivScalarInt8(input0_data_ + task_id * stride, input1_data_, output_data_ + task_id * stride, count, quant_args_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Divint8 function error error_code[" << ret << "]";
+  }
+  return ret;
+}
+
+int DivScalarInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  auto div_kernel = reinterpret_cast<DivInt8CPUKernel *>(cdata);
+  auto ret = div_kernel->DivScalarDoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "DivInt8 DoExecute error task_id[" << task_id << "] error_code[" << ret << "]";
+  }
+  return ret;
+}
+
 int DivInt8CPUKernel::Run() {
+  if (div_scalar_) {
+    auto ret = ParallelLaunch(this->ms_context_, DivScalarInt8Run, this, op_parameter_->thread_num_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "DivInt8Run function error error_code[" << ret << "]";
+    }
+    return ret;
+  }
+
   if (broadcast_) {
     ArithmeticParameter tile_para;
     tile_para.ndim_ = out_tensors_.at(0)->shape().size();
