@@ -39,6 +39,7 @@
 #include "securec/include/securec.h"
 #include "utils/json_operation_utils.h"
 #include "mindspore/ccsrc/debug/common.h"
+#include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -108,28 +109,13 @@ std::string TbeUtils::GetOpDebugPath() {
   if (debug_path != "") {
     return debug_path;
   }
-  std::string config_path;
-  if (!Common::CommonFuncForConfigPath("./", common::GetEnv(kCOMPILER_CACHE_PATH), &config_path)) {
-    MS_LOG(EXCEPTION) << "Invalid environment variable 'MS_COMPILER_CACHE_PATH', the path is "
-                      << common::GetEnv(kCOMPILER_CACHE_PATH)
-                      << ". Please check (1) whether the path exists, (2) whether the path has the access "
-                         "permission, (3) whether the path is too long. ";
-  }
-  // cppcheck-suppress *
-  if (config_path.empty()) {
-    MS_LOG(EXCEPTION) << "Config path of 'MS_COMPILER_CACHE_PATH' is empty.";
-  }
+  auto config_path = GetCompilerCachePath();
   std::string rank_id_str = common::GetEnv(kRankID);
   if (rank_id_str.empty()) {
     MS_LOG(DEBUG) << "Environment variable 'RANK_ID' is empty, using the default value: 0";
     rank_id_str = "0";
   }
-  // cppcheck-suppress *
-  if (config_path[config_path.length() - 1] == '/') {
-    debug_path = config_path + "rank_" + rank_id_str + "/";
-  } else {
-    debug_path = config_path + "/" + "rank_" + rank_id_str + "/";
-  }
+  debug_path = config_path + "rank_" + rank_id_str + "/";
   return debug_path;
 }
 
@@ -214,7 +200,12 @@ void TbeUtils::LoadCache() {
     auto config_path = TbeUtils::GetOpDebugPath();
     auto path = config_path + kCceKernelMeta;
     if (!bin_map->ReadIndex(path)) {
-      MS_LOG(INFO) << "Cache initialize failed[" << path << "]";
+      MS_LOG(INFO) << "Tbe Cache initialize failed[" << path << "]";
+    }
+    auto akg_config_path = GetCompilerCachePath();
+    auto akg_path = akg_config_path + kAkgKernelMeta;
+    if (!bin_map->ReadIndex(akg_path)) {
+      MS_LOG(INFO) << "Akg Cache initialize failed[" << akg_path << "]";
     }
     has_load = true;
   }
@@ -497,9 +488,8 @@ KernelPackPtr KernelMeta::GetKernelPack(const std::string &kernel_name, const bo
     ret = kernel_pack_iter->second;
   } else {
     // 2. kernel file has been create, but pack does not been created.
-    auto config_path = TbeUtils::GetOpDebugPath();
-    std::string cce_json = is_akg ? ("./kernel_meta/" + kernel_name + kJsonSuffix)
-                                  : (config_path + kCceKernelMeta + kernel_name + kJsonSuffix);
+    std::string cce_json = is_akg ? GetCompilerCachePath() + kAkgKernelMeta + kernel_name + kJsonSuffix
+                                  : TbeUtils::GetOpDebugPath() + kCceKernelMeta + kernel_name + kJsonSuffix;
     ret = std::make_shared<KernelPack>();
     if (!ret->LoadKernelMeta(cce_json)) {
       MS_LOG(INFO) << "Read cache json and bin file failed[" << cce_json << "]";

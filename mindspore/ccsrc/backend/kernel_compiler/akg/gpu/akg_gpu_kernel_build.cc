@@ -28,14 +28,6 @@ namespace mindspore {
 namespace kernel {
 constexpr int32_t ARGS_SIZE = 1;
 
-KernelPackPtr AkgGpuKernelBuilder::AkgSearchCache(const std::string &kernel_name) {
-  return SearchCache(kernel_name, kProcessorCuda);
-}
-
-KernelPackPtr AkgGpuKernelBuilder::AkgInsertCache(const std::string &kernel_name) {
-  return InsertCache(kernel_name, kProcessorCuda);
-}
-
 void AkgGpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
                                           const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
   auto kernel_mod_ptr = std::make_shared<GpuKernelMod>(kernel_pack);

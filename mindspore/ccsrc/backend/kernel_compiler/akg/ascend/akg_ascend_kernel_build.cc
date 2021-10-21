@@ -15,7 +15,7 @@
  */
 
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_build.h"
-
+#include <memory>
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -45,7 +45,7 @@ void AkgAscendKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
 }
 
 void AkgAscendKernelBuilder::AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) {
-  kernel::SaveJsonInfo(kernel_name, kernel_json);
+  kernel::SaveJsonInfo(kernel_name, kernel_json, GetCompilerCachePath().append(kAkgKernelMeta));
 }
 }  // namespace kernel
 }  // namespace mindspore

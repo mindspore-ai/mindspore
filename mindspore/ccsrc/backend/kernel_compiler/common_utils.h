@@ -33,9 +33,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kCceKernelMeta = "./kernel_meta/";
-constexpr auto kCpuKernelMeta = "./kernel_meta/";
-constexpr auto kGpuKernelMeta = "./cuda_meta";
+constexpr auto kAkgKernelMeta = "kernel_meta/";
 constexpr auto kProcessorAiCore = "aicore";
 constexpr auto kProcessorAiCpu = "aicpu";
 constexpr auto kProcessorCuda = "cuda";
@@ -45,6 +43,7 @@ constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
 constexpr unsigned int AUTODIFF_COMPILE_OVERTIME = 600;
 constexpr auto kArgDataformat = "data_format";
+constexpr auto kCOMPILER_CACHE_PATH = "MS_COMPILER_CACHE_PATH";
 
 const std::vector<std::string> support_devices = {"aicore", "aicpu", "cuda"};
 
@@ -74,6 +73,7 @@ class KernelMeta {
   std::unordered_map<std::string, std::string> kernel_meta_map_;
 };
 
+std::string GetCompilerCachePath();
 bool CheckCache(const std::string &kernel_name);
 KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor);
@@ -84,7 +84,7 @@ size_t GetDtypeNbyte(const std::string &dtypes);
 bool GetShapeSize(const std::vector<size_t> &shape, const TypePtr &type_ptr, int64_t *size_i);
 bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr, Processor processor,
                    std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list);
-void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path = kCceKernelMeta);
+void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path);
 std::string GetProcessor(const AnfNodePtr &anf_node);
 Processor GetProcessor(const string &processor);
 bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);

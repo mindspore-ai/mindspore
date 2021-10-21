@@ -156,12 +156,27 @@ FusionType GetFusionTypeByName(const std::string &name) {
   return iter->first;
 }
 
-void KernelMeta::Initialize() {
-  if (GetStrProcessorFromContext() == kProcessorCpu) {
-    kernel_meta_path_ = std::string(kCpuKernelMeta);
-  } else {
-    kernel_meta_path_ = std::string(kGpuKernelMeta) + "/";
+std::string GetCompilerCachePath() {
+  static std::string config_path = "";
+  if (config_path != "") {
+    return config_path;
+  }
+  if (!Common::CommonFuncForConfigPath("./", common::GetEnv(kCOMPILER_CACHE_PATH), &config_path)) {
+    MS_LOG(EXCEPTION) << "Invalid environment variable 'MS_COMPILER_CACHE_PATH', the path is "
+                      << common::GetEnv(kCOMPILER_CACHE_PATH)
+                      << ". Please check (1) whether the path exists, (2) whether the path has the access "
+                         "permission, (3) whether the path is too long. ";
+  }
+  if (config_path[config_path.length() - 1] != '/') {
+    config_path += "/";
+  }
+  return config_path;
+}
 
+void KernelMeta::Initialize() {
+  auto config_path = GetCompilerCachePath();
+  kernel_meta_path_ = config_path + std::string(kAkgKernelMeta);
+  if (access(kernel_meta_path_.c_str(), R_OK | W_OK | X_OK) == -1) {
 #if defined(_WIN32) || defined(_WIN64)
     auto ret = mkdir(kernel_meta_path_.c_str());
 #else
@@ -170,8 +185,9 @@ void KernelMeta::Initialize() {
     if (ret != 0) {
       MS_LOG(INFO) << "kernel dir [" << kernel_meta_path_ << "], will be created later";
     }
+  } else {
+    MS_LOG(DEBUG) << "kernel dir [" << kernel_meta_path_ << "] found";
   }
-
   initialized_ = true;
 }
 
@@ -241,13 +257,7 @@ KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &pro
   MS_LOG(INFO) << "Insert cache for kernel:" << kernel_name << ", processr:" << processor;
   KernelMeta *bin_map = KernelMeta::GetInstance();
   std::string kernel_json;
-  if (processor == kProcessorAiCore || processor == kProcessorAiCpu) {
-    kernel_json = kCceKernelMeta;
-  } else if (processor == kProcessorCpu) {
-    kernel_json = kCpuKernelMeta;
-  } else {
-    kernel_json = bin_map->kernel_meta_path();
-  }
+  kernel_json = bin_map->kernel_meta_path();
   (void)kernel_json.append(kernel_name).append(kJsonSuffix);
   KernelPackPtr kernel_pack = std::make_shared<KernelPack>();
   if (!kernel_pack->ReadFromJsonFile(kernel_json, processor)) {

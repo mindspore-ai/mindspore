@@ -113,7 +113,6 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   if (!akg_nodes.empty()) {
     kernel::AkgAscendKernelBuilder akg_ascend_kernel_builder;
     akg_ret = akg_ascend_kernel_builder.AkgKernelParallelBuild(akg_nodes);
-    (void)bin_map->ReadIndex(kernel::kCceKernelMeta);
   }
   for (const auto &anf_node : other_nodes) {
     kernel::KernelModPtr kernel_mod_ptr = SerialCompileImpl(anf_node);

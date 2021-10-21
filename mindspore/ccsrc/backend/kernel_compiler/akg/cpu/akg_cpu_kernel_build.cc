@@ -26,14 +26,6 @@
 
 namespace mindspore {
 namespace kernel {
-KernelPackPtr AkgCpuKernelBuilder::AkgSearchCache(const std::string &kernel_name) {
-  return SearchCache(kernel_name, kProcessorCpu);
-}
-
-KernelPackPtr AkgCpuKernelBuilder::AkgInsertCache(const std::string &kernel_name) {
-  return InsertCache(kernel_name, kProcessorCpu);
-}
-
 void AkgCpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
                                           const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
   auto kernel_mod_ptr = std::make_shared<CpuKernelMod>(kernel_pack);
