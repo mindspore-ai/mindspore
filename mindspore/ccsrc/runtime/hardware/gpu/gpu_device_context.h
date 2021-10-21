@@ -39,6 +39,8 @@ class GPUDeviceContext : public DeviceContext {
   // Release device memory, stream, cudnn and cublas handle, etc.
   void Destroy() override;
 
+  bool BindDeviceToCurrentThread() const;
+
   bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
   void FreeMemory(DeviceAddress *const &address) const override;
   bool AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
@@ -83,7 +85,6 @@ class GPUDeviceContext : public DeviceContext {
   // Operator fusion optimization.
   void FuseOperators(const KernelGraphPtr &graph) const;
 
-  bool BindDeviceToCurrentThread() const;
 #ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.
   bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,

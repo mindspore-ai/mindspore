@@ -198,7 +198,8 @@ bool GPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddressP
 
 DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                        TypeId type_id) const {
-  return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id);
+  return std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id, device_context_key_.device_name_,
+                                            device_context_key_.device_id_);
 }
 
 void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
