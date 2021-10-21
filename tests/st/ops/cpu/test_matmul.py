@@ -19,8 +19,8 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
+np.random.seed(100)
 
 
 class MatMulNet(nn.Cell):
@@ -31,85 +31,64 @@ class MatMulNet(nn.Cell):
     def construct(self, x, y):
         return self.matmul(x, y)
 
+
 def judge_result_correct(result, expect):
     assert result.dtype == expect.dtype
     assert result.shape == expect.shape
     assert np.allclose(result, expect)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_matmul_no_transpose_vec():
-    input_x = Tensor(np.arange(1 * 3).reshape((1, 3)), mstype.float32)
-    input_y = Tensor(np.arange(3 * 5).reshape((3, 5)), mstype.float32)
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_matmul_no_transpose_vec(dtype):
+    """
+    Feature: matrix & vec
+    Description: test cases for matmul between matrix and vector
+    Expectation: the result match to scipy
+    """
+    a = np.arange(1 * 3).reshape((1, 3)).astype(dtype)
+    b = np.arange(3 * 5).reshape((3, 5)).astype(dtype)
 
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     net = MatMulNet()
-    output = net(input_x, input_y)
-    expect = np.array([[25., 28., 31., 34., 37.]], dtype=np.float32)
-    judge_result_correct(output.asnumpy(), expect)
+    output = net(Tensor(a), Tensor(b)).asnumpy()
+    expect = np.array([[25., 28., 31., 34., 37.]], dtype)
+    judge_result_correct(output, expect)
+
+
+def np_matmul(a: np.ndarray, b: np.ndarray, trans_a: bool, trans_b: bool):
+    if trans_a:
+        a = a.T
+    if trans_b:
+        b = b.T
+    return np.matmul(a, b)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_matmul_no_transpose():
-    input_x = Tensor(np.arange(4 * 3).reshape((4, 3)), mstype.float32)
-    input_y = Tensor(np.arange(3 * 5).reshape((3, 5)), mstype.float32)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-    net = MatMulNet()
-    output = net(input_x, input_y)
-    expect = np.array([[25., 28., 31., 34., 37.],
-                       [70., 82., 94., 106., 118.],
-                       [115., 136., 157., 178., 199.],
-                       [160., 190., 220., 250., 280.]], dtype=np.float32)
-    judge_result_correct(output.asnumpy(), expect)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_matmul_transpose_a():
-    input_x = Tensor(np.arange(3 * 2).reshape((3, 2)), mstype.float32)
-    input_y = Tensor(np.arange(3 * 4).reshape((3, 4)), mstype.float32)
+@pytest.mark.parametrize('trans_a', [True, False])
+@pytest.mark.parametrize('trans_b', [True, False])
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
+def test_matmul_matrix(trans_a, trans_b, dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for matmul for all float types and transpose args combinations
+    Expectation: the result match to scipy
+    """
+    m, k, n = 5, 3, 4
+    a = np.random.random((m, k)).astype(dtype)
+    b = np.random.random((k, n)).astype(dtype)
+    if trans_a:
+        a = a.T
+    if trans_b:
+        b = b.T
+    expect = np_matmul(a, b, trans_a, trans_b)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    net = MatMulNet(transpose_a=True)
-    output = net(input_x, input_y)
-    expect = np.array([[40., 46., 52., 58.],
-                       [52., 61., 70., 79.]], dtype=np.float32)
-    judge_result_correct(output.asnumpy(), expect)
+    net = MatMulNet(transpose_a=trans_a, transpose_b=trans_b)
+    output = net(Tensor(a), Tensor(b)).asnumpy()
 
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_matmul_transpose_b():
-    input_x = Tensor(np.arange(2 * 3).reshape((2, 3)), mstype.float32)
-    input_y = Tensor(np.arange(5 * 3).reshape((5, 3)), mstype.float32)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    net = MatMulNet(transpose_b=True)
-    output = net(input_x, input_y)
-    expect = np.array([[5., 14., 23., 32., 41.],
-                       [14., 50., 86., 122., 158.]], dtype=np.float32)
-    judge_result_correct(output.asnumpy(), expect)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_matmul_transpose_ab():
-    input_x = Tensor(np.arange(3 * 5).reshape((3, 5)), mstype.float16)
-    input_y = Tensor(np.arange(4 * 3).reshape((4, 3)), mstype.float16)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    net = MatMulNet(transpose_a=True, transpose_b=True)
-    output = net(input_x, input_y)
-    expect = np.array([[25., 70., 115., 160.],
-                       [28., 82., 136., 190.],
-                       [31., 94., 157., 220.],
-                       [34., 106., 178., 250.],
-                       [37., 118., 199., 280.]], dtype=np.float16)
-    judge_result_correct(output.asnumpy(), expect)
+    judge_result_correct(output, expect)
