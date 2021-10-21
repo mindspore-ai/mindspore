@@ -182,12 +182,11 @@ class Calibrator {
 
   STATUS AddQuantizedOp(const CNodePtr &cnode);
 
-  static STATUS RecordMaxMinValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
+  STATUS RecordMaxMinValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
 
-  static STATUS UpdateDivergInterval(
-    std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
+  STATUS UpdateDivergInterval(std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
 
-  static STATUS UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
+  STATUS UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
 
   STATUS ComputeThreshold();
 

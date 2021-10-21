@@ -97,8 +97,8 @@ int QuantNodeHelper::NodeQuantPreprocess(schema::MetaGraphT *graph, schema::CNod
     MS_LOG(ERROR) << node->name << " propagate Quant Params failed.";
     return ret;
   }
-  ret = quant_type_determiner_->DetermineQuantAll(*graph, node);
-  if (!ret) {
+  auto bool_ret = quant_type_determiner_->DetermineQuantAll(*graph, node);
+  if (!bool_ret) {
     MS_LOG(DEBUG) << node->name << " dont need quant.";
     return RET_OK;
   }
