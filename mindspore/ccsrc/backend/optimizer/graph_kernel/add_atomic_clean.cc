@@ -417,7 +417,7 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphP
     AnfNodePtrList cast_inputs = {NewValueNode(prim::kPrimCast), value_node};
     auto cast_node_inner =
       CreateCNode(cast_inputs, new_sub_graph, {.format = format, .shape = {1}, .type = TypeIdToType(dst_type)});
-    SetNodeAttrSafely("dst_type", MakeValue("float32"), cast_node_inner);
+    SetNodeAttrSafely(kAttrDstType, kFloat32, cast_node_inner);
     broadcast_input_node = cast_node_inner;
   } else {
     broadcast_input_node = value_node;

@@ -30,6 +30,7 @@
 #include "backend/optimizer/pass/conv_transpose_to_conv_bp.h"
 #include "backend/optimizer/pass/reduce_sum_optimizer.h"
 #include "backend/optimizer/pass/add_dynamic_shape_attr.h"
+#include "backend/optimizer/pass/add_akg_kernel_attrs.h"
 #include "utils/ms_context.h"
 #include "debug/anf_ir_dump.h"
 
@@ -78,6 +79,7 @@ void CommonFinalOptimization(const std::shared_ptr<session::KernelGraph> &kernel
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto pm = std::make_shared<PassManager>("final_opt");
   pm->AddPass(std::make_shared<OptimizeUpdateState>());
+  pm->AddPass(std::make_shared<AddAkgKernelAttrs>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

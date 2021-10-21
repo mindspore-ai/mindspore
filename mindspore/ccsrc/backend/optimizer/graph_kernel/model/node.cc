@@ -29,7 +29,6 @@
 #include "mindspore/core/ir/tensor.h"
 #include "mindspore/core/utils/shape_utils.h"
 #include "utils/utils.h"
-#include "backend/kernel_compiler/common_utils.h"
 
 namespace mindspore::graphkernel::inner {
 void Node::DumpTensor(std::ostringstream &os) const {
@@ -38,7 +37,7 @@ void Node::DumpTensor(std::ostringstream &os) const {
     os << shape[i];
     if (i + 1 < shape.size()) os << ",";
   }
-  os << "]{" << kernel::TypeId2String(type) << "x" << format << "}";
+  os << "]{" << TypeIdToType(type)->ToString() << "x" << format << "}";
 }
 
 void Node::AddInput(const NodePtr &new_input) {

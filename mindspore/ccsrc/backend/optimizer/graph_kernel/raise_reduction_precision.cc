@@ -37,7 +37,8 @@ AnfNodePtr RaiseReductionPrecision::CreateCast(const AnfNodePtr &input, const Ty
   MS_EXCEPTION_IF_NULL(func_graph);
   AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), input};
   auto cnode = CreateCNode(inputs, func_graph, {.format = format, .shape = GetShape(input), .type = dst_type});
-  SetNodeAttrSafely("dst_type", MakeValue(kernel::TypeId2String(dst_type->type_id())), cnode);
+  SetNodeAttrSafely(kAttrDstType, dst_type, cnode);
+  AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(true), cnode);
   return cnode;
 }
 
