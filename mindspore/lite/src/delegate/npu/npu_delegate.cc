@@ -51,7 +51,7 @@
 #include "src/delegate/npu/op/transpose_npu.h"
 #include "src/delegate/npu/op/unsqueeze_npu.h"
 #include "src/delegate/npu/npu_graph.h"
-#include "src/delegate/npu/npu_graph_utils.h"
+#include "src/delegate/delegate_utils.h"
 #include "src/delegate/npu/pass/npu_transform_pass.h"
 #include "src/delegate/npu/pass/npu_insert_transform_pass.h"
 #include "src/delegate/npu/pass/npu_fusion_pass.h"
@@ -252,7 +252,7 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
 
 std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
                                                  KernelIter end) {
-  auto out_tensors = NPUGraphUtils::GetGraphOutTensors(ops);
+  auto out_tensors = lite::GetGraphOutTensors(ops);
   std::vector<mindspore::MSTensor> all_out_tensors;
   for (auto op : ops) {
     for (auto out_tensor : op->outputs()) {
@@ -279,7 +279,7 @@ std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops
 
 kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel *model, KernelIter from,
                                             KernelIter end) {
-  auto in_tensors = NPUGraphUtils::GetGraphInTensors(ops);
+  auto in_tensors = lite::GetGraphInTensors(ops);
   auto out_tensors = GraphOutTensors(ops, model, from, end);
   auto graph_kernel = new (std::nothrow) NPUGraph(ops, npu_manager_, in_tensors, out_tensors);
   if (graph_kernel == nullptr) {

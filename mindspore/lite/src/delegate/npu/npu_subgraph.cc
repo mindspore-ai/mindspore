@@ -27,7 +27,6 @@
 #include "include/version.h"
 #include "src/common/utils.h"
 #include "src/delegate/npu/npu_converter_utils.h"
-#include "src/delegate/npu/npu_graph_utils.h"
 namespace mindspore {
 static std::set<mindspore::schema::PrimitiveType> npu_specific_weight_nodes = {
   schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_PadFusion,
