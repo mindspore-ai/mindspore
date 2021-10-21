@@ -356,19 +356,15 @@ class _RNNBase(Cell):
 
     def construct(self, x, hx=None, seq_length=None):
         '''Defines the RNN like operators performed'''
-        x_dtype = P.dtype(x)
-        hx_dtype = P.dtype(hx)
-        _check_input_dtype(x_dtype, "x", [mstype.float32], self.cls_name)
-        _check_input_dtype(hx_dtype, "hx", [mstype.float32], self.cls_name)
-        if seq_length is not None:
-            seq_length_dtype = P.dtype(seq_length)
-            _check_input_dtype(seq_length_dtype, "seq_length", [mstype.int32, mstype.int64], self.cls_name)
-
         max_batch_size = x.shape[0] if self.batch_first else x.shape[1]
         num_directions = 2 if self.bidirectional else 1
         if hx is None:
             hx = _init_state((self.num_layers * num_directions, max_batch_size, self.hidden_size),
                              x.dtype, self.is_lstm)
+        _check_input_dtype(x.dtype, "x", [mstype.float32], self.cls_name)
+        _check_input_dtype(hx.dtype, "hx", [mstype.float32], self.cls_name)
+        if seq_length is not None:
+            _check_input_dtype(seq_length.dtype, "seq_length", [mstype.int32, mstype.int64], self.cls_name)
         if self.batch_first:
             x = P.Transpose()(x, (1, 0, 2))
         if self.bidirectional:
@@ -622,10 +618,8 @@ class RNNCell(_RNNCellBase):
     def construct(self, x, hx):
         _check_is_tensor('x', x, self.cls_name)
         _check_is_tensor('hx', hx, self.cls_name)
-        x_dtype = P.dtype(x)
-        hx_dtype = P.dtype(hx)
-        _check_input_dtype(x_dtype, "x", [mstype.float32], self.cls_name)
-        _check_input_dtype(hx_dtype, "hx", [mstype.float32], self.cls_name)
+        _check_input_dtype(x.dtype, "x", [mstype.float32], self.cls_name)
+        _check_input_dtype(hx.dtype, "hx", [mstype.float32], self.cls_name)
         _check_batch_size_equal(x.shape[0], hx.shape[0], self.cls_name)
 
         if self.nonlinearity == "tanh":
@@ -692,10 +686,8 @@ class GRUCell(_RNNCellBase):
     def construct(self, x, hx):
         _check_is_tensor('x', x, self.cls_name)
         _check_is_tensor('hx', hx, self.cls_name)
-        x_dtype = P.dtype(x)
-        hx_dtype = P.dtype(hx)
-        _check_input_dtype(x_dtype, "x", [mstype.float32], self.cls_name)
-        _check_input_dtype(hx_dtype, "hx", [mstype.float32], self.cls_name)
+        _check_input_dtype(x.dtype, "x", [mstype.float32], self.cls_name)
+        _check_input_dtype(hx.dtype, "hx", [mstype.float32], self.cls_name)
         _check_batch_size_equal(x.shape[0], hx.shape[0], self.cls_name)
 
         return _gru_cell(x, hx, self.weight_ih, self.weight_hh, self.bias_ih, self.bias_hh)
