@@ -32,7 +32,8 @@ from mindspore.nn import SoftmaxCrossEntropyWithLogits
 from mindspore.nn import Momentum
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
-from dump_test_utils import generate_dump_json
+from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow, \
+    check_dump_structure, find_nth_pos
 from tests.security_utils import security_off_wrap
 
 
@@ -67,8 +68,12 @@ def test_async_dump():
             shutil.rmtree(dump_path)
         add = Net()
         add(Tensor(x), Tensor(y))
-        time.sleep(5)
+        for _ in range(3):
+            if not os.path.exists(dump_file_path):
+                time.sleep(2)
+        check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
         assert len(os.listdir(dump_file_path)) == 1
+        del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
 def run_e2e_dump():
@@ -100,6 +105,11 @@ def run_e2e_dump():
         expect = np.array([[8, 10, 12], [14, 16, 18]], np.float32)
         assert output.dtype == expect.dtype
         assert np.array_equal(output, expect)
+        for _ in range(3):
+            if not os.path.exists(dump_file_path):
+                time.sleep(2)
+        check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
 @pytest.mark.level0
@@ -122,6 +132,8 @@ def test_e2e_dump_with_hccl_env():
     os.environ["RANK_TABLE_FILE"] = "invalid_file.json"
     os.environ["RANK_ID"] = "4"
     run_e2e_dump()
+    del os.environ['RANK_TABLE_FILE']
+    del os.environ['RANK_ID']
 
 
 @pytest.mark.level0
@@ -142,6 +154,8 @@ def test_cpu_e2e_dump_with_hccl_set():
     os.environ["RANK_TABLE_FILE"] = "invalid_file.json"
     os.environ["RANK_ID"] = "4"
     run_e2e_dump()
+    del os.environ['RANK_TABLE_FILE']
+    del os.environ['RANK_ID']
 
 
 @pytest.mark.level0
@@ -162,6 +176,8 @@ def test_gpu_e2e_dump_with_hccl_set():
     os.environ["RANK_TABLE_FILE"] = "invalid_file.json"
     os.environ["RANK_ID"] = "4"
     run_e2e_dump()
+    del os.environ['RANK_TABLE_FILE']
+    del os.environ['RANK_ID']
 
 
 class ReluReduceMeanDenseRelu(Cell):
@@ -221,6 +237,7 @@ def test_async_dump_net_multi_layer_mode1():
                 assert value.asnumpy() == dump_result[index]
         else:
             print('Failed to find hisi convert tools: msaccucmp.py or msaccucmp.pyc.')
+        del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
 @pytest.mark.level0
@@ -247,6 +264,8 @@ def test_dump_with_diagnostic_path():
         add = Net()
         add(Tensor(x), Tensor(y))
         assert len(os.listdir(dump_file_path)) == 5
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+        del os.environ['MS_DIAGNOSTIC_DATA_PATH']
 
 
 def run_e2e_dump_execution_graph():
@@ -265,6 +284,7 @@ def run_e2e_dump_execution_graph():
         add(Tensor(x), Tensor(y))
         exe_graph_path = os.path.join(dump_path, 'rank_0', 'execution_order')
         assert len(os.listdir(exe_graph_path)) == 1
+        del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
 @pytest.mark.level0
@@ -275,3 +295,107 @@ def test_dump_with_execution_graph():
     """Test dump with execution graph on GPU."""
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     run_e2e_dump_execution_graph()
+
+
+def run_overflow_dump():
+    """Run async dump and generate overflow"""
+    if sys.platform != 'linux':
+        return
+    pwd = os.getcwd()
+    overflow_x = np.array([60000, 60000]).astype(np.float16)
+    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'overflow_dump')
+        dump_config_path = os.path.join(tmp_dir, 'overflow_dump.json')
+        generate_dump_json_with_overflow(dump_path, dump_config_path, 'test_async_dump', 3)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        add = Net()
+        add(Tensor(overflow_x), Tensor(overflow_x))
+        exe_graph_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
+        for _ in range(5):
+            if not os.path.exists(exe_graph_path):
+                time.sleep(2)
+        check_dump_structure(dump_path, dump_config_path, 1, 1, 1)
+        # check if overflow dump generate exact two files, and the naming format
+        assert len(os.listdir(exe_graph_path)) == 2
+        output_path = glob.glob(os.path.join(exe_graph_path, "Add.Default_Add-op0.*.*.*"))[0]
+        overflow_path = glob.glob(os.path.join(exe_graph_path, "Opdebug.Node_OpDebug.*.*.*"))[0]
+        assert output_path
+        assert overflow_path
+        # check if generated files have matching task and stream id
+        output_file_name = os.path.split(output_path)
+        overflow_file_name = os.path.split(overflow_path)
+        output_second_dot_pos = find_nth_pos(output_file_name[1], ".", 2)
+        output_third_dot_pos = find_nth_pos(output_file_name[1], ".", 3)
+        output_fourth_dot_pos = find_nth_pos(output_file_name[1], ".", 4)
+        output_task_id = output_file_name[1][output_second_dot_pos+1:output_third_dot_pos]
+        output_stream_id = output_file_name[1][output_third_dot_pos+1:output_fourth_dot_pos]
+
+        overflow_second_dot_pos = find_nth_pos(overflow_file_name[1], ".", 2)
+        overflow_third_dot_pos = find_nth_pos(overflow_file_name[1], ".", 3)
+        overflow_fourth_dot_pos = find_nth_pos(overflow_file_name[1], ".", 4)
+        overflow_task_id = overflow_file_name[1][overflow_second_dot_pos+1:overflow_third_dot_pos]
+        overflow_stream_id = overflow_file_name[1][overflow_third_dot_pos+1:overflow_fourth_dot_pos]
+        assert output_task_id == overflow_task_id
+        assert output_stream_id == overflow_stream_id
+        # check if overflow dump file contains same task and stream id as file name
+        with open(overflow_path, 'rb') as f:
+            f.seek(321, 0)
+            raw_data = f.read()
+            task_id_infile = int.from_bytes(raw_data[24:25], 'little')
+            stream_id_infile = int.from_bytes(raw_data[16:17], 'little')
+            assert output_task_id == str(task_id_infile)
+            assert output_stream_id == str(stream_id_infile)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+def run_not_overflow_dump():
+    """Run async dump and not generate overflow"""
+    if sys.platform != 'linux':
+        return
+    pwd = os.getcwd()
+    overflow_x = np.array([60000, 60000]).astype(np.float16)
+    overflow_y = np.array([2, 2]).astype(np.float16)
+    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'overflow_dump')
+        dump_config_path = os.path.join(tmp_dir, 'overflow_dump.json')
+        generate_dump_json_with_overflow(dump_path, dump_config_path, 'test_async_dump', 3)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        add = Net()
+        add(Tensor(overflow_x), Tensor(overflow_y))
+        exe_graph_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
+        # check no overflow is happening, and path should not be generated
+        assert not os.path.exists(exe_graph_path)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_overflow_dump():
+    """
+    Feature: Overflow Dump
+    Description: Test overflow dump
+    Expectation: Overflow is occurred, and overflow dump file is in correct format
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+    run_overflow_dump()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_not_overflow_dump():
+    """
+    Feature: Overflow Dump
+    Description: Test overflow dump
+    Expectation: Overflow is not occurred, and overflow dump file is not generated
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='Ascend')
+    run_not_overflow_dump()
