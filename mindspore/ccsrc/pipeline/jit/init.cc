@@ -77,7 +77,7 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<GraphExecutorPy, std::shared_ptr<GraphExecutorPy>>(m, "GraphExecutor_")
     .def_static("get_instance", &GraphExecutorPy::GetInstance, "Executor get_instance.")
     .def("__call__", &GraphExecutorPy::Run, py::arg("args"), py::arg("phase") = py::str(""), "Executor run function.")
-    .def("del_net_res", &GraphExecutorPy::DelNetRes, py::arg("network_id") = py::str(""), "Delete network resource.")
+    .def("del_net_res", &GraphExecutorPy::DelNetRes, py::arg("network_id") = py::set(), "Delete network resource.")
     .def("get_func_graph", &GraphExecutorPy::GetFuncGraph, py::arg("phase") = py::str(""), "Get graph pointer.")
     .def("get_func_graph_proto", &GraphExecutorPy::GetFuncGraphProto, py::arg("phase") = py::str(""),
          py::arg("type") = py::str("onnx_ir"), "Get graph proto string by specifying ir type.")
