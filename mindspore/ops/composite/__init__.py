@@ -36,6 +36,7 @@ __all__ = [
     'core',
     'add_flags',
     'tail',
+    'Map',
     'MultitypeFuncGraph',
     'GradOperation',
     'HyperMap',
