@@ -387,7 +387,7 @@ class Constant(Initializer):
 
 @_register()
 class Uniform(Initializer):
-    """
+    r"""
     Initialize a uniform array, and obtain values :math:`{U}(-\text{scale}, \text{scale})` from the uniform distribution
     to fill the input tensor.
 
@@ -445,7 +445,7 @@ class Normal(Initializer):
 
 @_register()
 class TruncatedNormal(Initializer):
-    """
+    r"""
     Initialize a truncated normal distribution which is a bounded normal distribution
     within :math:`{N}(\text{low}, \text{high})`.
 
