@@ -14,30 +14,29 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/tbe/tbe_kernel_mod.h"
-#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
+#include "backend/kernel_compiler/tbe/tbe_kernel_compile.h"
 
 namespace mindspore {
 namespace kernel {
 namespace ascend {
-std::string AscendKernelCompileManager::AscendOpSelectFormat(const AnfNodePtr &node) { return std::string(); }
-bool AscendKernelCompileManager::AscendOpCheckSupported(const AnfNodePtr &node) { return true; }
-AscendKernelCompileManager::~AscendKernelCompileManager() {}
-bool AscendKernelCompileManager::tbe_init_flag_ = true;
+std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) { return std::string(); }
+bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node) { return true; }
+TbeKernelCompileManager::~TbeKernelCompileManager() {}
+bool TbeKernelCompileManager::tbe_init_flag_ = true;
 
-void AscendKernelCompileManager::TbeInitialize() {}
+void TbeKernelCompileManager::TbeInitialize() {}
 // pre build
-void AscendKernelCompileManager::AscendPreBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) {}
+void TbeKernelCompileManager::TbePreBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph) {}
 // single op compile
-bool AscendKernelCompileManager::AscendSingleOpCompile(const std::vector<AnfNodePtr> &anf_nodes) { return true; }
+void TbeKernelCompileManager::TbeSingleOpCompile(const std::vector<CNodePtr> &anf_nodes) {}
 // fusion op compile
-KernelModMap AscendKernelCompileManager::AscendFusionOpCompile(const std::vector<FusionScopeInfo> &fusion_scopes) {
-  std::map<int64_t, KernelModPtr> kernel_mod_ret;
+JsonNameMap TbeKernelCompileManager::TbeFusionOpCompile(const std::vector<FusionScopeInfo> &fusion_scopes) {
+  JsonNameMap json_name_map;
   for (const auto &fusion_scope_iter : fusion_scopes) {
-    kernel_mod_ret[fusion_scope_iter.scope_id] = std::make_shared<TbeKernelMod>(nullptr);
+    json_name_map[fusion_scope_iter.scope_id] = "NA";
   }
-  return kernel_mod_ret;
+  return json_name_map;
 }
-void AscendKernelCompileManager::ResetOldTask() {}
 }  // namespace ascend
 }  // namespace kernel
 }  // namespace mindspore

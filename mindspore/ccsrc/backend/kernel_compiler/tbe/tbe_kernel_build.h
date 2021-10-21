@@ -35,7 +35,7 @@ namespace kernel {
 class TbeKernelBuild {
  public:
   static bool GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
-                        std::vector<size_t> *output_size_list, const AnfNodePtr &anf_node);
+                        std::vector<size_t> *output_size_list);
   static bool GetIOSize(const nlohmann::json &fusion_op_list, const std::vector<AnfNodePtr> &output_nodes,
                         std::vector<size_t> *input_size_list, std::vector<size_t> *output_size_list);
   static void CalInputSize(const nlohmann::json &fusion_op_list, std::vector<size_t> *input_size_list);

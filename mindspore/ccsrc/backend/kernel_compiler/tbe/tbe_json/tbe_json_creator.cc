@@ -275,6 +275,7 @@ size_t TbeJsonCreator::GenJsonHash(nlohmann::json tbe_json) {
     op.erase(kJName);
     op.erase(kJOriName);
     op.erase(kJPattern);
+    op.erase(kJOutputDataDesc);
     DeleteDescName(&op.at(kJOutputDesc));
     if (op[kJType] != kJData) {
       DeleteDescName(&op.at(kJInputDesc));

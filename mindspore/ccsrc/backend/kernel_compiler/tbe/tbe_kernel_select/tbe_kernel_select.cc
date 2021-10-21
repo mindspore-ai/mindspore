@@ -25,7 +25,7 @@
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
-#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
+#include "backend/kernel_compiler/tbe/tbe_kernel_compile.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/common_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_broadcast_selecter.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_select/tbe_kernel_reduce_selecter.h"
@@ -270,8 +270,8 @@ bool TbeKernelSelect::TbeCheckSupported(const KernelBuildInfoIter &kernel_build_
   auto kernel_build_info_tmp = AnfAlgo::GetSelectKernelBuildInfo(cnode_ptr_);
   AnfAlgo::SetSelectKernelBuildInfo(*kernel_build_info_iter, cnode_ptr_.get());
   bool ret = true;
-  auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-  if (!build_manager.AscendOpCheckSupported(cnode_ptr_)) {
+  auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
+  if (!build_manager.TbeOpCheckSupported(cnode_ptr_)) {
     ret = false;
   }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_tmp, cnode_ptr_.get());
@@ -434,8 +434,8 @@ std::vector<std::string> TbeKernelSelect::SplitStrToVec(const std::string &op_se
 std::string TbeKernelSelect::OpSelectFormat() {
   std::string res_json_str;
   MS_LOG(INFO) << "Format select for node:[" << cnode_ptr_->fullname_with_scope() << "].";
-  auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-  res_json_str = build_manager.AscendOpSelectFormat(cnode_ptr_);
+  auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
+  res_json_str = build_manager.TbeOpSelectFormat(cnode_ptr_);
   return res_json_str;
 }
 

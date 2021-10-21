@@ -145,7 +145,7 @@
 #include "backend/optimizer/ascend/mindir/bn_grad_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/all_to_all_unify_mindir.h"
 #include "backend/optimizer/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
-#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
+#include "backend/kernel_compiler/tbe/tbe_kernel_compile.h"
 #include "utils/ms_context.h"
 #include "utils/config_manager.h"
 #include "utils/context/graph_kernel_flags.h"
@@ -485,8 +485,8 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   auto pre_build = common::GetEnv("MS_DISABLE_PREBUILD");
   if (pre_build.empty()) {
-    auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    build_manager.AscendPreBuild(kernel_graph);
+    auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
+    build_manager.TbePreBuild(kernel_graph);
   }
 #ifdef ENABLE_DUMP_IR
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);

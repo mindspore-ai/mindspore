@@ -76,11 +76,11 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_common) {
   auto tbe_json_creator_build = std::make_shared<BuildTbeJsonCreator>();
   nlohmann::json kernel_json;
   EXPECT_TRUE(tbe_json_creator_select->GenJson(relu1, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 7996236493612266030U);
+  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 13146561810461380838U);
   EXPECT_TRUE(tbe_json_creator_check->GenJson(relu1, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 7996236493612266030U);
+  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 13146561810461380838U);
   EXPECT_TRUE(tbe_json_creator_build->GenJson(relu1, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 8871925407866693227U);
+  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 17413190217831512531U);
 }
 
 TEST_F(TestHWTBEJsonCreator, test_tbe_single_conv2d_backprop_filter) {
@@ -119,11 +119,11 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_conv2d_backprop_filter) {
   auto tbe_json_creator_build = std::make_shared<BuildTbeJsonCreator>();
   nlohmann::json kernel_json;
   EXPECT_TRUE(tbe_json_creator_select->GenJson(conv2d_backprop_filter, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 5607478231018216842U);
+  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 751738472046426254U);
   EXPECT_TRUE(tbe_json_creator_check->GenJson(conv2d_backprop_filter, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 5607478231018216842U);
+  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 751738472046426254U);
   EXPECT_TRUE(tbe_json_creator_build->GenJson(conv2d_backprop_filter, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 9335690682233293002U);
+  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 8516089404045447470U);
 }
 
 TEST_F(TestHWTBEJsonCreator, test_tbe_single_dynamic_rnn) {
@@ -177,11 +177,11 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_dynamic_rnn) {
   auto tbe_json_creator_build = std::make_shared<BuildTbeJsonCreator>();
   nlohmann::json kernel_json;
   EXPECT_TRUE(tbe_json_creator_select->GenJson(dynamic_rnn, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 3872183248827091892U);
+  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 13288675099420394285U);
   EXPECT_TRUE(tbe_json_creator_check->GenJson(dynamic_rnn, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 3872183248827091892U);
+  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(), 13288675099420394285U);
   EXPECT_TRUE(tbe_json_creator_build->GenJson(dynamic_rnn, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 4782807372940719547U);
+  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 17084598473306810717U);
 }
 
 TEST_F(TestHWTBEJsonCreator, test_tbe_single_layer_norm) {
@@ -231,11 +231,11 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_single_layer_norm) {
   auto tbe_json_creator_build = std::make_shared<BuildTbeJsonCreator>();
   nlohmann::json kernel_json;
   EXPECT_TRUE(tbe_json_creator_select->GenJson(layer_norm, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 16136357943512350570U);
+  EXPECT_EQ(tbe_json_creator_select->GetJsonHash(), 6545088373747371515U);
   EXPECT_TRUE(tbe_json_creator_check->GenJson(layer_norm, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(),  2213683222980179728U);
+  EXPECT_EQ(tbe_json_creator_check->GetJsonHash(),  6866520754867840453U);
   EXPECT_TRUE(tbe_json_creator_build->GenJson(layer_norm, &kernel_json));
-  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 12598710319131944227U);
+  EXPECT_EQ(tbe_json_creator_build->GetJsonHash(), 10583210293426000299U);
 }
 
 TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
@@ -306,7 +306,7 @@ TEST_F(TestHWTBEJsonCreator, test_tbe_fusion_common) {
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));
-  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 4295704009218326208U);
+  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 12371036326019427133U);
 }
 
 TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
@@ -365,7 +365,7 @@ TEST_F(TestHWTBEJsonCreator, test_fusion_add_conv2d) {
   nlohmann::json fusion_json;
   auto tbe_json_creator = std::make_shared<FusionBuildTbeJsonCreator>();
   EXPECT_TRUE(tbe_json_creator->GenJson(fusion_scope_info, &fusion_json));
-  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 3224628976775251376U);
+  EXPECT_EQ(tbe_json_creator->GetJsonHash(), 3371595473173037387U);
 }
 
 }  // namespace mindspore::kernel

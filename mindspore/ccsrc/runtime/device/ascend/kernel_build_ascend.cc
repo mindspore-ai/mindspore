@@ -22,10 +22,7 @@
 #include <set>
 #include <map>
 #include "runtime/device/ascend/kernel_select_ascend.h"
-#include "runtime/device/kernel_info.h"
-#include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
-#include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
+#include "backend/kernel_compiler/tbe/tbe_kernel_compile.h"
 #include "backend/kernel_compiler/akg/ascend/akg_ascend_kernel_build.h"
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_build.h"
 #include "backend/kernel_compiler/host/host_kernel_build.h"
@@ -33,8 +30,6 @@
 #include "backend/kernel_compiler/rts/rt_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "backend/kernel_compiler/common_utils.h"
-#include "frontend/operator/ops.h"
-#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace device {
@@ -72,7 +67,7 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
 }
 
 static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
-  std::vector<AnfNodePtr> tbe_nodes;
+  std::vector<CNodePtr> tbe_nodes;
   std::vector<AnfNodePtr> akg_nodes;
   std::vector<AnfNodePtr> other_nodes;
   for (const auto &anf_node : kernels) {
@@ -80,12 +75,13 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
     if (!AnfAlgo::IsRealKernel(anf_node)) {
       continue;
     }
+    if (AnfAlgo::GetKernelMod(anf_node) != nullptr) {
+      continue;
+    }
     KernelType kernel_type = AnfAlgo::GetKernelType(anf_node);
     switch (kernel_type) {
       case KernelType::TBE_KERNEL: {
-        if (AnfAlgo::GetKernelMod(anf_node) == nullptr) {
-          tbe_nodes.push_back(anf_node);
-        }
+        tbe_nodes.push_back(anf_node);
         break;
       }
       case KernelType::AKG_KERNEL: {
@@ -98,18 +94,16 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
       }
     }
   }
-  bool tbe_ret = true;
-  bool akg_ret = true;
   auto bin_map = kernel::tbe::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);
   if (!tbe_nodes.empty()) {
-    auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    tbe_ret = build_manager.AscendSingleOpCompile(tbe_nodes);
-    build_manager.ResetOldTask();
+    auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
+    build_manager.TbeSingleOpCompile(tbe_nodes);
     auto config_path = TbeUtils::GetOpDebugPath();
     std::string dir = config_path + "kernel_meta/";
     (void)bin_map->ReadIndex(dir);
   }
+  bool akg_ret = true;
   if (!akg_nodes.empty()) {
     kernel::AkgAscendKernelBuilder akg_ascend_kernel_builder;
     akg_ret = akg_ascend_kernel_builder.AkgKernelParallelBuild(akg_nodes);
@@ -119,7 +113,7 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
   }
-  return tbe_ret && akg_ret;
+  return akg_ret;
 }
 
 static std::vector<size_t> CalCleanZerosSize(const CNodePtr &pre_node) {

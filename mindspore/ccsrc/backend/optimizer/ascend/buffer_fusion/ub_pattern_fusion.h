@@ -18,7 +18,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
+#include <string>
+#include <map>
 #include "backend/optimizer/ascend/buffer_fusion/fusion_base_pass.h"
 #include "ir/anf.h"
 #include "backend/optimizer/common/pass.h"
@@ -41,7 +42,7 @@ class UbPatternFusion : public Pass {
   void GetBufferFusionInfo(session::KernelGraph *kernel_graph,
                            std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) const;
   bool ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos, int64_t fusion_id,
-                       const kernel::KernelModPtr &kernel_ptr, session::KernelGraph *kernel_graph) const;
+                       session::KernelGraph *kernel_graph) const;
   bool FuseBufferFusionPattern(session::KernelGraph *kernel_graph) const;
 };
 }  // namespace opt

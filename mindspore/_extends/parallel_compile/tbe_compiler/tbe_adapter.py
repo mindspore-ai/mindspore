@@ -183,8 +183,9 @@ def _parallel_compilation_init(initialize: TbeJob):
         res_queue = ret[1]
         live_checker = ret[2]
         termin_event = ret[3]
+        log_level = int(os.getenv("ASCEND_GLOBAL_LOG_LEVEL", "3"))
         from schedule_search.rl_online_tune import rl_tune_init
-        ret = rl_tune_init(soc_info, res_queue, live_checker, termin_event, global_loglevel, pid_ts)
+        ret = rl_tune_init(soc_info, res_queue, live_checker, termin_event, log_level, pid_ts)
         if not ret:
             initialize.error("RL env init failed!")
             return False

@@ -89,7 +89,7 @@ bool KernelBuildClient::AkgWait() {
   return true;
 }
 
-std::string AscendKernelBuildClient::TbeSendJob(const std::string &job_json_str) {
+std::string AscendKernelBuildClient::DispatchToServer(const std::string &job_json_str) {
   auto res = SendRequest(job_json_str);
   if (res == kFailed) {
     MS_LOG(ERROR) << "Send TBE job json failed, res: " << res;
