@@ -17,6 +17,7 @@ The configuration module provides various functions to set and get the supported
 configuration parameters, and read a configuration file.
 """
 import os
+import platform
 import random
 import time
 import numpy
@@ -430,6 +431,10 @@ def get_enable_shared_mem():
         >>> # Get the flag of shared memory feature.
         >>> shared_mem_flag = ds.config.get_enable_shared_mem()
     """
+    # For windows we forbid shared mem function temporarily
+    if platform.system().lower() == 'windows':
+        logger.warning("For windows we forbid shared mem function temporarily.")
+        return False
     return _config.get_enable_shared_mem()
 
 
