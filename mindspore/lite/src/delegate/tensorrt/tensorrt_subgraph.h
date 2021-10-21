@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_SUB_GTAPH_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_SUB_GTAPH_
+#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_
+#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_
 #include <utility>
 #include <set>
 #include <string>
@@ -32,18 +32,24 @@ class TensorRTSubGraph : public kernel::Kernel {
  public:
   TensorRTSubGraph(std::vector<TensorRTOp *> ops, const std::vector<mindspore::MSTensor> &inputs,
                    const std::vector<mindspore::MSTensor> &outputs, const mindspore::Context *ctx,
-                   std::shared_ptr<GPUDeviceInfo> device_info, TensorRTRuntime *runtime, bool support_hw_resize)
+                   std::shared_ptr<GPUDeviceInfo> device_info, TensorRTRuntime *runtime, bool support_resize,
+                   bool support_hw_resize)
       : kernel::Kernel(inputs, outputs, nullptr, ctx),
         all_ops_(std::move(ops)),
         device_info_(device_info),
         runtime_(runtime) {
     trt_specific_weight_nodes_ = {
-      schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_ReduceFusion,  schema::PrimitiveType_Transpose,
-      schema::PrimitiveType_Gather,       schema::PrimitiveType_Reshape,       schema::PrimitiveType_PowFusion,
-      schema::PrimitiveType_AddFusion,    schema::PrimitiveType_DivFusion,     schema::PrimitiveType_SubFusion,
-      schema::PrimitiveType_MatMul,       schema::PrimitiveType_PowFusion,     schema::PrimitiveType_Eltwise,
-      schema::PrimitiveType_ScaleFusion,  schema::PrimitiveType_MulFusion,     schema::PrimitiveType_StridedSlice,
-      schema::PrimitiveType_PadFusion,    schema::PrimitiveType_FullConnection};
+      schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_ReduceFusion, schema::PrimitiveType_Transpose,
+      schema::PrimitiveType_Gather,       schema::PrimitiveType_Reshape,      schema::PrimitiveType_PowFusion,
+      schema::PrimitiveType_AddFusion,    schema::PrimitiveType_DivFusion,    schema::PrimitiveType_SubFusion,
+      schema::PrimitiveType_MatMul,       schema::PrimitiveType_PowFusion,    schema::PrimitiveType_Eltwise,
+      schema::PrimitiveType_ScaleFusion,  schema::PrimitiveType_MulFusion,    schema::PrimitiveType_Minimum,
+      schema::PrimitiveType_StridedSlice, schema::PrimitiveType_PadFusion,    schema::PrimitiveType_FullConnection,
+      schema::PrimitiveType_Cast,         schema::PrimitiveType_ExpandDims};
+    if (!support_resize) {
+      input_batchsize_index_ = -1;
+      input_hw_index_ = -1;
+    }
     if (!support_hw_resize) {
       input_hw_index_ = -1;
     }
@@ -98,11 +104,10 @@ class TensorRTSubGraph : public kernel::Kernel {
   nvinfer1::IExecutionContext *trt_context_{nullptr};
   nvinfer1::IOptimizationProfile *profile_{nullptr};
 
+  // -1 means don't support resize
   int input_batchsize_index_{0};
   int output_batchsize_index_{0};
-
-  // -1 means don't support hw resize
   int input_hw_index_{0};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_SUB_GTAPH_
+#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_

@@ -24,23 +24,11 @@ int ReduceTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  auto reduce_op = primitive->value_as_ReduceFusion();
-  if (reduce_op == nullptr) {
-    MS_LOG(ERROR) << "convert failed";
-    return RET_ERROR;
-  }
   if (in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
   }
   if (out_tensors.size() != 1) {
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
-  }
-  auto it = reduce_ops_.find(reduce_op->mode());
-  if (it != reduce_ops_.end()) {
-    reduce_op_ = it->second;
-  } else {
-    MS_LOG(ERROR) << "unsupported ReduceMode: " << reduce_op->mode();
-    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -96,7 +84,8 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   MS_LOG(DEBUG) << "after transpose and expand dims " << GetTensorFormat(reduce_input, out_format_);
 
   uint32_t reduceAxis = GetAxis();
-  nvinfer1::IReduceLayer *layer = network->addReduce(*reduce_input, reduce_op_, reduceAxis, keep_dims);
+  nvinfer1::IReduceLayer *layer =
+    network->addReduce(*reduce_input, ConvertTRTReduceMode(reduce_op->mode()), reduceAxis, keep_dims);
   if (layer == nullptr) {
     MS_LOG(ERROR) << "addReduce failed for TensorRT.";
     return RET_ERROR;
@@ -137,7 +126,6 @@ uint32_t ReduceTensorRT::GetAxis() {
     MS_LOG(WARNING) << "not int data type";
   }
   int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
-  // uint32_t base = std::pow(2, DIMENSION_4D);
   for (int i = 0; i < axis_tensor.ElementNum(); i++) {
     int format_axis_data = *axis_data;
     reduceAxis |= 1u << format_axis_data;

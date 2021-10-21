@@ -44,7 +44,8 @@ int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
       }
       break;
     }
-    case schema::PrimitiveType_Transpose: {
+    case schema::PrimitiveType_Transpose:
+    case schema::PrimitiveType_ExpandDims: {
       if (in_tensors.size() != INPUT_SIZE2) {
         MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();
         return RET_ERROR;
@@ -129,6 +130,10 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     case schema::PrimitiveType_Flatten: {
       ret = AddFlattenOp(shuffle_layer);
+      break;
+    }
+    case schema::PrimitiveType_ExpandDims: {
+      ret = AddExpandDimsOp(shuffle_layer);
       break;
     }
     default:
@@ -266,6 +271,28 @@ int ShuffleTensorRT::AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   flatten_dims.d[0] = input_shape[0];
   flatten_dims.d[1] = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int>());
   shuffle_layer->setReshapeDimensions(flatten_dims);
+  return RET_OK;
+}
+
+int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
+  if (in_tensors_[1].DataType() != DataType::kNumberTypeInt32) {
+    MS_LOG(WARNING) << op_name_ << " axis tensor data type is " << static_cast<int>(in_tensors_[1].DataType());
+  }
+  auto axis_data = static_cast<const int *>(in_tensors_[1].Data().get());
+  int axis = axis_data[0];
+  auto input_dims = tensorrt_in_tensors_[0].trt_tensor_->getDimensions();
+  std::vector<int64_t> new_shape;
+  for (int i = 0; i < input_dims.nbDims; i++) {
+    if (axis == i) {
+      new_shape.push_back(1);
+    }
+    new_shape.push_back(input_dims.d[i]);
+  }
+  if (axis == -1) {
+    new_shape.push_back(1);
+  }
+  nvinfer1::Dims new_dims = ConvertCudaDims(new_shape);
+  shuffle_layer->setReshapeDimensions(new_dims);
   return RET_OK;
 }
 
