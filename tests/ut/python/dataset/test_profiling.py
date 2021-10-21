@@ -27,30 +27,46 @@ FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"
 SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 
-PIPELINE_FILE = "./pipeline_profiling_1.json"
-CPU_UTIL_FILE = "./minddata_cpu_utilization_1.json"
-DATASET_ITERATOR_FILE = "./dataset_iterator_profiling_1.txt"
+PIPELINE_FILE = "./pipeline_profiling"
+CPU_UTIL_FILE = "./minddata_cpu_utilization"
+DATASET_ITERATOR_FILE = "./dataset_iterator_profiling"
+
+# add file name to rank id mapping to avoid file writing crash
+file_name_map_rank_id = {"test_profiling_simple_pipeline": "0",
+                         "test_profiling_complex_pipeline": "1",
+                         "test_profiling_inline_ops_pipeline1": "2",
+                         "test_profiling_inline_ops_pipeline2": "3",
+                         "test_profiling_sampling_interval": "4",
+                         "test_profiling_basic_pipeline": "5",
+                         "test_profiling_cifar10_pipeline": "6",
+                         "test_profiling_seq_pipelines_epochctrl3": "7",
+                         "test_profiling_seq_pipelines_epochctrl2": "8",
+                         "test_profiling_seq_pipelines_repeat": "9"}
 
 
-def set_profiling_env_var():
+def set_profiling_env_var(index='0'):
     """
     Set the MindData Profiling environment variables
     """
     os.environ['PROFILING_MODE'] = 'true'
     os.environ['MINDDATA_PROFILING_DIR'] = '.'
-    os.environ['DEVICE_ID'] = '1'
-    os.environ['RANK_ID'] = '1'
+    os.environ['DEVICE_ID'] = index
+    os.environ['RANK_ID'] = index
 
 
-def delete_profiling_files():
+def delete_profiling_files(index='0'):
     """
     Delete the MindData profiling files generated from the test.
     Also disable the MindData Profiling environment variables.
     """
     # Delete MindData profiling files
-    os.remove(PIPELINE_FILE)
-    os.remove(CPU_UTIL_FILE)
-    os.remove(DATASET_ITERATOR_FILE)
+    pipeline_file = PIPELINE_FILE + "_" + index + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + index + ".json"
+    dataset_iterator_file = DATASET_ITERATOR_FILE + "_" + index + ".txt"
+
+    os.remove(pipeline_file)
+    os.remove(cpu_util_file)
+    os.remove(dataset_iterator_file)
 
     # Disable MindData Profiling environment variables
     del os.environ['PROFILING_MODE']
@@ -59,22 +75,22 @@ def delete_profiling_files():
     del os.environ['RANK_ID']
 
 
-def confirm_cpuutil(num_pipeline_ops):
+def confirm_cpuutil(num_pipeline_ops, cpu_uti_file):
     """
     Confirm CPU utilization JSON file with <num_pipeline_ops> in the pipeline
     """
-    with open(CPU_UTIL_FILE) as file1:
+    with open(cpu_uti_file) as file1:
         data = json.load(file1)
         op_info = data["op_info"]
         # Confirm <num_pipeline_ops>+1 ops in CPU util file (including op_id=-1 for monitor thread)
         assert len(op_info) == num_pipeline_ops + 1
 
 
-def confirm_ops_in_pipeline(num_ops, op_list):
+def confirm_ops_in_pipeline(num_ops, op_list, pipeline_file):
     """
     Confirm pipeline JSON file with <num_ops> are in the pipeline and the given list of ops
     """
-    with open(PIPELINE_FILE) as file1:
+    with open(pipeline_file) as file1:
         data = json.load(file1)
         op_info = data["op_info"]
         # Confirm ops in pipeline file
@@ -87,7 +103,12 @@ def test_profiling_simple_pipeline():
     """
     Generator -> Shuffle -> Batch
     """
-    set_profiling_env_var()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
+    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
+    dataset_iterator_file = DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
 
     source = [(np.array([x]),) for x in range(1024)]
     data1 = ds.GeneratorDataset(source, ["data"])
@@ -99,25 +120,25 @@ def test_profiling_simple_pipeline():
     assert data1.get_dataset_size() == 32
 
     # Confirm profiling files do not (yet) exist
-    assert os.path.exists(PIPELINE_FILE) is False
-    assert os.path.exists(CPU_UTIL_FILE) is False
-    assert os.path.exists(DATASET_ITERATOR_FILE) is False
+    assert os.path.exists(pipeline_file) is False
+    assert os.path.exists(cpu_util_file) is False
+    assert os.path.exists(dataset_iterator_file) is False
 
     try:
         for _ in data1:
             pass
 
         # Confirm profiling files now exist
-        assert os.path.exists(PIPELINE_FILE) is True
-        assert os.path.exists(CPU_UTIL_FILE) is True
-        assert os.path.exists(DATASET_ITERATOR_FILE) is True
+        assert os.path.exists(pipeline_file) is True
+        assert os.path.exists(cpu_util_file) is True
+        assert os.path.exists(dataset_iterator_file) is True
 
     except Exception as error:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 def test_profiling_complex_pipeline():
@@ -126,7 +147,12 @@ def test_profiling_complex_pipeline():
                              -> Zip
     TFReader  -> Shuffle ->
     """
-    set_profiling_env_var()
+
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
+    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
 
     source = [(np.array([x]),) for x in range(1024)]
     data1 = ds.GeneratorDataset(source, ["gen"])
@@ -142,7 +168,7 @@ def test_profiling_complex_pipeline():
         for _ in data3:
             pass
 
-        with open(PIPELINE_FILE) as f:
+        with open(pipeline_file) as f:
             data = json.load(f)
             op_info = data["op_info"]
             assert len(op_info) == 5
@@ -156,14 +182,14 @@ def test_profiling_complex_pipeline():
                     assert op_info[i]["metrics"] is None
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
-        confirm_cpuutil(5)
+        confirm_cpuutil(5, cpu_util_file)
 
     except Exception as error:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 def test_profiling_inline_ops_pipeline1():
@@ -173,7 +199,11 @@ def test_profiling_inline_ops_pipeline1():
                  Concat -> EpochCtrl
     Generator ->
     """
-    set_profiling_env_var()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
+    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
 
     # In source1 dataset: Number of rows is 3; its values are 0, 1, 2
     def source1():
@@ -201,7 +231,7 @@ def test_profiling_inline_ops_pipeline1():
         assert num_iter == 10
 
         # Confirm pipeline is created with EpochCtrl op
-        with open(PIPELINE_FILE) as f:
+        with open(pipeline_file) as f:
             data = json.load(f)
             op_info = data["op_info"]
             assert len(op_info) == 4
@@ -216,14 +246,14 @@ def test_profiling_inline_ops_pipeline1():
                     assert "throughput" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 4 ops are in the pipeline JSON file
-        confirm_cpuutil(4)
+        confirm_cpuutil(4, cpu_util_file)
 
     except Exception as error:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 def test_profiling_inline_ops_pipeline2():
@@ -231,7 +261,11 @@ def test_profiling_inline_ops_pipeline2():
     Test pipeline with many inline ops
     Generator -> Rename -> Skip -> Repeat -> Take
     """
-    set_profiling_env_var()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
+    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
 
     # In source1 dataset: Number of rows is 10; its values are 0, 1, 2, 3, 4, 5 ... 9
     def source1():
@@ -248,7 +282,7 @@ def test_profiling_inline_ops_pipeline2():
         for _ in data1:
             pass
 
-        with open(PIPELINE_FILE) as f:
+        with open(pipeline_file) as f:
             data = json.load(f)
             op_info = data["op_info"]
             assert len(op_info) == 5
@@ -263,21 +297,23 @@ def test_profiling_inline_ops_pipeline2():
                     assert "throughput" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
-        confirm_cpuutil(5)
+        confirm_cpuutil(5, cpu_util_file)
 
     except Exception as error:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 def test_profiling_sampling_interval():
     """
     Test non-default monitor sampling interval
     """
-    set_profiling_env_var()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
 
     interval_origin = ds.config.get_monitor_sampling_interval()
 
@@ -296,12 +332,12 @@ def test_profiling_sampling_interval():
 
     except Exception as error:
         ds.config.set_monitor_sampling_interval(interval_origin)
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
         ds.config.set_monitor_sampling_interval(interval_origin)
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 def test_profiling_basic_pipeline():
@@ -309,7 +345,11 @@ def test_profiling_basic_pipeline():
     Test with this basic pipeline
     Generator -> Map -> Batch -> Repeat -> EpochCtrl
     """
-    set_profiling_env_var()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
+    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
 
     def source1():
         for i in range(8000):
@@ -332,7 +372,7 @@ def test_profiling_basic_pipeline():
 
         assert num_iter == 1000
 
-        with open(PIPELINE_FILE) as f:
+        with open(pipeline_file) as f:
             data = json.load(f)
             op_info = data["op_info"]
             assert len(op_info) == 5
@@ -347,14 +387,14 @@ def test_profiling_basic_pipeline():
                     assert "throughput" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
-        confirm_cpuutil(5)
+        confirm_cpuutil(5, cpu_util_file)
 
     except Exception as error:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 def test_profiling_cifar10_pipeline():
@@ -362,7 +402,11 @@ def test_profiling_cifar10_pipeline():
     Test with this common pipeline with Cifar10
     Cifar10 -> Map -> Map -> Batch -> Repeat
     """
-    set_profiling_env_var()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
+    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
 
     # Create this common pipeline
     # Cifar10 -> Map -> Map -> Batch -> Repeat
@@ -385,7 +429,7 @@ def test_profiling_cifar10_pipeline():
 
         assert num_iter == 750
 
-        with open(PIPELINE_FILE) as f:
+        with open(pipeline_file) as f:
             data = json.load(f)
             op_info = data["op_info"]
             assert len(op_info) == 5
@@ -400,14 +444,14 @@ def test_profiling_cifar10_pipeline():
                     assert "throughput" in op_info[i]["metrics"]["output_queue"]
 
         # Confirm CPU util JSON file content, when 5 ops are in the pipeline JSON file
-        confirm_cpuutil(5)
+        confirm_cpuutil(5, cpu_util_file)
 
     except Exception as error:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 def test_profiling_seq_pipelines_epochctrl3():
@@ -417,7 +461,11 @@ def test_profiling_seq_pipelines_epochctrl3():
     2) Generator -> Batch
     Note: This is a simplification of the user scenario to use the same pipeline for training and then evaluation.
     """
-    set_profiling_env_var()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
+    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
 
     source = [(np.array([x]),) for x in range(64)]
     data1 = ds.GeneratorDataset(source, ["data"])
@@ -432,8 +480,8 @@ def test_profiling_seq_pipelines_epochctrl3():
         assert num_iter == 2
 
         # Confirm pipeline file and CPU util file each have 3 ops
-        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"])
-        confirm_cpuutil(3)
+        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
+        confirm_cpuutil(3, cpu_util_file)
 
         # Test B - Call create_dict_iterator with num_epochs=1
         num_iter = 0
@@ -444,15 +492,15 @@ def test_profiling_seq_pipelines_epochctrl3():
         assert num_iter == 2
 
         # Confirm pipeline file and CPU util file each have 2 ops
-        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"])
-        confirm_cpuutil(2)
+        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
+        confirm_cpuutil(2, cpu_util_file)
 
     except Exception as error:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 def test_profiling_seq_pipelines_epochctrl2():
@@ -461,7 +509,11 @@ def test_profiling_seq_pipelines_epochctrl2():
     1) Generator -> Batch
     2) Generator -> Batch -> EpochCtrl
     """
-    set_profiling_env_var()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
+    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
 
     source = [(np.array([x]),) for x in range(64)]
     data2 = ds.GeneratorDataset(source, ["data"])
@@ -476,8 +528,8 @@ def test_profiling_seq_pipelines_epochctrl2():
         assert num_iter == 4
 
         # Confirm pipeline file and CPU util file each have 2 ops
-        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"])
-        confirm_cpuutil(2)
+        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
+        confirm_cpuutil(2, cpu_util_file)
 
         # Test B - Call create_dict_iterator with num_epochs>1
         num_iter = 0
@@ -488,15 +540,15 @@ def test_profiling_seq_pipelines_epochctrl2():
         assert num_iter == 4
 
         # Confirm pipeline file and CPU util file each have 3 ops
-        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"])
-        confirm_cpuutil(3)
+        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"], pipeline_file)
+        confirm_cpuutil(3, cpu_util_file)
 
     except Exception as error:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 def test_profiling_seq_pipelines_repeat():
@@ -505,7 +557,11 @@ def test_profiling_seq_pipelines_repeat():
     1) Generator -> Batch
     2) Generator -> Batch -> Repeat
     """
-    set_profiling_env_var()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    file_id = file_name_map_rank_id[file_name]
+    set_profiling_env_var(file_id)
+    pipeline_file = PIPELINE_FILE + "_" + file_id + ".json"
+    cpu_util_file = CPU_UTIL_FILE + "_" + file_id + ".json"
 
     source = [(np.array([x]),) for x in range(64)]
     data2 = ds.GeneratorDataset(source, ["data"])
@@ -519,8 +575,8 @@ def test_profiling_seq_pipelines_repeat():
         assert num_iter == 4
 
         # Confirm pipeline file and CPU util file each have 2 ops
-        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"])
-        confirm_cpuutil(2)
+        confirm_ops_in_pipeline(2, ["GeneratorOp", "BatchOp"], pipeline_file)
+        confirm_cpuutil(2, cpu_util_file)
 
         # Test B - Add repeat op to pipeline.  Call create_dict_iterator with 3 ops in pipeline
         data2 = data2.repeat(5)
@@ -530,15 +586,15 @@ def test_profiling_seq_pipelines_repeat():
         assert num_iter == 20
 
         # Confirm pipeline file and CPU util file each have 3 ops
-        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "RepeatOp"])
-        confirm_cpuutil(3)
+        confirm_ops_in_pipeline(3, ["GeneratorOp", "BatchOp", "RepeatOp"], pipeline_file)
+        confirm_cpuutil(3, cpu_util_file)
 
     except Exception as error:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
         raise error
 
     else:
-        delete_profiling_files()
+        delete_profiling_files(file_id)
 
 
 if __name__ == "__main__":
