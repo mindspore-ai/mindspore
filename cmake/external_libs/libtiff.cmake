@@ -24,7 +24,7 @@ else()
 endif()
 
 mindspore_add_pkg(tiff
-        VER 4.1.0
+        VER 4.2.0
         LIBS tiff
         URL ${REQ_URL}
         MD5 ${MD5}
