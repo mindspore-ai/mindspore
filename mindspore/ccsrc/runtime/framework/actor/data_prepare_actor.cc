@@ -406,7 +406,6 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
       UpdateRefCount(host_tensor_address.get(), true);
     }
     MS_EXCEPTION_IF_NULL(host_tensor_address);
-    DeviceTensorStore::GetInstance().Insert(front_node.get(), host_tensor_address);
     if (host_tensor_address->DeviceType() == device_tensor->DeviceType()) {
       AnfAlgo::SetOutputAddr(host_tensor_address, 0, backend_node.get());
     } else {
@@ -414,6 +413,9 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
                    << ", device tensor type:" << device_tensor->DeviceType();
     }
   }
+  // Maybe the same host_tensor_address corresponds to the different front_node in shared weight scene,
+  // so need update the device tensor store always.
+  DeviceTensorStore::GetInstance().Insert(front_node.get(), host_tensor_address);
 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
   MS_EXCEPTION_IF_NULL(host_tensor_address);
