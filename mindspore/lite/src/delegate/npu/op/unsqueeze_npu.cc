@@ -21,7 +21,7 @@ namespace mindspore {
 int UnsqueezeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
   CHECK_LESS_RETURN(in_tensors.size(), 1);
-  if (in_tensors[0].Shape().size() > 3) {
+  if (in_tensors[0].Shape().size() > INPUT_SIZE3) {
     MS_LOG(WARNING) << "The dimension of output not support bigger than 4.";
     return RET_NOT_SUPPORT;
   }

@@ -34,6 +34,8 @@ using mindspore::lite::RET_NOT_SUPPORT;
 using mindspore::lite::RET_OK;
 namespace mindspore {
 constexpr int NPU_SHAPE_SIZE = 4;
+constexpr int INPUT_SIZE2 = 2;
+constexpr int INPUT_SIZE3 = 3;
 
 class NPUOp {
  public:
