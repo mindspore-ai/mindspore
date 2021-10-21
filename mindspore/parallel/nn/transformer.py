@@ -370,6 +370,8 @@ class FeedForward(Cell):
         self.projection.bias.parallel_optimizer = False
         self.dropout = nn.Dropout(1 - dropout_rate)
         self.dropout.dropout.shard(((dp, 1),))
+        self.dropout_3d = nn.Dropout(1 - dropout_rate)
+        self.dropout_3d.dropout.shard(((dp, 1, 1),))
         self.cast = P.Cast()
 
     def construct(self, x):
@@ -380,7 +382,10 @@ class FeedForward(Cell):
         hidden = self.mapping(x)
         output = self.projection(hidden)
         # returned shape is [bs, seq_length, ffn_hidden_size] or [bs * seq_length, ffn_hidden_size]
-        output = self.dropout(output)
+        if len(F.shape(output)) == 3:
+            output = self.dropout_3d(output)
+        else:
+            output = self.dropout(output)
         return output
 
 
