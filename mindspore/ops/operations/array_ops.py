@@ -5868,7 +5868,7 @@ class TransShape(PrimitiveWithInfer):
                 'value': None}
 
 
-class Sort(PrimitiveWithInfer):
+class Sort(Primitive):
     """
     Sorts the elements of the input tensor along a given dimension in ascending order by value.
 
@@ -5876,6 +5876,10 @@ class Sort(PrimitiveWithInfer):
         axis (int): The dimension to sort along. Default: -1.
         descending (bool): Controls the sorting order. If descending is True then the elements
             are sorted in descending order by value. Default: False.
+
+    .. warning::
+        Currently, only the data type of Float16 is supported. If use Float32, it may cause loss
+        of accuracy.
 
     Inputs:
         - **x** (Tensor) - The input to sort, with float16 or float32 data type.
@@ -5906,19 +5910,12 @@ class Sort(PrimitiveWithInfer):
          [2, 0, 1],
          [0, 1, 2]]))
     """
-
     @prim_attr_register
     def __init__(self, axis=-1, descending=False):
         """Initialize Sort"""
         self.axis = validator.check_value_type("axis", axis, [int], self.name)
         self.descending = validator.check_value_type("descending", descending, [bool], self.name)
-
-    def infer_shape(self, x_shape):
-        return x_shape, x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x_dtype", x_dtype, [mstype.float32, mstype.float16], self.name)
-        return x_dtype, mstype.tensor_type(mstype.int32)
+        self.init_prim_io_names(inputs=['x'], outputs=['y1', 'y2'])
 
 
 class EmbeddingLookup(PrimitiveWithCheck):
