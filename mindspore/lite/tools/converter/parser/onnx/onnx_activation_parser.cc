@@ -86,6 +86,10 @@ ops::PrimitiveC *OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, cons
         slope.push_back(*slope_raw_data);
         channel_shared = true;
       } else {
+        if (INT_MUL_OVERFLOW_THRESHOLD(slope_size, sizeof(float), SIZE_MAX)) {
+          MS_LOG(ERROR) << "data_size overflow";
+          return nullptr;
+        }
         if (memcpy_s(slope.data(), slope_size * sizeof(float), slope_raw_data, slope_data->raw_data().size()) != EOK) {
           MS_LOG(ERROR) << "memcpy_s failed";
           return nullptr;

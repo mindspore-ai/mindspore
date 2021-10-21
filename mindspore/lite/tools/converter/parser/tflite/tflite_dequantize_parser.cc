@@ -28,6 +28,8 @@ ops::PrimitiveC *TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::Ope
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(!tflite_op->inputs.empty(), nullptr);
+  MS_CHECK_TRUE_RET(!tflite_op->outputs.empty(), nullptr);
   const auto &in_tensor = tflite_subgraph->tensors[tflite_op->inputs.at(0)];
   if (in_tensor == nullptr) {
     MS_LOG(ERROR) << "input tensor is null";
