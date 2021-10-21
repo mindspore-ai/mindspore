@@ -59,6 +59,9 @@ class OnnxNodeParser {
 
   static STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
 
+  static const void *GetOnnxRawData(const onnx::TensorProto &onnx_const_tensor, TypeId data_type, size_t data_count,
+                                    size_t *data_size);
+
   const std::string name_{};
 
  private:

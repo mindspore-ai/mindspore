@@ -135,10 +135,9 @@ ops::PrimitiveC *TfliteCustomParser::Mfcc(const std::vector<uint8_t> &custom_att
 ops::PrimitiveC *TfliteCustomParser::Predict(const std::vector<uint8_t> &custom_attr) {
   auto prim = std::make_unique<ops::CustomPredict>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-
+  MS_CHECK_TRUE_RET(custom_attr.data() != nullptr, nullptr);
   prim->set_output_num(reinterpret_cast<const int64_t *>(custom_attr.data())[0]);
   prim->set_weight_threshold(reinterpret_cast<const float *>(custom_attr.data())[1]);
-
   return prim.release();
 }
 
@@ -161,11 +160,12 @@ ops::PrimitiveC *TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_att
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
+  MS_CHECK_GE(tflite_op->inputs.size(), kInputSize1, nullptr);
   auto prim = std::make_unique<ops::Rfft>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
   std::vector<int64_t> fft_length;
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, fft_length)) {
+  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, &fft_length)) {
     MS_LOG(ERROR) << "rfft -> fftLength get failed";
     return nullptr;
   }

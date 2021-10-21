@@ -30,6 +30,7 @@
 #include "include/errorcode.h"
 #include "tools/converter/parser/tflite/tflite_util.h"
 #include "ops/primitive_c.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -48,7 +49,9 @@ class TfliteNodeParser {
   template <typename T>
   STATUS GetTfliteData(const int32_t tensor_index, const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                        const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                       std::vector<T> &attr_data) {
+                       std::vector<T> *attr_data) {
+    MS_ASSERT(attr_data != nullptr);
+    CHECK_LESS_RETURN(tflite_tensors.size(), static_cast<size_t>(tensor_index + 1));
     const auto &tensor = tflite_tensors[tensor_index];
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "tensor is null";
@@ -57,6 +60,7 @@ class TfliteNodeParser {
 
     int32_t count = 1;
     std::for_each(tensor->shape.begin(), tensor->shape.end(), [&](int32_t sha) { count *= sha; });
+    CHECK_LESS_RETURN(tflite_model_buffer.size(), static_cast<size_t>(tensor->buffer + 1));
     auto &buf_data = tflite_model_buffer[tensor->buffer];
     if (buf_data == nullptr) {
       MS_LOG(ERROR) << "buf_data is null";
@@ -71,7 +75,7 @@ class TfliteNodeParser {
       case tflite::TensorType_UINT8: {
         for (int i = 0; i < count; i++) {
           uint8_t data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr)));
-          attr_data.emplace_back(static_cast<T>(data));
+          attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(uint8_t);
         }
         break;
@@ -79,7 +83,7 @@ class TfliteNodeParser {
       case tflite::TensorType_INT8: {
         for (int i = 0; i < count; i++) {
           int8_t data = *(static_cast<int8_t *>(static_cast<void *>(data_ptr)));
-          attr_data.emplace_back(static_cast<T>(data));
+          attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(int8_t);
         }
         break;
@@ -87,7 +91,7 @@ class TfliteNodeParser {
       case tflite::TensorType_INT16: {
         for (int i = 0; i < count; i++) {
           int16_t data = *(static_cast<int16_t *>(static_cast<void *>(data_ptr)));
-          attr_data.emplace_back(static_cast<T>(data));
+          attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(int16_t);
         }
         break;
@@ -95,7 +99,7 @@ class TfliteNodeParser {
       case tflite::TensorType_INT32: {
         for (int i = 0; i < count; i++) {
           int32_t data = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
-          attr_data.emplace_back(static_cast<T>(data));
+          attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(int32_t);
         }
         break;
@@ -103,7 +107,7 @@ class TfliteNodeParser {
       case tflite::TensorType_INT64: {
         for (int i = 0; i < count; i++) {
           int64_t data = *(static_cast<int64_t *>(static_cast<void *>(data_ptr)));
-          attr_data.emplace_back(static_cast<T>(data));
+          attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(int64_t);
         }
         break;
@@ -111,7 +115,7 @@ class TfliteNodeParser {
       case tflite::TensorType_FLOAT32: {
         for (int i = 0; i < count; i++) {
           float data = *(static_cast<float *>(static_cast<void *>(data_ptr)));
-          attr_data.emplace_back(static_cast<T>(data));
+          attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(float);
         }
         break;
@@ -128,7 +132,9 @@ class TfliteNodeParser {
   STATUS TransTfliteDataToVec2D(const int32_t tensor_index,
                                 const std::vector<std::unique_ptr<tflite::TensorT>> &tflite_tensors,
                                 const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                                std::vector<std::vector<T>> &vec) {
+                                std::vector<std::vector<T>> *vec) {
+    MS_ASSERT(vec != nullptr);
+    CHECK_LESS_RETURN(tflite_tensors.size(), static_cast<size_t>(tensor_index + 1));
     const auto &tensor = tflite_tensors[tensor_index];
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "tensor is null";
@@ -137,6 +143,7 @@ class TfliteNodeParser {
 
     int32_t count = 1;
     std::for_each(tensor->shape.begin(), tensor->shape.end(), [&](int32_t sha) { count *= sha; });
+    CHECK_LESS_RETURN(tflite_model_buffer.size(), static_cast<size_t>(tensor->buffer + 1));
     auto &buf_data = tflite_model_buffer[tensor->buffer];
     if (buf_data == nullptr) {
       MS_LOG(ERROR) << "buf_data is null";
@@ -148,14 +155,14 @@ class TfliteNodeParser {
       return RET_NO_CHANGE;
     }
 
-    vec.resize(count / 2, std::vector<T>(2));
+    (*vec).resize(count / 2, std::vector<T>(2));
     switch (tensor->type) {
       case tflite::TensorType_UINT8: {
         for (int i = 0; i < count / 2; i++) {
           uint8_t data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(uint8_t))));
-          vec[i][0] = static_cast<T>(data);
+          (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(uint8_t))));
-          vec[i][1] = static_cast<T>(data);
+          (*vec)[i][1] = static_cast<T>(data);
           i += 2;
         }
         break;
@@ -163,45 +170,45 @@ class TfliteNodeParser {
       case tflite::TensorType_INT8: {
         for (int i = 0; i < count / 2; i++) {
           uint8_t data = *(static_cast<int8_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int8_t))));
-          vec[i][0] = static_cast<T>(data);
+          (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<int8_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(int8_t))));
-          vec[i][1] = static_cast<T>(data);
+          (*vec)[i][1] = static_cast<T>(data);
         }
         break;
       }
       case tflite::TensorType_INT16: {
         for (int i = 0; i < count / 2; i++) {
           uint8_t data = *(static_cast<int16_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int16_t))));
-          vec[i][0] = static_cast<T>(data);
+          (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<int16_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(int16_t))));
-          vec[i][1] = static_cast<T>(data);
+          (*vec)[i][1] = static_cast<T>(data);
         }
         break;
       }
       case tflite::TensorType_INT32: {
         for (int i = 0; i < count / 2; i++) {
           uint8_t data = *(static_cast<int32_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int32_t))));
-          vec[i][0] = static_cast<T>(data);
+          (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<int32_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(int32_t))));
-          vec[i][1] = static_cast<T>(data);
+          (*vec)[i][1] = static_cast<T>(data);
         }
         break;
       }
       case tflite::TensorType_INT64: {
         for (int i = 0; i < count / 2; i++) {
           uint8_t data = *(static_cast<int64_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int64_t))));
-          vec[i][0] = static_cast<T>(data);
+          (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<int64_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(int64_t))));
-          vec[i][1] = static_cast<T>(data);
+          (*vec)[i][1] = static_cast<T>(data);
         }
         break;
       }
       case tflite::TensorType_FLOAT32: {
         for (int i = 0; i < count / 2; i++) {
           uint8_t data = *(static_cast<float *>(static_cast<void *>(data_ptr + 2 * i * sizeof(float))));
-          vec[i][0] = static_cast<T>(data);
+          (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<float *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(float))));
-          vec[i][1] = static_cast<T>(data);
+          (*vec)[i][1] = static_cast<T>(data);
         }
         break;
       }

@@ -28,6 +28,7 @@ ops::PrimitiveC *TfliteRangeParser::Parse(const std::unique_ptr<tflite::Operator
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
+  MS_CHECK_GE(tflite_op->inputs.size(), kInputSize2, nullptr);
   auto prim = std::make_unique<ops::Range>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -35,19 +36,19 @@ ops::PrimitiveC *TfliteRangeParser::Parse(const std::unique_ptr<tflite::Operator
 
   std::vector<int64_t> limit;
   std::vector<int64_t> delta;
-  int status = GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, limit);
-  if (status != RET_OK && status != RET_NO_CHANGE) {
+  int ret = GetTfliteData(tflite_op->inputs.at(SECOND_INPUT), tflite_subgraph->tensors, tflite_model->buffers, &limit);
+  if (ret != RET_OK && ret != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get range -> limit failed";
     return nullptr;
   }
-  if (status == RET_OK) {
-    status = GetTfliteData(tflite_op->inputs.at(2), tflite_subgraph->tensors, tflite_model->buffers, delta);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
+  if (ret == RET_OK) {
+    ret = GetTfliteData(tflite_op->inputs.at(THIRD_INPUT), tflite_subgraph->tensors, tflite_model->buffers, &delta);
+    if (ret != RET_OK && ret != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "get range -> delta failed";
       return nullptr;
     }
   }
-  if (status == RET_OK) {
+  if (ret == RET_OK) {
     prim->set_limit(limit.front());
     prim->set_delta(delta.front());
   }

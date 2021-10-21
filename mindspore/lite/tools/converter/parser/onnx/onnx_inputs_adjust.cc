@@ -170,7 +170,7 @@ STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNod
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(cnode != nullptr);
   if (cnode->inputs().size() != opt::kInputSizeThree) {
-    MS_LOG(ERROR) << "onnx transpose input size is 2, now is " << (cnode->inputs().size() - 1);
+    MS_LOG(ERROR) << "onnx transpose input size should be 2, now is " << (cnode->inputs().size() - 1);
     return lite::RET_ERROR;
   }
   auto anf_node = cnode->input(1);
@@ -203,6 +203,7 @@ STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNod
     return lite::RET_OK;
   }
   auto perm_value = perm_param->default_param()->cast<tensor::TensorPtr>();
+  MS_ASSERT(perm_value != nullptr);
   if (perm_value->shape().empty()) {
     MS_LOG(ERROR) << "transpose second input is invalid.";
     return lite::RET_ERROR;
@@ -259,6 +260,10 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
     }
     auto shape = default_data->shape();
     size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+    if (size > (int64_t)INT32_MAX) {
+      MS_LOG(ERROR) << "Size of tensor should be smaller than int32_max, now is: " << size;
+      return lite::RET_ERROR;
+    }
     break;
   }
   auto inputs = cnode->inputs();
@@ -273,6 +278,7 @@ STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
         MS_LOG(ERROR) << "new a parameter node failed.";
       }
       inputs.push_back(new_param_node);
+      // fall through
     }
     case opt::kInputSizeFive: {
       std::vector<int32_t> steps;

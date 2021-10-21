@@ -65,6 +65,10 @@ class TfliteModelParser : public converter::ModelParser {
   STATUS BuildSubFuncGraphMap(size_t subgraph_idx, const FuncGraphPtr &sub_func_graph,
                               const std::string &subgraph_name);
   STATUS ControlFlowNodePostProcess();
+  void ConvertInputTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, const FuncGraphPtr &func_graph,
+                          const std::unique_ptr<tflite::OperatorT> &op, tflite::BuiltinOperator tflite_op_type,
+                          std::unordered_map<int, AnfNodePtr> *anf_node_map, std::string op_name,
+                          std::vector<AnfNodePtr> *op_inputs);
   static STATUS ConvertOutputTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                     const FuncGraphPtr &func_graph, const std::unique_ptr<tflite::OperatorT> &op,
                                     const CNodePtr &dst_cnode, std::unordered_map<int, AnfNodePtr> *anf_node_map);
