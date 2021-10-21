@@ -527,7 +527,7 @@ class SoftMarginLoss(LossBase):
         ``Ascend``
 
     Examples:
-        >>> loss = ops.SoftMarginLoss()
+        >>> loss = nn.SoftMarginLoss()
         >>> logits = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
         >>> labels = Tensor(np.array([[-1, 1], [1, -1]]), mindspore.float32)
         >>> output = loss(logits, labels)
@@ -728,7 +728,9 @@ class MultiClassDiceLoss(LossBase):
     Args:
         weights (Union[Tensor, None]): Tensor of shape :math:`(num\_classes, dim)`. The weight shape[0] should be
             equal to labels shape[1].
+            Default: None.
         ignore_indiex (Union[int, None]): Class index to ignore.
+            Default: None.
         activation (Union[str, Cell]): Activate function applied to the output of the fully connected layer, eg. 'ReLU'.
             Default: 'softmax'. Choose from: ['softmax', 'logsoftmax', 'relu', 'relu6', 'tanh','Sigmoid']
 

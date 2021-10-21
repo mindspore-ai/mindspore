@@ -58,9 +58,9 @@ class LSTM(Cell):
 
     There are two pipelines connecting two consecutive cells in a LSTM model; one is cell state pipeline
     and the other is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
-    Given an input :math:`x_t` at time :math:`t`, an hidden state :math:`h_{t-1}` and an cell
+    Given an input :math:`x_t` at time :math:`t`, a hidden state :math:`h_{t-1}` and a cell
     state :math:`c_{t-1}` of the layer at time :math:`{t-1}`, the cell state and hidden state at
-    time :math:`t` is computed using an gating mechanism. Input gate :math:`i_t` is designed to protect the cell
+    time :math:`t` is computed using a gating mechanism. Input gate :math:`i_t` is designed to protect the cell
     from perturbation by irrelevant inputs. Forget gate :math:`f_t` affords protection of the cell by forgetting
     some information in the past, which is stored in :math:`h_{t-1}`. Output gate :math:`o_t` protects other
     units from perturbation by currently irrelevant memory contents. Candidate cell state :math:`\tilde{c}_t` is
@@ -101,7 +101,7 @@ class LSTM(Cell):
           (batch_size, seq_len, `input_size`).
         - **hx** (tuple) - A tuple of two Tensors (h_0, c_0) both of data type mindspore.float32 or
           mindspore.float16 and shape (num_directions * `num_layers`, batch_size, `hidden_size`).
-          Data type of `hx` must be the same as `x`.
+          The data type of `hx` must be the same as `x`.
 
     Outputs:
         Tuple, a tuple contains (`output`, (`h_n`, `c_n`)).
@@ -292,9 +292,9 @@ class LSTMCell(Cell):
 
     There are two pipelines connecting two consecutive cells in a LSTM model; one is cell state pipeline
     and the other is hidden state pipeline. Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
-    Given an input :math:`x_t` at time :math:`t`, an hidden state :math:`h_{t-1}` and an cell
+    Given an input :math:`x_t` at time :math:`t`, a hidden state :math:`h_{t-1}` and a cell
     state :math:`c_{t-1}` of the layer at time :math:`{t-1}`, the cell state and hidden state at
-    time :math:`t` is computed using an gating mechanism. Input gate :math:`i_t` is designed to protect the cell
+    time :math:`t` is computed using a gating mechanism. Input gate :math:`i_t` is designed to protect the cell
     from perturbation by irrelevant inputs. Forget gate :math:`f_t` affords protection of the cell by forgetting
     some information in the past, which is stored in :math:`h_{t-1}`. Output gate :math:`o_t` protects other
     units from perturbation by currently irrelevant memory contents. Candidate cell state :math:`\tilde{c}_t` is
@@ -339,7 +339,7 @@ class LSTMCell(Cell):
           mindspore.float16 and shape (num_directions, batch_size, `hidden_size`).
         - **c** - data type mindspore.float32 or
           mindspore.float16 and shape (num_directions, batch_size, `hidden_size`).
-          Data type of `h' and 'c' must be the same of `x`.
+          The data type of `h' and 'c' must be the same of `x`.
         - **w** - data type mindspore.float32 or
           mindspore.float16 and shape (`weight_size`, 1, 1).
           The value of `weight_size` depends on `input_size`, `hidden_size` and `bidirectional`

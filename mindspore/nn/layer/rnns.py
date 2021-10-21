@@ -464,8 +464,8 @@ class GRU(_RNNBase):
 
     There are two gates in a GRU model; one is update gate and the other is reset gate.
     Denote two consecutive time nodes as :math:`t-1` and :math:`t`.
-    Given an input :math:`x_t` at time :math:`t`, an hidden state :math:`h_{t-1}`, the update and reset gate at
-    time :math:`t` is computed using an gating mechanism. Update gate :math:`z_t` is designed to protect the cell
+    Given an input :math:`x_t` at time :math:`t`, a hidden state :math:`h_{t-1}`, the update and reset gate at
+    time :math:`t` is computed using a gating mechanism. Update gate :math:`z_t` is designed to protect the cell
     from perturbation by irrelevant inputs and past hidden state. Reset gate :math:`r_t` determines how much
     information should be reset from old hidden state. New memory state :math:`{n}_t` is
     calculated with the current input, on which the reset gate will be applied. Finally, current hidden state
@@ -502,7 +502,8 @@ class GRU(_RNNBase):
         - **x** (Tensor) - Tensor of data type mindspore.float32 and
           shape (seq_len, batch_size, `input_size`) or (batch_size, seq_len, `input_size`).
         - **hx** (Tensor) - Tensor of data type mindspore.float32 and
-          shape (num_directions * `num_layers`, batch_size, `hidden_size`). Data type of `hx` must be the same as `x`.
+          shape (num_directions * `num_layers`, batch_size, `hidden_size`). The data type of `hx` must be the same as
+          `x`.
         - **seq_length** (Tensor) - The length of each sequence in a input batch.
           Tensor of shape :math:`(\text{batch_size})`. Default: None.
           This input indicates the real sequence length before padding to avoid padded elements

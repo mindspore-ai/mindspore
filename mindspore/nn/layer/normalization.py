@@ -413,9 +413,9 @@ class BatchNorm2d(_BatchNorm):
         use_batch_statistics (bool):
 
             - If true, use the mean value and variance value of current batch data and track running mean
-              and running varance.
+              and running variance.
             - If false, use the mean value and variance value of specified value, and not track statistical value.
-            - If None, The use_batch_statistics is automatically assigned process according to
+            - If None, The use_batch_statistics is automatically assigned a process according to
               the training and eval mode. During training, batchnorm2d process will be the same
               with use_batch_statistics=True. Contrarily, in eval, batchnorm2d process will be the same
               with use_batch_statistics=False. Default: None.
