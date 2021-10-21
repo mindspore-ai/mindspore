@@ -62,12 +62,12 @@ std::string GpuKernelFactory::SupportedTypeList(const std::string &kernel_name) 
     std::string type_list = "in[";
     auto attr = (iter->second)[attr_index].first;
     for (size_t input_index = 0; input_index < attr.GetInputSize(); ++input_index) {
-      type_list = type_list + TypeId2String(attr.GetInputAttr(input_index).first) +
+      type_list = type_list + TypeIdToString(attr.GetInputAttr(input_index).first) +
                   ((input_index == (attr.GetInputSize() - 1)) ? "" : " ");
     }
     type_list = type_list + "], out[";
     for (size_t input_index = 0; input_index < attr.GetOutputSize(); ++input_index) {
-      type_list = type_list + TypeId2String(attr.GetOutputAttr(input_index).first) +
+      type_list = type_list + TypeIdToString(attr.GetOutputAttr(input_index).first) +
                   ((input_index == (attr.GetOutputSize() - 1)) ? "" : " ");
     }
     type_lists = type_lists + type_list + "]; ";

@@ -37,7 +37,7 @@ void Node::DumpTensor(std::ostringstream &os) const {
     os << shape[i];
     if (i + 1 < shape.size()) os << ",";
   }
-  os << "]{" << TypeIdToType(type)->ToString() << "x" << format << "}";
+  os << "]{" << TypeIdToString(type) << "x" << format << "}";
 }
 
 void Node::AddInput(const NodePtr &new_input) {

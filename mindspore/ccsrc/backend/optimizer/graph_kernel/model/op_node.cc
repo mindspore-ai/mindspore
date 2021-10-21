@@ -306,7 +306,7 @@ TypeId CastOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
   if (dst_type->isa<Type>()) {
     return dst_type->cast<TypePtr>()->type_id();
   }
-  return kernel::DtypeToTypeId(GetValue<std::string>(dst_type));
+  return StringToTypeId(GetValue<std::string>(dst_type));
 }
 
 void SelectOp::CheckType(const NodePtrList &inputs, const DAttrs &) {
@@ -439,7 +439,7 @@ TypeId Conv2dOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
   if (dst_type->isa<Type>()) {
     return dst_type->cast<TypePtr>()->type_id();
   }
-  return kernel::DtypeToTypeId(GetValue<std::string>(dst_type));
+  return StringToTypeId(GetValue<std::string>(dst_type));
 }
 
 DShape TransposeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
@@ -492,13 +492,12 @@ DShape MatMulOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
 }
 
 TypeId MatMulOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
-  CHECK_ATTR(attrs, "dst_type");
   if (attrs.find("dst_type") == attrs.end()) return inputs[0]->type;
   auto dst_type = attrs.find("dst_type")->second;
   if (dst_type->isa<Type>()) {
     return dst_type->cast<TypePtr>()->type_id();
   }
-  return kernel::DtypeToTypeId(GetValue<std::string>(dst_type));
+  return StringToTypeId(GetValue<std::string>(dst_type));
 }
 
 DShape PadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
