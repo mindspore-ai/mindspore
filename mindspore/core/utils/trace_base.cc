@@ -185,9 +185,11 @@ std::vector<std::string> GetSourceLineList(const AnfNodePtr &node) {
   }
   auto cnode = node->cast<CNodePtr>();
   auto primal_debug_infos = cnode->primal_debug_infos();
-  result.emplace_back("Corresponding forward node candidate:\n");
-  for (auto &primal_debug_info : primal_debug_infos) {
-    GetSourceLineFromDebugInfo(primal_debug_info, &result);
+  if (!primal_debug_infos.empty()) {
+    result.emplace_back("Corresponding forward node candidate:\n");
+    for (auto &primal_debug_info : primal_debug_infos) {
+      GetSourceLineFromDebugInfo(primal_debug_info, &result);
+    }
   }
   return result;
 }

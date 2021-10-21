@@ -97,11 +97,9 @@ std::shared_ptr<FuncGraphSpecializer> ProgramSpecializer::GetFuncGraphSpecialize
   return nullptr;
 }
 
-std::string GetNextCounter() {
+static int64_t GetNextCounter() {
   static int64_t g_CloneCounter = 1;
-  std::string str_count = std::to_string(g_CloneCounter);
-  g_CloneCounter++;
-  return str_count;
+  return g_CloneCounter++;
 }
 
 FuncGraphSpecializer::FuncGraphSpecializer(ProgramSpecializer *const s, const FuncGraphPtr &fg,
