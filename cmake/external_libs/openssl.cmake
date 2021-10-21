@@ -7,7 +7,7 @@ else()
 endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   mindspore_add_pkg(openssl
-    VER 1.1.0
+    VER 1.1.1k
     LIBS ssl crypto
     URL ${REQ_URL}
     MD5 ${MD5}
