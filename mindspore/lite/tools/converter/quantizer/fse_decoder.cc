@@ -115,6 +115,7 @@ int FSEDecoder::DeCompress(const schema::Tensor &src_tensor, Tensor *dst_tensor)
   CHECK_NULL_RETURN(src_tensor.data());
   auto total_size = src_tensor.data()->size();
   float *output = static_cast<float *>(dst_tensor->data());
+  CHECK_NULL_RETURN(output);
   int out_sz = dst_tensor->ElementsNum();
   // deserialize from `data`:
   BitStream bs;

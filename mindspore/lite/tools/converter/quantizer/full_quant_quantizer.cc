@@ -396,7 +396,11 @@ STATUS Calibrator::ComputeThreshold() {
         }
       }
       if (!already_computed) {
-        input_infos[i]->ComputeThreshold();
+        auto ret = input_infos[i]->ComputeThreshold();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "ComputeThreshold failed.";
+          return ret;
+        }
       }
     }
   }

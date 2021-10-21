@@ -162,12 +162,14 @@ int FSEEncoder::Compress(schema::TensorT *tensor_input) {
   ret = bs.Create(kInt16 * fse_quant.symbol_table_count);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "BitStream Create failed.";
+    free(fse_quant.symbol_table);
     return ret;
   }
   ret = FSEEncode(&bs, fse_quant.symbol_table, fse_quant.symbol_table_count, fse_quant.frequency, fse_quant.size,
                   table_log);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FSE Encode failed.";
+    free(fse_quant.symbol_table);
     return ret;
   }
   bs.Flush();
@@ -175,6 +177,7 @@ int FSEEncoder::Compress(schema::TensorT *tensor_input) {
   ret = SerializingToOut(tensor_input, &bs, fse_quant, table_log);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Serializing To Out failed.";
+    free(fse_quant.symbol_table);
     return ret;
   }
   bs.Free();
@@ -251,7 +254,7 @@ int FSEEncoder::NormalizeFrequency(FSEQuant *q, int *table_log) {
   // grow
   if (updated_table_size < new_table_size) {
     int max_ix = GetMaxIndex(q->frequency, q->size);
-    if (max_ix < 0 || max_ix > MAX_SYMS) {
+    if (max_ix < 0 || max_ix >= MAX_SYMS) {
       MS_LOG(ERROR) << "max_ix is invalid.";
       return RET_ERROR;
     }
@@ -399,6 +402,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
   const int extend_size = 2;
   auto max_size = tensor_input->data.size() * extend_size;
   auto *out8 = static_cast<uint8_t *>(malloc(max_size));
+  MSLITE_CHECK_PTR(out8);
   size_t out_size = 0;
   auto ret = SerializingToTensor(tensor_input, bs, fse_quant, table_log, out8, max_size, &out_size);
   if (ret != RET_OK) {
@@ -407,6 +411,7 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, BitStream *bs, c
     return ret;
   }
   tensor_input->data.resize(out_size);
+  MSLITE_CHECK_PTR(tensor_input->data.data());
   if (memcpy_s(tensor_input->data.data(), out_size, out8, out_size) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";
     free(out8);
