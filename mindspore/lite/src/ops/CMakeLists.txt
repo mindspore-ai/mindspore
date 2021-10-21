@@ -1,6 +1,13 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
 include_directories(${CCSRC_DIR}/backend/kernel_compiler/cpu)
-
+if(APPLE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32 \
+        -fno-aligned-allocation -DTARGET_OS_OSX")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions -Wno-shorten-64-to-32 \
+        -fno-aligned-allocation -DTARGET_OS_OSX")
+endif()
 file(GLOB OPS_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/populate/*.cc

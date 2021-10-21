@@ -138,7 +138,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   mindspore::Format format() const override { return this->format_; }
   virtual int ref_count() const { return ref_count_; }
 
-  virtual int init_ref_count() const { return this->init_ref_count_; }
+  virtual int init_ref_count() const { return static_cast<int>(this->init_ref_count_); }
 
   virtual void set_ref_count(int ref_count) {
     ref_count_ = ref_count;
@@ -151,7 +151,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_init_ref_count(int ref_count) { this->init_ref_count_ = ref_count; }
 
-  virtual void ResetRefCount() { set_ref_count(this->init_ref_count_); }
+  virtual void ResetRefCount() { set_ref_count(static_cast<int>(this->init_ref_count_)); }
 
   virtual void IncRefCount();
 
