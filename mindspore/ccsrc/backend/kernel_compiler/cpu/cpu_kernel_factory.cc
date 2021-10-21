@@ -176,5 +176,10 @@ std::vector<KernelAttr> CPUKernelFactory::GetSupportedKernelAttrList(const std::
   }
   return result;
 }
+
+bool CPUKernelFactory::SearchRegisteredOp(const std::string &kernel_name) const {
+  auto iter = name_to_attr_creator_.find(kernel_name);
+  return iter != name_to_attr_creator_.end();
+}
 }  // namespace kernel
 }  // namespace mindspore

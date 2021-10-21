@@ -42,6 +42,7 @@ class CPUKernelFactory {
   void SetKernelAttrs(const std::shared_ptr<kernel::OpInfo> op_info, std::vector<KernelAttr> *kernel_attrs);
   void UpdateKernelAttrs(const std::string &kernel_name, const std::vector<KernelAttr> &kernel_attrs);
   std::vector<KernelAttr> GetSupportedKernelAttrList(const std::string &kernel_name);
+  bool SearchRegisteredOp(const std::string &kernel_name) const;
 
  private:
   CPUKernelFactory() = default;

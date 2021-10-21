@@ -91,7 +91,7 @@ class CustomRegOp(RegOp):
                 Please note that target and the `func_type` of `Custom` op have some constraints.
                 If func_type is "akg", target can be one of ["Ascend", "GPU"].
                 If func_type is "tbe", target can only be "Ascend".
-                If func_type is "lib", target can only be "GPU".
+                If func_type is "aot", target can only be "GPU".
                 If func_type is "py_func", target can only be "CPU".
                 Default: None.
         """
@@ -137,10 +137,59 @@ class Custom(ops.PrimitiveWithInfer):
         This is an experimental prototype that is subject to change.
 
     Args:
-        func (Union[function, str]): If func is of function type, then func should be a Python function which describes
-            the computation logic of a user defined operator. The function can be one of the following:
-            1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
-            2. A TBE operator implementation function.
+        func (Union[function, str]):
+            function:
+                If func is of function type, then func should be a Python function which describes
+                the computation logic of a user defined operator. The function can be one of the following:
+                1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
+                2. A TBE operator implementation function.
+
+            str:
+                If func is of str type, then str should be a path of binary file along with a function name. This could
+                only be used when func_type is "aot". Currently "aot" supports GPU/CPU(linux only) platform.
+                "aot" means ahead of time, in which case Custom directly launches user defined "xxx.so" file as
+                an operator. Users need compile a handwriting "xxx.cu"/"xxx.cc" file into "xxx.so" ahead of time, and
+                offer the path of the file along with a function name.
+
+                "xxx.so" file Generation:
+                    1) GPU Platform:
+                        Given user defined "xxx.cu" file (ex. "{path}/add.cu"),
+                        use nvcc command to compile it.(ex. "nvcc --shared -Xcompiler -fPIC -o add.so add.cu")
+                    2) CPU Platform:
+                        Given user defined "xxx.cc" file (ex. "{path}/add.cc"),
+                        use g++/gcc command to compile it.(ex. "g++ --shared -fPIC  -o add.so add.cc")
+                Define a "xxx.cc"/"xxx.cu" file:
+                    "aot" is a cross-platform identity. The functions defined in "xxx.cc" or "xxx.cu" share the same
+                    args. Typically, the function should be as:
+
+                    int func(int nparam, void **params, int *ndims, int64_t **shapes, const char **dtypes, void *stream,
+                         void *extra)
+
+                    Parameters:
+                        nparam(int): total number of inputs plus outputs; suppose the operator has 2 inputs and 3
+                        outputs, then nparam=5
+                        params(void **): a pointer to the array of inputs and outputs' pointer; the pointer type of
+                        inputs and outputs is void * ; suppose the operator has 2 inputs and 3 outputs, then the first
+                        input's pointer is nparam[0] and the second output's pointer is nparam[4]
+                        ndims(int *): a pointer to the array of inputs and outputs' dimension num; suppose params[i]
+                            is a 1024x1024 tensor and params[j] is a 77x83x4 tensor, then ndims[i]=2, ndims[j]=3.
+                        shapes(int64_t **): a pointer to the array of inputs and outputs' shapes(int64_t *); the ith
+                            input's jth dimension's size is shapes[i][j](0<=j<ndims[i]); suppose params[i]
+                            is a 2x3 tensor and params[j] is a 3x3x4 tensor, then shapes[i][0]=2, shapes[j][2]=4.
+                        dtypes(const char **): a pointer to the array of inputs and outputs' types(const char *);
+                            (ex. "float32", "float16", "float", "float64", "int", "int8", "int16", "int32", "int64",
+                            "uint", "uint8", "uint16", "uint32", "uint64", "bool")
+                        stream(void *): stream pointer, only used in cuda file
+                        extra(void *): used for further extension
+                    Return Value(int):
+                        0: raise no Exception
+                        larger than 0: will raise Exception
+                    Examples:
+                        see details tests/st/ops/graph_kernel/custom/aot_test_files/
+                Use it in Custom:
+                    Custom(func="{path}/{file_name}:{func_name}",...)
+                    (ex. Custom(func="./reorganize.so:CustomReorganize", out_shape=[1], out_type=mstype.float32))
+
         out_shape (Union[function, list, tuple]): The output shape infer function or the value of output shape of func.
             If func has single output, then the value of output shape is a list.
             If func has multiple outputs, then the value of output shape is a tuple of list, each list represents the
@@ -149,8 +198,8 @@ class Custom(ops.PrimitiveWithInfer):
             function or the value of output dtype of func.
             If func has single output, then the value of output shape is a mindspore.dtype.
             If func has multiple outputs, then the value of output shape is a tuple of mindspore.dtype.
-        func_type (str): The implementation type of func, should be one of ["akg", "tbe", "lib", "py_func"].
-        grad (function): The gradient function of func. Default: None.
+        func_type (str): The implementation type of func, should be one of ["akg", "tbe", "aot", "py_func"].
+        bprop (function): The gradient function of func. Default: None.
         reg_info (Union[str, dict, list, tuple]): Represents the registration information of func with json format of
             type str or dict. The registration information specifies supported formats of input and output, attributes
             and target of func. If reg_info is a list or tuple, then each item should be with json format of type str
@@ -177,54 +226,78 @@ class Custom(ops.PrimitiveWithInfer):
         >>> from mindspore.ops.op_info_register import DataType
         >>> from mindspore.nn import Cell
         >>>
+        >>> #func_type="tbe"
+        >>>
         >>> square_with_bias_op_info = CustomRegOp() \
-        >>>     .fusion_type("OPAQUE") \
-        >>>     .attr("bias", "required", "float") \
-        >>>     .input(0, "x") \
-        >>>     .output(0, "y") \
-        >>>     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-        >>>     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-        >>>     .target("Ascend") \
-        >>>     .get_op_info()
+        ...     .fusion_type("OPAQUE") \
+        ...     .attr("bias", "required", "float") \
+        ...     .input(0, "x") \
+        ...     .output(0, "y") \
+        ...     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+        ...     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+        ...     .target("Ascend") \
+        ...     .get_op_info()
         >>>
         >>> @custom_op_info_register(square_with_bias_op_info)
-        >>> def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
-        >>>     import te.lang.cce
-        >>>     from te import tvm
-        >>>     from topi import generic
-        >>>     from topi.cce import util
-        >>>
-        >>>     shape = input_x.get("shape")
-        >>>     dtype = input_x.get("dtype").lower()
-        >>>
-        >>>     shape = util.shape_refine(shape)
-        >>>     data = tvm.placeholder(shape, name="data", dtype=dtype.lower())
-        >>>
-        >>>     with tvm.target.cce():
-        >>>         res0 = te.lang.cce.vmul(data, data)
-        >>>         res = te.lang.cce.vadds(res0, bias)
-        >>>         sch = generic.auto_schedule(res)
-        >>>
-        >>>     config = {"print_ir": False,
-        >>>               "name": kernel_name,
-        >>>               "tensor_list": [data, res]}
-        >>>
-        >>>     te.lang.cce.cce_build_code(sch, config)
+        ... def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
+        ...     import te.lang.cce
+        ...     from te import tvm
+        ...     from topi import generic
+        ...     from topi.cce import util
+        ...
+        ...     shape = input_x.get("shape")
+        ...     dtype = input_x.get("dtype").lower()
+        ...
+        ...     shape = util.shape_refine(shape)
+        ...     data = tvm.placeholder(shape, name="data", dtype=dtype.lower())
+        ...
+        ...     with tvm.target.cce():
+        ...         res0 = te.lang.cce.vmul(data, data)
+        ...         res = te.lang.cce.vadds(res0, bias)
+        ...         sch = generic.auto_schedule(res)
+        ...
+        ...     config = {"print_ir": False,
+        ...               "name": kernel_name,
+        ...               "tensor_list": [data, res]}
+        ...
+        ...     te.lang.cce.cce_build_code(sch, config)
         >>>
         >>> class Net(Cell):
-        >>>     def __init__(self):
-        >>>         super(Net1, self).__init__()
-        >>>         self.square_with_bias = Custom(square_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, \
-        >>>                                        func_type="tbe")
+        ...     def __init__(self):
+        ...         super(Net1, self).__init__()
+        ...         self.square_with_bias = Custom(square_with_bias, out_shape=[2, 3], out_dtype=mstype.float32, \
+        ...                                        func_type="tbe")
+        ...
+        ...     def construct(self, x):
+        ...         res = self.square_with_bias(x, 1.0)
+        ...         return res
         >>>
-        >>>     def construct(self, x):
-        >>>         res = self.square_with_bias(x, 1.0)
-        >>>         return res
+        >>> #func_type="aot", platform=GPU
+        >>>
+        >>> class AOTSingleOutputNet(Cell):
+        ...     def __init__(self, func, out_shapes, out_types, reg=None):
+        ...         super(AOTSingleOutputNet, self).__init__()
+        ...         self.program = Custom(func, out_shapes, out_types, "aot", reg_info=reg)
+        ...     def construct(self, x, y):
+        ...         return self.program(x, y)
+        >>>
+        >>> reorganize_op_info = CustomRegOp() \
+        ...     .fusion_type("OPAQUE") \
+        ...     .input(0, "x1") \
+        ...     .input(1, "x2") \
+        ...     .output(0, "y") \
+        ...     .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
+        ...     .target("GPU") \
+        ...     .get_op_info()
+        >>>
+        >>> #test = AOTSingleOutputNet("./reorganize.so:CustomReorganize", shape, mstype.float32, reorganize_gpu_info)
+        >>> #output = test(Tensor(input_x), Tensor(input_y))
+        >>> #see more details in tests/st/ops/graph_kernel/custom/test_custom_aot.py
     """
 
     registered_func = {}
 
-    def __init__(self, func, out_shape, out_dtype, func_type, grad=None, reg_info=None):
+    def __init__(self, func, out_shape, out_dtype, func_type, bprop=None, reg_info=None):
         ops.PrimitiveWithInfer.__init__(self, "Custom")
 
         self.supported_targets = ["Ascend", "GPU", "CPU"]
@@ -242,7 +315,7 @@ class Custom(ops.PrimitiveWithInfer):
         self.add_prim_attr("func_name", self.func_name)
         self.out_shape = out_shape
         self.out_dtype = out_dtype
-        self.grad = grad
+        self.bprop = bprop
         self.func_type = func_type
         # Register info
         self.register_info(reg_info)
@@ -272,7 +345,7 @@ class Custom(ops.PrimitiveWithInfer):
         return self.out_dtype
 
     def get_bprop(self):
-        return self.grad
+        return self.bprop
 
     def register_info(self, info):
         """Register reg_info."""
@@ -392,7 +465,7 @@ class Custom(ops.PrimitiveWithInfer):
                 reg_info["imply_type"].strip():
             return reg_info["imply_type"]
         # Infer imply_type from func_type
-        func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "lib": target, "py_func": target}
+        func_type_to_imply_type = {"akg": "AKG", "tbe": "TBE", "aot": target, "py_func": target}
         return func_type_to_imply_type.get(self.func_type, "AKG")
 
     def add_inputs_name_to_attr(self, reg_info):
