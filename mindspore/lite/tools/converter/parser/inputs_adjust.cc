@@ -101,7 +101,7 @@ bool InputAdjust::Run(const FuncGraphPtr &func_graph) {
   auto manager = Manage(func_graph, true);
   if (manager == nullptr) {
     MS_LOG(ERROR) << "manager is nullptr.";
-    return lite ::RET_NULL_PTR;
+    return false;
   }
   auto node_list = TopoSort(func_graph->get_return());
   STATUS status = lite::RET_OK;

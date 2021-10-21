@@ -65,59 +65,8 @@ STATUS OnnxNodeParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_te
     return RET_ERROR;
   }
   size_t data_size = 0;
-  const void *onnx_data = nullptr;
   auto data_type = GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type()));
-  switch (data_type) {
-    case kNumberTypeFloat32:
-      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(float), SIZE_MAX)) {
-        MS_LOG(ERROR) << "data_size overflow";
-        return RET_ERROR;
-      }
-      data_size = data_count * sizeof(float);
-      if (onnx_const_tensor.float_data_size() == 0) {
-        onnx_data = onnx_const_tensor.raw_data().data();
-      } else {
-        onnx_data = onnx_const_tensor.float_data().data();
-      }
-      break;
-    case kNumberTypeInt32:
-      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(int), SIZE_MAX)) {
-        MS_LOG(ERROR) << "data_size overflow";
-        return RET_ERROR;
-      }
-      data_size = data_count * sizeof(int);
-      if (onnx_const_tensor.int32_data_size() == 0) {
-        onnx_data = onnx_const_tensor.raw_data().data();
-      } else {
-        onnx_data = onnx_const_tensor.int32_data().data();
-      }
-      break;
-    case kNumberTypeInt64:
-      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(int64_t), SIZE_MAX)) {
-        MS_LOG(ERROR) << "data_size overflow";
-        return RET_ERROR;
-      }
-      data_size = data_count * sizeof(int64_t);
-      if (onnx_const_tensor.int64_data_size() == 0) {
-        onnx_data = onnx_const_tensor.raw_data().data();
-      } else {
-        onnx_data = onnx_const_tensor.int64_data().data();
-      }
-      break;
-    case kNumberTypeUInt8:
-    case kNumberTypeInt8:
-    case kNumberTypeBool:
-      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(uint8_t), SIZE_MAX)) {
-        MS_LOG(ERROR) << "data_size overflow";
-        return RET_ERROR;
-      }
-      data_size = data_count * sizeof(uint8_t);
-      onnx_data = onnx_const_tensor.raw_data().data();
-      break;
-    default:
-      MS_LOG(ERROR) << "unsupported data type " << data_type;
-      return RET_ERROR;
-  }
+  const void *onnx_data = GetOnnxRawData(onnx_const_tensor, data_type, data_count, &data_size);
   if (data_size == 0) {
     return RET_OK;
   }
@@ -221,6 +170,76 @@ size_t OnnxNodeParser::GetOnnxElementNum(const onnx::TensorProto &onnx_tensor, b
     *overflowed = is_overflow;
   }
   return data_count;
+}
+
+const void *OnnxNodeParser::GetOnnxRawData(const onnx::TensorProto &onnx_const_tensor, TypeId data_type,
+                                           size_t data_count, size_t *data_size) {
+  MS_ASSERT(data_size != nullptr);
+  const void *onnx_data = nullptr;
+  switch (data_type) {
+    case kNumberTypeFloat32:
+      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(float), SIZE_MAX)) {
+        MS_LOG(ERROR) << "data_size overflow";
+        return nullptr;
+      }
+      *data_size = data_count * sizeof(float);
+      if (onnx_const_tensor.float_data_size() == 0) {
+        onnx_data = onnx_const_tensor.raw_data().data();
+      } else {
+        onnx_data = onnx_const_tensor.float_data().data();
+      }
+      break;
+    case kNumberTypeFloat64:
+      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(double), SIZE_MAX)) {
+        MS_LOG(ERROR) << "data_size overflow";
+        return nullptr;
+      }
+      *data_size = data_count * sizeof(double);
+      if (onnx_const_tensor.double_data_size() == 0) {
+        onnx_data = onnx_const_tensor.raw_data().data();
+      } else {
+        onnx_data = onnx_const_tensor.double_data().data();
+      }
+      break;
+    case kNumberTypeInt32:
+      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(int), SIZE_MAX)) {
+        MS_LOG(ERROR) << "data_size overflow";
+        return nullptr;
+      }
+      *data_size = data_count * sizeof(int);
+      if (onnx_const_tensor.int32_data_size() == 0) {
+        onnx_data = onnx_const_tensor.raw_data().data();
+      } else {
+        onnx_data = onnx_const_tensor.int32_data().data();
+      }
+      break;
+    case kNumberTypeInt64:
+      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(int64_t), SIZE_MAX)) {
+        MS_LOG(ERROR) << "data_size overflow";
+        return nullptr;
+      }
+      *data_size = data_count * sizeof(int64_t);
+      if (onnx_const_tensor.int64_data_size() == 0) {
+        onnx_data = onnx_const_tensor.raw_data().data();
+      } else {
+        onnx_data = onnx_const_tensor.int64_data().data();
+      }
+      break;
+    case kNumberTypeUInt8:
+    case kNumberTypeInt8:
+    case kNumberTypeBool:
+      if (INT_MUL_OVERFLOW_THRESHOLD(data_count, sizeof(uint8_t), SIZE_MAX)) {
+        MS_LOG(ERROR) << "data_size overflow";
+        return nullptr;
+      }
+      *data_size = data_count * sizeof(uint8_t);
+      onnx_data = onnx_const_tensor.raw_data().data();
+      break;
+    default:
+      MS_LOG(ERROR) << "unsupported data type " << data_type;
+      return nullptr;
+  }
+  return onnx_data;
 }
 }  // namespace lite
 }  // namespace mindspore

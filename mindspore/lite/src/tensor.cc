@@ -209,7 +209,7 @@ int Tensor::ElementsNum() const {
   }
   auto num = std::accumulate(shape_.begin(), shape_.end(), 1LL, std::multiplies<int64_t>());
   if (num > (int64_t)INT32_MAX) {
-    MS_LOG(ERROR) << "Element number of tensor shouder be smaller than int32_max: " << num << " return INT32_MAX";
+    MS_LOG(ERROR) << "Element number of tensor should be smaller than int32_max: " << num << " return INT32_MAX";
     return INT32_MAX;
   }
   return (int32_t)num;

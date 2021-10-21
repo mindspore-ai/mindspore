@@ -30,6 +30,7 @@ ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::Operat
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(!tflite_op->inputs.empty(), nullptr);
   auto prim = std::make_unique<ops::AvgPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
@@ -69,6 +70,7 @@ ops::PrimitiveC *TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::Operat
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(!tflite_op->inputs.empty(), nullptr);
   auto prim = std::make_unique<ops::MaxPoolFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 

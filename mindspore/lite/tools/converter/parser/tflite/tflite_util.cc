@@ -98,7 +98,7 @@ size_t GetDataTypeSize(const TypeId &data_type) {
 STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore::PadMode pad_mode, int strideH,
                        int strideW, int windowH, int windowW, std::vector<int64_t> *params) {
   MSLITE_CHECK_PTR(tensor);
-
+  MSLITE_CHECK_PTR(params);
   if (tensor->shape.empty()) {
     MS_LOG(DEBUG) << "the tensor's shape is dynamic, which obtain only when running.";
     return RET_NO_CHANGE;
@@ -109,6 +109,7 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore
   int padRight = 0;
   if (pad_mode == mindspore::PadMode::SAME) {
     auto shape = tensor->shape;
+    MS_CHECK_TRUE_RET(shape.size() == DIMENSION_4D, RET_ERROR);
     int H_input = shape.at(1);
     int W_input = shape.at(2);
     if (strideH == 0) {
@@ -116,6 +117,10 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore
       return RET_ERROR;
     }
     int H_output = ceil(H_input * 1.0 / strideH);
+    if (INT_MUL_OVERFLOW_THRESHOLD((H_output - 1), static_cast<size_t>(strideH), SIZE_MAX)) {
+      MS_LOG(ERROR) << "data_size overflow";
+      return RET_ERROR;
+    }
     int pad_needed_H = (H_output - 1) * strideH + windowH - H_input;
     padUp = floor(pad_needed_H / 2.0);
     padDown = pad_needed_H - padUp;
@@ -124,6 +129,10 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore
       return RET_ERROR;
     }
     int W_output = ceil(W_input * 1.0 / strideW);
+    if (INT_MUL_OVERFLOW_THRESHOLD((W_output - 1), static_cast<size_t>(strideW), SIZE_MAX)) {
+      MS_LOG(ERROR) << "data_size overflow";
+      return RET_ERROR;
+    }
     int pad_needed_W = (W_output - 1) * strideW + windowW - W_input;
     padLeft = floor(pad_needed_W / 2.0);
     padRight = pad_needed_W - padLeft;

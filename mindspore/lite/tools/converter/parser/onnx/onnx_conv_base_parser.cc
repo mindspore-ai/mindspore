@@ -26,7 +26,110 @@ constexpr size_t kNumDim1 = 1;
 constexpr size_t kNumDim2 = 2;
 constexpr size_t kNumDim3 = 3;
 constexpr size_t kNumDim4 = 4;
+constexpr int kBeginIndex1 = 0;
+constexpr int kBeginIndex2 = 1;
+constexpr int kEndIndex1 = 2;
+constexpr int kEndIndex2 = 3;
 }  // namespace
+STATUS ParseDilations(std::vector<int64_t> *dilation, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
+  MS_ASSERT(dilation != nullptr && conv1d != nullptr);
+  switch (onnx_node_attr.ints().size()) {
+    case kNumDim1:
+      *conv1d = true;
+      dilation->push_back(1);
+      dilation->push_back(onnx_node_attr.ints(0));
+      break;
+    case kNumDim2:
+      dilation->push_back(onnx_node_attr.ints(0));
+      dilation->push_back(onnx_node_attr.ints(1));
+      break;
+    default:
+      MS_LOG(ERROR) << "dilations size " << onnx_node_attr.ints().size() << " is not 1 or 2";
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS ParseKernels(std::vector<int64_t> *kernels, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
+  MS_ASSERT(kernels != nullptr && conv1d != nullptr);
+  switch (onnx_node_attr.ints().size()) {
+    case kNumDim1:
+      *conv1d = true;
+      kernels->push_back(1);
+      kernels->push_back(onnx_node_attr.ints(0));
+      break;
+    case kNumDim2:
+      kernels->push_back(onnx_node_attr.ints(0));
+      kernels->push_back(onnx_node_attr.ints(1));
+      break;
+    default:
+      MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 1 or 2";
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS ParseKernelShape(std::vector<int64_t> *kernels, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
+  MS_ASSERT(kernels != nullptr && conv1d != nullptr);
+  switch (onnx_node_attr.ints().size()) {
+    case kNumDim1:
+      *conv1d = true;
+      kernels->push_back(1);
+      kernels->push_back(onnx_node_attr.ints(0));
+      break;
+    case kNumDim2:
+      kernels->push_back(onnx_node_attr.ints(0));
+      kernels->push_back(onnx_node_attr.ints(1));
+      break;
+    default:
+      MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 1 or 2";
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS ParsePads(std::vector<int64_t> *pads, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
+  MS_ASSERT(pads != nullptr && conv1d != nullptr);
+  switch (onnx_node_attr.ints().size()) {
+    case kNumDim2:
+      *conv1d = true;
+      pads->push_back(0);
+      pads->push_back(0);
+      pads->push_back(onnx_node_attr.ints(0));
+      pads->push_back(onnx_node_attr.ints(1));
+      break;
+    case kNumDim4:
+      pads->push_back(onnx_node_attr.ints(kBeginIndex1));
+      pads->push_back(onnx_node_attr.ints(kEndIndex1));
+      pads->push_back(onnx_node_attr.ints(kBeginIndex2));
+      pads->push_back(onnx_node_attr.ints(kEndIndex2));
+      break;
+    default:
+      MS_LOG(ERROR) << "pads size " << onnx_node_attr.ints().size() << " is not 2 or 4";
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS ParseStrides(std::vector<int64_t> *strides, bool *conv1d, const onnx::AttributeProto &onnx_node_attr) {
+  MS_ASSERT(strides != nullptr && conv1d != nullptr);
+  switch (onnx_node_attr.ints().size()) {
+    case kNumDim1:
+      *conv1d = true;
+      strides->push_back(1);
+      strides->push_back(onnx_node_attr.ints(0));
+      break;
+    case kNumDim2:
+      strides->push_back(onnx_node_attr.ints(0));
+      strides->push_back(onnx_node_attr.ints(1));
+      break;
+    default:
+      MS_LOG(ERROR) << "strides size " << onnx_node_attr.ints().size() << " is not 1 or 2";
+      return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 STATUS OnnxConvBaseParser::ParseVecAttr(const onnx::NodeProto &onnx_node, std::vector<int64_t> *kernels,
                                         std::vector<int64_t> *strides, std::vector<int64_t> *dilation,
                                         std::vector<int64_t> *pads, bool *conv1d) {
@@ -37,83 +140,34 @@ STATUS OnnxConvBaseParser::ParseVecAttr(const onnx::NodeProto &onnx_node, std::v
   MS_ASSERT(conv1d != nullptr);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "dilations") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim1:
-          *conv1d = true;
-          dilation->push_back(1);
-          dilation->push_back(onnx_node_attr.ints(0));
-          break;
-        case kNumDim2:
-          dilation->push_back(onnx_node_attr.ints(0));
-          dilation->push_back(onnx_node_attr.ints(1));
-          break;
-        default:
-          MS_LOG(ERROR) << "dilations size " << onnx_node_attr.ints().size() << " is not 1 or 2";
-          return RET_ERROR;
+      auto ret = ParseDilations(dilation, conv1d, onnx_node_attr);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Parse dilations failed!";
+        return RET_ERROR;
       }
     } else if (onnx_node_attr.name() == "kernels") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim1:
-          *conv1d = true;
-          kernels->push_back(1);
-          kernels->push_back(onnx_node_attr.ints(0));
-          break;
-        case kNumDim2:
-          kernels->push_back(onnx_node_attr.ints(0));
-          kernels->push_back(onnx_node_attr.ints(1));
-          break;
-        default:
-          MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 1 or 2";
-          return RET_ERROR;
+      auto ret = ParseKernels(kernels, conv1d, onnx_node_attr);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Parse kernels failed!";
+        return RET_ERROR;
       }
     } else if (onnx_node_attr.name() == "kernel_shape") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim1:
-          *conv1d = true;
-          kernels->push_back(1);
-          kernels->push_back(onnx_node_attr.ints(0));
-          break;
-        case kNumDim2:
-          kernels->push_back(onnx_node_attr.ints(0));
-          kernels->push_back(onnx_node_attr.ints(1));
-          break;
-        default:
-          MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 1 or 2";
-          return RET_ERROR;
+      auto ret = ParseKernelShape(kernels, conv1d, onnx_node_attr);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Parse kernel_shape failed!";
+        return RET_ERROR;
       }
     } else if (onnx_node_attr.name() == "pads") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim2:
-          *conv1d = true;
-          pads->push_back(0);
-          pads->push_back(0);
-          pads->push_back(onnx_node_attr.ints(0));
-          pads->push_back(onnx_node_attr.ints(1));
-          break;
-        case kNumDim4:
-          pads->push_back(onnx_node_attr.ints(0));
-          pads->push_back(onnx_node_attr.ints(2));
-          pads->push_back(onnx_node_attr.ints(1));
-          pads->push_back(onnx_node_attr.ints(3));
-          break;
-        default:
-          MS_LOG(ERROR) << "pads size " << onnx_node_attr.ints().size() << " is not 2 or 4";
-          return RET_ERROR;
+      auto ret = ParsePads(pads, conv1d, onnx_node_attr);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Parse pads failed!";
+        return RET_ERROR;
       }
     } else if (onnx_node_attr.name() == "strides") {
-      switch (onnx_node_attr.ints().size()) {
-        case kNumDim1:
-          *conv1d = true;
-          strides->push_back(1);
-          strides->push_back(onnx_node_attr.ints(0));
-          break;
-        case kNumDim2:
-          strides->push_back(onnx_node_attr.ints(0));
-          strides->push_back(onnx_node_attr.ints(1));
-          break;
-        default:
-          MS_LOG(ERROR) << "strides size " << onnx_node_attr.ints().size() << " is not 1 or 2";
-          return RET_ERROR;
+      auto ret = ParseStrides(strides, conv1d, onnx_node_attr);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Parse strides failed!";
+        return RET_ERROR;
       }
     }
   }

@@ -28,10 +28,11 @@ ops::PrimitiveC *TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT
   MS_CHECK_TRUE_RET(tflite_op != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_subgraph != nullptr, nullptr);
   MS_CHECK_TRUE_RET(tflite_model != nullptr, nullptr);
+  MS_CHECK_TRUE_RET(!tflite_op->outputs.empty(), nullptr);
   auto prim = std::make_unique<ops::Cast>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
 
-  const auto &out_tensor = tflite_subgraph->tensors[tflite_op->outputs[0]];
+  const auto &out_tensor = tflite_subgraph->tensors[tflite_op->outputs.front()];
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is null";
     return nullptr;

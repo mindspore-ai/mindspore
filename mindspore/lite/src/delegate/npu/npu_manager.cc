@@ -85,6 +85,9 @@ bool NPUManager::CheckDDKVersion() {
       MS_LOG(WARNING) << "DDK Version " << version << " less than 100.320.011.018";
       return false;
     }
+  } else {
+    MS_LOG(WARNING) << "Get DDK Version failed!";
+    return false;
   }
   return true;
 }

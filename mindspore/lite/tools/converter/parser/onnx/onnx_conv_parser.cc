@@ -90,31 +90,45 @@ STATUS GetConvChannel(const onnx::GraphProto &onnx_graph, const onnx::NodeProto 
   return RET_OK;
 }
 
+STATUS OnnxConvParser::ParseOnnxAttr(const onnx::NodeProto &onnx_node, int64_t *group, mindspore::Format *format,
+                                     mindspore::PadMode *pad_mode) {
+  MS_ASSERT(group != nullptr);
+  MS_ASSERT(format != nullptr);
+  MS_ASSERT(pad_mode != nullptr);
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    if (onnx_node_attr.name() == "group") {
+      *group = onnx_node_attr.i();
+    } else if (onnx_node_attr.name() == "auto_pad") {
+      *pad_mode = GetOnnxPadMode(onnx_node_attr);
+    } else if (onnx_node_attr.name() == "order" && onnx_node_attr.s() != "NHWC") {
+      MS_LOG(ERROR) << "Unsupported format: " << onnx_node_attr.s();
+      return RET_ERROR;
+    } else if (onnx_node_attr.name() == "order") {
+      if (onnx_node_attr.s() == "NHWC") {
+        *format = mindspore::Format::NHWC;
+      } else {
+        MS_LOG(ERROR) << "Unsupported format: " << onnx_node_attr.s();
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto prim = std::make_unique<ops::Conv2DFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   prim->set_pad({0, 0, 0, 0});
   mindspore::Format format = mindspore::Format::NCHW;
   mindspore::PadMode pad_mode = mindspore::PadMode::PAD;
-  int64_t channel_out = 1, channel_in = 1, group = 1;
+  int64_t channel_out = 1;
+  int64_t channel_in = 1;
+  int64_t group = 1;
   std::vector<int64_t> kernels, strides, dilation, pads;
-
-  for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    if (onnx_node_attr.name() == "group") {
-      group = onnx_node_attr.i();
-    } else if (onnx_node_attr.name() == "auto_pad") {
-      pad_mode = GetOnnxPadMode(onnx_node_attr);
-    } else if (onnx_node_attr.name() == "order" && onnx_node_attr.s() != "NHWC") {
-      MS_LOG(ERROR) << "Unsupported format: " << onnx_node_attr.s();
-      return nullptr;
-    } else if (onnx_node_attr.name() == "order") {
-      if (onnx_node_attr.s() == "NHWC") {
-        format = mindspore::Format::NHWC;
-      } else {
-        MS_LOG(ERROR) << "Unsupported format: " << onnx_node_attr.s();
-        return nullptr;
-      }
-    }
+  auto status = ParseOnnxAttr(onnx_node, &group, &format, &pad_mode);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Parse onnx attribute failed.";
+    return nullptr;
   }
   prim->AddAttr(mindspore::ops::kOriginalFormat, MakeValue<int64_t>(format));
   prim->set_pad_mode(pad_mode);
@@ -143,7 +157,7 @@ ops::PrimitiveC *OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const
   }
 
   // get channel_out and channel_in
-  auto status = GetConvChannel(onnx_graph, onnx_node, group, &channel_out, &channel_in);
+  status = GetConvChannel(onnx_graph, onnx_node, group, &channel_out, &channel_in);
   if (status == RET_OK) {
     prim->set_in_channel(channel_in);
     prim->set_out_channel(channel_out);
