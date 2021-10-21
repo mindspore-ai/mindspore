@@ -22,75 +22,61 @@ from mindspore.mindrecord import FileReader
 from mindspore.mindrecord import SUCCESS
 
 CIFAR10_DIR = "../data/mindrecord/testCifar10Data"
-MINDRECORD_FILE = "./cifar10.mindrecord"
+file_name = "./cifar10.mindrecord"
+
+def remove_file(x):
+    if os.path.exists("{}".format(x)):
+        os.remove("{}".format(x))
+    if os.path.exists("{}.db".format(x)):
+        os.remove("{}.db".format(x))
+    if os.path.exists("{}_test".format(x)):
+        os.remove("{}_test".format(x))
+    if os.path.exists("{}_test.db".format(x)):
+        os.remove("{}_test.db".format(x))
 
 @pytest.fixture
 def fixture_file():
     """add/remove file"""
-    def remove_file(x):
-        if os.path.exists("{}".format(x)):
-            os.remove("{}".format(x))
-        if os.path.exists("{}.db".format(x)):
-            os.remove("{}.db".format(x))
-        if os.path.exists("{}_test".format(x)):
-            os.remove("{}_test".format(x))
-        if os.path.exists("{}_test.db".format(x)):
-            os.remove("{}_test.db".format(x))
-
-    remove_file(MINDRECORD_FILE)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_file(file_name)
     yield "yield_fixture_data"
-    remove_file(MINDRECORD_FILE)
-
-@pytest.fixture
-def fixture_space_file():
-    """add/remove file"""
-    def remove_file(x):
-        if os.path.exists("{}".format(x)):
-            os.remove("{}".format(x))
-        if os.path.exists("{}.db".format(x)):
-            os.remove("{}.db".format(x))
-        if os.path.exists("{}_test".format(x)):
-            os.remove("{}_test".format(x))
-        if os.path.exists("{}_test.db".format(x)):
-            os.remove("{}_test.db".format(x))
-
-    x = "./yes  ok"
-    remove_file(x)
-    yield "yield_fixture_data"
-    remove_file(x)
+    remove_file(file_name)
 
 def test_cifar10_to_mindrecord_without_index_fields(fixture_file):
     """test transform cifar10 dataset to mindrecord without index fields."""
-    cifar10_transformer = Cifar10ToMR(CIFAR10_DIR, MINDRECORD_FILE)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    cifar10_transformer = Cifar10ToMR(CIFAR10_DIR, file_name)
     cifar10_transformer.transform()
-    assert os.path.exists(MINDRECORD_FILE)
-    assert os.path.exists(MINDRECORD_FILE + "_test")
-    read()
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + "_test")
+    read(file_name)
 
 
 
 def test_cifar10_to_mindrecord(fixture_file):
     """test transform cifar10 dataset to mindrecord."""
-    cifar10_transformer = Cifar10ToMR(CIFAR10_DIR, MINDRECORD_FILE)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    cifar10_transformer = Cifar10ToMR(CIFAR10_DIR, file_name)
     cifar10_transformer.transform(['label'])
-    assert os.path.exists(MINDRECORD_FILE)
-    assert os.path.exists(MINDRECORD_FILE + "_test")
-    read()
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + "_test")
+    read(file_name)
 
 def test_cifar10_to_mindrecord_with_return(fixture_file):
     """test transform cifar10 dataset to mindrecord."""
-    cifar10_transformer = Cifar10ToMR(CIFAR10_DIR, MINDRECORD_FILE)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    cifar10_transformer = Cifar10ToMR(CIFAR10_DIR, file_name)
     ret = cifar10_transformer.transform(['label'])
     assert ret == SUCCESS, "commit failed"
-    assert os.path.exists(MINDRECORD_FILE)
-    assert os.path.exists(MINDRECORD_FILE + "_test")
-    read()
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + "_test")
+    read(file_name)
 
 
-def read():
+def read(file_name):
     """test file reader"""
     count = 0
-    reader = FileReader(MINDRECORD_FILE)
+    reader = FileReader(file_name)
     for _, x in enumerate(reader.get_next()):
         assert len(x) == 3
         count = count + 1
@@ -100,7 +86,7 @@ def read():
     reader.close()
 
     count = 0
-    reader = FileReader(MINDRECORD_FILE + "_test")
+    reader = FileReader(file_name + "_test")
     for _, x in enumerate(reader.get_next()):
         assert len(x) == 3
         count = count + 1
@@ -130,16 +116,18 @@ def test_cifar10_to_mindrecord_filename_start_with_space(fixture_file):
         cifar10_transformer = Cifar10ToMR(CIFAR10_DIR, filename)
         cifar10_transformer.transform()
 
-def test_cifar10_to_mindrecord_filename_contain_space(fixture_space_file):
+def test_cifar10_to_mindrecord_filename_contain_space():
     """
-    test transform cifar10 dataset to mindrecord
-    when file name contains space.
+    Feature: Cifar10ToMR
+    Description: test transform cifar10 dataset to mindrecord when file name contains space.
+    Expectation: generate mindrecord file successfully
     """
-    filename = "./yes  ok"
+    filename = "./cifar10  ok"
     cifar10_transformer = Cifar10ToMR(CIFAR10_DIR, filename)
     cifar10_transformer.transform()
     assert os.path.exists(filename)
     assert os.path.exists(filename + "_test")
+    remove_file(filename)
 
 def test_cifar10_to_mindrecord_directory(fixture_file):
     """

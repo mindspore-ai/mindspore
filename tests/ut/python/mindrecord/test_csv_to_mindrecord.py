@@ -27,7 +27,6 @@ except ModuleNotFoundError:
     pd = None
 
 CSV_FILE = "../data/mindrecord/testCsv/data.csv"
-MINDRECORD_FILE = "../data/mindrecord/testCsv/csv.mindrecord"
 PARTITION_NUMBER = 4
 
 @pytest.fixture(name="remove_mindrecord_file")
@@ -36,20 +35,21 @@ def fixture_remove():
     def remove_one_file(x):
         if os.path.exists(x):
             os.remove(x)
-    def remove_file():
-        x = MINDRECORD_FILE
+    def remove_file(file_name):
+        x = file_name
         remove_one_file(x)
-        x = MINDRECORD_FILE + ".db"
+        x = file_name + ".db"
         remove_one_file(x)
         for i in range(PARTITION_NUMBER):
-            x = MINDRECORD_FILE + str(i)
+            x = file_name + str(i)
             remove_one_file(x)
-            x = MINDRECORD_FILE + str(i) + ".db"
+            x = file_name + str(i) + ".db"
             remove_one_file(x)
 
-    remove_file()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_file(file_name)
     yield "yield_fixture_data"
-    remove_file()
+    remove_file(file_name)
 
 def read(filename, columns, row_num):
     """test file reade"""
@@ -70,26 +70,29 @@ def read(filename, columns, row_num):
 
 def test_csv_to_mindrecord(remove_mindrecord_file):
     """test transform csv  to mindrecord."""
-    csv_trans = CsvToMR(CSV_FILE, MINDRECORD_FILE, partition_number=PARTITION_NUMBER)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    csv_trans = CsvToMR(CSV_FILE, file_name, partition_number=PARTITION_NUMBER)
     csv_trans.transform()
     for i in range(PARTITION_NUMBER):
-        assert os.path.exists(MINDRECORD_FILE + str(i))
-        assert os.path.exists(MINDRECORD_FILE + str(i) + ".db")
-    read(MINDRECORD_FILE + "0", ["Age", "EmployNumber", "Name", "Sales", "Over18"], 5)
+        assert os.path.exists(file_name + str(i))
+        assert os.path.exists(file_name + str(i) + ".db")
+    read(file_name + "0", ["Age", "EmployNumber", "Name", "Sales", "Over18"], 5)
 
 def test_csv_to_mindrecord_with_columns(remove_mindrecord_file):
     """test transform csv  to mindrecord."""
-    csv_trans = CsvToMR(CSV_FILE, MINDRECORD_FILE, columns_list=['Age', 'Sales'], partition_number=PARTITION_NUMBER)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    csv_trans = CsvToMR(CSV_FILE, file_name, columns_list=['Age', 'Sales'], partition_number=PARTITION_NUMBER)
     csv_trans.transform()
     for i in range(PARTITION_NUMBER):
-        assert os.path.exists(MINDRECORD_FILE + str(i))
-        assert os.path.exists(MINDRECORD_FILE + str(i) + ".db")
-    read(MINDRECORD_FILE + "0", ["Age", "Sales"], 5)
+        assert os.path.exists(file_name + str(i))
+        assert os.path.exists(file_name + str(i) + ".db")
+    read(file_name + "0", ["Age", "Sales"], 5)
 
 def test_csv_to_mindrecord_with_no_exist_columns(remove_mindrecord_file):
     """test transform csv  to mindrecord."""
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     with pytest.raises(Exception, match="The parameter columns_list is illegal, column ssales does not exist."):
-        csv_trans = CsvToMR(CSV_FILE, MINDRECORD_FILE, columns_list=['Age', 'ssales'],
+        csv_trans = CsvToMR(CSV_FILE, file_name, columns_list=['Age', 'ssales'],
                             partition_number=PARTITION_NUMBER)
         csv_trans.transform()
 
@@ -97,8 +100,9 @@ def test_csv_partition_number_with_illegal_columns(remove_mindrecord_file):
     """
     test transform csv  to mindrecord
     """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     with pytest.raises(Exception, match="The parameter columns_list must be list of str."):
-        csv_trans = CsvToMR(CSV_FILE, MINDRECORD_FILE, ["Sales", 2])
+        csv_trans = CsvToMR(CSV_FILE, file_name, ["Sales", 2])
         csv_trans.transform()
 
 
@@ -107,19 +111,21 @@ def test_csv_to_mindrecord_default_partition_number(remove_mindrecord_file):
     test transform csv to mindrecord
     when partition number is default.
     """
-    csv_trans = CsvToMR(CSV_FILE, MINDRECORD_FILE)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    csv_trans = CsvToMR(CSV_FILE, file_name)
     csv_trans.transform()
-    assert os.path.exists(MINDRECORD_FILE)
-    assert os.path.exists(MINDRECORD_FILE + ".db")
-    read(MINDRECORD_FILE, ["Age", "EmployNumber", "Name", "Sales", "Over18"], 5)
+    assert os.path.exists(file_name)
+    assert os.path.exists(file_name + ".db")
+    read(file_name, ["Age", "EmployNumber", "Name", "Sales", "Over18"], 5)
 
 def test_csv_partition_number_0(remove_mindrecord_file):
     """
     test transform csv  to mindrecord
     when partition number is 0.
     """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     with pytest.raises(Exception, match="Invalid parameter value"):
-        csv_trans = CsvToMR(CSV_FILE, MINDRECORD_FILE, None, 0)
+        csv_trans = CsvToMR(CSV_FILE, file_name, None, 0)
         csv_trans.transform()
 
 def test_csv_to_mindrecord_partition_number_none(remove_mindrecord_file):
@@ -127,9 +133,10 @@ def test_csv_to_mindrecord_partition_number_none(remove_mindrecord_file):
     test transform csv to mindrecord
     when partition number is none.
     """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     with pytest.raises(Exception,
                        match="The parameter partition_number must be int"):
-        csv_trans = CsvToMR(CSV_FILE, MINDRECORD_FILE, None, None)
+        csv_trans = CsvToMR(CSV_FILE, file_name, None, None)
         csv_trans.transform()
 
 def test_csv_to_mindrecord_illegal_filename(remove_mindrecord_file):

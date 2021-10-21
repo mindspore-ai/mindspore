@@ -23,7 +23,6 @@ from mindspore.mindrecord import FileReader
 from mindspore.mindrecord import MnistToMR
 
 MNIST_DIR = "../data/mindrecord/testMnistData"
-FILE_NAME = "mnist"
 PARTITION_NUM = 4
 IMAGE_SIZE = 28
 NUM_CHANNELS = 1
@@ -34,32 +33,35 @@ def fixture_file():
     def remove_one_file(x):
         if os.path.exists(x):
             os.remove(x)
-    def remove_file():
-        x = "mnist_train.mindrecord"
-        remove_one_file(x)
-        x = "mnist_train.mindrecord.db"
-        remove_one_file(x)
-        x = "mnist_test.mindrecord"
-        remove_one_file(x)
-        x = "mnist_test.mindrecord.db"
-        remove_one_file(x)
+    def remove_file(file_name):
+        remove_one_file(file_name + '_train.mindrecord')
+        remove_one_file(file_name + '_train.mindrecord.db')
+        remove_one_file(file_name + '_test.mindrecord')
+        remove_one_file(file_name + '_test.mindrecord.db')
         for i in range(PARTITION_NUM):
-            x = "mnist_train.mindrecord" + str(i)
+            x = file_name + "_train.mindrecord" + str(i)
             remove_one_file(x)
-            x = "mnist_train.mindrecord" + str(i) + ".db"
+            x = file_name + "_train.mindrecord" + str(i) + ".db"
             remove_one_file(x)
-            x = "mnist_test.mindrecord" + str(i)
+            x = file_name + "_test.mindrecord" + str(i)
             remove_one_file(x)
-            x = "mnist_test.mindrecord" + str(i) + ".db"
+            x = file_name + "_test.mindrecord" + str(i) + ".db"
             remove_one_file(x)
 
-    remove_file()
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    remove_file(file_name)
     yield "yield_fixture_data"
-    remove_file()
+    remove_file(file_name)
 
-def read(train_name, test_name):
+def read(file_name, partition=False):
     """test file reader"""
     count = 0
+    if partition:
+        train_name = file_name + "_train.mindrecord0"
+        test_name = file_name + "_test.mindrecord0"
+    else:
+        train_name = file_name + "_train.mindrecord"
+        test_name = file_name + "_test.mindrecord"
     reader = FileReader(train_name)
     for _, x in enumerate(reader.get_next()):
         assert len(x) == 2
@@ -82,21 +84,24 @@ def read(train_name, test_name):
 
 def test_mnist_to_mindrecord(fixture_file):
     """test transform mnist dataset to mindrecord."""
-    mnist_transformer = MnistToMR(MNIST_DIR, FILE_NAME)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mnist_transformer = MnistToMR(MNIST_DIR, file_name)
     mnist_transformer.transform()
-    assert os.path.exists("mnist_train.mindrecord")
-    assert os.path.exists("mnist_test.mindrecord")
+    assert os.path.exists(file_name + "_train.mindrecord")
+    assert os.path.exists(file_name + "_test.mindrecord")
 
-    read("mnist_train.mindrecord", "mnist_test.mindrecord")
+    read(file_name)
 
 def test_mnist_to_mindrecord_compare_data(fixture_file):
     """test transform mnist dataset to mindrecord and compare data."""
-    mnist_transformer = MnistToMR(MNIST_DIR, FILE_NAME)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mnist_transformer = MnistToMR(MNIST_DIR, file_name)
     mnist_transformer.transform()
-    assert os.path.exists("mnist_train.mindrecord")
-    assert os.path.exists("mnist_test.mindrecord")
+    assert os.path.exists(file_name + "_train.mindrecord")
+    assert os.path.exists(file_name + "_test.mindrecord")
 
-    train_name, test_name = "mnist_train.mindrecord", "mnist_test.mindrecord"
+    train_name = file_name + "_train.mindrecord"
+    test_name = file_name + "_test.mindrecord"
 
     def _extract_images(filename, num_images):
         """Extract the images into a 4D tensor [image index, y, x, channels]."""
@@ -147,7 +152,8 @@ def test_mnist_to_mindrecord_compare_data(fixture_file):
 
 def test_mnist_to_mindrecord_multi_partition(fixture_file):
     """test transform mnist dataset to multiple mindrecord files."""
-    mnist_transformer = MnistToMR(MNIST_DIR, FILE_NAME, PARTITION_NUM)
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mnist_transformer = MnistToMR(MNIST_DIR, file_name, PARTITION_NUM)
     mnist_transformer.transform()
 
-    read("mnist_train.mindrecord0", "mnist_test.mindrecord0")
+    read(file_name, partition=True)
