@@ -42,9 +42,6 @@ static constexpr uint32_t kAicpuUnloadFlag = 0;
 static constexpr uint32_t kTupleTaskId = 0;
 static constexpr uint32_t kTupleStreamId = 1;
 static constexpr uint32_t kTupleArgs = 2;
-static constexpr uint32_t kCurrentStepTensorIndex = 0;
-static constexpr uint32_t kCurrentEpochTensorIndex = 2;
-static constexpr uint32_t kStepsPerEpochTensorIndex = 3;
 static constexpr uint64_t kOpDebugShape = 2048;
 static constexpr uint64_t kOpDebugHostMemSize = 2048;
 static constexpr uint64_t kOpDebugDevMemSize = sizeof(void *);
@@ -58,6 +55,10 @@ static const std::map<uint32_t, std::string> kOverflowModeStr = {{kNoOverflow, "
                                                                  {kAllOverflow, "AllOverflow"}};
 constexpr const char *kNodeNameOpDebug = "Node_OpDebug";
 constexpr const char *kOpTypeOpDebug = "Opdebug";
+
+static constexpr auto kCurLoopCountName = "current_loop_count";
+static constexpr auto kCurEpochCountName = "current_epoch_count";
+static constexpr auto kConstLoopNumInEpochName = "const_loop_num_in_epoch";
 
 namespace mindspore {
 namespace device {
@@ -136,9 +137,9 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
   MS_EXCEPTION_IF_NULL(context_ptr);
   MS_EXCEPTION_IF_NULL(kernel_graph_);
   auto dump_path = DumpJsonParser::GetInstance().path();
-  const auto &input_ctrl_tensors = kernel_graph_->input_ctrl_tensors();
-  constexpr size_t kLoopSinkCtrlTensorNum = 3;  // cur step, cur epoch, steps per epoch
-  bool valid_ctrl_tensors = input_ctrl_tensors != nullptr && input_ctrl_tensors->size() >= kLoopSinkCtrlTensorNum;
+  auto input_ctrl_tensors = kernel_graph_->device_loop_control_tensors();
+  constexpr size_t kLoopSinkCtrlTensorNum = 5;  // cur step, next step, cur epoch, one, steps per epoch
+  bool valid_ctrl_tensors = input_ctrl_tensors.size() >= kLoopSinkCtrlTensorNum;
   std::string net_name = DumpJsonParser::GetInstance().net_name();
   std::string iteration = DumpJsonParser::GetInstance().iteration_string();
 
@@ -177,19 +178,19 @@ void DataDumper::SetOpMappingInfo(NotNull<aicpu::dump::OpMappingInfo *> dump_inf
     MS_LOG(INFO) << "[DataDump] input_ctrl_tensors not valid.";
     return;
   }
-  const auto &current_step_tensor = input_ctrl_tensors->at(kCurrentStepTensorIndex);
-  const auto &currnet_epoch_tensor = input_ctrl_tensors->at(kCurrentEpochTensorIndex);
-  const auto &steps_per_epoch_tensor = input_ctrl_tensors->at(kStepsPerEpochTensorIndex);
+  const auto &current_step_tensor = input_ctrl_tensors[kCurLoopCountName];
+  const auto &current_epoch_tensor = input_ctrl_tensors[kCurEpochCountName];
+  const auto &steps_per_epoch_tensor = input_ctrl_tensors[kConstLoopNumInEpochName];
 
   MS_EXCEPTION_IF_NULL(current_step_tensor);
-  MS_EXCEPTION_IF_NULL(currnet_epoch_tensor);
+  MS_EXCEPTION_IF_NULL(current_epoch_tensor);
   MS_EXCEPTION_IF_NULL(steps_per_epoch_tensor);
   MS_EXCEPTION_IF_NULL(current_step_tensor->device_address());
-  MS_EXCEPTION_IF_NULL(currnet_epoch_tensor->device_address());
+  MS_EXCEPTION_IF_NULL(current_epoch_tensor->device_address());
   MS_EXCEPTION_IF_NULL(steps_per_epoch_tensor->device_address());
 
   void *current_step = current_step_tensor->device_address()->GetMutablePtr();
-  void *current_epoch = currnet_epoch_tensor->device_address()->GetMutablePtr();
+  void *current_epoch = current_epoch_tensor->device_address()->GetMutablePtr();
   void *steps_per_epoch = steps_per_epoch_tensor->device_address()->GetMutablePtr();
 
   if (current_epoch != nullptr && current_step != nullptr && steps_per_epoch != nullptr) {

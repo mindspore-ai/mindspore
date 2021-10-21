@@ -36,13 +36,14 @@ using mindspore::device::ascend::ProfilingTraceInfo;
 using mindspore::device::ascend::ProfilingUtils;
 #endif
 namespace mindspore {
-constexpr auto kCurLoopCountParamName = "cur_loop_count";
-constexpr auto kNextLoopCountParamName = "next_loop_count";
-constexpr auto kIterLoopParamName = "iter_loop";
-constexpr auto kOneParamName = "one";
-constexpr auto kEpochParamName = "loop_epoch";
+// device loop control
+constexpr auto kCurLoopCountName = "current_loop_count";
+constexpr auto kNextLoopCountName = "next_loop_count";
+constexpr auto kCurEpochCountName = "current_epoch_count";
+constexpr auto kConstOneName = "const_one";
+constexpr auto kConstLoopNumInEpochName = "const_loop_num_in_epoch";
+
 constexpr auto kStreamNeedActivedFirst = "stream_need_active_first";
-constexpr uint32_t kSecondStreamSwitchLabel = 2;
 enum StreamSwitchKind {
   kFpBpStreamSwitch = 0,
   kGetNextStreamSwitch = 1,
@@ -57,10 +58,13 @@ class KernelAdjust {
     static KernelAdjust instance;
     return instance;
   }
+  // device loop control
+  void InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr);
+  void LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
 
   void InsertOverflowCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  void InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  bool StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
 #ifndef ENABLE_SECURITY
   void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);
 #endif
@@ -82,8 +86,6 @@ class KernelAdjust {
   void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
   CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
-  void CreateSwitchOpParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                std::map<std::string, mindspore::ParameterPtr> *switch_loop_input);
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                 StreamSwitchKind kind);
@@ -97,17 +99,12 @@ class KernelAdjust {
                                     bool cur_loop);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder CreateMngKernelBuilder(const std::vector<std::string> &formats,
                                                                          const std::vector<TypeId> &type_ids);
-  void LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs);
-  void InitCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
 #ifndef ENABLE_SECURITY
   void InsertProfilingKernel(const ProfilingTraceInfo &profiling_trace_info,
                              NotNull<session::KernelGraph *> kernel_graph_ptr);
 #endif
   bool ExistIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   bool ExistGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-
-  void InsertSwitchLoopInput(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                             const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
   void InsertGetNextLoopStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                      std::vector<CNodePtr> *exec_order, uint32_t *getnext_switch_stream_id,
                                      uint32_t *getnext_stream_id,
@@ -158,6 +155,13 @@ class KernelAdjust {
   void InsertFpBpAndEosLoopStreamActive(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                         std::vector<CNodePtr> *exec_order,
                                         const std::vector<uint32_t> &fpbp_active_streams);
+  void SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const string name,
+                               int32_t value);
+  void AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_graph, KernelRuntime *runtime_instance,
+                               const string name);
+  std::shared_ptr<Tensor> CreateTensor(int32_t initial_value);
+  std::shared_ptr<Parameter> CreateParameter(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                             const string parameter_name);
 };
 }  // namespace device
 }  // namespace mindspore
