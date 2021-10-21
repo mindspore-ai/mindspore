@@ -104,7 +104,7 @@ std::vector<PrimitivePtr> GetExpandOps() {
 bool PyExpander::ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
   DumpOption dump_option;
   dump_option.extract_opinfo_from_anfnode = true;
-  kernel::AkgKernelJsonGenerator json_generator(dump_option);
+  AkgKernelJsonGenerator json_generator(dump_option);
   return json_generator.CollectJson(node, kernel_json);
 }
 

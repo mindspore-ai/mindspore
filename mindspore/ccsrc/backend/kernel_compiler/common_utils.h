@@ -42,7 +42,6 @@ constexpr auto kProcessorUnknown = "unknown";
 constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
 constexpr unsigned int AUTODIFF_COMPILE_OVERTIME = 600;
-constexpr auto kArgDataformat = "data_format";
 constexpr auto kCOMPILER_CACHE_PATH = "MS_COMPILER_CACHE_PATH";
 
 const std::vector<std::string> support_devices = {"aicore", "aicpu", "cuda"};

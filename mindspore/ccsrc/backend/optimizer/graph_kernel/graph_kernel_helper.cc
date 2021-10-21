@@ -101,7 +101,7 @@ AnfNodePtrList EliminateMakeTuple(const FuncGraphPtr &fg, const FuncGraphManager
 bool GenJson(const AnfNodePtrList &op_nodes, const std::pair<AnfNodePtrList, AnfNodePtrList> &in_and_out,
              const DumpOption &dump_option, nlohmann::json *op_desc,
              std::map<std::string, AnfNodePtr> *address_node_map = nullptr) {
-  kernel::AkgKernelJsonGenerator akg_kernel_json_generator(dump_option);
+  AkgKernelJsonGenerator akg_kernel_json_generator(dump_option);
   if (!akg_kernel_json_generator.CollectFusedJson(op_nodes, in_and_out.first, in_and_out.second)) {
     MS_LOG(ERROR) << "Collect json desc failed.";
     return false;

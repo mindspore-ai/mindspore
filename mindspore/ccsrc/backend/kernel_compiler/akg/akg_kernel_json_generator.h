@@ -25,8 +25,10 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "nlohmann/json.hpp"
 
-namespace mindspore {
-namespace kernel {
+namespace mindspore::graphkernel {
+using kernel::OpAttrPtr;
+using kernel::OpInfoPtr;
+
 // json key
 constexpr auto kJsonKeyOpDesc = "op_desc";
 constexpr auto kJsonKeyAttr = "attr";
@@ -36,6 +38,7 @@ constexpr auto kJsonKeyInferDataType = "infer_data_type";
 constexpr auto kJsonKeyInferShape = "infer_shape";
 constexpr auto kJsonKeyShape = "shape";
 constexpr auto kJsonKeyDataType = "data_type";
+constexpr auto kJsonKeyDataformat = "data_format";
 constexpr auto kJsonKeyOutputDesc = "output_desc";
 constexpr auto kJsonKeyName = "name";
 constexpr auto kJsonKeyTensorName = "tensor_name";
@@ -163,6 +166,5 @@ class AkgKernelJsonGenerator {
   std::map<std::string, AnfNodePtr> address_node_map_;
   bool is_basic_op_{false};
 };
-}  // namespace kernel
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_JSON_GENERATOR_H_

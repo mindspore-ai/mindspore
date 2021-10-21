@@ -34,8 +34,6 @@
 #include "backend/optimizer/graph_kernel/model/lite_graph.h"
 
 namespace mindspore::graphkernel {
-using kernel::DumpOption;
-
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 constexpr auto kGraphKernelModule = "mindspore._extends.graph_kernel";
