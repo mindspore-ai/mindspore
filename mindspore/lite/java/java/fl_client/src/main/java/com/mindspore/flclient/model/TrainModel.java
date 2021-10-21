@@ -96,7 +96,7 @@ public abstract class TrainModel {
             logger.severe(Common.addTag("train loop failed"));
             return -1;
         }
-        boolean isSuccess = trainSession.export(modelPath, 0, 0);
+        boolean isSuccess = trainSession.export(modelPath, 0, 1);
         if (!isSuccess) {
             logger.severe(Common.addTag("save model failed"));
             return -1;

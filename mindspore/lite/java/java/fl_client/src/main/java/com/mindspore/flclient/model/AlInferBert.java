@@ -68,9 +68,9 @@ public class AlInferBert extends AlBert {
             return -1;
         }
         if (isEvalMode) {
-            features = DataSet.init(exampleFile, vocabFile, idsFile, false);
+            features = DataSet.init(exampleFile, vocabFile, idsFile, false, maxSeqLen);
         } else {
-            features = DataSet.readInferData(exampleFile, vocabFile, idsFile, false);
+            features = DataSet.readInferData(exampleFile, vocabFile, idsFile, false, maxSeqLen);
         }
         return features.size();
     }
@@ -115,14 +115,14 @@ public class AlInferBert extends AlBert {
         }
         logger.info(Common.addTag("Infer model," + modelPath + ",Data file," + dataFile + ",vocab file," + vocabFile +
                 ",idsFile," + idsFile));
-        int inferSize = initDataSet(dataFile, vocabFile, idsFile, false);
-        if (inferSize == 0) {
-            logger.severe(Common.addTag("infer size should more than 0"));
-            return new int[0];
-        }
         int status = initSessionAndInputs(modelPath, false);
         if (status == -1) {
             logger.severe(Common.addTag("init session and inputs failed"));
+            return new int[0];
+        }
+        int inferSize = initDataSet(dataFile, vocabFile, idsFile, false);
+        if (inferSize == 0) {
+            logger.severe(Common.addTag("infer size should more than 0"));
             return new int[0];
         }
         status = padSamples();
