@@ -25,8 +25,12 @@ from ..common import dtype as mstype
 from ..common import Tensor
 from .._c_expression import Tensor as Tensor_
 from .._c_expression import typing
+from .._checkparam import Validator as validator
 
 from .dtypes import promotion_rule, dtype_tuple, all_types, dtype_map, rule_for_trigonometric
+
+
+_check_axis_type = constexpr(validator.check_axis_type)
 
 
 @constexpr
@@ -301,27 +305,6 @@ def _check_is_float(dtype):
 @constexpr
 def _check_is_int(dtype):
     return isinstance(dtype, typing.Int)
-
-
-@constexpr
-def _check_axis_type(axis, type_int=True, type_tuple=True, type_list=True):
-    """Check axis argument type."""
-    if type_int and isinstance(axis, int):
-        return True
-    if (type_tuple and isinstance(axis, tuple)) or (type_list and isinstance(axis, list)):
-        for ax in axis:
-            if not isinstance(ax, int):
-                raise TypeError(f"Each axis should be integer, but got {type(ax)} in {axis}.")
-        return True
-
-    type_str = ""
-    if type_int:
-        type_str += "int, "
-    if type_tuple:
-        type_str += "tuple, "
-    if type_list:
-        type_str += "list, "
-    raise TypeError(f"Axis should be {type_str}but got {type(axis)}.")
 
 
 @constexpr
