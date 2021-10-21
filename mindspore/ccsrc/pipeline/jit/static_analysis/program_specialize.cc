@@ -110,8 +110,7 @@ FuncGraphSpecializer::FuncGraphSpecializer(ProgramSpecializer *const s, const Fu
   parent_ = s->GetFuncGraphSpecializer(context->parent());
   engine_ = s->engine();
   cloner_ = SpecializerClone(fg, std::make_shared<TraceSpecialize>(GetNextCounter()));
-  repl_node_ = cloner_->cloned_node();
-  specialized_func_graph_ = cloner_->cloned_func_graph()[fg];
+  specialized_func_graph_ = cloner_->cloned_func_graphs().find(fg)->second;
   todo_.push_back(fg->get_return());
   auto ps = fg->parameters();
   (void)todo_.insert(todo_.end(), ps.begin(), ps.end());
@@ -125,9 +124,8 @@ AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &nod
   std::shared_ptr<FuncGraphSpecializer> specializer = GetTopSpecializer(node);
 
   // If had replicated, just return that.
-  MS_EXCEPTION_IF_NULL(specializer->repl_node_);
-  auto iter = specializer->repl_node_->find(node);
-  if (iter != specializer->repl_node_->end()) {
+  auto iter = specializer->cloned_nodes().find(node);
+  if (iter != specializer->cloned_nodes().end()) {
     return iter->second;
   }
   auto new_node = specializer->cloner_->CloneDisconnected(node);
@@ -138,8 +136,8 @@ AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &nod
     UpdateNewCNodeInputs(node, new_node);
   }
 
-  iter = specializer->repl_node_->find(node);
-  if (iter != specializer->repl_node_->end()) {
+  iter = specializer->cloned_nodes().find(node);
+  if (iter != specializer->cloned_nodes().end()) {
     if (iter->second == node) {
       MS_LOG(EXCEPTION) << "Replicated is same as original node, node: " << node->ToString();
     }
@@ -178,9 +176,8 @@ void FuncGraphSpecializer::UpdateNewCNodeInputs(const AnfNodePtr &node, const An
 
 AnfNodePtr FuncGraphSpecializer::GetReplicatedNode(const AnfNodePtr &node) {
   std::shared_ptr<FuncGraphSpecializer> specializer = GetTopSpecializer(node);
-  MS_EXCEPTION_IF_NULL(specializer->repl_node_);
-  auto iter = specializer->repl_node_->find(node);
-  if (iter != specializer->repl_node_->end()) {
+  auto iter = specializer->cloned_nodes().find(node);
+  if (iter != specializer->cloned_nodes().end()) {
     return iter->second;
   }
   return node;

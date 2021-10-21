@@ -68,7 +68,7 @@ class TracePhi : public TraceInfo {
   explicit TracePhi(const DebugInfoPtr &info) : TraceInfo(info, "phi", "Φ") {}
   MS_DECLARE_PARENT(TracePhi, TraceInfo);
   ~TracePhi() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TracePhi>(*shared_from_base<TracePhi>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TracePhi>(*this); }
 };
 
 class TraceIfStmtTrueBranch : public TraceInfo {
@@ -77,9 +77,7 @@ class TraceIfStmtTrueBranch : public TraceInfo {
   explicit TraceIfStmtTrueBranch(const DebugInfoPtr &info) : TraceInfo(info, "if_true", "✓") {}
   MS_DECLARE_PARENT(TraceIfStmtTrueBranch, TraceInfo);
   ~TraceIfStmtTrueBranch() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceIfStmtTrueBranch>(*shared_from_base<TraceIfStmtTrueBranch>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceIfStmtTrueBranch>(*this); }
 };
 
 class TraceIfStmtFalseBranch : public TraceInfo {
@@ -88,9 +86,7 @@ class TraceIfStmtFalseBranch : public TraceInfo {
   explicit TraceIfStmtFalseBranch(const DebugInfoPtr &info) : TraceInfo(info, "if_false", "✗") {}
   MS_DECLARE_PARENT(TraceIfStmtFalseBranch, TraceInfo);
   ~TraceIfStmtFalseBranch() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceIfStmtFalseBranch>(*shared_from_base<TraceIfStmtFalseBranch>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceIfStmtFalseBranch>(*this); }
 };
 
 class TraceIfStmtAfterBranch : public TraceInfo {
@@ -98,9 +94,7 @@ class TraceIfStmtAfterBranch : public TraceInfo {
   explicit TraceIfStmtAfterBranch(const DebugInfoPtr &info) : TraceInfo(info, "if_after", "↓") {}
   MS_DECLARE_PARENT(TraceIfStmtAfterBranch, TraceInfo);
   ~TraceIfStmtAfterBranch() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceIfStmtAfterBranch>(*shared_from_base<TraceIfStmtAfterBranch>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceIfStmtAfterBranch>(*this); }
 };
 
 class TraceIfExpTrueBranch : public TraceInfo {
@@ -108,9 +102,7 @@ class TraceIfExpTrueBranch : public TraceInfo {
   explicit TraceIfExpTrueBranch(const DebugInfoPtr &info) : TraceInfo(info, "ifexp_true", "↰") {}
   MS_DECLARE_PARENT(TraceIfExpTrueBranch, TraceInfo);
   ~TraceIfExpTrueBranch() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceIfExpTrueBranch>(*shared_from_base<TraceIfExpTrueBranch>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceIfExpTrueBranch>(*this); }
 };
 
 class TraceIfExpFalseBranch : public TraceInfo {
@@ -118,9 +110,7 @@ class TraceIfExpFalseBranch : public TraceInfo {
   explicit TraceIfExpFalseBranch(const DebugInfoPtr &info) : TraceInfo(info, "ifexp_false", "↱") {}
   MS_DECLARE_PARENT(TraceIfExpFalseBranch, TraceInfo);
   ~TraceIfExpFalseBranch() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceIfExpFalseBranch>(*shared_from_base<TraceIfExpFalseBranch>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceIfExpFalseBranch>(*this); }
 };
 
 class TraceCopy : public TraceInfo {
@@ -129,7 +119,7 @@ class TraceCopy : public TraceInfo {
   explicit TraceCopy(const DebugInfoPtr &info) : TraceInfo(info, "copy", "") {}
   MS_DECLARE_PARENT(TraceCopy, TraceInfo);
   ~TraceCopy() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceCopy>(*shared_from_base<TraceCopy>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceCopy>(*this); }
 };
 
 class TraceIterator : public TraceInfo {
@@ -137,7 +127,7 @@ class TraceIterator : public TraceInfo {
   explicit TraceIterator(const DebugInfoPtr &info) : TraceInfo(info, "iterator", "@") {}
   MS_DECLARE_PARENT(TraceIterator, TraceInfo);
   ~TraceIterator() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceIterator>(*shared_from_base<TraceIterator>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceIterator>(*this); }
 };
 
 class TraceWhileHeader : public TraceInfo {
@@ -145,7 +135,7 @@ class TraceWhileHeader : public TraceInfo {
   explicit TraceWhileHeader(const DebugInfoPtr &info) : TraceInfo(info, "while_header", "⤾") {}
   MS_DECLARE_PARENT(TraceWhileHeader, TraceInfo);
   ~TraceWhileHeader() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceWhileHeader>(*shared_from_base<TraceWhileHeader>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceWhileHeader>(*this); }
 };
 
 class TraceWhileBody : public TraceInfo {
@@ -153,7 +143,7 @@ class TraceWhileBody : public TraceInfo {
   explicit TraceWhileBody(const DebugInfoPtr &info) : TraceInfo(info, "while_body", "⥁") {}
   MS_DECLARE_PARENT(TraceWhileBody, TraceInfo);
   ~TraceWhileBody() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceWhileBody>(*shared_from_base<TraceWhileBody>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceWhileBody>(*this); }
 };
 
 class TraceWhileAfter : public TraceInfo {
@@ -161,7 +151,7 @@ class TraceWhileAfter : public TraceInfo {
   explicit TraceWhileAfter(const DebugInfoPtr &info) : TraceInfo(info, "while_after", "↓") {}
   MS_DECLARE_PARENT(TraceWhileAfter, TraceInfo);
   ~TraceWhileAfter() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceWhileAfter>(*shared_from_base<TraceWhileAfter>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceWhileAfter>(*this); }
 };
 
 class TraceForHeader : public TraceInfo {
@@ -169,7 +159,7 @@ class TraceForHeader : public TraceInfo {
   explicit TraceForHeader(const DebugInfoPtr &info) : TraceInfo(info, "for_header", "⤾") {}
   MS_DECLARE_PARENT(TraceForHeader, TraceInfo);
   ~TraceForHeader() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceForHeader>(*shared_from_base<TraceForHeader>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceForHeader>(*this); }
 };
 
 class TraceForBody : public TraceInfo {
@@ -177,7 +167,7 @@ class TraceForBody : public TraceInfo {
   explicit TraceForBody(const DebugInfoPtr &info) : TraceInfo(info, "for_body", "⥁") {}
   MS_DECLARE_PARENT(TraceForBody, TraceInfo);
   ~TraceForBody() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceForBody>(*shared_from_base<TraceForBody>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceForBody>(*this); }
 };
 
 class TraceForAfter : public TraceInfo {
@@ -185,7 +175,7 @@ class TraceForAfter : public TraceInfo {
   explicit TraceForAfter(const DebugInfoPtr &info) : TraceInfo(info, "for_after", "↓") {}
   MS_DECLARE_PARENT(TraceForAfter, TraceInfo);
   ~TraceForAfter() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceForAfter>(*shared_from_base<TraceForAfter>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceForAfter>(*this); }
 };
 
 class TraceLoopEnd : public TraceInfo {
@@ -193,7 +183,7 @@ class TraceLoopEnd : public TraceInfo {
   explicit TraceLoopEnd(const DebugInfoPtr &info) : TraceInfo(info, "loop_end", "↓↓") {}
   MS_DECLARE_PARENT(TraceLoopEnd, TraceInfo);
   ~TraceLoopEnd() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceLoopEnd>(*shared_from_base<TraceLoopEnd>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceLoopEnd>(*this); }
 };
 
 class TraceEquiv : public TraceInfo {
@@ -201,7 +191,7 @@ class TraceEquiv : public TraceInfo {
   explicit TraceEquiv(const DebugInfoPtr &info) : TraceInfo(info, "equiv", "equiv") {}
   MS_DECLARE_PARENT(TraceEquiv, TraceInfo);
   ~TraceEquiv() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceEquiv>(*shared_from_base<TraceEquiv>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceEquiv>(*this); }
 };
 
 class TraceGradFpropApp : public TraceInfo {
@@ -210,7 +200,7 @@ class TraceGradFpropApp : public TraceInfo {
   explicit TraceGradFpropApp(const DebugInfoPtr &info) : TraceInfo(info, "grad_fprop_app", "▲") {}
   MS_DECLARE_PARENT(TraceGradFpropApp, TraceInfo);
   ~TraceGradFpropApp() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceGradFpropApp>(*shared_from_base<TraceGradFpropApp>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGradFpropApp>(*this); }
 };
 
 class TraceGradBpropApp : public TraceInfo {
@@ -219,7 +209,7 @@ class TraceGradBpropApp : public TraceInfo {
   explicit TraceGradBpropApp(const DebugInfoPtr &info) : TraceInfo(info, "grad_bprop_app", "▼") {}
   MS_DECLARE_PARENT(TraceGradBpropApp, TraceInfo);
   ~TraceGradBpropApp() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceGradBpropApp>(*shared_from_base<TraceGradBpropApp>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGradBpropApp>(*this); }
 };
 
 class TraceGradFprop : public TraceInfo {
@@ -228,7 +218,7 @@ class TraceGradFprop : public TraceInfo {
   explicit TraceGradFprop(const DebugInfoPtr &info) : TraceInfo(info, "grad_fprop", "▶") {}
   MS_DECLARE_PARENT(TraceGradFprop, TraceInfo);
   ~TraceGradFprop() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceGradFprop>(*shared_from_base<TraceGradFprop>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGradFprop>(*this); }
 };
 
 class TraceGradBprop : public TraceInfo {
@@ -237,7 +227,7 @@ class TraceGradBprop : public TraceInfo {
   explicit TraceGradBprop(const DebugInfoPtr &info) : TraceInfo(info, "grad_bprop", "◀") {}
   MS_DECLARE_PARENT(TraceGradBprop, TraceInfo);
   ~TraceGradBprop() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceGradBprop>(*shared_from_base<TraceGradBprop>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGradBprop>(*this); }
 };
 
 class TraceGradSens : public TraceInfo {
@@ -246,7 +236,7 @@ class TraceGradSens : public TraceInfo {
   explicit TraceGradSens(const DebugInfoPtr &info) : TraceInfo(info, "grad_sens", "∇") {}
   MS_DECLARE_PARENT(TraceGradSens, TraceInfo);
   ~TraceGradSens() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceGradSens>(*shared_from_base<TraceGradSens>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGradSens>(*this); }
 };
 
 class TraceSpecialize : public TraceInfo {
@@ -257,7 +247,7 @@ class TraceSpecialize : public TraceInfo {
   std::string symbol() const override { return counter_ + "_"; }
   std::string full_name() const override { return full_name_ + counter_ + "_"; }
   ~TraceSpecialize() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceSpecialize>(*shared_from_base<TraceSpecialize>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceSpecialize>(*this); }
 
  private:
   std::string counter_;
@@ -268,9 +258,7 @@ class TraceGradOperation : public TraceInfo {
   explicit TraceGradOperation(const DebugInfoPtr &info) : TraceInfo(info, "grad_ops", "") {}
   MS_DECLARE_PARENT(TraceGradOperation, TraceInfo);
   ~TraceGradOperation() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceGradOperation>(*shared_from_base<TraceGradOperation>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGradOperation>(*this); }
 };
 
 class TraceForceBool : public TraceInfo {
@@ -278,7 +266,7 @@ class TraceForceBool : public TraceInfo {
   explicit TraceForceBool(const DebugInfoPtr &info) : TraceInfo(info, "force_bool", "") {}
   MS_DECLARE_PARENT(TraceForceBool, TraceInfo);
   ~TraceForceBool() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceForceBool>(*shared_from_base<TraceForceBool>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceForceBool>(*this); }
 };
 
 class TraceForceWhileCond : public TraceInfo {
@@ -286,9 +274,7 @@ class TraceForceWhileCond : public TraceInfo {
   explicit TraceForceWhileCond(const DebugInfoPtr &info) : TraceInfo(info, "force_while_cond", "") {}
   MS_DECLARE_PARENT(TraceForceWhileCond, TraceInfo);
   ~TraceForceWhileCond() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceForceWhileCond>(*shared_from_base<TraceForceWhileCond>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceForceWhileCond>(*this); }
 };
 
 class TraceExpandJ : public TraceInfo {
@@ -296,7 +282,7 @@ class TraceExpandJ : public TraceInfo {
   explicit TraceExpandJ(const DebugInfoPtr &info) : TraceInfo(info, "expand_j", "") {}
   MS_DECLARE_PARENT(TraceExpandJ, TraceInfo);
   ~TraceExpandJ() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceExpandJ>(*shared_from_base<TraceExpandJ>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceExpandJ>(*this); }
 };
 
 class TraceGenMetaFuncGraph : public TraceInfo {
@@ -304,9 +290,7 @@ class TraceGenMetaFuncGraph : public TraceInfo {
   explicit TraceGenMetaFuncGraph(const DebugInfoPtr &info) : TraceInfo(info, "GenMetaFuncGraph", "") {}
   MS_DECLARE_PARENT(TraceGenMetaFuncGraph, TraceInfo);
   ~TraceGenMetaFuncGraph() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceGenMetaFuncGraph>(*shared_from_base<TraceGenMetaFuncGraph>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGenMetaFuncGraph>(*this); }
 };
 
 class TraceEvaluatorGenGraph : public TraceInfo {
@@ -314,9 +298,7 @@ class TraceEvaluatorGenGraph : public TraceInfo {
   explicit TraceEvaluatorGenGraph(const DebugInfoPtr &info) : TraceInfo(info, "GenEvaluatorGraph", "") {}
   MS_DECLARE_PARENT(TraceEvaluatorGenGraph, TraceInfo);
   ~TraceEvaluatorGenGraph() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceEvaluatorGenGraph>(*shared_from_base<TraceEvaluatorGenGraph>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceEvaluatorGenGraph>(*this); }
 };
 
 class TraceResolve : public TraceInfo {
@@ -324,7 +306,7 @@ class TraceResolve : public TraceInfo {
   explicit TraceResolve(const DebugInfoPtr &info) : TraceInfo(info, "resolve", "") {}
   MS_DECLARE_PARENT(TraceResolve, TraceInfo);
   ~TraceResolve() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceResolve>(*shared_from_base<TraceResolve>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceResolve>(*this); }
 };
 
 class TraceTransform : public TraceInfo {
@@ -344,7 +326,7 @@ class TraceTransform : public TraceInfo {
   }
 
   ~TraceTransform() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceTransform>(*shared_from_base<TraceTransform>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceTransform>(*this); }
   std::string transform_name_;
 };
 
@@ -353,9 +335,7 @@ class TraceGenerateVarArg : public TraceInfo {
   explicit TraceGenerateVarArg(const DebugInfoPtr &info) : TraceInfo(info, "GenerateVarArg", "") {}
   MS_DECLARE_PARENT(TraceGenerateVarArg, TraceInfo);
   ~TraceGenerateVarArg() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceGenerateVarArg>(*shared_from_base<TraceGenerateVarArg>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGenerateVarArg>(*this); }
 };
 
 class TraceGenerateKwArg : public TraceInfo {
@@ -363,9 +343,7 @@ class TraceGenerateKwArg : public TraceInfo {
   explicit TraceGenerateKwArg(const DebugInfoPtr &info) : TraceInfo(info, "GenerateKwArg", "") {}
   MS_DECLARE_PARENT(TraceGenerateKwArg, TraceInfo);
   ~TraceGenerateKwArg() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceGenerateKwArg>(*shared_from_base<TraceGenerateKwArg>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGenerateKwArg>(*this); }
 };
 
 class TraceTrasformK : public TraceInfo {
@@ -373,7 +351,7 @@ class TraceTrasformK : public TraceInfo {
   explicit TraceTrasformK(const DebugInfoPtr &info) : TraceInfo(info, "TraceTrasformK", "") {}
   MS_DECLARE_PARENT(TraceTrasformK, TraceInfo);
   ~TraceTrasformK() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceTrasformK>(*shared_from_base<TraceTrasformK>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceTrasformK>(*this); }
 };
 
 class TracePartialTransform : public TraceInfo {
@@ -381,9 +359,7 @@ class TracePartialTransform : public TraceInfo {
   explicit TracePartialTransform(const DebugInfoPtr &info) : TraceInfo(info, "PartialTransform", "") {}
   MS_DECLARE_PARENT(TracePartialTransform, TraceInfo);
   ~TracePartialTransform() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TracePartialTransform>(*shared_from_base<TracePartialTransform>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TracePartialTransform>(*this); }
 };
 
 class TraceGetEnv : public TraceInfo {
@@ -391,7 +367,7 @@ class TraceGetEnv : public TraceInfo {
   explicit TraceGetEnv(const DebugInfoPtr &info) : TraceInfo(info, "get_env", "") {}
   MS_DECLARE_PARENT(TraceGetEnv, TraceInfo);
   ~TraceGetEnv() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceGetEnv>(*shared_from_base<TraceGetEnv>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceGetEnv>(*this); }
 };
 
 class TraceDoSignature : public TraceInfo {
@@ -399,7 +375,7 @@ class TraceDoSignature : public TraceInfo {
   explicit TraceDoSignature(const DebugInfoPtr &info) : TraceInfo(info, "DoSignature", "") {}
   MS_DECLARE_PARENT(TraceDoSignature, TraceInfo);
   ~TraceDoSignature() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceDoSignature>(*shared_from_base<TraceDoSignature>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceDoSignature>(*this); }
 };
 
 class TraceCombileLikeGraphs : public TraceInfo {
@@ -408,9 +384,7 @@ class TraceCombileLikeGraphs : public TraceInfo {
   explicit TraceCombileLikeGraphs(const DebugInfoPtr &info) : TraceInfo(info, "CombileLike", "L-") {}
   MS_DECLARE_PARENT(TraceCombileLikeGraphs, TraceInfo);
   ~TraceCombileLikeGraphs() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceCombileLikeGraphs>(*shared_from_base<TraceCombileLikeGraphs>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceCombileLikeGraphs>(*this); }
 };
 
 class TraceSegmentTransform : public TraceInfo {
@@ -418,9 +392,7 @@ class TraceSegmentTransform : public TraceInfo {
   explicit TraceSegmentTransform(const DebugInfoPtr &info) : TraceInfo(info, "segment_transform", "") {}
   MS_DECLARE_PARENT(TraceSegmentTransform, TraceInfo);
   ~TraceSegmentTransform() override = default;
-  TraceInfoPtr clone() override {
-    return std::make_shared<TraceSegmentTransform>(*shared_from_base<TraceSegmentTransform>());
-  }
+  TraceInfoPtr clone() override { return std::make_shared<TraceSegmentTransform>(*this); }
 };
 
 class TraceOpt : public TraceInfo {
@@ -428,7 +400,7 @@ class TraceOpt : public TraceInfo {
   explicit TraceOpt(const DebugInfoPtr &info) : TraceInfo(info, "opt", "") {}
   MS_DECLARE_PARENT(TraceOpt, TraceInfo);
   ~TraceOpt() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceOpt>(*shared_from_base<TraceOpt>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceOpt>(*this); }
 };
 
 class TraceListComp : public TraceInfo {
@@ -436,7 +408,7 @@ class TraceListComp : public TraceInfo {
   explicit TraceListComp(const DebugInfoPtr &info) : TraceInfo(info, "ListComp", "G-") {}
   MS_DECLARE_PARENT(TraceListComp, TraceInfo);
   ~TraceListComp() override = default;
-  TraceInfoPtr clone() override { return std::make_shared<TraceListComp>(*shared_from_base<TraceListComp>()); }
+  TraceInfoPtr clone() override { return std::make_shared<TraceListComp>(*this); }
 };
 }  // namespace mindspore
 

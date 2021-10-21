@@ -103,18 +103,23 @@ class MS_CORE_API AnfNode : public Base {
   /// \brief Constructor.
   ///
   /// \param[in] func_graph The FuncGraph to which this AnfNode belongs.
-  explicit AnfNode(const FuncGraphPtr &func_graph)
+  /// \param[in] debug_info The debug info to be used for this AnfNode.
+  AnfNode(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
       : func_graph_(FuncGraphWeakPtr(func_graph)),
         abstract_(nullptr),
         intermediate_abstract_(nullptr),
-        debug_info_(std::make_shared<NodeDebugInfo>()),
+        debug_info_(std::move(debug_info)),
         fullname_with_scope_(""),
         hash_(std::hash<const AnfNode *>()),
+        scope_(ScopeManager::GetInstance().GetCurrentScope()),
         kernel_info_(nullptr),
         interpret_(false),
-        interpreted_node_(nullptr) {
-    scope_ = ScopeManager::GetInstance().GetCurrentScope();
-  }
+        interpreted_node_(nullptr) {}
+
+  /// \brief Constructor.
+  ///
+  /// \param[in] func_graph The FuncGraph to which this AnfNode belongs.
+  explicit AnfNode(const FuncGraphPtr &func_graph) : AnfNode(func_graph, std::make_shared<NodeDebugInfo>()) {}
 
   /// \brief Destructor.
   ~AnfNode() override = default;
@@ -403,6 +408,13 @@ class MS_CORE_API CNode : public AnfNode, public EffectInfoHolder {
     primal_debug_infos_ = PrimalDebugInfoManager::GetInstance().GetCurrentPrimalDebugInfo();
   }
 
+  /// \brief Constructor.
+  ///
+  /// \param[in] inputs Input nodes of this Cnode.
+  /// \param[in] func_graph The FuncGraph to which this CNode belongs.
+  /// \param[in] debug_info The debug info to be used for this CNode.
+  CNode(std::vector<AnfNodePtr> &&inputs, const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info);
+
   /// \brief Destructor.
   ~CNode() override = default;
   MS_DECLARE_PARENT(CNode, AnfNode);
@@ -677,6 +689,13 @@ class MS_CORE_API ANode : public AnfNode {
   ///
   /// \param[in] func_graph The FuncGraph to which this ANode belongs.
   explicit ANode(const FuncGraphPtr &func_graph) : AnfNode(func_graph) {}
+
+  /// \brief Constructor.
+  ///
+  /// \param[in] func_graph The FuncGraph to which this ANode belongs.
+  /// \param[in] debug_info The debug info to be used for this ANode.
+  ANode(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info) : AnfNode(func_graph, std::move(debug_info)) {}
+
   /// \brief Destructor.
   virtual ~ANode() = default;
 
@@ -693,6 +712,18 @@ class MS_CORE_API Parameter : public ANode {
   /// \param[in] func_graph The FuncGraph to which this Parameter belongs.
   explicit Parameter(const FuncGraphPtr &func_graph)
       : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr), used_graph_count_(0) {}
+
+  /// \brief Constructor.
+  ///
+  /// \param[in] func_graph The FuncGraph to which this Parameter belongs.
+  /// \param[in] debug_info The debug info to be used for this Parameter.
+  Parameter(const FuncGraphPtr &func_graph, NodeDebugInfoPtr &&debug_info)
+      : ANode(func_graph, std::move(debug_info)),
+        name_(""),
+        has_default_(false),
+        default_param_(nullptr),
+        used_graph_count_(0) {}
+
   /// \brief Destructor.
   ~Parameter() override = default;
   MS_DECLARE_PARENT(Parameter, ANode);
@@ -872,6 +903,14 @@ class MS_CORE_API ValueNode : public ANode {
   ///
   /// \param[in] value The value of this ValueNode.
   explicit ValueNode(const ValuePtr &value) : value_(value) {}
+
+  /// \brief Constructor of ValueNode.
+  ///
+  /// \param[in] value The value of this ValueNode.
+  /// \param[in] debug_info The debug info to be used for this ValueNode.
+  ValueNode(const ValuePtr &value, NodeDebugInfoPtr &&debug_info)
+      : ANode(nullptr, std::move(debug_info)), value_(value) {}
+
   /// \brief Destructor.
   ~ValueNode() override = default;
   MS_DECLARE_PARENT(ValueNode, ANode);

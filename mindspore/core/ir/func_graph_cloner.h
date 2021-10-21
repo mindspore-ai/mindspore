@@ -29,10 +29,12 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/manager.h"
+#include "utils/hashing.h"
 
 namespace mindspore {
 class Cloner;
 using ClonerPtr = std::shared_ptr<Cloner>;
+using NodeToNodeMap = std::unordered_map<AnfNodePtr, AnfNodePtr, PointerHash<AnfNodePtr>>;
 
 enum CloneType { kBasic = 0, kInline = 1, kLifting = 2, kDropping = 3 };
 
@@ -59,15 +61,12 @@ class Cloner {
   FuncGraphPtr operator[](const FuncGraphPtr &func_graph);
 
   // Map of replicate nodes and graphs
-  std::unordered_map<AnfNodePtr, AnfNodePtr> *cloned_node() { return &repl_node_; }
-  std::unordered_map<FuncGraphPtr, FuncGraphPtr> &cloned_func_graph() { return repl_func_graph_; }
+  const NodeToNodeMap &cloned_nodes() const { return repl_node_; }
+  const std::unordered_map<FuncGraphPtr, FuncGraphPtr> &cloned_func_graphs() const { return repl_func_graph_; }
 
   // Scope of cloned graphs
   void set_scope(const ScopePtr &scope) { scope_ = scope; }
   const ScopePtr scope() const { return scope_; }
-
-  std::unordered_map<AnfNodePtr, AnfNodePtr> repl_node_;
-  std::unordered_map<FuncGraphPtr, FuncGraphPtr> repl_func_graph_;
 
  private:
   void CloneNodes();
@@ -87,7 +86,7 @@ class Cloner {
   void CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void CloneFuncGraphDefaultValues(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void InlineCloneParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &params);
-  void SetFuncGraphInfo(const FuncGraphPtr &func_graph, FuncGraphPtr *const target_func_graph);
+  void SetFuncGraphInfo(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void CloneParameters(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void GenParameters(const FuncGraphPtr &func_graph);
   void CloneParameter(const ParameterPtr &param, const AnfNodePtr &node);
@@ -107,14 +106,15 @@ class Cloner {
   bool clone_all_used_graphs_;
   TraceInfoPtr relation_;
   TraceInfoPtr target_relation_;
+  NodeToNodeMap repl_node_;
+  std::unordered_map<FuncGraphPtr, FuncGraphPtr> repl_func_graph_;
   FuncGraphManagerPtr manager_;
   FuncGraphSet graph_set_;
   ScopePtr scope_;
   CloneType type_;
-  std::list<CloneInfo> todo_;
-  std::list<std::pair<CNodePtr, CNodePtr>> nodes_;
+  std::vector<CloneInfo> todo_;
   std::unordered_map<FuncGraphPtr, bool> status_;
-  std::unordered_map<FuncGraphPtr, std::unordered_map<AnfNodePtr, AnfNodePtr>> repl_map_node_;
+  std::unordered_map<FuncGraphPtr, NodeToNodeMap> repl_map_node_;
   std::unordered_map<FuncGraphPtr, std::unordered_map<FuncGraphPtr, AnfNodePtr>> repl_map_func_graph_;
   std::unordered_map<FuncGraphPtr, AnfNodePtrList> repl_func_graph_params_;
 };

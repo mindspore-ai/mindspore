@@ -594,6 +594,10 @@ std::vector<U> GetValue(const ValuePtr &value) {
 
 inline ValueNodePtr NewValueNode(const ValuePtr &t) { return std::make_shared<ValueNode>(t); }
 
+inline ValueNodePtr NewValueNode(const ValuePtr &t, NodeDebugInfoPtr &&debug_info) {
+  return std::make_shared<ValueNode>(t, std::move(debug_info));
+}
+
 template <typename T, typename _ = typename std::enable_if<!std::is_base_of<Value, T>::value>::type>
 inline ValueNodePtr NewValueNode(const std::shared_ptr<T> &x) {
   return NewValueNode(MakeValue(x));

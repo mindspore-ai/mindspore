@@ -391,16 +391,20 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
     MS_LOG(DEBUG) << "Start combine like graph:" << it.first << ", size:" << graphs.size();
     auto fg = graphs[0];
     FuncGraphVector func_graphs = {fg};
-    ClonerPtr cloner = std::make_shared<Cloner>(func_graphs, false, false, true, std::make_shared<TraceCopy>(),
-                                                std::make_shared<TraceCombileLikeGraphs>());
-    cloner->Run();
-    auto base_graph = cloner->cloned_func_graph()[fg];
+    Cloner cloner(func_graphs, false, false, true, std::make_shared<TraceCopy>(),
+                  std::make_shared<TraceCombileLikeGraphs>());
+    cloner.Run();
+    auto cloned_fg_iter = cloner.cloned_func_graphs().find(fg);
+    if (cloned_fg_iter == cloner.cloned_func_graphs().end()) {
+      MS_LOG(EXCEPTION) << "Clone func graph failed! " << fg->ToString();
+    }
+    auto base_graph = cloned_fg_iter->second;
     MS_LOG(DEBUG) << "Basegraph:" << base_graph->ToString();
 
     if (fg->paramter_obj_nodes().empty() || graphs.size() <= 1 || fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
       continue;
     }
-    auto &cloned_nodes = *cloner->cloned_node();
+    auto &cloned_nodes = cloner.cloned_nodes();
     for (auto &fv : fg->paramter_obj_nodes()) {
       TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
       auto param = base_graph->add_parameter();
@@ -408,11 +412,11 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
       auto &node_users = res->manager()->node_users()[fv];
       for (auto &n : node_users) {
         // If the user is not in this graph, no need to change.
-        auto cloned = cloned_nodes[n.first];
-        if (cloned == nullptr) {
+        auto iter = cloned_nodes.find(n.first);
+        if (iter == cloned_nodes.end()) {
           continue;
         }
-        auto repl_n = cloned->cast<CNodePtr>();
+        auto repl_n = iter->second->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(repl_n);
         repl_n->set_input(IntToSize(n.second), param);
       }
