@@ -61,6 +61,11 @@ Status NodeRemovalPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *co
   std::unique_ptr<NodeRemovalPass::RemovalNodes> removal_nodes = std::make_unique<NodeRemovalPass::RemovalNodes>();
   RETURN_IF_NOT_OK(removal_nodes->Run(root_ir, modified));
 
+  // Update modified flag if there were any nodes identified to be removed
+  if (removal_nodes->nodes_to_remove().empty() == false) {
+    *modified = true;
+  }
+
   // Then, execute the removal of any nodes that were set up for removal
   for (auto node : removal_nodes->nodes_to_remove()) {
     RETURN_IF_NOT_OK(node->Drop());

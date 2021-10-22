@@ -118,6 +118,18 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
     return network
 
 
+def _check_add_offload(dataset, dataset_helper, network):
+    from mindspore.dataset.engine import offload
+    if offload.check_map_offload(dataset.__transfer_dataset__):
+        # A temporary solution to ensure there are two columns in dataset.
+        dataset_types, _ = dataset_helper.types_shapes()
+        if len(dataset_types) != 2:
+            raise RuntimeError("Offload can currently only use datasets with two columns.")
+        offload_model = dataset.__transfer_dataset__.get_offload_model()
+        network = offload.ApplyPreTransform(offload_model, network)
+    return network
+
+
 def connect_network_with_dataset(network, dataset_helper):
     """
     Connect the `network` with dataset in `dataset_helper`.
@@ -153,7 +165,6 @@ def connect_network_with_dataset(network, dataset_helper):
         >>> net = Net()
         >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
     """
-
     dataset_iter = dataset_helper.iter
     dataset = dataset_iter.dataset
 
@@ -191,6 +202,7 @@ def connect_network_with_dataset(network, dataset_helper):
        not context.get_context("enable_ge") and \
        context.get_context("device_target") in ("Ascend", "GPU"):
         dataset.__me_inited__ = True
+        network = _check_add_offload(dataset, dataset_helper, network)
         network = _generate_network_with_dataset(network, dataset_helper, queue_name)
 
     if _dynamic_sink_data(dataset, dataset_iter) and _dynamic_sink_exception_scenario(dataset_iter):

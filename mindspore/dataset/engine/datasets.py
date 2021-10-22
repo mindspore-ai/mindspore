@@ -51,6 +51,7 @@ from mindspore.common import Tensor
 from mindspore import log as logger
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from mindspore.parallel._utils import _get_device_num
+from mindspore.dataset.engine.offload import GetOffloadModel, op_to_model
 
 import mindspore.dataset.transforms.py_transforms as py_transforms
 
@@ -90,6 +91,29 @@ class Shuffle(str, Enum):
 ShuffleToShuffleMode = {Shuffle.FILES: cde.ShuffleMode.FILES,
                         Shuffle.GLOBAL: cde.ShuffleMode.GLOBAL,
                         Shuffle.INFILE: cde.ShuffleMode.INFILE}
+
+
+def get_offloadable_ops(operations):
+    """
+    Check if operations are supported by offload hardware accelarator.
+
+    Args:
+        operations: list of operations.
+
+    Returns:
+        Dictionary with boolean key for each operation for offload support.
+    """
+    is_offloadable = {}
+    if not isinstance(operations, list):
+        operations = [operations]
+    for op in operations:
+        name = op.__class__.__name__
+        if name in op_to_model:
+            is_offloadable[name] = True
+        else:
+            is_offloadable[name] = False
+
+    return is_offloadable
 
 
 def shuffle_to_shuffle_mode(shuffle):
@@ -650,7 +674,8 @@ class Dataset:
 
     @check_map
     def map(self, operations, input_columns=None, output_columns=None, column_order=None,
-            num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None, max_rowsize=16):
+            num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None,
+            max_rowsize=16, offload=False):
         """
         Apply each operation in operations to this dataset.
 
@@ -690,8 +715,9 @@ class Dataset:
             cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
                 (default=None, which means no cache is used).
             callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None).
-            max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
-               data between processes.  This is only used if python_multiprocessing is set to True (default=16).
+            max_rowsize (int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
+               data between processes.  This is only used if python_multiprocessing is set to True (Default=16).
+            offload (bool, optional): Flag to indicate whether offload is used (Default=False).
 
 
         Returns:
@@ -785,7 +811,7 @@ class Dataset:
         """
 
         return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
-                          python_multiprocessing, cache, callbacks, max_rowsize)
+                          python_multiprocessing, cache, callbacks, max_rowsize, offload)
 
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=None):
@@ -2767,13 +2793,15 @@ class MapDataset(Dataset):
         callbacks (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None)
         max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
             data between processes.  This is only used if python_multiprocessing is set to True (default=16).
+        offload (bool, optional): Flag to indicate whether offload is used (Default=False).
 
     Raises:
         ValueError: If len(input_columns) != len(output_columns) and column_order is not specified.
     """
 
     def __init__(self, input_dataset, operations=None, input_columns=None, output_columns=None, column_order=None,
-                 num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None, max_rowsize=16):
+                 num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None, max_rowsize=16,
+                 offload=False):
         super().__init__(children=input_dataset, num_parallel_workers=num_parallel_workers, cache=cache)
         self.operations = to_list(operations)
         self.operations = py_transforms.Compose.reduce(self.operations)
@@ -2799,6 +2827,20 @@ class MapDataset(Dataset):
 
         self.callbacks = to_list(callbacks)
         self.max_rowsize = max_rowsize
+        self.offload = offload
+
+        if self.offload is True:
+            offloadable_ops = get_offloadable_ops(operations)
+            cannot_offload = False
+            invalid_ops = []
+            for op in offloadable_ops:
+                if offloadable_ops[op] is not True:
+                    cannot_offload = True
+                    invalid_ops.append(op)
+            if cannot_offload is True:
+                logger.warning(("In map(), offload is set to True, but offload is not supported for the following "
+                                "operation(s): {} \nSetting offload to False").format(*invalid_ops))
+                self.offload = False
 
     def parse(self, children=None):
         operations = []
@@ -2810,7 +2852,7 @@ class MapDataset(Dataset):
 
         callbacks = [cb.create_runtime_obj() for cb in self.callbacks]
         return cde.MapNode(children[0], operations, self.input_columns, self.output_columns, self.column_order,
-                           callbacks)
+                           callbacks, self.max_rowsize, self.offload)
 
     def __deepcopy__(self, memodict):
         return self.__safe_deepcopy__(memodict, exclude=("operations", "callbacks", "__transfer_dataset__"))
@@ -3210,6 +3252,13 @@ class _ToDevice:
     def __deepcopy__(self, memodict):
         return self
 
+    def get_offload_model(self):
+        """
+        Get offload model containing removed offload ops from pipeline.
+        """
+        offload_model = GetOffloadModel(self._to_device)
+        return offload_model
+
 
 class TransferDataset(Dataset):
     """
@@ -3286,6 +3335,12 @@ class TransferDataset(Dataset):
         if self._to_device is not None:
             return self._to_device.get_data_info()
         raise RuntimeError("Calling get_data_info with bad state.")
+
+    def get_offload_model(self):
+        if self._to_device is not None:
+            return self._to_device.get_offload_model()
+
+        raise RuntimeError("get_offload_model, _to_device is None")
 
     def release(self):
         """
@@ -6478,6 +6533,7 @@ class _Flowers102Dataset:
     """
     Mainly for loading Flowers102 Dataset, and return one row each time.
     """
+
     def __init__(self, dataset_dir, task, usage, decode):
         self.dataset_dir = os.path.realpath(dataset_dir)
         self.task = task

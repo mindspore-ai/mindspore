@@ -21,6 +21,7 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "minddata/dataset/engine/opt/pre/cache_transform_pass.h"
+#include "minddata/dataset/engine/opt/pre/node_offload_pass.h"
 #include "minddata/dataset/engine/opt/post/repeat_pass.h"
 #endif
 #include "minddata/dataset/engine/opt/pass.h"
@@ -60,6 +61,14 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   if (usage_ == kDeGetter) actions.emplace_back(std::make_unique<GetterPass>());
 #ifndef ENABLE_ANDROID
   actions.emplace_back(std::make_unique<CacheTransformPass>());
+
+  std::unique_ptr<NodeOffloadPass> offload = std::make_unique<NodeOffloadPass>();
+  // Checks nodes for offload removal
+  bool offload_mod = false;
+  // Checks ir_tree nodes for offload removal
+  offload->Run(ir, &offload_mod);
+  // Creates JSON object of offload nodes.
+  offload_json_ = offload->GetOffloadJson();
 #endif
   // Vector of flags for each action
   std::vector<bool> modified(actions.size(), false);
@@ -69,7 +78,8 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
     RETURN_IF_NOT_OK(actions[i]->Run(ir, &m));
     modified[i] = m;
   }
-  MS_LOG(INFO) << "Pre pass complete.";
+
+  MS_LOG(INFO) << "Pre pass offload complete.";
   return Status::OK();
 }
 
@@ -259,6 +269,8 @@ Status TreeAdapter::Launch() {
   launched_ = true;
   return Status::OK();
 }
+
+nlohmann::json TreeAdapter::GetOffloadJson() { return offload_json_; }
 
 }  // namespace dataset
 }  // namespace mindspore

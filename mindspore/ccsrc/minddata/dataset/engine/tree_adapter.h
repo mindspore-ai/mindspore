@@ -78,6 +78,9 @@ class TreeAdapter {
   // Optional optimizations status
   bool OptimizationEnabled() const { return optimize_; }
 
+  // Return Offload Json
+  nlohmann::json GetOffloadJson();
+
 #ifndef ENABLE_SECURITY
   /// \brief Setter for Profiling Manager
   Status SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager,
@@ -129,6 +132,7 @@ class TreeAdapter {
     kCompileStateReady          // Execution tree is generated from the optimized IR
   };
   CompileState tree_state_;
+  nlohmann::json offload_json_;
 };
 }  // namespace dataset
 }  // namespace mindspore
