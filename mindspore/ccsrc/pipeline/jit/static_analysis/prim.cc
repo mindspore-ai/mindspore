@@ -864,8 +864,8 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   auto data_v = args_spec_list[0]->BuildValue();
   MS_EXCEPTION_IF_NULL(data_v);
   if (!data_v->isa<parse::NameSpace>()) {
-    MS_LOG(EXCEPTION) << "Not supported to get attribute for " << data_v->ToString()
-                      << "\nThe first argument should be a NameSpace, but got " << args_spec_list[0]->ToString();
+    MS_EXCEPTION(TypeError) << "Not supported to get attribute for " << data_v->ToString()
+                            << "\nThe first argument should be a NameSpace, but got " << args_spec_list[0]->ToString();
   }
 
   auto item_value = args_spec_list[1]->BuildValue();

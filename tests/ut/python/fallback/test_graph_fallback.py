@@ -100,8 +100,22 @@ def div_mod_func2(x, y):
     return Tensor(a)
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_div_mod_func2():
+def test_div_mod_func2_scalar():
+    """
+    Feature: JIT Fallback
+    Description: Test divmod in graph.
+    Expectation: No exception.
+    """
     print(div_mod_func2(8, 3))  # (2, 2)
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_div_mod_func2_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test divmod in graph.
+    Expectation: No exception.
+    """
+    print(div_mod_func2(Tensor(8), Tensor(3)))  # name 'x' is not defined
 
 
 # NameError: name 'Tensor' is not defined.

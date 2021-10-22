@@ -50,5 +50,15 @@ TEST_F(TestValidator, ValidateAbstract01) {
   // normally, the above statement should not exit, so expected the following statement execute
   EXPECT_TRUE(true);
 }
+
+/// Feature: JIT Fallback
+/// Description: Make sure no interpreted node.
+/// Expectation: No exception.
+TEST_F(TestValidator, ValidateValueNode01) {
+  AnfNodePtr node = NewValueNode(static_cast<int64_t>(1));
+  ValidateValueNode(node);
+  // normally, the above statement should not exit, so expected the following statement execute
+  EXPECT_TRUE(true);
+}
 }  // namespace validator
 }  // namespace mindspore
