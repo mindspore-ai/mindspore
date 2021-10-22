@@ -20,8 +20,8 @@ import os
 import json
 import tempfile
 import numpy as np
-import mindspore.offline_debug.dbg_services as d
 import pytest
+import mindspore.offline_debug.dbg_services as d
 from tests.security_utils import security_off_wrap
 from dump_test_utils import build_dump_structure
 
@@ -70,7 +70,7 @@ def run_watchpoints(is_sync):
         temp_dir = build_dump_structure(tmp_dir, tensor_name, tensor_list, "Test", tensor_info)
 
         debugger_backend = d.DbgServices(dump_file_path=temp_dir)
-        debugger_backend.initialize(net_name="Test", is_sync_mode=False)
+        debugger_backend.initialize(net_name="Test", is_sync_mode=is_sync)
 
         # NOTES:
         # -> watch_condition=6 is MIN_LT
@@ -144,6 +144,89 @@ def test_sync_watchpoints():
 @security_off_wrap
 def test_async_watchpoints():
     run_watchpoints(False)
+
+
+def run_overflow_watchpoint(is_overflow):
+    test_name = "overflow_watchpoint"
+    tensor = np.array([65504, 65504], np.float16)
+    task_id = 2
+    stream_id = 7
+    pwd = os.getcwd()
+    with tempfile.TemporaryDirectory(dir=pwd) as tmp_dir:
+        path = os.path.join(tmp_dir, "rank_0", "Add", "0", "0")
+        os.makedirs(path, exist_ok=True)
+        add_file = tempfile.mkstemp(prefix="Add.Default_Add-op0."+str(task_id)+"."+str(stream_id)+
+                                    ".1", dir=path)
+        with open(add_file[1], 'wb') as add_f:
+            add_f.write(b'1')
+            add_f.seek(8)
+            add_f.write(b'\n\x032.0\x10\x83\xf7\xef\x9f\x99\xc8\xf3\x02\x1a\x10\x08\x02\x10\x02\x1a\x03')
+            add_f.write(b'\n\x01\x020\x04:\x03\n\x01\x022\x0f')
+            add_f.write(b'Default/Add-op0')
+            add_f.write(tensor)
+        overflow_file = tempfile.mkstemp(prefix="Opdebug.Node_OpDebug."+str(task_id)+"." +str(stream_id)+
+                                         ".0", dir=path)
+        with open(overflow_file[1], 'wb') as f:
+            f.seek(321, 0)
+            byte_list = []
+            for i in range(256):
+                if i == 16:
+                    byte_list.append(stream_id)
+                elif i == 24:
+                    if is_overflow:
+                        byte_list.append(task_id)
+                    else:
+                        # wrong task_id, should not generate overflow watchpoint hit
+                        byte_list.append(task_id+1)
+                else:
+                    byte_list.append(0)
+            newFileByteArray = bytearray(byte_list)
+            f.write(bytes(newFileByteArray))
+        debugger_backend = d.DbgServices(dump_file_path=tmp_dir)
+        debugger_backend.initialize(net_name="Add", is_sync_mode=False)
+        debugger_backend.add_watchpoint(watchpoint_id=1, watch_condition=2,
+                                        check_node_list={"Default/Add-op0":
+                                                         {"rank_id": [0], "root_graph_id": [0], "is_output": True
+                                                         }}, parameter_list=[])
+
+        watchpoint_hits_test = debugger_backend.check_watchpoints(iteration=0)
+
+        if is_overflow:
+            assert len(watchpoint_hits_test) == 1
+            if GENERATE_GOLDEN:
+                print_watchpoint_hits(watchpoint_hits_test, 0, True, test_name)
+            else:
+                compare_expect_actual_result(watchpoint_hits_test, 0, test_name)
+        else:
+            assert not watchpoint_hits_test
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_async_overflow_watchpoints_hit():
+    """
+    Feature: Offline Debugger CheckWatchpoint
+    Description: Test check overflow watchpoint hit
+    Expectation: Overflow watchpoint is hit
+    """
+    run_overflow_watchpoint(True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_async_overflow_watchpoints_not_hit():
+    """
+    Feature: Offline Debugger CheckWatchpoint
+    Description: Test check overflow watchpoint hit
+    Expectation: Overflow watchpoint is not hit
+    """
+    run_overflow_watchpoint(False)
 
 
 def compare_expect_actual_result(watchpoint_hits_list, test_index, test_name):

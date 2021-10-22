@@ -17,6 +17,7 @@ Utils for testing dump feature.
 """
 
 import json
+import os
 
 async_dump_dict = {
     "common_dump_settings": {
@@ -87,3 +88,63 @@ def generate_dump_json(dump_path, json_file_name, test_key):
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")
     with open(json_file_name, 'w') as f:
         json.dump(data, f)
+
+
+def generate_dump_json_with_overflow(dump_path, json_file_name, test_key, op):
+    """
+    Util function to generate dump configuration json file.
+    """
+    if test_key == "test_async_dump":
+        data = async_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["op_debug_mode"] = op
+    else:
+        raise ValueError(
+            "Failed to generate dump json file. Overflow only support in async dump")
+    with open(json_file_name, 'w') as f:
+        json.dump(data, f)
+
+
+def check_dump_structure(dump_path, json_file_path, num_card, num_graph, num_iteration):
+    """
+    Util to check if the dump structure is correct.
+    """
+    with open(json_file_path) as f:
+        data = json.load(f)
+    net_name = data["common_dump_settings"]["net_name"]
+    assert os.path.isdir(dump_path)
+    for rank_id in range(num_card):
+        rank_path = os.path.join(dump_path, "rank_"+str(rank_id))
+        assert os.path.exists(rank_path)
+
+        net_name_path = os.path.join(rank_path, net_name)
+        assert os.path.exists(net_name_path)
+        graph_path = os.path.join(rank_path, "graphs")
+        assert os.path.exists(graph_path)
+        execution_order_path = os.path.join(rank_path, "execution_order")
+        assert os.path.exists(execution_order_path)
+
+        for graph_id in range(num_graph):
+            graph_id_path = os.path.join(net_name_path, str(graph_id))
+            assert os.path.exists(graph_id_path)
+
+            graph_pb_file = os.path.join(graph_path, "ms_output_trace_code_graph_" + str(graph_id) + ".pb")
+            graph_ir_file = os.path.join(graph_path, "ms_output_trace_code_graph_" + str(graph_id) + ".ir")
+            assert os.path.exists(graph_pb_file)
+            assert os.path.exists(graph_ir_file)
+
+            execution_order_file = os.path.join(execution_order_path, "ms_execution_order_graph_"
+                                                + str(graph_id) + ".csv")
+            assert os.path.exists(execution_order_file)
+
+            for iteration_id in range(num_iteration):
+                it_id_path = os.path.join(graph_id_path, str(iteration_id))
+                assert os.path.isdir(it_id_path)
+
+
+def find_nth_pos(string, substring, n):
+    start = string.find(substring)
+    while n > 1 and start >= 0:
+        start = string.find(substring, start + len(substring))
+        n -= 1
+    return start
