@@ -1709,7 +1709,8 @@ class Argmax(PrimitiveWithInfer):
         return ouput_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
+        validator.check_tensor_dtype_valid("input_x", x_dtype, [mstype.float16, mstype.float32, mstype.float64],
+                                           self.name)
         return mstype.tensor_type(self.output_type)
 
 
