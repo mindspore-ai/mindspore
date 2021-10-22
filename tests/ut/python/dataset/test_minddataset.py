@@ -1997,6 +1997,7 @@ def create_multi_mindrecord_files():
                 os.remove("{}.db".format(filename))
 
 def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
+    ds.config.set_seed(1)
     datas_all = []
     index = 0
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -2233,6 +2234,7 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
     assert origin_index != current_index
 
 def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_files):
+    ds.config.set_seed(1)
     datas_all = []
     datas_all_samples = []
     index = 0
@@ -2424,6 +2426,7 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
     assert origin_index != current_index
 
 def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
+    ds.config.set_seed(1)
     datas_all = []
     datas_all_samples = []
     index = 0

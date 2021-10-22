@@ -32,8 +32,6 @@ except ModuleNotFoundError:
     tf = None
 
 TFRECORD_DATA_DIR = "../data/mindrecord/testTFRecordData"
-TFRECORD_FILE_NAME = "test.tfrecord"
-MINDRECORD_FILE_NAME = "test.mindrecord"
 PARTITION_NUM = 1
 
 def cast_name(key):
@@ -82,7 +80,7 @@ def verify_data(transformer, reader):
                 assert value == mr_item[cast_name(key)]
     assert count == 10
 
-def generate_tfrecord():
+def generate_tfrecord(tfrecord_file_name):
     def create_int_feature(values):
         if isinstance(values, list):
             feature = tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))  # values: [int, int, int]
@@ -105,7 +103,7 @@ def generate_tfrecord():
             feature = tf.train.Feature(bytes_list=tf.train.BytesList(value=[bytes(values, encoding='utf-8')]))
         return feature
 
-    writer = tf.io.TFRecordWriter(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    writer = tf.io.TFRecordWriter(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     example_count = 0
     for i in range(10):
@@ -131,7 +129,7 @@ def generate_tfrecord():
     writer.close()
     logger.info("Write {} rows in tfrecord.".format(example_count))
 
-def generate_tfrecord_with_special_field_name():
+def generate_tfrecord_with_special_field_name(tfrecord_file_name):
     def create_int_feature(values):
         if isinstance(values, list):
             feature = tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))  # values: [int, int, int]
@@ -147,7 +145,7 @@ def generate_tfrecord_with_special_field_name():
             feature = tf.train.Feature(bytes_list=tf.train.BytesList(value=[bytes(values, encoding='utf-8')]))
         return feature
 
-    writer = tf.io.TFRecordWriter(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    writer = tf.io.TFRecordWriter(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     example_count = 0
     for i in range(10):
@@ -172,8 +170,12 @@ def test_tfrecord_to_mindrecord():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([], tf.string),
@@ -183,25 +185,25 @@ def test_tfrecord_to_mindrecord():
                     "float_list": tf.io.FixedLenFeature([7], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                        MINDRECORD_FILE_NAME, feature_dict, ["image_bytes"])
+    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                        mindrecord_file_name, feature_dict, ["image_bytes"])
     tfrecord_transformer.transform()
 
-    assert os.path.exists(MINDRECORD_FILE_NAME)
-    assert os.path.exists(MINDRECORD_FILE_NAME + ".db")
+    assert os.path.exists(mindrecord_file_name)
+    assert os.path.exists(mindrecord_file_name + ".db")
 
-    fr_mindrecord = FileReader(MINDRECORD_FILE_NAME)
+    fr_mindrecord = FileReader(mindrecord_file_name)
     verify_data(tfrecord_transformer, fr_mindrecord)
 
-    os.remove(MINDRECORD_FILE_NAME)
-    os.remove(MINDRECORD_FILE_NAME + ".db")
+    os.remove(mindrecord_file_name)
+    os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_scalar_with_1():
     """test transform tfrecord to mindrecord."""
@@ -211,8 +213,11 @@ def test_tfrecord_to_mindrecord_scalar_with_1():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([], tf.string),
@@ -222,25 +227,25 @@ def test_tfrecord_to_mindrecord_scalar_with_1():
                     "float_list": tf.io.FixedLenFeature([7], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                        MINDRECORD_FILE_NAME, feature_dict, ["image_bytes"])
+    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                        mindrecord_file_name, feature_dict, ["image_bytes"])
     tfrecord_transformer.transform()
 
-    assert os.path.exists(MINDRECORD_FILE_NAME)
-    assert os.path.exists(MINDRECORD_FILE_NAME + ".db")
+    assert os.path.exists(mindrecord_file_name)
+    assert os.path.exists(mindrecord_file_name + ".db")
 
-    fr_mindrecord = FileReader(MINDRECORD_FILE_NAME)
+    fr_mindrecord = FileReader(mindrecord_file_name)
     verify_data(tfrecord_transformer, fr_mindrecord)
 
-    os.remove(MINDRECORD_FILE_NAME)
-    os.remove(MINDRECORD_FILE_NAME + ".db")
+    os.remove(mindrecord_file_name)
+    os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_scalar_with_1_list_small_len_exception():
     """test transform tfrecord to mindrecord."""
@@ -250,8 +255,11 @@ def test_tfrecord_to_mindrecord_scalar_with_1_list_small_len_exception():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([], tf.string),
@@ -261,22 +269,22 @@ def test_tfrecord_to_mindrecord_scalar_with_1_list_small_len_exception():
                     "float_list": tf.io.FixedLenFeature([2], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
     with pytest.raises(ValueError):
-        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                            MINDRECORD_FILE_NAME, feature_dict, ["image_bytes"])
+        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                            mindrecord_file_name, feature_dict, ["image_bytes"])
         tfrecord_transformer.transform()
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_list_with_diff_type_exception():
     """test transform tfrecord to mindrecord."""
@@ -286,8 +294,11 @@ def test_tfrecord_to_mindrecord_list_with_diff_type_exception():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([], tf.string),
@@ -297,22 +308,22 @@ def test_tfrecord_to_mindrecord_list_with_diff_type_exception():
                     "float_list": tf.io.FixedLenFeature([7], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
     with pytest.raises(ValueError):
-        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                            MINDRECORD_FILE_NAME, feature_dict, ["image_bytes"])
+        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                            mindrecord_file_name, feature_dict, ["image_bytes"])
         tfrecord_transformer.transform()
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_list_without_bytes_type():
     """test transform tfrecord to mindrecord."""
@@ -322,8 +333,11 @@ def test_tfrecord_to_mindrecord_list_without_bytes_type():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([], tf.string),
@@ -333,25 +347,25 @@ def test_tfrecord_to_mindrecord_list_without_bytes_type():
                     "float_list": tf.io.FixedLenFeature([7], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                        MINDRECORD_FILE_NAME, feature_dict)
+    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                        mindrecord_file_name, feature_dict)
     tfrecord_transformer.transform()
 
-    assert os.path.exists(MINDRECORD_FILE_NAME)
-    assert os.path.exists(MINDRECORD_FILE_NAME + ".db")
+    assert os.path.exists(mindrecord_file_name)
+    assert os.path.exists(mindrecord_file_name + ".db")
 
-    fr_mindrecord = FileReader(MINDRECORD_FILE_NAME)
+    fr_mindrecord = FileReader(mindrecord_file_name)
     verify_data(tfrecord_transformer, fr_mindrecord)
 
-    os.remove(MINDRECORD_FILE_NAME)
-    os.remove(MINDRECORD_FILE_NAME + ".db")
+    os.remove(mindrecord_file_name)
+    os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_scalar_with_2_exception():
     """test transform tfrecord to mindrecord."""
@@ -361,8 +375,11 @@ def test_tfrecord_to_mindrecord_scalar_with_2_exception():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([], tf.string),
@@ -372,22 +389,22 @@ def test_tfrecord_to_mindrecord_scalar_with_2_exception():
                     "float_list": tf.io.FixedLenFeature([7], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                        MINDRECORD_FILE_NAME, feature_dict, ["image_bytes"])
+    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                        mindrecord_file_name, feature_dict, ["image_bytes"])
     with pytest.raises(ValueError):
         tfrecord_transformer.transform()
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_scalar_string_with_1_exception():
     """test transform tfrecord to mindrecord."""
@@ -397,8 +414,11 @@ def test_tfrecord_to_mindrecord_scalar_string_with_1_exception():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([1], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([], tf.string),
@@ -408,22 +428,22 @@ def test_tfrecord_to_mindrecord_scalar_string_with_1_exception():
                     "float_list": tf.io.FixedLenFeature([7], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
     with pytest.raises(ValueError):
-        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                            MINDRECORD_FILE_NAME, feature_dict, ["image_bytes"])
+        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                            mindrecord_file_name, feature_dict, ["image_bytes"])
         tfrecord_transformer.transform()
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_scalar_bytes_with_10_exception():
     """test transform tfrecord to mindrecord."""
@@ -433,8 +453,11 @@ def test_tfrecord_to_mindrecord_scalar_bytes_with_10_exception():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([10], tf.string),
@@ -444,22 +467,22 @@ def test_tfrecord_to_mindrecord_scalar_bytes_with_10_exception():
                     "float_list": tf.io.FixedLenFeature([7], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
     with pytest.raises(ValueError):
-        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                            MINDRECORD_FILE_NAME, feature_dict, ["image_bytes"])
+        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                            mindrecord_file_name, feature_dict, ["image_bytes"])
         tfrecord_transformer.transform()
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_exception_bytes_fields_is_not_string_type():
     """test transform tfrecord to mindrecord."""
@@ -469,8 +492,11 @@ def test_tfrecord_to_mindrecord_exception_bytes_fields_is_not_string_type():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([], tf.string),
@@ -480,22 +506,22 @@ def test_tfrecord_to_mindrecord_exception_bytes_fields_is_not_string_type():
                     "float_list": tf.io.FixedLenFeature([7], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
     with pytest.raises(ValueError):
-        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                            MINDRECORD_FILE_NAME, feature_dict, ["int64_list"])
+        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                            mindrecord_file_name, feature_dict, ["int64_list"])
         tfrecord_transformer.transform()
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_exception_bytes_fields_is_not_list():
     """test transform tfrecord to mindrecord."""
@@ -505,8 +531,11 @@ def test_tfrecord_to_mindrecord_exception_bytes_fields_is_not_list():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"file_name": tf.io.FixedLenFeature([], tf.string),
                     "image_bytes": tf.io.FixedLenFeature([], tf.string),
@@ -516,22 +545,22 @@ def test_tfrecord_to_mindrecord_exception_bytes_fields_is_not_list():
                     "float_list": tf.io.FixedLenFeature([7], tf.float32),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
     with pytest.raises(ValueError):
-        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                            MINDRECORD_FILE_NAME, feature_dict, "")
+        tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                            mindrecord_file_name, feature_dict, "")
         tfrecord_transformer.transform()
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
 def test_tfrecord_to_mindrecord_with_special_field_name():
     """test transform tfrecord to mindrecord."""
@@ -541,29 +570,32 @@ def test_tfrecord_to_mindrecord_with_special_field_name():
             please use pip install it / reinstall version >= {}.".format(SupportedTensorFlowVersion))
         return
 
-    generate_tfrecord_with_special_field_name()
-    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    file_name_ = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    mindrecord_file_name = file_name_ + '.mindrecord'
+    tfrecord_file_name = file_name_ + '.tfrecord'
+    generate_tfrecord_with_special_field_name(tfrecord_file_name)
+    assert os.path.exists(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
 
     feature_dict = {"image/class/label": tf.io.FixedLenFeature([], tf.int64),
                     "image/encoded": tf.io.FixedLenFeature([], tf.string),
                     }
 
-    if os.path.exists(MINDRECORD_FILE_NAME):
-        os.remove(MINDRECORD_FILE_NAME)
-    if os.path.exists(MINDRECORD_FILE_NAME + ".db"):
-        os.remove(MINDRECORD_FILE_NAME + ".db")
+    if os.path.exists(mindrecord_file_name):
+        os.remove(mindrecord_file_name)
+    if os.path.exists(mindrecord_file_name + ".db"):
+        os.remove(mindrecord_file_name + ".db")
 
-    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME),
-                                        MINDRECORD_FILE_NAME, feature_dict, ["image/encoded"])
+    tfrecord_transformer = TFRecordToMR(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name),
+                                        mindrecord_file_name, feature_dict, ["image/encoded"])
     tfrecord_transformer.transform()
 
-    assert os.path.exists(MINDRECORD_FILE_NAME)
-    assert os.path.exists(MINDRECORD_FILE_NAME + ".db")
+    assert os.path.exists(mindrecord_file_name)
+    assert os.path.exists(mindrecord_file_name + ".db")
 
-    fr_mindrecord = FileReader(MINDRECORD_FILE_NAME)
+    fr_mindrecord = FileReader(mindrecord_file_name)
     verify_data(tfrecord_transformer, fr_mindrecord)
 
-    os.remove(MINDRECORD_FILE_NAME)
-    os.remove(MINDRECORD_FILE_NAME + ".db")
+    os.remove(mindrecord_file_name)
+    os.remove(mindrecord_file_name + ".db")
 
-    os.remove(os.path.join(TFRECORD_DATA_DIR, TFRECORD_FILE_NAME))
+    os.remove(os.path.join(TFRECORD_DATA_DIR, tfrecord_file_name))
