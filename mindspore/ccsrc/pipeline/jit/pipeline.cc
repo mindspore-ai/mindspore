@@ -463,40 +463,30 @@ py::dict GraphExecutorPy::GetAllreduceFusion(const std::string &phase) {
 
 // Not support multi thread, not support nested call too.
 // Here using nested_called flg to avoid nested call.
-void GraphExecutorPy::DelNetRes(const std::string &id) {
-  static bool nested_called = false;
-  if (nested_called) {
-    return;
-  }
-  nested_called = true;
+void GraphExecutorPy::DelNetRes(const py::set &id) {
 #ifdef ENABLE_GE
   FinalizeBackend();
 #else
   ConfigManager::GetInstance().ResetIterNum();
 #endif
-  if (executor_ != nullptr) {
-    bool flag = false;
-    auto tmp_info = info_;
-    for (auto &item : tmp_info) {
-      if (item.first.find(id) != string::npos) {
-        MS_LOG(DEBUG) << "Delete network res:" << item.first;
-        item.second = nullptr;
-        (void)info_.erase(item.first);
-        flag = true;
-      }
+  for (auto item : id) {
+    if (py::isinstance<py::str>(item)) {
+      auto phase = py::cast<std::string>(item);
+      info_.erase(phase);
+      MS_LOG(DEBUG) << "Delete phase: " << phase << ", info size: " << info_.size();
+    } else {
+      MS_LOG(ERROR) << "Expect string phase, but got " << py::str(item);
     }
-
-    MS_LOG(DEBUG) << "Delete flag:" << flag;
-#ifdef ENABLE_GE
-    if (flag && info_.size() == 0) {
-      // because Ge only support one Session exist at the same time ,so we delete the old one
-      transform::DfGraphManager::GetInstance().DeleteGraphRunner();
-      transform::DfGraphManager::GetInstance().EraseAnfGraph();
-      transform::DfGraphManager::GetInstance().DeleteGeSession();
-    }
-#endif
   }
-  nested_called = false;
+
+#ifdef ENABLE_GE
+  if (!id.empty() && info_.size() == 0) {
+    // because Ge only support one Session exist at the same time ,so we delete the old one
+    transform::DfGraphManager::GetInstance().DeleteGraphRunner();
+    transform::DfGraphManager::GetInstance().EraseAnfGraph();
+    transform::DfGraphManager::GetInstance().DeleteGeSession();
+  }
+#endif
 }
 
 void GraphExecutorPy::ClearRes() {

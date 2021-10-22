@@ -104,7 +104,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   size_t GetNumOpsInfo(const std::string &phase);
   void SetNumOpsInfo(size_t);
   py::dict GetAllreduceFusion(const std::string &phase);
-  void DelNetRes(const std::string &id);
+  void DelNetRes(const py::set &id);
   void ReleaseResource(const py::object &phase_obj);
   static void ClearRes();
 #ifdef ENABLE_DEBUGGER

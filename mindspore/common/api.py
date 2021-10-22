@@ -464,7 +464,6 @@ class _CellGraphExecutor:
         # create needed graph by lazy mode
         self.is_init = False
         self._graph_executor = GraphExecutor_.get_instance()
-        self.compile_cache = {}
         self._graph_executor.set_py_exe_path(sys.executable)
         self._graph_executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
         self.queue_name = ""
@@ -531,7 +530,7 @@ class _CellGraphExecutor:
         obj.arguments_key = str(key)
         phase = phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
 
-        if phase in self.compile_cache.keys():
+        if phase in obj.compile_cache:
             logger.debug("%r graph has existed.", phase)
             return phase, False
 
@@ -548,7 +547,7 @@ class _CellGraphExecutor:
         enable_ge = context.get_context("enable_ge")
         use_vm = not enable_ge or (enable_debug_runtime and context.get_context("mode") == context.PYNATIVE_MODE)
         result = self._graph_executor.compile(obj, args_list, phase, use_vm, self.queue_name)
-        self.compile_cache[phase] = phase
+        obj.compile_cache.add(phase)
         if not result:
             raise RuntimeError("Executor compile failed.")
         graph = self._graph_executor.get_func_graph(phase)

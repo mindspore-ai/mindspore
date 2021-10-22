@@ -99,6 +99,7 @@ class Cell(Cell_):
         self._parallel_parameter_merge_net_dict = {}
         self._create_time = int(time.time() * 1e9)
         self.arguments_key = ""
+        self.compile_cache = set()
         self.parameter_broadcast_done = False
         init_pipeline()
 
@@ -297,8 +298,8 @@ class Cell(Cell_):
     def __del__(self):
         if context.get_context is not None and context.get_context("mode") == context.PYNATIVE_MODE:
             _pynative_executor.del_cell(str(id(self)))
-        if hasattr(self, "_create_time"):
-            _cell_graph_executor.del_net_res(str(self._create_time))
+        if self.compile_cache:
+            _cell_graph_executor.del_net_res(self.compile_cache)
 
     def __delattr__(self, name):
         if name in self._params:
