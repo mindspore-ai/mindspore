@@ -475,7 +475,7 @@ void AnfExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &nod
       comment << ",";
     }
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(arg);
-    std::string func_graph_id = fg->debug_info()->get_id();
+    auto func_graph_id = fg->debug_info()->get_id();
     comment << " fg_" << func_graph_id << "=" << fg->ToString();
   }
   if (has_comment) {
