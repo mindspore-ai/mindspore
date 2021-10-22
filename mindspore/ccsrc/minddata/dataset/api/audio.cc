@@ -40,6 +40,7 @@
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
+#include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -438,6 +439,35 @@ Overdrive::Overdrive(float gain, float color) : data_(std::make_shared<Data>(gai
 
 std::shared_ptr<TensorOperation> Overdrive::Parse() {
   return std::make_shared<OverdriveOperation>(data_->gain_, data_->color_);
+}
+
+// Phaser Transform Operation.
+struct Phaser::Data {
+  Data(int32_t sample_rate, float gain_in, float gain_out, float delay_ms, float decay, float mod_speed,
+       bool sinusoidal)
+      : sample_rate_(sample_rate),
+        gain_in_(gain_in),
+        gain_out_(gain_out),
+        delay_ms_(delay_ms),
+        decay_(decay),
+        mod_speed_(mod_speed),
+        sinusoidal_(sinusoidal) {}
+  int32_t sample_rate_;
+  float gain_in_;
+  float gain_out_;
+  float delay_ms_;
+  float decay_;
+  float mod_speed_;
+  bool sinusoidal_;
+};
+
+Phaser::Phaser(int32_t sample_rate, float gain_in, float gain_out, float delay_ms, float decay, float mod_speed,
+               bool sinusoidal)
+    : data_(std::make_shared<Data>(sample_rate, gain_in, gain_out, delay_ms, decay, mod_speed, sinusoidal)) {}
+
+std::shared_ptr<TensorOperation> Phaser::Parse() {
+  return std::make_shared<PhaserOperation>(data_->sample_rate_, data_->gain_in_, data_->gain_out_, data_->delay_ms_,
+                                           data_->decay_, data_->mod_speed_, data_->sinusoidal_);
 }
 
 // RiaaBiquad Transform Operation.

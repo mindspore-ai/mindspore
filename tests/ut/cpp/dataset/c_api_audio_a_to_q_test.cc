@@ -1106,6 +1106,144 @@ TEST_F(MindDataTestPipeline, TestOverdriveWrongArg) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: Phaser
+/// Description: test basic usage of Phaser
+/// Expectation: get correct number of data
+TEST_F(MindDataTestPipeline, TestPhaserBasic) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhaserBasic";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto PhaserOp = audio::Phaser(44100);
+
+  ds = ds->Map({PhaserOp});
+  EXPECT_NE(ds, nullptr);
+
+  // Apply a phasing effect to the audio
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+  auto col = row["waveform"];
+  ASSERT_EQ(col.Shape(), expected);
+  ASSERT_EQ(col.Shape().size(), 2);
+  ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+  ASSERT_OK(iter->GetNextRow(&row));
+  i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+}
+
+/// Feature: Phaser
+/// Description: test invalid parameter of Phaser
+/// Expectation: throw exception correctly
+TEST_F(MindDataTestPipeline, TestPhaserWrongArg) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhaserWrongArg.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  std::shared_ptr<Dataset> ds01;
+  std::shared_ptr<Dataset> ds02;
+  std::shared_ptr<Dataset> ds03;
+  std::shared_ptr<Dataset> ds04;
+  std::shared_ptr<Dataset> ds05;
+  std::shared_ptr<Dataset> ds06;
+  std::shared_ptr<Dataset> ds07;
+  std::shared_ptr<Dataset> ds08;
+  std::shared_ptr<Dataset> ds09;
+  std::shared_ptr<Dataset> ds10;
+  EXPECT_NE(ds, nullptr);
+
+  // Check gain_in out of range [0,1]
+  MS_LOG(INFO) << "gain_in is less than 0.";
+  auto phaser_op_01 = audio::Phaser(44100, -0.2);
+  ds01 = ds->Map({phaser_op_01});
+  EXPECT_NE(ds01, nullptr);
+  std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
+  EXPECT_EQ(iter01, nullptr);
+
+  MS_LOG(INFO) << "gain_in is greater than 1.";
+  auto phaser_op_02 = audio::Phaser(44100, 1.2);
+  ds02 = ds->Map({phaser_op_02});
+  EXPECT_NE(ds02, nullptr);
+  std::shared_ptr<Iterator> iter02 = ds02->CreateIterator();
+  EXPECT_EQ(iter02, nullptr);
+
+  // Check gain_out out of range [0,1e9]
+  MS_LOG(INFO) << "gain_out is less than 0.";
+  auto phaser_op_03 = audio::Phaser(44100, 0.2, -1.3);
+  ds03 = ds->Map({phaser_op_03});
+  EXPECT_NE(ds03, nullptr);
+  std::shared_ptr<Iterator> iter03 = ds03->CreateIterator();
+  EXPECT_EQ(iter03, nullptr);
+
+  MS_LOG(INFO) << "gain_out is greater than 1e9.";
+  auto phaser_op_04 = audio::Phaser(44100, 0.3, 1e10);
+  ds04 = ds->Map({phaser_op_04});
+  EXPECT_NE(ds04, nullptr);
+  std::shared_ptr<Iterator> iter04 = ds04->CreateIterator();
+  EXPECT_EQ(iter04, nullptr);
+
+  // Check delay_ms out of range [0,5.0]
+  MS_LOG(INFO) << "delay_ms is less than 0.";
+  auto phaser_op_05 = audio::Phaser(44100, 0.2, 2, -2.0);
+  ds05 = ds->Map({phaser_op_05});
+  EXPECT_NE(ds05, nullptr);
+  std::shared_ptr<Iterator> iter05 = ds05->CreateIterator();
+  EXPECT_EQ(iter05, nullptr);
+
+  MS_LOG(INFO) << "delay_ms is greater than 5.0.";
+  auto phaser_op_06 = audio::Phaser(44100, 0.3, 2, 6.0);
+  ds06 = ds->Map({phaser_op_06});
+  EXPECT_NE(ds06, nullptr);
+  std::shared_ptr<Iterator> iter06 = ds06->CreateIterator();
+  EXPECT_EQ(iter06, nullptr);
+
+  // Check decay out of range [0,0.99]
+  MS_LOG(INFO) << "decay is less than 0.";
+  auto phaser_op_07 = audio::Phaser(44100, 0.2, 2, 2.0, -1.0);
+  ds07 = ds->Map({phaser_op_07});
+  EXPECT_NE(ds07, nullptr);
+  std::shared_ptr<Iterator> iter07 = ds07->CreateIterator();
+  EXPECT_EQ(iter07, nullptr);
+
+  MS_LOG(INFO) << "decay is greater than 0.99.";
+  auto phaser_op_08 = audio::Phaser(44100, 0.3, 2, 2.0, 1.2);
+  ds08 = ds->Map({phaser_op_08});
+  EXPECT_NE(ds08, nullptr);
+  std::shared_ptr<Iterator> iter08 = ds08->CreateIterator();
+  EXPECT_EQ(iter08, nullptr);
+
+  // Check mod_speed out of range [0.1,10]
+  MS_LOG(INFO) << "mod_speed is less than 0.1 .";
+  auto phaser_op_09 = audio::Phaser(44100, 0.2, 2, 2.0, 0.5, 0.002);
+  ds09 = ds->Map({phaser_op_09});
+  EXPECT_NE(ds09, nullptr);
+  std::shared_ptr<Iterator> iter09 = ds09->CreateIterator();
+  EXPECT_EQ(iter09, nullptr);
+
+  MS_LOG(INFO) << "mod_speed is greater than 10.";
+  auto phaser_op_10 = audio::Phaser(44100, 0.3, 2, 2.0, 0.5, 12.0);
+  ds10 = ds->Map({phaser_op_10});
+  EXPECT_NE(ds10, nullptr);
+  std::shared_ptr<Iterator> iter10 = ds10->CreateIterator();
+  EXPECT_EQ(iter10, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestLfilterPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLfilterPipeline.";
   // Original waveform

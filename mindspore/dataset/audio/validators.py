@@ -18,9 +18,9 @@ Validators for TensorOps.
 
 from functools import wraps
 
-from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32_not_zero, \
-    check_list_same_size, check_non_negative_float32, check_non_negative_int32, check_pos_float32, check_pos_int32, \
-    check_value, parse_user_args, type_check
+from mindspore.dataset.core.validator_helpers import check_float32, check_float32_not_zero, check_int32,\
+    check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
+    check_pos_float32, check_pos_int32, check_value, parse_user_args, type_check
 from .utils import FadeShape, GainType, Interpolation, Modulation, ScaleType
 
 
@@ -295,6 +295,31 @@ def check_overdrive(method):
         check_value(gain, [0, 100], "gain")
         type_check(color, (float, int), "color")
         check_value(color, [0, 100], "color")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_phaser(method):
+    """Wrapper method to check the parameters of Phaser."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, gain_in, gain_out, delay_ms, decay,
+         mod_speed, sinusoidal], _ = parse_user_args(method, *args, **kwargs)
+        type_check(sample_rate, (int,), "sample_rate")
+        check_int32(sample_rate, "sample_rate")
+        type_check(gain_in, (float, int), "gain_in")
+        check_value(gain_in, [0, 1], "gain_in")
+        type_check(gain_out, (float, int), "gain_out")
+        check_value(gain_out, [0, 1e9], "gain_out")
+        type_check(delay_ms, (float, int), "delay_ms")
+        check_value(delay_ms, [0, 5.0], "delay_ms")
+        type_check(decay, (float, int), "decay")
+        check_value(decay, [0, 0.99], "decay")
+        type_check(mod_speed, (float, int), "mod_speed")
+        check_value(mod_speed, [0.1, 2], "mod_speed")
+        type_check(sinusoidal, (bool,), "sinusoidal")
         return method(self, *args, **kwargs)
 
     return new_method

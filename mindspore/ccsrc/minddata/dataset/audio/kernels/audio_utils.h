@@ -662,6 +662,89 @@ Status DetectPitchFrequency(const std::shared_ptr<Tensor> &input, std::shared_pt
 Status GenerateWaveTable(std::shared_ptr<Tensor> *output, const DataType &type, Modulation modulation,
                          int32_t table_size, float min, float max, float phase);
 
+/// \brief Apply a phaser effect to the audio.
+/// \param input Tensor of shape <..., time>.
+/// \param output Tensor of shape <..., time>.
+/// \param sample_rate Sampling rate of the waveform.
+/// \param gain_in Desired input gain at the boost (or attenuation) in dB.
+/// \param gain_out Desired output gain at the boost (or attenuation) in dB.
+/// \param delay_ms Desired delay in milli seconds.
+/// \param decay Desired decay relative to gain-in.
+/// \param mod_speed Modulation speed in Hz.
+/// \param sinusoidal If true, use sinusoidal modulation. If false, use triangular modulation.
+/// \return Status code.
+template <typename T>
+Status Phaser(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t sample_rate, float gain_in,
+              float gain_out, float delay_ms, float decay, float mod_speed, bool sinusoidal) {
+  TensorShape input_shape = input->shape();
+  // input convert to 2D (channels,time)
+  auto channels = input->Size() / input_shape[-1];
+  auto time = input_shape[-1];
+  TensorShape to_shape({channels, time});
+  RETURN_IF_NOT_OK(input->Reshape(to_shape));
+  // input vector
+  std::vector<std::vector<T>> input_vec(channels, std::vector<T>(time, 0));
+  // output vector
+  std::vector<std::vector<T>> out_vec(channels, std::vector<T>(time, 0));
+  // input convert to vector
+  auto input_itr = input->begin<T>();
+  for (size_t i = 0; i < channels; i++) {
+    for (size_t j = 0; j < time; j++) {
+      input_vec[i][j] = *input_itr * gain_in;
+      input_itr++;
+    }
+  }
+  // compute
+  // create delay buffer
+  int delay_buf_nrow = channels;
+  // calculate the length of the delay
+  int delay_buf_len = static_cast<int>((delay_ms * 0.001 * sample_rate) + 0.5);
+  std::vector<std::vector<T>> delay_buf(delay_buf_nrow, std::vector<T>(delay_buf_len, 0 * decay));
+  // calculate the length after the momentum
+  int mod_buf_len = static_cast<int>(sample_rate / mod_speed + 0.5);
+  Modulation modulation = sinusoidal ? Modulation::kSinusoidal : Modulation::kTriangular;
+  // create and compute mod buffer
+  std::shared_ptr<Tensor> mod_buf_tensor;
+  RETURN_IF_NOT_OK(GenerateWaveTable(&mod_buf_tensor, DataType(DataType::DE_INT32), modulation, mod_buf_len,
+                                     static_cast<float>(1.0f), static_cast<float>(delay_buf_len),
+                                     static_cast<float>(PI / 2)));
+  // tensor mod_buf convert to vector
+  std::vector<int> mod_buf;
+  for (auto itr = mod_buf_tensor->begin<int>(); itr != mod_buf_tensor->end<int>(); itr++) {
+    mod_buf.push_back(*itr);
+  }
+  dsize_t delay_pos = 0;
+  dsize_t mod_pos = 0;
+  // for every channal at the current time
+  for (size_t i = 0; i < time; i++) {
+    // calculate the delay data that should be added to each channal at this time
+    int idx = static_cast<int>((delay_pos + mod_buf[mod_pos]) % delay_buf_len);
+    mod_pos = (mod_pos + 1) % mod_buf_len;
+    delay_pos = (delay_pos + 1) % delay_buf_len;
+    // update the next delay data with the current result * decay
+    for (size_t j = 0; j < channels; j++) {
+      out_vec[j][i] = input_vec[j][i] + delay_buf[j][idx];
+      delay_buf[j][delay_pos] = (input_vec[j][i] + delay_buf[j][idx]) * decay;
+    }
+  }
+  std::vector<T> out_vec_one_d;
+  for (size_t i = 0; i < channels; i++) {
+    for (size_t j = 0; j < time; j++) {
+      // gain_out on the output
+      out_vec[i][j] *= gain_out;
+      // clamp
+      out_vec[i][j] = std::max<float>(-1.0f, std::min<float>(1.0f, out_vec[i][j]));
+      // output vector is transformed from 2d to 1d
+      out_vec_one_d.push_back(out_vec[i][j]);
+    }
+  }
+  // move data to output tensor
+  std::shared_ptr<Tensor> out;
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_vec_one_d, input_shape, &out));
+  *output = out;
+  return Status::OK();
+}
+
 /// \brief Flanger about interpolation effect.
 /// \param input: Tensor of shape <batch, channel, time>.
 /// \param int_delay: A dimensional vector about integer delay, subscript representing delay.

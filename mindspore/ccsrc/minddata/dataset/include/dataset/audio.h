@@ -592,6 +592,36 @@ class Overdrive final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Phaser TensorTransform.
+class Phaser final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sampling rate of the waveform, e.g. 44100 (Hz).
+  /// \param[in] gain_in Desired input gain at the boost (or attenuation) in dB.
+  ///     Allowed range of values is [0, 1] (Default=0.4).
+  /// \param[in] gain_out Desired output gain at the boost (or attenuation) in dB.
+  ///     Allowed range of values is [0, 1e9] (Default=0.74).
+  /// \param[in] delay_ms Desired delay in milli seconds. Allowed range of values is [0, 5] (Default=3.0).
+  /// \param[in] decay Desired decay relative to gain-in. Allowed range of values is [0, 0.99] (Default=0.4).
+  /// \param[in] mod_speed Modulation speed in Hz. Allowed range of values is [0.1, 2] (Default=0.5).
+  /// \param[in] sinusoidal If true, use sinusoidal modulation (preferable for multiple instruments).
+  ///     If false, use triangular modulation (gives single instruments a sharper phasing effect) (Default=true).
+  Phaser(int32_t sample_rate, float gain_in = 0.4f, float gain_out = 0.74f, float delay_ms = 3.0f, float decay = 0.4f,
+         float mod_speed = 0.5f, bool sinusoidal = true);
+
+  /// \brief Destructor.
+  ~Phaser() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply RIAA vinyl playback equalization.
 class RiaaBiquad final : public TensorTransform {
  public:

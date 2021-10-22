@@ -28,7 +28,7 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_contrast, check_dc_shift, \
     check_deemph_biquad, check_detect_pitch_frequency, check_equalizer_biquad, check_fade, check_flanger, \
     check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, check_masking, check_mu_law_coding, \
-    check_overdrive, check_riaa_biquad, check_time_stretch, check_treble_biquad, check_vol
+    check_overdrive, check_phaser, check_riaa_biquad, check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -774,6 +774,48 @@ class Overdrive(AudioTensorOperation):
 
     def parse(self):
         return cde.OverdriveOperation(self.gain, self.color)
+
+
+class Phaser(AudioTensorOperation):
+    """
+    Apply a phasing effect to the audio.
+
+    Args:
+        sample_rate (int): Sampling rate of the waveform, e.g. 44100 (Hz).
+        gain_in (float): Desired input gain at the boost (or attenuation) in dB.
+            Allowed range of values is [0, 1] (default=0.4).
+        gain_out (float): Desired output gain at the boost (or attenuation) in dB.
+            Allowed range of values is [0, 1e9] (default=0.74).
+        delay_ms (float): Desired delay in milli seconds. Allowed range of values is [0, 5] (default=3.0).
+        decay (float): Desired decay relative to gain-in. Allowed range of values is [0, 0.99] (default=0.4).
+        mod_speed (float): Modulation speed in Hz. Allowed range of values is [0.1, 2] (default=0.5).
+        sinusoidal (bool): If True, use sinusoidal modulation (preferable for multiple instruments).
+            If False, use triangular modulation (gives single instruments a sharper
+            phasing effect) (default=True).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Phaser(44100)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_phaser
+    def __init__(self, sample_rate, gain_in=0.4, gain_out=0.74,
+                 delay_ms=3.0, decay=0.4, mod_speed=0.5, sinusoidal=True):
+        self.decay = decay
+        self.delay_ms = delay_ms
+        self.gain_in = gain_in
+        self.gain_out = gain_out
+        self.mod_speed = mod_speed
+        self.sample_rate = sample_rate
+        self.sinusoidal = sinusoidal
+
+    def parse(self):
+        return cde.PhaserOperation(self.sample_rate, self.gain_in, self.gain_out,
+                                   self.delay_ms, self.decay, self.mod_speed, self.sinusoidal)
 
 
 class RiaaBiquad(AudioTensorOperation):

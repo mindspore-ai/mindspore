@@ -44,6 +44,7 @@
 #include "minddata/dataset/audio/ir/kernels/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
+#include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
@@ -347,6 +348,18 @@ PYBIND_REGISTER(OverdriveOperation, 1, ([](const py::module *m) {
                         THROW_IF_ERROR(overdrive->ValidateParams());
                         return overdrive;
                       }));
+                }));
+
+PYBIND_REGISTER(PhaserOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::PhaserOperation, TensorOperation, std::shared_ptr<audio::PhaserOperation>>(
+                    *m, "PhaserOperation")
+                    .def(py::init([](int32_t sample_rate, float gain_in, float gain_out, float delay_ms, float decay,
+                                     float mod_speed, bool sinusoidal) {
+                      auto phaser = std::make_shared<audio::PhaserOperation>(sample_rate, gain_in, gain_out, delay_ms,
+                                                                             decay, mod_speed, sinusoidal);
+                      THROW_IF_ERROR(phaser->ValidateParams());
+                      return phaser;
+                    }));
                 }));
 
 PYBIND_REGISTER(

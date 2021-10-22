@@ -168,6 +168,7 @@ constexpr char kMagphaseOp[] = "MagphaseOp";
 constexpr char kMuLawDecodingOp[] = "MuLawDecodingOp";
 constexpr char kMuLawEncodingOp[] = "MuLawEncodingOp";
 constexpr char kOverdriveOp[] = "OverdriveOp";
+constexpr char kPhaserOp[] = "PhaserOp";
 constexpr char kRiaaBiquadOp[] = "RiaaBiquadOp";
 constexpr char kTimeMaskingOp[] = "TimeMaskingOp";
 constexpr char kTimeStretchOp[] = "TimeStretchOp";
