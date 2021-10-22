@@ -141,6 +141,109 @@ Adel, AGroupofProbiotocs, anthonyaje, anzhengqi, askmiao, baihuawei, baiyangfan,
 
 Contributions of any kind are welcome!
 
+# MindSpore 1.4.0
+
+## MindSpore 1.4.0 Release Notes
+
+### Major Features and Improvements
+
+#### NewModels
+
+#### FrontEnd
+
+#### Auto Parallel
+
+- Add distributed operators: Conv2D/Conv2DTranspose/Conv2DBackpropInput/MaxPool/AvgPool/BatchNorm/GatherD
+- Support to configure shard strategy for dataset
+
+#### Executor
+
+#### DataSet
+
+- Add SlicePatchesOperation for Remote Sensing feature（[!18179](https://e.gitee.com/mind_spore/repos/mindspore/mindspore/pulls/18179)）
+
+#### FederatedLearning
+
+#### Running Data Recorder
+
+#### GraphKernel Fusion
+
+#### Profiler
+
+- [STABLE]  Support MS_DIAGNOSTIC_DATA_PATH for profiler feature.(Ascend/GPU)
+
+#### Dump
+
+- [STABLE]  Support MS_DIAGNOSTIC_DATA_PATH for dump feature.(Ascend/GPU/CPU)
+
+### API Change
+
+#### Backwards Incompatible Change
+
+##### Python API
+
+##### Command Line Interface
+
+###### Dump Config
+
+Previously, we need to set the dump path in dump config file. To make the dump feature easier to use on cloud, we support new environment parameter `MS_DIAGNOSTIC_DATA_PATH`.  View the [New Dump Tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/r1.4/advanced_use/dump_in_graph_mode.html#dump).
+
+| 1.3.0                          | 1.4.0                                                                                                                                        |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path` is a mandatory field. | `path` field is optional.  If `path` field is not provided or is empty string, `MS_DIAGNOSTIC_DATA_PATH` should be set in environment. |
+
+### Bug fixes
+
+#### FrontEnd
+
+#### Executor
+
+#### Dataset
+
+- Fix module 'signal' has no attribute 'SIGCHLD' problem under windows platform. ([!21232](https://gitee.com/mindspore/mindspore/pulls/21232))
+
+## MindSpore Lite
+
+### Major Features and Improvements
+
+#### Converter and runtime
+
+#### x86 backend optimization
+
+#### ARM backend optimization
+
+#### Cuda backend optimization
+
+#### OpenCL backend
+
+#### Post quantization
+
+#### Training on Device
+
+#### Codegen
+
+### API Change
+
+#### API Incompatible Change
+
+##### C++ API
+
+#### New features
+
+##### Java API
+
+### Bug fixes
+
+#### Deprecations
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+Adel, AGroupofProbiotocs, anthonyaje, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, dong-li001, eric, Eric, fary86, fuzhiye, Gaoxiong, GAO_HYP_XYJ, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, heleiwang, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Islam Amin, Jesse, , Jiabin Liu, jianghui58, jiangzhiwen, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, Jonathan, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, laiyongqiang, leonwanghui, Li, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, Lin Xh, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, Lixia, lixian, liyanliu, liyong, lizhenyu, luopengting, luoyang, lvchangquan, lvliang, lz, mahdi, Mahdi, maning202007, Margaret_wangrui, mayang, mengyuanli, Ming_blue, nhussain, ougongchang, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, Pengyongrong, qianlong, qianjiahong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, , Wan, wandongdong, wangdongxu, wangmin, wangnan39@huawei.com, wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wudenggang, wukesong, wuweikang, wuxuejian, Xiao Tianci, Xiaoda, xiefangqi, xinyunfan, xuanyue, xulei2020, Xun, xuyongfei, yanghaitao, yanghaitao1, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang, zhanghaibo5@huawei.com, zhanghuiyao, zhanghui_china, zhangxinfeng3, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, Zhenglong Li, zhiqwang, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Zirui, Ziyan, zjun, ZPaC, wangfengwfwf, zymaa, gerayking.
+
+Contributions of any kind are welcome!
+
 # MindSpore 1.3.0
 
 ## MindSpore 1.3.0 Release Notes
