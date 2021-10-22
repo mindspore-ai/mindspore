@@ -516,6 +516,7 @@ inline const PrimitivePtr kPrimFloorDiv = std::make_shared<Primitive>("FloorDiv"
 inline const PrimitivePtr kPrimSqrt = std::make_shared<Primitive>("Sqrt");
 inline const PrimitivePtr kPrimSqrtGrad = std::make_shared<Primitive>("SqrtGrad");
 inline const PrimitivePtr kPrimReciprocal = std::make_shared<Primitive>(kReciprocal);
+inline const PrimitivePtr kPrimReciprocalGrad = std::make_shared<Primitive>("ReciprocalGrad");
 inline const PrimitivePtr kPrimExpandDims = std::make_shared<Primitive>("ExpandDims");
 inline const PrimitivePtr kPrimAbs = std::make_shared<Primitive>(kAbs);
 inline const PrimitivePtr kPrimAbsGrad = std::make_shared<Primitive>("AbsGrad");

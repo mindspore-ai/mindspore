@@ -307,6 +307,7 @@ from .apply_rms_prop import _apply_rms_prop_tbe
 from .cumprod import _cumprop_tbe
 from .reduce_prod import _reduce_prod_tbe
 from .reciprocal_grad import _reciprocal_grad_tbe
+from .reciprocal_grad_ds import _reciprocal_grad_ds_tbe
 from .sqrt_grad import _sqrt_grad_tbe
 from .sqrt_grad_ds import _sqrt_grad_ds_tbe
 from .rsqrt_grad import _rsqrt_grad_tbe
