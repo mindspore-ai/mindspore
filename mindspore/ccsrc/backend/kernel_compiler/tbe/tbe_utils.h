@@ -66,6 +66,7 @@ class TbeUtils {
 
   static KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor,
                                    const bool is_akg = false);
+  static void UpdateCache(const std::string &kernel_name);
 };
 
 struct KernelMetaInfo {
@@ -95,6 +96,7 @@ class KernelMeta {
   static KernelMeta *GetInstance();
   bool ReadIndex(const std::string &bin_dir);
   KernelPackPtr GetKernelPack(const std::string &kernel_name, const bool is_akg = false);
+  void UpdateCache(const std::string &kernel_name);
 
  private:
   KernelMeta() = default;

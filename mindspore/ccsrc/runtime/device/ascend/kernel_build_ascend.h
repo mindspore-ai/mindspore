@@ -18,12 +18,13 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_BUILD_ASCEND_H_
 
 #include <vector>
-
+#include <map>
 #include "backend/session/kernel_graph.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
+using CommOpInputInfo = std::map<AnfNodePtr, std::vector<size_t>>;
 /**
  * @brief kernel build for ascend.
  */
@@ -33,6 +34,10 @@ bool KernelBuild(const std::vector<CNodePtr> &kernels);
  * Must DO these changes just before kernel build, and after all of other optimizations on AnfGraph
  */
 void KernelBuildPreprocess(mindspore::session::KernelGraph *kernel_graph);
+/**
+ * @brief Communication Op Input Info.
+ * */
+CommOpInputInfo GetCommunicationOpInputInfo(const mindspore::session::KernelGraph *kernel_graph);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

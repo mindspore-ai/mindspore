@@ -229,7 +229,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
     return GetScriptFilePath(env, kGetPathScript, kServerScript);
   }
   // Run TBE building.
-  std::string TbeSendJob(const std::string &job_json_str);
+  std::string DispatchToServer(const std::string &job_json_str);
 
   AscendKernelBuildClient(const AscendKernelBuildClient &) = delete;
   AscendKernelBuildClient &operator=(const AscendKernelBuildClient &) = delete;

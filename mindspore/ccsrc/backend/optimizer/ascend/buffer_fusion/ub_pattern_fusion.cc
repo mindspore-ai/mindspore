@@ -17,22 +17,17 @@
 #include <vector>
 #include <utility>
 #include <unordered_map>
-#include <deque>
+#include <map>
 #include <memory>
 #include <string>
-#include <algorithm>
-#include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
-#include "backend/kernel_compiler/tbe/ascend_kernel_compile.h"
-#include "backend/kernel_compiler/kernel_fusion.h"
+#include "backend/kernel_compiler/tbe/tbe_kernel_compile.h"
+#include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "debug/anf_ir_dump.h"
-#include "backend/session/anf_runtime_algorithm.h"
-#include "base/core_ops.h"
-#include "runtime/device/kernel_info.h"
-#include "utils/ms_context.h"
 #include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {
+using mindspore::kernel::tbe::TbeUtils;
 namespace {
 const int8_t MAX_PATTERN_SIZE = 7;
 const int8_t MIN_PATTERN_SIZE = 2;
@@ -461,12 +456,8 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
         buffer_fusion_info.first, buffer_fusion_info.second.full_name, buffer_fusion_info.second.inputs_list,
         buffer_fusion_info.second.anf_nodes, buffer_fusion_info.second.outputs_list);
     });
-  std::map<int64_t, kernel::KernelModPtr> kernel_mods;
-  if (!fusion_scope_infos.empty()) {
-    auto &build_manager = kernel::ascend::AscendKernelCompileManager::GetInstance();
-    kernel_mods = build_manager.AscendFusionOpCompile(fusion_scope_infos);
-    build_manager.ResetOldTask();
-  }
+  auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
+  auto id_names = build_manager.TbeFusionOpCompile(fusion_scope_infos);
   std::set<int64_t> fusion_ids;
   for (auto &buffer_fusion_info : buffer_fusion_infos) {
     MS_LOG(DEBUG) << "anf node size: " << buffer_fusion_info.second.anf_nodes.size()
@@ -477,14 +468,14 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
   // Replace fusion op from return to head
   for (auto &fusion_id : fusion_ids) {
     // Get kernel mod when supporting tbe
-    if (kernel_mods.find(fusion_id) == kernel_mods.end() || kernel_mods[fusion_id] == nullptr) {
+    if (id_names.find(fusion_id) == id_names.end()) {
       MS_LOG(DEBUG) << "fusion id: " << fusion_id << ", fusion op compiling failed";
       continue;
     }
     if (CheckCircle(*kernel_graph, buffer_fusion_infos[fusion_id])) {
       MS_LOG(DEBUG) << "fusion id: " << fusion_id << " will cause graph circle, pass this fusion.";
     } else {
-      change = ReplaceFusionOp(&buffer_fusion_infos, fusion_id, kernel_mods[fusion_id], kernel_graph);
+      change = ReplaceFusionOp(&buffer_fusion_infos, fusion_id, kernel_graph);
     }
   }
   MS_LOG(DEBUG) << "End Buffer Fusion";
@@ -492,8 +483,7 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
 }
 
 bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
-                                      int64_t fusion_id, const kernel::KernelModPtr &kernel_ptr,
-                                      session::KernelGraph *kernel_graph) const {
+                                      int64_t fusion_id, session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto buffer_fusion_info = (*buffer_fusion_infos)[fusion_id];
   if (buffer_fusion_info.anf_nodes.size() < kFusionNodeNumThreshold) {
@@ -519,7 +509,6 @@ bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionIn
     return false;
   }
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, buffer_fusion.get());
-  AnfAlgo::SetKernelMod(kernel_ptr, buffer_fusion.get());
   SetFusionOpRefInfos(kernel_graph, buffer_fusion_info.outputs_list, buffer_fusion);
   ReplaceOldNode(buffer_fusion_infos, fusion_id, buffer_fusion, kernel_graph);
   return true;

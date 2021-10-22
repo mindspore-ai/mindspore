@@ -211,6 +211,15 @@ void TbeUtils::LoadCache() {
   }
 }
 
+void TbeUtils::UpdateCache(const std::string &kernel_name) {
+  KernelMeta *bin_map = KernelMeta::GetInstance();
+  if (bin_map == nullptr) {
+    MS_LOG(INFO) << "kernel cache is invalid.";
+    return;
+  }
+  return bin_map->UpdateCache(kernel_name);
+}
+
 KernelPackPtr TbeUtils::SearchCache(const std::string &kernel_name, const bool is_akg) {
   // search cache.
   KernelMeta *bin_map = KernelMeta::GetInstance();
@@ -356,6 +365,7 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
     (void)bin_dir_tmp.append("/");
     (void)bin_dir_tmp.append(cce_json);
     kernel_index_map_[kernel_name] = bin_dir_tmp;
+    UpdateCache(kernel_name);
   }
   (void)closedir(dir);
 
@@ -480,16 +490,33 @@ std::string TbeUtils::GetSocVersion() {
   return version;
 }
 
+void KernelMeta::UpdateCache(const std::string &kernel_name) {
+  auto kernel_pack_iter = kernel_pack_map_.find(kernel_name);
+  if (kernel_pack_iter != kernel_pack_map_.end()) {
+    // cache exists, skip
+    MS_LOG(INFO) << "Kernel pack already exist, skip. Kernel name:" << kernel_name;
+    return;
+  }
+  auto config_path = TbeUtils::GetOpDebugPath();
+  std::string cce_json = config_path + kCceKernelMeta + kernel_name + kJsonSuffix;
+  auto ret = std::make_shared<KernelPack>();
+  if (!ret->LoadKernelMeta(cce_json)) {
+    MS_LOG(INFO) << "Read cache json and bin file failed[" << cce_json << "]";
+    return;
+  }
+  kernel_pack_map_[kernel_name] = ret;
+}
+
 KernelPackPtr KernelMeta::GetKernelPack(const std::string &kernel_name, const bool is_akg) {
   KernelPackPtr ret = nullptr;
   // 1. pack has been created
   auto kernel_pack_iter = kernel_pack_map_.find(kernel_name);
   if (kernel_pack_iter != kernel_pack_map_.end()) {
     ret = kernel_pack_iter->second;
-  } else {
+  }
+  if (is_akg) {
     // 2. kernel file has been create, but pack does not been created.
-    std::string cce_json = is_akg ? GetCompilerCachePath() + kAkgKernelMeta + kernel_name + kJsonSuffix
-                                  : TbeUtils::GetOpDebugPath() + kCceKernelMeta + kernel_name + kJsonSuffix;
+    std::string cce_json = GetCompilerCachePath() + kAkgKernelMeta + kernel_name + kJsonSuffix;
     ret = std::make_shared<KernelPack>();
     if (!ret->LoadKernelMeta(cce_json)) {
       MS_LOG(INFO) << "Read cache json and bin file failed[" << cce_json << "]";
