@@ -40,6 +40,7 @@ class MS_CORE_API AssignAdd : public PrimitiveC {
 };
 AbstractBasePtr AssignAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args);
+using kPrimAssignAddPtr = std::shared_ptr<AssignAdd>;
 }  // namespace ops
 }  // namespace mindspore
 
