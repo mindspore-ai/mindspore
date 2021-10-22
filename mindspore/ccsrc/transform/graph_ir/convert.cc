@@ -892,6 +892,10 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
       auto name = std::static_pointer_cast<Parameter>(it)->name();
       //  the parameters which has not been converted to var
       if (vars_.find(name) == vars_.end()) {
+        if (HasAbstractMonad(it)) {
+          MS_LOG(INFO) << it->DebugString() << " is a monad parameter, skip.";
+          continue;
+        }
         auto op = Convert(it);
         MS_EXCEPTION_IF_NULL(op);
         MS_LOG(INFO) << "add not var input " << it->ToString() << ", index " << index;
@@ -900,10 +904,6 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
           return *this;
         }
         UpdateDataOpDesc(it, op);
-        if (HasAbstractMonad(it)) {
-          MS_LOG(INFO) << it->DebugString() << " is a monad parameter, skip.";
-          continue;
-        }
         MS_LOG(INFO) << "add input " << it->ToString() << ", index " << index;
         (void)std::static_pointer_cast<Data>(op)->set_attr_index(index++);
         inputs.push_back(*op);
