@@ -1384,6 +1384,48 @@ TEST_F(MindDataTestPipeline, TestShuffleDataset) {
   iter->Stop();
 }
 
+
+void TestShuffleTFRecord(int32_t shuffle_size, std::string dataset_root_path) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestShuffleTFRecord.";
+
+  // Create an TFRecord Dataset
+  std::string folder_path = dataset_root_path + "/testDataset1/testDataset1.data";
+  std::shared_ptr<Dataset> ds = TFRecord({folder_path}, "", {}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Shuffle operation on ds
+  ds = ds->Shuffle(shuffle_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // iterate over the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+// Feature: Test shuffle operation on TFRecord dataset
+// Description: Iterate through dataset with a shuffle size of 4 and 100 and count the number of rows
+// Expectation: There should be 10 rows in the dataset
+TEST_F(MindDataTestPipeline, TestShuffleTFRecord) {
+ TestShuffleTFRecord(4, datasets_root_path_);
+ TestShuffleTFRecord(100, datasets_root_path_);
+}
+
 TEST_F(MindDataTestPipeline, TestSkipDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipDataset.";
 
@@ -1908,4 +1950,50 @@ TEST_F(MindDataTestPipeline, TestNumWorkersValidate) {
     ASSERT_OK(ds->SetNumWorkers(cpu_core_cnt)->IRNode()->ValidateParams());
     ASSERT_OK(ds->SetNumWorkers(1)->IRNode()->ValidateParams());
   }
+}
+
+// Feature: Test Conact operation on TFRecord dataset
+// Description: Perform Concat on two identical datasets, iterate through the product and count rows
+// Expectation: There should be 2 rows in the concatenated dataset (2 times original size)
+TEST_F(MindDataTestPipeline, TestConcatTFRecord) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatSuccess.";
+
+  // Create a TFRecord Dataset
+  std::string file_path = datasets_root_path_ + "/testTFTestAllTypes/test.data";
+  std::string schema_path = datasets_root_path_ + "/testTFTestAllTypes/datasetSchema1Row.json";
+  std::shared_ptr<Dataset> ds1 = TFRecord({file_path}, schema_path);
+  EXPECT_NE(ds1, nullptr);
+
+
+  // Create a TFRecord Dataset
+  std::shared_ptr<Dataset> ds2 = TFRecord({file_path}, schema_path);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Project operation on ds
+  ds1 = ds1->Project({"col_sint16"});
+  EXPECT_NE(ds1, nullptr);
+  ds2 = ds2->Project({"col_sint16"});
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Concat operation on the ds
+  ds1 = ds1->Concat({ds2});
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // iterate over the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 2);
+  // Manually terminate the pipeline
+  iter->Stop();
 }

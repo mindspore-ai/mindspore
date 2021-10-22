@@ -110,6 +110,73 @@ TEST_F(MindDataTestPipeline, TestCelebADefault) {
   iter->Stop();
 }
 
+// Feature: Test Repeat operation on CelebA dataset
+// Description: Perform repeat operation with count = 2, and count rows in the dataset
+// Expectation: Dataset should have 8 rows (2 times original size since it is repeated)
+TEST_F(MindDataTestPipeline, TestCelebARepeat) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebARepeat.";
+
+  std::string file_path = datasets_root_path_ + "/testCelebAData/";
+  std::shared_ptr<Dataset> ds = CelebA(file_path);
+  ds = ds->Repeat(2);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect a valid iterator
+  ASSERT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  // Verify correct number of rows fetched
+  EXPECT_EQ(i, 8);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+// Feature: Test SubsetRandomSampler on CelebA dataset
+// Description: Create dataset with SubsetRandomSampler given a single index and count rows in the dataset
+// Expectation: Dataset should have 1 row
+TEST_F(MindDataTestPipeline, TestCelebASubsetRandomSampler) {
+  std::vector<int64_t> indices = {1};
+
+  std::shared_ptr<Sampler> sampl = std::make_shared<SubsetRandomSampler>(indices);
+  EXPECT_NE(sampl, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testCelebAData/";
+  std::shared_ptr<Dataset> ds = CelebA(folder_path, "all", sampl);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestGetRepeatCount) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetRepeatCount.";
 
