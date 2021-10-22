@@ -79,6 +79,7 @@ void GPUDeviceContext::Initialize() {
     ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_context_key_.device_id_);
   }
 
+  MS_LOG(INFO) << "Set GPU device id index " << device_context_key_.device_id_;
   // Set device id and initialize device resource.
   if (!InitDevice()) {
     MS_LOG(EXCEPTION) << "GPU InitDevice failed.";
@@ -91,10 +92,12 @@ void GPUDeviceContext::Initialize() {
 
   // Initialize NCCL.
   if (collective_inited && collective_handle_ != nullptr) {
+    MS_LOG(INFO) << "Start initializing NCCL communicator for device " << device_context_key_.device_id_;
     auto init_nccl_comm_funcptr =
       reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle_), "InitNCCLComm"));
     MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
     (*init_nccl_comm_funcptr)();
+    MS_LOG(INFO) << "End initializing NCCL communicator.";
   }
 
 #ifndef ENABLE_SECURITY
