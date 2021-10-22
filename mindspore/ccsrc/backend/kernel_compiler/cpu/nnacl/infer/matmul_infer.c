@@ -25,7 +25,9 @@ int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_
     return NNACL_PARAM_INVALID;
   }
   for (size_t i = 0; i < (a_shape_size - 2) && i < (b_shape_size - 2); ++i) {
-    if (a_shape[i] != b_shape[i]) {
+    int min_value = MSMIN(a_shape[i], b_shape[i]);
+    int max_value = MSMAX(a_shape[i], b_shape[i]);
+    if (max_value % min_value != 0) {
       return NNACL_INPUT_TENSOR_ERROR;
     }
   }
@@ -45,6 +47,17 @@ int CheckMatmulInputShape(int *a_shape, size_t a_shape_size, int *b_shape, size_
     return NNACL_ERR;
   }
   return NNACL_OK;
+}
+
+bool BroadcastInfer(int *a_shape, size_t a_shape_size, int *b_shape, size_t b_shape_size) {
+  for (size_t i = 0; i < (a_shape_size - 2) && i < (b_shape_size - 2); ++i) {
+    int min_value = MSMIN(a_shape[i], b_shape[i]);
+    int max_value = MSMAX(a_shape[i], b_shape[i]);
+    if (a_shape[i] != b_shape[i] && max_value % min_value == 0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
@@ -109,6 +122,12 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
   if (del_end) {
     c_shape_size--;
+  }
+
+  if (BroadcastInfer(a_shape, a_shape_size, b_shape, b_shape_size)) {
+    for (size_t i = 0; i < (a_shape_size - 2) && i < (b_shape_size - 2); ++i) {
+      c_shape[i] = MSMAX(a_shape[i], b_shape[i]);
+    }
   }
   SetShapeArray(output, c_shape, c_shape_size);
   return NNACL_OK;
