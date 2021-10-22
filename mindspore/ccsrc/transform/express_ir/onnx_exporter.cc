@@ -34,6 +34,8 @@ const int kOneNum = 1;
 const int kTwoNum = 2;
 const int kThreeNum = 3;
 const int kFourNum = 4;
+const int64_t kOneNumLong = 1;
+const float weight_for_mul = 0.5;
 enum OpMergeMode {
   OP_MERGE_UNDEFINED = 0,            // undefined behavior
   OP_MERGE_IGNORE = 1,               // indicate an input op merged into other op in compute node list
@@ -1016,7 +1018,7 @@ void OnnxExporter::ExportPrimExpandDims(const FuncGraphPtr &, const CNodePtr &no
     new_shape.push_back(x_shape->shape()[i]);
   }
   if (axis < 0) {
-    axis = axis + IntToLong(kOneNum) + SizeToLong(x_shape->shape().size());
+    axis = axis + kOneNumLong + SizeToLong(x_shape->shape().size());
   }
   new_shape.insert(new_shape.begin() + axis, kOneNum);
   auto new_shape_value = MakeValue<std::vector<int64_t>>(new_shape);
@@ -1183,11 +1185,12 @@ void OnnxExporter::ExportPrimGeLU(const FuncGraphPtr &, const CNodePtr &node,
   // Add Pow node
   // Add input exponent node for Pow node
   auto exp_node_idx = AllocateNodeIndex();
+  const float exponent_for_pow = 3.0;
   onnx::NodeProto *exp_node_proto = graph_proto->add_node();
   onnx::AttributeProto *exp_attr_proto = exp_node_proto->add_attribute();
   onnx::TensorProto *exp_tensor_proto = exp_attr_proto->mutable_t();
   SetConstantNodeProtoInfoForGeLU(exp_node_proto, std::to_string(exp_node_idx), exp_attr_proto, exp_tensor_proto,
-                                  "exponent", 3.0);
+                                  "exponent", exponent_for_pow);
   // Add pow node
   auto pow_idx = AllocateNodeIndex();
   auto pow_name = std::to_string(pow_idx);
@@ -1204,11 +1207,12 @@ void OnnxExporter::ExportPrimGeLU(const FuncGraphPtr &, const CNodePtr &node,
   // Add first Mul node
   // Add input node for first Mul node
   auto fmul_input_node_idx = AllocateNodeIndex();
+  const float weight_for_fmul = 0.044715;
   onnx::NodeProto *fmul_input_node_proto = graph_proto->add_node();
   onnx::AttributeProto *fmul_input_attr_proto = fmul_input_node_proto->add_attribute();
   onnx::TensorProto *fmul_input_tensor_proto = fmul_input_attr_proto->mutable_t();
   SetConstantNodeProtoInfoForGeLU(fmul_input_node_proto, std::to_string(fmul_input_node_idx), fmul_input_attr_proto,
-                                  fmul_input_tensor_proto, "input_y_for_mul", 0.044715);
+                                  fmul_input_tensor_proto, "input_y_for_mul", weight_for_fmul);
   // Add first Mul Node
   auto fmul_name = std::to_string(AllocateNodeIndex());
   onnx::NodeProto *fmul_node_proto = graph_proto->add_node();
@@ -1227,11 +1231,12 @@ void OnnxExporter::ExportPrimGeLU(const FuncGraphPtr &, const CNodePtr &node,
   // Add second Mul node
   // Add input node for second Mul node
   auto smul_input_node_idx = AllocateNodeIndex();
+  const float weight_for_smul = 0.79788456;
   onnx::NodeProto *smul_input_node_proto = graph_proto->add_node();
   onnx::AttributeProto *smul_input_attr_proto = smul_input_node_proto->add_attribute();
   onnx::TensorProto *smul_input_tensor_proto = smul_input_attr_proto->mutable_t();
   SetConstantNodeProtoInfoForGeLU(smul_input_node_proto, std::to_string(smul_input_node_idx), smul_input_attr_proto,
-                                  smul_input_tensor_proto, "input_y_for_smul", 0.79788456);
+                                  smul_input_tensor_proto, "input_y_for_smul", weight_for_smul);
   // Add second Mul Node
   auto smul_name = std::to_string(AllocateNodeIndex());
   onnx::NodeProto *smul_node_proto = graph_proto->add_node();
@@ -1262,7 +1267,7 @@ void OnnxExporter::ExportPrimGeLU(const FuncGraphPtr &, const CNodePtr &node,
   onnx::AttributeProto *tmul_input_attr_proto = tmul_input_node_proto->add_attribute();
   onnx::TensorProto *tmul_input_tensor_proto = tmul_input_attr_proto->mutable_t();
   SetConstantNodeProtoInfoForGeLU(tmul_input_node_proto, std::to_string(tmul_input_node_idx), tmul_input_attr_proto,
-                                  tmul_input_tensor_proto, "input_y_for_tmul", 0.5);
+                                  tmul_input_tensor_proto, "input_y_for_tmul", weight_for_mul);
   // Add third Mul Node
   auto tmul_name = std::to_string(AllocateNodeIndex());
   onnx::NodeProto *tmul_node_proto = graph_proto->add_node();
@@ -1302,7 +1307,6 @@ void OnnxExporter::ExportPrimConcat(const FuncGraphPtr &, const CNodePtr &node,
   auto op_value = dyn_cast<ValueNode>(op);
   auto prim = dyn_cast<Primitive>(op_value->value());
   auto input_node = node->input(kOneNum)->cast<CNodePtr>();
-
   if (input_node->IsApply(prim::kPrimMakeTuple)) {
     node_proto->set_op_type("ConcatFromSequence");
   } else {
@@ -1532,10 +1536,11 @@ void OnnxExporter::ExportPrimSquare(const FuncGraphPtr &, const CNodePtr &node,
   attr_proto->set_name("value");
   attr_proto->set_type(onnx::AttributeProto_AttributeType_TENSOR);
   onnx::TensorProto *tensor_proto = attr_proto->mutable_t();
+  const float exponent_value = 2.0;
   tensor_proto->set_name("exponent");
   tensor_proto->add_dims(static_cast<::google::protobuf::int64>(1));
   tensor_proto->set_data_type(GetOnnxDataType(kNumberTypeFloat32));
-  tensor_proto->add_float_data(2.0);
+  tensor_proto->add_float_data(exponent_value);
 
   auto node_idx = AllocateNodeIndex();
   (*node_map_ptr)[node] = node_idx;
@@ -1671,7 +1676,6 @@ size_t OnnxExporter::ExportPrimitive(const FuncGraphPtr &, std::map<AnfNodePtr, 
 
   // Set inputs
   for (const auto &input_name : input_list) {
-    // auto input_name = GetNodeInputName(input, node_map_ptr, graph_proto);
     node_proto->add_input(input_name);
   }
 
@@ -1786,7 +1790,6 @@ void OnnxExporter::ExportMergeLayerNorm(const FuncGraphPtr &, const CNodePtr &no
   auto shape_node = NewValueNode(new_shape_value)->cast<AnfNodePtr>();
   auto shape_node_idx = AllocateNodeIndex();
 
-  // (*node_map_ptr)[shape_node] = shape_node_idx;
   onnx::NodeProto *shape_node_proto = graph_proto->add_node();
   shape_node_proto->add_output(std::to_string(shape_node_idx));
   shape_node_proto->set_op_type("Constant");
