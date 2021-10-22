@@ -950,7 +950,7 @@ bool GetShapeSize(const std::vector<size_t> &shape, const TypePtr &type_ptr, int
     return false;
   }
   for (size_t j = 0; j < shape.size(); j++) {
-    size_i[0] = LongMulWithOverflowCheck(size_i[0], static_cast<int>(shape[j]));
+    size_i[0] = LongMulWithOverflowCheck(size_i[0], static_cast<int64_t>(shape[j]));
   }
   size_i[0] = LongMulWithOverflowCheck(size_i[0], SizeToInt(type_byte));
   return true;
