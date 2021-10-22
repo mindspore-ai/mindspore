@@ -24,8 +24,12 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
 
+# add file name to rank id mapping to avoid file writing crash
+file_name_map_rank_id = {"test_analyze_basic": "0",
+                         "test_analyze_sequential_pipelines_invalid": "1"}
 
-class TestMinddataProfilingAnalyzer():
+
+class TestMinddataProfilingAnalyzer:
     """
     Test the MinddataProfilingAnalyzer class
     """
@@ -34,12 +38,11 @@ class TestMinddataProfilingAnalyzer():
         """
         Run once for the class
         """
-        # Define filenames and path used for the MinddataProfilingAnalyzer tests. Use device_id=7.
-        self._PIPELINE_FILE = "./pipeline_profiling_7.json"
-        self._CPU_UTIL_FILE = "./minddata_cpu_utilization_7.json"
-        self._DATASET_ITERATOR_FILE = "./dataset_iterator_profiling_7.txt"
-        self._SUMMARY_JSON_FILE = "./minddata_pipeline_summary_7.json"
-        self._SUMMARY_CSV_FILE = "./minddata_pipeline_summary_7.csv"
+        self._PIPELINE_FILE = "./pipeline_profiling"
+        self._CPU_UTIL_FILE = "./minddata_cpu_utilization"
+        self._DATASET_ITERATOR_FILE = "./dataset_iterator_profiling"
+        self._SUMMARY_JSON_FILE = "./minddata_pipeline_summary"
+        self._SUMMARY_CSV_FILE = "./minddata_pipeline_summary"
         self._ANALYZE_FILE_PATH = "./"
 
         # This is the set of keys for success case
@@ -48,43 +51,59 @@ class TestMinddataProfilingAnalyzer():
              'parent_id', 'per_batch_time', 'per_pipeline_time', 'per_push_queue_time', 'pipeline_ops',
              'queue_average_size', 'queue_empty_freq_pct', 'queue_utilization_pct']
 
-
     def setup_method(self):
         """
         Run before each test function.
         """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
+
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+        summary_json_file = self._SUMMARY_JSON_FILE + "_" + file_id + ".json"
+        summary_csv_file = self._SUMMARY_CSV_FILE + "_" + file_id + ".csv"
+
         # Confirm MindData Profiling files do not yet exist
-        assert os.path.exists(self._PIPELINE_FILE) is False
-        assert os.path.exists(self._CPU_UTIL_FILE) is False
-        assert os.path.exists(self._DATASET_ITERATOR_FILE) is False
+        assert os.path.exists(pipeline_file) is False
+        assert os.path.exists(cpu_util_file) is False
+        assert os.path.exists(dataset_iterator_file) is False
         # Confirm MindData Profiling analyze summary files do not yet exist
-        assert os.path.exists(self._SUMMARY_JSON_FILE) is False
-        assert os.path.exists(self._SUMMARY_CSV_FILE) is False
+        assert os.path.exists(summary_json_file) is False
+        assert os.path.exists(summary_csv_file) is False
 
         # Set the MindData Profiling environment variables
         os.environ['PROFILING_MODE'] = 'true'
         os.environ['MINDDATA_PROFILING_DIR'] = '.'
-        os.environ['RANK_ID'] = '7'
-
+        os.environ['RANK_ID'] = file_id
 
     def teardown_method(self):
         """
         Run after each test function.
         """
+
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
+
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+        summary_json_file = self._SUMMARY_JSON_FILE + "_" + file_id + ".json"
+        summary_csv_file = self._SUMMARY_CSV_FILE + "_" + file_id + ".csv"
+
         # Delete MindData profiling files generated from the test.
-        os.remove(self._PIPELINE_FILE)
-        os.remove(self._CPU_UTIL_FILE)
-        os.remove(self._DATASET_ITERATOR_FILE)
+        os.remove(pipeline_file)
+        os.remove(cpu_util_file)
+        os.remove(dataset_iterator_file)
 
         # Delete MindData profiling analyze summary files generated from the test.
-        os.remove(self._SUMMARY_JSON_FILE)
-        os.remove(self._SUMMARY_CSV_FILE)
+        os.remove(summary_json_file)
+        os.remove(summary_csv_file)
 
         # Disable MindData Profiling environment variables
         del os.environ['PROFILING_MODE']
         del os.environ['MINDDATA_PROFILING_DIR']
         del os.environ['RANK_ID']
-
 
     def get_csv_result(self, file_pathname):
         """
@@ -103,15 +122,19 @@ class TestMinddataProfilingAnalyzer():
                 result.append(row)
         return result
 
-
     def verify_md_summary(self, md_summary_dict, EXPECTED_SUMMARY_KEYS):
         """
         Verify the content of the 3 variations of the MindData Profiling analyze summary output.
         """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
+
+        summary_json_file = self._SUMMARY_JSON_FILE + "_" + file_id + ".json"
+        summary_csv_file = self._SUMMARY_CSV_FILE + "_" + file_id + ".csv"
 
         # Confirm MindData Profiling analyze summary files are created
-        assert os.path.exists(self._SUMMARY_JSON_FILE) is True
-        assert os.path.exists(self._SUMMARY_CSV_FILE) is True
+        assert os.path.exists(summary_json_file) is True
+        assert os.path.exists(summary_csv_file) is True
 
         # Build a list of the sorted returned keys
         summary_returned_keys = list(md_summary_dict.keys())
@@ -122,7 +145,7 @@ class TestMinddataProfilingAnalyzer():
             assert k in summary_returned_keys
 
         # Read summary JSON file
-        with open(self._SUMMARY_JSON_FILE) as f:
+        with open(summary_json_file) as f:
             summary_json_data = json.load(f)
         # Build a list of the sorted JSON keys
         summary_json_keys = list(summary_json_data.keys())
@@ -136,7 +159,7 @@ class TestMinddataProfilingAnalyzer():
         np.testing.assert_array_equal(summary_returned_keys, summary_json_keys)
 
         # Read summary CSV file
-        summary_csv_data = self.get_csv_result(self._SUMMARY_CSV_FILE)
+        summary_csv_data = self.get_csv_result(summary_csv_file)
         # Build a list of the sorted CSV keys from the first column in the CSV file
         summary_csv_keys = []
         for x in summary_csv_data:
@@ -150,18 +173,24 @@ class TestMinddataProfilingAnalyzer():
         # 3b. Confirm returned dictionary keys are identical to CSV file first column keys
         np.testing.assert_array_equal(summary_returned_keys, summary_csv_keys)
 
-
     def mysource(self):
         """Source for data values"""
         for i in range(8000):
             yield (np.array([i]),)
-
 
     def test_analyze_basic(self):
         """
         Test MindData profiling analyze summary files exist with basic pipeline.
         Also test basic content (subset of keys and values) from the returned summary result.
         """
+
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
+
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+
         # Create this basic and common linear pipeline
         # Generator -> Map -> Batch -> Repeat -> EpochCtrl
         data1 = ds.GeneratorDataset(self.mysource, ["col1"])
@@ -179,12 +208,12 @@ class TestMinddataProfilingAnalyzer():
         assert num_iter == 1000
 
         # Confirm MindData Profiling files are created
-        assert os.path.exists(self._PIPELINE_FILE) is True
-        assert os.path.exists(self._CPU_UTIL_FILE) is True
-        assert os.path.exists(self._DATASET_ITERATOR_FILE) is True
+        assert os.path.exists(pipeline_file) is True
+        assert os.path.exists(cpu_util_file) is True
+        assert os.path.exists(dataset_iterator_file) is True
 
         # Call MindData Analyzer for generated MindData profiling files to generate MindData pipeline summary result
-        md_analyzer = MinddataProfilingAnalyzer(self._ANALYZE_FILE_PATH, 7, self._ANALYZE_FILE_PATH)
+        md_analyzer = MinddataProfilingAnalyzer(self._ANALYZE_FILE_PATH, file_id, self._ANALYZE_FILE_PATH)
         md_summary_dict = md_analyzer.analyze()
 
         # Verify MindData Profiling Analyze Summary output
@@ -210,11 +239,17 @@ class TestMinddataProfilingAnalyzer():
         assert md_summary_dict["parent_id"] == [-1, 0, 1, 2, 3]
         assert len(md_summary_dict["avg_cpu_pct"]) == 5
 
-
     def test_analyze_sequential_pipelines_invalid(self):
         """
         Test invalid scenario in which MinddataProfilingAnalyzer is called for two sequential pipelines.
         """
+        file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+        file_id = file_name_map_rank_id[file_name]
+
+        pipeline_file = self._PIPELINE_FILE + "_" + file_id + ".json"
+        cpu_util_file = self._CPU_UTIL_FILE + "_" + file_id + ".json"
+        dataset_iterator_file = self._DATASET_ITERATOR_FILE + "_" + file_id + ".txt"
+
         # Create the pipeline
         # Generator -> Map -> Batch -> EpochCtrl
         data1 = ds.GeneratorDataset(self.mysource, ["col1"])
@@ -233,9 +268,9 @@ class TestMinddataProfilingAnalyzer():
         assert num_iter == 125
 
         # Confirm MindData Profiling files are created
-        assert os.path.exists(self._PIPELINE_FILE) is True
-        assert os.path.exists(self._CPU_UTIL_FILE) is True
-        assert os.path.exists(self._DATASET_ITERATOR_FILE) is True
+        assert os.path.exists(pipeline_file) is True
+        assert os.path.exists(cpu_util_file) is True
+        assert os.path.exists(dataset_iterator_file) is True
 
         # Phase 2 - For the pipeline, call create_tuple_iterator with num_epochs=1
         # Note: This pipeline has 3 ops: Generator -> Map -> Batch
@@ -250,12 +285,12 @@ class TestMinddataProfilingAnalyzer():
         # Confirm MindData Profiling files are created
         # Note: There is an MD bug in which which the pipeline file is not recreated;
         #       it still has 4 ops instead of 3 ops
-        assert os.path.exists(self._PIPELINE_FILE) is True
-        assert os.path.exists(self._CPU_UTIL_FILE) is True
-        assert os.path.exists(self._DATASET_ITERATOR_FILE) is True
+        assert os.path.exists(pipeline_file) is True
+        assert os.path.exists(cpu_util_file) is True
+        assert os.path.exists(dataset_iterator_file) is True
 
         # Call MindData Analyzer for generated MindData profiling files to generate MindData pipeline summary result
-        md_analyzer = MinddataProfilingAnalyzer(self._ANALYZE_FILE_PATH, 7, self._ANALYZE_FILE_PATH)
+        md_analyzer = MinddataProfilingAnalyzer(self._ANALYZE_FILE_PATH, file_id, self._ANALYZE_FILE_PATH)
         md_summary_dict = md_analyzer.analyze()
 
         # Verify MindData Profiling Analyze Summary output
