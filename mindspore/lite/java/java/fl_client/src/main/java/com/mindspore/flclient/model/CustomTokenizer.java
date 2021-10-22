@@ -91,10 +91,9 @@ public class CustomTokenizer {
      *
      * @param vocabFile vocab file path
      * @param idsFile word id file path
-     * @param isTrainMode if work in trainMod
-     * @param isLowerCase if need do lowercase
+     * @param seqLen max word len to clamp
      */
-    public void init(String vocabFile, String idsFile, boolean isTrainMode, boolean isLowerCase) {
+    public void init(String vocabFile, String idsFile, int seqLen) {
         if (vocabFile == null || idsFile == null) {
             logger.severe(Common.addTag("idsFile,vocabFile cannot be empty"));
             return;
@@ -123,9 +122,7 @@ public class CustomTokenizer {
                 return;
             }
         }
-        if (!isTrainMode) {
-            maxSeqLen = 256;
-        }
+        maxSeqLen = seqLen;
     }
 
     /**
