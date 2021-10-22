@@ -201,37 +201,81 @@ class LDataType {
 class LiteMat {
   // Class that represents a lite Mat of a Image.
  public:
+  /// \brief Constructor
   LiteMat();
 
+  /// \brief Function to create an LiteMat object.
+  /// \param[in] width The width of the input object.
+  /// \param[in] data_type The data type of the input object.
   explicit LiteMat(int width, LDataType data_type = LDataType::UINT8);
 
+  /// \brief Function to create an LiteMat object.
+  /// \param[in] width The width of the input object.
+  /// \param[in] height The height of the input object.
+  /// \param[in] data_type The data type of the input object.
   LiteMat(int width, int height, LDataType data_type = LDataType::UINT8);
 
+  /// \brief Function to create an LiteMat object.
+  /// \param[in] width The width of the input object.
+  /// \param[in] height The height of the input object.
+  /// \param[in] p_data The pointer data of the input object.
+  /// \param[in] data_type The data type of the input object.
   LiteMat(int width, int height, void *p_data, LDataType data_type = LDataType::UINT8);
 
+  /// \brief Function to create an LiteMat object.
+  /// \param[in] width The width of the input object.
+  /// \param[in] height The height of the input object.
+  /// \param[in] channel The channel of the input object.
+  /// \param[in] data_type The data type of the input object.
   LiteMat(int width, int height, int channel, LDataType data_type = LDataType::UINT8);
 
+  /// \brief Function to create an LiteMat object.
+  /// \param[in] width The width of the input object.
+  /// \param[in] height The height of the input object.
+  /// \param[in] channel The channel of the input object.
+  /// \param[in] p_data The pointer data of the input object.
+  /// \param[in] data_type The data type of the input object.
   LiteMat(int width, int height, int channel, void *p_data, LDataType data_type = LDataType::UINT8);
 
+  /// \brief Destructor of LiteMat.
   ~LiteMat();
 
   LiteMat(const LiteMat &m);
 
+  /// \brief Perform Init operation on given LiteMat
+  /// \param[in] width Set width for given LiteMat.
+  /// \param[in] data_type Set data type for given LiteMat.
   void Init(int width, LDataType data_type = LDataType::UINT8);
 
+  /// \brief Perform Init operation on given LiteMat
+  /// \param[in] width Set width for given LiteMat.
+  /// \param[in] height Set height for given LiteMat.
+  /// \param[in] data_type Set data type for given LiteMat.
   void Init(int width, int height, LDataType data_type = LDataType::UINT8);
 
+  /// \brief Perform Init operation on given LiteMat
+  /// \param[in] width Set width for given LiteMat.
+  /// \param[in] height Set height for given LiteMat.
+  /// \param[in] p_data Set pointer data for given LiteMat.
+  /// \param[in] data_type Set data type for given LiteMat.
   void Init(int width, int height, void *p_data, LDataType data_type = LDataType::UINT8);
 
-  // Perform Init operation on given LiteMat, will malloc memory for it.
-  // @param width set width for given LiteMat.
-  // @param height set height for given LiteMat.
-  // @param channel set channel for given LiteMat.
-  // @param data_type set data type for given LiteMat.
-  // @param align_memory whether malloc align memory or not, default is true, which is better for doing acceleration.
+  /// \brief Perform Init operation on given LiteMat
+  /// \param[in] width Set width for given LiteMat.
+  /// \param[in] height Set height for given LiteMat.
+  /// \param[in] channel Set channel for given LiteMat.
+  /// \param[in] data_type Set data type for given LiteMat.
+  /// \param[in] align_memory Whether malloc align memory or not, default is true,
+  ///     which is better for doing acceleration.
   void Init(int width, int height, int channel, const LDataType &data_type = LDataType::UINT8,
             bool align_memory = true);
 
+  /// \brief Perform Init operation on given LiteMat
+  /// \param[in] width Set width for given LiteMat.
+  /// \param[in] height Set height for given LiteMat.
+  /// \param[in] channel Set channel for given LiteMat.
+  /// \param[in] p_data Set pointer data for given LiteMat.
+  /// \param[in] data_type Set data type for given LiteMat.
   void Init(int width, int height, int channel, void *p_data, LDataType data_type = LDataType::UINT8);
 
   bool GetROI(int x, int y, int w, int h, LiteMat &dst);  // NOLINT
