@@ -35,13 +35,15 @@ import java.util.logging.Logger;
 public class AlBert extends TrainModel {
     private static final Logger logger = Logger.getLogger(AlBert.class.toString());
 
-    private static final int NUM_OF_CLASS = 5;
+    private static final int NUM_OF_CLASS = 4;
 
     private static final int TRAIN_BERT_INPUTS = 4;
 
     private static final int EVAL_BERT_INPUTS = 3;
 
     List<Feature> features;
+
+    int maxSeqLen = 16;
 
     private int dataSize;
 
@@ -63,11 +65,8 @@ public class AlBert extends TrainModel {
             }
             if (!isTrainMode) {
                 labels.add(feature.labelIds);
-            }
-            if (isTrainMode) {
-                for (int j = 0; j < dataSize; j++) {
-                    labelIdBufffer.putInt(feature.inputIds[j]);
-                }
+            } else {
+                labelIdBufffer.putInt(feature.labelIds);
             }
         }
     }
@@ -90,32 +89,28 @@ public class AlBert extends TrainModel {
             logger.severe(Common.addTag("inputs size error"));
             return ret;
         }
-        MSTensor labelIdTensor = inputs.get(3);
-        if (labelIdTensor == null) {
+       MSTensor inputIdTensor = trainSession.getInputsByTensorName("input_ids");
+        if (inputIdTensor == null) {
             logger.severe(Common.addTag("labelId tensor is null"));
             return ret;
         }
-        int inputSize = labelIdTensor.elementsNum();
-        batchSize = labelIdTensor.getShape()[0];
+        int inputSize = inputIdTensor.elementsNum();
+        batchSize = inputIdTensor.getShape()[0];
         if (batchSize <= 0) {
             logger.severe(Common.addTag("batch size should bigger than 0"));
             return ret;
         }
         dataSize = inputSize / batchSize;
-        MSTensor tokenTypeIdTensor = inputs.get(0);
-        if (tokenTypeIdTensor == null) {
-            logger.severe(Common.addTag("tokenTypeIdTensor tensor is null"));
-            return ret;
-        }
-        int tokenTypeIdInputSize = tokenTypeIdTensor.elementsNum();
-        inputIdBufffer = ByteBuffer.allocateDirect(tokenTypeIdInputSize * Integer.BYTES);
-        tokenIdBufffer = ByteBuffer.allocateDirect(tokenTypeIdInputSize * Integer.BYTES);
-        maskIdBufffer = ByteBuffer.allocateDirect(tokenTypeIdInputSize * Integer.BYTES);
+        maxSeqLen = dataSize;
+        // tokenId,inputId,maskId has same size
+        inputIdBufffer = ByteBuffer.allocateDirect(inputSize * Integer.BYTES);
+        tokenIdBufffer = ByteBuffer.allocateDirect(inputSize * Integer.BYTES);
+        maskIdBufffer = ByteBuffer.allocateDirect(inputSize * Integer.BYTES);
         inputIdBufffer.order(ByteOrder.nativeOrder());
         tokenIdBufffer.order(ByteOrder.nativeOrder());
         maskIdBufffer.order(ByteOrder.nativeOrder());
         if (isTrainMode) {
-            labelIdBufffer = ByteBuffer.allocateDirect(inputSize * Integer.BYTES);
+            labelIdBufffer = ByteBuffer.allocateDirect(batchSize * Integer.BYTES);
             labelIdBufffer.order(ByteOrder.nativeOrder());
         }
         numOfClass = NUM_OF_CLASS;
@@ -151,19 +146,19 @@ public class AlBert extends TrainModel {
                 logger.severe(Common.addTag("train bert input size error"));
                 return new ArrayList<>();
             }
-            labelIdTensor = inputs.get(3);
-            tokenIdTensor = inputs.get(0);
-            inputIdTensor = inputs.get(1);
-            maskIdTensor = inputs.get(2);
+            labelIdTensor = trainSession.getInputsByTensorName("label_ids");
+            tokenIdTensor = trainSession.getInputsByTensorName("token_type_id");
+            inputIdTensor = trainSession.getInputsByTensorName("input_ids");
+            maskIdTensor = trainSession.getInputsByTensorName("input_mask");
             labelIdTensor.setData(labelIdBufffer);
         } else {
             if (inputs.size() != EVAL_BERT_INPUTS) {
                 logger.severe(Common.addTag("eval bert input size error"));
                 return new ArrayList<>();
             }
-            tokenIdTensor = inputs.get(0);
-            inputIdTensor = inputs.get(1);
-            maskIdTensor = inputs.get(2);
+            tokenIdTensor = trainSession.getInputsByTensorName("token_type_id");
+            inputIdTensor = trainSession.getInputsByTensorName("input_ids");
+            maskIdTensor = trainSession.getInputsByTensorName("input_mask");
         }
         tokenIdTensor.setData(tokenIdBufffer);
         inputIdTensor.setData(inputIdBufffer);
