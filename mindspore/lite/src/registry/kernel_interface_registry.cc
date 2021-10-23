@@ -27,16 +27,35 @@ using mindspore::schema::PrimitiveType_MIN;
 namespace mindspore {
 namespace registry {
 namespace {
+static constexpr auto kMaxProviderNum = 10;
+static constexpr auto KMaxCustomTypeNum = 200;
 static const auto kMaxKernelNum = PrimitiveType_MAX - PrimitiveType_MIN + 1;
 std::string GetCustomType(const schema::Primitive *primitive) {
   auto param = primitive->value_as_Custom();
-  MS_ASSERT(param != nullptr);
+  if (param == nullptr) {
+    return "";
+  }
+  if (param->type() == nullptr) {
+    return "";
+  }
   return param->type()->str();
 }
 }  // namespace
 
 Status KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::string &type,
                                           const KernelInterfaceCreator creator) {
+  auto provider_iter = custom_creators_.find(provider);
+  if (provider_iter == custom_creators_.end() && custom_creators_.size() >= kMaxProviderNum) {
+    MS_LOG(ERROR) << "register too many provider!";
+    return kLiteError;
+  }
+  if (provider_iter != custom_creators_.end()) {
+    auto type_iter = provider_iter->second.find(type);
+    if (type_iter == provider_iter->second.end() && provider_iter->second.size() >= KMaxCustomTypeNum) {
+      MS_LOG(ERROR) << "register too many custom type!";
+      return kLiteError;
+    }
+  }
   custom_creators_[provider][type] = creator;
   return kSuccess;
 }
@@ -104,6 +123,9 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInter
     return nullptr;
   }
   int op_type = static_cast<int>(primitive->value_type());
+  if (op_type > PrimitiveType_MAX || op_type <= PrimitiveType_MIN) {
+    return nullptr;
+  }
   if (op_type == schema::PrimitiveType_Custom) {
     return GetCustomKernelInterface(primitive);
   }
@@ -118,9 +140,6 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInter
     return nullptr;
   }
 
-  if (op_type > PrimitiveType_MAX || op_type <= PrimitiveType_MIN) {
-    return nullptr;
-  }
   auto creator = iter->second[op_type];
   if (creator != nullptr) {
     kernel = creator();
@@ -143,6 +162,10 @@ Status KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, co
   std::unique_lock<std::mutex> lock(mutex_);
   auto iter = kernel_creators_.find(provider);
   if (iter == kernel_creators_.end()) {
+    if (kernel_creators_.size() >= kMaxProviderNum) {
+      MS_LOG(ERROR) << "register too many provider!";
+      return kLiteError;
+    }
     kernel_creators_[provider] =
       reinterpret_cast<KernelInterfaceCreator *>(calloc(kMaxKernelNum, sizeof(KernelInterfaceCreator)));
     if (kernel_creators_[provider] == nullptr) {
