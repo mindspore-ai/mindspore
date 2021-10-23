@@ -4344,7 +4344,7 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
                     "Recommend to set_enable_shared_mem to False, reduce max_rowsize or reduce num_parallel_workers."
                     .format(shm_estimate_usage, shm_available))
         except FileNotFoundError:
-            logger.warning("Expected /dev/shm to exist.")
+            raise RuntimeError("Expected /dev/shm to exist.")
 
 
 def _convert_row(row):

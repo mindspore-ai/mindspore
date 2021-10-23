@@ -1300,10 +1300,6 @@ def rgb_to_bgrs(np_rgb_imgs, is_hwc):
 
     shape_size = len(np_rgb_imgs.shape)
 
-    if shape_size == 2:
-        raise TypeError("img shape should be (H, W, C)/(N, H, W, C)/(C ,H, W)/(N, C, H, W). "
-                        "Got (H, W).")
-
     if not shape_size in (3, 4):
         raise TypeError("img shape should be (H, W, C)/(N, H, W, C)/(C ,H, W)/(N, C, H, W). "
                         "Got {}.".format(np_rgb_imgs.shape))

@@ -461,9 +461,10 @@ def set_enable_shared_mem(enable):
     """
     if not isinstance(enable, bool):
         raise TypeError("enable must be of type bool.")
-    logger.warning("The shared memory is on, multiprocessing performance will be improved. "
-                   "Note: the required shared memory can't exceeds 80% of the available shared memory. "
-                   "You can reduce max_rowsize or reduce num_parallel_workers to reduce shared memory usage.")
+    if enable:
+        logger.warning("The shared memory is on, multiprocessing performance will be improved. "
+                       "Note: the required shared memory can't exceeds 80% of the available shared memory. "
+                       "You can reduce max_rowsize or reduce num_parallel_workers to reduce shared memory usage.")
     _config.set_enable_shared_mem(enable)
 
 
