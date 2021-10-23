@@ -31,9 +31,17 @@ void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_lis
 
 void AscendStreamAssign::GetHcomStreams(std::vector<uint32_t> *streams) { return; }
 }  // namespace ascend
-void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
-bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return true; }
+
+void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
+void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr) { return; }
+void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  return;
+}
+
 bool KernelAdjust::NeedInsertSwitch() { return true; }
+
+void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }
+
 #ifndef ENABLE_SECURITY
 void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) { return; }
 #endif

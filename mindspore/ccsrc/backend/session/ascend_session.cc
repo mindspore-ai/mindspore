@@ -80,14 +80,7 @@ using mindspore::profiler::ascend::MemoryProfiling;
 
 namespace mindspore {
 namespace session {
-const size_t kInvalidIndex = SIZE_MAX;
-const size_t kLoopSinkTensorNum = 3;
-const size_t kLoopSinkCurLoopIndex = 0;
-const size_t kLoopSinkNextLoopIndex = 1;
-const size_t kLoopSinkEpochIndex = 2;
 const size_t kLabelNumsThreshold = 1023;
-constexpr char SR_TAG[] = "sr_tag";
-constexpr char BACKWARD[] = "backward";
 constexpr auto kUnknowErrorString = "Unknown error occurred";
 namespace {
 #ifndef ENABLE_SECURITY
@@ -209,88 +202,6 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
   }
 }
 
-size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vector<tensor::TensorPtr> *inputs) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(DEBUG) << "Load kInputCtrlTensors";
-  auto inputs_params = graph->input_ctrl_tensors();
-  if (inputs_params == nullptr) {
-    return 0;
-  }
-  if (inputs_params->size() < kLoopSinkTensorNum) {
-    MS_LOG(EXCEPTION) << "Illegal inputs_params size";
-  }
-  // update current loop tensor to 0 per iterator
-  auto cur_loop_tensor = (*inputs_params)[kLoopSinkCurLoopIndex];
-  MS_EXCEPTION_IF_NULL(cur_loop_tensor);
-  auto *cur_val = static_cast<int32_t *>(cur_loop_tensor->data_c());
-  MS_EXCEPTION_IF_NULL(cur_val);
-  *cur_val = 0;
-  cur_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
-  // set loop_count to zero
-  if (inputs) {
-    inputs->push_back(cur_loop_tensor);
-  } else {
-    auto device_address = cur_loop_tensor->device_address();
-    if (!device_address->SyncHostToDevice(cur_loop_tensor->shape(), LongToSize(cur_loop_tensor->data().nbytes()),
-                                          cur_loop_tensor->data_type(), cur_loop_tensor->data_c(),
-                                          cur_loop_tensor->device_info().host_format_)) {
-      MS_LOG(EXCEPTION) << "SyncHostToDevice failed for cur_loop_tensor needed for async dump.";
-    }
-  }
-
-  // update next loop tensor to 0 per iterator
-  auto next_loop_tensor = (*inputs_params)[kLoopSinkNextLoopIndex];
-  MS_EXCEPTION_IF_NULL(next_loop_tensor);
-  auto *next_val = static_cast<int32_t *>(next_loop_tensor->data_c());
-  MS_EXCEPTION_IF_NULL(next_val);
-  *next_val = 0;
-  next_loop_tensor->set_sync_status(kNeedSyncHostToDevice);
-  // set loop_count to zero
-  if (inputs) {
-    inputs->push_back(next_loop_tensor);
-  } else {
-    auto device_address = next_loop_tensor->device_address();
-    if (!device_address->SyncHostToDevice(next_loop_tensor->shape(), LongToSize(next_loop_tensor->data().nbytes()),
-                                          next_loop_tensor->data_type(), next_loop_tensor->data_c(),
-                                          next_loop_tensor->device_info().host_format_)) {
-      MS_LOG(EXCEPTION) << "SyncHostToDevice failed for next_loop_tensor needed for async dump.";
-    }
-  }
-
-  auto epoch_tensor = (*inputs_params)[kLoopSinkEpochIndex];
-  MS_EXCEPTION_IF_NULL(epoch_tensor);
-  auto *epoch_val = static_cast<int32_t *>(epoch_tensor->data_c());
-  MS_EXCEPTION_IF_NULL(epoch_val);
-  *epoch_val = SizeToInt(graph->current_epoch());
-  epoch_tensor->set_sync_status(kNeedSyncHostToDevice);
-  if (inputs) {
-    inputs->push_back(epoch_tensor);
-  } else {
-    auto device_address = epoch_tensor->device_address();
-    if (!device_address->SyncHostToDevice(epoch_tensor->shape(), LongToSize(epoch_tensor->data().nbytes()),
-                                          epoch_tensor->data_type(), epoch_tensor->data_c(),
-                                          epoch_tensor->device_info().host_format_)) {
-      MS_LOG(EXCEPTION) << "SyncHostToDevice failed for epoch_tensor needed for async dump.";
-    }
-  }
-  MS_LOG(DEBUG) << "Load epoch_val:" << *epoch_val;
-  graph->set_current_epoch(graph->current_epoch() + 1);
-  return inputs_params->size();
-}
-
-void UpdateCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vector<tensor::TensorPtr> *inputs,
-                           size_t *input_ctrl_size) {
-  if (graph->input_ctrl_tensors()) {
-    auto &dump_json_parser = DumpJsonParser::GetInstance();
-    bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || graph->IsDatasetGraph());
-    if (sink_mode || !dump_json_parser.async_dump_enabled()) {
-      *input_ctrl_size = LoadCtrlInputTensor(graph, inputs);
-    } else {
-      LoadCtrlInputTensor(graph, nullptr);
-    }
-  }
-}
-
 bool NeedMemcpyInDevice(const device::DeviceAddressPtr &src_device_addr,
                         const device::DeviceAddressPtr &dst_device_addr) {
   MS_EXCEPTION_IF_NULL(dst_device_addr);
@@ -378,15 +289,10 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
 void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                   const std::vector<tensor::TensorPtr> &inputs_const) const {
   std::vector<tensor::TensorPtr> inputs(inputs_const);
-  size_t input_ctrl_size = kLoopSinkTensorNum;
   uint32_t device_memcpy_nums = 0;
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  UpdateCtrlInputTensor(kernel_graph, &inputs, &input_ctrl_size);
+  device::KernelAdjust::GetInstance().LoadDeviceLoopCtrlParameters(kernel_graph);
   auto &input_nodes = kernel_graph->input_nodes();
-  if ((inputs.size() + input_ctrl_size) - kLoopSinkTensorNum != input_nodes.size()) {
-    MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
-                      << ", input_ctrl_size:" << input_ctrl_size;
-  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto enable_mem_scheduler = ms_context->get_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER);
@@ -1175,7 +1081,8 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
   // prepare for next step from json get atomic info
   BuildKernel(kernel_graph);
   device::ascend::KernelBuildPreprocess(kernel_graph.get());
-  device::KernelAdjust::GetInstance().InsertSwitchLoop(kernel_graph);
+  device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(kernel_graph);
+  device::KernelAdjust::GetInstance().ProcessLoopSink(kernel_graph);
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -1377,6 +1284,7 @@ void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->AssignMemory(*kernel_graph);
+  device::KernelAdjust::GetInstance().AssignLoopCtrlMemory(*kernel_graph);
   MS_LOG(INFO) << "Status record: end memory alloc. graph id: " << kernel_graph->graph_id();
 }
 
@@ -1415,7 +1323,6 @@ void AscendSession::Load(const std::shared_ptr<KernelGraph> &kernel_graph) const
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  (void)device::KernelAdjust::GetInstance().StepLoadCtrlInputs(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   bool ret_ok = runtime_instance->Load(*kernel_graph, is_task_sink);

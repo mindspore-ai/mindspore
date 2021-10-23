@@ -267,27 +267,6 @@ void KernelAdjust::InsertFpBpAndEosLoopStreamActive(const std::shared_ptr<sessio
   MS_LOG(INFO) << "FpBp loop insert FpBp loop and Eos loop Stream Active " << fpbp_active_app->fullname_with_scope();
 }
 
-void KernelAdjust::InsertSwitchLoopInput(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                         const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input) {
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  std::vector<AnfNodePtr> *mute_inputs = kernel_graph_ptr->MutableInputs();
-  MS_EXCEPTION_IF_NULL(mute_inputs);
-  mute_inputs->push_back(switch_loop_input.at(kCurLoopCountParamName));
-  mute_inputs->push_back(switch_loop_input.at(kNextLoopCountParamName));
-  mute_inputs->push_back(switch_loop_input.at(kEpochParamName));
-  mute_inputs->push_back(switch_loop_input.at(kIterLoopParamName));
-  mute_inputs->push_back(switch_loop_input.at(kOneParamName));
-  for (const auto &input : kernel_graph_ptr->inputs()) {
-    MS_EXCEPTION_IF_NULL(input);
-    if (input->isa<Parameter>()) {
-      ParameterPtr param_ptr = input->cast<ParameterPtr>();
-      if (param_ptr == nullptr) {
-        MS_EXCEPTION(NotSupportError) << "Cast to parameter point failed !";
-      }
-    }
-  }
-}
-
 void KernelAdjust::InsertGetNextLoopStreamSwitch(
   const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, std::vector<CNodePtr> *exec_order,
   uint32_t *getnext_switch_stream_id, uint32_t *getnext_stream_id,
@@ -413,7 +392,7 @@ void KernelAdjust::InsertEosDoneSend(const std::shared_ptr<session::KernelGraph>
   MS_LOG(INFO) << "EoS loop insert EoS done Send " << eos_done_send->fullname_with_scope();
 }
 
-void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   device::ascend::AscendStreamMng &resource_manager = device::ascend::AscendStreamMng::GetInstance();
   resource_manager.ResetResource();
@@ -421,7 +400,7 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
     return;
   }
   if (kernel_graph_ptr->is_dynamic_shape()) {
-    MS_LOG(INFO) << "KernelGraph:" << kernel_graph_ptr->graph_id() << " is dynamic shape, skip InsertSwitchLoop";
+    MS_LOG(INFO) << "KernelGraph:" << kernel_graph_ptr->graph_id() << " is dynamic shape, skip ProcessLoopSink";
     return;
   }
   bool exist_getnext = ExistGetNext(kernel_graph_ptr);
@@ -431,9 +410,7 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   if (exist_getnext) {
     ReorderGetNext(kernel_graph_ptr);
   }
-  std::map<std::string, mindspore::ParameterPtr> switch_loop_input;
-  CreateSwitchOpParameters(kernel_graph_ptr, &switch_loop_input);
-  InsertSwitchLoopInput(kernel_graph_ptr, switch_loop_input);
+  auto switch_loop_input = kernel_graph_ptr->device_loop_control_params();
 
   const std::vector<CNodePtr> &orders = kernel_graph_ptr->execution_order();
   if (orders.empty()) {
@@ -511,52 +488,6 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   kernel_graph_ptr->set_execution_order(exec_order);
 }
 
-void KernelAdjust::CreateSwitchOpParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                            std::map<std::string, mindspore::ParameterPtr> *switch_loop_input) {
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  MS_EXCEPTION_IF_NULL(switch_loop_input);
-  ShapeVector shp = {1};
-  tensor::TensorPtr tensor_ptr = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  MS_EXCEPTION_IF_NULL(tensor_ptr);
-  mindspore::abstract::AbstractBasePtr paremeter_abstract_ptr = tensor_ptr->ToAbstract();
-  if (paremeter_abstract_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "create abstract before insert switch op failed!";
-  }
-
-  ParameterPtr cur_loop_count = std::make_shared<Parameter>(kernel_graph_ptr);
-  MS_EXCEPTION_IF_NULL(cur_loop_count);
-  cur_loop_count->set_name(kCurLoopCountParamName);
-  cur_loop_count->set_abstract(paremeter_abstract_ptr);
-  ParameterPtr loop_count_cur = kernel_graph_ptr->NewParameter(cur_loop_count);
-  (*switch_loop_input)[kCurLoopCountParamName] = loop_count_cur;
-
-  ParameterPtr next_loop_count = std::make_shared<Parameter>(kernel_graph_ptr);
-  MS_EXCEPTION_IF_NULL(next_loop_count);
-  next_loop_count->set_name(kNextLoopCountParamName);
-  next_loop_count->set_abstract(paremeter_abstract_ptr);
-  ParameterPtr loop_count_next = kernel_graph_ptr->NewParameter(next_loop_count);
-  (*switch_loop_input)[kNextLoopCountParamName] = loop_count_next;
-
-  ParameterPtr iter_loop = std::make_shared<Parameter>(kernel_graph_ptr);
-  iter_loop->set_name(kIterLoopParamName);
-  iter_loop->set_abstract(paremeter_abstract_ptr);
-  ParameterPtr iter_loop_new = kernel_graph_ptr->NewParameter(iter_loop);
-  (*switch_loop_input)[kIterLoopParamName] = iter_loop_new;
-
-  ParameterPtr one = std::make_shared<Parameter>(kernel_graph_ptr);
-  one->set_name(kOneParamName);
-  one->set_abstract(paremeter_abstract_ptr);
-  ParameterPtr one_new = kernel_graph_ptr->NewParameter(one);
-  (*switch_loop_input)[kOneParamName] = one_new;
-
-  ParameterPtr epoch = std::make_shared<Parameter>(kernel_graph_ptr);
-  MS_EXCEPTION_IF_NULL(epoch);
-  epoch->set_name(kEpochParamName);
-  epoch->set_abstract(paremeter_abstract_ptr);
-  ParameterPtr epoch_new = kernel_graph_ptr->NewParameter(epoch);
-  (*switch_loop_input)[kEpochParamName] = epoch_new;
-}
-
 kernel::KernelBuildInfo::KernelBuildInfoBuilder KernelAdjust::CreateMngKernelBuilder(
   const std::vector<std::string> &formats, const std::vector<TypeId> &type_ids) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
@@ -579,14 +510,14 @@ CNodePtr KernelAdjust::CreateStreamSwitchOp(const std::shared_ptr<session::Kerne
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(stream_switch));
   if (kind == kFpBpStreamSwitch || kind == kEosStreamSwitch) {
-    inputs.push_back(switch_loop_input.at(kNextLoopCountParamName));
+    inputs.push_back(switch_loop_input.at(kNextLoopCountName));
   } else if (kind == kGetNextStreamSwitch || kind == kIndependentStreamSwitch) {
-    inputs.push_back(switch_loop_input.at(kNextLoopCountParamName));
+    inputs.push_back(switch_loop_input.at(kNextLoopCountName));
   } else {
     MS_LOG(ERROR) << "unknown stream switch kind: " << kind;
   }
 
-  inputs.push_back(switch_loop_input.at(kIterLoopParamName));
+  inputs.push_back(switch_loop_input.at(kConstLoopNumInEpochName));
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   CNodePtr stream_switch_app = kernel_graph_ptr->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(stream_switch_app);
@@ -681,12 +612,12 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::K
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(assign_add));
   if (cur_loop) {
-    inputs.push_back(switch_loop_input.at(kCurLoopCountParamName));
+    inputs.push_back(switch_loop_input.at(kCurLoopCountName));
   } else {
-    inputs.push_back(switch_loop_input.at(kNextLoopCountParamName));
+    inputs.push_back(switch_loop_input.at(kNextLoopCountName));
   }
 
-  inputs.push_back(switch_loop_input.at(kOneParamName));
+  inputs.push_back(switch_loop_input.at(kConstOneName));
   CNodePtr assign_add_one = kernel_graph_ptr->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(assign_add_one);
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), assign_add_one.get());
@@ -697,154 +628,13 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::K
   AnfAlgo::SetNodeAttr("input_names", input_names_v, assign_add_one);
   AnfAlgo::SetNodeAttr("output_names", output_names_v, assign_add_one);
   selected_kernel_builder.SetKernelType(KernelType::TBE_KERNEL);
-  MS_EXCEPTION_IF_NULL(switch_loop_input.at(kCurLoopCountParamName));
-  assign_add_one->set_abstract(switch_loop_input.at(kCurLoopCountParamName)->abstract());
+  MS_EXCEPTION_IF_NULL(switch_loop_input.at(kCurLoopCountName));
+  assign_add_one->set_abstract(switch_loop_input.at(kCurLoopCountName)->abstract());
   // add AssignAdd op to kernel ref node map
   session::AnfWithOutIndex final_pair = std::make_pair(assign_add_one, 0);
   session::KernelWithIndex kernel_with_index = AnfAlgo::VisitKernel(AnfAlgo::GetInputNode(assign_add_one, 0), 0);
   kernel_graph_ptr->AddRefCorrespondPairs(final_pair, kernel_with_index);
   return assign_add_one;
-}
-
-bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
-  auto &dump_json_parser = DumpJsonParser::GetInstance();
-  bool sink_mode = (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE || kernel_graph_ptr->IsDatasetGraph());
-  if (!sink_mode && dump_json_parser.async_dump_enabled()) {
-    InitCtrlInputs(kernel_graph_ptr);
-    return true;
-  }
-  if (!NeedInsertSwitch()) {
-    return true;
-  }
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  if (kernel_graph_ptr->is_dynamic_shape()) {
-    MS_LOG(INFO) << "Skip StepLoadCtrlInputs";
-    return true;
-  }
-  auto input_nodes = kernel_graph_ptr->inputs();
-  std::vector<tensor::TensorPtr> inputs;
-  LoadSwitchInputs(&inputs);
-  std::shared_ptr<std::vector<tensor::TensorPtr>> inputsPtr = std::make_shared<std::vector<tensor::TensorPtr>>(inputs);
-  kernel_graph_ptr->set_input_ctrl_tensors(inputsPtr);
-  size_t input_ctrl_size = inputs.size();
-  // inputs_node:include four ctrl nodes in the back. such as:conv,loop_cnt, ites_loop, zero, one.
-  // deal four ctrl nodes.
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto tensor = inputs[i];
-    MS_EXCEPTION_IF_NULL(tensor);
-    size_t deal_index = input_nodes.size() - input_ctrl_size + i;
-    if (deal_index >= input_nodes.size()) {
-      MS_LOG(EXCEPTION) << "deal_index[" << deal_index << "] out of range";
-    }
-    auto input_node = input_nodes[deal_index];
-    bool need_sync = false;
-    MS_EXCEPTION_IF_NULL(input_node);
-    if (input_node->isa<Parameter>()) {
-      auto pk_node = input_node->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(pk_node);
-      if (tensor->NeedSyncHostToDevice() || !pk_node->has_default()) {
-        need_sync = true;
-      }
-    }
-    if (need_sync) {
-      auto pk_node = input_node->cast<ParameterPtr>();
-      MS_EXCEPTION_IF_NULL(pk_node);
-      auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
-      MS_EXCEPTION_IF_NULL(device_address);
-      tensor->set_device_address(device_address);
-      if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
-                                            LongToSize(tensor->data().nbytes()), tensor->data_type(), tensor->data_c(),
-                                            tensor->device_info().host_format_)) {
-        MS_LOG(INFO) << "SyncHostToDevice failed.";
-        return false;
-      }
-    }
-    tensor->set_sync_status(kNoNeedSync);
-  }
-  return true;
-}
-
-void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
-  MS_LOG(INFO) << "---------------- LoadSwitchInputs---";
-  MS_EXCEPTION_IF_NULL(inputs);
-  // current loop count
-  ShapeVector shp = {1};
-  tensor::TensorPtr cur_loop_count = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  MS_EXCEPTION_IF_NULL(cur_loop_count);
-  int32_t *val = nullptr;
-  val = static_cast<int32_t *>(cur_loop_count->data_c());
-  MS_EXCEPTION_IF_NULL(val);
-  *val = 0;
-  inputs->push_back(cur_loop_count);
-
-  // next loop count
-  tensor::TensorPtr next_loop_count = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  MS_EXCEPTION_IF_NULL(next_loop_count);
-  val = static_cast<int32_t *>(next_loop_count->data_c());
-  MS_EXCEPTION_IF_NULL(val);
-  *val = 0;
-  inputs->push_back(next_loop_count);
-
-  // Epoch in device
-  tensor::TensorPtr epoch_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  MS_EXCEPTION_IF_NULL(epoch_tensor);
-  val = static_cast<int32_t *>(epoch_tensor->data_c());
-  MS_EXCEPTION_IF_NULL(val);
-  *val = 0;
-  inputs->push_back(epoch_tensor);
-
-  // total loop count per iter
-  tensor::TensorPtr iter_loop_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  MS_EXCEPTION_IF_NULL(iter_loop_tensor);
-  val = static_cast<int32_t *>(iter_loop_tensor->data_c());
-  MS_EXCEPTION_IF_NULL(val);
-  if (ConfigManager::GetInstance().dataset_mode() == DS_NORMAL_MODE) {
-    MS_LOG(INFO) << "iter_loop_tensor not used in dataset_mode DS_NORMAL_MODE";
-    *val = 0;
-  } else {
-    *val = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
-  }
-  MS_LOG(INFO) << "iter_loop_tensor = " << *val;
-  inputs->push_back(iter_loop_tensor);
-
-  tensor::TensorPtr one_tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  MS_EXCEPTION_IF_NULL(one_tensor);
-  val = static_cast<int32_t *>(one_tensor->data_c());
-  MS_EXCEPTION_IF_NULL(val);
-  *val = 1;
-  inputs->push_back(one_tensor);
-
-  MS_LOG(INFO) << "---------------- LoadSwitchInputs End--";
-}
-
-void KernelAdjust::InitCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
-  MS_LOG(INFO) << " -------------------------- InitCtrlInputs Start-- ";
-  std::vector<tensor::TensorPtr> inputs;
-  // prepare default values for CtrlInputs
-  LoadSwitchInputs(&inputs);
-  std::shared_ptr<std::vector<tensor::TensorPtr>> inputsPtr = std::make_shared<std::vector<tensor::TensorPtr>>(inputs);
-  kernel_graph_ptr->set_input_ctrl_tensors(inputsPtr);
-  for (size_t i = 0; i < inputs.size(); ++i) {
-    auto tensor = inputs[i];
-    MS_EXCEPTION_IF_NULL(tensor);
-    device::DeviceAddressPtr device_address = std::make_shared<device::ascend::AscendDeviceAddress>(
-      nullptr, LongToSize(tensor->data().nbytes()), tensor->device_info().host_format_, tensor->data_type());
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto runtime_instance = KernelRuntimeManager::Instance().GetSingleKernelRuntime(kAscendDevice, device_id);
-    if (runtime_instance->MallocMem(kStaticMem, LongToSize(tensor->data().nbytes()), device_address) == nullptr) {
-      MS_LOG(EXCEPTION) << "Cannot alloc address when flag is : " << kStaticMem
-                        << " , tensor size is : " << tensor->data().nbytes();
-    }
-    MS_EXCEPTION_IF_NULL(device_address);
-    tensor->set_device_address(device_address);
-    if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                          tensor->data_c(), tensor->device_info().host_format_)) {
-      MS_LOG(EXCEPTION) << "SyncHostToDevice failed for InitCtrlInputs.";
-    }
-  }
-  MS_LOG(INFO) << " ------------------------- InitCtrlInputs End--";
 }
 
 #ifndef ENABLE_SECURITY
@@ -1110,6 +900,158 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
   }
 
   kernel_graph_ptr->set_execution_order(new_execution_order);
+}
+
+// device loop control
+std::shared_ptr<Tensor> KernelAdjust::CreateTensor(int32_t initial_value) {
+  ShapeVector shp = {1};
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto val = static_cast<int32_t *>(tensor->data_c());
+  MS_EXCEPTION_IF_NULL(val);
+  *val = initial_value;
+  return tensor;
+}
+
+std::shared_ptr<Parameter> KernelAdjust::CreateParameter(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                                         const string parameter_name) {
+  ShapeVector shp = {1};
+  tensor::TensorPtr tensor_ptr = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  mindspore::abstract::AbstractBasePtr parameter_abstract_ptr = tensor_ptr->ToAbstract();
+  if (parameter_abstract_ptr == nullptr) {
+    MS_LOG(EXCEPTION) << "Create abstract for device loop control failed!";
+  }
+
+  ParameterPtr param = std::make_shared<Parameter>(kernel_graph_ptr);
+  MS_EXCEPTION_IF_NULL(param);
+  param->set_name(parameter_name);
+  param->set_abstract(parameter_abstract_ptr);
+  ParameterPtr graph_parameter = kernel_graph_ptr->NewParameter(param);
+  return graph_parameter;
+}
+
+void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  std::map<std::string, tensor::TensorPtr> device_loop_ctrl_tensors;
+  std::map<std::string, mindspore::ParameterPtr> device_loop_ctrl_params;
+
+  // current loop count
+  device_loop_ctrl_tensors[kCurLoopCountName] = CreateTensor(0);
+  device_loop_ctrl_params[kCurLoopCountName] = CreateParameter(kernel_graph_ptr, kCurLoopCountName);
+
+  // next loop count tensor
+  device_loop_ctrl_tensors[kNextLoopCountName] = CreateTensor(0);
+  device_loop_ctrl_params[kNextLoopCountName] = CreateParameter(kernel_graph_ptr, kNextLoopCountName);
+
+  // current epoch count tensor
+  device_loop_ctrl_tensors[kCurEpochCountName] = CreateTensor(0);
+  device_loop_ctrl_params[kCurEpochCountName] = CreateParameter(kernel_graph_ptr, kCurEpochCountName);
+
+  // constant one tensor
+  device_loop_ctrl_tensors[kConstOneName] = CreateTensor(1);
+  device_loop_ctrl_params[kConstOneName] = CreateParameter(kernel_graph_ptr, kConstOneName);
+
+  // constant loop num in epoch tensor
+  int32_t initial_value = 0;
+  if (NeedInsertSwitch()) {
+    initial_value = SizeToInt(LongToSize(ConfigManager::GetInstance().iter_num()));
+  } else {
+    MS_LOG(INFO) << "Tensor const_loop_num_in_epoch only used in loop sink mode.";
+    initial_value = 0;
+  }
+  MS_LOG(INFO) << "Loop num in epoch is " << initial_value;
+  device_loop_ctrl_tensors[kConstLoopNumInEpochName] = CreateTensor(initial_value);
+  device_loop_ctrl_params[kConstLoopNumInEpochName] = CreateParameter(kernel_graph_ptr, kConstLoopNumInEpochName);
+
+  kernel_graph_ptr->set_device_loop_ctrl_tensors(device_loop_ctrl_tensors);
+  kernel_graph_ptr->set_device_loop_ctrl_params(device_loop_ctrl_params);
+}
+
+void KernelAdjust::AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_graph, KernelRuntime *runtime_instance,
+                                           const string name) {
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  auto device_loop_control_params = kernel_graph.device_loop_control_params();
+  if (!device_loop_control_params.count(name)) {
+    MS_LOG(WARNING) << "Can't find Device Loop Control Parameter " << name;
+    return;
+  }
+  auto param = device_loop_control_params.at(name);
+  MS_EXCEPTION_IF_NULL(param);
+
+  DeviceAddressPtr device_address = nullptr;
+  if (AnfAlgo::OutputAddrExist(param, 0)) {
+    device_address = AnfAlgo::GetMutableOutputAddr(param, 0);
+    MS_EXCEPTION_IF_NULL(device_address);
+  } else {
+    MS_LOG(INFO) << "Device Loop Control Parameter " << name << " have no address, allocating...";
+    auto size = AnfAlgo::GetOutputTensorMemSize(param, 0);
+    auto format = AnfAlgo::GetOutputFormat(param, 0);
+    auto type_id = AnfAlgo::GetOutputDeviceDataType(param, 0);
+
+    device_address = std::make_shared<device::ascend::AscendDeviceAddress>(nullptr, size, format, type_id);
+    if (runtime_instance->MallocMem(kStaticMem, size, device_address) == nullptr) {
+      MS_LOG(EXCEPTION) << "Cannot alloc static memory for device loop control parameter " << name
+                        << " , tensor size is : " << size;
+    }
+    MS_EXCEPTION_IF_NULL(device_address);
+    AnfAlgo::SetOutputAddr(device_address, 0, param.get());
+  }
+
+  auto device_loop_control_tensors = kernel_graph.device_loop_control_tensors();
+  auto tensor = device_loop_control_tensors.at(name);
+  MS_EXCEPTION_IF_NULL(tensor);
+  tensor->set_device_address(device_address);
+  if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(param, 0), LongToSize(tensor->data().nbytes()),
+                                        tensor->data_type(), tensor->data_c(), tensor->device_info().host_format_)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed for device loop control parameter " << name;
+  }
+}
+
+void KernelAdjust::AssignLoopCtrlMemory(const session::KernelGraph &kernel_graph_ptr) {
+  MS_LOG(INFO) << "Assign device loop control memory";
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto runtime_instance = KernelRuntimeManager::Instance().GetSingleKernelRuntime(kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  AssignLoopCtrlTensorMem(kernel_graph_ptr, runtime_instance, kCurLoopCountName);
+  AssignLoopCtrlTensorMem(kernel_graph_ptr, runtime_instance, kNextLoopCountName);
+  AssignLoopCtrlTensorMem(kernel_graph_ptr, runtime_instance, kCurEpochCountName);
+  AssignLoopCtrlTensorMem(kernel_graph_ptr, runtime_instance, kConstOneName);
+  AssignLoopCtrlTensorMem(kernel_graph_ptr, runtime_instance, kConstLoopNumInEpochName);
+}
+
+void KernelAdjust::SetDeviceLoopCtrlTensor(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                           const std::string name, int32_t value) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  auto device_loop_control_tensors = kernel_graph_ptr->device_loop_control_tensors();
+  if (!device_loop_control_tensors.count(name)) {
+    MS_LOG(WARNING) << "Can't find Device Loop Control Tensor " << name;
+    return;
+  }
+  auto tensor = device_loop_control_tensors.at(name);
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto *cur_val = static_cast<int32_t *>(tensor->data_c());
+  MS_EXCEPTION_IF_NULL(cur_val);
+  *cur_val = value;
+  tensor->set_sync_status(kNeedSyncHostToDevice);
+  auto device_address = tensor->device_address();
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
+                                        tensor->data_c(), tensor->device_info().host_format_)) {
+    MS_LOG(EXCEPTION) << "SyncHostToDevice failed for device loop control parameter " << name;
+  }
+}
+
+void KernelAdjust::LoadDeviceLoopCtrlParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  MS_LOG(INFO) << "Load device loop control data";
+  SetDeviceLoopCtrlTensor(kernel_graph_ptr, kCurLoopCountName, 0);
+  SetDeviceLoopCtrlTensor(kernel_graph_ptr, kNextLoopCountName, 0);
+  SetDeviceLoopCtrlTensor(kernel_graph_ptr, kCurEpochCountName, SizeToInt(kernel_graph_ptr->current_epoch()));
+
+  kernel_graph_ptr->set_current_epoch(kernel_graph_ptr->current_epoch() + 1);
 }
 }  // namespace device
 }  // namespace mindspore

@@ -27,8 +27,6 @@
 #include "utils/ms_context.h"
 namespace mindspore {
 namespace session {
-const char kInputCtrlTensors[] = "input_ctrl_tensors";
-
 class Context : public pipeline::ResourceBase {
  public:
   explicit Context(std::string target = kAscendDevice, uint32_t device_id = 0)

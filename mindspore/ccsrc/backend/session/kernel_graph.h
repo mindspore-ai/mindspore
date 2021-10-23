@@ -83,7 +83,8 @@ class KernelGraph : public FuncGraph {
     summary_node_exist_ = graph.summary_node_exist_;
     valid_inputs_ = graph.valid_inputs_;
     child_graph_order_ = graph.child_graph_order_;
-    input_ctrl_tensors_ = graph.input_ctrl_tensors_;
+    device_loop_ctrl_tensors_ = graph.device_loop_ctrl_tensors_;
+    device_loop_ctrl_params_ = graph.device_loop_ctrl_params_;
     parent_graph_ = graph.parent_graph_;
     start_label_ = graph.start_label_;
     end_goto_ = graph.end_goto_;
@@ -202,12 +203,18 @@ class KernelGraph : public FuncGraph {
   // checkout whether current graph is leaf graph
   bool IsLeafGraph() const;
 
-  // set input_tensors pointer of control parameter
-  void set_input_ctrl_tensors(const std::shared_ptr<std::vector<tensor::TensorPtr>> &input_tensors_ptr) {
-    input_ctrl_tensors_ = input_tensors_ptr;
+  void set_device_loop_ctrl_tensors(const std::map<std::string, tensor::TensorPtr> &device_loop_ctrl_tensors) {
+    device_loop_ctrl_tensors_ = device_loop_ctrl_tensors;
   }
-  // get input_tensors pointer of control parameter
-  std::shared_ptr<std::vector<tensor::TensorPtr>> input_ctrl_tensors() const { return input_ctrl_tensors_; }
+  std::map<std::string, tensor::TensorPtr> device_loop_control_tensors() const { return device_loop_ctrl_tensors_; }
+
+  void set_device_loop_ctrl_params(const std::map<std::string, mindspore::ParameterPtr> &device_loop_ctrl_params) {
+    device_loop_ctrl_params_ = device_loop_ctrl_params;
+  }
+  const std::map<std::string, mindspore::ParameterPtr> device_loop_control_params() const {
+    return device_loop_ctrl_params_;
+  }
+
   // get parent kernel graph
   std::weak_ptr<KernelGraph> parent_graph() const { return parent_graph_; }
   // set parent kernel graph
@@ -442,8 +449,10 @@ class KernelGraph : public FuncGraph {
   // child graph execute order in parent graph
   std::vector<std::weak_ptr<KernelGraph>> child_graph_order_;
 
-  // input_tensors of control parameter
-  std::shared_ptr<std::vector<tensor::TensorPtr>> input_ctrl_tensors_;
+  // device loop control frontend tensors
+  std::map<std::string, tensor::TensorPtr> device_loop_ctrl_tensors_;
+  // device loop control backend nodes
+  std::map<std::string, mindspore::ParameterPtr> device_loop_ctrl_params_;
 
   // parameter graph
   std::weak_ptr<KernelGraph> parent_graph_;
