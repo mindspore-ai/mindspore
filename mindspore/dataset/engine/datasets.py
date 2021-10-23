@@ -1221,18 +1221,12 @@ class Dataset:
         Examples:
             >>> from mindspore.dataset.text import SentencePieceModel
             >>>
-            >>> def gen_corpus():
-            ...     # key: word, value: number of occurrences, reason for using letters is so their order is apparent
-            ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
-            ...     for k, v in corpus.items():
-            ...         yield (np.array([k] * v, dtype='S'),)
-            >>> column_names = ["column1","column2","column3"]
-            >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
-            >>> dataset = dataset.build_sentencepiece_vocab(columns=["column3", "column1", "column2"],
-            ...                                             vocab_size=5000,
-            ...                                             character_coverage=0.9995,
-            ...                                             model_type=SentencePieceModel.UNIGRAM,
-            ...                                             params={})
+            >>> # DE_C_INTER_SENTENCEPIECE_MODE is a mapping dict
+            >>> from mindspore.dataset.text.utils import DE_C_INTER_SENTENCEPIECE_MODE
+            >>> dataset = ds.TextFileDataset("/path/to/sentence/piece/vocab/file", shuffle=False)
+            >>> dataset = dataset.build_sentencepiece_vocab(["text"], 5000, 0.9995,
+            ...                                             DE_C_INTER_SENTENCEPIECE_MODE[SentencePieceModel.UNIGRAM],
+            ...                                             {})
         """
         vocab = cde.SentencePieceVocab()
 

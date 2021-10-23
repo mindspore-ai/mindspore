@@ -269,7 +269,7 @@ def to_str(array, encoding='utf8'):
         >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"]
         >>> dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir, shuffle=False)
         >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(text.to_str(item["text"]))
+        ...     data = text.to_str(item["text"])
     """
 
     if not isinstance(array, np.ndarray):
