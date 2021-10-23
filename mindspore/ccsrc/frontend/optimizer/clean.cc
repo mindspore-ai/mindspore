@@ -497,7 +497,6 @@ bool CleanAfterOptA(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager
   manager->AddFuncGraph(root);
 
   bool changed = false;
-
   // Since `manager->Replace(...);` will modify member `all_nodes_`, so `all_node` can't be a ref var
   auto all_node = manager->all_nodes();
   for (auto &node : all_node) {
