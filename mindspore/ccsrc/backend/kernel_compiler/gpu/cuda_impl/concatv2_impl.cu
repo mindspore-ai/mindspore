@@ -58,16 +58,35 @@ template void ConcatKernel(const size_t size, const int input_num, const int all
                            const int all_size_axis, int *len_axis, float **inputs, float *output,
                            cudaStream_t cuda_stream);
 template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
-                           const int all_size_axis, int *len_axis, int **inputs, int *output, cudaStream_t cuda_stream);
-template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
                            const int all_size_axis, int *len_axis, half **inputs, half *output,
+                           cudaStream_t cuda_stream);
+
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, int64_t **inputs, int64_t *output,
+                           cudaStream_t cuda_stream);
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, int **inputs, int *output,
                            cudaStream_t cuda_stream);
 template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
                            const int all_size_axis, int *len_axis, short **inputs, short *output,  // NOLINT
                            cudaStream_t cuda_stream);
 template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, char **inputs, char *output,
+                           cudaStream_t cuda_stream);
+
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, uint64_t **inputs, uint64_t *output,
+                           cudaStream_t cuda_stream);
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, uint32_t **inputs, uint32_t *output,
+                           cudaStream_t cuda_stream);
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, uint16_t **inputs, uint16_t *output,
+                           cudaStream_t cuda_stream);
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
                            const int all_size_axis, int *len_axis, unsigned char **inputs, unsigned char *output,
                            cudaStream_t cuda_stream);
+
 template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
                            const int all_size_axis, int *len_axis, bool **inputs, bool *output,
                            cudaStream_t cuda_stream);
