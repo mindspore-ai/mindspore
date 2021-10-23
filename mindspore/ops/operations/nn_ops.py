@@ -3246,7 +3246,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
                              f"but got 'decay': {decay}, 'momentum': {momentum} and 'epsilon':{epsilon}.")
 
 
-class ApplyCenteredRMSProp(PrimitiveWithInfer):
+class ApplyCenteredRMSProp(Primitive):
     r"""
     Optimizer that implements the centered RMSProp algorithm.
     Please refer to the usage in source code of :class:`nn.RMSProp`.
@@ -3337,27 +3337,6 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         """Initialize ApplyCenteredRMSProp."""
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.add_prim_attr('side_effect_mem', True)
-
-    def infer_shape(self, var_shape, mean_gradient_shape, mean_square_shape, moment_shape, grad_shape,
-                    learning_rate_shape, decay_shape, momentum_shape, epsilon_shape):
-        validator.check("var_shape", var_shape, "mean_gradient_shape", mean_gradient_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "mean_square_shape", mean_square_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "moment_shape", moment_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
-        return var_shape
-
-    def infer_dtype(self, var_dtype, mean_gradient_dtype, mean_square_dtype, moment_dtype, grad_dtype,
-                    learning_rate_dtype, rho_dtype, momentum_dtype, epsilon_dtype):
-        args = {"var": var_dtype, "mean_gradient": mean_gradient_dtype,
-                "mean_square": mean_square_dtype, "moment": moment_dtype, "grad": grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-
-        valid_dtypes = [mstype.float16, mstype.float32]
-        args_rho = {"rho": rho_dtype, 'momentum': momentum_dtype, "epsilon": epsilon_dtype}
-        validator.check_types_same_and_valid(args_rho, valid_dtypes, self.name)
-        args_lr = {"learning_rate": learning_rate_dtype, "rho": rho_dtype}
-        validator.check_scalar_or_tensor_types_same(args_lr, valid_dtypes, self.name, allow_mix=True)
-        return var_dtype
 
 
 class LayerNorm(Primitive):
