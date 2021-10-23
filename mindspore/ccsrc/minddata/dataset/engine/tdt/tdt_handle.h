@@ -64,6 +64,10 @@ inline bool TdtHandle::DestroyHandle() {
       }
     }
   }
+  // clear the map container when all the handles have been destroyed
+  if (destroy_all) {
+    acl_handle_map.clear();
+  }
   return destroy_all;
 }
 
