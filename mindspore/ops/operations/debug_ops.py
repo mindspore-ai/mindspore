@@ -406,7 +406,7 @@ class Print(PrimitiveWithInfer):
         TypeError: If `input_x` is not one of the following: Tensor, bool, int, float, str.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class PrintDemo(nn.Cell):

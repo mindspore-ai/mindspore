@@ -61,7 +61,7 @@ def clip_by_value(x, clip_value_min, clip_value_max):
           Tensor, a clipped Tensor. It has the same shape and data type as `x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> min_value = Tensor(5, mindspore.float32)
@@ -158,7 +158,7 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
         same as the original input shape.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = np.array([[2., 3.], [1., 2.]]).astype(np.float32)

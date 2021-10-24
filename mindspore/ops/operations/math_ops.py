@@ -4754,7 +4754,7 @@ class Atanh(PrimitiveWithInfer):
         >>> atanh = ops.Atanh()
         >>> output = atanh(x)
         >>> print(output)
-        [0. -0.54930614]
+        [ 0.         -0.54930615]
     """
 
     @prim_attr_register
