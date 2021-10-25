@@ -99,7 +99,7 @@
 #include "ops/mat_mul.h"
 #include "ops/max_pool.h"
 #include "ops/maximum.h"
-#include "ops/merge.h"
+#include "ops/switch_layer.h"
 #include "ops/mfcc.h"
 #include "ops/minimum.h"
 #include "ops/mod.h"
@@ -353,7 +353,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(Maximum)
 FUNC_MSOP2SCHEMAOP_DECLARE(MaximumGrad)
 FUNC_MSOP2SCHEMAOP_DECLARE(MaxPoolFusion)
 FUNC_MSOP2SCHEMAOP_DECLARE(MaxPoolGrad)
-FUNC_MSOP2SCHEMAOP_DECLARE(Merge)
+FUNC_MSOP2SCHEMAOP_DECLARE(SwitchLayer)
 FUNC_MSOP2SCHEMAOP_DECLARE(Mfcc)
 FUNC_MSOP2SCHEMAOP_DECLARE(Minimum)
 FUNC_MSOP2SCHEMAOP_DECLARE(MinimumGrad)

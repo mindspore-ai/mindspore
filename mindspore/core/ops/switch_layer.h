@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MERGE_H_
-#define MINDSPORE_CORE_OPS_MERGE_H_
-#include <vector>
-#include <memory>
+#ifndef MINDSPORE_CORE_OPS_SWITCH_LAYER_H_
+#define MINDSPORE_CORE_OPS_SWITCH_LAYER_H_
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameMerge = "Merge";
-class MS_CORE_API Merge : public PrimitiveC {
+constexpr auto kNameSwitchLayer = "switch_layer";
+/// \brief SwitchLayer defined SwitchLayer operator prototype of lite.
+class MS_CORE_API SwitchLayer : public PrimitiveC {
  public:
-  Merge() : PrimitiveC(kNameMerge) {}
-  ~Merge() = default;
-  MS_DECLARE_PARENT(Merge, PrimitiveC);
-  void Init() {}
-};
+  /// \brief Constructor.
+  SwitchLayer() : PrimitiveC(kNameSwitchLayer) {}
 
-AbstractBasePtr MergeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args);
+  /// \brief Destructor.
+  ~SwitchLayer() = default;
+
+  MS_DECLARE_PARENT(SwitchLayer, PrimitiveC);
+};
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_MERGE_H_
+#endif  // MINDSPORE_CORE_OPS_SWITCH_LAYER_H_

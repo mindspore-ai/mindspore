@@ -111,7 +111,7 @@ union PrimitiveType {
     MaximumGrad,
     MaxPoolFusion,
     MaxPoolGrad,
-    Merge,
+    SwitchLayer,
     Mfcc,
     Minimum,
     MinimumGrad,
@@ -712,7 +712,7 @@ table MaxPoolGrad {
     format: Format;
 }
 
-table Merge {
+table SwitchLayer {
 }
 
 table Mfcc {
