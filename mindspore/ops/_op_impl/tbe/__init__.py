@@ -155,6 +155,7 @@ from .equal import _equal_tbe
 from .equal_ds import _equal_ds_tbe
 from .lerp import _lerp_tbe
 from .less import _less_tbe
+from .less_ds import _less_ds_tbe
 from .less_equal import _less_equal_tbe
 from .logical_and import _logical_and_tbe
 from .logical_not import _logical_not_tbe
