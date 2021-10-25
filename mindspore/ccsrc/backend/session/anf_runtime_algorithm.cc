@@ -470,9 +470,9 @@ std::string AnfRuntimeAlgorithm::GetCNodeName(const AnfNodePtr &node) {
     auto primitive = AnfAlgo::GetCNodePrimitive(node);
     if (primitive != nullptr) {
       if (primitive->name() == "Custom") {
-        auto func_name = primitive->GetAttr("func_name");
-        if (func_name) {
-          return GetValue<std::string>(func_name);
+        auto uniq_name = primitive->GetAttr("uniq_name");
+        if (uniq_name) {
+          return GetValue<std::string>(uniq_name);
         }
       }
       return primitive->name();
