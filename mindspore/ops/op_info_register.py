@@ -611,6 +611,9 @@ class DataType:
     Please add it if necessary.
 
     current support:
+
+    .. code-block::
+
         None_None = ("", "")
         None_Default = ("", "DefaultFormat")
         BOOL_None = ("bool", "")
