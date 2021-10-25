@@ -91,6 +91,18 @@ class OnnxLayerNormFusion : public NormFusion {
  private:
   const BaseRef DefinePattern() const override;
 };
+
+/// fuse onnx layer_norm into one operator with little variance
+class OnnxLayerNormFusion2 : public NormFusion {
+ public:
+  explicit OnnxLayerNormFusion2(const std::string &name = "OnnxLayerNormFusion2", bool multigraph = true)
+      : NormFusion(name, multigraph) {}
+
+  ~OnnxLayerNormFusion2() override = default;
+
+ private:
+  const BaseRef DefinePattern() const override;
+};
 }  // namespace opt
 }  // namespace mindspore
 
