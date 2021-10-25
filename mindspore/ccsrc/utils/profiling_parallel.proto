@@ -1,0 +1,45 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// The anf_ir.proto is `proto2` syntax, so this file use `proto2`, else will occur a compile error.
+syntax = "proto2";
+
+package mindspore.irpb;
+option cc_enable_arenas = true;
+
+import "anf_ir.proto";
+
+
+message ProfilingParallel {
+  optional string version = 1;
+  optional Config config = 2;
+  optional GraphProto graph = 3;
+}
+
+
+message Config {
+  optional uint32 rank_id = 1;
+
+  // The stage of current device
+  optional uint32 stage_id = 2;
+
+  // optional： stand_alone/data_parallel/semi_auto_parallel/auto_parallel/hybrid_parallel
+  optional string parallel_type = 3;
+
+  // The global stages and devices info, ex. 2 stages: [[0,1,2,3], [4,5,6,7]]
+  // If the training mode is not pipeline parallel training, [[0,1,2,3,4,5,6,7,8]]
+  repeated TensorShapeProto stage_devices = 4;
+}

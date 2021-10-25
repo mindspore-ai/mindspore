@@ -58,6 +58,12 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
+#ifndef ENABLE_SECURITY
+#ifdef ENABLE_D
+#include "mindspore/ccsrc/profiler/device/ascend/parallel_strategy_profiling.h"
+#endif
+#endif
+
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/constants.h"
 #include "ps/util.h"
@@ -628,6 +634,13 @@ void GraphExecutorPy::SaveCompiledGraph(const std::string &phase) {
 
   MS_LOG(INFO) << "Save compiled func graph(" << func_graph->ToString() << ") phase(" << phase << ")!";
   info_[phase]->func_graph = func_graph;
+
+#ifndef ENABLE_SECURITY
+#ifdef ENABLE_D
+  profiler::ascend::DumpProfileParallelStrategy(func_graph);
+#endif
+#endif
+
   if ((func_graph != nullptr) && func_graph->has_flag(parallel::AUTO_PARALLEL) &&
       ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
     MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
