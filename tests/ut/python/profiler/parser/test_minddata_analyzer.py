@@ -22,6 +22,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
+import mindspore._c_dataengine as cde
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
 
 # add file name to rank id mapping to avoid file writing crash
@@ -38,6 +39,9 @@ class TestMinddataProfilingAnalyzer:
         """
         Run once for the class
         """
+        # Get instance pointer for MindData profiling manager
+        self.md_profiler = cde.GlobalContext.profiling_manager()
+
         self._PIPELINE_FILE = "./pipeline_profiling"
         self._CPU_UTIL_FILE = "./minddata_cpu_utilization"
         self._DATASET_ITERATOR_FILE = "./dataset_iterator_profiling"
@@ -50,6 +54,7 @@ class TestMinddataProfilingAnalyzer:
             ['avg_cpu_pct', 'avg_cpu_pct_per_worker', 'children_ids', 'num_workers', 'op_ids', 'op_names',
              'parent_id', 'per_batch_time', 'per_pipeline_time', 'per_push_queue_time', 'pipeline_ops',
              'queue_average_size', 'queue_empty_freq_pct', 'queue_utilization_pct']
+
 
     def setup_method(self):
         """
@@ -72,15 +77,23 @@ class TestMinddataProfilingAnalyzer:
         assert os.path.exists(summary_json_file) is False
         assert os.path.exists(summary_csv_file) is False
 
-        # Set the MindData Profiling environment variables
-        os.environ['PROFILING_MODE'] = 'true'
-        os.environ['MINDDATA_PROFILING_DIR'] = '.'
+        # Set the MindData Profiling related environment variables
         os.environ['RANK_ID'] = file_id
+        os.environ['DEVICE_ID'] = file_id
+
+        # Initialize MindData profiling manager with current working directory
+        self.md_profiler.init(os.getcwd())
+
+        # Start MindData Profiling
+        self.md_profiler.start()
+
 
     def teardown_method(self):
         """
         Run after each test function.
         """
+        # Stop MindData Profiling
+        self.md_profiler.stop()
 
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         file_id = file_name_map_rank_id[file_name]
@@ -100,10 +113,9 @@ class TestMinddataProfilingAnalyzer:
         os.remove(summary_json_file)
         os.remove(summary_csv_file)
 
-        # Disable MindData Profiling environment variables
-        del os.environ['PROFILING_MODE']
-        del os.environ['MINDDATA_PROFILING_DIR']
+        # Disable MindData Profiling related environment variables
         del os.environ['RANK_ID']
+        del os.environ['DEVICE_ID']
 
     def get_csv_result(self, file_pathname):
         """

@@ -36,6 +36,18 @@
 namespace mindspore {
 namespace dataset {
 
+Status Profiling::Start() {
+  CHECK_FAIL_RETURN_UNEXPECTED(active_ == false, "Profiling node is already active.");
+  active_ = true;
+  return Status::OK();
+}
+
+Status Profiling::Stop() {
+  CHECK_FAIL_RETURN_UNEXPECTED(active_ == true, "Profiling node is already deactivated.");
+  active_ = false;
+  return Status::OK();
+}
+
 Status Tracing::SaveToFile() {
   if (value_.empty()) {
     return Status::OK();
@@ -78,6 +90,9 @@ void Tracing::Record(const int32_t type, const int32_t extra_info, const int32_t
   // Examples:
   // 0 0 20 10 xxx- The 20th batch took 10ms to get data from pipeline.
   // 1 64 20 5 xxx- Connector size is 5 when get the 20th batch.Connector capacity is 64.
+  if (active_ == false) {
+    return;
+  }
   TracingRecord record = {type, extra_info, batch_num, value, time_stamp};
   std::lock_guard<std::mutex> guard(lock_);
   (void)records_.emplace_back(record);
@@ -176,9 +191,9 @@ Status Sampling::ReadJson(nlohmann::json *output) {
 }
 
 // Constructor
-ProfilingManager::ProfilingManager() : enabled_(true) {}
+ProfilingManager::ProfilingManager() : profiling_state_(ProfilingState::kProfilingStateUnBegun), enabled_(false) {}
 
-bool ProfilingManager::IsProfilingEnable() const { return common::GetEnv("PROFILING_MODE") == "true" && enabled_; }
+bool ProfilingManager::IsProfilingEnable() const { return enabled_; }
 
 Status ProfilingManager::RegisterTree(TreeAdapter *tree_adapter) {
   Reset();
@@ -186,23 +201,6 @@ Status ProfilingManager::RegisterTree(TreeAdapter *tree_adapter) {
     tree_ = tree_adapter->tree_.get();
 
     perf_monitor_ = std::make_unique<Monitor>(this);
-
-    // Register nodes based on config
-    std::string dir = common::GetEnv("MINDDATA_PROFILING_DIR");
-    CHECK_FAIL_RETURN_UNEXPECTED(!dir.empty(), "Invalid parameter, Profiling directory is not set.");
-    CHECK_FAIL_RETURN_UNEXPECTED(dir.size() < PATH_MAX, "Invalid file, Profiling directory is invalid.");
-
-    char real_path[PATH_MAX] = {0};
-#if defined(_WIN32) || defined(_WIN64)
-    if (_fullpath(real_path, common::SafeCStr(dir), PATH_MAX) == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Profiling dir is invalid.");
-    }
-#else
-    if (realpath(common::SafeCStr(dir), real_path) == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, can not get realpath of Profiling directory.");
-    }
-#endif
-    dir_path_ = real_path;
 
 #ifdef ENABLE_GPUQUE
     std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
@@ -253,6 +251,11 @@ Status ProfilingManager::RegisterTracingNode(std::shared_ptr<Tracing> node) {
   // Register the node with its name as key.
   RETURN_IF_NOT_OK(node->Init(dir_path_, device_id_));
   tracing_nodes_[node->Name()] = node;
+
+  // the user may have already started profiling.
+  if (profiling_state_ == ProfilingState::kProfilingStateRunning) {
+    RETURN_IF_NOT_OK(node->Start());
+  }
   return Status::OK();
 }
 
@@ -278,6 +281,11 @@ Status ProfilingManager::RegisterSamplingNode(std::shared_ptr<Sampling> node) {
   // Register the node with its name as key.
   RETURN_IF_NOT_OK(node->Init(dir_path_, device_id_));
   sampling_nodes_[node->Name()] = node;
+
+  // the user may have already started profiling.
+  if (profiling_state_ == ProfilingState::kProfilingStateRunning) {
+    RETURN_IF_NOT_OK(node->Start());
+  }
   return Status::OK();
 }
 
@@ -293,8 +301,8 @@ Status ProfilingManager::GetSamplingNode(const std::string &name, std::shared_pt
   return Status::OK();
 }
 
-Status ProfilingManager::SaveProfilingData() {
-  if (!IsProfilingEnable()) {
+Status ProfilingManager::SaveProfilingData(const bool final_round) {
+  if ((!IsProfilingEnable()) && !final_round) {
     return Status::OK();
   }
   MS_LOG(INFO) << "Start to save profiling data.";
@@ -308,8 +316,8 @@ Status ProfilingManager::SaveProfilingData() {
   return Status::OK();
 }
 
-Status ProfilingManager::Analyze() {
-  if (!IsProfilingEnable()) {
+Status ProfilingManager::Analyze(const bool final_round) {
+  if (!IsProfilingEnable() && !final_round) {
     return Status::OK();
   }
   MS_LOG(INFO) << "Start to analyze profiling data.";
@@ -319,8 +327,8 @@ Status ProfilingManager::Analyze() {
   return Status::OK();
 }
 
-Status ProfilingManager::ChangeFileMode() {
-  if (!IsProfilingEnable()) {
+Status ProfilingManager::ChangeFileMode(const bool final_round) {
+  if (!IsProfilingEnable() && !final_round) {
     return Status::OK();
   }
   MS_LOG(INFO) << "Start to change file mode.";
@@ -617,6 +625,9 @@ Status ProfilingManager::GetConnectorCapacityByTime(uint64_t start_ts, uint64_t 
 }
 
 void ProfilingManager::RecordEndOfEpoch(uint32_t step_num) {
+  if (profiling_state_ != ProfilingState::kProfilingStateRunning) {
+    return;
+  }
   MS_LOG(INFO) << "Recording end of epoch. step_num: " << step_num;
   (void)epoch_end_ts_.emplace_back(ProfilingTime::GetCurMilliSecond());
   (void)epoch_end_step_.emplace_back(step_num);
@@ -628,6 +639,72 @@ Status ProfilingManager::Reset() {
   epoch_end_step_.clear();
   perf_monitor_.reset();
   tree_ = nullptr;
+  return Status::OK();
+}
+
+Status ProfilingManager::Init(const std::string &profile_data_path = "") {
+  // Validate input profile data path
+  CHECK_FAIL_RETURN_UNEXPECTED(!profile_data_path.empty(), "Invalid parameter, Profiling directory is not set.");
+  CHECK_FAIL_RETURN_UNEXPECTED(profile_data_path.size() < PATH_MAX, "Invalid file, Profiling directory is invalid.");
+
+  char real_path[PATH_MAX] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+  if (_fullpath(real_path, common::SafeCStr(profile_data_path), PATH_MAX) == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Profiling dir is invalid.");
+  }
+#else
+  if (realpath(common::SafeCStr(profile_data_path), real_path) == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Invalid file, can not get realpath of Profiling directory.");
+  }
+#endif
+  dir_path_ = real_path;
+
+  if (profiling_state_ == ProfilingState::kProfilingStateFinished) {
+    profiling_state_ = ProfilingState::kProfilingStateUnBegun;
+  }
+
+  // Enable profiling
+  enabled_ = true;
+
+  MS_LOG(INFO) << "MD profiler is initialized with directory path: " << dir_path_;
+  return Status::OK();
+}
+
+Status ProfilingManager::Start() {
+  CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ != ProfilingState::kProfilingStateRunning,
+                               "MD ProfilingManager is already running.");
+  CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ != ProfilingState::kProfilingStateFinished,
+                               "MD ProfilingManager is already finished.");
+
+  profiling_state_ = ProfilingState::kProfilingStateRunning;
+  for (const auto &node : tracing_nodes_) {
+    RETURN_IF_NOT_OK(node.second->Start());
+  }
+  for (const auto &node : sampling_nodes_) {
+    RETURN_IF_NOT_OK(node.second->Start());
+  }
+  MS_LOG(INFO) << "MD profiler is started.";
+  return Status::OK();
+}
+
+Status ProfilingManager::Stop() {
+  CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ != ProfilingState::kProfilingStateUnBegun,
+                               "MD ProfilingManager has not started yet.");
+  // It's OK if we are in kProfilingStateFinished state. We allow user to call Stop twice.
+  if (profiling_state_ == ProfilingState::kProfilingStateFinished) {
+    MS_LOG(WARNING) << "MD ProfilingManager had already stopped.";
+    return Status::OK();
+  }
+
+  for (const auto &node : tracing_nodes_) {
+    RETURN_IF_NOT_OK(node.second->Stop());
+  }
+  for (const auto &node : sampling_nodes_) {
+    RETURN_IF_NOT_OK(node.second->Stop());
+  }
+  profiling_state_ = ProfilingState::kProfilingStateFinished;
+  enabled_ = false;
+  MS_LOG(INFO) << "MD profiler is stopped.";
   return Status::OK();
 }
 

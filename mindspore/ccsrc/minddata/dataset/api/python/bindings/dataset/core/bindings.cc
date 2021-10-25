@@ -25,10 +25,11 @@
 
 namespace mindspore {
 namespace dataset {
-
 PYBIND_REGISTER(GlobalContext, 0, ([](const py::module *m) {
                   (void)py::class_<GlobalContext>(*m, "GlobalContext")
-                    .def_static("config_manager", &GlobalContext::config_manager, py::return_value_policy::reference);
+                    .def_static("config_manager", &GlobalContext::config_manager, py::return_value_policy::reference)
+                    .def_static("profiling_manager", &GlobalContext::profiling_manager,
+                                py::return_value_policy::reference);
                 }));
 
 PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
@@ -162,6 +163,5 @@ PYBIND_REGISTER(ConvertMode, 0, ([](const py::module *m) {
                     .value("DE_COLOR_RGBA2GRAY", ConvertMode::COLOR_RGBA2GRAY)
                     .export_values();
                 }));
-
 }  // namespace dataset
 }  // namespace mindspore

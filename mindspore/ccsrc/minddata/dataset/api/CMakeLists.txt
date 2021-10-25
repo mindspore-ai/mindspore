@@ -15,6 +15,7 @@ if(ENABLE_PYTHON)
             python/bindings/dataset/engine/ir/datasetops/source/samplers/bindings.cc
             python/bindings/dataset/engine/ir/execute/bindings.cc
             python/bindings/dataset/engine/ir/schema/bindings.cc
+            python/bindings/dataset/engine/perf/bindings.cc
             python/bindings/dataset/kernels/bindings.cc
             python/bindings/dataset/kernels/ir/bindings.cc
             python/bindings/dataset/kernels/ir/image/bindings.cc
