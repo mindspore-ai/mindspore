@@ -2175,21 +2175,12 @@ class BasicLSTMCellInputGrad(PrimitiveWithInfer):
         return (dgate_dtype, dgate_dtype)
 
 
-class InvGrad(PrimitiveWithInfer):
+class InvGrad(Primitive):
     """Computes gradients for inv operation."""
 
     @prim_attr_register
     def __init__(self):
-        pass
-
-    def infer_shape(self, x, grad):
-        validator.check("x_shape", x, "grad_shape", grad, Rel.EQ, self.name)
-        return x
-
-    def infer_dtype(self, x, grad):
-        validator.check_type_name("dgate", x, [mstype.float16, mstype.float32, mstype.int32, mstype.int8], self.name)
-        validator.check_type_name("grad", grad, [mstype.float16, mstype.float32, mstype.int32, mstype.int8], self.name)
-        return x
+        self.init_prim_io_names(inputs=['x', 'grad'], outputs=['y'])
 
 
 class LRNGrad(PrimitiveWithInfer):
