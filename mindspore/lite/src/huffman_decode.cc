@@ -29,6 +29,10 @@ STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decode
   std::string huffman_decoded_str;
   auto key_pos = input_str.find_first_of('#');
   auto code_pos = input_str.find_first_of('#', key_pos + 1);
+  if (key_pos == std::string::npos || code_pos == std::string::npos) {
+    MS_LOG(ERROR) << "not found '#' in input_str";
+    return RET_ERROR;
+  }
   auto key = input_str.substr(0, key_pos);
   auto code = input_str.substr(key_pos + 1, code_pos - key_pos - 1);
   auto encoded_data = input_str.substr(code_pos + 1);

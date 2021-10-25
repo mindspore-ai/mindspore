@@ -107,11 +107,13 @@ mindspore::Context *MSContextFromContext(const lite::Context *context) {
     auto device_type = device_context.device_type_;
     if (transfer_funcs.find(device_type) == transfer_funcs.end()) {
       MS_LOG(ERROR) << "device type is invalid.";
+      delete ms_context;
       return nullptr;
     }
     auto device_info = transfer_funcs[device_type](device_context);
     if (device_info == nullptr) {
       MS_LOG(ERROR) << "transfer device context to device info failed.";
+      delete ms_context;
       return nullptr;
     }
     if (device_type == DT_CPU) {

@@ -200,6 +200,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
     dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>(), src_category);
     // set tensor list datatype
     auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
+    MS_CHECK_TRUE_RET(tensor_list != nullptr, nullptr);
     if (src_tensor.data() != nullptr) {
       auto tensor_data_type = TypeId(reinterpret_cast<const int *>(src_tensor.data()->data())[0]);
       tensor_list->set_tensors_data_type(tensor_data_type);
@@ -558,7 +559,7 @@ int LiteSession::CompileGraph(Model *model) {
   return RET_OK;
 }
 
-bool LiteSession::IsIsolatedSubGraph(kernel::LiteKernel *kernel) {
+bool LiteSession::IsIsolatedSubGraph(const kernel::LiteKernel *kernel) {
   auto cur_in_tensors = kernel->in_tensors();
   for (auto cur_kernel : this->kernels_) {
     if (cur_kernel == kernel) {
@@ -589,7 +590,7 @@ int LiteSession::SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel
   return RET_OK;
 }
 
-int LiteSession::PrepareKernels(Model *model) {
+int LiteSession::PrepareKernels(const Model *model) {
   std::vector<kernel::LiteKernel *> all_kernels;
   for (auto kernel : this->kernels_) {
 #ifndef DELEGATE_CLIP

@@ -117,7 +117,7 @@ class LiteSession : public session::LiteSession {
 
   int SetAllocatorForDelegateKernels(const kernel::LiteKernel *kernel);
 
-  int PrepareKernels(Model *model);
+  int PrepareKernels(const Model *model);
 
   static int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
 
@@ -136,7 +136,7 @@ class LiteSession : public session::LiteSession {
 
  private:
   int IsolateOutputTensor();
-  bool IsIsolatedSubGraph(kernel::LiteKernel *kernel);
+  bool IsIsolatedSubGraph(const kernel::LiteKernel *kernel);
   std::unordered_map<Tensor *, Tensor *> isolate_graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
   std::unordered_map<Tensor *, Tensor *> isolate_input_map_;        /* <calculate-tensor,  src-subgraph-input-tensor> */
 

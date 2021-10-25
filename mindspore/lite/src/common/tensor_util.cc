@@ -154,15 +154,6 @@ int TensorListC2TensorList(const TensorListC *src, TensorList *dst) {
   return RET_OK;
 }
 
-int GenerateMergeSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, int outputs_size,
-                                  std::vector<TensorC *> *out_tensor_c) {
-  MS_CHECK_TRUE_RET(out_tensor_c != nullptr, RET_ERROR);
-  int ret = RET_OK;
-  for (int i = 0; i < outputs_size; i++) {
-    out_tensor_c->push_back(nullptr);
-  }
-  return ret;
-}
 #endif
 
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,

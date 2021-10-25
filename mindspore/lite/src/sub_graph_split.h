@@ -98,7 +98,7 @@ class SearchSubGraph {
   void SubGraphSplitByMiddle();
   void InitSearchSubGraphByMiddle();
   void SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes);
-  void InitMiddleSubgraph(std::vector<uint32_t> *multy_in_nodes);
+  void InitMiddleSubgraph(const std::vector<uint32_t> *multy_in_nodes);
   void InsertNodeByMid(uint32_t node_index, Subgraph *subgraph, uint32_t last_index);
   void InsertHeadNode(uint32_t index, Subgraph *subgraph);
   void OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint32_t root_node_index);
@@ -128,7 +128,7 @@ class SearchSubGraph {
   const schema::Primitive *CreatePartialPrimitive(int64_t subgraph_index);
 
  private: /* public cost-model func  */
-  CostModel CalculateConv2DFusion(Model::Node *node);
+  CostModel CalculateConv2DFusion(const Model::Node *node);
   void dfs(int i, int n, int current_sum, int except_value, int *min_value, std::vector<bool> *tmp_group,
            std::vector<bool> *cor_group, std::vector<Subgraph> *sub_graphs);
 

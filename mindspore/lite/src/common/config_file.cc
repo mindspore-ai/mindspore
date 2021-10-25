@@ -84,6 +84,9 @@ int GetSectionInfoFromConfigFile(const std::string &file, const std::string &sec
         continue;
       }
       auto key = line.substr(0, index);
+      if (index + 1 > line.size()) {
+        return RET_ERROR;
+      }
       auto value = line.substr(index + 1);
       lite::Trim(&key);
       lite::Trim(&value);
@@ -109,6 +112,9 @@ void ParserExecutionPlan(const std::map<std::string, std::string> *config_infos,
       continue;
     }
     auto data_type_key = value.substr(0, index);
+    if (index + 1 > value.size()) {
+      return;
+    }
     auto data_type_value = value.substr(index + 1);
     if (data_type_key != "data_type") {
       MS_LOG(WARNING) << "Invalid key in execution_plan: " << value;

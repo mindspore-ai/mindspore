@@ -26,7 +26,7 @@ std::vector<bool> StringToBitVector(const std::string &str) {
   size_t index = 0;
   for (auto ch : str) {
     for (size_t shift = kBit8; shift > 0; shift--) {
-      vec[index++] = (ch >> static_cast<size_t>(shift - 1)) & 0x1;
+      vec[index++] = (static_cast<unsigned char>(ch) >> static_cast<size_t>(shift - 1)) & 0x1;
     }
   }
   return vec;

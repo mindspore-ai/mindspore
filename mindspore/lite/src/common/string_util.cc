@@ -155,7 +155,9 @@ uint32_t Fetch32Bit(const char *p) {
 }
 
 uint64_t Rotate64(uint64_t value, int shift) {
-  return shift == 0 ? value : ((value >> shift) | (value << (64 - shift)));
+  return shift == 0
+           ? value
+           : ((value >> static_cast<unsigned int>(shift)) | (value << static_cast<unsigned int>((64 - shift))));
 }
 
 uint64_t HashLen16(uint64_t u, uint64_t v, uint64_t multiple) {
