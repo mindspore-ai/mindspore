@@ -162,8 +162,18 @@ class SliceGpuFwdKernel : public GpuKernel {
     auto size = GetAttr<std::vector<int64_t>>(kernel_node, "size");
     auto begin = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
 
+    if (size.size() != input_shape.size() || begin.size() != input_shape.size()) {
+      MS_LOG(ERROR) << "For 'SliceGpuFwdKernel', the dims of size and begin should be equal to the dims of input, "
+                    << "but got dims of input: " << input_shape.size() << ", dims of size: " << size.size()
+                    << ", dims of begin: " << begin.size();
+      return false;
+    }
+
     for (size_t i = 0; i < input_shape.size(); i++) {
-      if (i >= size.size() || input_shape[i] <= 0 || size[i] <= 0) {
+      if (size[i] == -1) {
+        size[i] = input_shape[i] - begin[i];
+      }
+      if (input_shape[i] <= 0 || size[i] <= 0) {
         MS_LOG(WARNING) << "Slice output is null.";
         is_null_input_ = true;
       }
