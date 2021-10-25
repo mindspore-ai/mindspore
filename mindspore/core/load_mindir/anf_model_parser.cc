@@ -469,7 +469,6 @@ ValuePtr MSANFModelParser::ParseAttrInScalarForm(const mind_ir::AttributeProto &
       MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_type;
       return {};
   }
-  return {};
 }
 
 void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto &attr_proto,
@@ -545,7 +544,6 @@ ValuePtr MSANFModelParser::ObtainCNodeAttrInSingleScalarForm(const mind_ir::Attr
       MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_type;
       return {};
   }
-  return {};
 }
 
 bool MSANFModelParser::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim,
