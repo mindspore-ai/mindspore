@@ -478,6 +478,7 @@ constexpr auto kAttrProfilingIterEnd = "PROFILING_ITER_END";
 constexpr auto kAttrHiddenSize = "hidden_size";
 constexpr auto kAttrInputSize = "input_size";
 constexpr auto kAttrDstType = "dst_type";
+constexpr auto kAttrSkipNopOp = "skip_nop_op";
 
 // primal attr key name
 constexpr auto kPrimalAttrForwardNodeName = "forward_node_name";
