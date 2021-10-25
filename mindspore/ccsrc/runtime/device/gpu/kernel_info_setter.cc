@@ -25,6 +25,7 @@
 #include "backend/kernel_compiler/oplib/opinfo.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/kernel_compiler/gpu/custom/custom_aot_gpu_kernel.h"
 #include "runtime/device/gpu/cuda_common.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
@@ -463,6 +464,10 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   builder->SetOutputsDeviceType(outputs_type);
   bool result = false;
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
+    const auto &kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    if (!kernel::GpuKernelFactory::GetInstance().SearchRegistered(kernel_name, builder->Build())) {
+      kernel::GpuKernelRegister(kernel_name, KernelAttr(), []() { return new kernel::CustomAOTGpuKernel(); });
+    }
     // Custom op select kernel from OpLib
     result = SelectCustomKernel(kernel_node, builder->Build(), &kernel_type);
   } else if (kernel_type == UNKNOWN_KERNEL_TYPE) {

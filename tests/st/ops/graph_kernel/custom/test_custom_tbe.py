@@ -136,6 +136,7 @@ def add_n_with_bias(inputs, output, bias, kernel_name="add_n_with_bias"):
 
 class Net1(Cell):
     """Net definition"""
+
     def __init__(self):
         super(Net1, self).__init__()
         # TBE dsl with attr
@@ -203,9 +204,10 @@ def bprop(data, axis, out, dout):
 
 class Net2(Cell):
     """Net definition"""
+
     def __init__(self):
         super(Net2, self).__init__()
-        self.square_with_bias = Custom(square_with_bias, out_shape=[3], out_dtype=mstype.float32, grad=bprop,
+        self.square_with_bias = Custom(square_with_bias, out_shape=[3], out_dtype=mstype.float32, bprop=bprop,
                                        func_type="tbe")
 
     def construct(self, x):
@@ -217,10 +219,10 @@ class Net2(Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_grad():
+def test_bprop():
     """
     Feature: ALL To ALL
-    Description: test cases for grad function of Custom op.
+    Description: test cases for bprop function of Custom op.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")

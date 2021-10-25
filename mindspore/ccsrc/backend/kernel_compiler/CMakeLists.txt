@@ -31,6 +31,7 @@ if(ENABLE_CPU)
         "cpu/quantum/*.cc"
         "cpu/pyfunc/*.cc"
         "cpu/rl/*.cc"
+        "cpu/custom/*.cc"
     )
 
     if(NOT ENABLE_MPI)
