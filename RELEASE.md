@@ -186,7 +186,7 @@ Contributions of any kind are welcome!
 
 ###### Dump Config
 
-Previously, we need to set the dump path in dump config file. To make the dump feature easier to use on cloud, we support new environment parameter `MS_DIAGNOSTIC_DATA_PATH`.  View the [New Dump Tutorial](https://www.mindspore.cn/tutorial/training/zh-CN/r1.4/advanced_use/dump_in_graph_mode.html#dump).
+Previously, we need to set the dump path in dump config file. To make the dump feature easier to use on cloud, we support new environment parameter `MS_DIAGNOSTIC_DATA_PATH`.
 
 | 1.3.0                          | 1.4.0                                                                                                                                        |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
