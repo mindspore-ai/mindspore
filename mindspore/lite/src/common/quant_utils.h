@@ -41,9 +41,9 @@ static constexpr int kPerTensor = 1;
 
 inline int QuantMax(int bits, TypeId type) {
   if (type == kNumberTypeInt8) {
-    return (1 << (bits - 1)) - 1;
+    return (1 << static_cast<unsigned int>(bits - 1)) - 1;
   } else if (type == kNumberTypeUInt8) {
-    return (1 << bits) - 1;
+    return (1 << static_cast<unsigned int>(bits)) - 1;
   }
   return 0;
 }

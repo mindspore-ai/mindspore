@@ -198,7 +198,7 @@ void ArithmeticCPUKernel::FreeConstTileBuff() {
   if (input1_broadcast_ == true && input1_ptr_ != nullptr) {
     free(input1_ptr_);
     input1_ptr_ = nullptr;
-    input0_broadcast_ = false;
+    input1_broadcast_ = false;
   }
   return;
 }

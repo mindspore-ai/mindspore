@@ -127,7 +127,10 @@ int TensorListSetItemCPUKernel::Run() {
     } else {
       auto src = input0_->GetTensor(i);
       auto dst = output0_->GetTensor(i);
-      MS_ASSERT(src != nullptr);
+      if (src == nullptr) {
+        MS_LOG(ERROR) << "src is nullptr.";
+        return RET_NULL_PTR;
+      }
       // merge move data will delete tensors
       if (dst == nullptr) {
         dst = lite::Tensor::CopyTensor(*src, src->data() != nullptr, ms_context_->allocator);

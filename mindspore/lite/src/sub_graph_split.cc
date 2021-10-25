@@ -29,6 +29,10 @@
 #include "include/model.h"
 #include "nnacl/base/conv_common_base.h"
 
+namespace {
+constexpr const int kMaxDepth = 2048;
+}
+
 namespace mindspore::lite {
 size_t CommConvMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
   size_t cost = output_shape[NHWC_N] * output_shape[NHWC_H] * output_shape[NHWC_W] * output_shape[NHWC_C] *
@@ -66,9 +70,9 @@ void SearchSubGraph::UpdateOfflineParallelFlag() {
     return;
   }
   // visited whole models to find any conv && depthwise conv have been set to device type
-  offline_parallel_enable_ =
-    std::any_of(this->model_->all_nodes_.begin(), this->model_->all_nodes_.end(),
-                [&](lite::Model::Node *node) { return IsOfflineParallelNode(node->primitive_, node->device_type_); });
+  offline_parallel_enable_ = std::any_of(
+    this->model_->all_nodes_.begin(), this->model_->all_nodes_.end(),
+    [&](const lite::Model::Node *node) { return IsOfflineParallelNode(node->primitive_, node->device_type_); });
 }
 
 bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgraphs) {
@@ -118,6 +122,9 @@ bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgra
 
 void SearchSubGraph::dfs(int i, int n, int current_sum, int except_value, int *min_value, std::vector<bool> *tmp_group,
                          std::vector<bool> *cor_group, std::vector<Subgraph> *sub_graphs) {
+  if (i > kMaxDepth) {
+    return;
+  }
   if (i == n) {
     if (abs(except_value - current_sum) < *min_value) {
       for (int j = 0; j < n; j++) {
@@ -141,7 +148,7 @@ void SearchSubGraph::dfs(int i, int n, int current_sum, int except_value, int *m
   return;
 }
 
-SearchSubGraph::CostModel SearchSubGraph::CalculateConv2DFusion(Model::Node *node) {
+SearchSubGraph::CostModel SearchSubGraph::CalculateConv2DFusion(const Model::Node *node) {
   CostModel cost;
   std::vector<uint32_t> inputs = node->input_indices_;
   std::vector<uint32_t> outputs = node->output_indices_;
@@ -581,7 +588,7 @@ void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph, ui
   return;
 }
 
-void SearchSubGraph::InitMiddleSubgraph(std::vector<uint32_t> *multy_in_nodes) {
+void SearchSubGraph::InitMiddleSubgraph(const std::vector<uint32_t> *multy_in_nodes) {
   for (uint32_t node_index : *multy_in_nodes) {
     std::vector<Subgraph> node_subs;
     Model::Node *node = node_list_[node_index];

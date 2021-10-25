@@ -71,14 +71,14 @@ class Scheduler {
   void FreeOpParameters();
   int InferSubGraphShape(size_t subgraph_index);
   // schedule a node to kernel according to context and kernels registered
-  int HandleBuildinCpuKernelWeight(kernel::SubGraphType belong_subgraph_type, kernel::LiteKernel *kernel);
+  int HandleBuildinCpuKernelWeight(const kernel::SubGraphType belong_subgraph_type, const kernel::LiteKernel *kernel);
   kernel::LiteKernel *FindBackendKernel(const std::vector<Tensor *> &in_tensors,
                                         const std::vector<Tensor *> &out_tensors, const Model::Node *node,
                                         TypeId prefer_data_type = kTypeUnknown);
   int FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                     OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
                     kernel::LiteKernel **kernel);
-  int CheckCpuValid(std::vector<kernel::LiteKernel *> *dst_kernels);
+  int CheckCpuValid(const std::vector<kernel::LiteKernel *> *dst_kernels);
   void ResetByExecutionPlan(std::string node_name, TypeId *data_type);
 
 #ifdef GPU_OPENCL
@@ -102,7 +102,7 @@ class Scheduler {
                                 std::vector<lite::Tensor *> *in_tensors, std::vector<lite::Tensor *> *out_tensors,
                                 TypeId prefer_data_type = kTypeUnknown);
   // vector<LiteKernel/SubGraphKernel> --> vector<SubGraphKernel>
-  int ConstructNormalSubGraphs(std::vector<kernel::LiteKernel *> src_kernel,
+  int ConstructNormalSubGraphs(const std::vector<kernel::LiteKernel *> src_kernel,
                                std::vector<kernel::LiteKernel *> *dst_kernel,
                                std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);
 

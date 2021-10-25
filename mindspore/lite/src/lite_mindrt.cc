@@ -67,14 +67,14 @@ bool OfflineIsolated(const std::vector<kernel::LiteKernel *> &kernels, const ker
       continue;
     }
     if (std::any_of(kernel->out_tensors().begin(), kernel->out_tensors().end(),
-                    [&this_input_tensor](lite::Tensor *tensor) { return tensor == &this_input_tensor; })) {
+                    [&this_input_tensor](const lite::Tensor *tensor) { return tensor == &this_input_tensor; })) {
       return false;
     }
   }
   return true;
 }
 
-void LiteOpActor::ReplaceNodeInTensor(kernel::LiteKernel *kernel, Tensor *old_tensor, Tensor *new_tensor) {
+void LiteOpActor::ReplaceNodeInTensor(kernel::LiteKernel *kernel, const Tensor *old_tensor, Tensor *new_tensor) {
   int ref_count = 0;
 #ifndef DELEGATE_CLIP
   /* set op input for calculate */
@@ -721,7 +721,7 @@ void LiteOpActor::SetInputShape() {
       input_tensorlist->set_shape(input_data_tensorlist->shape());
       std::vector<std::vector<int>> tensor_shape{};
       std::transform(input_data_tensorlist->tensors().begin(), input_data_tensorlist->tensors().end(),
-                     std::back_inserter(tensor_shape), [](Tensor *tensor_item) { return tensor_item->shape(); });
+                     std::back_inserter(tensor_shape), [](const Tensor *tensor_item) { return tensor_item->shape(); });
       input_tensorlist->MallocTensorListData(input_data_tensorlist->tensors_data_type(), tensor_shape);
 #endif
     } else {

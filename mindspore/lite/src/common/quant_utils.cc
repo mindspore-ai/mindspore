@@ -26,6 +26,7 @@ STATUS GetMaxMinPerChannel(int channels, int one_filter_size, int i, int elem_co
   float max = -FLT_MAX;
   // find min and max
   for (int j = 0; j < one_filter_size; j++) {
+    MS_CHECK_INT_MUL_NOT_OVERFLOW(i, one_filter_size, RET_ERROR);
     auto index = j + i * one_filter_size;
     if (!channel_at_first) {
       index = j * channels + i;
