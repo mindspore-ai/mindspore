@@ -40,6 +40,8 @@
 #include "ir/func_graph_cloner.h"
 #include "abstract/abstract_value.h"
 #include "api/ir/func_graph.h"
+#include "ir/func_graph_transform.h"
+#include "ir/func_graph_base.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -99,60 +101,6 @@ class AbstractFunction;
 using AbstractFunctionPtr = std::shared_ptr<AbstractFunction>;
 }  // namespace abstract
 
-// ANF transform class.
-// Either a primitive or a func_graph.
-class FuncGraphTransform {
- public:
-  enum Type { kGtPrimitive, kGtFuncGraph };
-
-  explicit FuncGraphTransform(const PrimitivePtr prim, const FuncGraphPtr func_graph = nullptr)
-      : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)) {}
-
-  explicit FuncGraphTransform(const FuncGraphPtr &func_graph, const PrimitivePtr &prim = func_graph_prim_)
-      : prim_(prim), func_graph_(FuncGraphWeakPtr(func_graph)) {}
-
-  FuncGraphTransform(const FuncGraphTransform &t) : prim_(t.prim_), func_graph_(t.func_graph_) {}
-
-  ~FuncGraphTransform() = default;
-
-  Type type() const {
-    if (IsFuncGraph()) {
-      return kGtFuncGraph;
-    } else {
-      return kGtPrimitive;
-    }
-  }
-
-  bool IsPrimitive() const { return (func_graph_.lock() == nullptr); }
-  bool IsFuncGraph() const { return (func_graph_.lock() != nullptr); }
-  FuncGraphPtr func_graph() const { return func_graph_.lock(); }
-  PrimitivePtr primitive() const { return prim_; }
-
-  FuncGraphTransform &operator=(const FuncGraphTransform &t) {
-    if (this != &t) {
-      prim_ = t.prim_;
-      func_graph_ = t.func_graph_;
-    }
-    return *this;
-  }
-
- private:
-  PrimitivePtr prim_;
-  // FuncGraph will be hold by FuncGraphManager, so weak_ptr is enough here.
-  // And use weak_ptr can break the reference cycle between "primal" and "grad" graph in
-  // FPropRemapper::FinalizeGraph().
-  FuncGraphWeakPtr func_graph_;
-  static const PrimitivePtr func_graph_prim_;
-};
-
-class FuncGraphBase : public Value {
- public:
-  FuncGraphBase() = default;
-
-  ~FuncGraphBase() override = default;
-  MS_DECLARE_PARENT(FuncGraphBase, Value);
-};
-
 class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, public EffectInfoHolder {
  public:
   using Drawer = std::function<void(const std::string &, const FuncGraphPtr &)>;
@@ -161,6 +109,8 @@ class FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, publi
   explicit FuncGraph(GraphDebugInfoPtr &&debug_info);
   ~FuncGraph() override = default;
   MS_DECLARE_PARENT(FuncGraph, FuncGraphBase);
+
+  void DoBreakLoop() override;
 
   // Get the graph's abstract.
   abstract::AbstractFunctionPtr abstract();

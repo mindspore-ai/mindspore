@@ -156,8 +156,7 @@ void DfGraphConvertor::InitLoopVar(std::vector<ge::Operator> *init_input) {
       value = ConfigManager::GetInstance().iter_num();
     } else {
       MS_LOG(INFO) << "Run with normal(non-sink) mode, the iterator number will always be 1";
-      value = 1;
-      ConfigManager::GetInstance().set_iter_num(value);
+      ConfigManager::GetInstance().ResetIterNum();
     }
     value -= 1;  // iteration start from 0, the max iteration number for n loop should be n-1
     (void)const_iter_num->set_attr_value(GeTensor(desc, reinterpret_cast<uint8_t *>(&value), sizeof(int64_t)));

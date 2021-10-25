@@ -1014,6 +1014,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   }
 
   phase_ = phase;
+  ConfigManager::GetInstance().ResetQueue(queue_name_);
   auto actions = GetPipeline(resource, phase, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase));
 
@@ -1561,7 +1562,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
       VectorRef outputs;
       mindrt_backend->RunGraph(actor_info, args, &outputs);
     }
-    ConfigManager::GetInstance().set_iter_num(size);
+    ConfigManager::GetInstance().set_iter_num(queue_name, size);
     return true;
   }
 
@@ -1570,12 +1571,12 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   // Convert CNodeList to LinConvertResult.
   auto segment = std::make_shared<GraphSegment>(std::vector<AnfNodePtr>{app_init}, false);
   auto runner = convert_fn(segment, "");
-  ConfigManager::GetInstance().set_iter_num(size);
+  ConfigManager::GetInstance().set_iter_num(queue_name, size);
   // PS cache does not support loop sink.
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
-    ConfigManager::GetInstance().set_iter_num(1);
+    ConfigManager::GetInstance().set_iter_num(queue_name, 1);
   }
 #endif
 
@@ -1726,6 +1727,26 @@ void FinalizeBackend() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   (void)context::FinalizeGe(context_ptr);
   (void)context::CloseTsd(context_ptr);
+}
+
+void MemoryRecycle() {
+#ifdef ENABLE_DUMP_IR
+  mindspore::RDR::ResetRecorder();
+#endif
+  ReclaimOptimizer();
+  ad::g_k_prims.clear();
+  ad::ClearKPynativeCellStaticRes();
+  ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
+  abstract::AnalysisResultCacheMgr::GetInstance().Clear();
+  abstract::AnalysisContext::ClearContext();
+  g_args_cache.clear();
+  // clean static variable to prevent from crash. As static variable is released after
+  // Python threads is released.
+  parse::data_converter::ClearObjectCache();
+  parse::Parser::CleanParserResource();
+  parse::CleanDataClassToClassMap();
+  trace::ClearTraceStack();
+  FuncGraphLoopBreaker::Inst().BreakLoop();
 }
 
 void ClearResAtexit() {

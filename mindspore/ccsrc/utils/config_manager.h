@@ -90,7 +90,12 @@ class ConfigManager {
     if (dataset_mode_ == DS_NORMAL_MODE) return 1;
     return iter_num_;
   }
-  void set_iter_num(const int64_t num) { iter_num_ = num; }
+
+  void set_iter_num(const std::string &queue_name, const int64_t num) {
+    queue_name_ = queue_name;
+    iter_num_ = num;
+    queue_info_map[queue_name_] = num;
+  }
 
   std::string dataset_phase() const { return dataset_phase_; }
   void set_dataset_phase(const std::string &phase) { dataset_phase_ = phase; }
@@ -103,6 +108,8 @@ class ConfigManager {
   void ResetConfig() noexcept;
 
   void ResetIterNum() noexcept;
+
+  void ResetQueue(const std::string &queue_name) noexcept;
 
   std::map<std::string, std::string> ge_initialize_options_;
 
@@ -118,6 +125,9 @@ class ConfigManager {
   DatasetMode dataset_mode_{DS_NORMAL_MODE};
   DatasetGraphParam dataset_param_{"", 0, 0, {}, {}, {}};
   int64_t iter_num_{1};
+  std::string queue_name_{""};
+  // now only save iter_num_ in the map
+  std::map<std::string, int16_t> queue_info_map;
   std::string dataset_phase_{""};
   int64_t gpu_loopsink_size_{1};
 };

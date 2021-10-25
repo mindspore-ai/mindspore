@@ -29,7 +29,7 @@ from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
 from .tensor import Tensor as MsTensor
 from .tensor import CSRTensor as MsCSRTensor
-from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, PynativeExecutor_
+from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, PynativeExecutor_, _ms_memory_recycle
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
@@ -37,7 +37,10 @@ from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, 
 from .._checkparam import Validator
 
 # store ms_function class compiled pipeline cache
-ms_compile_cache = {}
+ms_compile_cache = set()
+# store cell compiled pipeline cache,
+# {cell1:set_cache1, cell2:set_cache2, ...}
+cells_compile_cache = {}
 
 BROADCAST_PHASE = "_broadcast_"
 
@@ -246,7 +249,7 @@ class _MindsporeFunctionExecutor:
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
         key = self._graph_executor.generate_arguments_key(args_list, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
-        if phase in ms_compile_cache.keys():
+        if phase in ms_compile_cache:
             return phase
 
         if self.obj is None:
@@ -258,7 +261,7 @@ class _MindsporeFunctionExecutor:
             raise RuntimeError("Executor compile failed.")
         if context.get_context("enable_ge"):
             self.build_data_init_graph(phase)
-        ms_compile_cache[phase] = phase
+        ms_compile_cache.add(phase)
         return phase
 
     @_wrap_func
@@ -550,6 +553,14 @@ class _CellGraphExecutor:
     def _build_data_graph(self, obj, phase):
         self._graph_executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
 
+    def set_queue_name(self, queue_name):
+        """
+        while a mode use shared dataset with others, need set queue_name which saved in data_set
+        :param queue_name:
+        :return:
+        """
+        self._graph_executor.set_queue_name(queue_name)
+
     def _set_dataset_mode(self, args_list):
         """set dataset mode."""
         # decide whether to sink based on whether the inputs is virtual or args_list is ()
@@ -775,7 +786,25 @@ class _CellGraphExecutor:
                                    "jit_config")
 
 
+def ms_memory_recycle():
+    """
+    Recycle memory used by MindSpore.
+    When train multi Neural network models in one process, memory used by mindspore is very large,
+    this is because mindspore cached runtime memory for every model.
+    To recycle these cached memory, users can call this function after training of one model.
+    :return:
+    """
+    if ms_compile_cache:
+        _cell_graph_executor.del_net_res(ms_compile_cache)
+        ms_compile_cache.clear()
+    for cell_cache in cells_compile_cache.values():
+        if cell_cache:
+            _cell_graph_executor.del_net_res(cell_cache)
+            cell_cache.clear()
+    _ms_memory_recycle()
+
+
 _cell_graph_executor = _CellGraphExecutor()
 _pynative_executor = _PynativeExecutor()
 
-__all__ = ['ms_function']
+__all__ = ['ms_function', 'ms_memory_recycle']

@@ -34,7 +34,6 @@ class Context : public pipeline::ResourceBase {
   ~Context() override = default;
 
   uint32_t device_id() const { return device_id_; }
-  static std::shared_ptr<Context> GetInstance();
   void AddManager(const FuncGraphManagerPtr &m) { manager_list_.push_back(m); }
 
  private:

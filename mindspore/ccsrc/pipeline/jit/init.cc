@@ -488,4 +488,5 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("_export_bprop_mindir", &mindspore::ad::KPrim::ExportBpropMindir,
               "Export the backpropagation function to mindir file.");
 #endif
+  (void)m.def("_ms_memory_recycle", &mindspore::pipeline::MemoryRecycle, "Recycle memory used by mindspore.");
 }

@@ -17,6 +17,7 @@ import math
 
 from mindspore._checkparam import Validator
 from mindspore.common.dtype import pytype_to_dtype
+from mindspore.common.api import _cell_graph_executor
 from .. import context, nn
 from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes, _get_pipeline_stages
@@ -371,6 +372,9 @@ class _DatasetIter:
             if not hasattr(dataset, '__no_send__'):
                 _send_data(dataset, epoch_num)
         else:
+            # if using an existed __transfer_dataset__, set the queue_name directly
+            if not dataset.__transfer_dataset__.queue_name:
+                _cell_graph_executor.set_queue_name(dataset.__transfer_dataset__.queue_name)
             _send_data_no_flag(dataset, epoch_num)
 
         self.stop_send = dataset.__transfer_dataset__.stop_send

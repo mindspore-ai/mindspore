@@ -73,6 +73,8 @@ class MetaFuncGraph : public FuncGraphBase {
     }
   }
 
+  void DoBreakLoop() override { cache_.clear(); }
+
  protected:
   template <typename Derived>
   std::shared_ptr<Derived> shared_from_base() {

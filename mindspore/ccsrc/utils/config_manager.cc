@@ -43,6 +43,21 @@ void ConfigManager::ResetConfig() noexcept {
   iter_num_ = 1;
 }
 
-void ConfigManager::ResetIterNum() noexcept { iter_num_ = 1; }
+void ConfigManager::ResetIterNum() noexcept {
+  iter_num_ = 1;
+  queue_name_.clear();
+}
+
+void ConfigManager::ResetQueue(const std::string &queue_name) noexcept {
+  if (queue_name == queue_name_) {
+    return;
+  }
+
+  auto iter = queue_info_map.find(queue_name);
+  if (iter != queue_info_map.end()) {
+    queue_name_ = queue_name;
+    iter_num_ = iter->second;
+  }
+}
 
 }  // namespace mindspore
