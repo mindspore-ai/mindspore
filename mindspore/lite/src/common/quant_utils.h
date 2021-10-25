@@ -23,9 +23,14 @@
 #include <limits>
 #include <algorithm>
 #include <vector>
+#include <numeric>
+#include <functional>
+#include <map>
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#include "src/common/log_util.h"
 #include "ir/dtype/type_id.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 
@@ -34,6 +39,12 @@ struct QuantParamT;
 }
 
 namespace lite {
+
+typedef struct {
+  float min;
+  float max;
+} MinMax;
+
 const int RET_QUANT_CONTINUE = 2;
 static constexpr double SCALE_THREASHOLD = 1e-38;
 
@@ -54,9 +65,6 @@ inline int QuantMin(int bits, TypeId type) {
   }
   return 0;
 }
-
-STATUS GetMaxMinPerChannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
-                           bool channel_at_first, float *desired_max, float *desired_min);
 
 STATUS CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, bool narrow_range,
                              int quant_max, int quant_min, int num_bits);
@@ -143,88 +151,80 @@ STATUS DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<sc
   return RET_OK;
 }
 
+// Get the index of the bucket to which the current data belongs.
+int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_index);
+
+// Calculate the Compression effect of per-channel
+STATUS CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim);
+
+// Get the min max of each channel
+STATUS GetAllChannelMinMmax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
+                            std::map<int, MinMax> *per_channel_min_max);
+
+// Calculate the distribution difference between quant and origin
+STATUS CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vector<float> &dequant_datas,
+                          std::vector<schema::QuantParamT> *quant_params, const std::vector<int> &dims,
+                          int preferred_dim);
+
 template <typename T>
 STATUS DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::QuantType &quant_type,
                          std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
-                         const size_t &bit_num, const bool &k_means, std::vector<T> *quant_datas, int channels,
-                         bool channel_at_first = true) {
-  static const int quant_param_size = 32 * 8;
-  std::vector<float> dequant_datas(quant_datas->size());
-  if (channels <= 0) {
-    MS_LOG(ERROR) << "channels must be greater than 0";
+                         const size_t &bit_num, const bool &k_means, std::vector<T> *quant_datas,
+                         const std::vector<int> &dims, int preferred_dim) {
+  STATUS ret;
+  auto count = std::accumulate(std::begin(dims), std::end(dims), 1, std::multiplies<>());
+  if (static_cast<size_t>(count) != elem_count) {
+    MS_LOG(ERROR) << " element != count";
     return RET_ERROR;
   }
-  size_t one_filter_size = elem_count / channels;
-  bool do_quant = quant_param_size / (sizeof(float) * 8 - bit_num) < one_filter_size;
-  if (!do_quant && quant_type == schema::QuantType_QUANT_WEIGHT) {
-    MS_LOG(INFO) << "too few elements in a filter, no need to quantize. " << one_filter_size;
-    return RET_QUANT_CONTINUE;
-  }
-  for (int i = 0; i < channels; i++) {
-    float min = FLT_MAX;
-    float max = -FLT_MAX;
-    STATUS status =
-      GetMaxMinPerChannel(channels, one_filter_size, i, elem_count, raw_datas, channel_at_first, &max, &min);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "GetMaxMinPerChannel failed" << status;
-      return status;
-    }
-    schema::QuantParamT quant_param;
-    status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
-      return status;
-    }
-    // do quantization
-    double average_dequant = 0;
-    double average_raw = 0;
-    for (uint32_t j = 0; j < one_filter_size; j++) {
-      auto index = j + i * one_filter_size;
-      if (!channel_at_first) {
-        index = j * channels + i;
-      }
-      MS_ASSERT(index < elem_count);
-      float raw_data = raw_datas[index];
-      auto quant_data = QuantizeData<T>(raw_data, &quant_param, quant_max, quant_min);
-      (*quant_datas)[index] = quant_data;
 
-      if (quant_type == schema::QuantType_QUANT_WEIGHT) {
-        float dequant_data = quant_param.scale * (quant_data - quant_param.zeroPoint);
-        dequant_datas[index] = dequant_data;
-        average_dequant += dequant_data;
-        average_raw += raw_data;
-      }
+  CHECK_LESS_RETURN(dims.size(), static_cast<size_t>(preferred_dim + 1));
+  if (quant_type == schema::QuantType_QUANT_WEIGHT) {
+    ret = CalPerChannelGain(bit_num, dims, preferred_dim);
+    if (ret == RET_QUANT_CONTINUE) {
+      return RET_QUANT_CONTINUE;
     }
-    if (quant_type == schema::QuantType_QUANT_WEIGHT && !k_means) {
-      // mean
-      average_dequant = average_dequant / one_filter_size;
-      average_raw = average_raw / one_filter_size;
-      // std
-      double variance_dequant = 0;
-      double variance_raw = 0;
-      for (uint32_t j = 0; j < one_filter_size; j++) {
-        auto index = j + i * one_filter_size;
-        if (!channel_at_first) {
-          index = j * channels + i;
-        }
-        MS_ASSERT(index < elem_count);
-        variance_dequant += std::pow(dequant_datas[index] - average_dequant, 2);
-        variance_raw += std::pow(raw_datas[index] - average_raw, 2);
-      }
-      variance_dequant = std::sqrt(variance_dequant / one_filter_size);
-      variance_raw = std::sqrt(variance_raw / one_filter_size);
-      quant_param.varCorr = 1;
-      if (variance_raw != 0 && variance_dequant != 0) {
-        auto temp_var_corr = variance_raw / variance_dequant;
-        if (temp_var_corr > 0 && temp_var_corr < 10) {
-          quant_param.varCorr = temp_var_corr;
-        } else {
-          MS_LOG(WARNING) << "unexpected var_corr: " << temp_var_corr;
-        }
-      }
-      quant_param.meanCorr = average_raw - average_dequant * quant_param.varCorr;
+  }
+
+  std::vector<float> dequant_datas(quant_datas->size());
+  // the key is bucket_index
+  std::map<int, MinMax> per_channel_min_max;
+  ret = GetAllChannelMinMmax(raw_datas, elem_count, dims, preferred_dim, &per_channel_min_max);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get all channel min max failed.";
+    return ret;
+  }
+
+  // Cal Quant param
+  for (auto min_max_map : per_channel_min_max) {
+    float min = min_max_map.second.min;
+    float max = min_max_map.second.max;
+    schema::QuantParamT quant_param;
+    ret = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Cal quantization params failed.";
+      return ret;
     }
     quant_params->emplace_back(quant_param);
+  }
+
+  // Do quant
+  for (size_t i = 0; i < elem_count; i++) {
+    float raw_data = raw_datas[i];
+    auto bucket_index = GetBucketIndex(dims, preferred_dim, i);
+    auto quant_param = quant_params->at(bucket_index);
+    auto quant_data = QuantizeData<T>(raw_data, &quant_param, quant_max, quant_min);
+    (*quant_datas)[i] = quant_data;
+    // cal dequant(use for cal weight bias)
+    dequant_datas.at(i) = quant_param.scale * (quant_data - quant_param.zeroPoint);
+  }
+
+  if (quant_type == schema::QuantType_QUANT_WEIGHT) {
+    ret = CalWeightQuantBias(raw_datas, elem_count, dequant_datas, quant_params, dims, preferred_dim);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Cal weight quant bias failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }

@@ -188,7 +188,22 @@ STATUS SparseDecompress(const schema::Tensor &src_tensor, Tensor *dst_tensor) {
   return RET_OK;
 }
 
-int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, bool channel_first, TypeId dst_data_type) {
+// A * stride_a + bucket_index * stride_b + C
+int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_index, int bucket_in_index) {
+  int stride_a = 1;
+  for (size_t i = preferred_dim; i < dims.size(); i++) {
+    stride_a *= dims[i];
+  }
+  int stride_b = 1;
+  for (size_t i = preferred_dim + 1; i < dims.size(); i++) {
+    stride_b *= dims[i];
+  }
+  int A = bucket_in_index / stride_b;
+  int C = bucket_in_index % stride_b;
+  return A * stride_a + bucket_index * stride_b + C;
+}
+
+int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type) {
   MS_ASSERT(input_tensor != nullptr);
   if (input_tensor->data_type() != kNumberTypeInt8 && input_tensor->data_type() != kNumberTypeInt16) {
     MS_LOG(ERROR) << "Conv weight input type error." << input_tensor->data_type();
@@ -199,14 +214,16 @@ int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, bool channel_first,
     return RET_ERROR;
   }
   if (input_tensor->data_type() == kNumberTypeInt16 && dst_data_type == kNumberTypeFloat32) {
-    auto new_const_data = DequantData<int16_t, float>(input_tensor, channel_first);
+    auto new_const_data = DequantData<int16_t, float>(input_tensor, preferred_dim);
+    CHECK_NULL_RETURN(new_const_data);
     input_tensor->FreeData();
     input_tensor->set_data(new_const_data);
     input_tensor->set_own_data(true);
     input_tensor->set_data_type(dst_data_type);
   } else if (input_tensor->data_type() == kNumberTypeInt16 && dst_data_type == kNumberTypeFloat16) {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
-    auto new_const_data = DequantData<int16_t, float16_t>(input_tensor, channel_first);
+    auto new_const_data = DequantData<int16_t, float16_t>(input_tensor, preferred_dim);
+    CHECK_NULL_RETURN(new_const_data);
     input_tensor->FreeData();
     input_tensor->set_data(new_const_data);
     input_tensor->set_own_data(true);
@@ -216,14 +233,16 @@ int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, bool channel_first,
     return RET_NOT_SUPPORT;
 #endif
   } else if (input_tensor->data_type() == kNumberTypeInt8 && dst_data_type == kNumberTypeFloat32) {
-    auto new_const_data = DequantData<int8_t, float>(input_tensor, channel_first);
+    auto new_const_data = DequantData<int8_t, float>(input_tensor, preferred_dim);
+    CHECK_NULL_RETURN(new_const_data);
     input_tensor->FreeData();
     input_tensor->set_data(new_const_data);
     input_tensor->set_own_data(true);
     input_tensor->set_data_type(dst_data_type);
   } else if (input_tensor->data_type() == kNumberTypeInt8 && dst_data_type == kNumberTypeFloat16) {
 #if defined(ENABLE_ARM) && defined(ENABLE_FP16)
-    auto new_const_data = DequantData<int8_t, float16_t>(input_tensor, channel_first);
+    auto new_const_data = DequantData<int8_t, float16_t>(input_tensor, preferred_dim);
+    CHECK_NULL_RETURN(new_const_data);
     input_tensor->FreeData();
     input_tensor->set_data(new_const_data);
     input_tensor->set_own_data(true);
@@ -328,8 +347,8 @@ int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tens
   int index = 0;
   for (auto &tensor : in_tensors) {
     MS_CHECK_TRUE_RET(tensor != nullptr, RET_ERROR);
-    auto channel_first = IsChannelFirst(index++, op_parameter);
-    auto ret = WeightDecoder::DequantTensor(tensor, channel_first, dst_data_type);
+    auto preferred_dim = GetPreferredDim(op_parameter, index++, tensor->shape());
+    auto ret = WeightDecoder::DequantTensor(tensor, preferred_dim, dst_data_type);
     if (ret != RET_OK && ret != RET_NO_CHANGE) {
       MS_LOG(DEBUG) << "Dequant tensor failed";
       return RET_ERROR;
@@ -338,7 +357,7 @@ int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tens
   return RET_OK;
 }
 
-int WeightDecoder::DequantTensor(Tensor *tensor, bool channel_first, TypeId dst_data_type) {
+int WeightDecoder::DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_data_type) {
   MS_ASSERT(tensor != nullptr);
   if (!tensor->IsConst() ||
       !(dst_data_type == TypeId::kNumberTypeFloat32 || dst_data_type == TypeId::kNumberTypeFloat16)) {
@@ -349,11 +368,43 @@ int WeightDecoder::DequantTensor(Tensor *tensor, bool channel_first, TypeId dst_
   if (!need_dequant) {
     return RET_NO_CHANGE;
   }
-  auto ret = WeightDecoder::DequantWeight(tensor, channel_first, dst_data_type);
+  auto ret = WeightDecoder::DequantWeight(tensor, preferred_dim, dst_data_type);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Dequant data failed: " << ret;
     return ret;
   }
   return RET_OK;
+}
+
+int WeightDecoder::GetMatMulPreferredDim(OpParameter *op_parameter, int input_index, const std::vector<int> &dims) {
+  int last_first_index = dims.size() - 1;
+  int last_second_index = dims.size() - 2;
+  auto matmul_parameter = reinterpret_cast<MatMulParameter *>(op_parameter);
+  MS_ASSERT(matmul_parameter != nullptr);
+  // For MatMul A
+  if (input_index == 0) {
+    if (matmul_parameter->a_transpose_) {
+      return last_second_index;
+    } else {
+      return last_first_index;
+    }
+  }
+  // For MatMul B
+  if (input_index == 1) {
+    if (matmul_parameter->b_transpose_) {
+      return last_first_index;
+    } else {
+      return last_second_index;
+    }
+  }
+  return 0;
+}
+
+int WeightDecoder::GetPreferredDim(OpParameter *op_parameter, int index, const std::vector<int> &dims) {
+  if (op_parameter->type_ == schema::PrimitiveType_MatMul) {
+    return GetMatMulPreferredDim(op_parameter, index, dims);
+  }
+  // The first index.
+  return 0;
 }
 }  // namespace mindspore::lite

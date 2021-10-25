@@ -82,12 +82,13 @@ STATUS WeightQuantizer::SetAbstract(const tensor::TensorPtr &tensor_info, const 
 }
 
 STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
-  MS_CHECK_TRUE_RET(cnode != nullptr, RET_NULL_PTR);
+  CHECK_NULL_RETURN(cnode);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
+  CHECK_NULL_RETURN(primitive);
   WeightQuantType weight_quant_type = WeightQuantType::FIXED_BIT_PER_CHANNEL;
-  std::set<PrimitivePtr> per_layer_primitive_types = {prim::kPrimGather, prim::kPrimAdam, prim::kPrimSGD,
-                                                      prim::kPrimApplyMomentum};
+  auto manager = api::FuncGraphManager::Manage(funcGraph, true);
+  CHECK_NULL_RETURN(manager);
+  std::set<PrimitivePtr> per_layer_primitive_types = {prim::kPrimAdam, prim::kPrimSGD, prim::kPrimApplyMomentum};
   if (CheckNodeInSet(cnode, per_layer_primitive_types)) {
     weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
   }
@@ -99,22 +100,30 @@ STATUS WeightQuantizer::DoWeightQuantize(const CNodePtr &cnode) {
   } else if (opt::CheckPrimitiveType(cnode, prim::kPrimApplyMomentum)) {
     weight_indices = {2};
   } else {
-    for (size_t i = 0; i < cnode->size(); ++i) {
+    for (size_t i = 1; i < cnode->size(); ++i) {
       weight_indices.push_back(i);
     }
   }
   for (auto idx : weight_indices) {
     auto input = cnode->input(idx);
-    if (!quant_strategy_->CanTensorQuantized(input, 0)) {
-      MS_LOG(INFO) << "Input " << idx << "of Optimizer is not quantizable";
-      continue;
+    // support for shared weight
+    auto node_map = manager->node_users();
+    auto node_user = node_map[input];
+    if (node_user.size() > 1 && opt::CheckPrimitiveType(cnode, prim::kPrimMatMul)) {
+      MS_LOG(INFO) << input->fullname_with_scope() << " is shared weight.";
+      weight_quant_type = WeightQuantType::FIXED_BIT_PER_LAYER;
     }
     ParameterPtr param_node;
     tensor::TensorPtr tensor_info;
     GetLiteParameter(input, &param_node, &tensor_info);
     if (param_node == nullptr || tensor_info == nullptr || tensor_info->data_type() != TypeId::kNumberTypeFloat32) {
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " can not quant weight";
-      return RET_OK;
+      continue;
+    }
+    int preferred_dim = GetPreferredDim(primitive, idx - 1, tensor_info->shape());
+    if (!quant_strategy_->CanTensorQuantized(input, preferred_dim)) {
+      MS_LOG(INFO) << "Input " << idx << "of Optimizer is not quantizable";
+      continue;
     }
 
     auto status = RET_ERROR;

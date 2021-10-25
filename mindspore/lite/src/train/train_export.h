@@ -20,6 +20,8 @@
 #include <memory>
 #include <map>
 #include <unordered_map>
+#include <utility>
+#include <set>
 #include "schema/inner/model_generated.h"
 #include "src/lite_kernel.h"
 #include "src/lite_model.h"
@@ -34,6 +36,10 @@ struct MetaGraphT;
 }  // namespace schema
 #endif
 namespace lite {
+struct tensor_info {
+  size_t input_index;
+  OpParameter *op_parameter;
+};
 
 class TrainExport {
  public:
@@ -62,7 +68,7 @@ class TrainExport {
   int TopologicalSort();
   void PrepareRemap(int offset);
   Model::Node *FindNode(const mindspore::kernel::LiteKernel *kernel, const Model *model);
-  std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor);
+  std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor, int preferred_dim);
   std::unique_ptr<schema::CNodeT> CreateCNode(const mindspore::kernel::LiteKernel *kernel,
                                               std::vector<uint32_t> inputIndex, std::vector<uint32_t> outputIndex,
                                               const Model *model);
@@ -75,7 +81,11 @@ class TrainExport {
   std::unique_ptr<schema::TensorT> CreateTransformConst(size_t last_id);
   int AddTransform();
   bool NeedQuantization(const mindspore::lite::Tensor *tensor);
-  virtual int QuantTensorData(schema::TensorT *dest_tensor, const mindspore::lite::Tensor *src_tensor);
+  int ExportTensor(const Model *model, const std::vector<mindspore::lite::Tensor *> &tensors, int offset,
+                   const std::vector<std::pair<size_t, tensor_info>> &map_index,
+                   const std::vector<std::string> &output_names, const std::set<size_t> &out_set);
+  virtual int QuantTensorData(schema::TensorT *dest_tensor, const mindspore::lite::Tensor *src_tensor,
+                              int preferred_dim);
   mindspore::schema::QuantType GetNodeQuantType(const mindspore::kernel::LiteKernel *kernel);
   void TagQuantizedNodes();
   QuantizationType quant_type_;
