@@ -76,7 +76,7 @@ int SqueezeInt8CPUKernel::Prepare() {
     }
     return RET_ERROR;
   }
-  quant_squeeze_param_->out_quant_args_->scale_ = quant_params.front().scale;
+  quant_squeeze_param_->out_quant_args_->scale_ = static_cast<float>(quant_params.front().scale);
   quant_squeeze_param_->out_quant_args_->zp_ = quant_params.front().zeroPoint;
   if (!InferShapeDone()) {
     return RET_OK;
