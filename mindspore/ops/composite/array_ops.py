@@ -130,7 +130,7 @@ def sequence_mask(lengths, maxlen=None, prim_name='sequence_mask'):
     """
     Returns a mask tensor representing the first N positions of each cell.
 
-    If lengths has shape [d_1, d_2, ..., d_n], then the resulting tensor mask has type dtype and shape
+    If lengths has shape [d_1, d_2, ..., d_n], then the resulting tensor mask has type and shape
     [d_1, d_2, ..., d_n, maxlen], with mask[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])
 
     Inputs:
