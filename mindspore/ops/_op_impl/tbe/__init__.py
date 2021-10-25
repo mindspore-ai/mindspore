@@ -336,6 +336,7 @@ from .sinh import _sinh_tbe
 from .inv import _inv_tbe
 from .inv_grad import _inv_grad_tbe
 from .invert import _invert_tbe
+from .invert_ds import _invert_ds_tbe
 from .basic_lstm_cell import _basic_lstm_cell_tbe
 from .basic_lstm_cell_c_state_grad_v2 import _basic_lstm_cell_c_state_grad_tbe_v2
 from .basic_lstm_cell_c_state_grad import _basic_lstm_cell_c_state_grad_tbe
