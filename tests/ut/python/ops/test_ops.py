@@ -1193,6 +1193,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)),
                         Tensor(np.array([[0.5, 1], [1, 1.5]]).astype(np.float32))],
         'skip': ['backward']}),
+    ('IsInf', {
+        'block': P.IsInf(),
+        'desc_inputs': [Tensor(np.array([np.log(-1), 1, np.log(0)]).astype(np.float32))],
+        'desc_bprop': [],
+        'skip': ['backward']}),
     ('ACos', {
         'block': P.ACos(),
         'desc_inputs': [Tensor(np.array([2., 3.]).astype(np.float32))],
